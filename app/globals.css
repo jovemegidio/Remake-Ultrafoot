@@ -4,56 +4,60 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* EAFC 26 inspired dark theme — broadcast aesthetic */
-  --background: oklch(0.13 0.015 250);
+  /* EA FC 26 Premium Dark Theme - Inspired by EA Sports FC */
+  --background: oklch(0.08 0.02 260);
   --foreground: oklch(0.98 0.005 240);
 
-  --card: oklch(0.17 0.018 250);
+  --card: oklch(0.12 0.025 260);
   --card-foreground: oklch(0.98 0.005 240);
 
-  --popover: oklch(0.16 0.018 250);
+  --popover: oklch(0.10 0.02 260);
   --popover-foreground: oklch(0.98 0.005 240);
 
-  /* Electric cyan — primary brand */
-  --primary: oklch(0.82 0.15 200);
-  --primary-foreground: oklch(0.13 0.015 250);
+  /* EA FC Cyan - Primary brand color */
+  --primary: oklch(0.78 0.18 195);
+  --primary-foreground: oklch(0.08 0.02 260);
 
-  --secondary: oklch(0.22 0.02 250);
+  --secondary: oklch(0.18 0.03 260);
   --secondary-foreground: oklch(0.98 0.005 240);
 
-  --muted: oklch(0.22 0.02 250);
-  --muted-foreground: oklch(0.65 0.02 240);
+  --muted: oklch(0.20 0.025 260);
+  --muted-foreground: oklch(0.60 0.02 240);
 
-  /* Lime — secondary accent (active states, CTAs) */
-  --accent: oklch(0.88 0.2 130);
-  --accent-foreground: oklch(0.13 0.015 250);
+  /* Lime green - EA FC accent for CTAs */
+  --accent: oklch(0.85 0.22 140);
+  --accent-foreground: oklch(0.08 0.02 260);
 
-  --destructive: oklch(0.65 0.22 25);
+  /* Red for destructive actions */
+  --destructive: oklch(0.60 0.25 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  /* Gold — premium / special highlight */
-  --gold: oklch(0.82 0.15 85);
+  /* Gold - Premium/Special highlight */
+  --gold: oklch(0.80 0.18 85);
 
-  --border: oklch(0.27 0.02 250);
-  --input: oklch(0.22 0.02 250);
-  --ring: oklch(0.82 0.15 200);
+  /* Orange - Warning/Alert */
+  --warning: oklch(0.75 0.18 55);
 
-  --chart-1: oklch(0.82 0.15 200);
-  --chart-2: oklch(0.88 0.2 130);
-  --chart-3: oklch(0.82 0.15 85);
-  --chart-4: oklch(0.65 0.22 25);
-  --chart-5: oklch(0.6 0.1 250);
+  --border: oklch(0.22 0.03 260);
+  --input: oklch(0.16 0.025 260);
+  --ring: oklch(0.78 0.18 195);
 
-  --radius: 0.5rem;
+  --chart-1: oklch(0.78 0.18 195);
+  --chart-2: oklch(0.85 0.22 140);
+  --chart-3: oklch(0.80 0.18 85);
+  --chart-4: oklch(0.60 0.25 25);
+  --chart-5: oklch(0.55 0.12 280);
 
-  --sidebar: oklch(0.1 0.015 250);
-  --sidebar-foreground: oklch(0.85 0.01 240);
-  --sidebar-primary: oklch(0.82 0.15 200);
-  --sidebar-primary-foreground: oklch(0.13 0.015 250);
-  --sidebar-accent: oklch(0.18 0.018 250);
+  --radius: 0.625rem;
+
+  --sidebar: oklch(0.06 0.02 260);
+  --sidebar-foreground: oklch(0.75 0.01 240);
+  --sidebar-primary: oklch(0.78 0.18 195);
+  --sidebar-primary-foreground: oklch(0.08 0.02 260);
+  --sidebar-accent: oklch(0.14 0.025 260);
   --sidebar-accent-foreground: oklch(0.98 0.005 240);
-  --sidebar-border: oklch(0.22 0.02 250);
-  --sidebar-ring: oklch(0.82 0.15 200);
+  --sidebar-border: oklch(0.18 0.025 260);
+  --sidebar-ring: oklch(0.78 0.18 195);
 }
 
 @theme inline {
@@ -78,6 +82,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-gold: var(--gold);
+  --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -107,76 +112,142 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(ellipse at top, oklch(0.18 0.04 220 / 0.4) 0%, transparent 60%),
-      radial-gradient(ellipse at bottom right, oklch(0.2 0.05 130 / 0.15) 0%, transparent 50%);
+      radial-gradient(ellipse at top left, oklch(0.15 0.06 195 / 0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, oklch(0.12 0.08 140 / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at center, oklch(0.10 0.04 260 / 0.5) 0%, transparent 70%);
     background-attachment: fixed;
   }
 }
 
 @layer utilities {
-  /* Broadcast condensed display — for hero titles, scoreboards */
+  /* EA FC Display font - Bold condensed for titles */
   .font-display {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
   }
 
   .font-display-italic {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     font-style: italic;
   }
 
-  /* Glassmorphism panel */
+  /* Glassmorphism panel - EA FC style */
   .glass-panel {
     background: linear-gradient(
       135deg,
-      oklch(0.18 0.02 250 / 0.85) 0%,
-      oklch(0.14 0.02 250 / 0.75) 100%
+      oklch(0.14 0.03 260 / 0.9) 0%,
+      oklch(0.10 0.025 260 / 0.8) 100%
     );
-    backdrop-filter: blur(12px);
-    border: 1px solid oklch(0.3 0.02 250 / 0.6);
+    backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid oklch(0.28 0.04 260 / 0.5);
+  }
+
+  /* EA FC Card hover effect */
+  .eafc-card {
+    @apply bg-card border border-border rounded-xl transition-all duration-300;
+    background: linear-gradient(
+      145deg,
+      oklch(0.13 0.03 260) 0%,
+      oklch(0.10 0.025 260) 100%
+    );
+  }
+
+  .eafc-card:hover {
+    border-color: oklch(0.78 0.18 195 / 0.4);
+    box-shadow:
+      0 0 0 1px oklch(0.78 0.18 195 / 0.15),
+      0 8px 32px oklch(0.78 0.18 195 / 0.1),
+      inset 0 1px 0 oklch(0.95 0.05 195 / 0.1);
+    transform: translateY(-2px);
   }
 
   /* Subtle grid background */
   .bg-grid {
     background-image:
-      linear-gradient(oklch(0.3 0.02 250 / 0.15) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.3 0.02 250 / 0.15) 1px, transparent 1px);
-    background-size: 32px 32px;
+      linear-gradient(oklch(0.25 0.03 260 / 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.25 0.03 260 / 0.12) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
-  /* Neon glow shadow */
+  /* EA FC Field pattern */
+  .bg-field {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        oklch(0.25 0.12 140 / 0.03) 0px,
+        oklch(0.25 0.12 140 / 0.03) 2px,
+        transparent 2px,
+        transparent 24px
+      );
+  }
+
+  /* Neon glow effects */
   .shadow-glow-primary {
     box-shadow:
-      0 0 0 1px oklch(0.82 0.15 200 / 0.4),
-      0 0 24px oklch(0.82 0.15 200 / 0.25),
-      inset 0 1px 0 oklch(0.95 0.05 200 / 0.15);
+      0 0 0 1px oklch(0.78 0.18 195 / 0.5),
+      0 0 20px oklch(0.78 0.18 195 / 0.3),
+      0 0 40px oklch(0.78 0.18 195 / 0.15),
+      inset 0 1px 0 oklch(0.95 0.05 195 / 0.2);
   }
 
   .shadow-glow-accent {
     box-shadow:
-      0 0 0 1px oklch(0.88 0.2 130 / 0.4),
-      0 0 24px oklch(0.88 0.2 130 / 0.25),
-      inset 0 1px 0 oklch(0.95 0.05 130 / 0.2);
+      0 0 0 1px oklch(0.85 0.22 140 / 0.5),
+      0 0 20px oklch(0.85 0.22 140 / 0.3),
+      0 0 40px oklch(0.85 0.22 140 / 0.15),
+      inset 0 1px 0 oklch(0.95 0.1 140 / 0.2);
+  }
+
+  .shadow-glow-gold {
+    box-shadow:
+      0 0 0 1px oklch(0.80 0.18 85 / 0.5),
+      0 0 20px oklch(0.80 0.18 85 / 0.25),
+      inset 0 1px 0 oklch(0.95 0.1 85 / 0.2);
+  }
+
+  /* Text glow */
+  .text-glow-primary {
+    text-shadow: 0 0 20px oklch(0.78 0.18 195 / 0.5);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 20px oklch(0.85 0.22 140 / 0.5);
   }
 
   /* Diagonal slice — broadcast lower-third style */
   .clip-slice {
-    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
   }
 
   .clip-slice-r {
-    clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%);
+    clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* EA FC style diagonal accent */
+  .eafc-diagonal {
+    position: relative;
+  }
+
+  .eafc-diagonal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 50%, oklch(0.78 0.18 195 / 0.1) 50%);
+    pointer-events: none;
   }
 
   /* Animated pulse for LIVE indicator */
   @keyframes pulse-live {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.1); }
   }
   .animate-pulse-live {
     animation: pulse-live 1.5s ease-in-out infinite;
@@ -189,5 +260,51 @@
   }
   .animate-scroll-x {
     animation: scroll-x 40s linear infinite;
+  }
+
+  /* Gradient text */
+  .gradient-text-primary {
+    background: linear-gradient(135deg, oklch(0.78 0.18 195), oklch(0.85 0.22 140));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Shimmer loading effect */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.15 0.02 260) 0%,
+      oklch(0.20 0.03 260) 50%,
+      oklch(0.15 0.02 260) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Stat bar gradient */
+  .stat-bar {
+    background: linear-gradient(90deg, oklch(0.78 0.18 195), oklch(0.85 0.22 140));
+  }
+
+  /* Overall rating colors */
+  .overall-gold {
+    color: oklch(0.85 0.18 85);
+    text-shadow: 0 0 10px oklch(0.80 0.18 85 / 0.5);
+  }
+
+  .overall-silver {
+    color: oklch(0.75 0.02 260);
+    text-shadow: 0 0 10px oklch(0.70 0.02 260 / 0.5);
+  }
+
+  .overall-bronze {
+    color: oklch(0.65 0.12 55);
+    text-shadow: 0 0 10px oklch(0.60 0.12 55 / 0.5);
   }
 }
