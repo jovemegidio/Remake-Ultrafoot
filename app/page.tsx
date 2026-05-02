@@ -74,42 +74,57 @@ export default function DashboardPage() {
       <main className="p-6 space-y-6">
         {/* Hero — club identity */}
         <section className="relative overflow-hidden rounded-2xl border border-border eafc-card">
-          <div className="absolute inset-0 bg-grid opacity-20" />
+          {/* Background layers */}
+          <div className="absolute inset-0 bg-grid opacity-25" />
           <div
-            className="absolute inset-0 opacity-50"
+            className="absolute inset-0 opacity-60"
             style={{
-              background: `radial-gradient(ellipse at left, ${userTeam.cor1}40, transparent 60%), radial-gradient(ellipse at right, ${userTeam.cor2}20, transparent 70%)`,
+              background: `radial-gradient(ellipse at left, ${userTeam.cor1}55, transparent 55%), radial-gradient(ellipse at right, ${userTeam.cor2}22, transparent 70%)`,
             }}
           />
+          {/* Diagonal accent stripe (EA FC signature) */}
+          <div
+            className="absolute right-0 top-0 h-full w-1/3 opacity-20 pointer-events-none"
+            style={{
+              background: `linear-gradient(115deg, transparent 50%, ${userTeam.cor1} 50%, ${userTeam.cor1} 52%, transparent 52%, transparent 56%, ${userTeam.cor1} 56%, ${userTeam.cor1} 57%, transparent 57%)`,
+            }}
+          />
+          {/* Faint big crest watermark */}
+          <div className="absolute -right-10 -top-10 hidden lg:block opacity-[0.05] pointer-events-none">
+            <TeamCrest team={userTeam} size="2xl" className="scale-[2.5]" />
+          </div>
 
           <div className="relative flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-6">
               <div className="relative">
-                <TeamCrest team={userTeam} size="2xl" />
-                <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-card border-2 border-primary">
-                  <span className="font-display text-xs text-primary">{userTeam.prestigio}</span>
+                <div
+                  className="absolute -inset-2 rounded-full opacity-50 blur-xl"
+                  style={{ background: `radial-gradient(circle, ${userTeam.cor1}60, transparent 70%)` }}
+                />
+                <TeamCrest team={userTeam} size="2xl" className="relative" />
+                <div className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-card border-2 border-primary shadow-glow-primary">
+                  <span className="font-display-italic text-sm text-primary leading-none">{userTeam.prestigio}</span>
                 </div>
               </div>
               <div>
-                <div className="flex items-center gap-2 text-xs text-primary font-display tracking-[0.3em]">
+                <div className="flex items-center gap-2 text-[10px] text-primary font-display tracking-[0.4em]">
                   <Zap className="h-3 w-3" />
-                  {userTeam.nome.toUpperCase()} - {userTeam.estado}
+                  CLUBE - {userTeam.estado}
                 </div>
-                <h1 className="font-display-italic text-4xl lg:text-5xl leading-none tracking-tight text-glow-primary">
+                <h1 className="font-display-italic text-5xl lg:text-6xl leading-[0.9] tracking-tight text-glow-primary mt-1">
                   {userTeam.nome.toUpperCase()}
                 </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <span className="rounded-md bg-primary/15 px-2.5 py-1 font-display tracking-wider text-primary border border-primary/30">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-sm bg-primary/15 px-2.5 py-1 font-display tracking-wider text-primary border border-primary/30">
                     SERIE A
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="rounded-sm bg-card/60 px-2.5 py-1 font-display tracking-wider text-muted-foreground border border-border flex items-center gap-1.5">
                     <Star className="h-3 w-3 text-gold" />
-                    Prestigio {userTeam.prestigio}
+                    PRESTIGIO {userTeam.prestigio}
                   </span>
-                  <span className="text-border">|</span>
-                  <span className="flex items-center gap-1">
+                  <span className="rounded-sm bg-card/60 px-2.5 py-1 font-display tracking-wider text-muted-foreground border border-border flex items-center gap-1.5">
                     <Users className="h-3 w-3" />
-                    {formatNumber(userTeam.torcida)} torcedores
+                    {formatNumber(userTeam.torcida)} TORCEDORES
                   </span>
                 </div>
               </div>
@@ -131,7 +146,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Stat strip */}
+          {/* Stat strip — EAFC style with diagonal separators */}
           <div className="relative grid grid-cols-2 gap-px border-t border-border bg-border lg:grid-cols-5">
             <StatTile icon={Calendar} label="TEMPORADA" value="2026" sub="Semana 0 de 48" />
             <StatTile
@@ -141,15 +156,16 @@ export default function DashboardPage() {
               sub="+R$ 2.1M / mes"
               valueClass="text-accent"
             />
-            <StatTile icon={Star} label="OVERALL" value={String(userTeam.prestigio)} sub="Media geral do clube" valueClass="overall-gold" />
-            <StatTile icon={TrendingUp} label="CAMPANHA" value="0 pts" sub="0V 0E 0D 0/0 GS" />
             <StatTile
-              icon={ShieldCheck}
-              label="DIRETORIA"
-              value="50%"
-              sub="Regular"
-              valueClass="text-gold"
+              icon={Star}
+              label="OVERALL"
+              value={String(userTeam.prestigio)}
+              sub="Media geral do clube"
+              valueClass="overall-gold"
+              accent
             />
+            <StatTile icon={TrendingUp} label="CAMPANHA" value="0 pts" sub="0V 0E 0D 0/0 GS" />
+            <StatTile icon={ShieldCheck} label="DIRETORIA" value="50%" sub="Regular" valueClass="text-gold" />
           </div>
         </section>
 
@@ -323,15 +339,25 @@ function StatTile({
   value,
   sub,
   valueClass,
+  accent,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: string
   sub: string
   valueClass?: string
+  accent?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1 bg-card p-4">
+    <div
+      className={cn(
+        "relative flex flex-col gap-1 p-4 transition-colors",
+        accent ? "bg-card/80" : "bg-card",
+      )}
+    >
+      {accent && (
+        <span className="absolute left-0 top-0 h-[2px] w-12 bg-gradient-to-r from-gold to-transparent" />
+      )}
       <div className="flex items-center gap-1.5 text-[10px] font-display tracking-widest text-muted-foreground">
         <Icon className="h-3 w-3" />
         {label}
