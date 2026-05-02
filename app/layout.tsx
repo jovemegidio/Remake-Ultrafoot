@@ -18,9 +18,10 @@ const oswald = Oswald({
 })
 
 export const metadata: Metadata = {
-  title: "ULTRASPORT FC — Football Manager",
-  description: "Football manager game with cinematic EAFC-style broadcast UI",
+  title: "ULTRAFOOT 26 — Football Manager",
+  description: "Simulador de futebol brasileiro com visual premium estilo EA FC. Gerencie seu clube, contrate jogadores e conquiste titulos.",
   generator: "v0.app",
+  keywords: ["football manager", "futebol", "brasileiro", "simulador", "EA FC", "ultrafoot"],
 }
 
 export const viewport: Viewport = {
