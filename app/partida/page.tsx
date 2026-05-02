@@ -1,9 +1,20 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { useState } from "react"
-import { ChevronLeft, Globe2, Repeat2, ArrowRight } from "lucide-react"
+import { 
+  ChevronLeft, 
+  Globe2, 
+  ArrowRight, 
+  Tv, 
+  Cloud, 
+  Users, 
+  MapPin,
+  Clock,
+  Trophy,
+  Zap,
+  ChevronRight as ChevronRightIcon,
+} from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { MusicPlayer } from "@/components/music-player"
 import { ClubCrest } from "@/components/club-crest"
@@ -20,122 +31,205 @@ const kits: {
   secondary: string
   pattern: "stripes" | "solid" | "diagonal"
 }[] = [
-  { id: "home", label: "Titular", primary: "oklch(0.13 0.015 250)", secondary: "oklch(0.95 0.005 240)", pattern: "stripes" },
-  { id: "away", label: "Reserva", primary: "oklch(0.95 0.005 240)", secondary: "oklch(0.13 0.015 250)", pattern: "solid" },
-  { id: "third", label: "Alternativo", primary: "oklch(0.2 0.02 250)", secondary: "oklch(0.65 0.22 25)", pattern: "diagonal" },
+  { id: "home", label: "Titular", primary: "oklch(0.08 0.02 260)", secondary: "oklch(0.95 0.01 240)", pattern: "stripes" },
+  { id: "away", label: "Reserva", primary: "oklch(0.95 0.01 240)", secondary: "oklch(0.08 0.02 260)", pattern: "solid" },
+  { id: "third", label: "Alternativo", primary: "oklch(0.15 0.02 260)", secondary: "oklch(0.60 0.24 25)", pattern: "diagonal" },
 ]
+
+const matchInfo = {
+  competition: "Campeonato Mineiro",
+  round: "Rodada 1",
+  stadium: "Arena Independencia",
+  city: "Belo Horizonte, MG",
+  weather: "Parcialmente nublado",
+  temperature: "24C",
+  attendance: "~18.500",
+}
 
 export default function PreMatchPage() {
   const [selected, setSelected] = useState<KitId>("third")
+  const [speed, setSpeed] = useState<"instant" | "fast" | "normal">("normal")
 
   return (
-    <div className="relative min-h-screen pl-16 pb-16">
+    <div className="relative min-h-screen pl-16 pb-20 bg-background overflow-hidden">
       <GameSidebar />
 
-      {/* Cinematic background */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <Image
-          src="/office-bg.jpg"
-          alt=""
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background" />
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-grid opacity-20" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(ellipse at 30% 20%, oklch(0.60 0.24 25 / 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, oklch(0.75 0.18 195 / 0.08) 0%, transparent 50%)
+            `,
+          }}
+        />
+        {/* Stadium lights effect */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-b from-white/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-gradient-to-b from-white/5 to-transparent rounded-full blur-3xl" />
       </div>
 
       {/* Top bar */}
-      <header className="relative z-10 flex h-14 items-center justify-between border-b border-border/60 bg-card/30 px-6 backdrop-blur-md">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 glass-panel px-6">
+        <div className="flex items-center gap-4">
           <Link
             href="/"
-            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-card transition"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 hover:bg-card hover:border-primary/50 transition"
             aria-label="Voltar"
           >
             <ChevronLeft className="h-4 w-4" />
           </Link>
-          <span className="font-display tracking-widest text-xs">PARTIDA</span>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-1 bg-accent rounded-full" />
+            <span className="font-display tracking-[0.3em] text-xs text-muted-foreground">PARTIDA</span>
+          </div>
           <span className="text-border">/</span>
-          <span className="text-xs text-muted-foreground">Pré-Jogo</span>
+          <span className="font-display tracking-wider text-sm text-foreground">PRE-JOGO</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="font-display tracking-wider">
-            <Repeat2 className="mr-1 h-3.5 w-3.5" />
-            REPLAY
-          </Button>
-          <Button variant="outline" size="sm" className="font-display tracking-wider">
-            2X
-          </Button>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <Tv className="h-3.5 w-3.5" />
+            <span className="font-display tracking-wider">MODO DE SIMULACAO</span>
+          </span>
+          <div className="flex rounded-lg border border-border/50 overflow-hidden">
+            {(["instant", "fast", "normal"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSpeed(s)}
+                className={cn(
+                  "px-3 py-1.5 text-[10px] font-display tracking-wider transition",
+                  speed === s
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card/50 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {s === "instant" ? "INST" : s === "fast" ? "2X" : "1X"}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="relative z-10 flex min-h-[calc(100vh-7.5rem)] flex-col items-center justify-center px-6 py-12">
-        <div className="mx-auto w-full max-w-5xl text-center">
-          {/* Title */}
-          <div className="font-display tracking-[0.5em] text-[10px] text-primary mb-2">
-            ATO 1 · PREPARAÇÃO
-          </div>
-          <h1 className="font-display-italic text-7xl leading-none tracking-tight text-balance">
-            PRÉ-JOGO
-          </h1>
-
-          {/* Match header */}
-          <div className="mt-10 flex items-center justify-center gap-8">
-            <div className="flex items-center gap-3">
-              <ClubCrest
-                abbr="TBS"
-                size="lg"
-                primary="oklch(0.65 0.22 25)"
-                secondary="oklch(0.13 0.015 250)"
-              />
-              <div className="text-left">
-                <div className="text-[10px] font-display tracking-widest text-muted-foreground">
-                  MANDANTE
-                </div>
-                <div className="font-display-italic text-2xl">TOMBENSE</div>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <div className="font-display-italic text-3xl text-muted-foreground">VS</div>
-              <div className="mt-1 h-px w-12 bg-gradient-to-r from-transparent via-primary to-transparent" />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-[10px] font-display tracking-widest text-muted-foreground">
-                  VISITANTE
-                </div>
-                <div className="font-display-italic text-2xl">ATLÉTICO-MG</div>
-              </div>
-              <ClubCrest
-                abbr="CAM"
-                size="lg"
-                primary="oklch(0.13 0.015 250)"
-                secondary="oklch(0.95 0.005 240)"
-              />
-            </div>
-          </div>
-
-          {/* Competition badge */}
-          <div className="mt-6 inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-3 py-1.5 backdrop-blur">
-            <Globe2 className="h-3 w-3 text-primary" />
-            <span className="font-display tracking-widest text-[10px]">
-              CAMPEONATO MINEIRO BETANO
+      <main className="relative z-10 flex flex-col items-center px-6 py-12">
+        <div className="mx-auto w-full max-w-6xl">
+          {/* Stage indicator */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span className="flex items-center gap-2 text-[10px] font-display tracking-[0.3em] text-primary">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary text-[9px]">1</span>
+              PREPARACAO
             </span>
-            <span className="text-border">·</span>
-            <span className="text-[10px] text-muted-foreground">Rodada 1 · Independência</span>
+            <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="flex items-center gap-2 text-[10px] font-display tracking-[0.3em] text-muted-foreground">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-muted-foreground text-[9px]">2</span>
+              AO VIVO
+            </span>
+            <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="flex items-center gap-2 text-[10px] font-display tracking-[0.3em] text-muted-foreground">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-muted-foreground text-[9px]">3</span>
+              RESULTADO
+            </span>
+          </div>
+
+          {/* Match header card */}
+          <div className="relative overflow-hidden rounded-2xl border border-border/50 glass-panel mb-8">
+            {/* Decorative elements */}
+            <div className="absolute top-4 left-4 w-20 h-20 border-l-2 border-t-2 border-primary/20" />
+            <div className="absolute top-4 right-4 w-20 h-20 border-r-2 border-t-2 border-primary/20" />
+            <div className="absolute bottom-4 left-4 w-20 h-20 border-l-2 border-b-2 border-accent/20" />
+            <div className="absolute bottom-4 right-4 w-20 h-20 border-r-2 border-b-2 border-accent/20" />
+
+            <div className="relative p-10">
+              {/* Competition badge */}
+              <div className="flex justify-center mb-8">
+                <div className="inline-flex items-center gap-3 rounded-full border border-border/50 bg-card/50 px-5 py-2 backdrop-blur">
+                  <Trophy className="h-4 w-4 text-gold" />
+                  <span className="font-display tracking-[0.2em] text-xs">{matchInfo.competition.toUpperCase()}</span>
+                  <span className="h-4 w-px bg-border" />
+                  <span className="text-xs text-muted-foreground">{matchInfo.round}</span>
+                </div>
+              </div>
+
+              {/* Teams */}
+              <div className="flex items-center justify-center gap-16">
+                {/* Home team */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute -inset-4 bg-gradient-to-br from-destructive/20 to-transparent rounded-full blur-2xl" />
+                    <ClubCrest
+                      abbr="TBS"
+                      size="xl"
+                      primary="oklch(0.60 0.24 25)"
+                      secondary="oklch(0.08 0.02 260)"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[10px] font-display tracking-[0.3em] text-muted-foreground mb-1">
+                      MANDANTE
+                    </div>
+                    <div className="font-display-italic text-3xl">TOMBENSE</div>
+                    <div className="text-xs text-muted-foreground mt-1">4-3-3 | Ofensivo</div>
+                  </div>
+                </div>
+
+                {/* VS */}
+                <div className="flex flex-col items-center">
+                  <div className="relative">
+                    <div className="absolute -inset-8 bg-gradient-to-r from-destructive/20 via-transparent to-primary/20 rounded-full blur-3xl" />
+                    <div className="relative flex items-center justify-center w-24 h-24 rounded-full border-2 border-border/50 bg-card/50 backdrop-blur">
+                      <span className="font-display-italic text-4xl text-muted-foreground">VS</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>16:00</span>
+                  </div>
+                </div>
+
+                {/* Away team */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute -inset-4 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-2xl" />
+                    <ClubCrest
+                      abbr="CAM"
+                      size="xl"
+                      primary="oklch(0.08 0.02 260)"
+                      secondary="oklch(0.95 0.01 240)"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[10px] font-display tracking-[0.3em] text-muted-foreground mb-1">
+                      VISITANTE
+                    </div>
+                    <div className="font-display-italic text-3xl">ATLETICO-MG</div>
+                    <div className="text-xs text-muted-foreground mt-1">4-2-3-1 | Equilibrado</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Match info strip */}
+              <div className="mt-10 grid grid-cols-4 gap-4">
+                <InfoTile icon={MapPin} label="Estadio" value={matchInfo.stadium} sub={matchInfo.city} />
+                <InfoTile icon={Cloud} label="Clima" value={matchInfo.weather} sub={matchInfo.temperature} />
+                <InfoTile icon={Users} label="Publico Esperado" value={matchInfo.attendance} sub="78% ocupacao" />
+                <InfoTile icon={Zap} label="Gramado" value="Bom" sub="85/100 condicao" valueClass="text-accent" />
+              </div>
+            </div>
           </div>
 
           {/* Kit selector */}
-          <div className="mt-12">
-            <div className="mb-4 font-display tracking-[0.4em] text-[10px] text-muted-foreground">
-              ESCOLHA SEU UNIFORME
+          <div className="mb-10">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 text-[10px] font-display tracking-[0.3em] text-muted-foreground">
+                <div className="w-8 h-px bg-gradient-to-r from-transparent to-border" />
+                SELECIONE SEU UNIFORME
+                <div className="w-8 h-px bg-gradient-to-l from-transparent to-border" />
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto">
+            <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
               {kits.map((kit) => {
                 const active = selected === kit.id
                 return (
@@ -143,19 +237,19 @@ export default function PreMatchPage() {
                     key={kit.id}
                     onClick={() => setSelected(kit.id)}
                     className={cn(
-                      "group relative overflow-hidden rounded-lg border-2 p-4 transition-all",
+                      "group relative overflow-hidden rounded-xl border-2 p-6 transition-all duration-300",
                       active
-                        ? "border-accent bg-accent/5 shadow-glow-accent"
-                        : "border-border bg-card/60 backdrop-blur hover:border-primary/50",
+                        ? "border-accent bg-accent/5 shadow-glow-accent scale-[1.02]"
+                        : "border-border/50 glass-panel hover:border-primary/50 hover:scale-[1.01]",
                     )}
                   >
                     {active && (
-                      <span className="absolute right-2 top-2 rounded-sm bg-accent px-1.5 py-0.5 text-[9px] font-display tracking-widest text-accent-foreground">
+                      <span className="absolute right-3 top-3 rounded bg-accent px-2 py-0.5 text-[9px] font-display tracking-widest text-accent-foreground">
                         SELECIONADO
                       </span>
                     )}
 
-                    <div className="mx-auto w-24">
+                    <div className="mx-auto w-28 transition-transform duration-300 group-hover:scale-105">
                       <Jersey
                         variant={kit.id}
                         primary={kit.primary}
@@ -166,16 +260,16 @@ export default function PreMatchPage() {
 
                     <div
                       className={cn(
-                        "mt-3 font-display tracking-widest text-xs transition",
+                        "mt-4 font-display tracking-[0.2em] text-sm transition",
                         active ? "text-accent" : "text-foreground/80",
                       )}
                     >
                       {kit.label.toUpperCase()}
                     </div>
 
-                    {/* Diagonal accent on active */}
+                    {/* Decorative accent */}
                     {active && (
-                      <div className="absolute -bottom-2 -right-2 h-12 w-12 rotate-45 bg-accent/10" />
+                      <div className="absolute -bottom-4 -right-4 h-16 w-16 rotate-45 bg-accent/10 blur-xl" />
                     )}
                   </button>
                 )
@@ -184,25 +278,50 @@ export default function PreMatchPage() {
           </div>
 
           {/* Start match CTA */}
-          <div className="mt-12 flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-4">
             <Link href="/partida/ao-vivo">
               <Button
                 size="lg"
-                className="group h-12 px-8 font-display tracking-[0.2em] bg-accent text-accent-foreground hover:bg-accent/90 shadow-glow-accent"
+                className="group h-14 px-12 btn-eafc font-display tracking-[0.2em] text-base shadow-glow-accent"
               >
-                <Globe2 className="mr-2 h-4 w-4" />
+                <Globe2 className="mr-3 h-5 w-5" />
                 INICIAR PARTIDA
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <p className="text-[11px] text-muted-foreground">
-              Pressione para começar a transmissão · 90 minutos · Modo Normal
+            <p className="text-xs text-muted-foreground text-center">
+              Clique para iniciar a transmissao ao vivo da partida
             </p>
           </div>
         </div>
       </main>
 
       <MusicPlayer />
+    </div>
+  )
+}
+
+function InfoTile({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  valueClass,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: string
+  sub: string
+  valueClass?: string
+}) {
+  return (
+    <div className="rounded-lg border border-border/50 bg-card/30 p-4 backdrop-blur">
+      <div className="flex items-center gap-2 text-[9px] font-display tracking-[0.2em] text-muted-foreground mb-2">
+        <Icon className="h-3.5 w-3.5 text-primary" />
+        {label}
+      </div>
+      <div className={cn("font-display tracking-wide text-sm", valueClass)}>{value}</div>
+      <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>
     </div>
   )
 }

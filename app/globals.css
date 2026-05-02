@@ -4,56 +4,63 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* EAFC 26 inspired dark theme — broadcast aesthetic */
-  --background: oklch(0.13 0.015 250);
+  /* EA FC 26 inspired dark theme — Premium esports aesthetic */
+  --background: oklch(0.08 0.02 260);
   --foreground: oklch(0.98 0.005 240);
 
-  --card: oklch(0.17 0.018 250);
+  --card: oklch(0.12 0.02 260);
   --card-foreground: oklch(0.98 0.005 240);
 
-  --popover: oklch(0.16 0.018 250);
+  --popover: oklch(0.11 0.02 260);
   --popover-foreground: oklch(0.98 0.005 240);
 
-  /* Electric cyan — primary brand */
-  --primary: oklch(0.82 0.15 200);
-  --primary-foreground: oklch(0.13 0.015 250);
+  /* Electric cyan — primary brand (EA FC style) */
+  --primary: oklch(0.75 0.18 195);
+  --primary-foreground: oklch(0.08 0.02 260);
 
-  --secondary: oklch(0.22 0.02 250);
+  --secondary: oklch(0.18 0.025 260);
   --secondary-foreground: oklch(0.98 0.005 240);
 
-  --muted: oklch(0.22 0.02 250);
-  --muted-foreground: oklch(0.65 0.02 240);
+  --muted: oklch(0.18 0.02 260);
+  --muted-foreground: oklch(0.55 0.02 260);
 
-  /* Lime — secondary accent (active states, CTAs) */
-  --accent: oklch(0.88 0.2 130);
-  --accent-foreground: oklch(0.13 0.015 250);
+  /* Lime/Green — accent for CTAs (EA FC button style) */
+  --accent: oklch(0.82 0.22 145);
+  --accent-foreground: oklch(0.08 0.02 260);
 
-  --destructive: oklch(0.65 0.22 25);
+  --destructive: oklch(0.60 0.24 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  /* Gold — premium / special highlight */
-  --gold: oklch(0.82 0.15 85);
+  /* Gold — premium highlight (Ultimate Team style) */
+  --gold: oklch(0.78 0.18 75);
 
-  --border: oklch(0.27 0.02 250);
-  --input: oklch(0.22 0.02 250);
-  --ring: oklch(0.82 0.15 200);
+  --border: oklch(0.22 0.025 260);
+  --input: oklch(0.16 0.02 260);
+  --ring: oklch(0.75 0.18 195);
 
-  --chart-1: oklch(0.82 0.15 200);
-  --chart-2: oklch(0.88 0.2 130);
-  --chart-3: oklch(0.82 0.15 85);
-  --chart-4: oklch(0.65 0.22 25);
-  --chart-5: oklch(0.6 0.1 250);
+  --chart-1: oklch(0.75 0.18 195);
+  --chart-2: oklch(0.82 0.22 145);
+  --chart-3: oklch(0.78 0.18 75);
+  --chart-4: oklch(0.60 0.24 25);
+  --chart-5: oklch(0.6 0.15 280);
 
-  --radius: 0.5rem;
+  --radius: 0.375rem;
 
-  --sidebar: oklch(0.1 0.015 250);
-  --sidebar-foreground: oklch(0.85 0.01 240);
-  --sidebar-primary: oklch(0.82 0.15 200);
-  --sidebar-primary-foreground: oklch(0.13 0.015 250);
-  --sidebar-accent: oklch(0.18 0.018 250);
+  --sidebar: oklch(0.06 0.02 260);
+  --sidebar-foreground: oklch(0.75 0.01 260);
+  --sidebar-primary: oklch(0.75 0.18 195);
+  --sidebar-primary-foreground: oklch(0.08 0.02 260);
+  --sidebar-accent: oklch(0.14 0.02 260);
   --sidebar-accent-foreground: oklch(0.98 0.005 240);
-  --sidebar-border: oklch(0.22 0.02 250);
-  --sidebar-ring: oklch(0.82 0.15 200);
+  --sidebar-border: oklch(0.18 0.02 260);
+  --sidebar-ring: oklch(0.75 0.18 195);
+
+  /* EA FC specific colors */
+  --pitch-green: oklch(0.42 0.14 145);
+  --pitch-green-light: oklch(0.48 0.12 145);
+  --pitch-green-dark: oklch(0.36 0.16 145);
+  --neon-blue: oklch(0.70 0.20 240);
+  --neon-pink: oklch(0.70 0.25 340);
 }
 
 @theme inline {
@@ -86,10 +93,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -98,6 +105,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-pitch-green: var(--pitch-green);
+  --color-pitch-green-light: var(--pitch-green-light);
+  --color-pitch-green-dark: var(--pitch-green-dark);
+  --color-neon-blue: var(--neon-blue);
+  --color-neon-pink: var(--neon-pink);
 }
 
 @layer base {
@@ -106,19 +118,15 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(ellipse at top, oklch(0.18 0.04 220 / 0.4) 0%, transparent 60%),
-      radial-gradient(ellipse at bottom right, oklch(0.2 0.05 130 / 0.15) 0%, transparent 50%);
-    background-attachment: fixed;
   }
 }
 
 @layer utilities {
-  /* Broadcast condensed display — for hero titles, scoreboards */
+  /* EA FC Display font — bold condensed */
   .font-display {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
@@ -130,64 +138,177 @@
     font-style: italic;
   }
 
-  /* Glassmorphism panel */
+  /* EA FC Glassmorphism panel */
   .glass-panel {
     background: linear-gradient(
       135deg,
-      oklch(0.18 0.02 250 / 0.85) 0%,
-      oklch(0.14 0.02 250 / 0.75) 100%
+      oklch(0.14 0.025 260 / 0.9) 0%,
+      oklch(0.10 0.02 260 / 0.8) 100%
+    );
+    backdrop-filter: blur(20px);
+    border: 1px solid oklch(0.3 0.03 260 / 0.4);
+  }
+
+  .glass-panel-light {
+    background: linear-gradient(
+      135deg,
+      oklch(0.20 0.03 260 / 0.6) 0%,
+      oklch(0.15 0.025 260 / 0.5) 100%
     );
     backdrop-filter: blur(12px);
-    border: 1px solid oklch(0.3 0.02 250 / 0.6);
+    border: 1px solid oklch(0.35 0.03 260 / 0.3);
   }
 
-  /* Subtle grid background */
+  /* EA FC Grid background */
   .bg-grid {
     background-image:
-      linear-gradient(oklch(0.3 0.02 250 / 0.15) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.3 0.02 250 / 0.15) 1px, transparent 1px);
-    background-size: 32px 32px;
+      linear-gradient(oklch(0.25 0.025 260 / 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.25 0.025 260 / 0.12) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
-  /* Neon glow shadow */
+  .bg-grid-small {
+    background-image:
+      linear-gradient(oklch(0.3 0.03 260 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.3 0.03 260 / 0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* EA FC Neon glow effects */
   .shadow-glow-primary {
     box-shadow:
-      0 0 0 1px oklch(0.82 0.15 200 / 0.4),
-      0 0 24px oklch(0.82 0.15 200 / 0.25),
-      inset 0 1px 0 oklch(0.95 0.05 200 / 0.15);
+      0 0 0 1px oklch(0.75 0.18 195 / 0.5),
+      0 0 30px oklch(0.75 0.18 195 / 0.3),
+      0 0 60px oklch(0.75 0.18 195 / 0.15),
+      inset 0 1px 0 oklch(0.85 0.1 195 / 0.2);
   }
 
   .shadow-glow-accent {
     box-shadow:
-      0 0 0 1px oklch(0.88 0.2 130 / 0.4),
-      0 0 24px oklch(0.88 0.2 130 / 0.25),
-      inset 0 1px 0 oklch(0.95 0.05 130 / 0.2);
+      0 0 0 1px oklch(0.82 0.22 145 / 0.5),
+      0 0 30px oklch(0.82 0.22 145 / 0.3),
+      0 0 60px oklch(0.82 0.22 145 / 0.15),
+      inset 0 1px 0 oklch(0.9 0.15 145 / 0.25);
   }
 
-  /* Diagonal slice — broadcast lower-third style */
+  .shadow-glow-gold {
+    box-shadow:
+      0 0 0 1px oklch(0.78 0.18 75 / 0.5),
+      0 0 30px oklch(0.78 0.18 75 / 0.3),
+      0 0 60px oklch(0.78 0.18 75 / 0.15);
+  }
+
+  /* EA FC Diagonal slices */
   .clip-slice {
-    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
   }
 
   .clip-slice-r {
-    clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%);
+    clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%);
   }
 
-  /* Animated pulse for LIVE indicator */
+  .clip-angle {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  }
+
+  /* EA FC Animated pulse */
   @keyframes pulse-live {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.95); }
   }
   .animate-pulse-live {
     animation: pulse-live 1.5s ease-in-out infinite;
   }
 
-  /* Scrolling marquee */
+  /* EA FC Gradient text */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, oklch(0.75 0.18 195), oklch(0.85 0.15 220));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, oklch(0.78 0.18 75), oklch(0.85 0.15 60));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* EA FC Card hover effect */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px oklch(0 0 0 / 0.4);
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: oklch(0.12 0.02 260);
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: oklch(0.25 0.025 260);
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.35 0.03 260);
+  }
+
+  /* EA FC Button styles */
+  .btn-eafc {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, oklch(0.82 0.22 145) 0%, oklch(0.75 0.20 150) 100%);
+    color: oklch(0.08 0.02 260);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s ease;
+  }
+  .btn-eafc::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, oklch(1 0 0 / 0.15) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+  }
+  .btn-eafc:hover::before {
+    transform: translateX(100%);
+  }
+  .btn-eafc:hover {
+    transform: scale(1.02);
+  }
+
+  /* Animated marquee */
   @keyframes scroll-x {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
   .animate-scroll-x {
-    animation: scroll-x 40s linear infinite;
+    animation: scroll-x 30s linear infinite;
+  }
+
+  /* Loading shimmer */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.15 0.02 260) 0%,
+      oklch(0.22 0.025 260) 50%,
+      oklch(0.15 0.02 260) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
   }
 }
