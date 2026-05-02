@@ -66,7 +66,19 @@ const escudoMap: Record<string, string> = {
 
 export function getEscudoUrl(fileKey: string): string {
   const key = escudoMap[fileKey] || fileKey
-  return `${ULTRAFOOT_RAW_URL}/data/assets/teams/escudos/${key}.png`
+  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${key}.png`
+}
+
+export function getEscudoMiniUrl(fileKey: string): string {
+  const key = escudoMap[fileKey] || fileKey
+  return `${ULTRAFOOT_RAW_URL}/teams/escudosMini/${key}.png`
+}
+
+export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
+  const key = escudoMap[fileKey] || fileKey
+  // home -> camisas, away -> camisas2, third -> camisas3
+  const folder = variant === "home" ? "camisas" : variant === "away" ? "camisas2" : "camisas3"
+  return `${ULTRAFOOT_RAW_URL}/teams/${folder}/${key}.png`
 }
 
 export function getLogoUrl(): string {
