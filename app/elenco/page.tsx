@@ -16,6 +16,10 @@ import {
   Footprints,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
+<<<<<<< HEAD
+=======
+import { GameHeader } from "@/components/game-header"
+>>>>>>> bfedf7d (Atualizar estrutura do projeto)
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
@@ -85,6 +89,7 @@ export default function ElencoPage() {
   })
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen pl-16 pb-20">
       <GameSidebar />
 
@@ -100,6 +105,11 @@ export default function ElencoPage() {
           <span className="text-sm font-medium">{userTeam.nome}</span>
         </div>
       </header>
+=======
+    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+      <GameSidebar />
+      <GameHeader team={userTeam} />
+>>>>>>> bfedf7d (Atualizar estrutura do projeto)
 
       <main className="p-6">
         <div className="grid gap-6 lg:grid-cols-3">
