@@ -48,7 +48,7 @@ export default function MatchCenterPage() {
   const [speed, setSpeed] = useState("normal")
 
   return (
-    <div className="min-h-screen pl-16 pb-4">
+    <div className="min-h-screen pl-[72px] pb-4">
       <GameSidebar />
 
       {/* Top bar */}

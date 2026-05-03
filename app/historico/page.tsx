@@ -51,7 +51,7 @@ const legends = [
 
 export default function HistoricoPage() {
   return (
-    <div className="min-h-screen pl-16 pb-20">
+    <div className="min-h-screen pl-[72px] pb-24">
       <GameSidebar />
 
       {/* Top bar */}

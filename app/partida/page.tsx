@@ -29,7 +29,7 @@ export default function PreMatchPage() {
   const [selected, setSelected] = useState<KitId>("third")
 
   return (
-    <div className="relative min-h-screen pl-16 pb-16">
+    <div className="relative min-h-screen pl-[72px] pb-24">
       <GameSidebar />
 
       {/* Cinematic background */}
