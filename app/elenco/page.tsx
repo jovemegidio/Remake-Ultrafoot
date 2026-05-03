@@ -16,6 +16,7 @@ import {
   Footprints,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
+import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
@@ -85,21 +86,9 @@ export default function ElencoPage() {
   })
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24">
+    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
       <GameSidebar />
-
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="font-display tracking-widest text-primary">ULTRAFOOT</span>
-          <span className="text-border">/</span>
-          <span className="text-foreground">Elenco</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <TeamCrest team={userTeam} size="sm" />
-          <span className="text-sm font-medium">{userTeam.nome}</span>
-        </div>
-      </header>
+      <GameHeader team={userTeam} />
 
       <main className="p-6">
         <div className="grid gap-6 lg:grid-cols-3">
