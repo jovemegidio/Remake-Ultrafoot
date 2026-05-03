@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Oswald } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-<<<<<<< HEAD
-=======
 import { ThemeProvider } from "@/components/theme-provider"
->>>>>>> bfedf7d (Atualizar estrutura do projeto)
 import "./globals.css"
 
 const geist = Geist({
@@ -41,13 +38,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`bg-background ${geist.variable} ${geistMono.variable} ${oswald.variable}`}>
       <body className="font-sans antialiased">
-<<<<<<< HEAD
-        {children}
-=======
         <ThemeProvider>
           {children}
         </ThemeProvider>
->>>>>>> bfedf7d (Atualizar estrutura do projeto)
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>

@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-'use client'
-
-import * as React from 'react'
-import {
-  ThemeProvider as NextThemesProvider,
-  type ThemeProviderProps,
-} from 'next-themes'
-
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
-}
-=======
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
@@ -172,4 +159,3 @@ export function useTheme() {
 }
 
 export { themePresets, type ThemeColor, type ThemeConfig }
->>>>>>> bfedf7d (Atualizar estrutura do projeto)

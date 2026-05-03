@@ -29,11 +29,7 @@ export default function PreMatchPage() {
   const [selected, setSelected] = useState<KitId>("third")
 
   return (
-<<<<<<< HEAD
-    <div className="relative min-h-screen pl-16 pb-16">
-=======
     <div className="relative min-h-screen pl-[72px] pb-24">
->>>>>>> bfedf7d (Atualizar estrutura do projeto)
       <GameSidebar />
 
       {/* Cinematic background */}
@@ -53,7 +49,7 @@ export default function PreMatchPage() {
       <header className="relative z-10 flex h-14 items-center justify-between border-b border-border/60 bg-card/30 px-6 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <Link
-            href="/"
+            href="/dashboard"
             className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-card transition"
             aria-label="Voltar"
           >

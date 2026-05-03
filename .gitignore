@@ -14,3 +14,15 @@ next.user-config.*
 node_modules
 .next/
 .DS_Store
+
+# Upstream game source (Python+Tauri) — used as data source only.
+# Seeds/assets we need are copied into data/seeds and public/.
+Ultrafoot-main/
+Ultrafoot-main.zip
+
+# TS incremental build artifact
+tsconfig.tsbuildinfo
+
+# Use pnpm-lock.yaml as source of truth (project uses pnpm)
+package-lock.json
+yarn.lock
