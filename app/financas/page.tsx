@@ -16,6 +16,7 @@ import {
   ArrowDownRight,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
+import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
@@ -60,80 +61,68 @@ export default function FinancasPage() {
   const wagePercentage = (financialData.wageUsed / financialData.wageBudget) * 100
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24">
+    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
       <GameSidebar />
-
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="font-display tracking-widest text-primary">ULTRAFOOT</span>
-          <span className="text-border">/</span>
-          <span className="text-foreground">Financas</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <TeamCrest team={userTeam} size="sm" />
-          <span className="text-sm font-medium">{userTeam.nome}</span>
-        </div>
-      </header>
+      <GameHeader team={userTeam} />
 
       <main className="p-6 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="font-display-italic text-3xl tracking-tight">FINANCAS</h1>
-          <p className="text-sm text-muted-foreground">Gestao financeira do clube - Temporada 2026</p>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Financas</h1>
+          <p className="text-sm text-white/50 mt-1">Gestao financeira do clube - Temporada 2026</p>
         </div>
 
         {/* Balance Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <Wallet className="h-4 w-4 text-accent" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <Wallet className="h-4 w-4 text-[#1db954]" />
               SALDO ATUAL
             </div>
-            <div className="mt-2 font-display-italic text-3xl text-accent">
+            <div className="mt-2 text-2xl font-semibold text-[#1db954]">
               {formatCurrency(financialData.balance)}
             </div>
-            <div className="mt-1 flex items-center gap-1 text-xs text-accent">
+            <div className="mt-1 flex items-center gap-1 text-xs text-[#1db954]">
               <TrendingUp className="h-3 w-3" />
               <span>+{formatCurrency(netIncome)}/mes</span>
             </div>
           </div>
 
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <TrendingUp className="h-4 w-4 text-primary" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <TrendingUp className="h-4 w-4 text-blue-400" />
               RECEITA MENSAL
             </div>
-            <div className="mt-2 font-display-italic text-3xl text-primary">
+            <div className="mt-2 text-2xl font-semibold text-blue-400">
               {formatCurrency(financialData.monthlyIncome)}
             </div>
-            <div className="mt-1 text-xs text-muted-foreground">
+            <div className="mt-1 text-xs text-white/40">
               Previsao para janeiro
             </div>
           </div>
 
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <TrendingDown className="h-4 w-4 text-destructive" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <TrendingDown className="h-4 w-4 text-red-400" />
               DESPESAS MENSAIS
             </div>
-            <div className="mt-2 font-display-italic text-3xl text-destructive">
+            <div className="mt-2 text-2xl font-semibold text-red-400">
               {formatCurrency(financialData.monthlyExpenses)}
             </div>
-            <div className="mt-1 text-xs text-muted-foreground">
+            <div className="mt-1 text-xs text-white/40">
               Custos fixos e variaveis
             </div>
           </div>
 
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <DollarSign className="h-4 w-4 text-gold" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <DollarSign className="h-4 w-4 text-yellow-400" />
               VERBA DE TRANSFERENCIAS
             </div>
-            <div className="mt-2 font-display-italic text-3xl text-gold">
+            <div className="mt-2 text-2xl font-semibold text-yellow-400">
               {formatCurrency(financialData.transferBudget)}
             </div>
-            <div className="mt-1 text-xs text-muted-foreground">
+            <div className="mt-1 text-xs text-white/40">
               Disponivel para contratacoes
             </div>
           </div>
@@ -142,10 +131,10 @@ export default function FinancasPage() {
         {/* Breakdown Section */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Income Breakdown */}
-          <div className="eafc-card overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-card/50">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <h2 className="font-display tracking-widest text-xs">RECEITAS</h2>
+          <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+              <TrendingUp className="h-4 w-4 text-blue-400" />
+              <h2 className="text-xs font-medium text-white tracking-wider">RECEITAS</h2>
             </div>
             <div className="p-4 space-y-4">
               {incomeBreakdown.map((item) => (
@@ -169,10 +158,10 @@ export default function FinancasPage() {
           </div>
 
           {/* Expense Breakdown */}
-          <div className="eafc-card overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-card/50">
-              <TrendingDown className="h-4 w-4 text-destructive" />
-              <h2 className="font-display tracking-widest text-xs">DESPESAS</h2>
+          <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+              <TrendingDown className="h-4 w-4 text-red-400" />
+              <h2 className="text-xs font-medium text-white tracking-wider">DESPESAS</h2>
             </div>
             <div className="p-4 space-y-4">
               {expenseBreakdown.map((item) => (
@@ -199,28 +188,28 @@ export default function FinancasPage() {
         {/* Wage Budget & Recent Transactions */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Wage Budget */}
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest mb-4">
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider mb-4">
               <Users className="h-4 w-4" />
               FOLHA SALARIAL
             </div>
             <div className="space-y-3">
               <div className="flex items-end justify-between">
                 <div>
-                  <div className="text-sm text-muted-foreground">Utilizado</div>
-                  <div className="font-display-italic text-2xl">{formatCurrency(financialData.wageUsed)}</div>
+                  <div className="text-sm text-white/50">Utilizado</div>
+                  <div className="text-2xl font-semibold text-white">{formatCurrency(financialData.wageUsed)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-muted-foreground">Limite</div>
-                  <div className="font-display text-lg text-muted-foreground">{formatCurrency(financialData.wageBudget)}</div>
+                  <div className="text-sm text-white/50">Limite</div>
+                  <div className="text-lg text-white/50">{formatCurrency(financialData.wageBudget)}</div>
                 </div>
               </div>
               <Progress value={wagePercentage} className="h-2" />
               <div className="flex items-center justify-between text-xs">
-                <span className={wagePercentage > 90 ? "text-destructive" : "text-muted-foreground"}>
+                <span className={wagePercentage > 90 ? "text-red-400" : "text-white/50"}>
                   {wagePercentage.toFixed(0)}% utilizado
                 </span>
-                <span className="text-accent">
+                <span className="text-[#1db954]">
                   {formatCurrency(financialData.wageBudget - financialData.wageUsed)} disponivel
                 </span>
               </div>
@@ -228,33 +217,33 @@ export default function FinancasPage() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="lg:col-span-2 eafc-card overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card/50">
+          <div className="lg:col-span-2 rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.02]">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-gold" />
-                <h2 className="font-display tracking-widest text-xs">TRANSACOES RECENTES</h2>
+                <DollarSign className="h-4 w-4 text-yellow-400" />
+                <h2 className="text-xs font-medium text-white tracking-wider">TRANSACOES RECENTES</h2>
               </div>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-white/5">
               {recentTransactions.map((tx, index) => (
-                <div key={index} className="flex items-center justify-between px-5 py-3 hover:bg-card/50 transition-colors">
+                <div key={index} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                      tx.type === "income" ? "bg-accent/20" : "bg-destructive/20"
+                      tx.type === "income" ? "bg-[#1db954]/20" : "bg-red-400/20"
                     }`}>
                       {tx.type === "income" ? (
-                        <ArrowUpRight className="h-4 w-4 text-accent" />
+                        <ArrowUpRight className="h-4 w-4 text-[#1db954]" />
                       ) : (
-                        <ArrowDownRight className="h-4 w-4 text-destructive" />
+                        <ArrowDownRight className="h-4 w-4 text-red-400" />
                       )}
                     </div>
                     <div>
-                      <div className="text-sm">{tx.description}</div>
-                      <div className="text-xs text-muted-foreground">{tx.date}</div>
+                      <div className="text-sm text-white">{tx.description}</div>
+                      <div className="text-xs text-white/40">{tx.date}</div>
                     </div>
                   </div>
-                  <span className={`font-display text-sm ${
-                    tx.type === "income" ? "text-accent" : "text-destructive"
+                  <span className={`text-sm font-medium ${
+                    tx.type === "income" ? "text-[#1db954]" : "text-red-400"
                   }`}>
                     {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.value)}
                   </span>

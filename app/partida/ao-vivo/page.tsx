@@ -48,33 +48,33 @@ export default function MatchCenterPage() {
   const [speed, setSpeed] = useState("normal")
 
   return (
-    <div className="min-h-screen pl-[72px] pb-4">
+    <div className="min-h-screen pl-[72px] pb-4 bg-[#0a0a0a]">
       <GameSidebar />
 
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card/80 px-6 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl px-6">
         <div className="flex items-center gap-3">
           <Link
             href="/partida"
-            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-card transition"
+            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white/5 transition text-white/60 hover:text-white"
             aria-label="Voltar"
           >
             <ChevronLeft className="h-4 w-4" />
           </Link>
-          <h1 className="font-display-italic text-2xl tracking-tight text-accent">PARTIDA</h1>
-          <span className="ml-2 flex items-center gap-1.5 rounded-sm bg-destructive/15 px-2 py-0.5 text-[10px] font-display tracking-widest text-destructive">
-            <span className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse-live" />
+          <h1 className="text-xl font-semibold text-white">Partida</h1>
+          <span className="ml-2 flex items-center gap-1.5 rounded-sm bg-red-500/15 px-2 py-0.5 text-[10px] font-medium tracking-wider text-red-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
             AO VIVO
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="font-display tracking-wider">
+          <Button variant="outline" size="sm" className="text-xs border-white/10 bg-transparent text-white/70 hover:bg-white/5 hover:text-white">
             <Repeat2 className="mr-1 h-3.5 w-3.5" />
-            REPLAY
+            Replay
           </Button>
           <Button
             size="sm"
-            className="font-display tracking-wider bg-accent text-accent-foreground hover:bg-accent/90"
+            className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760]"
           >
             2X
           </Button>
@@ -83,7 +83,7 @@ export default function MatchCenterPage() {
 
       <main className="space-y-4 p-4">
         {/* Scoreboard */}
-        <section className="relative overflow-hidden rounded-xl border border-border bg-card">
+        <section className="relative overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
           <div className="absolute inset-0 bg-grid opacity-20" />
           <div
             className="absolute inset-0 opacity-50"
@@ -96,10 +96,10 @@ export default function MatchCenterPage() {
             {/* Home */}
             <div className="flex items-center justify-end gap-4">
               <div className="text-right">
-                <div className="text-[10px] font-display tracking-widest text-muted-foreground">
+                <div className="text-[10px] font-medium tracking-wider text-white/40">
                   MANDANTE
                 </div>
-                <div className="font-display-italic text-3xl">POUSO ALEGRE</div>
+                <div className="text-2xl font-semibold text-white">POUSO ALEGRE</div>
               </div>
               <ClubCrest
                 abbr="PAL"
@@ -111,9 +111,9 @@ export default function MatchCenterPage() {
 
             {/* Score */}
             <div className="flex items-center gap-4">
-              <div className="font-display-italic text-7xl leading-none tabular-nums">0</div>
-              <div className="font-display text-2xl text-muted-foreground">×</div>
-              <div className="font-display-italic text-7xl leading-none tabular-nums">0</div>
+              <div className="text-6xl font-bold leading-none tabular-nums text-white">0</div>
+              <div className="text-2xl text-white/30">×</div>
+              <div className="text-6xl font-bold leading-none tabular-nums text-white">0</div>
             </div>
 
             {/* Away */}
@@ -125,10 +125,10 @@ export default function MatchCenterPage() {
                 secondary="oklch(0.95 0.005 240)"
               />
               <div>
-                <div className="text-[10px] font-display tracking-widest text-muted-foreground">
+                <div className="text-[10px] font-medium tracking-wider text-white/40">
                   VISITANTE
                 </div>
-                <div className="font-display-italic text-3xl">ATLÉTICO-MG</div>
+                <div className="text-2xl font-semibold text-white">ATLETICO-MG</div>
               </div>
             </div>
           </div>
@@ -137,17 +137,17 @@ export default function MatchCenterPage() {
         {/* Match center: clock + speed + meta */}
         <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
           {/* Clock + speed */}
-          <section className="rounded-xl border border-border bg-card overflow-hidden">
+          <section className="rounded-xl border border-white/5 bg-[#141414] overflow-hidden">
             <div className="flex">
               {/* Clock */}
-              <div className="flex flex-col items-center justify-center gap-1 border-r border-border bg-card-foreground/[0.02] px-6 py-5">
-                <div className="rounded-sm bg-accent/15 px-2 py-0.5 text-[10px] font-display tracking-widest text-accent">
-                  · 10:00
+              <div className="flex flex-col items-center justify-center gap-1 border-r border-white/5 bg-white/[0.02] px-6 py-5">
+                <div className="rounded-sm bg-[#1db954]/15 px-2 py-0.5 text-[10px] font-medium tracking-wider text-[#1db954]">
+                  10:00
                 </div>
-                <div className="text-[10px] font-display tracking-widest text-muted-foreground">
+                <div className="text-[10px] font-medium tracking-wider text-white/40">
                   MATCH CENTER
                 </div>
-                <div className="font-display-italic text-base">Aquecimento final</div>
+                <div className="text-sm font-medium text-white">Aquecimento final</div>
               </div>
 
               {/* Speed buttons */}
@@ -159,10 +159,10 @@ export default function MatchCenterPage() {
                       key={s.id}
                       onClick={() => setSpeed(s.id)}
                       className={cn(
-                        "rounded-md border px-3 py-2 font-display tracking-widest text-[11px] transition",
+                        "rounded-md border px-3 py-2 text-[11px] font-medium transition",
                         active
-                          ? "border-accent bg-accent text-accent-foreground shadow-glow-accent"
-                          : "border-border bg-card hover:border-primary/50 hover:bg-card-foreground/[0.04]",
+                          ? "border-[#1db954] bg-[#1db954] text-black"
+                          : "border-white/10 bg-[#1a1a1a] text-white/70 hover:border-white/20 hover:bg-[#1a1a1a]/80",
                       )}
                     >
                       {s.label}
@@ -174,7 +174,7 @@ export default function MatchCenterPage() {
           </section>
 
           {/* Meta */}
-          <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
+          <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/5 bg-white/5 md:grid-cols-4">
             <MetaTile icon={CalendarDays} label="COMPETIÇÃO" value="Camp. Mineiro Betano" />
             <MetaTile icon={Cloud} label="CLIMA" value="Chuva" sub="22°C · Vento N 12km/h" />
             <MetaTile icon={Activity} label="GRAMADO" value="54/100" sub="Encharcado" valueClass="text-destructive" />
@@ -183,43 +183,43 @@ export default function MatchCenterPage() {
         </div>
 
         {/* Stats */}
-        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3 lg:grid-cols-6">
+        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/5 bg-white/5 md:grid-cols-3 lg:grid-cols-6">
           {stats.map((s) => (
             <StatCell key={s.label} {...s} />
           ))}
         </section>
 
         {/* Subs */}
-        <section className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
-          <Button className="font-display tracking-wider bg-accent text-accent-foreground hover:bg-accent/90 shadow-glow-accent">
+        <section className="flex flex-wrap items-center gap-3 rounded-xl border border-white/5 bg-[#141414] p-4">
+          <Button className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760]">
             <Users className="mr-2 h-4 w-4" />
-            SUBSTITUIR
+            Substituir
           </Button>
-          <span className="rounded-sm border border-accent/40 bg-accent/10 px-2 py-1 text-[10px] font-display tracking-widest text-accent">
+          <span className="rounded-sm border border-[#1db954]/40 bg-[#1db954]/10 px-2 py-1 text-[10px] font-medium tracking-wider text-[#1db954]">
             5 RESTANTES
           </span>
-          <span className="text-xs text-muted-foreground">Sem alterações ainda</span>
-          <span className="ml-auto text-[10px] font-display tracking-widest text-muted-foreground">
-            FORMAÇÃO 4-3-3
+          <span className="text-xs text-white/50">Sem alteracoes ainda</span>
+          <span className="ml-auto text-[10px] font-medium tracking-wider text-white/40">
+            FORMACAO 4-3-3
           </span>
         </section>
 
         {/* Pitch + events */}
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           {/* Pitch */}
-          <section className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border bg-card-foreground/[0.02] px-5 py-3">
+          <section className="overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
+            <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-3">
               <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" />
-                <h2 className="font-display tracking-widest text-xs">CAMPO TÁTICO</h2>
+                <Zap className="h-4 w-4 text-[#1db954]" />
+                <h2 className="text-xs font-medium text-white tracking-wider">CAMPO TATICO</h2>
               </div>
-              <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-3 text-[10px] text-white/50">
                 <span className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-destructive" />
+                  <span className="h-2 w-2 rounded-full bg-red-400" />
                   Mandante
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="h-2 w-2 rounded-full bg-blue-400" />
                   Visitante
                 </span>
               </div>
@@ -228,20 +228,20 @@ export default function MatchCenterPage() {
           </section>
 
           {/* Events */}
-          <section className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border bg-card-foreground/[0.02] px-5 py-3">
+          <section className="overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
+            <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-3">
               <div className="flex items-center gap-2">
-                <Goal className="h-4 w-4 text-primary" />
-                <h2 className="font-display tracking-widest text-xs">EVENTOS</h2>
+                <Goal className="h-4 w-4 text-[#1db954]" />
+                <h2 className="text-xs font-medium text-white tracking-wider">EVENTOS</h2>
               </div>
-              <span className="text-[10px] text-muted-foreground tracking-widest font-display">
+              <span className="text-[10px] text-white/40 tracking-wider font-medium">
                 MOMENTUM
               </span>
             </div>
 
             {/* Momentum bar */}
-            <div className="px-5 py-4 border-b border-border">
-              <div className="text-[10px] font-display tracking-widest text-muted-foreground mb-2">
+            <div className="px-5 py-4 border-b border-white/5">
+              <div className="text-[10px] font-medium tracking-wider text-white/40 mb-2">
                 MOMENTO ATUAL
               </div>
               <div className="relative h-12 w-full overflow-hidden rounded bg-muted">
@@ -265,7 +265,7 @@ export default function MatchCenterPage() {
                   />
                 </svg>
               </div>
-              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground tabular-nums">
+              <div className="mt-1 flex justify-between text-[10px] text-white/40 tabular-nums">
                 <span>0&apos;</span>
                 <span>45&apos;</span>
                 <span>90&apos;</span>
@@ -273,28 +273,28 @@ export default function MatchCenterPage() {
             </div>
 
             {/* Event list */}
-            <ul className="max-h-80 overflow-y-auto divide-y divide-border">
+            <ul className="max-h-80 overflow-y-auto divide-y divide-white/5">
               {events.map((e, i) => (
                 <li key={i} className="flex items-start gap-3 px-5 py-3">
                   <div
                     className={cn(
-                      "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-display text-[10px] tabular-nums",
+                      "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-medium tabular-nums",
                       e.side === "home"
-                        ? "bg-destructive/15 text-destructive"
-                        : "bg-primary/15 text-primary",
+                        ? "bg-red-400/15 text-red-400"
+                        : "bg-blue-400/15 text-blue-400",
                     )}
                   >
                     {e.min}&apos;
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] font-display tracking-widest text-muted-foreground">
+                    <div className="text-[10px] font-medium tracking-wider text-white/40">
                       {e.type === "card"
-                        ? "CARTÃO AMARELO"
+                        ? "CARTAO AMARELO"
                         : e.type === "chance"
                           ? "GRANDE CHANCE"
-                          : "INÍCIO DA PARTIDA"}
+                          : "INICIO DA PARTIDA"}
                     </div>
-                    <p className="text-sm text-foreground/90 leading-snug">{e.text}</p>
+                    <p className="text-sm text-white/80 leading-snug">{e.text}</p>
                   </div>
                 </li>
               ))}
@@ -320,13 +320,13 @@ function MetaTile({
   valueClass?: string
 }) {
   return (
-    <div className="bg-card p-4">
-      <div className="flex items-center gap-1.5 text-[10px] font-display tracking-widest text-muted-foreground">
+    <div className="bg-[#141414] p-4">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-wider text-white/40">
         <Icon className="h-3 w-3" />
         {label}
       </div>
-      <div className={cn("mt-1 font-display-italic text-lg leading-tight", valueClass)}>{value}</div>
-      {sub && <div className="text-[11px] text-muted-foreground">{sub}</div>}
+      <div className={cn("mt-1 text-lg font-semibold leading-tight text-white", valueClass)}>{value}</div>
+      {sub && <div className="text-[11px] text-white/40">{sub}</div>}
     </div>
   )
 }
@@ -345,22 +345,22 @@ function StatCell({
   ratio: number
 }) {
   return (
-    <div className="bg-card p-4">
-      <div className="flex items-center justify-between text-[10px] font-display tracking-widest text-muted-foreground">
+    <div className="bg-[#141414] p-4">
+      <div className="flex items-center justify-between text-[10px] font-medium tracking-wider text-white/40">
         <span className="flex items-center gap-1.5">
           <Icon className="h-3 w-3" />
           {label}
         </span>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="font-display-italic text-lg tabular-nums text-destructive">{home}</span>
-        <span className="text-muted-foreground text-xs">×</span>
-        <span className="font-display-italic text-lg tabular-nums text-primary">{away}</span>
+        <span className="text-lg font-semibold tabular-nums text-red-400">{home}</span>
+        <span className="text-white/30 text-xs">×</span>
+        <span className="text-lg font-semibold tabular-nums text-blue-400">{away}</span>
       </div>
-      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
         <div className="flex h-full">
-          <div className="bg-destructive h-full" style={{ width: `${ratio}%` }} />
-          <div className="bg-primary h-full" style={{ width: `${100 - ratio}%` }} />
+          <div className="bg-red-400 h-full" style={{ width: `${ratio}%` }} />
+          <div className="bg-blue-400 h-full" style={{ width: `${100 - ratio}%` }} />
         </div>
       </div>
     </div>

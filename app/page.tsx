@@ -45,6 +45,7 @@ const fixtures = [
   { home: userTeam, away: getTeamByShort("PLM")!, date: "Jan 15", time: "16:00", competition: "Brasileirao" },
   { home: getTeamByShort("CRN")!, away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
   { home: userTeam, away: getTeamByShort("SNT")!, date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
+  { home: getTeamByShort("FLM")!, away: userTeam, date: "Fev 05", time: "20:00", competition: "Brasileirao" },
 ]
 
 export default function DashboardPage() {
@@ -68,14 +69,14 @@ export default function DashboardPage() {
             {/* Team Crest */}
             <div className="relative">
               <TeamCrest team={userTeam} size="2xl" />
-              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-primary text-[10px] font-bold text-primary">
+              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-[#1db954] text-[10px] font-bold text-[#1db954]">
                 {userTeam.prestigio}
               </div>
             </div>
 
             {/* Team Info */}
             <div className="flex-1">
-              <div className="flex items-center gap-2 text-[10px] text-primary font-medium tracking-wider uppercase mb-1">
+              <div className="flex items-center gap-2 text-[10px] text-[#1db954] font-medium tracking-wider uppercase mb-1">
                 <Shield className="h-3 w-3" />
                 {userTeam.cidade}, {userTeam.estado}
               </div>
@@ -175,7 +176,7 @@ export default function DashboardPage() {
                   <div className="text-center px-8">
                     <div className="text-2xl font-bold text-white/20">VS</div>
                     <div className="text-xs text-white/50 mt-1">{fixtures[0].date}</div>
-                    <div className="text-xs text-primary">{fixtures[0].time}</div>
+                    <div className="text-xs text-[#1db954]">{fixtures[0].time}</div>
                   </div>
                   
                   <div className="flex items-center gap-4">
@@ -237,10 +238,10 @@ export default function DashboardPage() {
             <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  CALENDARIO
+                  <Calendar className="h-4 w-4 text-[#1db954]" />
+                  PROXIMAS PARTIDAS
                 </div>
-                <Link href="/calendario" className="text-xs text-primary hover:text-primary/80 transition-colors">
+                <Link href="/calendario" className="text-xs text-[#1db954] hover:text-[#1ed760] transition-colors">
                   Ver todos
                   <ChevronRight className="inline h-3 w-3 ml-0.5" />
                 </Link>

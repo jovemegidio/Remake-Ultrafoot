@@ -84,8 +84,8 @@ export default function CalendarioPage() {
   const nextMonth = () => setCurrentMonth(m => (m + 1) % 12)
   const prevMonth = () => setCurrentMonth(m => (m - 1 + 12) % 12)
 
-  // Find next fixture
-  const nextFixtureData = fixtures.find(f => f.fixture)
+  // Find next fixtures (4 proximas)
+  const nextFixtures = fixtures.filter(f => f.fixture).slice(0, 4)
 
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
@@ -95,81 +95,112 @@ export default function CalendarioPage() {
       {/* EA FC Style Layout */}
       <div className="flex h-[calc(100vh-48px-90px)]">
         {/* Left Panel - Match Info */}
-        <aside className="w-72 flex-shrink-0 border-r border-white/5 bg-[#0d0d0d] p-5 flex flex-col">
+        <aside className="w-80 flex-shrink-0 border-r border-white/5 bg-[#0d0d0d] p-5 flex flex-col">
           {/* Current Date */}
-          <div className="mb-6">
-            <div className="text-xs text-white/40 uppercase tracking-wider">
+          <div className="mb-4">
+            <div className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
               {weekDays[new Date(2026, currentMonth, selectedDay || 1).getDay() === 0 ? 6 : new Date(2026, currentMonth, selectedDay || 1).getDay() - 1]}
             </div>
-            <div className="text-2xl font-semibold text-white">
-              {months[currentMonth]} {selectedDay || 1}
+            <div className="text-xl font-semibold text-white">
+              {months[currentMonth]} {selectedDay || 1}, 2026
             </div>
-            <div className="text-sm text-white/50">2026</div>
           </div>
 
-          {/* Next Match */}
+          {/* Selected Match */}
           {selectedFixture ? (
-            <div className="flex-1">
-              <div className="text-[10px] uppercase tracking-wider text-primary mb-3">
+            <div className="mb-4 pb-4 border-b border-white/10">
+              <div className="text-[10px] uppercase tracking-wider text-[#1db954] font-medium mb-3">
                 {selectedFixture.competition}
               </div>
               
-              <div className="flex items-center gap-3 mb-4">
-                <TeamCrest team={selectedFixture.isHome ? userTeam : selectedFixture.opponent} size="lg" />
+              <div className="flex items-center gap-3 mb-3">
+                <TeamCrest team={selectedFixture.isHome ? userTeam : selectedFixture.opponent} size="md" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white truncate">
+                  <div className="text-sm font-semibold text-white truncate">
                     {selectedFixture.isHome ? userTeam.nome : selectedFixture.opponent.nome}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-6">
-                <TeamCrest team={selectedFixture.isHome ? selectedFixture.opponent : userTeam} size="lg" />
+              <div className="flex items-center gap-3 mb-4">
+                <TeamCrest team={selectedFixture.isHome ? selectedFixture.opponent : userTeam} size="md" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white truncate">
+                  <div className="text-sm font-semibold text-white truncate">
                     {selectedFixture.isHome ? selectedFixture.opponent.nome : userTeam.nome}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2 text-white/60">
-                  <Clock className="h-4 w-4" />
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-white/50">
+                  <Clock className="h-3.5 w-3.5" />
                   <span>{selectedFixture.time}</span>
                 </div>
-                <div className="flex items-center gap-2 text-white/60">
-                  <MapPin className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-white/50">
+                  <MapPin className="h-3.5 w-3.5" />
                   <span className="truncate">{selectedFixture.isHome ? userTeam.estadio_nome : selectedFixture.opponent.estadio_nome}</span>
                 </div>
               </div>
 
-              <button className="mt-6 w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#1db954] text-black text-sm font-semibold hover:bg-[#1ed760] transition-colors">
-                <Play className="h-4 w-4 fill-current" />
+              <button className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#1db954] text-black text-xs font-semibold hover:bg-[#1ed760] transition-colors">
+                <Play className="h-3.5 w-3.5 fill-current" />
                 Simular Partida
               </button>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <CalendarIcon className="h-12 w-12 text-white/20 mb-3" />
-              <div className="text-white/40 text-sm">Nenhuma partida neste dia</div>
+            <div className="mb-4 pb-4 border-b border-white/10 flex flex-col items-center justify-center text-center py-4">
+              <CalendarIcon className="h-8 w-8 text-white/20 mb-2" />
+              <div className="text-white/40 text-xs">Nenhuma partida neste dia</div>
             </div>
           )}
 
-          {/* Transfer Window */}
-          <div className="mt-auto pt-4 border-t border-white/10">
-            <div className="text-xs text-white/40 mb-1">Janela de Transferencias</div>
-            <div className="text-lg font-semibold text-white">Fechada</div>
-            <div className="text-xs text-white/50">Abre em 71 dias</div>
+          {/* Proximas Partidas */}
+          <div className="flex-1">
+            <div className="text-[10px] font-medium tracking-wider text-white/40 uppercase mb-3">
+              Proximas Partidas
+            </div>
+            <div className="space-y-2">
+              {nextFixtures.map((f, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDay(f.day)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left",
+                    f.day === selectedDay 
+                      ? "border-[#1db954] bg-[#1db954]/10" 
+                      : "border-white/5 bg-white/[0.02] hover:border-white/10"
+                  )}
+                >
+                  <TeamCrest team={f.fixture!.opponent} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-white truncate">
+                      {f.fixture!.isHome ? "vs" : "@"} {f.fixture!.opponent.nome}
+                    </div>
+                    <div className="text-[10px] text-white/40">
+                      {months[currentMonth]} {f.day} - {f.fixture!.time}
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "px-1.5 py-0.5 rounded text-[9px] font-medium",
+                    f.fixture!.isHome 
+                      ? "bg-[#1db954]/20 text-[#1db954]" 
+                      : "bg-white/10 text-white/60"
+                  )}>
+                    {f.fixture!.isHome ? "C" : "F"}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Bottom Actions */}
-          <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-[10px] text-white/40">
-            <span className="px-2 py-1 rounded bg-white/5">A</span>
-            <span>Sim. ate Data</span>
-            <span className="px-2 py-1 rounded bg-white/5 ml-auto">B</span>
-            <span>Voltar</span>
+          {/* Transfer Window */}
+          <div className="pt-4 border-t border-white/10 mt-4">
+            <div className="text-[10px] text-white/40 font-medium tracking-wider mb-1">Janela de Transferencias</div>
+            <div className="text-sm font-semibold text-white">Fechada</div>
+            <div className="text-[10px] text-white/50">Abre em 71 dias</div>
           </div>
-        </aside>
+
+          </aside>
 
         {/* Main Calendar */}
         <main className="flex-1 p-6 overflow-auto">

@@ -13,6 +13,7 @@ import {
   UserMinus,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
+import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
@@ -53,31 +54,16 @@ export default function MercadoPage() {
   )
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24">
+    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
       <GameSidebar />
-
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="font-display tracking-widest text-primary">ULTRAFOOT</span>
-          <span className="text-border">/</span>
-          <span className="text-foreground">Mercado</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-[10px] text-muted-foreground font-display tracking-wider">VERBA DISPONIVEL</div>
-            <div className="text-sm font-display text-accent">{formatCurrency(15000000)}</div>
-          </div>
-          <TeamCrest team={userTeam} size="sm" />
-        </div>
-      </header>
+      <GameHeader team={userTeam} />
 
       <main className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-display-italic text-3xl tracking-tight">MERCADO</h1>
-            <p className="text-sm text-muted-foreground">Janela de transferencias aberta</p>
+            <h1 className="text-2xl font-semibold text-white tracking-tight">Mercado</h1>
+            <p className="text-sm text-white/50 mt-1">Janela de transferencias aberta</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -97,49 +83,49 @@ export default function MercadoPage() {
 
         {/* Transfer Stats */}
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <DollarSign className="h-4 w-4 text-accent" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <DollarSign className="h-4 w-4 text-[#1db954]" />
               VERBA TOTAL
             </div>
-            <div className="mt-2 font-display-italic text-2xl text-accent">{formatCurrency(15000000)}</div>
+            <div className="mt-2 text-2xl font-semibold text-[#1db954]">{formatCurrency(15000000)}</div>
           </div>
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <UserPlus className="h-4 w-4 text-primary" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <UserPlus className="h-4 w-4 text-blue-400" />
               CONTRATACOES
             </div>
-            <div className="mt-2 font-display-italic text-2xl">0</div>
+            <div className="mt-2 text-2xl font-semibold text-white">0</div>
           </div>
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <UserMinus className="h-4 w-4 text-destructive" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <UserMinus className="h-4 w-4 text-red-400" />
               VENDAS
             </div>
-            <div className="mt-2 font-display-italic text-2xl">0</div>
+            <div className="mt-2 text-2xl font-semibold text-white">0</div>
           </div>
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <ArrowLeftRight className="h-4 w-4 text-gold" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <ArrowLeftRight className="h-4 w-4 text-yellow-400" />
               PROPOSTAS
             </div>
-            <div className="mt-2 font-display-italic text-2xl text-gold">{offersReceived.length}</div>
+            <div className="mt-2 text-2xl font-semibold text-yellow-400">{offersReceived.length}</div>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-card border border-border">
-            <TabsTrigger value="comprar" className="font-display text-xs tracking-wider">COMPRAR</TabsTrigger>
-            <TabsTrigger value="vender" className="font-display text-xs tracking-wider">VENDER</TabsTrigger>
-            <TabsTrigger value="propostas" className="font-display text-xs tracking-wider">
-              PROPOSTAS
+          <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto">
+            <TabsTrigger value="comprar" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">Comprar</TabsTrigger>
+            <TabsTrigger value="vender" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">Vender</TabsTrigger>
+            <TabsTrigger value="propostas" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">
+              Propostas
               {offersReceived.length > 0 && (
-                <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[10px] text-gold-foreground font-bold">
+                <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-[10px] text-black font-bold">
                   {offersReceived.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="emprestimos" className="font-display text-xs tracking-wider">EMPRESTIMOS</TabsTrigger>
+            <TabsTrigger value="emprestimos" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">Emprestimos</TabsTrigger>
           </TabsList>
 
           {/* Buy Tab */}

@@ -97,8 +97,8 @@ export default function ElencoPage() {
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="font-display-italic text-3xl tracking-tight">ELENCO</h1>
-                <p className="text-sm text-muted-foreground">{players.length} jogadores no elenco principal</p>
+                <h1 className="text-2xl font-semibold text-white tracking-tight">Elenco</h1>
+                <p className="text-sm text-white/50 mt-1">{players.length} jogadores no elenco principal</p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -121,12 +121,12 @@ export default function ElencoPage() {
 
             {/* Position Filter */}
             <Tabs value={filter} onValueChange={setFilter} className="w-full">
-              <TabsList className="bg-card border border-border">
-                <TabsTrigger value="all" className="font-display text-xs tracking-wider">TODOS</TabsTrigger>
-                <TabsTrigger value="gol" className="font-display text-xs tracking-wider">GOL</TabsTrigger>
-                <TabsTrigger value="def" className="font-display text-xs tracking-wider">DEF</TabsTrigger>
-                <TabsTrigger value="mei" className="font-display text-xs tracking-wider">MEI</TabsTrigger>
-                <TabsTrigger value="ata" className="font-display text-xs tracking-wider">ATA</TabsTrigger>
+              <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto">
+                <TabsTrigger value="all" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">Todos</TabsTrigger>
+                <TabsTrigger value="gol" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">GOL</TabsTrigger>
+                <TabsTrigger value="def" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">DEF</TabsTrigger>
+                <TabsTrigger value="mei" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">MEI</TabsTrigger>
+                <TabsTrigger value="ata" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">ATA</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -136,8 +136,8 @@ export default function ElencoPage() {
                 <button
                   key={player.id}
                   onClick={() => setSelectedPlayer(player)}
-                  className={`eafc-card p-4 text-left transition-all ${
-                    selectedPlayer.id === player.id ? "ring-2 ring-primary" : ""
+                  className={`rounded-xl bg-[#141414] border p-4 text-left transition-all ${
+                    selectedPlayer.id === player.id ? "border-[#1db954] ring-1 ring-[#1db954]" : "border-white/5 hover:border-white/10"
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -184,7 +184,7 @@ export default function ElencoPage() {
 
           {/* Player Detail */}
           <section className="space-y-4">
-            <div className="eafc-card overflow-hidden">
+            <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
               {/* Player Header */}
               <div 
                 className="relative p-6 bg-gradient-to-br"

@@ -15,12 +15,12 @@ interface GameHeaderProps {
 }
 
 const navItems = [
-  { label: "Office", href: "/" },
-  { label: "Calendar", href: "/calendario" },
-  { label: "Squad", href: "/elenco" },
-  { label: "Match", href: "/partida" },
-  { label: "Finance", href: "/financas" },
-  { label: "Market", href: "/mercado" },
+  { label: "Inicio", href: "/" },
+  { label: "Calendario", href: "/calendario" },
+  { label: "Elenco", href: "/elenco" },
+  { label: "Partida", href: "/partida" },
+  { label: "Financas", href: "/financas" },
+  { label: "Mercado", href: "/mercado" },
 ]
 
 export function GameHeader({ team, showNav = true, className }: GameHeaderProps) {
@@ -71,7 +71,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       <div className="flex items-center gap-3">
         <button className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium tracking-wider text-white/60 hover:text-white/80 transition-colors rounded hover:bg-white/5">
           <Save className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">SAVE</span>
+          <span className="hidden sm:inline">Salvar</span>
         </button>
         
         <Link 
@@ -79,7 +79,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold tracking-wider bg-[#1db954] text-black rounded hover:bg-[#1ed760] transition-colors"
         >
           <FastForward className="h-3.5 w-3.5" />
-          <span>ADVANCE</span>
+          <span>Avancar</span>
         </Link>
 
         <div className="w-px h-6 bg-white/10 mx-1" />
