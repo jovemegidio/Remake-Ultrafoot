@@ -3,6 +3,31 @@
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
+// Divisões / regiões suportadas pelo jogo
+export type Divisao =
+  | "serie_a"
+  | "serie_b"
+  | "serie_c"
+  | "serie_d"
+  // Internacionais
+  | "premier_league"
+  | "la_liga"
+  | "serie_a_ita"
+  | "bundesliga"
+  | "ligue_1"
+  | "saudi_pro"
+  | "j_league"
+  | "mls"
+  | "liga_mx"
+  | "primeira_liga"
+  // Estaduais
+  | "paulistao"
+  | "carioca"
+  | "mineiro"
+  | "gaucho"
+
+export type Regiao = "brasil" | "europa" | "asia" | "americas"
+
 export interface Team {
   nome: string
   curto: string
@@ -18,7 +43,9 @@ export interface Team {
   estadio_nome: string
   patrocinador: string
   escudo_url: string
-  divisao: string
+  divisao: Divisao | string
+  regiao?: Regiao
+  pais?: string
 }
 
 export interface TeamUniforms {
