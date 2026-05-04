@@ -15,13 +15,12 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
-import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { serieATeams, type Team } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
-
-// Generate fixtures for the month
-const generateMonthFixtures = (month: number) => {
+// Generate fixtures for the month given the user's team.
+const generateMonthFixtures = (month: number, userShort: string) => {
   const fixtures: {
     day: number
     fixture?: {
@@ -32,8 +31,8 @@ const generateMonthFixtures = (month: number) => {
       time: string
     }
   }[] = []
-  
-  const teams = serieATeams.filter(t => t.curto !== userTeam.curto)
+
+  const teams = serieATeams.filter(t => t.curto !== userShort)
   const daysInMonth = new Date(2026, month + 1, 0).getDate()
   
   // Generate some fixtures for the month
@@ -71,10 +70,11 @@ const monthsShort = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Se
 const weekDays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"]
 
 export default function CalendarioPage() {
+  const { team: userTeam } = useUserTeam()
   const [currentMonth, setCurrentMonth] = useState(0) // January 2026
   const [selectedDay, setSelectedDay] = useState<number | null>(22)
 
-  const fixtures = generateMonthFixtures(currentMonth)
+  const fixtures = generateMonthFixtures(currentMonth, userTeam.curto)
   const selectedFixture = selectedDay ? fixtures.find(f => f.day === selectedDay)?.fixture : null
   
   // Get first day of month (0 = Sunday, adjust for Monday start)

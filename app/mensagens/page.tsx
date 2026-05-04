@@ -19,9 +19,7 @@ import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+import { useUserTeam } from "@/lib/save-system"
 
 // Mock messages
 const messages = [
@@ -83,6 +81,7 @@ const messages = [
 ]
 
 export default function MensagensPage() {
+  const { team: userTeam } = useUserTeam()
   const [filter, setFilter] = useState("all")
   const [selectedMessage, setSelectedMessage] = useState(messages[0])
 

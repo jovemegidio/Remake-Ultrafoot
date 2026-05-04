@@ -25,29 +25,37 @@ import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
-
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
-
-// Standings
-const standings = serieATeams.slice(0, 8).map((team, index) => ({
-  pos: index + 1,
-  team,
-  pts: 0,
-  w: 0,
-  d: 0,
-  l: 0,
-  isUser: team.curto === userTeam.curto,
-}))
-
-// Next fixtures
-const fixtures = [
-  { home: userTeam, away: getTeamByShort("PLM")!, date: "Jan 15", time: "16:00", competition: "Brasileirao" },
-  { home: getTeamByShort("CRN")!, away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
-  { home: userTeam, away: getTeamByShort("SNT")!, date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
-]
+import { useMemo } from "react"
 
 export default function DashboardPage() {
+  const { team: userTeam } = useUserTeam()
+
+  const standings = useMemo(
+    () =>
+      serieATeams.slice(0, 8).map((team, index) => ({
+        pos: index + 1,
+        team,
+        pts: 0,
+        w: 0,
+        d: 0,
+        l: 0,
+        isUser: team.curto === userTeam.curto,
+      })),
+    [userTeam.curto],
+  )
+
+  const fixtures = useMemo(() => {
+    const opponents = serieATeams.filter(t => t.curto !== userTeam.curto)
+    const opp = (i: number) => opponents[i % opponents.length]
+    return [
+      { home: userTeam, away: opp(0), date: "Jan 15", time: "16:00", competition: "Brasileirao" },
+      { home: opp(1), away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
+      { home: userTeam, away: opp(2), date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
+    ]
+  }, [userTeam])
+
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
       <GameSidebar />

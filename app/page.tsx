@@ -4,9 +4,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, RefreshCw, Play } from "lucide-react"
 import { allTeams, getLogoUrl } from "@/lib/teams-data"
 import { allPlayers } from "@/lib/players-data"
+import { hasSave, useGameState } from "@/lib/save-system"
 
 const STAGES = [
   { at: 8, label: "Inicializando o motor" },
@@ -27,12 +28,16 @@ const TIPS = [
 
 export default function SplashPage() {
   const router = useRouter()
+  const { state, hydrated, reset } = useGameState()
   const [progress, setProgress] = useState(0)
   const [ready, setReady] = useState(false)
   const [tip] = useState(() => TIPS[Math.floor(Math.random() * TIPS.length)])
 
   const totalTeams = allTeams.length
   const totalPlayers = allPlayers.length
+  const hasExistingSave = hydrated && Boolean(state.selectedTeamShort)
+  const continueHref = hasExistingSave ? "/dashboard" : "/novo-jogo"
+  const continueLabel = hasExistingSave ? "Continuar carreira" : "Iniciar nova carreira"
 
   useEffect(() => {
     let raf = 0
@@ -50,6 +55,7 @@ export default function SplashPage() {
 
   useEffect(() => {
     router.prefetch("/dashboard")
+    router.prefetch("/novo-jogo")
   }, [router])
 
   const stage =
@@ -167,18 +173,39 @@ export default function SplashPage() {
             {tip}
           </p>
 
-          <Link
-            href="/dashboard"
-            className={
-              "group inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all " +
-              (ready
-                ? "bg-white text-black hover:bg-white/90 shadow-[0_8px_30px_rgba(255,255,255,0.18)]"
-                : "pointer-events-none bg-white/10 text-white/40")
-            }
-          >
-            {ready ? "Entrar no jogo" : "Carregando…"}
-            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            {hasExistingSave && (
+              <button
+                onClick={() => {
+                  if (confirm("Apagar carreira atual e iniciar nova?")) {
+                    reset()
+                    router.push("/novo-jogo")
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-medium text-white/50 hover:text-white transition-colors"
+                title="Iniciar nova carreira"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Nova
+              </button>
+            )}
+            <Link
+              href={continueHref}
+              className={
+                "group inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all " +
+                (ready
+                  ? "bg-white text-black hover:bg-white/90 shadow-[0_8px_30px_rgba(255,255,255,0.18)]"
+                  : "pointer-events-none bg-white/10 text-white/40")
+              }
+            >
+              {ready ? continueLabel : "Carregando…"}
+              {hasExistingSave ? (
+                <Play className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              ) : (
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 
