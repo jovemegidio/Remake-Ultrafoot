@@ -48,9 +48,10 @@ export default function DashboardPage() {
 
   const fixtures = useMemo(() => {
     const opponents = serieATeams.filter(t => t.curto !== userTeam.curto)
-    // Fallback to first team if opponents list is somehow empty
-    const fallbackTeam = serieATeams[0]
-    const opp = (i: number) => opponents[i % opponents.length] || fallbackTeam
+    // Fallback to different teams if opponents list is somehow empty
+    const fallbackOpponents = serieATeams.length > 1 ? serieATeams.slice(0, 6) : [serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0]]
+    const opponentsList = opponents.length > 0 ? opponents : fallbackOpponents
+    const opp = (i: number) => opponentsList[i % opponentsList.length]
     return [
       { home: userTeam, away: opp(0), date: "Jan 15", time: "16:00", competition: "Brasileirao" },
       { home: opp(1), away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
