@@ -41,12 +41,14 @@ const standings = serieATeams.slice(0, 8).map((team, index) => ({
   isUser: team.curto === userTeam.curto,
 }))
 
-// Next fixtures
+// Next fixtures - usando siglas corretas dos times
 const fixtures = [
-  { home: userTeam, away: getTeamByShort("PLM")!, date: "Jan 15", time: "16:00", competition: "Brasileirao" },
-  { home: getTeamByShort("CRN")!, away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
-  { home: userTeam, away: getTeamByShort("SNT")!, date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
-  { home: getTeamByShort("FLM")!, away: userTeam, date: "Fev 05", time: "20:00", competition: "Brasileirao" },
+  { home: userTeam, away: getTeamByShort("PAL")!, date: "Jan 15", time: "16:00", competition: "Brasileirao" },
+  { home: getTeamByShort("COR")!, away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
+  { home: userTeam, away: getTeamByShort("SAN")!, date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
+  { home: getTeamByShort("FLA")!, away: userTeam, date: "Fev 05", time: "20:00", competition: "Brasileirao" },
+  { home: getTeamByShort("INT")!, away: userTeam, date: "Fev 12", time: "19:00", competition: "Brasileirao" },
+  { home: userTeam, away: getTeamByShort("GRE")!, date: "Fev 19", time: "21:00", competition: "Brasileirao" },
 ]
 
 export default function DashboardPage() {
