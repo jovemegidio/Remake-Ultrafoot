@@ -82,53 +82,45 @@ export default function MatchCenterPage() {
       </header>
 
       <main className="space-y-4 p-4">
-        {/* Scoreboard */}
+        {/* Scoreboard - EA FC 26 Style */}
         <section className="relative overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
-          <div className="absolute inset-0 bg-grid opacity-20" />
-          <div
-            className="absolute inset-0 opacity-50"
-            style={{
-              background:
-                "radial-gradient(ellipse at center, oklch(0.65 0.22 25 / 0.15), transparent 70%)",
-            }}
-          />
-          <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-6 px-8 py-6">
-            {/* Home */}
-            <div className="flex items-center justify-end gap-4">
+          <div className="relative flex items-center justify-center gap-4 px-6 py-4">
+            {/* Home Team */}
+            <div className="flex items-center gap-3">
               <div className="text-right">
-                <div className="text-[10px] font-medium tracking-wider text-white/40">
-                  MANDANTE
+                <div className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
+                  Mandante
                 </div>
-                <div className="text-2xl font-semibold text-white">POUSO ALEGRE</div>
+                <div className="text-lg font-bold text-white tracking-wide">POUSO ALEGRE</div>
               </div>
               <ClubCrest
                 abbr="PAL"
-                size="lg"
+                size="md"
                 primary="oklch(0.65 0.22 25)"
                 secondary="oklch(0.13 0.015 250)"
               />
             </div>
 
             {/* Score */}
-            <div className="flex items-center gap-4">
-              <div className="text-6xl font-bold leading-none tabular-nums text-white">0</div>
-              <div className="text-2xl text-white/30">×</div>
-              <div className="text-6xl font-bold leading-none tabular-nums text-white">0</div>
+            <div className="flex items-center gap-3 px-4">
+              <div className="text-5xl font-bold leading-none tabular-nums text-white">0</div>
+              <div className="text-lg text-white/30 font-light">x</div>
+              <div className="text-5xl font-bold leading-none tabular-nums text-white">0</div>
             </div>
 
-            {/* Away */}
-            <div className="flex items-center gap-4">
+            {/* Away Team */}
+            <div className="flex items-center gap-3">
               <ClubCrest
                 abbr="CAM"
-                size="lg"
+                size="md"
                 primary="oklch(0.13 0.015 250)"
                 secondary="oklch(0.95 0.005 240)"
               />
-              <div>
-                <div className="text-[10px] font-medium tracking-wider text-white/40">
-                  VISITANTE
+              <div className="text-left">
+                <div className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
+                  Visitante
                 </div>
-                <div className="text-2xl font-semibold text-white">ATLETICO-MG</div>
+                <div className="text-lg font-bold text-white tracking-wide">ATLETICO-MG</div>
               </div>
             </div>
           </div>
