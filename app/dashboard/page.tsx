@@ -53,6 +53,9 @@ export default function DashboardPage() {
       { home: userTeam, away: opp(0), date: "Jan 15", time: "16:00", competition: "Brasileirao" },
       { home: opp(1), away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
       { home: userTeam, away: opp(2), date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
+      { home: opp(3), away: userTeam, date: "Fev 05", time: "19:00", competition: "Brasileirao" },
+      { home: userTeam, away: opp(4), date: "Fev 12", time: "16:00", competition: "Brasileirao" },
+      { home: opp(5), away: userTeam, date: "Fev 19", time: "20:00", competition: "Brasileirao" },
     ]
   }, [userTeam])
 
