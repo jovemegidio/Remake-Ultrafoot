@@ -29,6 +29,8 @@ import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { loadMatchContext } from "@/lib/match-context"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
+import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
+import { type GamepadButtonName } from "@/hooks/use-gamepad"
 import {
   type MatchSpeed,
   type MatchEvent,
@@ -127,32 +129,83 @@ export default function MatchCenterPage() {
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
 
-  // Pausa com ESC, botao PS ou Xbox
+  // Determina contexto atual da partida
+  const gameContext: GameContext = state.phase === "pre" 
+    ? "match_preview" 
+    : state.phase === "fulltime" 
+      ? "menu"
+      : isRunning 
+        ? "match_live" 
+        : "match_paused"
+
+  // Handler de teclado (ESC para pausar)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isRunning) {
-        pause()
+      if (e.key === "Escape") {
+        if (state.phase !== "pre" && state.phase !== "fulltime") {
+          if (isRunning) pause()
+          else resume()
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isRunning, pause])
+  }, [isRunning, pause, resume, state.phase])
 
-  // Pausa com gamepad (botao HOME/START/SELECT)
+  // Handler de gamepad com mapeamento completo de botoes
   useEffect(() => {
-    const handleGamepadAction = (e: CustomEvent<{ action: string }>) => {
-      const { action } = e.detail
-      if ((action === "START" || action === "HOME" || action === "SELECT") && state.phase !== "pre" && state.phase !== "fulltime") {
-        if (isRunning) {
-          pause()
-        } else {
-          resume()
-        }
+    const handleGamepadButton = (e: CustomEvent<{ button: GamepadButtonName }>) => {
+      const button = e.detail.button
+      const action = getActionForButton(button, gameContext)
+      
+      if (!action) return
+
+      // Executa acao baseada no mapeamento
+      switch (action) {
+        // Controle de partida
+        case "pause_resume":
+          if (state.phase !== "pre" && state.phase !== "fulltime") {
+            if (isRunning) pause()
+            else resume()
+          }
+          break
+        case "fast_forward":
+          if (speed === "slow") setSpeed("normal")
+          else if (speed === "normal") setSpeed("fast")
+          else if (speed === "fast") setSpeed("ultra")
+          else if (speed === "ultra") setSpeed("hyper")
+          break
+        case "slow_motion":
+          if (speed === "hyper") setSpeed("ultra")
+          else if (speed === "ultra") setSpeed("fast")
+          else if (speed === "fast") setSpeed("normal")
+          else if (speed === "normal") setSpeed("slow")
+          break
+        case "skip_to_result":
+          fastForward()
+          break
+        case "substitute":
+          if (subsRemaining > 0 && state.phase !== "fulltime") {
+            setShowSubModal(true)
+          }
+          break
+        case "show_stats":
+          // Scroll para estatisticas
+          document.querySelector('[data-section="stats"]')?.scrollIntoView({ behavior: "smooth" })
+          break
+        case "confirm":
+          if (state.phase === "pre") start()
+          break
+        case "back":
+          if (showSubModal) setShowSubModal(false)
+          break
       }
     }
-    window.addEventListener("gamepad:action" as any, handleGamepadAction)
-    return () => window.removeEventListener("gamepad:action" as any, handleGamepadAction)
-  }, [isRunning, pause, resume, state.phase])
+
+    // Escuta eventos de botao do gamepad
+    window.addEventListener("gamepad:button" as any, handleGamepadButton)
+    return () => window.removeEventListener("gamepad:button" as any, handleGamepadButton)
+  }, [gameContext, isRunning, pause, resume, speed, setSpeed, fastForward, start, subsRemaining, state.phase, showSubModal])
 
   // Modal substituição
   const [showSubModal, setShowSubModal] = useState(false)

@@ -1,19 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ControllerButton } from "./controller-buttons"
+import { 
+  type GameContext, 
+  getControlHints,
+  CONTROL_MAPPINGS,
+  ACTION_LABELS,
+  type GameAction
+} from "@/lib/gamepad-controls"
 
 type ControllerType = "xbox" | "playstation" | "generic" | null
-
-interface GamepadControlsBarProps {
-  actions?: Array<{
-    button: "A" | "B" | "X" | "Y" | "LB" | "RB" | "LT" | "RT"
-    label: string
-    onClick?: () => void
-  }>
-  className?: string
-}
 
 // Hook para detectar gamepad conectado
 function useGamepadDetection() {
@@ -55,21 +54,14 @@ function useGamepadDetection() {
       }
     }
 
-    const handleGamepadConnected = () => {
-      updateGamepads()
-    }
+    const handleGamepadConnected = () => updateGamepads()
+    const handleGamepadDisconnected = () => updateGamepads()
 
-    const handleGamepadDisconnected = () => {
-      updateGamepads()
-    }
-
-    // Initial check
     updateGamepads()
 
     window.addEventListener("gamepadconnected", handleGamepadConnected)
     window.addEventListener("gamepaddisconnected", handleGamepadDisconnected)
 
-    // Poll for gamepad state (some browsers need this)
     const interval = setInterval(updateGamepads, 1000)
 
     return () => {
@@ -82,26 +74,82 @@ function useGamepadDetection() {
   return gamepadInfo
 }
 
-// Acoes padrao do jogo
-const defaultActions: GamepadControlsBarProps["actions"] = [
-  { button: "A", label: "Selecionar" },
-  { button: "B", label: "Voltar" },
-  { button: "X", label: "Simular" },
-  { button: "Y", label: "Calendario" },
-  { button: "LB", label: "Tab Anterior" },
-  { button: "RB", label: "Proxima Tab" },
-]
+// Detecta o contexto atual baseado na rota
+function useCurrentContext(): GameContext {
+  const pathname = usePathname()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+
+  useEffect(() => {
+    const handleModalChange = (e: CustomEvent<{ open: boolean }>) => {
+      setModalOpen(e.detail.open)
+    }
+    const handlePauseChange = (e: CustomEvent<{ paused: boolean }>) => {
+      setIsPaused(e.detail.paused)
+    }
+    
+    window.addEventListener("modal:change" as any, handleModalChange)
+    window.addEventListener("match:pause" as any, handlePauseChange)
+    
+    return () => {
+      window.removeEventListener("modal:change" as any, handleModalChange)
+      window.removeEventListener("match:pause" as any, handlePauseChange)
+    }
+  }, [])
+
+  if (modalOpen) return "modal"
+  
+  if (pathname.includes("/partida/ao-vivo")) {
+    return isPaused ? "match_paused" : "match_live"
+  }
+  if (pathname.includes("/partida")) return "match_preview"
+  if (pathname.includes("/calendario")) return "calendar"
+  if (pathname.includes("/elenco")) return "squad"
+  if (pathname.includes("/mercado")) return "transfers"
+  
+  return "menu"
+}
+
+interface GamepadControlsBarProps {
+  context?: GameContext
+  customActions?: Array<{
+    button: "A" | "B" | "X" | "Y" | "LB" | "RB" | "LT" | "RT"
+    label: string
+    onClick?: () => void
+  }>
+  className?: string
+}
 
 export function GamepadControlsBar({ 
-  actions = defaultActions, 
+  context: contextOverride,
+  customActions, 
   className 
 }: GamepadControlsBarProps) {
   const { connected, type } = useGamepadDetection()
+  const detectedContext = useCurrentContext()
+  const context = contextOverride || detectedContext
 
   // So mostra a barra se o gamepad estiver conectado
   if (!connected || !type) {
     return null
   }
+
+  const controllerType = type === "generic" ? "xbox" : type
+
+  // Usa acoes customizadas ou gera automaticamente baseado no contexto
+  const actions = customActions || (() => {
+    const mapping = CONTROL_MAPPINGS[context]
+    if (!mapping) return []
+
+    const mainButtons: Array<"A" | "B" | "X" | "Y" | "LB" | "RB"> = ["A", "B", "X", "Y", "LB", "RB"]
+    
+    return mainButtons
+      .filter(button => mapping[button])
+      .map(button => ({
+        button,
+        label: ACTION_LABELS[mapping[button] as GameAction] || mapping[button] as string,
+      }))
+  })()
 
   return (
     <div className={cn(
@@ -117,7 +165,7 @@ export function GamepadControlsBar({
         >
           <ControllerButton 
             button={action.button} 
-            controller={type === "generic" ? "xbox" : type} 
+            controller={controllerType} 
             size="sm" 
             showLabel={false} 
           />
@@ -162,13 +210,11 @@ export function GamepadHeaderControls({
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      {/* Indicador de controle conectado */}
       <div className="flex items-center gap-1.5">
         <div className="w-1.5 h-1.5 rounded-full bg-[#1db954] animate-pulse" />
         {controllerIcon}
       </div>
 
-      {/* Navegacao por tabs se habilitado */}
       {showTabs && (
         <div className="flex items-center gap-2 ml-2">
           <ControllerButton 
@@ -202,5 +248,4 @@ export function GamepadHeaderControls({
   )
 }
 
-// Export do hook para uso em outros componentes
 export { useGamepadDetection }
