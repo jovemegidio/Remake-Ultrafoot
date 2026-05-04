@@ -212,7 +212,7 @@ export default function DashboardPage() {
               </div>
               
               <div className="divide-y divide-white/5">
-                {fixtures.map((f, i) => (
+                {fixtures.filter(f => f.home && f.away).map((f, i) => (
                   <FixtureRow key={i} fixture={f} userTeam={userTeam} isNext={i === 0} />
                 ))}
               </div>
@@ -416,10 +416,15 @@ function FixtureRow({
   userTeam,
   isNext,
 }: {
-  fixture: { home: Team; away: Team; date: string; time: string; competition: string }
+  fixture: { home?: Team; away?: Team; date: string; time: string; competition: string }
   userTeam: Team
   isNext?: boolean
 }) {
+  // Safety check for undefined teams
+  if (!fixture.home || !fixture.away) {
+    return null
+  }
+  
   const isHome = fixture.home.curto === userTeam.curto
 
   return (

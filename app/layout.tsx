@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Oswald } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
+import { SplashProvider } from "@/components/splash-provider"
 import "./globals.css"
 
 const geist = Geist({
@@ -40,9 +41,11 @@ export default function RootLayout({
     <html lang="pt-BR" className={`bg-background ${geist.variable} ${geistMono.variable} ${oswald.variable}`}>
       <body className="font-sans antialiased">
         <ThemeProvider>
-          <GamepadProvider>
-            {children}
-          </GamepadProvider>
+          <SplashProvider>
+            <GamepadProvider>
+              {children}
+            </GamepadProvider>
+          </SplashProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>

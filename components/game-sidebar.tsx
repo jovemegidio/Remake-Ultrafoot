@@ -44,7 +44,7 @@ export function GameSidebar() {
           alt="Ultrafoot"
           width={32}
           height={32}
-          className="object-contain"
+          className="object-contain w-auto h-auto"
           unoptimized
         />
       </Link>
