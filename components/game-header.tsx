@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { ChevronRight, Save, FastForward, Settings, Check, Loader2 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
-import { HeaderControls } from "@/components/controller-buttons"
+import { HeaderControls, ControllerTypeContext } from "@/components/controller-buttons"
+import { useContext } from "react"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
@@ -30,6 +31,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const router = useRouter()
   const { state, setState } = useGameState()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  
+  // Detecta o tipo de controlador do contexto
+  const controllerType = useContext(ControllerTypeContext)
   
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -62,8 +66,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     )}>
       {/* Left - Controller indicators + Navigation */}
       <div className="flex items-center gap-4">
-        {/* Console controller navigation indicators */}
-        <HeaderControls controller="playstation" className="hidden sm:flex" />
+        {/* Console controller navigation indicators - detecta automaticamente */}
+        <HeaderControls controller={controllerType} className="hidden sm:flex" />
         
         <div className="w-px h-5 bg-white/10 hidden sm:block" />
         

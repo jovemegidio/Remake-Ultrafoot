@@ -46,12 +46,30 @@ interface UseGamepadOptions {
 
 function detectControllerType(id: string): "xbox" | "playstation" | "generic" {
   const lowerId = id.toLowerCase()
-  if (lowerId.includes("xbox") || lowerId.includes("xinput") || lowerId.includes("microsoft")) {
-    return "xbox"
-  }
-  if (lowerId.includes("playstation") || lowerId.includes("dualshock") || lowerId.includes("dualsense") || lowerId.includes("sony")) {
+  
+  // PlayStation detection - DualShock 3/4, DualSense, SCPH, Wireless Controller
+  if (
+    lowerId.includes("playstation") || 
+    lowerId.includes("dualshock") || 
+    lowerId.includes("dualsense") || 
+    lowerId.includes("sony") ||
+    lowerId.includes("scph") ||
+    lowerId.includes("054c") || // Sony USB Vendor ID
+    (lowerId.includes("wireless controller") && !lowerId.includes("xbox"))
+  ) {
     return "playstation"
   }
+  
+  // Xbox detection - Xbox 360, Xbox One, Xbox Series, XInput
+  if (
+    lowerId.includes("xbox") || 
+    lowerId.includes("xinput") || 
+    lowerId.includes("microsoft") ||
+    lowerId.includes("045e") // Microsoft USB Vendor ID
+  ) {
+    return "xbox"
+  }
+  
   return "generic"
 }
 
