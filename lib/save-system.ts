@@ -24,7 +24,7 @@ export const DEFAULT_STATE: GameState = {
   version: VERSION,
   selectedTeamShort: null,
   managerName: "Tecnico",
-  season: 2026,
+  season: 2025,
   week: 0,
   language: "pt-BR",
   selectedUniform: "home",
@@ -123,7 +123,7 @@ export function useGameState(): {
  * (evita hydration mismatch ao retornar sempre o mesmo valor no SSR).
  */
 const FALLBACK_TEAM: Team =
-  getTeamByShort("BGT") ?? serieATeams[0] ?? allTeams[0]
+  getTeamByShort("BOT") ?? serieATeams[0] ?? allTeams[0]
 
 export function useUserTeam(): { team: Team; hydrated: boolean } {
   const { state, hydrated } = useGameState()

@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 import { getLogoUrl } from "@/lib/teams-data"
 
 const navItems = [
-  { icon: LayoutGrid, label: "Dashboard", href: "/" },
+  { icon: LayoutGrid, label: "Dashboard", href: "/dashboard" },
   { icon: Users, label: "Elenco", href: "/elenco" },
   { icon: CalendarDays, label: "Calendario", href: "/calendario" },
   { icon: Trophy, label: "Competicoes", href: "/competicoes" },

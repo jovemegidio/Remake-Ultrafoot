@@ -30,11 +30,10 @@ import { TrainingModal } from "@/components/modals/training-modal"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { FilterModal } from "@/components/modals/filter-modal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { type Team } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
 import { PlayerAvatar } from "@/components/player-avatar"
-
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Mock players data - includes one player close to retirement
 const playersData = [
@@ -95,6 +94,7 @@ interface FilterOptions {
 }
 
 export default function ElencoPage() {
+  const { team: userTeam } = useUserTeam()
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
   const [players, setPlayers] = useState(playersData)

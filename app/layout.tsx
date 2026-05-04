@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Oswald } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
 import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
@@ -48,7 +47,6 @@ export default function RootLayout({
             </NotificationsProvider>
           </GamepadProvider>
         </ThemeProvider>
-        {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
   )

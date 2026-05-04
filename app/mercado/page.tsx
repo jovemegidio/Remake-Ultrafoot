@@ -22,10 +22,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { FilterModal } from "@/components/modals/filter-modal"
 import { SearchPlayerModal } from "@/components/modals/search-player-modal"
-import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
+import { serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
 import { PlayerAvatar } from "@/components/player-avatar"
-
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Mock transfer targets - use index-based fallback for reliability
 // serieATeams order: [0]=BOT, [1]=PAL, [2]=FLA, [3]=FOR, [4]=INT, [5]=SAO, [6]=COR
@@ -69,6 +68,7 @@ interface FilterOptions {
 }
 
 export default function MercadoPage() {
+  const { team: userTeam } = useUserTeam()
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState("comprar")
   const [selectedPlayer, setSelectedPlayer] = useState<typeof transferTargets[0] | null>(null)

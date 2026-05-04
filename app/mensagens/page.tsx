@@ -27,10 +27,8 @@ import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
-
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Message type
 interface Message {
@@ -123,6 +121,7 @@ const initialMessages: Message[] = [
 ]
 
 export default function MensagensPage() {
+  const { team: userTeam } = useUserTeam()
   const [filter, setFilter] = useState("all")
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(messages[0])

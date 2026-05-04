@@ -15,19 +15,8 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
-
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
-
-// Historical data
-const clubHistory = {
-  founded: 1928,
-  seasons: 98,
-  bestPosition: "Campeao Serie B (2019)",
-  totalTitles: 5,
-  stadiumCapacity: userTeam.estadio_cap,
-}
 
 const titles = [
   { name: "Campeonato Brasileiro Serie B", year: 2019, icon: Trophy },
@@ -53,6 +42,14 @@ const legends = [
 ]
 
 export default function HistoricoPage() {
+  const { team: userTeam } = useUserTeam()
+  const clubHistory = {
+    founded: 1928,
+    seasons: 98,
+    bestPosition: "Campeao Serie B (2019)",
+    totalTitles: 5,
+    stadiumCapacity: userTeam.estadio_cap,
+  }
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
       <GameSidebar />

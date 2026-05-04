@@ -28,12 +28,13 @@ import { GamepadControlsBar, GamepadHeaderControls } from "@/components/gamepad-
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam, useGameState } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
 import { useMemo } from "react"
 
 export default function DashboardPage() {
   const { team: userTeam } = useUserTeam()
+  const { state } = useGameState()
 
   const standings = useMemo(
     () =>
@@ -127,7 +128,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-white/40 uppercase tracking-wider">Temporada</div>
-                <div className="text-xl font-bold text-white">2026</div>
+                <div className="text-xl font-bold text-white">{state.season}</div>
               </div>
             </div>
           </div>

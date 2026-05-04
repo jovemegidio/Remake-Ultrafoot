@@ -20,13 +20,9 @@ import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
-import { getTeamByShort, serieATeams, formatCurrency } from "@/lib/teams-data"
-
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
-
-// Financial data
+import { formatCurrency } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
 const financialData = {
-  balance: userTeam.saldo,
   monthlyIncome: 4500000,
   monthlyExpenses: 3200000,
   transferBudget: 15000000,
@@ -57,6 +53,7 @@ const recentTransactions = [
 ]
 
 export default function FinancasPage() {
+  const { team: userTeam } = useUserTeam()
   const netIncome = financialData.monthlyIncome - financialData.monthlyExpenses
   const wagePercentage = (financialData.wageUsed / financialData.wageBudget) * 100
 
@@ -69,7 +66,7 @@ export default function FinancasPage() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-semibold text-white tracking-tight">Financas</h1>
-          <p className="text-sm text-white/50 mt-1">Gestao financeira do clube - Temporada 2026</p>
+          <p className="text-sm text-white/50 mt-1">Gestao financeira do clube — {userTeam.nome}</p>
         </div>
 
         {/* Balance Cards */}
