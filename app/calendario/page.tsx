@@ -9,6 +9,8 @@ import {
   Clock,
   Play,
   Calendar as CalendarIcon,
+  Home,
+  Plane,
 } from "lucide-react"
 import Image from "next/image"
 import { GameSidebar } from "@/components/game-sidebar"
@@ -181,12 +183,12 @@ export default function CalendarioPage() {
                     </div>
                   </div>
                   <div className={cn(
-                    "px-1.5 py-0.5 rounded text-[9px] font-medium",
+                    "flex items-center justify-center h-6 w-6 rounded",
                     f.fixture!.isHome 
                       ? "bg-[#1db954]/20 text-[#1db954]" 
                       : "bg-white/10 text-white/60"
                   )}>
-                    {f.fixture!.isHome ? "C" : "F"}
+                    {f.fixture!.isHome ? <Home className="h-3 w-3" /> : <Plane className="h-3 w-3" />}
                   </div>
                 </button>
               ))}
@@ -287,7 +289,10 @@ export default function CalendarioPage() {
                           : "bg-white/10 text-white/70 border border-white/10"
                       )}>
                         <TeamCrest team={fixture.opponent} size="xs" />
-                        <span className="truncate">{fixture.isHome ? "Casa" : "Fora"}</span>
+                        <span className="truncate flex items-center gap-1">
+                          {fixture.isHome ? <Home className="h-2.5 w-2.5" /> : <Plane className="h-2.5 w-2.5" />}
+                          {fixture.isHome ? "Casa" : "Fora"}
+                        </span>
                         <span className="ml-auto text-[9px] opacity-60">{fixture.competitionShort}</span>
                       </div>
                     )}

@@ -59,7 +59,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-export function MusicPlayer({ className, defaultSize = "compact" }: MusicPlayerProps) {
+export function MusicPlayer({ className, defaultSize = "mini" }: MusicPlayerProps) {
   const [size, setSize] = useState<PlayerSize>(defaultSize)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -204,14 +204,15 @@ export function MusicPlayer({ className, defaultSize = "compact" }: MusicPlayerP
     )
   }
 
-  // Mini player - floating pill
+  // Mini player - EA FC style floating pill
   if (size === "mini") {
     return (
       <div className={cn(
-        "fixed bottom-4 right-4 z-30 flex items-center gap-3 rounded-full bg-[#282828] pl-1 pr-4 py-1 shadow-xl border border-white/10",
+        "fixed bottom-4 right-4 z-30 flex items-center gap-2 rounded-full bg-[#1a1a1a] pl-1.5 pr-2 py-1.5 shadow-2xl border border-[#333]",
         className
       )}>
-        <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full">
+        {/* Album cover with lime green glow */}
+        <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full ring-2 ring-[#c5e946] ring-offset-1 ring-offset-[#1a1a1a]">
           <Image src={track.cover} alt="Album" fill className="object-cover" unoptimized />
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -219,33 +220,37 @@ export function MusicPlayer({ className, defaultSize = "compact" }: MusicPlayerP
             </div>
           )}
         </div>
-        <div className="min-w-0 max-w-[120px]">
-          <div className="truncate text-sm font-medium text-white">{track.title}</div>
-          <div className="truncate text-[10px] text-[#b3b3b3]">{track.artist}</div>
+        
+        {/* Track info */}
+        <div className="min-w-0 max-w-[100px] px-1">
+          <div className="truncate text-xs font-semibold text-white leading-tight">{track.title}</div>
+          <div className="truncate text-[10px] text-[#888]">{track.artist}</div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={togglePlay}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black transition hover:scale-105"
-            aria-label={playing ? "Pausar" : "Tocar"}
-          >
-            {playing ? <Pause className="h-4 w-4 fill-current" /> : <Play className="h-4 w-4 fill-current translate-x-0.5" />}
-          </button>
-          <button
-            onClick={() => setSize("compact")}
-            className="p-1.5 text-[#b3b3b3] hover:text-white transition-colors"
-            aria-label="Expandir"
-          >
-            <ChevronUp className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setSize("hidden")}
-            className="p-1.5 text-[#b3b3b3] hover:text-white transition-colors"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        
+        {/* Play button - EA FC lime green style */}
+        <button
+          onClick={togglePlay}
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-[#c5e946] text-black transition hover:bg-[#d4f055] hover:scale-105"
+          aria-label={playing ? "Pausar" : "Tocar"}
+        >
+          {playing ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 fill-current translate-x-0.5" />}
+        </button>
+        
+        {/* Expand and close buttons */}
+        <button
+          onClick={() => setSize("compact")}
+          className="p-1 text-[#666] hover:text-white transition-colors"
+          aria-label="Expandir"
+        >
+          <ChevronUp className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={() => setSize("hidden")}
+          className="p-1 text-[#666] hover:text-white transition-colors"
+          aria-label="Fechar"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
     )
   }

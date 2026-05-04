@@ -200,20 +200,27 @@ export default function MatchCenterPage() {
     )
   }
 
+  // Durante a partida ao vivo, ocultar a sidebar para evitar reinicio
+  const isMatchInProgress = state.phase === "first" || state.phase === "second" || state.phase === "halftime"
+
   return (
-    <div className="min-h-screen pl-[72px] pb-4 bg-[#0a0a0a]">
-      <GameSidebar />
+    <div className={cn("min-h-screen pb-4 bg-[#0a0a0a]", !isMatchInProgress && "pl-[72px]")}>
+      {/* Sidebar oculta durante a partida */}
+      {!isMatchInProgress && <GameSidebar />}
 
       {/* Top bar */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl px-6">
         <div className="flex items-center gap-3">
-          <Link
-            href="/partida"
-            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white/5 transition text-white/60 hover:text-white"
-            aria-label="Voltar"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
+          {/* Botao de voltar oculto durante a partida para evitar saida acidental */}
+          {!isMatchInProgress && (
+            <Link
+              href="/partida"
+              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white/5 transition text-white/60 hover:text-white"
+              aria-label="Voltar"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+          )}
           <h1 className="text-xl font-semibold text-white">Partida</h1>
           {state.phase !== "fulltime" && state.phase !== "pre" && (
             <span className="ml-2 flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-[10px] font-medium tracking-wider text-red-400">

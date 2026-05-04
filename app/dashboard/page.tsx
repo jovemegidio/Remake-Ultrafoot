@@ -18,6 +18,8 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownRight,
+  Home,
+  Plane,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -182,7 +184,10 @@ export default function DashboardPage() {
                     <TeamCrest team={fixtures[0].home} size="xl" />
                     <div>
                       <div className="font-semibold text-white">{fixtures[0].home.nome}</div>
-                      <div className="text-xs text-white/40">Casa</div>
+                      <div className="text-xs text-white/40 flex items-center gap-1">
+                        <Home className="h-3 w-3" />
+                        Casa
+                      </div>
                     </div>
                   </div>
                   
@@ -195,7 +200,10 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <div className="font-semibold text-white">{fixtures[0].away.nome}</div>
-                      <div className="text-xs text-white/40">Visitante</div>
+                      <div className="text-xs text-white/40 flex items-center gap-1 justify-end">
+                        <Plane className="h-3 w-3" />
+                        Visitante
+                      </div>
                     </div>
                     <TeamCrest team={fixtures[0].away} size="xl" />
                   </div>
@@ -480,9 +488,10 @@ function FixtureRow({
       </div>
 
       <span className={cn(
-        "px-2 py-0.5 rounded text-[10px] font-medium",
+        "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium",
         isHome ? "bg-[#1db954]/20 text-[#1db954]" : "bg-white/10 text-white/60"
       )}>
+        {isHome ? <Home className="h-3 w-3" /> : <Plane className="h-3 w-3" />}
         {isHome ? "Casa" : "Fora"}
       </span>
 

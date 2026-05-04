@@ -42,6 +42,7 @@ import {
 import { useUserTeam } from "@/lib/save-system"
 import { saveMatchContext, loadMatchContext } from "@/lib/match-context"
 import { simulateFullMatch } from "@/lib/match-engine"
+import { TacticalEditor } from "@/components/tactical-editor"
 
 type KitVariant = "home" | "away" | "third"
 type Weather = "sunny" | "cloudy" | "rain"
@@ -253,12 +254,8 @@ export default function PreMatchPage() {
     })
   }, [hydrated, homeTeam.curto, awayTeam.curto, homeKit, awayKit, duration, weather, matchMode])
 
-  const handleQuickSim = async () => {
-    setSimulating(true)
-    setQuickSimResult(null)
-    setShowQuickSim(true)
-    // Pequeno delay para suspense
-    await new Promise(r => setTimeout(r, 1200))
+  const handleQuickSim = () => {
+    // Simulacao rapida - vai direto ao resultado
     const final = simulateFullMatch({
       homeTeam,
       awayTeam,
@@ -269,6 +266,7 @@ export default function PreMatchPage() {
     })
     setQuickSimResult({ homeGoals: final.home.goals, awayGoals: final.away.goals })
     setSimulating(false)
+    setShowQuickSim(true)
   }
 
   if (!hydrated) {
@@ -451,85 +449,66 @@ export default function PreMatchPage() {
 
       <MusicPlayer />
 
-      {/* Modal: Ver Escalação */}
+      {/* Editor Tatico - Ver Escalação */}
       {showLineup && (
-        <Modal title="Escalação" onClose={() => setShowLineup(false)}>
-          <div className="grid md:grid-cols-2 gap-6">
-            <LineupPreview team={homeTeam} side="MANDANTE" />
-            <LineupPreview team={awayTeam} side="VISITANTE" />
-          </div>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setShowLineup(false)}
-              className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
-            >
-              Fechar
-            </Button>
-            <Link href="/elenco">
-              <Button className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold">
-                <Users className="mr-2 h-4 w-4" />
-                Ir para Elenco
-              </Button>
-            </Link>
-          </div>
-        </Modal>
+        <TacticalEditor
+          team={userTeam}
+          onClose={() => setShowLineup(false)}
+          onSave={(formation, players) => {
+            console.log("[v0] Formation saved:", formation, players)
+          }}
+        />
       )}
 
-      {/* Modal: Simular Rápido */}
-      {showQuickSim && (
+      {/* Modal: Simular Rápido - Resultado direto */}
+      {showQuickSim && quickSimResult && (
         <Modal
-          title="Simulação Rápida"
+          title="Resultado Final"
           onClose={() => {
             setShowQuickSim(false)
             setQuickSimResult(null)
           }}
         >
           <div className="text-center py-6">
-            {simulating ? (
-              <div className="flex flex-col items-center gap-4">
-                <Loader2 className="h-10 w-10 text-[#1db954] animate-spin" />
-                <div className="text-sm text-white/70">Simulando partida completa...</div>
-                <div className="text-xs text-white/40">{duration} minutos · {homeTeam.curto} vs {awayTeam.curto}</div>
-              </div>
-            ) : quickSimResult ? (
-              <div className="space-y-6">
-                <div className="text-[10px] font-bold tracking-[0.3em] text-white/50">RESULTADO</div>
-                <div className="flex items-center justify-center gap-6">
-                  <div className="flex flex-col items-center gap-2">
-                    <TeamCrest team={homeTeam} size="lg" />
-                    <span className="text-xs font-medium text-white/70">{homeTeam.curto}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-5xl font-black tabular-nums text-white">{quickSimResult.homeGoals}</span>
-                    <span className="text-xl font-light text-white/30">×</span>
-                    <span className="text-5xl font-black tabular-nums text-white">{quickSimResult.awayGoals}</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <TeamCrest team={awayTeam} size="lg" />
-                    <span className="text-xs font-medium text-white/70">{awayTeam.curto}</span>
-                  </div>
+            <div className="space-y-6">
+              <div className="text-[10px] font-bold tracking-[0.3em] text-white/50">PLACAR FINAL</div>
+              <div className="flex items-center justify-center gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <TeamCrest team={homeTeam} size="lg" />
+                  <span className="text-xs font-medium text-white/70">{homeTeam.curto}</span>
                 </div>
-                <div className="flex justify-center gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleQuickSim}
-                    className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
-                  >
-                    Simular Novamente
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowQuickSim(false)
-                      router.push("/dashboard")
-                    }}
-                    className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold"
-                  >
-                    Confirmar Resultado
-                  </Button>
+                <div className="flex items-center gap-3">
+                  <span className="text-5xl font-black tabular-nums text-white">{quickSimResult.homeGoals}</span>
+                  <span className="text-xl font-light text-white/30">×</span>
+                  <span className="text-5xl font-black tabular-nums text-white">{quickSimResult.awayGoals}</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <TeamCrest team={awayTeam} size="lg" />
+                  <span className="text-xs font-medium text-white/70">{awayTeam.curto}</span>
                 </div>
               </div>
-            ) : null}
+              <div className="text-xs text-white/40">
+                {duration} minutos · {matchInfo.competition}
+              </div>
+              <div className="flex justify-center gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleQuickSim}
+                  className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
+                >
+                  Simular Novamente
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowQuickSim(false)
+                    router.push("/dashboard")
+                  }}
+                  className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold"
+                >
+                  Confirmar Resultado
+                </Button>
+              </div>
+            </div>
           </div>
         </Modal>
       )}
