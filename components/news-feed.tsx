@@ -12,33 +12,33 @@ import { cn } from "@/lib/utils"
 const NEWS_SOURCES = {
   ge: {
     name: "ge",
-    logo: "/logos/ge-logo.svg",
-    color: "#FF0000",
-    bgColor: "bg-red-600",
+    logo: "/logos/ge.png",
+    color: "#00A859",
+    bgColor: "bg-[#00A859]",
   },
   espn: {
     name: "ESPN Brasil",
-    logo: "/logos/espn-logo.svg",
-    color: "#FF0000",
-    bgColor: "bg-red-700",
+    logo: "/logos/espn.png",
+    color: "#E60000",
+    bgColor: "bg-[#E60000]",
   },
   brasileirao: {
     name: "Brasileirao",
-    logo: "/logos/brasileirao-logo.svg",
-    color: "#00875A",
-    bgColor: "bg-[#00875A]",
+    logo: "/logos/brasileirao.png",
+    color: "#BFFF00",
+    bgColor: "bg-[#BFFF00]",
   },
   cazeTv: {
-    name: "CazéTV",
-    logo: "/logos/cazetv-logo.svg",
-    color: "#7C3AED",
-    bgColor: "bg-purple-600",
+    name: "CazeTV",
+    logo: "/logos/cazetv.png",
+    color: "#0066FF",
+    bgColor: "bg-[#0066FF]",
   },
   tntSports: {
     name: "TNT Sports",
-    logo: "/logos/tnt-sports-logo.svg",
-    color: "#E50914",
-    bgColor: "bg-red-600",
+    logo: "/logos/tnt-sports.png",
+    color: "#FF00FF",
+    bgColor: "bg-[#FF00FF]",
   },
 }
 
@@ -295,64 +295,22 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   )
 }
 
-// Logo do veiculo de comunicacao
+// Logo do veiculo de comunicacao usando imagens reais
 function SourceLogo({ source, size = "md" }: { source: keyof typeof NEWS_SOURCES; size?: "sm" | "md" }) {
   const sourceData = NEWS_SOURCES[source]
   const sizeClass = size === "sm" ? "w-8 h-8" : "w-10 h-10"
   
-  // Renderiza logos customizadas SVG para cada veiculo
-  const renderLogo = () => {
-    switch(source) {
-      case "ge":
-        return (
-          <div className={cn(sizeClass, "rounded-full bg-red-600 flex items-center justify-center")}>
-            <span className="text-white font-black text-sm italic">ge</span>
-          </div>
-        )
-      case "espn":
-        return (
-          <div className={cn(sizeClass, "rounded-full bg-[#CC0000] flex items-center justify-center")}>
-            <svg viewBox="0 0 100 40" className="w-7 h-4">
-              <text x="50" y="30" textAnchor="middle" fill="white" fontFamily="Arial Black" fontSize="28" fontWeight="900" fontStyle="italic">
-                ESPN
-              </text>
-            </svg>
-          </div>
-        )
-      case "brasileirao":
-        return (
-          <div className={cn(sizeClass, "rounded-full bg-[#00875A] flex items-center justify-center p-1.5")}>
-            <svg viewBox="0 0 50 50" className="w-full h-full">
-              {/* Bola de futebol estilizada */}
-              <circle cx="25" cy="25" r="22" fill="none" stroke="white" strokeWidth="2"/>
-              <circle cx="25" cy="25" r="8" fill="white"/>
-              <path d="M25 3 L25 17 M25 33 L25 47 M3 25 L17 25 M33 25 L47 25" stroke="white" strokeWidth="2"/>
-              <text x="25" y="52" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">A</text>
-            </svg>
-          </div>
-        )
-      case "cazeTv":
-        return (
-          <div className={cn(sizeClass, "rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center")}>
-            <span className="text-white font-bold text-[10px]">CAZÉ</span>
-          </div>
-        )
-      case "tntSports":
-        return (
-          <div className={cn(sizeClass, "rounded-full bg-[#FF0000] flex items-center justify-center")}>
-            <span className="text-white font-black text-[9px]">TNT</span>
-          </div>
-        )
-      default:
-        return (
-          <div className={cn(sizeClass, "rounded-full bg-white/10 flex items-center justify-center")}>
-            <span className="text-white font-bold text-sm">{sourceData.name.charAt(0)}</span>
-          </div>
-        )
-    }
-  }
-
-  return renderLogo()
+  return (
+    <div className={cn(sizeClass, "rounded-full overflow-hidden relative")}>
+      <Image
+        src={sourceData.logo}
+        alt={sourceData.name}
+        fill
+        className="object-cover"
+        sizes={size === "sm" ? "32px" : "40px"}
+      />
+    </div>
+  )
 }
 
 // Badge de verificado

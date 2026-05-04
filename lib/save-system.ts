@@ -80,20 +80,32 @@ export function useGameState(): {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    setStateInternal(loadGameState())
+    // Carrega estado inicial de forma sincrona
+    const saved = loadGameState()
+    setStateInternal(saved)
     setHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    // Listener separado para sincronizar entre abas
+    if (!hydrated) return
+    
     const onStorage = (e: StorageEvent) => {
       if (e.key && e.key !== STORAGE_KEY) return
-      setStateInternal(loadGameState())
+      // Usa setTimeout para evitar setState durante render
+      setTimeout(() => {
+        setStateInternal(loadGameState())
+      }, 0)
     }
     window.addEventListener("storage", onStorage)
     return () => window.removeEventListener("storage", onStorage)
-  }, [])
+  }, [hydrated])
 
   const setState = (next: Partial<GameState>) => {
     setStateInternal(prev => {
       const merged = { ...prev, ...next }
-      saveGameState(merged)
+      // Salva de forma assincrona para nao bloquear
+      queueMicrotask(() => saveGameState(merged))
       return merged
     })
   }

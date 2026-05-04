@@ -2,14 +2,13 @@
 
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, memo, useMemo } from "react"
 
 interface PlayerAvatarProps {
   name: string
   teamColor?: string
   size?: "xs" | "sm" | "md" | "lg" | "xl"
   className?: string
-  // ID do jogador do TheSportsDB ou FIFA para buscar foto real
   playerId?: string
 }
 
@@ -29,9 +28,8 @@ const textSizeClasses = {
   xl: "text-4xl",
 }
 
-// Banco de fotos reais de jogadores brasileiros (TheSportsDB, Wikipedia, etc)
+// Banco de fotos reais de jogadores brasileiros
 const realPlayerPhotos: Record<string, string> = {
-  // Jogadores famosos do futebol brasileiro
   "Neymar": "https://www.thesportsdb.com/images/media/player/thumb/5lf1p41574873364.jpg",
   "Vinicius Junior": "https://www.thesportsdb.com/images/media/player/thumb/n0rip31596640316.jpg",
   "Richarlison": "https://www.thesportsdb.com/images/media/player/thumb/5cpb4t1574874008.jpg",
@@ -59,16 +57,14 @@ const realPlayerPhotos: Record<string, string> = {
   "Alex Sandro": "https://www.thesportsdb.com/images/media/player/thumb/vl3hry1574873344.jpg",
 }
 
-// Função para normalizar nome para busca
 function normalizePlayerName(name: string): string {
   return name
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim()
 }
 
-// Função para encontrar foto do jogador
 function findPlayerPhoto(name: string): string | null {
   const normalizedName = normalizePlayerName(name)
   
@@ -76,7 +72,6 @@ function findPlayerPhoto(name: string): string | null {
     if (normalizePlayerName(playerName) === normalizedName) {
       return photoUrl
     }
-    // Busca parcial (primeiro nome ou sobrenome)
     const nameParts = normalizedName.split(" ")
     const playerParts = normalizePlayerName(playerName).split(" ")
     
@@ -88,41 +83,31 @@ function findPlayerPhoto(name: string): string | null {
   return null
 }
 
-// Função para gerar URL de avatar usando uma API de rostos gerados
-function getGeneratedFaceUrl(name: string, size: number = 128): string {
-  // Usa RandomUser.me ou similar para rostos mais realistas
-  const seed = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  // Usa API que gera rostos baseados em seed
-  return `https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(name)}&size=${size}&backgroundColor=transparent`
-}
-
-// Função para gerar foto estilo cartão de jogador
 function getPlayerCardUrl(name: string, size: number = 128): string {
   const seed = encodeURIComponent(name)
-  // Usa big-heads para um estilo cartoon mais profissional
   return `https://api.dicebear.com/7.x/big-smile/svg?seed=${seed}&size=${size}&backgroundColor=transparent`
 }
 
-export function PlayerAvatar({ 
+export const PlayerAvatar = memo(function PlayerAvatar({ 
   name, 
   teamColor,
   size = "md", 
   className,
-  playerId
 }: PlayerAvatarProps) {
   const [imageError, setImageError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   
   const pixelSize = size === "xs" ? 32 : size === "sm" ? 40 : size === "md" ? 56 : size === "lg" ? 64 : 96
   
-  // Primeiro tenta buscar foto real do jogador
-  const realPhoto = findPlayerPhoto(name)
-  
-  // Se não encontrar foto real, usa avatar gerado
-  const avatarUrl = realPhoto || getPlayerCardUrl(name, pixelSize * 2)
+  const { realPhoto, avatarUrl } = useMemo(() => {
+    const photo = findPlayerPhoto(name)
+    return {
+      realPhoto: photo,
+      avatarUrl: photo || getPlayerCardUrl(name, pixelSize * 2)
+    }
+  }, [name, pixelSize])
   
   if (imageError) {
-    // Fallback para iniciais se o avatar falhar
     return (
       <div 
         className={cn(
@@ -165,7 +150,7 @@ export function PlayerAvatar({
         className={cn(
           "object-cover transition-opacity duration-200",
           isLoading ? "opacity-0" : "opacity-100",
-          realPhoto && "object-top" // Para fotos reais, foca no rosto
+          realPhoto && "object-top"
         )}
         onLoad={() => setIsLoading(false)}
         onError={() => setImageError(true)}
@@ -173,10 +158,9 @@ export function PlayerAvatar({
       />
     </div>
   )
-}
+})
 
-// Versão circular para uso em listas compactas
-export function PlayerAvatarCircle({ 
+export const PlayerAvatarCircle = memo(function PlayerAvatarCircle({ 
   name, 
   teamColor,
   size = "md", 
@@ -187,8 +171,13 @@ export function PlayerAvatarCircle({
   
   const pixelSize = size === "xs" ? 32 : size === "sm" ? 40 : size === "md" ? 56 : size === "lg" ? 64 : 96
   
-  const realPhoto = findPlayerPhoto(name)
-  const avatarUrl = realPhoto || getPlayerCardUrl(name, pixelSize * 2)
+  const { realPhoto, avatarUrl } = useMemo(() => {
+    const photo = findPlayerPhoto(name)
+    return {
+      realPhoto: photo,
+      avatarUrl: photo || getPlayerCardUrl(name, pixelSize * 2)
+    }
+  }, [name, pixelSize])
   
   if (imageError) {
     return (
@@ -241,4 +230,4 @@ export function PlayerAvatarCircle({
       />
     </div>
   )
-}
+})
