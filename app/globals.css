@@ -507,4 +507,59 @@
   .animate-blink {
     animation: blink 1.5s ease-in-out infinite;
   }
+
+  /* Performance mode classes */
+  .perf-low * {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+
+  .no-animations *,
+  .no-animations *::before,
+  .no-animations *::after {
+    animation: none !important;
+    animation-duration: 0ms !important;
+  }
+
+  .no-transitions *,
+  .no-transitions *::before,
+  .no-transitions *::after {
+    transition: none !important;
+    transition-duration: 0ms !important;
+  }
+
+  .no-blur .backdrop-blur-sm,
+  .no-blur .backdrop-blur-md,
+  .no-blur .backdrop-blur-lg,
+  .no-blur .backdrop-blur-xl,
+  .no-blur .backdrop-blur-2xl,
+  .no-blur .backdrop-blur-3xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* GPU acceleration hints for smooth animations */
+  .perf-high *,
+  .perf-ultra * {
+    will-change: auto;
+  }
+
+  /* Contain layout for better performance */
+  .contain-layout {
+    contain: layout;
+  }
+
+  .contain-paint {
+    contain: paint;
+  }
+
+  .contain-strict {
+    contain: strict;
+  }
+
+  /* Image loading optimizations */
+  .lazy-image {
+    content-visibility: auto;
+    contain-intrinsic-size: 100px 100px;
+  }
 }

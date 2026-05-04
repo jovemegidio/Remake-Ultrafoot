@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
@@ -35,8 +35,9 @@ const sizePixels = {
 /**
  * Team crest component that loads real escudos from Ultrafoot repository
  * Falls back to styled abbreviation if image fails to load
+ * Memoized for performance in lists
  */
-export function TeamCrest({
+export const TeamCrest = memo(function TeamCrest({
   team,
   teamShort,
   fileKey,
@@ -119,7 +120,7 @@ export function TeamCrest({
       />
     </div>
   )
-}
+})
 
 // Export a simpler version for lists
 export function TeamCrestSmall({ 

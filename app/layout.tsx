@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Oswald } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
+import { PerformanceProvider } from "@/components/performance-provider"
 import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
 import "./globals.css"
 
@@ -41,12 +42,14 @@ export default function RootLayout({
     <html lang="pt-BR" className={`bg-background ${geist.variable} ${geistMono.variable} ${oswald.variable}`}>
       <body className="font-sans antialiased">
         <ThemeProvider>
-          <GamepadProvider>
-            <NotificationsProvider>
-              {children}
-              <NotificationToastContainer />
-            </NotificationsProvider>
-          </GamepadProvider>
+          <PerformanceProvider>
+            <GamepadProvider>
+              <NotificationsProvider>
+                {children}
+                <NotificationToastContainer />
+              </NotificationsProvider>
+            </GamepadProvider>
+          </PerformanceProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>

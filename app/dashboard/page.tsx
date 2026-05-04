@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { memo, useMemo, useState } from "react"
 import {
   Calendar,
   ChevronRight,
@@ -20,50 +21,173 @@ import {
   ArrowDownRight,
   Home,
   Plane,
+  FastForward,
+  Siren,
+  Ban,
+  AlertTriangle,
+  Activity,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
-import { GamepadControlsBar, GamepadHeaderControls } from "@/components/gamepad-controls-bar"
+import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
-import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { serieATeams, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
+import { useUserTeam, useGameState } from "@/lib/save-system"
+import { useCareerData } from "@/hooks/use-career-data"
 import { cn } from "@/lib/utils"
-import { useMemo } from "react"
+
+// Memoized components for performance
+const StandingRow = memo(function StandingRow({ 
+  s, 
+  isUser 
+}: { 
+  s: { pos: number; team: Team; pts: number; w: number; d: number; l: number }
+  isUser: boolean 
+}) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2.5 items-center text-sm",
+        isUser && "bg-primary/10 border-l-2 border-primary"
+      )}
+    >
+      <span className={cn(
+        "text-xs font-medium",
+        s.pos <= 4 ? "text-[#1db954]" : s.pos >= 17 ? "text-red-500" : "text-white/50"
+      )}>
+        {s.pos}
+      </span>
+      <div className="flex items-center gap-2 min-w-0">
+        <TeamCrest team={s.team} size="xs" />
+        <span className="truncate text-xs text-white">{s.team.nome}</span>
+      </div>
+      <span className="text-center font-semibold text-white">{s.pts}</span>
+      <span className="text-center text-xs text-white/50">{s.w}</span>
+      <span className="text-center text-xs text-white/50">{s.d}</span>
+      <span className="text-center text-xs text-white/50">{s.l}</span>
+    </div>
+  )
+})
+
+const FixtureRow = memo(function FixtureRow({ 
+  fixture, 
+  userTeam, 
+  isNext 
+}: { 
+  fixture: { home: Team; away: Team; date: string; time: string; competition: string }
+  userTeam: Team
+  isNext: boolean 
+}) {
+  const isHome = fixture.home.curto === userTeam.curto
+  const opponent = isHome ? fixture.away : fixture.home
+
+  return (
+    <Link
+      href="/partida"
+      className={cn(
+        "flex items-center gap-3 px-5 py-3 hover:bg-white/5 transition-colors",
+        isNext && "bg-primary/5"
+      )}
+    >
+      <div className={cn(
+        "flex h-8 w-8 items-center justify-center rounded-lg",
+        isHome ? "bg-[#1db954]/20 text-[#1db954]" : "bg-white/10 text-white/60"
+      )}>
+        {isHome ? <Home className="h-4 w-4" /> : <Plane className="h-4 w-4" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <TeamCrest team={opponent} size="xs" />
+          <span className="font-medium text-white text-sm truncate">
+            {isHome ? "vs" : "@"} {opponent.nome}
+          </span>
+        </div>
+        <div className="text-[10px] text-white/40 mt-0.5">{fixture.competition}</div>
+      </div>
+      <div className="text-right">
+        <div className="text-xs text-white/60">{fixture.date}</div>
+        <div className="text-[10px] text-primary">{fixture.time}</div>
+      </div>
+    </Link>
+  )
+})
 
 export default function DashboardPage() {
-  const { team: userTeam } = useUserTeam()
+  const { team: userTeam, hydrated: teamHydrated } = useUserTeam()
+  const { state: gameState, setState: setGameState } = useGameState()
+  const { 
+    players,
+    season, 
+    teamMorale, 
+    boardSatisfaction,
+    events,
+    advanceWeek,
+    getInjuredPlayers,
+    getSuspendedPlayers,
+    getExpiringContracts,
+    getWeeklySalaryBill,
+    hydrated: careerHydrated,
+  } = useCareerData()
+
+  const [advanceModalOpen, setAdvanceModalOpen] = useState(false)
+  const [weekEvents, setWeekEvents] = useState<string[]>([])
 
   const standings = useMemo(
     () =>
       serieATeams.slice(0, 8).map((team, index) => ({
         pos: index + 1,
         team,
-        pts: 0,
-        w: 0,
-        d: 0,
-        l: 0,
+        pts: season.competitionResults.brasileirao.points,
+        w: season.competitionResults.brasileirao.wins,
+        d: season.competitionResults.brasileirao.draws,
+        l: season.competitionResults.brasileirao.losses,
         isUser: team.curto === userTeam.curto,
       })),
-    [userTeam.curto],
+    [userTeam.curto, season],
   )
 
   const fixtures = useMemo(() => {
     const opponents = serieATeams.filter(t => t.curto !== userTeam.curto)
-    // Fallback to different teams if opponents list is somehow empty
-    const fallbackOpponents = serieATeams.length > 1 ? serieATeams.slice(0, 6) : [serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0]]
+    const fallbackOpponents = serieATeams.length > 1 ? serieATeams.slice(0, 6) : [serieATeams[0]]
     const opponentsList = opponents.length > 0 ? opponents : fallbackOpponents
     const opp = (i: number) => opponentsList[i % opponentsList.length]
+    
+    const baseWeek = season.week
     return [
-      { home: userTeam, away: opp(0), date: "Jan 15", time: "16:00", competition: "Brasileirao" },
-      { home: opp(1), away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
-      { home: userTeam, away: opp(2), date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
-      { home: opp(3), away: userTeam, date: "Fev 05", time: "19:00", competition: "Brasileirao" },
-      { home: userTeam, away: opp(4), date: "Fev 12", time: "16:00", competition: "Brasileirao" },
-      { home: opp(5), away: userTeam, date: "Fev 19", time: "20:00", competition: "Brasileirao" },
+      { home: userTeam, away: opp(0), date: `Sem ${baseWeek + 1}`, time: "16:00", competition: "Brasileirao" },
+      { home: opp(1), away: userTeam, date: `Sem ${baseWeek + 2}`, time: "21:30", competition: "Brasileirao" },
+      { home: userTeam, away: opp(2), date: `Sem ${baseWeek + 3}`, time: "18:30", competition: "Copa do Brasil" },
+      { home: opp(3), away: userTeam, date: `Sem ${baseWeek + 4}`, time: "19:00", competition: "Brasileirao" },
+      { home: userTeam, away: opp(4), date: `Sem ${baseWeek + 5}`, time: "16:00", competition: "Brasileirao" },
+      { home: opp(5), away: userTeam, date: `Sem ${baseWeek + 6}`, time: "20:00", competition: "Brasileirao" },
     ]
-  }, [userTeam])
+  }, [userTeam, season.week])
+
+  // Stats
+  const injuredCount = getInjuredPlayers().length
+  const suspendedCount = getSuspendedPlayers().length
+  const expiringCount = getExpiringContracts().length
+  const weeklySalary = getWeeklySalaryBill()
+
+  const handleAdvanceWeek = () => {
+    advanceWeek()
+    // Atualiza o gameState tambem
+    setGameState({ week: season.week + 1 })
+    setWeekEvents(events.slice(0, 5))
+    setAdvanceModalOpen(true)
+  }
+
+  if (!teamHydrated || !careerHydrated) {
+    return (
+      <div className="min-h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-white/50">Carregando...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
@@ -118,16 +242,16 @@ export default function DashboardPage() {
             {/* Quick Stats */}
             <div className="flex gap-6">
               <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">Saldo</div>
-                <div className="text-xl font-bold text-[#1db954]">{formatCurrency(userTeam.saldo)}</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">Semana</div>
+                <div className="text-xl font-bold text-primary">{season.week}/48</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-white/40 uppercase tracking-wider">Posicao</div>
-                <div className="text-xl font-bold text-white">13°</div>
+                <div className="text-xl font-bold text-white">{season.competitionResults.brasileirao.position || "-"}°</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-white/40 uppercase tracking-wider">Temporada</div>
-                <div className="text-xl font-bold text-white">2026</div>
+                <div className="text-xl font-bold text-white">{season.year}</div>
               </div>
             </div>
           </div>
@@ -141,13 +265,13 @@ export default function DashboardPage() {
               <Play className="h-4 w-4" />
               Proxima Partida
             </Link>
-            <Link 
-              href="/calendario"
-              className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            <button 
+              onClick={handleAdvanceWeek}
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-primary hover:text-white hover:bg-primary/10 transition-colors"
             >
-              <Calendar className="h-4 w-4" />
-              Calendario
-            </Link>
+              <FastForward className="h-4 w-4" />
+              Avancar Semana
+            </button>
             <Link 
               href="/elenco"
               className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
@@ -164,6 +288,51 @@ export default function DashboardPage() {
             </Link>
           </div>
         </section>
+
+        {/* Squad Status Alert */}
+        {(injuredCount > 0 || suspendedCount > 0 || expiringCount > 0) && (
+          <section className="grid gap-3 md:grid-cols-3">
+            {injuredCount > 0 && (
+              <Link href="/elenco?filter=injured" className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 hover:bg-red-500/15 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/20">
+                    <Siren className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-red-400">{injuredCount} Jogador(es) Lesionado(s)</div>
+                    <div className="text-xs text-white/50">Clique para ver detalhes</div>
+                  </div>
+                </div>
+              </Link>
+            )}
+            {suspendedCount > 0 && (
+              <Link href="/elenco?filter=suspended" className="rounded-xl bg-orange-500/10 border border-orange-500/20 p-4 hover:bg-orange-500/15 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/20">
+                    <Ban className="h-5 w-5 text-orange-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-orange-400">{suspendedCount} Jogador(es) Suspenso(s)</div>
+                    <div className="text-xs text-white/50">Clique para ver detalhes</div>
+                  </div>
+                </div>
+              </Link>
+            )}
+            {expiringCount > 0 && (
+              <Link href="/elenco" className="rounded-xl bg-yellow-500/10 border border-yellow-500/20 p-4 hover:bg-yellow-500/15 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/20">
+                    <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-yellow-400">{expiringCount} Contrato(s) Expirando</div>
+                    <div className="text-xs text-white/50">Renovar antes que saiam</div>
+                  </div>
+                </div>
+              </Link>
+            )}
+          </section>
+        )}
 
         {/* Main Grid */}
         <div className="grid gap-5 lg:grid-cols-3">
@@ -218,7 +387,10 @@ export default function DashboardPage() {
                     <Play className="h-4 w-4 fill-current" />
                     Jogar Partida
                   </Link>
-                  <button className="px-4 py-2.5 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors">
+                  <button 
+                    onClick={handleAdvanceWeek}
+                    className="px-4 py-2.5 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors"
+                  >
                     Simular
                   </button>
                 </div>
@@ -234,7 +406,12 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/40">Satisfacao:</span>
-                  <span className="text-sm font-semibold text-yellow-500">50%</span>
+                  <span className={cn(
+                    "text-sm font-semibold",
+                    boardSatisfaction >= 70 ? "text-[#1db954]" : boardSatisfaction >= 40 ? "text-yellow-500" : "text-red-400"
+                  )}>
+                    {boardSatisfaction}%
+                  </span>
                 </div>
               </div>
               
@@ -242,7 +419,7 @@ export default function DashboardPage() {
                 <GoalCard
                   title="Meta Principal"
                   description="Permanecer na Serie A"
-                  progress={50}
+                  progress={boardSatisfaction}
                   status="Em andamento"
                   tone="primary"
                 />
@@ -279,6 +456,28 @@ export default function DashboardPage() {
 
           {/* Right Column - Standings & News */}
           <div className="space-y-5">
+            {/* Team Morale */}
+            <section className="rounded-xl bg-[#141414] border border-white/5 p-5">
+              <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
+                <Activity className="h-4 w-4 text-blue-400" />
+                MORAL DO ELENCO
+              </div>
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "text-3xl font-bold",
+                  teamMorale >= 70 ? "text-[#1db954]" : teamMorale >= 40 ? "text-yellow-500" : "text-red-400"
+                )}>
+                  {teamMorale}%
+                </div>
+                <div className="flex-1">
+                  <Progress value={teamMorale} className="h-2" />
+                  <div className="text-xs text-white/40 mt-1">
+                    {teamMorale >= 70 ? "Excelente" : teamMorale >= 40 ? "Regular" : "Baixo"}
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* Standings */}
             <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
@@ -300,28 +499,7 @@ export default function DashboardPage() {
                 </div>
                 
                 {standings.map((s) => (
-                  <div
-                    key={s.pos}
-                    className={cn(
-                      "grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2.5 items-center text-sm",
-                      s.isUser && "bg-primary/10 border-l-2 border-primary"
-                    )}
-                  >
-                    <span className={cn(
-                      "text-xs font-medium",
-                      s.pos <= 4 ? "text-[#1db954]" : s.pos >= 17 ? "text-red-500" : "text-white/50"
-                    )}>
-                      {s.pos}
-                    </span>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <TeamCrest team={s.team} size="xs" />
-                      <span className="truncate text-xs text-white">{s.team.nome}</span>
-                    </div>
-                    <span className="text-center font-semibold text-white">{s.pts}</span>
-                    <span className="text-center text-xs text-white/50">{s.w}</span>
-                    <span className="text-center text-xs text-white/50">{s.d}</span>
-                    <span className="text-center text-xs text-white/50">{s.l}</span>
-                  </div>
+                  <StandingRow key={s.pos} s={s} isUser={s.isUser} />
                 ))}
               </div>
               
@@ -334,45 +512,25 @@ export default function DashboardPage() {
               </Link>
             </section>
 
-            {/* News */}
-            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
-                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Newspaper className="h-4 w-4 text-primary" />
-                  NOTICIAS
-                </div>
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[10px] font-semibold text-primary">
-                  3
-                </span>
-              </div>
-              
-              <div className="divide-y divide-white/5">
-                {[
-                  { tag: "MERCADO", title: "Equipe abre janela com orcamento disponivel", time: "2h" },
-                  { tag: "STAFF", title: "Comissao tecnica define estrategia para temporada", time: "5h" },
-                  { tag: "ELENCO", title: "Capitao renova vinculo ate 2028", time: "1d" },
-                ].map((news) => (
-                  <div key={news.title} className="px-5 py-3 hover:bg-white/5 transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-2 text-[10px] text-primary font-medium tracking-wider">
-                      <FileText className="h-3 w-3" />
-                      {news.tag}
-                      <span className="ml-auto text-white/40 font-normal">{news.time}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-white/80 group-hover:text-white transition-colors line-clamp-2">
-                      {news.title}
-                    </p>
+            {/* Recent Events */}
+            {events.length > 0 && (
+              <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                  <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                    <Newspaper className="h-4 w-4 text-primary" />
+                    EVENTOS RECENTES
                   </div>
-                ))}
-              </div>
-              
-              <Link 
-                href="/mensagens"
-                className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/5"
-              >
-                Ver todas noticias
-                <ChevronRight className="h-3 w-3" />
-              </Link>
-            </section>
+                </div>
+                
+                <div className="divide-y divide-white/5 max-h-[200px] overflow-y-auto">
+                  {events.slice(0, 5).map((event, i) => (
+                    <div key={i} className="px-5 py-3">
+                      <p className="text-sm text-white/80">{event}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Quick Finance */}
             <section className="rounded-xl bg-[#141414] border border-white/5 p-5">
@@ -387,17 +545,16 @@ export default function DashboardPage() {
                   <span className="text-lg font-bold text-[#1db954]">{formatCurrency(userTeam.saldo)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Receita mensal</span>
+                  <span className="text-sm text-white/60">Folha semanal</span>
                   <span className="text-sm font-medium text-white flex items-center gap-1">
-                    <ArrowUpRight className="h-3 w-3 text-[#1db954]" />
-                    R$ 2.1M
+                    <ArrowDownRight className="h-3 w-3 text-red-500" />
+                    {formatCurrency(weeklySalary)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Folha salarial</span>
-                  <span className="text-sm font-medium text-white flex items-center gap-1">
-                    <ArrowDownRight className="h-3 w-3 text-red-500" />
-                    R$ 1.8M
+                  <span className="text-sm text-white/60">Elenco</span>
+                  <span className="text-sm font-medium text-white">
+                    {players.length} jogadores
                   </span>
                 </div>
               </div>
@@ -412,11 +569,50 @@ export default function DashboardPage() {
             </section>
           </div>
         </div>
-  </main>
+      </main>
   
-  <GamepadControlsBar />
-  <MusicPlayer />
-  </div>
+      <GamepadControlsBar />
+      <MusicPlayer />
+
+      {/* Advance Week Modal */}
+      <Dialog open={advanceModalOpen} onOpenChange={setAdvanceModalOpen}>
+        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <FastForward className="h-5 w-5 text-primary" />
+              Semana {season.week} - {season.year}
+            </DialogTitle>
+            <DialogDescription className="text-white/50">
+              Resumo da semana
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-3">
+            {weekEvents.length > 0 ? (
+              weekEvents.map((event, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+                  <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-white/80">{event}</p>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-white/50">
+                Semana tranquila. Nenhum evento especial.
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              onClick={() => setAdvanceModalOpen(false)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }
 
@@ -449,59 +645,9 @@ function GoalCard({
         <Progress value={progress} className="h-1.5" />
         <div className="flex justify-between text-[10px] text-white/40">
           <span>Progresso</span>
-          <span className="font-medium text-white">{progress}%</span>
+          <span>{progress}%</span>
         </div>
       </div>
-    </div>
-  )
-}
-
-function FixtureRow({
-  fixture,
-  userTeam,
-  isNext,
-}: {
-  fixture: { home: Team; away: Team; date: string; time: string; competition: string }
-  userTeam: Team
-  isNext?: boolean
-}) {
-  const isHome = fixture.home.curto === userTeam.curto
-
-  return (
-    <div className={cn(
-      "flex items-center gap-4 px-5 py-3",
-      isNext && "bg-[#1db954]/5"
-    )}>
-      <div className="w-16 text-xs">
-        <div className="text-white/80">{fixture.date}</div>
-        <div className="text-white/40">{fixture.time}</div>
-      </div>
-      
-      <div className="flex items-center gap-2 flex-1">
-        <TeamCrest team={fixture.home} size="sm" />
-        <span className={cn("text-sm", fixture.home.curto === userTeam.curto && "font-semibold text-white")}>
-          {fixture.home.curto}
-        </span>
-        <span className="text-white/30 mx-2">vs</span>
-        <span className={cn("text-sm", fixture.away.curto === userTeam.curto && "font-semibold text-white")}>
-          {fixture.away.curto}
-        </span>
-        <TeamCrest team={fixture.away} size="sm" />
-      </div>
-
-      <span className={cn(
-        "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium",
-        isHome ? "bg-[#1db954]/20 text-[#1db954]" : "bg-white/10 text-white/60"
-      )}>
-        {isHome ? <Home className="h-3 w-3" /> : <Plane className="h-3 w-3" />}
-        {isHome ? "Casa" : "Fora"}
-      </span>
-
-      {isNext && (
-        <span className="px-2 py-0.5 rounded bg-[#1db954] text-black text-[10px] font-semibold">
-          PROXIMA
-        </span>
-      )}
     </div>
   )
 }

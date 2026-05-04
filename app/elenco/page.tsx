@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, memo } from "react"
 import Link from "next/link"
 import {
   ChevronRight,
   Filter,
   Search,
-  SortAsc,
   Star,
   Users,
   Zap,
@@ -17,6 +16,12 @@ import {
   AlertTriangle,
   Clock,
   Check,
+  Heart,
+  Activity,
+  Siren,
+  Ban,
+  FileText,
+  Dumbbell,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -30,32 +35,14 @@ import { TrainingModal } from "@/components/modals/training-modal"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { FilterModal } from "@/components/modals/filter-modal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 import { PlayerAvatar } from "@/components/player-avatar"
-
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
-
-// Mock players data - includes one player close to retirement
-const playersData = [
-  { id: 1, name: "Cleiton", position: "GOL", age: 28, overall: 78, potential: 80, value: 8500000, pace: 45, shooting: 20, passing: 55, dribbling: 35, defending: 25, physical: 70 },
-  { id: 2, name: "Nathan Mendes", position: "LD", age: 24, overall: 75, potential: 82, value: 6200000, pace: 82, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 70 },
-  { id: 3, name: "Pedro Henrique", position: "ZAG", age: 27, overall: 77, potential: 78, value: 7800000, pace: 68, shooting: 45, passing: 60, dribbling: 55, defending: 80, physical: 82 },
-  { id: 4, name: "Eduardo Santos", position: "ZAG", age: 25, overall: 76, potential: 80, value: 7200000, pace: 70, shooting: 42, passing: 58, dribbling: 52, defending: 78, physical: 80 },
-  { id: 5, name: "Luan Candido", position: "LE", age: 23, overall: 74, potential: 83, value: 5800000, pace: 85, shooting: 58, passing: 72, dribbling: 75, defending: 70, physical: 68 },
-  { id: 6, name: "Jadsom Silva", position: "VOL", age: 22, overall: 73, potential: 84, value: 5500000, pace: 72, shooting: 60, passing: 75, dribbling: 72, defending: 76, physical: 75 },
-  { id: 7, name: "Eric Ramires", position: "VOL", age: 26, overall: 77, potential: 79, value: 8000000, pace: 75, shooting: 65, passing: 78, dribbling: 74, defending: 75, physical: 78 },
-  { id: 8, name: "Lincoln", position: "MEI", age: 24, overall: 78, potential: 85, value: 12000000, pace: 80, shooting: 75, passing: 80, dribbling: 82, defending: 55, physical: 68 },
-  { id: 9, name: "Vitinho", position: "PD", age: 25, overall: 76, potential: 80, value: 7500000, pace: 88, shooting: 72, passing: 70, dribbling: 80, defending: 35, physical: 65 },
-  { id: 10, name: "Helinho", position: "PE", age: 22, overall: 75, potential: 84, value: 6800000, pace: 90, shooting: 70, passing: 72, dribbling: 82, defending: 32, physical: 62 },
-  { id: 11, name: "Eduardo Sasha", position: "ATA", age: 30, overall: 79, potential: 79, value: 9500000, pace: 78, shooting: 82, passing: 68, dribbling: 75, defending: 38, physical: 76 },
-  { id: 12, name: "Thiago Borbas", position: "ATA", age: 21, overall: 72, potential: 86, value: 4500000, pace: 85, shooting: 74, passing: 62, dribbling: 76, defending: 30, physical: 70 },
-  { id: 13, name: "Marcelo Souza", position: "VOL", age: 36, overall: 74, potential: 74, value: 2000000, pace: 58, shooting: 55, passing: 72, dribbling: 68, defending: 76, physical: 65 },
-]
+import { useUserTeam } from "@/lib/save-system"
+import { useCareerData } from "@/hooks/use-career-data"
+import { type PlayerCareerData, INJURY_LABELS, canPlayerPlay, calculateEffectiveOverall } from "@/lib/season-system"
 
 // Retirement age threshold
 const RETIREMENT_WARNING_AGE = 34
-const RETIREMENT_AGE = 38
 
 const positionColors: Record<string, string> = {
   GOL: "bg-amber-500/20 text-amber-400 border-amber-500/30",
@@ -84,6 +71,16 @@ function formatValue(value: number) {
   }).format(value)
 }
 
+function formatSalary(weekly: number) {
+  const monthly = weekly * 4
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    notation: 'compact',
+    maximumFractionDigits: 1
+  }).format(monthly) + "/mes"
+}
+
 interface FilterOptions {
   positions: string[]
   minOverall: number
@@ -94,16 +91,146 @@ interface FilterOptions {
   maxValue: number
 }
 
+// Player card memoizado para performance
+const PlayerCard = memo(function PlayerCard({
+  player,
+  isSelected,
+  teamColor,
+  onClick,
+}: {
+  player: PlayerCareerData
+  isSelected: boolean
+  teamColor: string
+  onClick: () => void
+}) {
+  const { canPlay, reason } = canPlayerPlay(player)
+  const effectiveOverall = calculateEffectiveOverall(player)
+  
+  // Calcula valor de mercado baseado no overall e idade
+  const marketValue = Math.floor(
+    (player.overall * player.overall * 500) * 
+    (player.age < 25 ? 1.3 : player.age > 30 ? 0.7 : 1)
+  )
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "rounded-xl bg-[#141414] border p-4 text-left transition-all",
+        isSelected 
+          ? "border-[#1db954] ring-1 ring-[#1db954]" 
+          : "border-white/5 hover:border-white/10",
+        !canPlay && "opacity-60"
+      )}
+    >
+      <div className="flex items-start gap-4">
+        {/* Player Avatar */}
+        <div className="relative">
+          <PlayerAvatar 
+            name={player.name} 
+            teamColor={teamColor}
+            size="lg" 
+          />
+          <div className={cn(
+            "absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-md border",
+            positionColors[player.position] || "bg-gray-500/20 text-gray-400 border-gray-500/30"
+          )}>
+            <span className="text-[10px] font-bold">{player.position}</span>
+          </div>
+          
+          {/* Status indicators */}
+          {player.injury && (
+            <div className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white">
+              <Siren className="h-3 w-3" />
+            </div>
+          )}
+          {player.suspension && (
+            <div className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-white">
+              <Ban className="h-3 w-3" />
+            </div>
+          )}
+        </div>
+
+        {/* Player Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-medium text-white truncate">{player.name}</h3>
+            <span className={cn("text-xl font-bold", getOverallColor(effectiveOverall))}>
+              {effectiveOverall}
+            </span>
+          </div>
+          <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
+            <span className={cn(player.age >= RETIREMENT_WARNING_AGE && "text-amber-400")}>
+              {player.age} anos
+              {player.age >= RETIREMENT_WARNING_AGE && (
+                <AlertTriangle className="inline h-3 w-3 ml-1" />
+              )}
+            </span>
+            <span className="text-white/20">|</span>
+            <span>{formatValue(marketValue)}</span>
+          </div>
+          
+          {/* Status bars */}
+          <div className="mt-2 grid grid-cols-2 gap-1">
+            <div className="flex items-center gap-1">
+              <Heart className="h-3 w-3 text-red-400" />
+              <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    player.condition > 70 ? "bg-[#1db954]" : player.condition > 40 ? "bg-yellow-400" : "bg-red-400"
+                  )}
+                  style={{ width: `${player.condition}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Activity className="h-3 w-3 text-blue-400" />
+              <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    player.morale > 70 ? "bg-[#1db954]" : player.morale > 40 ? "bg-yellow-400" : "bg-red-400"
+                  )}
+                  style={{ width: `${player.morale}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Injury/Suspension indicator */}
+          {!canPlay && (
+            <div className="mt-2 text-[10px] text-red-400 truncate">
+              {reason}
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
+  )
+})
+
 export default function ElencoPage() {
+  const { team: userTeam, hydrated: teamHydrated } = useUserTeam()
+  const { 
+    players, 
+    teamMorale,
+    setTrainingFocus,
+    getInjuredPlayers,
+    getSuspendedPlayers,
+    getExpiringContracts,
+    getWeeklySalaryBill,
+    getSquadAverageOverall,
+    hydrated: careerHydrated,
+  } = useCareerData()
+
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
-  const [players, setPlayers] = useState(playersData)
-  const [selectedPlayer, setSelectedPlayer] = useState(players[0])
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
   const [trainingOpen, setTrainingOpen] = useState(false)
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [retirementModalOpen, setRetirementModalOpen] = useState(false)
-  const [playerToRetire, setPlayerToRetire] = useState<typeof playersData[0] | null>(null)
   const [retired, setRetired] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     positions: [],
@@ -115,6 +242,11 @@ export default function ElencoPage() {
     maxValue: 100000000,
   })
 
+  const selectedPlayer = useMemo(() => 
+    players.find(p => p.playerId === selectedPlayerId) || players[0],
+    [players, selectedPlayerId]
+  )
+
   const filteredPlayers = useMemo(() => {
     return players.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase())
@@ -122,7 +254,9 @@ export default function ElencoPage() {
         (filter === "gol" && p.position === "GOL") ||
         (filter === "def" && ["ZAG", "LD", "LE"].includes(p.position)) ||
         (filter === "mei" && ["VOL", "MEI"].includes(p.position)) ||
-        (filter === "ata" && ["PD", "PE", "ATA"].includes(p.position))
+        (filter === "ata" && ["PD", "PE", "ATA"].includes(p.position)) ||
+        (filter === "injured" && p.injury !== null) ||
+        (filter === "suspended" && p.suspension !== null)
       const matchesPosition = filters.positions.length === 0 || filters.positions.includes(p.position)
       const matchesOverall = p.overall >= filters.minOverall && p.overall <= filters.maxOverall
       const matchesAge = p.age >= filters.minAge && p.age <= filters.maxAge
@@ -131,17 +265,9 @@ export default function ElencoPage() {
   }, [players, search, filter, filters])
 
   const handleTrainingConfirm = (attribute: string) => {
-    // Update player stats (mock implementation)
-    setPlayers(prev => prev.map(p => {
-      if (p.id === selectedPlayer.id) {
-        const improvement = Math.floor(Math.random() * 2) + 1
-        return {
-          ...p,
-          [attribute]: Math.min(99, p[attribute as keyof typeof p] as number + improvement)
-        }
-      }
-      return p
-    }))
+    if (selectedPlayer) {
+      setTrainingFocus(selectedPlayer.playerId, attribute as PlayerCareerData["trainingFocus"])
+    }
   }
 
   const activeFiltersCount = useMemo(() => {
@@ -152,37 +278,33 @@ export default function ElencoPage() {
     return count
   }, [filters])
 
-  // Players close to retirement
-  const playersNearRetirement = useMemo(() => {
-    return players.filter(p => p.age >= RETIREMENT_WARNING_AGE)
-  }, [players])
-
-  // Handle retirement confirmation
-  const handleRetirePlayer = (player: typeof playersData[0]) => {
-    setPlayerToRetire(player)
-    setRetirementModalOpen(true)
-    setRetired(false)
-  }
+  // Stats do elenco
+  const injuredCount = getInjuredPlayers().length
+  const suspendedCount = getSuspendedPlayers().length
+  const expiringCount = getExpiringContracts().length
+  const squadAverage = getSquadAverageOverall()
+  const salaryBill = getWeeklySalaryBill()
 
   const confirmRetirement = () => {
-    if (playerToRetire) {
-      setPlayers(prev => prev.filter(p => p.id !== playerToRetire.id))
-      setRetired(true)
-      setTimeout(() => {
-        setRetirementModalOpen(false)
-        setPlayerToRetire(null)
-        setRetired(false)
-        // Select another player if the retired one was selected
-        if (selectedPlayer.id === playerToRetire.id) {
-          const remaining = players.filter(p => p.id !== playerToRetire.id)
-          setSelectedPlayer(remaining[0])
-        }
-      }, 1500)
-    }
+    // No sistema real, isso removeria o jogador
+    setRetired(true)
+    setTimeout(() => {
+      setRetirementModalOpen(false)
+      setRetired(false)
+    }, 1500)
   }
 
-  // Check if selected player can retire
-  const canRetire = selectedPlayer.age >= RETIREMENT_WARNING_AGE
+  if (!teamHydrated || !careerHydrated) {
+    return (
+      <div className="min-h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-white/50">Carregando elenco...</div>
+      </div>
+    )
+  }
+
+  const { canPlay: selectedCanPlay, reason: selectedReason } = selectedPlayer 
+    ? canPlayerPlay(selectedPlayer) 
+    : { canPlay: true, reason: undefined }
 
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
@@ -197,7 +319,9 @@ export default function ElencoPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-2xl font-semibold text-white tracking-tight">Elenco</h1>
-                <p className="text-sm text-white/50 mt-1">{players.length} jogadores no elenco principal</p>
+                <p className="text-sm text-white/50 mt-1">
+                  {players.length} jogadores - Media OVR {squadAverage}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -225,76 +349,75 @@ export default function ElencoPage() {
               </div>
             </div>
 
+            {/* Squad Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-lg bg-[#141414] border border-white/5 p-3">
+                <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium tracking-wider">
+                  <Activity className="h-3.5 w-3.5 text-[#1db954]" />
+                  MORAL
+                </div>
+                <div className="mt-1 text-lg font-semibold text-white">{teamMorale}%</div>
+              </div>
+              <div className="rounded-lg bg-[#141414] border border-white/5 p-3">
+                <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium tracking-wider">
+                  <Siren className="h-3.5 w-3.5 text-red-400" />
+                  LESIONADOS
+                </div>
+                <div className={cn("mt-1 text-lg font-semibold", injuredCount > 0 ? "text-red-400" : "text-white")}>
+                  {injuredCount}
+                </div>
+              </div>
+              <div className="rounded-lg bg-[#141414] border border-white/5 p-3">
+                <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium tracking-wider">
+                  <Ban className="h-3.5 w-3.5 text-orange-400" />
+                  SUSPENSOS
+                </div>
+                <div className={cn("mt-1 text-lg font-semibold", suspendedCount > 0 ? "text-orange-400" : "text-white")}>
+                  {suspendedCount}
+                </div>
+              </div>
+              <div className="rounded-lg bg-[#141414] border border-white/5 p-3">
+                <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium tracking-wider">
+                  <FileText className="h-3.5 w-3.5 text-yellow-400" />
+                  CONTRATOS
+                </div>
+                <div className={cn("mt-1 text-lg font-semibold", expiringCount > 0 ? "text-yellow-400" : "text-white")}>
+                  {expiringCount} exp.
+                </div>
+              </div>
+            </div>
+
             {/* Position Filter */}
             <Tabs value={filter} onValueChange={setFilter} className="w-full">
-              <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto">
-                <TabsTrigger value="all" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">Todos</TabsTrigger>
-                <TabsTrigger value="gol" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">GOL</TabsTrigger>
-                <TabsTrigger value="def" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">DEF</TabsTrigger>
-                <TabsTrigger value="mei" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">MEI</TabsTrigger>
-                <TabsTrigger value="ata" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">ATA</TabsTrigger>
+              <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto flex-wrap">
+                <TabsTrigger value="all" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-3 py-2">Todos</TabsTrigger>
+                <TabsTrigger value="gol" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-3 py-2">GOL</TabsTrigger>
+                <TabsTrigger value="def" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-3 py-2">DEF</TabsTrigger>
+                <TabsTrigger value="mei" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-3 py-2">MEI</TabsTrigger>
+                <TabsTrigger value="ata" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-3 py-2">ATA</TabsTrigger>
+                {injuredCount > 0 && (
+                  <TabsTrigger value="injured" className="text-xs data-[state=active]:bg-red-500/20 data-[state=active]:text-red-400 text-red-400/50 px-3 py-2">
+                    Lesionados ({injuredCount})
+                  </TabsTrigger>
+                )}
+                {suspendedCount > 0 && (
+                  <TabsTrigger value="suspended" className="text-xs data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 text-orange-400/50 px-3 py-2">
+                    Suspensos ({suspendedCount})
+                  </TabsTrigger>
+                )}
               </TabsList>
             </Tabs>
 
             {/* Players Grid */}
             <div className="grid gap-3 sm:grid-cols-2">
               {filteredPlayers.map((player) => (
-                <button
-                  key={player.id}
-                  onClick={() => setSelectedPlayer(player)}
-                  className={cn(
-                    "rounded-xl bg-[#141414] border p-4 text-left transition-all",
-                    selectedPlayer.id === player.id 
-                      ? "border-[#1db954] ring-1 ring-[#1db954]" 
-                      : "border-white/5 hover:border-white/10"
-                  )}
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Player Avatar */}
-                    <div className="relative">
-                      <PlayerAvatar 
-                        name={player.name} 
-                        teamColor={userTeam.cor1}
-                        size="lg" 
-                      />
-                      <div className={cn(
-                        "absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-md border",
-                        positionColors[player.position]
-                      )}>
-                        <span className="text-[10px] font-bold">{player.position}</span>
-                      </div>
-                    </div>
-
-                    {/* Player Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-medium text-white truncate">{player.name}</h3>
-                        <span className={cn("text-xl font-bold", getOverallColor(player.overall))}>
-                          {player.overall}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
-                        <span className={cn(player.age >= RETIREMENT_WARNING_AGE && "text-amber-400")}>
-                          {player.age} anos
-                          {player.age >= RETIREMENT_WARNING_AGE && (
-                            <AlertTriangle className="inline h-3 w-3 ml-1" />
-                          )}
-                        </span>
-                        <span className="text-white/20">|</span>
-                        <span>{formatValue(player.value)}</span>
-                      </div>
-                      <div className="mt-2 flex items-center gap-1">
-                        <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-[#1db954] to-[#1ed760] rounded-full"
-                            style={{ width: `${player.overall}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-white/40 ml-1">POT {player.potential}</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                <PlayerCard
+                  key={player.playerId}
+                  player={player}
+                  isSelected={selectedPlayer?.playerId === player.playerId}
+                  teamColor={userTeam.cor1}
+                  onClick={() => setSelectedPlayerId(player.playerId)}
+                />
               ))}
             </div>
 
@@ -310,118 +433,230 @@ export default function ElencoPage() {
           </section>
 
           {/* Player Detail */}
-          <section className="space-y-4">
-            <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              {/* Player Header */}
-              <div 
-                className="relative p-6"
-                style={{
-                  background: `linear-gradient(135deg, ${userTeam.cor1}40, ${userTeam.cor2}20)`
-                }}
-              >
-                <div className="absolute top-4 right-4">
-                  <span className={cn("text-5xl font-bold", getOverallColor(selectedPlayer.overall))}>
-                    {selectedPlayer.overall}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <PlayerAvatar 
-                    name={selectedPlayer.name} 
-                    teamColor={userTeam.cor1}
-                    size="xl" 
-                    className="rounded-2xl"
-                  />
-                  <div>
-                    <div className={cn(
-                      "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold border",
-                      positionColors[selectedPlayer.position]
-                    )}>
-                      {selectedPlayer.position}
-                    </div>
-                    <h2 className="mt-1 text-2xl font-bold text-white">{selectedPlayer.name}</h2>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-white/60">
-                      <span>{selectedPlayer.age} anos</span>
-                      <span className="text-white/30">|</span>
-                      <TeamCrest team={userTeam} size="xs" />
-                      <span>{userTeam.curto}</span>
+          {selectedPlayer && (
+            <section className="space-y-4">
+              <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+                {/* Player Header */}
+                <div 
+                  className="relative p-6"
+                  style={{
+                    background: `linear-gradient(135deg, ${userTeam.cor1}40, ${userTeam.cor2}20)`
+                  }}
+                >
+                  <div className="absolute top-4 right-4">
+                    <span className={cn("text-5xl font-bold", getOverallColor(selectedPlayer.overall))}>
+                      {calculateEffectiveOverall(selectedPlayer)}
+                    </span>
+                    {selectedPlayer.overall !== calculateEffectiveOverall(selectedPlayer) && (
+                      <div className="text-right text-xs text-white/40 mt-1">
+                        Base: {selectedPlayer.overall}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <PlayerAvatar 
+                      name={selectedPlayer.name} 
+                      teamColor={userTeam.cor1}
+                      size="xl" 
+                      className="rounded-2xl"
+                    />
+                    <div>
+                      <div className={cn(
+                        "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold border",
+                        positionColors[selectedPlayer.position] || "bg-gray-500/20 text-gray-400 border-gray-500/30"
+                      )}>
+                        {selectedPlayer.position}
+                      </div>
+                      <h2 className="mt-1 text-2xl font-bold text-white">{selectedPlayer.name}</h2>
+                      <div className="flex items-center gap-2 mt-1 text-sm text-white/60">
+                        <span>{selectedPlayer.age} anos</span>
+                        <span className="text-white/30">|</span>
+                        <TeamCrest team={userTeam} size="xs" />
+                        <span>{userTeam.curto}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Stats */}
-              <div className="p-4 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <StatItem icon={Zap} label="RITMO" value={selectedPlayer.pace} />
-                  <StatItem icon={Target} label="FINALIZACAO" value={selectedPlayer.shooting} />
-                  <StatItem icon={Footprints} label="PASSE" value={selectedPlayer.passing} />
-                  <StatItem icon={Star} label="DRIBLE" value={selectedPlayer.dribbling} />
-                  <StatItem icon={Shield} label="DEFESA" value={selectedPlayer.defending} />
-                  <StatItem icon={TrendingUp} label="FISICO" value={selectedPlayer.physical} />
-                </div>
-
-                <div className="pt-4 border-t border-white/10">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/60">Valor de mercado</span>
-                    <span className="font-medium text-[#1db954]">{formatValue(selectedPlayer.value)}</span>
+                {/* Stats */}
+                <div className="p-4 space-y-4">
+                  {/* Condition bars */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] text-white/40 font-medium tracking-wider flex items-center gap-1">
+                          <Heart className="h-3 w-3 text-red-400" />
+                          CONDICAO
+                        </span>
+                        <span className={cn(
+                          "text-sm font-bold",
+                          selectedPlayer.condition > 70 ? "text-[#1db954]" : selectedPlayer.condition > 40 ? "text-yellow-400" : "text-red-400"
+                        )}>
+                          {selectedPlayer.condition}%
+                        </span>
+                      </div>
+                      <Progress value={selectedPlayer.condition} className="h-1.5" />
+                    </div>
+                    <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] text-white/40 font-medium tracking-wider flex items-center gap-1">
+                          <Activity className="h-3 w-3 text-blue-400" />
+                          MORAL
+                        </span>
+                        <span className={cn(
+                          "text-sm font-bold",
+                          selectedPlayer.morale > 70 ? "text-[#1db954]" : selectedPlayer.morale > 40 ? "text-yellow-400" : "text-red-400"
+                        )}>
+                          {selectedPlayer.morale}%
+                        </span>
+                      </div>
+                      <Progress value={selectedPlayer.morale} className="h-1.5" />
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm mt-2">
-                    <span className="text-white/60">Potencial</span>
-                    <div className="flex items-center gap-2">
-                      <span className={cn("text-lg font-bold", getOverallColor(selectedPlayer.potential))}>
-                        {selectedPlayer.potential}
+
+                  {/* Attributes */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <StatItem icon={Zap} label="RITMO" value={selectedPlayer.currentAttributes.pace} />
+                    <StatItem icon={Target} label="FINALIZACAO" value={selectedPlayer.currentAttributes.shooting} />
+                    <StatItem icon={Footprints} label="PASSE" value={selectedPlayer.currentAttributes.passing} />
+                    <StatItem icon={Star} label="DRIBLE" value={selectedPlayer.currentAttributes.dribbling} />
+                    <StatItem icon={Shield} label="DEFESA" value={selectedPlayer.currentAttributes.defending} />
+                    <StatItem icon={TrendingUp} label="FISICO" value={selectedPlayer.currentAttributes.physical} />
+                  </div>
+
+                  {/* Contract info */}
+                  <div className="pt-4 border-t border-white/10 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">Salario</span>
+                      <span className="font-medium text-white">{formatSalary(selectedPlayer.contract.weeklySalary)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">Contrato expira em</span>
+                      <span className={cn(
+                        "font-medium",
+                        selectedPlayer.contract.weeksRemaining <= 26 ? "text-yellow-400" : "text-white"
+                      )}>
+                        {Math.floor(selectedPlayer.contract.weeksRemaining / 52)} ano(s)
                       </span>
-                      {selectedPlayer.potential > selectedPlayer.overall && (
-                        <TrendingUp className="h-4 w-4 text-[#1db954]" />
-                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">Potencial</span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("text-lg font-bold", getOverallColor(selectedPlayer.potential))}>
+                          {selectedPlayer.potential}
+                        </span>
+                        {selectedPlayer.potential > selectedPlayer.overall && (
+                          <TrendingUp className="h-4 w-4 text-[#1db954]" />
+                        )}
+                      </div>
+                    </div>
+                    {selectedPlayer.trainingFocus && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white/60">Foco de treino</span>
+                        <span className="font-medium text-primary capitalize">{selectedPlayer.trainingFocus}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Season stats */}
+                  <div className="pt-4 border-t border-white/10">
+                    <div className="text-[10px] text-white/40 font-medium tracking-wider mb-3">ESTATISTICAS DA TEMPORADA</div>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="rounded-lg bg-white/5 p-2">
+                        <div className="text-lg font-bold text-white">{selectedPlayer.stats.matchesPlayed}</div>
+                        <div className="text-[9px] text-white/40">JOGOS</div>
+                      </div>
+                      <div className="rounded-lg bg-white/5 p-2">
+                        <div className="text-lg font-bold text-[#1db954]">{selectedPlayer.stats.goals}</div>
+                        <div className="text-[9px] text-white/40">GOLS</div>
+                      </div>
+                      <div className="rounded-lg bg-white/5 p-2">
+                        <div className="text-lg font-bold text-blue-400">{selectedPlayer.stats.assists}</div>
+                        <div className="text-[9px] text-white/40">ASSIS</div>
+                      </div>
+                      <div className="rounded-lg bg-white/5 p-2">
+                        <div className="text-lg font-bold text-yellow-400">
+                          {selectedPlayer.stats.avgRating.toFixed(1)}
+                        </div>
+                        <div className="text-[9px] text-white/40">MEDIA</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setTrainingOpen(true)}
-                className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
-              >
-                Treinar
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setNegotiationOpen(true)}
-                className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
-              >
-                Negociar
-              </Button>
-            </div>
-
-            {/* Retirement Warning */}
-            {canRetire && (
-              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-amber-400">Proximo da Aposentadoria</h4>
-                    <p className="text-xs text-white/50 mt-1">
-                      {selectedPlayer.name} tem {selectedPlayer.age} anos e pode se aposentar em breve.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRetirePlayer(selectedPlayer)}
-                      className="mt-3 border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs"
-                    >
-                      <Clock className="mr-2 h-3.5 w-3.5" />
-                      Aposentar Jogador
-                    </Button>
+              {/* Status alerts */}
+              {!selectedCanPlay && (
+                <div className={cn(
+                  "rounded-xl border p-4",
+                  selectedPlayer.injury ? "bg-red-500/10 border-red-500/20" : "bg-orange-500/10 border-orange-500/20"
+                )}>
+                  <div className="flex items-start gap-3">
+                    {selectedPlayer.injury ? (
+                      <Siren className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <Ban className="h-5 w-5 text-orange-400 shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <h4 className={cn(
+                        "text-sm font-medium",
+                        selectedPlayer.injury ? "text-red-400" : "text-orange-400"
+                      )}>
+                        {selectedPlayer.injury ? "Lesionado" : "Suspenso"}
+                      </h4>
+                      <p className="text-xs text-white/50 mt-1">
+                        {selectedReason}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              )}
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setTrainingOpen(true)}
+                  disabled={!!selectedPlayer.injury}
+                  className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
+                >
+                  <Dumbbell className="mr-2 h-4 w-4" />
+                  Treinar
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setNegotiationOpen(true)}
+                  className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
+                >
+                  Negociar
+                </Button>
               </div>
-            )}
-          </section>
+
+              {/* Retirement Warning */}
+              {selectedPlayer.age >= RETIREMENT_WARNING_AGE && (
+                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-amber-400">Proximo da Aposentadoria</h4>
+                      <p className="text-xs text-white/50 mt-1">
+                        {selectedPlayer.name} tem {selectedPlayer.age} anos e pode se aposentar em breve.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRetirementModalOpen(true)}
+                        className="mt-3 border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs"
+                      >
+                        <Clock className="mr-2 h-3.5 w-3.5" />
+                        Aposentar Jogador
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </main>
 
@@ -431,7 +666,21 @@ export default function ElencoPage() {
       <TrainingModal
         open={trainingOpen}
         onOpenChange={setTrainingOpen}
-        player={selectedPlayer}
+        player={selectedPlayer ? {
+          id: 0,
+          name: selectedPlayer.name,
+          position: selectedPlayer.position,
+          age: selectedPlayer.age,
+          overall: selectedPlayer.overall,
+          potential: selectedPlayer.potential,
+          value: 0,
+          pace: selectedPlayer.currentAttributes.pace,
+          shooting: selectedPlayer.currentAttributes.shooting,
+          passing: selectedPlayer.currentAttributes.passing,
+          dribbling: selectedPlayer.currentAttributes.dribbling,
+          defending: selectedPlayer.currentAttributes.defending,
+          physical: selectedPlayer.currentAttributes.physical,
+        } : null}
         onConfirm={handleTrainingConfirm}
       />
 
@@ -439,11 +688,11 @@ export default function ElencoPage() {
         open={negotiationOpen}
         onOpenChange={setNegotiationOpen}
         player={selectedPlayer ? {
-          id: selectedPlayer.id,
+          id: 0,
           name: selectedPlayer.name,
           position: selectedPlayer.position,
           overall: selectedPlayer.overall,
-          value: selectedPlayer.value,
+          value: Math.floor((selectedPlayer.overall * selectedPlayer.overall * 500) * (selectedPlayer.age < 25 ? 1.3 : selectedPlayer.age > 30 ? 0.7 : 1)),
         } : null}
         type="sell"
       />
@@ -483,18 +732,18 @@ export default function ElencoPage() {
           {retired ? (
             <div className="py-6 text-center">
               <div className="mx-auto mb-4 flex justify-center">
-                {playerToRetire && (
+                {selectedPlayer && (
                   <PlayerAvatar 
-                    name={playerToRetire.name} 
+                    name={selectedPlayer.name} 
                     teamColor="#1db954"
                     size="xl" 
                     className="rounded-full"
                   />
                 )}
               </div>
-              <h3 className="text-lg font-semibold text-white">{playerToRetire?.name}</h3>
+              <h3 className="text-lg font-semibold text-white">{selectedPlayer?.name}</h3>
               <p className="text-sm text-white/50 mt-2">
-                Encerrou sua carreira apos {playerToRetire?.age} anos de idade.
+                Encerrou sua carreira apos {selectedPlayer?.age} anos de idade.
               </p>
               <p className="text-xs text-white/40 mt-1">
                 Obrigado pelos servicos prestados ao clube!
@@ -503,17 +752,17 @@ export default function ElencoPage() {
           ) : (
             <>
               <div className="py-4">
-                {playerToRetire && (
+                {selectedPlayer && (
                   <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
                     <PlayerAvatar 
-                      name={playerToRetire.name} 
+                      name={selectedPlayer.name} 
                       teamColor={userTeam.cor1}
                       size="lg" 
                     />
                     <div>
-                      <h3 className="font-medium text-white">{playerToRetire.name}</h3>
-                      <p className="text-sm text-white/50">{playerToRetire.position} - {playerToRetire.age} anos</p>
-                      <p className="text-xs text-white/40 mt-1">Overall: {playerToRetire.overall}</p>
+                      <h3 className="font-medium text-white">{selectedPlayer.name}</h3>
+                      <p className="text-sm text-white/50">{selectedPlayer.position} - {selectedPlayer.age} anos</p>
+                      <p className="text-xs text-white/40 mt-1">Overall: {selectedPlayer.overall}</p>
                     </div>
                   </div>
                 )}

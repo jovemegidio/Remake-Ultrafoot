@@ -283,6 +283,10 @@ export default function ConfiguracoesPage() {
                 <Users className="mr-2 h-3.5 w-3.5" />
                 Multiplayer
               </TabsTrigger>
+              <TabsTrigger value="performance" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">
+                <Cpu className="mr-2 h-3.5 w-3.5" />
+                Performance
+              </TabsTrigger>
               <TabsTrigger value="controls" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">
                 <Gamepad2 className="mr-2 h-3.5 w-3.5" />
                 Controles
@@ -435,6 +439,121 @@ export default function ConfiguracoesPage() {
                     </div>
                     <div className="h-2 w-32 rounded-full bg-primary" />
                     <div className="h-2 w-24 rounded-full bg-accent" />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Performance Settings */}
+            <TabsContent value="performance" className="mt-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Performance Level Selection */}
+                <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+                  <div>
+                    <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                      <Cpu className="h-4 w-4 text-primary" />
+                      Nivel de Performance
+                    </h3>
+                    <p className="text-xs text-white/40 mt-1">
+                      Detectado: <span className="text-primary capitalize">{detectedLevel}</span> - Ajuste conforme seu hardware
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    {(["low", "medium", "high", "ultra"] as const).map((level) => {
+                      const isActive = performanceLevel === level
+                      const preset = performancePresets[level]
+                      const labels = performanceLevelLabels[level]
+                      
+                      return (
+                        <button
+                          key={level}
+                          onClick={() => {
+                            setPerformanceLevel(level)
+                            savePerformanceLevel(level)
+                          }}
+                          className={cn(
+                            "w-full flex items-start gap-4 p-4 rounded-lg border transition-all text-left",
+                            isActive 
+                              ? "border-primary bg-primary/10" 
+                              : "border-white/10 bg-white/5 hover:border-white/20"
+                          )}
+                        >
+                          <div className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                            level === "low" ? "bg-blue-500/20 text-blue-400" :
+                            level === "medium" ? "bg-green-500/20 text-green-400" :
+                            level === "high" ? "bg-yellow-500/20 text-yellow-400" :
+                            "bg-red-500/20 text-red-400"
+                          )}>
+                            <Zap className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white">{labels.name}</div>
+                            <div className="text-xs text-white/50 mt-0.5">{labels.description}</div>
+                          </div>
+                          {isActive && (
+                            <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+                              <Check className="h-3 w-3 text-primary-foreground" />
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Current Settings Preview */}
+                <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+                  <div>
+                    <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                      <Monitor className="h-4 w-4 text-accent" />
+                      Configuracoes Atuais
+                    </h3>
+                    <p className="text-xs text-white/40 mt-1">
+                      Baseado no nivel <span className="text-primary capitalize">{performanceLevelLabels[performanceLevel].name}</span>
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      { label: "Animacoes", enabled: performancePresets[performanceLevel].enableAnimations },
+                      { label: "Transicoes", enabled: performancePresets[performanceLevel].enableTransitions },
+                      { label: "Efeitos de Blur", enabled: performancePresets[performanceLevel].enableBlur },
+                      { label: "Sombras", enabled: performancePresets[performanceLevel].enableShadows },
+                      { label: "Particulas", enabled: performancePresets[performanceLevel].enableParticles },
+                      { label: "Efeitos na Partida", enabled: performancePresets[performanceLevel].enableMatchEffects },
+                      { label: "Celebracao de Gol", enabled: performancePresets[performanceLevel].enableGoalCelebration },
+                      { label: "Hover Effects", enabled: performancePresets[performanceLevel].enableHoverEffects },
+                      { label: "Musica de Fundo", enabled: performancePresets[performanceLevel].enableBackgroundMusic },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                        <span className="text-xs text-white/70">{item.label}</span>
+                        <span className={cn(
+                          "text-xs font-medium px-2 py-0.5 rounded",
+                          item.enabled 
+                            ? "bg-[#1db954]/20 text-[#1db954]" 
+                            : "bg-white/10 text-white/40"
+                        )}>
+                          {item.enabled ? "ON" : "OFF"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-white/50">Taxa de atualizacao da partida</span>
+                      <span className="text-sm font-medium text-white">
+                        {performancePresets[performanceLevel].matchTickRate}ms
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/50">Qualidade de imagem</span>
+                      <span className="text-sm font-medium text-white capitalize">
+                        {performancePresets[performanceLevel].imageQuality}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

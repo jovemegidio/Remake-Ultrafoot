@@ -10,6 +10,7 @@ import {
   type MatchState,
   type MatchSpeed,
 } from "@/lib/match-engine"
+import { usePerformance } from "@/components/performance-provider"
 
 export interface UseMatchSimulation {
   state: MatchState
@@ -30,6 +31,9 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
   const [state, setState] = useState<MatchState>(() => createInitialState())
   const [speed, setSpeed] = useState<MatchSpeed>("normal")
   const [isRunning, setIsRunning] = useState(false)
+  
+  // Use performance settings for tick rate optimization
+  const { tickRate: perfTickRate, isLowPerformance } = usePerformance()
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const stateRef = useRef(state)
@@ -48,7 +52,9 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
   const startTimer = useCallback((spd: MatchSpeed) => {
     stopTimer()
     const ticksPerSec = SPEED_TICKS_PER_SEC[spd]
-    const intervalMs = Math.max(33, Math.floor(1000 / ticksPerSec))
+    // Use performance tick rate as minimum interval for low-end devices
+    const minInterval = isLowPerformance ? Math.max(perfTickRate, 100) : 33
+    const intervalMs = Math.max(minInterval, Math.floor(1000 / ticksPerSec))
 
     timerRef.current = setInterval(() => {
       const cfg = configRef.current
@@ -70,7 +76,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
       stateRef.current = next
       setState(next)
     }, intervalMs)
-  }, [stopTimer])
+  }, [stopTimer, isLowPerformance, perfTickRate])
 
   const start = useCallback(() => {
     const cfg = configRef.current
