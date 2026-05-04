@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { ChevronRight, Save, FastForward, Settings } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react"
+import { ChevronRight, Save, FastForward, Settings, Check, Loader2 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { useGameState } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
 
 interface GameHeaderProps {
@@ -25,7 +26,33 @@ const navItems = [
 
 export function GameHeader({ team, showNav = true, className }: GameHeaderProps) {
   const pathname = usePathname()
-  const userTeam = team || getTeamByShort("BGT") || serieATeams[0]
+  const router = useRouter()
+  const { state, setState } = useGameState()
+  const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [advancing, setAdvancing] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    // Simulate save delay for visual feedback
+    await new Promise(resolve => setTimeout(resolve, 500))
+    setState({ updatedAt: Date.now() })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const handleAdvance = async () => {
+    setAdvancing(true)
+    // Advance to next week
+    await new Promise(resolve => setTimeout(resolve, 300))
+    setState({ week: state.week + 1 })
+    setAdvancing(false)
+    // Navigate to partida page
+    router.push("/partida")
+  }
 
   return (
     <header className={cn(
@@ -62,25 +89,49 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
       {/* Center - Season Info (optional) */}
       <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4 text-[11px] text-white/50">
-        <span>Season <span className="text-white font-medium">2026</span></span>
+        <span>Temporada <span className="text-white font-medium">{state.season}</span></span>
         <span className="w-px h-3 bg-white/20" />
-        <span>Week <span className="text-white font-medium">0/48</span></span>
+        <span>Semana <span className="text-white font-medium">{state.week}/48</span></span>
       </div>
 
       {/* Right - Team & Actions */}
       <div className="flex items-center gap-3">
-        <button className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium tracking-wider text-white/60 hover:text-white/80 transition-colors rounded hover:bg-white/5">
-          <Save className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Salvar</span>
+        <button 
+          onClick={handleSave}
+          disabled={saving}
+          className={cn(
+            "flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium tracking-wider transition-colors rounded",
+            saved 
+              ? "text-[#1db954] bg-[#1db954]/10" 
+              : "text-white/60 hover:text-white/80 hover:bg-white/5",
+            saving && "opacity-50 cursor-wait"
+          )}
+        >
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : saved ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <Save className="h-3.5 w-3.5" />
+          )}
+          <span className="hidden sm:inline">{saved ? "Salvo!" : "Salvar"}</span>
         </button>
         
-        <Link 
-          href="/partida"
-          className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold tracking-wider bg-[#1db954] text-black rounded hover:bg-[#1ed760] transition-colors"
+        <button 
+          onClick={handleAdvance}
+          disabled={advancing}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold tracking-wider bg-[#1db954] text-black rounded hover:bg-[#1ed760] transition-colors",
+            advancing && "opacity-50 cursor-wait"
+          )}
         >
-          <FastForward className="h-3.5 w-3.5" />
+          {advancing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <FastForward className="h-3.5 w-3.5" />
+          )}
           <span>Avancar</span>
-        </Link>
+        </button>
 
         <div className="w-px h-6 bg-white/10 mx-1" />
 

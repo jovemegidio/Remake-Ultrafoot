@@ -27,10 +27,11 @@ import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/te
 const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Mock transfer targets - use index-based fallback for reliability
-const palTeam = serieATeams.find(t => t.curto === "PAL") || serieATeams[1]
-const flaTeam = serieATeams.find(t => t.curto === "FLA") || serieATeams[2]
-const corTeam = serieATeams.find(t => t.curto === "COR") || serieATeams[6]
-const saoTeam = serieATeams.find(t => t.curto === "SAO") || serieATeams[5]
+// serieATeams order: [0]=BOT, [1]=PAL, [2]=FLA, [3]=FOR, [4]=INT, [5]=SAO, [6]=COR
+const palTeam = serieATeams[1] // Palmeiras
+const flaTeam = serieATeams[2] // Flamengo
+const corTeam = serieATeams[6] // Corinthians
+const saoTeam = serieATeams[5] // Sao Paulo
 
 const transferTargets = [
   { id: 1, name: "Gabriel Veron", team: palTeam, position: "PD", age: 21, overall: 78, value: 18000000, trend: "up" as const },
