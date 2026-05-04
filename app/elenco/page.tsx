@@ -14,6 +14,9 @@ import {
   Target,
   Shield,
   Footprints,
+  AlertTriangle,
+  Clock,
+  Check,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -26,12 +29,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TrainingModal } from "@/components/modals/training-modal"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { FilterModal } from "@/components/modals/filter-modal"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
 const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
-// Mock players data
+// Mock players data - includes one player close to retirement
 const playersData = [
   { id: 1, name: "Cleiton", position: "GOL", age: 28, overall: 78, potential: 80, value: 8500000, pace: 45, shooting: 20, passing: 55, dribbling: 35, defending: 25, physical: 70 },
   { id: 2, name: "Nathan Mendes", position: "LD", age: 24, overall: 75, potential: 82, value: 6200000, pace: 82, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 70 },
@@ -45,7 +49,12 @@ const playersData = [
   { id: 10, name: "Helinho", position: "PE", age: 22, overall: 75, potential: 84, value: 6800000, pace: 90, shooting: 70, passing: 72, dribbling: 82, defending: 32, physical: 62 },
   { id: 11, name: "Eduardo Sasha", position: "ATA", age: 30, overall: 79, potential: 79, value: 9500000, pace: 78, shooting: 82, passing: 68, dribbling: 75, defending: 38, physical: 76 },
   { id: 12, name: "Thiago Borbas", position: "ATA", age: 21, overall: 72, potential: 86, value: 4500000, pace: 85, shooting: 74, passing: 62, dribbling: 76, defending: 30, physical: 70 },
+  { id: 13, name: "Marcelo Souza", position: "VOL", age: 36, overall: 74, potential: 74, value: 2000000, pace: 58, shooting: 55, passing: 72, dribbling: 68, defending: 76, physical: 65 },
 ]
+
+// Retirement age threshold
+const RETIREMENT_WARNING_AGE = 34
+const RETIREMENT_AGE = 38
 
 const positionColors: Record<string, string> = {
   GOL: "bg-amber-500/20 text-amber-400 border-amber-500/30",
@@ -92,6 +101,9 @@ export default function ElencoPage() {
   const [trainingOpen, setTrainingOpen] = useState(false)
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [filterModalOpen, setFilterModalOpen] = useState(false)
+  const [retirementModalOpen, setRetirementModalOpen] = useState(false)
+  const [playerToRetire, setPlayerToRetire] = useState<typeof playersData[0] | null>(null)
+  const [retired, setRetired] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     positions: [],
     minOverall: 0,
@@ -138,6 +150,38 @@ export default function ElencoPage() {
     if (filters.minAge > 16 || filters.maxAge < 45) count++
     return count
   }, [filters])
+
+  // Players close to retirement
+  const playersNearRetirement = useMemo(() => {
+    return players.filter(p => p.age >= RETIREMENT_WARNING_AGE)
+  }, [players])
+
+  // Handle retirement confirmation
+  const handleRetirePlayer = (player: typeof playersData[0]) => {
+    setPlayerToRetire(player)
+    setRetirementModalOpen(true)
+    setRetired(false)
+  }
+
+  const confirmRetirement = () => {
+    if (playerToRetire) {
+      setPlayers(prev => prev.filter(p => p.id !== playerToRetire.id))
+      setRetired(true)
+      setTimeout(() => {
+        setRetirementModalOpen(false)
+        setPlayerToRetire(null)
+        setRetired(false)
+        // Select another player if the retired one was selected
+        if (selectedPlayer.id === playerToRetire.id) {
+          const remaining = players.filter(p => p.id !== playerToRetire.id)
+          setSelectedPlayer(remaining[0])
+        }
+      }, 1500)
+    }
+  }
+
+  // Check if selected player can retire
+  const canRetire = selectedPlayer.age >= RETIREMENT_WARNING_AGE
 
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
@@ -229,7 +273,12 @@ export default function ElencoPage() {
                         </span>
                       </div>
                       <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
-                        <span>{player.age} anos</span>
+                        <span className={cn(player.age >= RETIREMENT_WARNING_AGE && "text-amber-400")}>
+                          {player.age} anos
+                          {player.age >= RETIREMENT_WARNING_AGE && (
+                            <AlertTriangle className="inline h-3 w-3 ml-1" />
+                          )}
+                        </span>
                         <span className="text-white/20">|</span>
                         <span>{formatValue(player.value)}</span>
                       </div>
@@ -346,6 +395,30 @@ export default function ElencoPage() {
                 Negociar
               </Button>
             </div>
+
+            {/* Retirement Warning */}
+            {canRetire && (
+              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-amber-400">Proximo da Aposentadoria</h4>
+                    <p className="text-xs text-white/50 mt-1">
+                      {selectedPlayer.name} tem {selectedPlayer.age} anos e pode se aposentar em breve.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRetirePlayer(selectedPlayer)}
+                      className="mt-3 border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs"
+                    >
+                      <Clock className="mr-2 h-3.5 w-3.5" />
+                      Aposentar Jogador
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </main>
@@ -380,6 +453,90 @@ export default function ElencoPage() {
         onApply={setFilters}
         type="player"
       />
+
+      {/* Retirement Modal */}
+      <Dialog open={retirementModalOpen} onOpenChange={setRetirementModalOpen}>
+        <DialogContent className="bg-[#1a1a1a] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              {retired ? (
+                <>
+                  <Check className="h-5 w-5 text-[#1db954]" />
+                  Aposentadoria Confirmada
+                </>
+              ) : (
+                <>
+                  <Clock className="h-5 w-5 text-amber-400" />
+                  Aposentar Jogador
+                </>
+              )}
+            </DialogTitle>
+            {!retired && (
+              <DialogDescription className="text-white/50">
+                Confirme a aposentadoria do jogador
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          
+          {retired ? (
+            <div className="py-6 text-center">
+              <div className="h-20 w-20 mx-auto rounded-full bg-[#1db954]/20 flex items-center justify-center mb-4">
+                <span className="text-4xl font-bold text-[#1db954]">
+                  {playerToRetire?.name.charAt(0)}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-white">{playerToRetire?.name}</h3>
+              <p className="text-sm text-white/50 mt-2">
+                Encerrou sua carreira apos {playerToRetire?.age} anos de idade.
+              </p>
+              <p className="text-xs text-white/40 mt-1">
+                Obrigado pelos servicos prestados ao clube!
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="py-4">
+                {playerToRetire && (
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+                      <span className="font-bold text-2xl text-white/40">
+                        {playerToRetire.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-white">{playerToRetire.name}</h3>
+                      <p className="text-sm text-white/50">{playerToRetire.position} - {playerToRetire.age} anos</p>
+                      <p className="text-xs text-white/40 mt-1">Overall: {playerToRetire.overall}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs text-amber-400">
+                    <AlertTriangle className="inline h-3.5 w-3.5 mr-1" />
+                    Esta acao e irreversivel. O jogador sera removido permanentemente do elenco.
+                  </p>
+                </div>
+              </div>
+              
+              <DialogFooter className="gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setRetirementModalOpen(false)}
+                  className="border-white/10 text-white/70"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={confirmRetirement}
+                  className="bg-amber-500 text-black hover:bg-amber-400"
+                >
+                  Confirmar Aposentadoria
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

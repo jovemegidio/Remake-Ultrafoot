@@ -14,6 +14,8 @@ export interface GameState {
   managerName: string
   season: number
   week: number
+  language: string
+  selectedUniform: "home" | "away" | "third"
   createdAt: number
   updatedAt: number
 }
@@ -24,6 +26,8 @@ export const DEFAULT_STATE: GameState = {
   managerName: "Tecnico",
   season: 2026,
   week: 0,
+  language: "pt-BR",
+  selectedUniform: "home",
   createdAt: 0,
   updatedAt: 0,
 }
