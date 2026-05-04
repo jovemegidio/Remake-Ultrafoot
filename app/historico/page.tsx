@@ -9,11 +9,14 @@ import {
   Medal,
   Users,
   Target,
+  MapPin,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
+import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
-import { getTeamByShort, serieATeams, formatCurrency } from "@/lib/teams-data"
+import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { cn } from "@/lib/utils"
 
 const userTeam = getTeamByShort("RBB") || serieATeams[0]
 
@@ -51,37 +54,30 @@ const legends = [
 
 export default function HistoricoPage() {
   return (
-    <div className="min-h-screen pl-[72px] pb-24">
+    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
       <GameSidebar />
-
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="font-display tracking-widest text-primary">ULTRAFOOT</span>
-          <span className="text-border">/</span>
-          <span className="text-foreground">Historico</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <TeamCrest team={userTeam} size="sm" />
-          <span className="text-sm font-medium">{userTeam.nome}</span>
-        </div>
-      </header>
+      <GameHeader team={userTeam} />
 
       <main className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-6">
-          <TeamCrest team={userTeam} size="2xl" />
+          <div className="relative">
+            <TeamCrest team={userTeam} size="2xl" />
+            <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-[#1db954] text-xs font-bold text-[#1db954]">
+              {userTeam.prestigio}
+            </div>
+          </div>
           <div>
-            <h1 className="font-display-italic text-4xl tracking-tight">{userTeam.nome.toUpperCase()}</h1>
-            <p className="text-muted-foreground mt-1">Fundado em {clubHistory.founded} - {clubHistory.seasons} anos de historia</p>
-            <div className="flex items-center gap-4 mt-2">
-              <span className="flex items-center gap-1 text-sm">
-                <Trophy className="h-4 w-4 text-gold" />
+            <h1 className="text-3xl font-bold text-white tracking-tight">{userTeam.nome.toUpperCase()}</h1>
+            <p className="text-white/50 mt-1">Fundado em {clubHistory.founded} - {clubHistory.seasons} anos de historia</p>
+            <div className="flex items-center gap-4 mt-3">
+              <span className="flex items-center gap-1.5 text-sm text-white/70">
+                <Trophy className="h-4 w-4 text-yellow-400" />
                 {clubHistory.totalTitles} titulos
               </span>
-              <span className="flex items-center gap-1 text-sm">
-                <Star className="h-4 w-4 text-primary" />
-                Prestigio {userTeam.prestigio}
+              <span className="flex items-center gap-1.5 text-sm text-white/70">
+                <MapPin className="h-4 w-4 text-[#1db954]" />
+                {userTeam.cidade}, {userTeam.estado}
               </span>
             </div>
           </div>
@@ -89,89 +85,89 @@ export default function HistoricoPage() {
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <Calendar className="h-4 w-4 text-primary" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <Calendar className="h-4 w-4 text-blue-400" />
               FUNDACAO
             </div>
-            <div className="mt-2 font-display-italic text-3xl">{clubHistory.founded}</div>
-            <div className="text-xs text-muted-foreground mt-1">{clubHistory.seasons} temporadas</div>
+            <div className="mt-2 text-3xl font-bold text-white">{clubHistory.founded}</div>
+            <div className="text-xs text-white/40 mt-1">{clubHistory.seasons} temporadas</div>
           </div>
 
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <Trophy className="h-4 w-4 text-gold" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <Trophy className="h-4 w-4 text-yellow-400" />
               TITULOS
             </div>
-            <div className="mt-2 font-display-italic text-3xl text-gold">{clubHistory.totalTitles}</div>
-            <div className="text-xs text-muted-foreground mt-1">Conquistas na historia</div>
+            <div className="mt-2 text-3xl font-bold text-yellow-400">{clubHistory.totalTitles}</div>
+            <div className="text-xs text-white/40 mt-1">Conquistas na historia</div>
           </div>
 
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <Users className="h-4 w-4 text-accent" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <Users className="h-4 w-4 text-[#1db954]" />
               TORCIDA
             </div>
-            <div className="mt-2 font-display-italic text-3xl text-accent">
+            <div className="mt-2 text-3xl font-bold text-[#1db954]">
               {(userTeam.torcida / 1000000).toFixed(1)}M
             </div>
-            <div className="text-xs text-muted-foreground mt-1">Torcedores estimados</div>
+            <div className="text-xs text-white/40 mt-1">Torcedores estimados</div>
           </div>
 
-          <div className="eafc-card p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-display tracking-widest">
-              <Target className="h-4 w-4 text-primary" />
+          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
+              <Target className="h-4 w-4 text-purple-400" />
               ESTADIO
             </div>
-            <div className="mt-2 font-display-italic text-2xl">{userTeam.estadio_nome}</div>
-            <div className="text-xs text-muted-foreground mt-1">{userTeam.estadio_cap.toLocaleString()} lugares</div>
+            <div className="mt-2 text-xl font-bold text-white truncate">{userTeam.estadio_nome}</div>
+            <div className="text-xs text-white/40 mt-1">{userTeam.estadio_cap.toLocaleString()} lugares</div>
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Titles */}
-          <section className="eafc-card overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-card/50">
-              <Trophy className="h-4 w-4 text-gold" />
-              <h2 className="font-display tracking-widest text-xs">TITULOS</h2>
+          <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+              <Trophy className="h-4 w-4 text-yellow-400" />
+              <h2 className="text-xs font-medium text-white tracking-wider">TITULOS</h2>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-white/5">
               {titles.map((title, index) => (
-                <div key={index} className="flex items-center gap-4 px-5 py-4 hover:bg-card/50 transition-colors">
-                  <div className="h-12 w-12 rounded-lg bg-gold/20 flex items-center justify-center">
-                    <title.icon className="h-6 w-6 text-gold" />
+                <div key={index} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
+                  <div className="h-12 w-12 rounded-lg bg-yellow-400/20 flex items-center justify-center">
+                    <title.icon className="h-6 w-6 text-yellow-400" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{title.name}</div>
-                    <div className="text-sm text-muted-foreground">{title.year}</div>
+                    <div className="font-medium text-white">{title.name}</div>
+                    <div className="text-sm text-white/50">{title.year}</div>
                   </div>
-                  <div className="text-2xl font-display-italic text-gold">{title.year}</div>
+                  <div className="text-2xl font-bold text-yellow-400">{title.year}</div>
                 </div>
               ))}
             </div>
           </section>
 
           {/* Legends */}
-          <section className="eafc-card overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-card/50">
-              <Star className="h-4 w-4 text-primary" />
-              <h2 className="font-display tracking-widest text-xs">LENDAS DO CLUBE</h2>
+          <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+              <Star className="h-4 w-4 text-[#1db954]" />
+              <h2 className="text-xs font-medium text-white tracking-wider">LENDAS DO CLUBE</h2>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-white/5">
               {legends.map((legend, index) => (
-                <div key={index} className="flex items-center gap-4 px-5 py-4 hover:bg-card/50 transition-colors">
-                  <div className="h-12 w-12 rounded-lg bg-card flex items-center justify-center">
-                    <span className="font-display-italic text-xl text-muted-foreground">
+                <div key={index} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
+                  <div className="h-12 w-12 rounded-lg bg-[#1a1a1a] flex items-center justify-center">
+                    <span className="text-xl font-bold text-white/50">
                       {legend.name.charAt(0)}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{legend.name}</div>
-                    <div className="text-sm text-muted-foreground">{legend.position} - {legend.years}</div>
+                    <div className="font-medium text-white">{legend.name}</div>
+                    <div className="text-sm text-white/50">{legend.position} - {legend.years}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-display-italic text-xl text-accent">{legend.goals}</div>
-                    <div className="text-[10px] text-muted-foreground font-display tracking-wider">GOLS</div>
+                    <div className="text-xl font-bold text-[#1db954]">{legend.goals}</div>
+                    <div className="text-[10px] text-white/40 font-medium tracking-wider">GOLS</div>
                   </div>
                 </div>
               ))}
@@ -180,15 +176,15 @@ export default function HistoricoPage() {
         </div>
 
         {/* Season History */}
-        <section className="eafc-card overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-card/50">
-            <History className="h-4 w-4 text-primary" />
-            <h2 className="font-display tracking-widest text-xs">HISTORICO DE TEMPORADAS</h2>
+        <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+            <History className="h-4 w-4 text-blue-400" />
+            <h2 className="text-xs font-medium text-white tracking-wider">HISTORICO DE TEMPORADAS</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border text-[10px] font-display tracking-widest text-muted-foreground">
+                <tr className="border-b border-white/5 text-[10px] font-medium tracking-wider text-white/40">
                   <th className="px-5 py-3 text-left">ANO</th>
                   <th className="px-5 py-3 text-left">COMPETICAO</th>
                   <th className="px-5 py-3 text-center">POSICAO</th>
@@ -196,23 +192,24 @@ export default function HistoricoPage() {
                   <th className="px-5 py-3 text-left">TREINADOR</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-white/5">
                 {seasonHistory.map((season) => (
-                  <tr key={season.year} className="hover:bg-card/50 transition-colors">
-                    <td className="px-5 py-3 font-display text-lg">{season.year}</td>
-                    <td className="px-5 py-3">{season.competition}</td>
+                  <tr key={season.year} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-5 py-3 text-lg font-semibold text-white">{season.year}</td>
+                    <td className="px-5 py-3 text-white/70">{season.competition}</td>
                     <td className="px-5 py-3 text-center">
-                      <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg font-display ${
-                        season.position <= 4 ? "bg-accent/20 text-accent" :
-                        season.position <= 12 ? "bg-primary/20 text-primary" :
-                        season.position >= 17 ? "bg-destructive/20 text-destructive" :
-                        "bg-muted text-muted-foreground"
-                      }`}>
+                      <span className={cn(
+                        "inline-flex h-8 w-8 items-center justify-center rounded-lg font-bold",
+                        season.position <= 4 ? "bg-[#1db954]/20 text-[#1db954]" :
+                        season.position <= 12 ? "bg-blue-400/20 text-blue-400" :
+                        season.position >= 17 ? "bg-red-400/20 text-red-400" :
+                        "bg-white/10 text-white/60"
+                      )}>
                         {season.position}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-center font-display-italic text-lg">{season.points}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{season.manager}</td>
+                    <td className="px-5 py-3 text-center text-lg font-semibold text-white">{season.points}</td>
+                    <td className="px-5 py-3 text-white/50">{season.manager}</td>
                   </tr>
                 ))}
               </tbody>
