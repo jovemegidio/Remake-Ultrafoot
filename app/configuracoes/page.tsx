@@ -23,13 +23,13 @@ import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useTheme, themePresets, type ThemeColor } from "@/components/theme-provider"
-import { getTeamUniforms, allTeams } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { getTeamByShort, serieATeams, getTeamUniforms, allTeams } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
+const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const uniforms = getTeamUniforms(userTeam)
+
 export default function ConfiguracoesPage() {
-  const { team: userTeam } = useUserTeam()
-  const uniforms = getTeamUniforms(userTeam)
   const { theme, setTheme, teamColors, setTeamColors } = useTheme()
   const [musicVolume, setMusicVolume] = useState([70])
   const [sfxVolume, setSfxVolume] = useState([80])

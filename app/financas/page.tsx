@@ -19,8 +19,19 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
-import { formatCurrency } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { getTeamByShort, serieATeams, formatCurrency } from "@/lib/teams-data"
+
+const userTeam = getTeamByShort("RBB") || serieATeams[0]
+
+// Financial data
+const financialData = {
+  balance: userTeam.saldo,
+  monthlyIncome: 4500000,
+  monthlyExpenses: 3200000,
+  transferBudget: 15000000,
+  wageBudget: 8500000,
+  wageUsed: 6200000,
+}
 
 const incomeBreakdown = [
   { label: "Direitos de TV", value: 2100000, icon: Tv, color: "text-primary" },
@@ -45,17 +56,6 @@ const recentTransactions = [
 ]
 
 export default function FinancasPage() {
-  const { team: userTeam } = useUserTeam()
-  // Financial baseline derived from the chosen team's saldo and stadium size,
-  // so smaller clubs get smaller numbers — same shape as before, no hardcode.
-  const financialData = {
-    balance: userTeam.saldo,
-    monthlyIncome: Math.round(userTeam.estadio_cap * 70 + userTeam.prestigio * 25000),
-    monthlyExpenses: Math.round(userTeam.prestigio * 30000 + 800000),
-    transferBudget: Math.round(userTeam.saldo * 0.18),
-    wageBudget: Math.round(userTeam.saldo * 0.10),
-    wageUsed: Math.round(userTeam.saldo * 0.072),
-  }
   const netIncome = financialData.monthlyIncome - financialData.monthlyExpenses
   const wagePercentage = (financialData.wageUsed / financialData.wageBudget) * 100
 

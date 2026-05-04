@@ -1,252 +1,482 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { ChevronRight, RefreshCw, Play } from "lucide-react"
-import { allTeams, getLogoUrl } from "@/lib/teams-data"
-import { allPlayers } from "@/lib/players-data"
-import { hasSave, useGameState } from "@/lib/save-system"
+import {
+  Calendar,
+  ChevronRight,
+  CircleDollarSign,
+  FileText,
+  Newspaper,
+  Shield,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Users,
+  Play,
+  MapPin,
+  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
+} from "lucide-react"
+import { GameSidebar } from "@/components/game-sidebar"
+import { GameHeader } from "@/components/game-header"
+import { MusicPlayer } from "@/components/music-player"
+import { TeamCrest } from "@/components/team-crest"
+import { Progress } from "@/components/ui/progress"
+import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
+import { cn } from "@/lib/utils"
 
-const STAGES = [
-  { at: 8, label: "Inicializando o motor" },
-  { at: 28, label: "Carregando ligas e calendarios" },
-  { at: 52, label: "Importando elencos brasileiros" },
-  { at: 74, label: "Preparando mercado de transferencias" },
-  { at: 92, label: "Sincronizando temporada 2026" },
-  { at: 100, label: "Pronto para jogar" },
+const userTeam = getTeamByShort("RBB") || serieATeams[0]
+
+// Standings
+const standings = serieATeams.slice(0, 8).map((team, index) => ({
+  pos: index + 1,
+  team,
+  pts: 0,
+  w: 0,
+  d: 0,
+  l: 0,
+  isUser: team.curto === userTeam.curto,
+}))
+
+// Next fixtures
+const fixtures = [
+  { home: userTeam, away: getTeamByShort("PLM")!, date: "Jan 15", time: "16:00", competition: "Brasileirao" },
+  { home: getTeamByShort("CRN")!, away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
+  { home: userTeam, away: getTeamByShort("SNT")!, date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
 ]
 
-const TIPS = [
-  "Avance a semana com calma — cada decisao afeta seu prestigio.",
-  "Renove contratos antes do mercado abrir.",
-  "Times com torcida grande recebem mais por bilheteria.",
-  "Goleiros velhos podem ter base alta, mas baixam rapido.",
-  "Defina metas realistas com a diretoria no inicio da temporada.",
-]
-
-export default function SplashPage() {
-  const router = useRouter()
-  const { state, hydrated, reset } = useGameState()
-  const [progress, setProgress] = useState(0)
-  const [ready, setReady] = useState(false)
-  const [tip] = useState(() => TIPS[Math.floor(Math.random() * TIPS.length)])
-
-  const totalTeams = allTeams.length
-  const totalPlayers = allPlayers.length
-  const hasExistingSave = hydrated && Boolean(state.selectedTeamShort)
-  const continueHref = hasExistingSave ? "/dashboard" : "/novo-jogo"
-  const continueLabel = hasExistingSave ? "Continuar carreira" : "Iniciar nova carreira"
-
-  useEffect(() => {
-    let raf = 0
-    const start = performance.now()
-    const duration = 2400
-    const tick = (t: number) => {
-      const pct = Math.min(100, Math.round(((t - start) / duration) * 100))
-      setProgress(pct)
-      if (pct < 100) raf = requestAnimationFrame(tick)
-      else setReady(true)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [])
-
-  useEffect(() => {
-    router.prefetch("/dashboard")
-    router.prefetch("/novo-jogo")
-  }, [router])
-
-  const stage =
-    [...STAGES].reverse().find(s => progress >= s.at) ?? STAGES[0]
-
+export default function DashboardPage() {
   return (
-    <main
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080808] text-white antialiased"
-      style={{
-        backgroundImage:
-          "radial-gradient(ellipse at 30% 20%, oklch(0.32 0.10 195 / 0.18) 0%, transparent 55%)," +
-          "radial-gradient(ellipse at 70% 80%, oklch(0.30 0.18 140 / 0.14) 0%, transparent 60%)",
-      }}
-    >
-      {/* Subtle dotted grid */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      />
+    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+      <GameSidebar />
+      <GameHeader team={userTeam} />
 
-      {/* Soft top vignette */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-40"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.04), transparent)",
-        }}
-      />
-
-      <div className="relative z-10 flex w-full max-w-[560px] flex-col items-center px-8">
-        {/* Logo + halo */}
-        <div className="relative mb-9 h-32 w-32">
-          <div
-            aria-hidden
-            className="absolute inset-0 rounded-full blur-2xl"
+      <main className="p-6 space-y-5">
+        {/* Hero - Club Identity */}
+        <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/5">
+          {/* Background accents */}
+          <div 
+            className="absolute inset-0 opacity-20"
             style={{
-              background:
-                "radial-gradient(circle, oklch(0.78 0.18 195 / 0.45) 0%, transparent 70%)",
+              background: `radial-gradient(ellipse at left, ${userTeam.cor1}60, transparent 50%), radial-gradient(ellipse at right, ${userTeam.cor2}30, transparent 60%)`
             }}
           />
-          <div className="relative flex h-32 w-32 items-center justify-center rounded-full ring-1 ring-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.01] backdrop-blur-sm">
-            <Image
-              src={getLogoUrl()}
-              alt="Ultrafoot"
-              width={84}
-              height={84}
-              className="object-contain drop-shadow-[0_2px_12px_rgba(0,212,255,0.35)]"
-              priority
-              unoptimized
-            />
+          
+          <div className="relative flex items-center gap-6 p-6">
+            {/* Team Crest */}
+            <div className="relative">
+              <TeamCrest team={userTeam} size="2xl" />
+              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-primary text-[10px] font-bold text-primary">
+                {userTeam.prestigio}
+              </div>
+            </div>
+
+            {/* Team Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 text-[10px] text-primary font-medium tracking-wider uppercase mb-1">
+                <Shield className="h-3 w-3" />
+                {userTeam.cidade}, {userTeam.estado}
+              </div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">
+                {userTeam.nome}
+              </h1>
+              <div className="flex items-center gap-4 mt-2 text-xs text-white/50">
+                <span className="flex items-center gap-1">
+                  <Star className="h-3 w-3 text-yellow-500" />
+                  Prestigio {userTeam.prestigio}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {formatNumber(userTeam.torcida)} torcedores
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {userTeam.estadio_nome}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="flex gap-6">
+              <div className="text-right">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">Saldo</div>
+                <div className="text-xl font-bold text-[#1db954]">{formatCurrency(userTeam.saldo)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">Posicao</div>
+                <div className="text-xl font-bold text-white">13°</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">Temporada</div>
+                <div className="text-xl font-bold text-white">2026</div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Wordmark */}
-        <h1
-          className="text-center text-[2.6rem] font-extrabold leading-none tracking-[0.02em]"
-          style={{
-            fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
-            background:
-              "linear-gradient(180deg, #ffffff 0%, #d6d6d6 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          ULTRAFOOT
-        </h1>
-        <p className="mt-2 text-[11px] uppercase tracking-[0.45em] text-white/40">
-          Football Manager · Edicao 2026
-        </p>
-
-        {/* Counter strip */}
-        <div className="mt-8 flex items-center justify-center gap-8 text-center">
-          <Counter label="Times" value={totalTeams} />
-          <Divider />
-          <Counter label="Jogadores" value={totalPlayers} />
-          <Divider />
-          <Counter label="Modo" value="Offline" small />
-        </div>
-
-        {/* Progress */}
-        <div className="mt-10 w-full">
-          <div
-            role="progressbar"
-            aria-valuenow={progress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            className="relative h-[3px] w-full overflow-hidden rounded-full bg-white/[0.06]"
-          >
-            <div
-              className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-300 ease-out"
-              style={{
-                width: `${progress}%`,
-                background:
-                  "linear-gradient(90deg, oklch(0.78 0.18 195) 0%, oklch(0.85 0.22 140) 100%)",
-                boxShadow: "0 0 12px oklch(0.78 0.18 195 / 0.65)",
-              }}
-            />
-          </div>
-          <div className="mt-3 flex items-center justify-between text-[11px] tracking-wider text-white/45">
-            <span className="uppercase">{stage.label}</span>
-            <span className="tabular-nums text-white/70">{progress}%</span>
-          </div>
-        </div>
-
-        {/* CTA / Tip */}
-        <div className="mt-10 flex w-full items-center justify-between gap-4">
-          <p className="max-w-[260px] text-left text-xs leading-relaxed text-white/40">
-            <span className="mr-1.5 text-white/60">Dica:</span>
-            {tip}
-          </p>
-
-          <div className="flex items-center gap-2">
-            {hasExistingSave && (
-              <button
-                onClick={() => {
-                  if (confirm("Apagar carreira atual e iniciar nova?")) {
-                    reset()
-                    router.push("/novo-jogo")
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2.5 text-xs font-medium text-white/50 hover:text-white transition-colors"
-                title="Iniciar nova carreira"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Nova
-              </button>
-            )}
-            <Link
-              href={continueHref}
-              className={
-                "group inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all " +
-                (ready
-                  ? "bg-white text-black hover:bg-white/90 shadow-[0_8px_30px_rgba(255,255,255,0.18)]"
-                  : "pointer-events-none bg-white/10 text-white/40")
-              }
+          {/* Quick Action Bar */}
+          <div className="flex items-center gap-px border-t border-white/5 bg-black/30">
+            <Link 
+              href="/partida"
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
             >
-              {ready ? continueLabel : "Carregando…"}
-              {hasExistingSave ? (
-                <Play className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              ) : (
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              )}
+              <Play className="h-4 w-4" />
+              Proxima Partida
+            </Link>
+            <Link 
+              href="/calendario"
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <Calendar className="h-4 w-4" />
+              Calendario
+            </Link>
+            <Link 
+              href="/elenco"
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <Users className="h-4 w-4" />
+              Elenco
+            </Link>
+            <Link 
+              href="/mercado"
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Mercado
             </Link>
           </div>
+        </section>
+
+        {/* Main Grid */}
+        <div className="grid gap-5 lg:grid-cols-3">
+          {/* Left Column - Fixtures & Goals */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Next Match */}
+            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Calendar className="h-4 w-4 text-[#1db954]" />
+                  PROXIMA PARTIDA
+                </div>
+                <span className="text-[10px] text-white/40">Brasileirao Serie A</span>
+              </div>
+              
+              <div className="p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <TeamCrest team={fixtures[0].home} size="xl" />
+                    <div>
+                      <div className="font-semibold text-white">{fixtures[0].home.nome}</div>
+                      <div className="text-xs text-white/40">Casa</div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center px-8">
+                    <div className="text-2xl font-bold text-white/20">VS</div>
+                    <div className="text-xs text-white/50 mt-1">{fixtures[0].date}</div>
+                    <div className="text-xs text-primary">{fixtures[0].time}</div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="font-semibold text-white">{fixtures[0].away.nome}</div>
+                      <div className="text-xs text-white/40">Visitante</div>
+                    </div>
+                    <TeamCrest team={fixtures[0].away} size="xl" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-3 mt-5">
+                  <Link 
+                    href="/partida"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#1db954] text-black text-sm font-semibold hover:bg-[#1ed760] transition-colors"
+                  >
+                    <Play className="h-4 w-4 fill-current" />
+                    Jogar Partida
+                  </Link>
+                  <button className="px-4 py-2.5 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors">
+                    Simular
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Goals */}
+            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Target className="h-4 w-4 text-yellow-500" />
+                  METAS DA DIRETORIA
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/40">Satisfacao:</span>
+                  <span className="text-sm font-semibold text-yellow-500">50%</span>
+                </div>
+              </div>
+              
+              <div className="p-5 grid gap-4 md:grid-cols-2">
+                <GoalCard
+                  title="Meta Principal"
+                  description="Permanecer na Serie A"
+                  progress={50}
+                  status="Em andamento"
+                  tone="primary"
+                />
+                <GoalCard
+                  title="Meta Minima"
+                  description="Nao rebaixar (Top 16)"
+                  progress={75}
+                  status="No caminho"
+                  tone="success"
+                />
+              </div>
+            </section>
+
+            {/* Upcoming Fixtures */}
+            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  CALENDARIO
+                </div>
+                <Link href="/calendario" className="text-xs text-primary hover:text-primary/80 transition-colors">
+                  Ver todos
+                  <ChevronRight className="inline h-3 w-3 ml-0.5" />
+                </Link>
+              </div>
+              
+              <div className="divide-y divide-white/5">
+                {fixtures.map((f, i) => (
+                  <FixtureRow key={i} fixture={f} userTeam={userTeam} isNext={i === 0} />
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Right Column - Standings & News */}
+          <div className="space-y-5">
+            {/* Standings */}
+            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  CLASSIFICACAO
+                </div>
+                <span className="text-[10px] text-white/40">BRASILEIRAO</span>
+              </div>
+              
+              <div className="divide-y divide-white/5">
+                <div className="grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider">
+                  <span>#</span>
+                  <span>Clube</span>
+                  <span className="text-center">Pts</span>
+                  <span className="text-center">V</span>
+                  <span className="text-center">E</span>
+                  <span className="text-center">D</span>
+                </div>
+                
+                {standings.map((s) => (
+                  <div
+                    key={s.pos}
+                    className={cn(
+                      "grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2.5 items-center text-sm",
+                      s.isUser && "bg-primary/10 border-l-2 border-primary"
+                    )}
+                  >
+                    <span className={cn(
+                      "text-xs font-medium",
+                      s.pos <= 4 ? "text-[#1db954]" : s.pos >= 17 ? "text-red-500" : "text-white/50"
+                    )}>
+                      {s.pos}
+                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <TeamCrest team={s.team} size="xs" />
+                      <span className="truncate text-xs text-white">{s.team.nome}</span>
+                    </div>
+                    <span className="text-center font-semibold text-white">{s.pts}</span>
+                    <span className="text-center text-xs text-white/50">{s.w}</span>
+                    <span className="text-center text-xs text-white/50">{s.d}</span>
+                    <span className="text-center text-xs text-white/50">{s.l}</span>
+                  </div>
+                ))}
+              </div>
+              
+              <Link 
+                href="/competicoes"
+                className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/5"
+              >
+                Ver tabela completa
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            </section>
+
+            {/* News */}
+            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Newspaper className="h-4 w-4 text-primary" />
+                  NOTICIAS
+                </div>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[10px] font-semibold text-primary">
+                  3
+                </span>
+              </div>
+              
+              <div className="divide-y divide-white/5">
+                {[
+                  { tag: "MERCADO", title: "Equipe abre janela com orcamento disponivel", time: "2h" },
+                  { tag: "STAFF", title: "Comissao tecnica define estrategia para temporada", time: "5h" },
+                  { tag: "ELENCO", title: "Capitao renova vinculo ate 2028", time: "1d" },
+                ].map((news) => (
+                  <div key={news.title} className="px-5 py-3 hover:bg-white/5 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2 text-[10px] text-primary font-medium tracking-wider">
+                      <FileText className="h-3 w-3" />
+                      {news.tag}
+                      <span className="ml-auto text-white/40 font-normal">{news.time}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-white/80 group-hover:text-white transition-colors line-clamp-2">
+                      {news.title}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              
+              <Link 
+                href="/mensagens"
+                className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/5"
+              >
+                Ver todas noticias
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            </section>
+
+            {/* Quick Finance */}
+            <section className="rounded-xl bg-[#141414] border border-white/5 p-5">
+              <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
+                <CircleDollarSign className="h-4 w-4 text-[#1db954]" />
+                FINANCAS
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">Saldo atual</span>
+                  <span className="text-lg font-bold text-[#1db954]">{formatCurrency(userTeam.saldo)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">Receita mensal</span>
+                  <span className="text-sm font-medium text-white flex items-center gap-1">
+                    <ArrowUpRight className="h-3 w-3 text-[#1db954]" />
+                    R$ 2.1M
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">Folha salarial</span>
+                  <span className="text-sm font-medium text-white flex items-center gap-1">
+                    <ArrowDownRight className="h-3 w-3 text-red-500" />
+                    R$ 1.8M
+                  </span>
+                </div>
+              </div>
+              
+              <Link 
+                href="/financas"
+                className="flex items-center justify-center gap-1 mt-4 py-2 text-xs text-primary hover:text-primary/80 transition-colors"
+              >
+                Ver detalhes
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            </section>
+          </div>
         </div>
-      </div>
+      </main>
 
-      {/* Footer */}
-      <footer className="absolute inset-x-0 bottom-6 flex items-center justify-between px-8 text-[10px] tracking-widest text-white/25">
-        <span>v2.0.0 · BUILD 2026.05</span>
-        <span>JOGAVEL OFFLINE · SAVE LOCAL</span>
-      </footer>
-    </main>
-  )
-}
-
-function Counter({
-  label,
-  value,
-  small,
-}: {
-  label: string
-  value: number | string
-  small?: boolean
-}) {
-  return (
-    <div className="flex flex-col items-center">
-      <span
-        className={
-          "tabular-nums font-semibold text-white " +
-          (small ? "text-base" : "text-2xl")
-        }
-        style={{
-          fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
-        }}
-      >
-        {typeof value === "number" ? value.toLocaleString("pt-BR") : value}
-      </span>
-      <span className="mt-0.5 text-[10px] uppercase tracking-[0.3em] text-white/35">
-        {label}
-      </span>
+      <MusicPlayer />
     </div>
   )
 }
 
-function Divider() {
-  return <div aria-hidden className="h-8 w-px bg-white/10" />
+function GoalCard({
+  title,
+  description,
+  progress,
+  status,
+  tone,
+}: {
+  title: string
+  description: string
+  progress: number
+  status: string
+  tone: "primary" | "success"
+}) {
+  return (
+    <div className="rounded-lg bg-white/5 p-4 border border-white/5">
+      <div className="flex items-center justify-between mb-2">
+        <span className={cn(
+          "text-[10px] font-medium tracking-wider uppercase",
+          tone === "success" ? "text-[#1db954]" : "text-primary"
+        )}>
+          {title}
+        </span>
+        <span className="text-[10px] text-white/40">{status}</span>
+      </div>
+      <div className="text-sm font-medium text-white mb-3">{description}</div>
+      <div className="space-y-1.5">
+        <Progress value={progress} className="h-1.5" />
+        <div className="flex justify-between text-[10px] text-white/40">
+          <span>Progresso</span>
+          <span className="font-medium text-white">{progress}%</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FixtureRow({
+  fixture,
+  userTeam,
+  isNext,
+}: {
+  fixture: { home: Team; away: Team; date: string; time: string; competition: string }
+  userTeam: Team
+  isNext?: boolean
+}) {
+  const isHome = fixture.home.curto === userTeam.curto
+
+  return (
+    <div className={cn(
+      "flex items-center gap-4 px-5 py-3",
+      isNext && "bg-[#1db954]/5"
+    )}>
+      <div className="w-16 text-xs">
+        <div className="text-white/80">{fixture.date}</div>
+        <div className="text-white/40">{fixture.time}</div>
+      </div>
+      
+      <div className="flex items-center gap-2 flex-1">
+        <TeamCrest team={fixture.home} size="sm" />
+        <span className={cn("text-sm", fixture.home.curto === userTeam.curto && "font-semibold text-white")}>
+          {fixture.home.curto}
+        </span>
+        <span className="text-white/30 mx-2">vs</span>
+        <span className={cn("text-sm", fixture.away.curto === userTeam.curto && "font-semibold text-white")}>
+          {fixture.away.curto}
+        </span>
+        <TeamCrest team={fixture.away} size="sm" />
+      </div>
+
+      <span className={cn(
+        "px-2 py-0.5 rounded text-[10px] font-medium",
+        isHome ? "bg-[#1db954]/20 text-[#1db954]" : "bg-white/10 text-white/60"
+      )}>
+        {isHome ? "Casa" : "Fora"}
+      </span>
+
+      {isNext && (
+        <span className="px-2 py-0.5 rounded bg-[#1db954] text-black text-[10px] font-semibold">
+          PROXIMA
+        </span>
+      )}
+    </div>
+  )
 }

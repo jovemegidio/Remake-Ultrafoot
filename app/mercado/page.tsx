@@ -18,8 +18,9 @@ import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
+
+const userTeam = getTeamByShort("RBB") || serieATeams[0]
 
 // Mock transfer targets
 const transferTargets = [
@@ -44,7 +45,6 @@ const loansAvailable = [
 ]
 
 export default function MercadoPage() {
-  const { team: userTeam } = useUserTeam()
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState("comprar")
 

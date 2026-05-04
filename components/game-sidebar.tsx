@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
 import { getLogoUrl } from "@/lib/teams-data"
 
 const navItems = [
-  { icon: LayoutGrid, label: "Dashboard", href: "/dashboard" },
+  { icon: LayoutGrid, label: "Dashboard", href: "/" },
   { icon: Users, label: "Elenco", href: "/elenco" },
   { icon: CalendarDays, label: "Calendario", href: "/calendario" },
   { icon: PlayCircle, label: "Partida", href: "/partida" },
@@ -37,8 +37,8 @@ export function GameSidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 flex w-[72px] flex-col items-center bg-[#0d0d0d]/95 backdrop-blur-sm py-3">
       {/* Logo Ultrafoot - EA FC style */}
-      <Link
-        href="/dashboard"
+      <Link 
+        href="/"
         className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] ring-1 ring-white/10 transition-all hover:ring-white/25"
       >
         <Image

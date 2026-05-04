@@ -1,11 +1,14 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useState } from "react"
+import Link from "next/link"
 import {
+  ChevronRight,
   Filter,
   Search,
   SortAsc,
   Star,
+  Users,
   Zap,
   TrendingUp,
   Target,
@@ -18,78 +21,27 @@ import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useUserTeam } from "@/lib/save-system"
-import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
+import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 
-interface UiPlayer {
-  id: string
-  name: string
-  position: string
-  age: number
-  overall: number
-  potential: number
-  value: number
-  pace: number
-  shooting: number
-  passing: number
-  dribbling: number
-  defending: number
-  physical: number
-}
+const userTeam = getTeamByShort("RBB") || serieATeams[0]
 
-// Deterministic pseudo-random in [0,1) so the same player always derives the
-// same stats across reloads (no hydration mismatch, no flicker on re-renders).
-function hashStr(s: string): number {
-  let h = 2166136261
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return (h >>> 0) / 4294967295
-}
-
-function jitter(seed: string, base: number, spread = 8): number {
-  const r = hashStr(seed)
-  return Math.max(20, Math.min(99, Math.round(base - spread / 2 + r * spread)))
-}
-
-// Map seed positions (LD/LE/VOL/MEI/ATA) to richer per-stat profiles.
-const POSITION_PROFILE: Record<
-  string,
-  Partial<Record<keyof UiPlayer, number>>
-> = {
-  GOL: { pace: 45, shooting: 20, passing: 55, dribbling: 35, defending: 75, physical: 70 },
-  ZAG: { pace: 65, shooting: 40, passing: 60, dribbling: 55, defending: 82, physical: 80 },
-  LD:  { pace: 80, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 72 },
-  LE:  { pace: 80, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 72 },
-  VOL: { pace: 72, shooting: 60, passing: 76, dribbling: 70, defending: 76, physical: 76 },
-  MEI: { pace: 75, shooting: 72, passing: 80, dribbling: 80, defending: 55, physical: 68 },
-  PD:  { pace: 86, shooting: 72, passing: 70, dribbling: 80, defending: 35, physical: 65 },
-  PE:  { pace: 86, shooting: 72, passing: 70, dribbling: 80, defending: 35, physical: 65 },
-  ATA: { pace: 78, shooting: 82, passing: 68, dribbling: 76, defending: 38, physical: 76 },
-}
-
-function toUiPlayer(p: Player, idx: number): UiPlayer {
-  const profile = POSITION_PROFILE[p.pos] ?? POSITION_PROFILE.MEI
-  const seed = `${p.time}:${p.nome}:${idx}`
-  const valueFactor = 0.5 + hashStr(seed + "v") * 1.6
-  return {
-    id: seed,
-    name: p.nome,
-    position: p.pos,
-    age: p.idade,
-    overall: p.base,
-    potential: Math.min(99, p.base + Math.round(Math.max(0, 30 - p.idade) / 6)),
-    value: Math.round(p.base * p.base * 12000 * valueFactor),
-    pace: jitter(seed + "pa", profile.pace ?? 70),
-    shooting: jitter(seed + "sh", profile.shooting ?? 60),
-    passing: jitter(seed + "ps", profile.passing ?? 65),
-    dribbling: jitter(seed + "dr", profile.dribbling ?? 65),
-    defending: jitter(seed + "de", profile.defending ?? 50),
-    physical: jitter(seed + "ph", profile.physical ?? 70),
-  }
-}
+// Mock players data
+const players = [
+  { id: 1, name: "Cleiton", position: "GOL", age: 28, overall: 78, potential: 80, value: 8500000, pace: 45, shooting: 20, passing: 55, dribbling: 35, defending: 25, physical: 70 },
+  { id: 2, name: "Nathan Mendes", position: "LD", age: 24, overall: 75, potential: 82, value: 6200000, pace: 82, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 70 },
+  { id: 3, name: "Pedro Henrique", position: "ZAG", age: 27, overall: 77, potential: 78, value: 7800000, pace: 68, shooting: 45, passing: 60, dribbling: 55, defending: 80, physical: 82 },
+  { id: 4, name: "Eduardo Santos", position: "ZAG", age: 25, overall: 76, potential: 80, value: 7200000, pace: 70, shooting: 42, passing: 58, dribbling: 52, defending: 78, physical: 80 },
+  { id: 5, name: "Luan Candido", position: "LE", age: 23, overall: 74, potential: 83, value: 5800000, pace: 85, shooting: 58, passing: 72, dribbling: 75, defending: 70, physical: 68 },
+  { id: 6, name: "Jadsom Silva", position: "VOL", age: 22, overall: 73, potential: 84, value: 5500000, pace: 72, shooting: 60, passing: 75, dribbling: 72, defending: 76, physical: 75 },
+  { id: 7, name: "Eric Ramires", position: "VOL", age: 26, overall: 77, potential: 79, value: 8000000, pace: 75, shooting: 65, passing: 78, dribbling: 74, defending: 75, physical: 78 },
+  { id: 8, name: "Lincoln", position: "MEI", age: 24, overall: 78, potential: 85, value: 12000000, pace: 80, shooting: 75, passing: 80, dribbling: 82, defending: 55, physical: 68 },
+  { id: 9, name: "Vitinho", position: "PD", age: 25, overall: 76, potential: 80, value: 7500000, pace: 88, shooting: 72, passing: 70, dribbling: 80, defending: 35, physical: 65 },
+  { id: 10, name: "Helinho", position: "PE", age: 22, overall: 75, potential: 84, value: 6800000, pace: 90, shooting: 70, passing: 72, dribbling: 82, defending: 32, physical: 62 },
+  { id: 11, name: "Eduardo Sasha", position: "ATA", age: 30, overall: 79, potential: 79, value: 9500000, pace: 78, shooting: 82, passing: 68, dribbling: 75, defending: 38, physical: 76 },
+  { id: 12, name: "Thiago Borbas", position: "ATA", age: 21, overall: 72, potential: 86, value: 4500000, pace: 85, shooting: 74, passing: 62, dribbling: 76, defending: 30, physical: 70 },
+]
 
 const positionColors: Record<string, string> = {
   GOL: "bg-amber-500/20 text-amber-400 border-amber-500/30",
@@ -119,38 +71,19 @@ function formatValue(value: number) {
 }
 
 export default function ElencoPage() {
-  const { team: userTeam } = useUserTeam()
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
+  const [selectedPlayer, setSelectedPlayer] = useState(players[0])
 
-  const players = useMemo<UiPlayer[]>(() => {
-    const raw = sortByPosition(getPlayersForTeam(userTeam))
-    return raw.map((p, i) => toUiPlayer(p, i))
-  }, [userTeam])
-
-  const [selectedPlayer, setSelectedPlayer] = useState<UiPlayer | null>(
-    players[0] ?? null,
-  )
-
-  // Reselect when team (and so player list) changes.
-  useEffect(() => {
-    setSelectedPlayer(players[0] ?? null)
-  }, [players])
-
-  const filteredPlayers = useMemo(
-    () =>
-      players.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase())
-        const matchesFilter =
-          filter === "all" ||
-          (filter === "gol" && p.position === "GOL") ||
-          (filter === "def" && ["ZAG", "LD", "LE"].includes(p.position)) ||
-          (filter === "mei" && ["VOL", "MEI"].includes(p.position)) ||
-          (filter === "ata" && ["PD", "PE", "ATA"].includes(p.position))
-        return matchesSearch && matchesFilter
-      }),
-    [players, search, filter],
-  )
+  const filteredPlayers = players.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase())
+    const matchesFilter = filter === "all" || 
+      (filter === "gol" && p.position === "GOL") ||
+      (filter === "def" && ["ZAG", "LD", "LE"].includes(p.position)) ||
+      (filter === "mei" && ["VOL", "MEI"].includes(p.position)) ||
+      (filter === "ata" && ["PD", "PE", "ATA"].includes(p.position))
+    return matchesSearch && matchesFilter
+  })
 
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
@@ -204,7 +137,7 @@ export default function ElencoPage() {
                   key={player.id}
                   onClick={() => setSelectedPlayer(player)}
                   className={`eafc-card p-4 text-left transition-all ${
-                    selectedPlayer?.id === player.id ? "ring-2 ring-primary" : ""
+                    selectedPlayer.id === player.id ? "ring-2 ring-primary" : ""
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -251,11 +184,9 @@ export default function ElencoPage() {
 
           {/* Player Detail */}
           <section className="space-y-4">
-            {selectedPlayer ? (
-            <>
             <div className="eafc-card overflow-hidden">
               {/* Player Header */}
-              <div
+              <div 
                 className="relative p-6 bg-gradient-to-br"
                 style={{
                   background: `linear-gradient(135deg, ${userTeam.cor1}40, ${userTeam.cor2}20)`
@@ -327,12 +258,6 @@ export default function ElencoPage() {
                 NEGOCIAR
               </Button>
             </div>
-            </>
-            ) : (
-              <div className="eafc-card p-8 text-center text-sm text-muted-foreground">
-                Nenhum jogador cadastrado para {userTeam.nome}.
-              </div>
-            )}
           </section>
         </div>
       </main>

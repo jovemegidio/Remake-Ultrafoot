@@ -13,11 +13,12 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { serieATeams, serieBTeams, type Team } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { getTeamByShort, serieATeams, serieBTeams, type Team } from "@/lib/teams-data"
 
-// Generate standings with empty stats anchored to the chosen team.
-const generateStandings = (teams: Team[], userShort: string) => {
+const userTeam = getTeamByShort("RBB") || serieATeams[0]
+
+// Generate standings with random stats
+const generateStandings = (teams: Team[]) => {
   return teams.map((team, index) => ({
     position: index + 1,
     team,
@@ -30,18 +31,21 @@ const generateStandings = (teams: Team[], userShort: string) => {
     goalDiff: 0,
     points: 0,
     form: ["", "", "", "", ""] as ("W" | "D" | "L" | "")[],
-    isUser: team.curto === userShort,
+    isUser: team.curto === userTeam.curto,
   }))
 }
 
-const buildCompetitions = (userPosInA: number) => [
-  {
-    id: "brasileirao",
-    name: "Brasileirao Serie A",
-    type: "Liga",
-    teams: 20,
+const serieAStandings = generateStandings(serieATeams)
+const serieBStandings = generateStandings(serieBTeams)
+
+const competitions = [
+  { 
+    id: "brasileirao", 
+    name: "Brasileirao Serie A", 
+    type: "Liga", 
+    teams: 20, 
     status: "Em andamento",
-    userPosition: userPosInA,
+    userPosition: serieAStandings.findIndex(s => s.isUser) + 1
   },
   { 
     id: "copa-do-brasil", 
@@ -71,10 +75,6 @@ const buildCompetitions = (userPosInA: number) => [
 
 export default function CompeticoesPage() {
   const [activeTab, setActiveTab] = useState("brasileirao")
-  const { team: userTeam } = useUserTeam()
-  const serieAStandings = generateStandings(serieATeams, userTeam.curto)
-  const serieBStandings = generateStandings(serieBTeams, userTeam.curto)
-  const competitions = buildCompetitions(serieAStandings.findIndex(s => s.isUser) + 1 || 0)
 
   return (
     <div className="min-h-screen pl-[72px] pb-24">
