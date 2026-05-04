@@ -127,6 +127,33 @@ export default function MatchCenterPage() {
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
 
+  // Pausa com ESC, botao PS ou Xbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isRunning) {
+        pause()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isRunning, pause])
+
+  // Pausa com gamepad (botao HOME/START/SELECT)
+  useEffect(() => {
+    const handleGamepadAction = (e: CustomEvent<{ action: string }>) => {
+      const { action } = e.detail
+      if ((action === "START" || action === "HOME" || action === "SELECT") && state.phase !== "pre" && state.phase !== "fulltime") {
+        if (isRunning) {
+          pause()
+        } else {
+          resume()
+        }
+      }
+    }
+    window.addEventListener("gamepad:action" as any, handleGamepadAction)
+    return () => window.removeEventListener("gamepad:action" as any, handleGamepadAction)
+  }, [isRunning, pause, resume, state.phase])
+
   // Modal substituição
   const [showSubModal, setShowSubModal] = useState(false)
   const [subsRemaining, setSubsRemaining] = useState(5)

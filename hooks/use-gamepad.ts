@@ -207,7 +207,7 @@ export function useGamepadNavigation(options: {
   onNavigate?: (direction: "up" | "down" | "left" | "right") => void
   onSelect?: () => void
   onBack?: () => void
-  onAction?: (action: "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "START" | "SELECT") => void
+  onAction?: (action: "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "START" | "SELECT" | "HOME") => void
   repeatDelay?: number
 }) {
   const {
@@ -238,6 +238,7 @@ export function useGamepadNavigation(options: {
         case "RT":
         case "START":
         case "SELECT":
+        case "HOME":
           onAction?.(button)
           break
         case "DPAD_UP":
