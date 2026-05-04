@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Play, Calendar, MapPin, Clock } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { CarouselDots, ControllerButton } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
+import type { GamepadButtonName } from "@/hooks/use-gamepad"
 
 interface Match {
   home: Team
@@ -57,8 +58,25 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
     }, 300)
   }, [currentIndex, validMatches.length, isAnimating])
 
-  const goToNext = () => navigate("right")
-  const goToPrev = () => navigate("left")
+  const goToNext = useCallback(() => navigate("right"), [navigate])
+  const goToPrev = useCallback(() => navigate("left"), [navigate])
+
+  // Listen for gamepad actions (LB/RB for navigation)
+  useEffect(() => {
+    const handleGamepadAction = (e: CustomEvent<{ action: string }>) => {
+      const action = e.detail.action
+      if (action === "LB") {
+        goToPrev()
+      } else if (action === "RB") {
+        goToNext()
+      }
+    }
+
+    window.addEventListener("gamepad:action", handleGamepadAction as EventListener)
+    return () => {
+      window.removeEventListener("gamepad:action", handleGamepadAction as EventListener)
+    }
+  }, [goToPrev, goToNext])
 
   const getDayName = (dateStr: string) => {
     const days = ["DOMINGO", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"]

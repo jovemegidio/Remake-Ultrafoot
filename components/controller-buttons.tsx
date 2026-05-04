@@ -1,8 +1,13 @@
 "use client"
 
+import { useContext } from "react"
 import { cn } from "@/lib/utils"
 
 type ControllerType = "xbox" | "playstation"
+
+// Optional context for auto-detecting controller type
+import { createContext } from "react"
+export const ControllerTypeContext = createContext<ControllerType>("xbox")
 
 interface ControllerButtonProps {
   button: "A" | "B" | "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "LS" | "RS"
@@ -64,11 +69,15 @@ export function ControllerButton({
   button, 
   label, 
   size = "sm", 
-  controller = "xbox",
+  controller,
   className 
 }: ControllerButtonProps) {
-  const displayButton = controller === "playstation" ? psButtonMap[button] : button
-  const colors = controller === "playstation" ? psColors[button] : xboxColors[button]
+  // Use context if no controller prop specified
+  const contextController = useContext(ControllerTypeContext)
+  const activeController = controller || contextController || "xbox"
+  
+  const displayButton = activeController === "playstation" ? psButtonMap[button] : button
+  const colors = activeController === "playstation" ? psColors[button] : xboxColors[button]
   const isShoulderButton = ["LB", "RB", "LT", "RT"].includes(button)
 
   return (
@@ -153,6 +162,29 @@ interface CarouselDotsProps {
   showNavButtons?: boolean
   controller?: ControllerType
   className?: string
+}
+
+// Connection status indicator
+interface ControllerStatusProps {
+  connected: boolean
+  controllerType: "xbox" | "playstation" | "generic"
+  className?: string
+}
+
+export function ControllerStatus({ connected, controllerType, className }: ControllerStatusProps) {
+  if (!connected) return null
+  
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <div className={cn(
+        "w-2 h-2 rounded-full animate-pulse",
+        connected ? "bg-[#1db954]" : "bg-white/20"
+      )} />
+      <span className="text-[10px] text-white/40 font-medium">
+        {controllerType === "playstation" ? "PS" : "XBOX"}
+      </span>
+    </div>
+  )
 }
 
 export function CarouselDots({ 
