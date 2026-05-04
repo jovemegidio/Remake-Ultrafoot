@@ -26,7 +26,7 @@ import { useTheme, themePresets, type ThemeColor } from "@/components/theme-prov
 import { getTeamByShort, serieATeams, getTeamUniforms, allTeams } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
 const uniforms = getTeamUniforms(userTeam)
 
 const languageOptions = [

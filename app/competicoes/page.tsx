@@ -20,7 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, serieATeams, serieBTeams, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Generate standings with random stats
 const generateStandings = (teams: Team[]) => {

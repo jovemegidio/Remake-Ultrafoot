@@ -24,31 +24,36 @@ import { FilterModal } from "@/components/modals/filter-modal"
 import { SearchPlayerModal } from "@/components/modals/search-player-modal"
 import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
-// Mock transfer targets
+// Mock transfer targets - use index-based fallback for reliability
+const palTeam = serieATeams.find(t => t.curto === "PAL") || serieATeams[1]
+const flaTeam = serieATeams.find(t => t.curto === "FLA") || serieATeams[2]
+const corTeam = serieATeams.find(t => t.curto === "COR") || serieATeams[6]
+const saoTeam = serieATeams.find(t => t.curto === "SAO") || serieATeams[5]
+
 const transferTargets = [
-  { id: 1, name: "Gabriel Veron", team: getTeamByShort("PLM")!, position: "PD", age: 21, overall: 78, value: 18000000, trend: "up" as const },
-  { id: 2, name: "Gustavo Scarpa", team: getTeamByShort("PLM")!, position: "MEI", age: 30, overall: 81, value: 12000000, trend: "down" as const },
-  { id: 3, name: "Bruno Henrique", team: getTeamByShort("FLM")!, position: "PE", age: 33, overall: 80, value: 8000000, trend: "down" as const },
-  { id: 4, name: "Yuri Alberto", team: getTeamByShort("CRN")!, position: "ATA", age: 23, overall: 79, value: 22000000, trend: "up" as const },
-  { id: 5, name: "Luciano", team: getTeamByShort("SPL")!, position: "ATA", age: 30, overall: 80, value: 15000000, trend: "stable" as const },
-  { id: 6, name: "Dudu", team: getTeamByShort("PLM")!, position: "PE", age: 32, overall: 82, value: 10000000, trend: "down" as const },
-  { id: 7, name: "Raphael Veiga", team: getTeamByShort("PLM")!, position: "MEI", age: 29, overall: 83, value: 25000000, trend: "up" as const },
-  { id: 8, name: "Arrascaeta", team: getTeamByShort("FLM")!, position: "MEI", age: 30, overall: 85, value: 30000000, trend: "stable" as const },
-  { id: 9, name: "Pedro", team: getTeamByShort("FLM")!, position: "ATA", age: 27, overall: 84, value: 35000000, trend: "up" as const },
+  { id: 1, name: "Gabriel Veron", team: palTeam, position: "PD", age: 21, overall: 78, value: 18000000, trend: "up" as const },
+  { id: 2, name: "Gustavo Scarpa", team: palTeam, position: "MEI", age: 30, overall: 81, value: 12000000, trend: "down" as const },
+  { id: 3, name: "Bruno Henrique", team: flaTeam, position: "PE", age: 33, overall: 80, value: 8000000, trend: "down" as const },
+  { id: 4, name: "Yuri Alberto", team: corTeam, position: "ATA", age: 23, overall: 79, value: 22000000, trend: "up" as const },
+  { id: 5, name: "Luciano", team: saoTeam, position: "ATA", age: 30, overall: 80, value: 15000000, trend: "stable" as const },
+  { id: 6, name: "Dudu", team: palTeam, position: "PE", age: 32, overall: 82, value: 10000000, trend: "down" as const },
+  { id: 7, name: "Raphael Veiga", team: palTeam, position: "MEI", age: 29, overall: 83, value: 25000000, trend: "up" as const },
+  { id: 8, name: "Arrascaeta", team: flaTeam, position: "MEI", age: 30, overall: 85, value: 30000000, trend: "stable" as const },
+  { id: 9, name: "Pedro", team: flaTeam, position: "ATA", age: 27, overall: 84, value: 35000000, trend: "up" as const },
 ]
 
-// Mock transfer offers received
-const offersReceived = [
-  { id: 1, player: "Lincoln", from: getTeamByShort("FLM")!, value: 15000000, status: "pending" },
-  { id: 2, player: "Helinho", from: getTeamByShort("SPL")!, value: 8500000, status: "pending" },
+// Mock transfer offers received - initial data
+const initialOffers = [
+  { id: 1, player: "Lincoln", from: flaTeam, value: 15000000, status: "pending" as "pending" | "accepted" | "rejected" },
+  { id: 2, player: "Helinho", from: saoTeam, value: 8500000, status: "pending" as "pending" | "accepted" | "rejected" },
 ]
 
 // Mock loans
 const loansAvailable = [
-  { id: 1, name: "Wesley", team: getTeamByShort("PLM")!, position: "PD", age: 19, overall: 72, value: 5000000, loanFee: 500000, trend: "up" as const },
-  { id: 2, name: "Giovani", team: getTeamByShort("CRN")!, position: "MEI", age: 20, overall: 70, value: 3000000, loanFee: 300000, trend: "stable" as const },
+  { id: 1, name: "Wesley", team: palTeam, position: "PD", age: 19, overall: 72, value: 5000000, loanFee: 500000, trend: "up" as const },
+  { id: 2, name: "Giovani", team: corTeam, position: "MEI", age: 20, overall: 70, value: 3000000, loanFee: 300000, trend: "stable" as const },
 ]
 
 interface FilterOptions {
@@ -69,6 +74,7 @@ export default function MercadoPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [negotiationType, setNegotiationType] = useState<"buy" | "sell" | "loan">("buy")
+  const [offers, setOffers] = useState(initialOffers)
   const [filters, setFilters] = useState<FilterOptions>({
     positions: [],
     minOverall: 0,
@@ -78,6 +84,21 @@ export default function MercadoPage() {
     minValue: 0,
     maxValue: 100000000,
   })
+
+  const pendingOffers = offers.filter(o => o.status === "pending")
+  const processedOffers = offers.filter(o => o.status !== "pending")
+
+  const handleAcceptOffer = (offerId: number) => {
+    setOffers(prev => prev.map(o => 
+      o.id === offerId ? { ...o, status: "accepted" as const } : o
+    ))
+  }
+
+  const handleRejectOffer = (offerId: number) => {
+    setOffers(prev => prev.map(o => 
+      o.id === offerId ? { ...o, status: "rejected" as const } : o
+    ))
+  }
 
   const filteredTargets = useMemo(() => {
     return transferTargets.filter(p => {
@@ -174,7 +195,7 @@ export default function MercadoPage() {
               <ArrowLeftRight className="h-4 w-4 text-yellow-400" />
               PROPOSTAS
             </div>
-            <div className="mt-2 text-2xl font-semibold text-yellow-400">{offersReceived.length}</div>
+            <div className="mt-2 text-2xl font-semibold text-yellow-400">{pendingOffers.length}</div>
           </div>
         </div>
 
@@ -184,9 +205,9 @@ export default function MercadoPage() {
             <TabsTrigger value="vender" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">Vender</TabsTrigger>
             <TabsTrigger value="propostas" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">
               Propostas
-              {offersReceived.length > 0 && (
+              {pendingOffers.length > 0 && (
                 <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-[10px] text-black font-bold">
-                  {offersReceived.length}
+                  {pendingOffers.length}
                 </span>
               )}
             </TabsTrigger>
@@ -231,42 +252,117 @@ export default function MercadoPage() {
 
           {/* Offers Tab */}
           <TabsContent value="propostas" className="mt-6">
-            <div className="space-y-4">
-              {offersReceived.map((offer) => (
-                <div key={offer.id} className="rounded-xl bg-[#141414] border border-white/5 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-white/5 flex items-center justify-center">
-                        <span className="font-bold text-xl text-white/40">
-                          {offer.player.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-white">{offer.player}</div>
-                        <div className="flex items-center gap-2 text-sm text-white/50">
-                          <span>Proposta de</span>
-                          <TeamCrest team={offer.from} size="xs" />
-                          <span>{offer.from.nome}</span>
+            <div className="space-y-6">
+              {/* Pending Offers */}
+              {pendingOffers.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">Propostas Pendentes</h3>
+                  {pendingOffers.map((offer) => (
+                    <div key={offer.id} className="rounded-xl bg-[#141414] border border-yellow-500/20 p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                            <span className="font-bold text-xl text-yellow-400">
+                              {offer.player.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-white">{offer.player}</div>
+                            <div className="flex items-center gap-2 text-sm text-white/50">
+                              <span>Proposta de</span>
+                              <TeamCrest team={offer.from} size="xs" />
+                              <span>{offer.from.nome}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-xl font-semibold text-[#1db954]">{formatCurrency(offer.value)}</div>
+                            <div className="text-[10px] text-white/40 uppercase tracking-wider">Oferta</div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+                              onClick={() => handleAcceptOffer(offer.id)}
+                            >
+                              Aceitar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                              onClick={() => handleRejectOffer(offer.id)}
+                            >
+                              Recusar
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="text-xl font-semibold text-[#1db954]">{formatCurrency(offer.value)}</div>
-                        <div className="text-[10px] text-white/40 uppercase tracking-wider">Oferta</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" className="bg-[#1db954] text-black hover:bg-[#1ed760]">
-                          Aceitar
-                        </Button>
-                        <Button size="sm" variant="outline" className="border-white/10 text-white/70">
-                          Recusar
-                        </Button>
+                  ))}
+                </div>
+              )}
+
+              {/* Processed Offers */}
+              {processedOffers.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider">Historico</h3>
+                  {processedOffers.map((offer) => (
+                    <div key={offer.id} className={`rounded-xl bg-[#141414] border p-4 ${
+                      offer.status === "accepted" ? "border-[#1db954]/20" : "border-red-500/20"
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${
+                            offer.status === "accepted" ? "bg-[#1db954]/10" : "bg-red-500/10"
+                          }`}>
+                            <span className={`font-bold text-xl ${
+                              offer.status === "accepted" ? "text-[#1db954]" : "text-red-400"
+                            }`}>
+                              {offer.player.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-white/70">{offer.player}</div>
+                            <div className="flex items-center gap-2 text-sm text-white/40">
+                              <span>Proposta de</span>
+                              <TeamCrest team={offer.from} size="xs" />
+                              <span>{offer.from.nome}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className={`text-xl font-semibold ${
+                              offer.status === "accepted" ? "text-[#1db954]" : "text-white/40 line-through"
+                            }`}>{formatCurrency(offer.value)}</div>
+                            <div className="text-[10px] text-white/40 uppercase tracking-wider">Oferta</div>
+                          </div>
+                          <div className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                            offer.status === "accepted" 
+                              ? "bg-[#1db954]/20 text-[#1db954]" 
+                              : "bg-red-500/20 text-red-400"
+                          }`}>
+                            {offer.status === "accepted" ? "Aceita" : "Recusada"}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Empty State */}
+              {offers.length === 0 && (
+                <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
+                  <ArrowLeftRight className="h-12 w-12 mx-auto text-white/20 mb-4" />
+                  <h3 className="font-semibold text-white">Nenhuma proposta recebida</h3>
+                  <p className="text-sm text-white/50 mt-2">
+                    Quando outros clubes fizerem ofertas pelos seus jogadores, elas aparecerão aqui
+                  </p>
+                </div>
+              )}
             </div>
           </TabsContent>
 

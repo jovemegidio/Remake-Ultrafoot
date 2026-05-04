@@ -25,7 +25,7 @@ const navItems = [
 
 export function GameHeader({ team, showNav = true, className }: GameHeaderProps) {
   const pathname = usePathname()
-  const userTeam = team || getTeamByShort("RBB") || serieATeams[0]
+  const userTeam = team || getTeamByShort("BGT") || serieATeams[0]
 
   return (
     <header className={cn(

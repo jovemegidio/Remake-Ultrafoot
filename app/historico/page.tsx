@@ -18,7 +18,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Historical data
 const clubHistory = {

@@ -29,7 +29,7 @@ import { FilterModal } from "@/components/modals/filter-modal"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Mock players data
 const playersData = [
