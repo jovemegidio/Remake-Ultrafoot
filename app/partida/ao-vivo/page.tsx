@@ -22,9 +22,14 @@ import {
   Timer,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
-import { ClubCrest } from "@/components/club-crest"
+import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getTeamByShort } from "@/lib/teams-data"
+
+// Teams for this match
+const homeTeam = getTeamByShort("PAL") || getTeamByShort("BTF")!
+const awayTeam = getTeamByShort("TLT") || getTeamByShort("FLM")!
 
 // Mock player data
 const homePlayers = [
@@ -87,6 +92,22 @@ export default function MatchCenterPage() {
   const [homeScore, setHomeScore] = useState(0)
   const [awayScore, setAwayScore] = useState(1)
   const [selectedPitchPlayer, setSelectedPitchPlayer] = useState<number | null>(null)
+  const [goalAnimation, setGoalAnimation] = useState<"home" | "away" | null>(null)
+  const [cardAnimation, setCardAnimation] = useState<"yellow" | "red" | null>(null)
+
+  // Simulate goal animation
+  const triggerGoalAnimation = (side: "home" | "away") => {
+    setGoalAnimation(side)
+    if (side === "home") setHomeScore(prev => prev + 1)
+    else setAwayScore(prev => prev + 1)
+    setTimeout(() => setGoalAnimation(null), 3000)
+  }
+
+  // Simulate card animation  
+  const triggerCardAnimation = (type: "yellow" | "red") => {
+    setCardAnimation(type)
+    setTimeout(() => setCardAnimation(null), 2000)
+  }
 
   const handleSubstitution = () => {
     if (selectedPlayerOut && selectedPlayerIn && subsRemaining > 0) {
@@ -161,6 +182,44 @@ export default function MatchCenterPage() {
       </header>
 
       <main className="space-y-4 p-4">
+        {/* Goal Animation Overlay */}
+        {goalAnimation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 bg-black/60 animate-fade-in" />
+            <div className="relative flex flex-col items-center gap-4 animate-scale-in">
+              <div className={cn(
+                "text-8xl font-black tracking-tighter animate-bounce",
+                goalAnimation === "home" ? "text-red-500" : "text-yellow-400"
+              )}>
+                GOOOOL!
+              </div>
+              <TeamCrest team={goalAnimation === "home" ? homeTeam : awayTeam} size="xl" />
+              <div className="text-2xl font-bold text-white">
+                {goalAnimation === "home" ? homeTeam?.nome : awayTeam?.nome}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card Animation Overlay */}
+        {cardAnimation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 bg-black/60 animate-fade-in" />
+            <div className="relative animate-scale-in">
+              <div className={cn(
+                "w-20 h-28 rounded-lg shadow-2xl animate-card-show",
+                cardAnimation === "yellow" ? "bg-yellow-400" : "bg-red-500"
+              )} />
+              <div className={cn(
+                "absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold uppercase tracking-wider whitespace-nowrap",
+                cardAnimation === "yellow" ? "text-yellow-400" : "text-red-500"
+              )}>
+                Cartao {cardAnimation === "yellow" ? "Amarelo" : "Vermelho"}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Scoreboard - EA FC 26 Style */}
         <section className="relative overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
           <div className="relative flex items-center justify-center gap-4 px-6 py-4">
@@ -170,38 +229,80 @@ export default function MatchCenterPage() {
                 <div className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
                   Mandante
                 </div>
-                <div className="text-lg font-bold text-white tracking-wide">POUSO ALEGRE</div>
+                <div className="text-lg font-bold text-white tracking-wide uppercase">
+                  {homeTeam?.nome || "MANDANTE"}
+                </div>
               </div>
-              <ClubCrest
-                abbr="PAL"
-                size="md"
-                primary="oklch(0.65 0.22 25)"
-                secondary="oklch(0.13 0.015 250)"
-              />
+              <div className="relative">
+                <TeamCrest team={homeTeam} size="md" />
+                {goalAnimation === "home" && (
+                  <div className="absolute inset-0 animate-ping rounded-full bg-[#1db954]/50" />
+                )}
+              </div>
             </div>
 
             {/* Score */}
             <div className="flex items-center gap-3 px-4">
-              <div className="text-5xl font-bold leading-none tabular-nums text-white">{homeScore}</div>
+              <div className={cn(
+                "text-5xl font-bold leading-none tabular-nums transition-all duration-300",
+                goalAnimation === "home" ? "text-[#1db954] scale-125" : "text-white"
+              )}>
+                {homeScore}
+              </div>
               <div className="text-lg text-white/30 font-light">x</div>
-              <div className="text-5xl font-bold leading-none tabular-nums text-white">{awayScore}</div>
+              <div className={cn(
+                "text-5xl font-bold leading-none tabular-nums transition-all duration-300",
+                goalAnimation === "away" ? "text-[#1db954] scale-125" : "text-white"
+              )}>
+                {awayScore}
+              </div>
             </div>
 
             {/* Away Team */}
             <div className="flex items-center gap-3">
-              <ClubCrest
-                abbr="CAM"
-                size="md"
-                primary="oklch(0.13 0.015 250)"
-                secondary="oklch(0.95 0.005 240)"
-              />
+              <div className="relative">
+                <TeamCrest team={awayTeam} size="md" />
+                {goalAnimation === "away" && (
+                  <div className="absolute inset-0 animate-ping rounded-full bg-[#1db954]/50" />
+                )}
+              </div>
               <div className="text-left">
                 <div className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
                   Visitante
                 </div>
-                <div className="text-lg font-bold text-white tracking-wide">ATLETICO-MG</div>
+                <div className="text-lg font-bold text-white tracking-wide uppercase">
+                  {awayTeam?.nome || "VISITANTE"}
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Test buttons for animations (dev only) */}
+          <div className="flex items-center justify-center gap-2 pb-3">
+            <button
+              onClick={() => triggerGoalAnimation("home")}
+              className="px-2 py-1 text-[9px] rounded bg-[#1db954]/20 text-[#1db954] hover:bg-[#1db954]/30"
+            >
+              Gol Casa
+            </button>
+            <button
+              onClick={() => triggerGoalAnimation("away")}
+              className="px-2 py-1 text-[9px] rounded bg-[#1db954]/20 text-[#1db954] hover:bg-[#1db954]/30"
+            >
+              Gol Fora
+            </button>
+            <button
+              onClick={() => triggerCardAnimation("yellow")}
+              className="px-2 py-1 text-[9px] rounded bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400/30"
+            >
+              Amarelo
+            </button>
+            <button
+              onClick={() => triggerCardAnimation("red")}
+              className="px-2 py-1 text-[9px] rounded bg-red-400/20 text-red-400 hover:bg-red-400/30"
+            >
+              Vermelho
+            </button>
           </div>
         </section>
 
