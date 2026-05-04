@@ -29,6 +29,12 @@ import { cn } from "@/lib/utils"
 const userTeam = getTeamByShort("RBB") || serieATeams[0]
 const uniforms = getTeamUniforms(userTeam)
 
+const languageOptions = [
+  { id: "pt-BR", label: "Portugues (Brasil)", flag: "🇧🇷" },
+  { id: "en-US", label: "English (US)", flag: "🇺🇸" },
+  { id: "es-ES", label: "Espanol", flag: "🇪🇸" },
+]
+
 export default function ConfiguracoesPage() {
   const { theme, setTheme, teamColors, setTeamColors } = useTheme()
   const [musicVolume, setMusicVolume] = useState([70])
@@ -37,6 +43,8 @@ export default function ConfiguracoesPage() {
   const [notifications, setNotifications] = useState(true)
   const [matchSpeed, setMatchSpeed] = useState("normal")
   const [selectedUniform, setSelectedUniform] = useState<"home" | "away" | "third">("home")
+  const [language, setLanguage] = useState("pt-BR")
+  const [selectedTeamForTheme, setSelectedTeamForTheme] = useState<string>(userTeam.curto)
 
   // Set team colors when "team" theme is selected
   useEffect(() => {
@@ -47,9 +55,19 @@ export default function ConfiguracoesPage() {
 
   const handleThemeChange = (newTheme: ThemeColor) => {
     if (newTheme === "team") {
-      setTeamColors({ primary: userTeam.cor1, secondary: userTeam.cor2 })
+      const teamForColors = getTeamByShort(selectedTeamForTheme) || userTeam
+      setTeamColors({ primary: teamForColors.cor1, secondary: teamForColors.cor2 })
     }
     setTheme(newTheme)
+  }
+
+  const handleTeamColorSelect = (teamCurto: string) => {
+    const team = getTeamByShort(teamCurto)
+    if (team) {
+      setSelectedTeamForTheme(teamCurto)
+      setTeamColors({ primary: team.cor1, secondary: team.cor2 })
+      setTheme("team")
+    }
   }
 
   return (
@@ -93,6 +111,10 @@ export default function ConfiguracoesPage() {
             <TabsTrigger value="uniform" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">
               <Shirt className="mr-2 h-3.5 w-3.5" />
               Uniformes
+            </TabsTrigger>
+            <TabsTrigger value="language" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2">
+              <Globe className="mr-2 h-3.5 w-3.5" />
+              Idioma
             </TabsTrigger>
           </TabsList>
 
@@ -188,24 +210,39 @@ export default function ConfiguracoesPage() {
                 </button>
 
                 <div className="pt-4 border-t border-white/10">
-                  <p className="text-xs text-white/40">
-                    Selecione um time diferente para usar outras cores:
+                  <p className="text-xs text-white/40 mb-3">
+                    Selecione um time para usar suas cores:
                   </p>
-                  <div className="mt-3 grid grid-cols-5 gap-2 max-h-32 overflow-y-auto pr-2">
-                    {allTeams.slice(0, 20).map((team) => (
-                      <button
-                        key={team.curto}
-                        onClick={() => {
-                          setTeamColors({ primary: team.cor1, secondary: team.cor2 })
-                          setTheme("team")
-                        }}
-                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                        title={team.nome}
-                      >
-                        <TeamCrest team={team} size="sm" />
-                        <span className="text-[9px] text-white/40">{team.curto}</span>
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto pr-2">
+                    {allTeams.map((team) => {
+                      const isSelected = theme === "team" && selectedTeamForTheme === team.curto
+                      return (
+                        <button
+                          key={team.curto}
+                          onClick={() => handleTeamColorSelect(team.curto)}
+                          className={cn(
+                            "relative flex flex-col items-center gap-1 p-2 rounded-lg transition-all",
+                            isSelected 
+                              ? "bg-white/10 ring-1 ring-white/30" 
+                              : "hover:bg-white/5"
+                          )}
+                          title={team.nome}
+                        >
+                          {isSelected && (
+                            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#1db954] flex items-center justify-center">
+                              <Check className="h-2.5 w-2.5 text-black" />
+                            </div>
+                          )}
+                          <TeamCrest team={team} size="sm" />
+                          <span className={cn(
+                            "text-[9px]",
+                            isSelected ? "text-white" : "text-white/40"
+                          )}>
+                            {team.curto}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -421,6 +458,58 @@ export default function ConfiguracoesPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Language Settings */}
+          <TabsContent value="language" className="mt-6">
+            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-6 max-w-xl">
+              <div>
+                <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" />
+                  Idioma do Jogo
+                </h3>
+                <p className="text-xs text-white/40 mt-1">
+                  Selecione o idioma para textos e interface do jogo
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {languageOptions.map((lang) => {
+                  const isSelected = language === lang.id
+                  return (
+                    <button
+                      key={lang.id}
+                      onClick={() => setLanguage(lang.id)}
+                      className={cn(
+                        "w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left",
+                        isSelected
+                          ? "border-primary bg-primary/10"
+                          : "border-white/10 bg-white/5 hover:border-white/20"
+                      )}
+                    >
+                      <span className="text-2xl">{lang.flag}</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-white">{lang.label}</div>
+                        {lang.id === "pt-BR" && (
+                          <div className="text-[10px] text-primary mt-0.5">Padrao</div>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-xs text-white/40">
+                  O idioma padrao e Portugues (Brasil). Alteracoes serao aplicadas apos reiniciar o jogo.
+                </p>
               </div>
             </div>
           </TabsContent>
