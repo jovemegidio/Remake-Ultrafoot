@@ -1,21 +1,52 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark } from "lucide-react"
+import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
-import { serieATeams, type Team } from "@/lib/teams-data"
+import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
+import { useGameState } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
+
+// Veiculos de comunicacao brasileiros com logos reais
+const NEWS_SOURCES = {
+  ge: {
+    name: "ge",
+    logo: "/logos/ge-logo.svg",
+    color: "#FF0000",
+    bgColor: "bg-red-600",
+  },
+  espn: {
+    name: "ESPN Brasil",
+    logo: "/logos/espn-logo.svg",
+    color: "#FF0000",
+    bgColor: "bg-red-700",
+  },
+  brasileirao: {
+    name: "Brasileirao",
+    logo: "/logos/brasileirao-logo.svg",
+    color: "#00875A",
+    bgColor: "bg-[#00875A]",
+  },
+  cazeTv: {
+    name: "CazéTV",
+    logo: "/logos/cazetv-logo.svg",
+    color: "#7C3AED",
+    bgColor: "bg-purple-600",
+  },
+  tntSports: {
+    name: "TNT Sports",
+    logo: "/logos/tnt-sports-logo.svg",
+    color: "#E50914",
+    bgColor: "bg-red-600",
+  },
+}
 
 interface NewsItem {
   id: string
-  source: {
-    name: string
-    logo: string
-    verified: boolean
-  }
+  source: keyof typeof NEWS_SOURCES
   date: string
-  type: "match_preview" | "transfer" | "highlight" | "announcement"
+  type: "match_preview" | "transfer" | "highlight" | "announcement" | "ranking" | "injury"
   title: string
   description?: string
   image?: string
@@ -26,62 +57,118 @@ interface NewsItem {
   likes: number
   comments: number
   isNew?: boolean
+  icon?: React.ReactNode
 }
 
-// Sample news data
-const sampleNews: NewsItem[] = [
-  {
-    id: "1",
-    source: {
-      name: "Brasileirao",
-      logo: "https://logodetimes.com/times/brasileirao-assai/logo-brasileirao-assai-256.png",
-      verified: true
-    },
-    date: "Hoje",
-    type: "match_preview",
-    title: "PROXIMAS PARTIDAS",
-    description: "Confira os confrontos da proxima rodada do Campeonato Brasileiro",
-    matches: [
-      { home: serieATeams[0], away: serieATeams[1] },
-      { home: serieATeams[2], away: serieATeams[3] },
-      { home: serieATeams[4], away: serieATeams[5] },
-      { home: serieATeams[6], away: serieATeams[7] },
-    ],
-    likes: 54940,
-    comments: 3700,
-    isNew: true
-  },
-  {
-    id: "2",
-    source: {
-      name: "GE",
-      logo: "https://s3.glbimg.com/v1/AUTH_7d75c8cbc9b549699dab464fd549ac33/ge/logos/ge-144.png",
-      verified: true
-    },
-    date: "2h",
-    type: "transfer",
-    title: "Mercado agitado na Serie A",
-    description: "Clubes brasileiros se movimentam para reforcar elencos na janela de transferencias",
-    image: "https://s2-ge.glbimg.com/H9TqW_mJGNjQl8zswOlFBiOZ_Jc=/0x0:1920x1080/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_bc8228b6673f488aa253bbcb03c80ec5/internal_photos/bs/2024/k/f/JMQm8wTEeGrJSYPMAFKg/brasileirao.jpg",
-    likes: 12500,
-    comments: 890,
-  },
-  {
-    id: "3",
-    source: {
-      name: "ESPN",
-      logo: "https://a.espncdn.com/i/espn/teamlogos/lrg/trans/espn_dotcom_black.gif",
-      verified: true
-    },
-    date: "5h",
-    type: "highlight",
-    title: "Melhores momentos da rodada",
-    description: "Gols, lances e destaques da ultima rodada do campeonato",
-    image: "https://a.espncdn.com/photo/2024/0423/r1324678_1296x729_16-9.jpg",
-    likes: 28300,
-    comments: 1540,
+// Gera noticias simuladas baseadas no estado do jogo
+function generateSimulatedNews(
+  userTeam: Team | null,
+  season: number,
+  week: number
+): NewsItem[] {
+  const teams = serieATeams
+  const randomTeam = () => teams[Math.floor(Math.random() * teams.length)]
+  const randomPlayer = () => {
+    const names = [
+      "Gabriel Silva", "Lucas Oliveira", "Matheus Santos", "Pedro Henrique",
+      "Gustavo Ferreira", "Rafael Costa", "Bruno Almeida", "Vinicius Lima",
+      "Felipe Souza", "Arthur Pereira", "Caio Ribeiro", "Diego Martins"
+    ]
+    return names[Math.floor(Math.random() * names.length)]
   }
-]
+  
+  const randomValue = () => Math.floor(Math.random() * 20 + 5) * 1000000
+  const randomAge = () => Math.floor(Math.random() * 15 + 18)
+  
+  // Gera confrontos para proxima rodada
+  const generateMatches = () => {
+    const shuffled = [...teams].sort(() => Math.random() - 0.5)
+    const matches: Array<{ home: Team; away: Team }> = []
+    for (let i = 0; i < Math.min(4, shuffled.length - 1); i += 2) {
+      matches.push({ home: shuffled[i], away: shuffled[i + 1] })
+    }
+    return matches
+  }
+
+  // Noticias templates simuladas
+  const newsTemplates: NewsItem[] = [
+    // Proximos jogos
+    {
+      id: "matches-" + season + "-" + week,
+      source: "brasileirao",
+      date: "Agora",
+      type: "match_preview",
+      title: "PROXIMOS JOGOS",
+      description: `Rodada ${week + 1} do Brasileirao ${season} - Confira os confrontos`,
+      matches: generateMatches(),
+      likes: Math.floor(Math.random() * 50000 + 30000),
+      comments: Math.floor(Math.random() * 5000 + 2000),
+      isNew: true,
+    },
+    // Transferencia
+    {
+      id: "transfer-" + Date.now(),
+      source: "ge",
+      date: "2h",
+      type: "transfer",
+      title: `${randomTeam().nome} anuncia contratacao de ${randomPlayer()}`,
+      description: `Jogador de ${randomAge()} anos chega por ${formatCurrency(randomValue())} e assina ate ${season + 3}`,
+      icon: <DollarSign className="h-5 w-5" />,
+      likes: Math.floor(Math.random() * 30000 + 10000),
+      comments: Math.floor(Math.random() * 3000 + 500),
+    },
+    // Destaque do time do usuario
+    ...(userTeam ? [{
+      id: "user-team-" + Date.now(),
+      source: "espn" as const,
+      date: "4h",
+      type: "highlight" as const,
+      title: `${userTeam.nome}: tecnico projeta temporada ${season}`,
+      description: `Comissao tecnica define estrategia para buscar titulo do Brasileirao`,
+      icon: <Trophy className="h-5 w-5" />,
+      likes: Math.floor(Math.random() * 25000 + 15000),
+      comments: Math.floor(Math.random() * 2000 + 800),
+    }] : []),
+    // Ranking
+    {
+      id: "ranking-" + Date.now(),
+      source: "cazeTv",
+      date: "6h",
+      type: "ranking",
+      title: "Artilharia do Brasileirao atualizada",
+      description: `${randomPlayer()} assume lideranca com ${Math.floor(Math.random() * 10 + 5)} gols`,
+      icon: <TrendingUp className="h-5 w-5" />,
+      likes: Math.floor(Math.random() * 40000 + 20000),
+      comments: Math.floor(Math.random() * 4000 + 1500),
+    },
+    // Lesao
+    {
+      id: "injury-" + Date.now(),
+      source: "tntSports",
+      date: "8h",
+      type: "injury",
+      title: `${randomPlayer()} sofre lesao e desfalca ${randomTeam().nome}`,
+      description: `Jogador passa por exames e deve ficar de fora por ${Math.floor(Math.random() * 6 + 2)} semanas`,
+      icon: <Users className="h-5 w-5" />,
+      likes: Math.floor(Math.random() * 15000 + 5000),
+      comments: Math.floor(Math.random() * 2000 + 300),
+    },
+    // Mercado agitado
+    {
+      id: "market-" + Date.now(),
+      source: "ge",
+      date: "12h",
+      type: "transfer",
+      title: "Clubes da Serie A movimentam mercado",
+      description: `Janela de transferencias aquece com propostas milionarias`,
+      icon: <DollarSign className="h-5 w-5" />,
+      likes: Math.floor(Math.random() * 35000 + 15000),
+      comments: Math.floor(Math.random() * 3500 + 1000),
+    },
+  ]
+
+  return newsTemplates
+}
 
 interface NewsFeedProps {
   className?: string
@@ -89,13 +176,21 @@ interface NewsFeedProps {
 }
 
 export function NewsFeed({ className, compact = false }: NewsFeedProps) {
+  const { state } = useGameState()
+  const userTeam = state.selectedTeamShort ? getTeamByShort(state.selectedTeamShort) : null
+  
+  const news = useMemo(() => 
+    generateSimulatedNews(userTeam ?? null, state.season, state.week),
+    [userTeam, state.season, state.week]
+  )
+  
   const [currentIndex, setCurrentIndex] = useState(0)
-  const news = sampleNews
 
   const nextNews = () => setCurrentIndex((i) => (i + 1) % news.length)
   const prevNews = () => setCurrentIndex((i) => (i - 1 + news.length) % news.length)
 
   const currentNews = news[currentIndex]
+  const source = NEWS_SOURCES[currentNews.source]
 
   if (compact) {
     return (
@@ -129,27 +224,11 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden bg-yellow-500 flex items-center justify-center">
-              {currentNews.source.logo ? (
-                <Image 
-                  src={currentNews.source.logo} 
-                  alt={currentNews.source.name}
-                  fill
-                  className="object-contain p-1"
-                  unoptimized
-                />
-              ) : (
-                <span className="text-sm font-bold text-black">{currentNews.source.name.charAt(0)}</span>
-              )}
-            </div>
+            <SourceLogo source={currentNews.source} size="md" />
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-sm text-white">{currentNews.source.name}</span>
-                {currentNews.source.verified && (
-                  <svg className="w-4 h-4 text-[#1da1f2]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
-                  </svg>
-                )}
+                <span className="font-semibold text-sm text-white">{source.name}</span>
+                <VerifiedBadge />
               </div>
               <span className="text-xs text-white/40">{currentNews.date}</span>
             </div>
@@ -164,26 +243,14 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
 
         {/* Content */}
         {currentNews.type === "match_preview" && currentNews.matches ? (
-          <MatchPreviewCard matches={currentNews.matches} title={currentNews.title} />
+          <MatchPreviewCard 
+            matches={currentNews.matches} 
+            title={currentNews.title}
+            description={currentNews.description}
+            season={state.season}
+          />
         ) : (
-          <div className="relative aspect-video">
-            {currentNews.image && (
-              <Image 
-                src={currentNews.image}
-                alt={currentNews.title}
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="text-lg font-bold text-white mb-1">{currentNews.title}</h3>
-              {currentNews.description && (
-                <p className="text-sm text-white/70 line-clamp-2">{currentNews.description}</p>
-              )}
-            </div>
-          </div>
+          <NewsContentCard news={currentNews} />
         )}
 
         {/* Footer - Engagement */}
@@ -228,104 +295,250 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   )
 }
 
-// Match Preview Card com mapa estilizado
-function MatchPreviewCard({ matches, title }: { matches: Array<{ home: Team; away: Team }>; title: string }) {
+// Logo do veiculo de comunicacao
+function SourceLogo({ source, size = "md" }: { source: keyof typeof NEWS_SOURCES; size?: "sm" | "md" }) {
+  const sourceData = NEWS_SOURCES[source]
+  const sizeClass = size === "sm" ? "w-8 h-8" : "w-10 h-10"
+  
+  // Renderiza logos customizadas SVG para cada veiculo
+  const renderLogo = () => {
+    switch(source) {
+      case "ge":
+        return (
+          <div className={cn(sizeClass, "rounded-full bg-red-600 flex items-center justify-center")}>
+            <span className="text-white font-black text-sm italic">ge</span>
+          </div>
+        )
+      case "espn":
+        return (
+          <div className={cn(sizeClass, "rounded-full bg-[#CC0000] flex items-center justify-center")}>
+            <svg viewBox="0 0 100 40" className="w-7 h-4">
+              <text x="50" y="30" textAnchor="middle" fill="white" fontFamily="Arial Black" fontSize="28" fontWeight="900" fontStyle="italic">
+                ESPN
+              </text>
+            </svg>
+          </div>
+        )
+      case "brasileirao":
+        return (
+          <div className={cn(sizeClass, "rounded-full bg-[#00875A] flex items-center justify-center p-1.5")}>
+            <svg viewBox="0 0 50 50" className="w-full h-full">
+              {/* Bola de futebol estilizada */}
+              <circle cx="25" cy="25" r="22" fill="none" stroke="white" strokeWidth="2"/>
+              <circle cx="25" cy="25" r="8" fill="white"/>
+              <path d="M25 3 L25 17 M25 33 L25 47 M3 25 L17 25 M33 25 L47 25" stroke="white" strokeWidth="2"/>
+              <text x="25" y="52" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">A</text>
+            </svg>
+          </div>
+        )
+      case "cazeTv":
+        return (
+          <div className={cn(sizeClass, "rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center")}>
+            <span className="text-white font-bold text-[10px]">CAZÉ</span>
+          </div>
+        )
+      case "tntSports":
+        return (
+          <div className={cn(sizeClass, "rounded-full bg-[#FF0000] flex items-center justify-center")}>
+            <span className="text-white font-black text-[9px]">TNT</span>
+          </div>
+        )
+      default:
+        return (
+          <div className={cn(sizeClass, "rounded-full bg-white/10 flex items-center justify-center")}>
+            <span className="text-white font-bold text-sm">{sourceData.name.charAt(0)}</span>
+          </div>
+        )
+    }
+  }
+
+  return renderLogo()
+}
+
+// Badge de verificado
+function VerifiedBadge() {
+  return (
+    <svg className="w-4 h-4 text-[#1da1f2]" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+    </svg>
+  )
+}
+
+// Card de preview de partidas com mapa do Brasil estilizado
+function MatchPreviewCard({ 
+  matches, 
+  title, 
+  description,
+  season 
+}: { 
+  matches: Array<{ home: Team; away: Team }>
+  title: string
+  description?: string
+  season: number
+}) {
   return (
     <div className="relative aspect-[4/3] bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#081020] overflow-hidden">
-      {/* Background pattern - mapa estilizado */}
-      <div className="absolute inset-0 opacity-30">
+      {/* Background - Mapa do Brasil estilizado */}
+      <div className="absolute inset-0 opacity-40">
         <svg viewBox="0 0 400 300" className="w-full h-full">
-          {/* Simplified Brazil map outline */}
+          {/* Contorno simplificado do Brasil */}
           <path
-            d="M200,20 Q280,40 320,80 Q360,120 340,180 Q320,240 260,280 Q200,300 140,280 Q80,260 60,200 Q40,140 80,80 Q120,40 200,20"
+            d="M180,25 Q240,20 280,35 Q320,50 350,90 Q370,130 365,170 Q360,210 340,240 Q310,270 270,280 Q230,290 190,285 Q150,280 120,260 Q90,240 70,200 Q50,160 55,120 Q60,80 90,55 Q120,30 180,25"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            className="text-[#1db954]/30"
+            stroke="url(#brazilGradient)"
+            strokeWidth="2"
+            className="drop-shadow-lg"
           />
-          {/* Grid lines */}
-          <g stroke="currentColor" strokeWidth="0.5" className="text-white/10">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <line key={`h${i}`} x1="0" y1={i * 75} x2="400" y2={i * 75} />
+          <defs>
+            <linearGradient id="brazilGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#00875A" stopOpacity="0.6"/>
+              <stop offset="50%" stopColor="#FFDF00" stopOpacity="0.4"/>
+              <stop offset="100%" stopColor="#00875A" stopOpacity="0.6"/>
+            </linearGradient>
+          </defs>
+          {/* Grid de fundo */}
+          <g stroke="white" strokeWidth="0.3" opacity="0.1">
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+              <line key={`h${i}`} x1="0" y1={i * 50} x2="400" y2={i * 50} />
             ))}
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <line key={`v${i}`} x1={i * 80} y1="0" x2={i * 80} y2="300" />
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <line key={`v${i}`} x1={i * 50} y1="0" x2={i * 50} y2="300" />
             ))}
+          </g>
+          {/* Pontos de cidade */}
+          <g fill="#1db954">
+            <circle cx="280" cy="100" r="3" opacity="0.6"/>
+            <circle cx="300" cy="150" r="3" opacity="0.6"/>
+            <circle cx="270" cy="200" r="3" opacity="0.6"/>
+            <circle cx="200" cy="180" r="3" opacity="0.6"/>
+            <circle cx="150" cy="140" r="3" opacity="0.6"/>
           </g>
         </svg>
       </div>
 
-      {/* Title */}
-      <div className="absolute top-4 left-4 right-4">
-        <h3 className="text-xl font-bold text-white tracking-wide text-center drop-shadow-lg">
-          {title}
-        </h3>
+      {/* Titulo e temporada */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white tracking-wide drop-shadow-lg">
+            {title}
+          </h3>
+          {description && (
+            <p className="text-xs text-white/60 mt-0.5">{description}</p>
+          )}
+        </div>
+        <div className="px-3 py-1 rounded-full bg-[#00875A]/20 border border-[#00875A]/30">
+          <span className="text-[#00875A] text-xs font-bold">{season}</span>
+        </div>
       </div>
 
-      {/* Match pairs with connecting lines */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="grid grid-cols-2 gap-x-16 gap-y-6">
+      {/* Confrontos */}
+      <div className="absolute inset-x-0 bottom-0 top-16 flex items-center justify-center px-6">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           {matches.map((match, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <TeamCrest team={match.home} size="md" className="drop-shadow-lg" />
-              <div className="flex items-center gap-1">
-                <span className="text-white/30 text-xs">vs</span>
-              </div>
-              <TeamCrest team={match.away} size="md" className="drop-shadow-lg" />
+            <div key={i} className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
+              <TeamCrest team={match.home} size="sm" className="drop-shadow-lg" />
+              <span className="text-[10px] text-white/50 font-medium px-1">vs</span>
+              <TeamCrest team={match.away} size="sm" className="drop-shadow-lg" />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Decorative airplane routes */}
+      {/* Rotas decorativas */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 300">
         <defs>
-          <marker id="plane" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
-            <path d="M0,5 L10,5 M5,0 L5,10 M3,3 L7,7 M7,3 L3,7" stroke="white" strokeWidth="1" fill="none" opacity="0.5"/>
-          </marker>
+          <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#1db954" stopOpacity="0"/>
+            <stop offset="50%" stopColor="#1db954" stopOpacity="0.5"/>
+            <stop offset="100%" stopColor="#1db954" stopOpacity="0"/>
+          </linearGradient>
         </defs>
-        {/* Curved flight paths */}
         <path 
-          d="M80,100 Q200,50 320,100" 
+          d="M60,150 Q200,80 340,150" 
           fill="none" 
-          stroke="white" 
-          strokeWidth="1" 
-          strokeDasharray="4,4"
-          opacity="0.2"
+          stroke="url(#routeGradient)" 
+          strokeWidth="1.5" 
+          strokeDasharray="6,4"
         />
         <path 
-          d="M100,200 Q200,150 300,200" 
+          d="M80,200 Q200,130 320,200" 
           fill="none" 
-          stroke="white" 
-          strokeWidth="1" 
-          strokeDasharray="4,4"
-          opacity="0.2"
+          stroke="url(#routeGradient)" 
+          strokeWidth="1.5" 
+          strokeDasharray="6,4"
         />
       </svg>
     </div>
   )
 }
 
-// Compact news item
-function NewsItemCompact({ news }: { news: NewsItem }) {
+// Card de conteudo de noticia padrao
+function NewsContentCard({ news }: { news: NewsItem }) {
+  const source = NEWS_SOURCES[news.source]
+  
+  const typeColors: Record<string, string> = {
+    transfer: "from-yellow-900/50 to-yellow-950/30",
+    highlight: "from-blue-900/50 to-blue-950/30",
+    ranking: "from-purple-900/50 to-purple-950/30",
+    injury: "from-red-900/50 to-red-950/30",
+    announcement: "from-green-900/50 to-green-950/30",
+  }
+
+  const typeIcons: Record<string, React.ReactNode> = {
+    transfer: <DollarSign className="h-6 w-6 text-yellow-400" />,
+    highlight: <Trophy className="h-6 w-6 text-blue-400" />,
+    ranking: <TrendingUp className="h-6 w-6 text-purple-400" />,
+    injury: <Users className="h-6 w-6 text-red-400" />,
+    announcement: <Trophy className="h-6 w-6 text-green-400" />,
+  }
+
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors cursor-pointer">
-      <div className="relative w-8 h-8 rounded-full overflow-hidden bg-white/10 flex-shrink-0">
-        {news.source.logo ? (
-          <Image 
-            src={news.source.logo} 
-            alt={news.source.name}
-            fill
-            className="object-contain p-1"
-            unoptimized
-          />
-        ) : (
-          <span className="text-xs font-bold text-white/60">{news.source.name.charAt(0)}</span>
+    <div className={cn(
+      "relative aspect-video bg-gradient-to-br",
+      typeColors[news.type] || "from-gray-900/50 to-gray-950/30"
+    )}>
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+      </div>
+      
+      {/* Icon */}
+      <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+        {news.icon || typeIcons[news.type]}
+      </div>
+
+      {/* Content */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+        <div className="flex items-center gap-2 mb-2">
+          <span 
+            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+            style={{ backgroundColor: source.color + "20", color: source.color }}
+          >
+            {news.type === "transfer" ? "Mercado" : 
+             news.type === "highlight" ? "Destaque" :
+             news.type === "ranking" ? "Ranking" :
+             news.type === "injury" ? "Lesao" : "Noticia"}
+          </span>
+        </div>
+        <h3 className="text-lg font-bold text-white mb-1 line-clamp-2">{news.title}</h3>
+        {news.description && (
+          <p className="text-sm text-white/70 line-clamp-2">{news.description}</p>
         )}
       </div>
+    </div>
+  )
+}
+
+// Item compacto de noticia
+function NewsItemCompact({ news }: { news: NewsItem }) {
+  const source = NEWS_SOURCES[news.source]
+  
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors cursor-pointer">
+      <SourceLogo source={news.source} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <span className="text-xs font-medium text-white/60">{news.source.name}</span>
+          <span className="text-xs font-medium text-white/60">{source.name}</span>
           <span className="text-[10px] text-white/30">{news.date}</span>
           {news.isNew && (
             <span className="px-1.5 py-0.5 rounded bg-yellow-400/20 text-yellow-400 text-[9px] font-bold">
