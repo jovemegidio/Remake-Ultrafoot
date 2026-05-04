@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { ChevronRight, Save, FastForward, Settings, Check, Loader2 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
+import { HeaderControls } from "@/components/controller-buttons"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
@@ -59,8 +60,14 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       "sticky top-0 z-30 flex h-12 items-center justify-between bg-[#0a0a0a]/95 backdrop-blur-sm border-b border-white/5 px-4",
       className
     )}>
-      {/* Left - Navigation */}
-      <div className="flex items-center gap-1">
+      {/* Left - Controller indicators + Navigation */}
+      <div className="flex items-center gap-4">
+        {/* Console controller navigation indicators */}
+        <HeaderControls controller="xbox" className="hidden sm:flex" />
+        
+        <div className="w-px h-5 bg-white/10 hidden sm:block" />
+        
+        <div className="flex items-center gap-1">
         {showNav && navItems.map((item, index) => {
           const isActive = item.href === "/" 
             ? pathname === "/" 
@@ -85,6 +92,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             </div>
           )
         })}
+        </div>
       </div>
 
       {/* Center - Season Info (optional) */}

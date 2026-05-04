@@ -25,6 +25,7 @@ import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { MatchCarousel } from "@/components/match-carousel"
+import { ControllerToolbar } from "@/components/controller-buttons"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
@@ -355,9 +356,23 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      <MusicPlayer />
-    </div>
-  )
+<MusicPlayer />
+
+{/* Controller Toolbar - FIFA style bottom bar */}
+<ControllerToolbar 
+  actions={[
+    { button: "A", label: "Selecionar" },
+    { button: "B", label: "Voltar" },
+    { button: "X", label: "Simular" },
+    { button: "Y", label: "Calendario" },
+    { button: "LB", label: "Tab Anterior" },
+    { button: "RB", label: "Proxima Tab" },
+  ]}
+  controller="xbox"
+  className="fixed bottom-0 left-[72px] right-0 z-40"
+/>
+</div>
+)
 }
 
 function GoalCard({

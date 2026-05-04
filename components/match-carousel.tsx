@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react"
 import { ChevronLeft, ChevronRight, Play, Calendar, MapPin, Clock } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
+import { CarouselDots, ControllerButton } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
 
@@ -129,29 +130,24 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
           </div>
         </div>
 
-        {/* Match indicators */}
-        <div className="flex justify-center gap-1.5 pb-3">
-          {validMatches.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (i !== currentIndex && !isAnimating) {
-                  setDirection(i > currentIndex ? "right" : "left")
-                  setIsAnimating(true)
-                  setTimeout(() => {
-                    setCurrentIndex(i)
-                    setIsAnimating(false)
-                  }, 300)
-                }
-              }}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-300",
-                i === currentIndex 
-                  ? "w-6 bg-[#1db954]" 
-                  : "w-1.5 bg-white/20 hover:bg-white/40"
-              )}
-            />
-          ))}
+        {/* Match indicators - FIFA style with controller buttons */}
+        <div className="flex justify-center pb-3">
+          <CarouselDots 
+            total={validMatches.length}
+            current={currentIndex}
+            onSelect={(i) => {
+              if (i !== currentIndex && !isAnimating) {
+                setDirection(i > currentIndex ? "right" : "left")
+                setIsAnimating(true)
+                setTimeout(() => {
+                  setCurrentIndex(i)
+                  setIsAnimating(false)
+                }, 300)
+              }
+            }}
+            showNavButtons={true}
+            controller="xbox"
+          />
         </div>
       </div>
 
@@ -239,14 +235,15 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons with controller icons */}
       <div className="flex items-center gap-2 p-4 pt-0">
         <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-[#1db954] text-black text-sm font-bold hover:bg-[#1ed760] transition-all hover:scale-[1.02] active:scale-[0.98]">
-          <Play className="h-4 w-4 fill-current" />
-          Jogar Partida
+          <ControllerButton button="A" size="xs" controller="xbox" />
+          <span>Jogar Partida</span>
         </button>
         <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors">
-          Simular
+          <ControllerButton button="X" size="xs" controller="xbox" />
+          <span>Simular</span>
         </button>
       </div>
     </section>
