@@ -11,6 +11,8 @@ type PlayerSize = "full" | "compact" | "mini" | "hidden"
 interface MusicPlayerProps {
   className?: string
   defaultSize?: PlayerSize
+  autoPlay?: boolean
+  offsetLeft?: number // para ajustar quando sidebar estiver presente
 }
 
 // Trilhas sonoras de futebol/jogo - usando URLs de audio livre
@@ -59,9 +61,10 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-export function MusicPlayer({ className, defaultSize = "mini" }: MusicPlayerProps) {
+export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, offsetLeft = 72 }: MusicPlayerProps) {
   const [size, setSize] = useState<PlayerSize>(defaultSize)
   const [playing, setPlaying] = useState(false)
+  const [hasAutoPlayed, setHasAutoPlayed] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(70)
@@ -124,6 +127,42 @@ export function MusicPlayer({ className, defaultSize = "mini" }: MusicPlayerProp
       }
     }
   }, [currentTrack])
+
+  // Auto-play on first interaction or load (requires user gesture in most browsers)
+  useEffect(() => {
+    if (autoPlay && !hasAutoPlayed && audioRef.current) {
+      const tryAutoPlay = () => {
+        if (audioRef.current && !playing) {
+          audioRef.current.play()
+            .then(() => {
+              setPlaying(true)
+              setHasAutoPlayed(true)
+            })
+            .catch(() => {
+              // Auto-play blocked, wait for user interaction
+            })
+        }
+      }
+      
+      // Try autoplay after a short delay
+      const timer = setTimeout(tryAutoPlay, 500)
+      
+      // Also try on first user interaction
+      const handleInteraction = () => {
+        tryAutoPlay()
+        document.removeEventListener("click", handleInteraction)
+        document.removeEventListener("keydown", handleInteraction)
+      }
+      document.addEventListener("click", handleInteraction, { once: true })
+      document.addEventListener("keydown", handleInteraction, { once: true })
+      
+      return () => {
+        clearTimeout(timer)
+        document.removeEventListener("click", handleInteraction)
+        document.removeEventListener("keydown", handleInteraction)
+      }
+    }
+  }, [autoPlay, hasAutoPlayed, playing])
 
   // Handle play/pause
   useEffect(() => {
@@ -258,10 +297,13 @@ export function MusicPlayer({ className, defaultSize = "mini" }: MusicPlayerProp
   // Compact player - slim bar
   if (size === "compact") {
     return (
-      <div className={cn(
-        "fixed bottom-0 left-[72px] right-0 z-30 flex h-16 items-center justify-between bg-gradient-to-r from-[#181818] to-[#121212] border-t border-[#282828] px-4",
-        className
-      )}>
+      <div 
+        className={cn(
+          "fixed bottom-0 right-0 z-30 flex h-16 items-center justify-between bg-gradient-to-r from-[#181818] to-[#121212] border-t border-[#282828] px-4",
+          className
+        )}
+        style={{ left: `${offsetLeft}px` }}
+      >
         {/* Left - Track info */}
         <div className="flex items-center gap-3 w-[30%] min-w-[180px]">
           <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded shadow-lg">
@@ -390,10 +432,13 @@ export function MusicPlayer({ className, defaultSize = "mini" }: MusicPlayerProp
 
   // Full player - expanded bar
   return (
-    <div className={cn(
-      "fixed bottom-0 left-[72px] right-0 z-30 flex h-[90px] items-center justify-between bg-[#000000] border-t border-[#282828] px-4",
-      className
-    )}>
+    <div 
+      className={cn(
+        "fixed bottom-0 right-0 z-30 flex h-[90px] items-center justify-between bg-[#000000] border-t border-[#282828] px-4",
+        className
+      )}
+      style={{ left: `${offsetLeft}px` }}
+    >
       {/* Left - Track info */}
       <div className="flex items-center gap-3 w-[30%] min-w-[180px]">
         <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded shadow-lg">

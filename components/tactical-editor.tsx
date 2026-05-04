@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
-import { X, Save, RotateCcw, ChevronDown, Users, Shuffle } from "lucide-react"
+import { useState, useRef, useCallback, useContext } from "react"
+import { X, Save, RotateCcw, ChevronDown, Users, Shuffle, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
+import { ControllerButton, ControllerToolbar } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import { type Team } from "@/lib/teams-data"
+import { ControllerTypeContext } from "@/components/controller-buttons"
 
 // Posicoes de jogadores no campo
 type Position = {
@@ -14,90 +16,107 @@ type Position = {
   number: number
   position: string
   rating: number
-  x: number // 0-100 percentual
-  y: number // 0-100 percentual
+  x: number
+  y: number
+  photo?: string
 }
 
-// Formacoes predefinidas
+// Formacoes predefinidas - EA FC style
 const FORMATIONS: Record<string, { name: string; positions: { pos: string; x: number; y: number }[] }> = {
   "4-3-3": {
     name: "4-3-3",
     positions: [
-      { pos: "GOL", x: 50, y: 92 },
-      { pos: "LD", x: 85, y: 75 },
-      { pos: "ZAG", x: 65, y: 78 },
-      { pos: "ZAG", x: 35, y: 78 },
-      { pos: "LE", x: 15, y: 75 },
-      { pos: "VOL", x: 50, y: 58 },
-      { pos: "MEI", x: 75, y: 48 },
-      { pos: "MEI", x: 25, y: 48 },
-      { pos: "PD", x: 80, y: 22 },
-      { pos: "ATA", x: 50, y: 15 },
-      { pos: "PE", x: 20, y: 22 },
+      { pos: "GOL", x: 50, y: 90 },
+      { pos: "LD", x: 85, y: 72 },
+      { pos: "ZAG", x: 65, y: 75 },
+      { pos: "ZAG", x: 35, y: 75 },
+      { pos: "LE", x: 15, y: 72 },
+      { pos: "VOL", x: 50, y: 55 },
+      { pos: "MEI", x: 75, y: 45 },
+      { pos: "MEI", x: 25, y: 45 },
+      { pos: "PD", x: 78, y: 20 },
+      { pos: "ATA", x: 50, y: 12 },
+      { pos: "PE", x: 22, y: 20 },
     ],
   },
   "4-4-2": {
     name: "4-4-2",
     positions: [
-      { pos: "GOL", x: 50, y: 92 },
-      { pos: "LD", x: 85, y: 75 },
-      { pos: "ZAG", x: 65, y: 78 },
-      { pos: "ZAG", x: 35, y: 78 },
-      { pos: "LE", x: 15, y: 75 },
-      { pos: "MD", x: 85, y: 50 },
-      { pos: "VOL", x: 60, y: 55 },
-      { pos: "VOL", x: 40, y: 55 },
-      { pos: "ME", x: 15, y: 50 },
-      { pos: "ATA", x: 60, y: 18 },
-      { pos: "ATA", x: 40, y: 18 },
+      { pos: "GOL", x: 50, y: 90 },
+      { pos: "LD", x: 85, y: 72 },
+      { pos: "ZAG", x: 65, y: 75 },
+      { pos: "ZAG", x: 35, y: 75 },
+      { pos: "LE", x: 15, y: 72 },
+      { pos: "MD", x: 85, y: 48 },
+      { pos: "VOL", x: 60, y: 52 },
+      { pos: "VOL", x: 40, y: 52 },
+      { pos: "ME", x: 15, y: 48 },
+      { pos: "ATA", x: 60, y: 15 },
+      { pos: "ATA", x: 40, y: 15 },
     ],
   },
   "3-5-2": {
     name: "3-5-2",
     positions: [
-      { pos: "GOL", x: 50, y: 92 },
-      { pos: "ZAG", x: 75, y: 78 },
-      { pos: "ZAG", x: 50, y: 82 },
-      { pos: "ZAG", x: 25, y: 78 },
-      { pos: "ALD", x: 90, y: 55 },
-      { pos: "VOL", x: 65, y: 58 },
-      { pos: "MEI", x: 50, y: 48 },
-      { pos: "VOL", x: 35, y: 58 },
-      { pos: "ALE", x: 10, y: 55 },
-      { pos: "ATA", x: 60, y: 18 },
-      { pos: "ATA", x: 40, y: 18 },
+      { pos: "GOL", x: 50, y: 90 },
+      { pos: "ZAG", x: 75, y: 75 },
+      { pos: "ZAG", x: 50, y: 78 },
+      { pos: "ZAG", x: 25, y: 75 },
+      { pos: "ALD", x: 90, y: 50 },
+      { pos: "VOL", x: 65, y: 55 },
+      { pos: "MEI", x: 50, y: 42 },
+      { pos: "VOL", x: 35, y: 55 },
+      { pos: "ALE", x: 10, y: 50 },
+      { pos: "ATA", x: 60, y: 15 },
+      { pos: "ATA", x: 40, y: 15 },
     ],
   },
   "4-2-3-1": {
     name: "4-2-3-1",
     positions: [
-      { pos: "GOL", x: 50, y: 92 },
-      { pos: "LD", x: 85, y: 75 },
-      { pos: "ZAG", x: 65, y: 78 },
-      { pos: "ZAG", x: 35, y: 78 },
-      { pos: "LE", x: 15, y: 75 },
-      { pos: "VOL", x: 60, y: 60 },
-      { pos: "VOL", x: 40, y: 60 },
-      { pos: "PD", x: 80, y: 38 },
-      { pos: "MEI", x: 50, y: 35 },
-      { pos: "PE", x: 20, y: 38 },
-      { pos: "ATA", x: 50, y: 15 },
+      { pos: "GOL", x: 50, y: 90 },
+      { pos: "LD", x: 85, y: 72 },
+      { pos: "ZAG", x: 65, y: 75 },
+      { pos: "ZAG", x: 35, y: 75 },
+      { pos: "LE", x: 15, y: 72 },
+      { pos: "VOL", x: 60, y: 58 },
+      { pos: "VOL", x: 40, y: 58 },
+      { pos: "PD", x: 80, y: 35 },
+      { pos: "MEI", x: 50, y: 32 },
+      { pos: "PE", x: 20, y: 35 },
+      { pos: "ATA", x: 50, y: 12 },
     ],
   },
   "5-3-2": {
     name: "5-3-2",
     positions: [
-      { pos: "GOL", x: 50, y: 92 },
-      { pos: "ALD", x: 90, y: 65 },
-      { pos: "ZAG", x: 70, y: 78 },
-      { pos: "ZAG", x: 50, y: 82 },
-      { pos: "ZAG", x: 30, y: 78 },
-      { pos: "ALE", x: 10, y: 65 },
-      { pos: "MEI", x: 70, y: 48 },
-      { pos: "VOL", x: 50, y: 55 },
-      { pos: "MEI", x: 30, y: 48 },
-      { pos: "ATA", x: 60, y: 18 },
-      { pos: "ATA", x: 40, y: 18 },
+      { pos: "GOL", x: 50, y: 90 },
+      { pos: "ALD", x: 90, y: 62 },
+      { pos: "ZAG", x: 70, y: 75 },
+      { pos: "ZAG", x: 50, y: 78 },
+      { pos: "ZAG", x: 30, y: 75 },
+      { pos: "ALE", x: 10, y: 62 },
+      { pos: "MEI", x: 70, y: 45 },
+      { pos: "VOL", x: 50, y: 52 },
+      { pos: "MEI", x: 30, y: 45 },
+      { pos: "ATA", x: 60, y: 15 },
+      { pos: "ATA", x: 40, y: 15 },
+    ],
+  },
+  "4-1-4-1": {
+    name: "4-1-4-1",
+    positions: [
+      { pos: "GOL", x: 50, y: 90 },
+      { pos: "LD", x: 85, y: 72 },
+      { pos: "ZAG", x: 65, y: 75 },
+      { pos: "ZAG", x: 35, y: 75 },
+      { pos: "LE", x: 15, y: 72 },
+      { pos: "VOL", x: 50, y: 60 },
+      { pos: "MD", x: 85, y: 42 },
+      { pos: "MEI", x: 65, y: 38 },
+      { pos: "MEI", x: 35, y: 38 },
+      { pos: "ME", x: 15, y: 42 },
+      { pos: "ATA", x: 50, y: 12 },
     ],
   },
 }
@@ -127,6 +146,15 @@ const DEFAULT_BENCH = [
   { id: 18, name: "Mendes", number: 18, position: "MEI", rating: 71 },
 ]
 
+// Rating color helper
+function getRatingColor(rating: number): string {
+  if (rating >= 85) return "from-[#d4af37] to-[#ffd700]" // Gold
+  if (rating >= 80) return "from-[#1db954] to-[#2ecc71]" // Green
+  if (rating >= 75) return "from-[#3498db] to-[#5dade2]" // Blue
+  if (rating >= 70) return "from-[#9b59b6] to-[#bb6bd9]" // Purple
+  return "from-[#7f8c8d] to-[#95a5a6]" // Gray
+}
+
 interface TacticalEditorProps {
   team: Team
   onClose: () => void
@@ -134,6 +162,7 @@ interface TacticalEditorProps {
 }
 
 export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
+  const controllerType = useContext(ControllerTypeContext)
   const [formation, setFormation] = useState("4-3-3")
   const [showFormationMenu, setShowFormationMenu] = useState(false)
   const [players, setPlayers] = useState<Position[]>(() => {
@@ -147,7 +176,11 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
   const [bench] = useState(DEFAULT_BENCH)
   const [draggingId, setDraggingId] = useState<number | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<"formation" | "tactics" | "attributes">("formation")
   const pitchRef = useRef<HTMLDivElement>(null)
+
+  const formationKeys = Object.keys(FORMATIONS)
+  const currentFormationIndex = formationKeys.indexOf(formation)
 
   // Aplicar nova formacao
   const applyFormation = (formationKey: string) => {
@@ -163,17 +196,24 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
     setShowFormationMenu(false)
   }
 
-  // Resetar posicoes
+  const nextFormation = () => {
+    const nextIndex = (currentFormationIndex + 1) % formationKeys.length
+    applyFormation(formationKeys[nextIndex])
+  }
+
+  const prevFormation = () => {
+    const prevIndex = (currentFormationIndex - 1 + formationKeys.length) % formationKeys.length
+    applyFormation(formationKeys[prevIndex])
+  }
+
   const resetPositions = () => {
     applyFormation(formation)
   }
 
-  // Embaralhar posicoes dos jogadores de campo
   const shufflePlayers = () => {
     setPlayers(prev => {
       const goalkeeper = prev[0]
       const fieldPlayers = [...prev.slice(1)]
-      // Fisher-Yates shuffle
       for (let i = fieldPlayers.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
         const tempPos = { x: fieldPlayers[i].x, y: fieldPlayers[i].y }
@@ -186,7 +226,6 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
     })
   }
 
-  // Drag handlers
   const handleDragStart = useCallback((id: number) => {
     setDraggingId(id)
     setSelectedPlayer(id)
@@ -218,168 +257,217 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
     setDraggingId(null)
   }, [])
 
-  // Salvar e fechar
   const handleSave = () => {
     onSave?.(formation, players)
     onClose()
   }
 
+  const selectedPlayerData = players.find(p => p.id === selectedPlayer)
+
   return (
-    <div className="fixed inset-0 z-50 flex bg-black/90 backdrop-blur-md">
-      {/* Left sidebar - Info */}
-      <aside className="w-64 flex-shrink-0 border-r border-white/10 bg-[#0d0d0d] flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-3 mb-3">
-            <TeamCrest team={team} size="lg" />
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#0a0a0a]">
+      {/* Header - EA FC style */}
+      <header className="flex items-center justify-between h-14 px-6 border-b border-white/10 bg-[#0d0d0d]">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-white/60 hover:text-white transition"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span className="text-sm font-medium">Voltar</span>
+          </button>
+          <div className="w-px h-6 bg-white/10" />
+          <div className="flex items-center gap-3">
+            <TeamCrest team={team} size="sm" />
             <div>
-              <div className="text-xs text-white/40 font-medium">Escalacao</div>
-              <div className="text-sm font-bold text-white">{team.nome}</div>
+              <h1 className="text-sm font-bold text-white">Escalacao</h1>
+              <div className="text-[10px] text-white/40">{team.nome}</div>
             </div>
           </div>
-          
-          {/* Formation selector */}
-          <div className="relative">
+        </div>
+
+        {/* Tab navigation */}
+        <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          {(["formation", "tactics", "attributes"] as const).map((tab) => (
             <button
-              onClick={() => setShowFormationMenu(!showFormationMenu)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm font-medium text-white hover:bg-white/10 transition"
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                activeTab === tab
+                  ? "bg-[#1db954] text-black"
+                  : "text-white/60 hover:text-white hover:bg-white/5"
+              )}
             >
-              <span>Formacao: {formation}</span>
-              <ChevronDown className={cn("h-4 w-4 transition-transform", showFormationMenu && "rotate-180")} />
+              {tab === "formation" ? "Formacao" : tab === "tactics" ? "Taticas" : "Atributos"}
             </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetPositions}
+            className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
+          >
+            <RotateCcw className="mr-1 h-3.5 w-3.5" />
+            Resetar
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold"
+          >
+            <Save className="mr-1 h-3.5 w-3.5" />
+            Confirmar
+          </Button>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left panel - Players list */}
+        <aside className="w-72 flex-shrink-0 border-r border-white/10 bg-[#0d0d0d] flex flex-col">
+          {/* Formation selector */}
+          <div className="p-4 border-b border-white/10">
+            <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2">
+              Formacao
+            </div>
+            <div className="flex items-center justify-between">
+              <button 
+                onClick={prevFormation}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setShowFormationMenu(!showFormationMenu)}
+                className="flex-1 mx-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#1db954]/20 to-[#1db954]/10 border border-[#1db954]/30 text-xl font-black text-white hover:from-[#1db954]/30 hover:to-[#1db954]/20 transition"
+              >
+                {formation}
+              </button>
+              <button 
+                onClick={nextFormation}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
             
             {showFormationMenu && (
-              <div className="absolute top-full left-0 right-0 mt-1 rounded-lg bg-[#1a1a1a] border border-white/10 overflow-hidden z-10">
-                {Object.keys(FORMATIONS).map(f => (
+              <div className="absolute left-4 right-4 mt-2 rounded-lg bg-[#1a1a1a] border border-white/10 overflow-hidden z-10 shadow-xl">
+                {formationKeys.map(f => (
                   <button
                     key={f}
                     onClick={() => applyFormation(f)}
                     className={cn(
-                      "w-full px-3 py-2 text-sm text-left transition",
+                      "w-full px-4 py-3 text-sm text-left transition flex items-center justify-between",
                       f === formation 
                         ? "bg-[#1db954] text-black font-semibold" 
                         : "text-white/70 hover:bg-white/5"
                     )}
                   >
-                    {FORMATIONS[f].name}
+                    <span className="font-bold">{FORMATIONS[f].name}</span>
+                    {f === formation && (
+                      <span className="text-[10px] bg-black/20 px-2 py-0.5 rounded">ATUAL</span>
+                    )}
                   </button>
                 ))}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Starters list */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2">
-            Titulares (11)
-          </div>
-          <div className="space-y-1">
-            {players.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedPlayer(p.id === selectedPlayer ? null : p.id)}
-                className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition",
-                  selectedPlayer === p.id 
-                    ? "bg-[#1db954]/20 border border-[#1db954]/50" 
-                    : "hover:bg-white/5 border border-transparent"
-                )}
-              >
-                <div
-                  className="h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold"
-                  style={{ backgroundColor: team.cor1, color: team.cor2 }}
-                >
-                  {p.number}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-white truncate">{p.name}</div>
-                  <div className="text-[10px] text-white/40">{p.position}</div>
-                </div>
-                <div className="text-xs font-bold text-[#1db954]">{p.rating}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Bench */}
-        <div className="border-t border-white/10 p-3">
-          <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2 flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            Banco ({bench.length})
-          </div>
-          <div className="grid grid-cols-4 gap-1">
-            {bench.slice(0, 7).map(p => (
-              <div
-                key={p.id}
-                className="flex flex-col items-center p-1 rounded bg-white/5 hover:bg-white/10 transition cursor-pointer"
-                title={`${p.name} (${p.position}) - ${p.rating}`}
-              >
-                <div
-                  className="h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-bold mb-0.5"
-                  style={{ backgroundColor: team.cor1, color: team.cor2 }}
-                >
-                  {p.number}
-                </div>
-                <div className="text-[8px] text-white/60 truncate w-full text-center">{p.name}</div>
+          {/* Starters list */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-3">
+              <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Titulares</span>
+                <span className="text-[#1db954]">11/11</span>
               </div>
-            ))}
+              <div className="space-y-1">
+                {players.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPlayer(p.id === selectedPlayer ? null : p.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all",
+                      selectedPlayer === p.id 
+                        ? "bg-[#1db954]/20 border border-[#1db954]/50" 
+                        : "hover:bg-white/5 border border-transparent"
+                    )}
+                  >
+                    {/* Player number circle */}
+                    <div
+                      className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shadow-lg"
+                      style={{ backgroundColor: team.cor1, color: team.cor2 }}
+                    >
+                      {p.number}
+                    </div>
+                    
+                    {/* Player info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">{p.name}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-white/40 font-medium">{p.position}</span>
+                        {selectedPlayer === p.id && (
+                          <span className="text-[9px] bg-[#1db954]/30 text-[#1db954] px-1.5 rounded">
+                            SELECIONADO
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Rating badge */}
+                    <div className={cn(
+                      "h-7 w-7 rounded flex items-center justify-center text-xs font-black text-white bg-gradient-to-br",
+                      getRatingColor(p.rating)
+                    )}>
+                      {p.rating}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </aside>
 
-      {/* Main content - Pitch */}
-      <main className="flex-1 flex flex-col">
-        {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#0a0a0a]">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold text-white">Editor Tatico</h1>
-            <span className="px-2 py-0.5 rounded bg-[#1db954]/20 text-[#1db954] text-xs font-medium">
-              {formation}
-            </span>
+          {/* Bench */}
+          <div className="border-t border-white/10 p-3">
+            <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              <span>Reservas ({bench.length})</span>
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {bench.map(p => (
+                <div
+                  key={p.id}
+                  className="flex-shrink-0 flex flex-col items-center p-2 rounded-lg bg-white/5 hover:bg-white/10 transition cursor-pointer min-w-[52px]"
+                  title={`${p.name} (${p.position}) - ${p.rating}`}
+                >
+                  <div
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold mb-1"
+                    style={{ backgroundColor: team.cor1, color: team.cor2 }}
+                  >
+                    {p.number}
+                  </div>
+                  <div className="text-[9px] text-white/60 truncate max-w-[48px] text-center">{p.name}</div>
+                  <div className={cn(
+                    "mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-gradient-to-r",
+                    getRatingColor(p.rating)
+                  )}>
+                    {p.rating}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={shufflePlayers}
-              className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
-            >
-              <Shuffle className="mr-1 h-3.5 w-3.5" />
-              Alternar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetPositions}
-              className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
-            >
-              <RotateCcw className="mr-1 h-3.5 w-3.5" />
-              Resetar
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold"
-            >
-              <Save className="mr-1 h-3.5 w-3.5" />
-              Salvar
-            </Button>
-            <button
-              onClick={onClose}
-              className="ml-2 h-8 w-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </header>
+        </aside>
 
-        {/* Pitch area */}
-        <div className="flex-1 flex items-center justify-center p-6 bg-[#0a0a0a]">
+        {/* Center - Pitch */}
+        <main className="flex-1 flex items-center justify-center p-6 bg-[#0a0a0a] overflow-hidden">
           <div
             ref={pitchRef}
-            className="relative w-full max-w-3xl aspect-[3/4] rounded-xl overflow-hidden select-none"
+            className="relative w-full max-w-2xl aspect-[3/4] rounded-2xl overflow-hidden select-none shadow-2xl"
             style={{
               background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
             }}
@@ -389,43 +477,36 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             onTouchMove={draggingId ? handleDrag : undefined}
             onTouchEnd={handleDragEnd}
           >
-            {/* Pitch lines */}
+            {/* Pitch stripes */}
             <div
-              className="absolute inset-0 opacity-25"
+              className="absolute inset-0 opacity-20"
               style={{
                 backgroundImage:
-                  "repeating-linear-gradient(0deg, transparent 0 8%, rgba(0,0,0,0.18) 8% 16%)",
+                  "repeating-linear-gradient(0deg, transparent 0 8%, rgba(0,0,0,0.15) 8% 16%)",
               }}
             />
+            
+            {/* Pitch markings */}
             <svg
               viewBox="0 0 100 100"
               className="absolute inset-0 h-full w-full"
               preserveAspectRatio="xMidYMid slice"
             >
-              <g stroke="rgba(255,255,255,0.5)" strokeWidth="0.3" fill="none">
-                {/* Outer boundary */}
-                <rect x="2" y="2" width="96" height="96" />
-                {/* Center line */}
-                <line x1="2" y1="50" x2="98" y2="50" />
-                {/* Center circle */}
+              <g stroke="rgba(255,255,255,0.45)" strokeWidth="0.25" fill="none">
+                <rect x="3" y="3" width="94" height="94" rx="1" />
+                <line x1="3" y1="50" x2="97" y2="50" />
                 <circle cx="50" cy="50" r="10" />
-                {/* Center spot */}
-                <circle cx="50" cy="50" r="0.5" fill="rgba(255,255,255,0.5)" />
-                {/* Top penalty area */}
-                <rect x="20" y="2" width="60" height="18" />
-                {/* Top goal area */}
-                <rect x="35" y="2" width="30" height="7" />
-                {/* Top penalty spot */}
-                <circle cx="50" cy="12" r="0.5" fill="rgba(255,255,255,0.5)" />
-                {/* Bottom penalty area */}
-                <rect x="20" y="80" width="60" height="18" />
-                {/* Bottom goal area */}
-                <rect x="35" y="91" width="30" height="7" />
-                {/* Bottom penalty spot */}
-                <circle cx="50" cy="88" r="0.5" fill="rgba(255,255,255,0.5)" />
-                {/* Goals */}
-                <rect x="40" y="0" width="20" height="2" stroke="rgba(255,255,255,0.8)" />
-                <rect x="40" y="98" width="20" height="2" stroke="rgba(255,255,255,0.8)" />
+                <circle cx="50" cy="50" r="0.6" fill="rgba(255,255,255,0.45)" />
+                <rect x="22" y="3" width="56" height="16" />
+                <rect x="36" y="3" width="28" height="6" />
+                <circle cx="50" cy="11" r="0.6" fill="rgba(255,255,255,0.45)" />
+                <path d="M35 19 A 15 15 0 0 0 65 19" />
+                <rect x="22" y="81" width="56" height="16" />
+                <rect x="36" y="91" width="28" height="6" />
+                <circle cx="50" cy="89" r="0.6" fill="rgba(255,255,255,0.45)" />
+                <path d="M35 81 A 15 15 0 0 1 65 81" />
+                <rect x="42" y="0" width="16" height="3" stroke="rgba(255,255,255,0.7)" />
+                <rect x="42" y="97" width="16" height="3" stroke="rgba(255,255,255,0.7)" />
               </g>
             </svg>
 
@@ -434,102 +515,160 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
               <div
                 key={p.id}
                 className={cn(
-                  "absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-shadow",
-                  draggingId === p.id && "z-20",
+                  "absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing group",
+                  draggingId === p.id && "z-20 scale-110",
                   selectedPlayer === p.id && "z-10"
                 )}
                 style={{ left: `${p.x}%`, top: `${p.y}%` }}
                 onMouseDown={() => handleDragStart(p.id)}
                 onTouchStart={() => handleDragStart(p.id)}
               >
-                {/* Selection ring */}
+                {/* Selection glow */}
                 {selectedPlayer === p.id && (
-                  <div className="absolute inset-0 -m-1.5 rounded-full border-2 border-[#1db954] animate-pulse" />
+                  <div className="absolute inset-0 -m-3 rounded-full bg-[#1db954]/30 blur-md animate-pulse" />
                 )}
                 
                 {/* Player circle */}
                 <div
                   className={cn(
-                    "h-10 w-10 rounded-full flex flex-col items-center justify-center shadow-lg border-2 transition-transform",
-                    draggingId === p.id && "scale-110"
+                    "relative h-12 w-12 rounded-full flex flex-col items-center justify-center shadow-xl border-[3px] transition-transform",
+                    selectedPlayer === p.id ? "border-[#1db954]" : "border-white/50"
                   )}
                   style={{
                     backgroundColor: team.cor1,
-                    borderColor: team.cor2,
                     color: team.cor2,
                   }}
                 >
-                  <span className="text-xs font-black leading-none">{p.number}</span>
+                  <span className="text-sm font-black leading-none">{p.number}</span>
                 </div>
                 
-                {/* Player name tag */}
+                {/* Player name */}
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap">
-                  <div className="bg-black/80 rounded px-1.5 py-0.5 text-[10px] font-medium text-white text-center">
+                  <div className={cn(
+                    "px-2 py-1 rounded-md text-[11px] font-semibold text-center shadow-lg",
+                    selectedPlayer === p.id
+                      ? "bg-[#1db954] text-black"
+                      : "bg-black/80 text-white"
+                  )}>
                     {p.name}
                   </div>
-                  <div className="text-[9px] text-white/60 text-center mt-0.5">{p.position}</div>
                 </div>
                 
                 {/* Rating badge */}
-                <div
-                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold bg-[#1db954] text-black shadow"
-                >
+                <div className={cn(
+                  "absolute -top-1 -right-1 h-6 w-6 rounded-md flex items-center justify-center text-[10px] font-black text-white shadow-lg bg-gradient-to-br",
+                  getRatingColor(p.rating)
+                )}>
                   {p.rating}
+                </div>
+                
+                {/* Position indicator */}
+                <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/60 text-[8px] font-bold text-white/80">
+                  {p.position}
                 </div>
               </div>
             ))}
 
-            {/* Instructions overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/60 text-[10px] text-white/70">
-              Arraste os jogadores para reposicionar
+            {/* Drag instructions */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 text-[10px] text-white/70 backdrop-blur-sm">
+              <ArrowLeftRight className="h-3 w-3" />
+              <span>Arraste para reposicionar</span>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
 
-      {/* Right sidebar - Selected player info */}
-      {selectedPlayer && (
-        <aside className="w-56 flex-shrink-0 border-l border-white/10 bg-[#0d0d0d] p-4">
-          {(() => {
-            const player = players.find(p => p.id === selectedPlayer)
-            if (!player) return null
-            return (
-              <>
-                <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-3">
-                  Jogador Selecionado
-                </div>
-                <div className="flex items-center gap-3 mb-4">
+        {/* Right panel - Player details */}
+        <aside className="w-64 flex-shrink-0 border-l border-white/10 bg-[#0d0d0d] flex flex-col">
+          {selectedPlayerData ? (
+            <>
+              {/* Selected player header */}
+              <div className="p-4 border-b border-white/10">
+                <div className="flex items-center gap-4">
                   <div
-                    className="h-12 w-12 rounded-full flex items-center justify-center text-lg font-bold"
+                    className="h-16 w-16 rounded-xl flex items-center justify-center text-2xl font-black shadow-lg"
                     style={{ backgroundColor: team.cor1, color: team.cor2 }}
                   >
-                    {player.number}
+                    {selectedPlayerData.number}
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">{player.name}</div>
-                    <div className="text-xs text-white/50">{player.position}</div>
+                    <div className="text-lg font-bold text-white">{selectedPlayerData.name}</div>
+                    <div className="text-xs text-white/50">{selectedPlayerData.position}</div>
+                    <div className={cn(
+                      "mt-1 inline-flex px-2 py-0.5 rounded text-xs font-black text-white bg-gradient-to-r",
+                      getRatingColor(selectedPlayerData.rating)
+                    )}>
+                      {selectedPlayerData.rating} OVR
+                    </div>
                   </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/50">Overall</span>
-                    <span className="font-bold text-[#1db954]">{player.rating}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/50">Posicao X</span>
-                    <span className="font-mono text-white">{player.x.toFixed(0)}%</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/50">Posicao Y</span>
-                    <span className="font-mono text-white">{player.y.toFixed(0)}%</span>
-                  </div>
+              </div>
+
+              {/* Stats */}
+              <div className="flex-1 p-4 space-y-3">
+                <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider">
+                  Atributos
                 </div>
-              </>
-            )
-          })()}
+                {[
+                  { label: "Ritmo", value: 78 },
+                  { label: "Finalizacao", value: 75 },
+                  { label: "Passe", value: 80 },
+                  { label: "Drible", value: 77 },
+                  { label: "Defesa", value: 45 },
+                  { label: "Fisico", value: 72 },
+                ].map((stat) => (
+                  <div key={stat.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-white/60">{stat.label}</span>
+                      <span className="font-bold text-white">{stat.value}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full bg-gradient-to-r from-[#1db954] to-[#2ecc71]"
+                        style={{ width: `${stat.value}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="p-4 border-t border-white/10 space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-white/10 bg-transparent text-white/70 hover:bg-white/5"
+                >
+                  <ArrowLeftRight className="mr-2 h-4 w-4" />
+                  Substituir Jogador
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-white/20" />
+              </div>
+              <div className="text-sm font-medium text-white/40">Nenhum jogador selecionado</div>
+              <div className="text-xs text-white/20 mt-1">Clique em um jogador para ver detalhes</div>
+            </div>
+          )}
         </aside>
-      )}
+      </div>
+
+      {/* Footer with controller buttons */}
+      <ControllerToolbar
+        visible={true}
+        controller={controllerType}
+        actions={[
+          { button: "A", label: "Selecionar" },
+          { button: "B", label: "Voltar" },
+          { button: "X", label: "Substituir" },
+          { button: "Y", label: "Taticas" },
+          { button: "LB", label: "Form. Anterior" },
+          { button: "RB", label: "Prox. Form." },
+        ]}
+        className="border-t border-white/10"
+      />
     </div>
   )
 }

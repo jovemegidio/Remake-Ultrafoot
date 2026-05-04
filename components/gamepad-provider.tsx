@@ -11,6 +11,8 @@ interface GamepadContextType {
   unregisterFocusableElement: (id: string) => void
   setFocusedElement: (id: string | null) => void
   focusedElementId: string | null
+  isGamepadConnected: boolean
+  controllerType: "xbox" | "playstation" | "generic"
 }
 
 const GamepadContext = createContext<GamepadContextType | null>(null)
@@ -196,6 +198,8 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
         unregisterFocusableElement,
         setFocusedElement: setFocusedElementId,
         focusedElementId,
+        isGamepadConnected: gamepad.connected,
+        controllerType: gamepad.controllerType,
       }}>
         {children}
       
