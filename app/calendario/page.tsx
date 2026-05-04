@@ -305,13 +305,18 @@ export default function CalendarioPage() {
           {/* Featured news */}
           <div className="space-y-4">
             <div className="rounded-lg overflow-hidden bg-[#1a1a1a] border border-white/5">
-              <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-accent/10">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Trophy className="h-12 w-12 text-primary/50" />
+              <div className="relative aspect-video bg-gradient-to-br from-[#0a5c2b] to-[#0d7a3a]">
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  {/* Logo Brasileirao Serie A */}
+                  <img 
+                    src="https://logodetimes.com/times/brasileirao-assai/logo-brasileirao-assai-256.png"
+                    alt="Brasileirao Serie A"
+                    className="h-16 w-auto object-contain drop-shadow-lg"
+                  />
                 </div>
               </div>
               <div className="p-3">
-                <div className="text-xs text-primary mb-1">COMPETICAO</div>
+                <div className="text-xs text-[#1db954] mb-1">COMPETICAO</div>
                 <div className="text-sm font-medium text-white line-clamp-2">
                   Brasileirao Serie A - Tabela atualizada
                 </div>
