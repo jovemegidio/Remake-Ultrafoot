@@ -10,7 +10,7 @@ import { createContext } from "react"
 export const ControllerTypeContext = createContext<ControllerType>("playstation")
 
 interface ControllerButtonProps {
-  button: "A" | "B" | "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "LS" | "RS" | "L" | "R" | "DPAD" | "MENU" | "VIEW"
+  button: "A" | "B" | "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "LS" | "RS" | "L" | "R" | "L3" | "R3" | "DPAD" | "DPAD_UP" | "DPAD_DOWN" | "DPAD_LEFT" | "DPAD_RIGHT" | "MENU" | "VIEW"
   label?: string
   size?: "xs" | "sm" | "md" | "lg"
   controller?: ControllerType
@@ -114,6 +114,68 @@ function XboxDpadButton({ className }: { className?: string }) {
     <svg viewBox="0 0 32 32" className={className} fill="none">
       <rect x="12" y="2" width="8" height="28" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
       <rect x="2" y="12" width="28" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    </svg>
+  )
+}
+
+function XboxDpadUpButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    </svg>
+  )
+}
+
+function XboxDpadDownButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    </svg>
+  )
+}
+
+function XboxDpadLeftButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    </svg>
+  )
+}
+
+function XboxDpadRightButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+    </svg>
+  )
+}
+
+function XboxL3Button({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 40 24" className={className} fill="none">
+      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
+      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">L3</text>
+    </svg>
+  )
+}
+
+function XboxR3Button({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 40 24" className={className} fill="none">
+      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
+      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">R3</text>
     </svg>
   )
 }
@@ -237,6 +299,50 @@ function PSDpadButton({ className }: { className?: string }) {
   )
 }
 
+function PSDpadUpButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    </svg>
+  )
+}
+
+function PSDpadDownButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    </svg>
+  )
+}
+
+function PSDpadLeftButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    </svg>
+  )
+}
+
+function PSDpadRightButton({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="12" y="2" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="12" y="16" width="8" height="14" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="2" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      <rect x="20" y="12" width="10" height="8" rx="1" stroke="white" strokeWidth="2" fill="white" fillOpacity="0.3" />
+    </svg>
+  )
+}
+
 function PSOptionsButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
@@ -281,7 +387,7 @@ export function ControllerButton({
   const contextController = useContext(ControllerTypeContext)
   const activeController = controller || contextController || "xbox"
   
-  const isWide = ["LB", "RB", "LT", "RT", "LS", "RS", "MENU", "VIEW"].includes(button)
+  const isWide = ["LB", "RB", "LT", "RT", "LS", "RS", "L3", "R3", "MENU", "VIEW"].includes(button)
   const sizeClass = isWide ? wideSizeClasses[size] : sizeClasses[size]
   
   const renderButton = () => {
@@ -297,7 +403,13 @@ export function ControllerButton({
         case "RT": return <XboxRTButton className={sizeClass} />
         case "LS": case "L": return <XboxLStickButton className={sizeClass} />
         case "RS": case "R": return <XboxRStickButton className={sizeClass} />
+        case "L3": return <XboxL3Button className={sizeClass} />
+        case "R3": return <XboxR3Button className={sizeClass} />
         case "DPAD": return <XboxDpadButton className={sizeClass} />
+        case "DPAD_UP": return <XboxDpadUpButton className={sizeClass} />
+        case "DPAD_DOWN": return <XboxDpadDownButton className={sizeClass} />
+        case "DPAD_LEFT": return <XboxDpadLeftButton className={sizeClass} />
+        case "DPAD_RIGHT": return <XboxDpadRightButton className={sizeClass} />
         case "MENU": return <XboxMenuButton className={sizeClass} />
         case "VIEW": return <XboxViewButton className={sizeClass} />
         default: return null
@@ -315,7 +427,13 @@ export function ControllerButton({
         case "RT": return <PSR2Button className={sizeClass} />
         case "LS": case "L": return <PSL3Button className={sizeClass} />
         case "RS": case "R": return <PSR3Button className={sizeClass} />
+        case "L3": return <PSL3Button className={sizeClass} />
+        case "R3": return <PSR3Button className={sizeClass} />
         case "DPAD": return <PSDpadButton className={sizeClass} />
+        case "DPAD_UP": return <PSDpadUpButton className={sizeClass} />
+        case "DPAD_DOWN": return <PSDpadDownButton className={sizeClass} />
+        case "DPAD_LEFT": return <PSDpadLeftButton className={sizeClass} />
+        case "DPAD_RIGHT": return <PSDpadRightButton className={sizeClass} />
         case "MENU": return <PSOptionsButton className={sizeClass} />
         case "VIEW": return <PSTouchpadButton className={sizeClass} />
         default: return null
