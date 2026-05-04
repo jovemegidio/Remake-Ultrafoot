@@ -27,14 +27,25 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
   const [direction, setDirection] = useState<"left" | "right" | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
 
-  const currentMatch = matches[currentIndex]
+  // Filter out matches with undefined teams
+  const validMatches = matches.filter(m => m.home && m.away)
+  
+  if (validMatches.length === 0) {
+    return (
+      <section className={cn("rounded-xl bg-[#141414] border border-white/5 p-6", className)}>
+        <div className="text-center text-white/40">Nenhuma partida disponivel</div>
+      </section>
+    )
+  }
+
+  const currentMatch = validMatches[currentIndex % validMatches.length]
 
   const navigate = useCallback((newDirection: "left" | "right") => {
     if (isAnimating) return
 
     const newIndex = newDirection === "right" 
-      ? (currentIndex + 1) % matches.length
-      : (currentIndex - 1 + matches.length) % matches.length
+      ? (currentIndex + 1) % validMatches.length
+      : (currentIndex - 1 + validMatches.length) % validMatches.length
 
     setDirection(newDirection)
     setIsAnimating(true)
@@ -43,7 +54,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
       setCurrentIndex(newIndex)
       setIsAnimating(false)
     }, 300)
-  }, [currentIndex, matches.length, isAnimating])
+  }, [currentIndex, validMatches.length, isAnimating])
 
   const goToNext = () => navigate("right")
   const goToPrev = () => navigate("left")
@@ -120,7 +131,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
 
         {/* Match indicators */}
         <div className="flex justify-center gap-1.5 pb-3">
-          {matches.map((_, i) => (
+          {validMatches.map((_, i) => (
             <button
               key={i}
               onClick={() => {

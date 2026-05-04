@@ -159,7 +159,7 @@ export default function DashboardPage() {
               matches={fixtures.map((f, i) => ({
                 ...f,
                 matchday: i + 1,
-                stadium: f.home.estadio_nome
+                stadium: f.home?.estadio_nome || "Estadio"
               }))} 
               userTeam={userTeam} 
             />
