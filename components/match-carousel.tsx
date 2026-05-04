@@ -182,8 +182,8 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
             {/* Home team */}
             <div className="flex flex-col items-center gap-3 flex-1">
               <div className="relative">
-                <TeamCrest team={currentMatch.home} size="2xl" />
-                {currentMatch.home.curto === userTeam.curto && (
+                {currentMatch.home && <TeamCrest team={currentMatch.home} size="2xl" />}
+                {currentMatch.home?.curto === userTeam?.curto && (
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1db954] flex items-center justify-center">
                     <span className="text-[8px] font-bold text-black">YOU</span>
                   </div>
@@ -191,10 +191,10 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-white tracking-wide">
-                  {currentMatch.home.curto}
+                  {currentMatch.home?.curto || "TBD"}
                 </div>
                 <div className="text-[10px] text-white/40 uppercase tracking-wider mt-0.5">
-                  {currentMatch.home.curto === userTeam.curto ? "Seu time" : "Casa"}
+                  {currentMatch.home?.curto === userTeam?.curto ? "Seu time" : "Casa"}
                 </div>
               </div>
             </div>
@@ -211,8 +211,8 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
             {/* Away team */}
             <div className="flex flex-col items-center gap-3 flex-1">
               <div className="relative">
-                <TeamCrest team={currentMatch.away} size="2xl" />
-                {currentMatch.away.curto === userTeam.curto && (
+                {currentMatch.away && <TeamCrest team={currentMatch.away} size="2xl" />}
+                {currentMatch.away?.curto === userTeam?.curto && (
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1db954] flex items-center justify-center">
                     <span className="text-[8px] font-bold text-black">YOU</span>
                   </div>
@@ -220,10 +220,10 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-white tracking-wide">
-                  {currentMatch.away.curto}
+                  {currentMatch.away?.curto || "TBD"}
                 </div>
                 <div className="text-[10px] text-white/40 uppercase tracking-wider mt-0.5">
-                  {currentMatch.away.curto === userTeam.curto ? "Seu time" : "Visitante"}
+                  {currentMatch.away?.curto === userTeam?.curto ? "Seu time" : "Visitante"}
                 </div>
               </div>
             </div>
