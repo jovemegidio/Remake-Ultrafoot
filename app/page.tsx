@@ -24,10 +24,11 @@ import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
+import { MatchCarousel } from "@/components/match-carousel"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Standings
 const standings = serieATeams.slice(0, 8).map((team, index) => ({
@@ -153,55 +154,15 @@ export default function DashboardPage() {
         <div className="grid gap-5 lg:grid-cols-3">
           {/* Left Column - Fixtures & Goals */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Next Match */}
-            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
-                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Calendar className="h-4 w-4 text-[#1db954]" />
-                  PROXIMA PARTIDA
-                </div>
-                <span className="text-[10px] text-white/40">Brasileirao Serie A</span>
-              </div>
-              
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <TeamCrest team={fixtures[0].home} size="xl" />
-                    <div>
-                      <div className="font-semibold text-white">{fixtures[0].home.nome}</div>
-                      <div className="text-xs text-white/40">Casa</div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center px-8">
-                    <div className="text-2xl font-bold text-white/20">VS</div>
-                    <div className="text-xs text-white/50 mt-1">{fixtures[0].date}</div>
-                    <div className="text-xs text-[#1db954]">{fixtures[0].time}</div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="font-semibold text-white">{fixtures[0].away.nome}</div>
-                      <div className="text-xs text-white/40">Visitante</div>
-                    </div>
-                    <TeamCrest team={fixtures[0].away} size="xl" />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-center gap-3 mt-5">
-                  <Link 
-                    href="/partida"
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#1db954] text-black text-sm font-semibold hover:bg-[#1ed760] transition-colors"
-                  >
-                    <Play className="h-4 w-4 fill-current" />
-                    Jogar Partida
-                  </Link>
-                  <button className="px-4 py-2.5 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors">
-                    Simular
-                  </button>
-                </div>
-              </div>
-            </section>
+            {/* Next Match - FIFA Style Carousel */}
+            <MatchCarousel 
+              matches={fixtures.map((f, i) => ({
+                ...f,
+                matchday: i + 1,
+                stadium: f.home.estadio_nome
+              }))} 
+              userTeam={userTeam} 
+            />
 
             {/* Goals */}
             <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">

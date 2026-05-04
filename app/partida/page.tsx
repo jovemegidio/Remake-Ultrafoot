@@ -36,8 +36,8 @@ import {
 type KitVariant = "home" | "away" | "third"
 
 // Dados do confronto
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
-const opponent = getTeamByShort("PLM") || serieATeams[1]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
+const opponent = getTeamByShort("PAL") || serieATeams[1]
 
 const matchInfo = {
   competition: "Brasileirao Serie A",

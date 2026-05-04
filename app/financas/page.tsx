@@ -22,7 +22,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { getTeamByShort, serieATeams, formatCurrency } from "@/lib/teams-data"
 
-const userTeam = getTeamByShort("RBB") || serieATeams[0]
+const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Financial data
 const financialData = {

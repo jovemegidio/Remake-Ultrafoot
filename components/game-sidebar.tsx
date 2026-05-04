@@ -7,7 +7,6 @@ import {
   LayoutGrid,
   Users,
   CalendarDays,
-  PlayCircle,
   Trophy,
   Wallet,
   Shirt,
@@ -22,7 +21,6 @@ const navItems = [
   { icon: LayoutGrid, label: "Dashboard", href: "/" },
   { icon: Users, label: "Elenco", href: "/elenco" },
   { icon: CalendarDays, label: "Calendario", href: "/calendario" },
-  { icon: PlayCircle, label: "Partida", href: "/partida" },
   { icon: Trophy, label: "Competicoes", href: "/competicoes" },
   { icon: Wallet, label: "Financas", href: "/financas" },
   { icon: Shirt, label: "Mercado", href: "/mercado" },
@@ -98,13 +96,6 @@ export function GameSidebar() {
         })}
       </nav>
 
-      {/* Bottom section - minimal */}
-      <div className="w-8 h-px bg-white/10 mt-3 mb-3" />
-      
-      {/* User avatar placeholder */}
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] ring-1 ring-white/10 text-white/60 text-xs font-medium">
-        UF
-      </div>
     </aside>
   )
 }

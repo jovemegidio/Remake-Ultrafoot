@@ -93,7 +93,7 @@ export function getIconeUrl(): string {
 export const serieATeams: Team[] = [
   {
     nome: "Botafogo",
-    curto: "BTF",
+    curto: "BOT",
     cidade: "Rio de Janeiro",
     estado: "RJ",
     cor1: "#181818",
@@ -110,7 +110,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Palmeiras",
-    curto: "PLM",
+    curto: "PAL",
     cidade: "Sao Paulo",
     estado: "SP",
     cor1: "#02693a",
@@ -127,7 +127,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Flamengo",
-    curto: "FLM",
+    curto: "FLA",
     cidade: "Rio de Janeiro",
     estado: "RJ",
     cor1: "#dd2c2c",
@@ -144,7 +144,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Fortaleza",
-    curto: "FRT",
+    curto: "FOR",
     cidade: "Fortaleza",
     estado: "CE",
     cor1: "#66ccff",
@@ -161,7 +161,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Internacional",
-    curto: "NTR",
+    curto: "INT",
     cidade: "Porto Alegre",
     estado: "RS",
     cor1: "#c01616",
@@ -178,7 +178,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Sao Paulo",
-    curto: "SPL",
+    curto: "SAO",
     cidade: "Sao Paulo",
     estado: "SP",
     cor1: "#ffffff",
@@ -195,7 +195,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Corinthians",
-    curto: "CRN",
+    curto: "COR",
     cidade: "Sao Paulo",
     estado: "SP",
     cor1: "#000000",
@@ -229,7 +229,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Cruzeiro",
-    curto: "CRZ",
+    curto: "CRU",
     cidade: "Belo Horizonte",
     estado: "MG",
     cor1: "#0d52a8",
@@ -246,7 +246,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Atletico-MG",
-    curto: "TLT",
+    curto: "CAM",
     cidade: "Belo Horizonte",
     estado: "MG",
     cor1: "#000000",
@@ -263,7 +263,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Fluminense",
-    curto: "FL1",
+    curto: "FLU",
     cidade: "Rio de Janeiro",
     estado: "RJ",
     cor1: "#ffffff",
@@ -280,7 +280,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Vasco da Gama",
-    curto: "VDG",
+    curto: "VAS",
     cidade: "Rio de Janeiro",
     estado: "RJ",
     cor1: "#000000",
@@ -297,7 +297,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Gremio",
-    curto: "GRM",
+    curto: "GRE",
     cidade: "Porto Alegre",
     estado: "RS",
     cor1: "#328ce9",
@@ -314,7 +314,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Vitoria",
-    curto: "VTR",
+    curto: "VIT",
     cidade: "Salvador",
     estado: "BA",
     cor1: "#000000",
@@ -331,7 +331,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Athletico-PR",
-    curto: "THL",
+    curto: "CAP",
     cidade: "Curitiba",
     estado: "PR",
     cor1: "#000000",
@@ -348,7 +348,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Juventude",
-    curto: "JVN",
+    curto: "JUV",
     cidade: "Caxias do Sul",
     estado: "RS",
     cor1: "#009933",
@@ -365,7 +365,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Santos",
-    curto: "SNT",
+    curto: "SAN",
     cidade: "Santos",
     estado: "SP",
     cor1: "#e6e6e6",
@@ -382,7 +382,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Mirassol",
-    curto: "MRS",
+    curto: "MIR",
     cidade: "Mirassol",
     estado: "SP",
     cor1: "#ffff00",
@@ -399,7 +399,7 @@ export const serieATeams: Team[] = [
   },
   {
     nome: "Sport",
-    curto: "SPR",
+    curto: "SPT",
     cidade: "Recife",
     estado: "PE",
     cor1: "#000000",
@@ -437,7 +437,7 @@ export const serieATeams: Team[] = [
 export const serieBTeams: Team[] = [
   {
     nome: "America-MG",
-    curto: "MRC",
+    curto: "AME",
     cidade: "Belo Horizonte",
     estado: "MG",
     cor1: "#00b754",
@@ -471,7 +471,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Coritiba",
-    curto: "CRT",
+    curto: "CFC",
     cidade: "Curitiba",
     estado: "PR",
     cor1: "#003f2e",
@@ -522,7 +522,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Paysandu",
-    curto: "PYS",
+    curto: "PAY",
     cidade: "Belem",
     estado: "PA",
     cor1: "#006699",
@@ -539,7 +539,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Chapecoense",
-    curto: "CHP",
+    curto: "CHA",
     cidade: "Chapeco",
     estado: "SC",
     cor1: "#14894f",
@@ -556,7 +556,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Vila Nova",
-    curto: "VLN",
+    curto: "VIL",
     cidade: "Goiania",
     estado: "GO",
     cor1: "#ff0000",
@@ -573,7 +573,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Amazonas FC",
-    curto: "MZN",
+    curto: "AMA",
     cidade: "Manaus",
     estado: "AM",
     cor1: "#ffcc00",
@@ -590,7 +590,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Operario-PR",
-    curto: "PRR",
+    curto: "OPE",
     cidade: "Ponta Grossa",
     estado: "PR",
     cor1: "#ffffff",
@@ -607,7 +607,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Gremio Novorizontino",
-    curto: "GR1",
+    curto: "NOV",
     cidade: "Novo Horizonte",
     estado: "SP",
     cor1: "#ffcc00",
@@ -624,7 +624,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "Botafogo-SP",
-    curto: "BT1",
+    curto: "BSP",
     cidade: "Ribeirao Preto",
     estado: "SP",
     cor1: "#ffffff",
@@ -641,7 +641,7 @@ export const serieBTeams: Team[] = [
   },
   {
     nome: "RB Bragantino",
-    curto: "RBB",
+    curto: "BGT",
     cidade: "Braganca Paulista",
     estado: "SP",
     cor1: "#ffffff",
@@ -674,7 +674,7 @@ export function getTeamByFileKey(fileKey: string): Team | undefined {
 // Uniformes dos times (baseado nas cores reais)
 export function getTeamUniforms(team: Team): TeamUniforms {
   // Determinar padrão baseado no time
-  const hasStripes = ["FLM", "BTF", "VDG", "TLT", "SPL", "GRM", "SNT", "BAH", "NTR", "VTR", "SPR"].includes(team.curto)
+  const hasStripes = ["FLA", "BOT", "VAS", "CAM", "SAO", "GRE", "SAN", "BAH", "INT", "VIT", "SPT"].includes(team.curto)
   
   return {
     home: {
