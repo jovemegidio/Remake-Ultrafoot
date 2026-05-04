@@ -42,6 +42,7 @@ import {
 import { useUserTeam } from "@/lib/save-system"
 import { saveMatchContext, loadMatchContext } from "@/lib/match-context"
 import { simulateFullMatch } from "@/lib/match-engine"
+import { FormationBoard } from "@/components/match/formation-board"
 
 type KitVariant = "home" | "away" | "third"
 type Weather = "sunny" | "cloudy" | "rain"
@@ -206,6 +207,7 @@ export default function PreMatchPage() {
   const [homeKit, setHomeKit] = useState<KitVariant>("home")
   const [awayKit, setAwayKit] = useState<KitVariant>("away")
   const [showLineup, setShowLineup] = useState(false)
+  const [lineupTab, setLineupTab] = useState<"home" | "away">("home")
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickSim, setShowQuickSim] = useState(false)
   const [quickSimResult, setQuickSimResult] = useState<{
