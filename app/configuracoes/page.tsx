@@ -142,7 +142,7 @@ export default function ConfiguracoesPage() {
   }
   
   const handleAddManager = () => {
-    if (!newManagerName.trim() || managers.length >= 4) return
+    if (!newManagerName.trim() || managers.length >= 6) return
     
     const usedColors = managers.map(m => m.color)
     const availableColor = managerColors.find(c => !usedColors.includes(c)) || managerColors[0]
@@ -429,7 +429,7 @@ export default function ConfiguracoesPage() {
                       Modo Multiplayer
                     </h3>
                     <p className="text-xs text-white/40 mt-1">
-                      Jogue com ate 4 tecnicos simultaneamente, cada um gerenciando um time diferente
+                      Jogue com ate 6 tecnicos simultaneamente, cada um gerenciando um time diferente
                     </p>
                   </div>
 
@@ -457,7 +457,7 @@ export default function ConfiguracoesPage() {
                         />
                         <Button
                           onClick={handleAddManager}
-                          disabled={!newManagerName.trim() || managers.length >= 4}
+                          disabled={!newManagerName.trim() || managers.length >= 6}
                           size="sm"
                           className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
@@ -480,7 +480,7 @@ export default function ConfiguracoesPage() {
                     <div>
                       <h3 className="text-sm font-medium text-white flex items-center gap-2">
                         <Gamepad2 className="h-4 w-4 text-accent" />
-                        Tecnicos Ativos ({managers.length}/4)
+                        Tecnicos Ativos ({managers.length}/6)
                       </h3>
                       <p className="text-xs text-white/40 mt-1">
                         Cada tecnico usa um controle diferente
@@ -666,27 +666,66 @@ export default function ConfiguracoesPage() {
                 </div>
               </div>
 
-              {/* Quick Reference */}
+              {/* Quick Reference - Partida */}
               <div className="mt-6 rounded-xl bg-[#141414] border border-white/5 p-6">
                 <h3 className="text-sm font-medium text-white mb-4">Referencia Rapida - Partida Ao Vivo</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {[
-                    { button: "A" as const, label: "Acelerar" },
-                    { button: "B" as const, label: "Desacelerar" },
-                    { button: "X" as const, label: "Estatisticas" },
-                    { button: "Y" as const, label: "Substituir" },
-                    { button: "LB" as const, label: "Evento Ant." },
-                    { button: "RB" as const, label: "Prox. Evento" },
-                    { button: "LT" as const, label: "Ver Tatica" },
-                    { button: "RT" as const, label: "Camera" },
-                    { button: "MENU" as const, label: "Pausar" },
-                    { button: "VIEW" as const, label: "Simular" },
-                  ].map(({ button, label }) => (
-                    <div key={button} className="flex items-center gap-2 p-2 rounded bg-white/5">
-                      <ControllerButton button={button} controller={controllerType} size="sm" showLabel={false} />
-                      <span className="text-[10px] text-white/60">{label}</span>
-                    </div>
-                  ))}
+                
+                {/* Botoes Principais */}
+                <div className="mb-4">
+                  <p className="text-xs text-white/40 mb-2">Botoes de Acao</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {[
+                      { button: "A" as const, label: "Acelerar" },
+                      { button: "B" as const, label: "Desacelerar" },
+                      { button: "X" as const, label: "Estatisticas" },
+                      { button: "Y" as const, label: "Substituir" },
+                      { button: "LB" as const, label: "Evento Ant." },
+                      { button: "RB" as const, label: "Prox. Evento" },
+                      { button: "LT" as const, label: "Ver Tatica" },
+                      { button: "RT" as const, label: "Camera" },
+                      { button: "MENU" as const, label: "Pausar" },
+                      { button: "VIEW" as const, label: "Simular Rapido" },
+                    ].map(({ button, label }) => (
+                      <div key={button} className="flex items-center gap-2 p-2 rounded bg-white/5">
+                        <ControllerButton button={button} controller={controllerType} size="sm" showLabel={false} />
+                        <span className="text-[10px] text-white/60">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Analógicos */}
+                <div className="mb-4">
+                  <p className="text-xs text-white/40 mb-2">Analogicos (L3/R3)</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { button: "L3" as const, label: "Musica On/Off" },
+                      { button: "R3" as const, label: "Screenshot" },
+                    ].map(({ button, label }) => (
+                      <div key={button} className="flex items-center gap-2 p-2 rounded bg-white/5">
+                        <ControllerButton button={button} controller={controllerType} size="sm" showLabel={false} />
+                        <span className="text-[10px] text-white/60">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Direcionais */}
+                <div>
+                  <p className="text-xs text-white/40 mb-2">Direcional (D-PAD)</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { button: "DPAD_UP" as const, label: "Navegar Cima" },
+                      { button: "DPAD_DOWN" as const, label: "Navegar Baixo" },
+                      { button: "DPAD_LEFT" as const, label: "Navegar Esquerda" },
+                      { button: "DPAD_RIGHT" as const, label: "Navegar Direita" },
+                    ].map(({ button, label }) => (
+                      <div key={button} className="flex items-center gap-2 p-2 rounded bg-white/5">
+                        <ControllerButton button={button} controller={controllerType} size="sm" showLabel={false} />
+                        <span className="text-[10px] text-white/60">{label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </TabsContent>
