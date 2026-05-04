@@ -24,6 +24,7 @@ import {
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
+import { GamepadControlsBar, GamepadHeaderControls } from "@/components/gamepad-controls-bar"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
@@ -411,10 +412,11 @@ export default function DashboardPage() {
             </section>
           </div>
         </div>
-      </main>
-
-      <MusicPlayer />
-    </div>
+  </main>
+  
+  <GamepadControlsBar />
+  <MusicPlayer />
+  </div>
   )
 }
 

@@ -1,0 +1,206 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
+import { ControllerButton } from "./controller-buttons"
+
+type ControllerType = "xbox" | "playstation" | "generic" | null
+
+interface GamepadControlsBarProps {
+  actions?: Array<{
+    button: "A" | "B" | "X" | "Y" | "LB" | "RB" | "LT" | "RT"
+    label: string
+    onClick?: () => void
+  }>
+  className?: string
+}
+
+// Hook para detectar gamepad conectado
+function useGamepadDetection() {
+  const [gamepadInfo, setGamepadInfo] = useState<{
+    connected: boolean
+    type: ControllerType
+  }>({ connected: false, type: null })
+
+  useEffect(() => {
+    const detectControllerType = (gamepad: Gamepad): ControllerType => {
+      const id = gamepad.id.toLowerCase()
+      if (id.includes("xbox") || id.includes("xinput") || id.includes("microsoft")) {
+        return "xbox"
+      }
+      if (id.includes("playstation") || id.includes("dualshock") || id.includes("dualsense") || id.includes("054c")) {
+        return "playstation"
+      }
+      return "generic"
+    }
+
+    const updateGamepads = () => {
+      const gamepads = navigator.getGamepads()
+      let foundGamepad: Gamepad | null = null
+      
+      for (const gp of gamepads) {
+        if (gp && gp.connected) {
+          foundGamepad = gp
+          break
+        }
+      }
+
+      if (foundGamepad) {
+        setGamepadInfo({
+          connected: true,
+          type: detectControllerType(foundGamepad)
+        })
+      } else {
+        setGamepadInfo({ connected: false, type: null })
+      }
+    }
+
+    const handleGamepadConnected = () => {
+      updateGamepads()
+    }
+
+    const handleGamepadDisconnected = () => {
+      updateGamepads()
+    }
+
+    // Initial check
+    updateGamepads()
+
+    window.addEventListener("gamepadconnected", handleGamepadConnected)
+    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected)
+
+    // Poll for gamepad state (some browsers need this)
+    const interval = setInterval(updateGamepads, 1000)
+
+    return () => {
+      window.removeEventListener("gamepadconnected", handleGamepadConnected)
+      window.removeEventListener("gamepaddisconnected", handleGamepadDisconnected)
+      clearInterval(interval)
+    }
+  }, [])
+
+  return gamepadInfo
+}
+
+// Acoes padrao do jogo
+const defaultActions: GamepadControlsBarProps["actions"] = [
+  { button: "A", label: "Selecionar" },
+  { button: "B", label: "Voltar" },
+  { button: "X", label: "Simular" },
+  { button: "Y", label: "Calendario" },
+  { button: "LB", label: "Tab Anterior" },
+  { button: "RB", label: "Proxima Tab" },
+]
+
+export function GamepadControlsBar({ 
+  actions = defaultActions, 
+  className 
+}: GamepadControlsBarProps) {
+  const { connected, type } = useGamepadDetection()
+
+  // So mostra a barra se o gamepad estiver conectado
+  if (!connected || !type) {
+    return null
+  }
+
+  return (
+    <div className={cn(
+      "fixed bottom-0 left-[72px] right-0 z-40 flex items-center justify-center gap-6 px-6 py-2.5",
+      "bg-[#0a0a0a]/95 backdrop-blur-sm border-t border-white/5",
+      className
+    )}>
+      {actions.map((action, i) => (
+        <button
+          key={i}
+          onClick={action.onClick}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity group"
+        >
+          <ControllerButton 
+            button={action.button} 
+            controller={type === "generic" ? "xbox" : type} 
+            size="sm" 
+            showLabel={false} 
+          />
+          <span className="text-[11px] text-white/60 font-medium tracking-wide group-hover:text-white/80">
+            {action.label}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Header com indicador de controle conectado e navegacao LB/RB
+interface GamepadHeaderControlsProps {
+  className?: string
+  showTabs?: boolean
+  currentTab?: number
+  totalTabs?: number
+}
+
+export function GamepadHeaderControls({ 
+  className, 
+  showTabs = true,
+  currentTab = 0,
+  totalTabs = 3 
+}: GamepadHeaderControlsProps) {
+  const { connected, type } = useGamepadDetection()
+
+  if (!connected || !type) {
+    return null
+  }
+
+  const controllerIcon = type === "playstation" ? (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 text-white/50" fill="currentColor">
+      <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.875c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.675-4.438-5.827-1.307-.448-3.728-1.186-5.393-1.501zm4.659 16.264l6.344-2.003c.725-.246 1.576-.795 1.576-1.753 0-.959-.775-1.261-1.576-1.016l-6.344 2.049v2.723zm-6.329-.423c-2.346-.746-4.315-.326-4.315 1.76 0 2.023 1.756 2.817 4.315 2.283l1.329-.381V19.4l-1.329.424v-1.387z"/>
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 text-white/50" fill="currentColor">
+      <path d="M4.102 21.033A11.947 11.947 0 0 0 12 24a11.96 11.96 0 0 0 7.898-2.967c1.058-1.074-.438-3.523-2.649-6.106-1.738 2.313-3.767 4.671-5.249 4.671-1.483 0-3.512-2.358-5.249-4.671-2.211 2.583-3.707 5.032-2.649 6.106zM12 0a11.94 11.94 0 0 0-7.898 2.967c-1.058 1.074.438 3.523 2.649 6.106C8.489 6.76 10.518 4.402 12 4.402c1.482 0 3.511 2.358 5.249 4.671 2.211-2.583 3.707-5.032 2.649-6.106A11.94 11.94 0 0 0 12 0z"/>
+    </svg>
+  )
+
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      {/* Indicador de controle conectado */}
+      <div className="flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full bg-[#1db954] animate-pulse" />
+        {controllerIcon}
+      </div>
+
+      {/* Navegacao por tabs se habilitado */}
+      {showTabs && (
+        <div className="flex items-center gap-2 ml-2">
+          <ControllerButton 
+            button="LB" 
+            controller={type === "generic" ? "xbox" : type}
+            size="xs" 
+            showLabel={false} 
+          />
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalTabs }).map((_, i) => (
+              <div 
+                key={i}
+                className={cn(
+                  "rounded-full transition-all",
+                  i === currentTab 
+                    ? "w-4 h-1.5 bg-[#1db954]" 
+                    : "w-1.5 h-1.5 bg-white/20"
+                )}
+              />
+            ))}
+          </div>
+          <ControllerButton 
+            button="RB" 
+            controller={type === "generic" ? "xbox" : type}
+            size="xs" 
+            showLabel={false} 
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Export do hook para uso em outros componentes
+export { useGamepadDetection }

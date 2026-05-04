@@ -29,6 +29,8 @@ import {
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
+import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
+import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -227,6 +229,7 @@ export default function PreMatchPage() {
 
   const matchInfo = {
     competition: "Brasileirão Série A",
+    competitionId: "brasileirao" as CompetitionId,
     round: "Rodada 1",
     stadium: userTeam.estadio_nome,
     city: userTeam.cidade,
@@ -234,6 +237,9 @@ export default function PreMatchPage() {
     time: "16:00",
     isHome: true,
   }
+
+  // Obtem tema da competicao
+  const competitionTheme = getCompetitionTheme(matchInfo.competitionId)
 
   const homeTeam = matchInfo.isHome ? userTeam : opponent
   const awayTeam = matchInfo.isHome ? opponent : userTeam
@@ -284,10 +290,17 @@ export default function PreMatchPage() {
 
       <main className="p-6">
         <div className="relative rounded-2xl overflow-hidden mb-6">
+          {/* Background da competicao */}
+          {competitionTheme.backgroundImage && (
+            <div 
+              className="absolute inset-0 bg-cover bg-center opacity-30"
+              style={{ backgroundImage: `url(${competitionTheme.backgroundImage})` }}
+            />
+          )}
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(135deg, ${homeTeam.cor1}15 0%, #0a0a0a 40%, #0a0a0a 60%, ${awayTeam.cor1}15 100%)`,
+              background: `linear-gradient(135deg, ${competitionTheme.colors.primary}20 0%, #0a0a0a 40%, #0a0a0a 60%, ${competitionTheme.colors.primary}20 100%)`,
             }}
           />
 
@@ -445,11 +458,12 @@ export default function PreMatchPage() {
             Configurações
           </button>
         </div>
-      </main>
-
-      <MusicPlayer />
-
-      {/* Editor Tatico - Ver Escalação */}
+  </main>
+  
+  <GamepadControlsBar />
+  <MusicPlayer />
+  
+  {/* Editor Tatico - Ver Escalação */}
       {showLineup && (
         <TacticalEditor
           team={userTeam}

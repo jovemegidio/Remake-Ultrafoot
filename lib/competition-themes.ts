@@ -28,6 +28,7 @@ export interface CompetitionTheme {
   name: string
   shortName: string
   logo?: string
+  backgroundImage?: string // URL da imagem de fundo do tema
   colors: {
     primary: string
     secondary: string
@@ -45,6 +46,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "brasileirao",
     name: "Campeonato Brasileiro Serie A",
     shortName: "BRASILEIRAO",
+    backgroundImage: "/themes/brasileirao.png",
     colors: {
       primary: "#1db954",
       secondary: "#0a0a0a",
@@ -60,6 +62,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "copa_brasil",
     name: "Copa do Brasil",
     shortName: "COPA BR",
+    backgroundImage: "/themes/copa-do-brasil.png",
     colors: {
       primary: "#009c3b",
       secondary: "#002776",
@@ -75,6 +78,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "libertadores",
     name: "CONMEBOL Libertadores",
     shortName: "LIBERTADORES",
+    backgroundImage: "/themes/libertadores.png",
     colors: {
       primary: "#d4af37",
       secondary: "#1a1a1a",
@@ -90,6 +94,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "sulamericana",
     name: "CONMEBOL Sul-Americana",
     shortName: "SULA",
+    backgroundImage: "/themes/sudamericana.png",
     colors: {
       primary: "#e63946",
       secondary: "#1a1a1a",
@@ -120,6 +125,7 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "europa_league",
     name: "UEFA Europa League",
     shortName: "UEL",
+    backgroundImage: "/themes/europa-league.png",
     colors: {
       primary: "#f57c00",
       secondary: "#1a1a1a",

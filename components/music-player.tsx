@@ -247,7 +247,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
   if (size === "mini") {
     return (
       <div className={cn(
-        "fixed bottom-4 right-4 z-30 flex items-center gap-2 rounded-full bg-[#1a1a1a] pl-1.5 pr-2 py-1.5 shadow-2xl border border-[#333]",
+        "fixed bottom-20 right-4 z-50 flex items-center gap-2 rounded-full bg-[#1a1a1a] pl-1.5 pr-2 py-1.5 shadow-2xl border border-[#333]",
         className
       )}>
         {/* Album cover with lime green glow */}
