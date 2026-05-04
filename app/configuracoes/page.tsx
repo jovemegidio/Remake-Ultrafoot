@@ -17,6 +17,8 @@ import {
   Plus,
   Trash2,
   ChevronRight,
+  Zap,
+  Cpu,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -42,6 +44,14 @@ import {
   type GameContext, 
   type GameAction 
 } from "@/lib/gamepad-controls"
+import {
+  type PerformanceLevel,
+  performancePresets,
+  performanceLevelLabels,
+  loadPerformanceLevel,
+  savePerformanceLevel,
+  detectPerformanceLevel,
+} from "@/lib/performance-config"
 
 const languageOptions = [
   { id: "pt-BR", label: "Portugues (Brasil)", flag: "🇧🇷" },
@@ -98,6 +108,18 @@ export default function ConfiguracoesPage() {
   
   // Controller state
   const [controllerType, setControllerType] = useState<"xbox" | "playstation">(state.controllerType || "playstation")
+  
+  // Performance state
+  const [performanceLevel, setPerformanceLevel] = useState<PerformanceLevel>("medium")
+  const [detectedLevel, setDetectedLevel] = useState<PerformanceLevel>("medium")
+  
+  // Load performance settings on mount
+  useEffect(() => {
+    const saved = loadPerformanceLevel()
+    const detected = detectPerformanceLevel()
+    setPerformanceLevel(saved)
+    setDetectedLevel(detected)
+  }, [])
   const [selectedContext, setSelectedContext] = useState<GameContext>("match_live")
 
   // Sync selectedUniform with state when it loads
