@@ -6,7 +6,16 @@ import { useEffect, useState } from "react"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 
 const STORAGE_KEY = "ultrafoot:save"
-const VERSION = 1
+const VERSION = 2
+
+// Configuracao de um tecnico/jogador
+export interface ManagerProfile {
+  id: string
+  name: string
+  teamShort: string
+  color: string // Cor de identificacao do jogador
+  controllerIndex: number // -1 = teclado, 0-3 = controles
+}
 
 export interface GameState {
   version: number
@@ -18,6 +27,13 @@ export interface GameState {
   selectedUniform: "home" | "away" | "third"
   createdAt: number
   updatedAt: number
+  // Multiplayer
+  multiplayerEnabled: boolean
+  managers: ManagerProfile[]
+  activeManagerId: string | null
+  // Configuracoes de controle
+  controllerType: "xbox" | "playstation"
+  controllerBindings: Record<string, Record<string, string>> // context -> button -> action
 }
 
 export const DEFAULT_STATE: GameState = {
@@ -30,6 +46,13 @@ export const DEFAULT_STATE: GameState = {
   selectedUniform: "home",
   createdAt: 0,
   updatedAt: 0,
+  // Multiplayer
+  multiplayerEnabled: false,
+  managers: [],
+  activeManagerId: null,
+  // Controles
+  controllerType: "playstation",
+  controllerBindings: {},
 }
 
 function safeParse(raw: string | null): GameState | null {
