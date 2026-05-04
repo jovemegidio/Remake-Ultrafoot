@@ -1,10 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   ChevronLeft,
-  Repeat2,
   Activity,
   Cloud,
   Users,
@@ -16,132 +15,189 @@ import {
   Sparkles,
   Zap,
   ArrowLeftRight,
-  X,
-  Check,
-  ChevronRight,
   Timer,
+  Play,
+  Pause,
+  FastForward,
+  RotateCcw,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getTeamByShort } from "@/lib/teams-data"
+import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
+import { loadMatchContext } from "@/lib/match-context"
+import { useMatchSimulation } from "@/hooks/use-match-simulation"
+import {
+  type MatchSpeed,
+  type MatchEvent,
+  type MatchState,
+} from "@/lib/match-engine"
+import { LivePitch } from "@/components/match/live-pitch"
+import { SubstitutionModal, type MatchPlayer } from "@/components/match/substitution-modal"
+import { MatchResultModal } from "@/components/match/match-result-modal"
 
-// Teams for this match
-const homeTeam = getTeamByShort("PAL") || getTeamByShort("BTF")!
-const awayTeam = getTeamByShort("TLT") || getTeamByShort("FLM")!
+// ─────────────────────────────────────────────────────────────────────────────
+// Mock players - usados como elenco padrão quando não houver squad real
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Mock player data
-const homePlayers = [
-  { id: 1, name: "Silva", number: 1, position: "GOL", rating: 78, stamina: 100 },
-  { id: 2, name: "Santos", number: 2, position: "LD", rating: 72, stamina: 85 },
-  { id: 3, name: "Oliveira", number: 3, position: "ZAG", rating: 75, stamina: 90 },
-  { id: 4, name: "Costa", number: 4, position: "ZAG", rating: 74, stamina: 88 },
-  { id: 5, name: "Ferreira", number: 6, position: "LE", rating: 71, stamina: 82 },
-  { id: 6, name: "Souza", number: 5, position: "VOL", rating: 76, stamina: 78 },
-  { id: 7, name: "Almeida", number: 8, position: "MEI", rating: 77, stamina: 75 },
-  { id: 8, name: "Rodrigues", number: 10, position: "MEI", rating: 80, stamina: 70 },
-  { id: 9, name: "Lima", number: 7, position: "PE", rating: 79, stamina: 72 },
-  { id: 10, name: "Pereira", number: 9, position: "ATA", rating: 82, stamina: 68 },
-  { id: 11, name: "Martins", number: 11, position: "PD", rating: 78, stamina: 74 },
+const buildSquad = (offset = 0, prefix = ""): MatchPlayer[] => [
+  { id: offset + 1, name: `${prefix}Silva`, number: 1, position: "GOL", rating: 78, stamina: 100, defending: 75, physical: 70, pace: 50, shooting: 25, passing: 60, dribbling: 35 },
+  { id: offset + 2, name: `${prefix}Santos`, number: 2, position: "LD", rating: 74, stamina: 95, pace: 82, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 70 },
+  { id: offset + 3, name: `${prefix}Oliveira`, number: 3, position: "ZAG", rating: 77, stamina: 92, pace: 68, shooting: 45, passing: 60, dribbling: 55, defending: 80, physical: 82 },
+  { id: offset + 4, name: `${prefix}Costa`, number: 4, position: "ZAG", rating: 76, stamina: 90, pace: 70, shooting: 42, passing: 58, dribbling: 52, defending: 78, physical: 80 },
+  { id: offset + 5, name: `${prefix}Ferreira`, number: 6, position: "LE", rating: 73, stamina: 88, pace: 85, shooting: 58, passing: 72, dribbling: 75, defending: 70, physical: 68 },
+  { id: offset + 6, name: `${prefix}Souza`, number: 5, position: "VOL", rating: 76, stamina: 82, pace: 72, shooting: 60, passing: 75, dribbling: 72, defending: 76, physical: 75 },
+  { id: offset + 7, name: `${prefix}Almeida`, number: 8, position: "MEI", rating: 78, stamina: 78, pace: 75, shooting: 70, passing: 80, dribbling: 78, defending: 60, physical: 70 },
+  { id: offset + 8, name: `${prefix}Rodrigues`, number: 10, position: "MEI", rating: 82, stamina: 75, pace: 80, shooting: 75, passing: 80, dribbling: 82, defending: 55, physical: 68 },
+  { id: offset + 9, name: `${prefix}Lima`, number: 7, position: "PE", rating: 79, stamina: 76, pace: 88, shooting: 72, passing: 70, dribbling: 80, defending: 35, physical: 65 },
+  { id: offset + 10, name: `${prefix}Pereira`, number: 9, position: "ATA", rating: 84, stamina: 72, pace: 85, shooting: 86, passing: 68, dribbling: 80, defending: 32, physical: 76 },
+  { id: offset + 11, name: `${prefix}Martins`, number: 11, position: "PD", rating: 78, stamina: 78, pace: 90, shooting: 70, passing: 72, dribbling: 82, defending: 32, physical: 62 },
 ]
 
-const homeBench = [
-  { id: 12, name: "Gomes", number: 12, position: "GOL", rating: 70, stamina: 100 },
-  { id: 13, name: "Ribeiro", number: 13, position: "ZAG", rating: 69, stamina: 100 },
-  { id: 14, name: "Araujo", number: 14, position: "VOL", rating: 71, stamina: 100 },
-  { id: 15, name: "Barbosa", number: 15, position: "MEI", rating: 73, stamina: 100 },
-  { id: 16, name: "Carvalho", number: 16, position: "ATA", rating: 74, stamina: 100 },
+const buildBench = (offset = 100, prefix = ""): MatchPlayer[] => [
+  { id: offset + 1, name: `${prefix}Gomes`, number: 12, position: "GOL", rating: 70, stamina: 100, defending: 70, physical: 68 },
+  { id: offset + 2, name: `${prefix}Ribeiro`, number: 13, position: "ZAG", rating: 71, stamina: 100, pace: 65, shooting: 40, passing: 58, dribbling: 50, defending: 75, physical: 78 },
+  { id: offset + 3, name: `${prefix}Araujo`, number: 14, position: "VOL", rating: 73, stamina: 100, pace: 70, shooting: 55, passing: 72, dribbling: 68, defending: 74, physical: 75 },
+  { id: offset + 4, name: `${prefix}Barbosa`, number: 15, position: "MEI", rating: 74, stamina: 100, pace: 72, shooting: 68, passing: 76, dribbling: 75, defending: 50, physical: 65 },
+  { id: offset + 5, name: `${prefix}Carvalho`, number: 16, position: "ATA", rating: 76, stamina: 100, pace: 82, shooting: 80, passing: 65, dribbling: 75, defending: 30, physical: 72 },
+  { id: offset + 6, name: `${prefix}Tavares`, number: 17, position: "PD", rating: 72, stamina: 100, pace: 86, shooting: 65, passing: 68, dribbling: 78, defending: 30, physical: 62 },
+  { id: offset + 7, name: `${prefix}Mendes`, number: 18, position: "MEI", rating: 71, stamina: 100, pace: 70, shooting: 65, passing: 72, dribbling: 70, defending: 55, physical: 65 },
 ]
 
-const speeds = [
-  { id: "slow", label: "LENTO" },
-  { id: "normal", label: "NORMAL" },
-  { id: "fast", label: "RAPIDO" },
-  { id: "ultra", label: "ULTRA" },
-  { id: "hyper", label: "HIPER" },
+// ─────────────────────────────────────────────────────────────────────────────
+// Velocidades
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SPEEDS: { id: MatchSpeed; label: string; sublabel: string }[] = [
+  { id: "slow", label: "LENTO", sublabel: "1x" },
+  { id: "normal", label: "NORMAL", sublabel: "2x" },
+  { id: "fast", label: "RÁPIDO", sublabel: "5x" },
+  { id: "ultra", label: "ULTRA", sublabel: "12x" },
+  { id: "hyper", label: "HIPER", sublabel: "30x" },
 ]
 
-const stats = [
-  { label: "POSSE", home: "34.2%", away: "65.8%", icon: Activity, ratio: 34.2 },
-  { label: "FINALIZACOES", home: "3", away: "8", icon: TargetIcon, ratio: 27 },
-  { label: "NO ALVO", home: "1", away: "4", icon: TargetIcon, ratio: 20 },
-  { label: "XG", home: "0.32", away: "1.16", icon: Sparkles, ratio: 22 },
-  { label: "ESCANTEIOS", home: "2", away: "5", icon: Flag, ratio: 29 },
-  { label: "FALTAS", home: "4", away: "2", icon: AlertTriangle, ratio: 67 },
-]
-
-const initialEvents = [
-  { min: 42, type: "goal", side: "away", text: "GOOOOL! Hulk cobra penalti no canto esquerdo" },
-  { min: 38, type: "penalty", side: "away", text: "Penalti para o visitante! Falta de Costa" },
-  { min: 32, type: "chance", side: "home", text: "Pereira cabeceia - bola na trave!" },
-  { min: 28, type: "sub", side: "away", text: "Substituicao: Sai Zaracho, entra Scarpa" },
-  { min: 18, type: "chance", side: "away", text: "Hulk arrisca de longe - defesa do goleiro" },
-  { min: 12, type: "card", side: "home", text: "Cartao amarelo - #14 Araujo" },
-  { min: 3, type: "kick-off", side: "home", text: "Bola rolando! Mandante comeca o jogo" },
-]
+// ─────────────────────────────────────────────────────────────────────────────
+// Página principal
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function MatchCenterPage() {
-  const [speed, setSpeed] = useState("normal")
+  const { team: userTeam, hydrated } = useUserTeam()
+
+  // Carrega contexto da partida
+  const [matchCtx, setMatchCtx] = useState(() => loadMatchContext())
+  useEffect(() => {
+    setMatchCtx(loadMatchContext())
+  }, [])
+
+  // Determina mandante e visitante a partir do contexto
+  const homeTeam: Team = useMemo(() => {
+    return getTeamByShort(matchCtx.homeShort) || userTeam || serieATeams[0]
+  }, [matchCtx.homeShort, userTeam])
+
+  const awayTeam: Team = useMemo(() => {
+    const t = getTeamByShort(matchCtx.awayShort)
+    if (t) return t
+    // Pega outro time qualquer diferente do home
+    return serieATeams.find(t => t.curto !== homeTeam.curto) || serieATeams[1]
+  }, [matchCtx.awayShort, homeTeam])
+
+  // O jogador está como mandante ou visitante?
+  const userSide: "home" | "away" = userTeam.curto === awayTeam.curto ? "away" : "home"
+
+  // Squads
+  const [homeSquad, setHomeSquad] = useState<MatchPlayer[]>(() => buildSquad(0, ""))
+  const [awaySquad, setAwaySquad] = useState<MatchPlayer[]>(() => buildSquad(200, ""))
+  const [homeBench, setHomeBench] = useState<MatchPlayer[]>(() => buildBench(100, ""))
+  const [awayBench, setAwayBench] = useState<MatchPlayer[]>(() => buildBench(300, ""))
+
+  // Configuração da simulação
+  const config = useMemo(() => ({
+    homeTeam,
+    awayTeam,
+    homeRating: Math.round(homeSquad.reduce((s, p) => s + p.rating, 0) / homeSquad.length),
+    awayRating: Math.round(awaySquad.reduce((s, p) => s + p.rating, 0) / awaySquad.length),
+    durationMinutes: matchCtx.duration,
+    weatherFactor: matchCtx.weather === "rain" ? 0.9 : 1,
+    homeSquad: homeSquad.map(p => ({ nome: p.name, pos: p.position })),
+    awaySquad: awaySquad.map(p => ({ nome: p.name, pos: p.position })),
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, matchCtx.weather])
+
+  const sim = useMatchSimulation(config)
+  const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
+
+  // Modal substituição
   const [showSubModal, setShowSubModal] = useState(false)
-  const [selectedPlayerOut, setSelectedPlayerOut] = useState<typeof homePlayers[0] | null>(null)
-  const [selectedPlayerIn, setSelectedPlayerIn] = useState<typeof homeBench[0] | null>(null)
   const [subsRemaining, setSubsRemaining] = useState(5)
-  const [events, setEvents] = useState(initialEvents)
-  const [matchMinute, setMatchMinute] = useState(45)
-  const [homeScore, setHomeScore] = useState(0)
-  const [awayScore, setAwayScore] = useState(1)
+
+  // Modal de fim
+  const [showResult, setShowResult] = useState(false)
+  useEffect(() => {
+    if (state.phase === "fulltime" && !showResult) {
+      // Mostra após pequena pausa para ver placar final
+      const t = setTimeout(() => setShowResult(true), 1200)
+      return () => clearTimeout(t)
+    }
+  }, [state.phase, showResult])
+
+  // Stamina drena conforme o tempo passa
+  useEffect(() => {
+    if (state.phase !== "first" && state.phase !== "second") return
+    setHomeSquad(prev =>
+      prev.map(p => ({
+        ...p,
+        stamina: Math.max(0, p.stamina - 0.4),
+      }))
+    )
+    setAwaySquad(prev =>
+      prev.map(p => ({
+        ...p,
+        stamina: Math.max(0, p.stamina - 0.4),
+      }))
+    )
+  }, [state.minute, state.phase])
+
+  // Animação de gol/cartão (durante 2.5s)
+  const [animation, setAnimation] = useState<{ type: "goal" | "card"; side: "home" | "away"; cardColor?: "yellow" | "red" } | null>(null)
+  useEffect(() => {
+    if (!state.flash) return
+    if (state.flash.type === "goal") {
+      setAnimation({ type: "goal", side: state.flash.side })
+      const t = setTimeout(() => setAnimation(null), 2500)
+      return () => clearTimeout(t)
+    }
+    if (state.flash.type === "card") {
+      setAnimation({ type: "card", side: state.flash.side, cardColor: state.flash.cardColor })
+      const t = setTimeout(() => setAnimation(null), 2000)
+      return () => clearTimeout(t)
+    }
+  }, [state.flash])
+
+  // Substituição
+  const userStarters = userSide === "home" ? homeSquad : awaySquad
+  const userBench = userSide === "home" ? homeBench : awayBench
+  const userTeamForSub = userSide === "home" ? homeTeam : awayTeam
+
+  const handleSub = (out: MatchPlayer, inPlayer: MatchPlayer) => {
+    if (subsRemaining <= 0) return
+    const setStarters = userSide === "home" ? setHomeSquad : setAwaySquad
+    const setBenchSet = userSide === "home" ? setHomeBench : setAwayBench
+    setStarters(prev => prev.map(p => p.id === out.id ? { ...inPlayer } : p))
+    setBenchSet(prev => prev.filter(p => p.id !== inPlayer.id))
+    setSubsRemaining(s => s - 1)
+    setShowSubModal(false)
+  }
+
+  // Selected pitch player
   const [selectedPitchPlayer, setSelectedPitchPlayer] = useState<number | null>(null)
-  const [goalAnimation, setGoalAnimation] = useState<"home" | "away" | null>(null)
-  const [cardAnimation, setCardAnimation] = useState<"yellow" | "red" | null>(null)
 
-  // Simulate goal animation
-  const triggerGoalAnimation = (side: "home" | "away") => {
-    setGoalAnimation(side)
-    if (side === "home") setHomeScore(prev => prev + 1)
-    else setAwayScore(prev => prev + 1)
-    setTimeout(() => setGoalAnimation(null), 3000)
-  }
-
-  // Simulate card animation  
-  const triggerCardAnimation = (type: "yellow" | "red") => {
-    setCardAnimation(type)
-    setTimeout(() => setCardAnimation(null), 2000)
-  }
-
-  const handleSubstitution = () => {
-    if (selectedPlayerOut && selectedPlayerIn && subsRemaining > 0) {
-      // Add substitution event
-      const newEvent = {
-        min: matchMinute,
-        type: "sub" as const,
-        side: "home" as const,
-        text: `Substituicao: Sai ${selectedPlayerOut.name}, entra ${selectedPlayerIn.name}`,
-      }
-      setEvents([newEvent, ...events])
-      setSubsRemaining(subsRemaining - 1)
-      setShowSubModal(false)
-      setSelectedPlayerOut(null)
-      setSelectedPlayerIn(null)
-    }
-  }
-
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case "goal": return "GOL"
-      case "card": return "CAR"
-      case "chance": return "CHA"
-      case "sub": return "SUB"
-      case "penalty": return "PEN"
-      default: return "INI"
-    }
-  }
-
-  const getEventColor = (type: string, side: string) => {
-    if (type === "goal") return "bg-[#1db954] text-black"
-    if (type === "card") return "bg-yellow-400 text-black"
-    if (type === "penalty") return "bg-red-400 text-white"
-    return side === "home" ? "bg-red-400/20 text-red-400" : "bg-blue-400/20 text-blue-400"
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+        Carregando partida...
+      </div>
+    )
   }
 
   return (
@@ -159,175 +215,136 @@ export default function MatchCenterPage() {
             <ChevronLeft className="h-4 w-4" />
           </Link>
           <h1 className="text-xl font-semibold text-white">Partida</h1>
-          <span className="ml-2 flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-[10px] font-medium tracking-wider text-red-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-            AO VIVO
-          </span>
+          {state.phase !== "fulltime" && state.phase !== "pre" && (
+            <span className="ml-2 flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-[10px] font-medium tracking-wider text-red-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+              AO VIVO
+            </span>
+          )}
+          {state.phase === "fulltime" && (
+            <span className="ml-2 px-2.5 py-1 rounded-full bg-white/10 text-[10px] font-medium tracking-wider text-white/70">
+              ENCERRADA
+            </span>
+          )}
           <span className="ml-2 px-2 py-1 rounded bg-white/10 text-xs font-bold text-white tabular-nums">
-            {matchMinute}&apos;
+            {state.minute}&apos;
           </span>
         </div>
+
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs border-white/10 bg-transparent text-white/70 hover:bg-white/5 hover:text-white">
-            <Repeat2 className="mr-1 h-3.5 w-3.5" />
-            Replay
-          </Button>
-          <Button
-            size="sm"
-            className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760]"
-          >
-            2X
-          </Button>
+          {state.phase === "pre" && (
+            <Button
+              size="sm"
+              onClick={start}
+              className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] font-bold tracking-wider"
+            >
+              <Play className="mr-1 h-3.5 w-3.5 fill-current" />
+              INICIAR
+            </Button>
+          )}
+          {(state.phase === "first" || state.phase === "second" || state.phase === "halftime") && (
+            <>
+              {isRunning ? (
+                <Button size="sm" onClick={pause} variant="outline" className="text-xs border-white/10 bg-transparent text-white/80 hover:bg-white/5">
+                  <Pause className="mr-1 h-3.5 w-3.5 fill-current" />
+                  PAUSAR
+                </Button>
+              ) : (
+                <Button size="sm" onClick={resume} className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] font-bold">
+                  <Play className="mr-1 h-3.5 w-3.5 fill-current" />
+                  CONTINUAR
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={fastForward} className="text-xs border-white/10 bg-transparent text-white/80 hover:bg-white/5">
+                <FastForward className="mr-1 h-3.5 w-3.5" />
+                FIM
+              </Button>
+            </>
+          )}
+          {state.phase === "fulltime" && (
+            <Button size="sm" variant="outline" onClick={reset} className="text-xs border-white/10 bg-transparent text-white/80 hover:bg-white/5">
+              <RotateCcw className="mr-1 h-3.5 w-3.5" />
+              REJOGAR
+            </Button>
+          )}
         </div>
       </header>
 
       <main className="space-y-4 p-4">
-        {/* Goal Animation Overlay */}
-        {goalAnimation && (
+        {/* Animação de gol */}
+        {animation?.type === "goal" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 bg-black/60 animate-fade-in" />
+            <div className="absolute inset-0 bg-black/70 animate-fade-in" />
             <div className="relative flex flex-col items-center gap-4 animate-scale-in">
-              <div className={cn(
-                "text-8xl font-black tracking-tighter animate-bounce",
-                goalAnimation === "home" ? "text-red-500" : "text-yellow-400"
-              )}>
+              <div
+                className="text-7xl sm:text-9xl font-black tracking-tighter animate-bounce"
+                style={{ color: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
+              >
                 GOOOOL!
               </div>
-              <TeamCrest team={goalAnimation === "home" ? homeTeam : awayTeam} size="xl" />
+              <TeamCrest team={animation.side === "home" ? homeTeam : awayTeam} size="xl" />
               <div className="text-2xl font-bold text-white">
-                {goalAnimation === "home" ? homeTeam?.nome : awayTeam?.nome}
+                {animation.side === "home" ? homeTeam.nome : awayTeam.nome}
               </div>
             </div>
           </div>
         )}
 
-        {/* Card Animation Overlay */}
-        {cardAnimation && (
+        {/* Animação de cartão */}
+        {animation?.type === "card" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <div className="absolute inset-0 bg-black/60 animate-fade-in" />
             <div className="relative animate-scale-in">
-              <div className={cn(
-                "w-20 h-28 rounded-lg shadow-2xl animate-card-show",
-                cardAnimation === "yellow" ? "bg-yellow-400" : "bg-red-500"
-              )} />
-              <div className={cn(
-                "absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold uppercase tracking-wider whitespace-nowrap",
-                cardAnimation === "yellow" ? "text-yellow-400" : "text-red-500"
-              )}>
-                Cartao {cardAnimation === "yellow" ? "Amarelo" : "Vermelho"}
+              <div
+                className={cn(
+                  "w-20 h-28 rounded-lg shadow-2xl",
+                  animation.cardColor === "yellow" ? "bg-yellow-400" : "bg-red-500",
+                )}
+              />
+              <div
+                className={cn(
+                  "absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold uppercase tracking-wider whitespace-nowrap",
+                  animation.cardColor === "yellow" ? "text-yellow-400" : "text-red-500",
+                )}
+              >
+                Cartão {animation.cardColor === "yellow" ? "Amarelo" : "Vermelho"}
               </div>
             </div>
           </div>
         )}
 
-        {/* Scoreboard - EA FC 26 Style */}
-        <section className="relative overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
-          <div className="relative flex items-center justify-center gap-4 px-6 py-4">
-            {/* Home Team */}
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
-                  Mandante
-                </div>
-                <div className="text-lg font-bold text-white tracking-wide uppercase">
-                  {homeTeam?.nome || "MANDANTE"}
-                </div>
-              </div>
-              <div className="relative">
-                <TeamCrest team={homeTeam} size="md" />
-                {goalAnimation === "home" && (
-                  <div className="absolute inset-0 animate-ping rounded-full bg-[#1db954]/50" />
-                )}
-              </div>
-            </div>
+        {/* PLACAR */}
+        <Scoreboard
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          state={state}
+          competition={matchCtx.competition}
+          weather={matchCtx.weather}
+        />
 
-            {/* Score */}
-            <div className="flex items-center gap-3 px-4">
-              <div className={cn(
-                "text-5xl font-bold leading-none tabular-nums transition-all duration-300",
-                goalAnimation === "home" ? "text-[#1db954] scale-125" : "text-white"
-              )}>
-                {homeScore}
-              </div>
-              <div className="text-lg text-white/30 font-light">x</div>
-              <div className={cn(
-                "text-5xl font-bold leading-none tabular-nums transition-all duration-300",
-                goalAnimation === "away" ? "text-[#1db954] scale-125" : "text-white"
-              )}>
-                {awayScore}
-              </div>
-            </div>
-
-            {/* Away Team */}
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <TeamCrest team={awayTeam} size="md" />
-                {goalAnimation === "away" && (
-                  <div className="absolute inset-0 animate-ping rounded-full bg-[#1db954]/50" />
-                )}
-              </div>
-              <div className="text-left">
-                <div className="text-[9px] font-medium tracking-wider text-white/40 uppercase">
-                  Visitante
-                </div>
-                <div className="text-lg font-bold text-white tracking-wide uppercase">
-                  {awayTeam?.nome || "VISITANTE"}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Test buttons for animations (dev only) */}
-          <div className="flex items-center justify-center gap-2 pb-3">
-            <button
-              onClick={() => triggerGoalAnimation("home")}
-              className="px-2 py-1 text-[9px] rounded bg-[#1db954]/20 text-[#1db954] hover:bg-[#1db954]/30"
-            >
-              Gol Casa
-            </button>
-            <button
-              onClick={() => triggerGoalAnimation("away")}
-              className="px-2 py-1 text-[9px] rounded bg-[#1db954]/20 text-[#1db954] hover:bg-[#1db954]/30"
-            >
-              Gol Fora
-            </button>
-            <button
-              onClick={() => triggerCardAnimation("yellow")}
-              className="px-2 py-1 text-[9px] rounded bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400/30"
-            >
-              Amarelo
-            </button>
-            <button
-              onClick={() => triggerCardAnimation("red")}
-              className="px-2 py-1 text-[9px] rounded bg-red-400/20 text-red-400 hover:bg-red-400/30"
-            >
-              Vermelho
-            </button>
-          </div>
-        </section>
-
-        {/* Speed Control */}
+        {/* CONTROLE DE VELOCIDADE */}
         <section className="rounded-xl border border-white/5 bg-[#141414] p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
               <Timer className="h-4 w-4 text-[#1db954]" />
-              <span className="text-xs font-medium text-white/60">Velocidade da Simulacao</span>
+              <span className="text-xs font-medium text-white/60 tracking-wider">VELOCIDADE</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              {speeds.map((s) => {
+            <div className="flex flex-wrap items-center gap-1.5">
+              {SPEEDS.map(s => {
                 const active = speed === s.id
                 return (
                   <button
                     key={s.id}
                     onClick={() => setSpeed(s.id)}
                     className={cn(
-                      "rounded-md border px-3 py-1.5 text-[10px] font-medium transition",
+                      "rounded-md border px-3 py-1.5 text-[10px] font-bold tracking-wider transition flex flex-col items-center min-w-[64px]",
                       active
                         ? "border-[#1db954] bg-[#1db954] text-black"
                         : "border-white/10 bg-[#1a1a1a] text-white/70 hover:border-white/20",
                     )}
                   >
-                    {s.label}
+                    <span>{s.label}</span>
+                    <span className={cn("text-[9px] opacity-60", active && "opacity-80")}>{s.sublabel}</span>
                   </button>
                 )
               })}
@@ -335,68 +352,128 @@ export default function MatchCenterPage() {
           </div>
         </section>
 
-        {/* Stats */}
+        {/* STATS */}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/5 bg-white/5 md:grid-cols-3 lg:grid-cols-6">
-          {stats.map((s) => (
-            <StatCell key={s.label} {...s} />
-          ))}
+          <StatCell
+            label="POSSE"
+            home={`${state.home.possession}%`}
+            away={`${state.away.possession}%`}
+            icon={Activity}
+            ratio={state.home.possession}
+          />
+          <StatCell
+            label="FINALIZAÇÕES"
+            home={state.home.shots}
+            away={state.away.shots}
+            icon={TargetIcon}
+            ratio={ratioFor(state.home.shots, state.away.shots)}
+          />
+          <StatCell
+            label="NO ALVO"
+            home={state.home.shotsOnTarget}
+            away={state.away.shotsOnTarget}
+            icon={TargetIcon}
+            ratio={ratioFor(state.home.shotsOnTarget, state.away.shotsOnTarget)}
+          />
+          <StatCell
+            label="xG"
+            home={state.home.xG.toFixed(2)}
+            away={state.away.xG.toFixed(2)}
+            icon={Sparkles}
+            ratio={ratioFor(state.home.xG, state.away.xG)}
+          />
+          <StatCell
+            label="ESCANTEIOS"
+            home={state.home.corners}
+            away={state.away.corners}
+            icon={Flag}
+            ratio={ratioFor(state.home.corners, state.away.corners)}
+          />
+          <StatCell
+            label="FALTAS"
+            home={state.home.fouls}
+            away={state.away.fouls}
+            icon={AlertTriangle}
+            ratio={ratioFor(state.home.fouls, state.away.fouls)}
+          />
         </section>
 
-        {/* Substitution Panel */}
+        {/* SUBSTITUIÇÃO BAR */}
         <section className="rounded-xl border border-white/5 bg-[#141414] p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <Button 
+              <Button
                 onClick={() => setShowSubModal(true)}
-                className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760]"
-                disabled={subsRemaining === 0}
+                disabled={subsRemaining === 0 || state.phase === "fulltime" || state.phase === "pre"}
+                className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-30 font-bold tracking-wider"
               >
                 <ArrowLeftRight className="mr-2 h-4 w-4" />
-                Substituir
+                SUBSTITUIR
               </Button>
-              <span className={cn(
-                "rounded-full px-3 py-1 text-[10px] font-medium tracking-wider",
-                subsRemaining > 2 ? "bg-[#1db954]/15 text-[#1db954]" : 
-                subsRemaining > 0 ? "bg-yellow-400/15 text-yellow-400" : "bg-red-400/15 text-red-400"
-              )}>
-                {subsRemaining} RESTANTES
+              <span
+                className={cn(
+                  "rounded-full px-3 py-1 text-[10px] font-bold tracking-wider",
+                  subsRemaining > 2
+                    ? "bg-[#1db954]/15 text-[#1db954]"
+                    : subsRemaining > 0
+                      ? "bg-yellow-400/15 text-yellow-400"
+                      : "bg-red-400/15 text-red-400",
+                )}
+              >
+                {subsRemaining}/5 RESTANTES
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs text-white/50">
-              <span>Formacao: <strong className="text-white">4-3-3</strong></span>
-              <span>Moral: <strong className="text-[#1db954]">Alta</strong></span>
+              <span>
+                Formação: <strong className="text-white">4-3-3</strong>
+              </span>
+              <span>
+                Sua moral:{" "}
+                <strong className="text-[#1db954]">
+                  {state.home.goals + state.away.goals === 0 ? "Equilibrada" : "Alta"}
+                </strong>
+              </span>
             </div>
           </div>
         </section>
 
-        {/* Pitch + Events */}
+        {/* PITCH + EVENTS */}
         <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
-          {/* Pitch */}
           <section className="overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
             <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-3">
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-[#1db954]" />
-                <h2 className="text-xs font-medium text-white tracking-wider">CAMPO TATICO</h2>
+                <h2 className="text-xs font-medium text-white tracking-wider">CAMPO TÁTICO</h2>
               </div>
               <div className="flex items-center gap-4 text-[10px] text-white/50">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                  Mandante
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ background: homeTeam.cor1 }}
+                  />
+                  {homeTeam.curto}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
-                  Visitante
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ background: awayTeam.cor1 }}
+                  />
+                  {awayTeam.curto}
                 </span>
               </div>
             </div>
-            <Pitch 
-              selectedPlayer={selectedPitchPlayer} 
+            <LivePitch
+              ball={state.ball}
+              homeTeam={homeTeam}
+              awayTeam={awayTeam}
+              homePlayers={homeSquad}
+              awayPlayers={awaySquad}
+              selectedPlayer={selectedPitchPlayer}
               onSelectPlayer={setSelectedPitchPlayer}
-              players={homePlayers}
+              flash={state.flash}
             />
           </section>
 
-          {/* Events */}
           <section className="overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
             <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-3">
               <div className="flex items-center gap-2">
@@ -404,182 +481,205 @@ export default function MatchCenterPage() {
                 <h2 className="text-xs font-medium text-white tracking-wider">EVENTOS</h2>
               </div>
               <span className="text-[10px] text-white/40 font-medium">
-                {events.length} eventos
+                {state.events.length} eventos
               </span>
             </div>
 
-            {/* Event list */}
-            <ul className="max-h-[400px] overflow-y-auto divide-y divide-white/5">
-              {events.map((e, i) => (
-                <li key={i} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-white/40 tabular-nums w-6">
-                      {e.min}&apos;
-                    </span>
-                    <div className={cn(
-                      "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider",
-                      getEventColor(e.type, e.side)
-                    )}>
-                      {getEventIcon(e.type)}
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm leading-snug",
-                      e.type === "goal" ? "text-[#1db954] font-semibold" : "text-white/80"
-                    )}>
-                      {e.text}
-                    </p>
-                  </div>
+            <ul className="max-h-[420px] overflow-y-auto divide-y divide-white/5">
+              {state.events.length === 0 ? (
+                <li className="px-4 py-8 text-center text-xs text-white/40">
+                  Inicie a partida para ver os eventos.
                 </li>
-              ))}
+              ) : (
+                state.events.map(e => (
+                  <EventRow key={e.id} event={e} homeTeam={homeTeam} awayTeam={awayTeam} />
+                ))
+              )}
             </ul>
           </section>
         </div>
 
-        {/* Meta Info */}
+        {/* META */}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/5 bg-white/5 md:grid-cols-4">
-          <MetaTile icon={CalendarDays} label="COMPETICAO" value="Camp. Mineiro" />
-          <MetaTile icon={Cloud} label="CLIMA" value="Chuva · 22°C" />
-          <MetaTile icon={Activity} label="GRAMADO" value="54/100" valueClass="text-yellow-400" />
-          <MetaTile icon={Users} label="PUBLICO" value="15.526" />
+          <MetaTile icon={CalendarDays} label="COMPETIÇÃO" value={matchCtx.competition} />
+          <MetaTile
+            icon={Cloud}
+            label="CLIMA"
+            value={
+              matchCtx.weather === "rain"
+                ? "Chuva · 18°C"
+                : matchCtx.weather === "cloudy"
+                  ? "Nublado · 22°C"
+                  : "Ensolarado · 26°C"
+            }
+          />
+          <MetaTile icon={Activity} label="GRAMADO" value="84/100" valueClass="text-[#1db954]" />
+          <MetaTile
+            icon={Users}
+            label="PÚBLICO"
+            value={(homeTeam.estadio_cap * (0.6 + Math.random() * 0.35))
+              .toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+          />
         </section>
       </main>
 
-      {/* Substitution Modal */}
-      {showSubModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl mx-4 rounded-xl bg-[#141414] border border-white/10 overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-              <h3 className="text-lg font-semibold text-white">Realizar Substituicao</h3>
-              <button 
-                onClick={() => {
-                  setShowSubModal(false)
-                  setSelectedPlayerOut(null)
-                  setSelectedPlayerIn(null)
-                }}
-                className="h-8 w-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+      {/* MODAIS */}
+      <SubstitutionModal
+        open={showSubModal}
+        onClose={() => setShowSubModal(false)}
+        team={userTeamForSub}
+        starters={userStarters}
+        bench={userBench}
+        subsRemaining={subsRemaining}
+        onConfirm={handleSub}
+      />
 
-            {/* Content */}
-            <div className="p-6 grid md:grid-cols-2 gap-6">
-              {/* Player Out */}
-              <div>
-                <h4 className="text-xs font-medium text-white/50 tracking-wider mb-3 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-red-400" />
-                  SAI DE CAMPO
-                </h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {homePlayers.map((player) => (
-                    <button
-                      key={player.id}
-                      onClick={() => setSelectedPlayerOut(player)}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
-                        selectedPlayerOut?.id === player.id
-                          ? "border-red-400 bg-red-400/10"
-                          : "border-white/5 bg-white/[0.02] hover:border-white/10"
-                      )}
-                    >
-                      <div className="h-8 w-8 rounded-full bg-red-400 flex items-center justify-center text-xs font-bold text-white">
-                        {player.number}
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-white">{player.name}</div>
-                        <div className="text-[10px] text-white/50">{player.position} - RAT {player.rating}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className={cn(
-                          "text-xs font-medium",
-                          player.stamina > 70 ? "text-[#1db954]" :
-                          player.stamina > 40 ? "text-yellow-400" : "text-red-400"
-                        )}>
-                          {player.stamina}%
-                        </div>
-                        <div className="text-[9px] text-white/40">Energia</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+      <MatchResultModal
+        open={showResult}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+        state={state}
+        userSide={userSide}
+        onClose={() => setShowResult(false)}
+      />
+    </div>
+  )
+}
 
-              {/* Player In */}
-              <div>
-                <h4 className="text-xs font-medium text-white/50 tracking-wider mb-3 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#1db954]" />
-                  ENTRA EM CAMPO
-                </h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {homeBench.map((player) => (
-                    <button
-                      key={player.id}
-                      onClick={() => setSelectedPlayerIn(player)}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
-                        selectedPlayerIn?.id === player.id
-                          ? "border-[#1db954] bg-[#1db954]/10"
-                          : "border-white/5 bg-white/[0.02] hover:border-white/10"
-                      )}
-                    >
-                      <div className="h-8 w-8 rounded-full bg-[#1a1a1a] border border-white/20 flex items-center justify-center text-xs font-bold text-white">
-                        {player.number}
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-white">{player.name}</div>
-                        <div className="text-[10px] text-white/50">{player.position} - RAT {player.rating}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-medium text-[#1db954]">
-                          {player.stamina}%
-                        </div>
-                        <div className="text-[9px] text-white/40">Energia</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+// ─────────────────────────────────────────────────────────────────────────────
+// Componentes auxiliares
+// ─────────────────────────────────────────────────────────────────────────────
 
-            {/* Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-white/[0.02]">
-              <div className="text-xs text-white/50">
-                {selectedPlayerOut && selectedPlayerIn ? (
-                  <span className="text-white">
-                    {selectedPlayerOut.name} <ChevronRight className="inline h-3 w-3 mx-1" /> {selectedPlayerIn.name}
-                  </span>
-                ) : (
-                  "Selecione os jogadores"
-                )}
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowSubModal(false)
-                    setSelectedPlayerOut(null)
-                    setSelectedPlayerIn(null)
-                  }}
-                  className="text-xs border-white/10 bg-transparent text-white/70 hover:bg-white/5"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleSubstitution}
-                  disabled={!selectedPlayerOut || !selectedPlayerIn}
-                  className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-50"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Confirmar
-                </Button>
-              </div>
+function ratioFor(home: number, away: number): number {
+  const total = home + away
+  if (total === 0) return 50
+  return Math.round((home / total) * 100)
+}
+
+function Scoreboard({
+  homeTeam,
+  awayTeam,
+  state,
+  competition,
+  weather,
+}: {
+  homeTeam: Team
+  awayTeam: Team
+  state: MatchState
+  competition: string
+  weather: "sunny" | "cloudy" | "rain"
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
+      {/* Background gradient */}
+      <div
+        className="absolute inset-0 opacity-20"
+        style={{
+          background: `linear-gradient(90deg, ${homeTeam.cor1}30 0%, transparent 30%, transparent 70%, ${awayTeam.cor1}30 100%)`,
+        }}
+      />
+
+      <div className="relative flex items-center justify-between gap-4 px-6 py-5">
+        {/* Mandante */}
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <TeamCrest team={homeTeam} size="lg" />
+          <div className="min-w-0">
+            <div className="text-[9px] font-bold tracking-[0.2em] text-white/40 uppercase">
+              MANDANTE
             </div>
+            <div className="text-lg font-black text-white tracking-tight uppercase truncate">
+              {homeTeam.nome}
+            </div>
+            <div className="text-[10px] text-white/40">{homeTeam.estadio_nome}</div>
           </div>
         </div>
-      )}
+
+        {/* Placar */}
+        <div className="flex items-center gap-3 px-4 flex-shrink-0">
+          <div
+            className={cn(
+              "text-5xl font-black leading-none tabular-nums transition-all",
+              state.flash?.type === "goal" && state.flash.side === "home" && "text-[#1db954] scale-125",
+            )}
+          >
+            {state.home.goals}
+          </div>
+          <div className="text-lg text-white/30 font-light">×</div>
+          <div
+            className={cn(
+              "text-5xl font-black leading-none tabular-nums transition-all",
+              state.flash?.type === "goal" && state.flash.side === "away" && "text-[#1db954] scale-125",
+            )}
+          >
+            {state.away.goals}
+          </div>
+        </div>
+
+        {/* Visitante */}
+        <div className="flex items-center gap-4 flex-1 min-w-0 justify-end">
+          <div className="text-right min-w-0">
+            <div className="text-[9px] font-bold tracking-[0.2em] text-white/40 uppercase">
+              VISITANTE
+            </div>
+            <div className="text-lg font-black text-white tracking-tight uppercase truncate">
+              {awayTeam.nome}
+            </div>
+            <div className="text-[10px] text-white/40">
+              {awayTeam.cidade}, {awayTeam.estado}
+            </div>
+          </div>
+          <TeamCrest team={awayTeam} size="lg" />
+        </div>
+      </div>
+
+      {/* Footer info */}
+      <div className="relative flex items-center justify-center gap-3 px-6 py-2 border-t border-white/5 bg-black/20 text-[10px] text-white/40">
+        <span>{competition}</span>
+        <span className="text-white/15">·</span>
+        <span className="capitalize">{weather === "sunny" ? "Ensolarado" : weather === "cloudy" ? "Nublado" : "Chuva"}</span>
+        <span className="text-white/15">·</span>
+        <span className="capitalize">
+          {state.phase === "pre" && "Aguardando início"}
+          {state.phase === "first" && "1º tempo"}
+          {state.phase === "halftime" && "Intervalo"}
+          {state.phase === "second" && "2º tempo"}
+          {state.phase === "fulltime" && "Encerrada"}
+        </span>
+      </div>
+    </section>
+  )
+}
+
+function StatCell({
+  label,
+  home,
+  away,
+  icon: Icon,
+  ratio,
+}: {
+  label: string
+  home: string | number
+  away: string | number
+  icon: React.ComponentType<{ className?: string }>
+  ratio: number
+}) {
+  return (
+    <div className="bg-[#141414] p-4">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-wider text-white/40 mb-2">
+        <Icon className="h-3 w-3" />
+        {label}
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-lg font-bold tabular-nums text-white">{home}</span>
+        <span className="text-white/20 text-xs">vs</span>
+        <span className="text-lg font-bold tabular-nums text-white">{away}</span>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="flex h-full">
+          <div className="bg-red-400 h-full transition-all duration-700" style={{ width: `${ratio}%` }} />
+          <div className="bg-blue-400 h-full transition-all duration-700" style={{ width: `${100 - ratio}%` }} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -601,164 +701,78 @@ function MetaTile({
         <Icon className="h-3 w-3" />
         {label}
       </div>
-      <div className={cn("mt-1 text-base font-semibold leading-tight text-white", valueClass)}>{value}</div>
-    </div>
-  )
-}
-
-function StatCell({
-  label,
-  home,
-  away,
-  icon: Icon,
-  ratio,
-}: {
-  label: string
-  home: string
-  away: string
-  icon: React.ComponentType<{ className?: string }>
-  ratio: number
-}) {
-  return (
-    <div className="bg-[#141414] p-4">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-wider text-white/40 mb-2">
-        <Icon className="h-3 w-3" />
-        {label}
-      </div>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-lg font-bold tabular-nums text-red-400">{home}</span>
-        <span className="text-white/20 text-xs">vs</span>
-        <span className="text-lg font-bold tabular-nums text-blue-400">{away}</span>
-      </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div className="flex h-full">
-          <div className="bg-red-400 h-full transition-all" style={{ width: `${ratio}%` }} />
-          <div className="bg-blue-400 h-full transition-all" style={{ width: `${100 - ratio}%` }} />
-        </div>
+      <div className={cn("mt-1 text-base font-semibold leading-tight text-white truncate", valueClass)}>
+        {value}
       </div>
     </div>
   )
 }
 
-function Pitch({
-  selectedPlayer,
-  onSelectPlayer,
-  players,
+function EventRow({
+  event,
+  homeTeam,
+  awayTeam,
 }: {
-  selectedPlayer: number | null
-  onSelectPlayer: (id: number | null) => void
-  players: typeof homePlayers
+  event: MatchEvent
+  homeTeam: Team
+  awayTeam: Team
 }) {
-  // Formation positions for 4-3-3
-  const positions = [
-    { x: 10, y: 50 },  // GK
-    { x: 25, y: 15 },  // LB
-    { x: 25, y: 38 },  // CB
-    { x: 25, y: 62 },  // CB
-    { x: 25, y: 85 },  // RB
-    { x: 45, y: 30 },  // CM
-    { x: 45, y: 50 },  // CM
-    { x: 45, y: 70 },  // CM
-    { x: 65, y: 20 },  // LW
-    { x: 65, y: 50 },  // ST
-    { x: 65, y: 80 },  // RW
-  ]
+  const teamColor = event.side === "home" ? homeTeam.cor1 : awayTeam.cor1
 
-  const awayPositions = positions.map((p) => ({ x: 100 - p.x, y: p.y }))
+  const badgeStyle =
+    event.type === "goal"
+      ? { className: "bg-[#1db954] text-black", label: "GOL" }
+      : event.type === "yellow_card"
+        ? { className: "bg-yellow-400 text-black", label: "AMA" }
+        : event.type === "red_card"
+          ? { className: "bg-red-500 text-white", label: "VER" }
+          : event.type === "penalty"
+            ? { className: "bg-purple-400/20 text-purple-300", label: "PEN" }
+            : event.type === "post"
+              ? { className: "bg-orange-400/20 text-orange-300", label: "TRA" }
+              : event.type === "save"
+                ? { className: "bg-blue-400/20 text-blue-300", label: "DEF" }
+                : event.type === "corner"
+                  ? { className: "bg-cyan-400/20 text-cyan-300", label: "ESC" }
+                  : event.type === "foul"
+                    ? { className: "bg-white/10 text-white/60", label: "FAL" }
+                    : event.type === "halftime"
+                      ? { className: "bg-white/15 text-white", label: "HT" }
+                      : event.type === "fulltime"
+                        ? { className: "bg-white/15 text-white", label: "FT" }
+                        : { className: "bg-white/10 text-white/60", label: "INI" }
 
   return (
-    <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-b from-[oklch(0.42_0.14_145)] via-[oklch(0.32_0.11_145)] to-[oklch(0.42_0.14_145)]">
-      {/* Stripes */}
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(90deg, transparent 0 8%, rgba(0,0,0,0.15) 8% 16%)",
-        }}
-      />
-
-      {/* Field markings */}
-      <svg viewBox="0 0 100 62.5" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
-        <g stroke="rgba(255,255,255,0.5)" strokeWidth="0.2" fill="none">
-          <rect x="2" y="2" width="96" height="58.5" />
-          <line x1="50" y1="2" x2="50" y2="60.5" />
-          <circle cx="50" cy="31.25" r="8" />
-          <circle cx="50" cy="31.25" r="0.5" fill="rgba(255,255,255,0.5)" />
-          {/* Left box */}
-          <rect x="2" y="16" width="14" height="30.5" />
-          <rect x="2" y="22" width="5" height="18.5" />
-          <path d="M 16 26 A 8 8 0 0 1 16 36.5" />
-          {/* Right box */}
-          <rect x="84" y="16" width="14" height="30.5" />
-          <rect x="93" y="22" width="5" height="18.5" />
-          <path d="M 84 26 A 8 8 0 0 0 84 36.5" />
-        </g>
-      </svg>
-
-      {/* Home Players */}
-      {positions.map((pos, i) => {
-        const player = players[i]
-        if (!player) return null
-        const isSelected = selectedPlayer === player.id
-        return (
-          <button
-            key={player.id}
-            onClick={() => onSelectPlayer(isSelected ? null : player.id)}
-            className="absolute -translate-x-1/2 -translate-y-1/2 group"
-            style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-          >
-            <div className={cn(
-              "relative flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold transition-all",
-              isSelected 
-                ? "bg-red-500 text-white ring-2 ring-white scale-110" 
-                : "bg-red-400 text-white hover:scale-105",
-              player.stamina < 50 && "ring-2 ring-yellow-400"
-            )}>
-              {player.number}
-              {/* Stamina indicator */}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-1 rounded-full bg-black/30 overflow-hidden">
-                <div 
-                  className={cn(
-                    "h-full transition-all",
-                    player.stamina > 70 ? "bg-[#1db954]" :
-                    player.stamina > 40 ? "bg-yellow-400" : "bg-red-400"
-                  )}
-                  style={{ width: `${player.stamina}%` }}
-                />
-              </div>
-            </div>
-            {/* Player tooltip */}
-            {isSelected && (
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
-                <div className="bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 shadow-xl">
-                  <div className="text-xs font-semibold text-white">{player.name}</div>
-                  <div className="text-[10px] text-white/50">{player.position} - RAT {player.rating}</div>
-                  <div className={cn(
-                    "text-[10px] font-medium mt-1",
-                    player.stamina > 70 ? "text-[#1db954]" :
-                    player.stamina > 40 ? "text-yellow-400" : "text-red-400"
-                  )}>
-                    Energia: {player.stamina}%
-                  </div>
-                </div>
-              </div>
-            )}
-          </button>
-        )
-      })}
-
-      {/* Away Players */}
-      {awayPositions.map((pos, i) => (
+    <li className="flex items-start gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="text-[10px] font-bold text-white/40 tabular-nums w-6">{event.minute}&apos;</span>
         <div
-          key={`away-${i}`}
-          className="absolute -translate-x-1/2 -translate-y-1/2"
-          style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+          className={cn(
+            "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider min-w-[28px] text-center",
+            badgeStyle.className,
+          )}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-400 text-xs font-bold text-white opacity-80">
-            {i + 1}
-          </div>
+          {badgeStyle.label}
         </div>
-      ))}
-    </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p
+          className={cn(
+            "text-sm leading-snug",
+            event.type === "goal"
+              ? "text-[#1db954] font-semibold"
+              : event.important
+                ? "text-white"
+                : "text-white/70",
+          )}
+        >
+          {event.text}
+        </p>
+      </div>
+      <div
+        className="h-6 w-1 rounded-full flex-shrink-0"
+        style={{ background: teamColor, opacity: 0.6 }}
+      />
+    </li>
   )
 }

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Zap, Target, Footprints, Star, Shield, TrendingUp, Check, Dumbbell } from "lucide-react"
+import { PlayerAvatar } from "@/components/player-avatar"
 import { cn } from "@/lib/utils"
 
 interface Player {
@@ -110,11 +111,10 @@ export function TrainingModal({
           <div className="space-y-6 py-4">
             {/* Player Stats Overview */}
             <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
-                <span className="font-bold text-2xl text-white/40">
-                  {player.name.charAt(0)}
-                </span>
-              </div>
+              <PlayerAvatar 
+                name={player.name} 
+                size="md" 
+              />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white">{player.name}</span>

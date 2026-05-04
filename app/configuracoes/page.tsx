@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useTheme, themePresets, type ThemeColor } from "@/components/theme-provider"
-import { getTeamByShort, serieATeams, getTeamUniforms, allTeams } from "@/lib/teams-data"
+import { getTeamUniforms } from "@/lib/teams-data"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
 
@@ -49,7 +49,6 @@ export default function ConfiguracoesPage() {
   const [matchSpeed, setMatchSpeed] = useState("normal")
   const [selectedUniform, setSelectedUniform] = useState<"home" | "away" | "third">(state.selectedUniform || "home")
   const [language, setLanguage] = useState(state.language || "pt-BR")
-  const [selectedTeamForTheme, setSelectedTeamForTheme] = useState<string>(userTeam.curto)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -72,19 +71,9 @@ export default function ConfiguracoesPage() {
 
   const handleThemeChange = (newTheme: ThemeColor) => {
     if (newTheme === "team") {
-      const teamForColors = getTeamByShort(selectedTeamForTheme) || userTeam
-      setTeamColors({ primary: teamForColors.cor1, secondary: teamForColors.cor2 })
+      setTeamColors({ primary: userTeam.cor1, secondary: userTeam.cor2 })
     }
     setTheme(newTheme)
-  }
-
-  const handleTeamColorSelect = (teamCurto: string) => {
-    const team = getTeamByShort(teamCurto)
-    if (team) {
-      setSelectedTeamForTheme(teamCurto)
-      setTeamColors({ primary: team.cor1, secondary: team.cor2 })
-      setTheme("team")
-    }
   }
 
   const handleUniformSelect = (uniform: "home" | "away" | "third") => {
@@ -239,18 +228,21 @@ export default function ConfiguracoesPage() {
                 </div>
               </div>
 
-              {/* Team Colors */}
+              {/* Team Colors - Apenas cores do time do usuario */}
               <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
                 <div>
                   <h3 className="text-sm font-medium text-white flex items-center gap-2">
                     <TeamCrest team={userTeam} size="xs" />
                     Cores do Time
                   </h3>
-                  <p className="text-xs text-white/40 mt-1">Use as cores do seu clube na interface</p>
+                  <p className="text-xs text-white/40 mt-1">Use as cores do {userTeam.nome} na interface</p>
                 </div>
 
                 <button
-                  onClick={() => handleThemeChange("team")}
+                  onClick={() => {
+                    setTeamColors({ primary: userTeam.cor1, secondary: userTeam.cor2 })
+                    setTheme("team")
+                  }}
                   className={cn(
                     "relative w-full flex items-center gap-4 p-4 rounded-lg border transition-all",
                     theme === "team" 
@@ -258,61 +250,44 @@ export default function ConfiguracoesPage() {
                       : "border-white/10 bg-white/5 hover:border-white/20"
                   )}
                 >
-                  <div className="flex gap-1">
-                    <div 
-                      className="h-8 w-8 rounded-full border-2 border-white/20"
-                      style={{ backgroundColor: userTeam.cor1 }}
-                    />
-                    <div 
-                      className="h-8 w-8 rounded-full border-2 border-white/20 -ml-3"
-                      style={{ backgroundColor: userTeam.cor2 }}
-                    />
-                  </div>
-                  <div className="text-left">
+                  <TeamCrest team={userTeam} size="md" />
+                  <div className="flex-1 text-left">
                     <div className="text-sm font-medium text-white">{userTeam.nome}</div>
-                    <div className="text-xs text-white/40">Usar cores do clube</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="h-4 w-4 rounded-full border border-white/20"
+                        style={{ backgroundColor: userTeam.cor1 }}
+                      />
+                      <div 
+                        className="h-4 w-4 rounded-full border border-white/20"
+                        style={{ backgroundColor: userTeam.cor2 }}
+                      />
+                      <span className="text-xs text-white/40">Cores do clube</span>
+                    </div>
                   </div>
                   {theme === "team" && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="h-3 w-3 text-primary-foreground" />
+                    <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="h-3.5 w-3.5 text-primary-foreground" />
                     </div>
                   )}
                 </button>
 
+                {/* Preview das cores do time */}
                 <div className="pt-4 border-t border-white/10">
-                  <p className="text-xs text-white/40 mb-3">
-                    Selecione um time para usar suas cores:
-                  </p>
-                  <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto pr-2">
-                    {allTeams.map((team) => {
-                      const isSelected = theme === "team" && selectedTeamForTheme === team.curto
-                      return (
-                        <button
-                          key={team.curto}
-                          onClick={() => handleTeamColorSelect(team.curto)}
-                          className={cn(
-                            "relative flex flex-col items-center gap-1 p-2 rounded-lg transition-all",
-                            isSelected 
-                              ? "bg-white/10 ring-1 ring-white/30" 
-                              : "hover:bg-white/5"
-                          )}
-                          title={team.nome}
-                        >
-                          {isSelected && (
-                            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#1db954] flex items-center justify-center">
-                              <Check className="h-2.5 w-2.5 text-black" />
-                            </div>
-                          )}
-                          <TeamCrest team={team} size="sm" />
-                          <span className={cn(
-                            "text-[9px]",
-                            isSelected ? "text-white" : "text-white/40"
-                          )}>
-                            {team.curto}
-                          </span>
-                        </button>
-                      )
-                    })}
+                  <p className="text-xs text-white/40 mb-3">Preview das cores</p>
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="flex-1 h-12 rounded-lg flex items-center justify-center text-xs font-medium"
+                      style={{ backgroundColor: userTeam.cor1, color: userTeam.cor2 }}
+                    >
+                      Cor Primaria
+                    </div>
+                    <div 
+                      className="flex-1 h-12 rounded-lg flex items-center justify-center text-xs font-medium border border-white/10"
+                      style={{ backgroundColor: userTeam.cor2, color: userTeam.cor1 }}
+                    >
+                      Cor Secundaria
+                    </div>
                   </div>
                 </div>
               </div>

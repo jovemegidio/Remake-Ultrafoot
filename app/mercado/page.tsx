@@ -23,6 +23,7 @@ import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { FilterModal } from "@/components/modals/filter-modal"
 import { SearchPlayerModal } from "@/components/modals/search-player-modal"
 import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
+import { PlayerAvatar } from "@/components/player-avatar"
 
 const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
@@ -262,11 +263,11 @@ export default function MercadoPage() {
                     <div key={offer.id} className="rounded-xl bg-[#141414] border border-yellow-500/20 p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                            <span className="font-bold text-xl text-yellow-400">
-                              {offer.player.charAt(0)}
-                            </span>
-                          </div>
+                          <PlayerAvatar 
+                            name={offer.player} 
+                            teamColor="#eab308"
+                            size="sm" 
+                          />
                           <div>
                             <div className="font-medium text-white">{offer.player}</div>
                             <div className="flex items-center gap-2 text-sm text-white/50">
@@ -315,15 +316,11 @@ export default function MercadoPage() {
                     }`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${
-                            offer.status === "accepted" ? "bg-[#1db954]/10" : "bg-red-500/10"
-                          }`}>
-                            <span className={`font-bold text-xl ${
-                              offer.status === "accepted" ? "text-[#1db954]" : "text-red-400"
-                            }`}>
-                              {offer.player.charAt(0)}
-                            </span>
-                          </div>
+                          <PlayerAvatar 
+                            name={offer.player} 
+                            teamColor={offer.status === "accepted" ? "#1db954" : "#ef4444"}
+                            size="sm" 
+                          />
                           <div>
                             <div className="font-medium text-white/70">{offer.player}</div>
                             <div className="flex items-center gap-2 text-sm text-white/40">
@@ -373,11 +370,11 @@ export default function MercadoPage() {
               {loansAvailable.map((player) => (
                 <div key={player.id} className="rounded-xl bg-[#141414] border border-white/5 p-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-lg bg-white/5 flex items-center justify-center">
-                      <span className="font-bold text-2xl text-white/40">
-                        {player.name.charAt(0)}
-                      </span>
-                    </div>
+                    <PlayerAvatar 
+                      name={player.name} 
+                      teamColor={player.team.cor1}
+                      size="md" 
+                    />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-white">{player.name}</span>
@@ -472,11 +469,11 @@ function PlayerCard({
     <div className="rounded-xl bg-[#141414] border border-white/5 p-4 transition-all hover:border-white/10">
       <div className="flex items-start gap-4">
         <div className="relative">
-          <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
-            <span className="font-bold text-2xl text-white/40">
-              {player.name.charAt(0)}
-            </span>
-          </div>
+          <PlayerAvatar 
+            name={player.name} 
+            teamColor={player.team.cor1}
+            size="lg" 
+          />
           <div className={`absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-md border ${positionColors[player.position]}`}>
             <span className="text-[10px] font-bold">{player.position}</span>
           </div>

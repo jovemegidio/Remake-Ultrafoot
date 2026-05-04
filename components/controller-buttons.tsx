@@ -17,12 +17,12 @@ interface ControllerButtonProps {
   className?: string
 }
 
-// Map Xbox buttons to PlayStation equivalents
+// Map Xbox buttons to PlayStation equivalents (usando símbolos corretos)
 const psButtonMap: Record<string, string> = {
-  A: "X",
-  B: "O",
-  X: "□",
-  Y: "△",
+  A: "✕", // Cross
+  B: "○", // Circle  
+  X: "□", // Square
+  Y: "△", // Triangle
   LB: "L1",
   RB: "R1",
   LT: "L2",
@@ -31,32 +31,32 @@ const psButtonMap: Record<string, string> = {
   RS: "R3",
 }
 
-// Colors for Xbox buttons
+// Colors for Xbox buttons (cores oficiais Xbox)
 const xboxColors: Record<string, string> = {
-  A: "bg-[#107c10] text-white",
-  B: "bg-[#e81123] text-white",
-  X: "bg-[#0078d7] text-white",
-  Y: "bg-[#ffb900] text-black",
-  LB: "bg-white/10 text-white border border-white/20",
-  RB: "bg-white/10 text-white border border-white/20",
-  LT: "bg-white/10 text-white border border-white/20",
-  RT: "bg-white/10 text-white border border-white/20",
-  LS: "bg-white/10 text-white border border-white/20",
-  RS: "bg-white/10 text-white border border-white/20",
+  A: "bg-[#107c10] text-white", // Verde Xbox
+  B: "bg-[#e81123] text-white", // Vermelho Xbox
+  X: "bg-[#0078d7] text-white", // Azul Xbox
+  Y: "bg-[#ffb900] text-black", // Amarelo Xbox
+  LB: "bg-[#2d2d2d] text-white border border-white/30",
+  RB: "bg-[#2d2d2d] text-white border border-white/30",
+  LT: "bg-[#2d2d2d] text-white border border-white/30",
+  RT: "bg-[#2d2d2d] text-white border border-white/30",
+  LS: "bg-[#2d2d2d] text-white border border-white/30",
+  RS: "bg-[#2d2d2d] text-white border border-white/30",
 }
 
-// Colors for PlayStation buttons
+// Colors for PlayStation buttons (cores oficiais PlayStation)
 const psColors: Record<string, string> = {
-  A: "bg-[#2e6db4] text-white", // Cross - blue
-  B: "bg-[#df0024] text-white", // Circle - red
-  X: "bg-[#f19db4] text-white", // Square - pink
-  Y: "bg-[#00d474] text-white", // Triangle - green
-  LB: "bg-white/10 text-white border border-white/20",
-  RB: "bg-white/10 text-white border border-white/20",
-  LT: "bg-white/10 text-white border border-white/20",
-  RT: "bg-white/10 text-white border border-white/20",
-  LS: "bg-white/10 text-white border border-white/20",
-  RS: "bg-white/10 text-white border border-white/20",
+  A: "bg-[#24398C] text-[#6BB3E9]", // Cross - azul com símbolo azul claro
+  B: "bg-[#8C2424] text-[#E96B6B]", // Circle - vermelho com símbolo vermelho claro
+  X: "bg-[#8C247B] text-[#E96BD1]", // Square - rosa/magenta
+  Y: "bg-[#248C6B] text-[#6BE9C1]", // Triangle - verde/teal
+  LB: "bg-[#1a1a1a] text-white border border-white/30",
+  RB: "bg-[#1a1a1a] text-white border border-white/30",
+  LT: "bg-[#1a1a1a] text-white border border-white/30",
+  RT: "bg-[#1a1a1a] text-white border border-white/30",
+  LS: "bg-[#1a1a1a] text-white border border-white/30",
+  RS: "bg-[#1a1a1a] text-white border border-white/30",
 }
 
 const sizeClasses = {
@@ -180,8 +180,20 @@ export function ControllerStatus({ connected, controllerType, className }: Contr
         "w-2 h-2 rounded-full animate-pulse",
         connected ? "bg-[#1db954]" : "bg-white/20"
       )} />
+      {/* Ícone do controle */}
+      <div className="w-4 h-4 flex items-center justify-center">
+        {controllerType === "playstation" ? (
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white/60" fill="currentColor">
+            <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.875c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.675-4.438-5.827-1.307-.448-3.728-1.186-5.393-1.501zm4.659 16.264l6.344-2.003c.725-.246 1.576-.795 1.576-1.753 0-.959-.775-1.261-1.576-1.016l-6.344 2.049v2.723zm-6.329-.423c-2.346-.746-4.315-.326-4.315 1.76 0 2.023 1.756 2.817 4.315 2.283l1.329-.381V19.4l-1.329.424v-1.387z"/>
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white/60" fill="currentColor">
+            <path d="M4.102 21.033A11.947 11.947 0 0 0 12 24a11.96 11.96 0 0 0 7.898-2.967c1.058-1.074-.438-3.523-2.649-6.106-1.738 2.313-3.767 4.671-5.249 4.671-1.483 0-3.512-2.358-5.249-4.671-2.211 2.583-3.707 5.032-2.649 6.106zM12 0a11.94 11.94 0 0 0-7.898 2.967c-1.058 1.074.438 3.523 2.649 6.106C8.489 6.76 10.518 4.402 12 4.402c1.482 0 3.511 2.358 5.249 4.671 2.211-2.583 3.707-5.032 2.649-6.106A11.94 11.94 0 0 0 12 0z"/>
+          </svg>
+        )}
+      </div>
       <span className="text-[10px] text-white/40 font-medium">
-        {controllerType === "playstation" ? "PS" : "XBOX"}
+        {controllerType === "playstation" ? "PlayStation" : controllerType === "xbox" ? "Xbox" : "Controller"}
       </span>
     </div>
   )

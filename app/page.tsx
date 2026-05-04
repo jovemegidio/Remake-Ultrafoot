@@ -25,7 +25,9 @@ import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { MatchCarousel } from "@/components/match-carousel"
-import { ControllerToolbar } from "@/components/controller-buttons"
+import { ControllerToolbar, ControllerTypeContext } from "@/components/controller-buttons"
+import { useContext } from "react"
+import { NewsFeed } from "@/components/news-feed"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
@@ -51,6 +53,25 @@ const fixtures = [
   { home: getTeamByShort("INT")!, away: userTeam, date: "Fev 12", time: "19:00", competition: "Brasileirao" },
   { home: userTeam, away: getTeamByShort("GRE")!, date: "Fev 19", time: "21:00", competition: "Brasileirao" },
 ]
+
+function ControllerToolbarWithDetection() {
+  const controllerType = useContext(ControllerTypeContext)
+  
+  return (
+    <ControllerToolbar 
+      actions={[
+        { button: "A", label: "Selecionar" },
+        { button: "B", label: "Voltar" },
+        { button: "X", label: "Simular" },
+        { button: "Y", label: "Calendario" },
+        { button: "LB", label: "Tab Anterior" },
+        { button: "RB", label: "Proxima Tab" },
+      ]}
+      controller={controllerType}
+      className="fixed bottom-0 left-[72px] right-0 z-40"
+    />
+  )
+}
 
 export default function DashboardPage() {
   return (
@@ -276,9 +297,9 @@ export default function DashboardPage() {
               </Link>
             </section>
 
-            {/* News */}
-            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+            {/* News - Estilo BBC Sport */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                   <Newspaper className="h-4 w-4 text-primary" />
                   NOTICIAS
@@ -287,33 +308,7 @@ export default function DashboardPage() {
                   3
                 </span>
               </div>
-              
-              <div className="divide-y divide-white/5">
-                {[
-                  { tag: "MERCADO", title: "Equipe abre janela com orcamento disponivel", time: "2h" },
-                  { tag: "STAFF", title: "Comissao tecnica define estrategia para temporada", time: "5h" },
-                  { tag: "ELENCO", title: "Capitao renova vinculo ate 2028", time: "1d" },
-                ].map((news) => (
-                  <div key={news.title} className="px-5 py-3 hover:bg-white/5 transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-2 text-[10px] text-primary font-medium tracking-wider">
-                      <FileText className="h-3 w-3" />
-                      {news.tag}
-                      <span className="ml-auto text-white/40 font-normal">{news.time}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-white/80 group-hover:text-white transition-colors line-clamp-2">
-                      {news.title}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              
-              <Link 
-                href="/mensagens"
-                className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/5"
-              >
-                Ver todas noticias
-                <ChevronRight className="h-3 w-3" />
-              </Link>
+              <NewsFeed />
             </section>
 
             {/* Quick Finance */}
@@ -358,19 +353,8 @@ export default function DashboardPage() {
 
 <MusicPlayer />
 
-{/* Controller Toolbar - FIFA style bottom bar */}
-<ControllerToolbar 
-  actions={[
-    { button: "A", label: "Selecionar" },
-    { button: "B", label: "Voltar" },
-    { button: "X", label: "Simular" },
-    { button: "Y", label: "Calendario" },
-    { button: "LB", label: "Tab Anterior" },
-    { button: "RB", label: "Proxima Tab" },
-  ]}
-  controller="playstation"
-  className="fixed bottom-0 left-[72px] right-0 z-40"
-/>
+{/* Controller Toolbar - FIFA style bottom bar - detecta automaticamente o tipo de controle */}
+<ControllerToolbarWithDetection />
 </div>
 )
 }

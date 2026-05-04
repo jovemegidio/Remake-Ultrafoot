@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useContext } from "react"
 import { ChevronRight, Save, FastForward, Settings, Check, Loader2 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
-import { HeaderControls } from "@/components/controller-buttons"
+import { HeaderControls, ControllerTypeContext } from "@/components/controller-buttons"
+import { NotificationBell, NotificationCenter, useNotificationDemo } from "@/components/notifications-system"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
@@ -31,9 +32,16 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const { state, setState } = useGameState()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   
+  // Detecta o tipo de controlador do contexto
+  const controllerType = useContext(ControllerTypeContext)
+  
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [advancing, setAdvancing] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  
+  // Demo notifications - enables periodic notifications for testing
+  useNotificationDemo(true)
 
   const handleSave = async () => {
     setSaving(true)
@@ -62,8 +70,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     )}>
       {/* Left - Controller indicators + Navigation */}
       <div className="flex items-center gap-4">
-        {/* Console controller navigation indicators */}
-        <HeaderControls controller="playstation" className="hidden sm:flex" />
+        {/* Console controller navigation indicators - detecta automaticamente */}
+        <HeaderControls controller={controllerType} className="hidden sm:flex" />
         
         <div className="w-px h-5 bg-white/10 hidden sm:block" />
         
@@ -143,9 +151,13 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
         <div className="w-px h-6 bg-white/10 mx-1" />
 
+        <NotificationBell onClick={() => setShowNotifications(true)} />
+
         <Link href="/configuracoes" className="p-1.5 text-white/40 hover:text-white/70 transition-colors rounded hover:bg-white/5">
           <Settings className="h-4 w-4" />
         </Link>
+
+        <NotificationCenter isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
 
         <div className="flex items-center gap-2 pl-2 border-l border-white/10">
           <TeamCrest team={userTeam} size="xs" />

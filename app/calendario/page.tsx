@@ -307,12 +307,14 @@ export default function CalendarioPage() {
             <div className="rounded-lg overflow-hidden bg-[#1a1a1a] border border-white/5">
               <div className="relative aspect-video bg-gradient-to-br from-[#0a5c2b] to-[#0d7a3a]">
                 <div className="absolute inset-0 flex items-center justify-center p-4">
-                  {/* Logo Brasileirao Serie A */}
-                  <img 
-                    src="https://logodetimes.com/times/brasileirao-assai/logo-brasileirao-assai-256.png"
-                    alt="Brasileirao Serie A"
-                    className="h-16 w-auto object-contain drop-shadow-lg"
-                  />
+                {/* Logo Brasileirao Serie A */}
+                <Image 
+                  src="/logos/brasileirao.png"
+                  alt="Brasileirao Serie A"
+                  width={64}
+                  height={64}
+                  className="object-contain drop-shadow-lg"
+                />
                 </div>
               </div>
               <div className="p-3">
