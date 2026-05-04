@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Search,
   Filter,
@@ -19,18 +19,24 @@ import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { NegotiationModal } from "@/components/modals/negotiation-modal"
+import { FilterModal } from "@/components/modals/filter-modal"
+import { SearchPlayerModal } from "@/components/modals/search-player-modal"
 import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
 
 const userTeam = getTeamByShort("RBB") || serieATeams[0]
 
 // Mock transfer targets
 const transferTargets = [
-  { id: 1, name: "Gabriel Veron", team: getTeamByShort("PLM")!, position: "PD", age: 21, overall: 78, value: 18000000, trend: "up" },
-  { id: 2, name: "Gustavo Scarpa", team: getTeamByShort("PLM")!, position: "MEI", age: 30, overall: 81, value: 12000000, trend: "down" },
-  { id: 3, name: "Bruno Henrique", team: getTeamByShort("FLM")!, position: "PE", age: 33, overall: 80, value: 8000000, trend: "down" },
-  { id: 4, name: "Yuri Alberto", team: getTeamByShort("CRN")!, position: "ATA", age: 23, overall: 79, value: 22000000, trend: "up" },
-  { id: 5, name: "Luciano", team: getTeamByShort("SPL")!, position: "ATA", age: 30, overall: 80, value: 15000000, trend: "stable" },
-  { id: 6, name: "Dudu", team: getTeamByShort("PLM")!, position: "PE", age: 32, overall: 82, value: 10000000, trend: "down" },
+  { id: 1, name: "Gabriel Veron", team: getTeamByShort("PLM")!, position: "PD", age: 21, overall: 78, value: 18000000, trend: "up" as const },
+  { id: 2, name: "Gustavo Scarpa", team: getTeamByShort("PLM")!, position: "MEI", age: 30, overall: 81, value: 12000000, trend: "down" as const },
+  { id: 3, name: "Bruno Henrique", team: getTeamByShort("FLM")!, position: "PE", age: 33, overall: 80, value: 8000000, trend: "down" as const },
+  { id: 4, name: "Yuri Alberto", team: getTeamByShort("CRN")!, position: "ATA", age: 23, overall: 79, value: 22000000, trend: "up" as const },
+  { id: 5, name: "Luciano", team: getTeamByShort("SPL")!, position: "ATA", age: 30, overall: 80, value: 15000000, trend: "stable" as const },
+  { id: 6, name: "Dudu", team: getTeamByShort("PLM")!, position: "PE", age: 32, overall: 82, value: 10000000, trend: "down" as const },
+  { id: 7, name: "Raphael Veiga", team: getTeamByShort("PLM")!, position: "MEI", age: 29, overall: 83, value: 25000000, trend: "up" as const },
+  { id: 8, name: "Arrascaeta", team: getTeamByShort("FLM")!, position: "MEI", age: 30, overall: 85, value: 30000000, trend: "stable" as const },
+  { id: 9, name: "Pedro", team: getTeamByShort("FLM")!, position: "ATA", age: 27, overall: 84, value: 35000000, trend: "up" as const },
 ]
 
 // Mock transfer offers received
@@ -41,17 +47,67 @@ const offersReceived = [
 
 // Mock loans
 const loansAvailable = [
-  { id: 1, name: "Wesley", team: getTeamByShort("PLM")!, position: "PD", age: 19, overall: 72, loanFee: 500000 },
-  { id: 2, name: "Giovani", team: getTeamByShort("CRN")!, position: "MEI", age: 20, overall: 70, loanFee: 300000 },
+  { id: 1, name: "Wesley", team: getTeamByShort("PLM")!, position: "PD", age: 19, overall: 72, value: 5000000, loanFee: 500000, trend: "up" as const },
+  { id: 2, name: "Giovani", team: getTeamByShort("CRN")!, position: "MEI", age: 20, overall: 70, value: 3000000, loanFee: 300000, trend: "stable" as const },
 ]
+
+interface FilterOptions {
+  positions: string[]
+  minOverall: number
+  maxOverall: number
+  minAge: number
+  maxAge: number
+  minValue: number
+  maxValue: number
+}
 
 export default function MercadoPage() {
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState("comprar")
+  const [selectedPlayer, setSelectedPlayer] = useState<typeof transferTargets[0] | null>(null)
+  const [negotiationOpen, setNegotiationOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [searchModalOpen, setSearchModalOpen] = useState(false)
+  const [negotiationType, setNegotiationType] = useState<"buy" | "sell" | "loan">("buy")
+  const [filters, setFilters] = useState<FilterOptions>({
+    positions: [],
+    minOverall: 0,
+    maxOverall: 99,
+    minAge: 16,
+    maxAge: 45,
+    minValue: 0,
+    maxValue: 100000000,
+  })
 
-  const filteredTargets = transferTargets.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredTargets = useMemo(() => {
+    return transferTargets.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase())
+      const matchesPosition = filters.positions.length === 0 || filters.positions.includes(p.position)
+      const matchesOverall = p.overall >= filters.minOverall && p.overall <= filters.maxOverall
+      const matchesAge = p.age >= filters.minAge && p.age <= filters.maxAge
+      const matchesValue = p.value >= filters.minValue && p.value <= filters.maxValue
+      return matchesSearch && matchesPosition && matchesOverall && matchesAge && matchesValue
+    })
+  }, [search, filters])
+
+  const handleNegotiate = (player: typeof transferTargets[0], type: "buy" | "sell" | "loan") => {
+    setSelectedPlayer(player)
+    setNegotiationType(type)
+    setNegotiationOpen(true)
+  }
+
+  const handleSearchSelect = (player: typeof transferTargets[0]) => {
+    handleNegotiate(player, "buy")
+  }
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0
+    if (filters.positions.length > 0) count++
+    if (filters.minOverall > 0 || filters.maxOverall < 99) count++
+    if (filters.minAge > 16 || filters.maxAge < 45) count++
+    if (filters.minValue > 0 || filters.maxValue < 100000000) count++
+    return count
+  }, [filters])
 
   return (
     <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
@@ -66,17 +122,26 @@ export default function MercadoPage() {
             <p className="text-sm text-white/50 mt-1">Janela de transferencias aberta</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar jogador..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-[200px] bg-card border-border"
-              />
-            </div>
-            <Button variant="outline" size="icon" className="border-border">
+            <Button 
+              variant="outline" 
+              onClick={() => setSearchModalOpen(true)}
+              className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Buscar Jogador
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => setFilterOpen(true)}
+              className="border-white/10 relative"
+            >
               <Filter className="h-4 w-4" />
+              {activeFiltersCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#1db954] text-[10px] text-black font-bold">
+                  {activeFiltersCount}
+                </span>
+              )}
             </Button>
           </div>
         </div>
@@ -132,21 +197,34 @@ export default function MercadoPage() {
           <TabsContent value="comprar" className="mt-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredTargets.map((player) => (
-                <PlayerCard key={player.id} player={player} type="buy" />
+                <PlayerCard 
+                  key={player.id} 
+                  player={player} 
+                  onNegotiate={() => handleNegotiate(player, "buy")} 
+                />
               ))}
             </div>
+            {filteredTargets.length === 0 && (
+              <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
+                <Search className="h-12 w-12 mx-auto text-white/20 mb-4" />
+                <h3 className="font-semibold text-white">Nenhum jogador encontrado</h3>
+                <p className="text-sm text-white/50 mt-2">
+                  Ajuste os filtros ou busque por outro jogador
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           {/* Sell Tab */}
           <TabsContent value="vender" className="mt-6">
-            <div className="eafc-card p-8 text-center">
-              <UserMinus className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-              <h3 className="font-display text-lg">LISTE JOGADORES PARA VENDA</h3>
-              <p className="text-sm text-muted-foreground mt-2">
+            <div className="rounded-xl bg-[#141414] border border-white/5 p-8 text-center">
+              <UserMinus className="h-12 w-12 mx-auto text-white/20 mb-4" />
+              <h3 className="font-semibold text-white">Liste Jogadores para Venda</h3>
+              <p className="text-sm text-white/50 mt-2">
                 Acesse o elenco para colocar jogadores disponiveis para transferencia
               </p>
-              <Button className="mt-4 font-display text-xs tracking-wider">
-                IR PARA ELENCO
+              <Button className="mt-4 bg-[#1db954] text-black hover:bg-[#1ed760]">
+                Ir para Elenco
               </Button>
             </div>
           </TabsContent>
@@ -155,17 +233,17 @@ export default function MercadoPage() {
           <TabsContent value="propostas" className="mt-6">
             <div className="space-y-4">
               {offersReceived.map((offer) => (
-                <div key={offer.id} className="eafc-card p-4">
+                <div key={offer.id} className="rounded-xl bg-[#141414] border border-white/5 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-card flex items-center justify-center">
-                        <span className="font-display-italic text-xl text-muted-foreground">
+                      <div className="h-12 w-12 rounded-lg bg-white/5 flex items-center justify-center">
+                        <span className="font-bold text-xl text-white/40">
                           {offer.player.charAt(0)}
                         </span>
                       </div>
                       <div>
-                        <div className="font-medium">{offer.player}</div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="font-medium text-white">{offer.player}</div>
+                        <div className="flex items-center gap-2 text-sm text-white/50">
                           <span>Proposta de</span>
                           <TeamCrest team={offer.from} size="xs" />
                           <span>{offer.from.nome}</span>
@@ -174,15 +252,15 @@ export default function MercadoPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="font-display-italic text-xl text-accent">{formatCurrency(offer.value)}</div>
-                        <div className="text-[10px] text-muted-foreground font-display tracking-wider">OFERTA</div>
+                        <div className="text-xl font-semibold text-[#1db954]">{formatCurrency(offer.value)}</div>
+                        <div className="text-[10px] text-white/40 uppercase tracking-wider">Oferta</div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" className="font-display text-xs tracking-wider bg-accent">
-                          ACEITAR
+                        <Button size="sm" className="bg-[#1db954] text-black hover:bg-[#1ed760]">
+                          Aceitar
                         </Button>
-                        <Button size="sm" variant="outline" className="font-display text-xs tracking-wider border-border">
-                          RECUSAR
+                        <Button size="sm" variant="outline" className="border-white/10 text-white/70">
+                          Recusar
                         </Button>
                       </div>
                     </div>
@@ -196,30 +274,35 @@ export default function MercadoPage() {
           <TabsContent value="emprestimos" className="mt-6">
             <div className="grid gap-4 md:grid-cols-2">
               {loansAvailable.map((player) => (
-                <div key={player.id} className="eafc-card p-4">
+                <div key={player.id} className="rounded-xl bg-[#141414] border border-white/5 p-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-lg bg-card flex items-center justify-center">
-                      <span className="font-display-italic text-2xl text-muted-foreground">
+                    <div className="h-14 w-14 rounded-lg bg-white/5 flex items-center justify-center">
+                      <span className="font-bold text-2xl text-white/40">
                         {player.name.charAt(0)}
                       </span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{player.name}</span>
-                        <span className="font-display-italic text-lg text-gold">{player.overall}</span>
+                        <span className="font-medium text-white">{player.name}</span>
+                        <span className="text-lg font-bold text-yellow-500">{player.overall}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-white/50">
                         <TeamCrest team={player.team} size="xs" />
                         <span>{player.team.nome}</span>
-                        <span className="text-border">|</span>
+                        <span className="text-white/20">|</span>
                         <span>{player.position}</span>
-                        <span className="text-border">|</span>
+                        <span className="text-white/20">|</span>
                         <span>{player.age} anos</span>
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-muted-foreground">Taxa: {formatCurrency(player.loanFee)}/temporada</span>
-                        <Button size="sm" variant="outline" className="font-display text-xs tracking-wider border-border">
-                          NEGOCIAR
+                        <span className="text-xs text-white/50">Taxa: {formatCurrency(player.loanFee)}/temporada</span>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleNegotiate({ ...player, value: player.loanFee }, "loan")}
+                          className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
+                        >
+                          Negociar
                         </Button>
                       </div>
                     </div>
@@ -232,13 +315,37 @@ export default function MercadoPage() {
       </main>
 
       <MusicPlayer />
+
+      {/* Modals */}
+      <NegotiationModal
+        open={negotiationOpen}
+        onOpenChange={setNegotiationOpen}
+        player={selectedPlayer}
+        type={negotiationType}
+        team={selectedPlayer?.team}
+      />
+
+      <FilterModal
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        filters={filters}
+        onApply={setFilters}
+        type="transfer"
+      />
+
+      <SearchPlayerModal
+        open={searchModalOpen}
+        onOpenChange={setSearchModalOpen}
+        players={transferTargets}
+        onSelect={handleSearchSelect}
+      />
     </div>
   )
 }
 
 function PlayerCard({ 
   player, 
-  type 
+  onNegotiate 
 }: { 
   player: {
     id: number
@@ -248,43 +355,60 @@ function PlayerCard({
     age: number
     overall: number
     value: number
-    trend: string
+    trend: "up" | "down" | "stable"
   }
-  type: "buy" | "sell"
+  onNegotiate: () => void
 }) {
+  const positionColors: Record<string, string> = {
+    GOL: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    ZAG: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    LD: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    LE: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    VOL: "bg-green-500/20 text-green-400 border-green-500/30",
+    MEI: "bg-green-500/20 text-green-400 border-green-500/30",
+    PD: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    PE: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    ATA: "bg-red-500/20 text-red-400 border-red-500/30",
+  }
+
   return (
-    <div className="eafc-card p-4 transition-all hover:border-primary/30">
+    <div className="rounded-xl bg-[#141414] border border-white/5 p-4 transition-all hover:border-white/10">
       <div className="flex items-start gap-4">
         <div className="relative">
-          <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-card to-muted flex items-center justify-center">
-            <span className="font-display-italic text-2xl text-muted-foreground">
+          <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+            <span className="font-bold text-2xl text-white/40">
               {player.name.charAt(0)}
             </span>
           </div>
-          <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-md bg-card border border-border">
+          <div className={`absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-md border ${positionColors[player.position]}`}>
             <span className="text-[10px] font-bold">{player.position}</span>
           </div>
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-medium truncate">{player.name}</h3>
-            <span className="font-display-italic text-xl text-gold">{player.overall}</span>
+            <h3 className="font-medium text-white truncate">{player.name}</h3>
+            <span className="text-xl font-bold text-yellow-500">{player.overall}</span>
           </div>
-          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 mt-1 text-xs text-white/50">
             <TeamCrest team={player.team} size="xs" />
             <span>{player.team.nome}</span>
-            <span className="text-border">|</span>
+            <span className="text-white/20">|</span>
             <span>{player.age} anos</span>
           </div>
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-1">
-              <span className="font-display text-sm text-accent">{formatCurrency(player.value)}</span>
-              {player.trend === "up" && <TrendingUp className="h-3 w-3 text-accent" />}
-              {player.trend === "down" && <TrendingDown className="h-3 w-3 text-destructive" />}
+              <span className="text-sm font-medium text-[#1db954]">{formatCurrency(player.value)}</span>
+              {player.trend === "up" && <TrendingUp className="h-3 w-3 text-[#1db954]" />}
+              {player.trend === "down" && <TrendingDown className="h-3 w-3 text-red-500" />}
             </div>
-            <Button size="sm" variant="outline" className="font-display text-xs tracking-wider border-border">
-              NEGOCIAR
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={onNegotiate}
+              className="border-white/10 text-white/70 hover:text-white hover:bg-white/10"
+            >
+              Negociar
             </Button>
           </div>
         </div>
