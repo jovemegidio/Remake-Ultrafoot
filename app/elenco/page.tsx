@@ -32,6 +32,7 @@ import { FilterModal } from "@/components/modals/filter-modal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
+import { PlayerAvatar } from "@/components/player-avatar"
 
 const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
@@ -251,11 +252,11 @@ export default function ElencoPage() {
                   <div className="flex items-start gap-4">
                     {/* Player Avatar */}
                     <div className="relative">
-                      <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
-                        <span className="font-bold text-2xl text-white/40">
-                          {player.name.charAt(0)}
-                        </span>
-                      </div>
+                      <PlayerAvatar 
+                        name={player.name} 
+                        teamColor={userTeam.cor1}
+                        size="lg" 
+                      />
                       <div className={cn(
                         "absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-md border",
                         positionColors[player.position]
@@ -324,11 +325,12 @@ export default function ElencoPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="h-24 w-24 rounded-2xl bg-black/30 backdrop-blur flex items-center justify-center">
-                    <span className="font-bold text-4xl text-white/40">
-                      {selectedPlayer.name.charAt(0)}
-                    </span>
-                  </div>
+                  <PlayerAvatar 
+                    name={selectedPlayer.name} 
+                    teamColor={userTeam.cor1}
+                    size="xl" 
+                    className="rounded-2xl"
+                  />
                   <div>
                     <div className={cn(
                       "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold border",
@@ -480,10 +482,15 @@ export default function ElencoPage() {
           
           {retired ? (
             <div className="py-6 text-center">
-              <div className="h-20 w-20 mx-auto rounded-full bg-[#1db954]/20 flex items-center justify-center mb-4">
-                <span className="text-4xl font-bold text-[#1db954]">
-                  {playerToRetire?.name.charAt(0)}
-                </span>
+              <div className="mx-auto mb-4 flex justify-center">
+                {playerToRetire && (
+                  <PlayerAvatar 
+                    name={playerToRetire.name} 
+                    teamColor="#1db954"
+                    size="xl" 
+                    className="rounded-full"
+                  />
+                )}
               </div>
               <h3 className="text-lg font-semibold text-white">{playerToRetire?.name}</h3>
               <p className="text-sm text-white/50 mt-2">
@@ -498,11 +505,11 @@ export default function ElencoPage() {
               <div className="py-4">
                 {playerToRetire && (
                   <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                    <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
-                      <span className="font-bold text-2xl text-white/40">
-                        {playerToRetire.name.charAt(0)}
-                      </span>
-                    </div>
+                    <PlayerAvatar 
+                      name={playerToRetire.name} 
+                      teamColor={userTeam.cor1}
+                      size="lg" 
+                    />
                     <div>
                       <h3 className="font-medium text-white">{playerToRetire.name}</h3>
                       <p className="text-sm text-white/50">{playerToRetire.position} - {playerToRetire.age} anos</p>

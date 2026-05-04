@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
+import { PlayerAvatar } from "@/components/player-avatar"
 import { Search, Filter, TrendingUp, TrendingDown, X } from "lucide-react"
 import { formatCurrency, serieATeams, getTeamByShort, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
@@ -153,11 +154,11 @@ export function SearchPlayerModal({
                 <div className="flex items-center gap-4">
                   {/* Player Avatar */}
                   <div className="relative">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
-                      <span className="font-bold text-xl text-white/40">
-                        {player.name.charAt(0)}
-                      </span>
-                    </div>
+                    <PlayerAvatar 
+                      name={player.name} 
+                      teamColor={player.team.cor1}
+                      size="md" 
+                    />
                     <div className={cn(
                       "absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-md border",
                       positionColors[player.position]
