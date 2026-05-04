@@ -7,7 +7,7 @@ type ControllerType = "xbox" | "playstation"
 
 // Optional context for auto-detecting controller type
 import { createContext } from "react"
-export const ControllerTypeContext = createContext<ControllerType>("xbox")
+export const ControllerTypeContext = createContext<ControllerType>("playstation")
 
 interface ControllerButtonProps {
   button: "A" | "B" | "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "LS" | "RS"
@@ -74,7 +74,7 @@ export function ControllerButton({
 }: ControllerButtonProps) {
   // Use context if no controller prop specified
   const contextController = useContext(ControllerTypeContext)
-  const activeController = controller || contextController || "xbox"
+  const activeController = controller || contextController || "playstation"
   
   const displayButton = activeController === "playstation" ? psButtonMap[button] : button
   const colors = activeController === "playstation" ? psColors[button] : xboxColors[button]
@@ -112,7 +112,7 @@ interface ControllerToolbarProps {
   className?: string
 }
 
-export function ControllerToolbar({ actions, controller = "xbox", className }: ControllerToolbarProps) {
+export function ControllerToolbar({ actions, controller = "playstation", className }: ControllerToolbarProps) {
   return (
     <div className={cn(
       "flex items-center gap-6 px-4 py-2 bg-[#0a0a0a]/90 backdrop-blur-sm border-t border-white/5",
@@ -140,7 +140,7 @@ interface HeaderControlsProps {
   className?: string
 }
 
-export function HeaderControls({ controller = "xbox", className }: HeaderControlsProps) {
+export function HeaderControls({ controller = "playstation", className }: HeaderControlsProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <ControllerButton button="LB" controller={controller} size="xs" />
@@ -192,7 +192,7 @@ export function CarouselDots({
   current, 
   onSelect, 
   showNavButtons = true,
-  controller = "xbox",
+  controller = "playstation",
   className 
 }: CarouselDotsProps) {
   return (

@@ -245,10 +245,10 @@ export default function SplashPage() {
           showPressStart ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         )}>
           <div className="flex flex-col items-center gap-4">
-            {/* Controller button indicator */}
+            {/* Controller button indicator - PlayStation */}
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#1db954] flex items-center justify-center text-black font-bold text-sm animate-pulse">
-                A
+              <div className="w-8 h-8 rounded-full bg-[#2e6db4] flex items-center justify-center text-white font-bold text-sm animate-pulse">
+                X
               </div>
               <span className="text-white/60 text-sm">ou</span>
               <div className="px-3 py-1 rounded bg-white/10 text-white/60 text-xs font-mono">

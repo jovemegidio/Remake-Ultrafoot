@@ -164,7 +164,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               }
             }}
             showNavButtons={true}
-            controller="xbox"
+            controller="playstation"
           />
         </div>
       </div>
@@ -256,11 +256,11 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
       {/* Action buttons with controller icons */}
       <div className="flex items-center gap-2 p-4 pt-0">
         <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-[#1db954] text-black text-sm font-bold hover:bg-[#1ed760] transition-all hover:scale-[1.02] active:scale-[0.98]">
-          <ControllerButton button="A" size="xs" controller="xbox" />
+          <ControllerButton button="A" size="xs" controller="playstation" />
           <span>Jogar Partida</span>
         </button>
         <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors">
-          <ControllerButton button="X" size="xs" controller="xbox" />
+          <ControllerButton button="X" size="xs" controller="playstation" />
           <span>Simular</span>
         </button>
       </div>

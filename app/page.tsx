@@ -368,7 +368,7 @@ export default function DashboardPage() {
     { button: "LB", label: "Tab Anterior" },
     { button: "RB", label: "Proxima Tab" },
   ]}
-  controller="xbox"
+  controller="playstation"
   className="fixed bottom-0 left-[72px] right-0 z-40"
 />
 </div>

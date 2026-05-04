@@ -63,7 +63,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       {/* Left - Controller indicators + Navigation */}
       <div className="flex items-center gap-4">
         {/* Console controller navigation indicators */}
-        <HeaderControls controller="xbox" className="hidden sm:flex" />
+        <HeaderControls controller="playstation" className="hidden sm:flex" />
         
         <div className="w-px h-5 bg-white/10 hidden sm:block" />
         
