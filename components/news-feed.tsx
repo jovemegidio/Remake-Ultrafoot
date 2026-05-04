@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { TeamCrest } from "@/components/team-crest"
 import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
@@ -185,12 +186,49 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   )
   
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [direction, setDirection] = useState(0)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
-  const nextNews = () => setCurrentIndex((i) => (i + 1) % news.length)
-  const prevNews = () => setCurrentIndex((i) => (i - 1 + news.length) % news.length)
+  const nextNews = useCallback(() => {
+    setDirection(1)
+    setCurrentIndex((i) => (i + 1) % news.length)
+  }, [news.length])
+  
+  const prevNews = useCallback(() => {
+    setDirection(-1)
+    setCurrentIndex((i) => (i - 1 + news.length) % news.length)
+  }, [news.length])
+
+  // Auto-play news carousel
+  useEffect(() => {
+    if (!isAutoPlaying) return
+    const interval = setInterval(nextNews, 6000)
+    return () => clearInterval(interval)
+  }, [isAutoPlaying, nextNews])
 
   const currentNews = news[currentIndex]
   const source = NEWS_SOURCES[currentNews.source]
+
+  // Variants para animacao
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+      scale: 0.95
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+      scale: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 300 : -300,
+      opacity: 0,
+      scale: 0.95
+    })
+  }
 
   if (compact) {
     return (
@@ -219,8 +257,12 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
         <ChevronRight className="h-5 w-5" />
       </button>
 
-      {/* News Card */}
-      <div className="rounded-2xl overflow-hidden bg-[#141414] border border-white/5">
+      {/* News Card with Animation */}
+      <div 
+        className="rounded-2xl overflow-hidden bg-[#141414] border border-white/5"
+        onMouseEnter={() => setIsAutoPlaying(false)}
+        onMouseLeave={() => setIsAutoPlaying(true)}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <div className="flex items-center gap-3">
@@ -241,17 +283,35 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
           )}
         </div>
 
-        {/* Content */}
-        {currentNews.type === "match_preview" && currentNews.matches ? (
-          <MatchPreviewCard 
-            matches={currentNews.matches} 
-            title={currentNews.title}
-            description={currentNews.description}
-            season={state.season}
-          />
-        ) : (
-          <NewsContentCard news={currentNews} />
-        )}
+        {/* Content with smooth transitions */}
+        <div className="relative overflow-hidden">
+          <AnimatePresence initial={false} custom={direction} mode="wait">
+            <motion.div
+              key={currentIndex}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 },
+                scale: { duration: 0.2 }
+              }}
+            >
+              {currentNews.type === "match_preview" && currentNews.matches ? (
+                <MatchPreviewCard 
+                  matches={currentNews.matches} 
+                  title={currentNews.title}
+                  description={currentNews.description}
+                  season={state.season}
+                />
+              ) : (
+                <NewsContentCard news={currentNews} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
         {/* Footer - Engagement */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">

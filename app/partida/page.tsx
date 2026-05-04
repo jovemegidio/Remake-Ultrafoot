@@ -245,10 +245,12 @@ export default function PreMatchPage() {
 
           {/* Competition Header */}
           <div className="relative flex items-center justify-center gap-4 py-4 border-b border-white/5">
-            <img 
-              src="https://logodetimes.com/times/brasileirao-assai/logo-brasileirao-assai-256.png"
+            <Image 
+              src="/logos/brasileirao.png"
               alt="Brasileirao"
-              className="h-8 w-auto object-contain"
+              width={40}
+              height={40}
+              className="object-contain"
             />
             <div className="text-center">
               <div className="text-xs font-bold tracking-[0.2em] text-white/60">

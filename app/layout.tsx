@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Oswald } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
+import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
 import "./globals.css"
 
 const geist = Geist({
@@ -41,7 +42,10 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider>
           <GamepadProvider>
-            {children}
+            <NotificationsProvider>
+              {children}
+              <NotificationToastContainer />
+            </NotificationsProvider>
           </GamepadProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === "production" && <Analytics />}
