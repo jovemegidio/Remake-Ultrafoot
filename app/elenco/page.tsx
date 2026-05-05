@@ -211,21 +211,18 @@ export default function ElencoPage() {
   const [draggingPlayer, setDraggingPlayer] = useState<number | null>(null)
   const [dragOverTarget, setDragOverTarget] = useState<number | null>(null)
   const [playerPositions, setPlayerPositions] = useState<Record<number, { x: number; y: number }>>({})
-  const [showMatchNotification, setShowMatchNotification] = useState(true)
+  const [showMatchNotification, setShowMatchNotification] = useState(false)
+  const [isMatchInProgress, setIsMatchInProgress] = useState(false)
+  const [showSubstitutionModal, setShowSubstitutionModal] = useState(false)
+  const [showPlayerProfile, setShowPlayerProfile] = useState(false)
+  const [showTutorials, setShowTutorials] = useState(false)
+  const [showSuggestedSubs, setShowSuggestedSubs] = useState(false)
+  const [ballInstruction, setBallInstruction] = useState<"sem_bola" | "com_bola">("sem_bola")
   const pitchRef = useRef<HTMLDivElement>(null)
   
-  // Show match notification on mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      addNotification({
-        type: "match_start",
-        title: "Partida Iniciada",
-        message: `${userTeam.nome} x Sao Paulo - Campeonato Brasileiro`,
-        priority: "medium"
-      })
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [addNotification, userTeam.nome])
+  // Match notifications should only show during actual matches (simulations)
+  // This would be triggered by the match simulation system
+  // For now, we check a hypothetical state flag
   
   const selectedPlayer = useMemo(() => {
     return [...players, ...bench].find(p => p.id === selectedPlayerId) || players[0]
@@ -717,9 +714,9 @@ export default function ElencoPage() {
       <GameSidebar />
       <GameHeader team={userTeam} />
       
-      {/* Match notification toast */}
+      {/* Match notification toast - only shows during actual match simulations */}
       <AnimatePresence>
-        {showMatchNotification && (
+        {isMatchInProgress && showMatchNotification && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -902,12 +899,15 @@ export default function ElencoPage() {
               ))}
               
               {/* Tactical instruction overlay */}
-              <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-black/60 text-white/70 text-[10px] md:text-xs">
-                <span>Sem a bola</span>
+              <button 
+                onClick={() => setBallInstruction(prev => prev === "sem_bola" ? "com_bola" : "sem_bola")}
+                className="absolute bottom-2 md:bottom-4 left-2 md:left-4 flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white/70 text-[10px] md:text-xs transition-colors border border-white/10"
+              >
+                <span>{ballInstruction === "sem_bola" ? "Sem a bola" : "Com a bola"}</span>
                 <span className="text-white/40">|</span>
                 <span className="text-[#1db954]">Trocar instrucao</span>
                 <ChevronRight className="h-3 w-3 text-[#1db954]" />
-              </div>
+              </button>
             </div>
             
             {/* Reserves section */}
@@ -1120,6 +1120,7 @@ export default function ElencoPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setShowSubstitutionModal(true)}
                   className="w-full border-white/10 text-white/70 hover:text-white hover:bg-white/10 text-xs"
                 >
                   <ArrowLeftRight className="h-4 w-4 mr-2" />
@@ -1128,6 +1129,7 @@ export default function ElencoPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setShowPlayerProfile(true)}
                   className="w-full border-white/10 text-white/70 hover:text-white hover:bg-white/10 text-xs"
                 >
                   <Info className="h-4 w-4 mr-2" />
@@ -1151,30 +1153,267 @@ export default function ElencoPage() {
             <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
             <span className="hidden sm:inline">Voltar</span>
           </Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setCurrentView("visao_tatica")}
+            className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
+          >
             <RotateCcw className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
             <span className="hidden md:inline">Editar tatica ativa</span>
           </Button>
         </div>
         
         <div className="flex items-center gap-1 md:gap-4">
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowSuggestedSubs(true)}
+            className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
+          >
             <Shuffle className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
             <span className="hidden sm:inline">Substituicoes sugeridas</span>
           </Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3 hidden sm:flex">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowSubstitutionModal(true)}
+            className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3 hidden sm:flex"
+          >
+            <ArrowLeftRight className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
             <span>Substituicoes rapidas</span>
           </Button>
           <div className="w-px h-4 md:h-6 bg-white/10 hidden md:block" />
           <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3 hidden md:flex">
             Rolagem
           </Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowTutorials(true)}
+            className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
+          >
             <Info className="h-3 w-3 md:h-4 md:w-4 sm:mr-1" />
             <span className="hidden sm:inline">Tutoriais</span>
           </Button>
         </div>
       </div>
+      
+      {/* Substitution Modal */}
+      <AnimatePresence>
+        {showSubstitutionModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowSubstitutionModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-lg w-full"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Substituir Jogador</h2>
+                <button onClick={() => setShowSubstitutionModal(false)} className="p-2 rounded-lg hover:bg-white/10">
+                  <X className="h-5 w-5 text-white/60" />
+                </button>
+              </div>
+              <p className="text-sm text-white/60 mb-4">
+                Arraste jogadores entre o campo e os reservas para fazer substituicoes, ou selecione um jogador abaixo:
+              </p>
+              <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                {bench.map((player) => (
+                  <button
+                    key={player.id}
+                    onClick={() => {
+                      // Swap selected player with this bench player
+                      const selectedInField = players.find(p => p.id === selectedPlayerId)
+                      if (selectedInField) {
+                        setPlayers(prev => prev.map(p => p.id === selectedPlayerId ? player : p))
+                        setBench(prev => prev.map(p => p.id === player.id ? selectedInField : p))
+                        setShowSubstitutionModal(false)
+                      }
+                    }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-left"
+                  >
+                    <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-white truncate">{player.name}</div>
+                      <div className="text-[10px] text-white/40">{player.position}</div>
+                    </div>
+                    <span className={cn("text-sm font-bold", getOverallColor(player.overall))}>{player.overall}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Player Profile Modal */}
+      <AnimatePresence>
+        {showPlayerProfile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPlayerProfile(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-md w-full"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Perfil do Jogador</h2>
+                <button onClick={() => setShowPlayerProfile(false)} className="p-2 rounded-lg hover:bg-white/10">
+                  <X className="h-5 w-5 text-white/60" />
+                </button>
+              </div>
+              <div className="flex items-center gap-4 mb-6">
+                <PlayerAvatarCircle name={selectedPlayer.name} teamColor={userTeam.cor1} size="lg" />
+                <div>
+                  <h3 className="text-xl font-bold text-white">{selectedPlayer.name}</h3>
+                  <p className="text-sm text-white/50">{selectedPlayer.position} - {selectedPlayer.age} anos</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={cn("text-2xl font-black", getOverallColor(selectedPlayer.overall))}>{selectedPlayer.overall}</span>
+                    <span className="text-xs text-white/40">OVR</span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "Ritmo", value: selectedPlayer.pace },
+                  { label: "Finaliz.", value: selectedPlayer.shooting },
+                  { label: "Passe", value: selectedPlayer.passing },
+                  { label: "Drible", value: selectedPlayer.dribbling },
+                  { label: "Defesa", value: selectedPlayer.defending },
+                  { label: "Fisico", value: selectedPlayer.physical },
+                ].map(stat => (
+                  <div key={stat.label} className="p-3 rounded-lg bg-white/5 text-center">
+                    <div className={cn("text-lg font-bold", getStatColor(stat.value))}>{stat.value}</div>
+                    <div className="text-[10px] text-white/40">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Tutorials Modal */}
+      <AnimatePresence>
+        {showTutorials && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowTutorials(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-md w-full"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Tutoriais</h2>
+                <button onClick={() => setShowTutorials(false)} className="p-2 rounded-lg hover:bg-white/10">
+                  <X className="h-5 w-5 text-white/60" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-white/5">
+                  <h3 className="text-sm font-medium text-white mb-1">Arrastar jogadores</h3>
+                  <p className="text-xs text-white/50">Arraste jogadores no campo para reposiciona-los ou troca-los com reservas.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-white/5">
+                  <h3 className="text-sm font-medium text-white mb-1">Trocar formacao</h3>
+                  <p className="text-xs text-white/50">Use as setas ao lado da formacao para alterar entre diferentes esquemas taticos.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-white/5">
+                  <h3 className="text-sm font-medium text-white mb-1">Ver detalhes</h3>
+                  <p className="text-xs text-white/50">Clique em um jogador para ver seus atributos no painel lateral.</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Suggested Substitutions Modal */}
+      <AnimatePresence>
+        {showSuggestedSubs && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowSuggestedSubs(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-md w-full"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Substituicoes Sugeridas</h2>
+                <button onClick={() => setShowSuggestedSubs(false)} className="p-2 rounded-lg hover:bg-white/10">
+                  <X className="h-5 w-5 text-white/60" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                {players.filter(p => p.energy < 80).slice(0, 3).map(tiredPlayer => {
+                  const replacement = bench.find(b => b.position === tiredPlayer.position) || bench[0]
+                  return (
+                    <button
+                      key={tiredPlayer.id}
+                      onClick={() => {
+                        setPlayers(prev => prev.map(p => p.id === tiredPlayer.id ? replacement : p))
+                        setBench(prev => prev.map(p => p.id === replacement.id ? tiredPlayer : p))
+                        setShowSuggestedSubs(false)
+                      }}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <PlayerAvatarCircle name={tiredPlayer.name} teamColor={userTeam.cor1} size="xs" />
+                        <div className="text-left">
+                          <div className="text-xs text-white">{tiredPlayer.name}</div>
+                          <div className="text-[10px] text-red-400">{tiredPlayer.energy}% energia</div>
+                        </div>
+                      </div>
+                      <ArrowLeftRight className="h-4 w-4 text-white/40" />
+                      <div className="flex items-center gap-2">
+                        <PlayerAvatarCircle name={replacement.name} teamColor={userTeam.cor1} size="xs" />
+                        <div className="text-left">
+                          <div className="text-xs text-white">{replacement.name}</div>
+                          <div className="text-[10px] text-green-400">{replacement.energy}% energia</div>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+                {players.filter(p => p.energy < 80).length === 0 && (
+                  <p className="text-sm text-white/50 text-center py-4">
+                    Nenhuma substituicao sugerida no momento. Todos os jogadores estao com energia adequada.
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
