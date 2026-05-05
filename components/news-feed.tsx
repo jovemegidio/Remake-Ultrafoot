@@ -180,14 +180,17 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   const { state } = useGameState()
   const userTeam = state.selectedTeamShort ? getTeamByShort(state.selectedTeamShort) : null
   
-  const news = useMemo(() => 
-    generateSimulatedNews(userTeam ?? null, state.season, state.week),
-    [userTeam, state.season, state.week]
-  )
-  
+  const [news, setNews] = useState<NewsItem[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [isClient, setIsClient] = useState(false)
+
+  // Gera noticias apenas no cliente para evitar erro de hidratacao
+  useEffect(() => {
+    setIsClient(true)
+    setNews(generateSimulatedNews(userTeam ?? null, state.season, state.week))
+  }, [userTeam, state.season, state.week])
 
   const nextNews = useCallback(() => {
     setDirection(1)
@@ -207,6 +210,18 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   }, [isAutoPlaying, nextNews])
 
   const currentNews = news[currentIndex]
+
+  // Renderiza placeholder enquanto carrega no cliente ou nao ha noticias
+  if (!isClient || news.length === 0 || !currentNews) {
+    return (
+      <div className={cn("rounded-2xl bg-[#141414] border border-white/5 animate-pulse", className)}>
+        <div className="h-64 flex items-center justify-center">
+          <div className="text-white/30 text-sm">Carregando noticias...</div>
+        </div>
+      </div>
+    )
+  }
+
   const source = NEWS_SOURCES[currentNews.source]
 
   // Variants para animacao

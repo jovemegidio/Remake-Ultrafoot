@@ -45,6 +45,7 @@ export function GameSidebar() {
           width={56}
           height={24}
           className="object-contain"
+          style={{ width: 'auto', height: 'auto' }}
           priority
           unoptimized
         />
