@@ -220,21 +220,19 @@ export default function ConfiguracoesPage() {
                     onClick={() => setCurrentView(card.id)}
                     onMouseEnter={() => setSelectedCardIndex(index)}
                     className={cn(
-                      "relative p-4 md:p-6 rounded-xl text-left overflow-hidden transition-all aspect-[4/3]",
-                      "bg-gradient-to-br from-[#1a3a4a] via-[#142a35] to-[#0d1a20]",
+                      "relative flex flex-col justify-between p-4 md:p-5 rounded-xl text-left overflow-hidden transition-all aspect-square",
+                      "bg-gradient-to-br from-[#1a3a4a]/80 via-[#142a35]/90 to-[#0d1a20]",
                       isSelected 
-                        ? "ring-2 ring-primary shadow-lg shadow-primary/20" 
-                        : "ring-1 ring-white/10 hover:ring-white/20"
+                        ? "ring-2 ring-[#00d4ff] shadow-lg shadow-[#00d4ff]/20" 
+                        : "ring-1 ring-white/5 hover:ring-white/20"
                     )}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-                    
-                    <h2 className="text-base md:text-lg font-bold text-white whitespace-pre-line leading-tight">
+                    <h2 className="text-sm md:text-base font-semibold text-white whitespace-pre-line leading-tight">
                       {card.title}
                     </h2>
                     
-                    <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6">
-                      <Icon className="h-10 w-10 md:h-14 md:w-14 text-white/80" strokeWidth={1.5} />
+                    <div className="flex justify-center items-center">
+                      <Icon className="h-8 w-8 md:h-10 md:w-10 text-white/70" strokeWidth={1.5} />
                     </div>
                   </motion.button>
                 )
@@ -510,6 +508,117 @@ export default function ConfiguracoesPage() {
               <h3 className="text-sm font-medium text-white mb-4">Player de Musica</h3>
               <p className="text-xs text-white/50 mb-4">O player de musica esta disponivel na parte inferior da tela.</p>
               <MusicPlayer defaultSize="compact" autoPlay={false} offsetLeft={0} />
+            </div>
+          </div>
+        )
+        
+      case "online":
+        return (
+          <div className="space-y-6">
+            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <Globe className="h-4 w-4 text-primary" />
+                Configuracoes Online
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div>
+                    <div className="text-sm text-white">Modo Online</div>
+                    <div className="text-xs text-white/40">Conectar a servidores</div>
+                  </div>
+                  <Switch />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div>
+                    <div className="text-sm text-white">Atualizacoes Automaticas</div>
+                    <div className="text-xs text-white/40">Baixar elencos atualizados</div>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div>
+                    <div className="text-sm text-white">Partidas Online</div>
+                    <div className="text-xs text-white/40">Jogar contra outros usuarios</div>
+                  </div>
+                  <Switch />
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+        
+      case "escalacoes":
+        return (
+          <div className="space-y-6">
+            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <Grid2X2 className="h-4 w-4 text-primary" />
+                Escalacoes Salvas
+              </h3>
+              <p className="text-sm text-white/50">Gerencie suas escalacoes personalizadas para diferentes situacoes de jogo.</p>
+              <div className="grid gap-3">
+                {["Escalacao Principal", "Rotacao", "Jovens"].map((name, i) => (
+                  <div key={name} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <span className="text-sm font-bold text-primary">{i + 1}</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-white">{name}</div>
+                        <div className="text-xs text-white/40">4-3-3 • 11 jogadores</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-white/30" />
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" className="w-full border-dashed border-white/20 text-white/60 hover:text-white hover:bg-white/5">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Escalacao
+              </Button>
+            </div>
+          </div>
+        )
+        
+      case "criar_atleta":
+        return (
+          <div className="space-y-6">
+            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-primary" />
+                Criar Novo Atleta
+              </h3>
+              <p className="text-sm text-white/50">Crie jogadores personalizados para adicionar ao seu elenco.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-white/60 mb-1 block">Nome do Jogador</label>
+                  <Input placeholder="Digite o nome..." className="bg-white/5 border-white/10 text-white" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-white/60 mb-1 block">Posicao</label>
+                    <select className="w-full h-9 rounded-md bg-white/5 border border-white/10 text-white text-sm px-3">
+                      <option value="ATA">Atacante</option>
+                      <option value="MEI">Meia</option>
+                      <option value="ZAG">Zagueiro</option>
+                      <option value="LAT">Lateral</option>
+                      <option value="GOL">Goleiro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/60 mb-1 block">Idade</label>
+                    <Input type="number" placeholder="18" min={16} max={45} className="bg-white/5 border-white/10 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-white/60 mb-1 block">Overall</label>
+                  <Slider defaultValue={[70]} max={99} min={40} />
+                </div>
+              </div>
+              <Button className="w-full bg-primary hover:bg-primary/90">
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Atleta
+              </Button>
             </div>
           </div>
         )

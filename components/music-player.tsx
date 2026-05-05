@@ -15,42 +15,42 @@ interface MusicPlayerProps {
   offsetLeft?: number // para ajustar quando sidebar estiver presente
 }
 
-// Trilhas sonoras de futebol/jogo - usando URLs de audio que funcionam
+// Trilhas sonoras de futebol/jogo - usando URLs de audio CC0 publicos
 const tracks = [
   { 
     title: "Stadium Anthem", 
     artist: "Sport Vibes", 
     cover: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=300&h=300&fit=crop",
-    src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
-    duration: 145
+    src: "https://upload.wikimedia.org/wikipedia/commons/c/c8/Example.ogg",
+    duration: 13
   },
   { 
     title: "Victory March", 
     artist: "Game Day", 
     cover: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=300&h=300&fit=crop",
-    src: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946bc3eb71.mp3",
-    duration: 120
+    src: "https://upload.wikimedia.org/wikipedia/commons/4/4e/BWV_543-fugue.ogg",
+    duration: 251
   },
   { 
     title: "Pre Match Energy", 
     artist: "Football Beats", 
     cover: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=300&h=300&fit=crop",
-    src: "https://cdn.pixabay.com/download/audio/2023/09/04/audio_5410cc12ce.mp3",
-    duration: 157
+    src: "https://upload.wikimedia.org/wikipedia/commons/f/f5/Chopin_-_Pair_of_Waltzes.ogg",
+    duration: 129
   },
   { 
     title: "Championship Vibes", 
     artist: "Sports Mix", 
     cover: "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=300&h=300&fit=crop",
-    src: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_b0eb79a1b6.mp3",
-    duration: 130
+    src: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Beethoven_Moonlight_1st_movement.ogg",
+    duration: 334
   },
   { 
     title: "Locker Room", 
     artist: "Team Spirit", 
     cover: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&h=300&fit=crop",
-    src: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3",
-    duration: 106
+    src: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Debussy_-_Clair_de_Lune.ogg",
+    duration: 296
   },
 ]
 
