@@ -16,6 +16,8 @@ import {
   TrendingUp,
   TrendingDown,
   AlertCircle,
+  Globe,
+  Users,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -227,8 +229,12 @@ export default function MercadoPage() {
                 onClick={() => setSelectedFilter("nome")}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full">
-                    <User className="h-16 w-16 text-white/20 mb-2" />
-                    <span className="text-white/50 text-sm">Qualquer</span>
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-b from-white/10 to-white/5 flex items-center justify-center">
+                        <User className="h-10 w-10 text-white/30" strokeWidth={1.5} />
+                      </div>
+                    </div>
+                    <span className="text-white/50 text-sm mt-3">Qualquer</span>
                   </div>
                 }
               />
@@ -237,9 +243,9 @@ export default function MercadoPage() {
                 selected={selectedFilter === "posicao"}
                 onClick={() => setSelectedFilter("posicao")}
                 customContent={
-                  <div className="flex flex-col items-center justify-center h-full gap-2">
+                  <div className="flex flex-col items-center justify-center h-full gap-1">
                     <span className="text-white/50 text-sm">Qualquer</span>
-                    <div className="font-semibold text-white">Funcao</div>
+                    <div className="font-semibold text-white text-base">Funcao</div>
                     <span className="text-white/50 text-sm">Qualquer</span>
                   </div>
                 }
@@ -250,9 +256,13 @@ export default function MercadoPage() {
                 onClick={() => setSelectedFilter("nacionalidade")}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full">
-                    <div className="flex gap-1 mb-2">
-                      <div className="w-8 h-6 bg-white/20 rounded" />
-                      <div className="w-8 h-6 bg-white/20 rounded" />
+                    <div className="flex gap-2 mb-3">
+                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
+                        <Flag className="h-4 w-4 text-white/40" />
+                      </div>
+                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
+                        <Flag className="h-4 w-4 text-white/40" />
+                      </div>
                     </div>
                     <span className="text-white/50 text-sm">Qualquer</span>
                   </div>
@@ -264,7 +274,7 @@ export default function MercadoPage() {
                 onClick={() => setSelectedFilter("status")}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full">
-                    <ArrowLeftRight className="h-12 w-12 text-white/30 mb-2" />
+                    <ArrowLeftRight className="h-12 w-12 text-white/30 mb-3" strokeWidth={1.5} />
                     <span className="text-white/50 text-sm">Qualquer</span>
                   </div>
                 }
@@ -276,14 +286,14 @@ export default function MercadoPage() {
                 selected={selectedFilter === "idade"}
                 onClick={() => setSelectedFilter("idade")}
                 customContent={
-                  <div className="flex flex-col items-start justify-center h-full px-4 gap-3">
+                  <div className="flex flex-col items-start justify-center h-full px-6 gap-4">
                     <div className="flex justify-between w-full text-sm">
-                      <span className="text-white/50">MIN.</span>
-                      <span className="text-white">16</span>
+                      <span className="text-white/50 font-medium">MIN.</span>
+                      <span className="text-white font-medium">16</span>
                     </div>
                     <div className="flex justify-between w-full text-sm">
-                      <span className="text-white/50">MAX.</span>
-                      <span className="text-white">35</span>
+                      <span className="text-white/50 font-medium">MAX.</span>
+                      <span className="text-white font-medium">35</span>
                     </div>
                   </div>
                 }
@@ -294,9 +304,13 @@ export default function MercadoPage() {
                 onClick={() => setSelectedFilter("pais")}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full">
-                    <div className="flex gap-1 mb-2">
-                      <div className="w-8 h-6 bg-white/20 rounded" />
-                      <div className="w-8 h-6 bg-white/20 rounded" />
+                    <div className="flex gap-2 mb-3">
+                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
+                        <Globe className="h-4 w-4 text-white/40" />
+                      </div>
+                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
+                        <Globe className="h-4 w-4 text-white/40" />
+                      </div>
                     </div>
                     <span className="text-white/50 text-sm">Qualquer</span>
                   </div>
@@ -308,7 +322,9 @@ export default function MercadoPage() {
                 onClick={() => setSelectedFilter("liga")}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full">
-                    <Trophy className="h-12 w-12 text-white/30 mb-2" />
+                    <div className="w-14 h-14 rounded-lg bg-gradient-to-b from-white/10 to-white/5 flex items-center justify-center mb-3 border border-white/10">
+                      <Trophy className="h-8 w-8 text-white/30" strokeWidth={1.5} />
+                    </div>
                     <span className="text-white/50 text-sm">Qualquer</span>
                   </div>
                 }
@@ -319,7 +335,9 @@ export default function MercadoPage() {
                 onClick={() => setSelectedFilter("time")}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full">
-                    <Shield className="h-16 w-16 text-white/15 mb-2" />
+                    <div className="w-16 h-16 rounded-lg bg-gradient-to-b from-white/8 to-transparent flex items-center justify-center mb-3">
+                      <Shield className="h-12 w-12 text-white/15" strokeWidth={1} />
+                    </div>
                     <span className="text-white/40 text-sm">Qualquer</span>
                   </div>
                 }
@@ -510,21 +528,27 @@ function FilterCardComponent({
     <button
       onClick={onClick}
       className={cn(
-        "relative rounded-xl p-4 h-40 text-left transition-all",
-        "bg-gradient-to-br from-[#1a2a2e] to-[#0f1a1c]",
+        "relative rounded-xl p-4 h-44 text-left transition-all overflow-hidden",
+        "bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618]",
         selected 
-          ? "ring-2 ring-primary shadow-lg shadow-primary/20" 
-          : "border border-white/10 hover:border-white/20",
-        highlight && "opacity-60"
+          ? "ring-2 ring-primary shadow-lg shadow-primary/30" 
+          : "border border-white/5 hover:border-primary/30",
+        highlight && "opacity-70"
       )}
     >
+      {/* Subtle glow effect when selected */}
+      {selected && (
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none" />
+      )}
       <h3 className={cn(
-        "text-sm font-semibold mb-4",
-        highlight ? "text-white/40" : "text-white"
+        "text-sm font-semibold relative z-10",
+        highlight ? "text-white/50" : "text-white"
       )}>
         {card.label}
       </h3>
-      {customContent}
+      <div className="relative z-10 h-[calc(100%-2rem)]">
+        {customContent}
+      </div>
     </button>
   )
 }
