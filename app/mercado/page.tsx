@@ -119,7 +119,7 @@ interface FilterCard {
 export default function MercadoPage() {
   const [activeTab, setActiveTab] = useState("buscar")
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("nome")
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(transferTargets[0])
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [playerListIndex, setPlayerListIndex] = useState(0)
   const [positionFilter, setPositionFilter] = useState<string>("Tudo")
@@ -341,10 +341,13 @@ export default function MercadoPage() {
                 <span className="border border-white/30 rounded px-1.5 py-0.5">s</span>
                 <span>Restaurar</span>
               </div>
-              <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setActiveTab("rede")}
+                className="flex items-center gap-2 hover:text-white transition-colors"
+              >
                 <span className="border border-white/30 rounded px-1.5 py-0.5">d</span>
                 <span>Buscar</span>
-              </div>
+              </button>
             </div>
           </TabsContent>
 
@@ -604,8 +607,11 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
               {isNew ? "NOVO" : isNotScouted ? "NAO OBSERVADO" : "OBSERVADO"}
             </span>
           </div>
-          <button className="px-4 py-1.5 rounded-lg bg-white/10 text-white/60 text-sm hover:bg-white/20 transition-colors">
-            {isNotScouted ? "Nao observado" : "Observar"}
+          <button 
+            onClick={onNegotiate}
+            className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            Negociar
           </button>
         </div>
       </div>

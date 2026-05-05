@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { Globe, Save, FileEdit, KeyRound, X, Trophy } from "lucide-react"
 
 // Fases da splash screen
 type SplashPhase = 
@@ -11,16 +13,25 @@ type SplashPhase =
   | "studio-logo" 
   | "ea-warning" 
   | "loading" 
-  | "title" 
-  | "press-start"
+  | "main-menu"
   | "fade-out"
+
+type MenuOption = "novo-jogo" | "carregar" | "editar" | "registrar" | "sair"
 
 export default function SplashPage() {
   const router = useRouter()
   const [phase, setPhase] = useState<SplashPhase>("black")
   const [loadingProgress, setLoadingProgress] = useState(0)
-  const [showPressStart, setShowPressStart] = useState(false)
+  const [selectedOption, setSelectedOption] = useState<MenuOption>("novo-jogo")
   const [isExiting, setIsExiting] = useState(false)
+
+  const menuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href?: string }[] = [
+    { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-8 w-8" />, href: "/novo-jogo" },
+    { id: "carregar", label: "CARREGAR", icon: <Save className="h-8 w-8" />, href: "/" },
+    { id: "editar", label: "EDITAR", icon: <FileEdit className="h-8 w-8" />, href: "/editar" },
+    { id: "registrar", label: "REGISTRAR JOGO", icon: <KeyRound className="h-8 w-8" /> },
+    { id: "sair", label: "SAIR", icon: <X className="h-8 w-8" /> },
+  ]
 
   // Sequencia de fases da splash
   useEffect(() => {
@@ -38,106 +49,83 @@ export default function SplashPage() {
       setPhase("loading")
       
       // Fase 4: Tela de carregamento
-      // Progresso simulado
       for (let i = 0; i <= 100; i += 2) {
         await delay(40)
         setLoadingProgress(i)
       }
       
       await delay(500)
-      setPhase("title")
-      
-      // Fase 5: Titulo do jogo
-      await delay(2000)
-      setPhase("press-start")
-      setShowPressStart(true)
+      setPhase("main-menu")
     }
     
     sequence()
   }, [])
 
-  // Handler para continuar
-  const handleContinue = useCallback(() => {
-    if (phase === "press-start" && !isExiting) {
+  // Handler para navegacao no menu
+  const handleMenuSelect = useCallback(() => {
+    const option = menuOptions.find(o => o.id === selectedOption)
+    if (option?.href && !isExiting) {
       setIsExiting(true)
       setPhase("fade-out")
       setTimeout(() => {
-        router.push("/")
-      }, 1000)
+        router.push(option.href!)
+      }, 500)
     }
-  }, [phase, isExiting, router])
+  }, [selectedOption, isExiting, router, menuOptions])
 
-  // Listeners para input
+  // Navegacao por teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === " ") {
-        handleContinue()
-      }
-    }
+      if (phase !== "main-menu") return
 
-    const handleGamepadAction = (e: CustomEvent<{ action: string }>) => {
-      if (e.detail.action === "A" || e.detail.action === "X") {
-        handleContinue()
+      const currentIndex = menuOptions.findIndex(o => o.id === selectedOption)
+      
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault()
+        const newIndex = currentIndex > 0 ? currentIndex - 1 : menuOptions.length - 1
+        setSelectedOption(menuOptions[newIndex].id)
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault()
+        const newIndex = currentIndex < menuOptions.length - 1 ? currentIndex + 1 : 0
+        setSelectedOption(menuOptions[newIndex].id)
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault()
+        handleMenuSelect()
       }
     }
 
     window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener("gamepad:action", handleGamepadAction as EventListener)
-    
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener("gamepad:action", handleGamepadAction as EventListener)
-    }
-  }, [handleContinue])
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [phase, selectedOption, handleMenuSelect, menuOptions])
 
   return (
     <div 
       className={cn(
-        "fixed inset-0 bg-black flex items-center justify-center overflow-hidden transition-opacity duration-1000",
+        "fixed inset-0 flex items-center justify-center overflow-hidden transition-opacity duration-500",
         isExiting && "opacity-0"
       )}
-      onClick={handleContinue}
+      style={{
+        background: "linear-gradient(135deg, #2a2a2a 0%, #3d3d3d 25%, #4a4a4a 50%, #3d3d3d 75%, #2a2a2a 100%)"
+      }}
     >
-      {/* Background elements */}
-      <div className="absolute inset-0">
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050505] to-black" />
-        
-        {/* Animated particles */}
-        <div className="absolute inset-0 overflow-hidden">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-[#1db954]/20 rounded-full animate-float"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${5 + Math.random() * 10}s`,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Scan lines effect */}
-        <div 
-          className="absolute inset-0 pointer-events-none opacity-[0.03]"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              0deg,
-              transparent,
-              transparent 2px,
-              rgba(255, 255, 255, 0.03) 2px,
-              rgba(255, 255, 255, 0.03) 4px
-            )`,
-          }}
-        />
-      </div>
+      {/* Scan lines effect */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.02]"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.1) 2px,
+            rgba(0, 0, 0, 0.1) 4px
+          )`,
+        }}
+      />
 
       {/* Phase: Studio Logo */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000",
-        phase === "studio-logo" ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black",
+        phase === "studio-logo" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         <div className="relative">
           <div className="text-[#1db954] text-sm font-mono tracking-[0.5em] uppercase mb-4 animate-pulse">
@@ -149,9 +137,9 @@ export default function SplashPage() {
         </div>
       </div>
 
-      {/* Phase: EA-style Warning */}
+      {/* Phase: Warning */}
       <div className={cn(
-        "absolute inset-0 flex items-center justify-center p-8 transition-all duration-1000",
+        "absolute inset-0 flex items-center justify-center p-8 transition-all duration-1000 bg-black",
         phase === "ea-warning" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         <div className="max-w-2xl text-center">
@@ -170,11 +158,10 @@ export default function SplashPage() {
 
       {/* Phase: Loading */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black",
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         <div className="w-full max-w-md px-8">
-          {/* Loading tips */}
           <div className="text-center mb-8">
             <p className="text-white/40 text-xs">
               {loadingProgress < 30 && "Carregando dados dos times..."}
@@ -184,20 +171,13 @@ export default function SplashPage() {
             </p>
           </div>
 
-          {/* Progress bar */}
           <div className="relative h-1 bg-white/10 rounded-full overflow-hidden">
             <div 
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#1db954] to-[#1ed760] transition-all duration-100 ease-out"
               style={{ width: `${loadingProgress}%` }}
             />
-            {/* Glow effect */}
-            <div 
-              className="absolute inset-y-0 left-0 bg-[#1db954]/50 blur-sm transition-all duration-100"
-              style={{ width: `${loadingProgress}%` }}
-            />
           </div>
 
-          {/* Percentage */}
           <div className="text-center mt-4">
             <span className="text-[#1db954] font-mono text-lg tabular-nums">
               {loadingProgress}%
@@ -206,70 +186,99 @@ export default function SplashPage() {
         </div>
       </div>
 
-      {/* Phase: Title */}
+      {/* Phase: Main Menu - Brasfoot Style */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000",
-        (phase === "title" || phase === "press-start") ? "opacity-100" : "opacity-0 pointer-events-none"
+        "absolute inset-0 flex flex-col transition-all duration-500",
+        phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Main logo */}
-        <div className="relative mb-8">
-          {/* Glow behind logo */}
-          <div className="absolute inset-0 blur-3xl bg-[#1db954]/20 scale-150" />
-          
-          {/* Logo */}
-          <div className="relative w-64 h-64 md:w-80 md:h-80">
-            <Image
-              src="https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main/Logo%20-%20UF26%20III.png"
-              alt="Ultrafoot 26"
-              fill
-              className="object-contain drop-shadow-2xl animate-logo-float"
-              priority
-              unoptimized
-            />
-          </div>
-        </div>
-
-        {/* Game title text */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter">
-            ULTRA<span className="text-[#1db954]">FOOT</span>
-          </h1>
-          <div className="text-white/40 text-sm tracking-[0.3em] mt-2">
-            TEMPORADA 2026
-          </div>
-        </div>
-
-        {/* Press Start */}
-        <div className={cn(
-          "transition-all duration-500",
-          showPressStart ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-        )}>
-          <div className="flex flex-col items-center gap-4">
-            {/* Controller button indicator - PlayStation */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#2e6db4] flex items-center justify-center text-white font-bold text-sm animate-pulse">
-                X
-              </div>
-              <span className="text-white/60 text-sm">ou</span>
-              <div className="px-3 py-1 rounded bg-white/10 text-white/60 text-xs font-mono">
-                ENTER
-              </div>
+        {/* Header with game title */}
+        <div className="flex justify-center pt-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight italic">
+              ULTRAFOOT
+            </h1>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <span className="text-2xl md:text-3xl font-black text-white/80">26-27</span>
+              <span className="text-xs text-red-400 font-medium">versao nao registrada</span>
             </div>
-            
-            <p className="text-white/50 text-sm tracking-wider animate-blink">
-              PRESSIONE PARA CONTINUAR
-            </p>
           </div>
         </div>
 
-        {/* Bottom info */}
-        <div className="absolute bottom-8 left-0 right-0 flex justify-between items-center px-8">
-          <div className="text-white/20 text-[10px]">
-            v1.0.0
+        {/* Main menu grid */}
+        <div className="flex-1 flex items-center justify-center px-8">
+          <div className="grid grid-cols-3 gap-8 max-w-3xl w-full">
+            {/* Top row - Main options */}
+            {menuOptions.slice(0, 3).map((option) => (
+              <MenuButton
+                key={option.id}
+                option={option}
+                selected={selectedOption === option.id}
+                onClick={() => {
+                  setSelectedOption(option.id)
+                  if (option.href) {
+                    setIsExiting(true)
+                    setPhase("fade-out")
+                    setTimeout(() => router.push(option.href!), 500)
+                  }
+                }}
+                onMouseEnter={() => setSelectedOption(option.id)}
+              />
+            ))}
           </div>
-          <div className="text-white/20 text-[10px]">
-            2026 Egidio Studios
+        </div>
+
+        {/* Bottom row - Secondary options */}
+        <div className="flex items-center justify-between px-12 pb-8">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setSelectedOption("registrar")
+              }}
+              onMouseEnter={() => setSelectedOption("registrar")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded transition-colors",
+                selectedOption === "registrar" 
+                  ? "text-white bg-white/10" 
+                  : "text-white/60 hover:text-white"
+              )}
+            >
+              <div className="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center">
+                <span className="font-bold text-sm">R</span>
+              </div>
+              <span className="font-semibold text-sm">REGISTRAR JOGO</span>
+            </button>
           </div>
+
+          {/* FIFA World Cup Logo placeholder */}
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center">
+              <Trophy className="h-12 w-12 text-yellow-500/60" />
+              <span className="text-white/40 text-xs mt-1">FIFA 26</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              // Close/exit action
+            }}
+            onMouseEnter={() => setSelectedOption("sair")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded transition-colors",
+              selectedOption === "sair" 
+                ? "text-white bg-white/10" 
+                : "text-white/60 hover:text-white"
+            )}
+          >
+            <X className="h-5 w-5" />
+            <span className="font-semibold text-sm">SAIR</span>
+          </button>
+        </div>
+
+        {/* Navigation hint */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-white/40">
+          <span>Use as setas para navegar</span>
+          <span>|</span>
+          <span>Enter para selecionar</span>
         </div>
       </div>
 
@@ -277,10 +286,59 @@ export default function SplashPage() {
       <div 
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(0,0,0,0.8) 100%)`,
+          background: `radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%)`,
         }}
       />
     </div>
+  )
+}
+
+// Menu Button Component - Brasfoot Style
+function MenuButton({
+  option,
+  selected,
+  onClick,
+  onMouseEnter,
+}: {
+  option: { id: string; label: string; icon: React.ReactNode; href?: string }
+  selected: boolean
+  onClick: () => void
+  onMouseEnter: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      className={cn(
+        "flex flex-col items-center gap-3 p-6 rounded-lg transition-all duration-200",
+        "bg-gradient-to-b from-white/5 to-transparent",
+        selected 
+          ? "ring-2 ring-white/30 bg-white/10 scale-105" 
+          : "hover:bg-white/5"
+      )}
+    >
+      {/* Icon container */}
+      <div className={cn(
+        "w-20 h-20 rounded-lg flex items-center justify-center transition-colors",
+        "bg-gradient-to-br from-gray-600 to-gray-800",
+        selected && "from-gray-500 to-gray-700"
+      )}>
+        <div className={cn(
+          "text-white/80 transition-colors",
+          selected && "text-white"
+        )}>
+          {option.icon}
+        </div>
+      </div>
+      
+      {/* Label */}
+      <span className={cn(
+        "font-bold text-sm tracking-wide transition-colors",
+        selected ? "text-white" : "text-white/70"
+      )}>
+        {option.label}
+      </span>
+    </button>
   )
 }
 
