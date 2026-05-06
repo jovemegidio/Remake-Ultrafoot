@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -48,9 +48,20 @@ export function NegotiationModal({
 
   if (!player) return null
 
-  const minOffer = Math.floor(player.value * 0.5)
-  const maxOffer = Math.floor(player.value * 1.5)
-  const fairValue = player.value
+  // For loans, calculate monthly fee instead of full value
+  const isLoan = type === "loan"
+  const loanMonthlyRate = 0.02 // 2% of value per month
+  const loanMonths = 12
+  
+  const minOffer = isLoan 
+    ? Math.floor(player.value * loanMonthlyRate * 6) // 6 months minimum
+    : Math.floor(player.value * 0.5)
+  const maxOffer = isLoan
+    ? Math.floor(player.value * loanMonthlyRate * 24) // 24 months maximum
+    : Math.floor(player.value * 1.5)
+  const fairValue = isLoan 
+    ? Math.floor(player.value * loanMonthlyRate * loanMonths)
+    : player.value
   const offerPercentage = Math.round((offer / fairValue) * 100)
 
   const getOfferStatus = () => {
@@ -130,11 +141,18 @@ export function NegotiationModal({
             {/* Value Info */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">Valor de Mercado</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">
+                  {isLoan ? "Taxa de Emprestimo (12 meses)" : "Valor de Mercado"}
+                </div>
                 <div className="text-lg font-semibold text-white mt-1">{formatCurrency(fairValue)}</div>
+                {isLoan && (
+                  <div className="text-[10px] text-white/30 mt-1">Valor total: {formatCurrency(player.value)}</div>
+                )}
               </div>
               <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">Sua Oferta</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">
+                  {isLoan ? "Sua Proposta de Emprestimo" : "Sua Oferta"}
+                </div>
                 <div className={`text-lg font-semibold mt-1 ${status.color}`}>{formatCurrency(offer)}</div>
               </div>
             </div>
@@ -204,8 +222,12 @@ export function NegotiationModal({
             </div>
             <div className="text-sm text-white/50 mt-1">
               {accepted 
-                ? `A transferencia de ${player.name} foi concluida por ${formatCurrency(offer)}`
-                : "O clube recusou sua oferta. Tente novamente com um valor maior."
+                ? isLoan
+                  ? `O emprestimo de ${player.name} foi acordado por ${formatCurrency(offer)} (12 meses)`
+                  : `A transferencia de ${player.name} foi concluida por ${formatCurrency(offer)}`
+                : isLoan
+                  ? "O clube recusou o emprestimo. Tente um valor maior ou duracao diferente."
+                  : "O clube recusou sua oferta. Tente novamente com um valor maior."
               }
             </div>
           </div>

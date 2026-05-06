@@ -128,8 +128,10 @@ export default function MercadoPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(transferTargets[0])
   const [negotiationOpen, setNegotiationOpen] = useState(false)
+  const [negotiationType, setNegotiationType] = useState<"buy" | "loan">("buy")
   const [playerListIndex, setPlayerListIndex] = useState(0)
   const [positionFilter, setPositionFilter] = useState<string>("Tudo")
+  const [showSearchResults, setShowSearchResults] = useState(false)
   
   // Filter states
   const [nameFilter, setNameFilter] = useState("")
@@ -198,10 +200,16 @@ export default function MercadoPage() {
     setSelectedPlayer(player)
   }
 
-  const handleNegotiate = () => {
+  const handleNegotiate = (type: "buy" | "loan" = "buy") => {
     if (selectedPlayer) {
+      setNegotiationType(type)
       setNegotiationOpen(true)
     }
+  }
+
+  const handleSearch = () => {
+    setShowSearchResults(true)
+    setActiveTab("rede")
   }
 
   return (
@@ -248,6 +256,27 @@ export default function MercadoPage() {
 
           {/* Search Filters Tab */}
           <TabsContent value="buscar" className="mt-0">
+            {/* Search Input */}
+            <div className="mb-6 flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
+                <input
+                  type="text"
+                  placeholder="Buscar jogador por nome..."
+                  value={nameFilter}
+                  onChange={(e) => setNameFilter(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#1a1a1a] border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                />
+              </div>
+              <button
+                onClick={handleSearch}
+                className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2"
+              >
+                <Search className="h-4 w-4" />
+                Buscar
+              </button>
+            </div>
+
             <div className="grid grid-cols-4 gap-4">
               {/* First Row */}
               <FilterCardComponent 
@@ -261,7 +290,7 @@ export default function MercadoPage() {
                         <User className="h-10 w-10 text-white/30" strokeWidth={1.5} />
                       </div>
                     </div>
-                    <span className="text-white/50 text-sm mt-3">Qualquer</span>
+                    <span className="text-white/50 text-sm mt-3">{nameFilter || "Qualquer"}</span>
                   </div>
                 }
               />
@@ -373,25 +402,22 @@ export default function MercadoPage() {
             </div>
 
             {/* Bottom Controls */}
-            <div className="flex items-center gap-6 mt-8 text-xs text-white/50">
-              <div className="flex items-center gap-2">
-                <span className="border border-white/30 rounded px-1.5 py-0.5">Enter</span>
-                <span>Selecionar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="border border-white/30 rounded px-1.5 py-0.5">Esc</span>
-                <span>Voltar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="border border-white/30 rounded px-1.5 py-0.5">s</span>
-                <span>Restaurar</span>
+            <div className="flex items-center justify-between mt-8">
+              <div className="flex items-center gap-6 text-xs text-white/50">
+                <div className="flex items-center gap-2">
+                  <span className="border border-white/30 rounded px-1.5 py-0.5">Enter</span>
+                  <span>Selecionar Filtro</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="border border-white/30 rounded px-1.5 py-0.5">Esc</span>
+                  <span>Limpar Filtros</span>
+                </div>
               </div>
               <button 
-                onClick={() => setActiveTab("rede")}
-                className="flex items-center gap-2 hover:text-white transition-colors"
+                onClick={handleSearch}
+                className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
               >
-                <span className="border border-white/30 rounded px-1.5 py-0.5">d</span>
-                <span>Buscar</span>
+                Iniciar Busca
               </button>
             </div>
           </TabsContent>
@@ -528,7 +554,7 @@ export default function MercadoPage() {
         open={negotiationOpen}
         onOpenChange={setNegotiationOpen}
         player={selectedPlayer}
-        type="buy"
+        type={negotiationType}
         team={selectedPlayer?.team}
       />
     </div>
@@ -641,7 +667,7 @@ function PlayerListCard({
 }
 
 // Player Details Panel Component
-function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotiate: () => void }) {
+function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotiate: (type: "buy" | "loan") => void }) {
   const isNew = player.scoutProgress && player.scoutProgress < 100
   const isNotScouted = !player.scoutedBy
 
@@ -656,12 +682,20 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
               {isNew ? "NOVO" : isNotScouted ? "NAO OBSERVADO" : "OBSERVADO"}
             </span>
           </div>
-          <button 
-            onClick={onNegotiate}
-            className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Negociar
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => onNegotiate("buy")}
+              className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Comprar
+            </button>
+            <button 
+              onClick={() => onNegotiate("loan")}
+              className="px-4 py-1.5 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors"
+            >
+              Emprestar
+            </button>
+          </div>
         </div>
       </div>
 
