@@ -326,9 +326,10 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left panel - Players list */}
-        <aside className="w-72 flex-shrink-0 border-r border-white/10 bg-[#0d0d0d] flex flex-col">
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Left panel - Players list (only shown in formation tab) */}
+        {activeTab === "formation" && (
+        <aside className="w-64 flex-shrink-0 border-r border-white/10 bg-[#0d0d0d] flex flex-col overflow-hidden">
           {/* Formation selector */}
           <div className="p-4 border-b border-white/10">
             <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2">
@@ -379,8 +380,8 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
           </div>
 
           {/* Starters list */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-3">
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            <div className="p-3 pb-0">
               <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2 flex items-center justify-between">
                 <span>Titulares</span>
                 <span className="text-[#1db954]">11/11</span>
@@ -432,12 +433,12 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
           </div>
 
           {/* Bench */}
-          <div className="border-t border-white/10 p-3">
+          <div className="border-t border-white/10 p-3 flex-shrink-0">
             <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2 flex items-center gap-1">
               <Users className="h-3 w-3" />
               <span>Reservas ({bench.length})</span>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-1">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {bench.map(p => (
                 <div
                   key={p.id}
@@ -462,9 +463,199 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             </div>
           </div>
         </aside>
+        )}
 
-        {/* Center - Pitch */}
-        <main className="flex-1 flex items-center justify-center p-6 bg-[#0a0a0a] overflow-hidden">
+        {/* Tab: Taticas */}
+        {activeTab === "tactics" && (
+          <div className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
+            <div className="max-w-3xl mx-auto space-y-6">
+              <div className="text-center mb-8">
+                <h2 className="text-xl font-bold text-white mb-2">Instrucoes Taticas</h2>
+                <p className="text-sm text-white/50">Configure o estilo de jogo da sua equipe</p>
+              </div>
+
+              {/* Estilo Defensivo */}
+              <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-400" />
+                  Estilo Defensivo
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-white/50 block mb-3">Linha Defensiva</label>
+                    <div className="flex gap-2">
+                      {["Baixa", "Media", "Alta"].map(opt => (
+                        <button key={opt} className={cn(
+                          "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
+                          opt === "Media" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                        )}>{opt}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/50 block mb-3">Marcacao</label>
+                    <div className="flex gap-2">
+                      {["Pressao Alta", "Equilibrada", "Recuada"].map(opt => (
+                        <button key={opt} className={cn(
+                          "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
+                          opt === "Equilibrada" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                        )}>{opt}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Estilo Ofensivo */}
+              <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  Estilo Ofensivo
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs text-white/50 block mb-3">Estilo de Construcao</label>
+                    <div className="flex gap-2">
+                      {["Curto", "Misto", "Direto"].map(opt => (
+                        <button key={opt} className={cn(
+                          "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
+                          opt === "Misto" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                        )}>{opt}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/50 block mb-3">Velocidade de Ataque</label>
+                    <div className="flex gap-2">
+                      {["Lento", "Normal", "Rapido"].map(opt => (
+                        <button key={opt} className={cn(
+                          "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
+                          opt === "Normal" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                        )}>{opt}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mentalidade */}
+              <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                  Mentalidade do Time
+                </h3>
+                <div className="flex gap-2">
+                  {["Ultra Def.", "Defensivo", "Equilibrado", "Ofensivo", "Ultra Ofen."].map(opt => (
+                    <button key={opt} className={cn(
+                      "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
+                      opt === "Equilibrado" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                    )}>{opt}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Largura e Profundidade */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                  <h3 className="text-sm font-bold text-white mb-4">Largura Defensiva</h3>
+                  <div className="flex items-center gap-4">
+                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#1db954]" />
+                    <span className="text-xl font-bold text-[#1db954] w-8">5</span>
+                  </div>
+                </div>
+                <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                  <h3 className="text-sm font-bold text-white mb-4">Profundidade</h3>
+                  <div className="flex items-center gap-4">
+                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#1db954]" />
+                    <span className="text-xl font-bold text-[#1db954] w-8">5</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Atributos */}
+        {activeTab === "attributes" && (
+          <div className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
+            <div className="max-w-3xl mx-auto space-y-6">
+              <div className="text-center mb-8">
+                <h2 className="text-xl font-bold text-white mb-2">Funcoes dos Jogadores</h2>
+                <p className="text-sm text-white/50">Defina funcoes especificas para cada jogador</p>
+              </div>
+
+              {/* Bolas Paradas */}
+              <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-4">Bolas Paradas</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { role: "Cobrador de Escanteios", player: "Rodrigues" },
+                    { role: "Cobrador de Faltas", player: "Almeida" },
+                    { role: "Cobrador de Penaltis", player: "Pereira" },
+                    { role: "Capitao", player: "Souza" },
+                  ].map(item => (
+                    <div key={item.role} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                      <span className="text-xs text-white/60">{item.role}</span>
+                      <span className="text-xs font-bold text-[#1db954]">{item.player}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Funcoes Individuais */}
+              <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-4">Funcoes Individuais</h3>
+                <div className="space-y-2">
+                  {players.slice(0, 6).map(player => (
+                    <div key={player.id} className="flex items-center gap-4 p-3 rounded-lg bg-white/5">
+                      <div
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ backgroundColor: team.cor1, color: team.cor2 }}
+                      >
+                        {player.number}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-white">{player.name}</div>
+                        <div className="text-[10px] text-white/40">{player.position}</div>
+                      </div>
+                      <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1db954] cursor-pointer">
+                        <option>Equilibrado</option>
+                        <option>Ofensivo</option>
+                        <option>Defensivo</option>
+                        <option>Livre</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Instrucoes de Corrida */}
+              <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
+                <h3 className="text-sm font-bold text-white mb-4">Instrucoes de Corrida</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { label: "Atacantes", options: ["Ficar Atras", "Equilibrado", "Infiltrar"] },
+                    { label: "Meias", options: ["Ficar Atras", "Equilibrado", "Infiltrar"] },
+                    { label: "Laterais", options: ["Ficar", "Equilibrado", "Sobrepor"] },
+                  ].map(item => (
+                    <div key={item.label} className="space-y-2">
+                      <label className="text-xs text-white/50 block">{item.label}</label>
+                      <select className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1db954] cursor-pointer">
+                        {item.options.map(opt => (
+                          <option key={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Center - Pitch (only in formation tab) */}
+        {activeTab === "formation" && (
+        <main className="flex-1 flex items-center justify-center p-4 bg-[#0a0a0a] overflow-hidden min-w-0">
           <div
             ref={pitchRef}
             className="relative w-full max-w-2xl aspect-[3/4] rounded-2xl overflow-hidden select-none shadow-2xl"
@@ -576,9 +767,11 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             </div>
           </div>
         </main>
+        )}
 
-        {/* Right panel - Player details */}
-        <aside className="w-64 flex-shrink-0 border-l border-white/10 bg-[#0d0d0d] flex flex-col">
+        {/* Right panel - Player details (only in formation tab) */}
+        {activeTab === "formation" && (
+        <aside className="w-56 flex-shrink-0 border-l border-white/10 bg-[#0d0d0d] flex flex-col overflow-hidden">
           {selectedPlayerData ? (
             <>
               {/* Selected player header */}
@@ -653,6 +846,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             </div>
           )}
         </aside>
+        )}
       </div>
 
       {/* Footer with controller buttons */}

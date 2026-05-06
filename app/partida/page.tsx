@@ -200,7 +200,7 @@ function KitSelector({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Página
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────���─────────────────────────────────────────
 
 export default function PreMatchPage() {
   const router = useRouter()
@@ -284,7 +284,7 @@ export default function PreMatchPage() {
   }
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a] overflow-x-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
