@@ -126,7 +126,7 @@ const leagues = ["Todas", "Brasileirao Serie A", "Brasileirao Serie B", "Premier
 export default function MercadoPage() {
   const [activeTab, setActiveTab] = useState("buscar")
   const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null)
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(transferTargets[0])
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [negotiationType, setNegotiationType] = useState<"buy" | "loan">("buy")
   const [playerListIndex, setPlayerListIndex] = useState(0)
@@ -139,6 +139,9 @@ export default function MercadoPage() {
   const [selectedLeague, setSelectedLeague] = useState("Todas")
   const [minAge, setMinAge] = useState(16)
   const [maxAge, setMaxAge] = useState(35)
+  
+  // Search input state for real-time filtering
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Filter cards for search
   const filterCards: FilterCard[] = [
@@ -155,8 +158,9 @@ export default function MercadoPage() {
   // Filter players by all criteria
   const filteredPlayers = useMemo(() => {
     return transferTargets.filter(p => {
-      // Name filter
-      if (nameFilter && !p.name.toLowerCase().includes(nameFilter.toLowerCase())) {
+      // Name filter (uses searchQuery for real-time search)
+      const searchTerm = searchQuery || nameFilter
+      if (searchTerm && !p.name.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false
       }
       // Position filter
@@ -173,7 +177,14 @@ export default function MercadoPage() {
       }
       return true
     })
-  }, [nameFilter, selectedPosition, minAge, maxAge, positionFilter])
+  }, [nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter])
+  
+  // Auto-select first player when filtered results change
+  useMemo(() => {
+    if (filteredPlayers.length > 0 && !selectedPlayer) {
+      setSelectedPlayer(filteredPlayers[0])
+    }
+  }, [filteredPlayers, selectedPlayer])
 
   // Group players by position type
   const groupedPlayers = useMemo(() => {
@@ -263,19 +274,80 @@ export default function MercadoPage() {
                 <input
                   type="text"
                   placeholder="Buscar jogador por nome..."
-                  value={nameFilter}
-                  onChange={(e) => setNameFilter(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#1a1a1a] border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    // Auto switch to results tab if typing
+                    if (e.target.value.length >= 2) {
+                      setShowSearchResults(true)
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setNameFilter(searchQuery)
+                      handleSearch()
+                    }
+                  }}
+                  className="w-full pl-12 pr-12 py-3 rounded-xl bg-[#1a1a1a] border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("")
+                      setNameFilter("")
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
               <button
                 onClick={handleSearch}
-                className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2"
+                className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
               >
                 <Search className="h-4 w-4" />
                 Buscar
               </button>
             </div>
+            
+            {/* Quick search results preview */}
+            {searchQuery.length >= 2 && filteredPlayers.length > 0 && (
+              <div className="mb-6 p-4 rounded-xl bg-[#1a1a1a] border border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-white/60">{filteredPlayers.length} jogadores encontrados</span>
+                  <button 
+                    onClick={handleSearch}
+                    className="text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Ver todos na Rede
+                  </button>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {filteredPlayers.slice(0, 4).map((player) => (
+                    <button
+                      key={player.id}
+                      onClick={() => {
+                        setSelectedPlayer(player)
+                        setActiveTab("rede")
+                      }}
+                      className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-left group"
+                    >
+                      <PlayerAvatar name={player.name} teamColor={player.team.cor1} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-white truncate group-hover:text-primary transition-colors">
+                          {player.name}
+                        </div>
+                        <div className="text-[10px] text-white/40">{player.position} - {player.age} anos</div>
+                      </div>
+                      <span className="text-sm font-bold text-yellow-500">{player.overall}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-4 gap-4">
               {/* First Row */}
