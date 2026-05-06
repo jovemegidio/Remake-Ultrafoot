@@ -21,7 +21,6 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
@@ -118,13 +117,26 @@ interface FilterCard {
   value: string
 }
 
+// Available positions for filter
+const positions = ["Tudo", "GOL", "LD", "LE", "ZAG", "VOL", "MEI", "ME", "MD", "ATA", "PE", "PD"]
+
+// Available leagues
+const leagues = ["Todas", "Brasileirao Serie A", "Brasileirao Serie B", "Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
+
 export default function MercadoPage() {
   const [activeTab, setActiveTab] = useState("buscar")
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>("nome")
+  const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(transferTargets[0])
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [playerListIndex, setPlayerListIndex] = useState(0)
   const [positionFilter, setPositionFilter] = useState<string>("Tudo")
+  
+  // Filter states
+  const [nameFilter, setNameFilter] = useState("")
+  const [selectedPosition, setSelectedPosition] = useState("Tudo")
+  const [selectedLeague, setSelectedLeague] = useState("Todas")
+  const [minAge, setMinAge] = useState(16)
+  const [maxAge, setMaxAge] = useState(35)
 
   // Filter cards for search
   const filterCards: FilterCard[] = [
@@ -138,13 +150,28 @@ export default function MercadoPage() {
     { id: "time", label: "Time", icon: <Shield className="h-12 w-12 text-white/20" />, value: "Qualquer" },
   ]
 
-  // Filter players by position
+  // Filter players by all criteria
   const filteredPlayers = useMemo(() => {
-    if (positionFilter === "Tudo") return transferTargets
-    return transferTargets.filter(p => 
-      p.position === positionFilter || p.secondaryPositions?.includes(positionFilter)
-    )
-  }, [positionFilter])
+    return transferTargets.filter(p => {
+      // Name filter
+      if (nameFilter && !p.name.toLowerCase().includes(nameFilter.toLowerCase())) {
+        return false
+      }
+      // Position filter
+      if (selectedPosition !== "Tudo" && p.position !== selectedPosition && !p.secondaryPositions?.includes(selectedPosition)) {
+        return false
+      }
+      // Age filter
+      if (p.age < minAge || p.age > maxAge) {
+        return false
+      }
+      // Position filter for "rede" tab
+      if (positionFilter !== "Tudo" && p.position !== positionFilter && !p.secondaryPositions?.includes(positionFilter)) {
+        return false
+      }
+      return true
+    })
+  }, [nameFilter, selectedPosition, minAge, maxAge, positionFilter])
 
   // Group players by position type
   const groupedPlayers = useMemo(() => {
@@ -178,11 +205,11 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-6">
+      <main className="p-4 h-[calc(100vh-48px)] overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {/* EA FC Style Header Navigation */}
           <div className="flex items-center gap-6 mb-8">
@@ -496,8 +523,6 @@ export default function MercadoPage() {
           </TabsContent>
         </Tabs>
       </main>
-
-      <MusicPlayer />
 
       <NegotiationModal
         open={negotiationOpen}

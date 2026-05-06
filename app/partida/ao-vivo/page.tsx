@@ -138,6 +138,10 @@ export default function MatchCenterPage() {
         ? "match_live" 
         : "match_paused"
 
+  // Modal substituição - declarado antes dos useEffects que o utilizam
+  const [showSubModal, setShowSubModal] = useState(false)
+  const [subsRemaining, setSubsRemaining] = useState(5)
+
   // Handler de teclado (ESC para pausar)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -206,10 +210,6 @@ export default function MatchCenterPage() {
     window.addEventListener("gamepad:button" as any, handleGamepadButton)
     return () => window.removeEventListener("gamepad:button" as any, handleGamepadButton)
   }, [gameContext, isRunning, pause, resume, speed, setSpeed, fastForward, start, subsRemaining, state.phase, showSubModal])
-
-  // Modal substituição
-  const [showSubModal, setShowSubModal] = useState(false)
-  const [subsRemaining, setSubsRemaining] = useState(5)
 
   // Modal de fim
   const [showResult, setShowResult] = useState(false)

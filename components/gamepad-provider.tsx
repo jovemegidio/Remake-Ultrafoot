@@ -117,7 +117,7 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
       ? focusableElements.get(focusedElementId)?.element 
       : null
 
-    const nextElement = findNearestElement(direction, currentElement)
+    const nextElement = findNearestElement(direction, currentElement ?? null)
     
     if (nextElement) {
       setFocusedElementId(nextElement.id)
@@ -144,7 +144,7 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
     router.back()
   }, [router])
 
-  const handleAction = useCallback((action: "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "START" | "SELECT") => {
+  const handleAction = useCallback((action: "X" | "Y" | "LB" | "RB" | "LT" | "RT" | "START" | "SELECT" | "HOME") => {
     // Dispatch custom event for components to listen to
     const event = new CustomEvent("gamepad:action", { detail: { action } })
     window.dispatchEvent(event)
