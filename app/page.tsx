@@ -75,11 +75,11 @@ function ControllerToolbarWithDetection() {
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-6 space-y-5">
+      <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Hero - Club Identity */}
         <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/5">
           {/* Background accents */}

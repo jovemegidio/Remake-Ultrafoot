@@ -391,11 +391,11 @@ export default function ElencoPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <div className="min-h-screen pl-[72px] bg-[#0a0a0a]">
+      <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
         
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 overflow-y-auto">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <TeamCrest team={userTeam} size="lg" />
@@ -537,11 +537,11 @@ export default function ElencoPage() {
   // Visao Tatica view
   if (currentView === "visao_tatica") {
     return (
-      <div className="min-h-screen pl-[72px] pb-16 bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10">
+      <div className="h-screen pl-[72px] bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10 flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
         
-        <main className="p-4 md:p-6">
+        <main className="flex-1 p-4 overflow-y-auto">
           {/* Sub-header */}
           <div className="flex items-center gap-4 md:gap-6 mb-6 flex-wrap">
             <Button 

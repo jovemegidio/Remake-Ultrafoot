@@ -61,11 +61,11 @@ export default function FinancasPage() {
   const wagePercentage = (financialData.wageUsed / financialData.wageBudget) * 100
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-6 space-y-6">
+      <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-semibold text-white tracking-tight">Financas</h1>

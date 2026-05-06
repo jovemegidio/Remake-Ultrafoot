@@ -129,22 +129,19 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         </div>
       </div>
 
-      {/* Center - Season Info (optional) */}
-      <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-2">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-          <Calendar className="h-3.5 w-3.5 text-[#1db954]" />
-          <span className="text-[10px] text-white/50 uppercase tracking-wider">Temporada</span>
-          <span className="text-[11px] text-white font-semibold">{state.season}</span>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-          <TrendingUp className="h-3.5 w-3.5 text-[#1db954]" />
-          <span className="text-[10px] text-white/50 uppercase tracking-wider">Semana</span>
-          <span className="text-[11px] text-white font-semibold">{state.week}<span className="text-white/40">/48</span></span>
-        </div>
-      </div>
-
-      {/* Right - Team & Actions */}
+      {/* Right - Season Info & Actions */}
       <div className="flex items-center gap-3">
+        {/* Season/Week Info - compacto */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
+          <Calendar className="h-3 w-3 text-[#1db954]" />
+          <span className="text-[10px] text-white/60">{state.season}</span>
+          <span className="text-white/20">|</span>
+          <span className="text-[10px] text-white/60">Sem</span>
+          <span className="text-[10px] text-white font-medium">{state.week}<span className="text-white/40">/48</span></span>
+        </div>
+
+        <div className="w-px h-5 bg-white/10 hidden lg:block" />
+
         <button 
           onClick={handleSave}
           disabled={saving}

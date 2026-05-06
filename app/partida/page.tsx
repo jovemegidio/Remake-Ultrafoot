@@ -200,7 +200,7 @@ function KitSelector({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Página
-// ───────────────────────────────────���─────────────────────────────────────────
+// ───────────────────────────────────�����─────────────────────────────────────────
 
 export default function PreMatchPage() {
   const router = useRouter()
@@ -277,18 +277,18 @@ export default function PreMatchPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a] overflow-x-hidden">
+    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-6">
+      <main className="flex-1 p-4 overflow-y-auto">
         <div className="relative rounded-2xl overflow-hidden mb-6">
           {/* Background da competicao */}
           {competitionTheme.backgroundImage && (

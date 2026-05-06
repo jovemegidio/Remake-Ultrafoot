@@ -66,11 +66,11 @@ export default function DashboardPage() {
   }, [userTeam])
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a] overflow-x-hidden">
+    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-4 md:p-6 space-y-5 max-w-full">
+      <main className="flex-1 p-4 overflow-y-auto space-y-4 max-w-full">
         {/* Hero - Club Identity */}
         <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/5">
           {/* Background accents */}

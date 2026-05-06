@@ -54,11 +54,11 @@ const legends = [
 
 export default function HistoricoPage() {
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-6 space-y-6">
+      <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Header */}
         <div className="flex items-center gap-6">
           <div className="relative">
