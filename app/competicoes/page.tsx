@@ -198,20 +198,184 @@ export default function CompeticoesPage() {
           </TabsContent>
 
           <TabsContent value="copa-do-brasil" className="mt-4">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1db954]/10 mx-auto mb-4">
-                <Trophy className="h-8 w-8 text-[#1db954]" />
-              </div>
-              <h3 className="text-lg font-semibold text-white">Copa do Brasil 2026</h3>
-              <p className="text-sm text-white/50 mt-2">
-                O sorteio dos grupos sera realizado em breve
-              </p>
-            </div>
+            <CopaBracket userTeam={userTeam} />
           </TabsContent>
         </Tabs>
       </main>
 
       <MusicPlayer />
+    </div>
+  )
+}
+
+// Copa do Brasil Bracket
+function CopaBracket({ userTeam }: { userTeam: Team }) {
+  const [bracketDrawn, setBracketDrawn] = useState(false)
+  const [bracket, setBracket] = useState<{
+    oitavas: { id: number; team1: string; team2: string; score1: number | null; score2: number | null }[];
+    quartas: { id: number; team1: string | null; team2: string | null; score1: number | null; score2: number | null }[];
+    semis: { id: number; team1: string | null; team2: string | null; score1: number | null; score2: number | null }[];
+    final: { id: number; team1: string | null; team2: string | null; score1: number | null; score2: number | null }[];
+  }>({
+    oitavas: [],
+    quartas: [],
+    semis: [],
+    final: []
+  })
+
+  const drawBracket = () => {
+    // Sortear times para as oitavas
+    const teams = ["FLA", "COR", "PAL", "SAO", "GRE", "INT", "BOT", "CAM", 
+                   userTeam.curto, "FLU", "FOR", "CRU", "BAH", "VAS", "CAP", "SAN"]
+    const shuffled = [...teams].sort(() => Math.random() - 0.5)
+    
+    const oitavas = []
+    for (let i = 0; i < 8; i++) {
+      oitavas.push({
+        id: i + 1,
+        team1: shuffled[i * 2],
+        team2: shuffled[i * 2 + 1],
+        score1: null,
+        score2: null
+      })
+    }
+    
+    setBracket({
+      oitavas,
+      quartas: Array(4).fill(null).map((_, i) => ({ id: i + 1, team1: null, team2: null, score1: null, score2: null })),
+      semis: Array(2).fill(null).map((_, i) => ({ id: i + 1, team1: null, team2: null, score1: null, score2: null })),
+      final: [{ id: 1, team1: null, team2: null, score1: null, score2: null }]
+    })
+    setBracketDrawn(true)
+  }
+
+  const getTeamData = (short: string | null) => {
+    if (!short) return null
+    return getTeamByShort(short)
+  }
+
+  if (!bracketDrawn) {
+    return (
+      <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1db954]/10 mx-auto mb-6">
+          <Trophy className="h-10 w-10 text-[#1db954]" />
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Copa do Brasil 2026</h3>
+        <p className="text-sm text-white/50 mb-6">
+          Clique para realizar o sorteio das oitavas de final
+        </p>
+        <button
+          onClick={drawBracket}
+          className="px-6 py-3 rounded-lg bg-[#1db954] text-black font-semibold hover:bg-[#1ed760] transition-colors"
+        >
+          Sortear Chaves
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-xl bg-[#141414] border border-white/5 p-6 overflow-x-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <Trophy className="h-5 w-5 text-[#1db954]" />
+        <h3 className="text-lg font-semibold text-white">Copa do Brasil 2026 - Mata-mata</h3>
+      </div>
+
+      <div className="flex gap-8 min-w-[900px]">
+        {/* Oitavas */}
+        <div className="flex-1">
+          <div className="text-xs text-white/40 uppercase tracking-wider mb-3 text-center">Oitavas</div>
+          <div className="space-y-2">
+            {bracket.oitavas.map((match) => {
+              const team1 = getTeamData(match.team1)
+              const team2 = getTeamData(match.team2)
+              const isUserMatch = match.team1 === userTeam.curto || match.team2 === userTeam.curto
+              
+              return (
+                <div 
+                  key={match.id} 
+                  className={cn(
+                    "p-2 rounded-lg border",
+                    isUserMatch ? "bg-[#1db954]/10 border-[#1db954]/30" : "bg-white/5 border-white/10"
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {team1 && <TeamCrest team={team1} size="xs" />}
+                    <span className={cn("text-xs flex-1", match.team1 === userTeam.curto && "font-bold text-white")}>
+                      {match.team1}
+                    </span>
+                    <span className="text-xs text-white/50">{match.score1 ?? "-"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {team2 && <TeamCrest team={team2} size="xs" />}
+                    <span className={cn("text-xs flex-1", match.team2 === userTeam.curto && "font-bold text-white")}>
+                      {match.team2}
+                    </span>
+                    <span className="text-xs text-white/50">{match.score2 ?? "-"}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Quartas */}
+        <div className="flex-1">
+          <div className="text-xs text-white/40 uppercase tracking-wider mb-3 text-center">Quartas</div>
+          <div className="space-y-4 pt-6">
+            {bracket.quartas.map((match) => (
+              <div key={match.id} className="p-2 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs flex-1 text-white/50">{match.team1 || "A definir"}</span>
+                  <span className="text-xs text-white/50">-</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs flex-1 text-white/50">{match.team2 || "A definir"}</span>
+                  <span className="text-xs text-white/50">-</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Semis */}
+        <div className="flex-1">
+          <div className="text-xs text-white/40 uppercase tracking-wider mb-3 text-center">Semifinal</div>
+          <div className="space-y-8 pt-16">
+            {bracket.semis.map((match) => (
+              <div key={match.id} className="p-2 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs flex-1 text-white/50">{match.team1 || "A definir"}</span>
+                  <span className="text-xs text-white/50">-</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs flex-1 text-white/50">{match.team2 || "A definir"}</span>
+                  <span className="text-xs text-white/50">-</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Final */}
+        <div className="flex-1">
+          <div className="text-xs text-yellow-500 uppercase tracking-wider mb-3 text-center font-semibold">Final</div>
+          <div className="pt-32">
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+              <div className="flex items-center gap-2 mb-1">
+                <Trophy className="h-3 w-3 text-yellow-500" />
+                <span className="text-xs flex-1 text-white/50">{bracket.final[0]?.team1 || "A definir"}</span>
+                <span className="text-xs text-white/50">-</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3" />
+                <span className="text-xs flex-1 text-white/50">{bracket.final[0]?.team2 || "A definir"}</span>
+                <span className="text-xs text-white/50">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

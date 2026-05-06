@@ -13,6 +13,8 @@ import {
   Mail,
   History,
   Settings,
+  BarChart3,
+  Palette,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -22,10 +24,12 @@ const navItems = [
   { icon: Users, label: "Elenco", href: "/elenco" },
   { icon: CalendarDays, label: "Calendario", href: "/calendario" },
   { icon: Trophy, label: "Competicoes", href: "/competicoes" },
+  { icon: BarChart3, label: "Estatisticas", href: "/estatisticas" },
   { icon: Wallet, label: "Financas", href: "/financas" },
   { icon: ShoppingCart, label: "Mercado", href: "/mercado" },
   { icon: Mail, label: "Mensagens", href: "/mensagens", badge: 3 },
   { icon: History, label: "Historico", href: "/historico" },
+  { icon: Palette, label: "Editor", href: "/editar" },
   { icon: Settings, label: "Configuracoes", href: "/configuracoes" },
 ]
 
