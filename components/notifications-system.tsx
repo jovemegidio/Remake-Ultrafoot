@@ -122,12 +122,34 @@ function NotificationIcon({ type, priority }: { type: Notification["type"], prio
 
 // Toast notifications
 export function NotificationToast({ notification, onClose }: { notification: Notification, onClose: () => void }) {
-  const priorityStyles = {
-    urgent: "border-red-500/50 bg-red-950/80",
-    high: "border-yellow-500/50 bg-yellow-950/50",
-    medium: "border-white/10 bg-[#1a1a1a]",
-    low: "border-white/5 bg-[#1a1a1a]"
+  const priorityConfig = {
+    urgent: { 
+      border: "border-l-4 border-l-red-500 border-t-0 border-r-0 border-b-0", 
+      bg: "bg-[#111111]",
+      iconBg: "bg-red-500/10",
+      accentColor: "text-red-400"
+    },
+    high: { 
+      border: "border-l-4 border-l-amber-500 border-t-0 border-r-0 border-b-0", 
+      bg: "bg-[#111111]",
+      iconBg: "bg-amber-500/10",
+      accentColor: "text-amber-400"
+    },
+    medium: { 
+      border: "border-l-4 border-l-[#1db954] border-t-0 border-r-0 border-b-0", 
+      bg: "bg-[#111111]",
+      iconBg: "bg-[#1db954]/10",
+      accentColor: "text-[#1db954]"
+    },
+    low: { 
+      border: "border-l-4 border-l-white/20 border-t-0 border-r-0 border-b-0", 
+      bg: "bg-[#111111]",
+      iconBg: "bg-white/5",
+      accentColor: "text-white/60"
+    }
   }
+
+  const config = priorityConfig[notification.priority || "medium"]
   
   useEffect(() => {
     const timeout = setTimeout(onClose, notification.priority === "urgent" ? 8000 : 5000)
@@ -137,41 +159,61 @@ export function NotificationToast({ notification, onClose }: { notification: Not
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, x: 50, scale: 0.95 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: 100, scale: 0.95 }}
+      transition={{ type: "spring", damping: 20, stiffness: 300 }}
       className={cn(
-        "flex items-start gap-3 p-4 rounded-xl border backdrop-blur-xl shadow-2xl max-w-sm",
-        priorityStyles[notification.priority || "medium"]
+        "relative flex items-start gap-3 p-4 rounded-lg shadow-2xl w-[340px] overflow-hidden",
+        config.border,
+        config.bg
       )}
     >
-      <div className="flex-shrink-0 mt-0.5">
+      {/* Icon container */}
+      <div className={cn(
+        "flex-shrink-0 p-2.5 rounded-lg",
+        config.iconBg
+      )}>
         <NotificationIcon type={notification.type} priority={notification.priority} />
       </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold text-white truncate">{notification.title}</h4>
-        <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{notification.message}</p>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 py-0.5">
+        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-bold text-white tracking-tight">{notification.title}</h4>
+        </div>
+        <p className="text-xs text-white/50 mt-1 leading-relaxed line-clamp-2">{notification.message}</p>
         {notification.action && (
           <button 
             onClick={notification.action.onClick}
-            className="text-xs text-[#1db954] hover:text-[#1ed760] mt-2 flex items-center gap-1"
+            className={cn("text-xs font-medium mt-2.5 flex items-center gap-1 hover:underline", config.accentColor)}
           >
             {notification.action.label}
             <ChevronRight className="h-3 w-3" />
           </button>
         )}
       </div>
+
+      {/* Close button */}
       <button 
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
           onClose()
         }}
-        className="flex-shrink-0 p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors cursor-pointer"
+        className="absolute top-2 right-2 p-1.5 rounded-md hover:bg-white/10 text-white/30 hover:text-white/70 transition-all cursor-pointer"
         aria-label="Fechar notificacao"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5" />
       </button>
+
+      {/* Progress bar */}
+      <motion.div 
+        className={cn("absolute bottom-0 left-0 h-0.5", config.accentColor.replace("text-", "bg-"))}
+        initial={{ width: "100%" }}
+        animate={{ width: "0%" }}
+        transition={{ duration: notification.priority === "urgent" ? 8 : 5, ease: "linear" }}
+      />
     </motion.div>
   )
 }
@@ -196,7 +238,7 @@ export function NotificationToastContainer() {
   }, [])
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+    <div className="fixed top-16 right-4 z-50 flex flex-col gap-3">
       <AnimatePresence mode="popLayout">
         {toasts.map(toast => (
           <NotificationToast 

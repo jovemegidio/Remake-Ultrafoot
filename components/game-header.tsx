@@ -6,7 +6,7 @@ import { useState, useContext } from "react"
 import { ChevronRight, Save, FastForward, Settings, Check, Loader2 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { HeaderControls, ControllerTypeContext } from "@/components/controller-buttons"
-import { NotificationBell, NotificationCenter, useNotificationDemo } from "@/components/notifications-system"
+import { NotificationBell, NotificationCenter } from "@/components/notifications-system"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
@@ -40,8 +40,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [advancing, setAdvancing] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   
-  // Demo notifications - enables periodic notifications for testing
-  useNotificationDemo(true)
+  // Demo notifications desativado - notificacoes de gol e partida agora sao reais
+  // useNotificationDemo(false)
 
   const handleSave = async () => {
     setSaving(true)
