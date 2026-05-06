@@ -710,7 +710,7 @@ export default function ElencoPage() {
 
   // Gerenciamento view (main view)
   return (
-    <div className="min-h-screen pl-[72px] pb-16 md:pb-20 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a]">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -738,7 +738,7 @@ export default function ElencoPage() {
         )}
       </AnimatePresence>
 
-      <main className="h-[calc(100vh-48px-64px)] md:h-[calc(100vh-48px-80px)]">
+      <main className="h-[calc(100vh-48px-56px)]">
         {/* Sub-header with tabs */}
         <div className="flex flex-col md:flex-row md:items-center justify-between px-3 md:px-6 py-2 md:py-3 border-b border-white/10 bg-[#0d0d0d] gap-2 md:gap-0">
           <div className="flex items-center gap-3 md:gap-6">
@@ -911,13 +911,12 @@ export default function ElencoPage() {
             </div>
             
             {/* Reserves section */}
-            <div className="mt-2 md:mt-4 p-2 md:p-4 rounded-xl bg-[#141414] border border-white/10">
-              <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h3 className="text-xs md:text-sm font-semibold text-white">Reservas</h3>
-                <span className="text-[10px] md:text-xs text-white/40">{bench.length} jogadores</span>
+            <div className="mt-2 p-2 md:p-3 rounded-xl bg-[#141414] border border-white/10">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-white">Reservas ({bench.length})</h3>
               </div>
               
-              <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10">
+              <div className="flex gap-2 flex-wrap">
                 {bench.map((player) => {
                   const posColors = positionColors[player.position] || positionColors.MEI
                   return (
@@ -935,7 +934,7 @@ export default function ElencoPage() {
                       }}
                       onClick={() => setSelectedPlayerId(player.id)}
                       className={cn(
-                        "flex-shrink-0 flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition-all min-w-[120px] md:min-w-[160px] cursor-grab active:cursor-grabbing",
+                        "flex flex-col items-center p-1.5 rounded-lg cursor-grab active:cursor-grabbing transition-all",
                         selectedPlayerId === player.id
                           ? "bg-[#1db954]/20 border border-[#1db954]/50"
                           : "bg-white/5 border border-transparent hover:bg-white/10",
@@ -949,22 +948,13 @@ export default function ElencoPage() {
                           size="xs"
                         />
                         <div className={cn(
-                          "absolute -bottom-0.5 -right-0.5 px-0.5 md:px-1 py-0.5 rounded text-[7px] md:text-[8px] font-bold border",
-                          posColors.bg, posColors.text, posColors.border
+                          "absolute -bottom-0.5 -right-0.5 px-1 py-0.5 rounded text-[7px] font-bold",
+                          posColors.bg, posColors.text
                         )}>
-                          {player.position}
+                          {player.overall}
                         </div>
                       </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] md:text-xs font-medium text-white truncate">{player.name}</span>
-                          <span className={cn("text-xs md:text-sm font-black", getOverallColor(player.overall))}>
-                            {player.overall}
-                          </span>
-                        </div>
-                        <div className="text-[9px] md:text-[10px] text-white/40">{player.age} anos</div>
-                      </div>
+                      <span className="text-[9px] text-white/70 mt-1 truncate max-w-[50px]">{player.name.split(" ").pop()}</span>
                     </motion.div>
                   )
                 })}
@@ -973,7 +963,7 @@ export default function ElencoPage() {
           </div>
 
           {/* Right panel - Player details (hidden on mobile, shown in drawer) */}
-          <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 border-l border-white/10 bg-[#0d0d0d] overflow-y-auto">
+          <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-l border-white/10 bg-[#0d0d0d] overflow-hidden">
             {/* Player header */}
             <div className="p-3 md:p-4 border-b border-white/10" style={{
               background: `linear-gradient(135deg, ${userTeam.cor1}30 0%, transparent 100%)`

@@ -15,7 +15,6 @@ import {
 import Image from "next/image"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
@@ -90,12 +89,12 @@ export default function CalendarioPage() {
   const nextFixtures = fixtures.filter(f => f.fixture).slice(0, 4)
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
       {/* EA FC Style Layout */}
-      <div className="flex h-[calc(100vh-48px-90px)]">
+      <div className="flex h-[calc(100vh-48px)]">
         {/* Left Panel - Match Info */}
         <aside className="w-80 flex-shrink-0 border-r border-white/5 bg-[#0d0d0d] p-5 flex flex-col">
           {/* Current Date */}
@@ -205,7 +204,7 @@ export default function CalendarioPage() {
           </aside>
 
         {/* Main Calendar */}
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-4 overflow-hidden">
           {/* Month Navigation */}
           <div className="flex items-center gap-2 mb-6">
             <button 
@@ -304,7 +303,7 @@ export default function CalendarioPage() {
         </main>
 
         {/* Right Panel - News Feed (opcional, como na imagem de referencia) */}
-        <aside className="w-80 flex-shrink-0 border-l border-white/5 bg-[#0d0d0d] p-5 hidden xl:flex flex-col">
+        <aside className="w-72 flex-shrink-0 border-l border-white/5 bg-[#0d0d0d] p-4 hidden xl:flex flex-col overflow-hidden">
           <div className="text-xs text-white/40 uppercase tracking-wider mb-4">Destaques</div>
           
           {/* Featured news */}
@@ -352,8 +351,6 @@ export default function CalendarioPage() {
           </div>
         </aside>
       </div>
-
-      <MusicPlayer />
     </div>
   )
 }

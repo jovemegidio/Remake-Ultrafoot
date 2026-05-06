@@ -21,7 +21,6 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
@@ -178,11 +177,11 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-6">
+      <main className="p-4 h-[calc(100vh-48px)] overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {/* EA FC Style Header Navigation */}
           <div className="flex items-center gap-6 mb-8">
@@ -496,8 +495,6 @@ export default function MercadoPage() {
           </TabsContent>
         </Tabs>
       </main>
-
-      <MusicPlayer />
 
       <NegotiationModal
         open={negotiationOpen}
