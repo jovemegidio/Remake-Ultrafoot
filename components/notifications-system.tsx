@@ -162,8 +162,13 @@ export function NotificationToast({ notification, onClose }: { notification: Not
         )}
       </div>
       <button 
-        onClick={onClose}
-        className="flex-shrink-0 p-1 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onClose()
+        }}
+        className="flex-shrink-0 p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors cursor-pointer"
+        aria-label="Fechar notificacao"
       >
         <X className="h-4 w-4" />
       </button>
