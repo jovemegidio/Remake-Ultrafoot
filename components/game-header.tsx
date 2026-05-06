@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState, useContext } from "react"
-import { ChevronRight, Save, FastForward, Settings, Check, Loader2 } from "lucide-react"
+import { useState, useContext, useRef, useEffect } from "react"
+import { ChevronRight, Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { HeaderControls, ControllerTypeContext } from "@/components/controller-buttons"
 import { NotificationBell, NotificationCenter } from "@/components/notifications-system"
@@ -39,6 +39,32 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [saved, setSaved] = useState(false)
   const [advancing, setAdvancing] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showCoachDropdown, setShowCoachDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowCoachDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Dados do tecnico (mock - pode ser integrado com save-system)
+  const coachData = {
+    nome: "Voce",
+    cargo: "Tecnico Principal",
+    partidasTotal: 24,
+    vitorias: 16,
+    empates: 5,
+    derrotas: 3,
+    aproveitamento: Math.round((16 * 3 + 5) / (24 * 3) * 100),
+    titulosTemporada: 0,
+    sequencia: "+5V",
+  }
   
   // Demo notifications desativado - notificacoes de gol e partida agora sao reais
   // useNotificationDemo(false)
@@ -159,9 +185,106 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
         <NotificationCenter isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
 
-        <div className="flex items-center gap-2 pl-2 border-l border-white/10">
-          <TeamCrest team={userTeam} size="xs" />
-          <span className="text-[11px] font-medium text-white/80 hidden sm:inline">{userTeam.curto}</span>
+        {/* Team badge com dropdown do tecnico */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setShowCoachDropdown(!showCoachDropdown)}
+            className={cn(
+              "flex items-center gap-2 pl-2 border-l border-white/10 py-1 pr-2 rounded-r transition-colors",
+              showCoachDropdown ? "bg-white/10" : "hover:bg-white/5"
+            )}
+          >
+            <TeamCrest team={userTeam} size="xs" />
+            <span className="text-[11px] font-medium text-white/80 hidden sm:inline">{userTeam.curto}</span>
+            <ChevronDown className={cn(
+              "h-3 w-3 text-white/40 transition-transform hidden sm:block",
+              showCoachDropdown && "rotate-180"
+            )} />
+          </button>
+
+          {/* Dropdown do tecnico */}
+          {showCoachDropdown && (
+            <div className="absolute top-full right-0 mt-2 w-72 rounded-xl border border-white/10 bg-[#111111] shadow-2xl overflow-hidden z-50 animate-fade-in">
+              {/* Header do dropdown */}
+              <div className="p-4 border-b border-white/5 bg-gradient-to-r from-[#1db954]/10 to-transparent">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#1db954]/20 flex items-center justify-center">
+                    <User className="h-6 w-6 text-[#1db954]" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">{coachData.nome}</div>
+                    <div className="text-[10px] text-white/50 uppercase tracking-wider">{coachData.cargo}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Estatisticas do tecnico */}
+              <div className="p-4 space-y-3">
+                <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+                  <Trophy className="h-3 w-3" />
+                  Estatisticas da Temporada
+                </div>
+
+                {/* Linha de partidas */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="text-center p-2 rounded-lg bg-white/5">
+                    <div className="text-lg font-bold text-white">{coachData.partidasTotal}</div>
+                    <div className="text-[9px] text-white/40">Jogos</div>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-[#1db954]/10">
+                    <div className="text-lg font-bold text-[#1db954]">{coachData.vitorias}</div>
+                    <div className="text-[9px] text-white/40">V</div>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-yellow-500/10">
+                    <div className="text-lg font-bold text-yellow-400">{coachData.empates}</div>
+                    <div className="text-[9px] text-white/40">E</div>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-red-500/10">
+                    <div className="text-lg font-bold text-red-400">{coachData.derrotas}</div>
+                    <div className="text-[9px] text-white/40">D</div>
+                  </div>
+                </div>
+
+                {/* Aproveitamento e sequencia */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-[#1db954]" />
+                    <span className="text-xs text-white/60">Aproveitamento</span>
+                  </div>
+                  <span className="text-sm font-bold text-[#1db954]">{coachData.aproveitamento}%</span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-white/40" />
+                    <span className="text-xs text-white/60">Sequencia</span>
+                  </div>
+                  <span className="text-sm font-bold text-[#1db954]">{coachData.sequencia}</span>
+                </div>
+
+                {/* Titulos */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-yellow-400" />
+                    <span className="text-xs text-white/60">Titulos na Temporada</span>
+                  </div>
+                  <span className="text-sm font-bold text-white">{coachData.titulosTemporada}</span>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-3 border-t border-white/5 bg-white/[0.02]">
+                <Link 
+                  href="/perfil" 
+                  onClick={() => setShowCoachDropdown(false)}
+                  className="flex items-center justify-center gap-2 w-full py-2 text-xs font-medium text-[#1db954] hover:text-[#1ed760] transition-colors"
+                >
+                  Ver perfil completo
+                  <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

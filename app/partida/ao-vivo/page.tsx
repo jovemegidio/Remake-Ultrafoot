@@ -358,20 +358,98 @@ export default function MatchCenterPage() {
       </header>
 
       <main className="space-y-4 p-4">
-        {/* Animação de gol */}
+        {/* Animacao de gol - Profissional */}
         {animation?.type === "goal" && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 bg-black/70 animate-fade-in" />
-            <div className="relative flex flex-col items-center gap-4 animate-scale-in">
-              <div
-                className="text-7xl sm:text-9xl font-black tracking-tighter animate-bounce"
-                style={{ color: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
-              >
-                GOOOOL!
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
+            {/* Background com blur e gradiente radial */}
+            <div 
+              className="absolute inset-0 animate-fade-in"
+              style={{
+                background: `radial-gradient(ellipse at center, ${animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1}20 0%, rgba(0,0,0,0.95) 70%)`
+              }}
+            />
+            
+            {/* Particulas de confete */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(30)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-3 h-3 rounded-full animate-confetti"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `-10%`,
+                    backgroundColor: i % 2 === 0 
+                      ? (animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1)
+                      : (animation.side === "home" ? homeTeam.cor2 : awayTeam.cor2),
+                    animationDelay: `${Math.random() * 0.5}s`,
+                    animationDuration: `${2 + Math.random()}s`,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Linhas de energia radiantes */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-1 h-[200vh] origin-center animate-pulse-line"
+                  style={{
+                    background: `linear-gradient(to bottom, transparent, ${animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1}40, transparent)`,
+                    transform: `rotate(${i * 30}deg)`,
+                    animationDelay: `${i * 0.05}s`,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Conteudo principal */}
+            <div className="relative flex flex-col items-center gap-6 z-10">
+              {/* Texto GOOOOL com efeito de impacto */}
+              <div className="relative">
+                {/* Sombra/glow atras */}
+                <div
+                  className="absolute inset-0 blur-2xl opacity-60 animate-pulse"
+                  style={{ color: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
+                >
+                  <span className="text-8xl sm:text-[12rem] font-black tracking-tighter">GOOOOL!</span>
+                </div>
+                
+                {/* Texto principal com animacao de entrada */}
+                <div
+                  className="relative text-8xl sm:text-[12rem] font-black tracking-tighter animate-goal-text"
+                  style={{ 
+                    color: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1,
+                    textShadow: `0 0 60px ${animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1}80, 0 0 120px ${animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1}40`
+                  }}
+                >
+                  GOOOOL!
+                </div>
               </div>
-              <TeamCrest team={animation.side === "home" ? homeTeam : awayTeam} size="xl" />
-              <div className="text-2xl font-bold text-white">
+
+              {/* Escudo do time com brilho */}
+              <div className="relative animate-goal-badge">
+                <div 
+                  className="absolute inset-0 blur-xl opacity-50 scale-150"
+                  style={{ backgroundColor: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
+                />
+                <TeamCrest team={animation.side === "home" ? homeTeam : awayTeam} size="xl" />
+              </div>
+
+              {/* Nome do time */}
+              <div className="text-3xl sm:text-4xl font-bold text-white animate-goal-name tracking-wide">
                 {animation.side === "home" ? homeTeam.nome : awayTeam.nome}
+              </div>
+
+              {/* Placar atualizado */}
+              <div className="flex items-center gap-4 mt-2 animate-goal-score">
+                <span className="text-4xl sm:text-5xl font-black text-white tabular-nums">
+                  {state.homeScore}
+                </span>
+                <span className="text-2xl text-white/40 font-light">x</span>
+                <span className="text-4xl sm:text-5xl font-black text-white tabular-nums">
+                  {state.awayScore}
+                </span>
               </div>
             </div>
           </div>

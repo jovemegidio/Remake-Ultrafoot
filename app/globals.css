@@ -507,4 +507,111 @@
   .animate-blink {
     animation: blink 1.5s ease-in-out infinite;
   }
+
+  /* ===== GOAL CELEBRATION ANIMATIONS ===== */
+  
+  /* Confetti falling animation */
+  @keyframes confetti {
+    0% {
+      transform: translateY(0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg) scale(0);
+      opacity: 0;
+    }
+  }
+  .animate-confetti {
+    animation: confetti 2.5s ease-out forwards;
+  }
+
+  /* Pulsing energy lines */
+  @keyframes pulse-line {
+    0%, 100% {
+      opacity: 0;
+      transform: rotate(var(--rotation, 0deg)) scaleY(0);
+    }
+    50% {
+      opacity: 0.6;
+      transform: rotate(var(--rotation, 0deg)) scaleY(1);
+    }
+  }
+  .animate-pulse-line {
+    animation: pulse-line 1.5s ease-in-out infinite;
+  }
+
+  /* Goal text dramatic entrance */
+  @keyframes goal-text {
+    0% {
+      transform: scale(0) rotate(-10deg);
+      opacity: 0;
+      filter: blur(20px);
+    }
+    60% {
+      transform: scale(1.15) rotate(2deg);
+      opacity: 1;
+      filter: blur(0);
+    }
+    80% {
+      transform: scale(0.95) rotate(-1deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+  .animate-goal-text {
+    animation: goal-text 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Badge entrance with glow */
+  @keyframes goal-badge {
+    0% {
+      transform: scale(0) translateY(30px);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-goal-badge {
+    animation: goal-badge 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+    opacity: 0;
+  }
+
+  /* Team name slide up */
+  @keyframes goal-name {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-goal-name {
+    animation: goal-name 0.4s ease-out 0.5s forwards;
+    opacity: 0;
+  }
+
+  /* Score pop */
+  @keyframes goal-score {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  .animate-goal-score {
+    animation: goal-score 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s forwards;
+    opacity: 0;
+  }
 }
