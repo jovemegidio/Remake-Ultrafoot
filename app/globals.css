@@ -1,0 +1,772 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Custom Scrollbar Styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+:root {
+  /* EA FC 26 Premium Dark Theme - Inspired by EA Sports FC */
+  --background: oklch(0.08 0.02 260);
+  --foreground: oklch(0.98 0.005 240);
+
+  --card: oklch(0.12 0.025 260);
+  --card-foreground: oklch(0.98 0.005 240);
+
+  --popover: oklch(0.10 0.02 260);
+  --popover-foreground: oklch(0.98 0.005 240);
+
+  /* EA FC Cyan - Primary brand color */
+  --primary: oklch(0.78 0.18 195);
+  --primary-foreground: oklch(0.08 0.02 260);
+
+  --secondary: oklch(0.18 0.03 260);
+  --secondary-foreground: oklch(0.98 0.005 240);
+
+  --muted: oklch(0.20 0.025 260);
+  --muted-foreground: oklch(0.60 0.02 240);
+
+  /* Lime green - EA FC accent for CTAs */
+  --accent: oklch(0.85 0.22 140);
+  --accent-foreground: oklch(0.08 0.02 260);
+
+  /* Red for destructive actions */
+  --destructive: oklch(0.60 0.25 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  /* Gold - Premium/Special highlight */
+  --gold: oklch(0.80 0.18 85);
+
+  /* Orange - Warning/Alert */
+  --warning: oklch(0.75 0.18 55);
+
+  --border: oklch(0.22 0.03 260);
+  --input: oklch(0.16 0.025 260);
+  --ring: oklch(0.78 0.18 195);
+
+  --chart-1: oklch(0.78 0.18 195);
+  --chart-2: oklch(0.85 0.22 140);
+  --chart-3: oklch(0.80 0.18 85);
+  --chart-4: oklch(0.60 0.25 25);
+  --chart-5: oklch(0.55 0.12 280);
+
+  --radius: 0.625rem;
+
+  --sidebar: oklch(0.06 0.02 260);
+  --sidebar-foreground: oklch(0.75 0.01 240);
+  --sidebar-primary: oklch(0.78 0.18 195);
+  --sidebar-primary-foreground: oklch(0.08 0.02 260);
+  --sidebar-accent: oklch(0.14 0.025 260);
+  --sidebar-accent-foreground: oklch(0.98 0.005 240);
+  --sidebar-border: oklch(0.18 0.025 260);
+  --sidebar-ring: oklch(0.78 0.18 195);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  --font-display: var(--font-oswald), 'Geist', sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-gold: var(--gold);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(ellipse at top left, oklch(0.15 0.06 195 / 0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, oklch(0.12 0.08 140 / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at center, oklch(0.10 0.04 260 / 0.5) 0%, transparent 70%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  /* EA FC Display font - Bold condensed for titles */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .font-display-italic {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-style: italic;
+  }
+
+  /* Glassmorphism panel - EA FC style */
+  .glass-panel {
+    background: linear-gradient(
+      135deg,
+      oklch(0.14 0.03 260 / 0.9) 0%,
+      oklch(0.10 0.025 260 / 0.8) 100%
+    );
+    backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid oklch(0.28 0.04 260 / 0.5);
+  }
+
+  /* EA FC Card hover effect */
+  .eafc-card {
+    @apply bg-card border border-border rounded-xl transition-all duration-300;
+    background: linear-gradient(
+      145deg,
+      oklch(0.13 0.03 260) 0%,
+      oklch(0.10 0.025 260) 100%
+    );
+  }
+
+  .eafc-card:hover {
+    border-color: oklch(0.78 0.18 195 / 0.4);
+    box-shadow:
+      0 0 0 1px oklch(0.78 0.18 195 / 0.15),
+      0 8px 32px oklch(0.78 0.18 195 / 0.1),
+      inset 0 1px 0 oklch(0.95 0.05 195 / 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Subtle grid background */
+  .bg-grid {
+    background-image:
+      linear-gradient(oklch(0.25 0.03 260 / 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.25 0.03 260 / 0.12) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* EA FC Field pattern */
+  .bg-field {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        oklch(0.25 0.12 140 / 0.03) 0px,
+        oklch(0.25 0.12 140 / 0.03) 2px,
+        transparent 2px,
+        transparent 24px
+      );
+  }
+
+  /* Neon glow effects */
+  .shadow-glow-primary {
+    box-shadow:
+      0 0 0 1px oklch(0.78 0.18 195 / 0.5),
+      0 0 20px oklch(0.78 0.18 195 / 0.3),
+      0 0 40px oklch(0.78 0.18 195 / 0.15),
+      inset 0 1px 0 oklch(0.95 0.05 195 / 0.2);
+  }
+
+  .shadow-glow-accent {
+    box-shadow:
+      0 0 0 1px oklch(0.85 0.22 140 / 0.5),
+      0 0 20px oklch(0.85 0.22 140 / 0.3),
+      0 0 40px oklch(0.85 0.22 140 / 0.15),
+      inset 0 1px 0 oklch(0.95 0.1 140 / 0.2);
+  }
+
+  .shadow-glow-gold {
+    box-shadow:
+      0 0 0 1px oklch(0.80 0.18 85 / 0.5),
+      0 0 20px oklch(0.80 0.18 85 / 0.25),
+      inset 0 1px 0 oklch(0.95 0.1 85 / 0.2);
+  }
+
+  /* Text glow */
+  .text-glow-primary {
+    text-shadow: 0 0 20px oklch(0.78 0.18 195 / 0.5);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 20px oklch(0.85 0.22 140 / 0.5);
+  }
+
+  /* Diagonal slice — broadcast lower-third style */
+  .clip-slice {
+    clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
+  }
+
+  .clip-slice-r {
+    clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* EA FC style diagonal accent */
+  .eafc-diagonal {
+    position: relative;
+  }
+
+  .eafc-diagonal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 50%, oklch(0.78 0.18 195 / 0.1) 50%);
+    pointer-events: none;
+  }
+
+  /* Animated pulse for LIVE indicator */
+  @keyframes pulse-live {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.1); }
+  }
+  .animate-pulse-live {
+    animation: pulse-live 1.5s ease-in-out infinite;
+  }
+
+  /* Scrolling marquee */
+  @keyframes scroll-x {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .animate-scroll-x {
+    animation: scroll-x 40s linear infinite;
+  }
+
+  /* Gradient text */
+  .gradient-text-primary {
+    background: linear-gradient(135deg, oklch(0.78 0.18 195), oklch(0.85 0.22 140));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Shimmer loading effect */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.15 0.02 260) 0%,
+      oklch(0.20 0.03 260) 50%,
+      oklch(0.15 0.02 260) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Stat bar gradient */
+  .stat-bar {
+    background: linear-gradient(90deg, oklch(0.78 0.18 195), oklch(0.85 0.22 140));
+  }
+
+  /* Overall rating colors */
+  .overall-gold {
+    color: oklch(0.85 0.18 85);
+    text-shadow: 0 0 10px oklch(0.80 0.18 85 / 0.5);
+  }
+
+  .overall-silver {
+    color: oklch(0.75 0.02 260);
+    text-shadow: 0 0 10px oklch(0.70 0.02 260 / 0.5);
+  }
+
+  .overall-bronze {
+    color: oklch(0.65 0.12 55);
+    text-shadow: 0 0 10px oklch(0.60 0.12 55 / 0.5);
+  }
+
+  /* Goal animation */
+  @keyframes scale-in {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .animate-scale-in {
+    animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Fade in */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  /* Card show animation */
+  @keyframes card-show {
+    0% { 
+      transform: translateY(-100px) rotateY(180deg) scale(0.5);
+      opacity: 0;
+    }
+    50% {
+      transform: translateY(0) rotateY(90deg) scale(1.1);
+    }
+    100% { 
+      transform: translateY(0) rotateY(0deg) scale(1);
+      opacity: 1;
+    }
+  }
+  .animate-card-show {
+    animation: card-show 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-style: preserve-3d;
+  }
+
+  /* Goal text bounce */
+  @keyframes goal-bounce {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.1); }
+    50% { transform: scale(0.95); }
+    75% { transform: scale(1.05); }
+  }
+  .animate-goal-bounce {
+    animation: goal-bounce 0.8s ease-in-out infinite;
+  }
+
+  /* Score flash */
+  @keyframes score-flash {
+    0%, 100% { text-shadow: 0 0 0 transparent; }
+    50% { text-shadow: 0 0 30px #1db954, 0 0 60px #1db954; }
+  }
+  .animate-score-flash {
+    animation: score-flash 0.5s ease-in-out 3;
+  }
+
+  /* FIFA-style slide animations for match carousel */
+  @keyframes slide-out-left {
+    0% { 
+      transform: translateX(0); 
+      opacity: 1; 
+    }
+    100% { 
+      transform: translateX(-100%); 
+      opacity: 0; 
+    }
+  }
+
+  @keyframes slide-out-right {
+    0% { 
+      transform: translateX(0); 
+      opacity: 1; 
+    }
+    100% { 
+      transform: translateX(100%); 
+      opacity: 0; 
+    }
+  }
+
+  @keyframes slide-in {
+    0% { 
+      transform: translateX(20px); 
+      opacity: 0; 
+    }
+    100% { 
+      transform: translateX(0); 
+      opacity: 1; 
+    }
+  }
+
+  @keyframes slide-in-left {
+    0% { 
+      transform: translateX(-100%); 
+      opacity: 0; 
+    }
+    100% { 
+      transform: translateX(0); 
+      opacity: 1; 
+    }
+  }
+
+  @keyframes slide-in-right {
+    0% { 
+      transform: translateX(100%); 
+      opacity: 0; 
+    }
+    100% { 
+      transform: translateX(0); 
+      opacity: 1; 
+    }
+  }
+
+  .animate-slide-out-left {
+    animation: slide-out-left 0.3s ease-out forwards;
+  }
+
+  .animate-slide-out-right {
+    animation: slide-out-right 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out forwards;
+  }
+
+  /* FIFA card flip animation */
+  @keyframes match-card-enter {
+    0% {
+      transform: perspective(1000px) rotateY(-30deg) translateZ(-100px);
+      opacity: 0;
+    }
+    100% {
+      transform: perspective(1000px) rotateY(0deg) translateZ(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-match-card-enter {
+    animation: match-card-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Splash screen animations */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) translateX(0);
+      opacity: 0.2;
+    }
+    25% {
+      transform: translateY(-20px) translateX(10px);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translateY(-40px) translateX(-10px);
+      opacity: 0.2;
+    }
+    75% {
+      transform: translateY(-20px) translateX(5px);
+      opacity: 0.3;
+    }
+  }
+
+  @keyframes logo-float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+
+  .animate-float {
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .animate-logo-float {
+    animation: logo-float 3s ease-in-out infinite;
+  }
+
+  .animate-blink {
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  /* ===== GOAL CELEBRATION ANIMATIONS - BROADCAST STYLE ===== */
+  
+  /* Flash branco inicial */
+  @keyframes goal-flash {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  .animate-goal-flash {
+    animation: goal-flash 0.4s ease-out forwards;
+  }
+
+  /* Background fade in */
+  @keyframes goal-bg-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  .animate-goal-bg-in {
+    animation: goal-bg-in 0.3s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  /* Slide down do minuto */
+  @keyframes goal-slide-down {
+    0% {
+      transform: translateX(-50%) translateY(-30px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-goal-slide-down {
+    animation: goal-slide-down 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
+    opacity: 0;
+  }
+
+  /* Card principal entrada */
+  @keyframes goal-card-in {
+    0% {
+      transform: scale(0.8) translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-goal-card-in {
+    animation: goal-card-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+    opacity: 0;
+  }
+
+  /* Badge bounce */
+  @keyframes goal-badge-bounce {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+    }
+  }
+  .animate-goal-badge-bounce {
+    animation: goal-badge-bounce 1s ease-in-out infinite;
+    animation-delay: 0.8s;
+  }
+
+  /* Score pop quando marca */
+  @keyframes goal-score-pop {
+    0% {
+      transform: scale(1);
+    }
+    30% {
+      transform: scale(1.2);
+    }
+    60% {
+      transform: scale(0.95);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  .animate-goal-score-pop {
+    animation: goal-score-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s forwards;
+  }
+
+  /* Texto GOOOL slide */
+  @keyframes goal-text-slide {
+    0% {
+      transform: translateY(20px) scale(0.9);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+  .animate-goal-text-slide {
+    animation: goal-text-slide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s forwards;
+    opacity: 0;
+  }
+
+  /* Particulas flutuantes */
+  @keyframes goal-particle {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    20% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(0) translateY(-50px);
+      opacity: 0;
+    }
+  }
+  .animate-goal-particle {
+    animation: goal-particle 2s ease-out forwards;
+  }
+
+  /* Legado - mantido para compatibilidade */
+  @keyframes confetti {
+    0% {
+      transform: translateY(0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg) scale(0);
+      opacity: 0;
+    }
+  }
+  .animate-confetti {
+    animation: confetti 2.5s ease-out forwards;
+  }
+
+  @keyframes pulse-line {
+    0%, 100% {
+      opacity: 0;
+      transform: rotate(var(--rotation, 0deg)) scaleY(0);
+    }
+    50% {
+      opacity: 0.6;
+      transform: rotate(var(--rotation, 0deg)) scaleY(1);
+    }
+  }
+  .animate-pulse-line {
+    animation: pulse-line 1.5s ease-in-out infinite;
+  }
+
+  @keyframes goal-text {
+    0% {
+      transform: scale(0) rotate(-10deg);
+      opacity: 0;
+      filter: blur(20px);
+    }
+    60% {
+      transform: scale(1.15) rotate(2deg);
+      opacity: 1;
+      filter: blur(0);
+    }
+    80% {
+      transform: scale(0.95) rotate(-1deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+  .animate-goal-text {
+    animation: goal-text 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes goal-badge {
+    0% {
+      transform: scale(0) translateY(30px);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-goal-badge {
+    animation: goal-badge 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+    opacity: 0;
+  }
+
+  @keyframes goal-name {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-goal-name {
+    animation: goal-name 0.4s ease-out 0.5s forwards;
+    opacity: 0;
+  }
+
+  @keyframes goal-score {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  .animate-goal-score {
+    animation: goal-score 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s forwards;
+    opacity: 0;
+  }
+}
