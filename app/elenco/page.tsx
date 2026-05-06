@@ -790,8 +790,11 @@ export default function ElencoPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row h-full">
-          {/* Main content - Pitch */}
+          {/* Main content area */}
           <div className="flex-1 flex flex-col p-2 md:p-4 overflow-hidden">
+            {/* Tab Content: Elenco */}
+            {activeTab === "elenco" && (
+            <>
             {/* Pitch area */}
             <div 
               ref={pitchRef}
@@ -960,6 +963,157 @@ export default function ElencoPage() {
                 })}
               </div>
             </div>
+            </>
+            )}
+
+            {/* Tab Content: Taticas */}
+            {activeTab === "taticas" && (
+              <div className="flex-1 rounded-xl md:rounded-2xl bg-[#111111] border border-white/10 overflow-auto p-4 md:p-6">
+                <div className="max-w-4xl mx-auto space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-white mb-2">Instrucoes Taticas</h2>
+                    <p className="text-sm text-white/50">Configure o estilo de jogo da sua equipe</p>
+                  </div>
+
+                  {/* Defensive Style */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-blue-400" />
+                      Estilo Defensivo
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-white/60 block mb-2">Linha Defensiva</label>
+                        <div className="flex gap-2">
+                          {["Baixa", "Media", "Alta"].map(opt => (
+                            <button key={opt} className={cn(
+                              "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                              opt === "Media" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                            )}>{opt}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-white/60 block mb-2">Marcacao</label>
+                        <div className="flex gap-2">
+                          {["Pressao", "Equilibrada", "Recuada"].map(opt => (
+                            <button key={opt} className={cn(
+                              "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                              opt === "Equilibrada" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                            )}>{opt}</button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Offensive Style */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                      <Target className="h-4 w-4 text-red-400" />
+                      Estilo Ofensivo
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-white/60 block mb-2">Estilo de Construcao</label>
+                        <div className="flex gap-2">
+                          {["Curto", "Misto", "Direto"].map(opt => (
+                            <button key={opt} className={cn(
+                              "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                              opt === "Misto" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                            )}>{opt}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-white/60 block mb-2">Velocidade de Ataque</label>
+                        <div className="flex gap-2">
+                          {["Lento", "Normal", "Rapido"].map(opt => (
+                            <button key={opt} className={cn(
+                              "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                              opt === "Normal" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                            )}>{opt}</button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Team Mentality */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-yellow-400" />
+                      Mentalidade
+                    </h3>
+                    <div className="flex gap-2">
+                      {["Ultra Defensivo", "Defensivo", "Equilibrado", "Ofensivo", "Ultra Ofensivo"].map(opt => (
+                        <button key={opt} className={cn(
+                          "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                          opt === "Equilibrado" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                        )}>{opt}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab Content: Atribuicoes */}
+            {activeTab === "atribuicoes" && (
+              <div className="flex-1 rounded-xl md:rounded-2xl bg-[#111111] border border-white/10 overflow-auto p-4 md:p-6">
+                <div className="max-w-4xl mx-auto space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-white mb-2">Funcoes dos Jogadores</h2>
+                    <p className="text-sm text-white/50">Defina funcoes especificas para cada jogador em campo</p>
+                  </div>
+
+                  {/* Set Pieces */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 className="text-sm font-semibold text-white mb-4">Bolas Paradas</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <span className="text-xs text-white/70">Cobrador de Escanteios</span>
+                        <span className="text-xs font-medium text-[#1db954]">Eric Ramires</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <span className="text-xs text-white/70">Cobrador de Faltas</span>
+                        <span className="text-xs font-medium text-[#1db954]">Lincoln</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <span className="text-xs text-white/70">Cobrador de Penaltis</span>
+                        <span className="text-xs font-medium text-[#1db954]">Eduardo Sasha</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <span className="text-xs text-white/70">Capitao</span>
+                        <span className="text-xs font-medium text-[#1db954]">Pedro Henrique</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Player Roles */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 className="text-sm font-semibold text-white mb-4">Funcoes Individuais</h3>
+                    <div className="space-y-3">
+                      {players.slice(0, 6).map(player => (
+                        <div key={player.id} className="flex items-center gap-4 p-3 rounded-lg bg-white/5">
+                          <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-white">{player.name}</div>
+                            <div className="text-[10px] text-white/40">{player.position}</div>
+                          </div>
+                          <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1db954]">
+                            <option>{player.function}</option>
+                            <option>Equilibrado</option>
+                            <option>Ofensivo</option>
+                            <option>Defensivo</option>
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right panel - Player details (hidden on mobile, shown in drawer) */}
