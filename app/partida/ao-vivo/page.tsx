@@ -39,6 +39,7 @@ import {
 import { LivePitch } from "@/components/match/live-pitch"
 import { SubstitutionModal, type MatchPlayer } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
+import { useNotifications } from "@/components/notifications-system"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock players - usados como elenco padrão quando não houver squad real
