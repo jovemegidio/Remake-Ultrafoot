@@ -274,7 +274,7 @@ export default function MatchCenterPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="min-h-screen min-w-[1280px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
         Carregando partida...
       </div>
     )
@@ -284,9 +284,10 @@ export default function MatchCenterPage() {
   const isMatchInProgress = state.phase === "first" || state.phase === "second" || state.phase === "halftime"
 
   return (
-    <div className={cn("min-h-screen pb-4 bg-[#0a0a0a]", !isMatchInProgress && "pl-[72px]")}>
+    <div className={cn("min-h-screen min-w-[1280px] pb-4 bg-[#0a0a0a]", !isMatchInProgress && "flex")}>
       {/* Sidebar oculta durante a partida */}
       {!isMatchInProgress && <GameSidebar />}
+      <div className="flex-1">
 
       {/* Top bar */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl px-6">
@@ -629,6 +630,7 @@ export default function MatchCenterPage() {
         userSide={userSide}
         onClose={() => setShowResult(false)}
       />
+    </div>
     </div>
   )
 }

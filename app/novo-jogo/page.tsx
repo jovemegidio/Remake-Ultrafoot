@@ -72,7 +72,7 @@ export default function NovoJogoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080808] text-white antialiased">
+    <main className="min-h-screen min-w-[1280px] bg-[#080808] text-white antialiased">
       <BackgroundFx />
 
       {/* Header */}

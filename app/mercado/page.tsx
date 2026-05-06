@@ -178,8 +178,9 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="min-h-screen min-w-[1280px] flex bg-[#0a0a0a]">
       <GameSidebar />
+      <div className="flex-1 pb-24">
       <GameHeader team={userTeam} />
 
       <main className="p-6">
@@ -506,6 +507,7 @@ export default function MercadoPage() {
         type="buy"
         team={selectedPlayer?.team}
       />
+    </div>
     </div>
   )
 }

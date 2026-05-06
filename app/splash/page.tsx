@@ -101,7 +101,7 @@ export default function SplashPage() {
   return (
     <div 
       className={cn(
-        "fixed inset-0 flex items-center justify-center overflow-hidden transition-opacity duration-500",
+        "fixed inset-0 min-w-[1280px] flex items-center justify-center overflow-hidden transition-opacity duration-500",
         isExiting && "opacity-0"
       )}
       style={{

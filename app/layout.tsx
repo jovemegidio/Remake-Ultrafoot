@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={`bg-background ${geist.variable} ${geistMono.variable} ${oswald.variable}`}>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased overflow-x-auto">
         <ThemeProvider>
           <GamepadProvider>
             <NotificationsProvider>

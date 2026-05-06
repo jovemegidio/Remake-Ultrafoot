@@ -391,8 +391,9 @@ export default function ElencoPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <div className="min-h-screen pl-[72px] bg-[#0a0a0a]">
+      <div className="min-h-screen min-w-[1280px] flex bg-[#0a0a0a]">
         <GameSidebar />
+        <div className="flex-1">
         <GameHeader team={userTeam} />
         
         <main className="p-4 md:p-6 lg:p-8">
@@ -530,6 +531,7 @@ export default function ElencoPage() {
             </Button>
           </div>
         </main>
+        </div>
       </div>
     )
   }
@@ -537,8 +539,9 @@ export default function ElencoPage() {
   // Visao Tatica view
   if (currentView === "visao_tatica") {
     return (
-      <div className="min-h-screen pl-[72px] pb-16 bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10">
+      <div className="min-h-screen min-w-[1280px] flex bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10">
         <GameSidebar />
+        <div className="flex-1 pb-16">
         <GameHeader team={userTeam} />
         
         <main className="p-4 md:p-6">
@@ -704,14 +707,16 @@ export default function ElencoPage() {
             </Button>
           </div>
         </main>
+        </div>
       </div>
     )
   }
 
   // Gerenciamento view (main view)
   return (
-    <div className="min-h-screen pl-[72px] pb-16 md:pb-20 bg-[#0a0a0a]">
+    <div className="min-h-screen min-w-[1280px] flex bg-[#0a0a0a]">
       <GameSidebar />
+      <div className="flex-1 pb-16 md:pb-20">
       <GameHeader team={userTeam} />
       
       {/* Match notification toast - only shows during actual match simulations */}
@@ -1414,6 +1419,7 @@ export default function ElencoPage() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   )
 }

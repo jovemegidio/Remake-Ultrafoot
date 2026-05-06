@@ -75,8 +75,9 @@ function ControllerToolbarWithDetection() {
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="min-h-screen min-w-[1280px] flex bg-[#0a0a0a]">
       <GameSidebar />
+      <div className="flex-1 pb-24">
       <GameHeader team={userTeam} />
 
       <main className="p-6 space-y-5">
@@ -355,6 +356,7 @@ export default function DashboardPage() {
 
 {/* Controller Toolbar - FIFA style bottom bar - detecta automaticamente o tipo de controle */}
 <ControllerToolbarWithDetection />
+</div>
 </div>
 )
 }

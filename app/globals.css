@@ -109,8 +109,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-x: auto;
+    overflow-y: auto;
+  }
   body {
     @apply bg-background text-foreground;
+    min-width: 1280px;
     background-image:
       radial-gradient(ellipse at top left, oklch(0.15 0.06 195 / 0.25) 0%, transparent 50%),
       radial-gradient(ellipse at bottom right, oklch(0.12 0.08 140 / 0.15) 0%, transparent 50%),

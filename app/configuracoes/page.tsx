@@ -192,8 +192,9 @@ export default function ConfiguracoesPage() {
   if (currentView === "menu") {
     return (
       <ControllerTypeContext.Provider value={controllerType}>
-        <div className="min-h-screen pl-[72px] bg-[#0a0a0a]">
+        <div className="min-h-screen min-w-[1280px] flex bg-[#0a0a0a]">
           <GameSidebar />
+          <div className="flex-1">
           <GameHeader team={userTeam} />
           
           <main className="p-4 md:p-8 lg:p-12">
@@ -255,6 +256,7 @@ export default function ConfiguracoesPage() {
           </main>
           
           <MusicPlayer defaultSize="mini" autoPlay={false} />
+        </div>
         </div>
       </ControllerTypeContext.Provider>
     )
@@ -634,8 +636,9 @@ export default function ConfiguracoesPage() {
 
   return (
     <ControllerTypeContext.Provider value={controllerType}>
-      <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+      <div className="min-h-screen min-w-[1280px] flex bg-[#0a0a0a]">
         <GameSidebar />
+        <div className="flex-1 pb-24">
         <GameHeader team={userTeam} />
 
         <main className="p-4 md:p-6 space-y-6">
@@ -669,6 +672,7 @@ export default function ConfiguracoesPage() {
         </main>
         
         <MusicPlayer defaultSize="mini" autoPlay={false} />
+      </div>
       </div>
     </ControllerTypeContext.Provider>
   )

@@ -85,7 +85,7 @@ export default function CampeaoPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="min-h-screen min-w-[1280px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
@@ -93,7 +93,7 @@ export default function CampeaoPage() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden"
+      className="relative min-h-screen min-w-[1280px] overflow-hidden"
       style={{
         background: `radial-gradient(ellipse at top, ${team.cor1}30 0%, #0a0a0a 50%, #000 100%)`,
       }}

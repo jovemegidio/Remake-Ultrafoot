@@ -200,7 +200,7 @@ function KitSelector({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Página
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────���─────────────────────────────────────────
 
 export default function PreMatchPage() {
   const router = useRouter()
@@ -277,15 +277,16 @@ export default function PreMatchPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="min-h-screen min-w-[1280px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    <div className="min-h-screen min-w-[1280px] flex bg-[#0a0a0a]">
       <GameSidebar />
+      <div className="flex-1 pb-24">
       <GameHeader team={userTeam} />
 
       <main className="p-6">
@@ -640,6 +641,7 @@ export default function PreMatchPage() {
           </div>
         </Modal>
       )}
+    </div>
     </div>
   )
 }

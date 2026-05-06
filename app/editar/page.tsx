@@ -119,7 +119,7 @@ export default function EditarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#c0c0c0] p-2">
+    <div className="min-h-screen min-w-[1280px] bg-[#c0c0c0] p-2">
       {/* Main container - Brasfoot style */}
       <div className="grid grid-cols-2 gap-2 h-[calc(100vh-16px)]">
         
