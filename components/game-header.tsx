@@ -104,10 +104,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       </div>
 
       {/* Center - Season Info (optional) */}
-      <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4 text-[11px] text-white/50">
-        <span>Temporada <span className="text-white font-medium">{state.season}</span></span>
-        <span className="w-px h-3 bg-white/20" />
-        <span>Semana <span className="text-white font-medium">{state.week}/48</span></span>
+      <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-2 text-[11px] text-white/50">
+        <ChevronRight className="h-3 w-3 text-white/20" />
+        <span>Temporada <span className="text-[#1db954] font-medium">{state.season}</span></span>
+        <ChevronRight className="h-3 w-3 text-white/20" />
+        <span>Semana <span className="text-[#1db954] font-medium">{state.week}/48</span></span>
       </div>
 
       {/* Right - Team & Actions */}
