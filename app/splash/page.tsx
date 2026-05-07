@@ -281,40 +281,90 @@ export default function SplashPage() {
 
       {/* Phase: Main Menu - EAFC Style */}
       <div className={cn(
-        "absolute inset-0 flex flex-col transition-all duration-500",
+        "absolute inset-0 flex flex-col transition-all duration-700",
         phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         
+        {/* Animated background gradient */}
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: "radial-gradient(ellipse at 50% 0%, rgba(102, 126, 234, 0.15) 0%, transparent 50%)",
+          }}
+        />
+        
+        {/* Subtle moving particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {phase === "main-menu" && [...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white/10 rounded-full"
+              style={{
+                left: `${10 + i * 12}%`,
+                top: `${20 + (i % 3) * 25}%`,
+                animation: `float ${4 + i * 0.5}s ease-in-out infinite`,
+                animationDelay: `${i * 0.3}s`,
+              }}
+            />
+          ))}
+        </div>
+
         {/* Header with UF26 logo */}
-        <div className="flex flex-col items-center pt-16 pb-6">
+        <div 
+          className="flex flex-col items-center pt-16 pb-6"
+          style={{
+            animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+          }}
+        >
           {/* Logo container with gradient background */}
-          <div className="relative mb-4">
+          <div className="relative mb-4 group">
+            {/* Glow effect behind logo */}
             <div 
-              className="w-32 h-32 rounded-2xl flex items-center justify-center overflow-hidden shadow-xl"
+              className="absolute -inset-4 rounded-3xl opacity-60 blur-2xl transition-opacity duration-500"
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)",
+              }}
+            />
+            <div 
+              className="relative w-32 h-32 rounded-2xl flex items-center justify-center overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105"
               style={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)"
               }}
             >
+              {/* Shimmer overlay */}
+              <div 
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)",
+                  animation: "shimmerSlow 3s infinite",
+                }}
+              />
               <Image
                 src="/brand/ultrafoot-text.png"
                 alt="UF26"
                 width={90}
                 height={45}
-                className="object-contain brightness-0 invert h-auto w-auto"
+                className="object-contain brightness-0 invert h-auto w-auto relative z-10"
                 priority
               />
             </div>
           </div>
           
-          {/* Version warning */}
-          <span className="text-red-500 text-sm font-medium tracking-wide">
+          {/* Version warning with pulse */}
+          <span 
+            className="text-red-500 text-sm font-medium tracking-wide"
+            style={{
+              animation: "pulse 2s ease-in-out infinite",
+              textShadow: "0 0 20px rgba(239, 68, 68, 0.3)",
+            }}
+          >
             versao nao registrada
           </span>
         </div>
 
         {/* Main menu options - horizontal row */}
         <div className="flex-1 flex items-center justify-center px-8">
-          <div className="flex items-center justify-center gap-8">
+          <div className="flex items-center justify-center gap-6 md:gap-10">
             {mainMenuOptions.map((option, index) => {
               const isSelected = selectedIndex === index
               return (
@@ -322,35 +372,69 @@ export default function SplashPage() {
                   key={option.id}
                   onClick={() => handleMenuSelect(index)}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className={cn(
-                    "flex flex-col items-center gap-5 px-6 py-4 rounded-xl transition-all duration-200",
-                    isSelected 
-                      ? "bg-white/[0.06]" 
-                      : "bg-transparent hover:bg-white/[0.03]"
-                  )}
+                  className="relative flex flex-col items-center gap-5 px-4 py-4 rounded-2xl transition-all duration-300"
+                  style={{
+                    animation: phase === "main-menu" ? `slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + index * 0.1}s forwards` : "none",
+                    opacity: 0,
+                  }}
                 >
+                  {/* Selection glow background */}
+                  <div 
+                    className={cn(
+                      "absolute inset-0 rounded-2xl transition-all duration-400",
+                      isSelected ? "opacity-100" : "opacity-0"
+                    )}
+                    style={{
+                      background: "radial-gradient(ellipse at center, rgba(255,255,255,0.06) 0%, transparent 70%)",
+                    }}
+                  />
+                  
                   {/* Icon container */}
-                  <div className={cn(
-                    "w-24 h-24 rounded-xl flex items-center justify-center transition-all duration-200 border-2",
-                    isSelected 
-                      ? "bg-gradient-to-br from-gray-500/60 to-gray-700/60 border-white/30 shadow-lg shadow-white/5" 
-                      : "bg-gradient-to-br from-gray-700/40 to-gray-800/40 border-white/10"
-                  )}>
+                  <div className="relative">
+                    {/* Glow effect for selected */}
+                    <div 
+                      className={cn(
+                        "absolute -inset-2 rounded-2xl blur-xl transition-all duration-400",
+                        isSelected ? "opacity-40" : "opacity-0"
+                      )}
+                      style={{
+                        background: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(150,150,150,0.2) 100%)",
+                      }}
+                    />
                     <div className={cn(
-                      "transition-colors duration-200",
-                      isSelected ? "text-white" : "text-white/50"
-                    )}>
-                      {option.icon}
+                      "relative w-20 h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center transition-all duration-300 border",
+                      isSelected 
+                        ? "bg-gradient-to-br from-gray-400/40 to-gray-600/50 border-white/40 scale-105 shadow-lg" 
+                        : "bg-gradient-to-br from-gray-700/30 to-gray-800/40 border-white/10 hover:border-white/20"
+                    )}
+                    style={{
+                      boxShadow: isSelected ? "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" : "none",
+                    }}
+                    >
+                      <div className={cn(
+                        "transition-all duration-300",
+                        isSelected ? "text-white scale-110" : "text-white/40"
+                      )}>
+                        {option.icon}
+                      </div>
                     </div>
                   </div>
                   
                   {/* Label */}
                   <span className={cn(
-                    "font-bold text-sm tracking-wide transition-colors duration-200 whitespace-nowrap",
-                    isSelected ? "text-white" : "text-white/40"
+                    "font-bold text-xs md:text-sm tracking-wide transition-all duration-300 whitespace-nowrap",
+                    isSelected ? "text-white" : "text-white/35"
                   )}>
                     {option.label}
                   </span>
+                  
+                  {/* Selection indicator line */}
+                  <div 
+                    className={cn(
+                      "absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-transparent via-white/60 to-transparent rounded-full transition-all duration-300",
+                      isSelected ? "w-16 opacity-100" : "w-0 opacity-0"
+                    )}
+                  />
                 </button>
               )
             })}
@@ -358,39 +442,50 @@ export default function SplashPage() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-8 pb-8 pt-4">
+        <div 
+          className="flex items-center justify-between px-6 md:px-8 pb-6 md:pb-8 pt-4"
+          style={{
+            animation: phase === "main-menu" ? "slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards" : "none",
+            opacity: 0,
+          }}
+        >
           {/* Registrar button */}
           <button
-            className="flex items-center gap-3 px-4 py-2 text-white/50 hover:text-white transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-white/40 hover:text-white/80 transition-all duration-300 group"
           >
-            <div className="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border border-current flex items-center justify-center transition-all duration-300 group-hover:border-white/60 group-hover:bg-white/5">
               <span className="font-bold text-xs">R</span>
             </div>
-            <span className="font-semibold text-sm tracking-wide">REGISTRAR JOGO</span>
+            <span className="font-medium text-sm tracking-wide hidden sm:block">REGISTRAR JOGO</span>
           </button>
 
           {/* Center - Navigation hints + Trophy */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-3 text-xs text-white/30">
-              <span>Use as setas para navegar</span>
-              <span className="text-white/15">|</span>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3 text-xs text-white/25">
+              <span className="hidden md:inline">Use as setas para navegar</span>
+              <span className="hidden md:inline text-white/10">|</span>
               <span>Enter para selecionar</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Trophy className="h-7 w-7 text-yellow-500/70" />
+            <div className="flex items-center gap-2 group cursor-pointer">
+              <Trophy 
+                className="h-6 w-6 text-yellow-500/60 transition-all duration-300 group-hover:text-yellow-400 group-hover:scale-110" 
+                style={{
+                  filter: "drop-shadow(0 0 8px rgba(234, 179, 8, 0.3))",
+                }}
+              />
               <div className="text-center">
-                <div className="text-white/50 text-xs font-medium">FIFA 26</div>
-                <div className="text-white/25 text-[10px]">Enter para selecionar</div>
+                <div className="text-white/40 text-xs font-medium group-hover:text-white/60 transition-colors">ULTRAFOOT 26</div>
+                <div className="text-white/20 text-[10px]">Enter para selecionar</div>
               </div>
             </div>
           </div>
 
           {/* Sair button */}
           <button
-            className="flex items-center gap-3 px-4 py-2 text-white/50 hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-white/40 hover:text-red-400/80 transition-all duration-300 group"
           >
-            <X className="h-5 w-5" />
-            <span className="font-semibold text-sm tracking-wide">SAIR</span>
+            <X className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+            <span className="font-medium text-sm tracking-wide hidden sm:block">SAIR</span>
           </button>
         </div>
       </div>
