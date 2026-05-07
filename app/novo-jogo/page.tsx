@@ -162,20 +162,24 @@ export default function NovoJogoPage() {
               </div>
             </div>
 
-            {/* Team grid */}
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {teams.map(team => (
-                <TeamCard
-                  key={team.curto + team.divisao}
-                  team={team}
-                  selected={selected?.curto === team.curto}
-                  onClick={() => setSelected(team)}
-                />
-              ))}
-              {teams.length === 0 && (
-                <div className="col-span-full rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-white/40">
-                  Nenhum time encontrado para “{search}”.
-                </div>
+            {/* Team grid - scrollable with max height */}
+            <div className="max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {teams.map(team => (
+                  <TeamCard
+                    key={team.curto + team.divisao}
+                    team={team}
+                    selected={selected?.curto === team.curto}
+                    onClick={() => setSelected(team)}
+                  />
+                ))}
+                {teams.length === 0 && (
+                  <div className="col-span-full rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-white/40">
+                    Nenhum time encontrado para "{search}".
+                  </div>
+                )}
+              </div>
+            </div>
               )}
             </div>
           </section>

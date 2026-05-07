@@ -27,8 +27,8 @@ export default function SplashPage() {
 
   const menuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href?: string }[] = [
     { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-8 w-8" />, href: "/novo-jogo" },
-    { id: "carregar", label: "CARREGAR", icon: <Save className="h-8 w-8" />, href: "/" },
-    { id: "editar", label: "EDITAR", icon: <FileEdit className="h-8 w-8" />, href: "/editar" },
+    { id: "editar", label: "EDITOR DE CLUBES", icon: <FileEdit className="h-8 w-8" />, href: "/editar" },
+    { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-8 w-8" />, href: "/" },
     { id: "registrar", label: "REGISTRAR JOGO", icon: <KeyRound className="h-8 w-8" /> },
     { id: "sair", label: "SAIR", icon: <X className="h-8 w-8" /> },
   ]
@@ -122,16 +122,21 @@ export default function SplashPage() {
         }}
       />
 
-      {/* Phase: Studio Logo */}
+      {/* Phase: Studio Logo - Agencia do Japa */}
       <div className={cn(
         "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black",
         phase === "studio-logo" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        <div className="relative">
-          <div className="text-[#1db954] text-sm font-mono tracking-[0.5em] uppercase mb-4 animate-pulse">
-            Egidio Studios
-          </div>
-          <div className="text-white/40 text-xs tracking-wider">
+        <div className="relative flex flex-col items-center">
+          <Image
+            src="/images/agencia-do-japa-logo.png"
+            alt="Agencia do Japa"
+            width={320}
+            height={160}
+            className="object-contain"
+            priority
+          />
+          <div className="text-white/40 text-xs tracking-wider mt-4">
             Apresenta
           </div>
         </div>
@@ -162,7 +167,18 @@ export default function SplashPage() {
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         <div className="w-full max-w-md px-8">
-          <div className="text-center mb-8">
+          {/* Logo UF26 */}
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/brand/icone.png"
+              alt="Ultrafoot 26"
+              width={120}
+              height={120}
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div className="text-center mb-4">
             <p className="text-white/40 text-xs">
               {loadingProgress < 30 && "Carregando dados dos times..."}
               {loadingProgress >= 30 && loadingProgress < 60 && "Preparando estatisticas..."}
@@ -191,14 +207,18 @@ export default function SplashPage() {
         "absolute inset-0 flex flex-col transition-all duration-500",
         phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Header with game title */}
+        {/* Header with game logo */}
         <div className="flex justify-center pt-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight italic">
-              ULTRAFOOT
-            </h1>
-            <div className="flex items-center justify-center gap-2 mt-1">
-              <span className="text-2xl md:text-3xl font-black text-white/80">26-27</span>
+          <div className="flex flex-col items-center">
+            <Image
+              src="/brand/icone.png"
+              alt="Ultrafoot 26"
+              width={100}
+              height={100}
+              className="object-contain"
+              priority
+            />
+            <div className="flex items-center justify-center gap-2 mt-2">
               <span className="text-xs text-red-400 font-medium">versao nao registrada</span>
             </div>
           </div>
