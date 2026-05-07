@@ -267,17 +267,17 @@ export default function SplashPage() {
         "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Animated background particles */}
+        {/* Animated background particles - fixed positions to avoid hydration mismatch */}
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
+          {[...Array(12)].map((_, i) => (
             <div
               key={i}
               className="absolute w-1 h-1 bg-cyan-500/30 rounded-full animate-pulse"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 3}s`,
+                left: `${(i * 8 + 5) % 100}%`,
+                top: `${(i * 7 + 10) % 100}%`,
+                animationDelay: `${(i * 0.2) % 2}s`,
+                animationDuration: `${2 + (i % 3)}s`,
               }}
             />
           ))}
@@ -449,14 +449,9 @@ export default function SplashPage() {
                   animation: "shimmerSlow 4s infinite",
                 }}
               />
-              <Image
-                src="/brand/ultrafoot-text.png"
-                alt="UF26"
-                width={56}
-                height={28}
-                className="object-contain brightness-0 invert h-auto w-auto max-w-[44px] md:max-w-[50px] lg:max-w-[56px] relative z-10"
-                priority
-              />
+              <span className="text-white font-bold text-[10px] md:text-xs tracking-wider relative z-10">
+                ULTRAFOOT
+              </span>
             </div>
           </div>
           
