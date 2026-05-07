@@ -14,7 +14,6 @@ import {
   History,
   Settings,
   BarChart3,
-  Palette,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -29,7 +28,6 @@ const navItems = [
   { icon: ShoppingCart, label: "Mercado", href: "/mercado" },
   { icon: Mail, label: "Mensagens", href: "/mensagens", badge: 3 },
   { icon: History, label: "Historico", href: "/historico" },
-  { icon: Palette, label: "Editor", href: "/editar" },
   { icon: Settings, label: "Configuracoes", href: "/configuracoes" },
 ]
 

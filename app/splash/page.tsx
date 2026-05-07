@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, Trophy, X, Key, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react"
+import { Globe, Save, FileEdit, Trophy, X, Key, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ type SplashPhase =
   | "main-menu"
   | "fade-out"
 
-type MenuOption = "novo-jogo" | "carregar"
+type MenuOption = "novo-jogo" | "editar" | "carregar"
 
 export default function SplashPage() {
   const router = useRouter()
@@ -47,6 +47,7 @@ export default function SplashPage() {
 
   const mainMenuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href?: string }[] = [
     { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
+    { id: "editar", label: "EDITOR DE CLUBES", icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
     { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
   ]
 
