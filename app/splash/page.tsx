@@ -188,10 +188,9 @@ export default function SplashPage() {
         >
           {/* Soft glow behind logo */}
           <div 
-            className="absolute -inset-20 opacity-20"
+            className="absolute -inset-20 opacity-10"
             style={{
-              background: "radial-gradient(ellipse at center, rgba(34, 197, 94, 0.3) 0%, transparent 60%)",
-              animation: phase === "studio-logo" ? "glowPulse 3s ease-in-out infinite" : "none",
+              background: "radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, transparent 60%)",
             }}
           />
           
@@ -206,11 +205,11 @@ export default function SplashPage() {
             <Image
               src="/images/agencia-do-japa-logo.png"
               alt="Agencia do Japa"
-              width={400}
-              height={200}
-              className="object-contain h-auto w-auto max-w-[80vw]"
+              width={280}
+              height={140}
+              className="object-contain h-auto w-auto max-w-[60vw]"
               style={{
-                filter: "drop-shadow(0 0 40px rgba(34, 197, 94, 0.15))",
+                filter: "drop-shadow(0 0 30px rgba(255, 255, 255, 0.08))",
               }}
               priority
             />
@@ -396,91 +395,80 @@ export default function SplashPage() {
         phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         
-        {/* Animated background gradient */}
+        {/* Subtle top gradient - EAFC style */}
         <div 
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-20"
           style={{
-            background: "radial-gradient(ellipse at 50% 0%, rgba(102, 126, 234, 0.15) 0%, transparent 50%)",
+            background: "radial-gradient(ellipse at 50% 0%, rgba(102, 126, 234, 0.1) 0%, transparent 40%)",
           }}
         />
         
-        {/* Subtle moving particles */}
+        {/* Minimal ambient dots */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {phase === "main-menu" && [...Array(8)].map((_, i) => (
+          {phase === "main-menu" && [...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-white/10 rounded-full"
+              className="absolute w-0.5 h-0.5 bg-white/5 rounded-full"
               style={{
-                left: `${10 + i * 12}%`,
-                top: `${20 + (i % 3) * 25}%`,
-                animation: `float ${4 + i * 0.5}s ease-in-out infinite`,
-                animationDelay: `${i * 0.3}s`,
+                left: `${15 + i * 20}%`,
+                top: `${25 + (i % 2) * 30}%`,
+                animation: `float ${6 + i}s ease-in-out infinite`,
+                animationDelay: `${i * 0.5}s`,
               }}
             />
           ))}
         </div>
 
-        {/* Header with UF26 logo */}
+        {/* Header with UF26 logo - Compact */}
         <div 
-          className="flex flex-col items-center pt-8 md:pt-12 lg:pt-16 pb-4"
+          className="flex flex-col items-center pt-10 md:pt-14 lg:pt-16 pb-2"
           style={{
             animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
           }}
         >
-          {/* Logo container with gradient background */}
-          <div className="relative mb-3 group">
-            {/* Glow effect behind logo */}
+          {/* Logo container with gradient background - EAFC Style */}
+          <div className="relative mb-4 group">
+            {/* Subtle glow effect */}
             <div 
-              className="absolute -inset-3 rounded-2xl opacity-60 blur-xl transition-opacity duration-500"
+              className="absolute -inset-2 rounded-xl opacity-30 blur-lg transition-opacity duration-500"
               style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               }}
             />
             <div 
-              className="relative w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-xl md:rounded-2xl flex items-center justify-center overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105"
+              className="relative w-16 h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-lg md:rounded-xl flex items-center justify-center overflow-hidden shadow-xl transition-transform duration-300 hover:scale-105"
               style={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)"
               }}
             >
-              {/* Shimmer overlay */}
+              {/* Subtle shimmer overlay */}
               <div 
-                className="absolute inset-0 opacity-30"
+                className="absolute inset-0 opacity-20"
                 style={{
-                  background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)",
-                  animation: "shimmerSlow 3s infinite",
+                  background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
+                  animation: "shimmerSlow 4s infinite",
                 }}
               />
               <Image
                 src="/brand/ultrafoot-text.png"
                 alt="UF26"
-                width={80}
-                height={40}
-                className="object-contain brightness-0 invert h-auto w-auto max-w-[70px] md:max-w-[80px] lg:max-w-[90px] relative z-10"
+                width={56}
+                height={28}
+                className="object-contain brightness-0 invert h-auto w-auto max-w-[44px] md:max-w-[50px] lg:max-w-[56px] relative z-10"
                 priority
               />
             </div>
           </div>
           
-          {/* Version warning with pulse - only show if not registered */}
+          {/* Version warning - minimal style */}
           {!isRegistered ? (
-            <span 
-              className="text-red-500 text-sm font-medium tracking-wide"
-              style={{
-                animation: "pulse 2s ease-in-out infinite",
-                textShadow: "0 0 20px rgba(239, 68, 68, 0.3)",
-              }}
-            >
+            <span className="text-amber-500/70 text-[10px] font-medium tracking-widest uppercase">
               versao nao registrada
             </span>
           ) : (
-            <span 
-              className="text-emerald-500 text-sm font-medium tracking-wide flex items-center gap-2"
-              style={{
-                textShadow: "0 0 20px rgba(16, 185, 129, 0.3)",
-              }}
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              versao registrada
+            <span className="text-emerald-500/70 text-[10px] font-medium tracking-widest uppercase flex items-center gap-1.5">
+              <CheckCircle2 className="h-3 w-3" />
+              registrado
             </span>
           )}
         </div>
@@ -501,42 +489,32 @@ export default function SplashPage() {
                     opacity: 0,
                   }}
                 >
-                  {/* Selection glow background */}
+                  {/* Minimal selection background */}
                   <div 
                     className={cn(
-                      "absolute inset-0 rounded-2xl transition-all duration-400",
+                      "absolute inset-0 rounded-xl transition-all duration-300",
                       isSelected ? "opacity-100" : "opacity-0"
                     )}
                     style={{
-                      background: "radial-gradient(ellipse at center, rgba(255,255,255,0.06) 0%, transparent 70%)",
+                      background: "radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, transparent 60%)",
                     }}
                   />
                   
                   {/* Icon container */}
                   <div className="relative">
-                    {/* Glow effect for selected */}
-                    <div 
-                      className={cn(
-                        "absolute -inset-2 rounded-xl blur-lg transition-all duration-400",
-                        isSelected ? "opacity-40" : "opacity-0"
-                      )}
-                      style={{
-                        background: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(150,150,150,0.2) 100%)",
-                      }}
-                    />
                     <div className={cn(
-                      "relative w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-lg md:rounded-xl flex items-center justify-center transition-all duration-300 border",
+                      "relative w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-lg md:rounded-xl flex items-center justify-center transition-all duration-300 border",
                       isSelected 
-                        ? "bg-gradient-to-br from-gray-400/40 to-gray-600/50 border-white/40 scale-105 shadow-lg" 
-                        : "bg-gradient-to-br from-gray-700/30 to-gray-800/40 border-white/10 hover:border-white/20"
+                        ? "bg-gradient-to-br from-white/15 to-white/5 border-white/30 scale-105" 
+                        : "bg-gradient-to-br from-white/5 to-transparent border-white/10 hover:border-white/15"
                     )}
                     style={{
-                      boxShadow: isSelected ? "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" : "none",
+                      boxShadow: isSelected ? "0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" : "none",
                     }}
                     >
                       <div className={cn(
-                        "transition-all duration-300 [&>svg]:h-5 [&>svg]:w-5 sm:[&>svg]:h-6 sm:[&>svg]:w-6 md:[&>svg]:h-7 md:[&>svg]:w-7",
-                        isSelected ? "text-white scale-110" : "text-white/40"
+                        "transition-all duration-300 [&>svg]:h-5 [&>svg]:w-5 sm:[&>svg]:h-5 sm:[&>svg]:w-5 md:[&>svg]:h-6 md:[&>svg]:w-6",
+                        isSelected ? "text-white" : "text-white/35"
                       )}>
                         {option.icon}
                       </div>
@@ -554,8 +532,8 @@ export default function SplashPage() {
                   {/* Selection indicator line */}
                   <div 
                     className={cn(
-                      "absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-transparent via-white/60 to-transparent rounded-full transition-all duration-300",
-                      isSelected ? "w-16 opacity-100" : "w-0 opacity-0"
+                      "absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[2px] bg-white/50 rounded-full transition-all duration-300",
+                      isSelected ? "w-10 opacity-100" : "w-0 opacity-0"
                     )}
                   />
                 </button>
