@@ -4,7 +4,14 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, Trophy, X } from "lucide-react"
+import { Globe, Save, FileEdit, Trophy, X, Key, CheckCircle2, AlertCircle } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 
 // Fases da splash screen
 type SplashPhase = 
@@ -23,6 +30,11 @@ export default function SplashPage() {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isExiting, setIsExiting] = useState(false)
+  const [showRegisterModal, setShowRegisterModal] = useState(false)
+  const [serialKey, setSerialKey] = useState("")
+  const [isRegistered, setIsRegistered] = useState(false)
+  const [registerError, setRegisterError] = useState("")
+  const [isValidating, setIsValidating] = useState(false)
 
   const mainMenuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href: string }[] = [
     { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
@@ -70,9 +82,40 @@ export default function SplashPage() {
     }
   }, [isExiting, router, mainMenuOptions])
 
+  // Funcao para validar e registrar o jogo
+  const handleRegister = useCallback(async () => {
+    setRegisterError("")
+    setIsValidating(true)
+    
+    // Simula validacao da chave (em producao, seria uma API call)
+    await delay(1500)
+    
+    // Chave de exemplo valida: ULTRA-FOOT-2026-XXXX
+    const validKeyPattern = /^ULTRA-FOOT-2026-[A-Z0-9]{4}$/
+    
+    if (validKeyPattern.test(serialKey.toUpperCase())) {
+      setIsRegistered(true)
+      setIsValidating(false)
+      // Fecha o modal apos 2 segundos de sucesso
+      setTimeout(() => {
+        setShowRegisterModal(false)
+      }, 2000)
+    } else {
+      setRegisterError("Chave de serial invalida. Verifique e tente novamente.")
+      setIsValidating(false)
+    }
+  }, [serialKey])
+
   // Navegacao por teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (showRegisterModal) {
+        if (e.key === "Escape") {
+          setShowRegisterModal(false)
+        }
+        return
+      }
+      
       if (phase !== "main-menu") return
 
       if (e.key === "ArrowLeft") {
@@ -86,7 +129,9 @@ export default function SplashPage() {
         handleMenuSelect(selectedIndex)
       } else if (e.key === "r" || e.key === "R") {
         e.preventDefault()
-        // Registrar action - pode abrir modal
+        if (!isRegistered) {
+          setShowRegisterModal(true)
+        }
       } else if (e.key === "Escape" || e.key === "x" || e.key === "X") {
         e.preventDefault()
         // Sair action
@@ -95,7 +140,7 @@ export default function SplashPage() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions])
+  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, isRegistered])
 
   return (
     <div 
@@ -416,16 +461,28 @@ export default function SplashPage() {
             </div>
           </div>
           
-          {/* Version warning with pulse */}
-          <span 
-            className="text-red-500 text-sm font-medium tracking-wide"
-            style={{
-              animation: "pulse 2s ease-in-out infinite",
-              textShadow: "0 0 20px rgba(239, 68, 68, 0.3)",
-            }}
-          >
-            versao nao registrada
-          </span>
+          {/* Version warning with pulse - only show if not registered */}
+          {!isRegistered ? (
+            <span 
+              className="text-red-500 text-sm font-medium tracking-wide"
+              style={{
+                animation: "pulse 2s ease-in-out infinite",
+                textShadow: "0 0 20px rgba(239, 68, 68, 0.3)",
+              }}
+            >
+              versao nao registrada
+            </span>
+          ) : (
+            <span 
+              className="text-emerald-500 text-sm font-medium tracking-wide flex items-center gap-2"
+              style={{
+                textShadow: "0 0 20px rgba(16, 185, 129, 0.3)",
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              versao registrada
+            </span>
+          )}
         </div>
 
         {/* Main menu options - horizontal row */}
@@ -517,12 +574,29 @@ export default function SplashPage() {
         >
           {/* Registrar button */}
           <button
-            className="flex items-center gap-3 px-4 py-2 text-white/40 hover:text-white/80 transition-all duration-300 group"
+            onClick={() => !isRegistered && setShowRegisterModal(true)}
+            className={cn(
+              "flex items-center gap-3 px-4 py-2 transition-all duration-300 group",
+              isRegistered 
+                ? "text-emerald-500/60 cursor-default" 
+                : "text-white/40 hover:text-white/80"
+            )}
           >
-            <div className="w-8 h-8 rounded-full border border-current flex items-center justify-center transition-all duration-300 group-hover:border-white/60 group-hover:bg-white/5">
-              <span className="font-bold text-xs">R</span>
+            <div className={cn(
+              "w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300",
+              isRegistered 
+                ? "border-emerald-500/40 bg-emerald-500/10" 
+                : "border-current group-hover:border-white/60 group-hover:bg-white/5"
+            )}>
+              {isRegistered ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : (
+                <span className="font-bold text-xs">R</span>
+              )}
             </div>
-            <span className="font-medium text-sm tracking-wide hidden sm:block">REGISTRAR JOGO</span>
+            <span className="font-medium text-sm tracking-wide hidden sm:block">
+              {isRegistered ? "REGISTRADO" : "REGISTRAR JOGO"}
+            </span>
           </button>
 
           {/* Center - Navigation hints + Trophy */}
@@ -563,6 +637,97 @@ export default function SplashPage() {
           background: `radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%)`,
         }}
       />
+
+      {/* Modal de Registro */}
+      <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
+        <DialogContent 
+          className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 border-white/10 text-white max-w-md"
+          showCloseButton={!isValidating}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)"
+                }}
+              >
+                <Key className="h-5 w-5 text-white" />
+              </div>
+              Registrar Ultrafoot 26
+            </DialogTitle>
+            <DialogDescription className="text-white/50">
+              Insira sua chave de serial para desbloquear todos os recursos do jogo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 pt-4">
+            {/* Input da chave serial */}
+            <div className="space-y-2">
+              <label className="text-sm text-white/60 font-medium">
+                Chave de Serial
+              </label>
+              <input
+                type="text"
+                value={serialKey}
+                onChange={(e) => {
+                  setSerialKey(e.target.value.toUpperCase())
+                  setRegisterError("")
+                }}
+                placeholder="ULTRA-FOOT-2026-XXXX"
+                disabled={isValidating || isRegistered}
+                className={cn(
+                  "w-full px-4 py-3 bg-black/40 border rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 transition-all duration-300 font-mono tracking-wider",
+                  registerError 
+                    ? "border-red-500/50 focus:ring-red-500/30" 
+                    : "border-white/10 focus:ring-white/20 focus:border-white/30"
+                )}
+              />
+              
+              {/* Mensagem de erro */}
+              {registerError && (
+                <div className="flex items-center gap-2 text-red-400 text-sm animate-[fadeIn_0.3s_ease-out]">
+                  <AlertCircle className="h-4 w-4" />
+                  {registerError}
+                </div>
+              )}
+            </div>
+
+            {/* Botao de registro */}
+            <button
+              onClick={handleRegister}
+              disabled={!serialKey.trim() || isValidating || isRegistered}
+              className={cn(
+                "w-full py-3.5 rounded-xl font-semibold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2",
+                isRegistered
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : !serialKey.trim() || isValidating
+                    ? "bg-white/5 text-white/30 cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 hover:scale-[1.02]"
+              )}
+            >
+              {isValidating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Validando...
+                </>
+              ) : isRegistered ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Jogo Registrado com Sucesso!
+                </>
+              ) : (
+                "Ativar Jogo"
+              )}
+            </button>
+
+            {/* Dica */}
+            <p className="text-center text-white/30 text-xs">
+              Nao possui uma chave? Entre em contato com o suporte.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
