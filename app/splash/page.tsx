@@ -115,22 +115,88 @@ export default function SplashPage() {
 
       {/* Phase: Studio Logo - Agencia do Japa */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
         phase === "studio-logo" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        <div className="relative flex flex-col items-center">
-          <Image
-            src="/images/agencia-do-japa-logo.png"
-            alt="Agencia do Japa"
-            width={320}
-            height={160}
-            className="object-contain h-auto w-auto"
-            priority
+        {/* Subtle ambient particles */}
+        <div className="absolute inset-0 overflow-hidden">
+          {phase === "studio-logo" && [...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-0.5 h-0.5 bg-white/5 rounded-full"
+              style={{
+                left: `${15 + i * 15}%`,
+                top: `${30 + (i % 2) * 40}%`,
+                animation: `float ${5 + i * 0.5}s ease-in-out infinite`,
+                animationDelay: `${i * 0.4}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Main content container */}
+        <div 
+          className="relative flex flex-col items-center"
+          style={{
+            animation: phase === "studio-logo" ? "studioFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+          }}
+        >
+          {/* Soft glow behind logo */}
+          <div 
+            className="absolute -inset-20 opacity-20"
+            style={{
+              background: "radial-gradient(ellipse at center, rgba(34, 197, 94, 0.3) 0%, transparent 60%)",
+              animation: phase === "studio-logo" ? "glowPulse 3s ease-in-out infinite" : "none",
+            }}
           />
-          <div className="text-white/40 text-xs tracking-wider mt-4">
-            Apresenta
+          
+          {/* Logo with animation */}
+          <div 
+            className="relative"
+            style={{
+              animation: phase === "studio-logo" ? "logoSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards" : "none",
+              opacity: 0,
+            }}
+          >
+            <Image
+              src="/images/agencia-do-japa-logo.png"
+              alt="Agencia do Japa"
+              width={400}
+              height={200}
+              className="object-contain h-auto w-auto max-w-[80vw]"
+              style={{
+                filter: "drop-shadow(0 0 40px rgba(34, 197, 94, 0.15))",
+              }}
+              priority
+            />
+          </div>
+          
+          {/* "Apresenta" text with delayed animation */}
+          <div 
+            className="mt-8"
+            style={{
+              animation: phase === "studio-logo" ? "apresentaFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards" : "none",
+              opacity: 0,
+            }}
+          >
+            <span 
+              className="text-white/40 text-sm tracking-[0.3em] uppercase font-light"
+              style={{
+                textShadow: "0 0 20px rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              Apresenta
+            </span>
           </div>
         </div>
+
+        {/* Bottom gradient fade */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+          style={{
+            background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 100%)",
+          }}
+        />
       </div>
 
       {/* Phase: Warning */}

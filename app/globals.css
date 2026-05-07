@@ -584,6 +584,53 @@
     }
   }
 
+  /* Studio intro animations */
+  @keyframes studioFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes logoSlideUp {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes apresentaFadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+      letter-spacing: 0.2em;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+      letter-spacing: 0.3em;
+    }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      opacity: 0.15;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.25;
+      transform: scale(1.05);
+    }
+  }
+
   /* ===== GOAL CELEBRATION ANIMATIONS - BROADCAST STYLE ===== */
   
   /* Flash branco inicial */
