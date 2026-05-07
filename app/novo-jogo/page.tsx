@@ -180,8 +180,6 @@ export default function NovoJogoPage() {
                 )}
               </div>
             </div>
-              )}
-            </div>
           </section>
 
           {/* Selection panel */}
