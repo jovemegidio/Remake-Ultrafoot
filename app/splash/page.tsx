@@ -154,23 +154,66 @@ export default function SplashPage() {
 
       {/* Phase: Loading */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        <div className="w-full max-w-md px-8">
-          {/* Logo ULTRAFOOT */}
-          <div className="flex justify-center mb-8">
-            <Image
-              src="/brand/ultrafoot-text.png"
-              alt="Ultrafoot"
-              width={280}
-              height={60}
-              className="object-contain h-auto w-auto"
-              priority
+        {/* Animated background particles */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-cyan-500/30 rounded-full animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${2 + Math.random() * 3}s`,
+              }}
             />
+          ))}
+        </div>
+
+        {/* Radial glow behind logo */}
+        <div 
+          className="absolute w-[500px] h-[500px] rounded-full opacity-20 animate-pulse"
+          style={{
+            background: "radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%)",
+            animationDuration: "3s",
+          }}
+        />
+
+        <div className="w-full max-w-md px-8 relative z-10">
+          {/* Logo ULTRAFOOT with animation */}
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              {/* Glow effect */}
+              <div 
+                className="absolute inset-0 blur-xl opacity-50 animate-pulse"
+                style={{
+                  background: "linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), transparent)",
+                  animationDuration: "2s",
+                }}
+              />
+              <Image
+                src="/brand/ultrafoot-text.png"
+                alt="Ultrafoot"
+                width={280}
+                height={60}
+                className="object-contain h-auto w-auto relative z-10 animate-[pulse_3s_ease-in-out_infinite]"
+                style={{
+                  filter: "drop-shadow(0 0 20px rgba(6, 182, 212, 0.3))",
+                }}
+                priority
+              />
+            </div>
           </div>
-          <div className="text-center mb-4">
-            <p className="text-white/40 text-xs">
+
+          {/* Loading status text with fade animation */}
+          <div className="text-center mb-4 h-5 overflow-hidden">
+            <p 
+              key={loadingProgress < 30 ? "1" : loadingProgress < 60 ? "2" : loadingProgress < 90 ? "3" : "4"}
+              className="text-white/40 text-xs animate-[fadeIn_0.5s_ease-out]"
+            >
               {loadingProgress < 30 && "Carregando dados dos times..."}
               {loadingProgress >= 30 && loadingProgress < 60 && "Preparando estatisticas..."}
               {loadingProgress >= 60 && loadingProgress < 90 && "Sincronizando temporada..."}
@@ -178,17 +221,60 @@ export default function SplashPage() {
             </p>
           </div>
 
-          <div className="relative h-1 bg-white/10 rounded-full overflow-hidden">
+          {/* Progress bar with shimmer effect */}
+          <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden">
+            {/* Progress fill */}
             <div 
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-100 ease-out"
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-400 transition-all duration-100 ease-out rounded-full"
               style={{ width: `${loadingProgress}%` }}
+            />
+            {/* Shimmer overlay */}
+            <div 
+              className="absolute inset-y-0 left-0 overflow-hidden rounded-full"
+              style={{ width: `${loadingProgress}%` }}
+            >
+              <div 
+                className="absolute inset-0 animate-[shimmer_1.5s_infinite]"
+                style={{
+                  background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                  transform: "translateX(-100%)",
+                }}
+              />
+            </div>
+            {/* Glow at the end */}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-cyan-400 blur-md animate-pulse"
+              style={{ 
+                left: `calc(${loadingProgress}% - 8px)`,
+                opacity: loadingProgress > 0 ? 1 : 0,
+              }}
             />
           </div>
 
+          {/* Percentage with animation */}
           <div className="text-center mt-4">
-            <span className="text-cyan-400 font-mono text-lg tabular-nums">
+            <span 
+              className="text-cyan-400 font-mono text-lg tabular-nums inline-block"
+              style={{
+                textShadow: "0 0 20px rgba(6, 182, 212, 0.5)",
+              }}
+            >
               {loadingProgress}%
             </span>
+          </div>
+
+          {/* Loading dots */}
+          <div className="flex justify-center gap-1 mt-6">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 bg-cyan-500/50 rounded-full animate-bounce"
+                style={{
+                  animationDelay: `${i * 0.15}s`,
+                  animationDuration: "0.8s",
+                }}
+              />
+            ))}
           </div>
         </div>
       </div>
