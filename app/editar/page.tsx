@@ -143,7 +143,7 @@ export default function EditarPage() {
               alt="Ultrafoot"
               width={120}
               height={30}
-              className="object-contain opacity-80"
+              className="object-contain opacity-80 h-auto w-auto"
             />
             <div className="h-6 w-px bg-white/20" />
             <h1 className="text-lg font-bold text-white/90">Editor de Clubes</h1>
@@ -238,7 +238,7 @@ export default function EditarPage() {
                       <span className="font-medium">{selectedTeam.estadio_nome}</span>
                     </div>
                     <div className="text-sm text-white/50">
-                      {selectedTeam.estadio_cap.toLocaleString("pt-BR")} lugares
+                      {new Intl.NumberFormat("pt-BR").format(selectedTeam.estadio_cap)} lugares
                     </div>
                     <div className="mt-3 text-sm">
                       <span className="text-white/60">Tecnico:</span>{" "}
@@ -272,7 +272,7 @@ export default function EditarPage() {
                         alt={`${selectedTeam.nome} ${variant}`}
                         width={48}
                         height={60}
-                        className="object-contain"
+                        className="object-contain h-auto w-auto"
                         unoptimized
                       />
                     </div>

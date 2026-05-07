@@ -78,7 +78,7 @@ export default function NovoJogoPage() {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between border-b border-white/5 px-6 py-4">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/splash")}
           className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />

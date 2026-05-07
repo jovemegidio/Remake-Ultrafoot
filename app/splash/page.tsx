@@ -15,19 +15,19 @@ type SplashPhase =
   | "main-menu"
   | "fade-out"
 
-type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
+type MenuOption = "novo-jogo" | "editar" | "carregar"
 
 export default function SplashPage() {
   const router = useRouter()
   const [phase, setPhase] = useState<SplashPhase>("black")
   const [loadingProgress, setLoadingProgress] = useState(0)
-  const [selectedOption, setSelectedOption] = useState<MenuOption>("editar")
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [isExiting, setIsExiting] = useState(false)
 
   const mainMenuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href: string }[] = [
     { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
     { id: "editar", label: "EDITOR DE CLUBES", icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
-    { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-7 w-7" strokeWidth={1.5} />, href: "/" },
+    { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-7 w-7" strokeWidth={1.5} />, href: "/dashboard" },
   ]
 
   // Sequencia de fases da splash
@@ -59,14 +59,14 @@ export default function SplashPage() {
   }, [])
 
   // Handler para navegacao no menu
-  const handleMenuSelect = useCallback((option: MenuOption) => {
-    const menuOption = mainMenuOptions.find(o => o.id === option)
+  const handleMenuSelect = useCallback((index: number) => {
+    const menuOption = mainMenuOptions[index]
     if (menuOption?.href && !isExiting) {
       setIsExiting(true)
       setPhase("fade-out")
       setTimeout(() => {
         router.push(menuOption.href)
-      }, 500)
+      }, 400)
     }
   }, [isExiting, router, mainMenuOptions])
 
@@ -75,22 +75,18 @@ export default function SplashPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (phase !== "main-menu") return
 
-      const currentIndex = mainMenuOptions.findIndex(o => o.id === selectedOption)
-      
       if (e.key === "ArrowLeft") {
         e.preventDefault()
-        const newIndex = currentIndex > 0 ? currentIndex - 1 : mainMenuOptions.length - 1
-        setSelectedOption(mainMenuOptions[newIndex].id)
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : mainMenuOptions.length - 1)
       } else if (e.key === "ArrowRight") {
         e.preventDefault()
-        const newIndex = currentIndex < mainMenuOptions.length - 1 ? currentIndex + 1 : 0
-        setSelectedOption(mainMenuOptions[newIndex].id)
+        setSelectedIndex(prev => prev < mainMenuOptions.length - 1 ? prev + 1 : 0)
       } else if (e.key === "Enter" || e.key === " ") {
         e.preventDefault()
-        handleMenuSelect(selectedOption)
+        handleMenuSelect(selectedIndex)
       } else if (e.key === "r" || e.key === "R") {
         e.preventDefault()
-        // Registrar action
+        // Registrar action - pode abrir modal
       } else if (e.key === "Escape" || e.key === "x" || e.key === "X") {
         e.preventDefault()
         // Sair action
@@ -99,26 +95,18 @@ export default function SplashPage() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [phase, selectedOption, handleMenuSelect, mainMenuOptions])
+  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions])
 
   return (
     <div 
       className={cn(
-        "fixed inset-0 flex flex-col overflow-hidden transition-opacity duration-500",
+        "fixed inset-0 flex flex-col overflow-hidden transition-opacity duration-400",
         isExiting && "opacity-0"
       )}
       style={{
-        background: "linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 50%, #1f1f1f 100%)"
+        background: "linear-gradient(180deg, #1f1f1f 0%, #171717 50%, #1a1a1a 100%)"
       }}
     >
-      {/* Subtle texture overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 70%)`
-        }}
-      />
-
       {/* Phase: Black screen */}
       <div className={cn(
         "absolute inset-0 bg-black transition-opacity duration-1000",
@@ -136,7 +124,7 @@ export default function SplashPage() {
             alt="Agencia do Japa"
             width={320}
             height={160}
-            className="object-contain"
+            className="object-contain h-auto w-auto"
             priority
           />
           <div className="text-white/40 text-xs tracking-wider mt-4">
@@ -177,7 +165,7 @@ export default function SplashPage() {
               alt="Ultrafoot"
               width={280}
               height={60}
-              className="object-contain"
+              className="object-contain h-auto w-auto"
               priority
             />
           </div>
@@ -212,11 +200,11 @@ export default function SplashPage() {
       )}>
         
         {/* Header with UF26 logo */}
-        <div className="flex flex-col items-center pt-12 pb-4">
+        <div className="flex flex-col items-center pt-16 pb-6">
           {/* Logo container with gradient background */}
-          <div className="relative mb-3">
+          <div className="relative mb-4">
             <div 
-              className="w-28 h-28 rounded-2xl flex items-center justify-center overflow-hidden"
+              className="w-32 h-32 rounded-2xl flex items-center justify-center overflow-hidden shadow-xl"
               style={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)"
               }}
@@ -224,47 +212,47 @@ export default function SplashPage() {
               <Image
                 src="/brand/ultrafoot-text.png"
                 alt="UF26"
-                width={80}
-                height={40}
-                className="object-contain brightness-0 invert"
+                width={90}
+                height={45}
+                className="object-contain brightness-0 invert h-auto w-auto"
                 priority
               />
             </div>
           </div>
           
           {/* Version warning */}
-          <span className="text-red-500 text-xs font-medium tracking-wide">
+          <span className="text-red-500 text-sm font-medium tracking-wide">
             versao nao registrada
           </span>
         </div>
 
         {/* Main menu options - horizontal row */}
         <div className="flex-1 flex items-center justify-center px-8">
-          <div className="flex items-center justify-center gap-6">
-            {mainMenuOptions.map((option) => {
-              const isSelected = selectedOption === option.id
+          <div className="flex items-center justify-center gap-8">
+            {mainMenuOptions.map((option, index) => {
+              const isSelected = selectedIndex === index
               return (
                 <button
                   key={option.id}
-                  onClick={() => handleMenuSelect(option.id)}
-                  onMouseEnter={() => setSelectedOption(option.id)}
+                  onClick={() => handleMenuSelect(index)}
+                  onMouseEnter={() => setSelectedIndex(index)}
                   className={cn(
-                    "flex flex-col items-center gap-4 px-8 py-6 rounded-xl transition-all duration-200",
+                    "flex flex-col items-center gap-5 px-6 py-4 rounded-xl transition-all duration-200",
                     isSelected 
-                      ? "bg-white/[0.08]" 
-                      : "bg-transparent hover:bg-white/[0.04]"
+                      ? "bg-white/[0.06]" 
+                      : "bg-transparent hover:bg-white/[0.03]"
                   )}
                 >
                   {/* Icon container */}
                   <div className={cn(
-                    "w-20 h-20 rounded-xl flex items-center justify-center transition-all duration-200",
+                    "w-24 h-24 rounded-xl flex items-center justify-center transition-all duration-200 border-2",
                     isSelected 
-                      ? "bg-gradient-to-br from-gray-500/80 to-gray-700/80 shadow-lg" 
-                      : "bg-gradient-to-br from-gray-600/60 to-gray-800/60"
+                      ? "bg-gradient-to-br from-gray-500/60 to-gray-700/60 border-white/30 shadow-lg shadow-white/5" 
+                      : "bg-gradient-to-br from-gray-700/40 to-gray-800/40 border-white/10"
                   )}>
                     <div className={cn(
                       "transition-colors duration-200",
-                      isSelected ? "text-white" : "text-white/70"
+                      isSelected ? "text-white" : "text-white/50"
                     )}>
                       {option.icon}
                     </div>
@@ -273,7 +261,7 @@ export default function SplashPage() {
                   {/* Label */}
                   <span className={cn(
                     "font-bold text-sm tracking-wide transition-colors duration-200 whitespace-nowrap",
-                    isSelected ? "text-white" : "text-white/60"
+                    isSelected ? "text-white" : "text-white/40"
                   )}>
                     {option.label}
                   </span>
@@ -284,10 +272,10 @@ export default function SplashPage() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-8 pb-6">
+        <div className="flex items-center justify-between px-8 pb-8 pt-4">
           {/* Registrar button */}
           <button
-            className="flex items-center gap-3 px-4 py-2 text-white/70 hover:text-white transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-white/50 hover:text-white transition-colors"
           >
             <div className="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center">
               <span className="font-bold text-xs">R</span>
@@ -296,24 +284,24 @@ export default function SplashPage() {
           </button>
 
           {/* Center - Navigation hints + Trophy */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3 text-xs text-white/40">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-3 text-xs text-white/30">
               <span>Use as setas para navegar</span>
-              <span className="text-white/20">|</span>
+              <span className="text-white/15">|</span>
               <span>Enter para selecionar</span>
             </div>
             <div className="flex items-center gap-2">
-              <Trophy className="h-8 w-8 text-yellow-500/80" />
+              <Trophy className="h-7 w-7 text-yellow-500/70" />
               <div className="text-center">
-                <div className="text-white/60 text-xs font-medium">FIFA 26</div>
-                <div className="text-white/30 text-[10px]">Enter para selecionar</div>
+                <div className="text-white/50 text-xs font-medium">FIFA 26</div>
+                <div className="text-white/25 text-[10px]">Enter para selecionar</div>
               </div>
             </div>
           </div>
 
           {/* Sair button */}
           <button
-            className="flex items-center gap-3 px-4 py-2 text-white/70 hover:text-white transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-white/50 hover:text-white transition-colors"
           >
             <X className="h-5 w-5" />
             <span className="font-semibold text-sm tracking-wide">SAIR</span>
@@ -325,7 +313,7 @@ export default function SplashPage() {
       <div 
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(0,0,0,0.3) 100%)`,
+          background: `radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%)`,
         }}
       />
     </div>
