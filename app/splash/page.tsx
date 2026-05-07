@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, Trophy, X, Key, CheckCircle2, AlertCircle } from "lucide-react"
+import { Globe, Save, Trophy, X, Key, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ type SplashPhase =
   | "main-menu"
   | "fade-out"
 
-type MenuOption = "novo-jogo" | "editar" | "carregar"
+type MenuOption = "novo-jogo" | "carregar"
 
 export default function SplashPage() {
   const router = useRouter()
@@ -31,15 +31,23 @@ export default function SplashPage() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isExiting, setIsExiting] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
+  const [showLoadModal, setShowLoadModal] = useState(false)
   const [serialKey, setSerialKey] = useState("")
   const [isRegistered, setIsRegistered] = useState(false)
   const [registerError, setRegisterError] = useState("")
   const [isValidating, setIsValidating] = useState(false)
+  const [selectedSaveIndex, setSelectedSaveIndex] = useState(0)
 
-  const mainMenuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href: string }[] = [
+  // Mock saved games data
+  const savedGames = [
+    { id: 1, teamName: "Flamengo", season: "2025/26", date: "05/07/2026", position: "1º lugar", competition: "Serie A" },
+    { id: 2, teamName: "Palmeiras", season: "2024/25", date: "28/06/2026", position: "3º lugar", competition: "Serie A" },
+    { id: 3, teamName: "Santos", season: "2025/26", date: "15/06/2026", position: "8º lugar", competition: "Serie A" },
+  ]
+
+  const mainMenuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href?: string }[] = [
     { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
-    { id: "editar", label: "EDITOR DE CLUBES", icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
-    { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-7 w-7" strokeWidth={1.5} />, href: "/dashboard" },
+    { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
   ]
 
   // Sequencia de fases da splash
@@ -73,7 +81,15 @@ export default function SplashPage() {
   // Handler para navegacao no menu
   const handleMenuSelect = useCallback((index: number) => {
     const menuOption = mainMenuOptions[index]
-    if (menuOption?.href && !isExiting) {
+    if (isExiting) return
+    
+    // Se for carregar jogo, mostra o modal de saves
+    if (menuOption?.id === "carregar") {
+      setShowLoadModal(true)
+      return
+    }
+    
+    if (menuOption?.href) {
       setIsExiting(true)
       setPhase("fade-out")
       setTimeout(() => {
@@ -81,6 +97,15 @@ export default function SplashPage() {
       }, 400)
     }
   }, [isExiting, router, mainMenuOptions])
+
+  // Handler para carregar save
+  const handleLoadSave = useCallback((saveId: number) => {
+    setIsExiting(true)
+    setPhase("fade-out")
+    setTimeout(() => {
+      router.push(`/dashboard?save=${saveId}`)
+    }, 400)
+  }, [router])
 
   // Funcao para validar e registrar o jogo
   const handleRegister = useCallback(async () => {
@@ -116,6 +141,22 @@ export default function SplashPage() {
         return
       }
       
+      if (showLoadModal) {
+        if (e.key === "Escape") {
+          setShowLoadModal(false)
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault()
+          setSelectedSaveIndex(prev => prev > 0 ? prev - 1 : savedGames.length - 1)
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault()
+          setSelectedSaveIndex(prev => prev < savedGames.length - 1 ? prev + 1 : 0)
+        } else if (e.key === "Enter") {
+          e.preventDefault()
+          handleLoadSave(savedGames[selectedSaveIndex].id)
+        }
+        return
+      }
+      
       if (phase !== "main-menu") return
 
       if (e.key === "ArrowLeft") {
@@ -140,7 +181,7 @@ export default function SplashPage() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, isRegistered])
+  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, showLoadModal, isRegistered, selectedSaveIndex, savedGames, handleLoadSave])
 
   return (
     <div 
@@ -205,12 +246,9 @@ export default function SplashPage() {
             <Image
               src="/images/agencia-do-japa-logo.png"
               alt="Agencia do Japa"
-              width={280}
-              height={140}
-              className="object-contain h-auto w-auto max-w-[60vw]"
-              style={{
-                filter: "drop-shadow(0 0 30px rgba(255, 255, 255, 0.08))",
-              }}
+              width={180}
+              height={90}
+              className="object-contain h-auto w-auto max-w-[45vw]"
               priority
             />
           </div>
@@ -267,21 +305,24 @@ export default function SplashPage() {
         "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Animated background particles - fixed positions to avoid hydration mismatch */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(12)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-cyan-500/30 rounded-full animate-pulse"
-              style={{
-                left: `${(i * 8 + 5) % 100}%`,
-                top: `${(i * 7 + 10) % 100}%`,
-                animationDelay: `${(i * 0.2) % 2}s`,
-                animationDuration: `${2 + (i % 3)}s`,
-              }}
-            />
-          ))}
-        </div>
+        {/* Background with leagues logos */}
+        <div 
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: "url('/images/leagues-logos.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            animation: "slowZoom 20s ease-in-out infinite alternate",
+          }}
+        />
+        
+        {/* Gradient overlay for better readability */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%)",
+          }}
+        />
 
         {/* Radial glow behind logo */}
         <div 
@@ -449,9 +490,14 @@ export default function SplashPage() {
                   animation: "shimmerSlow 4s infinite",
                 }}
               />
-              <span className="text-white font-bold text-[10px] md:text-xs tracking-wider relative z-10">
-                ULTRAFOOT
-              </span>
+              <Image
+                src="/brand/uf26-logo.png"
+                alt="UF26"
+                width={48}
+                height={24}
+                className="object-contain h-auto w-auto max-w-[38px] md:max-w-[44px] lg:max-w-[48px] relative z-10"
+                priority
+              />
             </div>
           </div>
           
@@ -698,6 +744,82 @@ export default function SplashPage() {
               Nao possui uma chave? Entre em contato com o suporte.
             </p>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Carregar Jogo */}
+      <Dialog open={showLoadModal} onOpenChange={setShowLoadModal}>
+        <DialogContent 
+          className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 border-white/10 text-white max-w-lg"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600"
+              >
+                <Save className="h-5 w-5 text-white" />
+              </div>
+              Carregar Jogo
+            </DialogTitle>
+            <DialogDescription className="text-white/50">
+              Selecione um save para continuar sua carreira.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-4">
+            {savedGames.length === 0 ? (
+              <div className="text-center py-8 text-white/40">
+                <Save className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>Nenhum save encontrado.</p>
+                <p className="text-sm mt-1">Comece um novo jogo para criar seu primeiro save.</p>
+              </div>
+            ) : (
+              savedGames.map((save, index) => (
+                <button
+                  key={save.id}
+                  onClick={() => handleLoadSave(save.id)}
+                  onMouseEnter={() => setSelectedSaveIndex(index)}
+                  className={cn(
+                    "w-full p-4 rounded-xl border transition-all duration-200 text-left",
+                    selectedSaveIndex === index
+                      ? "bg-gradient-to-r from-cyan-500/20 via-blue-500/10 to-transparent border-cyan-500/40"
+                      : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                        <span className="text-lg font-bold text-white/80">{save.teamName.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-white">{save.teamName}</div>
+                        <div className="text-xs text-white/50">{save.competition} - {save.position}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-white/60">{save.season}</div>
+                      <div className="text-xs text-white/30 flex items-center gap-1 justify-end">
+                        <Clock className="h-3 w-3" />
+                        {save.date}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          {savedGames.length > 0 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-4">
+              <div className="text-xs text-white/30">
+                Use as setas para navegar, Enter para selecionar
+              </div>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400/60 hover:text-red-400 transition-colors">
+                <Trash2 className="h-3.5 w-3.5" />
+                Gerenciar Saves
+              </button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

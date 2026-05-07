@@ -631,6 +631,15 @@
     }
   }
 
+  @keyframes slowZoom {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1.1);
+    }
+  }
+
   /* ===== GOAL CELEBRATION ANIMATIONS - BROADCAST STYLE ===== */
   
   /* Flash branco inicial */
