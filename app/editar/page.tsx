@@ -166,11 +166,11 @@ export default function EditarPage() {
           
           <div className="flex items-center gap-4">
             <Image
-              src="/brand/ultrafoot-text.png"
-              alt="Ultrafoot"
-              width={140}
-              height={35}
-              className="object-contain h-8 w-auto"
+              src="/brand/uf26-logo.png"
+              alt="UF26"
+              width={100}
+              height={40}
+              className="object-contain h-7 w-auto"
               priority
             />
             <div className="hidden md:flex items-center gap-3">
