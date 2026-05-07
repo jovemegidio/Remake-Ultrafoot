@@ -308,44 +308,118 @@ export default function SplashPage() {
 
       {/* Phase: Leagues - Logos das ligas e competicoes */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 overflow-hidden",
         phase === "leagues" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Gradient overlay top */}
+        {/* Background gradient - dark to greenish (stadium feel) */}
         <div 
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0"
           style={{
-            background: "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.6) 100%)",
+            background: "linear-gradient(180deg, #0a0f0a 0%, #0d1a0d 40%, #0f1f0f 60%, #0a0f0a 100%)",
           }}
         />
         
-        {/* Leagues logos image */}
+        {/* Fog/mist effect at bottom */}
         <div 
-          className="relative w-full max-w-4xl px-8"
+          className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
           style={{
-            animation: phase === "leagues" ? "leaguesFadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+            background: "linear-gradient(0deg, rgba(255,255,255,0.03) 0%, transparent 100%)",
+          }}
+        />
+        
+        {/* Stars/particles effect */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-0.5 h-0.5 bg-white/20 rounded-full"
+              style={{
+                left: `${(i * 5 + 3) % 100}%`,
+                top: `${(i * 7 + 5) % 60}%`,
+                animation: `twinkle ${2 + (i % 3)}s ease-in-out infinite`,
+                animationDelay: `${i * 0.15}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Leagues grid container */}
+        <div 
+          className="relative z-10 w-full max-w-5xl px-6"
+          style={{
+            animation: phase === "leagues" ? "leaguesFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
           }}
         >
-          <Image
-            src="/images/leagues-logos.png"
-            alt="Ligas e Competicoes"
-            width={1200}
-            height={600}
-            className="w-full h-auto object-contain opacity-90"
-            priority
-          />
+          {/* Grid of league logos */}
+          <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 md:gap-6">
+            {[
+              { name: "Premier League", abbr: "PL" },
+              { name: "LaLiga", abbr: "LL" },
+              { name: "Serie A", abbr: "SA" },
+              { name: "Bundesliga", abbr: "BL" },
+              { name: "Ligue 1", abbr: "L1" },
+              { name: "Brasileirao", abbr: "BR" },
+              { name: "Eredivisie", abbr: "ED" },
+              { name: "Liga Portugal", abbr: "LP" },
+              { name: "MLS", abbr: "MLS" },
+              { name: "Liga MX", abbr: "MX" },
+              { name: "Champions", abbr: "UCL" },
+              { name: "Europa League", abbr: "UEL" },
+              { name: "Conference", abbr: "ECL" },
+              { name: "Libertadores", abbr: "LIB" },
+              { name: "Sulamericana", abbr: "SUL" },
+              { name: "Copa America", abbr: "CA" },
+              { name: "Euro", abbr: "EUR" },
+              { name: "World Cup", abbr: "WC" },
+              { name: "FA Cup", abbr: "FA" },
+              { name: "Copa del Rey", abbr: "CR" },
+              { name: "DFB Pokal", abbr: "DFB" },
+              { name: "Coppa Italia", abbr: "CI" },
+              { name: "Copa Brasil", abbr: "CB" },
+              { name: "EFL Cup", abbr: "EFL" },
+              { name: "Super Cup", abbr: "SC" },
+              { name: "Club WC", abbr: "CWC" },
+              { name: "Nations", abbr: "NL" },
+              { name: "Recopa", abbr: "RC" },
+              { name: "Supercopa", abbr: "SB" },
+              { name: "Community", abbr: "CS" },
+            ].map((league, index) => (
+              <div
+                key={league.abbr}
+                className="flex flex-col items-center justify-center group"
+                style={{
+                  animation: phase === "leagues" ? `fadeInUp 0.5s ease-out forwards` : "none",
+                  animationDelay: `${0.3 + index * 0.03}s`,
+                  opacity: 0,
+                }}
+              >
+                {/* Logo placeholder - shield style */}
+                <div 
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-1 transition-all duration-300"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                >
+                  <span className="text-white/70 text-[8px] md:text-[10px] font-bold tracking-tight">
+                    {league.abbr}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         
         {/* Text overlay */}
         <div 
-          className="absolute bottom-16 left-0 right-0 text-center"
+          className="absolute bottom-12 left-0 right-0 text-center"
           style={{
-            animation: phase === "leagues" ? "fadeIn 1s ease-out 0.5s forwards" : "none",
+            animation: phase === "leagues" ? "fadeIn 0.8s ease-out 1s forwards" : "none",
             opacity: 0,
           }}
         >
-          <span className="text-white/40 text-xs tracking-[0.3em] uppercase">
-            Ligas Licenciadas
+          <span className="text-white/30 text-[10px] tracking-[0.4em] uppercase">
+            30+ Competicoes Licenciadas
           </span>
         </div>
       </div>
