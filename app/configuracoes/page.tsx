@@ -71,7 +71,7 @@ const menuCards = [
   { id: "times" as ViewType, title: "Editar\ntimes", icon: Grid2X2, row: 1 },
   { id: "escalacoes" as ViewType, title: "Escalacoes", icon: Grid2X2, row: 1 },
   { id: "criar_atleta" as ViewType, title: "Criar\natleta", icon: UserPlus, row: 1 },
-  { id: "musica" as ViewType, title: "Musica\nEA SPORTS", icon: Music, row: 1 },
+  { id: "musica" as ViewType, title: "Musica", icon: Music, row: 1 },
 ]
 
 const languageOptions = [
@@ -220,19 +220,25 @@ export default function ConfiguracoesPage() {
                     onClick={() => setCurrentView(card.id)}
                     onMouseEnter={() => setSelectedCardIndex(index)}
                     className={cn(
-                      "relative flex flex-col justify-between p-4 md:p-5 rounded-xl text-left overflow-hidden transition-all aspect-square",
-                      "bg-gradient-to-br from-[#1a3a4a]/80 via-[#142a35]/90 to-[#0d1a20]",
+                      "relative flex flex-col justify-between p-4 md:p-5 rounded-lg text-left overflow-hidden transition-all aspect-square",
+                      "bg-gradient-to-br from-[#0d2a35] via-[#0a2028] to-[#061318]",
                       isSelected 
-                        ? "ring-2 ring-[#00d4ff] shadow-lg shadow-[#00d4ff]/20" 
-                        : "ring-1 ring-white/5 hover:ring-white/20"
+                        ? "shadow-lg shadow-[#00d4ff]/30" 
+                        : "hover:brightness-110"
                     )}
+                    style={{
+                      borderLeft: isSelected ? "3px solid #00d4ff" : "2px solid rgba(0, 180, 200, 0.4)",
+                      borderBottom: isSelected ? "3px solid #00d4ff" : "2px solid rgba(0, 180, 200, 0.4)",
+                      borderTop: isSelected ? "2px solid #00d4ff" : "1px solid rgba(255, 255, 255, 0.05)",
+                      borderRight: isSelected ? "2px solid #00d4ff" : "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
                   >
                     <h2 className="text-sm md:text-base font-semibold text-white whitespace-pre-line leading-tight">
                       {card.title}
                     </h2>
                     
                     <div className="flex justify-center items-center">
-                      <Icon className="h-8 w-8 md:h-10 md:w-10 text-white/70" strokeWidth={1.5} />
+                      <Icon className="h-8 w-8 md:h-10 md:w-10 text-white/60" strokeWidth={1.5} />
                     </div>
                   </motion.button>
                 )
