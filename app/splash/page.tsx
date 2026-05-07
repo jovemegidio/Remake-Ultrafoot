@@ -18,6 +18,7 @@ type SplashPhase =
   | "black" 
   | "studio-logo" 
   | "ea-warning" 
+  | "leagues"
   | "loading" 
   | "main-menu"
   | "fade-out"
@@ -64,9 +65,13 @@ export default function SplashPage() {
       
       // Fase 3: Aviso legal
       await delay(3000)
+      setPhase("leagues")
+      
+      // Fase 4: Logos das ligas e competicoes
+      await delay(3500)
       setPhase("loading")
       
-      // Fase 4: Tela de carregamento
+      // Fase 5: Tela de carregamento
       for (let i = 0; i <= 100; i += 2) {
         await delay(40)
         setLoadingProgress(i)
@@ -301,30 +306,55 @@ export default function SplashPage() {
         </div>
       </div>
 
+      {/* Phase: Leagues - Logos das ligas e competicoes */}
+      <div className={cn(
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
+        phase === "leagues" ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}>
+        {/* Gradient overlay top */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.6) 100%)",
+          }}
+        />
+        
+        {/* Leagues logos image */}
+        <div 
+          className="relative w-full max-w-4xl px-8"
+          style={{
+            animation: phase === "leagues" ? "leaguesFadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+          }}
+        >
+          <Image
+            src="/images/leagues-logos.png"
+            alt="Ligas e Competicoes"
+            width={1200}
+            height={600}
+            className="w-full h-auto object-contain opacity-90"
+            priority
+          />
+        </div>
+        
+        {/* Text overlay */}
+        <div 
+          className="absolute bottom-16 left-0 right-0 text-center"
+          style={{
+            animation: phase === "leagues" ? "fadeIn 1s ease-out 0.5s forwards" : "none",
+            opacity: 0,
+          }}
+        >
+          <span className="text-white/40 text-xs tracking-[0.3em] uppercase">
+            Ligas Licenciadas
+          </span>
+        </div>
+      </div>
+
       {/* Phase: Loading */}
       <div className={cn(
         "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Background with leagues logos */}
-        <div 
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: "url('/images/leagues-logos.png')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            animation: "slowZoom 20s ease-in-out infinite alternate",
-          }}
-        />
-        
-        {/* Gradient overlay for better readability */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%)",
-          }}
-        />
-
         {/* Radial glow behind logo */}
         <div 
           className="absolute w-[500px] h-[500px] rounded-full opacity-20 animate-pulse"
