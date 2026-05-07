@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Users,
   Shuffle,
-  Flag
+  Flag,
+  ArrowLeft
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { 
@@ -89,11 +90,6 @@ export default function EditarPage() {
     )
   }, [searchTeam])
 
-  // Get country code from estado (simplified)
-  const getCountryCode = (estado: string) => {
-    return "BRA"
-  }
-
   // Sort players
   const sortedPlayers = useMemo(() => {
     if (!sortColumn) return mockPlayers
@@ -119,167 +115,122 @@ export default function EditarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#c0c0c0] p-2">
-      {/* Main container - Brasfoot style */}
-      <div className="grid grid-cols-2 gap-2 h-[calc(100vh-16px)]">
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col">
+      {/* Header with back button */}
+      <div className="bg-[#16213e] border-b border-[#0f3460]/50 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/splash"
+            className="flex items-center gap-2 px-4 py-2 bg-[#0f3460] hover:bg-[#1a4a7a] text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Menu
+          </Link>
+          <h1 className="text-xl font-bold text-white">Editor de Clubes</h1>
+        </div>
+      </div>
+
+      {/* Main container */}
+      <div className="flex-1 grid grid-cols-2 gap-0 p-0">
         
         {/* Left Panel - Teams List */}
-        <div className="flex flex-col gap-2">
-          {/* Teams Table */}
-          <div className="flex-1 bg-white border-2 border-gray-400 rounded overflow-hidden flex flex-col">
-            {/* Table Header */}
-            <div className="grid grid-cols-[1fr_120px_60px] bg-[#000080] text-white text-xs font-semibold">
-              <div className="px-2 py-1 border-r border-[#000060]">Time</div>
-              <div className="px-2 py-1 border-r border-[#000060]">Pais</div>
-              <div className="px-2 py-1">Nivel</div>
-            </div>
-            
-            {/* Teams List */}
-            <div className="flex-1 overflow-y-auto">
-              {filteredTeams.map((team, index) => (
-                <button
-                  key={team.curto}
-                  onClick={() => setSelectedTeam(team)}
-                  className={cn(
-                    "w-full grid grid-cols-[1fr_120px_60px] text-xs border-b border-gray-200 transition-colors",
-                    selectedTeam?.curto === team.curto 
-                      ? "bg-[#000080] text-white" 
-                      : index % 2 === 0 ? "bg-white hover:bg-blue-50" : "bg-gray-50 hover:bg-blue-50"
-                  )}
-                >
-                  <div className="px-2 py-1.5 text-left truncate">{team.nome}</div>
-                  <div className="px-2 py-1.5 flex items-center gap-1">
-                    <span className="text-[10px]">{getCountryFlag(team.estado)}</span>
-                    <span>{getCountryName(team.estado)}</span>
-                  </div>
-                  <div className="px-2 py-1.5 text-center">{team.prestigio}</div>
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-col border-r border-[#0f3460]/50">
+          {/* Table Header */}
+          <div className="grid grid-cols-[1fr_120px_60px] bg-[#3d3d6b] text-white text-sm font-semibold">
+            <div className="px-3 py-2 border-r border-[#2d2d5b]">Time</div>
+            <div className="px-3 py-2 border-r border-[#2d2d5b] text-center">Pais</div>
+            <div className="px-3 py-2 text-center">Nivel</div>
+          </div>
+          
+          {/* Teams List */}
+          <div className="flex-1 overflow-y-auto bg-white">
+            {filteredTeams.map((team, index) => (
+              <button
+                key={team.curto}
+                onClick={() => setSelectedTeam(team)}
+                className={cn(
+                  "w-full grid grid-cols-[1fr_120px_60px] text-sm border-b border-gray-200 transition-colors",
+                  selectedTeam?.curto === team.curto 
+                    ? "bg-[#3d3d6b] text-white" 
+                    : index % 2 === 0 ? "bg-white hover:bg-blue-50 text-gray-800" : "bg-gray-50 hover:bg-blue-50 text-gray-800"
+                )}
+              >
+                <div className="px-3 py-2 text-left truncate">{team.nome}</div>
+                <div className="px-3 py-2 flex items-center justify-center gap-1">
+                  <span className="text-xs">{getCountryFlag(team.estado)}</span>
+                  <span>Brasil</span>
+                </div>
+                <div className="px-3 py-2 text-center font-semibold">{team.prestigio}</div>
+              </button>
+            ))}
           </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-3 gap-1">
-            <button className="flex items-center justify-center gap-1 px-3 py-2 bg-[#e0e0e0] border-2 border-t-white border-l-white border-b-gray-500 border-r-gray-500 text-xs font-semibold hover:bg-[#d0d0d0] active:border-t-gray-500 active:border-l-gray-500 active:border-b-white active:border-r-white">
-              <Plus className="h-4 w-4 text-green-600" />
-              adicionar
-            </button>
-            <button className="flex items-center justify-center gap-1 px-3 py-2 bg-[#e0e0e0] border-2 border-t-white border-l-white border-b-gray-500 border-r-gray-500 text-xs font-semibold hover:bg-[#d0d0d0] active:border-t-gray-500 active:border-l-gray-500 active:border-b-white active:border-r-white">
-              <Pencil className="h-4 w-4 text-blue-600" />
-              editar
-            </button>
-            <button className="flex items-center justify-center gap-1 px-3 py-2 bg-[#e0e0e0] border-2 border-t-white border-l-white border-b-gray-500 border-r-gray-500 text-xs font-semibold hover:bg-[#d0d0d0] active:border-t-gray-500 active:border-l-gray-500 active:border-b-white active:border-r-white">
-              <Trash2 className="h-4 w-4 text-red-600" />
-              deletar
-            </button>
-          </div>
-
-          {/* Search Fields */}
-          <div className="bg-[#e0e0e0] border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white p-2 space-y-2">
+          {/* Search */}
+          <div className="bg-[#16213e] p-3 border-t border-[#0f3460]/50">
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold w-24">Procurar time:</label>
               <input
                 type="text"
                 value={searchTeam}
                 onChange={(e) => setSearchTeam(e.target.value)}
-                className="flex-1 px-2 py-1 text-xs border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white bg-white"
+                placeholder="Procurar time..."
+                className="flex-1 px-3 py-2 text-sm bg-[#0f3460] border border-[#1a4a7a] rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-[#4a7ab0]"
               />
-              <button className="p-1 bg-[#e0e0e0] border-2 border-t-white border-l-white border-b-gray-500 border-r-gray-500">
-                <Search className="h-4 w-4" />
+              <button className="p-2 bg-[#0f3460] hover:bg-[#1a4a7a] rounded-lg transition-colors">
+                <Search className="h-4 w-4 text-white" />
               </button>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold w-24">Procurar jogador:</label>
-              <input
-                type="text"
-                value={searchPlayer}
-                onChange={(e) => setSearchPlayer(e.target.value)}
-                className="flex-1 px-2 py-1 text-xs border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white bg-white"
-              />
-              <button className="p-1 bg-[#e0e0e0] border-2 border-t-white border-l-white border-b-gray-500 border-r-gray-500">
-                <Search className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Filter Buttons */}
-          <div className="bg-[#e0e0e0] border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white p-2">
-            <div className="text-xs font-semibold mb-1">Mostrar times:</div>
-            <div className="flex gap-1">
-              <button className="flex-1 px-2 py-1 text-xs bg-white border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white hover:bg-gray-100">
-                sem escudo
-              </button>
-              <button className="flex-1 px-2 py-1 text-xs bg-white border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white hover:bg-gray-100">
-                sem camisas
-              </button>
-              <button className="flex-1 px-2 py-1 text-xs bg-white border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white hover:bg-gray-100">
-                jogadores duplicados
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Actions */}
-          <div className="flex gap-2">
-            <Link
-              href="/splash"
-              className="flex items-center justify-center gap-1 px-4 py-2 bg-[#e0e0e0] border-2 border-t-white border-l-white border-b-gray-500 border-r-gray-500 text-xs font-semibold hover:bg-[#d0d0d0]"
-            >
-              <Home className="h-4 w-4" />
-              inicio
-            </Link>
-            <button className="flex items-center justify-center gap-1 px-4 py-2 bg-[#e0e0e0] border-2 border-t-white border-l-white border-b-gray-500 border-r-gray-500 text-xs font-semibold hover:bg-[#d0d0d0]">
-              <X className="h-4 w-4 text-red-600" />
-              sair jogo
-            </button>
           </div>
         </div>
 
         {/* Right Panel - Team Details */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col bg-[#1a1a2e]">
           {selectedTeam && (
             <>
               {/* Team Info Header */}
-              <div className="bg-[#6b5b95] text-white p-3 rounded-t flex items-start gap-4">
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold">{selectedTeam.nome}</h2>
-                  <div className="text-xs text-white/80">Regional</div>
-                  <div className="flex items-center gap-2 mt-2 text-sm">
-                    <Flag className="h-4 w-4" />
-                    <span>Brasil</span>
+              <div className="bg-[#3d3d6b] text-white p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold">{selectedTeam.nome}</h2>
+                    <div className="text-sm text-white/70 mt-1">Regional</div>
+                    <div className="flex items-center gap-2 mt-3 text-sm">
+                      <Flag className="h-4 w-4" />
+                      <span>Brasil</span>
+                    </div>
+                    <div className="mt-2 text-sm">
+                      <span className="text-white/70">Estadio</span>{" "}
+                      <span className="font-medium">{selectedTeam.estadio_nome}</span>
+                    </div>
+                    <div className="text-sm text-white/70">
+                      {selectedTeam.estadio_cap.toLocaleString()} lugares
+                    </div>
+                    <div className="mt-3 text-sm">
+                      <span className="text-white/70">Tecnico:</span>{" "}
+                      <span className="font-semibold">Ramon Carrasco</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-sm">
-                    <span className="text-xs">Estadio</span>
-                    <span>{selectedTeam.estadio_nome}</span>
+                  
+                  {/* Team Level */}
+                  <div className="text-right mr-4">
+                    <div className="text-4xl font-bold">{selectedTeam.prestigio}</div>
                   </div>
-                  <div className="text-xs mt-1 text-white/70">
-                    {selectedTeam.estadio_cap.toLocaleString()} lugares
-                  </div>
-                  <div className="text-xs mt-2">
-                    Tecnico: <span className="font-semibold">Ramon Carrasco</span>
-                  </div>
-                </div>
-                
-                {/* Team Level */}
-                <div className="text-right">
-                  <div className="text-3xl font-bold">{selectedTeam.prestigio}</div>
-                </div>
 
-                {/* Team Crest */}
-                <div className="w-16 h-16 flex items-center justify-center">
-                  <TeamCrest team={selectedTeam} size="lg" />
+                  {/* Team Crest */}
+                  <div className="w-20 h-20 flex items-center justify-center">
+                    <TeamCrest team={selectedTeam} size="lg" />
+                  </div>
                 </div>
               </div>
 
-              {/* Kits Preview */}
-              <div className="bg-[#6b5b95] px-3 pb-3 flex items-center gap-4">
+              {/* Kits Preview and Tabs */}
+              <div className="bg-[#3d3d6b] px-4 pb-4 flex items-center justify-between">
                 <div className="flex gap-2">
                   {["home", "away", "third"].map((variant) => (
-                    <div key={variant} className="w-12 h-16 bg-white/10 rounded flex items-center justify-center">
+                    <div key={variant} className="w-14 h-18 bg-white/10 rounded-lg flex items-center justify-center p-1">
                       <Image
                         src={getCamisaUrl(selectedTeam.file_key, variant as "home" | "away" | "third")}
                         alt={`${selectedTeam.nome} ${variant}`}
-                        width={40}
-                        height={50}
+                        width={48}
+                        height={60}
                         className="object-contain"
                         unoptimized
                       />
@@ -288,13 +239,13 @@ export default function EditarPage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex-1 flex justify-end gap-2">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setActiveTab("principal")}
                     className={cn(
-                      "px-4 py-1 text-xs font-semibold rounded transition-colors",
+                      "px-5 py-2 text-sm font-semibold rounded transition-colors",
                       activeTab === "principal"
-                        ? "bg-white text-[#6b5b95]"
+                        ? "bg-[#f4d03f] text-[#1a1a2e]"
                         : "bg-white/20 text-white hover:bg-white/30"
                     )}
                   >
@@ -303,9 +254,9 @@ export default function EditarPage() {
                   <button
                     onClick={() => setActiveTab("juniores")}
                     className={cn(
-                      "px-4 py-1 text-xs font-semibold rounded transition-colors",
+                      "px-5 py-2 text-sm font-semibold rounded transition-colors",
                       activeTab === "juniores"
-                        ? "bg-white text-[#6b5b95]"
+                        ? "bg-[#f4d03f] text-[#1a1a2e]"
                         : "bg-white/20 text-white hover:bg-white/30"
                     )}
                   >
@@ -315,89 +266,74 @@ export default function EditarPage() {
               </div>
 
               {/* Players Table */}
-              <div className="flex-1 bg-white border-2 border-gray-400 rounded overflow-hidden flex flex-col">
+              <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Table Header */}
-                <div className="grid grid-cols-[1fr_80px_50px_50px_70px_40px] bg-[#000080] text-white text-[10px] font-semibold">
+                <div className="grid grid-cols-[1fr_90px_60px_50px_80px_50px] bg-[#3d3d6b] text-white text-xs font-semibold">
                   <button 
                     onClick={() => handleSort("nome")}
-                    className="px-2 py-1 border-r border-[#000060] text-left hover:bg-[#0000a0] flex items-center gap-1"
+                    className="px-3 py-2 border-r border-[#2d2d5b] text-left hover:bg-[#4d4d7b] flex items-center gap-1"
                   >
                     Nome
                     {sortColumn === "nome" && (sortDirection === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                   </button>
                   <button 
                     onClick={() => handleSort("posicao")}
-                    className="px-2 py-1 border-r border-[#000060] text-left hover:bg-[#0000a0]"
+                    className="px-3 py-2 border-r border-[#2d2d5b] text-left hover:bg-[#4d4d7b]"
                   >
                     Posicao
                   </button>
-                  <div className="px-2 py-1 border-r border-[#000060]">Pais</div>
+                  <div className="px-3 py-2 border-r border-[#2d2d5b] text-center">Pais</div>
                   <button 
                     onClick={() => handleSort("idade")}
-                    className="px-2 py-1 border-r border-[#000060] hover:bg-[#0000a0]"
+                    className="px-3 py-2 border-r border-[#2d2d5b] text-center hover:bg-[#4d4d7b]"
                   >
-                    idade
+                    Idade
                   </button>
-                  <div className="px-2 py-1 border-r border-[#000060]">Carac.</div>
-                  <div className="px-2 py-1">Lado</div>
+                  <div className="px-3 py-2 border-r border-[#2d2d5b] text-center">Carac.</div>
+                  <div className="px-3 py-2 text-center">Lado</div>
                 </div>
                 
                 {/* Players List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto bg-white">
                   {sortedPlayers.map((player, index) => (
                     <button
                       key={player.id}
                       onClick={() => setSelectedPlayerIndex(index)}
                       className={cn(
-                        "w-full grid grid-cols-[1fr_80px_50px_50px_70px_40px] text-[10px] border-b border-gray-200 transition-colors",
+                        "w-full grid grid-cols-[1fr_90px_60px_50px_80px_50px] text-xs border-b border-gray-200 transition-colors",
                         selectedPlayerIndex === index 
-                          ? "bg-yellow-300" 
-                          : index % 2 === 0 ? "bg-white hover:bg-yellow-100" : "bg-gray-50 hover:bg-yellow-100"
+                          ? "bg-[#f4d03f] text-[#1a1a2e]" 
+                          : index % 2 === 0 ? "bg-white hover:bg-yellow-50 text-gray-800" : "bg-gray-50 hover:bg-yellow-50 text-gray-800"
                       )}
                     >
-                      <div className="px-2 py-1 text-left truncate">{player.nome}</div>
-                      <div className="px-2 py-1 text-left">{player.posicao}</div>
-                      <div className="px-2 py-1 flex items-center gap-0.5">
-                        <span className="text-[8px]">{getCountryFlag(player.pais)}</span>
+                      <div className="px-3 py-2 text-left truncate font-medium">{player.nome}</div>
+                      <div className="px-3 py-2 text-left">{player.posicao}</div>
+                      <div className="px-3 py-2 flex items-center justify-center gap-0.5">
+                        <span className="text-[10px]">{getCountryFlag(player.pais)}</span>
                         <span>{player.pais}</span>
                       </div>
-                      <div className="px-2 py-1 text-center">{player.idade}</div>
-                      <div className="px-2 py-1 text-center">{player.caracteristica}</div>
-                      <div className="px-2 py-1 text-center">{player.lado}</div>
+                      <div className="px-3 py-2 text-center">{player.idade}</div>
+                      <div className="px-3 py-2 text-center">{player.caracteristica}</div>
+                      <div className="px-3 py-2 text-center">{player.lado}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Bottom Stats */}
-              <div className="flex items-center justify-between bg-[#e0e0e0] border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white p-2">
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="font-semibold">{mockPlayers.length}/55</span>
-                  <span className="font-semibold">8</span>
-                  <div className="flex items-center gap-1">
-                    <button className="p-0.5 bg-green-500 rounded">
-                      <Plus className="h-3 w-3 text-white" />
-                    </button>
-                    <button className="p-0.5 bg-green-500 rounded">
-                      <Users className="h-3 w-3 text-white" />
-                    </button>
-                    <button className="p-0.5 bg-red-500 rounded">
-                      <X className="h-3 w-3 text-white" />
-                    </button>
-                  </div>
+              <div className="flex items-center justify-between bg-[#16213e] border-t border-[#0f3460]/50 p-3">
+                <div className="flex items-center gap-4 text-sm text-white">
+                  <span className="font-semibold">{mockPlayers.length}/55 jogadores</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1 px-2 py-1 text-xs bg-white border border-gray-400 rounded hover:bg-gray-100">
-                    <Shuffle className="h-3 w-3" />
-                    Criar aleatorio
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-xs bg-[#0f3460] hover:bg-[#1a4a7a] text-white rounded transition-colors">
+                    <Plus className="h-3 w-3" />
+                    Adicionar
                   </button>
-                  <select className="px-2 py-1 text-xs border border-gray-400 rounded bg-white">
-                    <option>Goleiro</option>
-                    <option>Lateral</option>
-                    <option>Zagueiro</option>
-                    <option>Meia</option>
-                    <option>Atacante</option>
-                  </select>
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-xs bg-[#0f3460] hover:bg-[#1a4a7a] text-white rounded transition-colors">
+                    <Shuffle className="h-3 w-3" />
+                    Aleatorio
+                  </button>
                 </div>
               </div>
             </>
@@ -414,15 +350,12 @@ function getCountryFlag(code: string): string {
     "RJ": "🇧🇷", "SP": "🇧🇷", "MG": "🇧🇷", "RS": "🇧🇷", "PR": "🇧🇷", 
     "BA": "🇧🇷", "CE": "🇧🇷", "PE": "🇧🇷", "PA": "🇧🇷", "SC": "🇧🇷",
     "GO": "🇧🇷", "AM": "🇧🇷", "AL": "🇧🇷",
-    "BRA": "🇧🇷", "URU": "🇺🇾", "ARG": "🇦🇷", "CHI": "🇨🇱", "ECU": "🇪🇨",
-    "COL": "🇨🇴", "PAR": "🇵🇾", "PER": "🇵🇪", "VEN": "🇻🇪", "BOL": "🇧🇴"
+    "BRA": "🇧🇷", "URU": "🇺🇾", "ARG": "🇦🇷", "CHI": "🇨🇱", 
+    "COL": "🇨🇴", "ECU": "🇪🇨", "PER": "🇵🇪", "MEX": "🇲🇽",
   }
-  return flags[code] || "🏴"
+  return flags[code] || "🏳️"
 }
 
 function getCountryName(estado: string): string {
-  // All Brazilian states return Brasil
-  const brazilianStates = ["RJ", "SP", "MG", "RS", "PR", "BA", "CE", "PE", "PA", "SC", "GO", "AM", "AL", "SE", "RN", "PB", "MA", "PI", "AC", "AP", "RO", "RR", "TO", "MT", "MS", "DF", "ES"]
-  if (brazilianStates.includes(estado)) return "Brasil"
-  return estado
+  return "Brasil"
 }
