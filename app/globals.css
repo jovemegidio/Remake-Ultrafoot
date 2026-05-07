@@ -305,8 +305,19 @@
 
   /* Shimmer loading effect */
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes fadeIn {
+    0% { 
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    100% { 
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .animate-shimmer {
@@ -539,6 +550,85 @@
 
   .animate-blink {
     animation: blink 1.5s ease-in-out infinite;
+  }
+
+  /* Menu animations - EAFC style */
+  @keyframes slideDown {
+    0% {
+      transform: translateY(-30px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    0% {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes shimmerSlow {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
+  /* Studio intro animations */
+  @keyframes studioFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes logoSlideUp {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes apresentaFadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+      letter-spacing: 0.2em;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+      letter-spacing: 0.3em;
+    }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      opacity: 0.15;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.25;
+      transform: scale(1.05);
+    }
   }
 
   /* ===== GOAL CELEBRATION ANIMATIONS - BROADCAST STYLE ===== */
