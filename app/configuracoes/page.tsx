@@ -61,17 +61,16 @@ import {
   detectPerformanceLevel,
 } from "@/lib/performance-config"
 
-type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "tempo" | "times" | "escalacoes" | "criar_atleta" | "musica"
+type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "tempo" | "escalacoes" | "criar_atleta" | "musica"
 
 const menuCards = [
   { id: "configuracoes" as ViewType, title: "Configuracoes", icon: Settings, row: 0 },
   { id: "perfil" as ViewType, title: "Perfil", icon: User, row: 0 },
   { id: "online" as ViewType, title: "Configuracoes\nonline", icon: Globe, row: 0 },
   { id: "tempo" as ViewType, title: "Tempo de jogo", icon: Clock, row: 0 },
-  { id: "times" as ViewType, title: "Editar\ntimes", icon: Grid2X2, row: 1 },
   { id: "escalacoes" as ViewType, title: "Escalacoes", icon: Grid2X2, row: 1 },
   { id: "criar_atleta" as ViewType, title: "Criar\natleta", icon: UserPlus, row: 1 },
-  { id: "musica" as ViewType, title: "Musica\nEA SPORTS", icon: Music, row: 1 },
+  { id: "musica" as ViewType, title: "Musica", icon: Music, row: 1 },
 ]
 
 const languageOptions = [
@@ -220,19 +219,25 @@ export default function ConfiguracoesPage() {
                     onClick={() => setCurrentView(card.id)}
                     onMouseEnter={() => setSelectedCardIndex(index)}
                     className={cn(
-                      "relative flex flex-col justify-between p-4 md:p-5 rounded-xl text-left overflow-hidden transition-all aspect-square",
-                      "bg-gradient-to-br from-[#1a3a4a]/80 via-[#142a35]/90 to-[#0d1a20]",
+                      "relative flex flex-col justify-between p-4 md:p-5 rounded-lg text-left overflow-hidden transition-all aspect-square",
+                      "bg-gradient-to-br from-[#0d2a35] via-[#0a2028] to-[#061318]",
                       isSelected 
-                        ? "ring-2 ring-[#00d4ff] shadow-lg shadow-[#00d4ff]/20" 
-                        : "ring-1 ring-white/5 hover:ring-white/20"
+                        ? "shadow-lg shadow-[#00d4ff]/30" 
+                        : "hover:brightness-110"
                     )}
+                    style={{
+                      borderLeft: isSelected ? "3px solid #00d4ff" : "2px solid rgba(0, 180, 200, 0.4)",
+                      borderBottom: isSelected ? "3px solid #00d4ff" : "2px solid rgba(0, 180, 200, 0.4)",
+                      borderTop: isSelected ? "2px solid #00d4ff" : "1px solid rgba(255, 255, 255, 0.05)",
+                      borderRight: isSelected ? "2px solid #00d4ff" : "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
                   >
                     <h2 className="text-sm md:text-base font-semibold text-white whitespace-pre-line leading-tight">
                       {card.title}
                     </h2>
                     
                     <div className="flex justify-center items-center">
-                      <Icon className="h-8 w-8 md:h-10 md:w-10 text-white/70" strokeWidth={1.5} />
+                      <Icon className="h-8 w-8 md:h-10 md:w-10 text-white/60" strokeWidth={1.5} />
                     </div>
                   </motion.button>
                 )
@@ -400,79 +405,6 @@ export default function ConfiguracoesPage() {
                     {speed}
                   </button>
                 ))}
-              </div>
-            </div>
-          </div>
-        )
-        
-      case "times":
-        return (
-          <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
-              <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                Multiplayer Local
-              </h3>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                <div>
-                  <div className="text-sm text-white">Ativar Multiplayer</div>
-                  <div className="text-xs text-white/40">Ate 6 tecnicos</div>
-                </div>
-                <Switch checked={multiplayerEnabled} onCheckedChange={setMultiplayerEnabled} />
-              </div>
-              
-              {multiplayerEnabled && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={newManagerName}
-                      onChange={(e) => setNewManagerName(e.target.value)}
-                      placeholder="Nome do tecnico..."
-                      className="flex-1 bg-white/5 border-white/10 text-white"
-                      onKeyDown={(e) => e.key === "Enter" && handleAddManager()}
-                    />
-                    <Button onClick={handleAddManager} disabled={!newManagerName.trim() || managers.length >= 6} size="sm">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {managers.map((manager) => (
-                    <div key={manager.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
-                      <div className="h-8 w-8 rounded-full" style={{ backgroundColor: manager.color }} />
-                      <div className="flex-1">
-                        <div className="text-sm text-white">{manager.name}</div>
-                        <div className="text-xs text-white/40">Controle {manager.controllerIndex + 1}</div>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => handleRemoveManager(manager.id)}>
-                        <Trash2 className="h-4 w-4 text-red-400" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
-              <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                <Shirt className="h-4 w-4 text-primary" />
-                Uniforme do Time
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {(["home", "away", "third"] as const).map((type) => {
-                  const uniform = uniforms[type]
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => setSelectedUniform(type)}
-                      className={cn(
-                        "p-4 rounded-lg border transition-all flex flex-col items-center gap-2",
-                        selectedUniform === type ? "border-primary bg-primary/10" : "border-white/10 bg-white/5 hover:border-white/20"
-                      )}
-                    >
-                      <Jersey uniform={uniform} size="md" />
-                      <span className="text-xs text-white capitalize">{type === "home" ? "Titular" : type === "away" ? "Visitante" : "Alternativo"}</span>
-                    </button>
-                  )
-                })}
               </div>
             </div>
           </div>
