@@ -72,11 +72,11 @@ export default function NovoJogoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080808] text-white antialiased">
+    <main className="h-screen bg-[#080808] text-white antialiased flex flex-col overflow-hidden">
       <BackgroundFx />
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between border-b border-white/5 px-6 py-4">
+      <header className="relative z-10 flex-shrink-0 flex items-center justify-between border-b border-white/5 px-6 h-14">
         <button
           onClick={() => router.push("/splash")}
           className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
@@ -104,31 +104,30 @@ export default function NovoJogoPage() {
         </div>
       </header>
 
-      <div className="relative z-10 mx-auto max-w-[1400px] px-6 py-8">
-        <div className="mb-8">
+      <div className="relative z-10 flex-1 flex flex-col mx-auto w-full max-w-[1400px] px-6 py-4 overflow-hidden">
+        <div className="flex-shrink-0 mb-4">
           <p className="text-[11px] uppercase tracking-[0.4em] text-white/35">
             Passo 1 de 1
           </p>
           <h1
-            className="mt-2 text-4xl font-extrabold tracking-tight"
+            className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight"
             style={{
               fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
             }}
           >
             ESCOLHA SEU TIME
           </h1>
-          <p className="mt-2 max-w-xl text-sm text-white/50">
-            Selecione o clube que voce vai gerenciar nesta carreira. Voce pode jogar
-            com qualquer um dos {DIVISIONS.reduce((s, d) => s + d.teams.length, 0)} times
-            brasileiros disponiveis.
+          <p className="mt-1 max-w-xl text-xs text-white/50">
+            Selecione o clube que voce vai gerenciar. {DIVISIONS.reduce((s, d) => s + d.teams.length, 0)} times
+            disponiveis.
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+        <div className="flex-1 grid gap-4 lg:grid-cols-[1fr_360px] overflow-hidden">
           {/* Team browser */}
-          <section>
+          <section className="flex flex-col overflow-hidden">
             {/* Filters */}
-            <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="flex-shrink-0 mb-3 flex flex-wrap items-center gap-2">
               <div className="flex flex-wrap items-center gap-1 rounded-full bg-white/[0.04] p-1">
                 {DIVISIONS.map(d => (
                   <button
@@ -138,32 +137,32 @@ export default function NovoJogoPage() {
                       setSelected(null)
                     }}
                     className={
-                      "rounded-full px-4 py-1.5 text-xs font-semibold transition " +
+                      "rounded-full px-3 py-1 text-xs font-semibold transition " +
                       (d.key === divisao
                         ? "bg-white text-black"
                         : "text-white/55 hover:text-white")
                     }
                   >
                     {d.short}
-                    <span className="ml-1.5 text-[10px] opacity-60">
+                    <span className="ml-1 text-[10px] opacity-60">
                       {d.teams.length}
                     </span>
                   </button>
                 ))}
               </div>
-              <div className="relative flex-1 min-w-[200px]">
+              <div className="relative flex-1 min-w-[180px]">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
                 <Input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder={`Buscar em ${activeDivision.label}…`}
-                  className="border-white/10 bg-white/[0.03] pl-9 text-sm text-white placeholder:text-white/30"
+                  className="border-white/10 bg-white/[0.03] pl-9 text-sm text-white placeholder:text-white/30 h-9"
                 />
               </div>
             </div>
 
-            {/* Team grid - scrollable with max height */}
-            <div className="max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+            {/* Team grid - scrollable */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin pr-2">
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {teams.map(team => (
                   <TeamCard
@@ -183,27 +182,29 @@ export default function NovoJogoPage() {
           </section>
 
           {/* Selection panel */}
-          <aside className="lg:sticky lg:top-6 lg:h-fit">
-            <div className="overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-white/[0.04] to-white/[0.01]">
+          <aside className="flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-white/[0.04] to-white/[0.01]">
               {selected ? (
-                <SelectedPanel team={selected} />
+                <div className="flex-1 overflow-y-auto scrollbar-thin">
+                  <SelectedPanel team={selected} />
+                </div>
               ) : (
-                <div className="flex h-[420px] flex-col items-center justify-center px-6 text-center">
+                <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
                   <div
                     aria-hidden
-                    className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"
+                    className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5"
                   >
-                    <Trophy className="h-7 w-7 text-white/30" />
+                    <Trophy className="h-6 w-6 text-white/30" />
                   </div>
                   <p className="text-sm text-white/50">
-                    Selecione um time ao lado para ver detalhes e iniciar carreira.
+                    Selecione um time para ver detalhes.
                   </p>
                 </div>
               )}
 
               {/* Manager + start */}
-              <div className="border-t border-white/5 p-5">
-                <label className="mb-1.5 block text-[10px] uppercase tracking-[0.3em] text-white/40">
+              <div className="flex-shrink-0 border-t border-white/5 p-4">
+                <label className="mb-1 block text-[10px] uppercase tracking-[0.3em] text-white/40">
                   Nome do Tecnico
                 </label>
                 <Input
@@ -211,13 +212,13 @@ export default function NovoJogoPage() {
                   onChange={e => setManagerName(e.target.value)}
                   placeholder="Ex: Tite"
                   maxLength={32}
-                  className="mb-4 border-white/10 bg-white/[0.03] text-white placeholder:text-white/30"
+                  className="mb-3 border-white/10 bg-white/[0.03] text-white placeholder:text-white/30 h-9"
                 />
                 <button
                   onClick={handleStart}
                   disabled={!selected}
                   className={
-                    "group flex w-full items-center justify-between rounded-xl px-5 py-3 text-sm font-semibold transition " +
+                    "group flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition " +
                     (selected
                       ? "bg-white text-black hover:bg-white/90 shadow-[0_8px_30px_rgba(255,255,255,0.18)]"
                       : "cursor-not-allowed bg-white/5 text-white/30")
@@ -226,8 +227,8 @@ export default function NovoJogoPage() {
                   <span>Comecar carreira</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <p className="mt-3 text-center text-[10px] text-white/30">
-                  Save salvo localmente · funciona offline
+                <p className="mt-2 text-center text-[10px] text-white/30">
+                  Save salvo localmente
                 </p>
               </div>
             </div>
@@ -296,19 +297,19 @@ function SelectedPanel({ team }: { team: Team }) {
 
   return (
     <div
-      className="relative px-6 pb-6 pt-8"
+      className="relative px-5 pb-4 pt-5"
       style={{
         backgroundImage: `radial-gradient(ellipse at top, ${team.cor1}30 0%, transparent 65%)`,
       }}
     >
-      <div className="flex items-start gap-4">
-        <TeamCrest team={team} size="2xl" />
+      <div className="flex items-start gap-3">
+        <TeamCrest team={team} size="xl" />
         <div className="min-w-0 flex-1">
           <p className="text-[10px] uppercase tracking-[0.3em] text-white/40">
             {team.divisao.replace("_", " ").toUpperCase()}
           </p>
           <h2
-            className="mt-1 text-2xl font-extrabold leading-tight text-white"
+            className="mt-0.5 text-xl font-extrabold leading-tight text-white"
             style={{
               fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
             }}
@@ -321,7 +322,7 @@ function SelectedPanel({ team }: { team: Team }) {
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <Stat icon={Star} label="Prestigio" value={team.prestigio.toString()} />
         <Stat
           icon={Trophy}
@@ -332,12 +333,12 @@ function SelectedPanel({ team }: { team: Team }) {
         <Stat icon={Wallet} label="Saldo" value={formatCurrency(team.saldo)} />
       </div>
 
-      <div className="mt-4 rounded-xl border border-white/5 bg-black/30 p-4">
+      <div className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
           <Building2 className="h-3 w-3" />
           Estadio
         </div>
-        <div className="mt-1.5 text-sm font-medium text-white">
+        <div className="mt-1 text-sm font-medium text-white">
           {team.estadio_nome || "—"}
         </div>
         <div className="mt-0.5 text-[11px] text-white/40">
@@ -346,7 +347,7 @@ function SelectedPanel({ team }: { team: Team }) {
       </div>
 
       {players.length > 0 && (
-        <div className="mt-3 flex items-center justify-between text-[11px] text-white/45">
+        <div className="mt-2 flex items-center justify-between text-[11px] text-white/45">
           <span>{players.length} jogadores no elenco</span>
           {team.patrocinador && (
             <span className="text-white/30">{team.patrocinador}</span>
@@ -367,13 +368,13 @@ function Stat({
   value: string
 }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-black/20 p-3">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] text-white/40">
+    <div className="rounded-lg border border-white/5 bg-black/20 p-2.5">
+      <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] text-white/40">
         <Icon className="h-3 w-3" />
         {label}
       </div>
       <div
-        className="mt-1 text-lg font-semibold text-white"
+        className="mt-0.5 text-base font-semibold text-white"
         style={{
           fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
         }}

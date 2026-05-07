@@ -422,22 +422,22 @@ export default function SplashPage() {
 
         {/* Header with UF26 logo */}
         <div 
-          className="flex flex-col items-center pt-16 pb-6"
+          className="flex flex-col items-center pt-8 md:pt-12 lg:pt-16 pb-4"
           style={{
             animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
           }}
         >
           {/* Logo container with gradient background */}
-          <div className="relative mb-4 group">
+          <div className="relative mb-3 group">
             {/* Glow effect behind logo */}
             <div 
-              className="absolute -inset-4 rounded-3xl opacity-60 blur-2xl transition-opacity duration-500"
+              className="absolute -inset-3 rounded-2xl opacity-60 blur-xl transition-opacity duration-500"
               style={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)",
               }}
             />
             <div 
-              className="relative w-32 h-32 rounded-2xl flex items-center justify-center overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105"
+              className="relative w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-xl md:rounded-2xl flex items-center justify-center overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-105"
               style={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)"
               }}
@@ -453,9 +453,9 @@ export default function SplashPage() {
               <Image
                 src="/brand/ultrafoot-text.png"
                 alt="UF26"
-                width={90}
-                height={45}
-                className="object-contain brightness-0 invert h-auto w-auto relative z-10"
+                width={80}
+                height={40}
+                className="object-contain brightness-0 invert h-auto w-auto max-w-[70px] md:max-w-[80px] lg:max-w-[90px] relative z-10"
                 priority
               />
             </div>
@@ -486,8 +486,8 @@ export default function SplashPage() {
         </div>
 
         {/* Main menu options - horizontal row */}
-        <div className="flex-1 flex items-center justify-center px-8">
-          <div className="flex items-center justify-center gap-6 md:gap-10">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-8">
+          <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-10">
             {mainMenuOptions.map((option, index) => {
               const isSelected = selectedIndex === index
               return (
@@ -495,7 +495,7 @@ export default function SplashPage() {
                   key={option.id}
                   onClick={() => handleMenuSelect(index)}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className="relative flex flex-col items-center gap-5 px-4 py-4 rounded-2xl transition-all duration-300"
+                  className="relative flex flex-col items-center gap-3 sm:gap-4 md:gap-5 px-2 sm:px-3 md:px-4 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all duration-300"
                   style={{
                     animation: phase === "main-menu" ? `slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + index * 0.1}s forwards` : "none",
                     opacity: 0,
@@ -517,7 +517,7 @@ export default function SplashPage() {
                     {/* Glow effect for selected */}
                     <div 
                       className={cn(
-                        "absolute -inset-2 rounded-2xl blur-xl transition-all duration-400",
+                        "absolute -inset-2 rounded-xl blur-lg transition-all duration-400",
                         isSelected ? "opacity-40" : "opacity-0"
                       )}
                       style={{
@@ -525,7 +525,7 @@ export default function SplashPage() {
                       }}
                     />
                     <div className={cn(
-                      "relative w-20 h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center transition-all duration-300 border",
+                      "relative w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-lg md:rounded-xl flex items-center justify-center transition-all duration-300 border",
                       isSelected 
                         ? "bg-gradient-to-br from-gray-400/40 to-gray-600/50 border-white/40 scale-105 shadow-lg" 
                         : "bg-gradient-to-br from-gray-700/30 to-gray-800/40 border-white/10 hover:border-white/20"
@@ -535,7 +535,7 @@ export default function SplashPage() {
                     }}
                     >
                       <div className={cn(
-                        "transition-all duration-300",
+                        "transition-all duration-300 [&>svg]:h-5 [&>svg]:w-5 sm:[&>svg]:h-6 sm:[&>svg]:w-6 md:[&>svg]:h-7 md:[&>svg]:w-7",
                         isSelected ? "text-white scale-110" : "text-white/40"
                       )}>
                         {option.icon}
@@ -545,7 +545,7 @@ export default function SplashPage() {
                   
                   {/* Label */}
                   <span className={cn(
-                    "font-bold text-xs md:text-sm tracking-wide transition-all duration-300 whitespace-nowrap",
+                    "font-bold text-[10px] sm:text-xs md:text-sm tracking-wide transition-all duration-300 whitespace-nowrap",
                     isSelected ? "text-white" : "text-white/35"
                   )}>
                     {option.label}
@@ -566,7 +566,7 @@ export default function SplashPage() {
 
         {/* Footer */}
         <div 
-          className="flex items-center justify-between px-6 md:px-8 pb-6 md:pb-8 pt-4"
+          className="flex items-center justify-between px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 md:pb-8 pt-2"
           style={{
             animation: phase === "main-menu" ? "slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards" : "none",
             opacity: 0,
@@ -576,56 +576,55 @@ export default function SplashPage() {
           <button
             onClick={() => !isRegistered && setShowRegisterModal(true)}
             className={cn(
-              "flex items-center gap-3 px-4 py-2 transition-all duration-300 group",
+              "flex items-center gap-2 px-2 sm:px-4 py-2 transition-all duration-300 group",
               isRegistered 
                 ? "text-emerald-500/60 cursor-default" 
                 : "text-white/40 hover:text-white/80"
             )}
           >
             <div className={cn(
-              "w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300",
+              "w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all duration-300",
               isRegistered 
                 ? "border-emerald-500/40 bg-emerald-500/10" 
                 : "border-current group-hover:border-white/60 group-hover:bg-white/5"
             )}>
               {isRegistered ? (
-                <CheckCircle2 className="h-4 w-4" />
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               ) : (
-                <span className="font-bold text-xs">R</span>
+                <span className="font-bold text-[10px] sm:text-xs">R</span>
               )}
             </div>
-            <span className="font-medium text-sm tracking-wide hidden sm:block">
-              {isRegistered ? "REGISTRADO" : "REGISTRAR JOGO"}
+            <span className="font-medium text-xs sm:text-sm tracking-wide hidden sm:block">
+              {isRegistered ? "REGISTRADO" : "REGISTRAR"}
             </span>
           </button>
 
           {/* Center - Navigation hints + Trophy */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3 text-xs text-white/25">
+          <div className="flex flex-col items-center gap-1">
+            <div className="hidden sm:flex items-center gap-3 text-[10px] sm:text-xs text-white/25">
               <span className="hidden md:inline">Use as setas para navegar</span>
               <span className="hidden md:inline text-white/10">|</span>
               <span>Enter para selecionar</span>
             </div>
-            <div className="flex items-center gap-2 group cursor-pointer">
+            <div className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer">
               <Trophy 
-                className="h-6 w-6 text-yellow-500/60 transition-all duration-300 group-hover:text-yellow-400 group-hover:scale-110" 
+                className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500/60 transition-all duration-300 group-hover:text-yellow-400 group-hover:scale-110" 
                 style={{
                   filter: "drop-shadow(0 0 8px rgba(234, 179, 8, 0.3))",
                 }}
               />
               <div className="text-center">
-                <div className="text-white/40 text-xs font-medium group-hover:text-white/60 transition-colors">ULTRAFOOT 26</div>
-                <div className="text-white/20 text-[10px]">Enter para selecionar</div>
+                <div className="text-white/40 text-[10px] sm:text-xs font-medium group-hover:text-white/60 transition-colors">ULTRAFOOT 26</div>
               </div>
             </div>
           </div>
 
           {/* Sair button */}
           <button
-            className="flex items-center gap-2 px-4 py-2 text-white/40 hover:text-red-400/80 transition-all duration-300 group"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 text-white/40 hover:text-red-400/80 transition-all duration-300 group"
           >
-            <X className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
-            <span className="font-medium text-sm tracking-wide hidden sm:block">SAIR</span>
+            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:rotate-90" />
+            <span className="font-medium text-xs sm:text-sm tracking-wide hidden sm:block">SAIR</span>
           </button>
         </div>
       </div>
