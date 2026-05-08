@@ -42,6 +42,7 @@ import {
   type Team,
 } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
+import { useGameManager } from "@/lib/use-game-manager"
 import { saveMatchContext, loadMatchContext } from "@/lib/match-context"
 import { simulateFullMatch } from "@/lib/match-engine"
 import { TacticalEditor } from "@/components/tactical-editor"
@@ -205,6 +206,7 @@ function KitSelector({
 export default function PreMatchPage() {
   const router = useRouter()
   const { team: userTeam, hydrated } = useUserTeam()
+  const { seasonCalendar, currentWeek, currentSeason } = useGameManager()
 
   const [homeKit, setHomeKit] = useState<KitVariant>("home")
   const [awayKit, setAwayKit] = useState<KitVariant>("away")
@@ -222,20 +224,31 @@ export default function PreMatchPage() {
   const [weather, setWeather] = useState<Weather>("sunny")
   const [matchMode, setMatchMode] = useState<"normal" | "highlights" | "commentary">("normal")
 
-  // Determina adversário (primeiro time da Série A diferente do user)
+  // Determina proxima partida do calendario
+  const nextMatch = seasonCalendar.nextUserMatch
+  
+  // Determina adversário baseado na proxima partida do calendario
   const opponent = useMemo(() => {
+    if (nextMatch) {
+      return nextMatch.homeTeam.curto === userTeam.curto 
+        ? nextMatch.awayTeam 
+        : nextMatch.homeTeam
+    }
     return serieATeams.find(t => t.curto !== userTeam.curto) || serieATeams[1]
-  }, [userTeam.curto])
+  }, [nextMatch, userTeam.curto])
+  
+  // Verifica se o usuario joga em casa
+  const isHome = nextMatch ? nextMatch.homeTeam.curto === userTeam.curto : true
 
   const matchInfo = {
-    competition: "Brasileirão Série A",
+    competition: nextMatch?.competition || "Brasileirao Serie A",
     competitionId: "brasileirao" as CompetitionId,
-    round: "Rodada 1",
-    stadium: userTeam.estadio_nome,
-    city: userTeam.cidade,
-    date: "15 Jan 2026",
+    round: nextMatch ? `Rodada ${nextMatch.round}` : `Rodada ${currentWeek + 1}`,
+    stadium: isHome ? userTeam.estadio_nome : opponent.estadio_nome,
+    city: isHome ? userTeam.cidade : opponent.cidade,
+    date: `${currentSeason}`,
     time: "16:00",
-    isHome: true,
+    isHome,
   }
 
   // Obtem tema da competicao

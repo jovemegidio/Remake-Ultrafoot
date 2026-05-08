@@ -14,6 +14,8 @@ import {
   History,
   Settings,
   BarChart3,
+  Dumbbell,
+  FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +23,8 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", href: "/" },
   { icon: Users, label: "Elenco", href: "/elenco" },
+  { icon: Dumbbell, label: "Treinamento", href: "/treinamento" },
+  { icon: FileText, label: "Contratos", href: "/contratos" },
   { icon: CalendarDays, label: "Calendario", href: "/calendario" },
   { icon: Trophy, label: "Competicoes", href: "/competicoes" },
   { icon: BarChart3, label: "Estatisticas", href: "/estatisticas" },

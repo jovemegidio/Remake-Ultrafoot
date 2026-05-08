@@ -9,6 +9,7 @@ import { HeaderControls, ControllerTypeContext } from "@/components/controller-b
 import { NotificationBell, NotificationCenter } from "@/components/notifications-system"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
+import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
 interface GameHeaderProps {
@@ -30,6 +31,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const pathname = usePathname()
   const router = useRouter()
   const { state, setState } = useGameState()
+  const { advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar } = useGameManager()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   
   // Detecta o tipo de controlador do contexto
@@ -81,12 +83,17 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
   const handleAdvance = async () => {
     setAdvancing(true)
-    // Advance to next week
+    
+    // Avanca semana usando o game manager (simula outras partidas)
     await new Promise(resolve => setTimeout(resolve, 300))
-    setState({ week: state.week + 1 })
+    const result = await advanceGameWeek()
+    
     setAdvancing(false)
-    // Navigate to partida page
-    router.push("/partida")
+    
+    // Se tem partida do usuario, vai para tela de partida
+    if (seasonCalendar.nextUserMatch) {
+      router.push("/partida")
+    }
   }
 
   return (
@@ -134,10 +141,10 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         {/* Season/Week Info - compacto */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
           <Calendar className="h-3 w-3 text-[#1db954]" />
-          <span className="text-[10px] text-white/60">{state.season}</span>
+          <span className="text-[10px] text-white/60">{currentSeason}</span>
           <span className="text-white/20">|</span>
-          <span className="text-[10px] text-white/60">Sem</span>
-          <span className="text-[10px] text-white font-medium">{state.week}<span className="text-white/40">/48</span></span>
+          <span className="text-[10px] text-white/60">Rod</span>
+          <span className="text-[10px] text-white font-medium">{currentWeek}<span className="text-white/40">/38</span></span>
         </div>
 
         <div className="w-px h-5 bg-white/10 hidden lg:block" />
