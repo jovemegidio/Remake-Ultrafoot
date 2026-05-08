@@ -42,6 +42,7 @@ export type EventType =
   | "halftime"
   | "fulltime"
   | "var"
+  | "injury"
 
 export type Side = "home" | "away"
 
@@ -55,6 +56,29 @@ export interface MatchEvent {
   player?: string
   // Para destaque visual
   important?: boolean
+  // Para lesoes
+  injuryType?: string
+  injurySeverity?: "leve" | "media" | "grave"
+  injuryWeeks?: number
+}
+
+// Tipos de lesao
+export const MATCH_INJURY_TYPES = [
+  "Distensao muscular",
+  "Entorse de tornozelo",
+  "Contusao",
+  "Fadiga muscular",
+  "Caimbra",
+  "Pancada no joelho",
+  "Lesao na coxa"
+]
+
+export interface MatchInjury {
+  player: string
+  type: string
+  severity: "leve" | "media" | "grave"
+  weeksOut: number
+  minute: number
 }
 
 export interface TeamStats {
@@ -69,6 +93,7 @@ export interface TeamStats {
   possession: number // 0-100 (somam ~100 com adversário)
   passes: number
   passAccuracy: number
+  injuries: MatchInjury[]
 }
 
 export interface BallPosition {
@@ -117,6 +142,7 @@ const emptyTeamStats = (): TeamStats => ({
   possession: 50,
   passes: 0,
   passAccuracy: 80,
+  injuries: [],
 })
 
 export function createInitialState(): MatchState {
@@ -445,6 +471,64 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
           ...state.events,
         ]
       }
+    }
+  }
+
+  // Lesao durante a partida (2% de chance por minuto - cerca de 1-2 lesoes por partida em media)
+  if (rnd() < 0.02) {
+    const isHome = rnd() < 0.5
+    const side: Side = isHome ? "home" : "away"
+    const teamStats = isHome ? state.home : state.away
+    const player = pickPlayer(side, config, ["ATA", "MEI", "VOL", "ZAG", "LD", "LE", "PD", "PE"])
+    
+    // Determina severidade (maioria e leve)
+    const sevRoll = rnd()
+    let severity: "leve" | "media" | "grave" = "leve"
+    let weeksOut = 1
+    
+    if (sevRoll < 0.70) {
+      severity = "leve"
+      weeksOut = Math.floor(rnd() * 2) + 1 // 1-2 semanas
+    } else if (sevRoll < 0.92) {
+      severity = "media"
+      weeksOut = Math.floor(rnd() * 3) + 3 // 3-5 semanas
+    } else {
+      severity = "grave"
+      weeksOut = Math.floor(rnd() * 8) + 6 // 6-13 semanas
+    }
+    
+    const injuryType = pick(MATCH_INJURY_TYPES)
+    
+    // Registra lesao
+    teamStats.injuries.push({
+      player,
+      type: injuryType,
+      severity,
+      weeksOut,
+      minute
+    })
+    
+    state.events = [
+      {
+        id: nameId(),
+        minute,
+        type: "injury",
+        side,
+        text: severity === "grave" 
+          ? `${player} sai de maca com ${injuryType}. Fora por ${weeksOut} semanas!`
+          : `${player} sentiu ${injuryType}. Deve ficar fora ${weeksOut} semana(s)`,
+        player,
+        important: severity !== "leve",
+        injuryType,
+        injurySeverity: severity,
+        injuryWeeks: weeksOut
+      },
+      ...state.events,
+    ]
+    
+    // Flash visual para lesoes graves
+    if (severity !== "leve") {
+      state.flash = { side, type: "card", cardColor: "red" }
     }
   }
 

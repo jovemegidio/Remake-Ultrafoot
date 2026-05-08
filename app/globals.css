@@ -3,10 +3,47 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Custom Scrollbar Styles */
+/* ===== GLOBAL CUSTOM SCROLLBAR - EA FC PREMIUM STYLE ===== */
+
+/* Apply to ALL scrollable elements */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.78 0.18 195 / 0.3) oklch(0.12 0.025 260 / 0.5);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: oklch(0.12 0.025 260 / 0.5);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, oklch(0.78 0.18 195 / 0.4), oklch(0.78 0.18 195 / 0.2));
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, oklch(0.78 0.18 195 / 0.6), oklch(0.78 0.18 195 / 0.4));
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, oklch(0.78 0.18 195 / 0.8), oklch(0.78 0.18 195 / 0.5));
+}
+
+*::-webkit-scrollbar-corner {
+  background: oklch(0.12 0.025 260 / 0.5);
+}
+
+/* Thin scrollbar variant */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: oklch(0.78 0.18 195 / 0.25) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -19,14 +56,83 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, oklch(0.78 0.18 195 / 0.3), oklch(0.78 0.18 195 / 0.15));
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(180deg, oklch(0.78 0.18 195 / 0.5), oklch(0.78 0.18 195 / 0.3));
 }
 
+/* Premium scrollbar with glow effect */
+.scrollbar-premium {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.78 0.18 195 / 0.4) oklch(0.08 0.02 260);
+}
+
+.scrollbar-premium::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scrollbar-premium::-webkit-scrollbar-track {
+  background: linear-gradient(90deg, oklch(0.08 0.02 260), oklch(0.12 0.025 260), oklch(0.08 0.02 260));
+  border-radius: 5px;
+  box-shadow: inset 0 0 4px oklch(0 0 0 / 0.3);
+}
+
+.scrollbar-premium::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, 
+    oklch(0.78 0.18 195 / 0.6), 
+    oklch(0.78 0.18 195 / 0.3),
+    oklch(0.78 0.18 195 / 0.6)
+  );
+  border-radius: 5px;
+  border: 2px solid oklch(0.08 0.02 260);
+  box-shadow: 
+    0 0 8px oklch(0.78 0.18 195 / 0.3),
+    inset 0 1px 0 oklch(0.95 0.05 195 / 0.2);
+}
+
+.scrollbar-premium::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, 
+    oklch(0.85 0.22 140 / 0.7), 
+    oklch(0.78 0.18 195 / 0.5),
+    oklch(0.85 0.22 140 / 0.7)
+  );
+  box-shadow: 
+    0 0 12px oklch(0.78 0.18 195 / 0.5),
+    inset 0 1px 0 oklch(0.95 0.05 195 / 0.3);
+}
+
+/* Gold scrollbar for special sections */
+.scrollbar-gold {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.80 0.18 85 / 0.4) oklch(0.10 0.02 260);
+}
+
+.scrollbar-gold::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-gold::-webkit-scrollbar-track {
+  background: oklch(0.10 0.02 260);
+  border-radius: 4px;
+}
+
+.scrollbar-gold::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, oklch(0.80 0.18 85 / 0.5), oklch(0.70 0.15 85 / 0.3));
+  border-radius: 4px;
+  box-shadow: 0 0 6px oklch(0.80 0.18 85 / 0.2);
+}
+
+.scrollbar-gold::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, oklch(0.85 0.20 85 / 0.7), oklch(0.75 0.18 85 / 0.5));
+  box-shadow: 0 0 10px oklch(0.80 0.18 85 / 0.4);
+}
+
+/* Hidden scrollbar */
 .scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -34,6 +140,35 @@
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+/* Auto-hide scrollbar (shows only on scroll) */
+.scrollbar-auto {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-auto::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.scrollbar-auto:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, oklch(0.78 0.18 195 / 0.4), oklch(0.78 0.18 195 / 0.2));
+}
+
+.scrollbar-auto:hover {
+  scrollbar-color: oklch(0.78 0.18 195 / 0.3) transparent;
 }
 
 :root {

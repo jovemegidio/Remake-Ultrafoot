@@ -94,13 +94,72 @@ export interface Player {
 export interface Scout {
   id: number
   name: string
-  region: string // "Brasil" | "Europa" | "Americas" | "Asia"
+  nationality: string
+  region: string // "Brasil" | "Europa" | "Americas" | "Asia" | "Africa"
   skill: number // 1-5 estrelas
   salary: number
   isSearching: boolean
   searchProgress: number
-  foundPlayers: number[] // IDs dos jogadores descobertos
+  searchTarget: string | null // Regiao sendo pesquisada
+  foundPlayers: ScoutedPlayer[] // Jogadores descobertos
+  weeksSearching: number
 }
+
+export interface ScoutedPlayer {
+  id: number
+  name: string
+  position: string
+  age: number
+  overall: number
+  potential: number
+  nationality: string
+  team: string
+  teamShort: string
+  value: number
+  reportProgress: number // 0-100
+  discoveredWeek: number
+}
+
+// Jogadores que podem ser descobertos por olheiros
+export const DISCOVERABLE_PLAYERS: Omit<ScoutedPlayer, "id" | "reportProgress" | "discoveredWeek">[] = [
+  // Brasil
+  { name: "Estevao", position: "PD", age: 17, overall: 76, potential: 92, nationality: "Brasil", team: "Palmeiras", teamShort: "PAL", value: 30000000 },
+  { name: "Endrick", position: "ATA", age: 18, overall: 78, potential: 93, nationality: "Brasil", team: "Real Madrid", teamShort: "RMA", value: 60000000 },
+  { name: "Vitor Roque", position: "ATA", age: 19, overall: 77, potential: 89, nationality: "Brasil", team: "Barcelona", teamShort: "BAR", value: 40000000 },
+  { name: "Savinho", position: "PD", age: 20, overall: 79, potential: 88, nationality: "Brasil", team: "Man City", teamShort: "MCI", value: 50000000 },
+  { name: "Luis Guilherme", position: "PE", age: 18, overall: 72, potential: 86, nationality: "Brasil", team: "West Ham", teamShort: "WHU", value: 15000000 },
+  { name: "Matheus Nascimento", position: "ATA", age: 20, overall: 73, potential: 85, nationality: "Brasil", team: "Botafogo", teamShort: "BOT", value: 8000000 },
+  { name: "Gabriel Moscardo", position: "VOL", age: 18, overall: 71, potential: 85, nationality: "Brasil", team: "PSG", teamShort: "PSG", value: 20000000 },
+  { name: "Wesley", position: "PD", age: 19, overall: 72, potential: 84, nationality: "Brasil", team: "Flamengo", teamShort: "FLA", value: 12000000 },
+  
+  // Argentina
+  { name: "Claudio Echeverri", position: "MEI", age: 18, overall: 73, potential: 89, nationality: "Argentina", team: "River Plate", teamShort: "RIV", value: 18000000 },
+  { name: "Franco Mastantuono", position: "MEI", age: 17, overall: 70, potential: 88, nationality: "Argentina", team: "River Plate", teamShort: "RIV", value: 15000000 },
+  { name: "Maximo Perrone", position: "VOL", age: 21, overall: 74, potential: 84, nationality: "Argentina", team: "Las Palmas", teamShort: "LPA", value: 10000000 },
+  
+  // Europa
+  { name: "Lamine Yamal", position: "PD", age: 17, overall: 81, potential: 95, nationality: "Espanha", team: "Barcelona", teamShort: "BAR", value: 120000000 },
+  { name: "Kobbie Mainoo", position: "MEI", age: 19, overall: 78, potential: 89, nationality: "Inglaterra", team: "Man United", teamShort: "MUN", value: 55000000 },
+  { name: "Warren Zaire-Emery", position: "MEI", age: 18, overall: 79, potential: 91, nationality: "Franca", team: "PSG", teamShort: "PSG", value: 70000000 },
+  { name: "Florian Wirtz", position: "MEI", age: 21, overall: 86, potential: 93, nationality: "Alemanha", team: "Leverkusen", teamShort: "B04", value: 130000000 },
+  { name: "Jamal Musiala", position: "MEI", age: 21, overall: 86, potential: 93, nationality: "Alemanha", team: "Bayern", teamShort: "BAY", value: 120000000 },
+  
+  // Africa
+  { name: "Karim Konate", position: "ATA", age: 20, overall: 74, potential: 86, nationality: "Costa Marfim", team: "Salzburg", teamShort: "SAL", value: 15000000 },
+  { name: "Ismaila Sarr", position: "PD", age: 26, overall: 78, potential: 80, nationality: "Senegal", team: "Marseille", teamShort: "OM", value: 18000000 },
+]
+
+// Olheiros disponiveis para contratar
+export const AVAILABLE_SCOUTS: Omit<Scout, "isSearching" | "searchProgress" | "searchTarget" | "foundPlayers" | "weeksSearching">[] = [
+  { id: 101, name: "Ricardo Silva", nationality: "Brasil", region: "Brasil", skill: 4, salary: 25000 },
+  { id: 102, name: "Mateo Fernandez", nationality: "Argentina", region: "Americas", skill: 4, salary: 30000 },
+  { id: 103, name: "Pierre Dubois", nationality: "Franca", region: "Europa", skill: 5, salary: 50000 },
+  { id: 104, name: "Hans Mueller", nationality: "Alemanha", region: "Europa", skill: 4, salary: 40000 },
+  { id: 105, name: "Kwame Asante", nationality: "Gana", region: "Africa", skill: 3, salary: 20000 },
+  { id: 106, name: "Marco Rossi", nationality: "Italia", region: "Europa", skill: 4, salary: 35000 },
+  { id: 107, name: "Carlos Mendez", nationality: "Mexico", region: "Americas", skill: 3, salary: 22000 },
+  { id: 108, name: "Takeshi Yamamoto", nationality: "Japao", region: "Asia", skill: 3, salary: 28000 },
+]
 
 export interface MatchResult {
   week: number
@@ -644,6 +703,55 @@ export const useGameEngine = create<GameEngineState>()(
           // Processar convocacoes de selecao
           const isFifaDate = s.fifaDates.includes(newWeek)
           
+          // Processar progresso dos olheiros
+          const updatedScouts = s.scouts.map(scout => {
+            if (!scout.isSearching || !scout.searchTarget) return scout
+            
+            // Progresso baseado na habilidade do olheiro
+            const progressGain = 8 + (scout.skill * 4) + Math.floor(Math.random() * 10)
+            const newProgress = Math.min(100, scout.searchProgress + progressGain)
+            const newWeeksSearching = scout.weeksSearching + 1
+            
+            // Se atingiu 100%, encontra jogador
+            if (newProgress >= 100) {
+              // Filtra jogadores da regiao
+              const regionPlayers = DISCOVERABLE_PLAYERS.filter(p => {
+                if (scout.searchTarget === "Brasil") return p.nationality === "Brasil"
+                if (scout.searchTarget === "Americas") return ["Argentina", "Colombia", "Uruguay", "Mexico", "Chile"].includes(p.nationality)
+                if (scout.searchTarget === "Europa") return ["Espanha", "Franca", "Alemanha", "Inglaterra", "Italia", "Portugal", "Holanda"].includes(p.nationality)
+                if (scout.searchTarget === "Africa") return ["Senegal", "Gana", "Costa Marfim", "Nigeria", "Egito", "Marrocos"].includes(p.nationality)
+                return true
+              })
+              
+              // Evita duplicatas
+              const existingNames = scout.foundPlayers.map(p => p.name)
+              const available = regionPlayers.filter(p => !existingNames.includes(p.name))
+              
+              if (available.length > 0) {
+                const discovered = available[Math.floor(Math.random() * available.length)]
+                const newPlayer: ScoutedPlayer = {
+                  ...discovered,
+                  id: Date.now() + Math.floor(Math.random() * 1000),
+                  reportProgress: 30 + Math.floor(Math.random() * 40),
+                  discoveredWeek: newWeek
+                }
+                
+                return {
+                  ...scout,
+                  searchProgress: 0,
+                  weeksSearching: 0,
+                  foundPlayers: [...scout.foundPlayers, newPlayer]
+                }
+              }
+            }
+            
+            return {
+              ...scout,
+              searchProgress: newProgress,
+              weeksSearching: newWeeksSearching
+            }
+          })
+          
           // Atualizar financas
           const weeklyBalance = s.weeklyIncome - s.weeklyExpenses
           
@@ -652,6 +760,7 @@ export const useGameEngine = create<GameEngineState>()(
             currentWeek: finalWeek,
             currentSeason: newSeason,
             squadPlayers: updatedPlayers,
+            scouts: updatedScouts,
             balance: s.balance + weeklyBalance
           }
         })
@@ -749,21 +858,110 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
-      hireScount: (scout) => {
+      hireScout: (scoutData: Omit<Scout, "isSearching" | "searchProgress" | "searchTarget" | "foundPlayers" | "weeksSearching">) => {
+        const newScout: Scout = {
+          ...scoutData,
+          isSearching: false,
+          searchProgress: 0,
+          searchTarget: null,
+          foundPlayers: [],
+          weeksSearching: 0
+        }
         set((s) => ({
-          scouts: [...s.scouts, scout],
-          weeklyExpenses: s.weeklyExpenses + scout.salary
+          scouts: [...s.scouts, newScout],
+          weeklyExpenses: s.weeklyExpenses + scoutData.salary
         }))
       },
       
-      startScoutSearch: (scoutId, region) => {
+      fireScout: (scoutId: number) => {
+        set((s) => {
+          const scout = s.scouts.find(sc => sc.id === scoutId)
+          return {
+            scouts: s.scouts.filter(sc => sc.id !== scoutId),
+            weeklyExpenses: s.weeklyExpenses - (scout?.salary || 0)
+          }
+        })
+      },
+      
+      startScoutSearch: (scoutId: number, region: string) => {
         set((s) => ({
           scouts: s.scouts.map(scout =>
             scout.id === scoutId
-              ? { ...scout, isSearching: true, searchProgress: 0, region }
+              ? { ...scout, isSearching: true, searchProgress: 0, searchTarget: region, weeksSearching: 0 }
               : scout
           )
         }))
+      },
+      
+      stopScoutSearch: (scoutId: number) => {
+        set((s) => ({
+          scouts: s.scouts.map(scout =>
+            scout.id === scoutId
+              ? { ...scout, isSearching: false, searchProgress: 0, searchTarget: null, weeksSearching: 0 }
+              : scout
+          )
+        }))
+      },
+      
+      processScoutProgress: () => {
+        const state = get()
+        
+        set((s) => {
+          const updatedScouts = s.scouts.map(scout => {
+            if (!scout.isSearching || !scout.searchTarget) return scout
+            
+            // Progresso baseado na habilidade do olheiro
+            const progressGain = 8 + (scout.skill * 4) + Math.floor(Math.random() * 10)
+            const newProgress = Math.min(100, scout.searchProgress + progressGain)
+            const newWeeksSearching = scout.weeksSearching + 1
+            
+            // Se atingiu 100%, encontra jogador
+            if (newProgress >= 100) {
+              // Filtra jogadores da regiao
+              const regionPlayers = DISCOVERABLE_PLAYERS.filter(p => {
+                if (scout.searchTarget === "Brasil") return p.nationality === "Brasil"
+                if (scout.searchTarget === "Americas") return ["Argentina", "Colombia", "Uruguay", "Mexico", "Chile"].includes(p.nationality)
+                if (scout.searchTarget === "Europa") return ["Espanha", "Franca", "Alemanha", "Inglaterra", "Italia", "Portugal", "Holanda"].includes(p.nationality)
+                if (scout.searchTarget === "Africa") return ["Senegal", "Gana", "Costa Marfim", "Nigeria", "Egito", "Marrocos"].includes(p.nationality)
+                return true
+              })
+              
+              // Evita duplicatas
+              const existingIds = scout.foundPlayers.map(p => p.name)
+              const available = regionPlayers.filter(p => !existingIds.includes(p.name))
+              
+              if (available.length > 0) {
+                const discovered = available[Math.floor(Math.random() * available.length)]
+                const newPlayer: ScoutedPlayer = {
+                  ...discovered,
+                  id: Date.now() + Math.floor(Math.random() * 1000),
+                  reportProgress: 30 + Math.floor(Math.random() * 40),
+                  discoveredWeek: s.currentWeek
+                }
+                
+                return {
+                  ...scout,
+                  searchProgress: 0,
+                  weeksSearching: 0,
+                  foundPlayers: [...scout.foundPlayers, newPlayer]
+                }
+              }
+            }
+            
+            return {
+              ...scout,
+              searchProgress: newProgress,
+              weeksSearching: newWeeksSearching
+            }
+          })
+          
+          return { scouts: updatedScouts }
+        })
+      },
+      
+      getDiscoveredPlayers: () => {
+        const state = get()
+        return state.scouts.flatMap(s => s.foundPlayers)
       },
       
       simulateOtherMatches: () => {

@@ -109,39 +109,140 @@ function generateRoundMatchups(teams: Team[], round: number): [Team, Team][] {
   return matchups
 }
 
+// Nomes de jogadores por posicao para simulacao
+const PLAYER_NAMES_BY_TEAM: Record<string, string[]> = {
+  "FLA": ["Gabigol", "Pedro", "Everton Ribeiro", "Arrascaeta", "De La Cruz", "Gerson", "Pulgar", "Ayrton Lucas"],
+  "PAL": ["Endrick", "Dudu", "Raphael Veiga", "Gustavo Scarpa", "Zé Rafael", "Murilo", "Weverton"],
+  "COR": ["Yuri Alberto", "Róger Guedes", "Renato Augusto", "Fagner", "Cássio", "Gil", "Fausto Vera"],
+  "SAO": ["Luciano", "Calleri", "Alisson", "Rodrigo Nestor", "Rafinha", "Diego Costa", "Jandrei"],
+  "FLU": ["Cano", "Ganso", "Jhon Arias", "André", "Marcelo", "Nino", "Fábio"],
+  "BOT": ["Tiquinho", "Júnior Santos", "Eduardo", "Tchê Tchê", "Marlon Freitas", "Adryelson"],
+  "INT": ["Enner Valencia", "Alan Patrick", "Mauricio", "De Pena", "Fernando", "Rochet"],
+  "GRE": ["Suárez", "Cristaldo", "Pepê", "Villasanti", "Kannemann", "Marchesín"],
+  "CAM": ["Hulk", "Paulinho", "Scarpa", "Otávio", "Zaracho", "Junior Alonso", "Everson"],
+  "VAS": ["Vegetti", "Payet", "Praxedes", "Galdames", "Léo", "Maicon"],
+  "BAH": ["Everaldo", "Thaciano", "Cauly", "Everton Ribeiro", "Kanu", "Marcos Felipe"],
+  "CRU": ["Rafael Silva", "Arthur Gomes", "Matheus Pereira", "Lucas Romero", "João Marcelo"],
+  "FOR": ["Lucero", "Moisés", "Pochettino", "Hércules", "Brítez", "João Ricardo"],
+  "CAP": ["Pablo", "Vitor Roque", "Fernandinho", "Terans", "Thiago Heleno", "Bento"],
+  "BGT": ["Eduardo Sasha", "Helinho", "Lincoln", "Eric Ramires", "Jadsom", "Cleiton"],
+  "SAN": ["Marcos Leonardo", "Soteldo", "Lucas Lima", "Camacho", "Messias", "João Paulo"],
+  "SPT": ["Michael", "Alan Patrick", "Yago", "Alisson", "Lucas André"],
+  "CEA": ["Erick Pulga", "Vina", "Mendoza", "Richard", "David Ricardo"],
+  "VIT": ["Alerrandro", "Matheuzinho", "Willian Oliveira", "Wagner Leonardo"],
+  "JUV": ["Nenê", "Pitta", "Chico", "Zé Marcos", "Gabriel"],
+  "MIR": ["Rómulo", "Sávio", "Gustavo Coutinho", "Dudu"]
+}
+
+// Obtem nome de jogador aleatorio do time
+function getRandomPlayerName(teamShort: string): string {
+  const names = PLAYER_NAMES_BY_TEAM[teamShort] || ["Jogador"]
+  return names[Math.floor(Math.random() * names.length)]
+}
+
 // Simula resultado de uma partida entre dois times
 function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, season: number): MatchResult {
   // Fator de forca baseado em prestigio
   const homeStrength = homeTeam.prestigio + 5 // Bonus de mando
   const awayStrength = awayTeam.prestigio
   
-  // Calcula probabilidades
+  // Calcula probabilidades com mais variancia
   const totalStrength = homeStrength + awayStrength
   const homeChance = homeStrength / totalStrength
   
-  // Simula gols baseado em forca
-  const homeExpectedGoals = 1.3 + (homeChance * 1.5)
-  const awayExpectedGoals = 1.1 + ((1 - homeChance) * 1.5)
+  // Simula gols com distribuicao Poisson simplificada
+  const homeExpectedGoals = 1.2 + (homeChance * 1.2)
+  const awayExpectedGoals = 0.9 + ((1 - homeChance) * 1.2)
   
-  const homeScore = Math.floor(Math.random() * 4 * (homeExpectedGoals / 2))
-  const awayScore = Math.floor(Math.random() * 4 * (awayExpectedGoals / 2))
+  // Funcao para gerar gols com distribuicao mais realista
+  const generateGoals = (expected: number): number => {
+    let goals = 0
+    const random = Math.random()
+    
+    if (random < 0.15) goals = 0
+    else if (random < 0.35) goals = 1
+    else if (random < 0.60) goals = 2
+    else if (random < 0.80) goals = 3
+    else if (random < 0.92) goals = 4
+    else goals = 5
+    
+    // Ajusta baseado na forca
+    if (expected > 2) goals = Math.min(goals + 1, 6)
+    if (expected < 1.2) goals = Math.max(goals - 1, 0)
+    
+    return goals
+  }
   
-  // Gera eventos basicos
+  const homeScore = generateGoals(homeExpectedGoals)
+  const awayScore = generateGoals(awayExpectedGoals)
+  
+  // Gera eventos detalhados
   const events: MatchEvent[] = []
+  const usedMinutes = new Set<number>()
+  
+  const getUniqueMinute = (): number => {
+    let minute = Math.floor(Math.random() * 90) + 1
+    while (usedMinutes.has(minute)) {
+      minute = Math.floor(Math.random() * 90) + 1
+    }
+    usedMinutes.add(minute)
+    return minute
+  }
+  
+  // Gols do time da casa
   for (let i = 0; i < homeScore; i++) {
+    const scorerName = getRandomPlayerName(homeTeam.curto)
+    const hasAssist = Math.random() > 0.3
+    
     events.push({
-      minute: Math.floor(Math.random() * 90) + 1,
+      minute: getUniqueMinute(),
       type: "goal",
-      playerId: 0,
-      playerName: "Jogador " + homeTeam.curto
+      playerId: Math.floor(Math.random() * 1000) + 1,
+      playerName: scorerName,
+      ...(hasAssist && {
+        assistPlayerId: Math.floor(Math.random() * 1000) + 1,
+        assistPlayerName: getRandomPlayerName(homeTeam.curto)
+      })
     })
   }
+  
+  // Gols do time visitante
   for (let i = 0; i < awayScore; i++) {
+    const scorerName = getRandomPlayerName(awayTeam.curto)
+    const hasAssist = Math.random() > 0.3
+    
     events.push({
-      minute: Math.floor(Math.random() * 90) + 1,
+      minute: getUniqueMinute(),
       type: "goal",
-      playerId: 0,
-      playerName: "Jogador " + awayTeam.curto
+      playerId: Math.floor(Math.random() * 1000) + 1,
+      playerName: scorerName,
+      ...(hasAssist && {
+        assistPlayerId: Math.floor(Math.random() * 1000) + 1,
+        assistPlayerName: getRandomPlayerName(awayTeam.curto)
+      })
+    })
+  }
+  
+  // Cartoes (2-6 por partida em media)
+  const yellowCards = Math.floor(Math.random() * 4) + 2
+  for (let i = 0; i < yellowCards; i++) {
+    const isHome = Math.random() > 0.5
+    events.push({
+      minute: getUniqueMinute(),
+      type: "yellow",
+      playerId: Math.floor(Math.random() * 1000) + 1,
+      playerName: getRandomPlayerName(isHome ? homeTeam.curto : awayTeam.curto)
+    })
+  }
+  
+  // Chance de cartao vermelho (10%)
+  if (Math.random() > 0.9) {
+    const isHome = Math.random() > 0.5
+    events.push({
+      minute: getUniqueMinute(),
+      type: "red",
+      playerId: Math.floor(Math.random() * 1000) + 1,
+      playerName: getRandomPlayerName(isHome ? homeTeam.curto : awayTeam.curto)
     })
   }
   
