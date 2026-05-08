@@ -680,6 +680,61 @@
     }
   }
 
+  /* ===== LOADING SCREEN ANIMATIONS ===== */
+  
+  @keyframes breathe {
+    0%, 100% {
+      opacity: 0.6;
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.1);
+    }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes logoFadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.9) translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes shimmerMove {
+    0% {
+      transform: translateX(-200%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
+  @keyframes dotPulse {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.5);
+    }
+  }
+
   /* ===== GOAL CELEBRATION ANIMATIONS - BROADCAST STYLE ===== */
   
   /* Flash branco inicial */
