@@ -308,229 +308,237 @@ export default function SplashPage() {
 
       {/* Phase: Leagues - Logos das ligas e competicoes */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 overflow-hidden",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 overflow-hidden bg-black",
         phase === "leagues" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Background gradient - dark to greenish (stadium feel) */}
+        {/* Leagues image container with fade-in animation */}
         <div 
-          className="absolute inset-0"
+          className="relative w-full h-full flex items-center justify-center"
           style={{
-            background: "linear-gradient(180deg, #0a0f0a 0%, #0d1a0d 40%, #0f1f0f 60%, #0a0f0a 100%)",
-          }}
-        />
-        
-        {/* Fog/mist effect at bottom */}
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
-          style={{
-            background: "linear-gradient(0deg, rgba(255,255,255,0.03) 0%, transparent 100%)",
-          }}
-        />
-        
-        {/* Stars/particles effect */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-0.5 h-0.5 bg-white/20 rounded-full"
-              style={{
-                left: `${(i * 5 + 3) % 100}%`,
-                top: `${(i * 7 + 5) % 60}%`,
-                animation: `twinkle ${2 + (i % 3)}s ease-in-out infinite`,
-                animationDelay: `${i * 0.15}s`,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Leagues grid container */}
-        <div 
-          className="relative z-10 w-full max-w-5xl px-6"
-          style={{
-            animation: phase === "leagues" ? "leaguesFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+            animation: phase === "leagues" ? "leaguesFadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
           }}
         >
-          {/* Grid of league logos */}
-          <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 md:gap-6">
-            {[
-              { name: "Premier League", abbr: "PL" },
-              { name: "LaLiga", abbr: "LL" },
-              { name: "Serie A", abbr: "SA" },
-              { name: "Bundesliga", abbr: "BL" },
-              { name: "Ligue 1", abbr: "L1" },
-              { name: "Brasileirao", abbr: "BR" },
-              { name: "Eredivisie", abbr: "ED" },
-              { name: "Liga Portugal", abbr: "LP" },
-              { name: "MLS", abbr: "MLS" },
-              { name: "Liga MX", abbr: "MX" },
-              { name: "Champions", abbr: "UCL" },
-              { name: "Europa League", abbr: "UEL" },
-              { name: "Conference", abbr: "ECL" },
-              { name: "Libertadores", abbr: "LIB" },
-              { name: "Sulamericana", abbr: "SUL" },
-              { name: "Copa America", abbr: "CA" },
-              { name: "Euro", abbr: "EUR" },
-              { name: "World Cup", abbr: "WC" },
-              { name: "FA Cup", abbr: "FA" },
-              { name: "Copa del Rey", abbr: "CR" },
-              { name: "DFB Pokal", abbr: "DFB" },
-              { name: "Coppa Italia", abbr: "CI" },
-              { name: "Copa Brasil", abbr: "CB" },
-              { name: "EFL Cup", abbr: "EFL" },
-              { name: "Super Cup", abbr: "SC" },
-              { name: "Club WC", abbr: "CWC" },
-              { name: "Nations", abbr: "NL" },
-              { name: "Recopa", abbr: "RC" },
-              { name: "Supercopa", abbr: "SB" },
-              { name: "Community", abbr: "CS" },
-            ].map((league, index) => (
-              <div
-                key={league.abbr}
-                className="flex flex-col items-center justify-center group"
-                style={{
-                  animation: phase === "leagues" ? `fadeInUp 0.5s ease-out forwards` : "none",
-                  animationDelay: `${0.3 + index * 0.03}s`,
-                  opacity: 0,
-                }}
-              >
-                {/* Logo placeholder - shield style */}
-                <div 
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-1 transition-all duration-300"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <span className="text-white/70 text-[8px] md:text-[10px] font-bold tracking-tight">
-                    {league.abbr}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Imagem das ligas */}
+          <Image
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Ligas%20-%20Ultrafoot-mviTl8G52mNA9cparkkPpC2TVaR7MY.jpg"
+            alt="Ligas e competicoes licenciadas"
+            fill
+            className="object-contain"
+            style={{
+              animation: phase === "leagues" ? "leaguesZoom 3.5s ease-out forwards" : "none",
+            }}
+            priority
+          />
+          
+          {/* Vignette overlay */}
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)",
+            }}
+          />
         </div>
         
         {/* Text overlay */}
         <div 
-          className="absolute bottom-12 left-0 right-0 text-center"
+          className="absolute bottom-16 left-0 right-0 text-center"
           style={{
-            animation: phase === "leagues" ? "fadeIn 0.8s ease-out 1s forwards" : "none",
+            animation: phase === "leagues" ? "fadeIn 0.8s ease-out 1.5s forwards" : "none",
             opacity: 0,
           }}
         >
-          <span className="text-white/30 text-[10px] tracking-[0.4em] uppercase">
-            30+ Competicoes Licenciadas
+          <span className="text-white/50 text-xs tracking-[0.4em] uppercase font-medium">
+            50+ Ligas Licenciadas
           </span>
         </div>
       </div>
 
-      {/* Phase: Loading */}
+      {/* Phase: Loading - Professional Institutional Style */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 overflow-hidden",
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        {/* Radial glow behind logo */}
+        {/* Background with subtle gradient */}
         <div 
-          className="absolute w-[500px] h-[500px] rounded-full opacity-20 animate-pulse"
+          className="absolute inset-0"
           style={{
-            background: "radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%)",
-            animationDuration: "3s",
+            background: "linear-gradient(180deg, #0a0a0a 0%, #0d1117 40%, #0a1628 70%, #0a0a0a 100%)",
+          }}
+        />
+        
+        {/* Animated ambient light - top */}
+        <div 
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse at center top, rgba(6, 182, 212, 0.08) 0%, transparent 60%)",
+            animation: "breathe 4s ease-in-out infinite",
+          }}
+        />
+        
+        {/* Subtle grid pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.02] pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: "60px 60px",
           }}
         />
 
-        <div className="w-full max-w-md px-8 relative z-10">
-          {/* Logo ULTRAFOOT with animation */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              {/* Glow effect */}
-              <div 
-                className="absolute inset-0 blur-xl opacity-50 animate-pulse"
-                style={{
-                  background: "linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), transparent)",
-                  animationDuration: "2s",
-                }}
-              />
-              <Image
-                src="/brand/ultrafoot-text.png"
-                alt="Ultrafoot"
-                width={280}
-                height={60}
-                className="object-contain h-auto w-auto relative z-10 animate-[pulse_3s_ease-in-out_infinite]"
-                style={{
-                  filter: "drop-shadow(0 0 20px rgba(6, 182, 212, 0.3))",
-                }}
-                priority
-              />
-            </div>
-          </div>
-
-          {/* Loading status text with fade animation */}
-          <div className="text-center mb-4 h-5 overflow-hidden">
-            <p 
-              key={loadingProgress < 30 ? "1" : loadingProgress < 60 ? "2" : loadingProgress < 90 ? "3" : "4"}
-              className="text-white/40 text-xs animate-[fadeIn_0.5s_ease-out]"
-            >
-              {loadingProgress < 30 && "Carregando dados dos times..."}
-              {loadingProgress >= 30 && loadingProgress < 60 && "Preparando estatisticas..."}
-              {loadingProgress >= 60 && loadingProgress < 90 && "Sincronizando temporada..."}
-              {loadingProgress >= 90 && "Finalizando..."}
-            </p>
-          </div>
-
-          {/* Progress bar with shimmer effect */}
-          <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden">
-            {/* Progress fill */}
+        {/* Main content */}
+        <div className="relative z-10 flex flex-col items-center w-full max-w-lg px-8">
+          
+          {/* Logo container with refined glow */}
+          <div 
+            className="relative mb-16"
+            style={{
+              animation: phase === "loading" ? "logoFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+            }}
+          >
+            {/* Outer glow ring */}
             <div 
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-400 transition-all duration-100 ease-out rounded-full"
-              style={{ width: `${loadingProgress}%` }}
-            />
-            {/* Shimmer overlay */}
-            <div 
-              className="absolute inset-y-0 left-0 overflow-hidden rounded-full"
-              style={{ width: `${loadingProgress}%` }}
-            >
-              <div 
-                className="absolute inset-0 animate-[shimmer_1.5s_infinite]"
-                style={{
-                  background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
-                  transform: "translateX(-100%)",
-                }}
-              />
-            </div>
-            {/* Glow at the end */}
-            <div 
-              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-cyan-400 blur-md animate-pulse"
-              style={{ 
-                left: `calc(${loadingProgress}% - 8px)`,
-                opacity: loadingProgress > 0 ? 1 : 0,
-              }}
-            />
-          </div>
-
-          {/* Percentage with animation */}
-          <div className="text-center mt-4">
-            <span 
-              className="text-cyan-400 font-mono text-lg tabular-nums inline-block"
+              className="absolute -inset-16 opacity-30"
               style={{
-                textShadow: "0 0 20px rgba(6, 182, 212, 0.5)",
+                background: "radial-gradient(ellipse at center, rgba(6, 182, 212, 0.3) 0%, transparent 70%)",
+                animation: "pulseGlow 3s ease-in-out infinite",
               }}
-            >
-              {loadingProgress}%
-            </span>
+            />
+            
+            {/* Inner glow */}
+            <div 
+              className="absolute -inset-8 blur-2xl opacity-40"
+              style={{
+                background: "linear-gradient(180deg, rgba(6, 182, 212, 0.4) 0%, rgba(59, 130, 246, 0.2) 100%)",
+                animation: "pulseGlow 2.5s ease-in-out infinite alternate",
+              }}
+            />
+            
+            {/* Logo */}
+            <Image
+              src="/brand/ultrafoot-text.png"
+              alt="Ultrafoot"
+              width={320}
+              height={70}
+              className="object-contain h-auto w-auto relative z-10"
+              style={{
+                filter: "drop-shadow(0 0 30px rgba(6, 182, 212, 0.4)) drop-shadow(0 0 60px rgba(6, 182, 212, 0.2))",
+              }}
+              priority
+            />
           </div>
 
-          {/* Loading dots */}
-          <div className="flex justify-center gap-1 mt-6">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 bg-cyan-500/50 rounded-full animate-bounce"
+          {/* Loading section with elegant design */}
+          <div 
+            className="w-full"
+            style={{
+              animation: phase === "loading" ? "fadeInUp 0.8s ease-out 0.3s forwards" : "none",
+              opacity: 0,
+            }}
+          >
+            {/* Status text - refined typography */}
+            <div className="text-center mb-6">
+              <p 
+                key={loadingProgress < 25 ? "1" : loadingProgress < 50 ? "2" : loadingProgress < 75 ? "3" : "4"}
+                className="text-white/50 text-[11px] tracking-[0.2em] uppercase font-light transition-all duration-300"
+              >
+                {loadingProgress < 25 && "Inicializando motor de jogo"}
+                {loadingProgress >= 25 && loadingProgress < 50 && "Carregando dados dos clubes"}
+                {loadingProgress >= 50 && loadingProgress < 75 && "Sincronizando temporada"}
+                {loadingProgress >= 75 && "Preparando experiencia"}
+              </p>
+            </div>
+
+            {/* Progress bar - sleek modern design */}
+            <div className="relative">
+              {/* Track background */}
+              <div 
+                className="h-[3px] rounded-full overflow-hidden"
                 style={{
-                  animationDelay: `${i * 0.15}s`,
-                  animationDuration: "0.8s",
+                  background: "rgba(255,255,255,0.08)",
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.3)",
+                }}
+              >
+                {/* Progress fill with gradient */}
+                <div 
+                  className="h-full rounded-full transition-all duration-150 ease-out relative overflow-hidden"
+                  style={{ 
+                    width: `${loadingProgress}%`,
+                    background: "linear-gradient(90deg, #06b6d4 0%, #3b82f6 50%, #06b6d4 100%)",
+                    boxShadow: "0 0 20px rgba(6, 182, 212, 0.5), 0 0 40px rgba(6, 182, 212, 0.3)",
+                  }}
+                >
+                  {/* Shimmer effect */}
+                  <div 
+                    className="absolute inset-0"
+                    style={{
+                      background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)",
+                      animation: "shimmerMove 1.5s ease-in-out infinite",
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Glow indicator at progress end */}
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full transition-all duration-150"
+                style={{ 
+                  left: `calc(${loadingProgress}% - 4px)`,
+                  background: "#06b6d4",
+                  boxShadow: "0 0 12px rgba(6, 182, 212, 0.8), 0 0 24px rgba(6, 182, 212, 0.4)",
+                  opacity: loadingProgress > 0 ? 1 : 0,
                 }}
               />
-            ))}
+            </div>
+
+            {/* Percentage display - elegant monospace */}
+            <div className="flex justify-center mt-5">
+              <div className="relative">
+                <span 
+                  className="text-white/80 font-mono text-sm tabular-nums tracking-wider"
+                  style={{
+                    textShadow: "0 0 20px rgba(6, 182, 212, 0.3)",
+                  }}
+                >
+                  {loadingProgress}
+                </span>
+                <span className="text-white/40 font-mono text-sm ml-0.5">%</span>
+              </div>
+            </div>
+
+            {/* Animated loading indicator - refined dots */}
+            <div className="flex justify-center gap-1.5 mt-8">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-1 h-1 rounded-full"
+                  style={{
+                    background: "rgba(6, 182, 212, 0.6)",
+                    boxShadow: "0 0 6px rgba(6, 182, 212, 0.4)",
+                    animation: `dotPulse 1.2s ease-in-out infinite`,
+                    animationDelay: `${i * 0.2}s`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom branding bar */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 py-6 px-8"
+          style={{
+            background: "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
+          }}
+        >
+          <div className="flex justify-between items-center max-w-4xl mx-auto">
+            <span className="text-white/20 text-[9px] tracking-[0.15em] uppercase font-light">
+              Ultrafoot 26
+            </span>
+            <span className="text-white/20 text-[9px] tracking-[0.1em] uppercase font-light">
+              Agencia do Japa
+            </span>
           </div>
         </div>
       </div>

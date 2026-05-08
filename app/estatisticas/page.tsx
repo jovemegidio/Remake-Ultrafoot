@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Trophy,
   Target,
@@ -18,7 +18,9 @@ import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { useGameState } from "@/lib/save-system"
+import { useUserTeam } from "@/lib/save-system"
+import { useGameEngine } from "@/lib/game-engine"
+import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
 // Mock data para artilharia
@@ -88,9 +90,70 @@ const userSquadStats = [
 ]
 
 export default function EstatisticasPage() {
-  const { state } = useGameState()
-  const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  const { team: userTeam } = useUserTeam()
+  const { squadPlayers, matchResults, currentSeason } = useGameEngine()
+  const { standings } = useGameManager()
   const [activeTab, setActiveTab] = useState("artilharia")
+
+  // Calcula estatisticas do elenco baseado nos dados do game engine
+  const userSquadStatsLive = useMemo(() => {
+    return squadPlayers.map(p => ({
+      id: p.id,
+      name: p.name,
+      position: p.position,
+      matches: p.seasonStats.matchesPlayed,
+      goals: p.seasonStats.goals,
+      assists: p.seasonStats.assists,
+      yellows: p.seasonStats.yellowCards,
+      reds: p.seasonStats.redCards,
+      rating: 7.0 + (p.seasonStats.goals * 0.1) + (p.seasonStats.assists * 0.05),
+      cleanSheets: p.seasonStats.cleanSheets
+    })).sort((a, b) => (b.goals + b.assists) - (a.goals + a.assists))
+  }, [squadPlayers])
+
+  // Calcula estatisticas do time
+  const userTeamStatsLive = useMemo(() => {
+    const userMatches = matchResults.filter(
+      m => m.homeTeam === userTeam.curto || m.awayTeam === userTeam.curto
+    )
+    
+    let goalsScored = 0
+    let goalsConceded = 0
+    let wins = 0
+    let draws = 0
+    let losses = 0
+    let cleanSheets = 0
+    
+    userMatches.forEach(m => {
+      const isHome = m.homeTeam === userTeam.curto
+      const scored = isHome ? m.homeScore : m.awayScore
+      const conceded = isHome ? m.awayScore : m.homeScore
+      
+      goalsScored += scored
+      goalsConceded += conceded
+      
+      if (conceded === 0) cleanSheets++
+      
+      if (scored > conceded) wins++
+      else if (scored < conceded) losses++
+      else draws++
+    })
+    
+    return {
+      goalsScored,
+      goalsConceded,
+      cleanSheets,
+      wins,
+      draws,
+      losses,
+      possession: 52,
+      passAccuracy: 78,
+      shotsPerGame: 12.4,
+      tackles: 186,
+      fouls: 142,
+      corners: 89,
+    }
+  }, [matchResults, userTeam.curto])
 
   return (
     <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
@@ -115,12 +178,12 @@ export default function EstatisticasPage() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
-            <StatCard label="Gols Marcados" value={userTeamStats.goalsScored} icon={Target} color="text-[#1db954]" />
-            <StatCard label="Gols Sofridos" value={userTeamStats.goalsConceded} icon={Target} color="text-red-500" />
-            <StatCard label="Clean Sheets" value={userTeamStats.cleanSheets} icon={Shirt} color="text-blue-500" />
-            <StatCard label="Vitorias" value={userTeamStats.wins} icon={Trophy} color="text-yellow-500" />
-            <StatCard label="Posse de Bola" value={`${userTeamStats.possession}%`} icon={Footprints} color="text-purple-500" />
-            <StatCard label="Precisao Passes" value={`${userTeamStats.passAccuracy}%`} icon={TrendingUp} color="text-orange-500" />
+            <StatCard label="Gols Marcados" value={userTeamStatsLive.goalsScored} icon={Target} color="text-[#1db954]" />
+            <StatCard label="Gols Sofridos" value={userTeamStatsLive.goalsConceded} icon={Target} color="text-red-500" />
+            <StatCard label="Clean Sheets" value={userTeamStatsLive.cleanSheets} icon={Shirt} color="text-blue-500" />
+            <StatCard label="Vitorias" value={userTeamStatsLive.wins} icon={Trophy} color="text-yellow-500" />
+            <StatCard label="Empates" value={userTeamStatsLive.draws} icon={TrendingUp} color="text-white/50" />
+            <StatCard label="Derrotas" value={userTeamStatsLive.losses} icon={AlertTriangle} color="text-red-400" />
           </div>
         </section>
 
@@ -194,7 +257,7 @@ export default function EstatisticasPage() {
           </TabsContent>
 
           <TabsContent value="elenco" className="mt-4">
-            <SquadStatsTable data={userSquadStats} />
+            <SquadStatsTable data={userSquadStatsLive.length > 0 ? userSquadStatsLive : userSquadStats} />
           </TabsContent>
         </Tabs>
       </main>

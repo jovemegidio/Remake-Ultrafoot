@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Trophy,
   ChevronRight,
@@ -18,12 +18,12 @@ import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, serieATeams, serieBTeams, type Team } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
+import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
-
-// Generate standings with random stats
-const generateStandings = (teams: Team[]) => {
+// Generate standings with random stats (fallback for Serie B)
+const generateStandings = (teams: Team[], userTeamShort: string) => {
   return teams.map((team, index) => ({
     position: index + 1,
     team,
@@ -36,66 +36,89 @@ const generateStandings = (teams: Team[]) => {
     goalDiff: 0,
     points: 0,
     form: ["", "", "", "", ""] as ("W" | "D" | "L" | "")[],
-    isUser: team.curto === userTeam.curto,
+    isUser: team.curto === userTeamShort,
   }))
 }
 
-const serieAStandings = generateStandings(serieATeams)
-const serieBStandings = generateStandings(serieBTeams)
-
-const competitions = [
-  { 
-    id: "brasileirao", 
-    name: "Brasileirao Serie A", 
-    type: "Liga", 
-    teams: 20, 
-    status: "Em andamento",
-    userPosition: serieAStandings.findIndex(s => s.isUser) + 1,
-    icon: Trophy,
-    color: "text-yellow-500",
-    bgColor: "bg-yellow-500/10",
-    borderColor: "border-yellow-500/30"
-  },
-  { 
-    id: "copa-do-brasil", 
-    name: "Copa do Brasil", 
-    type: "Copa", 
-    teams: 92, 
-    status: "Fase de grupos",
-    userPosition: null,
-    icon: Trophy,
-    color: "text-[#1db954]",
-    bgColor: "bg-[#1db954]/10",
-    borderColor: "border-[#1db954]/30"
-  },
-  { 
-    id: "paulistao", 
-    name: "Campeonato Paulista", 
-    type: "Estadual", 
-    teams: 16, 
-    status: "A iniciar",
-    userPosition: null,
-    icon: Trophy,
-    color: "text-white/50",
-    bgColor: "bg-white/5",
-    borderColor: "border-white/10"
-  },
-  { 
-    id: "libertadores", 
-    name: "Copa Libertadores", 
-    type: "Continental", 
-    teams: 47, 
-    status: "Classificacao pendente",
-    userPosition: null,
-    icon: Trophy,
-    color: "text-blue-400",
-    bgColor: "bg-blue-400/10",
-    borderColor: "border-blue-400/30"
-  },
-]
-
 export default function CompeticoesPage() {
+  const { team: userTeam } = useUserTeam()
+  const { standings: gameStandings, currentWeek, currentSeason, userPosition } = useGameManager()
   const [activeTab, setActiveTab] = useState("brasileirao")
+
+  // Converte standings do game engine para o formato da tabela
+  const serieAStandings = useMemo(() => {
+    if (gameStandings.length === 0) {
+      return generateStandings(serieATeams, userTeam.curto)
+    }
+    
+    return gameStandings.map((entry, index) => ({
+      position: index + 1,
+      team: getTeamByShort(entry.teamShort) || serieATeams[0],
+      played: entry.played,
+      won: entry.won,
+      drawn: entry.drawn,
+      lost: entry.lost,
+      goalsFor: entry.goalsFor,
+      goalsAgainst: entry.goalsAgainst,
+      goalDiff: entry.goalsFor - entry.goalsAgainst,
+      points: entry.points,
+      form: [...entry.form.slice(-5), "", "", "", "", ""].slice(0, 5) as ("W" | "D" | "L" | "")[],
+      isUser: entry.teamShort === userTeam.curto,
+    }))
+  }, [gameStandings, userTeam.curto])
+
+  const serieBStandings = useMemo(() => generateStandings(serieBTeams, userTeam.curto), [userTeam.curto])
+
+  const competitions = [
+    { 
+      id: "brasileirao", 
+      name: "Brasileirao Serie A", 
+      type: "Liga", 
+      teams: 20, 
+      status: currentWeek > 0 ? "Em andamento" : "A iniciar",
+      userPosition: userPosition > 0 ? userPosition : null,
+      icon: Trophy,
+      color: "text-yellow-500",
+      bgColor: "bg-yellow-500/10",
+      borderColor: "border-yellow-500/30"
+    },
+    { 
+      id: "copa-do-brasil", 
+      name: "Copa do Brasil", 
+      type: "Copa", 
+      teams: 92, 
+      status: "Fase de grupos",
+      userPosition: null,
+      icon: Trophy,
+      color: "text-[#1db954]",
+      bgColor: "bg-[#1db954]/10",
+      borderColor: "border-[#1db954]/30"
+    },
+    { 
+      id: "paulistao", 
+      name: "Campeonato Paulista", 
+      type: "Estadual", 
+      teams: 16, 
+      status: "A iniciar",
+      userPosition: null,
+      icon: Trophy,
+      color: "text-white/50",
+      bgColor: "bg-white/5",
+      borderColor: "border-white/10"
+    },
+    { 
+      id: "libertadores", 
+      name: "Copa Libertadores", 
+      type: "Continental", 
+      teams: 47, 
+      status: "Classificacao pendente",
+      userPosition: null,
+      icon: Trophy,
+      color: "text-blue-400",
+      bgColor: "bg-blue-400/10",
+      borderColor: "border-blue-400/30"
+    },
+  ]
 
   return (
     <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
@@ -112,7 +135,7 @@ export default function CompeticoesPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#141414] border border-white/5">
               <Calendar className="h-4 w-4 text-[#1db954]" />
-              <span className="text-sm text-white/70">Semana 0/48</span>
+              <span className="text-sm text-white/70">Rodada {currentWeek}/38</span>
             </div>
           </div>
         </div>

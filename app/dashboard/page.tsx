@@ -29,15 +29,34 @@ import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
+import { useGameManager, useStandings, type Fixture } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
-import { useMemo } from "react"
+import { useMemo, useEffect } from "react"
 
 export default function DashboardPage() {
   const { team: userTeam } = useUserTeam()
+  const { 
+    standings: gameStandings, 
+    seasonCalendar, 
+    currentWeek, 
+    currentSeason,
+    userPosition,
+    initializeNewGame,
+    hydrated
+  } = useGameManager()
+  
+  // Inicializa o jogo se ainda nao foi inicializado
+  useEffect(() => {
+    if (hydrated && userTeam && gameStandings.length === 0) {
+      initializeNewGame(userTeam.curto)
+    }
+  }, [hydrated, userTeam, gameStandings.length, initializeNewGame])
 
-  const standings = useMemo(
-    () =>
-      serieATeams.slice(0, 8).map((team, index) => ({
+  // Classificacao formatada para exibicao (top 8)
+  const standings = useMemo(() => {
+    if (gameStandings.length === 0) {
+      // Fallback inicial
+      return serieATeams.slice(0, 8).map((team, index) => ({
         pos: index + 1,
         team,
         pts: 0,
@@ -45,25 +64,47 @@ export default function DashboardPage() {
         d: 0,
         l: 0,
         isUser: team.curto === userTeam.curto,
-      })),
-    [userTeam.curto],
-  )
+      }))
+    }
+    
+    return gameStandings.slice(0, 8).map((entry, index) => ({
+      pos: index + 1,
+      team: getTeamByShort(entry.teamShort) || serieATeams[0],
+      pts: entry.points,
+      w: entry.won,
+      d: entry.drawn,
+      l: entry.lost,
+      isUser: entry.teamShort === userTeam.curto,
+    }))
+  }, [gameStandings, userTeam.curto])
 
+  // Proximas partidas do usuario
   const fixtures = useMemo(() => {
-    const opponents = serieATeams.filter(t => t.curto !== userTeam.curto)
-    // Fallback to different teams if opponents list is somehow empty
-    const fallbackOpponents = serieATeams.length > 1 ? serieATeams.slice(0, 6) : [serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0], serieATeams[0]]
-    const opponentsList = opponents.length > 0 ? opponents : fallbackOpponents
-    const opp = (i: number) => opponentsList[i % opponentsList.length]
-    return [
-      { home: userTeam, away: opp(0), date: "Jan 15", time: "16:00", competition: "Brasileirao" },
-      { home: opp(1), away: userTeam, date: "Jan 22", time: "21:30", competition: "Brasileirao" },
-      { home: userTeam, away: opp(2), date: "Jan 29", time: "18:30", competition: "Copa do Brasil" },
-      { home: opp(3), away: userTeam, date: "Fev 05", time: "19:00", competition: "Brasileirao" },
-      { home: userTeam, away: opp(4), date: "Fev 12", time: "16:00", competition: "Brasileirao" },
-      { home: opp(5), away: userTeam, date: "Fev 19", time: "20:00", competition: "Brasileirao" },
-    ]
-  }, [userTeam])
+    const userFixtures = seasonCalendar.fixtures.filter(f => f.isUserMatch && !f.played)
+    
+    if (userFixtures.length === 0) {
+      // Fallback
+      const opponents = serieATeams.filter(t => t.curto !== userTeam.curto)
+      const opp = (i: number) => opponents[i % opponents.length]
+      return [
+        { home: userTeam, away: opp(0), date: "Rodada 1", time: "16:00", competition: "Brasileirao", round: 1 },
+        { home: opp(1), away: userTeam, date: "Rodada 2", time: "21:30", competition: "Brasileirao", round: 2 },
+        { home: userTeam, away: opp(2), date: "Rodada 3", time: "18:30", competition: "Brasileirao", round: 3 },
+        { home: opp(3), away: userTeam, date: "Rodada 4", time: "19:00", competition: "Brasileirao", round: 4 },
+        { home: userTeam, away: opp(4), date: "Rodada 5", time: "16:00", competition: "Brasileirao", round: 5 },
+        { home: opp(5), away: userTeam, date: "Rodada 6", time: "20:00", competition: "Brasileirao", round: 6 },
+      ]
+    }
+    
+    return userFixtures.slice(0, 6).map(f => ({
+      home: f.homeTeam,
+      away: f.awayTeam,
+      date: `Rodada ${f.round}`,
+      time: "16:00",
+      competition: f.competition,
+      round: f.round
+    }))
+  }, [seasonCalendar.fixtures, userTeam])
 
   return (
     <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
@@ -123,11 +164,11 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-white/40 uppercase tracking-wider">Posicao</div>
-                <div className="text-xl font-bold text-white">13°</div>
+                <div className="text-xl font-bold text-white">{userPosition > 0 ? `${userPosition}°` : "-"}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">Temporada</div>
-                <div className="text-xl font-bold text-white">2026</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">Rodada</div>
+                <div className="text-xl font-bold text-white">{currentWeek}<span className="text-sm text-white/40">/38</span></div>
               </div>
             </div>
           </div>
