@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   MessageSquare,
@@ -56,8 +56,14 @@ export default function ReunioesPage() {
   const [lastMeetingResult, setLastMeetingResult] = useState<PlayerMeeting | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterPosition, setFilterPosition] = useState<string>("all")
+  const [mounted, setMounted] = useState(false)
   
   const { squadPlayers, playerMeetings, holdMeeting, canMeetPlayer, currentWeek } = gameEngine
+  
+  // Evita erro de hidratacao
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Filtra jogadores
   const filteredPlayers = useMemo(() => {
@@ -204,7 +210,7 @@ export default function ReunioesPage() {
                           )}>
                             {player.morale}
                           </span>
-                          {!canMeetThisPlayer && (
+                          {mounted && !canMeetThisPlayer && (
                             <span className="text-xs text-white/30 flex items-center gap-1">
                               <Clock className="h-3 w-3" /> Cooldown
                             </span>
