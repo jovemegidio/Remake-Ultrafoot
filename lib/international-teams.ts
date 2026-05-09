@@ -1,11 +1,9 @@
 // Dados dos times internacionais
-import { type Team, type Divisao } from "./teams-data"
+import { type Team, type Divisao, getEscudoUrl } from "./teams-data"
 
-// URL base para escudos internacionais (usando repositorio publico)
-const INTL_ESCUDO_BASE = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main/teams/escudos"
-
+// Usa a funcao centralizada de escudos que verifica primeiro os locais
 function getIntlEscudo(key: string): string {
-  return `${INTL_ESCUDO_BASE}/${key}.png`
+  return getEscudoUrl(key)
 }
 
 // =============================================
