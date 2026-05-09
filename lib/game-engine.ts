@@ -9,12 +9,49 @@ import { persist } from 'zustand/middleware'
 // TIPOS E INTERFACES
 // ============================================
 
+export interface ContractBonus {
+  type: "goals" | "assists" | "titles" | "appearances" | "cleanSheets" | "nationalTeam"
+  threshold: number // Quantidade necessaria
+  amount: number // Valor do bonus
+  achieved: boolean
+}
+
 export interface PlayerContract {
   salary: number // Salario semanal
   endDate: number // Semana de termino (week absoluto)
   releaseClause: number | null
   signedWeek: number
   signedSeason: number
+  // Clausulas de bonus
+  bonuses: ContractBonus[]
+  // Opcao de renovacao automatica
+  autoRenewalOption: boolean
+  autoRenewalWeeks: number // Semanas adicionais se renovar
+  // Clausula de revenda (% para time anterior)
+  resaleClause: number // 0-50%
+  previousClub: string | null
+}
+
+// Historico de confrontos entre times
+export interface HeadToHead {
+  team1: string
+  team2: string
+  matches: HeadToHeadMatch[]
+  team1Wins: number
+  team2Wins: number
+  draws: number
+  team1Goals: number
+  team2Goals: number
+}
+
+export interface HeadToHeadMatch {
+  season: number
+  week: number
+  competition: string
+  homeTeam: string
+  awayTeam: string
+  homeScore: number
+  awayScore: number
 }
 
 export interface PlayerInjury {
@@ -167,6 +204,41 @@ export interface TopScorer {
   matches: number
 }
 
+// Sistema de Ofertas da IA
+export interface TransferOffer {
+  id: number
+  playerId: number
+  playerName: string
+  fromTeam: string
+  offerType: "compra" | "emprestimo"
+  offerAmount: number
+  wageCoverage?: number // % do salario coberto no emprestimo
+  loanWeeks?: number
+  status: "pendente" | "aceita" | "rejeitada" | "expirada"
+  createdWeek: number
+  expiresWeek: number
+}
+
+// Times que podem fazer ofertas
+export const AI_TEAMS = [
+  { short: "FLA", name: "Flamengo", budget: 80000000, prestige: 90 },
+  { short: "PAL", name: "Palmeiras", budget: 75000000, prestige: 88 },
+  { short: "COR", name: "Corinthians", budget: 50000000, prestige: 85 },
+  { short: "SAO", name: "Sao Paulo", budget: 45000000, prestige: 84 },
+  { short: "INT", name: "Internacional", budget: 40000000, prestige: 82 },
+  { short: "GRE", name: "Gremio", budget: 38000000, prestige: 81 },
+  { short: "CAM", name: "Atletico-MG", budget: 55000000, prestige: 83 },
+  { short: "FLU", name: "Fluminense", budget: 35000000, prestige: 80 },
+  { short: "BOT", name: "Botafogo", budget: 60000000, prestige: 79 },
+  { short: "BAH", name: "Bahia", budget: 25000000, prestige: 75 },
+  // Times europeus
+  { short: "POR", name: "Porto", budget: 40000000, prestige: 85 },
+  { short: "BEN", name: "Benfica", budget: 45000000, prestige: 84 },
+  { short: "LEV", name: "Bayer Leverkusen", budget: 60000000, prestige: 82 },
+  { short: "SEV", name: "Sevilla", budget: 35000000, prestige: 80 },
+  { short: "LYO", name: "Lyon", budget: 30000000, prestige: 78 },
+]
+
 // ============================================
 // ESTADO GLOBAL DO JOGO
 // ============================================
@@ -194,12 +266,18 @@ interface GameEngineState {
   // Resultados
   matchResults: MatchResult[]
   
+  // Historico de confrontos
+  headToHeadRecords: HeadToHead[]
+  
   // Selecoes
   nationalTeamCalls: NationalTeamCall[]
   fifaDates: number[] // semanas com datas FIFA
   
   // Artilharia
   topScorers: TopScorer[]
+  
+  // Ofertas de transferencia
+  transferOffers: TransferOffer[]
   
   // Financas
   balance: number
@@ -210,6 +288,8 @@ interface GameEngineState {
   
   // Acoes
   advanceWeek: () => void
+  generateAIOffers: () => void
+  respondToOffer: (offerId: number, accept: boolean) => void
   trainPlayer: (playerId: number, attribute: string) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   sellPlayer: (playerId: number) => void
@@ -227,6 +307,9 @@ interface GameEngineState {
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
   healPlayer: (playerId: number) => void
   initializeGame: (teamShort: string) => void
+  updateHeadToHead: (result: MatchResult) => void
+  getHeadToHead: (team1: string, team2: string) => HeadToHead | null
+  checkContractBonuses: (playerId: number) => void
 }
 
 // Jogadores iniciais do Bragantino (exemplo)
@@ -248,7 +331,20 @@ const initialPlayers: Player[] = [
     energy: 100,
     morale: "Feliz",
     form: 75,
-    contract: { salary: 120000, endDate: 156, releaseClause: 15000000, signedWeek: 0, signedSeason: 2026 },
+    contract: { 
+      salary: 120000, 
+      endDate: 156, 
+      releaseClause: 15000000, 
+      signedWeek: 0, 
+      signedSeason: 2026,
+      bonuses: [
+        { type: "cleanSheets", threshold: 15, amount: 500000, achieved: false }
+      ],
+      autoRenewalOption: true,
+      autoRenewalWeeks: 52,
+      resaleClause: 0,
+      previousClub: null
+    },
     injury: null,
     seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
     training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
@@ -567,10 +663,14 @@ export const useGameEngine = create<GameEngineState>()(
       
       matchResults: [],
       
+      headToHeadRecords: [],
+      
       nationalTeamCalls: [],
       fifaDates: FIFA_DATES_2026,
       
       topScorers: [],
+      
+      transferOffers: [],
       
       balance: 27500000,
       weeklyIncome: 2100000,
@@ -647,14 +747,26 @@ export const useGameEngine = create<GameEngineState>()(
           // Atualizar financas
           const weeklyBalance = s.weeklyIncome - s.weeklyExpenses
           
+          // Expirar ofertas antigas
+          const updatedOffers = s.transferOffers.map(offer => {
+            if (offer.status === "pendente" && offer.expiresWeek <= newWeek) {
+              return { ...offer, status: "expirada" as const }
+            }
+            return offer
+          })
+          
           return {
             ...s,
             currentWeek: finalWeek,
             currentSeason: newSeason,
             squadPlayers: updatedPlayers,
+            transferOffers: updatedOffers,
             balance: s.balance + weeklyBalance
           }
         })
+        
+        // Gera novas ofertas da IA
+        get().generateAIOffers()
       },
       
       trainPlayer: (playerId, attribute) => {
@@ -776,6 +888,109 @@ export const useGameEngine = create<GameEngineState>()(
           }))
           return { serieAStandings: updatedStandings }
         })
+      },
+      
+      generateAIOffers: () => {
+        const state = get()
+        
+        // Chance de gerar ofertas (20% por semana)
+        if (Math.random() > 0.2) return
+        
+        // Seleciona jogadores atraentes (overall >= 75, idade < 30)
+        const attractivePlayers = state.squadPlayers.filter(p => 
+          p.overall >= 75 && p.age < 30 && !p.isLoanedIn
+        )
+        
+        if (attractivePlayers.length === 0) return
+        
+        // Seleciona um jogador aleatorio
+        const targetPlayer = attractivePlayers[Math.floor(Math.random() * attractivePlayers.length)]
+        
+        // Seleciona um time para fazer oferta
+        const possibleTeams = AI_TEAMS.filter(t => t.budget >= targetPlayer.marketValue * 0.5)
+        if (possibleTeams.length === 0) return
+        
+        const buyingTeam = possibleTeams[Math.floor(Math.random() * possibleTeams.length)]
+        
+        // Determina tipo de oferta
+        const isLoan = Math.random() < 0.3 || buyingTeam.budget < targetPlayer.marketValue
+        
+        // Calcula valor da oferta
+        let offerAmount: number
+        if (isLoan) {
+          // Emprestimo: paga parte do salario
+          offerAmount = targetPlayer.contract?.salary ? Math.round(targetPlayer.contract.salary * 4 * (0.5 + Math.random() * 0.5)) : 100000
+        } else {
+          // Compra: 60-120% do valor de mercado
+          const multiplier = 0.6 + Math.random() * 0.6
+          offerAmount = Math.round(targetPlayer.marketValue * multiplier)
+        }
+        
+        const newOffer: TransferOffer = {
+          id: Date.now(),
+          playerId: targetPlayer.id,
+          playerName: targetPlayer.name,
+          fromTeam: buyingTeam.name,
+          offerType: isLoan ? "emprestimo" : "compra",
+          offerAmount,
+          wageCoverage: isLoan ? Math.round(50 + Math.random() * 50) : undefined,
+          loanWeeks: isLoan ? Math.round(26 + Math.random() * 26) : undefined,
+          status: "pendente",
+          createdWeek: state.currentWeek,
+          expiresWeek: state.currentWeek + 3
+        }
+        
+        set((s) => ({
+          transferOffers: [...s.transferOffers, newOffer]
+        }))
+      },
+      
+      respondToOffer: (offerId: number, accept: boolean) => {
+        const state = get()
+        const offer = state.transferOffers.find(o => o.id === offerId)
+        
+        if (!offer || offer.status !== "pendente") return
+        
+        if (accept) {
+          const player = state.squadPlayers.find(p => p.id === offer.playerId)
+          if (!player) return
+          
+          if (offer.offerType === "compra") {
+            // Vende o jogador
+            set((s) => ({
+              squadPlayers: s.squadPlayers.filter(p => p.id !== offer.playerId),
+              balance: s.balance + offer.offerAmount,
+              transferBudget: s.transferBudget + offer.offerAmount,
+              weeklyExpenses: s.weeklyExpenses - (player.contract?.salary || 0),
+              transferOffers: s.transferOffers.map(o => 
+                o.id === offerId ? { ...o, status: "aceita" as const } : o
+              )
+            }))
+          } else {
+            // Empresta o jogador
+            const loanedPlayer = {
+              ...player,
+              isLoanedIn: false, // Saindo por emprestimo
+              loanEndWeek: state.currentWeek + (offer.loanWeeks || 26),
+              parentClub: offer.fromTeam
+            }
+            
+            set((s) => ({
+              squadPlayers: s.squadPlayers.filter(p => p.id !== offer.playerId),
+              balance: s.balance + offer.offerAmount,
+              weeklyExpenses: s.weeklyExpenses - (player.contract?.salary || 0) * ((offer.wageCoverage || 100) / 100),
+              transferOffers: s.transferOffers.map(o => 
+                o.id === offerId ? { ...o, status: "aceita" as const } : o
+              )
+            }))
+          }
+        } else {
+          set((s) => ({
+            transferOffers: s.transferOffers.map(o => 
+              o.id === offerId ? { ...o, status: "rejeitada" as const } : o
+            )
+          }))
+        }
       },
       
       drawCopaBracket: () => {
@@ -920,8 +1135,134 @@ export const useGameEngine = create<GameEngineState>()(
           serieAStandings,
           copaBrasil: [],
           matchResults: [],
+          headToHeadRecords: [],
           topScorers: []
         })
+      },
+      
+      updateHeadToHead: (result: MatchResult) => {
+        set((s) => {
+          const team1 = result.homeTeam < result.awayTeam ? result.homeTeam : result.awayTeam
+          const team2 = result.homeTeam < result.awayTeam ? result.awayTeam : result.homeTeam
+          
+          const existingRecord = s.headToHeadRecords.find(
+            h => h.team1 === team1 && h.team2 === team2
+          )
+          
+          const newMatch: HeadToHeadMatch = {
+            season: result.season,
+            week: result.week,
+            competition: result.competition,
+            homeTeam: result.homeTeam,
+            awayTeam: result.awayTeam,
+            homeScore: result.homeScore,
+            awayScore: result.awayScore
+          }
+          
+          if (existingRecord) {
+            // Atualiza registro existente
+            const isTeam1Home = result.homeTeam === team1
+            const team1Score = isTeam1Home ? result.homeScore : result.awayScore
+            const team2Score = isTeam1Home ? result.awayScore : result.homeScore
+            
+            return {
+              headToHeadRecords: s.headToHeadRecords.map(h => {
+                if (h.team1 === team1 && h.team2 === team2) {
+                  return {
+                    ...h,
+                    matches: [...h.matches, newMatch],
+                    team1Wins: h.team1Wins + (team1Score > team2Score ? 1 : 0),
+                    team2Wins: h.team2Wins + (team2Score > team1Score ? 1 : 0),
+                    draws: h.draws + (team1Score === team2Score ? 1 : 0),
+                    team1Goals: h.team1Goals + team1Score,
+                    team2Goals: h.team2Goals + team2Score
+                  }
+                }
+                return h
+              })
+            }
+          } else {
+            // Cria novo registro
+            const isTeam1Home = result.homeTeam === team1
+            const team1Score = isTeam1Home ? result.homeScore : result.awayScore
+            const team2Score = isTeam1Home ? result.awayScore : result.homeScore
+            
+            const newRecord: HeadToHead = {
+              team1,
+              team2,
+              matches: [newMatch],
+              team1Wins: team1Score > team2Score ? 1 : 0,
+              team2Wins: team2Score > team1Score ? 1 : 0,
+              draws: team1Score === team2Score ? 1 : 0,
+              team1Goals: team1Score,
+              team2Goals: team2Score
+            }
+            
+            return {
+              headToHeadRecords: [...s.headToHeadRecords, newRecord]
+            }
+          }
+        })
+      },
+      
+      getHeadToHead: (team1: string, team2: string) => {
+        const state = get()
+        const t1 = team1 < team2 ? team1 : team2
+        const t2 = team1 < team2 ? team2 : team1
+        return state.headToHeadRecords.find(h => h.team1 === t1 && h.team2 === t2) || null
+      },
+      
+      checkContractBonuses: (playerId: number) => {
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p => {
+            if (p.id !== playerId || !p.contract) return p
+            
+            const updatedBonuses = p.contract.bonuses.map(bonus => {
+              if (bonus.achieved) return bonus
+              
+              let currentValue = 0
+              switch (bonus.type) {
+                case "goals":
+                  currentValue = p.seasonStats.goals
+                  break
+                case "assists":
+                  currentValue = p.seasonStats.assists
+                  break
+                case "appearances":
+                  currentValue = p.seasonStats.matchesPlayed
+                  break
+                case "cleanSheets":
+                  currentValue = p.seasonStats.cleanSheets
+                  break
+                case "nationalTeam":
+                  currentValue = p.calledUp ? 1 : 0
+                  break
+                case "titles":
+                  // Implementar quando tiver sistema de titulos
+                  currentValue = 0
+                  break
+              }
+              
+              if (currentValue >= bonus.threshold) {
+                return { ...bonus, achieved: true }
+              }
+              return bonus
+            })
+            
+            // Calcula bonus total a pagar
+            const bonusTotal = updatedBonuses
+              .filter(b => b.achieved && !p.contract?.bonuses.find(ob => ob.type === b.type)?.achieved)
+              .reduce((sum, b) => sum + b.amount, 0)
+            
+            return {
+              ...p,
+              contract: {
+                ...p.contract,
+                bonuses: updatedBonuses
+              }
+            }
+          })
+        }))
       }
     }),
     {
