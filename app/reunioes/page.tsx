@@ -75,7 +75,7 @@ export default function ReunioesPage() {
   }, [squadPlayers, searchTerm, filterPosition])
 
   const selectedPlayer = selectedPlayerId ? squadPlayers.find(p => p.id === selectedPlayerId) : null
-  const canMeet = selectedPlayerId ? canMeetPlayer(selectedPlayerId) : false
+  const canMeet = selectedPlayerId && mounted ? canMeetPlayer(selectedPlayerId) : false
 
   // Realiza a reuniao
   const handleMeeting = () => {
@@ -106,13 +106,12 @@ export default function ReunioesPage() {
   }, [selectedPlayerId, playerMeetings])
 
   return (
-    <div className="flex h-screen bg-[#0a0a0f]">
+    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <GameHeader />
+<GameHeader team={userTeam} />
         
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-premium">
+        <main className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Header */}
@@ -175,7 +174,7 @@ export default function ReunioesPage() {
                 
                 <div className="max-h-[500px] overflow-y-auto scrollbar-thin">
                   {filteredPlayers.map(player => {
-                    const canMeetThisPlayer = canMeetPlayer(player.id)
+                    const canMeetThisPlayer = mounted ? canMeetPlayer(player.id) : true
                     const isSelected = selectedPlayerId === player.id
                     
                     return (
@@ -210,7 +209,7 @@ export default function ReunioesPage() {
                           )}>
                             {player.morale}
                           </span>
-                          {mounted && !canMeetThisPlayer && (
+                          {!canMeetThisPlayer && (
                             <span className="text-xs text-white/30 flex items-center gap-1">
                               <Clock className="h-3 w-3" /> Cooldown
                             </span>

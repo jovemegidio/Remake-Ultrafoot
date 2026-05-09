@@ -100,13 +100,12 @@ export default function AnalisePartidaPage() {
   }
 
   return (
-    <div className="flex h-screen bg-[#0a0a0f]">
+    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <GameHeader />
+<GameHeader team={userTeam} />
         
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-premium">
+        <main className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Header */}
