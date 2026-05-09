@@ -6,13 +6,14 @@ import Image from "next/image"
 import {
   ArrowLeft,
   ArrowRight,
-  ChevronDown,
   Search,
   Star,
   Users,
   Building2,
   Wallet,
   Trophy,
+  Globe,
+  MapPin,
 } from "lucide-react"
 import {
   serieATeams,
@@ -24,7 +25,20 @@ import {
   getLogoUrl,
   type Divisao,
   type Team,
+  type Regiao,
 } from "@/lib/teams-data"
+import {
+  premierLeagueTeams,
+  laLigaTeams,
+  serieAItaTeams,
+  bundesligaTeams,
+  ligue1Teams,
+  saudiProTeams,
+  mlsTeams,
+  ligaMXTeams,
+  primeiraLigaTeams,
+  leagueInfo,
+} from "@/lib/international-teams"
 import { teamRating, getPlayersByTeam } from "@/lib/players-data"
 import { selectTeam } from "@/lib/save-system"
 import { TeamCrest } from "@/components/team-crest"
@@ -35,21 +49,51 @@ interface DivisaoTab {
   label: string
   short: string
   teams: Team[]
+  region: Regiao
+  country?: string
+  flag?: string
 }
 
 const DIVISIONS: DivisaoTab[] = [
-  { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams },
-  { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams },
-  { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams },
-  { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams },
+  // Brasil
+  { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
+  { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
+  { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
+  { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
+  // Europa
+  { key: "premier_league", label: "Premier League", short: "Premier", teams: premierLeagueTeams, region: "europa", country: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams, region: "europa", country: "Espanha", flag: "🇪🇸" },
+  { key: "serie_a_ita", label: "Serie A Italia", short: "Serie A ITA", teams: serieAItaTeams, region: "europa", country: "Italia", flag: "🇮🇹" },
+  { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams, region: "europa", country: "Alemanha", flag: "🇩🇪" },
+  { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams, region: "europa", country: "Franca", flag: "🇫🇷" },
+  { key: "primeira_liga", label: "Primeira Liga", short: "Portugal", teams: primeiraLigaTeams, region: "europa", country: "Portugal", flag: "🇵🇹" },
+  // Americas
+  { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams, region: "americas", country: "EUA", flag: "🇺🇸" },
+  { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams, region: "americas", country: "Mexico", flag: "🇲🇽" },
+  // Asia
+  { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams, region: "asia", country: "Arabia Saudita", flag: "🇸🇦" },
+]
+
+const REGIONS: { key: Regiao | "all"; label: string; icon: string }[] = [
+  { key: "all", label: "Todas", icon: "🌍" },
+  { key: "brasil", label: "Brasil", icon: "🇧🇷" },
+  { key: "europa", label: "Europa", icon: "🇪🇺" },
+  { key: "americas", label: "Americas", icon: "🌎" },
+  { key: "asia", label: "Asia", icon: "🌏" },
 ]
 
 export default function NovoJogoPage() {
   const router = useRouter()
+  const [selectedRegion, setSelectedRegion] = useState<Regiao | "all">("all")
   const [divisao, setDivisao] = useState<Divisao>("serie_a")
   const [search, setSearch] = useState("")
   const [managerName, setManagerName] = useState("")
   const [selected, setSelected] = useState<Team | null>(null)
+
+  const filteredDivisions = useMemo(() => {
+    if (selectedRegion === "all") return DIVISIONS
+    return DIVISIONS.filter(d => d.region === selectedRegion)
+  }, [selectedRegion])
 
   const activeDivision = DIVISIONS.find(d => d.key === divisao) ?? DIVISIONS[0]
 
@@ -61,14 +105,29 @@ export default function NovoJogoPage() {
       t =>
         t.nome.toLowerCase().includes(q) ||
         t.curto.toLowerCase().includes(q) ||
-        t.estado.toLowerCase().includes(q),
+        t.estado.toLowerCase().includes(q) ||
+        t.cidade?.toLowerCase().includes(q),
     )
   }, [activeDivision, search])
+
+  const totalTeams = DIVISIONS.reduce((s, d) => s + d.teams.length, 0)
 
   const handleStart = () => {
     if (!selected) return
     selectTeam(selected.curto, managerName)
     router.push("/dashboard")
+  }
+
+  // When region changes, select first division of that region
+  const handleRegionChange = (region: Regiao | "all") => {
+    setSelectedRegion(region)
+    const firstDivInRegion = region === "all" 
+      ? DIVISIONS[0] 
+      : DIVISIONS.find(d => d.region === region)
+    if (firstDivInRegion) {
+      setDivisao(firstDivInRegion.key)
+    }
+    setSelected(null)
   }
 
   return (
@@ -104,7 +163,7 @@ export default function NovoJogoPage() {
         </div>
       </header>
 
-      <div className="relative z-10 flex-1 flex flex-col mx-auto w-full max-w-[1400px] px-6 py-4 overflow-hidden">
+      <div className="relative z-10 flex-1 flex flex-col mx-auto w-full max-w-[1600px] px-6 py-4 overflow-hidden">
         <div className="flex-shrink-0 mb-4">
           <p className="text-[11px] uppercase tracking-[0.4em] text-white/35">
             Passo 1 de 1
@@ -118,18 +177,38 @@ export default function NovoJogoPage() {
             ESCOLHA SEU TIME
           </h1>
           <p className="mt-1 max-w-xl text-xs text-white/50">
-            Selecione o clube que voce vai gerenciar. {DIVISIONS.reduce((s, d) => s + d.teams.length, 0)} times
-            disponiveis.
+            Selecione o clube que voce vai gerenciar. {totalTeams} times disponiveis em {DIVISIONS.length} ligas.
           </p>
         </div>
 
         <div className="flex-1 grid gap-4 lg:grid-cols-[1fr_360px] overflow-hidden">
           {/* Team browser */}
           <section className="flex flex-col overflow-hidden">
-            {/* Filters */}
+            {/* Region selector */}
+            <div className="flex-shrink-0 mb-3">
+              <div className="flex items-center gap-1 rounded-full bg-white/[0.04] p-1 w-fit">
+                {REGIONS.map(r => (
+                  <button
+                    key={r.key}
+                    onClick={() => handleRegionChange(r.key)}
+                    className={
+                      "rounded-full px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1.5 " +
+                      (r.key === selectedRegion
+                        ? "bg-white text-black"
+                        : "text-white/55 hover:text-white")
+                    }
+                  >
+                    <span>{r.icon}</span>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Division tabs */}
             <div className="flex-shrink-0 mb-3 flex flex-wrap items-center gap-2">
-              <div className="flex flex-wrap items-center gap-1 rounded-full bg-white/[0.04] p-1">
-                {DIVISIONS.map(d => (
+              <div className="flex flex-wrap items-center gap-1 rounded-xl bg-white/[0.04] p-1 max-w-full overflow-x-auto">
+                {filteredDivisions.map(d => (
                   <button
                     key={d.key}
                     onClick={() => {
@@ -137,14 +216,15 @@ export default function NovoJogoPage() {
                       setSelected(null)
                     }}
                     className={
-                      "rounded-full px-3 py-1 text-xs font-semibold transition " +
+                      "rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition whitespace-nowrap flex items-center gap-1.5 " +
                       (d.key === divisao
                         ? "bg-white text-black"
-                        : "text-white/55 hover:text-white")
+                        : "text-white/55 hover:text-white hover:bg-white/5")
                     }
                   >
+                    <span className="text-xs">{d.flag}</span>
                     {d.short}
-                    <span className="ml-1 text-[10px] opacity-60">
+                    <span className="text-[10px] opacity-60">
                       {d.teams.length}
                     </span>
                   </button>
@@ -155,9 +235,25 @@ export default function NovoJogoPage() {
                 <Input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder={`Buscar em ${activeDivision.label}…`}
+                  placeholder={`Buscar em ${activeDivision.label}...`}
                   className="border-white/10 bg-white/[0.03] pl-9 text-sm text-white placeholder:text-white/30 h-9"
                 />
+              </div>
+            </div>
+
+            {/* League info bar */}
+            <div className="flex-shrink-0 mb-2 flex items-center gap-4 px-1">
+              <div className="flex items-center gap-2 text-xs text-white/50">
+                <Globe className="h-3.5 w-3.5" />
+                <span>{activeDivision.country}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-white/50">
+                <Trophy className="h-3.5 w-3.5" />
+                <span>{activeDivision.label}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-white/50">
+                <Users className="h-3.5 w-3.5" />
+                <span>{activeDivision.teams.length} times</span>
               </div>
             </div>
 
@@ -168,7 +264,7 @@ export default function NovoJogoPage() {
                   <TeamCard
                     key={team.curto + team.divisao}
                     team={team}
-                    selected={selected?.curto === team.curto}
+                    selected={selected?.curto === team.curto && selected?.divisao === team.divisao}
                     onClick={() => setSelected(team)}
                   />
                 ))}
@@ -279,7 +375,7 @@ function TeamCard({
           )}
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[10px] text-white/40">
-          <span>{team.estado}</span>
+          <span>{team.pais || team.estado}</span>
           <span className="text-white/15">·</span>
           <span className="flex items-center gap-0.5">
             <Star className="h-2.5 w-2.5" />
@@ -294,6 +390,7 @@ function TeamCard({
 function SelectedPanel({ team }: { team: Team }) {
   const overall = teamRating(team.nome)
   const players = getPlayersByTeam(team.nome)
+  const divisionInfo = DIVISIONS.find(d => d.key === team.divisao)
 
   return (
     <div
@@ -305,9 +402,10 @@ function SelectedPanel({ team }: { team: Team }) {
       <div className="flex items-start gap-3">
         <TeamCrest team={team} size="xl" />
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40">
-            {team.divisao.replace("_", " ").toUpperCase()}
-          </p>
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
+            <span>{divisionInfo?.flag}</span>
+            <span>{divisionInfo?.label || team.divisao.replace("_", " ").toUpperCase()}</span>
+          </div>
           <h2
             className="mt-0.5 text-xl font-extrabold leading-tight text-white"
             style={{
@@ -316,8 +414,9 @@ function SelectedPanel({ team }: { team: Team }) {
           >
             {team.nome}
           </h2>
-          <p className="mt-0.5 text-xs text-white/45">
-            {team.cidade ? `${team.cidade}, ${team.estado}` : team.estado}
+          <p className="mt-0.5 text-xs text-white/45 flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            {team.cidade ? `${team.cidade}, ${team.pais || team.estado}` : team.pais || team.estado}
           </p>
         </div>
       </div>
@@ -327,7 +426,7 @@ function SelectedPanel({ team }: { team: Team }) {
         <Stat
           icon={Trophy}
           label="Overall"
-          value={overall > 0 ? overall.toString() : "–"}
+          value={overall > 0 ? overall.toString() : "-"}
         />
         <Stat icon={Users} label="Torcida" value={formatNumber(team.torcida)} />
         <Stat icon={Wallet} label="Saldo" value={formatCurrency(team.saldo)} />
@@ -339,19 +438,40 @@ function SelectedPanel({ team }: { team: Team }) {
           Estadio
         </div>
         <div className="mt-1 text-sm font-medium text-white">
-          {team.estadio_nome || "—"}
+          {team.estadio_nome || "-"}
         </div>
         <div className="mt-0.5 text-[11px] text-white/40">
           Capacidade: {team.estadio_cap.toLocaleString("pt-BR")}
         </div>
       </div>
 
+      {/* Additional info */}
+      <div className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
+          <Globe className="h-3 w-3" />
+          Informacoes
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+          <div>
+            <span className="text-white/40">Pais: </span>
+            <span className="text-white/70">{team.pais || "Brasil"}</span>
+          </div>
+          <div>
+            <span className="text-white/40">Liga: </span>
+            <span className="text-white/70">{divisionInfo?.short || team.divisao}</span>
+          </div>
+          {team.patrocinador && (
+            <div className="col-span-2">
+              <span className="text-white/40">Patrocinador: </span>
+              <span className="text-white/70">{team.patrocinador}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {players.length > 0 && (
         <div className="mt-2 flex items-center justify-between text-[11px] text-white/45">
           <span>{players.length} jogadores no elenco</span>
-          {team.patrocinador && (
-            <span className="text-white/30">{team.patrocinador}</span>
-          )}
         </div>
       )}
     </div>

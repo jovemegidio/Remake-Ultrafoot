@@ -723,22 +723,36 @@ export const serieDTeams: Team[] = [
   { nome: "Guarany de Sobral", curto: "GUA", cidade: "Sobral", estado: "CE", cor1: "#000000", cor2: "#ffffff", prestigio: 16, torcida: 20000, estadio_cap: 5000, saldo: 1000000, file_key: "guarany_ce", estadio_nome: "Junco", patrocinador: "Betano", escudo_url: getEscudoUrl("guarany_ce"), divisao: "serie_d" },
 ]
 
-// Todos os times
-export const allTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams]
+// Importar times internacionais
+import { allInternationalTeams } from "./international-teams"
+
+// Todos os times brasileiros
+export const allBrazilianTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams]
+
+// Todos os times (incluindo internacionais)
+export const allTeams = [...allBrazilianTeams, ...allInternationalTeams]
 
 // Times por divisao
 export function getTeamsByDivision(divisao: string): Team[] {
   return allTeams.filter(t => t.divisao === divisao)
 }
 
-// Função para buscar time por curto
-export function getTeamByShort(curto: string): Team | undefined {
+// Função para buscar time por curto (busca tambem por divisao para evitar duplicatas)
+export function getTeamByShort(curto: string, divisao?: string): Team | undefined {
+  if (divisao) {
+    return allTeams.find(t => t.curto === curto && t.divisao === divisao)
+  }
   return allTeams.find(t => t.curto === curto)
 }
 
 // Função para buscar time por file_key
 export function getTeamByFileKey(fileKey: string): Team | undefined {
   return allTeams.find(t => t.file_key === fileKey)
+}
+
+// Função para buscar time por nome
+export function getTeamByName(nome: string): Team | undefined {
+  return allTeams.find(t => t.nome.toLowerCase() === nome.toLowerCase())
 }
 
 // Uniformes dos times (baseado nas cores reais)
