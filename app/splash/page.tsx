@@ -412,51 +412,21 @@ export default function SplashPage() {
         {/* Main content */}
         <div className="relative z-10 flex flex-col items-center w-full max-w-lg px-8">
           
-          {/* Text Logo container with refined glow */}
+          {/* Logo container */}
           <div 
-            className="relative mb-16 flex flex-col items-center"
+            className="relative mb-16"
             style={{
               animation: phase === "loading" ? "logoFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
             }}
           >
-            {/* Outer glow ring */}
-            <div 
-              className="absolute -inset-16 opacity-30"
-              style={{
-                background: "radial-gradient(ellipse at center, rgba(6, 182, 212, 0.3) 0%, transparent 70%)",
-                animation: "pulseGlow 3s ease-in-out infinite",
-              }}
+            <Image
+              src="/brand/ultrafoot-logo.png"
+              alt="Ultrafoot"
+              width={320}
+              height={70}
+              className="object-contain h-auto w-auto"
+              priority
             />
-            
-            {/* Inner glow */}
-            <div 
-              className="absolute -inset-8 blur-2xl opacity-40"
-              style={{
-                background: "linear-gradient(180deg, rgba(6, 182, 212, 0.4) 0%, rgba(59, 130, 246, 0.2) 100%)",
-                animation: "pulseGlow 2.5s ease-in-out infinite alternate",
-              }}
-            />
-            
-            {/* Text Logo */}
-            <h1 
-              className="relative z-10 text-5xl sm:text-6xl md:text-7xl font-black tracking-[0.12em] text-transparent bg-clip-text"
-              style={{
-                fontFamily: "var(--font-oswald), sans-serif",
-                backgroundImage: "linear-gradient(180deg, #ffffff 0%, #06b6d4 50%, #3b82f6 100%)",
-                filter: "drop-shadow(0 0 30px rgba(6, 182, 212, 0.5)) drop-shadow(0 0 60px rgba(6, 182, 212, 0.3))",
-              }}
-            >
-              ULTRAFOOT
-            </h1>
-            <span 
-              className="relative z-10 text-2xl sm:text-3xl font-bold tracking-[0.5em] text-cyan-400/80 mt-2"
-              style={{
-                fontFamily: "var(--font-oswald), sans-serif",
-                textShadow: "0 0 20px rgba(6, 182, 212, 0.5)",
-              }}
-            >
-              26
-            </span>
           </div>
 
           {/* Loading section with elegant design */}
@@ -603,42 +573,23 @@ export default function SplashPage() {
           ))}
         </div>
 
-        {/* Header with ULTRAFOOT text logo */}
+        {/* Header with ULTRAFOOT logo */}
         <div 
           className="flex flex-col items-center pt-10 md:pt-14 lg:pt-16 pb-4"
           style={{
             animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
           }}
         >
-          {/* Text Logo */}
-          <div className="relative mb-3 group">
-            {/* Glow effect behind text */}
-            <div 
-              className="absolute inset-0 blur-2xl opacity-40"
-              style={{
-                background: "linear-gradient(135deg, #1db954 0%, #1ed760 100%)",
-              }}
+          {/* Logo Image */}
+          <div className="relative mb-4">
+            <Image
+              src="/brand/ultrafoot-logo.png"
+              alt="Ultrafoot"
+              width={280}
+              height={60}
+              className="object-contain h-auto w-auto max-w-[200px] sm:max-w-[240px] md:max-w-[280px]"
+              priority
             />
-            <h1 
-              className="relative text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-[0.15em] text-transparent bg-clip-text transition-all duration-300"
-              style={{
-                fontFamily: "var(--font-oswald), sans-serif",
-                backgroundImage: "linear-gradient(180deg, #ffffff 0%, #e0e0e0 50%, #a0a0a0 100%)",
-                textShadow: "0 0 40px rgba(29, 185, 84, 0.3)",
-              }}
-            >
-              ULTRAFOOT
-            </h1>
-            <div className="flex items-center justify-center gap-2 mt-1">
-              <div className="h-px flex-1 max-w-12 bg-gradient-to-r from-transparent to-[#1db954]/50" />
-              <span 
-                className="text-[#1db954] text-lg sm:text-xl md:text-2xl font-bold tracking-[0.3em]"
-                style={{ fontFamily: "var(--font-oswald), sans-serif" }}
-              >
-                26
-              </span>
-              <div className="h-px flex-1 max-w-12 bg-gradient-to-l from-transparent to-[#1db954]/50" />
-            </div>
           </div>
           
           {/* Version warning - minimal style */}
