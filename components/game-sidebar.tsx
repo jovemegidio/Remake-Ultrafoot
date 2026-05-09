@@ -21,6 +21,8 @@ import {
   Mic,
   ClipboardList,
   Target,
+  MessageSquare,
+  PieChart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -36,7 +38,9 @@ const navItems = [
   { icon: Target, label: "Adversarios", href: "/adversarios" },
   { icon: BarChart3, label: "Estatisticas", href: "/estatisticas" },
   { icon: ClipboardList, label: "Relatorios", href: "/relatorios" },
+  { icon: PieChart, label: "Analise Partida", href: "/analise-partida" },
   { icon: Heart, label: "Vestiario", href: "/vestiario" },
+  { icon: MessageSquare, label: "Reunioes", href: "/reunioes" },
   { icon: Mic, label: "Imprensa", href: "/imprensa" },
   { icon: Wallet, label: "Financas", href: "/financas" },
   { icon: ShoppingCart, label: "Mercado", href: "/mercado" },

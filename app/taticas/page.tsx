@@ -30,7 +30,7 @@ import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-import { useGameEngine, type TeamTactics, type PlayerInstructions, type PlayerRole } from "@/lib/game-engine"
+import { useGameEngine, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
 
 // Descricoes de mentalidade
 const MENTALITY_INFO: Record<string, { label: string; desc: string; color: string }> = {
