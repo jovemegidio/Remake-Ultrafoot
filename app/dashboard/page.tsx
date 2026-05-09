@@ -20,6 +20,9 @@ import {
   ArrowDownRight,
   Home,
   Plane,
+  AlertTriangle,
+  Heart,
+  DollarSign,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -30,6 +33,7 @@ import { Progress } from "@/components/ui/progress"
 import { serieATeams, getTeamByShort, formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, useStandings, type Fixture } from "@/lib/use-game-manager"
+import { useGameEngine } from "@/lib/game-engine"
 import { cn } from "@/lib/utils"
 import { useMemo, useEffect } from "react"
 
@@ -44,6 +48,7 @@ export default function DashboardPage() {
     initializeNewGame,
     hydrated
   } = useGameManager()
+  const gameEngine = useGameEngine()
   
   // Inicializa o jogo se ainda nao foi inicializado
   useEffect(() => {
@@ -105,6 +110,116 @@ export default function DashboardPage() {
       round: f.round
     }))
   }, [seasonCalendar.fixtures, userTeam])
+
+  // Financas dinamicas
+  const finances = useMemo(() => {
+    const totalWages = gameEngine.squadPlayers.reduce((sum, p) => sum + (p.contract?.salary || 0), 0) * 4
+    const scoutWages = gameEngine.scouts.reduce((sum, s) => sum + s.salary, 0) * 4
+    const monthlyExpenses = totalWages + scoutWages + 800000
+    const monthlyIncome = (userTeam.prestigio * 25000 + 1500000) + (userTeam.prestigio * 15000 + 800000)
+    
+    return {
+      balance: gameEngine.balance,
+      monthlyIncome,
+      monthlyExpenses,
+      netIncome: monthlyIncome - monthlyExpenses
+    }
+  }, [gameEngine.balance, gameEngine.squadPlayers, gameEngine.scouts, userTeam.prestigio])
+
+  // Noticias dinamicas baseadas em eventos do jogo
+  const news = useMemo(() => {
+    const newsItems: { tag: string; title: string; time: string; icon: typeof Trophy }[] = []
+    
+    // Verifica lesoes
+    const injuredPlayers = gameEngine.squadPlayers.filter(p => p.injury)
+    if (injuredPlayers.length > 0) {
+      newsItems.push({
+        tag: "MEDICO",
+        title: `${injuredPlayers[0].name} esta lesionado - ${injuredPlayers[0].injury?.type}`,
+        time: "Agora",
+        icon: AlertTriangle
+      })
+    }
+    
+    // Verifica contratos expirando
+    const expiringContracts = gameEngine.squadPlayers.filter(p => {
+      if (!p.contract) return false
+      const weeksRemaining = p.contract.endDate - currentWeek
+      return weeksRemaining <= 26 && weeksRemaining > 0
+    })
+    if (expiringContracts.length > 0) {
+      newsItems.push({
+        tag: "CONTRATOS",
+        title: `${expiringContracts.length} jogador(es) com contrato expirando`,
+        time: "Importante",
+        icon: FileText
+      })
+    }
+    
+    // Ultimo resultado
+    const lastResult = gameEngine.matchResults.slice(-1)[0]
+    if (lastResult) {
+      const isWin = (lastResult.homeTeam === userTeam.curto && lastResult.homeScore > lastResult.awayScore) ||
+                   (lastResult.awayTeam === userTeam.curto && lastResult.awayScore > lastResult.homeScore)
+      const isDraw = lastResult.homeScore === lastResult.awayScore
+      newsItems.push({
+        tag: "RESULTADO",
+        title: isWin ? `Vitoria! ${lastResult.homeTeam} ${lastResult.homeScore} x ${lastResult.awayScore} ${lastResult.awayTeam}` :
+               isDraw ? `Empate: ${lastResult.homeTeam} ${lastResult.homeScore} x ${lastResult.awayScore} ${lastResult.awayTeam}` :
+               `Derrota: ${lastResult.homeTeam} ${lastResult.homeScore} x ${lastResult.awayScore} ${lastResult.awayTeam}`,
+        time: `Rodada ${lastResult.week}`,
+        icon: Trophy
+      })
+    }
+    
+    // Posicao na tabela
+    if (userPosition > 0) {
+      const zone = userPosition <= 4 ? "Libertadores" : userPosition <= 6 ? "Sul-Americana" : userPosition >= 17 ? "Rebaixamento" : "Meio da tabela"
+      newsItems.push({
+        tag: "TABELA",
+        title: `${userPosition}o lugar - Zona de ${zone}`,
+        time: "Atual",
+        icon: TrendingUp
+      })
+    }
+    
+    // Olheiros ativos
+    const activeScouts = gameEngine.scouts.filter(s => s.isSearching)
+    if (activeScouts.length > 0) {
+      newsItems.push({
+        tag: "OLHEIROS",
+        title: `${activeScouts.length} olheiro(s) em busca ativa`,
+        time: "Em andamento",
+        icon: Users
+      })
+    }
+    
+    return newsItems.slice(0, 4)
+  }, [gameEngine.squadPlayers, gameEngine.matchResults, gameEngine.scouts, currentWeek, userTeam.curto, userPosition])
+
+  // Metas dinamicas
+  const goals = useMemo(() => {
+    const targetPosition = userTeam.prestigio >= 80 ? 4 : userTeam.prestigio >= 70 ? 8 : 12
+    const avoidPosition = 17
+    
+    const mainProgress = userPosition > 0 ? Math.max(0, Math.min(100, ((20 - userPosition) / (20 - targetPosition)) * 100)) : 50
+    const survivalProgress = userPosition > 0 ? Math.max(0, Math.min(100, ((20 - userPosition) / (20 - avoidPosition)) * 100)) : 75
+    
+    return {
+      main: {
+        title: "Meta Principal",
+        description: targetPosition <= 4 ? "Classificar para Libertadores" : targetPosition <= 8 ? "Classificar para Sul-Americana" : "Terminar no top 12",
+        progress: mainProgress,
+        status: mainProgress >= 80 ? "No caminho" : mainProgress >= 50 ? "Em andamento" : "Dificil"
+      },
+      survival: {
+        title: "Meta Minima",
+        description: "Nao rebaixar (Top 16)",
+        progress: survivalProgress,
+        status: survivalProgress >= 80 ? "Tranquilo" : survivalProgress >= 50 ? "Em andamento" : "Perigo!"
+      }
+    }
+  }, [userPosition, userTeam.prestigio])
 
   return (
     <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
@@ -281,17 +396,17 @@ export default function DashboardPage() {
               
               <div className="p-5 grid gap-4 md:grid-cols-2">
                 <GoalCard
-                  title="Meta Principal"
-                  description="Permanecer na Serie A"
-                  progress={50}
-                  status="Em andamento"
+                  title={goals.main.title}
+                  description={goals.main.description}
+                  progress={goals.main.progress}
+                  status={goals.main.status}
                   tone="primary"
                 />
                 <GoalCard
-                  title="Meta Minima"
-                  description="Nao rebaixar (Top 16)"
-                  progress={75}
-                  status="No caminho"
+                  title={goals.survival.title}
+                  description={goals.survival.description}
+                  progress={goals.survival.progress}
+                  status={goals.survival.status}
                   tone="success"
                 />
               </div>
@@ -388,22 +503,22 @@ export default function DashboardPage() {
               </div>
               
               <div className="divide-y divide-white/5">
-                {[
-                  { tag: "MERCADO", title: "Equipe abre janela com orcamento disponivel", time: "2h" },
-                  { tag: "STAFF", title: "Comissao tecnica define estrategia para temporada", time: "5h" },
-                  { tag: "ELENCO", title: "Capitao renova vinculo ate 2028", time: "1d" },
-                ].map((news) => (
-                  <div key={news.title} className="px-5 py-3 hover:bg-white/5 transition-colors cursor-pointer group">
+                {news.length > 0 ? news.map((item, idx) => (
+                  <div key={idx} className="px-5 py-3 hover:bg-white/5 transition-colors cursor-pointer group">
                     <div className="flex items-center gap-2 text-[10px] text-primary font-medium tracking-wider">
-                      <FileText className="h-3 w-3" />
-                      {news.tag}
-                      <span className="ml-auto text-white/40 font-normal">{news.time}</span>
+                      <item.icon className="h-3 w-3" />
+                      {item.tag}
+                      <span className="ml-auto text-white/40 font-normal">{item.time}</span>
                     </div>
                     <p className="mt-1 text-sm text-white/80 group-hover:text-white transition-colors line-clamp-2">
-                      {news.title}
+                      {item.title}
                     </p>
                   </div>
-                ))}
+                )) : (
+                  <div className="px-5 py-6 text-center text-white/40 text-sm">
+                    Nenhuma noticia no momento
+                  </div>
+                )}
               </div>
               
               <Link 
@@ -425,20 +540,30 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">Saldo atual</span>
-                  <span className="text-lg font-bold text-[#1db954]">{formatCurrency(userTeam.saldo)}</span>
+                  <span className="text-lg font-bold text-[#1db954]">{formatCurrency(finances.balance)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">Receita mensal</span>
                   <span className="text-sm font-medium text-white flex items-center gap-1">
                     <ArrowUpRight className="h-3 w-3 text-[#1db954]" />
-                    R$ 2.1M
+                    {formatCurrency(finances.monthlyIncome)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Folha salarial</span>
+                  <span className="text-sm text-white/60">Despesas mensais</span>
                   <span className="text-sm font-medium text-white flex items-center gap-1">
                     <ArrowDownRight className="h-3 w-3 text-red-500" />
-                    R$ 1.8M
+                    {formatCurrency(finances.monthlyExpenses)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                  <span className="text-sm text-white/60">Balanco</span>
+                  <span className={cn(
+                    "text-sm font-bold flex items-center gap-1",
+                    finances.netIncome >= 0 ? "text-[#1db954]" : "text-red-500"
+                  )}>
+                    {finances.netIncome >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                    {finances.netIncome >= 0 ? "+" : ""}{formatCurrency(finances.netIncome)}
                   </span>
                 </div>
               </div>

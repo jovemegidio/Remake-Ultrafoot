@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, Trophy, X, Key, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react"
+import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ type SplashPhase =
   | "main-menu"
   | "fade-out"
 
-type MenuOption = "novo-jogo" | "editar" | "carregar"
+type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
 export default function SplashPage() {
   const router = useRouter()
@@ -50,6 +50,8 @@ export default function SplashPage() {
     { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
     { id: "editar", label: "EDITOR DE CLUBES", icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
     { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
+    { id: "registrar", label: "REGISTRAR", icon: <Key className="h-7 w-7" strokeWidth={1.5} /> },
+    { id: "sair", label: "SAIR", icon: <LogOut className="h-7 w-7" strokeWidth={1.5} /> },
   ]
 
   // Sequencia de fases da splash
@@ -95,6 +97,26 @@ export default function SplashPage() {
       return
     }
     
+    // Se for registrar, mostra o modal de registro
+    if (menuOption?.id === "registrar") {
+      if (!isRegistered) {
+        setShowRegisterModal(true)
+      }
+      return
+    }
+    
+    // Se for sair, fecha a janela ou volta
+    if (menuOption?.id === "sair") {
+      if (typeof window !== "undefined") {
+        window.close()
+        // Fallback: se nao conseguir fechar, mostra mensagem
+        setTimeout(() => {
+          alert("Obrigado por jogar Ultrafoot 26!")
+        }, 100)
+      }
+      return
+    }
+    
     if (menuOption?.href) {
       setIsExiting(true)
       setPhase("fade-out")
@@ -102,7 +124,7 @@ export default function SplashPage() {
         router.push(menuOption.href)
       }, 400)
     }
-  }, [isExiting, router, mainMenuOptions])
+  }, [isExiting, router, mainMenuOptions, isRegistered])
 
   // Handler para carregar save
   const handleLoadSave = useCallback((saveId: number) => {
@@ -390,41 +412,19 @@ export default function SplashPage() {
         {/* Main content */}
         <div className="relative z-10 flex flex-col items-center w-full max-w-lg px-8">
           
-          {/* Logo container with refined glow */}
+          {/* Logo container */}
           <div 
             className="relative mb-16"
             style={{
               animation: phase === "loading" ? "logoFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
             }}
           >
-            {/* Outer glow ring */}
-            <div 
-              className="absolute -inset-16 opacity-30"
-              style={{
-                background: "radial-gradient(ellipse at center, rgba(6, 182, 212, 0.3) 0%, transparent 70%)",
-                animation: "pulseGlow 3s ease-in-out infinite",
-              }}
-            />
-            
-            {/* Inner glow */}
-            <div 
-              className="absolute -inset-8 blur-2xl opacity-40"
-              style={{
-                background: "linear-gradient(180deg, rgba(6, 182, 212, 0.4) 0%, rgba(59, 130, 246, 0.2) 100%)",
-                animation: "pulseGlow 2.5s ease-in-out infinite alternate",
-              }}
-            />
-            
-            {/* Logo */}
             <Image
-              src="/brand/ultrafoot-text.png"
+              src="/brand/ultrafoot-logo.png"
               alt="Ultrafoot"
               width={320}
               height={70}
-              className="object-contain h-auto w-auto relative z-10"
-              style={{
-                filter: "drop-shadow(0 0 30px rgba(6, 182, 212, 0.4)) drop-shadow(0 0 60px rgba(6, 182, 212, 0.2))",
-              }}
+              className="object-contain h-auto w-auto"
               priority
             />
           </div>
@@ -573,45 +573,23 @@ export default function SplashPage() {
           ))}
         </div>
 
-        {/* Header with UF26 logo - Compact */}
+        {/* Header with ULTRAFOOT logo */}
         <div 
-          className="flex flex-col items-center pt-10 md:pt-14 lg:pt-16 pb-2"
+          className="flex flex-col items-center pt-10 md:pt-14 lg:pt-16 pb-4"
           style={{
             animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
           }}
         >
-          {/* Logo container with gradient background - EAFC Style */}
-          <div className="relative mb-4 group">
-            {/* Subtle glow effect */}
-            <div 
-              className="absolute -inset-2 rounded-xl opacity-30 blur-lg transition-opacity duration-500"
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              }}
+          {/* Logo Image */}
+          <div className="relative mb-4">
+            <Image
+              src="/brand/ultrafoot-logo.png"
+              alt="Ultrafoot"
+              width={280}
+              height={60}
+              className="object-contain h-auto w-auto max-w-[200px] sm:max-w-[240px] md:max-w-[280px]"
+              priority
             />
-            <div 
-              className="relative w-16 h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-lg md:rounded-xl flex items-center justify-center overflow-hidden shadow-xl transition-transform duration-300 hover:scale-105"
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)"
-              }}
-            >
-              {/* Subtle shimmer overlay */}
-              <div 
-                className="absolute inset-0 opacity-20"
-                style={{
-                  background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
-                  animation: "shimmerSlow 4s infinite",
-                }}
-              />
-              <Image
-                src="/brand/uf26-logo.png"
-                alt="UF26"
-                width={48}
-                height={24}
-                className="object-contain h-auto w-auto max-w-[38px] md:max-w-[44px] lg:max-w-[48px] relative z-10"
-                priority
-              />
-            </div>
           </div>
           
           {/* Version warning - minimal style */}
@@ -696,69 +674,6 @@ export default function SplashPage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div 
-          className="flex items-center justify-between px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 md:pb-8 pt-2"
-          style={{
-            animation: phase === "main-menu" ? "slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards" : "none",
-            opacity: 0,
-          }}
-        >
-          {/* Registrar button */}
-          <button
-            onClick={() => !isRegistered && setShowRegisterModal(true)}
-            className={cn(
-              "flex items-center gap-2 px-2 sm:px-4 py-2 transition-all duration-300 group",
-              isRegistered 
-                ? "text-emerald-500/60 cursor-default" 
-                : "text-white/40 hover:text-white/80"
-            )}
-          >
-            <div className={cn(
-              "w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all duration-300",
-              isRegistered 
-                ? "border-emerald-500/40 bg-emerald-500/10" 
-                : "border-current group-hover:border-white/60 group-hover:bg-white/5"
-            )}>
-              {isRegistered ? (
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              ) : (
-                <span className="font-bold text-[10px] sm:text-xs">R</span>
-              )}
-            </div>
-            <span className="font-medium text-xs sm:text-sm tracking-wide hidden sm:block">
-              {isRegistered ? "REGISTRADO" : "REGISTRAR"}
-            </span>
-          </button>
-
-          {/* Center - Navigation hints + Trophy */}
-          <div className="flex flex-col items-center gap-1">
-            <div className="hidden sm:flex items-center gap-3 text-[10px] sm:text-xs text-white/25">
-              <span className="hidden md:inline">Use as setas para navegar</span>
-              <span className="hidden md:inline text-white/10">|</span>
-              <span>Enter para selecionar</span>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer">
-              <Trophy 
-                className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500/60 transition-all duration-300 group-hover:text-yellow-400 group-hover:scale-110" 
-                style={{
-                  filter: "drop-shadow(0 0 8px rgba(234, 179, 8, 0.3))",
-                }}
-              />
-              <div className="text-center">
-                <div className="text-white/40 text-[10px] sm:text-xs font-medium group-hover:text-white/60 transition-colors">ULTRAFOOT 26</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sair button */}
-          <button
-            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 text-white/40 hover:text-red-400/80 transition-all duration-300 group"
-          >
-            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:rotate-90" />
-            <span className="font-medium text-xs sm:text-sm tracking-wide hidden sm:block">SAIR</span>
-          </button>
-        </div>
       </div>
 
       {/* Vignette overlay */}

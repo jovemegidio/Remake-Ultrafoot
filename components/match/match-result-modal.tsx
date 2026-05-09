@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Trophy, ChevronRight, BarChart3, Home, Star, Zap } from "lucide-react"
+import { Trophy, ChevronRight, BarChart3, Home, Star, Zap, Mic } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -301,13 +301,23 @@ export function MatchResultModal({
                   </Button>
                 </Link>
               )}
+              <Link href="/imprensa" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#1db954] to-[#1ed760] text-black hover:opacity-90 font-bold"
+                >
+                  <Mic className="mr-2 h-4 w-4" />
+                  Coletiva de Imprensa
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <Link href="/dashboard" className="w-full sm:w-auto">
                 <Button
                   size="lg"
                   className="w-full sm:w-auto bg-white/5 border border-white/10 text-white hover:bg-white/10 font-medium"
                 >
                   <Home className="mr-2 h-4 w-4 text-white/60" />
-                  Voltar ao Dashboard
+                  Dashboard
                 </Button>
               </Link>
               <Button
@@ -316,7 +326,7 @@ export function MatchResultModal({
                 className="w-full sm:w-auto bg-white/5 border border-white/10 text-white hover:bg-white/10 font-medium"
               >
                 <BarChart3 className="mr-2 h-4 w-4 text-white/60" />
-                Ver Estatisticas
+                Estatisticas
               </Button>
             </motion.div>
           </div>

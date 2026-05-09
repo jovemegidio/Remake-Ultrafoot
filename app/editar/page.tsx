@@ -26,6 +26,7 @@ import {
   getCamisaUrl,
   type Team 
 } from "@/lib/teams-data"
+import { allInternationalTeams } from "@/lib/international-teams"
 import { TeamCrest } from "@/components/team-crest"
 
 // Mock players data generator based on team
@@ -58,8 +59,8 @@ const generatePlayersForTeam = (team: Team) => {
   }))
 }
 
-// All teams combined
-const allTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams]
+// All teams combined (brasileiros + internacionais)
+const allTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams, ...allInternationalTeams]
 
 export default function EditarPage() {
   const router = useRouter()

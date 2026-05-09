@@ -291,30 +291,30 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-[#121212] border-l border-white/10 z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <Bell className="h-5 w-5 text-white" />
-                <h2 className="text-lg font-semibold text-white">Notificacoes</h2>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#0a0a0a]">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-[#1db954]" />
+                <h2 className="text-sm font-semibold text-white">Notificacoes</h2>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#1db954] text-black text-xs font-bold">
+                  <span className="px-1.5 py-0.5 rounded-full bg-[#1db954] text-black text-[10px] font-bold">
                     {unreadCount}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {unreadCount > 0 && (
                   <button 
                     onClick={markAllAsRead}
-                    className="text-xs text-[#1db954] hover:text-[#1ed760] px-2 py-1"
+                    className="text-[10px] text-[#1db954] hover:text-[#1ed760] px-2 py-1 rounded hover:bg-white/5"
                   >
-                    Marcar todas como lidas
+                    Marcar lidas
                   </button>
                 )}
                 <button 
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>

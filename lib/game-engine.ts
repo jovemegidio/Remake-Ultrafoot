@@ -9,12 +9,49 @@ import { persist } from 'zustand/middleware'
 // TIPOS E INTERFACES
 // ============================================
 
+export interface ContractBonus {
+  type: "goals" | "assists" | "titles" | "appearances" | "cleanSheets" | "nationalTeam"
+  threshold: number // Quantidade necessaria
+  amount: number // Valor do bonus
+  achieved: boolean
+}
+
 export interface PlayerContract {
   salary: number // Salario semanal
   endDate: number // Semana de termino (week absoluto)
   releaseClause: number | null
   signedWeek: number
   signedSeason: number
+  // Clausulas de bonus
+  bonuses: ContractBonus[]
+  // Opcao de renovacao automatica
+  autoRenewalOption: boolean
+  autoRenewalWeeks: number // Semanas adicionais se renovar
+  // Clausula de revenda (% para time anterior)
+  resaleClause: number // 0-50%
+  previousClub: string | null
+}
+
+// Historico de confrontos entre times
+export interface HeadToHead {
+  team1: string
+  team2: string
+  matches: HeadToHeadMatch[]
+  team1Wins: number
+  team2Wins: number
+  draws: number
+  team1Goals: number
+  team2Goals: number
+}
+
+export interface HeadToHeadMatch {
+  season: number
+  week: number
+  competition: string
+  homeTeam: string
+  awayTeam: string
+  homeScore: number
+  awayScore: number
 }
 
 export interface PlayerInjury {
@@ -168,6 +205,550 @@ export interface TopScorer {
 }
 
 // ============================================
+// SISTEMA DE TATICAS AVANCADO (FM STYLE)
+// ============================================
+
+export type TeamMentality = "muito_defensivo" | "defensivo" | "equilibrado" | "ofensivo" | "muito_ofensivo"
+export type PlayingStyle = "posse_bola" | "contra_ataque" | "pressao_alta" | "jogo_direto" | "jogo_posicional"
+export type PassingStyle = "curto" | "misto" | "direto"
+export type TempoStyle = "lento" | "normal" | "rapido"
+export type DefensiveLine = "baixa" | "media" | "alta"
+export type PressingIntensity = "baixa" | "media" | "alta" | "muito_alta"
+export type MarkingStyle = "zonal" | "individual" | "misto"
+export type BuildUpStyle = "curto" | "misto" | "longo"
+export type ChanceCreation = "largura" | "centro" | "misto"
+export type CrossingStyle = "baixo" | "misto" | "alto"
+
+export interface TeamTactics {
+  // Mentalidade geral
+  mentality: TeamMentality
+  playingStyle: PlayingStyle
+  
+  // Com a bola
+  passingStyle: PassingStyle
+  tempo: TempoStyle
+  buildUp: BuildUpStyle
+  chanceCreation: ChanceCreation
+  crossingStyle: CrossingStyle
+  shootFromDistance: boolean
+  playThroughBalls: boolean
+  
+  // Sem a bola
+  defensiveLine: DefensiveLine
+  pressingIntensity: PressingIntensity
+  markingStyle: MarkingStyle
+  offsideTrap: boolean
+  counterPress: boolean
+  
+  // Transicoes
+  counterAttack: boolean
+  holdPosition: boolean
+  
+  // Bolas paradas
+  cornersAggressive: boolean
+  freekickSpecialist: number | null // ID do jogador
+  penaltyTaker: number | null
+}
+
+export type PlayerRole = 
+  // Goleiros (4 funcoes)
+  | "goleiro_defensor" | "goleiro_libero" | "goleiro_sweeper" | "goleiro_distribuidor"
+  // Zagueiros Centrais (8 funcoes)
+  | "zagueiro_central" | "zagueiro_stopper" | "zagueiro_cover" | "zagueiro_saidor" 
+  | "zagueiro_libero" | "zagueiro_marcador" | "zagueiro_aereo" | "zagueiro_lider"
+  // Laterais/Alas Defensivos (10 funcoes)
+  | "lateral_defensivo" | "lateral_equilibrado" | "lateral_ofensivo" | "ala" | "lateral_invertido"
+  | "ala_completo" | "lateral_cruzador" | "carrilero" | "lateral_zona" | "lateral_sobreposto"
+  // Volantes/Meio Defensivo (10 funcoes)
+  | "volante_destruidor" | "volante_box_to_box" | "volante_saidor" | "meia_defensivo" | "regista"
+  | "volante_ancora" | "volante_cobertura" | "segundo_volante" | "meio_campo_central" | "volante_tecnico"
+  // Meias/Armadores (12 funcoes)
+  | "meia_central" | "meia_armador" | "meia_atacante" | "meia_box_to_box" | "enganche"
+  | "mezzala" | "trequartista" | "meia_infiltrador" | "meia_organizador" | "meia_livre"
+  | "meia_defensivo_avancado" | "construtor_jogo"
+  // Pontas/Alas Ofensivos (10 funcoes)
+  | "ponta" | "ponta_invertido" | "ala_ofensivo" | "meia_ponta"
+  | "extremo" | "ponta_fixo" | "ponta_flutuante" | "segundo_atacante_ponta" | "ponta_velocista" | "ponta_finalizador"
+  // Atacantes (12 funcoes)
+  | "centroavante" | "atacante_movel" | "falso_nove" | "target_man" | "poacher"
+  | "atacante_completo" | "atacante_pressing" | "atacante_referencia" | "atacante_area"
+  | "segundo_atacante" | "atacante_profundidade" | "atacante_pivot"
+
+// Descricoes das funcoes para UI
+export const PLAYER_ROLE_INFO: Record<PlayerRole, { name: string; description: string; positions: string[] }> = {
+  // Goleiros
+  goleiro_defensor: { name: "Goleiro Defensor", description: "Foca em defesas e evita riscos", positions: ["GOL"] },
+  goleiro_libero: { name: "Goleiro Libero", description: "Sai da area para cortar jogadas", positions: ["GOL"] },
+  goleiro_sweeper: { name: "Goleiro Sweeper", description: "Joga como ultimo defensor, muito adiantado", positions: ["GOL"] },
+  goleiro_distribuidor: { name: "Goleiro Distribuidor", description: "Inicia jogadas com passes precisos", positions: ["GOL"] },
+  // Zagueiros
+  zagueiro_central: { name: "Zagueiro Central", description: "Equilibrio entre marcacao e saida de bola", positions: ["ZAG"] },
+  zagueiro_stopper: { name: "Zagueiro Stopper", description: "Agressivo, antecipa e desarma", positions: ["ZAG"] },
+  zagueiro_cover: { name: "Zagueiro Cover", description: "Cobre espacos e protege a defesa", positions: ["ZAG"] },
+  zagueiro_saidor: { name: "Zagueiro Saidor", description: "Conduz a bola e inicia jogadas", positions: ["ZAG"] },
+  zagueiro_libero: { name: "Libero", description: "Zagueiro livre que avanca com a bola", positions: ["ZAG"] },
+  zagueiro_marcador: { name: "Zagueiro Marcador", description: "Focado em marcacao individual", positions: ["ZAG"] },
+  zagueiro_aereo: { name: "Zagueiro Aereo", description: "Especialista em jogadas aereas", positions: ["ZAG"] },
+  zagueiro_lider: { name: "Zagueiro Lider", description: "Organiza a defesa e lidera a equipe", positions: ["ZAG"] },
+  // Laterais
+  lateral_defensivo: { name: "Lateral Defensivo", description: "Prioriza a marcacao", positions: ["LD", "LE"] },
+  lateral_equilibrado: { name: "Lateral Equilibrado", description: "Equilibra ataque e defesa", positions: ["LD", "LE"] },
+  lateral_ofensivo: { name: "Lateral Ofensivo", description: "Ataca constantemente", positions: ["LD", "LE"] },
+  ala: { name: "Ala", description: "Joga toda a lateral do campo", positions: ["LD", "LE"] },
+  lateral_invertido: { name: "Lateral Invertido", description: "Corta para o centro", positions: ["LD", "LE"] },
+  ala_completo: { name: "Ala Completo", description: "Cobre toda a faixa lateral com intensidade", positions: ["LD", "LE"] },
+  lateral_cruzador: { name: "Lateral Cruzador", description: "Especialista em cruzamentos", positions: ["LD", "LE"] },
+  carrilero: { name: "Carrilero", description: "Lateral que joga como volante", positions: ["LD", "LE"] },
+  lateral_zona: { name: "Lateral por Dentro", description: "Entra no meio campo ao atacar", positions: ["LD", "LE"] },
+  lateral_sobreposto: { name: "Lateral Sobreposto", description: "Sempre ultrapassa o ponta", positions: ["LD", "LE"] },
+  // Volantes
+  volante_destruidor: { name: "Volante Destruidor", description: "Desarma e protege a defesa", positions: ["VOL"] },
+  volante_box_to_box: { name: "Volante Box-to-Box", description: "Cobre todo o campo", positions: ["VOL"] },
+  volante_saidor: { name: "Volante Saidor", description: "Sai jogando com qualidade", positions: ["VOL"] },
+  meia_defensivo: { name: "Meia Defensivo", description: "Protege a defesa e distribui", positions: ["VOL"] },
+  regista: { name: "Regista", description: "Organizador de jogo profundo", positions: ["VOL"] },
+  volante_ancora: { name: "Volante Ancora", description: "Fica fixo protegendo a defesa", positions: ["VOL"] },
+  volante_cobertura: { name: "Volante Cobertura", description: "Cobre os laterais que avancam", positions: ["VOL"] },
+  segundo_volante: { name: "Segundo Volante", description: "Chega na area para finalizar", positions: ["VOL"] },
+  meio_campo_central: { name: "Meio-Campo Central", description: "Equilibrio total no meio", positions: ["VOL", "MEI"] },
+  volante_tecnico: { name: "Volante Tecnico", description: "Qualidade tecnica acima da media", positions: ["VOL"] },
+  // Meias
+  meia_central: { name: "Meia Central", description: "Controla o ritmo do jogo", positions: ["MEI"] },
+  meia_armador: { name: "Meia Armador", description: "Cria jogadas e da assistencias", positions: ["MEI"] },
+  meia_atacante: { name: "Meia Atacante", description: "Joga proximo aos atacantes", positions: ["MEI"] },
+  meia_box_to_box: { name: "Meia Box-to-Box", description: "Defende e ataca com intensidade", positions: ["MEI"] },
+  enganche: { name: "Enganche", description: "Camisa 10 classico, liberdade criativa", positions: ["MEI"] },
+  mezzala: { name: "Mezzala", description: "Meia que infiltra pelos lados", positions: ["MEI"] },
+  trequartista: { name: "Trequartista", description: "Armador puro, sem funcao defensiva", positions: ["MEI"] },
+  meia_infiltrador: { name: "Meia Infiltrador", description: "Chega na area para finalizar", positions: ["MEI"] },
+  meia_organizador: { name: "Meia Organizador", description: "Dita o ritmo e organiza jogadas", positions: ["MEI"] },
+  meia_livre: { name: "Meia Livre", description: "Sem posicao fixa, circula pelo ataque", positions: ["MEI"] },
+  meia_defensivo_avancado: { name: "Meia Defensivo Avancado", description: "Marca alto e pressiona", positions: ["MEI"] },
+  construtor_jogo: { name: "Construtor de Jogo", description: "Inicia todas as jogadas ofensivas", positions: ["MEI"] },
+  // Pontas
+  ponta: { name: "Ponta", description: "Joga aberto na lateral", positions: ["PD", "PE"] },
+  ponta_invertido: { name: "Ponta Invertido", description: "Corta para finalizar", positions: ["PD", "PE"] },
+  ala_ofensivo: { name: "Ala Ofensivo", description: "Extremo que cruza", positions: ["PD", "PE"] },
+  meia_ponta: { name: "Meia-Ponta", description: "Flutua entre meio e ataque", positions: ["PD", "PE", "MEI"] },
+  extremo: { name: "Extremo", description: "Joga grudado na linha lateral", positions: ["PD", "PE"] },
+  ponta_fixo: { name: "Ponta Fixo", description: "Mantem largura no ataque", positions: ["PD", "PE"] },
+  ponta_flutuante: { name: "Ponta Flutuante", description: "Circula por todo o ataque", positions: ["PD", "PE"] },
+  segundo_atacante_ponta: { name: "Segundo Atacante Ponta", description: "Ponta que joga como atacante", positions: ["PD", "PE"] },
+  ponta_velocista: { name: "Ponta Velocista", description: "Usa velocidade para criar", positions: ["PD", "PE"] },
+  ponta_finalizador: { name: "Ponta Finalizador", description: "Foca em finalizar", positions: ["PD", "PE"] },
+  // Atacantes
+  centroavante: { name: "Centroavante", description: "Atacante classico de area", positions: ["ATA"] },
+  atacante_movel: { name: "Atacante Movel", description: "Circula pelo ataque", positions: ["ATA"] },
+  falso_nove: { name: "Falso Nove", description: "Recua para criar espacos", positions: ["ATA"] },
+  target_man: { name: "Pivo", description: "Segura a bola e pivotea", positions: ["ATA"] },
+  poacher: { name: "Oportunista", description: "Vive de gols de oportunidade", positions: ["ATA"] },
+  atacante_completo: { name: "Atacante Completo", description: "Faz tudo no ataque", positions: ["ATA"] },
+  atacante_pressing: { name: "Atacante Pressing", description: "Marca alto e pressiona", positions: ["ATA"] },
+  atacante_referencia: { name: "Atacante Referencia", description: "Ponto focal do ataque", positions: ["ATA"] },
+  atacante_area: { name: "Finalizador de Area", description: "Especialista dentro da area", positions: ["ATA"] },
+  segundo_atacante: { name: "Segundo Atacante", description: "Joga atras do centroavante", positions: ["ATA"] },
+  atacante_profundidade: { name: "Atacante de Profundidade", description: "Busca espacos nas costas", positions: ["ATA"] },
+  atacante_pivot: { name: "Atacante Pivot", description: "Segura e distribui no ataque", positions: ["ATA"] },
+}
+
+export interface PlayerInstructions {
+  role: PlayerRole
+  
+  // Movimentacao
+  roaming: "ficar_posicao" | "liberdade_moderada" | "liberdade_total"
+  runs: "raramente" | "as_vezes" | "frequentemente"
+  
+  // Marcacao
+  markingTightness: "solto" | "normal" | "apertado"
+  closingDown: "menos" | "normal" | "mais"
+  
+  // Com a bola
+  dribbling: "menos" | "normal" | "mais"
+  passingRisk: "seguro" | "normal" | "arriscado"
+  crossFrequency: "menos" | "normal" | "mais"
+  shootFrequency: "menos" | "normal" | "mais"
+  
+  // Especiais
+  stayWider: boolean
+  cutInside: boolean
+  getForward: boolean
+  holdPosition: boolean
+  tackleHarder: boolean
+}
+
+export interface OpponentAnalysis {
+  teamShort: string
+  teamName: string
+  analyzedWeek: number
+  analysisProgress: number // 0-100
+  
+  // Dados descobertos
+  formation: string | null
+  mentality: TeamMentality | null
+  keyPlayers: { name: string; position: string; threat: number }[]
+  weaknesses: string[]
+  strengths: string[]
+  
+  // Estatisticas
+  avgGoalsScored: number
+  avgGoalsConceded: number
+  homeRecord: { w: number; d: number; l: number }
+  awayRecord: { w: number; d: number; l: number }
+}
+
+// Moral do vestiario
+export interface SquadMorale {
+  overall: number // 0-100
+  unity: number // 0-100
+  confidence: number // 0-100
+  recentEvents: MoraleEvent[]
+}
+
+export interface MoraleEvent {
+  week: number
+  type: "vitoria" | "derrota" | "empate" | "titulo" | "contratacao" | "venda" | "lesao" | "conflito" | "elogio"
+  description: string
+  impact: number // -20 to +20
+}
+
+// Conferencia de imprensa
+export interface PressConference {
+  week: number
+  questions: PressQuestion[]
+  responses: PressResponse[]
+  moraleImpact: number
+}
+
+export interface PressQuestion {
+  id: number
+  type: "match" | "player" | "transfer" | "rival" | "tactics" | "injury"
+  question: string
+  options: { text: string; tone: "positivo" | "neutro" | "negativo" | "agressivo"; impact: number }[]
+}
+
+export interface PressResponse {
+  questionId: number
+  selectedOption: number
+  impact: number
+}
+
+// Relatorio de desempenho
+export interface PerformanceReport {
+  playerId: number
+  playerName: string
+  period: "semana" | "mes" | "temporada"
+  
+  // Notas
+  avgRating: number
+  matchRatings: { week: number; rating: number; opponent: string }[]
+  
+  // Comparacoes
+  vsLastPeriod: number // -100 to +100
+  vsSquadAvg: number // -100 to +100
+  vsPositionAvg: number // -100 to +100
+  
+  // Destaques
+  strengths: string[]
+  weaknesses: string[]
+  recommendation: string
+}
+
+// ============================================
+// SISTEMA DE REUNIOES COM JOGADORES
+// ============================================
+
+export type MeetingType = 
+  | "elogio" | "critica" | "motivacao" | "cobranca"
+  | "conversa_futuro" | "pedido_foco" | "aviso_disciplinar"
+  | "promessa_titularidade" | "promessa_venda" | "integracao"
+  | "felicitacao_gol" | "apoio_lesao" | "discussao_contrato"
+  | "pedido_lideranca" | "explicar_reserva"
+
+export interface PlayerMeeting {
+  id: number
+  playerId: number
+  playerName: string
+  week: number
+  type: MeetingType
+  playerResponse: "positivo" | "neutro" | "negativo"
+  moraleChange: number
+  relationshipChange: number
+  details: string
+}
+
+export interface MeetingOption {
+  type: MeetingType
+  label: string
+  description: string
+  icon: string
+  possibleOutcomes: {
+    positive: { chance: number; moraleChange: number; message: string }
+    neutral: { chance: number; moraleChange: number; message: string }
+    negative: { chance: number; moraleChange: number; message: string }
+  }
+}
+
+export const MEETING_OPTIONS: MeetingOption[] = [
+  {
+    type: "elogio",
+    label: "Elogiar Desempenho",
+    description: "Reconhecer o bom trabalho do jogador",
+    icon: "thumb-up",
+    possibleOutcomes: {
+      positive: { chance: 70, moraleChange: 10, message: "ficou motivado com o reconhecimento" },
+      neutral: { chance: 25, moraleChange: 2, message: "agradeceu educadamente" },
+      negative: { chance: 5, moraleChange: -5, message: "achou o elogio falso" }
+    }
+  },
+  {
+    type: "critica",
+    label: "Criticar Desempenho",
+    description: "Apontar erros e cobrar melhora",
+    icon: "alert-triangle",
+    possibleOutcomes: {
+      positive: { chance: 30, moraleChange: 5, message: "aceitou a critica e prometeu melhorar" },
+      neutral: { chance: 40, moraleChange: -3, message: "ouviu em silencio" },
+      negative: { chance: 30, moraleChange: -15, message: "ficou irritado e discordou" }
+    }
+  },
+  {
+    type: "motivacao",
+    label: "Discurso Motivacional",
+    description: "Inspirar o jogador a dar o maximo",
+    icon: "flame",
+    possibleOutcomes: {
+      positive: { chance: 60, moraleChange: 12, message: "ficou inspirado e motivado" },
+      neutral: { chance: 30, moraleChange: 3, message: "ouviu com atencao" },
+      negative: { chance: 10, moraleChange: -5, message: "pareceu indiferente" }
+    }
+  },
+  {
+    type: "cobranca",
+    label: "Cobrar Mais Dedicacao",
+    description: "Exigir mais empenho nos treinos",
+    icon: "target",
+    possibleOutcomes: {
+      positive: { chance: 40, moraleChange: 5, message: "entendeu a mensagem e vai se esforcar mais" },
+      neutral: { chance: 35, moraleChange: -2, message: "disse que ja esta fazendo o possivel" },
+      negative: { chance: 25, moraleChange: -10, message: "ficou ofendido com a cobranca" }
+    }
+  },
+  {
+    type: "conversa_futuro",
+    label: "Conversar Sobre Futuro",
+    description: "Discutir planos de carreira",
+    icon: "compass",
+    possibleOutcomes: {
+      positive: { chance: 50, moraleChange: 8, message: "gostou de saber que tem futuro no clube" },
+      neutral: { chance: 35, moraleChange: 0, message: "quer ver na pratica" },
+      negative: { chance: 15, moraleChange: -8, message: "quer sair do clube" }
+    }
+  },
+  {
+    type: "promessa_titularidade",
+    label: "Prometer Titularidade",
+    description: "Garantir que sera titular",
+    icon: "star",
+    possibleOutcomes: {
+      positive: { chance: 80, moraleChange: 15, message: "ficou muito feliz com a promessa" },
+      neutral: { chance: 15, moraleChange: 5, message: "quer ver a promessa cumprida" },
+      negative: { chance: 5, moraleChange: -5, message: "nao acreditou" }
+    }
+  },
+  {
+    type: "explicar_reserva",
+    label: "Explicar Tempo no Banco",
+    description: "Justificar falta de minutos",
+    icon: "info",
+    possibleOutcomes: {
+      positive: { chance: 45, moraleChange: 5, message: "entendeu a situacao" },
+      neutral: { chance: 35, moraleChange: -2, message: "aceitou mas nao gostou" },
+      negative: { chance: 20, moraleChange: -12, message: "ficou mais insatisfeito" }
+    }
+  },
+  {
+    type: "pedido_lideranca",
+    label: "Pedir Lideranca",
+    description: "Solicitar que lidere o grupo",
+    icon: "crown",
+    possibleOutcomes: {
+      positive: { chance: 55, moraleChange: 10, message: "aceitou o desafio com orgulho" },
+      neutral: { chance: 30, moraleChange: 3, message: "disse que vai tentar" },
+      negative: { chance: 15, moraleChange: -5, message: "nao se sente preparado" }
+    }
+  },
+  {
+    type: "apoio_lesao",
+    label: "Apoiar Durante Lesao",
+    description: "Dar suporte durante recuperacao",
+    icon: "heart",
+    possibleOutcomes: {
+      positive: { chance: 85, moraleChange: 12, message: "agradeceu muito o apoio" },
+      neutral: { chance: 13, moraleChange: 5, message: "ficou grato" },
+      negative: { chance: 2, moraleChange: 0, message: "prefere ficar sozinho" }
+    }
+  },
+  {
+    type: "aviso_disciplinar",
+    label: "Aviso Disciplinar",
+    description: "Alertar sobre comportamento inadequado",
+    icon: "alert-circle",
+    possibleOutcomes: {
+      positive: { chance: 35, moraleChange: 0, message: "pediu desculpas e vai mudar" },
+      neutral: { chance: 40, moraleChange: -5, message: "ficou em silencio" },
+      negative: { chance: 25, moraleChange: -15, message: "reagiu mal e discutiu" }
+    }
+  },
+  {
+    type: "integracao",
+    label: "Conversa de Integracao",
+    description: "Ajudar novo jogador a se adaptar",
+    icon: "users",
+    possibleOutcomes: {
+      positive: { chance: 75, moraleChange: 10, message: "se sentiu acolhido no grupo" },
+      neutral: { chance: 20, moraleChange: 3, message: "esta se adaptando aos poucos" },
+      negative: { chance: 5, moraleChange: -3, message: "ainda se sente deslocado" }
+    }
+  },
+  {
+    type: "felicitacao_gol",
+    label: "Parabenizar por Gol",
+    description: "Celebrar gol marcado",
+    icon: "trophy",
+    possibleOutcomes: {
+      positive: { chance: 90, moraleChange: 8, message: "ficou muito feliz com o reconhecimento" },
+      neutral: { chance: 10, moraleChange: 3, message: "agradeceu" },
+      negative: { chance: 0, moraleChange: 0, message: "" }
+    }
+  }
+]
+
+// ============================================
+// ANALISE TATICA POS-PARTIDA
+// ============================================
+
+export interface PostMatchAnalysis {
+  matchId: number
+  week: number
+  opponent: string
+  result: { home: number; away: number }
+  isHome: boolean
+  
+  // Avaliacao geral
+  overallRating: number // 1-10
+  tacticsRating: number // 1-10
+  
+  // Pontos positivos
+  positives: AnalysisPoint[]
+  
+  // Pontos negativos
+  negatives: AnalysisPoint[]
+  
+  // Jogadores destaque
+  bestPlayers: { playerId: number; name: string; rating: number; reason: string }[]
+  worstPlayers: { playerId: number; name: string; rating: number; reason: string }[]
+  
+  // Estatisticas chave
+  keyStats: {
+    possession: number
+    shots: number
+    shotsOnTarget: number
+    xG: number
+    xGA: number
+    passAccuracy: number
+    duelsWon: number
+    aerialDuelsWon: number
+  }
+  
+  // Recomendacoes
+  recommendations: string[]
+  
+  // Comparacao com plano tatico
+  tacticAdherence: number // 0-100%
+  tacticDeviations: string[]
+}
+
+export interface AnalysisPoint {
+  category: "ataque" | "defesa" | "meio" | "tatica" | "individual" | "coletivo"
+  title: string
+  description: string
+  impact: "alto" | "medio" | "baixo"
+  relatedPlayers?: number[]
+}
+
+// Pool de pontos de analise para geracao
+export const ANALYSIS_POSITIVES: Omit<AnalysisPoint, "relatedPlayers">[] = [
+  { category: "ataque", title: "Finalizacoes precisas", description: "Time aproveitou bem as chances criadas", impact: "alto" },
+  { category: "ataque", title: "Movimentacao ofensiva", description: "Atacantes se movimentaram bem entre linhas", impact: "medio" },
+  { category: "ataque", title: "Triangulacoes eficientes", description: "Boas trocas de passes no ultimo terco", impact: "medio" },
+  { category: "ataque", title: "Cruzamentos perigosos", description: "Laterais criaram perigo com cruzamentos", impact: "medio" },
+  { category: "defesa", title: "Linha defensiva solida", description: "Defesa bem postada e sem espacos", impact: "alto" },
+  { category: "defesa", title: "Goleiro seguro", description: "Goleiro fez defesas importantes", impact: "alto" },
+  { category: "defesa", title: "Duelos aereos ganhos", description: "Time dominou as disputas de cabeca", impact: "medio" },
+  { category: "defesa", title: "Transicao defensiva rapida", description: "Recomposicao defensiva eficiente", impact: "medio" },
+  { category: "meio", title: "Controle do meio-campo", description: "Dominio na regiao central", impact: "alto" },
+  { category: "meio", title: "Distribuicao de qualidade", description: "Passes precisos e criativos", impact: "medio" },
+  { category: "meio", title: "Pressing eficiente", description: "Recuperacao de bola no campo ofensivo", impact: "medio" },
+  { category: "tatica", title: "Plano tatico executado", description: "Time seguiu as instrucoes a risca", impact: "alto" },
+  { category: "tatica", title: "Adaptacao durante o jogo", description: "Ajustes taticos foram eficazes", impact: "medio" },
+  { category: "coletivo", title: "Intensidade constante", description: "Time manteve ritmo durante 90 minutos", impact: "alto" },
+  { category: "coletivo", title: "Comunicacao em campo", description: "Jogadores bem sincronizados", impact: "medio" },
+]
+
+export const ANALYSIS_NEGATIVES: Omit<AnalysisPoint, "relatedPlayers">[] = [
+  { category: "ataque", title: "Desperdicio de chances", description: "Finalizacoes imprecisas em boas oportunidades", impact: "alto" },
+  { category: "ataque", title: "Falta de criatividade", description: "Dificuldade em criar chances claras", impact: "medio" },
+  { category: "ataque", title: "Pouca movimentacao", description: "Atacantes estaticos facilitaram marcacao", impact: "medio" },
+  { category: "defesa", title: "Espacos na defesa", description: "Linha defensiva deixou buracos", impact: "alto" },
+  { category: "defesa", title: "Erros individuais", description: "Falhas defensivas comprometeram", impact: "alto" },
+  { category: "defesa", title: "Bola aerea fragil", description: "Perdemos muitos duelos de cabeca", impact: "medio" },
+  { category: "defesa", title: "Laterais expostos", description: "Adversario explorou as laterais", impact: "medio" },
+  { category: "meio", title: "Perda do meio-campo", description: "Adversario dominou a regiao central", impact: "alto" },
+  { category: "meio", title: "Passes errados", description: "Muitos passes interceptados", impact: "medio" },
+  { category: "meio", title: "Falta de intensidade", description: "Meio-campo nao pressionou o suficiente", impact: "medio" },
+  { category: "tatica", title: "Plano tatico ignorado", description: "Jogadores nao seguiram instrucoes", impact: "alto" },
+  { category: "tatica", title: "Formacao inadequada", description: "Esquema tatico nao funcionou", impact: "alto" },
+  { category: "coletivo", title: "Queda de ritmo", description: "Time caiu fisicamente na etapa final", impact: "medio" },
+  { category: "coletivo", title: "Falta de comunicacao", description: "Jogadores desorganizados em campo", impact: "medio" },
+  { category: "individual", title: "Jogador abaixo", description: "Desempenho individual comprometeu o time", impact: "medio" },
+]
+
+// Sistema de Ofertas da IA
+export interface TransferOffer {
+  id: number
+  playerId: number
+  playerName: string
+  fromTeam: string
+  offerType: "compra" | "emprestimo"
+  offerAmount: number
+  wageCoverage?: number // % do salario coberto no emprestimo
+  loanWeeks?: number
+  status: "pendente" | "aceita" | "rejeitada" | "expirada"
+  createdWeek: number
+  expiresWeek: number
+}
+
+// Times que podem fazer ofertas
+export const AI_TEAMS = [
+  { short: "FLA", name: "Flamengo", budget: 80000000, prestige: 90 },
+  { short: "PAL", name: "Palmeiras", budget: 75000000, prestige: 88 },
+  { short: "COR", name: "Corinthians", budget: 50000000, prestige: 85 },
+  { short: "SAO", name: "Sao Paulo", budget: 45000000, prestige: 84 },
+  { short: "INT", name: "Internacional", budget: 40000000, prestige: 82 },
+  { short: "GRE", name: "Gremio", budget: 38000000, prestige: 81 },
+  { short: "CAM", name: "Atletico-MG", budget: 55000000, prestige: 83 },
+  { short: "FLU", name: "Fluminense", budget: 35000000, prestige: 80 },
+  { short: "BOT", name: "Botafogo", budget: 60000000, prestige: 79 },
+  { short: "BAH", name: "Bahia", budget: 25000000, prestige: 75 },
+  // Times europeus
+  { short: "POR", name: "Porto", budget: 40000000, prestige: 85 },
+  { short: "BEN", name: "Benfica", budget: 45000000, prestige: 84 },
+  { short: "LEV", name: "Bayer Leverkusen", budget: 60000000, prestige: 82 },
+  { short: "SEV", name: "Sevilla", budget: 35000000, prestige: 80 },
+  { short: "LYO", name: "Lyon", budget: 30000000, prestige: 78 },
+]
+
+// ============================================
 // ESTADO GLOBAL DO JOGO
 // ============================================
 
@@ -194,12 +775,40 @@ interface GameEngineState {
   // Resultados
   matchResults: MatchResult[]
   
+  // Historico de confrontos
+  headToHeadRecords: HeadToHead[]
+  
   // Selecoes
   nationalTeamCalls: NationalTeamCall[]
   fifaDates: number[] // semanas com datas FIFA
   
   // Artilharia
   topScorers: TopScorer[]
+  
+  // Ofertas de transferencia
+  transferOffers: TransferOffer[]
+  
+  // Taticas
+  teamTactics: TeamTactics
+  playerInstructions: Record<number, PlayerInstructions>
+  opponentAnalyses: OpponentAnalysis[]
+  
+  // Moral e vestiario
+  squadMorale: SquadMorale
+  
+  // Conferencias de imprensa
+  pressConferences: PressConference[]
+  nextPressConference: PressQuestion[] | null
+  
+  // Relatorios de desempenho
+  performanceReports: PerformanceReport[]
+  
+  // Reunioes com jogadores
+  playerMeetings: PlayerMeeting[]
+  meetingCooldowns: Record<number, number> // playerId -> week quando pode ter nova reuniao
+  
+  // Analises pos-partida
+  postMatchAnalyses: PostMatchAnalysis[]
   
   // Financas
   balance: number
@@ -210,12 +819,14 @@ interface GameEngineState {
   
   // Acoes
   advanceWeek: () => void
+  generateAIOffers: () => void
+  respondToOffer: (offerId: number, accept: boolean) => void
   trainPlayer: (playerId: number, attribute: string) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   sellPlayer: (playerId: number) => void
   buyPlayer: (player: Player, fee: number) => void
   loanPlayer: (player: Player, weeks: number, salary: number) => void
-  hireScount: (scout: Scout) => void
+  hireScout: (scout: Scout) => void
   startScoutSearch: (scoutId: number, region: string) => void
   simulateOtherMatches: () => void
   drawCopaBracket: () => void
@@ -227,6 +838,33 @@ interface GameEngineState {
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
   healPlayer: (playerId: number) => void
   initializeGame: (teamShort: string) => void
+  updateHeadToHead: (result: MatchResult) => void
+  getHeadToHead: (team1: string, team2: string) => HeadToHead | null
+  checkContractBonuses: (playerId: number) => void
+  
+  // Taticas
+  setTeamTactics: (tactics: Partial<TeamTactics>) => void
+  setPlayerInstructions: (playerId: number, instructions: Partial<PlayerInstructions>) => void
+  analyzeOpponent: (teamShort: string) => void
+  updateOpponentAnalysis: () => void
+  
+  // Moral
+  addMoraleEvent: (event: Omit<MoraleEvent, "week">) => void
+  updateSquadMorale: () => void
+  
+  // Conferencias
+  generatePressConference: () => void
+  respondToPressConference: (questionId: number, optionIndex: number) => void
+  
+  // Relatorios
+  generatePerformanceReport: (playerId: number, period: "semana" | "mes" | "temporada") => PerformanceReport
+  
+  // Reunioes
+  holdMeeting: (playerId: number, meetingType: MeetingType) => PlayerMeeting
+  canMeetPlayer: (playerId: number) => boolean
+  
+  // Analise pos-partida
+  generatePostMatchAnalysis: (matchResult: MatchResult, isHome: boolean, stats: any) => PostMatchAnalysis
 }
 
 // Jogadores iniciais do Bragantino (exemplo)
@@ -248,7 +886,20 @@ const initialPlayers: Player[] = [
     energy: 100,
     morale: "Feliz",
     form: 75,
-    contract: { salary: 120000, endDate: 156, releaseClause: 15000000, signedWeek: 0, signedSeason: 2026 },
+    contract: { 
+      salary: 120000, 
+      endDate: 156, 
+      releaseClause: 15000000, 
+      signedWeek: 0, 
+      signedSeason: 2026,
+      bonuses: [
+        { type: "cleanSheets", threshold: 15, amount: 500000, achieved: false }
+      ],
+      autoRenewalOption: true,
+      autoRenewalWeeks: 52,
+      resaleClause: 0,
+      previousClub: null
+    },
     injury: null,
     seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
     training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
@@ -567,10 +1218,61 @@ export const useGameEngine = create<GameEngineState>()(
       
       matchResults: [],
       
+      headToHeadRecords: [],
+      
       nationalTeamCalls: [],
       fifaDates: FIFA_DATES_2026,
       
       topScorers: [],
+      
+      transferOffers: [],
+      
+      // Taticas padrao
+      teamTactics: {
+        mentality: "equilibrado",
+        playingStyle: "jogo_posicional",
+        passingStyle: "misto",
+        tempo: "normal",
+        buildUp: "misto",
+        chanceCreation: "misto",
+        crossingStyle: "misto",
+        shootFromDistance: false,
+        playThroughBalls: true,
+        defensiveLine: "media",
+        pressingIntensity: "media",
+        markingStyle: "zonal",
+        offsideTrap: false,
+        counterPress: true,
+        counterAttack: true,
+        holdPosition: false,
+        cornersAggressive: false,
+        freekickSpecialist: null,
+        penaltyTaker: 10, // Sasha
+      },
+      playerInstructions: {},
+      opponentAnalyses: [],
+      
+      // Moral
+      squadMorale: {
+        overall: 70,
+        unity: 75,
+        confidence: 70,
+        recentEvents: []
+      },
+      
+      // Conferencias
+      pressConferences: [],
+      nextPressConference: null,
+      
+      // Relatorios
+      performanceReports: [],
+      
+      // Reunioes
+      playerMeetings: [],
+      meetingCooldowns: {},
+      
+      // Analises pos-partida
+      postMatchAnalyses: [],
       
       balance: 27500000,
       weeklyIncome: 2100000,
@@ -647,14 +1349,26 @@ export const useGameEngine = create<GameEngineState>()(
           // Atualizar financas
           const weeklyBalance = s.weeklyIncome - s.weeklyExpenses
           
+          // Expirar ofertas antigas
+          const updatedOffers = s.transferOffers.map(offer => {
+            if (offer.status === "pendente" && offer.expiresWeek <= newWeek) {
+              return { ...offer, status: "expirada" as const }
+            }
+            return offer
+          })
+          
           return {
             ...s,
             currentWeek: finalWeek,
             currentSeason: newSeason,
             squadPlayers: updatedPlayers,
+            transferOffers: updatedOffers,
             balance: s.balance + weeklyBalance
           }
         })
+        
+        // Gera novas ofertas da IA
+        get().generateAIOffers()
       },
       
       trainPlayer: (playerId, attribute) => {
@@ -749,7 +1463,7 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
-      hireScount: (scout) => {
+      hireScout: (scout) => {
         set((s) => ({
           scouts: [...s.scouts, scout],
           weeklyExpenses: s.weeklyExpenses + scout.salary
@@ -776,6 +1490,109 @@ export const useGameEngine = create<GameEngineState>()(
           }))
           return { serieAStandings: updatedStandings }
         })
+      },
+      
+      generateAIOffers: () => {
+        const state = get()
+        
+        // Chance de gerar ofertas (20% por semana)
+        if (Math.random() > 0.2) return
+        
+        // Seleciona jogadores atraentes (overall >= 75, idade < 30)
+        const attractivePlayers = state.squadPlayers.filter(p => 
+          p.overall >= 75 && p.age < 30 && !p.isLoanedIn
+        )
+        
+        if (attractivePlayers.length === 0) return
+        
+        // Seleciona um jogador aleatorio
+        const targetPlayer = attractivePlayers[Math.floor(Math.random() * attractivePlayers.length)]
+        
+        // Seleciona um time para fazer oferta
+        const possibleTeams = AI_TEAMS.filter(t => t.budget >= targetPlayer.marketValue * 0.5)
+        if (possibleTeams.length === 0) return
+        
+        const buyingTeam = possibleTeams[Math.floor(Math.random() * possibleTeams.length)]
+        
+        // Determina tipo de oferta
+        const isLoan = Math.random() < 0.3 || buyingTeam.budget < targetPlayer.marketValue
+        
+        // Calcula valor da oferta
+        let offerAmount: number
+        if (isLoan) {
+          // Emprestimo: paga parte do salario
+          offerAmount = targetPlayer.contract?.salary ? Math.round(targetPlayer.contract.salary * 4 * (0.5 + Math.random() * 0.5)) : 100000
+        } else {
+          // Compra: 60-120% do valor de mercado
+          const multiplier = 0.6 + Math.random() * 0.6
+          offerAmount = Math.round(targetPlayer.marketValue * multiplier)
+        }
+        
+        const newOffer: TransferOffer = {
+          id: Date.now(),
+          playerId: targetPlayer.id,
+          playerName: targetPlayer.name,
+          fromTeam: buyingTeam.name,
+          offerType: isLoan ? "emprestimo" : "compra",
+          offerAmount,
+          wageCoverage: isLoan ? Math.round(50 + Math.random() * 50) : undefined,
+          loanWeeks: isLoan ? Math.round(26 + Math.random() * 26) : undefined,
+          status: "pendente",
+          createdWeek: state.currentWeek,
+          expiresWeek: state.currentWeek + 3
+        }
+        
+        set((s) => ({
+          transferOffers: [...s.transferOffers, newOffer]
+        }))
+      },
+      
+      respondToOffer: (offerId: number, accept: boolean) => {
+        const state = get()
+        const offer = state.transferOffers.find(o => o.id === offerId)
+        
+        if (!offer || offer.status !== "pendente") return
+        
+        if (accept) {
+          const player = state.squadPlayers.find(p => p.id === offer.playerId)
+          if (!player) return
+          
+          if (offer.offerType === "compra") {
+            // Vende o jogador
+            set((s) => ({
+              squadPlayers: s.squadPlayers.filter(p => p.id !== offer.playerId),
+              balance: s.balance + offer.offerAmount,
+              transferBudget: s.transferBudget + offer.offerAmount,
+              weeklyExpenses: s.weeklyExpenses - (player.contract?.salary || 0),
+              transferOffers: s.transferOffers.map(o => 
+                o.id === offerId ? { ...o, status: "aceita" as const } : o
+              )
+            }))
+          } else {
+            // Empresta o jogador
+            const loanedPlayer = {
+              ...player,
+              isLoanedIn: false, // Saindo por emprestimo
+              loanEndWeek: state.currentWeek + (offer.loanWeeks || 26),
+              parentClub: offer.fromTeam
+            }
+            
+            set((s) => ({
+              squadPlayers: s.squadPlayers.filter(p => p.id !== offer.playerId),
+              balance: s.balance + offer.offerAmount,
+              weeklyExpenses: s.weeklyExpenses - (player.contract?.salary || 0) * ((offer.wageCoverage || 100) / 100),
+              transferOffers: s.transferOffers.map(o => 
+                o.id === offerId ? { ...o, status: "aceita" as const } : o
+              )
+            }))
+          }
+        } else {
+          set((s) => ({
+            transferOffers: s.transferOffers.map(o => 
+              o.id === offerId ? { ...o, status: "rejeitada" as const } : o
+            )
+          }))
+        }
       },
       
       drawCopaBracket: () => {
@@ -920,8 +1737,815 @@ export const useGameEngine = create<GameEngineState>()(
           serieAStandings,
           copaBrasil: [],
           matchResults: [],
+          headToHeadRecords: [],
           topScorers: []
         })
+      },
+      
+      updateHeadToHead: (result: MatchResult) => {
+        set((s) => {
+          const team1 = result.homeTeam < result.awayTeam ? result.homeTeam : result.awayTeam
+          const team2 = result.homeTeam < result.awayTeam ? result.awayTeam : result.homeTeam
+          
+          const existingRecord = s.headToHeadRecords.find(
+            h => h.team1 === team1 && h.team2 === team2
+          )
+          
+          const newMatch: HeadToHeadMatch = {
+            season: result.season,
+            week: result.week,
+            competition: result.competition,
+            homeTeam: result.homeTeam,
+            awayTeam: result.awayTeam,
+            homeScore: result.homeScore,
+            awayScore: result.awayScore
+          }
+          
+          if (existingRecord) {
+            // Atualiza registro existente
+            const isTeam1Home = result.homeTeam === team1
+            const team1Score = isTeam1Home ? result.homeScore : result.awayScore
+            const team2Score = isTeam1Home ? result.awayScore : result.homeScore
+            
+            return {
+              headToHeadRecords: s.headToHeadRecords.map(h => {
+                if (h.team1 === team1 && h.team2 === team2) {
+                  return {
+                    ...h,
+                    matches: [...h.matches, newMatch],
+                    team1Wins: h.team1Wins + (team1Score > team2Score ? 1 : 0),
+                    team2Wins: h.team2Wins + (team2Score > team1Score ? 1 : 0),
+                    draws: h.draws + (team1Score === team2Score ? 1 : 0),
+                    team1Goals: h.team1Goals + team1Score,
+                    team2Goals: h.team2Goals + team2Score
+                  }
+                }
+                return h
+              })
+            }
+          } else {
+            // Cria novo registro
+            const isTeam1Home = result.homeTeam === team1
+            const team1Score = isTeam1Home ? result.homeScore : result.awayScore
+            const team2Score = isTeam1Home ? result.awayScore : result.homeScore
+            
+            const newRecord: HeadToHead = {
+              team1,
+              team2,
+              matches: [newMatch],
+              team1Wins: team1Score > team2Score ? 1 : 0,
+              team2Wins: team2Score > team1Score ? 1 : 0,
+              draws: team1Score === team2Score ? 1 : 0,
+              team1Goals: team1Score,
+              team2Goals: team2Score
+            }
+            
+            return {
+              headToHeadRecords: [...s.headToHeadRecords, newRecord]
+            }
+          }
+        })
+      },
+      
+      getHeadToHead: (team1: string, team2: string) => {
+        const state = get()
+        const t1 = team1 < team2 ? team1 : team2
+        const t2 = team1 < team2 ? team2 : team1
+        return state.headToHeadRecords.find(h => h.team1 === t1 && h.team2 === t2) || null
+      },
+      
+      checkContractBonuses: (playerId: number) => {
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p => {
+            if (p.id !== playerId || !p.contract) return p
+            
+            const updatedBonuses = p.contract.bonuses.map(bonus => {
+              if (bonus.achieved) return bonus
+              
+              let currentValue = 0
+              switch (bonus.type) {
+                case "goals":
+                  currentValue = p.seasonStats.goals
+                  break
+                case "assists":
+                  currentValue = p.seasonStats.assists
+                  break
+                case "appearances":
+                  currentValue = p.seasonStats.matchesPlayed
+                  break
+                case "cleanSheets":
+                  currentValue = p.seasonStats.cleanSheets
+                  break
+                case "nationalTeam":
+                  currentValue = p.calledUp ? 1 : 0
+                  break
+                case "titles":
+                  currentValue = 0
+                  break
+              }
+              
+              if (currentValue >= bonus.threshold) {
+                return { ...bonus, achieved: true }
+              }
+              return bonus
+            })
+            
+            return {
+              ...p,
+              contract: {
+                ...p.contract,
+                bonuses: updatedBonuses
+              }
+            }
+          })
+        }))
+      },
+      
+      // ============================================
+      // TATICAS
+      // ============================================
+      
+      setTeamTactics: (tactics: Partial<TeamTactics>) => {
+        set((s) => ({
+          teamTactics: { ...s.teamTactics, ...tactics }
+        }))
+      },
+      
+      setPlayerInstructions: (playerId: number, instructions: Partial<PlayerInstructions>) => {
+        set((s) => {
+          const existing = s.playerInstructions[playerId] || {
+            role: "meia_central",
+            roaming: "liberdade_moderada",
+            runs: "as_vezes",
+            markingTightness: "normal",
+            closingDown: "normal",
+            dribbling: "normal",
+            passingRisk: "normal",
+            crossFrequency: "normal",
+            shootFrequency: "normal",
+            stayWider: false,
+            cutInside: false,
+            getForward: false,
+            holdPosition: false,
+            tackleHarder: false
+          }
+          return {
+            playerInstructions: {
+              ...s.playerInstructions,
+              [playerId]: { ...existing, ...instructions }
+            }
+          }
+        })
+      },
+      
+      analyzeOpponent: (teamShort: string) => {
+        const state = get()
+        const existing = state.opponentAnalyses.find(a => a.teamShort === teamShort)
+        
+        if (existing && existing.analysisProgress >= 100) return
+        
+        const teamNames: Record<string, string> = {
+          FLA: "Flamengo", PAL: "Palmeiras", COR: "Corinthians", SAO: "Sao Paulo",
+          INT: "Internacional", GRE: "Gremio", CAM: "Atletico-MG", FLU: "Fluminense",
+          BOT: "Botafogo", BAH: "Bahia", CRU: "Cruzeiro", FOR: "Fortaleza",
+          VAS: "Vasco", CAP: "Athletico-PR", SAN: "Santos", VIT: "Vitoria",
+          JUV: "Juventude", MIR: "Mirassol", SPT: "Sport", CEA: "Ceara"
+        }
+        
+        set((s) => {
+          if (existing) {
+            return {
+              opponentAnalyses: s.opponentAnalyses.map(a => 
+                a.teamShort === teamShort 
+                  ? { ...a, analysisProgress: Math.min(100, a.analysisProgress + 25) }
+                  : a
+              )
+            }
+          }
+          
+          const newAnalysis: OpponentAnalysis = {
+            teamShort,
+            teamName: teamNames[teamShort] || teamShort,
+            analyzedWeek: s.currentWeek,
+            analysisProgress: 25,
+            formation: null,
+            mentality: null,
+            keyPlayers: [],
+            weaknesses: [],
+            strengths: [],
+            avgGoalsScored: 0,
+            avgGoalsConceded: 0,
+            homeRecord: { w: 0, d: 0, l: 0 },
+            awayRecord: { w: 0, d: 0, l: 0 }
+          }
+          
+          return {
+            opponentAnalyses: [...s.opponentAnalyses, newAnalysis]
+          }
+        })
+      },
+      
+      updateOpponentAnalysis: () => {
+        set((s) => ({
+          opponentAnalyses: s.opponentAnalyses.map(analysis => {
+            if (analysis.analysisProgress < 100) {
+              const progress = Math.min(100, analysis.analysisProgress + 10)
+              
+              // Revela informacoes conforme progresso
+              let updates: Partial<OpponentAnalysis> = { analysisProgress: progress }
+              
+              if (progress >= 50 && !analysis.formation) {
+                const formations = ["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2"]
+                updates.formation = formations[Math.floor(Math.random() * formations.length)]
+              }
+              
+              if (progress >= 75 && !analysis.mentality) {
+                const mentalities: TeamMentality[] = ["defensivo", "equilibrado", "ofensivo"]
+                updates.mentality = mentalities[Math.floor(Math.random() * mentalities.length)]
+              }
+              
+              if (progress >= 100) {
+                const weaknessPool = ["Vulneravel em contra-ataques", "Laterais sobem muito", "Goleiro inseguro", "Bola aerea defensiva", "Saida de bola ruim"]
+                const strengthPool = ["Forte no jogo aereo", "Transicao rapida", "Meio-campo criativo", "Defesa solida", "Pressao alta eficiente"]
+                
+                updates.weaknesses = [weaknessPool[Math.floor(Math.random() * weaknessPool.length)]]
+                updates.strengths = [strengthPool[Math.floor(Math.random() * strengthPool.length)]]
+                updates.avgGoalsScored = 1 + Math.random() * 1.5
+                updates.avgGoalsConceded = 0.8 + Math.random() * 1.2
+              }
+              
+              return { ...analysis, ...updates }
+            }
+            return analysis
+          })
+        }))
+      },
+      
+      // ============================================
+      // MORAL
+      // ============================================
+      
+      addMoraleEvent: (event: Omit<MoraleEvent, "week">) => {
+        const state = get()
+        const newEvent: MoraleEvent = { ...event, week: state.currentWeek }
+        
+        set((s) => {
+          const newMorale = Math.max(0, Math.min(100, s.squadMorale.overall + event.impact))
+          const newConfidence = Math.max(0, Math.min(100, s.squadMorale.confidence + (event.impact * 0.7)))
+          
+          return {
+            squadMorale: {
+              ...s.squadMorale,
+              overall: newMorale,
+              confidence: newConfidence,
+              recentEvents: [newEvent, ...s.squadMorale.recentEvents.slice(0, 9)]
+            }
+          }
+        })
+      },
+      
+      updateSquadMorale: () => {
+        set((s) => {
+          // Moral tende a voltar a 70 com o tempo
+          const targetMorale = 70
+          const diff = targetMorale - s.squadMorale.overall
+          const adjustment = diff * 0.1
+          
+          return {
+            squadMorale: {
+              ...s.squadMorale,
+              overall: Math.round(s.squadMorale.overall + adjustment)
+            }
+          }
+        })
+      },
+      
+      // ============================================
+      // CONFERENCIAS DE IMPRENSA
+      // ============================================
+      
+      generatePressConference: () => {
+        const state = get()
+        
+        const questionPool: PressQuestion[] = [
+          // PERGUNTAS SOBRE PARTIDA
+          {
+            id: 1,
+            type: "match",
+            question: "Como avalia o desempenho do time na ultima partida?",
+            options: [
+              { text: "Estou muito satisfeito, jogamos muito bem.", tone: "positivo", impact: 5 },
+              { text: "Foi um resultado justo, mas podemos melhorar.", tone: "neutro", impact: 0 },
+              { text: "Nao estou feliz, precisamos reagir.", tone: "negativo", impact: -3 }
+            ]
+          },
+          {
+            id: 2,
+            type: "match",
+            question: "O que achou da arbitragem no ultimo jogo?",
+            options: [
+              { text: "A arbitragem foi correta, sem reclamacoes.", tone: "neutro", impact: 1 },
+              { text: "Houve erros, mas faz parte do futebol.", tone: "neutro", impact: 0 },
+              { text: "Fomos prejudicados, isso e inaceitavel!", tone: "agressivo", impact: -5 }
+            ]
+          },
+          {
+            id: 3,
+            type: "match",
+            question: "O time sentiu pressao da torcida?",
+            options: [
+              { text: "A torcida nos apoiou e foi fundamental.", tone: "positivo", impact: 4 },
+              { text: "Sabemos lidar com a pressao.", tone: "neutro", impact: 1 },
+              { text: "A cobranca excessiva atrapalha.", tone: "negativo", impact: -6 }
+            ]
+          },
+          // PERGUNTAS SOBRE JOGADORES
+          {
+            id: 4,
+            type: "player",
+            question: "Algum jogador tem te impressionado nos treinos?",
+            options: [
+              { text: "Todos estao se dedicando muito.", tone: "positivo", impact: 3 },
+              { text: "Prefiro nao individualizar.", tone: "neutro", impact: 0 },
+              { text: "Alguns precisam se esforcar mais.", tone: "negativo", impact: -5 }
+            ]
+          },
+          {
+            id: 5,
+            type: "player",
+            question: "Como esta a situacao do jogador que nao vem sendo escalado?",
+            options: [
+              { text: "Ele tera sua chance, estou contando com ele.", tone: "positivo", impact: 5 },
+              { text: "A concorrencia e grande, precisa trabalhar.", tone: "neutro", impact: 0 },
+              { text: "Nao vou falar sobre escalacao na imprensa.", tone: "agressivo", impact: -2 }
+            ]
+          },
+          {
+            id: 6,
+            type: "player",
+            question: "Ha jogadores insatisfeitos no elenco?",
+            options: [
+              { text: "O grupo esta unido e focado.", tone: "positivo", impact: 4 },
+              { text: "E normal haver competicao interna.", tone: "neutro", impact: 0 },
+              { text: "Quem nao estiver feliz pode procurar outro clube.", tone: "agressivo", impact: -8 }
+            ]
+          },
+          {
+            id: 7,
+            type: "player",
+            question: "O que espera do jovem que subiu da base?",
+            options: [
+              { text: "Tem muito talento, vai nos ajudar muito.", tone: "positivo", impact: 5 },
+              { text: "Precisa de tempo para se adaptar.", tone: "neutro", impact: 1 },
+              { text: "Ainda nao esta pronto para o time principal.", tone: "negativo", impact: -4 }
+            ]
+          },
+          // PERGUNTAS SOBRE RIVAIS
+          {
+            id: 8,
+            type: "rival",
+            question: "O que espera do proximo adversario?",
+            options: [
+              { text: "Respeitamos, mas vamos jogar para vencer.", tone: "positivo", impact: 2 },
+              { text: "Sera um jogo dificil, estamos preparados.", tone: "neutro", impact: 1 },
+              { text: "Nao estou preocupado com eles.", tone: "agressivo", impact: -2 }
+            ]
+          },
+          {
+            id: 9,
+            type: "rival",
+            question: "O tecnico adversario fez provocacoes. Quer responder?",
+            options: [
+              { text: "Prefiro falar apenas dentro de campo.", tone: "neutro", impact: 2 },
+              { text: "Cada um sabe a sua capacidade.", tone: "positivo", impact: 1 },
+              { text: "Ele fala muito, vamos ver no jogo.", tone: "agressivo", impact: -3 }
+            ]
+          },
+          {
+            id: 10,
+            type: "rival",
+            question: "Considera este classico o mais importante do ano?",
+            options: [
+              { text: "Todo jogo e importante, mas este e especial.", tone: "positivo", impact: 3 },
+              { text: "Sao 3 pontos como qualquer outro jogo.", tone: "neutro", impact: 0 },
+              { text: "E o jogo que todos querem vencer.", tone: "positivo", impact: 2 }
+            ]
+          },
+          // PERGUNTAS SOBRE TATICA
+          {
+            id: 11,
+            type: "tactics",
+            question: "Pretende mudar a tatica para o proximo jogo?",
+            options: [
+              { text: "Estamos bem como estamos.", tone: "neutro", impact: 0 },
+              { text: "Sempre fazemos ajustes conforme o adversario.", tone: "positivo", impact: 2 },
+              { text: "Nao vou revelar nossa estrategia.", tone: "agressivo", impact: -1 }
+            ]
+          },
+          {
+            id: 12,
+            type: "tactics",
+            question: "O time vai jogar mais ofensivo ou defensivo?",
+            options: [
+              { text: "Vamos impor nosso jogo, como sempre.", tone: "positivo", impact: 3 },
+              { text: "Depende do andamento da partida.", tone: "neutro", impact: 1 },
+              { text: "Nao comento sobre tatica antes do jogo.", tone: "agressivo", impact: -1 }
+            ]
+          },
+          {
+            id: 13,
+            type: "tactics",
+            question: "Por que o time tem sofrido tantos gols?",
+            options: [
+              { text: "Estamos trabalhando para corrigir isso.", tone: "neutro", impact: 0 },
+              { text: "Sao detalhes que acontecem no futebol.", tone: "neutro", impact: -1 },
+              { text: "A culpa nao e so da defesa, e do coletivo.", tone: "negativo", impact: -4 }
+            ]
+          },
+          // PERGUNTAS SOBRE TRANSFERENCIAS
+          {
+            id: 14,
+            type: "transfer",
+            question: "O clube esta no mercado por reforcos?",
+            options: [
+              { text: "Estamos sempre atentos a oportunidades.", tone: "positivo", impact: 1 },
+              { text: "Confio no elenco que temos.", tone: "neutro", impact: 2 },
+              { text: "Precisamos de reforcos urgentemente.", tone: "negativo", impact: -4 }
+            ]
+          },
+          {
+            id: 15,
+            type: "transfer",
+            question: "Ha interesse de clubes europeus em seus jogadores?",
+            options: [
+              { text: "Jogadores de qualidade sempre tem mercado.", tone: "positivo", impact: 2 },
+              { text: "Nao vou comentar sobre especulacoes.", tone: "neutro", impact: 0 },
+              { text: "Quem quiser leva-los tera que pagar caro.", tone: "agressivo", impact: -2 }
+            ]
+          },
+          {
+            id: 16,
+            type: "transfer",
+            question: "Venderia seu principal jogador nesta janela?",
+            options: [
+              { text: "Nao ha negociacao no momento.", tone: "neutro", impact: 1 },
+              { text: "Se for bom para todos, conversamos.", tone: "positivo", impact: 0 },
+              { text: "Ele e fundamental e nao sai.", tone: "positivo", impact: 3 }
+            ]
+          },
+          // PERGUNTAS SOBRE LESOES
+          {
+            id: 17,
+            type: "injury",
+            question: "Como esta a situacao do departamento medico?",
+            options: [
+              { text: "Estamos com o grupo praticamente completo.", tone: "positivo", impact: 2 },
+              { text: "Alguns jogadores ainda se recuperam.", tone: "neutro", impact: 0 },
+              { text: "As lesoes tem nos prejudicado muito.", tone: "negativo", impact: -3 }
+            ]
+          },
+          {
+            id: 18,
+            type: "injury",
+            question: "O jogador lesionado voltara a tempo para o classico?",
+            options: [
+              { text: "Estamos otimistas com a recuperacao.", tone: "positivo", impact: 2 },
+              { text: "Vamos avaliar dia a dia.", tone: "neutro", impact: 0 },
+              { text: "Infelizmente nao, mas temos substitutos.", tone: "neutro", impact: -1 }
+            ]
+          },
+          // PERGUNTAS GERAIS
+          {
+            id: 19,
+            type: "match",
+            question: "Seu cargo esta ameacado apos os ultimos resultados?",
+            options: [
+              { text: "Tenho confianca da diretoria.", tone: "positivo", impact: 2 },
+              { text: "Trabalho duro e os resultados virao.", tone: "neutro", impact: 1 },
+              { text: "Isso e problema da diretoria, nao meu.", tone: "agressivo", impact: -5 }
+            ]
+          },
+          {
+            id: 20,
+            type: "match",
+            question: "Qual a meta do clube para esta temporada?",
+            options: [
+              { text: "Lutar pelo titulo, sempre.", tone: "positivo", impact: 4 },
+              { text: "Chegar o mais longe possivel.", tone: "neutro", impact: 1 },
+              { text: "Primeiro nos livrar do rebaixamento.", tone: "negativo", impact: -3 }
+            ]
+          }
+        ]
+        
+        // Seleciona 3 perguntas aleatorias
+        const shuffled = questionPool.sort(() => Math.random() - 0.5)
+        const selectedQuestions = shuffled.slice(0, 3)
+        
+        set({ nextPressConference: selectedQuestions })
+      },
+      
+      respondToPressConference: (questionId: number, optionIndex: number) => {
+        const state = get()
+        if (!state.nextPressConference) return
+        
+        const question = state.nextPressConference.find(q => q.id === questionId)
+        if (!question) return
+        
+        const option = question.options[optionIndex]
+        
+        // Aplica impacto na moral
+        get().addMoraleEvent({
+          type: option.tone === "positivo" ? "elogio" : option.tone === "negativo" ? "conflito" : "elogio",
+          description: `Conferencia: "${option.text}"`,
+          impact: option.impact
+        })
+        
+        // Remove pergunta respondida
+        set((s) => ({
+          nextPressConference: s.nextPressConference?.filter(q => q.id !== questionId) || null,
+          pressConferences: s.nextPressConference?.length === 1 
+            ? [...s.pressConferences, {
+                week: s.currentWeek,
+                questions: s.nextPressConference,
+                responses: [{ questionId, selectedOption: optionIndex, impact: option.impact }],
+                moraleImpact: option.impact
+              }]
+            : s.pressConferences
+        }))
+      },
+      
+      // ============================================
+      // RELATORIOS DE DESEMPENHO
+      // ============================================
+      
+      generatePerformanceReport: (playerId: number, period: "semana" | "mes" | "temporada"): PerformanceReport => {
+        const state = get()
+        const player = state.squadPlayers.find(p => p.id === playerId)
+        
+        if (!player) {
+          return {
+            playerId,
+            playerName: "Desconhecido",
+            period,
+            avgRating: 0,
+            matchRatings: [],
+            vsLastPeriod: 0,
+            vsSquadAvg: 0,
+            vsPositionAvg: 0,
+            strengths: [],
+            weaknesses: [],
+            recommendation: "Jogador nao encontrado"
+          }
+        }
+        
+        // Calcula nota media baseada em atributos e forma
+        const avgRating = (player.overall + player.form) / 20
+        
+        // Identifica pontos fortes
+        const strengths: string[] = []
+        if (player.pace >= 85) strengths.push("Velocidade excepcional")
+        if (player.shooting >= 80) strengths.push("Finalizacao precisa")
+        if (player.passing >= 80) strengths.push("Qualidade de passe")
+        if (player.dribbling >= 80) strengths.push("Habilidade com a bola")
+        if (player.defending >= 80) strengths.push("Solidez defensiva")
+        if (player.physical >= 80) strengths.push("Forca fisica")
+        
+        // Identifica pontos fracos
+        const weaknesses: string[] = []
+        if (player.pace < 60) weaknesses.push("Falta de velocidade")
+        if (player.shooting < 50) weaknesses.push("Finalizacao fraca")
+        if (player.passing < 60) weaknesses.push("Passes imprecisos")
+        if (player.defending < 50 && !["ATA", "PE", "PD", "MEI"].includes(player.position)) weaknesses.push("Vulnerabilidade defensiva")
+        
+        // Recomendacao
+        let recommendation = "Manter no elenco"
+        if (player.form < 60) recommendation = "Precisa de mais minutos para ganhar ritmo"
+        if (player.morale === "Infeliz" || player.morale === "Insatisfeito") recommendation = "Conversar com o jogador sobre sua situacao"
+        if (player.age < 23 && player.potential > player.overall + 5) recommendation = "Investir em treinamento - alto potencial"
+        
+        return {
+          playerId,
+          playerName: player.name,
+          period,
+          avgRating,
+          matchRatings: [],
+          vsLastPeriod: Math.round((Math.random() - 0.5) * 20),
+          vsSquadAvg: Math.round((avgRating - 7) * 10),
+          vsPositionAvg: Math.round((Math.random() - 0.3) * 15),
+          strengths,
+          weaknesses,
+          recommendation
+        }
+      },
+      
+      // ============================================
+      // REUNIOES COM JOGADORES
+      // ============================================
+      
+      canMeetPlayer: (playerId: number): boolean => {
+        const state = get()
+        const cooldown = state.meetingCooldowns[playerId]
+        return !cooldown || cooldown <= state.currentWeek
+      },
+      
+      holdMeeting: (playerId: number, meetingType: MeetingType): PlayerMeeting => {
+        const state = get()
+        const player = state.squadPlayers.find(p => p.id === playerId)
+        
+        if (!player) {
+          return {
+            id: Date.now(),
+            playerId,
+            playerName: "Desconhecido",
+            week: state.currentWeek,
+            type: meetingType,
+            playerResponse: "neutro",
+            moraleChange: 0,
+            relationshipChange: 0,
+            details: "Jogador nao encontrado"
+          }
+        }
+        
+        const meetingOption = MEETING_OPTIONS.find(m => m.type === meetingType)
+        if (!meetingOption) {
+          return {
+            id: Date.now(),
+            playerId,
+            playerName: player.name,
+            week: state.currentWeek,
+            type: meetingType,
+            playerResponse: "neutro",
+            moraleChange: 0,
+            relationshipChange: 0,
+            details: "Tipo de reuniao invalido"
+          }
+        }
+        
+        // Determina resultado baseado nas chances
+        const roll = Math.random() * 100
+        let outcome: "positive" | "neutral" | "negative"
+        let response: "positivo" | "neutro" | "negativo"
+        
+        // Modifica chances baseado na moral atual do jogador
+        const moraleMod = player.morale === "Feliz" ? 10 : player.morale === "Infeliz" ? -15 : 0
+        const adjustedPositiveChance = meetingOption.possibleOutcomes.positive.chance + moraleMod
+        
+        if (roll < adjustedPositiveChance) {
+          outcome = "positive"
+          response = "positivo"
+        } else if (roll < adjustedPositiveChance + meetingOption.possibleOutcomes.neutral.chance) {
+          outcome = "neutral"
+          response = "neutro"
+        } else {
+          outcome = "negative"
+          response = "negativo"
+        }
+        
+        const selectedOutcome = meetingOption.possibleOutcomes[outcome]
+        
+        const meeting: PlayerMeeting = {
+          id: Date.now(),
+          playerId,
+          playerName: player.name,
+          week: state.currentWeek,
+          type: meetingType,
+          playerResponse: response,
+          moraleChange: selectedOutcome.moraleChange,
+          relationshipChange: outcome === "positive" ? 5 : outcome === "negative" ? -5 : 0,
+          details: `${player.name} ${selectedOutcome.message}`
+        }
+        
+        // Aplica mudancas de moral ao jogador
+        const newMorale = outcome === "positive" ? "Feliz" : outcome === "negative" ? "Insatisfeito" : player.morale
+        
+        set((s) => ({
+          playerMeetings: [meeting, ...s.playerMeetings.slice(0, 49)],
+          meetingCooldowns: {
+            ...s.meetingCooldowns,
+            [playerId]: s.currentWeek + 2 // Cooldown de 2 semanas
+          },
+          squadPlayers: s.squadPlayers.map(p => 
+            p.id === playerId ? { ...p, morale: newMorale, form: Math.max(50, Math.min(100, p.form + selectedOutcome.moraleChange)) } : p
+          )
+        }))
+        
+        // Adiciona evento de moral
+        get().addMoraleEvent({
+          type: outcome === "positive" ? "elogio" : outcome === "negative" ? "conflito" : "elogio",
+          description: `Reuniao com ${player.name}: ${selectedOutcome.message}`,
+          impact: Math.round(selectedOutcome.moraleChange / 2)
+        })
+        
+        return meeting
+      },
+      
+      // ============================================
+      // ANALISE POS-PARTIDA
+      // ============================================
+      
+      generatePostMatchAnalysis: (matchResult: MatchResult, isHome: boolean, stats: any): PostMatchAnalysis => {
+        const state = get()
+        
+        const ourScore = isHome ? matchResult.homeScore : matchResult.awayScore
+        const theirScore = isHome ? matchResult.awayScore : matchResult.homeScore
+        const won = ourScore > theirScore
+        const lost = ourScore < theirScore
+        
+        // Calcula rating geral baseado no resultado
+        let overallRating = 6
+        if (won) overallRating = 7 + Math.min(2, (ourScore - theirScore) * 0.5)
+        if (lost) overallRating = 5 - Math.min(2, (theirScore - ourScore) * 0.5)
+        overallRating = Math.round(overallRating * 10) / 10
+        
+        // Rating tatico
+        const tacticsRating = overallRating + (Math.random() - 0.5) * 2
+        
+        // Seleciona pontos positivos e negativos
+        const numPositives = won ? 3 : lost ? 1 : 2
+        const numNegatives = lost ? 3 : won ? 1 : 2
+        
+        const shuffledPositives = [...ANALYSIS_POSITIVES].sort(() => Math.random() - 0.5)
+        const shuffledNegatives = [...ANALYSIS_NEGATIVES].sort(() => Math.random() - 0.5)
+        
+        const positives: AnalysisPoint[] = shuffledPositives.slice(0, numPositives)
+        const negatives: AnalysisPoint[] = shuffledNegatives.slice(0, numNegatives)
+        
+        // Seleciona melhores e piores jogadores
+        const sortedPlayers = [...state.squadPlayers]
+          .filter(p => !p.injury)
+          .sort((a, b) => (b.overall + b.form) - (a.overall + a.form))
+        
+        const bestPlayers = sortedPlayers.slice(0, 3).map(p => ({
+          playerId: p.id,
+          name: p.name,
+          rating: 6 + Math.random() * 3,
+          reason: ["Otima atuacao", "Decisivo", "Seguro", "Criativo"][Math.floor(Math.random() * 4)]
+        }))
+        
+        const worstPlayers = sortedPlayers.slice(-2).map(p => ({
+          playerId: p.id,
+          name: p.name,
+          rating: 4 + Math.random() * 2,
+          reason: ["Abaixo do esperado", "Erros frequentes", "Sem ritmo"][Math.floor(Math.random() * 3)]
+        }))
+        
+        // Gera estatisticas
+        const keyStats = {
+          possession: 45 + Math.floor(Math.random() * 20),
+          shots: 8 + Math.floor(Math.random() * 10),
+          shotsOnTarget: 3 + Math.floor(Math.random() * 5),
+          xG: ourScore - 0.5 + Math.random(),
+          xGA: theirScore - 0.3 + Math.random(),
+          passAccuracy: 75 + Math.floor(Math.random() * 15),
+          duelsWon: 45 + Math.floor(Math.random() * 15),
+          aerialDuelsWon: 40 + Math.floor(Math.random() * 20)
+        }
+        
+        // Recomendacoes baseadas no resultado
+        const recommendations: string[] = []
+        if (lost) {
+          recommendations.push("Revisar posicionamento defensivo")
+          recommendations.push("Treinar finalizacoes")
+        }
+        if (keyStats.possession < 50) {
+          recommendations.push("Trabalhar posse de bola")
+        }
+        if (keyStats.passAccuracy < 80) {
+          recommendations.push("Melhorar precisao de passes")
+        }
+        if (won) {
+          recommendations.push("Manter a estrategia atual")
+        }
+        
+        // Desvios taticos
+        const tacticDeviations: string[] = []
+        if (Math.random() > 0.6) tacticDeviations.push("Laterais nao avancaram como pedido")
+        if (Math.random() > 0.7) tacticDeviations.push("Pressing nao foi intenso o suficiente")
+        if (Math.random() > 0.8) tacticDeviations.push("Linha defensiva muito recuada")
+        
+        const analysis: PostMatchAnalysis = {
+          matchId: Date.now(),
+          week: matchResult.week,
+          opponent: isHome ? matchResult.awayTeam : matchResult.homeTeam,
+          result: { home: matchResult.homeScore, away: matchResult.awayScore },
+          isHome,
+          overallRating,
+          tacticsRating: Math.round(tacticsRating * 10) / 10,
+          positives,
+          negatives,
+          bestPlayers,
+          worstPlayers,
+          keyStats,
+          recommendations: recommendations.slice(0, 3),
+          tacticAdherence: 60 + Math.floor(Math.random() * 35),
+          tacticDeviations
+        }
+        
+        set((s) => ({
+          postMatchAnalyses: [analysis, ...s.postMatchAnalyses.slice(0, 19)]
+        }))
+        
+        return analysis
       }
     }),
     {

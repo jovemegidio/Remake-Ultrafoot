@@ -16,6 +16,11 @@ import {
   BarChart3,
   Dumbbell,
   FileText,
+  Crosshair,
+  Heart,
+  ClipboardList,
+  Target,
+  MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -23,11 +28,16 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", href: "/" },
   { icon: Users, label: "Elenco", href: "/elenco" },
+  { icon: Crosshair, label: "Taticas", href: "/taticas" },
   { icon: Dumbbell, label: "Treinamento", href: "/treinamento" },
   { icon: FileText, label: "Contratos", href: "/contratos" },
   { icon: CalendarDays, label: "Calendario", href: "/calendario" },
   { icon: Trophy, label: "Competicoes", href: "/competicoes" },
+  { icon: Target, label: "Adversarios", href: "/adversarios" },
   { icon: BarChart3, label: "Estatisticas", href: "/estatisticas" },
+  { icon: ClipboardList, label: "Relatorios", href: "/relatorios" },
+  { icon: Heart, label: "Vestiario", href: "/vestiario" },
+  { icon: MessageSquare, label: "Reunioes", href: "/reunioes" },
   { icon: Wallet, label: "Financas", href: "/financas" },
   { icon: ShoppingCart, label: "Mercado", href: "/mercado" },
   { icon: Mail, label: "Mensagens", href: "/mensagens", badge: 3 },
