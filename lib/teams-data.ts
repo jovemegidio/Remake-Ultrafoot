@@ -9,7 +9,7 @@ export type Divisao =
   | "serie_b"
   | "serie_c"
   | "serie_d"
-  // Internacionais
+  // Internacionais - Primeira Divisao
   | "premier_league"
   | "la_liga"
   | "serie_a_ita"
@@ -20,6 +20,15 @@ export type Divisao =
   | "mls"
   | "liga_mx"
   | "primeira_liga"
+  // Internacionais - Segunda Divisao
+  | "championship"      // Inglaterra 2
+  | "la_liga_2"         // Espanha 2
+  | "serie_b_ita"       // Italia 2
+  | "bundesliga_2"      // Alemanha 2
+  | "ligue_2"           // Franca 2
+  | "liga_portugal_2"   // Portugal 2
+  | "eredivisie"        // Holanda
+  | "jupiler_pro"       // Belgica
   // Estaduais
   | "paulistao"
   | "carioca"
