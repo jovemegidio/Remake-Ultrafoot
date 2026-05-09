@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, Trophy, X, Key, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react"
+import { Globe, Save, FileEdit, Trophy, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, UserPlus, LogOut } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ type SplashPhase =
   | "main-menu"
   | "fade-out"
 
-type MenuOption = "novo-jogo" | "editar" | "carregar"
+type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
 export default function SplashPage() {
   const router = useRouter()
@@ -50,6 +50,8 @@ export default function SplashPage() {
     { id: "novo-jogo", label: "NOVO JOGO", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
     { id: "editar", label: "EDITOR DE CLUBES", icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
     { id: "carregar", label: "CARREGAR JOGO", icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
+    { id: "registrar", label: "REGISTRAR", icon: <Key className="h-7 w-7" strokeWidth={1.5} /> },
+    { id: "sair", label: "SAIR", icon: <LogOut className="h-7 w-7" strokeWidth={1.5} /> },
   ]
 
   // Sequencia de fases da splash
@@ -95,6 +97,26 @@ export default function SplashPage() {
       return
     }
     
+    // Se for registrar, mostra o modal de registro
+    if (menuOption?.id === "registrar") {
+      if (!isRegistered) {
+        setShowRegisterModal(true)
+      }
+      return
+    }
+    
+    // Se for sair, fecha a janela ou volta
+    if (menuOption?.id === "sair") {
+      if (typeof window !== "undefined") {
+        window.close()
+        // Fallback: se nao conseguir fechar, mostra mensagem
+        setTimeout(() => {
+          alert("Obrigado por jogar Ultrafoot 26!")
+        }, 100)
+      }
+      return
+    }
+    
     if (menuOption?.href) {
       setIsExiting(true)
       setPhase("fade-out")
@@ -102,7 +124,7 @@ export default function SplashPage() {
         router.push(menuOption.href)
       }, 400)
     }
-  }, [isExiting, router, mainMenuOptions])
+  }, [isExiting, router, mainMenuOptions, isRegistered])
 
   // Handler para carregar save
   const handleLoadSave = useCallback((saveId: number) => {
@@ -698,46 +720,14 @@ export default function SplashPage() {
 
         {/* Footer */}
         <div 
-          className="flex items-center justify-between px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 md:pb-8 pt-2"
+          className="flex items-center justify-center px-4 sm:px-6 md:px-8 pb-6 sm:pb-8 md:pb-10 pt-2"
           style={{
             animation: phase === "main-menu" ? "slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards" : "none",
             opacity: 0,
           }}
         >
-          {/* Registrar button */}
-          <button
-            onClick={() => !isRegistered && setShowRegisterModal(true)}
-            className={cn(
-              "flex items-center gap-2 px-2 sm:px-4 py-2 transition-all duration-300 group",
-              isRegistered 
-                ? "text-emerald-500/60 cursor-default" 
-                : "text-white/40 hover:text-white/80"
-            )}
-          >
-            <div className={cn(
-              "w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all duration-300",
-              isRegistered 
-                ? "border-emerald-500/40 bg-emerald-500/10" 
-                : "border-current group-hover:border-white/60 group-hover:bg-white/5"
-            )}>
-              {isRegistered ? (
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              ) : (
-                <span className="font-bold text-[10px] sm:text-xs">R</span>
-              )}
-            </div>
-            <span className="font-medium text-xs sm:text-sm tracking-wide hidden sm:block">
-              {isRegistered ? "REGISTRADO" : "REGISTRAR"}
-            </span>
-          </button>
-
           {/* Center - Navigation hints + Trophy */}
-          <div className="flex flex-col items-center gap-1">
-            <div className="hidden sm:flex items-center gap-3 text-[10px] sm:text-xs text-white/25">
-              <span className="hidden md:inline">Use as setas para navegar</span>
-              <span className="hidden md:inline text-white/10">|</span>
-              <span>Enter para selecionar</span>
-            </div>
+          <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer">
               <Trophy 
                 className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500/60 transition-all duration-300 group-hover:text-yellow-400 group-hover:scale-110" 
@@ -749,15 +739,18 @@ export default function SplashPage() {
                 <div className="text-white/40 text-[10px] sm:text-xs font-medium group-hover:text-white/60 transition-colors">ULTRAFOOT 26</div>
               </div>
             </div>
+            <div className="flex items-center gap-3 text-[10px] sm:text-xs text-white/25">
+              <span>Use as setas para navegar</span>
+              <span className="text-white/10">|</span>
+              <span>Enter para selecionar</span>
+            </div>
+            {isRegistered && (
+              <span className="text-emerald-500/60 text-[10px] font-medium tracking-widest uppercase flex items-center gap-1.5 mt-1">
+                <CheckCircle2 className="h-3 w-3" />
+                JOGO REGISTRADO
+              </span>
+            )}
           </div>
-
-          {/* Sair button */}
-          <button
-            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 text-white/40 hover:text-red-400/80 transition-all duration-300 group"
-          >
-            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:rotate-90" />
-            <span className="font-medium text-xs sm:text-sm tracking-wide hidden sm:block">SAIR</span>
-          </button>
         </div>
       </div>
 
