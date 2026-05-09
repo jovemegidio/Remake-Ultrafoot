@@ -204,6 +204,170 @@ export interface TopScorer {
   matches: number
 }
 
+// ============================================
+// SISTEMA DE TATICAS AVANCADO (FM STYLE)
+// ============================================
+
+export type TeamMentality = "muito_defensivo" | "defensivo" | "equilibrado" | "ofensivo" | "muito_ofensivo"
+export type PlayingStyle = "posse_bola" | "contra_ataque" | "pressao_alta" | "jogo_direto" | "jogo_posicional"
+export type PassingStyle = "curto" | "misto" | "direto"
+export type TempoStyle = "lento" | "normal" | "rapido"
+export type DefensiveLine = "baixa" | "media" | "alta"
+export type PressingIntensity = "baixa" | "media" | "alta" | "muito_alta"
+export type MarkingStyle = "zonal" | "individual" | "misto"
+export type BuildUpStyle = "curto" | "misto" | "longo"
+export type ChanceCreation = "largura" | "centro" | "misto"
+export type CrossingStyle = "baixo" | "misto" | "alto"
+
+export interface TeamTactics {
+  // Mentalidade geral
+  mentality: TeamMentality
+  playingStyle: PlayingStyle
+  
+  // Com a bola
+  passingStyle: PassingStyle
+  tempo: TempoStyle
+  buildUp: BuildUpStyle
+  chanceCreation: ChanceCreation
+  crossingStyle: CrossingStyle
+  shootFromDistance: boolean
+  playThroughBalls: boolean
+  
+  // Sem a bola
+  defensiveLine: DefensiveLine
+  pressingIntensity: PressingIntensity
+  markingStyle: MarkingStyle
+  offsideTrap: boolean
+  counterPress: boolean
+  
+  // Transicoes
+  counterAttack: boolean
+  holdPosition: boolean
+  
+  // Bolas paradas
+  cornersAggressive: boolean
+  freekickSpecialist: number | null // ID do jogador
+  penaltyTaker: number | null
+}
+
+export type PlayerRole = 
+  // Goleiros
+  | "goleiro_defensor" | "goleiro_libero"
+  // Zagueiros
+  | "zagueiro_central" | "zagueiro_stopper" | "zagueiro_cover" | "zagueiro_saidor"
+  // Laterais
+  | "lateral_defensivo" | "lateral_equilibrado" | "lateral_ofensivo" | "ala" | "lateral_invertido"
+  // Volantes
+  | "volante_destruidor" | "volante_box_to_box" | "volante_saidor" | "meia_defensivo" | "regista"
+  // Meias
+  | "meia_central" | "meia_armador" | "meia_atacante" | "meia_box_to_box" | "enganche"
+  // Pontas
+  | "ponta" | "ponta_invertido" | "ala_ofensivo" | "meia_ponta"
+  // Atacantes
+  | "centroavante" | "atacante_movel" | "falso_nove" | "target_man" | "poacher"
+
+export interface PlayerInstructions {
+  role: PlayerRole
+  
+  // Movimentacao
+  roaming: "ficar_posicao" | "liberdade_moderada" | "liberdade_total"
+  runs: "raramente" | "as_vezes" | "frequentemente"
+  
+  // Marcacao
+  markingTightness: "solto" | "normal" | "apertado"
+  closingDown: "menos" | "normal" | "mais"
+  
+  // Com a bola
+  dribbling: "menos" | "normal" | "mais"
+  passingRisk: "seguro" | "normal" | "arriscado"
+  crossFrequency: "menos" | "normal" | "mais"
+  shootFrequency: "menos" | "normal" | "mais"
+  
+  // Especiais
+  stayWider: boolean
+  cutInside: boolean
+  getForward: boolean
+  holdPosition: boolean
+  tackleHarder: boolean
+}
+
+export interface OpponentAnalysis {
+  teamShort: string
+  teamName: string
+  analyzedWeek: number
+  analysisProgress: number // 0-100
+  
+  // Dados descobertos
+  formation: string | null
+  mentality: TeamMentality | null
+  keyPlayers: { name: string; position: string; threat: number }[]
+  weaknesses: string[]
+  strengths: string[]
+  
+  // Estatisticas
+  avgGoalsScored: number
+  avgGoalsConceded: number
+  homeRecord: { w: number; d: number; l: number }
+  awayRecord: { w: number; d: number; l: number }
+}
+
+// Moral do vestiario
+export interface SquadMorale {
+  overall: number // 0-100
+  unity: number // 0-100
+  confidence: number // 0-100
+  recentEvents: MoraleEvent[]
+}
+
+export interface MoraleEvent {
+  week: number
+  type: "vitoria" | "derrota" | "empate" | "titulo" | "contratacao" | "venda" | "lesao" | "conflito" | "elogio"
+  description: string
+  impact: number // -20 to +20
+}
+
+// Conferencia de imprensa
+export interface PressConference {
+  week: number
+  questions: PressQuestion[]
+  responses: PressResponse[]
+  moraleImpact: number
+}
+
+export interface PressQuestion {
+  id: number
+  type: "match" | "player" | "transfer" | "rival" | "tactics" | "injury"
+  question: string
+  options: { text: string; tone: "positivo" | "neutro" | "negativo" | "agressivo"; impact: number }[]
+}
+
+export interface PressResponse {
+  questionId: number
+  selectedOption: number
+  impact: number
+}
+
+// Relatorio de desempenho
+export interface PerformanceReport {
+  playerId: number
+  playerName: string
+  period: "semana" | "mes" | "temporada"
+  
+  // Notas
+  avgRating: number
+  matchRatings: { week: number; rating: number; opponent: string }[]
+  
+  // Comparacoes
+  vsLastPeriod: number // -100 to +100
+  vsSquadAvg: number // -100 to +100
+  vsPositionAvg: number // -100 to +100
+  
+  // Destaques
+  strengths: string[]
+  weaknesses: string[]
+  recommendation: string
+}
+
 // Sistema de Ofertas da IA
 export interface TransferOffer {
   id: number
@@ -279,6 +443,21 @@ interface GameEngineState {
   // Ofertas de transferencia
   transferOffers: TransferOffer[]
   
+  // Taticas
+  teamTactics: TeamTactics
+  playerInstructions: Record<number, PlayerInstructions>
+  opponentAnalyses: OpponentAnalysis[]
+  
+  // Moral e vestiario
+  squadMorale: SquadMorale
+  
+  // Conferencias de imprensa
+  pressConferences: PressConference[]
+  nextPressConference: PressQuestion[] | null
+  
+  // Relatorios de desempenho
+  performanceReports: PerformanceReport[]
+  
   // Financas
   balance: number
   weeklyIncome: number
@@ -310,6 +489,23 @@ interface GameEngineState {
   updateHeadToHead: (result: MatchResult) => void
   getHeadToHead: (team1: string, team2: string) => HeadToHead | null
   checkContractBonuses: (playerId: number) => void
+  
+  // Taticas
+  setTeamTactics: (tactics: Partial<TeamTactics>) => void
+  setPlayerInstructions: (playerId: number, instructions: Partial<PlayerInstructions>) => void
+  analyzeOpponent: (teamShort: string) => void
+  updateOpponentAnalysis: () => void
+  
+  // Moral
+  addMoraleEvent: (event: Omit<MoraleEvent, "week">) => void
+  updateSquadMorale: () => void
+  
+  // Conferencias
+  generatePressConference: () => void
+  respondToPressConference: (questionId: number, optionIndex: number) => void
+  
+  // Relatorios
+  generatePerformanceReport: (playerId: number, period: "semana" | "mes" | "temporada") => PerformanceReport
 }
 
 // Jogadores iniciais do Bragantino (exemplo)
@@ -671,6 +867,46 @@ export const useGameEngine = create<GameEngineState>()(
       topScorers: [],
       
       transferOffers: [],
+      
+      // Taticas padrao
+      teamTactics: {
+        mentality: "equilibrado",
+        playingStyle: "jogo_posicional",
+        passingStyle: "misto",
+        tempo: "normal",
+        buildUp: "misto",
+        chanceCreation: "misto",
+        crossingStyle: "misto",
+        shootFromDistance: false,
+        playThroughBalls: true,
+        defensiveLine: "media",
+        pressingIntensity: "media",
+        markingStyle: "zonal",
+        offsideTrap: false,
+        counterPress: true,
+        counterAttack: true,
+        holdPosition: false,
+        cornersAggressive: false,
+        freekickSpecialist: null,
+        penaltyTaker: 10, // Sasha
+      },
+      playerInstructions: {},
+      opponentAnalyses: [],
+      
+      // Moral
+      squadMorale: {
+        overall: 70,
+        unity: 75,
+        confidence: 70,
+        recentEvents: []
+      },
+      
+      // Conferencias
+      pressConferences: [],
+      nextPressConference: null,
+      
+      // Relatorios
+      performanceReports: [],
       
       balance: 27500000,
       weeklyIncome: 2100000,
@@ -1238,7 +1474,6 @@ export const useGameEngine = create<GameEngineState>()(
                   currentValue = p.calledUp ? 1 : 0
                   break
                 case "titles":
-                  // Implementar quando tiver sistema de titulos
                   currentValue = 0
                   break
               }
@@ -1249,11 +1484,6 @@ export const useGameEngine = create<GameEngineState>()(
               return bonus
             })
             
-            // Calcula bonus total a pagar
-            const bonusTotal = updatedBonuses
-              .filter(b => b.achieved && !p.contract?.bonuses.find(ob => ob.type === b.type)?.achieved)
-              .reduce((sum, b) => sum + b.amount, 0)
-            
             return {
               ...p,
               contract: {
@@ -1263,6 +1493,326 @@ export const useGameEngine = create<GameEngineState>()(
             }
           })
         }))
+      },
+      
+      // ============================================
+      // TATICAS
+      // ============================================
+      
+      setTeamTactics: (tactics: Partial<TeamTactics>) => {
+        set((s) => ({
+          teamTactics: { ...s.teamTactics, ...tactics }
+        }))
+      },
+      
+      setPlayerInstructions: (playerId: number, instructions: Partial<PlayerInstructions>) => {
+        set((s) => {
+          const existing = s.playerInstructions[playerId] || {
+            role: "meia_central",
+            roaming: "liberdade_moderada",
+            runs: "as_vezes",
+            markingTightness: "normal",
+            closingDown: "normal",
+            dribbling: "normal",
+            passingRisk: "normal",
+            crossFrequency: "normal",
+            shootFrequency: "normal",
+            stayWider: false,
+            cutInside: false,
+            getForward: false,
+            holdPosition: false,
+            tackleHarder: false
+          }
+          return {
+            playerInstructions: {
+              ...s.playerInstructions,
+              [playerId]: { ...existing, ...instructions }
+            }
+          }
+        })
+      },
+      
+      analyzeOpponent: (teamShort: string) => {
+        const state = get()
+        const existing = state.opponentAnalyses.find(a => a.teamShort === teamShort)
+        
+        if (existing && existing.analysisProgress >= 100) return
+        
+        const teamNames: Record<string, string> = {
+          FLA: "Flamengo", PAL: "Palmeiras", COR: "Corinthians", SAO: "Sao Paulo",
+          INT: "Internacional", GRE: "Gremio", CAM: "Atletico-MG", FLU: "Fluminense",
+          BOT: "Botafogo", BAH: "Bahia", CRU: "Cruzeiro", FOR: "Fortaleza",
+          VAS: "Vasco", CAP: "Athletico-PR", SAN: "Santos", VIT: "Vitoria",
+          JUV: "Juventude", MIR: "Mirassol", SPT: "Sport", CEA: "Ceara"
+        }
+        
+        set((s) => {
+          if (existing) {
+            return {
+              opponentAnalyses: s.opponentAnalyses.map(a => 
+                a.teamShort === teamShort 
+                  ? { ...a, analysisProgress: Math.min(100, a.analysisProgress + 25) }
+                  : a
+              )
+            }
+          }
+          
+          const newAnalysis: OpponentAnalysis = {
+            teamShort,
+            teamName: teamNames[teamShort] || teamShort,
+            analyzedWeek: s.currentWeek,
+            analysisProgress: 25,
+            formation: null,
+            mentality: null,
+            keyPlayers: [],
+            weaknesses: [],
+            strengths: [],
+            avgGoalsScored: 0,
+            avgGoalsConceded: 0,
+            homeRecord: { w: 0, d: 0, l: 0 },
+            awayRecord: { w: 0, d: 0, l: 0 }
+          }
+          
+          return {
+            opponentAnalyses: [...s.opponentAnalyses, newAnalysis]
+          }
+        })
+      },
+      
+      updateOpponentAnalysis: () => {
+        set((s) => ({
+          opponentAnalyses: s.opponentAnalyses.map(analysis => {
+            if (analysis.analysisProgress < 100) {
+              const progress = Math.min(100, analysis.analysisProgress + 10)
+              
+              // Revela informacoes conforme progresso
+              let updates: Partial<OpponentAnalysis> = { analysisProgress: progress }
+              
+              if (progress >= 50 && !analysis.formation) {
+                const formations = ["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2"]
+                updates.formation = formations[Math.floor(Math.random() * formations.length)]
+              }
+              
+              if (progress >= 75 && !analysis.mentality) {
+                const mentalities: TeamMentality[] = ["defensivo", "equilibrado", "ofensivo"]
+                updates.mentality = mentalities[Math.floor(Math.random() * mentalities.length)]
+              }
+              
+              if (progress >= 100) {
+                const weaknessPool = ["Vulneravel em contra-ataques", "Laterais sobem muito", "Goleiro inseguro", "Bola aerea defensiva", "Saida de bola ruim"]
+                const strengthPool = ["Forte no jogo aereo", "Transicao rapida", "Meio-campo criativo", "Defesa solida", "Pressao alta eficiente"]
+                
+                updates.weaknesses = [weaknessPool[Math.floor(Math.random() * weaknessPool.length)]]
+                updates.strengths = [strengthPool[Math.floor(Math.random() * strengthPool.length)]]
+                updates.avgGoalsScored = 1 + Math.random() * 1.5
+                updates.avgGoalsConceded = 0.8 + Math.random() * 1.2
+              }
+              
+              return { ...analysis, ...updates }
+            }
+            return analysis
+          })
+        }))
+      },
+      
+      // ============================================
+      // MORAL
+      // ============================================
+      
+      addMoraleEvent: (event: Omit<MoraleEvent, "week">) => {
+        const state = get()
+        const newEvent: MoraleEvent = { ...event, week: state.currentWeek }
+        
+        set((s) => {
+          const newMorale = Math.max(0, Math.min(100, s.squadMorale.overall + event.impact))
+          const newConfidence = Math.max(0, Math.min(100, s.squadMorale.confidence + (event.impact * 0.7)))
+          
+          return {
+            squadMorale: {
+              ...s.squadMorale,
+              overall: newMorale,
+              confidence: newConfidence,
+              recentEvents: [newEvent, ...s.squadMorale.recentEvents.slice(0, 9)]
+            }
+          }
+        })
+      },
+      
+      updateSquadMorale: () => {
+        set((s) => {
+          // Moral tende a voltar a 70 com o tempo
+          const targetMorale = 70
+          const diff = targetMorale - s.squadMorale.overall
+          const adjustment = diff * 0.1
+          
+          return {
+            squadMorale: {
+              ...s.squadMorale,
+              overall: Math.round(s.squadMorale.overall + adjustment)
+            }
+          }
+        })
+      },
+      
+      // ============================================
+      // CONFERENCIAS DE IMPRENSA
+      // ============================================
+      
+      generatePressConference: () => {
+        const state = get()
+        
+        const questionPool: PressQuestion[] = [
+          {
+            id: 1,
+            type: "match",
+            question: "Como avalia o desempenho do time na ultima partida?",
+            options: [
+              { text: "Estou muito satisfeito, jogamos muito bem.", tone: "positivo", impact: 5 },
+              { text: "Foi um resultado justo, mas podemos melhorar.", tone: "neutro", impact: 0 },
+              { text: "Nao estou feliz, precisamos reagir.", tone: "negativo", impact: -3 }
+            ]
+          },
+          {
+            id: 2,
+            type: "player",
+            question: "Algum jogador tem te impressionado nos treinos?",
+            options: [
+              { text: "Todos estao se dedicando muito.", tone: "positivo", impact: 3 },
+              { text: "Prefiro nao individualizar.", tone: "neutro", impact: 0 },
+              { text: "Alguns precisam se esforcar mais.", tone: "negativo", impact: -5 }
+            ]
+          },
+          {
+            id: 3,
+            type: "rival",
+            question: "O que espera do proximo adversario?",
+            options: [
+              { text: "Respeitamos, mas vamos jogar para vencer.", tone: "positivo", impact: 2 },
+              { text: "Sera um jogo dificil, estamos preparados.", tone: "neutro", impact: 1 },
+              { text: "Nao estou preocupado com eles.", tone: "agressivo", impact: -2 }
+            ]
+          },
+          {
+            id: 4,
+            type: "tactics",
+            question: "Pretende mudar a tatica para o proximo jogo?",
+            options: [
+              { text: "Estamos bem como estamos.", tone: "neutro", impact: 0 },
+              { text: "Sempre fazemos ajustes conforme o adversario.", tone: "positivo", impact: 2 },
+              { text: "Nao vou revelar nossa estrategia.", tone: "agressivo", impact: -1 }
+            ]
+          },
+          {
+            id: 5,
+            type: "transfer",
+            question: "O clube esta no mercado por reforcos?",
+            options: [
+              { text: "Estamos sempre atentos a oportunidades.", tone: "positivo", impact: 1 },
+              { text: "Confio no elenco que temos.", tone: "neutro", impact: 2 },
+              { text: "Precisamos de reforcos urgentemente.", tone: "negativo", impact: -4 }
+            ]
+          }
+        ]
+        
+        // Seleciona 3 perguntas aleatorias
+        const shuffled = questionPool.sort(() => Math.random() - 0.5)
+        const selectedQuestions = shuffled.slice(0, 3)
+        
+        set({ nextPressConference: selectedQuestions })
+      },
+      
+      respondToPressConference: (questionId: number, optionIndex: number) => {
+        const state = get()
+        if (!state.nextPressConference) return
+        
+        const question = state.nextPressConference.find(q => q.id === questionId)
+        if (!question) return
+        
+        const option = question.options[optionIndex]
+        
+        // Aplica impacto na moral
+        get().addMoraleEvent({
+          type: option.tone === "positivo" ? "elogio" : option.tone === "negativo" ? "conflito" : "elogio",
+          description: `Conferencia: "${option.text}"`,
+          impact: option.impact
+        })
+        
+        // Remove pergunta respondida
+        set((s) => ({
+          nextPressConference: s.nextPressConference?.filter(q => q.id !== questionId) || null,
+          pressConferences: s.nextPressConference?.length === 1 
+            ? [...s.pressConferences, {
+                week: s.currentWeek,
+                questions: s.nextPressConference,
+                responses: [{ questionId, selectedOption: optionIndex, impact: option.impact }],
+                moraleImpact: option.impact
+              }]
+            : s.pressConferences
+        }))
+      },
+      
+      // ============================================
+      // RELATORIOS DE DESEMPENHO
+      // ============================================
+      
+      generatePerformanceReport: (playerId: number, period: "semana" | "mes" | "temporada"): PerformanceReport => {
+        const state = get()
+        const player = state.squadPlayers.find(p => p.id === playerId)
+        
+        if (!player) {
+          return {
+            playerId,
+            playerName: "Desconhecido",
+            period,
+            avgRating: 0,
+            matchRatings: [],
+            vsLastPeriod: 0,
+            vsSquadAvg: 0,
+            vsPositionAvg: 0,
+            strengths: [],
+            weaknesses: [],
+            recommendation: "Jogador nao encontrado"
+          }
+        }
+        
+        // Calcula nota media baseada em atributos e forma
+        const avgRating = (player.overall + player.form) / 20
+        
+        // Identifica pontos fortes
+        const strengths: string[] = []
+        if (player.pace >= 85) strengths.push("Velocidade excepcional")
+        if (player.shooting >= 80) strengths.push("Finalizacao precisa")
+        if (player.passing >= 80) strengths.push("Qualidade de passe")
+        if (player.dribbling >= 80) strengths.push("Habilidade com a bola")
+        if (player.defending >= 80) strengths.push("Solidez defensiva")
+        if (player.physical >= 80) strengths.push("Forca fisica")
+        
+        // Identifica pontos fracos
+        const weaknesses: string[] = []
+        if (player.pace < 60) weaknesses.push("Falta de velocidade")
+        if (player.shooting < 50) weaknesses.push("Finalizacao fraca")
+        if (player.passing < 60) weaknesses.push("Passes imprecisos")
+        if (player.defending < 50 && !["ATA", "PE", "PD", "MEI"].includes(player.position)) weaknesses.push("Vulnerabilidade defensiva")
+        
+        // Recomendacao
+        let recommendation = "Manter no elenco"
+        if (player.form < 60) recommendation = "Precisa de mais minutos para ganhar ritmo"
+        if (player.morale === "Infeliz" || player.morale === "Insatisfeito") recommendation = "Conversar com o jogador sobre sua situacao"
+        if (player.age < 23 && player.potential > player.overall + 5) recommendation = "Investir em treinamento - alto potencial"
+        
+        return {
+          playerId,
+          playerName: player.name,
+          period,
+          avgRating,
+          matchRatings: [], // Seria preenchido com dados reais de partidas
+          vsLastPeriod: Math.round((Math.random() - 0.5) * 20),
+          vsSquadAvg: Math.round((avgRating - 7) * 10),
+          vsPositionAvg: Math.round((Math.random() - 0.3) * 15),
+          strengths,
+          weaknesses,
+          recommendation
+        }
       }
     }),
     {
