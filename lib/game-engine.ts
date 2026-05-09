@@ -215,7 +215,7 @@ interface GameEngineState {
   sellPlayer: (playerId: number) => void
   buyPlayer: (player: Player, fee: number) => void
   loanPlayer: (player: Player, weeks: number, salary: number) => void
-  hireScount: (scout: Scout) => void
+  hireScout: (scout: Scout) => void
   startScoutSearch: (scoutId: number, region: string) => void
   simulateOtherMatches: () => void
   drawCopaBracket: () => void
@@ -749,7 +749,7 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
-      hireScount: (scout) => {
+      hireScout: (scout) => {
         set((s) => ({
           scouts: [...s.scouts, scout],
           weeklyExpenses: s.weeklyExpenses + scout.salary
