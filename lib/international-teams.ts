@@ -1,5 +1,6 @@
 // Dados dos times internacionais
-import { type Team, type Divisao, getEscudoUrl } from "./teams-data"
+import { type Team, type Divisao } from "./teams-data"
+import { getEscudoUrl } from "./escudos-map"
 
 // Usa a funcao centralizada de escudos que verifica primeiro os locais
 function getIntlEscudo(key: string): string {

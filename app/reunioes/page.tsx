@@ -108,11 +108,10 @@ export default function ReunioesPage() {
   return (
     <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
+      <GameHeader team={userTeam} />
       
-<GameHeader team={userTeam} />
-        
-        <main className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-7xl mx-auto space-y-6">
+      <main className="flex-1 p-6 overflow-y-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -467,8 +466,8 @@ export default function ReunioesPage() {
               )}
             </div>
             
-          </div>
-        </main>
+        </div>
+      </main>
     </div>
   )
 }
