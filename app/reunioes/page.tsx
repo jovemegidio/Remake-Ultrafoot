@@ -469,7 +469,6 @@ export default function ReunioesPage() {
             
           </div>
         </main>
-      </div>
     </div>
   )
 }

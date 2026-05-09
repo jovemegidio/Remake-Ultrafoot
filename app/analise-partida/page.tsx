@@ -494,7 +494,6 @@ export default function AnalisePartidaPage() {
             
           </div>
         </main>
-      </div>
     </div>
   )
 }
