@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, Trophy, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, UserPlus, LogOut } from "lucide-react"
+import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -674,40 +674,6 @@ export default function SplashPage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div 
-          className="flex items-center justify-center px-4 sm:px-6 md:px-8 pb-6 sm:pb-8 md:pb-10 pt-2"
-          style={{
-            animation: phase === "main-menu" ? "slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards" : "none",
-            opacity: 0,
-          }}
-        >
-          {/* Center - Navigation hints + Trophy */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer">
-              <Trophy 
-                className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500/60 transition-all duration-300 group-hover:text-yellow-400 group-hover:scale-110" 
-                style={{
-                  filter: "drop-shadow(0 0 8px rgba(234, 179, 8, 0.3))",
-                }}
-              />
-              <div className="text-center">
-                <div className="text-white/40 text-[10px] sm:text-xs font-medium group-hover:text-white/60 transition-colors">ULTRAFOOT 26</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-[10px] sm:text-xs text-white/25">
-              <span>Use as setas para navegar</span>
-              <span className="text-white/10">|</span>
-              <span>Enter para selecionar</span>
-            </div>
-            {isRegistered && (
-              <span className="text-emerald-500/60 text-[10px] font-medium tracking-widest uppercase flex items-center gap-1.5 mt-1">
-                <CheckCircle2 className="h-3 w-3" />
-                JOGO REGISTRADO
-              </span>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Vignette overlay */}
