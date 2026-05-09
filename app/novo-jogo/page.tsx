@@ -143,20 +143,14 @@ export default function NovoJogoPage() {
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <Image
             src={getLogoUrl()}
-            alt="Ultrafoot"
-            width={28}
-            height={28}
+            alt="Logo"
+            width={36}
+            height={36}
             unoptimized
           />
-          <span
-            className="text-sm font-bold tracking-[0.3em] text-white/80"
-            style={{ fontFamily: "var(--font-oswald), var(--font-geist), sans-serif" }}
-          >
-            ULTRAFOOT
-          </span>
         </div>
         <div className="text-[10px] tracking-[0.3em] text-white/30">
           NOVA CARREIRA
