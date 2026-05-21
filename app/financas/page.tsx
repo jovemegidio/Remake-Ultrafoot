@@ -93,7 +93,7 @@ export default function FinancasPage() {
     
     // Bilheteria baseada em jogos em casa jogados
     const homeMatches = gameEngine.matchResults.filter(m => m.homeTeam === userTeam.curto).length
-    const avgAttendance = Math.round(userTeam.estadio_capacidade * 0.7)
+    const avgAttendance = Math.round((userTeam.estadio_cap || 30000) * 0.7)
     const ticketPrice = 50 + (userTeam.prestigio * 0.5)
     const ticketRevenue = homeMatches * avgAttendance * ticketPrice
 
@@ -104,7 +104,7 @@ export default function FinancasPage() {
     // Despesas
     const totalWages = gameEngine.squadPlayers.reduce((sum, p) => sum + (p.contract?.salary || 0), 0) * 4 // Mensal
     const scoutWages = gameEngine.scouts.reduce((sum, s) => sum + s.salary, 0) * 4
-    const infrastructure = Math.round(userTeam.estadio_capacidade * 5)
+    const infrastructure = Math.round((userTeam.estadio_cap || 30000) * 5)
     const staff = 250000
     const other = 100000
 
@@ -155,7 +155,7 @@ export default function FinancasPage() {
       if (match.homeTeam === userTeam?.curto || match.awayTeam === userTeam?.curto) {
         const isHome = match.homeTeam === userTeam?.curto
         if (isHome) {
-          const ticketRev = Math.round((userTeam?.estadio_capacidade || 30000) * 0.7 * 55)
+          const ticketRev = Math.round((userTeam?.estadio_cap || 30000) * 0.7 * 55)
           transactions.push({
             type: "income",
             description: `Bilheteria vs ${match.awayTeam}`,
