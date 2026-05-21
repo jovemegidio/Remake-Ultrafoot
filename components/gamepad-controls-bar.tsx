@@ -153,7 +153,7 @@ export function GamepadControlsBar({
 
   return (
     <div className={cn(
-      "fixed bottom-0 left-[72px] right-0 z-40 flex items-center justify-center gap-6 px-6 py-2.5",
+      "fixed bottom-0 left-16 right-0 z-40 flex items-center justify-center gap-6 px-6 py-2.5",
       "bg-[#0a0a0a]/95 backdrop-blur-sm border-t border-white/5",
       className
     )}>

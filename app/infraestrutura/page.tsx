@@ -209,7 +209,7 @@ export default function InfraestruturaPage() {
                 <Building2 className="h-5 w-5 text-[#1db954]" />
                 Infraestrutura do Clube
               </h1>
-              <p className="text-xs text-white/50 mt-0.5">Gerencie e evolua as instalacoes do {userTeam.nome}</p>
+              <p className="text-xs text-white/50 mt-0.5">Gerencie e evolua as instalacoes do {userTeam?.nome || "seu clube"}</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">

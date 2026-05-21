@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext } from "react"
+import { useContext, useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 type ControllerType = "xbox" | "playstation"
@@ -462,14 +462,74 @@ interface ControllerToolbarProps {
   }>
   controller?: ControllerType
   className?: string
-  visible?: boolean // Only show when gamepad connected
+  visible?: boolean // Force visibility (undefined = auto-detect)
 }
 
-export function ControllerToolbar({ actions, controller, className, visible = true }: ControllerToolbarProps) {
+// Hook para detectar gamepad conectado - exportado para uso em outros componentes
+export function useGamepadConnected() {
+  const [connected, setConnected] = useState(false)
+  const [type, setType] = useState<ControllerType>("xbox")
+
+  useEffect(() => {
+    const detectControllerType = (gamepad: Gamepad): ControllerType => {
+      const id = gamepad.id.toLowerCase()
+      if (id.includes("playstation") || id.includes("dualshock") || id.includes("dualsense") || id.includes("054c") || id.includes("sony")) {
+        return "playstation"
+      }
+      return "xbox"
+    }
+
+    const updateGamepads = () => {
+      const gamepads = navigator.getGamepads()
+      let foundGamepad: Gamepad | null = null
+      
+      for (const gp of gamepads) {
+        if (gp && gp.connected) {
+          foundGamepad = gp
+          break
+        }
+      }
+
+      if (foundGamepad) {
+        setConnected(true)
+        setType(detectControllerType(foundGamepad))
+      } else {
+        setConnected(false)
+      }
+    }
+
+    const handleGamepadConnected = () => updateGamepads()
+    const handleGamepadDisconnected = () => updateGamepads()
+
+    // Initial check
+    updateGamepads()
+
+    window.addEventListener("gamepadconnected", handleGamepadConnected)
+    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected)
+
+    // Periodic check (some browsers don't fire events reliably)
+    const interval = setInterval(updateGamepads, 2000)
+
+    return () => {
+      window.removeEventListener("gamepadconnected", handleGamepadConnected)
+      window.removeEventListener("gamepaddisconnected", handleGamepadDisconnected)
+      clearInterval(interval)
+    }
+  }, [])
+
+  return { connected, type }
+}
+
+export function ControllerToolbar({ actions, controller, className, visible }: ControllerToolbarProps) {
   const contextController = useContext(ControllerTypeContext)
-  const activeController = controller || contextController
+  const { connected, type } = useGamepadConnected()
   
-  if (!visible) return null
+  // Use deteccao automatica se visible nao for especificado
+  const shouldShow = visible !== undefined ? visible : connected
+  
+  if (!shouldShow) return null
+  
+  const activeController = controller || (connected ? type : contextController)
   
   return (
     <div className={cn(
@@ -492,15 +552,21 @@ export function ControllerToolbar({ actions, controller, className, visible = tr
   )
 }
 
-// Header controls (LB/RB navigation)
+// Header controls (LB/RB navigation) - so aparece com gamepad conectado
 interface HeaderControlsProps {
   controller?: ControllerType
   className?: string
+  forceVisible?: boolean
 }
 
-export function HeaderControls({ controller, className }: HeaderControlsProps) {
+export function HeaderControls({ controller, className, forceVisible }: HeaderControlsProps) {
   const contextController = useContext(ControllerTypeContext)
-  const activeController = controller || contextController
+  const { connected, type } = useGamepadConnected()
+  
+  // So mostra se gamepad conectado (ou forceVisible)
+  if (!forceVisible && !connected) return null
+  
+  const activeController = controller || (connected ? type : contextController)
   
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -515,12 +581,12 @@ export function HeaderControls({ controller, className }: HeaderControlsProps) {
   )
 }
 
-// Carousel dots estilo EA FC
+// Carousel dots estilo EA FC - botoes de navegacao so aparecem com gamepad
 interface CarouselDotsProps {
   total: number
   current: number
   onSelect?: (index: number) => void
-  showNavButtons?: boolean
+  showNavButtons?: boolean // undefined = auto-detect, true/false = force
   controller?: ControllerType
   className?: string
 }
@@ -529,16 +595,20 @@ export function CarouselDots({
   total, 
   current, 
   onSelect, 
-  showNavButtons = true,
+  showNavButtons,
   controller,
   className 
 }: CarouselDotsProps) {
   const contextController = useContext(ControllerTypeContext)
-  const activeController = controller || contextController
+  const { connected, type } = useGamepadConnected()
+  
+  // Determina se deve mostrar botoes de navegacao
+  const shouldShowNavButtons = showNavButtons !== undefined ? showNavButtons : connected
+  const activeController = controller || (connected ? type : contextController)
   
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      {showNavButtons && (
+      {shouldShowNavButtons && (
         <ControllerButton button="LB" controller={activeController} size="xs" showLabel={false} />
       )}
       <div className="flex items-center gap-1.5">
@@ -555,7 +625,7 @@ export function CarouselDots({
           />
         ))}
       </div>
-      {showNavButtons && (
+      {shouldShowNavButtons && (
         <ControllerButton button="RB" controller={activeController} size="xs" showLabel={false} />
       )}
     </div>

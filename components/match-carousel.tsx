@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Play, Calendar, MapPin, Clock } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
-import { CarouselDots, ControllerButton } from "@/components/controller-buttons"
+import { CarouselDots, useGamepadConnected } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
 import type { GamepadButtonName } from "@/hooks/use-gamepad"
@@ -148,7 +148,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
           </div>
         </div>
 
-        {/* Match indicators - FIFA style with controller buttons */}
+        {/* Match indicators - FIFA style with controller buttons (auto-detect gamepad) */}
         <div className="flex justify-center pb-3">
           <CarouselDots 
             total={validMatches.length}
@@ -163,8 +163,6 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
                 }, 300)
               }
             }}
-            showNavButtons={true}
-            controller="playstation"
           />
         </div>
       </div>
@@ -253,14 +251,14 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
         </div>
       </div>
 
-      {/* Action buttons with controller icons */}
+      {/* Action buttons - sem icones de controle (aparecem na barra inferior) */}
       <div className="flex items-center gap-2 p-4 pt-0">
         <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-[#1db954] text-black text-sm font-bold hover:bg-[#1ed760] transition-all hover:scale-[1.02] active:scale-[0.98]">
-          <ControllerButton button="A" size="xs" controller="playstation" />
+          <Play className="h-4 w-4" />
           <span>Jogar Partida</span>
         </button>
         <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors">
-          <ControllerButton button="X" size="xs" controller="playstation" />
+          <Calendar className="h-4 w-4" />
           <span>Simular</span>
         </button>
       </div>
