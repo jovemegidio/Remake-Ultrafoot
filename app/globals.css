@@ -6,7 +6,7 @@
 /* Custom Scrollbar Styles */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.05);
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -15,16 +15,17 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
 .scrollbar-none {
@@ -33,6 +34,66 @@
 }
 
 .scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scrollbar customizado estilo EA FC - verde */
+.scrollbar-game {
+  scrollbar-width: thin;
+  scrollbar-color: #1db954 rgba(255, 255, 255, 0.05);
+}
+
+.scrollbar-game::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-game::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+
+.scrollbar-game::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #1db954 0%, #1aa34a 100%);
+  border-radius: 10px;
+}
+
+.scrollbar-game::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #1ed760 0%, #1db954 100%);
+}
+
+/* Scrollbar horizontal para reservas */
+.scrollbar-horizontal {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(29, 185, 84, 0.5) rgba(255, 255, 255, 0.05);
+}
+
+.scrollbar-horizontal::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  margin: 0 8px;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #1db954 0%, #1aa34a 100%);
+  border-radius: 10px;
+}
+
+.scrollbar-horizontal::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #1ed760 0%, #1db954 100%);
+}
+
+/* Hide scrollbar class */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 

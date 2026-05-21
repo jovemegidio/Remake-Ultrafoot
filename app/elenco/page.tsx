@@ -738,7 +738,7 @@ export default function ElencoPage() {
         )}
       </AnimatePresence>
 
-      <main className="h-[calc(100vh-48px-56px)]">
+      <main className="h-[calc(100vh-48px-56px)] flex flex-col">
         {/* Sub-header with tabs */}
         <div className="flex flex-col md:flex-row md:items-center justify-between px-3 md:px-6 py-2 md:py-3 border-b border-white/10 bg-[#0d0d0d] gap-2 md:gap-0">
           <div className="flex items-center gap-3 md:gap-6">
@@ -789,9 +789,9 @@ export default function ElencoPage() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row h-full">
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
           {/* Main content area */}
-          <div className="flex-1 flex flex-col p-2 md:p-4 overflow-hidden">
+          <div className="flex-1 flex flex-col p-2 md:p-4 min-h-0">
             {/* Tab Content: Elenco */}
             {activeTab === "elenco" && (
             <>
@@ -800,7 +800,7 @@ export default function ElencoPage() {
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
-              className="flex-1 relative rounded-xl md:rounded-2xl overflow-hidden min-h-[300px]" 
+              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[250px]" 
               style={{
                 background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
               }}
@@ -914,13 +914,13 @@ export default function ElencoPage() {
             </div>
             
             {/* Reserves section - Melhorado */}
-            <div className="mt-3 p-3 md:p-4 rounded-xl bg-[#111111] border border-white/5">
-              <div className="flex items-center justify-between mb-3">
+            <div className="mt-2 p-3 rounded-xl bg-[#111111] border border-white/5 flex-shrink-0">
+              <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Reservas ({bench.length})</h3>
                 <span className="text-[10px] text-white/40">Arraste para substituir</span>
               </div>
               
-              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-horizontal">
                 {bench.map((player) => {
                   const posColors = positionColors[player.position] || positionColors.MEI
                   return (
@@ -938,33 +938,34 @@ export default function ElencoPage() {
                       }}
                       onClick={() => setSelectedPlayerId(player.id)}
                       className={cn(
-                        "flex flex-col items-center p-2 md:p-2.5 rounded-xl cursor-grab active:cursor-grabbing transition-all min-w-[70px]",
+                        "flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all flex-shrink-0",
+                        "w-[68px]",
                         selectedPlayerId === player.id
                           ? "bg-[#1db954]/15 ring-1 ring-[#1db954]/40"
                           : "bg-white/[0.03] hover:bg-white/[0.06]",
                         dragOverTarget === player.id && "ring-2 ring-[#1db954]"
                       )}
                     >
-                      <div className="relative mb-1.5">
+                      <div className="relative mb-1">
                         <PlayerAvatarCircle
                           name={player.name}
                           teamColor={userTeam.cor1}
-                          size="sm"
+                          size="xs"
                           className={cn(
                             "border-2 transition-colors",
                             selectedPlayerId === player.id ? "border-[#1db954]/60" : "border-white/10"
                           )}
                         />
                         <div className={cn(
-                          "absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black",
+                          "absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-black",
                           "bg-[#1a1a1a] border",
                           selectedPlayerId === player.id ? "border-[#1db954]/50" : "border-white/20"
                         )}>
                           <span className={getOverallColor(player.overall)}>{player.overall}</span>
                         </div>
                       </div>
-                      <span className="text-[10px] text-white/80 font-medium truncate max-w-[60px]">{player.name.split(" ").pop()}</span>
-                      <span className={cn("text-[8px] font-semibold mt-0.5", posColors.text)}>{player.position}</span>
+                      <span className="text-[9px] text-white/80 font-medium truncate w-full text-center">{player.name.split(" ").pop()}</span>
+                      <span className={cn("text-[8px] font-semibold mt-0.5 px-1 py-px rounded", posColors.bg, posColors.text)}>{player.position}</span>
                     </motion.div>
                   )
                 })}
