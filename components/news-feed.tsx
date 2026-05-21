@@ -629,7 +629,6 @@ function NewsContentCard({ news }: { news: NewsItem }) {
       <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
         {news.icon || typeIcons[news.type]}
       </div>
-      </div>
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
