@@ -191,7 +191,7 @@ export default function FinancasPage() {
 
   if (!hydrated || !userTeam || !dynamicFinances) {
     return (
-      <div className="h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center">
+      <div className="h-screen pl-16 bg-[#0a0a0a] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
@@ -200,7 +200,7 @@ export default function FinancasPage() {
   const wagePercentage = (dynamicFinances.wageUsed / dynamicFinances.wageBudget) * 100
 
   return (
-    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 

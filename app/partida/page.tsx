@@ -290,14 +290,14 @@ export default function PreMatchPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen pl-16 bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
   }
 
   return (
-    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 

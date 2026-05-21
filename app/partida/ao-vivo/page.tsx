@@ -274,7 +274,7 @@ export default function MatchCenterPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen pl-[72px] bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen pl-16 bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
         Carregando partida...
       </div>
     )
@@ -284,7 +284,7 @@ export default function MatchCenterPage() {
   const isMatchInProgress = state.phase === "first" || state.phase === "second" || state.phase === "halftime"
 
   return (
-    <div className={cn("h-screen bg-[#0a0a0a] flex flex-col overflow-hidden", !isMatchInProgress && "pl-[72px]")}>
+    <div className={cn("h-screen bg-[#0a0a0a] flex flex-col overflow-hidden", !isMatchInProgress && "pl-16")}>
       {/* Sidebar oculta durante a partida */}
       {!isMatchInProgress && <GameSidebar />}
 

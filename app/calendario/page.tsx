@@ -190,14 +190,14 @@ export default function CalendarioPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a] flex items-center justify-center">
+      <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 

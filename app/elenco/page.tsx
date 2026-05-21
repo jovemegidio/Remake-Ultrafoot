@@ -391,7 +391,7 @@ export default function ElencoPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
+      <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
         
@@ -505,7 +505,7 @@ export default function ElencoPage() {
           </div>
           
           {/* Bottom controls */}
-          <div className="fixed bottom-0 left-[72px] right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
+          <div className="fixed bottom-0 left-16 right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-2 md:gap-4">
               <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs md:text-sm">
                 <Gamepad2 className="h-4 w-4 mr-1 md:mr-2" />
@@ -537,7 +537,7 @@ export default function ElencoPage() {
   // Visao Tatica view
   if (currentView === "visao_tatica") {
     return (
-      <div className="h-screen pl-[72px] bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10 flex flex-col overflow-hidden">
+      <div className="h-screen pl-16 bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10 flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
         
@@ -679,7 +679,7 @@ export default function ElencoPage() {
           </div>
           
           {/* Bottom controls */}
-          <div className="fixed bottom-0 left-[72px] right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
+          <div className="fixed bottom-0 left-16 right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-2 md:gap-4">
               <Button 
                 variant="ghost" 
@@ -710,7 +710,7 @@ export default function ElencoPage() {
 
   // Gerenciamento view (main view)
   return (
-    <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -913,13 +913,14 @@ export default function ElencoPage() {
               </button>
             </div>
             
-            {/* Reserves section */}
-            <div className="mt-2 p-2 md:p-3 rounded-xl bg-[#141414] border border-white/10">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-semibold text-white">Reservas ({bench.length})</h3>
+            {/* Reserves section - Melhorado */}
+            <div className="mt-3 p-3 md:p-4 rounded-xl bg-[#111111] border border-white/5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Reservas ({bench.length})</h3>
+                <span className="text-[10px] text-white/40">Arraste para substituir</span>
               </div>
               
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                 {bench.map((player) => {
                   const posColors = positionColors[player.position] || positionColors.MEI
                   return (
@@ -937,27 +938,33 @@ export default function ElencoPage() {
                       }}
                       onClick={() => setSelectedPlayerId(player.id)}
                       className={cn(
-                        "flex flex-col items-center p-1.5 rounded-lg cursor-grab active:cursor-grabbing transition-all",
+                        "flex flex-col items-center p-2 md:p-2.5 rounded-xl cursor-grab active:cursor-grabbing transition-all min-w-[70px]",
                         selectedPlayerId === player.id
-                          ? "bg-[#1db954]/20 border border-[#1db954]/50"
-                          : "bg-white/5 border border-transparent hover:bg-white/10",
+                          ? "bg-[#1db954]/15 ring-1 ring-[#1db954]/40"
+                          : "bg-white/[0.03] hover:bg-white/[0.06]",
                         dragOverTarget === player.id && "ring-2 ring-[#1db954]"
                       )}
                     >
-                      <div className="relative">
+                      <div className="relative mb-1.5">
                         <PlayerAvatarCircle
                           name={player.name}
                           teamColor={userTeam.cor1}
-                          size="xs"
+                          size="sm"
+                          className={cn(
+                            "border-2 transition-colors",
+                            selectedPlayerId === player.id ? "border-[#1db954]/60" : "border-white/10"
+                          )}
                         />
                         <div className={cn(
-                          "absolute -bottom-0.5 -right-0.5 px-1 py-0.5 rounded text-[7px] font-bold",
-                          posColors.bg, posColors.text
+                          "absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black",
+                          "bg-[#1a1a1a] border",
+                          selectedPlayerId === player.id ? "border-[#1db954]/50" : "border-white/20"
                         )}>
-                          {player.overall}
+                          <span className={getOverallColor(player.overall)}>{player.overall}</span>
                         </div>
                       </div>
-                      <span className="text-[9px] text-white/70 mt-1 truncate max-w-[50px]">{player.name.split(" ").pop()}</span>
+                      <span className="text-[10px] text-white/80 font-medium truncate max-w-[60px]">{player.name.split(" ").pop()}</span>
+                      <span className={cn("text-[8px] font-semibold mt-0.5", posColors.text)}>{player.position}</span>
                     </motion.div>
                   )
                 })}
@@ -1117,166 +1124,121 @@ export default function ElencoPage() {
           </div>
 
           {/* Right panel - Player details (hidden on mobile, shown in drawer) */}
-          <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-l border-white/10 bg-[#0d0d0d] overflow-hidden">
-            {/* Player header */}
-            <div className="p-3 md:p-4 border-b border-white/10" style={{
-              background: `linear-gradient(135deg, ${userTeam.cor1}30 0%, transparent 100%)`
+          <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 border-l border-white/5 bg-[#0a0a0a] overflow-y-auto">
+            {/* Player header - Melhorado */}
+            <div className="p-4 border-b border-white/5" style={{
+              background: `linear-gradient(135deg, ${userTeam.cor1}20 0%, transparent 60%)`
             }}>
-              <div className="flex items-start gap-3 md:gap-4">
-                <div className="text-right">
-                  <div className={cn("text-3xl md:text-4xl font-black", getOverallColor(selectedPlayer.overall))}>
-                    {selectedPlayer.overall}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className={cn(
+                    "w-16 h-16 rounded-xl flex items-center justify-center text-3xl font-black",
+                    "bg-gradient-to-br from-white/10 to-white/5 border border-white/10"
+                  )}>
+                    <span className={getOverallColor(selectedPlayer.overall)}>{selectedPlayer.overall}</span>
                   </div>
-                  <div className="text-[9px] md:text-[10px] text-white/40 font-medium">
-                    {selectedPlayer.position} • {selectedPlayer.position === "ATA" || selectedPlayer.position === "PD" || selectedPlayer.position === "PE" ? "ATA" : selectedPlayer.position === "MEI" || selectedPlayer.position === "VOL" ? "MEI" : selectedPlayer.position === "ZAG" || selectedPlayer.position === "LD" || selectedPlayer.position === "LE" ? "DEF" : "GOL"}
+                  <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-[#1a1a1a] border border-white/10 text-[9px] font-bold text-white/70">
+                    {selectedPlayer.position}
                   </div>
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-lg md:text-xl font-bold text-white uppercase">{selectedPlayer.name}</h2>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-bold text-white uppercase truncate">{selectedPlayer.name}</h2>
+                  <p className="text-[11px] text-white/40 mt-0.5">
+                    {selectedPlayer.position === "ATA" || selectedPlayer.position === "PD" || selectedPlayer.position === "PE" ? "Atacante" : selectedPlayer.position === "MEI" || selectedPlayer.position === "VOL" ? "Meio-campista" : selectedPlayer.position === "ZAG" || selectedPlayer.position === "LD" || selectedPlayer.position === "LE" ? "Defensor" : "Goleiro"}
+                  </p>
                 </div>
               </div>
             </div>
             
-            {/* Player info */}
-            <div className="p-3 md:p-4 space-y-3 md:space-y-4">
+            {/* Player info - Melhorado */}
+            <div className="p-4 space-y-4">
+              {/* Energia com barra maior */}
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] text-white/50 font-medium">Energia</span>
+                  <span className="text-sm font-bold text-[#1db954]">{selectedPlayer.energy}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-[#1db954] to-[#1ed760] rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${selectedPlayer.energy}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+              </div>
+
+              {/* Informacoes do atleta - Grid melhorado */}
               <div>
-                <h3 className="text-[10px] md:text-xs font-semibold text-white/60 uppercase tracking-wider mb-2 md:mb-3">
-                  Informacoes do atleta
+                <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-3">
+                  Informacoes do Atleta
                 </h3>
                 
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Ritmo", value: selectedPlayer.rhythm, isNum: true },
+                    { label: "Idade", value: selectedPlayer.age, isNum: false },
+                    { label: "Moral", value: selectedPlayer.moral, isMoral: true },
+                    { label: "Finaliz.", value: selectedPlayer.shooting, isNum: true },
+                    { label: "Perna", value: selectedPlayer.foot, isNum: false },
+                    { label: "Passes", value: selectedPlayer.passing, isNum: true },
+                    { label: "Aceleracao", value: selectedPlayer.acceleration, isNum: false },
+                    { label: "Conducao", value: selectedPlayer.dribbling, isNum: true },
+                    { label: "Funcao", value: selectedPlayer.function, isNum: false, truncate: true },
+                    { label: "Defesa", value: selectedPlayer.defending, isNum: true },
+                    { label: "Altura", value: `${selectedPlayer.height} cm`, isNum: false },
+                    { label: "Fisico", value: selectedPlayer.physical, isNum: true },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02]">
+                      <span className="text-[10px] text-white/40">{item.label}</span>
+                      <span className={cn(
+                        "text-[11px] font-medium",
+                        item.isNum ? getStatColor(item.value as number) : 
+                        item.isMoral ? getMoralColor(item.value as string) : "text-white/80",
+                        item.truncate && "truncate max-w-[50px]"
+                      )}>
+                        {item.value}
+                        {item.isMoral && item.value === "Feliz" && <Smile className="h-3 w-3 inline ml-1" />}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Playstyles - Melhorado */}
+              <div className="pt-3 border-t border-white/5">
+                <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-3">
+                  Estilos de Jogo
+                </h3>
+                
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] md:text-xs text-white/50">Energia</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 md:w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-[#1db954] rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${selectedPlayer.energy}%` }}
-                          transition={{ duration: 0.5 }}
-                        />
-                      </div>
-                      <span className="text-[10px] md:text-xs font-medium text-[#1db954]">{selectedPlayer.energy}%</span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-x-3 md:gap-x-4 gap-y-1.5 md:gap-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Ritmo de jogo</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium", getStatColor(selectedPlayer.rhythm))}>
-                        {selectedPlayer.rhythm}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Idade</span>
-                      <span className="text-[10px] md:text-xs font-medium text-white">{selectedPlayer.age}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Moral</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium flex items-center gap-1", getMoralColor(selectedPlayer.moral))}>
-                        {selectedPlayer.moral}
-                        {selectedPlayer.moral === "Feliz" && <Smile className="h-3 w-3" />}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Ritmo</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium", getStatColor(selectedPlayer.pace))}>
-                        {selectedPlayer.pace}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Perna</span>
-                      <span className="text-[10px] md:text-xs font-medium text-white">{selectedPlayer.foot}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Finaliz.</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium", getStatColor(selectedPlayer.shooting))}>
-                        {selectedPlayer.shooting}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">t. aceleracao</span>
-                      <span className="text-[10px] md:text-xs font-medium text-white">{selectedPlayer.acceleration}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Passes</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium", getStatColor(selectedPlayer.passing))}>
-                        {selectedPlayer.passing}
-                        {selectedPlayer.passing >= 80 && <span className="text-[#1db954] ml-0.5">+1</span>}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Funcao</span>
-                      <span className="text-[10px] md:text-xs font-medium text-white truncate max-w-[60px]">{selectedPlayer.function}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Conducao</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium", getStatColor(selectedPlayer.dribbling))}>
-                        {selectedPlayer.dribbling}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Foco</span>
-                      <span className="text-[10px] md:text-xs font-medium text-white">{selectedPlayer.focus}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Defesa</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium", getStatColor(selectedPlayer.defending))}>
-                        {selectedPlayer.defending}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Altura</span>
-                      <span className="text-[10px] md:text-xs font-medium text-white">{selectedPlayer.height} cm</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] md:text-xs text-white/50">Fisico</span>
-                      <span className={cn("text-[10px] md:text-xs font-medium", getStatColor(selectedPlayer.physical))}>
-                        {selectedPlayer.physical}
-                      </span>
+                    <span className="text-[11px] text-white/60">Fintas</span>
+                    <div className="flex items-center gap-0.5">
+                      {getStarRating(selectedPlayer.fintas)}
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Playstyles */}
-              <div className="pt-3 md:pt-4 border-t border-white/10">
-                <h3 className="text-[10px] md:text-xs font-semibold text-white/60 uppercase tracking-wider mb-2 md:mb-3">
-                  Estilos de jogo
-                </h3>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] md:text-xs text-white/50">Fintas</span>
-                  <div className="flex items-center gap-0.5">
-                    {getStarRating(selectedPlayer.fintas)}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Actions */}
-              <div className="pt-3 md:pt-4 border-t border-white/10 space-y-2">
+              {/* Actions - Melhorado */}
+              <div className="pt-3 border-t border-white/5">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowSubstitutionModal(true)}
-                  className="w-full border-white/10 text-white/70 hover:text-white hover:bg-white/10 text-xs"
+                  className="w-full h-10 border-white/10 text-white/70 hover:text-white hover:bg-[#1db954]/10 hover:border-[#1db954]/30 text-xs mb-2"
                 >
                   <ArrowLeftRight className="h-4 w-4 mr-2" />
                   Substituir
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setShowPlayerProfile(true)}
-                  className="w-full border-white/10 text-white/70 hover:text-white hover:bg-white/10 text-xs"
+                  className="w-full h-9 text-white/50 hover:text-white hover:bg-white/5 text-xs"
                 >
-                  <Info className="h-4 w-4 mr-2" />
+                  <Info className="h-3.5 w-3.5 mr-2" />
                   Ver Perfil Completo
                 </Button>
               </div>
@@ -1286,7 +1248,7 @@ export default function ElencoPage() {
       </main>
       
       {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-[72px] right-0 h-12 md:h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-2 md:px-6">
+      <div className="fixed bottom-0 left-16 right-0 h-12 md:h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-2 md:px-6">
         <div className="flex items-center gap-1 md:gap-4">
           <Button 
             variant="ghost" 

@@ -68,14 +68,14 @@ function ControllerToolbarWithDetection() {
         { button: "RB", label: "Proxima Tab" },
       ]}
       controller={controllerType}
-      className="fixed bottom-0 left-[72px] right-0 z-40"
+      className="fixed bottom-0 left-16 right-0 z-40"
     />
   )
 }
 
 export default function DashboardPage() {
   return (
-    <div className="h-screen pl-[72px] bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 

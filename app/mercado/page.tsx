@@ -224,7 +224,7 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden pl-[72px] bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
