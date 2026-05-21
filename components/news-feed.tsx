@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign } from "lucide-react"
+import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Loader2, Sparkles } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { TeamCrest } from "@/components/team-crest"
 import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
@@ -51,6 +51,7 @@ interface NewsItem {
   title: string
   description?: string
   image?: string
+  generatedImage?: string // Imagem gerada por IA
   matches?: Array<{
     home: Team
     away: Team
@@ -59,6 +60,8 @@ interface NewsItem {
   comments: number
   isNew?: boolean
   icon?: React.ReactNode
+  teamName?: string
+  playerName?: string
 }
 
 // Gera noticias simuladas baseadas no estado do jogo
@@ -505,9 +508,46 @@ function MatchPreviewCard({
   )
 }
 
-// Card de conteudo de noticia padrao
+// Card de conteudo de noticia padrao com suporte a imagens geradas por IA
 function NewsContentCard({ news }: { news: NewsItem }) {
   const source = NEWS_SOURCES[news.source]
+  const [aiImage, setAiImage] = useState<string | null>(news.generatedImage || null)
+  const [isLoadingImage, setIsLoadingImage] = useState(false)
+  const [imageError, setImageError] = useState(false)
+  
+  // Gera imagem com IA ao clicar no botao
+  const generateAIImage = async () => {
+    if (isLoadingImage) return
+    setIsLoadingImage(true)
+    setImageError(false)
+    
+    try {
+      const response = await fetch("/api/generate-news-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newsType: news.type,
+          title: news.title,
+          teamName: news.teamName,
+          playerName: news.playerName,
+        }),
+      })
+      
+      if (!response.ok) throw new Error("Failed to generate image")
+      
+      const data = await response.json()
+      if (data.imageUrl) {
+        setAiImage(data.imageUrl)
+      } else {
+        setImageError(true)
+      }
+    } catch (error) {
+      console.error("[v0] Error generating AI image:", error)
+      setImageError(true)
+    } finally {
+      setIsLoadingImage(false)
+    }
+  }
   
   const typeColors: Record<string, string> = {
     transfer: "from-yellow-900/50 to-yellow-950/30",
@@ -527,17 +567,68 @@ function NewsContentCard({ news }: { news: NewsItem }) {
 
   return (
     <div className={cn(
-      "relative aspect-video bg-gradient-to-br",
+      "relative aspect-video bg-gradient-to-br overflow-hidden",
       typeColors[news.type] || "from-gray-900/50 to-gray-950/30"
     )}>
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-      </div>
+      {/* Background - Imagem gerada por IA ou padrao */}
+      {aiImage ? (
+        <div className="absolute inset-0">
+          <Image
+            src={aiImage}
+            alt={news.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+          <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary/20 border border-primary/30 flex items-center gap-1">
+            <Sparkles className="h-3 w-3 text-primary" />
+            <span className="text-[10px] text-primary font-medium">AI</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Background pattern padrao */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+          </div>
+          
+          {/* Botao para gerar imagem com IA */}
+          <button
+            onClick={generateAIImage}
+            disabled={isLoadingImage}
+            className={cn(
+              "absolute top-2 right-2 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all",
+              isLoadingImage 
+                ? "bg-white/10 cursor-wait" 
+                : "bg-primary/20 border border-primary/30 hover:bg-primary/30"
+            )}
+          >
+            {isLoadingImage ? (
+              <>
+                <Loader2 className="h-3 w-3 text-primary animate-spin" />
+                <span className="text-[10px] text-primary font-medium">Gerando...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3 w-3 text-primary" />
+                <span className="text-[10px] text-primary font-medium">Gerar Imagem AI</span>
+              </>
+            )}
+          </button>
+          
+          {imageError && (
+            <div className="absolute top-12 right-2 px-2 py-1 rounded bg-red-500/20 border border-red-500/30">
+              <span className="text-[10px] text-red-400">Erro ao gerar</span>
+            </div>
+          )}
+        </>
+      )}
       
       {/* Icon */}
-      <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+      <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
         {news.icon || typeIcons[news.type]}
+      </div>
       </div>
 
       {/* Content */}

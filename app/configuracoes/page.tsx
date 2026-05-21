@@ -276,6 +276,36 @@ export default function ConfiguracoesPage() {
                 <Palette className="h-4 w-4 text-primary" />
                 Cores do Tema
               </h3>
+              
+              {/* Opcao Cores do Time */}
+              <div className="mb-4">
+                <button
+                  onClick={() => {
+                    setTheme("team")
+                    setTeamColors({ primary: userTeam.cor1, secondary: userTeam.cor2 })
+                  }}
+                  className={cn(
+                    "relative w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
+                    theme === "team" ? "border-primary bg-primary/10" : "border-white/10 bg-white/5 hover:border-white/20"
+                  )}
+                >
+                  <div className="flex gap-1">
+                    <div className="h-6 w-6 rounded-full border border-white/20" style={{ backgroundColor: userTeam.cor1 }} />
+                    <div className="h-6 w-6 rounded-full border border-white/20 -ml-2" style={{ backgroundColor: userTeam.cor2 }} />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium text-white">Cores do {userTeam.nome}</span>
+                    <span className="text-[10px] text-white/40 block">Usar as cores do seu clube</span>
+                  </div>
+                  {theme === "team" && (
+                    <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="h-3 w-3 text-primary-foreground" />
+                    </div>
+                  )}
+                </button>
+              </div>
+              
+              <div className="text-xs text-white/40 mb-2">Temas Predefinidos</div>
               <div className="grid grid-cols-2 gap-3">
                 {(Object.keys(themePresets) as Exclude<ThemeColor, "team">[]).map((key) => {
                   const preset = themePresets[key]
