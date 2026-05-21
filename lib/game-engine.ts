@@ -137,6 +137,431 @@ export interface Scout {
   isSearching: boolean
   searchProgress: number
   foundPlayers: number[] // IDs dos jogadores descobertos
+  weeksToComplete: number // semanas restantes para completar busca
+  searchCost: number // custo da viagem/busca
+}
+
+// ============================================
+// SISTEMA DE INFRAESTRUTURA DO CLUBE
+// ============================================
+
+export interface ClubInfrastructure {
+  // Estadio
+  stadiumLevel: number // 1-5
+  stadiumCapacity: number
+  stadiumName: string
+  
+  // Acustica e pressao (afeta visitantes)
+  acousticsLevel: number // 1-5 - maior = mais pressao em visitantes
+  soundSystemLevel: number // 1-5
+  
+  // Gramado (afeta estilo de jogo)
+  pitchQuality: number // 1-5 - 5 = perfeito para toque de bola
+  pitchHeight: "baixo" | "medio" | "alto" // alto prejudica times tecnicos
+  
+  // Centro de Treinamento
+  trainingFacilitiesLevel: number // 1-5 - afeta desenvolvimento
+  youthAcademyLevel: number // 1-5 - afeta geracao de jovens
+  medicalCenterLevel: number // 1-5 - afeta recuperacao de lesoes
+  
+  // Seguranca
+  securityLevel: number // 1-5 - previne eventos negativos
+  dataSecurityLevel: number // 1-5 - protege dados de olheiros
+  
+  // Custos de manutencao
+  maintenanceCost: number
+}
+
+export interface InfrastructureUpgrade {
+  type: keyof ClubInfrastructure
+  currentLevel: number
+  nextLevel: number
+  cost: number
+  weeksToComplete: number
+  benefits: string[]
+}
+
+// ============================================
+// SISTEMA DE EVENTOS ALEATORIOS
+// ============================================
+
+export type RandomEventType = 
+  | "torcida_briga" | "protestos_ct" | "emboscada_onibus"
+  | "vazamento_dados" | "jogador_problema" | "lesao_treino"
+  | "investidor_interesse" | "patrocinador_novo" | "premios_fifa"
+  | "jogador_destaque" | "clima_extremo" | "greve_funcionarios"
+  | "crise_financeira" | "boom_economia" | "rival_reforcos"
+
+export interface RandomEvent {
+  id: number
+  type: RandomEventType
+  title: string
+  description: string
+  week: number
+  severity: "baixa" | "media" | "alta"
+  
+  // Efeitos
+  financialImpact: number // pode ser negativo
+  moraleImpact: number
+  
+  // Decisoes disponiveis
+  choices: EventChoice[]
+  
+  // Status
+  resolved: boolean
+  selectedChoice: number | null
+}
+
+export interface EventChoice {
+  id: number
+  text: string
+  cost: number
+  moraleEffect: number
+  reputationEffect: number
+  successChance: number // 0-100
+  outcomes: {
+    success: { description: string; effects: EventEffect[] }
+    failure: { description: string; effects: EventEffect[] }
+  }
+}
+
+export interface EventEffect {
+  type: "financial" | "morale" | "reputation" | "player_injury" | "ban" | "stadium_damage"
+  value: number
+  playerId?: number
+  duration?: number // semanas
+}
+
+// Pool de eventos aleatorios
+export const RANDOM_EVENTS_POOL: Omit<RandomEvent, "id" | "week" | "resolved" | "selectedChoice">[] = [
+  {
+    type: "torcida_briga",
+    title: "Briga de Torcidas",
+    description: "Confronto entre torcidas antes do classico. A seguranca do estadio esta sendo questionada.",
+    severity: "alta",
+    financialImpact: -500000,
+    moraleImpact: -10,
+    choices: [
+      {
+        id: 1,
+        text: "Aumentar seguranca imediatamente (custo alto)",
+        cost: 300000,
+        moraleEffect: 5,
+        reputationEffect: 10,
+        successChance: 90,
+        outcomes: {
+          success: { description: "Seguranca reforcada. Federacao elogiou as medidas.", effects: [] },
+          failure: { description: "Apesar do investimento, houve incidentes menores.", effects: [{ type: "financial", value: -100000 }] }
+        }
+      },
+      {
+        id: 2,
+        text: "Manter seguranca atual e torcer pelo melhor",
+        cost: 0,
+        moraleEffect: -5,
+        reputationEffect: -15,
+        successChance: 40,
+        outcomes: {
+          success: { description: "Felizmente nao houve mais incidentes.", effects: [] },
+          failure: { description: "Novos confrontos! Multa pesada da federacao.", effects: [{ type: "financial", value: -800000 }, { type: "ban", value: 2 }] }
+        }
+      }
+    ]
+  },
+  {
+    type: "protestos_ct",
+    title: "Protestos no CT",
+    description: "Torcedores insatisfeitos com os resultados invadiram o CT exigindo mudancas.",
+    severity: "media",
+    financialImpact: -100000,
+    moraleImpact: -15,
+    choices: [
+      {
+        id: 1,
+        text: "Reunir com lideres da torcida",
+        cost: 0,
+        moraleEffect: 10,
+        reputationEffect: 5,
+        successChance: 70,
+        outcomes: {
+          success: { description: "Dialogo produtivo. Torcida deu voto de confianca.", effects: [{ type: "morale", value: 10 }] },
+          failure: { description: "Reuniao terminou em discussao. Clima piorou.", effects: [{ type: "morale", value: -10 }] }
+        }
+      },
+      {
+        id: 2,
+        text: "Ignorar e focar nos treinos",
+        cost: 0,
+        moraleEffect: -10,
+        reputationEffect: -10,
+        successChance: 50,
+        outcomes: {
+          success: { description: "Protestos diminuiram com o tempo.", effects: [] },
+          failure: { description: "Protestos intensificaram. Jogadores abalados.", effects: [{ type: "morale", value: -20 }] }
+        }
+      }
+    ]
+  },
+  {
+    type: "investidor_interesse",
+    title: "Interesse de Investidor",
+    description: "Um grupo de investidores demonstrou interesse em aportar capital no clube.",
+    severity: "baixa",
+    financialImpact: 0,
+    moraleImpact: 5,
+    choices: [
+      {
+        id: 1,
+        text: "Abrir negociacoes",
+        cost: 50000,
+        moraleEffect: 10,
+        reputationEffect: 5,
+        successChance: 60,
+        outcomes: {
+          success: { description: "Acordo fechado! Aporte de capital significativo.", effects: [{ type: "financial", value: 10000000 }] },
+          failure: { description: "Negociacoes nao avancaram.", effects: [] }
+        }
+      },
+      {
+        id: 2,
+        text: "Recusar - manter independencia",
+        cost: 0,
+        moraleEffect: 0,
+        reputationEffect: 5,
+        successChance: 100,
+        outcomes: {
+          success: { description: "Clube mantem sua identidade e independencia.", effects: [] },
+          failure: { description: "", effects: [] }
+        }
+      }
+    ]
+  },
+  {
+    type: "vazamento_dados",
+    title: "Vazamento de Dados de Olheiros",
+    description: "Informacoes sobre alvos do scouting foram vazadas para clubes rivais.",
+    severity: "media",
+    financialImpact: 0,
+    moraleImpact: -5,
+    choices: [
+      {
+        id: 1,
+        text: "Investigar e demitir responsaveis",
+        cost: 100000,
+        moraleEffect: -5,
+        reputationEffect: 10,
+        successChance: 70,
+        outcomes: {
+          success: { description: "Vazamento contido. Seguranca reforcada.", effects: [] },
+          failure: { description: "Nao foi possivel identificar a fonte.", effects: [{ type: "reputation", value: -10 }] }
+        }
+      },
+      {
+        id: 2,
+        text: "Investir em seguranca de dados",
+        cost: 500000,
+        moraleEffect: 0,
+        reputationEffect: 5,
+        successChance: 95,
+        outcomes: {
+          success: { description: "Sistema de seguranca atualizado. Dados protegidos.", effects: [] },
+          failure: { description: "Investimento insuficiente.", effects: [] }
+        }
+      }
+    ]
+  },
+  {
+    type: "clima_extremo",
+    title: "Clima Extremo na Cidade",
+    description: "Previsao de tempestade forte no dia da partida em casa.",
+    severity: "baixa",
+    financialImpact: -50000,
+    moraleImpact: 0,
+    choices: [
+      {
+        id: 1,
+        text: "Adiar partida (acordo com federacao)",
+        cost: 200000,
+        moraleEffect: 0,
+        reputationEffect: 0,
+        successChance: 80,
+        outcomes: {
+          success: { description: "Partida adiada com sucesso.", effects: [] },
+          failure: { description: "Federacao negou. Partida mantem data.", effects: [] }
+        }
+      },
+      {
+        id: 2,
+        text: "Jogar normalmente",
+        cost: 0,
+        moraleEffect: -5,
+        reputationEffect: 0,
+        successChance: 100,
+        outcomes: {
+          success: { description: "Partida sera disputada com condicoes adversas.", effects: [] },
+          failure: { description: "", effects: [] }
+        }
+      }
+    ]
+  }
+]
+
+// ============================================
+// SISTEMA DE HIERARQUIA E DISCIPLINA
+// ============================================
+
+export interface PlayerHierarchy {
+  playerId: number
+  role: "capitao" | "vice_capitao" | "veterano" | "referencia" | "jovem" | "novato"
+  influence: number // 0-100 - quanto influencia o vestiario
+  respect: number // 0-100 - respeito pelo treinador
+  disciplineIssues: DisciplineIssue[]
+}
+
+export interface DisciplineIssue {
+  id: number
+  playerId: number
+  type: "atraso_treino" | "falta_treino" | "problema_extracampo" | "discussao_vestiario" | "desrespeito_tecnico" | "vazamento_midia"
+  week: number
+  severity: "leve" | "moderada" | "grave"
+  resolved: boolean
+  punishment?: DisciplinePunishment
+}
+
+export type DisciplinePunishment = 
+  | "advertencia" | "multa_leve" | "multa_pesada" 
+  | "banco_1_jogo" | "banco_3_jogos" | "afastamento_treinos"
+  | "rescisao_contrato"
+
+export const DISCIPLINE_PUNISHMENTS: Record<DisciplinePunishment, { label: string; finePercent: number; moraleImpact: number; respectChange: number }> = {
+  advertencia: { label: "Advertencia Verbal", finePercent: 0, moraleImpact: -5, respectChange: 5 },
+  multa_leve: { label: "Multa Leve (10% salario)", finePercent: 10, moraleImpact: -10, respectChange: 10 },
+  multa_pesada: { label: "Multa Pesada (30% salario)", finePercent: 30, moraleImpact: -20, respectChange: 15 },
+  banco_1_jogo: { label: "Banco por 1 Jogo", finePercent: 0, moraleImpact: -15, respectChange: 10 },
+  banco_3_jogos: { label: "Banco por 3 Jogos", finePercent: 0, moraleImpact: -25, respectChange: 15 },
+  afastamento_treinos: { label: "Afastamento dos Treinos", finePercent: 20, moraleImpact: -30, respectChange: 20 },
+  rescisao_contrato: { label: "Rescisao de Contrato", finePercent: 100, moraleImpact: -50, respectChange: 25 }
+}
+
+// ============================================
+// MODIFICADORES DE PARTIDA
+// ============================================
+
+export interface MatchModifiers {
+  // Fator casa/fora
+  homeAdvantage: number // 0-20 pontos extras para mandante
+  crowdPressure: number // 0-20 pressao da torcida (afeta visitante)
+  
+  // Clima e altitude
+  weather: "sol" | "nublado" | "chuva" | "tempestade" | "neve"
+  temperature: number // celsius
+  altitude: number // metros
+  
+  // Rivalidade
+  isDerby: boolean
+  derbyIntensity: number // 0-100
+  
+  // Importancia da partida
+  matchImportance: "normal" | "decisivo" | "final"
+  
+  // Efeitos calculados
+  homeTeamBoost: number
+  awayTeamDebuff: number
+  staminaDrainMultiplier: number // >1 = drena mais (altitude, calor)
+  technicalPenalty: number // reducao em passe/drible (chuva, gramado ruim)
+}
+
+export function calculateMatchModifiers(
+  homeInfra: ClubInfrastructure,
+  weather: MatchModifiers["weather"],
+  altitude: number,
+  isDerby: boolean,
+  matchImportance: MatchModifiers["matchImportance"]
+): MatchModifiers {
+  let homeAdvantage = 5 + (homeInfra.acousticsLevel * 2) + (homeInfra.soundSystemLevel)
+  let crowdPressure = 5 + (homeInfra.acousticsLevel * 3)
+  
+  // Gramado afeta tecnica
+  let technicalPenalty = 0
+  if (homeInfra.pitchHeight === "alto") technicalPenalty += 5
+  if (homeInfra.pitchQuality < 3) technicalPenalty += (3 - homeInfra.pitchQuality) * 3
+  
+  // Clima
+  if (weather === "chuva") technicalPenalty += 8
+  if (weather === "tempestade") technicalPenalty += 15
+  if (weather === "neve") technicalPenalty += 12
+  
+  // Altitude
+  let staminaDrainMultiplier = 1
+  if (altitude > 2500) staminaDrainMultiplier = 1.5
+  else if (altitude > 1500) staminaDrainMultiplier = 1.25
+  else if (altitude > 800) staminaDrainMultiplier = 1.1
+  
+  // Derby intensifica tudo
+  const derbyIntensity = isDerby ? 80 : 0
+  if (isDerby) {
+    homeAdvantage += 5
+    crowdPressure += 10
+  }
+  
+  // Importancia
+  if (matchImportance === "decisivo") {
+    crowdPressure += 5
+    homeAdvantage += 3
+  } else if (matchImportance === "final") {
+    crowdPressure += 10
+    homeAdvantage += 5
+  }
+  
+  return {
+    homeAdvantage: Math.min(homeAdvantage, 25),
+    crowdPressure: Math.min(crowdPressure, 25),
+    weather,
+    temperature: weather === "neve" ? -2 : weather === "sol" ? 30 : 22,
+    altitude,
+    isDerby,
+    derbyIntensity,
+    matchImportance,
+    homeTeamBoost: homeAdvantage,
+    awayTeamDebuff: Math.round(crowdPressure * 0.7),
+    staminaDrainMultiplier,
+    technicalPenalty
+  }
+}
+
+// ============================================
+// SOCIO-TORCEDOR (ECONOMIA DINAMICA)
+// ============================================
+
+export interface FanBase {
+  totalMembers: number
+  activeMembers: number // pagam mensalidade
+  monthlyRevenue: number
+  satisfaction: number // 0-100
+  loyalty: number // 0-100
+  
+  // Fatores que afetam
+  recentResults: number // -100 a +100
+  signings: number // contratacoes de peso aumentam
+  ticketPrices: "barato" | "normal" | "caro"
+}
+
+export function calculateFanRevenue(fanBase: FanBase, results: number, hasStarSigning: boolean): number {
+  let memberChange = 0
+  
+  // Resultados afetam adesao
+  if (results > 50) memberChange = Math.round(fanBase.totalMembers * 0.05)
+  else if (results > 20) memberChange = Math.round(fanBase.totalMembers * 0.02)
+  else if (results < -20) memberChange = -Math.round(fanBase.totalMembers * 0.03)
+  else if (results < -50) memberChange = -Math.round(fanBase.totalMembers * 0.08)
+  
+  // Contratacao de peso
+  if (hasStarSigning) memberChange += Math.round(fanBase.totalMembers * 0.1)
+  
+  const newActiveMembers = Math.max(100, fanBase.activeMembers + memberChange)
+  const avgMonthlyfee = 50 // R$ 50 por socio
+  
+  return newActiveMembers * avgMonthlyfee
 }
 
 export interface MatchResult {

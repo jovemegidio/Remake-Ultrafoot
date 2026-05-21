@@ -94,11 +94,43 @@ export interface MatchConfig {
   awayTeam: Team
   homeRating: number  // 50-95
   awayRating: number  // 50-95
-  durationMinutes: number // padrão 90
-  weatherFactor?: number // 0.8-1.2 (chuva reduz precisão)
+  durationMinutes: number // padrao 90
+  weatherFactor?: number // 0.8-1.2 (chuva reduz precisao)
   // Squads (opcional, para nomear eventos)
   homeSquad?: { nome: string; pos: string }[]
   awaySquad?: { nome: string; pos: string }[]
+  
+  // Novos modificadores de partida
+  modifiers?: MatchModifiers
+}
+
+// Modificadores que afetam a partida
+export interface MatchModifiers {
+  // Fator casa/fora
+  homeAdvantageBoost: number // 0-25 pontos extras para mandante (baseado em infraestrutura)
+  crowdPressure: number // 0-25 pressao da torcida (debuff visitante)
+  
+  // Clima
+  weather: "sol" | "nublado" | "chuva" | "tempestade"
+  temperature: number // celsius (extremos afetam desempenho)
+  
+  // Altitude (metros)
+  altitude: number // >2500 = severo, >1500 = moderado
+  
+  // Rivalidade
+  isDerby: boolean
+  derbyIntensity: number // 0-100 (afeta cartoes e intensidade)
+  
+  // Importancia
+  matchImportance: "normal" | "decisivo" | "final"
+  
+  // Gramado
+  pitchQuality: number // 1-5 (afeta passe e drible)
+  pitchHeight: "baixo" | "medio" | "alto"
+  
+  // Efeitos calculados
+  staminaDrainMultiplier: number // >1 = drena mais rapido
+  technicalPenalty: number // reducao em passe/drible
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -178,35 +210,103 @@ function pickPlayer(side: Side, config: MatchConfig, posFilter?: string[]): stri
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface MinuteProbs {
-  shotChance: number       // chance de finalização (qualquer time)
+  shotChance: number       // chance de finalizacao (qualquer time)
   homeAdvantage: number    // 0..1, % chance de o evento ser do mandante
   cornerChance: number
   foulChance: number
   cardChance: number
+  technicalPenalty: number // reducao em precisao (clima, gramado)
+  staminaDrain: number     // multiplicador de desgaste
 }
 
 function calcProbs(config: MatchConfig): MinuteProbs {
+  const mods = config.modifiers
   const total = config.homeRating + config.awayRating
-  // Mandante tem +5% de boost (vantagem em casa)
-  const homeBoost = 5
-  const homeAdvantage = (config.homeRating + homeBoost) / (total + homeBoost)
+  
+  // Calcula vantagem em casa baseada em infraestrutura e modificadores
+  let homeBoost = 5 // base
+  
+  if (mods) {
+    // Infraestrutura do estadio aumenta vantagem
+    homeBoost += (mods.homeAdvantageBoost || 0) * 0.4
+    
+    // Pressao da torcida reduz performance visitante (aumenta chance do mandante)
+    homeBoost += (mods.crowdPressure || 0) * 0.3
+    
+    // Derby aumenta volatilidade
+    if (mods.isDerby) {
+      homeBoost += 3
+    }
+    
+    // Partidas decisivas aumentam pressao
+    if (mods.matchImportance === "decisivo") homeBoost += 2
+    if (mods.matchImportance === "final") homeBoost += 4
+  }
+  
+  const homeAdvantage = Math.min(0.7, (config.homeRating + homeBoost) / (total + homeBoost))
 
   // Times fortes finalizam mais
   const avg = total / 2
   const shotChance = Math.min(0.55, 0.18 + (avg - 60) * 0.012)
+  
+  // Calcula penalidade tecnica (clima, gramado)
+  let technicalPenalty = 0
+  if (mods) {
+    technicalPenalty = mods.technicalPenalty || 0
+    
+    // Clima afeta precisao
+    if (mods.weather === "chuva") technicalPenalty += 8
+    if (mods.weather === "tempestade") technicalPenalty += 15
+    
+    // Gramado ruim afeta toque de bola
+    if (mods.pitchQuality && mods.pitchQuality < 3) {
+      technicalPenalty += (3 - mods.pitchQuality) * 4
+    }
+    if (mods.pitchHeight === "alto") {
+      technicalPenalty += 5
+    }
+  }
+  
+  // Multiplicador de desgaste (altitude, calor)
+  let staminaDrain = 1
+  if (mods) {
+    staminaDrain = mods.staminaDrainMultiplier || 1
+    
+    // Altitude afeta muito o desgaste
+    if (mods.altitude > 2500) staminaDrain = Math.max(staminaDrain, 1.5)
+    else if (mods.altitude > 1500) staminaDrain = Math.max(staminaDrain, 1.25)
+    
+    // Calor extremo
+    if (mods.temperature > 35) staminaDrain *= 1.2
+    else if (mods.temperature > 30) staminaDrain *= 1.1
+  }
+  
+  // Derby aumenta faltas e cartoes
+  let foulChance = 0.22
+  let cardChance = 0.04
+  if (mods?.isDerby) {
+    foulChance = 0.30
+    cardChance = 0.08
+  }
+  if (mods?.matchImportance === "final") {
+    foulChance = 0.28
+    cardChance = 0.06
+  }
 
   return {
     shotChance,
     homeAdvantage,
     cornerChance: 0.16,
-    foulChance: 0.22,
-    cardChance: 0.04,
+    foulChance,
+    cardChance,
+    technicalPenalty,
+    staminaDrain,
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tick: avança 1 minuto de partida
-// ─────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────���──────
 
 export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
   if (state.phase === "fulltime" || state.phase === "pre") return state
@@ -579,4 +679,151 @@ export function formatPossession(s: MatchState): { home: string; away: string } 
 
 export function formatStat(value: number, decimals = 0): string {
   return value.toFixed(decimals)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Funcao auxiliar para criar modificadores de partida
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface InfrastructureInput {
+  acousticsLevel?: number  // 1-5
+  soundSystemLevel?: number // 1-5
+  stadiumLevel?: number // 1-5
+  pitchQuality?: number // 1-5
+  pitchHeight?: "baixo" | "medio" | "alto"
+}
+
+export function createMatchModifiers(
+  homeInfra: InfrastructureInput = {},
+  options: {
+    weather?: MatchModifiers["weather"]
+    temperature?: number
+    altitude?: number
+    isDerby?: boolean
+    derbyIntensity?: number
+    matchImportance?: MatchModifiers["matchImportance"]
+  } = {}
+): MatchModifiers {
+  const {
+    acousticsLevel = 1,
+    soundSystemLevel = 1,
+    stadiumLevel = 1,
+    pitchQuality = 3,
+    pitchHeight = "medio"
+  } = homeInfra
+
+  const {
+    weather = "sol",
+    temperature = 25,
+    altitude = 0,
+    isDerby = false,
+    derbyIntensity = 0,
+    matchImportance = "normal"
+  } = options
+
+  // Calcula vantagem em casa baseada em infraestrutura
+  let homeAdvantageBoost = (stadiumLevel * 2) + (acousticsLevel * 2) + soundSystemLevel
+  
+  // Calcula pressao da torcida
+  let crowdPressure = (acousticsLevel * 3) + (soundSystemLevel * 2)
+  
+  // Derby aumenta tudo
+  if (isDerby) {
+    homeAdvantageBoost += 5
+    crowdPressure += 8
+  }
+  
+  // Partidas importantes
+  if (matchImportance === "decisivo") {
+    crowdPressure += 5
+    homeAdvantageBoost += 2
+  } else if (matchImportance === "final") {
+    crowdPressure += 10
+    homeAdvantageBoost += 4
+  }
+  
+  // Calcula penalidade tecnica
+  let technicalPenalty = 0
+  
+  // Clima
+  if (weather === "chuva") technicalPenalty += 8
+  if (weather === "tempestade") technicalPenalty += 15
+  
+  // Gramado
+  if (pitchQuality < 3) technicalPenalty += (3 - pitchQuality) * 4
+  if (pitchHeight === "alto") technicalPenalty += 5
+  
+  // Multiplicador de desgaste
+  let staminaDrainMultiplier = 1
+  
+  // Altitude
+  if (altitude > 2500) staminaDrainMultiplier = 1.5
+  else if (altitude > 1500) staminaDrainMultiplier = 1.25
+  else if (altitude > 800) staminaDrainMultiplier = 1.1
+  
+  // Temperatura
+  if (temperature > 35) staminaDrainMultiplier *= 1.2
+  else if (temperature > 30) staminaDrainMultiplier *= 1.1
+
+  return {
+    homeAdvantageBoost: Math.min(homeAdvantageBoost, 25),
+    crowdPressure: Math.min(crowdPressure, 25),
+    weather,
+    temperature,
+    altitude,
+    isDerby,
+    derbyIntensity,
+    matchImportance,
+    pitchQuality,
+    pitchHeight,
+    staminaDrainMultiplier,
+    technicalPenalty
+  }
+}
+
+// Classicos brasileiros conhecidos
+export const BRAZILIAN_DERBIES: [string, string, number][] = [
+  // [time1, time2, intensidade]
+  ["FLA", "FLU", 95], // Fla-Flu
+  ["FLA", "VAS", 98], // Classico dos Milhoes
+  ["FLA", "BOT", 80], // Classico Carioca
+  ["COR", "PAL", 100], // Derby Paulista
+  ["COR", "SAO", 95], // Majestoso
+  ["PAL", "SAO", 90], // Choque-Rei
+  ["GRE", "INT", 98], // Gre-Nal
+  ["CAM", "CRU", 95], // Classico Mineiro
+  ["BAH", "VIT", 90], // Ba-Vi
+  ["SAN", "COR", 85], // Classico Alvinegro
+  ["SAN", "PAL", 82], // Classico da Saudade
+  ["BGT", "PAL", 60], // Confronto paulista
+  ["BGT", "COR", 60], // Confronto paulista
+]
+
+export function isDerbyMatch(team1: string, team2: string): { isDerby: boolean; intensity: number } {
+  for (const [t1, t2, intensity] of BRAZILIAN_DERBIES) {
+    if ((team1 === t1 && team2 === t2) || (team1 === t2 && team2 === t1)) {
+      return { isDerby: true, intensity }
+    }
+  }
+  return { isDerby: false, intensity: 0 }
+}
+
+// Altitudes de estadios brasileiros e sul-americanos
+export const STADIUM_ALTITUDES: Record<string, number> = {
+  // Bolivia
+  "LP": 3640, // La Paz
+  "COC": 2500, // Cochabamba
+  // Colombia
+  "BOG": 2640, // Bogota
+  // Equador
+  "QUI": 2850, // Quito
+  // Peru
+  "CUS": 3400, // Cusco
+  "LIM": 150, // Lima
+  // Brasil (maioria ao nivel do mar)
+  "DEFAULT": 100,
+}
+
+export function getStadiumAltitude(teamShort: string): number {
+  return STADIUM_ALTITUDES[teamShort] || STADIUM_ALTITUDES["DEFAULT"]
 }

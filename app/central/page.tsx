@@ -18,18 +18,24 @@ import {
   AlertCircle,
   CheckCircle2,
   FileText,
-  Calendar
+  Calendar,
+  Zap,
+  Shield,
+  AlertTriangle,
+  Crown,
+  Gavel
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
+import { RandomEvents } from "@/components/random-events"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 
-type TabType = "vestiario" | "reunioes" | "mensagens" | "contratos"
+type TabType = "vestiario" | "reunioes" | "mensagens" | "contratos" | "eventos" | "disciplina"
 
 // Mock data
 const playerMorale = [
@@ -60,6 +66,20 @@ const contracts = [
   { name: "Estevao", position: "MD", overall: 79, endsIn: "3 meses", salary: "R$ 250.000", status: "critico" },
 ]
 
+// Mock data para disciplina
+const disciplineIssues = [
+  { id: 1, player: "Helinho", type: "atraso_treino", date: "Ontem", severity: "leve", resolved: false },
+  { id: 2, player: "Lincoln", type: "discussao_vestiario", date: "3 dias atras", severity: "moderada", resolved: true, punishment: "advertencia" },
+]
+
+const playerHierarchy = [
+  { name: "Eduardo Sasha", role: "capitao", influence: 95, respect: 92 },
+  { name: "Pedro Henrique", role: "vice_capitao", influence: 85, respect: 88 },
+  { name: "Cleiton", role: "veterano", influence: 78, respect: 85 },
+  { name: "Lincoln", role: "referencia", influence: 72, respect: 80 },
+  { name: "Helinho", role: "jovem", influence: 45, respect: 65 },
+]
+
 export default function CentralPage() {
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
@@ -67,6 +87,8 @@ export default function CentralPage() {
 
   const tabs = [
     { id: "vestiario" as TabType, label: "Vestiario", icon: Heart, count: null },
+    { id: "eventos" as TabType, label: "Eventos", icon: Zap, count: 2 },
+    { id: "disciplina" as TabType, label: "Disciplina", icon: Gavel, count: disciplineIssues.filter(d => !d.resolved).length },
     { id: "reunioes" as TabType, label: "Reunioes", icon: Users, count: meetings.filter(m => m.status === "urgente").length },
     { id: "mensagens" as TabType, label: "Mensagens", icon: Mail, count: messages.filter(m => m.unread).length },
     { id: "contratos" as TabType, label: "Contratos", icon: FileText, count: contracts.filter(c => c.status === "critico").length },
@@ -338,6 +360,146 @@ export default function CentralPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "eventos" && (
+            <motion.div
+              key="eventos"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              <RandomEvents />
+            </motion.div>
+          )}
+
+          {activeTab === "disciplina" && (
+            <motion.div
+              key="disciplina"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {/* Hierarquia do Vestiario */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-400" />
+                  Hierarquia do Vestiario
+                </h3>
+                <div className="space-y-2">
+                  {playerHierarchy.map((player, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                      <div className="relative">
+                        <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="sm" />
+                        {player.role === "capitao" && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 flex items-center justify-center">
+                            <span className="text-[8px] font-black text-black">C</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-white">{player.name}</span>
+                          <span className={cn(
+                            "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                            player.role === "capitao" ? "bg-amber-400/20 text-amber-400" :
+                            player.role === "vice_capitao" ? "bg-amber-400/10 text-amber-300" :
+                            player.role === "veterano" ? "bg-blue-400/20 text-blue-400" :
+                            player.role === "referencia" ? "bg-purple-400/20 text-purple-400" :
+                            "bg-white/10 text-white/60"
+                          )}>
+                            {player.role === "capitao" ? "Capitao" :
+                             player.role === "vice_capitao" ? "Vice-Capitao" :
+                             player.role === "veterano" ? "Veterano" :
+                             player.role === "referencia" ? "Referencia" : "Jovem"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1">
+                          <div className="flex items-center gap-1 text-[10px] text-white/40">
+                            <Users className="h-3 w-3" />
+                            Influencia: <span className="text-white/70">{player.influence}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] text-white/40">
+                            <Shield className="h-3 w-3" />
+                            Respeito: <span className="text-white/70">{player.respect}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Questoes Disciplinares */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400" />
+                    Questoes Disciplinares
+                  </h3>
+                </div>
+                {disciplineIssues.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <CheckCircle2 className="h-10 w-10 mx-auto text-[#1db954]/40 mb-2" />
+                    <p className="text-sm text-white/50">Nenhum problema disciplinar</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {disciplineIssues.map((issue) => (
+                      <div key={issue.id} className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg transition-colors",
+                        issue.resolved ? "bg-white/[0.02] opacity-60" : "bg-red-500/10 border border-red-500/20"
+                      )}>
+                        <div className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          issue.severity === "grave" ? "bg-red-500/20" :
+                          issue.severity === "moderada" ? "bg-amber-500/20" : "bg-yellow-500/20"
+                        )}>
+                          <AlertTriangle className={cn(
+                            "h-5 w-5",
+                            issue.severity === "grave" ? "text-red-400" :
+                            issue.severity === "moderada" ? "text-amber-400" : "text-yellow-400"
+                          )} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-white">{issue.player}</span>
+                            <span className={cn(
+                              "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                              issue.severity === "grave" ? "bg-red-500/20 text-red-400" :
+                              issue.severity === "moderada" ? "bg-amber-500/20 text-amber-400" :
+                              "bg-yellow-500/20 text-yellow-400"
+                            )}>
+                              {issue.severity}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-white/40">
+                            {issue.type === "atraso_treino" ? "Atraso no treino" :
+                             issue.type === "falta_treino" ? "Falta no treino" :
+                             issue.type === "discussao_vestiario" ? "Discussao no vestiario" :
+                             issue.type === "desrespeito_tecnico" ? "Desrespeito ao tecnico" :
+                             "Problema extracampo"} - {issue.date}
+                          </div>
+                        </div>
+                        {issue.resolved ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-[#1db954]" />
+                            <span className="text-xs text-white/50">{issue.punishment}</span>
+                          </div>
+                        ) : (
+                          <Button size="sm" variant="outline" className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
+                            <Gavel className="h-3 w-3 mr-1" />
+                            Punir
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

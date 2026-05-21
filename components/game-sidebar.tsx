@@ -14,6 +14,8 @@ import {
   BarChart3,
   Dumbbell,
   Heart,
+  Search,
+  Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +26,8 @@ const navItems = [
   { icon: Dumbbell, label: "Treinamento", href: "/treinamento" },
   { icon: CalendarDays, label: "Calendario", href: "/calendario" },
   { icon: Trophy, label: "Competicoes", href: "/competicoes" },
+  { icon: Search, label: "Olheiros", href: "/olheiros" },
+  { icon: Building2, label: "Infraestrutura", href: "/infraestrutura" },
   { icon: BarChart3, label: "Estatisticas", href: "/estatisticas" },
   { icon: Heart, label: "Central do Clube", href: "/central" },
   { icon: Wallet, label: "Financas", href: "/financas" },

@@ -913,62 +913,64 @@ export default function ElencoPage() {
               </button>
             </div>
             
-            {/* Reserves section - Melhorado */}
+            {/* Reserves section - Melhorado com scroll vertical */}
             <div className="mt-2 p-3 rounded-xl bg-[#111111] border border-white/5 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Reservas ({bench.length})</h3>
                 <span className="text-[10px] text-white/40">Arraste para substituir</span>
               </div>
               
-              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-horizontal">
-                {bench.map((player) => {
-                  const posColors = positionColors[player.position] || positionColors.MEI
-                  return (
-                    <motion.div
-                      key={player.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, player.id)}
-                      onDragOver={(e) => handleDragOverPlayer(e as unknown as React.DragEvent, player.id)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDropOnPlayer(e as unknown as React.DragEvent, player.id)}
-                      onDragEnd={handleDragEnd}
-                      animate={{
-                        scale: draggingPlayer === player.id ? 1.05 : dragOverTarget === player.id ? 1.1 : 1,
-                        opacity: draggingPlayer === player.id ? 0.7 : 1,
-                      }}
-                      onClick={() => setSelectedPlayerId(player.id)}
-                      className={cn(
-                        "flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all flex-shrink-0",
-                        "w-[68px]",
-                        selectedPlayerId === player.id
-                          ? "bg-[#1db954]/15 ring-1 ring-[#1db954]/40"
-                          : "bg-white/[0.03] hover:bg-white/[0.06]",
-                        dragOverTarget === player.id && "ring-2 ring-[#1db954]"
-                      )}
-                    >
-                      <div className="relative mb-1">
-                        <PlayerAvatarCircle
-                          name={player.name}
-                          teamColor={userTeam.cor1}
-                          size="xs"
-                          className={cn(
-                            "border-2 transition-colors",
-                            selectedPlayerId === player.id ? "border-[#1db954]/60" : "border-white/10"
-                          )}
-                        />
-                        <div className={cn(
-                          "absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-black",
-                          "bg-[#1a1a1a] border",
-                          selectedPlayerId === player.id ? "border-[#1db954]/50" : "border-white/20"
-                        )}>
-                          <span className={getOverallColor(player.overall)}>{player.overall}</span>
+              {/* Container com altura maxima e scroll vertical */}
+              <div className="max-h-[280px] overflow-y-auto scrollbar-game pr-1">
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
+                  {bench.map((player) => {
+                    const posColors = positionColors[player.position] || positionColors.MEI
+                    return (
+                      <motion.div
+                        key={player.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, player.id)}
+                        onDragOver={(e) => handleDragOverPlayer(e as unknown as React.DragEvent, player.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDropOnPlayer(e as unknown as React.DragEvent, player.id)}
+                        onDragEnd={handleDragEnd}
+                        animate={{
+                          scale: draggingPlayer === player.id ? 1.05 : dragOverTarget === player.id ? 1.1 : 1,
+                          opacity: draggingPlayer === player.id ? 0.7 : 1,
+                        }}
+                        onClick={() => setSelectedPlayerId(player.id)}
+                        className={cn(
+                          "flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
+                          selectedPlayerId === player.id
+                            ? "bg-[#1db954]/15 ring-1 ring-[#1db954]/40"
+                            : "bg-white/[0.03] hover:bg-white/[0.06]",
+                          dragOverTarget === player.id && "ring-2 ring-[#1db954]"
+                        )}
+                      >
+                        <div className="relative mb-1">
+                          <PlayerAvatarCircle
+                            name={player.name}
+                            teamColor={userTeam.cor1}
+                            size="xs"
+                            className={cn(
+                              "border-2 transition-colors",
+                              selectedPlayerId === player.id ? "border-[#1db954]/60" : "border-white/10"
+                            )}
+                          />
+                          <div className={cn(
+                            "absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-black",
+                            "bg-[#1a1a1a] border",
+                            selectedPlayerId === player.id ? "border-[#1db954]/50" : "border-white/20"
+                          )}>
+                            <span className={getOverallColor(player.overall)}>{player.overall}</span>
+                          </div>
                         </div>
-                      </div>
-                      <span className="text-[9px] text-white/80 font-medium truncate w-full text-center">{player.name.split(" ").pop()}</span>
-                      <span className={cn("text-[8px] font-semibold mt-0.5 px-1 py-px rounded", posColors.bg, posColors.text)}>{player.position}</span>
-                    </motion.div>
-                  )
-                })}
+                        <span className="text-[9px] text-white/80 font-medium truncate w-full text-center">{player.name.split(" ").pop()}</span>
+                        <span className={cn("text-[8px] font-semibold mt-0.5 px-1 py-px rounded", posColors.bg, posColors.text)}>{player.position}</span>
+                      </motion.div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
             </>
