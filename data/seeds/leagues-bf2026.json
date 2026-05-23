@@ -1,0 +1,530 @@
+{
+  "version": "2026-27",
+  "leagues": [
+    {
+      "countryCode": "AFG",
+      "country": "Afeganistão",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "LIGA EURO",
+        "Série A",
+        "LIGA EURO",
+        "Série B",
+        "Copa São Paulo ",
+        "Série C",
+        "Copa São Paulo ",
+        "Série D"
+      ]
+    },
+    {
+      "countryCode": "AFS",
+      "country": "África do Sul",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "LIGA AMERICA",
+        "Serie A",
+        "LIGA AMERICA",
+        "Serie B",
+        "Campeonato da Africa do Sul",
+        "Campeonato da Africa do Sul"
+      ]
+    },
+    {
+      "countryCode": "AUS",
+      "country": "Austrália",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "FIFA LEAGUE",
+        "GOLD",
+        "FIFA LEAGUE",
+        "SILVER",
+        "Campeonato Australiano",
+        "Campeonato Australiano"
+      ]
+    },
+    {
+      "countryCode": "ARS",
+      "country": "Arábia Saudita",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Saudi Pro League ",
+        "Saudi 1st Division",
+        "Campeonato da Arábia Saudita",
+        "Campeonato da Arábia Saudita"
+      ]
+    },
+    {
+      "countryCode": "AUT",
+      "country": "Áustria",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Austrian Bundesliga ",
+        "2. Liga",
+        "3. Liga",
+        "4. Liga"
+      ]
+    },
+    {
+      "countryCode": "BEL",
+      "country": "Bélgica",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Pro League",
+        "Challenger Pro League",
+        "Reserve League 1A",
+        "Reserve League 2A"
+      ]
+    },
+    {
+      "countryCode": "CAT",
+      "country": "Catar",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Stars League",
+        "Campeonato do Catar",
+        "2ª divisão",
+        "Campeonato do Catar",
+        "3ª divisão",
+        "Campeonato do Catar",
+        "4ª divisão"
+      ]
+    },
+    {
+      "countryCode": "CHN",
+      "country": "China",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Chinese Super League",
+        "Chinese League 1",
+        "Chinese League 2",
+        "Campeonato Chinês"
+      ]
+    },
+    {
+      "countryCode": "COL",
+      "country": "Colômbia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Primera A",
+        "Primera B",
+        "Campeonato Colombiano",
+        "Campeonato Colombiano"
+      ]
+    },
+    {
+      "countryCode": "CRO",
+      "country": "Croácia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "HNL",
+        "1. NL",
+        "2. NL",
+        "Campeonato Croata"
+      ]
+    },
+    {
+      "countryCode": "DIN",
+      "country": "Dinamarca",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Danish Superliga",
+        "Betinia Liga",
+        "Campeonato Dinamarquês",
+        "Campeonato Dinamarquês"
+      ]
+    },
+    {
+      "countryCode": "EGI",
+      "country": "Egito",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Egyptian Premier League",
+        "Campeonato Egípcio",
+        "Campeonato Egípcio",
+        "Campeonato Egípcio"
+      ]
+    },
+    {
+      "countryCode": "EMI",
+      "country": "Emirados Árabes Unidos",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "UAE Pro League",
+        "Campeonato dos Emirados Árabes",
+        "Campeonato dos Emirados Árabes",
+        "Campeonato dos Emirados Árabes"
+      ]
+    },
+    {
+      "countryCode": "EQU",
+      "country": "Equador",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "LigaPro Serie A",
+        "LigaPro Serie B",
+        "Campeonato Equatoriano",
+        "Campeonato Equatoriano"
+      ]
+    },
+    {
+      "countryCode": "ESC",
+      "country": "Escócia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Scottish Premiership",
+        "Scottish Championship",
+        "Scottish League One",
+        "Scottish League Two"
+      ]
+    },
+    {
+      "countryCode": "EUA",
+      "country": "Estados Unidos",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "MLS",
+        "USL Championship",
+        "USL League One",
+        "USL League Two"
+      ]
+    },
+    {
+      "countryCode": "GRE",
+      "country": "Grécia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Stoiximan Super League",
+        "Super League 2",
+        "Campeonato Grego",
+        "Campeonato Grego"
+      ]
+    },
+    {
+      "countryCode": "HOL",
+      "country": "Holanda",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Eredivisie",
+        "Eerste Divisie",
+        "Tweede Divisie",
+        "Vierde Divise"
+      ]
+    },
+    {
+      "countryCode": "ITA",
+      "country": "Itália",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Serie A",
+        "Serie B",
+        "Serie C",
+        "Serie D"
+      ]
+    },
+    {
+      "countryCode": "JAP",
+      "country": "Japão",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "J1 League",
+        "Campeonato Japonês",
+        "Campeonato Japonês",
+        "Campeonato Japonês"
+      ]
+    },
+    {
+      "countryCode": "MAR",
+      "country": "Marrocos",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Botola Pro",
+        "Campeonato Marroquino",
+        "2ª divisão",
+        "Campeonato Marroquino",
+        "3ª divisão",
+        "Campeonato Marroquino",
+        "4ª divisão"
+      ]
+    },
+    {
+      "countryCode": "MEX",
+      "country": "México",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Liga MX",
+        "Campeonato Mexicano",
+        "2ª divisão",
+        "Campeonato Mexicano",
+        "3ª divisão",
+        "Campeonato Mexicano",
+        "4ª divisão"
+      ]
+    },
+    {
+      "countryCode": "PAR",
+      "country": "Paraguai",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Primera División",
+        "División Intermedia",
+        "Campeonato Paraguaio",
+        "Campeonato Paraguaio"
+      ]
+    },
+    {
+      "countryCode": "PER",
+      "country": "Peru",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Liga 1",
+        "Liga 2",
+        "Campeonato Peruano",
+        "Campeonato Peruano"
+      ]
+    },
+    {
+      "countryCode": "POR",
+      "country": "Portugal",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Liga Portugal",
+        "Liga Portugal 2",
+        "Liga 3",
+        "Liga 4"
+      ]
+    },
+    {
+      "countryCode": "SER",
+      "country": "Sérvia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Superliga",
+        "Prva Liga",
+        "Campeonato Sérvio",
+        "Campeonato Sérvio"
+      ]
+    },
+    {
+      "countryCode": "SUE",
+      "country": "Suécia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Allsvenskan",
+        "Superettan",
+        "Campeonato Sueco",
+        "Campeonato Sueco"
+      ]
+    },
+    {
+      "countryCode": "NOR",
+      "country": "Noruega",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Eliteserien",
+        "Campeonato da Noruega",
+        "Campeonato da Noruega",
+        "Campeonato da Noruega"
+      ]
+    },
+    {
+      "countryCode": "TUR",
+      "country": "Turquia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Süper Lig",
+        "1.Lig",
+        "2.Lig",
+        "3.Lig"
+      ]
+    },
+    {
+      "countryCode": "UCR",
+      "country": "Ucrânia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Ukrainian Premier League",
+        "Persha Liha",
+        "Campeonato Ucraniano",
+        "Campeonato Ucraniano"
+      ]
+    },
+    {
+      "countryCode": "URU",
+      "country": "Uruguai",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Liga AUF Uruguaya",
+        "Uruguayan Segunda División",
+        "Campeonato Uruguaio",
+        "Campeonato Uruguaio"
+      ]
+    },
+    {
+      "countryCode": "RUS",
+      "country": "Rússia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Russian Premier League",
+        "First League",
+        "Second League, Division A",
+        "Second League, Division B"
+      ]
+    },
+    {
+      "countryCode": "BOL",
+      "country": "Bolívia",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "División Profesional",
+        "Primera A",
+        "Campeonato Boliviano",
+        "Campeonato Boliviano"
+      ]
+    },
+    {
+      "countryCode": "CHI",
+      "country": "Chile",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Liga de Primera",
+        "Liga de Ascenso",
+        "Segunda División",
+        "Tercero División"
+      ]
+    },
+    {
+      "countryCode": "SUI",
+      "country": "Suíça",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Swiss Super League",
+        "Challenge League",
+        "Promotion League",
+        "Campeonato Suiço"
+      ]
+    },
+    {
+      "countryCode": "ALE",
+      "country": "Alemanha",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Bundesliga",
+        "2.Bundesliga",
+        "3.Liga",
+        "Regionalliga"
+      ]
+    },
+    {
+      "countryCode": "VEN",
+      "country": "Venezuela",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Primera Division",
+        "Campeonato Venezuelano",
+        "Campeonato Venezuelano",
+        "Campeonato Venezuelano"
+      ]
+    },
+    {
+      "countryCode": "ESP",
+      "country": "Espanha",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "LaLiga",
+        "LaLiga 2",
+        "Primera Federación",
+        "Segunda Federación"
+      ]
+    },
+    {
+      "countryCode": "ARG",
+      "country": "Argentina",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Liga Profesional de Fútbol",
+        "Primera Nacional ",
+        "Primera B",
+        "Primera C"
+      ]
+    },
+    {
+      "countryCode": "BRA",
+      "country": "Brasil",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Brasileirão",
+        "Serie A",
+        "Brasileirão",
+        "Serie B",
+        "Brasileirão",
+        "Serie C",
+        "Brasileirão",
+        "Serie D"
+      ]
+    },
+    {
+      "countryCode": "FRA",
+      "country": "França",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Ligue 1",
+        "Ligue 2",
+        "National 1",
+        "National 2"
+      ]
+    },
+    {
+      "countryCode": "ING",
+      "country": "Inglaterra",
+      "divisions": [
+        "Ljava/util/ArrayList;",
+        "Ljava/lang/String;",
+        "Premier League",
+        "Championship",
+        "League One",
+        "League Two"
+      ]
+    }
+  ]
+}

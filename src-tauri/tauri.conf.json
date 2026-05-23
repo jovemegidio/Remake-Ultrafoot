@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Ultrafoot 26",
+  "version": "1.0.0",
+  "identifier": "com.ultrafoot.remake",
+  "build": {
+    "frontendDist": "../out",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build:tauri"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "Ultrafoot 26",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1024,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "shadow": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": false
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": ["../public/**/*", "../data/**/*", "../music/**/*"],
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["PortugueseBR"],
+        "displayLanguageSelector": false
+      },
+      "wix": {
+        "language": "pt-BR"
+      }
+    },
+    "shortDescription": "Ultrafoot 26 - Football Manager",
+    "longDescription": "Ultrafoot 26 é um jogo de gerenciamento de futebol com times do mundo inteiro.",
+    "copyright": "Copyright © 2026 Ultrafoot"
+  }
+}

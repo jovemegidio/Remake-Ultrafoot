@@ -1,0 +1,385 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Slider } from "@/components/ui/slider"
+import { 
+  FileText, 
+  Calendar, 
+  DollarSign, 
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Sparkles
+} from "lucide-react"
+import { PlayerAvatar } from "@/components/player-avatar"
+import { cn } from "@/lib/utils"
+import { type Player, formatWeeksToDate, getContractStatus } from "@/lib/game-engine"
+
+interface ContractModalProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  player: Player | null
+  currentWeek: number
+  currentSeason: number
+  onRenew?: (playerId: number, salary: number, weeks: number) => void
+  teamBalance: number
+}
+
+export function ContractModal({
+  open,
+  onOpenChange,
+  player,
+  currentWeek,
+  currentSeason,
+  onRenew,
+  teamBalance,
+}: ContractModalProps) {
+  const [newSalary, setNewSalary] = useState(0)
+  const [contractLength, setContractLength] = useState(104) // 2 anos padrao
+  const [step, setStep] = useState<"view" | "negotiate" | "success">("view")
+  const [isNegotiating, setIsNegotiating] = useState(false)
+  const currentSalary = player?.contract?.salary || 0
+
+  // Reset state quando modal abre
+  useEffect(() => {
+    if (open && player?.contract) {
+      setNewSalary(player.contract.salary)
+      setContractLength(104)
+      setStep("view")
+    }
+  }, [open, player])
+
+  // Calcular demanda do jogador baseado no overall e moral
+  const playerDemand = useMemo(() => {
+    if (!player) return 0
+
+    const baseSalary = currentSalary
+    const overallFactor = player.overall / 75
+    const moraleFactor = player.morale === "Feliz" ? 0.9 : 
+                         player.morale === "Motivado" ? 0.95 :
+                         player.morale === "Normal" ? 1.0 :
+                         player.morale === "Insatisfeito" ? 1.15 : 1.3
+    const ageFactor = player.age < 25 ? 1.1 : player.age > 30 ? 0.85 : 1.0
+    
+    return Math.round(baseSalary * overallFactor * moraleFactor * ageFactor)
+  }, [player, currentSalary])
+
+  if (!player) return null
+
+  const contractStatus = getContractStatus(player, currentWeek)
+  const weeksRemaining = player.contract ? player.contract.endDate - currentWeek : 0
+
+  // Verificar se proposta e aceitavel
+  const isProposalAcceptable = newSalary >= playerDemand * 0.9
+
+  // Custo total do contrato
+  const totalCost = newSalary * contractLength
+
+  // Formatar salario
+  const formatSalary = (value: number) => {
+    if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}M`
+    return `R$ ${(value / 1000).toFixed(0)}K`
+  }
+
+  const handleNegotiate = () => {
+    if (!isProposalAcceptable) return
+    
+    setIsNegotiating(true)
+    
+    setTimeout(() => {
+      // Simular negociacao
+      const acceptChance = newSalary >= playerDemand ? 0.95 : 
+                          newSalary >= playerDemand * 0.95 ? 0.7 : 0.4
+      
+      if (Math.random() < acceptChance) {
+        onRenew?.(player.id, newSalary, contractLength)
+        setStep("success")
+      } else {
+        // Jogador rejeitou - aumentar demanda
+        setNewSalary(Math.round(playerDemand * 1.1))
+      }
+      setIsNegotiating(false)
+    }, 2000)
+  }
+
+  const handleClose = () => {
+    setStep("view")
+    onOpenChange(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-lg bg-[#141414] border-white/10">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Contrato
+          </DialogTitle>
+          <DialogDescription className="text-white/50">
+            {step === "view" ? "Detalhes do contrato de" : "Renovacao de contrato de"} {player.name}
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === "view" && (
+          <div className="space-y-6 py-4">
+            {/* Player Info */}
+            <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
+              <PlayerAvatar name={player.name} size="md" />
+              <div className="flex-1">
+                <div className="font-semibold text-white">{player.name}</div>
+                <div className="text-sm text-white/50">{player.position} - {player.age} anos</div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-yellow-500">{player.overall}</div>
+                <div className="text-xs text-white/50">Overall</div>
+              </div>
+            </div>
+
+            {/* Contract Status */}
+            <div className={cn(
+              "p-4 rounded-lg border",
+              contractStatus === "ok" ? "bg-green-500/10 border-green-500/30" :
+              contractStatus === "expiring" ? "bg-yellow-500/10 border-yellow-500/30" :
+              "bg-red-500/10 border-red-500/30"
+            )}>
+              <div className="flex items-center gap-2 mb-3">
+                {contractStatus === "ok" ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : contractStatus === "expiring" ? (
+                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                )}
+                <span className={cn(
+                  "font-semibold",
+                  contractStatus === "ok" ? "text-green-500" :
+                  contractStatus === "expiring" ? "text-yellow-500" : "text-red-500"
+                )}>
+                  {contractStatus === "ok" ? "Contrato Ativo" :
+                   contractStatus === "expiring" ? "Contrato Expirando" : "Sem Contrato"}
+                </span>
+              </div>
+
+              {player.contract && (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Salario semanal:</span>
+                    <span className="text-white font-semibold">{formatSalary(currentSalary)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Termino:</span>
+                    <span className="text-white">
+                      {formatWeeksToDate(player.contract.endDate, currentSeason)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/50">Tempo restante:</span>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-white/50" />
+                      <span className="text-white font-semibold">
+                        {weeksRemaining > 52 
+                          ? `${Math.floor(weeksRemaining / 52)} anos e ${weeksRemaining % 52} semanas`
+                          : `${weeksRemaining} semanas`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                  {player.contract.releaseClause && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50">Clausula de rescisao:</span>
+                      <span className="text-yellow-500 font-semibold">
+                        {formatSalary(player.contract.releaseClause)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Market Value */}
+            <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-white/50 uppercase tracking-wider">Valor de Mercado</div>
+                  <div className="text-xl font-bold text-[#1db954]">{formatSalary(player.marketValue)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-white/50 uppercase tracking-wider">Potencial</div>
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-4 w-4 text-[#1db954]" />
+                    <span className="text-xl font-bold text-[#1db954]">{player.potential}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === "negotiate" && (
+          <div className="space-y-6 py-4">
+            {/* Salary Slider */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-white/70">Novo Salario Semanal</span>
+                <span className="text-xl font-bold text-white">{formatSalary(newSalary)}</span>
+              </div>
+              <Slider
+                value={[newSalary]}
+                onValueChange={([value]) => setNewSalary(value)}
+                min={Math.round(currentSalary * 0.5)}
+                max={Math.round(currentSalary * 2)}
+                step={5000}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-white/40">
+                <span>{formatSalary(Math.round(currentSalary * 0.5))}</span>
+                <span className="text-yellow-500">Demanda: {formatSalary(playerDemand)}</span>
+                <span>{formatSalary(Math.round(currentSalary * 2))}</span>
+              </div>
+            </div>
+
+            {/* Contract Length */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-white/70">Duracao do Contrato</span>
+                <span className="text-xl font-bold text-white">
+                  {contractLength >= 52 
+                    ? `${Math.floor(contractLength / 52)} ${contractLength >= 104 ? 'anos' : 'ano'}`
+                    : `${contractLength} semanas`
+                  }
+                </span>
+              </div>
+              <Slider
+                value={[contractLength]}
+                onValueChange={([value]) => setContractLength(value)}
+                min={26}
+                max={260}
+                step={26}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-white/40">
+                <span>6 meses</span>
+                <span>5 anos</span>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className={cn(
+              "p-4 rounded-lg border",
+              isProposalAcceptable ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"
+            )}>
+              <div className="flex items-center gap-2 mb-3">
+                {isProposalAcceptable ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                )}
+                <span className={cn(
+                  "font-semibold text-sm",
+                  isProposalAcceptable ? "text-green-500" : "text-red-500"
+                )}>
+                  {isProposalAcceptable ? "Proposta Aceitavel" : "Proposta Muito Baixa"}
+                </span>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-white/50">Custo total:</span>
+                  <span className="text-white font-semibold">{formatSalary(totalCost)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/50">Aumento salarial:</span>
+                  <span className={cn(
+                    "font-semibold",
+                    newSalary > currentSalary ? "text-red-500" : "text-green-500"
+                  )}>
+                    {newSalary > currentSalary ? "+" : ""}{((newSalary - currentSalary) / currentSalary * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === "success" && (
+          <div className="py-12 text-center">
+            <div className="relative">
+              <div className="h-20 w-20 mx-auto rounded-full bg-[#1db954]/20 flex items-center justify-center mb-6">
+                <Sparkles className="h-10 w-10 text-[#1db954]" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Contrato Renovado!</h3>
+            <p className="text-white/50 mb-4">
+              {player.name} assinou um novo contrato de{" "}
+              {contractLength >= 52 
+                ? `${Math.floor(contractLength / 52)} ${contractLength >= 104 ? 'anos' : 'ano'}`
+                : `${contractLength} semanas`
+              }
+            </p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10">
+              <DollarSign className="h-4 w-4 text-[#1db954]" />
+              <span className="text-white font-semibold">{formatSalary(newSalary)}</span>
+              <span className="text-white/50">/semana</span>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          {step === "view" && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={handleClose} 
+                className="border-white/10 text-white/70"
+              >
+                Fechar
+              </Button>
+              <Button 
+                onClick={() => setStep("negotiate")}
+                className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+              >
+                Renovar Contrato
+              </Button>
+            </>
+          )}
+          {step === "negotiate" && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => setStep("view")} 
+                className="border-white/10 text-white/70"
+              >
+                Voltar
+              </Button>
+              <Button 
+                onClick={handleNegotiate}
+                disabled={!isProposalAcceptable || isNegotiating}
+                className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-50"
+              >
+                {isNegotiating ? "Negociando..." : "Enviar Proposta"}
+              </Button>
+            </>
+          )}
+          {step === "success" && (
+            <Button 
+              onClick={handleClose}
+              className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+            >
+              Concluir
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
