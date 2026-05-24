@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Settings,
@@ -83,6 +84,27 @@ export default function ConfiguracoesPage() {
 
   const [currentView, setCurrentView] = useState<ViewType>("menu")
   const [selectedCardIndex, setSelectedCardIndex] = useState(0)
+
+  // Gamepad support
+  const router = useRouter()
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (!btn) return
+      if (currentView !== 'menu') {
+        if (btn === 'B') setCurrentView('menu')
+        return
+      }
+      if (btn === 'DPAD_RIGHT') setSelectedCardIndex(prev => Math.min(prev + 1, menuCards.length - 1))
+      else if (btn === 'DPAD_LEFT') setSelectedCardIndex(prev => Math.max(prev - 1, 0))
+      else if (btn === 'DPAD_DOWN') setSelectedCardIndex(prev => Math.min(prev + 3, menuCards.length - 1))
+      else if (btn === 'DPAD_UP') setSelectedCardIndex(prev => Math.max(prev - 3, 0))
+      else if (btn === 'A') setCurrentView(menuCards[selectedCardIndex].id)
+      else if (btn === 'B') router.back()
+    }
+    window.addEventListener('gamepad:button', handler)
+    return () => window.removeEventListener('gamepad:button', handler)
+  }, [currentView, selectedCardIndex, router])
   const [musicVolume, setMusicVolume] = useState([70])
   const [sfxVolume, setSfxVolume] = useState([80])
   const [autoSave, setAutoSave] = useState(true)
@@ -309,20 +331,20 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
-                Notificacoes e Sistema
+                {t.settings.notificationsSystem}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                   <div>
-                    <div className="text-sm text-white">Auto-save</div>
-                    <div className="text-xs text-white/40">Salvar automaticamente</div>
+                    <div className="text-sm text-white">{t.settings.autoSave}</div>
+                    <div className="text-xs text-white/40">{t.settings.autoSaveDesc}</div>
                   </div>
                   <Switch checked={autoSave} onCheckedChange={setAutoSave} />
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                   <div>
-                    <div className="text-sm text-white">Notificacoes</div>
-                    <div className="text-xs text-white/40">Alertas do jogo</div>
+                    <div className="text-sm text-white">{t.settings.notifications}</div>
+                    <div className="text-xs text-white/40">{t.settings.notificationsDesc}</div>
                   </div>
                   <Switch checked={notifications} onCheckedChange={setNotifications} />
                 </div>
@@ -337,7 +359,7 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" />
-                Informacoes do Tecnico
+                {t.settings.managerInfo}
               </h3>
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
@@ -350,11 +372,11 @@ export default function ConfiguracoesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 rounded-lg bg-white/5">
-                  <div className="text-xs text-white/40">Temporada</div>
+                  <div className="text-xs text-white/40">{t.settings.seasonLabel}</div>
                   <div className="text-lg font-bold text-white">{state.season}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
-                  <div className="text-xs text-white/40">Semana</div>
+                  <div className="text-xs text-white/40">{t.settings.weekLabel}</div>
                   <div className="text-lg font-bold text-white">{state.week}/38</div>
                 </div>
               </div>
@@ -363,7 +385,7 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
-                Idioma
+                {t.settings.language}
               </h3>
               <div className="grid grid-cols-1 gap-2">
                 {languageOptions.map((lang) => (
@@ -391,19 +413,23 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
-                Velocidade de Partida
+                {t.settings.matchSpeed}
               </h3>
               <div className="grid grid-cols-3 gap-2">
-                {["lento", "normal", "rapido"].map((speed) => (
+                {([
+                  { value: "lento", label: t.settings.slow },
+                  { value: "normal", label: t.settings.normal },
+                  { value: "rapido", label: t.settings.fast },
+                ]).map(({ value, label }) => (
                   <button
-                    key={speed}
-                    onClick={() => setMatchSpeed(speed)}
+                    key={value}
+                    onClick={() => setMatchSpeed(value)}
                     className={cn(
                       "p-3 rounded-lg border text-sm font-medium transition-all capitalize",
-                      matchSpeed === speed ? "border-primary bg-primary/10 text-white" : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
+                      matchSpeed === value ? "border-primary bg-primary/10 text-white" : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
                     )}
                   >
-                    {speed}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -417,19 +443,19 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Volume2 className="h-4 w-4 text-primary" />
-                Volume da Musica
+                {t.settings.musicVolume}
               </h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/60">Musica</span>
+                    <span className="text-sm text-white/60">{t.settings.musicLabel}</span>
                     <span className="text-sm text-white">{musicVolume[0]}%</span>
                   </div>
                   <Slider value={musicVolume} onValueChange={setMusicVolume} max={100} />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/60">Efeitos Sonoros</span>
+                    <span className="text-sm text-white/60">{t.settings.soundEffects}</span>
                     <span className="text-sm text-white">{sfxVolume[0]}%</span>
                   </div>
                   <Slider value={sfxVolume} onValueChange={setSfxVolume} max={100} />
@@ -438,8 +464,8 @@ export default function ConfiguracoesPage() {
             </div>
             
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6">
-              <h3 className="text-sm font-medium text-white mb-4">Player de Musica</h3>
-              <p className="text-xs text-white/50 mb-4">O player de musica esta disponivel na parte inferior da tela.</p>
+              <h3 className="text-sm font-medium text-white mb-4">{t.settings.musicPlayer}</h3>
+              <p className="text-xs text-white/50 mb-4">{t.settings.musicPlayerDesc}</p>
               <MusicPlayer defaultSize="compact" autoPlay={false} offsetLeft={0} />
             </div>
           </div>
@@ -451,27 +477,27 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
-                Configuracoes Online
+                {t.settings.onlineConfig}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                   <div>
-                    <div className="text-sm text-white">Modo Online</div>
-                    <div className="text-xs text-white/40">Conectar a servidores</div>
+                    <div className="text-sm text-white">{t.settings.onlineMode}</div>
+                    <div className="text-xs text-white/40">{t.settings.onlineModeDesc}</div>
                   </div>
                   <Switch />
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                   <div>
-                    <div className="text-sm text-white">Atualizacoes Automaticas</div>
-                    <div className="text-xs text-white/40">Baixar elencos atualizados</div>
+                    <div className="text-sm text-white">{t.settings.autoUpdates}</div>
+                    <div className="text-xs text-white/40">{t.settings.autoUpdatesDesc}</div>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                   <div>
-                    <div className="text-sm text-white">Partidas Online</div>
-                    <div className="text-xs text-white/40">Jogar contra outros usuarios</div>
+                    <div className="text-sm text-white">{t.settings.onlineMatches}</div>
+                    <div className="text-xs text-white/40">{t.settings.onlineMatchesDesc}</div>
                   </div>
                   <Switch />
                 </div>
@@ -486,11 +512,11 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Grid2X2 className="h-4 w-4 text-primary" />
-                Escalacoes Salvas
+                {t.settings.savedLineups}
               </h3>
-              <p className="text-sm text-white/50">Gerencie suas escalacoes personalizadas para diferentes situacoes de jogo.</p>
+              <p className="text-sm text-white/50">{t.settings.savedLineupsDesc}</p>
               <div className="grid gap-3">
-                {["Escalacao Principal", "Rotacao", "Jovens"].map((name, i) => (
+                {[t.settings.mainLineup, t.settings.rotation, t.settings.youth].map((name, i) => (
                   <div key={name} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -507,7 +533,7 @@ export default function ConfiguracoesPage() {
               </div>
               <Button variant="outline" size="sm" className="w-full border-dashed border-white/20 text-white/60 hover:text-white hover:bg-white/5">
                 <Plus className="h-4 w-4 mr-2" />
-                Nova Escalacao
+                {t.settings.newLineup}
               </Button>
             </div>
           </div>
@@ -519,17 +545,17 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <UserPlus className="h-4 w-4 text-primary" />
-                Criar Novo Atleta
+                {t.settings.createNewPlayer}
               </h3>
-              <p className="text-sm text-white/50">Crie jogadores personalizados para adicionar ao seu elenco.</p>
+              <p className="text-sm text-white/50">{t.settings.createNewPlayerDesc}</p>
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-white/60 mb-1 block">Nome do Jogador</label>
-                  <Input placeholder="Digite o nome..." className="bg-white/5 border-white/10 text-white" />
+                  <label className="text-xs text-white/60 mb-1 block">{t.settings.playerName}</label>
+                  <Input placeholder={t.settings.playerNamePlaceholder} className="bg-white/5 border-white/10 text-white" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-white/60 mb-1 block">Posicao</label>
+                    <label className="text-xs text-white/60 mb-1 block">{t.settings.positionLabel}</label>
                     <select className="w-full h-9 rounded-md bg-white/5 border border-white/10 text-white text-sm px-3">
                       <option value="ATA">Atacante</option>
                       <option value="MEI">Meia</option>
@@ -539,18 +565,18 @@ export default function ConfiguracoesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-white/60 mb-1 block">Idade</label>
+                    <label className="text-xs text-white/60 mb-1 block">{t.settings.ageLabel}</label>
                     <Input type="number" placeholder="18" min={16} max={45} className="bg-white/5 border-white/10 text-white" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-white/60 mb-1 block">Overall</label>
+                  <label className="text-xs text-white/60 mb-1 block">{t.settings.overallLabel}</label>
                   <Slider defaultValue={[70]} max={99} min={40} />
                 </div>
               </div>
               <Button className="w-full bg-primary hover:bg-primary/90">
                 <Plus className="h-4 w-4 mr-2" />
-                Criar Atleta
+                {t.settings.createPlayerBtn}
               </Button>
             </div>
           </div>
@@ -563,7 +589,7 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
-                Patrocinadores Oficiais
+                {t.settings.officialSponsors}
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 {[1, 2, 3].map((i) => (
@@ -575,14 +601,14 @@ export default function ConfiguracoesPage() {
                       <Plus className="h-5 w-5 text-white/30" />
                     </div>
                     <span className="text-[10px] text-white/30 text-center leading-tight">
-                      Slot {i}<br />disponivel
+                      Slot {i}<br />{t.settings.slotAvailable}
                     </span>
                   </div>
                 ))}
               </div>
               <div className="flex items-center justify-center gap-1.5 text-xs text-white/40 pt-1">
                 <ExternalLink className="h-3 w-3" />
-                <span>Interessado em patrocinar? Entre em contato com a equipe.</span>
+                <span>{t.settings.sponsorContact}</span>
               </div>
             </div>
 
@@ -590,7 +616,7 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
-                Apoiadores do Projeto
+                {t.settings.supporters}
               </h3>
               <div className="space-y-3">
                 {[
@@ -605,7 +631,7 @@ export default function ConfiguracoesPage() {
                     >
                       <div className="h-2 w-2 rounded-full" style={{ backgroundColor: level.color }} />
                       <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: level.color }}>
-                        Nivel {level.tier}
+                        {t.settings.levelLabel} {level.tier}
                       </span>
                     </div>
                     <div className="px-4 py-3">
@@ -617,7 +643,7 @@ export default function ConfiguracoesPage() {
                         </div>
                       ) : (
                         <p className="text-xs text-white/25 italic">
-                          Nenhum apoiador ainda — seja o primeiro!
+                          {t.settings.noSupporter}
                         </p>
                       )}
                     </div>
@@ -630,7 +656,7 @@ export default function ConfiguracoesPage() {
             <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
-                Equipe de Desenvolvimento
+                {t.settings.devTeam}
               </h3>
               <div className="space-y-2">
                 {[
@@ -646,7 +672,7 @@ export default function ConfiguracoesPage() {
                 ))}
               </div>
               <div className="pt-2 border-t border-white/5 text-center">
-                <p className="text-[10px] text-white/25">Ultrafoot {"©"} 2025 {"—"} Todos os direitos reservados</p>
+                <p className="text-[10px] text-white/25">{t.settings.copyright}</p>
               </div>
             </div>
           </div>
@@ -951,7 +977,7 @@ export default function ConfiguracoesPage() {
       default:
         return (
           <div className="flex items-center justify-center h-64">
-            <p className="text-white/50">Em desenvolvimento...</p>
+            <p className="text-white/50">{t.common.inDevelopment}</p>
           </div>
         )
     }
@@ -969,20 +995,20 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={() => setCurrentView("menu")} className="text-white/60 hover:text-white">
                 <ChevronLeft className="h-4 w-4 mr-1" />
-                Voltar
+                {t.common.back}
               </Button>
               <h1 className="text-xl font-semibold text-white capitalize">
-                {menuCards.find(c => c.id === currentView)?.title.replace("\n", " ") || "Configuracoes"}
+                {(cardTitles[currentView] ?? menuCards.find(c => c.id === currentView)?.title ?? t.settings.cards.settings).replace("\n", " ")}
               </h1>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleRestoreDefaults} className="text-xs bg-transparent border-white/10 text-white/70 hover:bg-white/5">
                 <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                Restaurar
+                {t.common.restore}
               </Button>
               <Button size="sm" onClick={handleSaveSettings} disabled={saving} className={cn("text-xs transition-all", saved ? "bg-[#1db954]/20 text-[#1db954]" : "bg-[#1db954] text-black hover:bg-[#1ed760]")}>
                 {saving ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="mr-2 h-3.5 w-3.5" /> : <Save className="mr-2 h-3.5 w-3.5" />}
-                {saved ? "Salvo!" : "Salvar"}
+                {saved ? t.common.saved : t.common.save}
               </Button>
             </div>
           </div>

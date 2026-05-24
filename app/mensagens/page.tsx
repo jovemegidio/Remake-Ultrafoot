@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import {
   Mail,
   MailOpen,
@@ -123,6 +124,17 @@ const initialMessages: Message[] = [
 ]
 
 export default function MensagensPage() {
+  const router = useRouter()
+
+  // Gamepad support
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === 'B') router.back()
+    }
+    window.addEventListener('gamepad:button', handler)
+    return () => window.removeEventListener('gamepad:button', handler)
+  }, [router])
   const [filter, setFilter] = useState("all")
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(messages[0])

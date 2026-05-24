@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   Heart, 
@@ -81,6 +82,17 @@ const playerHierarchy = [
 ]
 
 export default function CentralPage() {
+  const router = useRouter()
+
+  // Gamepad support
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === 'B') router.back()
+    }
+    window.addEventListener('gamepad:button', handler)
+    return () => window.removeEventListener('gamepad:button', handler)
+  }, [router])
   const { state } = useGameState()
   const { team: userTeam } = useUserTeam()
   const [activeTab, setActiveTab] = useState<TabType>("vestiario")

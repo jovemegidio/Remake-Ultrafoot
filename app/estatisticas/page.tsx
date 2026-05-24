@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
   Trophy,
   Target,
@@ -17,10 +17,11 @@ import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { getTeamByShort, type Team } from "@/lib/teams-data"
+import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
-import { useGameManager } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
 // Mock data para artilharia
@@ -93,7 +94,21 @@ export default function EstatisticasPage() {
   const { team: userTeam } = useUserTeam()
   const { squadPlayers, matchResults, currentSeason } = useGameEngine()
   const { standings } = useGameManager()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("artilharia")
+  const estatTabsOrder = ["artilharia", "assistencias", "cartoes", "elenco"]
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (!btn) return
+      if (btn === "B") { router.back(); return }
+      if (btn === "LB") setActiveTab(t => estatTabsOrder[Math.max(0, estatTabsOrder.indexOf(t) - 1)])
+      if (btn === "RB") setActiveTab(t => estatTabsOrder[Math.min(estatTabsOrder.length - 1, estatTabsOrder.indexOf(t) + 1)])
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router, activeTab])
 
   // Calcula estatisticas do elenco baseado nos dados do game engine
   const userSquadStatsLive = useMemo(() => {
@@ -165,7 +180,7 @@ export default function EstatisticasPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white tracking-tight">Estatisticas</h1>
-            <p className="text-sm text-white/50 mt-1">Temporada 2026 - Brasileirao Serie A</p>
+            <p className="text-sm text-white/50 mt-1">Temporada {currentSeason} - {getLeagueName(userTeam.curto)}</p>
           </div>
         </div>
 

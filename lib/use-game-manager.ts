@@ -3,14 +3,52 @@
 
 "use client"
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useRef } from "react"
 import { useGameState } from "@/lib/save-system"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { serieATeams, getTeamByShort, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getTeamByShort, type Team } from "@/lib/teams-data"
 import { getPlayersByTeam } from "@/lib/players-data"
 
-// Calendario base do Brasileirao - 38 rodadas
-const SEASON_END_WEEK = 38
+const LEAGUE_NAMES: Record<string, string> = {
+  serie_a: "Brasileirao Serie A",
+  serie_b: "Brasileirao Serie B",
+  serie_c: "Brasileirao Serie C",
+  serie_d: "Brasileirao Serie D",
+  premier_league: "Premier League",
+  la_liga: "La Liga",
+  serie_a_ita: "Serie A",
+  bundesliga: "Bundesliga",
+  ligue_1: "Ligue 1",
+  saudi_pro: "Saudi Pro League",
+  mls: "Major League Soccer",
+  liga_mx: "Liga MX",
+  primeira_liga: "Primeira Liga",
+  j_league: "J-League",
+  paulistao: "Campeonato Paulista",
+  carioca: "Campeonato Carioca",
+  mineiro: "Campeonato Mineiro",
+  gaucho: "Campeonato Gaucho",
+}
+
+function getUserLeagueTeams(teamShort: string): Team[] {
+  const userTeam = getTeamByShort(teamShort)
+  if (!userTeam) return []
+  const divisionTeams = getTeamsByDivision(userTeam.divisao)
+  // Garante que o time do usuario esta na lista
+  const hasUser = divisionTeams.some(t => t.curto === teamShort)
+  if (!hasUser) return [userTeam, ...divisionTeams.slice(0, 19)]
+  return divisionTeams
+}
+
+export function getLeagueName(teamShort: string): string {
+  const userTeam = getTeamByShort(teamShort)
+  if (!userTeam) return "Liga"
+  return LEAGUE_NAMES[userTeam.divisao] ?? "Liga"
+}
+
+export function getDivisionLeagueTeams(teamShort: string): Team[] {
+  return getUserLeagueTeams(teamShort)
+}
 
 export interface Fixture {
   id: number
@@ -32,14 +70,14 @@ export interface SeasonCalendar {
   previousUserMatch: Fixture | null
 }
 
-// Gera confrontos do Brasileirao (todos contra todos, turno e returno)
-function generateBrasileirao(teams: Team[], userTeamShort: string): Fixture[] {
+// Gera confrontos da liga (todos contra todos, turno e returno) — dinamico por qtd de times
+function generateBrasileirao(teams: Team[], userTeamShort: string, competition: string): Fixture[] {
   const fixtures: Fixture[] = []
   let fixtureId = 1
-  
+  const halfSeason = teams.length - 1
+
   // Primeira fase - turno
-  for (let round = 1; round <= 19; round++) {
-    // Algoritmo de circulo para gerar confrontos
+  for (let round = 1; round <= halfSeason; round++) {
     const matchups = generateRoundMatchups(teams, round)
     matchups.forEach(([home, away]) => {
       fixtures.push({
@@ -48,16 +86,16 @@ function generateBrasileirao(teams: Team[], userTeamShort: string): Fixture[] {
         week: round,
         homeTeam: home,
         awayTeam: away,
-        competition: "Brasileirao Serie A",
+        competition,
         played: false,
         isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort
       })
     })
   }
-  
+
   // Segunda fase - returno (inverte mando)
-  for (let round = 20; round <= 38; round++) {
-    const turnoRound = round - 19
+  for (let round = halfSeason + 1; round <= halfSeason * 2; round++) {
+    const turnoRound = round - halfSeason
     const turnoFixtures = fixtures.filter(f => f.round === turnoRound)
     turnoFixtures.forEach(f => {
       fixtures.push({
@@ -66,45 +104,48 @@ function generateBrasileirao(teams: Team[], userTeamShort: string): Fixture[] {
         week: round,
         homeTeam: f.awayTeam,
         awayTeam: f.homeTeam,
-        competition: "Brasileirao Serie A",
+        competition,
         played: false,
         isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort
       })
     })
   }
-  
+
   return fixtures
 }
 
 // Algoritmo de circulo para gerar confrontos de uma rodada
+// Suporta numero impar de times adicionando um "bye" virtual como ultimo time
 function generateRoundMatchups(teams: Team[], round: number): [Team, Team][] {
-  const n = teams.length
   const matchups: [Team, Team][] = []
-  
-  // Cria array rotativo (primeiro time fica fixo)
-  const fixed = teams[0]
-  const rotating = teams.slice(1)
-  
-  // Rotaciona para a rodada correta
+
+  // Se impar, adiciona um time fantasma (bye) para completar o par
+  const list: (Team | null)[] = teams.length % 2 === 0 ? [...teams] : [...teams, null]
+  const n = list.length
+
+  // Time fixo = list[0]; restante rotaciona
+  const fixed = list[0]
+  const rotating = list.slice(1)
+
   const rotated = [...rotating]
   for (let i = 1; i < round; i++) {
     const last = rotated.pop()!
     rotated.unshift(last)
   }
-  
-  // Gera confrontos
+
   const allTeams = [fixed, ...rotated]
   for (let i = 0; i < n / 2; i++) {
     const home = allTeams[i]
     const away = allTeams[n - 1 - i]
-    // Alterna mando de campo por rodada
+    // Ignora partidas envolvendo o time fantasma (bye)
+    if (!home || !away) continue
     if (round % 2 === 0) {
-      matchups.push([away, home])
+      matchups.push([away as Team, home as Team])
     } else {
-      matchups.push([home, away])
+      matchups.push([home as Team, away as Team])
     }
   }
-  
+
   return matchups
 }
 
@@ -184,11 +225,16 @@ function initializeStandings(teams: Team[]): StandingsEntry[] {
 export function useGameManager() {
   const { state: saveState, setState: setSaveState, hydrated } = useGameState()
   const gameEngine = useGameEngine()
-  
+
+  // Refs always pointing at latest values — prevents stale closures in callbacks called in loops
+  const saveStateRef = useRef(saveState)
+  saveStateRef.current = saveState
+  const seasonCalendarRef = useRef<SeasonCalendar>({ fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null })
+
   // Inicializa o jogo quando o usuario seleciona um time
   const initializeNewGame = useCallback((teamShort: string, managerName?: string) => {
-    // Inicializa classificacao da Serie A
-    const standings = initializeStandings(serieATeams)
+    const leagueTeams = getUserLeagueTeams(teamShort)
+    const standings = initializeStandings(leagueTeams)
 
     // Inicializa no game engine (carrega elenco do seed para o time)
     gameEngine.initializeGame(teamShort)
@@ -210,7 +256,7 @@ export function useGameManager() {
     })
   }, [gameEngine, setSaveState])
   
-  // Calendario da temporada
+  // Calendario da temporada — ref is updated after useMemo so advanceWeek loop calls see latest fixtures
   const seasonCalendar = useMemo((): SeasonCalendar => {
     if (!saveState.selectedTeamShort) {
       return { fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null }
@@ -218,9 +264,10 @@ export function useGameManager() {
     
     const userTeamShort = saveState.selectedTeamShort
     const currentWeek = saveState.week
-    
-    // Gera todos os confrontos
-    const fixtures = generateBrasileirao(serieATeams, userTeamShort)
+
+    const leagueTeams = getUserLeagueTeams(userTeamShort)
+    const competition = getLeagueName(userTeamShort)
+    const fixtures = generateBrasileirao(leagueTeams, userTeamShort, competition)
     
     // Marca partidas ja jogadas
     fixtures.forEach(f => {
@@ -255,65 +302,98 @@ export function useGameManager() {
       ? playedUserMatches[playedUserMatches.length - 1] 
       : null
     
-    return { fixtures, currentRound, nextUserMatch, previousUserMatch }
+    const result = { fixtures, currentRound, nextUserMatch, previousUserMatch }
+    seasonCalendarRef.current = result
+    return result
   }, [saveState.selectedTeamShort, saveState.week, gameEngine.matchResults])
   
   // Avanca uma semana/rodada
+  // Uses refs so sequential calls within a loop always read the latest week (fixes stale closure bug)
   const advanceWeek = useCallback(async () => {
-    const currentWeek = saveState.week
+    const currentState = saveStateRef.current
+    const currentWeek = currentState.week
     const newWeek = currentWeek + 1
-    
-    // Verifica fim de temporada
-    if (newWeek > SEASON_END_WEEK) {
-      // Salva classificacao antes de resetar
+
+    // Verifica fim de temporada — total de rodadas depende do tamanho da liga
+    const userShort = currentState.selectedTeamShort ?? ""
+    const leagueTeamsForEnd = getUserLeagueTeams(userShort)
+    const seasonEndWeek = (leagueTeamsForEnd.length - 1) * 2
+
+    if (newWeek > seasonEndWeek) {
       const currentStandings = useGameEngine.getState().serieAStandings
+      const nextSeason = currentState.season + 1
 
-      // Nova temporada
-      setSaveState({
-        week: 0,
-        season: saveState.season + 1
-      })
-
-      // Reseta classificacao
-      const newStandings = initializeStandings(serieATeams)
+      const teamsForReset = getUserLeagueTeams(userShort)
+      const newStandings = initializeStandings(teamsForReset)
       useGameEngine.setState({
         serieAStandings: newStandings,
         lastSeasonStandings: currentStandings,
         currentWeek: 0,
-        currentSeason: saveState.season + 1,
+        currentSeason: nextSeason,
         matchResults: []
       })
 
+      saveStateRef.current = { ...currentState, week: 0, season: nextSeason }
+      setSaveState({ week: 0, season: nextSeason })
+
       return { newSeason: true }
     }
-    
+
     // Simula partidas de outros times desta rodada
-    const roundFixtures = seasonCalendar.fixtures.filter(
+    const roundFixtures = seasonCalendarRef.current.fixtures.filter(
       f => f.week === newWeek && !f.isUserMatch
     )
-    
+
     for (const fixture of roundFixtures) {
       const result = simulateMatchResult(
-        fixture.homeTeam, 
-        fixture.awayTeam, 
-        newWeek, 
-        saveState.season
+        fixture.homeTeam,
+        fixture.awayTeam,
+        newWeek,
+        currentState.season
       )
       gameEngine.updateStandings(result)
     }
-    
+
     // Avanca game engine
     gameEngine.advanceWeek()
-    
-    // Atualiza save state
+
+    // Update ref immediately so the next loop iteration sees the incremented week
+    saveStateRef.current = { ...currentState, week: newWeek }
     setSaveState({ week: newWeek })
-    
-    return { 
-      newSeason: false, 
-      simulatedMatches: roundFixtures.length,
-      nextUserMatch: seasonCalendar.nextUserMatch
+
+    // Detecta campeao da liga apenas ao final da ultima rodada
+    let leagueChampion: { competition: string; season: string; stats: { won: number; drawn: number; lost: number; goalsFor: number } } | null = null
+    if (newWeek === seasonEndWeek) {
+      const finalStandings = useGameEngine.getState().serieAStandings
+      const sorted = [...finalStandings].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points
+        const sgA = a.goalsFor - a.goalsAgainst
+        const sgB = b.goalsFor - b.goalsAgainst
+        if (sgB !== sgA) return sgB - sgA
+        return b.goalsFor - a.goalsFor
+      })
+      const userEntry = finalStandings.find(s => s.teamShort === userShort)
+      if (sorted[0]?.teamShort === userShort && userEntry) {
+        leagueChampion = {
+          competition: getLeagueName(userShort),
+          season: `${currentState.season}/${String(currentState.season + 1).slice(-2)}`,
+          stats: {
+            won: userEntry.won,
+            drawn: userEntry.drawn,
+            lost: userEntry.lost,
+            goalsFor: userEntry.goalsFor,
+          },
+        }
+      }
     }
-  }, [saveState, setSaveState, gameEngine, seasonCalendar])
+
+    return {
+      newSeason: false,
+      simulatedMatches: roundFixtures.length,
+      nextUserMatch: seasonCalendarRef.current.nextUserMatch,
+      leagueChampion,
+    }
+  }, [setSaveState, gameEngine])
   
   // Registra resultado da partida do usuario
   // week+1 porque saveState.week é a rodada anterior — o usuario acabou de jogar a rodada atual (week+1)
@@ -324,10 +404,21 @@ export function useGameManager() {
     awayScore: number,
     events: MatchEvent[]
   ) => {
+    const currentState = saveStateRef.current
+    const targetWeek = currentState.week + 1
+
+    // Guard: evita duplo registro da mesma rodada (ex: quick-sim + ao-vivo)
+    const alreadyRegistered = useGameEngine.getState().matchResults.some(
+      r => r.week === targetWeek && r.season === currentState.season &&
+           ((r.homeTeam === homeTeam && r.awayTeam === awayTeam) ||
+            (r.homeTeam === awayTeam && r.awayTeam === homeTeam))
+    )
+    if (alreadyRegistered) return
+
     const result: MatchResult = {
-      week: saveState.week + 1,
-      season: saveState.season,
-      competition: "Brasileirao Serie A",
+      week: targetWeek,
+      season: currentState.season,
+      competition: getLeagueName(currentState.selectedTeamShort ?? ""),
       homeTeam,
       awayTeam,
       homeScore,
@@ -336,7 +427,7 @@ export function useGameManager() {
     }
 
     gameEngine.updateStandings(result)
-  }, [saveState.week, saveState.season, gameEngine])
+  }, [gameEngine])
   
   // Classificacao atual ordenada
   const standings = useMemo(() => {

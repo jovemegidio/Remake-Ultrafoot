@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ChevronLeft,
@@ -31,6 +31,8 @@ import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
+import { useRouter } from "next/navigation"
+import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
 // Descricoes de mentalidade
 const MENTALITY_INFO: Record<string, { label: string; desc: string; color: string }> = {
@@ -123,6 +125,7 @@ type TabType = "mentalidade" | "comBola" | "semBola" | "instrucoes" | "adversari
 export default function TaticasPage() {
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  useDiscordActivity("Configurando táticas", userTeam.nome)
   const gameEngine = useGameEngine()
   
   const [activeTab, setActiveTab] = useState<TabType>("mentalidade")
@@ -153,6 +156,38 @@ export default function TaticasPage() {
     if (!selectedPlayerId) return null
     return playerInstructions[selectedPlayerId] || null
   }, [selectedPlayerId, playerInstructions])
+
+  const router = useRouter()
+  const tabOrder: TabType[] = ["mentalidade", "comBola", "semBola", "instrucoes", "adversario"]
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (!btn) return
+      if (btn === "B") { router.back(); return }
+      if (btn === "A") { handleSaveTactics(); return }
+      if (btn === "LB") {
+        setActiveTab(prev => tabOrder[Math.max(0, tabOrder.indexOf(prev) - 1)])
+      } else if (btn === "RB") {
+        setActiveTab(prev => tabOrder[Math.min(tabOrder.length - 1, tabOrder.indexOf(prev) + 1)])
+      }
+      if (activeTab === "instrucoes") {
+        if (btn === "DPAD_DOWN") {
+          setSelectedPlayerId(prev => {
+            const idx = squadPlayers.findIndex(p => p.id === prev)
+            return squadPlayers[Math.min(squadPlayers.length - 1, idx + 1)]?.id ?? prev
+          })
+        } else if (btn === "DPAD_UP") {
+          setSelectedPlayerId(prev => {
+            const idx = squadPlayers.findIndex(p => p.id === prev)
+            return squadPlayers[Math.max(0, idx - 1)]?.id ?? prev
+          })
+        }
+      }
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router, activeTab, squadPlayers])
 
   return (
     <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">

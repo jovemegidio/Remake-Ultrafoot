@@ -131,6 +131,9 @@ export interface Player {
   loanEndWeek?: number
   loanSalaryReduction?: number
   parentClub?: string
+
+  // Escalacao manual (true = titular, false = reserva)
+  isStarter?: boolean
 }
 
 export interface Scout {
@@ -1289,6 +1292,7 @@ interface GameEngineState {
   generateAIOffers: () => void
   respondToOffer: (offerId: number, accept: boolean) => void
   trainPlayer: (playerId: number, attribute: string) => void
+  setStarter: (playerId: number, isStarter: boolean) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   sellPlayer: (playerId: number) => void
   buyPlayer: (player: Player, fee: number) => void
@@ -1773,8 +1777,8 @@ export const useGameEngine = create<GameEngineState>()(
             const energyGain = player.training.currentFocus ? 5 : 10
             const newEnergy = Math.min(100, player.energy + energyGain)
             
-            // Processar treinamento
-            if (player.training.currentFocus && player.training.lastTrainingWeek === s.currentWeek) {
+            // Processar treinamento (lastTrainingWeek check removed — would never match since currentWeek already advanced)
+            if (player.training.currentFocus) {
               const weeksTrained = player.training.weeksTrained + 1
               
               // A cada 4 semanas, chance de melhoria
@@ -1922,18 +1926,26 @@ export const useGameEngine = create<GameEngineState>()(
       
       trainPlayer: (playerId, attribute) => {
         set((s) => ({
-          squadPlayers: s.squadPlayers.map(p => 
-            p.id === playerId 
-              ? { 
-                  ...p, 
-                  training: { 
-                    currentFocus: attribute, 
-                    weeksTrained: 0, 
-                    lastTrainingWeek: s.currentWeek 
+          squadPlayers: s.squadPlayers.map(p =>
+            p.id === playerId
+              ? {
+                  ...p,
+                  training: {
+                    currentFocus: attribute,
+                    weeksTrained: 0,
+                    lastTrainingWeek: s.currentWeek
                   },
                   energy: Math.max(0, p.energy - 10)
                 }
               : p
+          )
+        }))
+      },
+
+      setStarter: (playerId, isStarter) => {
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p =>
+            p.id === playerId ? { ...p, isStarter } : p
           )
         }))
       },
@@ -2409,8 +2421,15 @@ export const useGameEngine = create<GameEngineState>()(
               joinedClubWeek: 0,
               joinedClubSeason: 2026,
               isLoanedIn: false,
+              isStarter: false,
             }
           })
+
+          // Marca os 11 melhores (por posição) como titulares padrão
+          const posOrder: Record<string, number> = { GOL: 0, LD: 1, ZAG: 2, LE: 3, VOL: 4, MEI: 5, PD: 6, PE: 7, ATA: 8 }
+          const sorted = [...seedPlayers].sort((a, b) => (posOrder[a.position] ?? 9) - (posOrder[b.position] ?? 9))
+          const starterIds = new Set(sorted.slice(0, 11).map(p => p.id))
+          seedPlayers = seedPlayers.map(p => ({ ...p, isStarter: starterIds.has(p.id) }))
         }
 
         set({

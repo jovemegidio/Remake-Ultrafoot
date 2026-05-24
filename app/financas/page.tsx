@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   Wallet,
   TrendingUp,
@@ -29,59 +30,74 @@ import { formatCurrency } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
+import { useDiscordActivity } from "@/hooks/use-discord-rpc"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-// Premiacoes por posicao no Brasileirao
+// Premiacoes por posicao no Brasileirao 2026 (total ~R$435M distribuidos)
 const PRIZE_MONEY = {
-  champion: 48000000, // Campeao
-  second: 44800000,
-  third: 41600000,
-  fourth: 38400000,
-  fifth: 35200000,
-  sixth: 32000000,
-  seventh: 28800000,
-  eighth: 25600000,
-  ninth: 22400000,
-  tenth: 19200000,
-  eleventh: 16000000,
-  twelfth: 14400000,
-  thirteenth: 12800000,
-  fourteenth: 11200000,
-  fifteenth: 9600000,
-  sixteenth: 8000000,
+  champion: 77000000,   // R$77M - Campeao
+  second: 60000000,     // R$60M
+  third: 50000000,      // R$50M
+  fourth: 43000000,     // R$43M - G4 / Libertadores
+  fifth: 36000000,      // R$36M
+  sixth: 31000000,      // R$31M
+  seventh: 26000000,    // R$26M
+  eighth: 22000000,     // R$22M
+  ninth: 17000000,      // R$17M
+  tenth: 13500000,      // R$13.5M
+  eleventh: 11000000,   // R$11M
+  twelfth: 9000000,     // R$9M
+  thirteenth: 7500000,  // R$7.5M
+  fourteenth: 6000000,  // R$6M
+  fifteenth: 5000000,   // R$5M
+  sixteenth: 4000000,   // R$4M
   // Rebaixados
-  seventeenth: 6400000,
-  eighteenth: 4800000,
-  nineteenth: 3200000,
-  twentieth: 1600000,
+  seventeenth: 3500000, // R$3.5M
+  eighteenth: 3000000,  // R$3M
+  nineteenth: 2500000,  // R$2.5M
+  twentieth: 2000000,   // R$2M
 }
 
-// Premiacoes da Copa do Brasil
+// Premiacoes da Copa do Brasil 2026
 const COPA_PRIZE = {
-  firstRound: 1470000,
-  secondRound: 1785000,
-  thirdRound: 2205000,
-  roundOf16: 3150000,
-  quarterFinals: 4200000,
-  semiFinals: 8400000,
-  runnerUp: 31500000,
-  champion: 73500000,
+  firstRound: 1600000,
+  secondRound: 1950000,
+  thirdRound: 2400000,
+  roundOf16: 3400000,
+  quarterFinals: 4500000,
+  semiFinals: 9000000,
+  runnerUp: 34000000,
+  champion: 80000000,
 }
 
-// Premiacoes Libertadores (fase de grupos em diante)
+// Premiacoes Libertadores 2026 (USD x cambio BRL ~5.85)
 const LIBERTADORES_PRIZE = {
-  groupStage: 3000000 * 5.5, // USD to BRL
-  roundOf16: 1500000 * 5.5,
-  quarterFinals: 2000000 * 5.5,
-  semiFinals: 2500000 * 5.5,
-  runnerUp: 6000000 * 5.5,
-  champion: 23000000 * 5.5,
+  groupStage: 3000000 * 5.85,   // USD to BRL
+  roundOf16: 1500000 * 5.85,
+  quarterFinals: 2000000 * 5.85,
+  semiFinals: 2500000 * 5.85,
+  runnerUp: 6000000 * 5.85,
+  champion: 23000000 * 5.85,
 }
 
 export default function FinancasPage() {
+  const router = useRouter()
+
+  // Gamepad support
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === 'B') router.back()
+    }
+    window.addEventListener('gamepad:button', handler)
+    return () => window.removeEventListener('gamepad:button', handler)
+  }, [router])
   const { team: userTeam } = useUserTeam()
+  useDiscordActivity("Gerenciando finanças", userTeam.nome)
   const gameEngine = useGameEngine()
   const { currentWeek, currentSeason, userPosition, standings, hydrated } = useGameManager()
+  const t = useTranslation()
 
   // Calcula receitas dinamicas
   const dynamicFinances = useMemo(() => {
@@ -158,9 +174,9 @@ export default function FinancasPage() {
           const ticketRev = Math.round((userTeam?.estadio_cap || 30000) * 0.7 * 55)
           transactions.push({
             type: "income",
-            description: `Bilheteria vs ${match.awayTeam}`,
+            description: `${t.finances.ticketing} vs ${match.awayTeam}`,
             value: ticketRev,
-            date: `Rodada ${match.week}`,
+            date: `${t.common.week} ${match.week}`,
           })
         }
       }
@@ -170,9 +186,9 @@ export default function FinancasPage() {
     if (currentWeek > 0) {
       transactions.push({
         type: "expense",
-        description: "Folha salarial semanal",
+        description: t.finances.weeklyPayroll,
         value: dynamicFinances?.expenses.wages ? Math.round(dynamicFinances.expenses.wages / 4) : 0,
-        date: `Semana ${currentWeek}`,
+        date: `${t.common.week} ${currentWeek}`,
       })
     }
 
@@ -180,14 +196,15 @@ export default function FinancasPage() {
     if (currentWeek % 4 === 0) {
       transactions.push({
         type: "income",
-        description: "Cota mensal de TV",
+        description: t.finances.tvRightsSlot,
         value: dynamicFinances?.income.tvRights || 0,
-        date: `Semana ${currentWeek}`,
+        date: `${t.common.week} ${currentWeek}`,
       })
     }
 
     return transactions.slice(0, 6)
-  }, [gameEngine.matchResults, userTeam, currentWeek, dynamicFinances])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameEngine.matchResults, userTeam, currentWeek, dynamicFinances, t])
 
   if (!hydrated || !userTeam || !dynamicFinances) {
     return (
@@ -208,12 +225,12 @@ export default function FinancasPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Financas</h1>
-            <p className="text-sm text-white/50 mt-1">Gestao financeira do clube - Temporada {currentSeason}</p>
+            <h1 className="text-2xl font-semibold text-white tracking-tight">{t.sidebar.finances}</h1>
+            <p className="text-sm text-white/50 mt-1">{t.common.season} {currentSeason}</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-white/50">
             <Calendar className="h-4 w-4" />
-            Semana {currentWeek}/38
+            {t.common.week} {currentWeek}/38
           </div>
         </div>
 
@@ -222,7 +239,7 @@ export default function FinancasPage() {
           <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <Wallet className="h-4 w-4 text-[#1db954]" />
-              SALDO ATUAL
+              {t.finances.currentBalanceHeader}
             </div>
             <div className="mt-2 text-2xl font-semibold text-[#1db954]">
               {formatCurrency(dynamicFinances.balance)}
@@ -243,39 +260,39 @@ export default function FinancasPage() {
           <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <TrendingUp className="h-4 w-4 text-blue-400" />
-              RECEITA MENSAL
+              {t.finances.monthlyIncomeHeader}
             </div>
             <div className="mt-2 text-2xl font-semibold text-blue-400">
               {formatCurrency(dynamicFinances.income.total)}
             </div>
             <div className="mt-1 text-xs text-white/40">
-              {dynamicFinances.homeMatches} jogos em casa
+              {t.finances.homeMatchesN(dynamicFinances.homeMatches)}
             </div>
           </div>
 
           <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <TrendingDown className="h-4 w-4 text-red-400" />
-              DESPESAS MENSAIS
+              {t.finances.monthlyExpensesHeader}
             </div>
             <div className="mt-2 text-2xl font-semibold text-red-400">
               {formatCurrency(dynamicFinances.expenses.total)}
             </div>
             <div className="mt-1 text-xs text-white/40">
-              {gameEngine.squadPlayers.length} jogadores + {gameEngine.scouts.length} olheiros
+              {t.finances.playersN(gameEngine.squadPlayers.length)} + {t.finances.scoutsN(gameEngine.scouts.length)}
             </div>
           </div>
 
           <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <DollarSign className="h-4 w-4 text-yellow-400" />
-              VERBA DE TRANSFERENCIAS
+              {t.finances.transferBudgetHeader}
             </div>
             <div className="mt-2 text-2xl font-semibold text-yellow-400">
               {formatCurrency(dynamicFinances.transferBudget)}
             </div>
             <div className="mt-1 text-xs text-white/40">
-              Disponivel para contratacoes
+              {t.finances.availableForHiring}
             </div>
           </div>
         </div>
@@ -286,12 +303,12 @@ export default function FinancasPage() {
           <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
               <TrendingUp className="h-4 w-4 text-blue-400" />
-              <h2 className="text-xs font-medium text-white tracking-wider">RECEITAS</h2>
+              <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.income.toUpperCase()}</h2>
             </div>
             <div className="p-4 space-y-4">
               <FinanceItem
                 icon={Tv}
-                label="Direitos de TV"
+                label={t.finances.tvRights}
                 value={dynamicFinances.income.tvRights}
                 total={dynamicFinances.income.total}
                 color="text-primary"
@@ -299,16 +316,16 @@ export default function FinancasPage() {
               />
               <FinanceItem
                 icon={Ticket}
-                label="Bilheteria"
+                label={t.finances.ticketing}
                 value={dynamicFinances.income.ticketRevenue}
                 total={dynamicFinances.income.total}
                 color="text-accent"
                 isIncome
-                subtitle={`Media ${dynamicFinances.avgAttendance.toLocaleString()} torcedores`}
+                subtitle={t.finances.avgAttendanceN(dynamicFinances.avgAttendance)}
               />
               <FinanceItem
                 icon={Building2}
-                label="Patrocinios"
+                label={t.finances.sponsorship}
                 value={dynamicFinances.income.sponsorship}
                 total={dynamicFinances.income.total}
                 color="text-yellow-400"
@@ -316,12 +333,12 @@ export default function FinancasPage() {
               />
               <FinanceItem
                 icon={Trophy}
-                label="Premiacoes (estimado)"
+                label={t.finances.estimatedPrizes}
                 value={dynamicFinances.income.estimatedPrize}
                 total={dynamicFinances.income.total}
                 color="text-purple-400"
                 isIncome
-                subtitle={`Baseado na ${userPosition}a posicao`}
+                subtitle={t.finances.yourPosition(userPosition)}
               />
             </div>
           </div>
@@ -330,30 +347,30 @@ export default function FinancasPage() {
           <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
               <TrendingDown className="h-4 w-4 text-red-400" />
-              <h2 className="text-xs font-medium text-white tracking-wider">DESPESAS</h2>
+              <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.expenses.toUpperCase()}</h2>
             </div>
             <div className="p-4 space-y-4">
               <FinanceItem
                 icon={Users}
-                label="Salarios de Jogadores"
+                label={t.finances.playerSalaries}
                 value={dynamicFinances.expenses.wages}
                 total={dynamicFinances.expenses.total}
                 color="text-red-400"
                 isIncome={false}
-                subtitle={`${gameEngine.squadPlayers.length} jogadores`}
+                subtitle={t.finances.playersN(gameEngine.squadPlayers.length)}
               />
               <FinanceItem
                 icon={Target}
-                label="Salarios de Olheiros"
+                label={t.finances.scoutSalaries}
                 value={dynamicFinances.expenses.scoutWages}
                 total={dynamicFinances.expenses.total}
                 color="text-orange-400"
                 isIncome={false}
-                subtitle={`${gameEngine.scouts.length} olheiros`}
+                subtitle={t.finances.scoutsN(gameEngine.scouts.length)}
               />
               <FinanceItem
                 icon={Building2}
-                label="Infraestrutura"
+                label={t.finances.infrastructure}
                 value={dynamicFinances.expenses.infrastructure}
                 total={dynamicFinances.expenses.total}
                 color="text-blue-400"
@@ -361,7 +378,7 @@ export default function FinancasPage() {
               />
               <FinanceItem
                 icon={Shirt}
-                label="Staff Tecnico"
+                label={t.finances.techStaff}
                 value={dynamicFinances.expenses.staff}
                 total={dynamicFinances.expenses.total}
                 color="text-cyan-400"
@@ -369,7 +386,7 @@ export default function FinancasPage() {
               />
               <FinanceItem
                 icon={ShoppingCart}
-                label="Outros"
+                label={t.finances.other}
                 value={dynamicFinances.expenses.other}
                 total={dynamicFinances.expenses.total}
                 color="text-white/50"
@@ -383,18 +400,18 @@ export default function FinancasPage() {
         <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
             <Award className="h-4 w-4 text-yellow-400" />
-            <h2 className="text-xs font-medium text-white tracking-wider">PREMIACOES POR COMPETICAO</h2>
+            <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.prizesByCompetition}</h2>
           </div>
           <div className="p-4 grid gap-4 md:grid-cols-3">
             {/* Brasileirao */}
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-[#1db954]" />
-                <span className="text-sm font-medium text-white">Brasileirao</span>
+                <span className="text-sm font-medium text-white">{t.competitions.brasileirao}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-white/50">Campeao</span>
+                  <span className="text-white/50">{t.finances.champion}</span>
                   <span className="text-[#1db954] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -402,7 +419,7 @@ export default function FinancasPage() {
                   <span className="text-white/70">{formatCurrency(PRIZE_MONEY.fourth)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/50">Sua posicao ({userPosition}o)</span>
+                  <span className="text-white/50">{t.finances.yourPosition(userPosition)}</span>
                   <span className="text-primary font-medium">
                     {formatCurrency(Object.values(PRIZE_MONEY)[userPosition - 1] || 0)}
                   </span>
@@ -414,19 +431,19 @@ export default function FinancasPage() {
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-yellow-400" />
-                <span className="text-sm font-medium text-white">Copa do Brasil</span>
+                <span className="text-sm font-medium text-white">{t.competitions.copaDoBrasil}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-white/50">Campeao</span>
+                  <span className="text-white/50">{t.finances.champion}</span>
                   <span className="text-yellow-400 font-medium">{formatCurrency(COPA_PRIZE.champion)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/50">Vice</span>
+                  <span className="text-white/50">{t.finances.runnerUp}</span>
                   <span className="text-white/70">{formatCurrency(COPA_PRIZE.runnerUp)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/50">Oitavas</span>
+                  <span className="text-white/50">{t.competitions.roundOf16}</span>
                   <span className="text-white/70">{formatCurrency(COPA_PRIZE.roundOf16)}</span>
                 </div>
               </div>
@@ -436,19 +453,19 @@ export default function FinancasPage() {
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-amber-400" />
-                <span className="text-sm font-medium text-white">Libertadores</span>
+                <span className="text-sm font-medium text-white">{t.competitions.libertadores}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-white/50">Campeao</span>
+                  <span className="text-white/50">{t.finances.champion}</span>
                   <span className="text-amber-400 font-medium">{formatCurrency(LIBERTADORES_PRIZE.champion)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/50">Vice</span>
+                  <span className="text-white/50">{t.finances.runnerUp}</span>
                   <span className="text-white/70">{formatCurrency(LIBERTADORES_PRIZE.runnerUp)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/50">Fase de Grupos</span>
+                  <span className="text-white/50">{t.competitions.groupStage}</span>
                   <span className="text-white/70">{formatCurrency(LIBERTADORES_PRIZE.groupStage)}</span>
                 </div>
               </div>
@@ -462,26 +479,26 @@ export default function FinancasPage() {
           <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider mb-4">
               <Users className="h-4 w-4" />
-              FOLHA SALARIAL
+              {t.finances.wageBill}
             </div>
             <div className="space-y-3">
               <div className="flex items-end justify-between">
                 <div>
-                  <div className="text-sm text-white/50">Utilizado</div>
+                  <div className="text-sm text-white/50">{t.finances.used}</div>
                   <div className="text-2xl font-semibold text-white">{formatCurrency(dynamicFinances.wageUsed)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-white/50">Limite</div>
+                  <div className="text-sm text-white/50">{t.finances.limit}</div>
                   <div className="text-lg text-white/50">{formatCurrency(dynamicFinances.wageBudget)}</div>
                 </div>
               </div>
               <Progress value={Math.min(100, wagePercentage)} className="h-2" />
               <div className="flex items-center justify-between text-xs">
                 <span className={wagePercentage > 90 ? "text-red-400" : "text-white/50"}>
-                  {wagePercentage.toFixed(0)}% utilizado
+                  {t.finances.usedPercentage(wagePercentage.toFixed(0))}
                 </span>
                 <span className="text-[#1db954]">
-                  {formatCurrency(Math.max(0, dynamicFinances.wageBudget - dynamicFinances.wageUsed))} disponivel
+                  {formatCurrency(Math.max(0, dynamicFinances.wageBudget - dynamicFinances.wageUsed))} {t.finances.availableForHiring}
                 </span>
               </div>
             </div>
@@ -492,7 +509,7 @@ export default function FinancasPage() {
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.02]">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-yellow-400" />
-                <h2 className="text-xs font-medium text-white tracking-wider">TRANSACOES RECENTES</h2>
+                <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.recentTransactions}</h2>
               </div>
             </div>
             <div className="divide-y divide-white/5 max-h-64 overflow-y-auto scrollbar-thin">
@@ -523,7 +540,7 @@ export default function FinancasPage() {
                 ))
               ) : (
                 <div className="px-5 py-8 text-center text-white/40 text-sm">
-                  Nenhuma transacao registrada ainda
+                  {t.finances.noTransactions}
                 </div>
               )}
             </div>

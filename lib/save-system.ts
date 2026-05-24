@@ -146,7 +146,7 @@ export function useGameState(): {
  * (evita hydration mismatch ao retornar sempre o mesmo valor no SSR).
  */
 const FALLBACK_TEAM: Team =
-  getTeamByShort("BGT") ?? serieATeams[0] ?? allTeams[0]
+  serieATeams[0] ?? allTeams[0]
 
 export function useUserTeam(): { team: Team; hydrated: boolean } {
   const { state, hydrated } = useGameState()

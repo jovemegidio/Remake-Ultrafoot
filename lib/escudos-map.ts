@@ -32,54 +32,50 @@ const escudoMap: Record<string, string> = {
 
 // Mapeamento de file_keys para escudos locais
 const localEscudoMap: Record<string, string> = {
-  // Times brasileiros Serie A - usando pasta /escudos/brasil/
-  "botafogorj_bra": "/escudos/brasil/botafogo.png",
-  "palmeiras": "/escudos/brasil/palmeiras.png",
-  "flarj": "/escudos/brasil/flamengo.png",
-  "corinthians_bra": "/escudos/brasil/corinthians.png",
-  "saopaulo_bra": "/escudos/brasil/saopaulo.png",
-  "flurj": "/escudos/brasil/fluminense.png",
-  "vasco": "/escudos/brasil/vasco.png",
-  "santos": "/escudos/brasil/santos.png",
-  "gremio": "/escudos/brasil/gremio.png",
-  "internacional_bra": "/escudos/brasil/internacional.png",
-  "atleticomg_bra": "/escudos/brasil/atleticomg.png",
-  "cruzeiro_bra": "/escudos/brasil/cruzeiro.png",
-  "bahia": "/escudos/brasil/bahia.png",
-  "fortaleza": "/escudos/brasil/fortaleza.png",
-  "vitoria": "/escudos/brasil/vitoria.png",
-  "atleticopr_bra": "/escudos/brasil/atleticopr.png",
-  "ceara_bra": "/escudos/brasil/ceara.png",
-  "sport": "/escudos/brasil/sport.png",
-  "bragantino_bra": "/escudos/brasil/bragantino.png",
-  "juventude": "/escudos/brasil/juventude.png",
+  // Serie A - arquivos raiz nomeados por file_key (confiáveis)
+  "botafogorj_bra": "/escudos/botafogorj_bra.png",
+  "palmeiras": "/escudos/palmeiras.png",
+  "flarj": "/escudos/flarj.png",
+  "corinthians_bra": "/escudos/corinthians_bra.png",
+  "saopaulo_bra": "/escudos/saopaulo_bra.png",
+  "flurj": "/escudos/flurj.png",
+  "vasco": "/escudos/vasco.png",
+  "santos": "/escudos/santos.png",
+  "gremio": "/escudos/gremio.png",
+  "internacional_bra": "/escudos/internacional_bra.png",
+  "atleticomg_bra": "/escudos/atleticomg_bra.png",
+  "cruzeiro_bra": "/escudos/cruzeiro_bra.png",
+  "bahia": "/escudos/bahia.png",
+  "fortaleza": "/escudos/fortaleza.png",
+  "vitoria": "/escudos/vitoria.png",
+  "atleticopr_bra": "/escudos/atleticopr_bra.png",
+  "ceara_bra": "/escudos/ceara_bra.png",
+  "sport": "/escudos/sport.png",
+  "bragantino_bra": "/escudos/bragantino_bra.png",
+  "juventude": "/escudos/juventude.png",
   "miirassol_sp": "/escudos/miirassol_sp.png",
-  // Times brasileiros Serie B e outras - usando pasta raiz /escudos/
-  "avai_bra": "/escudos/avai_bra.png",
-  "chapecoense_bra": "/escudos/chapecoense_bra.png",
-  "coritiba_bra": "/escudos/coritiba_bra.png",
-  "criciuma_bra": "/escudos/criciuma_bra.png",
-  "cuiaba_bra": "/escudos/cuiaba_bra.png",
-  "goias": "/escudos/goias.png",
-  "nautico": "/escudos/nautico.png",
-  "paysandu": "/escudos/paysandu.png",
-  "pontepreta_bra": "/escudos/pontepreta_bra.png",
+  // Serie B - existentes
   "americamg_bra": "/escudos/americamg_bra.png",
-  "guaranisp_bra": "/escudos/guaranisp_bra.png",
-  "ituano_sp": "/escudos/ituano_sp.png",
-  "londrina_pr": "/escudos/londrina_pr.png",
-  "operario_pr": "/escudos/operario_pr.png",
-  "csa_bra": "/escudos/csa_bra.png",
+  "goias": "/escudos/goias.png",
+  "coritiba_bra": "/escudos/coritiba_bra.png",
   "crb_bra": "/escudos/crb_bra.png",
-  "figueirense": "/escudos/figueirense.png",
-  "joinville": "/escudos/joinville.png",
-  "abcrn_bra": "/escudos/abcrn_bra.png",
-  "botafogosp_bra": "/escudos/botafogosp_bra.png",
-  "brasiliense_bra": "/escudos/brasiliense_bra.png",
-  "manaus_bra": "/escudos/manaus_bra.png",
+  "avai_bra": "/escudos/avai_bra.png",
+  "paysandu": "/escudos/paysandu.png",
+  "chapecoense_bra": "/escudos/chapecoense_bra.png",
   "vilago": "/escudos/vilago.png",
   "amazonas_am": "/escudos/amazonas_am.png",
+  "operario_pr": "/escudos/operario_pr.png",
   "novorinzontino_sp": "/escudos/novorinzontino_sp.png",
+  "botafogosp_bra": "/escudos/botafogosp_bra.png",
+  // Serie B - novos
+  "guaranisp_bra": "/escudos/guaranisp_bra.png",
+  "pontepreta_bra": "/escudos/pontepreta_bra.png",
+  "criciuma_bra": "/escudos/criciuma_bra.png",
+  "cuiaba_bra": "/escudos/cuiaba_bra.png",
+  "atleticogo_bra": "/escudos/atleticogo_bra.png",
+  "ituano_sp": "/escudos/ituano_sp.png",
+  "aguasanta_sp": "/escudos/aguasantasp_bra.png",
+  // Serie C
   "remo_pa": "/escudos/remo.png",
   "abc_rn": "/escudos/abcrn_bra.png",
   "nautico_pe": "/escudos/nautico.png",
@@ -87,6 +83,7 @@ const localEscudoMap: Record<string, string> = {
   "csa_al": "/escudos/csa_bra.png",
   "sampaio_ma": "/escudos/samapaiocorrea_ma.png",
   "figueirense_sc": "/escudos/figueirense.png",
+  "londrina_pr": "/escudos/londrina_pr.png",
   "tombense_mg": "/escudos/tombense_mg.png",
   "botafogo_pb": "/escudos/botafogopb_bra.png",
   "aparecidense_go": "/escudos/aparecidense_go.png",
@@ -99,6 +96,7 @@ const localEscudoMap: Record<string, string> = {
   "saojose_rs": "/escudos/saojosers_bra.png",
   "athletic_mg": "/escudos/athleticclub_mg.png",
   "caxias_rs": "/escudos/caxias.png",
+  // Serie D
   "brasiliense_df": "/escudos/brasiliense_df_bra.png",
   "river_pi": "/escudos/riverpi_bra.png",
   "inter_sp": "/escudos/interlimeira.png",
@@ -305,20 +303,18 @@ const localEscudoMap: Record<string, string> = {
 }
 
 export function getEscudoUrl(fileKey: string): string {
-  // Primeiro verifica se tem escudo local
+  // 1. Mapeamento explícito (internacionais, subpastas, overrides)
   if (localEscudoMap[fileKey]) {
     return localEscudoMap[fileKey]
   }
-  // Fallback para o repositorio remoto
-  const key = escudoMap[fileKey] || fileKey
-  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${key}.png`
+  // 2. Arquivo local nomeado pelo fileKey — cobre os 3300+ PNGs em /public/escudos/
+  //    Se não existir, TeamCrest.onError mostra o escudo colorido como fallback
+  return `/escudos/${fileKey}.png`
 }
 
 export function getEscudoMiniUrl(fileKey: string): string {
-  // Usa o mesmo escudo local em tamanho menor via CSS
   if (localEscudoMap[fileKey]) {
     return localEscudoMap[fileKey]
   }
-  const key = escudoMap[fileKey] || fileKey
-  return `${ULTRAFOOT_RAW_URL}/teams/escudosMini/${key}.png`
+  return `/escudos/${fileKey}.png`
 }

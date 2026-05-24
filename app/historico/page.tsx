@@ -1,5 +1,8 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+
 import {
   History,
   Trophy,
@@ -53,6 +56,17 @@ const legends = [
 ]
 
 export default function HistoricoPage() {
+  const router = useRouter()
+
+  // Gamepad support
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === 'B') router.back()
+    }
+    window.addEventListener('gamepad:button', handler)
+    return () => window.removeEventListener('gamepad:button', handler)
+  }, [router])
   return (
     <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />

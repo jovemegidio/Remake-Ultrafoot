@@ -1,1 +1,5 @@
-{}
+{
+  "_instructions": "Chave = nome normalizado (minúsculo, sem acento, hifenizado) OU playerId. Valor = URL da foto. Exemplo abaixo:",
+  "_example_neymar-jr": "https://example.com/fotos/neymar-jr.jpg",
+  "_example_gabriel-barbosa": "https://example.com/fotos/gabigol.jpg"
+}

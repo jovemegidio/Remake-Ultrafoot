@@ -31,11 +31,13 @@ import { formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { useGameEngine } from "@/lib/game-engine"
+import { useTranslation } from "@/lib/i18n"
 
 export default function DashboardPage() {
   const router = useRouter()
   const { hydrated, userTeam, seasonCalendar, standings, userPosition, currentSeason, saveState } = useGameManager()
   const gameEngine = useGameEngine()
+  const t = useTranslation()
 
   // Redireciona para splash se nao houver time selecionado
   useEffect(() => {
@@ -44,13 +46,40 @@ export default function DashboardPage() {
     }
   }, [hydrated, saveState.selectedTeamShort, router])
 
+  // Navegacao por controle no dashboard
+  useEffect(() => {
+    const handleGamepadButton = (e: Event) => {
+      const { button } = (e as CustomEvent<{ button: string }>).detail
+      switch (button) {
+        case "A":
+        case "START":
+          router.push("/partida")
+          break
+        case "X":
+          router.push("/calendario")
+          break
+        case "Y":
+          router.push("/elenco")
+          break
+        case "LB":
+          router.push("/mercado")
+          break
+        case "RB":
+          router.push("/competicoes")
+          break
+      }
+    }
+    window.addEventListener("gamepad:button", handleGamepadButton)
+    return () => window.removeEventListener("gamepad:button", handleGamepadButton)
+  }, [router])
+
   // Aguarda hidratacao
   if (!hydrated || !userTeam) {
     return (
       <div className="h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-2 border-[#1db954] border-t-transparent animate-spin" />
-          <span className="text-white/40 text-sm">Carregando...</span>
+          <span className="text-white/40 text-sm">{t.common.loading}</span>
         </div>
       </div>
     )
@@ -115,15 +144,15 @@ export default function DashboardPage() {
 
             <div className="flex gap-6">
               <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">Saldo</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.balance}</div>
                 <div className="text-xl font-bold text-[#1db954]">{formatCurrency(balance)}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">Posicao</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.position}</div>
                 <div className="text-xl font-bold text-white">{userPosition ? `${userPosition}°` : "-"}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">Temporada</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.season}</div>
                 <div className="text-xl font-bold text-white">{currentSeason}</div>
               </div>
             </div>
@@ -131,16 +160,16 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-px border-t border-white/5 bg-black/30">
             <Link href="/partida" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <Play className="h-4 w-4" /> Proxima Partida
+              <Play className="h-4 w-4" /> {t.common.nextMatch}
             </Link>
             <Link href="/calendario" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <Calendar className="h-4 w-4" /> Calendario
+              <Calendar className="h-4 w-4" /> {t.sidebar.calendar}
             </Link>
             <Link href="/elenco" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <Users className="h-4 w-4" /> Elenco
+              <Users className="h-4 w-4" /> {t.sidebar.squad}
             </Link>
             <Link href="/mercado" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <TrendingUp className="h-4 w-4" /> Mercado
+              <TrendingUp className="h-4 w-4" /> {t.sidebar.market}
             </Link>
           </div>
         </section>
@@ -168,7 +197,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                     <Trophy className="h-4 w-4 text-yellow-500" />
-                    ULTIMOS RESULTADOS
+                    {t.dashboard.lastResults}
                   </div>
                 </div>
                 <div className="divide-y divide-white/5">
@@ -185,10 +214,10 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                     <Calendar className="h-4 w-4 text-[#1db954]" />
-                    PROXIMAS PARTIDAS
+                    {t.dashboard.nextMatches}
                   </div>
                   <Link href="/calendario" className="text-xs text-[#1db954] hover:text-[#1ed760] transition-colors">
-                    Ver todos <ChevronRight className="inline h-3 w-3 ml-0.5" />
+                    {t.common.viewAll} <ChevronRight className="inline h-3 w-3 ml-0.5" />
                   </Link>
                 </div>
                 <div className="divide-y divide-white/5">
@@ -204,13 +233,13 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                   <Target className="h-4 w-4 text-yellow-500" />
-                  METAS DA DIRETORIA
+                  {t.dashboard.boardGoals}
                 </div>
-                <span className="text-xs text-white/40">Satisfacao: <span className="text-yellow-500 font-semibold">50%</span></span>
+                <span className="text-xs text-white/40">{t.dashboard.satisfaction}: <span className="text-yellow-500 font-semibold">50%</span></span>
               </div>
               <div className="p-5 grid gap-4 md:grid-cols-2">
-                <GoalCard title="Meta Principal" description="Permanecer na Serie A" progress={userPosition ? Math.max(10, 100 - userPosition * 5) : 50} status="Em andamento" tone="primary" />
-                <GoalCard title="Meta Minima" description="Nao rebaixar (Top 16)" progress={userPosition && userPosition <= 16 ? 75 : 30} status="No caminho" tone="success" />
+                <GoalCard title={t.dashboard.mainGoal} description="Permanecer na Serie A" progress={userPosition ? Math.max(10, 100 - userPosition * 5) : 50} status={t.common.inProgress} tone="primary" />
+                <GoalCard title={t.dashboard.minGoal} description="Nao rebaixar (Top 16)" progress={userPosition && userPosition <= 16 ? 75 : 30} status={t.common.onTrack} tone="success" />
               </div>
             </section>
           </div>
@@ -221,14 +250,14 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                   <Trophy className="h-4 w-4 text-yellow-500" />
-                  CLASSIFICACAO
+                  {t.dashboard.standings}
                 </div>
-                <span className="text-[10px] text-white/40">BRASILEIRAO</span>
+                <span className="text-[10px] text-white/40">{t.competitions.brasileirao.toUpperCase()}</span>
               </div>
               <div className="divide-y divide-white/5">
                 <div className="grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider">
-                  <span>#</span><span>Clube</span><span className="text-center">Pts</span>
-                  <span className="text-center">V</span><span className="text-center">E</span><span className="text-center">D</span>
+                  <span>#</span><span>{t.dashboard.col.club}</span><span className="text-center">{t.dashboard.col.pts}</span>
+                  <span className="text-center">{t.dashboard.col.w}</span><span className="text-center">{t.dashboard.col.d}</span><span className="text-center">{t.dashboard.col.l}</span>
                 </div>
                 {standings.slice(0, 8).map((s, i) => (
                   <div
@@ -250,7 +279,7 @@ export default function DashboardPage() {
                 ))}
               </div>
               <Link href="/competicoes" className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/5">
-                Ver tabela completa <ChevronRight className="h-3 w-3" />
+                {t.common.viewFullTable} <ChevronRight className="h-3 w-3" />
               </Link>
             </section>
 
@@ -259,7 +288,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
                   <Newspaper className="h-4 w-4 text-primary" />
-                  NOTICIAS
+                  {t.dashboard.news}
                 </div>
               </div>
               <NewsFeed />
@@ -269,22 +298,22 @@ export default function DashboardPage() {
             <section className="rounded-xl bg-[#141414] border border-white/5 p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
                 <CircleDollarSign className="h-4 w-4 text-[#1db954]" />
-                FINANCAS
+                {t.dashboard.finances}
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Saldo atual</span>
+                  <span className="text-sm text-white/60">{t.dashboard.currentBalance}</span>
                   <span className="text-lg font-bold text-[#1db954]">{formatCurrency(balance)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Receita semanal</span>
+                  <span className="text-sm text-white/60">{t.finances.weeklyIncome}</span>
                   <span className="text-sm font-medium text-white flex items-center gap-1">
                     <ArrowUpRight className="h-3 w-3 text-[#1db954]" />
                     {formatCurrency(weeklyIncome)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Folha salarial</span>
+                  <span className="text-sm text-white/60">{t.finances.salaries}</span>
                   <span className="text-sm font-medium text-white flex items-center gap-1">
                     <ArrowDownRight className="h-3 w-3 text-red-500" />
                     {formatCurrency(weeklyExpenses)}
@@ -292,7 +321,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <Link href="/financas" className="flex items-center justify-center gap-1 mt-4 py-2 text-xs text-primary hover:text-primary/80 transition-colors">
-                Ver detalhes <ChevronRight className="h-3 w-3" />
+                {t.common.viewDetails} <ChevronRight className="h-3 w-3" />
               </Link>
             </section>
           </div>
@@ -307,6 +336,7 @@ export default function DashboardPage() {
 function GoalCard({ title, description, progress, status, tone }: {
   title: string; description: string; progress: number; status: string; tone: "primary" | "success"
 }) {
+  const t = useTranslation()
   return (
     <div className="rounded-lg bg-white/5 p-4 border border-white/5">
       <div className="flex items-center justify-between mb-2">
@@ -317,7 +347,7 @@ function GoalCard({ title, description, progress, status, tone }: {
       <div className="space-y-1.5">
         <Progress value={progress} className="h-1.5" />
         <div className="flex justify-between text-[10px] text-white/40">
-          <span>Progresso</span>
+          <span>{t.dashboard.progress}</span>
           <span className="font-medium text-white">{progress}%</span>
         </div>
       </div>
@@ -327,6 +357,10 @@ function GoalCard({ title, description, progress, status, tone }: {
 
 function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam: Team; isNext?: boolean }) {
   const isHome = fixture.homeTeam.curto === userTeam.curto
+  const t = useTranslation()
+  const homeLabel = t.common.home
+  const awayLabel = t.common.away
+  const nextLabel = t.common.nextMatch.toUpperCase()
 
   return (
     <div className={cn("flex items-center gap-4 px-5 py-3", isNext && "bg-[#1db954]/5")}>
@@ -358,11 +392,11 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
       </div>
 
       <span className={cn("px-2 py-0.5 rounded text-[10px] font-medium", isHome ? "bg-[#1db954]/20 text-[#1db954]" : "bg-white/10 text-white/60")}>
-        {isHome ? "Casa" : "Fora"}
+        {isHome ? homeLabel : awayLabel}
       </span>
 
       {isNext && !fixture.played && (
-        <span className="px-2 py-0.5 rounded bg-[#1db954] text-black text-[10px] font-semibold">PROXIMA</span>
+        <span className="px-2 py-0.5 rounded bg-[#1db954] text-black text-[10px] font-semibold">{nextLabel}</span>
       )}
     </div>
   )

@@ -514,10 +514,9 @@ function NewsContentCard({ news }: { news: NewsItem }) {
   const [aiImage, setAiImage] = useState<string | null>(news.generatedImage || null)
   const [isLoadingImage, setIsLoadingImage] = useState(false)
   const hasAttempted = useRef(false)
-  const enableAiNewsImages = process.env.NEXT_PUBLIC_ENABLE_AI_NEWS_IMAGES === "true"
 
   const generateAIImage = useCallback(async () => {
-    if (!enableAiNewsImages || isLoadingImage || hasAttempted.current) return
+    if (isLoadingImage || hasAttempted.current) return
     hasAttempted.current = true
     setIsLoadingImage(true)
 
@@ -544,13 +543,13 @@ function NewsContentCard({ news }: { news: NewsItem }) {
     } finally {
       setIsLoadingImage(false)
     }
-  }, [enableAiNewsImages, isLoadingImage, news.type, news.title, news.teamName, news.playerName])
+  }, [isLoadingImage, news.type, news.title, news.teamName, news.playerName])
 
   useEffect(() => {
-    if (enableAiNewsImages && !aiImage) {
+    if (!aiImage) {
       generateAIImage()
     }
-  }, [aiImage, enableAiNewsImages, generateAIImage])
+  }, [aiImage, generateAIImage])
   
   const typeColors: Record<string, string> = {
     transfer: "from-yellow-900/50 to-yellow-950/30",

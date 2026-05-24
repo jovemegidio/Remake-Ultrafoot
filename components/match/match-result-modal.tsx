@@ -16,6 +16,7 @@ interface MatchResultModalProps {
   state: MatchState
   userSide: "home" | "away"
   isFinal?: boolean
+  isChampion?: boolean
   onClose: () => void
 }
 
@@ -26,6 +27,7 @@ export function MatchResultModal({
   state,
   userSide,
   isFinal,
+  isChampion,
   onClose,
 }: MatchResultModalProps) {
   if (!open) return null
@@ -289,7 +291,7 @@ export function MatchResultModal({
               transition={{ delay: 0.6 }}
               className="px-6 pb-6 pt-2 flex flex-col sm:flex-row items-center gap-3 justify-center border-t border-white/5"
             >
-              {isFinal && result === "win" && (
+              {((isFinal && result === "win") || isChampion) && (
                 <Link href="/campeao" className="w-full sm:w-auto">
                   <Button
                     size="lg"

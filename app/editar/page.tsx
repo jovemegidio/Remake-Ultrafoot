@@ -64,6 +64,17 @@ const allTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams
 
 export default function EditarPage() {
   const router = useRouter()
+
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === "B") router.back()
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router])
+
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(allTeams[0])
   const [searchTeam, setSearchTeam] = useState("")
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)

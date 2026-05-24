@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
   FileText,
   AlertTriangle,
@@ -19,6 +19,7 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { Progress } from "@/components/ui/progress"
+import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine, type Player, getContractStatus, formatWeeksToDate } from "@/lib/game-engine"
 import { formatCurrency } from "@/lib/teams-data"
@@ -26,10 +27,12 @@ import { cn } from "@/lib/utils"
 
 export default function ContratosPage() {
   const { team: userTeam } = useUserTeam()
+  const router = useRouter()
   const { squadPlayers, renewContract, currentWeek, currentSeason, balance, wageBudget } = useGameEngine()
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [showRenewalModal, setShowRenewalModal] = useState(false)
   const [filter, setFilter] = useState<"all" | "expiring" | "expired">("all")
+  const [gpPlayerIdx, setGpPlayerIdx] = useState(0)
   
   // Estado da negociacao
   const [proposedSalary, setProposedSalary] = useState(0)
@@ -69,6 +72,38 @@ export default function ContratosPage() {
     })
     return counts
   }, [squadPlayers, currentWeek])
+
+  useEffect(() => {
+    const filterOrder: ("all" | "expiring" | "expired")[] = ["all", "expiring", "expired"]
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (!btn) return
+      if (showRenewalModal) {
+        if (btn === "B") setShowRenewalModal(false)
+        return
+      }
+      if (btn === "B") { router.back(); return }
+      if (btn === "LB") setFilter(f => filterOrder[Math.max(0, filterOrder.indexOf(f) - 1)])
+      if (btn === "RB") setFilter(f => filterOrder[Math.min(filterOrder.length - 1, filterOrder.indexOf(f) + 1)])
+      if (btn === "DPAD_DOWN") {
+        setGpPlayerIdx(prev => {
+          const next = Math.min(prev + 1, filteredPlayers.length - 1)
+          setSelectedPlayer(filteredPlayers[next] ?? null)
+          return next
+        })
+      }
+      if (btn === "DPAD_UP") {
+        setGpPlayerIdx(prev => {
+          const next = Math.max(prev - 1, 0)
+          setSelectedPlayer(filteredPlayers[next] ?? null)
+          return next
+        })
+      }
+      if (btn === "A" && selectedPlayer) setShowRenewalModal(true)
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router, showRenewalModal, selectedPlayer, filteredPlayers])
 
   // Abre modal de renovacao
   const handleOpenRenewal = (player: Player) => {

@@ -35,13 +35,19 @@ function normalizeTeamName(value: string): string {
 
 function toPlayerPosition(posicao: string): Posicao {
   const normalized = posicao.toUpperCase()
+  if (normalized === "GOL") return "GOL"
   if (normalized === "DEF") return "ZAG"
   if (normalized === "LAT") return "LD"
+  if (normalized === "ZAG") return "ZAG"
+  if (normalized === "LD") return "LD"
+  if (normalized === "LE") return "LE"
   if (normalized === "VOL") return "VOL"
   if (normalized === "MEI") return "MEI"
   if (normalized === "ATA") return "ATA"
   return normalized
 }
+
+const MAX_IMPORTED_OVERALL = 92
 
 export const playersByTeam: Record<string, Player[]> = Object.fromEntries(
   Object.entries(RAW).map(([time, list]) => [
@@ -104,6 +110,7 @@ const teamAliasOverrides: Record<string, string[]> = {
   pumas: ["pumasunam_mex", "UNAM Pumas"],
   toluca: ["toluca_mex", "Deportivo Toluca"],
   leon: ["leon_mex", "Club Leon", "Club León"],
+  sporting: ["sporting_por"],
   braga: ["sportingbraga_por", "SC Braga"],
   vitoria_guimaraes: ["vitoriaguimaraes_por", "Vitoria de Guimaraes", "Vitória de Guimarães"],
   nycfc: ["New York City", "NYCFC"],
@@ -198,13 +205,15 @@ function getImportedPlayersForTeam(team: Team): Player[] {
 
   if (!importedTeam?.jogadores?.length) return []
 
-  return importedTeam.jogadores.map((player) => ({
-    nome: player.nome,
-    pos: toPlayerPosition(player.posicao),
-    idade: player.idade,
-    base: player.overall,
-    time: team.nome,
-  }))
+  return importedTeam.jogadores
+    .filter((player) => player.posicao?.toUpperCase() !== "BAN")
+    .map((player) => ({
+      nome: player.nome,
+      pos: toPlayerPosition(player.posicao),
+      idade: player.idade ?? 25,
+      base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
+      time: team.nome,
+    }))
 }
 
 const importedPlayersByTeam: Record<string, Player[]> = Object.fromEntries(

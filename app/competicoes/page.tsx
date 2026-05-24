@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   Trophy,
   ChevronRight,
@@ -24,9 +25,10 @@ import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { getTeamByShort, serieATeams, serieBTeams, type Team } from "@/lib/teams-data"
+import { getTeamByShort, getTeamsByDivision, serieBTeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameManager } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 // Tipos para competicoes
@@ -54,6 +56,7 @@ interface CompetitionState {
     champion: string | null
   }
   estadual: {
+    name: string
     phase: "grupos" | "semis" | "final"
     groups: { name: string; teams: { short: string; points: number; played: number }[] }[]
     semis: BracketMatch[]
@@ -182,6 +185,7 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
         champion: null,
       },
       estadual: {
+        name: "Estadual",
         phase: "grupos",
         groups: [],
         semis: [],
@@ -248,14 +252,16 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
     }))
   }
   
-  // Simular jogos da Copa do Brasil
-  const simulateCopaBrasilRound = () => {
+  // Simular jogos da Copa do Brasil — retorna true se usuario ganhou a final
+  const simulateCopaBrasilRound = (): boolean => {
+    let userWonFinal = false
+
     setState(s => {
       const copa = { ...s.copaBrasil }
       let currentMatches: BracketMatch[] = []
       let nextRound: "quartas" | "semis" | "final" | null = null
       let nextMatches: BracketMatch[] = []
-      
+
       if (copa.currentRound === "oitavas") {
         currentMatches = copa.oitavas
         nextRound = "quartas"
@@ -272,19 +278,19 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
         currentMatches = copa.final
         nextRound = null
       }
-      
+
       // Simular todas as partidas da rodada atual
       const simulatedMatches = currentMatches.map(match => {
         if (match.played) return match
-        
+
         const [score1, score2] = simulateMatch(50, 50)
         let winner = score1 > score2 ? match.team1 : score1 < score2 ? match.team2 : null
-        
+
         // Empate? Penaltis (aleatorio)
         if (!winner) {
           winner = Math.random() > 0.5 ? match.team1 : match.team2
         }
-        
+
         return {
           ...match,
           score1,
@@ -293,15 +299,15 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
           winner,
         }
       })
-      
+
       // Verificar se usuario foi eliminado
       const userMatch = simulatedMatches.find(m => m.team1 === userTeamShort || m.team2 === userTeamShort)
       const userEliminated = userMatch && userMatch.winner !== userTeamShort
-      
+
       // Preencher proxima rodada
       if (nextRound && nextMatches.length > 0) {
         const winners = simulatedMatches.map(m => m.winner).filter(Boolean) as string[]
-        
+
         for (let i = 0; i < nextMatches.length; i++) {
           nextMatches[i] = {
             ...nextMatches[i],
@@ -310,13 +316,16 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
           }
         }
       }
-      
+
       // Determinar campeao se for a final
       let champion = copa.champion
-      if (copa.currentRound === "final" && simulatedMatches[0].played) {
+      if (copa.currentRound === "final" && simulatedMatches[0]?.played) {
         champion = simulatedMatches[0].winner
+        if (champion === userTeamShort) {
+          userWonFinal = true  // capturado sincronamente pelo closure
+        }
       }
-      
+
       return {
         ...s,
         copaBrasil: {
@@ -328,6 +337,8 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
         }
       }
     })
+
+    return userWonFinal
   }
   
   // Sortear Estadual
@@ -366,6 +377,7 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
       ...s,
       estadual: {
         ...s.estadual,
+        name: estadualName,
         groups,
         drawn: true,
       }
@@ -466,8 +478,23 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
 export default function CompeticoesPage() {
   const { team: userTeam } = useUserTeam()
   const { standings: gameStandings, currentWeek, currentSeason, userPosition } = useGameManager()
+  const t = useTranslation()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("brasileirao")
-  
+  const tabsOrder = ["brasileirao", "copabrasil", "estadual", "libertadores", "sulamericana"]
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (!btn) return
+      if (btn === "B") { router.back(); return }
+      if (btn === "LB") setActiveTab(t => tabsOrder[Math.max(0, tabsOrder.indexOf(t) - 1)])
+      if (btn === "RB") setActiveTab(t => tabsOrder[Math.min(tabsOrder.length - 1, tabsOrder.indexOf(t) + 1)])
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router, activeTab])
+
   const {
     state: compState,
     drawCopaBrasil,
@@ -477,15 +504,29 @@ export default function CompeticoesPage() {
     drawLibertadores,
   } = useCompetitions(userTeam.curto, userPosition)
 
+  // Navega para a tela de campeao se o usuario ganhar uma copa
+  const handleSimulateCopa = (competitionName: string, season: string) => {
+    const userWon = simulateCopaBrasilRound()
+    if (userWon) {
+      localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
+        competition: competitionName,
+        season,
+        type: "cup",
+        stats: null,
+      }))
+      router.push("/campeao")
+    }
+  }
+
   // Converte standings do game engine para o formato da tabela
   const serieAStandings = useMemo(() => {
     if (gameStandings.length === 0) {
-      return generateStandings(serieATeams, userTeam.curto)
+      return generateStandings(getTeamsByDivision(userTeam.divisao), userTeam.curto)
     }
     
     return gameStandings.map((entry, index) => ({
       position: index + 1,
-      team: getTeamByShort(entry.teamShort) || serieATeams[0],
+      team: getTeamByShort(entry.teamShort) || getTeamsByDivision(userTeam.divisao)[0],
       played: entry.played,
       won: entry.won,
       drawn: entry.drawn,
@@ -502,77 +543,77 @@ export default function CompeticoesPage() {
   const serieBStandings = useMemo(() => generateStandings(serieBTeams, userTeam.curto), [userTeam.curto])
 
   const competitions = [
-    { 
-      id: "brasileirao", 
-      name: "Brasileirao Serie A", 
-      type: "Liga", 
-      teams: 20, 
-      status: currentWeek > 0 ? "Em andamento" : "A iniciar",
+    {
+      id: "brasileirao",
+      name: getLeagueName(userTeam.curto),
+      type: "Liga",
+      teams: getTeamsByDivision(userTeam.divisao).length,
+      status: currentWeek > 0 ? t.common.inProgress : t.common.onTrack,
       userPosition: userPosition > 0 ? userPosition : null,
       icon: Trophy,
       color: "text-yellow-500",
       bgColor: "bg-yellow-500/10",
       borderColor: "border-yellow-500/30"
     },
-    { 
-      id: "copa-do-brasil", 
-      name: "Copa do Brasil", 
-      type: "Copa", 
-      teams: 16, 
-      status: compState.copaBrasil.champion 
-        ? `Campeao: ${compState.copaBrasil.champion}`
-        : compState.copaBrasil.eliminated 
-          ? "Eliminado" 
-          : compState.copaBrasil.drawn 
+    {
+      id: "copa-do-brasil",
+      name: t.competitions.copaDoBrasil,
+      type: "Copa",
+      teams: 16,
+      status: compState.copaBrasil.champion
+        ? `${t.finances.champion}: ${compState.copaBrasil.champion}`
+        : compState.copaBrasil.eliminated
+          ? t.competitions.eliminated
+          : compState.copaBrasil.drawn
             ? compState.copaBrasil.currentRound.charAt(0).toUpperCase() + compState.copaBrasil.currentRound.slice(1)
-            : "Aguardando sorteio",
+            : t.competitions.awaiting,
       userPosition: null,
       icon: Trophy,
       color: compState.copaBrasil.eliminated ? "text-red-400" : "text-[#1db954]",
       bgColor: compState.copaBrasil.eliminated ? "bg-red-400/10" : "bg-[#1db954]/10",
       borderColor: compState.copaBrasil.eliminated ? "border-red-400/30" : "border-[#1db954]/30"
     },
-    { 
-      id: "estadual", 
-      name: "Campeonato Estadual", 
-      type: "Estadual", 
-      teams: 16, 
+    {
+      id: "estadual",
+      name: compState.estadual.name !== "Estadual" ? compState.estadual.name : t.competitions.estaduais,
+      type: "Estadual",
+      teams: 16,
       status: compState.estadual.champion
-        ? `Campeao: ${compState.estadual.champion}`
+        ? `${t.finances.champion}: ${compState.estadual.champion}`
         : compState.estadual.eliminated
-          ? "Eliminado"
+          ? t.competitions.eliminated
           : compState.estadual.drawn
             ? compState.estadual.phase.charAt(0).toUpperCase() + compState.estadual.phase.slice(1)
-            : "Aguardando sorteio",
+            : t.competitions.awaiting,
       userPosition: null,
       icon: MapPin,
       color: compState.estadual.eliminated ? "text-red-400" : "text-orange-400",
       bgColor: compState.estadual.eliminated ? "bg-red-400/10" : "bg-orange-400/10",
       borderColor: compState.estadual.eliminated ? "border-red-400/30" : "border-orange-400/30"
     },
-    { 
-      id: "libertadores", 
-      name: "Copa Libertadores", 
-      type: "Continental", 
-      teams: 32, 
+    {
+      id: "libertadores",
+      name: t.competitions.libertadores,
+      type: "Continental",
+      teams: 32,
       status: compState.libertadores.qualified
         ? compState.libertadores.champion
-          ? `Campeao: ${compState.libertadores.champion}`
+          ? `${t.finances.champion}: ${compState.libertadores.champion}`
           : compState.libertadores.eliminated
-            ? "Eliminado"
+            ? t.competitions.eliminated
             : compState.libertadores.group
-              ? "Fase de Grupos"
-              : "Classificado"
-        : "Nao classificado",
+              ? t.competitions.groupStage
+              : t.competitions.qualified
+        : t.competitions.notQualified,
       userPosition: null,
       icon: Globe,
-      color: compState.libertadores.qualified 
+      color: compState.libertadores.qualified
         ? compState.libertadores.eliminated ? "text-red-400" : "text-amber-400"
         : "text-white/30",
-      bgColor: compState.libertadores.qualified 
+      bgColor: compState.libertadores.qualified
         ? compState.libertadores.eliminated ? "bg-red-400/10" : "bg-amber-400/10"
         : "bg-white/5",
-      borderColor: compState.libertadores.qualified 
+      borderColor: compState.libertadores.qualified
         ? compState.libertadores.eliminated ? "border-red-400/30" : "border-amber-400/30"
         : "border-white/10"
     },
@@ -587,13 +628,13 @@ export default function CompeticoesPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Competicoes</h1>
-            <p className="text-sm text-white/50 mt-1">Temporada {currentSeason} - Acompanhe suas competicoes</p>
+            <h1 className="text-2xl font-semibold text-white tracking-tight">{t.sidebar.competitions}</h1>
+            <p className="text-sm text-white/50 mt-1">{t.competitions.seasonFollowup(currentSeason)}</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#141414] border border-white/5">
               <Calendar className="h-4 w-4 text-[#1db954]" />
-              <span className="text-sm text-white/70">Rodada {currentWeek}/38</span>
+              <span className="text-sm text-white/70">{t.competitions.roundProgress(currentWeek)}</span>
             </div>
           </div>
         </div>
@@ -633,7 +674,7 @@ export default function CompeticoesPage() {
                   <span>{comp.type}</span>
                   <span className="text-white/20">|</span>
                   <Users className="h-3 w-3" />
-                  <span>{comp.teams} times</span>
+                  <span>{t.competitions.teamCount(comp.teams)}</span>
                 </div>
                 <div className={cn(
                   "mt-3 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider",
@@ -691,11 +732,14 @@ export default function CompeticoesPage() {
           </TabsContent>
 
           <TabsContent value="copa-do-brasil" className="mt-4">
-            <CopaBracket 
-              userTeam={userTeam} 
+            <CopaBracket
+              userTeam={userTeam}
               state={compState.copaBrasil}
               onDraw={drawCopaBrasil}
-              onSimulate={simulateCopaBrasilRound}
+              onSimulate={() => handleSimulateCopa(
+                "Copa do Brasil",
+                `${currentSeason}/${String(currentSeason + 1).slice(-2)}`
+              )}
             />
           </TabsContent>
 
@@ -724,17 +768,18 @@ export default function CompeticoesPage() {
 }
 
 // Copa do Brasil Bracket Completo
-function CopaBracket({ 
-  userTeam, 
-  state, 
-  onDraw, 
-  onSimulate 
-}: { 
+function CopaBracket({
+  userTeam,
+  state,
+  onDraw,
+  onSimulate
+}: {
   userTeam: Team
   state: CompetitionState["copaBrasil"]
   onDraw: () => void
   onSimulate: () => void
 }) {
+  const t = useTranslation()
   const getTeamData = (short: string | null) => {
     if (!short) return null
     return getTeamByShort(short)
@@ -746,7 +791,7 @@ function CopaBracket({
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1db954]/10 mx-auto mb-6">
           <Trophy className="h-10 w-10 text-[#1db954]" />
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Copa do Brasil 2026</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.copaDoBrasil} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
           Clique para realizar o sorteio das oitavas de final
         </p>
@@ -755,17 +800,17 @@ function CopaBracket({
           className="px-6 py-3 rounded-lg bg-[#1db954] text-black font-semibold hover:bg-[#1ed760] transition-colors inline-flex items-center gap-2"
         >
           <Shuffle className="h-4 w-4" />
-          Sortear Chaves
+          {t.competitions.draw}
         </button>
       </div>
     )
   }
 
   const allRounds = [
-    { name: "Oitavas", matches: state.oitavas, isCurrent: state.currentRound === "oitavas" },
-    { name: "Quartas", matches: state.quartas, isCurrent: state.currentRound === "quartas" },
-    { name: "Semifinal", matches: state.semis, isCurrent: state.currentRound === "semis" },
-    { name: "Final", matches: state.final, isCurrent: state.currentRound === "final" },
+    { name: t.competitions.roundOf16, matches: state.oitavas, isCurrent: state.currentRound === "oitavas" },
+    { name: t.competitions.quarterFinals, matches: state.quartas, isCurrent: state.currentRound === "quartas" },
+    { name: t.competitions.semiFinals, matches: state.semis, isCurrent: state.currentRound === "semis" },
+    { name: t.competitions.final, matches: state.final, isCurrent: state.currentRound === "final" },
   ]
 
   const canSimulate = !state.champion && !state.eliminated
@@ -775,24 +820,24 @@ function CopaBracket({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-[#1db954]" />
-          <h3 className="text-lg font-semibold text-white">Copa do Brasil 2026 - Mata-mata</h3>
+          <h3 className="text-lg font-semibold text-white">{t.competitions.copaDoBrasil} 2026 - Mata-mata</h3>
         </div>
-        
+
         {canSimulate && (
           <button
             onClick={onSimulate}
             className="px-4 py-2 rounded-lg bg-[#1db954] text-black font-medium text-sm hover:bg-[#1ed760] transition-colors inline-flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
-            Simular {state.currentRound}
+            {t.competitions.simulate} {state.currentRound}
           </button>
         )}
-        
+
         {state.champion && (
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/30">
             <Crown className="h-4 w-4 text-yellow-500" />
             <span className="text-sm font-semibold text-yellow-500">
-              Campeao: {state.champion}
+              {t.finances.champion}: {state.champion}
             </span>
           </div>
         )}
@@ -840,7 +885,7 @@ function CopaBracket({
                         match.team1 === userTeam.curto && "font-bold text-white",
                         match.played && match.winner === match.team1 && "text-[#1db954]"
                       )}>
-                        {match.team1 || "A definir"}
+                        {match.team1 || t.competitions.toBeDefined}
                       </span>
                       <span className={cn(
                         "text-sm font-bold tabular-nums",
@@ -856,7 +901,7 @@ function CopaBracket({
                         match.team2 === userTeam.curto && "font-bold text-white",
                         match.played && match.winner === match.team2 && "text-[#1db954]"
                       )}>
-                        {match.team2 || "A definir"}
+                        {match.team2 || t.competitions.toBeDefined}
                       </span>
                       <span className={cn(
                         "text-sm font-bold tabular-nums",
@@ -876,7 +921,7 @@ function CopaBracket({
       {state.eliminated && (
         <div className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-center">
           <X className="h-6 w-6 text-red-500 mx-auto mb-2" />
-          <p className="text-sm text-red-400">Voce foi eliminado da Copa do Brasil</p>
+          <p className="text-sm text-red-400">{t.competitions.eliminatedFromCopa}</p>
         </div>
       )}
     </div>
@@ -895,22 +940,24 @@ function EstadualView({
   onDraw: () => void
   onSimulateGroups: () => void
 }) {
+  const t = useTranslation()
+
   if (!state.drawn) {
     return (
       <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-orange-400/10 mx-auto mb-6">
           <MapPin className="h-10 w-10 text-orange-400" />
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Campeonato Estadual 2026</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.estaduais} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
-          Clique para realizar o sorteio dos grupos
+          {t.competitions.draw}
         </p>
         <button
           onClick={onDraw}
           className="px-6 py-3 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors inline-flex items-center gap-2"
         >
           <Shuffle className="h-4 w-4" />
-          Sortear Grupos
+          {t.competitions.drawGroups}
         </button>
       </div>
     )
@@ -921,16 +968,16 @@ function EstadualView({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-orange-400" />
-          <h3 className="text-lg font-semibold text-white">Campeonato Estadual 2026</h3>
+          <h3 className="text-lg font-semibold text-white">{t.competitions.estaduais} 2026</h3>
         </div>
-        
+
         {state.phase === "grupos" && !state.groups[0].teams[0].played && (
           <button
             onClick={onSimulateGroups}
             className="px-4 py-2 rounded-lg bg-orange-500 text-white font-medium text-sm hover:bg-orange-600 transition-colors inline-flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
-            Simular Fase de Grupos
+            {t.competitions.simulateGroupStage}
           </button>
         )}
       </div>
@@ -986,7 +1033,7 @@ function EstadualView({
       {state.eliminated && (
         <div className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-center">
           <X className="h-6 w-6 text-red-500 mx-auto mb-2" />
-          <p className="text-sm text-red-400">Voce foi eliminado do Estadual na fase de grupos</p>
+          <p className="text-sm text-red-400">{t.competitions.eliminatedFromEstadual}</p>
         </div>
       )}
     </div>
@@ -1003,18 +1050,20 @@ function LibertadoresView({
   state: CompetitionState["libertadores"]
   onDraw: () => void
 }) {
+  const t = useTranslation()
+
   if (!state.qualified) {
     return (
       <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5 mx-auto mb-6">
           <Globe className="h-10 w-10 text-white/30" />
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Copa Libertadores 2026</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.libertadores} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
-          Termine entre os 4 primeiros no Brasileirao para se classificar
+          {t.competitions.toQualifyTop4}
         </p>
         <div className="text-xs text-white/30">
-          Posicao atual: {state.qualified ? "Classificado" : "Nao classificado"}
+          {state.qualified ? t.competitions.qualified : t.competitions.notQualified}
         </div>
       </div>
     )
@@ -1026,16 +1075,16 @@ function LibertadoresView({
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-400/10 mx-auto mb-6">
           <Globe className="h-10 w-10 text-amber-400" />
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">Copa Libertadores 2026</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.libertadores} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
-          Voce esta classificado! Clique para ver seu grupo
+          {t.competitions.youQualified}
         </p>
         <button
           onClick={onDraw}
           className="px-6 py-3 rounded-lg bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors inline-flex items-center gap-2"
         >
           <Shuffle className="h-4 w-4" />
-          Sortear Grupo
+          {t.competitions.drawGroup}
         </button>
       </div>
     )
@@ -1045,7 +1094,7 @@ function LibertadoresView({
     <div className="rounded-xl bg-[#141414] border border-white/5 p-6">
       <div className="flex items-center gap-2 mb-6">
         <Globe className="h-5 w-5 text-amber-400" />
-        <h3 className="text-lg font-semibold text-white">Copa Libertadores 2026 - {state.group.name}</h3>
+        <h3 className="text-lg font-semibold text-white">{t.competitions.libertadores} 2026 - {state.group.name}</h3>
       </div>
 
       <div className="max-w-md">
@@ -1103,14 +1152,15 @@ function StandingsTable({
     form: ("W" | "D" | "L" | "")[]
     isUser: boolean
   }[]
-  userTeam: Team 
+  userTeam: Team
 }) {
+  const t = useTranslation()
   return (
     <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
       {/* Header */}
       <div className="grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/5 bg-white/[0.02]">
         <span className="text-center">#</span>
-        <span>Clube</span>
+        <span>{t.dashboard.col.club}</span>
         <span className="text-center">J</span>
         <span className="text-center">V</span>
         <span className="text-center">E</span>
@@ -1193,15 +1243,15 @@ function StandingsTable({
       <div className="flex items-center gap-6 px-4 py-3 text-[10px] text-white/50 border-t border-white/5 bg-white/[0.02]">
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-[#1db954]" />
-          <span>Libertadores</span>
+          <span>{t.competitions.libertadoresLegend}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-blue-400" />
-          <span>Sul-Americana</span>
+          <span>{t.competitions.sulAmericanaLegend}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-red-500" />
-          <span>Rebaixamento</span>
+          <span>{t.competitions.relegationLegend}</span>
         </div>
       </div>
     </div>

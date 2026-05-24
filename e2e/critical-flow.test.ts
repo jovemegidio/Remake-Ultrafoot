@@ -5,14 +5,17 @@ test.describe("Critical flow — team selection → quick sim → standings upda
   test("novo-jogo: selecting a team persists it to localStorage", async ({ page }) => {
     await page.goto("/novo-jogo")
     // Pick the first visible team button
-    const teamBtn = page.locator("button").filter({ hasText: /^[A-Z]{3}$/ }).first()
-    const fallbackBtn = page.locator("button[class*='team'], button[class*='crest']").first()
-
-    const btn = (await teamBtn.count()) > 0 ? teamBtn : fallbackBtn
+    const btn = page.locator("button[data-team-card]").first()
     await btn.waitFor({ timeout: 10000 })
     await btn.click()
 
-    // After click, save state should contain selectedTeamShort
+    // Click "Comecar carreira" to persist selection to localStorage
+    const startBtn = page.locator("button").filter({ hasText: /come.*carreira|start.*career/i }).first()
+    await startBtn.waitFor({ timeout: 5000 })
+    await startBtn.click()
+
+    // After confirming, save state should contain selectedTeamShort
+    await page.waitForTimeout(1000)
     const saved = await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY)
     expect(saved).not.toBeNull()
     const parsed = JSON.parse(saved!)

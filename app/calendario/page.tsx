@@ -15,6 +15,7 @@ import {
   SkipForward,
   Check,
   Loader2,
+  Trophy,
 } from "lucide-react"
 import Link from "next/link"
 import { GameSidebar } from "@/components/game-sidebar"
@@ -24,10 +25,8 @@ import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
-
-const monthsShort = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-
-const weekDays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"]
+import { useTranslation } from "@/lib/i18n"
+import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
 // Mapeia rodadas para meses aproximados (temporada de Abril a Dezembro)
 function roundToMonth(round: number): number {
@@ -45,6 +44,10 @@ function roundToDay(round: number): number {
 export default function CalendarioPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
+  useDiscordActivity("Vendo o calendário", userTeam.nome)
+  const t = useTranslation()
+  const monthsShort = t.calendar.months
+  const weekDays = t.calendar.days
   const {
     seasonCalendar,
     currentWeek,
@@ -62,6 +65,8 @@ export default function CalendarioPage() {
     round: number;
     matches: { home: string; away: string; homeScore: number; awayScore: number }[];
   } | null>(null)
+  const [showChampionScreen, setShowChampionScreen] = useState(false)
+  const [championTeam, setChampionTeam] = useState<string | null>(null)
 
   // Filtra fixtures por mes
   const monthFixtures = useMemo(() => {
@@ -94,7 +99,12 @@ export default function CalendarioPage() {
   const handleAdvanceRound = useCallback(async () => {
     setIsSimulating(true)
     try {
-      await advanceWeek()
+      const result = await advanceWeek()
+      if (result?.newSeason) {
+        setChampionTeam(standings[0]?.teamShort ?? null)
+        setShowChampionScreen(true)
+        return
+      }
       
       // Mostra resultados simulados
       const simulatedMatches = seasonCalendar.fixtures
@@ -129,7 +139,12 @@ export default function CalendarioPage() {
       
       let currentRound = currentWeek
       while (currentRound < nextMatch.round - 1) {
-        await advanceWeek()
+        const r = await advanceWeek()
+        if (r?.newSeason) {
+          setChampionTeam(standings[0]?.teamShort ?? null)
+          setShowChampionScreen(true)
+          return
+        }
         currentRound++
         // Pequeno delay para mostrar progresso
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -239,13 +254,13 @@ export default function CalendarioPage() {
           {/* Current Date */}
           <div className="mb-4">
             <div className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
-              Temporada {currentSeason}
+              {t.common.season} {currentSeason}
             </div>
             <div className="text-xl font-semibold text-white">
-              Rodada {currentWeek}<span className="text-white/40">/38</span>
+              {t.common.week} {currentWeek}<span className="text-white/40">/38</span>
             </div>
             <div className="text-sm text-white/50 mt-1">
-              {userPosition > 0 ? `${userPosition}o lugar` : "Classif. pendente"}
+              {userPosition > 0 ? t.calendar.positionLabel(userPosition) : t.calendar.positionPending}
             </div>
           </div>
 
@@ -266,7 +281,7 @@ export default function CalendarioPage() {
               ) : (
                 <FastForward className="h-4 w-4" />
               )}
-              Avancar Rodada
+              {t.calendar.advanceRound}
             </button>
             
             {seasonCalendar.nextUserMatch && currentWeek < seasonCalendar.nextUserMatch.round - 1 && (
@@ -279,7 +294,7 @@ export default function CalendarioPage() {
                 )}
               >
                 <SkipForward className="h-3.5 w-3.5" />
-                Simular ate Proxima Partida
+                {t.calendar.simulateToNext}
               </button>
             )}
           </div>
@@ -289,7 +304,7 @@ export default function CalendarioPage() {
             <div className="mb-4 p-3 rounded-lg bg-[#1db954]/10 border border-[#1db954]/30 animate-in fade-in slide-in-from-top-2">
               <div className="flex items-center gap-2 text-xs font-medium text-[#1db954] mb-2">
                 <Check className="h-3.5 w-3.5" />
-                Rodada {simulationResults.round} Simulada
+                {t.calendar.roundSimulated(simulationResults.round)}
               </div>
               <div className="space-y-1 text-[10px] text-white/60">
                 {simulationResults.matches.slice(0, 3).map((m, i) => (
@@ -298,7 +313,7 @@ export default function CalendarioPage() {
                   </div>
                 ))}
                 {simulationResults.matches.length > 3 && (
-                  <div className="text-white/40">+{simulationResults.matches.length - 3} partidas</div>
+                  <div className="text-white/40">{t.calendar.moreMatches(simulationResults.matches.length - 3)}</div>
                 )}
               </div>
             </div>
@@ -313,7 +328,7 @@ export default function CalendarioPage() {
                 </div>
                 {selectedFixture.played && (
                   <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/60">
-                    Encerrada
+                    {t.calendar.finished}
                   </span>
                 )}
               </div>
@@ -345,7 +360,7 @@ export default function CalendarioPage() {
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2 text-white/50">
                   <Clock className="h-3.5 w-3.5" />
-                  <span>Rodada {selectedFixture.round}</span>
+                  <span>{t.common.week} {selectedFixture.round}</span>
                 </div>
                 <div className="flex items-center gap-2 text-white/50">
                   <MapPin className="h-3.5 w-3.5" />
@@ -363,14 +378,14 @@ export default function CalendarioPage() {
                   className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#1db954] text-black text-xs font-semibold hover:bg-[#1ed760] transition-colors"
                 >
                   <Play className="h-3.5 w-3.5 fill-current" />
-                  Jogar Partida
+                  {t.match.playMatch}
                 </Link>
               )}
             </div>
           ) : (
             <div className="mb-4 pb-4 border-b border-white/10 flex flex-col items-center justify-center text-center py-4">
               <CalendarIcon className="h-8 w-8 text-white/20 mb-2" />
-              <div className="text-white/40 text-xs">Selecione uma rodada</div>
+              <div className="text-white/40 text-xs">{t.calendar.selectRound}</div>
             </div>
           )}
 
@@ -378,7 +393,7 @@ export default function CalendarioPage() {
           {selectedRound && roundMatches.length > 0 && (
             <div className="mb-4">
               <div className="text-[10px] font-medium tracking-wider text-white/40 uppercase mb-3">
-                Rodada {selectedRound} - Todos os Jogos
+                {t.calendar.roundAllMatches(selectedRound)}
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
                 {roundMatches.map((f) => (
@@ -411,7 +426,7 @@ export default function CalendarioPage() {
           {/* Proximas Partidas */}
           <div className="flex-1">
             <div className="text-[10px] font-medium tracking-wider text-white/40 uppercase mb-3">
-              Proximas Partidas
+              {t.dashboard.nextMatches}
             </div>
             <div className="space-y-2">
               {nextUserFixtures.map((f) => (
@@ -431,7 +446,7 @@ export default function CalendarioPage() {
                       {f.homeTeam.curto === userTeam.curto ? "vs" : "@"} {f.homeTeam.curto === userTeam.curto ? f.awayTeam.nome : f.homeTeam.nome}
                     </div>
                     <div className="text-[10px] text-white/40">
-                      Rodada {f.round}
+                      {t.common.week} {f.round}
                     </div>
                   </div>
                   <div className={cn(
@@ -449,16 +464,16 @@ export default function CalendarioPage() {
 
           {/* Transfer Window */}
           <div className="pt-4 border-t border-white/10 mt-4">
-            <div className="text-[10px] text-white/40 font-medium tracking-wider mb-1">Janela de Transferencias</div>
+            <div className="text-[10px] text-white/40 font-medium tracking-wider mb-1">{t.calendar.transferWindow}</div>
             <div className="text-sm font-semibold text-white">
               {transferWindow.isOpen ? (
-                <span className="text-[#1db954]">Aberta</span>
+                <span className="text-[#1db954]">{t.calendar.windowOpen}</span>
               ) : (
-                "Fechada"
+                t.calendar.windowClosed
               )}
             </div>
             {!transferWindow.isOpen && (
-              <div className="text-[10px] text-white/50">Abre em {transferWindow.daysUntil} dias</div>
+              <div className="text-[10px] text-white/50">{t.calendar.windowOpensIn(transferWindow.daysUntil)}</div>
             )}
           </div>
         </aside>
@@ -552,7 +567,7 @@ export default function CalendarioPage() {
                         <TeamCrest team={item.fixture.homeTeam.curto === userTeam.curto ? item.fixture.awayTeam : item.fixture.homeTeam} size="xs" />
                         <span className="truncate flex items-center gap-1">
                           {item.fixture.homeTeam.curto === userTeam.curto ? <Home className="h-2.5 w-2.5" /> : <Plane className="h-2.5 w-2.5" />}
-                          {isPlayed ? `${item.fixture.homeScore}-${item.fixture.awayScore}` : item.fixture.homeTeam.curto === userTeam.curto ? "Casa" : "Fora"}
+                          {isPlayed ? `${item.fixture.homeScore}-${item.fixture.awayScore}` : item.fixture.homeTeam.curto === userTeam.curto ? t.common.home : t.common.away}
                         </span>
                         <span className="ml-auto text-[9px] opacity-60">R{item.fixture.round}</span>
                       </div>
@@ -566,7 +581,7 @@ export default function CalendarioPage() {
 
         {/* Right Panel - Standings Quick View */}
         <aside className="w-72 flex-shrink-0 border-l border-white/5 bg-[#0d0d0d] p-4 hidden xl:flex flex-col overflow-hidden">
-          <div className="text-xs text-white/40 uppercase tracking-wider mb-4">Classificacao</div>
+          <div className="text-xs text-white/40 uppercase tracking-wider mb-4">{t.calendar.standings}</div>
           
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             <div className="space-y-1">
@@ -603,10 +618,35 @@ export default function CalendarioPage() {
             href="/competicoes"
             className="mt-4 text-center text-xs text-primary hover:text-primary/80 transition-colors"
           >
-            Ver tabela completa
+            {t.common.viewFullTable}
           </Link>
         </aside>
       </div>
+
+      {/* Tela de campeao — aparece automaticamente ao fim da temporada */}
+      {showChampionScreen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-[#141414] border border-yellow-400/30 p-10 max-w-md w-full mx-4 text-center shadow-2xl">
+            <Trophy className="h-16 w-16 text-yellow-400" />
+            <h2 className="text-3xl font-black text-yellow-400 tracking-tight">CAMPEÃO!</h2>
+            {championTeam && (
+              <div className="flex flex-col items-center gap-3">
+                <TeamCrest team={getTeamByShort(championTeam) ?? undefined} size="2xl" />
+                <p className="text-xl font-bold text-white">
+                  {getTeamByShort(championTeam)?.nome ?? championTeam}
+                </p>
+              </div>
+            )}
+            <p className="text-white/50 text-sm">Temporada {currentSeason} encerrada. Nova temporada iniciando!</p>
+            <button
+              onClick={() => setShowChampionScreen(false)}
+              className="mt-2 px-8 py-3 rounded-xl bg-yellow-400 text-black font-bold text-lg hover:bg-yellow-300 transition-colors"
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -93,6 +94,17 @@ const MOCK_DISCOVERED_PLAYERS = [
 ]
 
 export default function OlheirosPage() {
+  const router = useRouter()
+
+  // Gamepad support
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === 'B') router.back()
+    }
+    window.addEventListener('gamepad:button', handler)
+    return () => window.removeEventListener('gamepad:button', handler)
+  }, [router])
   const { gameEngine, userTeam } = useGameManager()
   const [activeTab, setActiveTab] = useState<"meus_olheiros" | "contratar" | "descobertos">("meus_olheiros")
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)

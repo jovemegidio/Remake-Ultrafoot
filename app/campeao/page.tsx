@@ -1,13 +1,24 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { Trophy, Star, Sparkles, Home, Calendar, ArrowRight, Crown, Medal } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Trophy, Star, Sparkles, Home, ArrowRight, Crown, Medal } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameManager } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tipos
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface PendingChampion {
+  competition: string
+  season: string
+  type: "league" | "cup"
+  stats: { won: number; drawn: number; lost: number; goalsFor: number } | null
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Confete em CSS — sem dependências externas
@@ -65,19 +76,28 @@ function Confetti() {
 // Página
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FALLBACK_TROPHIES = [
-  {
-    name: "Brasileirão Série A",
-    season: "2025/26",
-    type: "league",
-  },
-]
-
 export default function CampeaoPage() {
   const { team, hydrated } = useUserTeam()
   const { currentSeason } = useGameManager()
-  const seasonLabel = `${currentSeason}/${String(currentSeason + 1).slice(-2)}`
+  const router = useRouter()
   const [hover, setHover] = useState(false)
+
+  // Lê dados do campeonato ganho do localStorage e limpa após leitura
+  const [champion, setChampion] = useState<PendingChampion | null>(null)
+  useEffect(() => {
+    const raw = localStorage.getItem("ultrafoot-pending-champion")
+    if (raw) {
+      try {
+        setChampion(JSON.parse(raw))
+      } catch {}
+      localStorage.removeItem("ultrafoot-pending-champion")
+    }
+  }, [])
+
+  const seasonLabel = champion?.season ?? `${currentSeason}/${String(currentSeason + 1).slice(-2)}`
+  const competitionName = champion?.competition ?? getLeagueName(team.curto)
+
+  const stats = champion?.stats ?? { won: 0, drawn: 0, lost: 0, goalsFor: 0 }
 
   useEffect(() => {
     document.body.style.background = "#000"
@@ -85,6 +105,15 @@ export default function CampeaoPage() {
       document.body.style.background = ""
     }
   }, [])
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === "A" || btn === "B" || btn === "START") router.push("/")
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router])
 
   if (!hydrated) {
     return (
@@ -199,27 +228,24 @@ export default function CampeaoPage() {
             />
           </div>
 
-          {/* Conquistas */}
+          {/* Conquista */}
           <div className="flex flex-wrap items-center justify-center gap-3 max-w-2xl">
-            {FALLBACK_TROPHIES.map(t => (
-              <div
-                key={t.name}
-                className="flex items-center gap-3 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-5 py-2.5 backdrop-blur-sm"
-              >
-                <Medal className="h-4 w-4 text-yellow-400" />
-                <span className="text-sm font-bold text-white">{t.name}</span>
-                <span className="text-xs text-yellow-400/80 tracking-wider">{t.season}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-3 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-5 py-2.5 backdrop-blur-sm">
+              <Medal className="h-4 w-4 text-yellow-400" />
+              <span className="text-sm font-bold text-white">{competitionName}</span>
+              <span className="text-xs text-yellow-400/80 tracking-wider">{seasonLabel}</span>
+            </div>
           </div>
 
-          {/* Estatísticas da temporada */}
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl w-full">
-            <Stat label="VITÓRIAS" value="28" icon={Star} color="#1db954" />
-            <Stat label="EMPATES" value="6" icon={Star} color="#eab308" />
-            <Stat label="DERROTAS" value="4" icon={Star} color="#ef4444" />
-            <Stat label="GOLS" value="92" icon={Star} color="#3b82f6" />
-          </div>
+          {/* Estatísticas da temporada — só exibe se houver stats reais */}
+          {stats.won > 0 || stats.drawn > 0 || stats.lost > 0 || stats.goalsFor > 0 ? (
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl w-full">
+              <Stat label="VITÓRIAS" value={String(stats.won)} icon={Star} color="#1db954" />
+              <Stat label="EMPATES" value={String(stats.drawn)} icon={Star} color="#eab308" />
+              <Stat label="DERROTAS" value={String(stats.lost)} icon={Star} color="#ef4444" />
+              <Stat label="GOLS" value={String(stats.goalsFor)} icon={Star} color="#3b82f6" />
+            </div>
+          ) : null}
         </div>
 
         {/* Mensagem inferior */}
@@ -233,26 +259,15 @@ export default function CampeaoPage() {
 
         {/* Ações */}
         <div className="mt-10 flex flex-col sm:flex-row gap-3">
-          <Link href="/">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-yellow-500 to-amber-400 text-black hover:opacity-90 font-bold tracking-wider shadow-lg shadow-yellow-500/30"
-            >
-              <Home className="mr-2 h-5 w-5" />
-              CONTINUAR CARREIRA
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-          <Link href="/historico">
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/15 bg-white/5 text-white hover:bg-white/10"
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              VER HISTÓRICO
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            onClick={() => router.push("/")}
+            className="bg-gradient-to-r from-yellow-500 to-amber-400 text-black hover:opacity-90 font-bold tracking-wider shadow-lg shadow-yellow-500/30"
+          >
+            <Home className="mr-2 h-5 w-5" />
+            CONTINUAR CARREIRA
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </div>
 

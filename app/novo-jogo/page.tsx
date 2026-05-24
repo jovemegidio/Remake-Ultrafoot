@@ -43,6 +43,7 @@ import { teamRating, getPlayersByTeam } from "@/lib/players-data"
 import { useGameManager } from "@/lib/use-game-manager"
 import { TeamCrest } from "@/components/team-crest"
 import { Input } from "@/components/ui/input"
+import { useTranslation } from "@/lib/i18n"
 
 interface DivisaoTab {
   key: Divisao
@@ -51,40 +52,50 @@ interface DivisaoTab {
   teams: Team[]
   region: Regiao
   country?: string
-  flag?: string
+  code?: string
 }
 
 const DIVISIONS: DivisaoTab[] = [
   // Brasil
-  { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
-  { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
-  { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
-  { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams, region: "brasil", country: "Brasil", flag: "🇧🇷" },
+  { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams, region: "brasil", country: "Brasil", code: "BR" },
+  { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams, region: "brasil", country: "Brasil", code: "BR" },
+  { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams, region: "brasil", country: "Brasil", code: "BR" },
+  { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams, region: "brasil", country: "Brasil", code: "BR" },
   // Europa
-  { key: "premier_league", label: "Premier League", short: "Premier", teams: premierLeagueTeams, region: "europa", country: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams, region: "europa", country: "Espanha", flag: "🇪🇸" },
-  { key: "serie_a_ita", label: "Serie A Italia", short: "Serie A ITA", teams: serieAItaTeams, region: "europa", country: "Italia", flag: "🇮🇹" },
-  { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams, region: "europa", country: "Alemanha", flag: "🇩🇪" },
-  { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams, region: "europa", country: "Franca", flag: "🇫🇷" },
-  { key: "primeira_liga", label: "Primeira Liga", short: "Portugal", teams: primeiraLigaTeams, region: "europa", country: "Portugal", flag: "🇵🇹" },
+  { key: "premier_league", label: "Premier League", short: "Premier", teams: premierLeagueTeams, region: "europa", country: "Inglaterra", code: "ENG" },
+  { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams, region: "europa", country: "Espanha", code: "ESP" },
+  { key: "serie_a_ita", label: "Serie A Italia", short: "Serie A ITA", teams: serieAItaTeams, region: "europa", country: "Italia", code: "ITA" },
+  { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams, region: "europa", country: "Alemanha", code: "GER" },
+  { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams, region: "europa", country: "Franca", code: "FRA" },
+  { key: "primeira_liga", label: "Primeira Liga", short: "Portugal", teams: primeiraLigaTeams, region: "europa", country: "Portugal", code: "POR" },
   // Americas
-  { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams, region: "americas", country: "EUA", flag: "🇺🇸" },
-  { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams, region: "americas", country: "Mexico", flag: "🇲🇽" },
+  { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams, region: "americas", country: "EUA", code: "USA" },
+  { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams, region: "americas", country: "Mexico", code: "MEX" },
   // Asia
-  { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams, region: "asia", country: "Arabia Saudita", flag: "🇸🇦" },
+  { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams, region: "asia", country: "Arabia Saudita", code: "KSA" },
 ]
 
-const REGIONS: { key: Regiao | "all"; label: string; icon: string }[] = [
-  { key: "all", label: "Todas", icon: "🌍" },
-  { key: "brasil", label: "Brasil", icon: "🇧🇷" },
-  { key: "europa", label: "Europa", icon: "🇪🇺" },
-  { key: "americas", label: "Americas", icon: "🌎" },
-  { key: "asia", label: "Asia", icon: "🌏" },
+const REGIONS: { key: Regiao | "all"; label: string; code: string | null }[] = [
+  { key: "all", label: "Todas", code: null },
+  { key: "brasil", label: "Brasil", code: "BR" },
+  { key: "europa", label: "Europa", code: "EU" },
+  { key: "americas", label: "Americas", code: "AM" },
+  { key: "asia", label: "Asia", code: "AS" },
 ]
 
 export default function NovoJogoPage() {
   const router = useRouter()
   const { initializeNewGame } = useGameManager()
+  const t = useTranslation()
+
+  const regions = [
+    { key: "all" as const, label: t.newGame.filterAll, code: null as string | null },
+    { key: "brasil" as const, label: t.newGame.filterBrazil, code: "BR" as string | null },
+    { key: "europa" as const, label: t.newGame.filterEurope, code: "EU" as string | null },
+    { key: "americas" as const, label: t.newGame.filterAmericas, code: "AM" as string | null },
+    { key: "asia" as const, label: t.newGame.filterAsia, code: "AS" as string | null },
+  ]
+
   const [selectedRegion, setSelectedRegion] = useState<Regiao | "all">("all")
   const [divisao, setDivisao] = useState<Divisao>("serie_a")
   const [search, setSearch] = useState("")
@@ -238,14 +249,14 @@ export default function NovoJogoPage() {
           />
         </div>
         <div className="text-[10px] tracking-[0.3em] text-white/30">
-          NOVA CARREIRA
+          {t.newGame.title}
         </div>
       </header>
 
       <div className="relative z-10 flex-1 flex flex-col mx-auto w-full max-w-[1600px] px-6 py-4 overflow-hidden">
         <div className="flex-shrink-0 mb-4">
           <p className="text-[11px] uppercase tracking-[0.4em] text-white/35">
-            Passo 1 de 1
+            {t.newGame.step}
           </p>
           <h1
             className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight"
@@ -253,10 +264,10 @@ export default function NovoJogoPage() {
               fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
             }}
           >
-            ESCOLHA SEU TIME
+            {t.newGame.chooseTeam}
           </h1>
           <p className="mt-1 max-w-xl text-xs text-white/50">
-            Selecione o clube que voce vai gerenciar. {totalTeams} times disponiveis em {DIVISIONS.length} ligas.
+            {t.newGame.teamsAvailable(totalTeams, DIVISIONS.length)}
           </p>
         </div>
 
@@ -266,7 +277,7 @@ export default function NovoJogoPage() {
             {/* Region selector */}
             <div className="flex-shrink-0 mb-3">
               <div className="flex items-center gap-1 rounded-full bg-white/[0.04] p-1 w-fit">
-                {REGIONS.map(r => (
+                {regions.map(r => (
                   <button
                     key={r.key}
                     onClick={() => handleRegionChange(r.key)}
@@ -277,7 +288,10 @@ export default function NovoJogoPage() {
                         : "text-white/55 hover:text-white")
                     }
                   >
-                    <span>{r.icon}</span>
+                    {r.code
+                      ? <CountryCode code={r.code} active={r.key === selectedRegion} />
+                      : <Globe className="h-3 w-3" />
+                    }
                     {r.label}
                   </button>
                 ))}
@@ -301,7 +315,7 @@ export default function NovoJogoPage() {
                         : "text-white/55 hover:text-white hover:bg-white/5")
                     }
                   >
-                    <span className="text-xs">{d.flag}</span>
+                    {d.code && <CountryCode code={d.code} active={d.key === divisao} />}
                     {d.short}
                     <span className="text-[10px] opacity-60">
                       {d.teams.length}
@@ -314,7 +328,7 @@ export default function NovoJogoPage() {
                 <Input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder={`Buscar em ${activeDivision.label}...`}
+                  placeholder={t.newGame.searchIn(activeDivision.label)}
                   className="border-white/10 bg-white/[0.03] pl-9 text-sm text-white placeholder:text-white/30 h-9"
                 />
               </div>
@@ -350,7 +364,7 @@ export default function NovoJogoPage() {
                 ))}
                 {teams.length === 0 && (
                   <div className="col-span-full rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-white/40">
-                    Nenhum time encontrado para "{search}".
+                    {t.newGame.noResults(search)}
                   </div>
                 )}
               </div>
@@ -373,7 +387,7 @@ export default function NovoJogoPage() {
                     <Trophy className="h-6 w-6 text-white/30" />
                   </div>
                   <p className="text-sm text-white/50">
-                    Selecione um time para ver detalhes.
+                    {t.newGame.selectTeamHint}
                   </p>
                 </div>
               )}
@@ -381,12 +395,12 @@ export default function NovoJogoPage() {
               {/* Manager + start */}
               <div className="flex-shrink-0 border-t border-white/5 p-4">
                 <label className="mb-1 block text-[10px] uppercase tracking-[0.3em] text-white/40">
-                  Nome do Tecnico
+                  {t.newGame.managerName}
                 </label>
                 <Input
                   value={managerName}
                   onChange={e => setManagerName(e.target.value)}
-                  placeholder="Ex: Tite"
+                  placeholder={t.newGame.managerPlaceholder}
                   maxLength={32}
                   className="mb-3 border-white/10 bg-white/[0.03] text-white placeholder:text-white/30 h-9"
                 />
@@ -400,11 +414,11 @@ export default function NovoJogoPage() {
                       : "cursor-not-allowed bg-white/5 text-white/30")
                   }
                 >
-                  <span>Comecar carreira</span>
+                  <span>{t.newGame.startCareer}</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <p className="mt-2 text-center text-[10px] text-white/30">
-                  Save salvo localmente
+                  {t.newGame.savedLocally}
                 </p>
               </div>
             </div>
@@ -476,6 +490,7 @@ function SelectedPanel({ team }: { team: Team }) {
   const overall = teamRating(team.nome)
   const players = getPlayersByTeam(team.nome)
   const divisionInfo = DIVISIONS.find(d => d.key === team.divisao)
+  const t = useTranslation()
 
   return (
     <div
@@ -488,7 +503,7 @@ function SelectedPanel({ team }: { team: Team }) {
         <TeamCrest team={team} size="xl" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
-            <span>{divisionInfo?.flag}</span>
+            {divisionInfo?.code && <CountryCode code={divisionInfo.code} active={false} />}
             <span>{divisionInfo?.label || team.divisao.replace("_", " ").toUpperCase()}</span>
           </div>
           <h2
@@ -507,26 +522,26 @@ function SelectedPanel({ team }: { team: Team }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <Stat icon={Star} label="Prestigio" value={team.prestigio.toString()} />
+        <Stat icon={Star} label={t.newGame.prestige} value={team.prestigio.toString()} />
         <Stat
           icon={Trophy}
-          label="Overall"
+          label={t.newGame.overall}
           value={overall > 0 ? overall.toString() : "-"}
         />
-        <Stat icon={Users} label="Torcida" value={formatNumber(team.torcida)} />
-        <Stat icon={Wallet} label="Saldo" value={formatCurrency(team.saldo)} />
+        <Stat icon={Users} label={t.newGame.fans} value={formatNumber(team.torcida)} />
+        <Stat icon={Wallet} label={t.common.balance} value={formatCurrency(team.saldo)} />
       </div>
 
       <div className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
           <Building2 className="h-3 w-3" />
-          Estadio
+          {t.newGame.stadium}
         </div>
         <div className="mt-1 text-sm font-medium text-white">
           {team.estadio_nome || "-"}
         </div>
         <div className="mt-0.5 text-[11px] text-white/40">
-          Capacidade: {team.estadio_cap.toLocaleString("pt-BR")}
+          {t.newGame.capacity}: {team.estadio_cap.toLocaleString("pt-BR")}
         </div>
       </div>
 
@@ -534,20 +549,20 @@ function SelectedPanel({ team }: { team: Team }) {
       <div className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
           <Globe className="h-3 w-3" />
-          Informacoes
+          {t.newGame.information}
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
           <div>
-            <span className="text-white/40">Pais: </span>
+            <span className="text-white/40">{t.newGame.country}: </span>
             <span className="text-white/70">{team.pais || "Brasil"}</span>
           </div>
           <div>
-            <span className="text-white/40">Liga: </span>
+            <span className="text-white/40">{t.newGame.league}: </span>
             <span className="text-white/70">{divisionInfo?.short || team.divisao}</span>
           </div>
           {team.patrocinador && (
             <div className="col-span-2">
-              <span className="text-white/40">Patrocinador: </span>
+              <span className="text-white/40">{t.newGame.sponsor}: </span>
               <span className="text-white/70">{team.patrocinador}</span>
             </div>
           )}
@@ -556,7 +571,7 @@ function SelectedPanel({ team }: { team: Team }) {
 
       {players.length > 0 && (
         <div className="mt-2 flex items-center justify-between text-[11px] text-white/45">
-          <span>{players.length} jogadores no elenco</span>
+          <span>{t.newGame.squad(players.length)}</span>
         </div>
       )}
     </div>
@@ -587,6 +602,21 @@ function Stat({
         {value}
       </div>
     </div>
+  )
+}
+
+function CountryCode({ code, active }: { code: string; active: boolean }) {
+  return (
+    <span
+      className={
+        "inline-flex shrink-0 items-center justify-center rounded px-1 py-0.5 text-[8px] font-black tracking-widest uppercase leading-none border " +
+        (active
+          ? "border-black/20 bg-black/10 text-black"
+          : "border-white/15 bg-white/5 text-white/50")
+      }
+    >
+      {code}
+    </span>
   )
 }
 

@@ -21,7 +21,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { serieATeams, formatCurrency } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
+import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
+import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { PlayerAvatar } from "@/components/player-avatar"
+import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 // Mock transfer targets
@@ -110,8 +113,45 @@ interface FilterCard {
   value: string
 }
 
+function marketPlayerToEnginePlayer(p: Player): EnginePlayer {
+  return {
+    id: p.id + 9000,
+    name: p.name,
+    position: p.position,
+    age: p.age,
+    overall: p.overall,
+    potential: p.potential,
+    nationality: p.nationality,
+    pace: p.stats?.pace ?? 70,
+    shooting: p.stats?.shooting ?? 65,
+    passing: p.stats?.passing ?? 65,
+    dribbling: p.stats?.dribbling ?? 65,
+    defending: p.stats?.defense ?? 55,
+    physical: p.stats?.physical ?? 65,
+    energy: 100,
+    morale: "Normal" as const,
+    form: p.overall,
+    contract: { salary: Math.round(p.overall * 800), endDate: 52, releaseClause: p.releaseClause ?? null, signedWeek: 0, signedSeason: 2026 },
+    injury: null,
+    seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
+    training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
+    nationalTeam: null,
+    calledUp: false,
+    marketValue: p.value,
+    joinedClubWeek: 0,
+    joinedClubSeason: 2026,
+    isLoanedIn: false,
+    isStarter: false,
+  }
+}
+
 export default function MercadoPage() {
   const { team: userTeam } = useUserTeam()
+  const t = useTranslation()
+  const { buyPlayer, loanPlayer } = useGameEngine()
+
+  useDiscordActivity("No mercado de transferências", userTeam.nome)
+
   const [activeTab, setActiveTab] = useState("buscar")
   const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
@@ -130,14 +170,14 @@ export default function MercadoPage() {
 
   // Filter cards for search
   const filterCards: FilterCard[] = [
-    { id: "nome", label: "Nome", icon: <User className="h-10 w-10 text-white/30" />, value: "Qualquer" },
-    { id: "posicao", label: "Posicao", icon: null, value: "Qualquer" },
-    { id: "nacionalidade", label: "Nacionalidade/Regiao", icon: <Flag className="h-10 w-10 text-white/30" />, value: "Qualquer" },
-    { id: "status", label: "Status transferencia", icon: <ArrowLeftRight className="h-10 w-10 text-white/30" />, value: "Qualquer" },
-    { id: "idade", label: "Idade", icon: null, value: "16 - 35" },
-    { id: "pais", label: "Pais/regiao", icon: <Flag className="h-8 w-8 text-white/30" />, value: "Qualquer" },
-    { id: "liga", label: "Liga", icon: <Trophy className="h-10 w-10 text-white/30" />, value: "Qualquer" },
-    { id: "time", label: "Time", icon: <Shield className="h-12 w-12 text-white/20" />, value: "Qualquer" },
+    { id: "nome", label: t.market.name, icon: <User className="h-10 w-10 text-white/30" />, value: t.market.any },
+    { id: "posicao", label: t.market.position, icon: null, value: t.market.any },
+    { id: "nacionalidade", label: t.market.nationality, icon: <Flag className="h-10 w-10 text-white/30" />, value: t.market.any },
+    { id: "status", label: t.market.transferStatus, icon: <ArrowLeftRight className="h-10 w-10 text-white/30" />, value: t.market.any },
+    { id: "idade", label: t.market.age, icon: null, value: "16 - 35" },
+    { id: "pais", label: t.market.countryRegion, icon: <Flag className="h-8 w-8 text-white/30" />, value: t.market.any },
+    { id: "liga", label: t.market.league, icon: <Trophy className="h-10 w-10 text-white/30" />, value: t.market.any },
+    { id: "time", label: t.market.team, icon: <Shield className="h-12 w-12 text-white/20" />, value: t.market.any },
   ]
 
   // Filter players by all criteria
@@ -261,30 +301,30 @@ export default function MercadoPage() {
             </div>
             
             <TabsList className="bg-transparent border-0 p-0 h-auto gap-6">
-              <TabsTrigger 
-                value="buscar" 
+              <TabsTrigger
+                value="buscar"
                 className="bg-transparent border-0 px-0 py-0 text-lg font-semibold data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
               >
-                Buscar Atletas
+                {t.market.searchAthletes}
               </TabsTrigger>
               <span className="text-white/20">|</span>
-              <TabsTrigger 
-                value="rede" 
+              <TabsTrigger
+                value="rede"
                 className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
               >
-                Rede Mundial de Transferencias
+                {t.market.transferNetwork}
               </TabsTrigger>
               <span className="text-white/20">|</span>
-              <TabsTrigger 
-                value="olheiros" 
+              <TabsTrigger
+                value="olheiros"
                 className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
               >
-                Olheiros
+                {t.market.scouts}
               </TabsTrigger>
             </TabsList>
 
             <div className="ml-auto flex items-center gap-4">
-              <span className="text-sm text-white/40">Filtros de Busca</span>
+              <span className="text-sm text-white/40">{t.market.searchFilters}</span>
             </div>
           </div>
 
@@ -296,7 +336,7 @@ export default function MercadoPage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
                 <input
                   type="text"
-                  placeholder="Buscar jogador por nome..."
+                  placeholder={t.market.searchByName}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
@@ -336,12 +376,12 @@ export default function MercadoPage() {
             {searchQuery.length >= 2 && filteredPlayers.length > 0 && (
               <div className="mb-6 p-4 rounded-xl bg-[#1a1a1a] border border-white/10">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-white/60">{filteredPlayers.length} jogadores encontrados</span>
-                  <button 
+                  <span className="text-sm text-white/60">{t.market.playersFound(filteredPlayers.length)}</span>
+                  <button
                     onClick={handleSearch}
                     className="text-xs text-primary hover:text-primary/80 transition-colors"
                   >
-                    Ver todos na Rede
+                    {t.market.viewInNetwork}
                   </button>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -381,7 +421,7 @@ export default function MercadoPage() {
                         <User className="h-10 w-10 text-white/30" strokeWidth={1.5} />
                       </div>
                     </div>
-                    <span className="text-white/50 text-sm mt-3">{nameFilter || "Qualquer"}</span>
+                    <span className="text-white/50 text-sm mt-3">{nameFilter || t.market.any}</span>
                   </div>
                 }
               />
@@ -391,9 +431,9 @@ export default function MercadoPage() {
                 onClick={() => setSelectedFilter("posicao")}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full gap-1">
-                    <span className="text-white/50 text-sm">Qualquer</span>
-                    <div className="font-semibold text-white text-base">Funcao</div>
-                    <span className="text-white/50 text-sm">Qualquer</span>
+                    <span className="text-white/50 text-sm">{t.market.any}</span>
+                    <div className="font-semibold text-white text-base">{t.market.role}</div>
+                    <span className="text-white/50 text-sm">{t.market.any}</span>
                   </div>
                 }
               />
@@ -508,7 +548,7 @@ export default function MercadoPage() {
                 onClick={handleSearch}
                 className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
               >
-                Iniciar Busca
+                {t.market.startSearch}
               </button>
             </div>
           </TabsContent>
@@ -559,7 +599,7 @@ export default function MercadoPage() {
                     <div key={group} className="rounded-xl bg-[#141414]/80 border border-white/5 p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-white font-semibold">{group}</h3>
-                        <span className="text-xs text-white/40">Pronto para jogar, Reserva</span>
+                        <span className="text-xs text-white/40">{t.market.readyToPlay}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {players.map((player) => (
@@ -585,8 +625,8 @@ export default function MercadoPage() {
               ) : (
                 <div className="rounded-xl bg-[#141414]/80 border border-white/5 p-8 flex flex-col items-center justify-center text-center">
                   <User className="h-20 w-20 text-white/10 mb-4" />
-                  <h3 className="text-white/40 text-lg">Selecione um jogador</h3>
-                  <p className="text-white/30 text-sm mt-2">Clique em um jogador para ver seus detalhes</p>
+                  <h3 className="text-white/40 text-lg">{t.market.selectPlayer}</h3>
+                  <p className="text-white/30 text-sm mt-2">{t.market.clickForDetails}</p>
                 </div>
               )}
             </div>
@@ -595,9 +635,9 @@ export default function MercadoPage() {
           {/* Scouts Tab */}
           <TabsContent value="olheiros" className="mt-0">
             <div className="flex items-center gap-4 mb-6">
-              <span className="text-white font-semibold">Olheiros</span>
+              <span className="text-white font-semibold">{t.market.scouts}</span>
               <span className="text-white/20">|</span>
-              <span className="text-white/40">Instrucoes</span>
+              <span className="text-white/40">{t.market.instructions}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
@@ -607,7 +647,7 @@ export default function MercadoPage() {
                   <ScoutCard key={scout.id} scout={scout} selected={index === 4} />
                 ))}
                 <button className="rounded-xl bg-[#141414]/50 border border-white/5 p-6 flex items-center justify-center hover:border-primary/30 transition-colors">
-                  <span className="text-white/60 font-medium">Contratar Olheiro</span>
+                  <span className="text-white/60 font-medium">{t.market.hireScout}</span>
                 </button>
               </div>
 
@@ -647,6 +687,15 @@ export default function MercadoPage() {
         player={selectedPlayer}
         type={negotiationType}
         team={selectedPlayer?.team}
+        onConfirm={(fee) => {
+          if (!selectedPlayer) return
+          const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer)
+          if (negotiationType === "loan") {
+            loanPlayer(enginePlayer, 26, Math.round(fee / 26))
+          } else {
+            buyPlayer(enginePlayer, fee)
+          }
+        }}
       />
     </div>
   )
@@ -759,6 +808,7 @@ function PlayerListCard({
 
 // Player Details Panel Component
 function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotiate: (type: "buy" | "loan") => void }) {
+  const t = useTranslation()
   const isNew = player.scoutProgress && player.scoutProgress < 100
   const isNotScouted = !player.scoutedBy
 
@@ -774,17 +824,17 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => onNegotiate("buy")}
               className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
             >
-              Comprar
+              {t.market.buy}
             </button>
-            <button 
+            <button
               onClick={() => onNegotiate("loan")}
               className="px-4 py-1.5 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors"
             >
-              Emprestar
+              {t.market.loan}
             </button>
           </div>
         </div>

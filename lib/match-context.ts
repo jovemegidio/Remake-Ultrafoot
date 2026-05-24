@@ -27,7 +27,7 @@ export interface MatchContext {
 }
 
 export const DEFAULT_MATCH_CONTEXT: MatchContext = {
-  homeShort: "BGT",
+  homeShort: "BOT",
   awayShort: "PAL",
   homeKit: "home",
   awayKit: "away",

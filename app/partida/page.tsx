@@ -39,9 +39,10 @@ import {
   type Team,
 } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameManager } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { saveMatchContext } from "@/lib/match-context"
-import { simulateFullMatch } from "@/lib/match-engine"
+import { simulateFullMatch, type MatchEvent as SimEvent } from "@/lib/match-engine"
+import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
 
@@ -213,6 +214,7 @@ export default function PreMatchPage() {
   const [quickSimResult, setQuickSimResult] = useState<{
     homeGoals: number
     awayGoals: number
+    events: SimEvent[]
   } | null>(null)
 
   // Configurações da partida
@@ -237,7 +239,7 @@ export default function PreMatchPage() {
   const isHome = nextMatch ? nextMatch.homeTeam.curto === userTeam.curto : true
 
   const matchInfo = {
-    competition: nextMatch?.competition || "Brasileirao Serie A",
+    competition: nextMatch?.competition || getLeagueName(userTeam.curto),
     competitionId: "brasileirao" as CompetitionId,
     round: nextMatch ? `Rodada ${nextMatch.round}` : `Rodada ${currentWeek + 1}`,
     stadium: isHome ? userTeam.estadio_nome : opponent.estadio_nome,
@@ -268,6 +270,19 @@ export default function PreMatchPage() {
       matchMode,
     })
   }, [hydrated, homeTeam.curto, awayTeam.curto, homeKit, awayKit, duration, weather, matchMode])
+
+  const handleQuickSim = useCallback(() => {
+    const final = simulateFullMatch({
+      homeTeam,
+      awayTeam,
+      homeRating: teamRating(homeTeam.nome) || homeTeam.prestigio,
+      awayRating: teamRating(awayTeam.nome) || awayTeam.prestigio,
+      durationMinutes: duration,
+      weatherFactor: weather === "rain" ? 0.9 : 1,
+    })
+    setQuickSimResult({ homeGoals: final.home.goals, awayGoals: final.away.goals, events: final.events })
+    setShowQuickSim(true)
+  }, [homeTeam, awayTeam, duration, weather])
 
   // Navegacao por controle na tela de pre-partida
   useEffect(() => {
@@ -327,20 +342,7 @@ export default function PreMatchPage() {
 
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [showLineup, showSettings, showQuickSim, router])
-
-  const handleQuickSim = useCallback(() => {
-    const final = simulateFullMatch({
-      homeTeam,
-      awayTeam,
-      homeRating: teamRating(homeTeam.nome) || homeTeam.prestigio,
-      awayRating: teamRating(awayTeam.nome) || awayTeam.prestigio,
-      durationMinutes: duration,
-      weatherFactor: weather === "rain" ? 0.9 : 1,
-    })
-    setQuickSimResult({ homeGoals: final.home.goals, awayGoals: final.away.goals })
-    setShowQuickSim(true)
-  }, [homeTeam, awayTeam, duration, weather])
+  }, [showLineup, showSettings, showQuickSim, router, handleQuickSim])
 
   if (!hydrated) {
     return (
@@ -582,12 +584,20 @@ export default function PreMatchPage() {
                 <Button
                   onClick={async () => {
                     if (quickSimResult) {
+                      const engineEvents: EngineEvent[] = quickSimResult.events
+                        .filter(e => e.type === "goal")
+                        .map(e => ({
+                          minute: e.minute,
+                          type: "goal" as const,
+                          playerId: 0,
+                          playerName: e.player ?? (e.side === "home" ? homeTeam.curto : awayTeam.curto),
+                        }))
                       registerUserMatchResult(
                         homeTeam.curto,
                         awayTeam.curto,
                         quickSimResult.homeGoals,
                         quickSimResult.awayGoals,
-                        []
+                        engineEvents
                       )
                       await advanceWeek()
                     }

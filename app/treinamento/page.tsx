@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import {
   Dumbbell,
   Target,
@@ -22,6 +22,7 @@ import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
+import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine, type Player } from "@/lib/game-engine"
 import { cn } from "@/lib/utils"
@@ -103,6 +104,8 @@ export default function TreinamentoPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
   const [filter, setFilter] = useState<"all" | "available" | "training">("all")
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Filtra jogadores
   const filteredPlayers = useMemo(() => {
@@ -118,17 +121,57 @@ export default function TreinamentoPage() {
     return players.sort((a, b) => b.overall - a.overall)
   }, [squadPlayers, filter])
 
+  const router = useRouter()
+  const [gpPlayerIdx, setGpPlayerIdx] = useState(0)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (!btn) return
+      if (btn === "B") {
+        if (selectedPlayer) { setSelectedPlayer(null); return }
+        router.back(); return
+      }
+      const filterOrder: ("all" | "available" | "training")[] = ["all", "available", "training"]
+      if (btn === "LB") setFilter(f => filterOrder[Math.max(0, filterOrder.indexOf(f) - 1)])
+      if (btn === "RB") setFilter(f => filterOrder[Math.min(filterOrder.length - 1, filterOrder.indexOf(f) + 1)])
+      if (btn === "DPAD_DOWN") {
+        setGpPlayerIdx(prev => {
+          const next = Math.min(prev + 1, filteredPlayers.length - 1)
+          setSelectedPlayer(filteredPlayers[next] ?? null)
+          return next
+        })
+      }
+      if (btn === "DPAD_UP") {
+        setGpPlayerIdx(prev => {
+          const next = Math.max(prev - 1, 0)
+          setSelectedPlayer(filteredPlayers[next] ?? null)
+          return next
+        })
+      }
+    }
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
+  }, [router, selectedPlayer, filteredPlayers])
+
   // Contagem de jogadores em treinamento
   const playersInTraining = squadPlayers.filter(p => p.training.currentFocus).length
 
   // Inicia treinamento
   const handleStartTraining = () => {
     if (selectedPlayer && selectedTraining) {
+      const type = trainingTypes.find(t => t.id === selectedTraining)
       trainPlayer(selectedPlayer.id, selectedTraining)
+      const label = type?.name ?? selectedTraining
+      setFeedback(`+1 ${label} em progresso para ${selectedPlayer.name}!`)
+      if (feedbackTimer.current) clearTimeout(feedbackTimer.current)
+      feedbackTimer.current = setTimeout(() => setFeedback(null), 3000)
       setSelectedPlayer(null)
       setSelectedTraining(null)
     }
   }
+
+  useEffect(() => () => { if (feedbackTimer.current) clearTimeout(feedbackTimer.current) }, [])
 
   // Verifica se jogador pode treinar
   const canTrain = (player: Player) => {
@@ -139,6 +182,13 @@ export default function TreinamentoPage() {
     <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
+
+      {/* Toast de feedback de treinamento */}
+      {feedback && (
+        <div className="fixed top-20 right-6 z-50 px-5 py-3 rounded-xl bg-[#1db954] text-black font-bold text-sm shadow-2xl animate-in slide-in-from-right-4 duration-300">
+          {feedback}
+        </div>
+      )}
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Header */}

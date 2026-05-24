@@ -33,6 +33,7 @@ import { useMatchSimulation } from "@/hooks/use-match-simulation"
 import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
 import { useGamepad, type GamepadButtonName } from "@/hooks/use-gamepad"
 import { useGameManager } from "@/lib/use-game-manager"
+import { useDiscordRPC } from "@/hooks/use-discord-rpc"
 import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
 import {
   type MatchSpeed,
@@ -114,7 +115,13 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
 function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
   const available = players
     .filter(p => !p.injury && !p.calledUp)
-    .sort((a, b) => (POSITION_ORDER[a.position] ?? 9) - (POSITION_ORDER[b.position] ?? 9))
+    .sort((a, b) => {
+      // Manual starters come first; fall back to position order
+      const aStarter = a.isStarter === true ? 0 : a.isStarter === false ? 2 : 1
+      const bStarter = b.isStarter === true ? 0 : b.isStarter === false ? 2 : 1
+      if (aStarter !== bStarter) return aStarter - bStarter
+      return (POSITION_ORDER[a.position] ?? 9) - (POSITION_ORDER[b.position] ?? 9)
+    })
 
   const starters: MatchPlayer[] = available.slice(0, 11).map((p, i) => ({
     id: idOffset + i + 1,
@@ -147,6 +154,15 @@ function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { sta
   }))
 
   return { starters, bench }
+}
+
+// Deriva formação tática a partir do elenco titular
+function deriveFormation(players: MatchPlayer[]): string {
+  const def = players.filter(p => ["ZAG", "LD", "LE", "ZD", "ZE"].includes(p.position)).length
+  const mid = players.filter(p => ["VOL", "MEI", "MCO", "MC"].includes(p.position)).length
+  const att = players.filter(p => ["ATA", "PE", "PD", "SA"].includes(p.position)).length
+  if (def > 0 || mid > 0 || att > 0) return `${def}-${mid}-${att}`
+  return "4-3-3"
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -264,12 +280,37 @@ export default function MatchCenterPage() {
     awayRating: Math.round(awaySquad.reduce((s, p) => s + p.rating, 0) / awaySquad.length),
     durationMinutes: matchCtx.duration,
     weatherFactor: matchCtx.weather === "rain" ? 0.9 : 1,
-    homeSquad: homeSquad.map(p => ({ nome: p.name, pos: p.position })),
-    awaySquad: awaySquad.map(p => ({ nome: p.name, pos: p.position })),
+    homeSquad: homeSquad.map(p => ({
+      nome: p.name,
+      pos: p.position,
+      rating: p.rating,
+      shooting: p.shooting,
+      passing: p.passing,
+      dribbling: p.dribbling,
+      defending: p.defending,
+      physical: p.physical,
+      pace: p.pace,
+      stamina: p.stamina,
+    })),
+    awaySquad: awaySquad.map(p => ({
+      nome: p.name,
+      pos: p.position,
+      rating: p.rating,
+      shooting: p.shooting,
+      passing: p.passing,
+      dribbling: p.dribbling,
+      defending: p.defending,
+      physical: p.physical,
+      pace: p.pace,
+      stamina: p.stamina,
+    })),
   }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, matchCtx.weather])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
+
+  // Discord Rich Presence — mostra time da casa x visitante + placar no Discord
+  useDiscordRPC(state, homeTeam, awayTeam)
 
   // Determina contexto atual da partida
   const gameContext: GameContext = state.phase === "pre" 
@@ -355,6 +396,7 @@ export default function MatchCenterPage() {
 
   // Modal de fim
   const [showResult, setShowResult] = useState(false)
+  const [isLeagueChampion, setIsLeagueChampion] = useState(false)
   useEffect(() => {
     if (state.phase === "fulltime" && !showResult) {
       // Registra o resultado no jogo uma unica vez
@@ -375,7 +417,18 @@ export default function MatchCenterPage() {
           state.away.goals,
           events
         )
-        advanceWeek().catch(() => {})
+        advanceWeek().then(result => {
+          if (result && "leagueChampion" in result && result.leagueChampion) {
+            const champ = result.leagueChampion
+            localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
+              competition: champ.competition,
+              season: champ.season,
+              type: "league",
+              stats: champ.stats,
+            }))
+            setIsLeagueChampion(true)
+          }
+        }).catch(() => {})
       }
       // Mostra após pequena pausa para ver placar final
       const t = setTimeout(() => setShowResult(true), 1200)
@@ -384,19 +437,20 @@ export default function MatchCenterPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, showResult])
 
-  // Stamina drena conforme o tempo passa
+  // Stamina drena por minuto de jogo (independente da velocidade de simulação)
+  // 100 stamina / 90 minutos = ~1.1 por minuto para esgotar totalmente
   useEffect(() => {
     if (state.phase !== "first" && state.phase !== "second") return
     setHomeSquad(prev =>
       prev.map(p => ({
         ...p,
-        stamina: Math.max(0, p.stamina - 0.4),
+        stamina: Math.max(0, p.stamina - 1.1),
       }))
     )
     setAwaySquad(prev =>
       prev.map(p => ({
         ...p,
-        stamina: Math.max(0, p.stamina - 0.4),
+        stamina: Math.max(0, p.stamina - 1.1),
       }))
     )
   }, [state.minute, state.phase])
@@ -726,6 +780,8 @@ export default function MatchCenterPage() {
             away={`${state.away.possession}%`}
             icon={Activity}
             ratio={state.home.possession}
+            homeColor={homeTeam.cor1}
+            awayColor={awayTeam.cor1}
           />
           <StatCell
             label="FINALIZAÇÕES"
@@ -733,6 +789,8 @@ export default function MatchCenterPage() {
             away={state.away.shots}
             icon={TargetIcon}
             ratio={ratioFor(state.home.shots, state.away.shots)}
+            homeColor={homeTeam.cor1}
+            awayColor={awayTeam.cor1}
           />
           <StatCell
             label="NO ALVO"
@@ -740,6 +798,8 @@ export default function MatchCenterPage() {
             away={state.away.shotsOnTarget}
             icon={TargetIcon}
             ratio={ratioFor(state.home.shotsOnTarget, state.away.shotsOnTarget)}
+            homeColor={homeTeam.cor1}
+            awayColor={awayTeam.cor1}
           />
           <StatCell
             label="xG"
@@ -747,6 +807,8 @@ export default function MatchCenterPage() {
             away={state.away.xG.toFixed(2)}
             icon={Sparkles}
             ratio={ratioFor(state.home.xG, state.away.xG)}
+            homeColor={homeTeam.cor1}
+            awayColor={awayTeam.cor1}
           />
           <StatCell
             label="ESCANTEIOS"
@@ -754,6 +816,8 @@ export default function MatchCenterPage() {
             away={state.away.corners}
             icon={Flag}
             ratio={ratioFor(state.home.corners, state.away.corners)}
+            homeColor={homeTeam.cor1}
+            awayColor={awayTeam.cor1}
           />
           <StatCell
             label="FALTAS"
@@ -761,6 +825,8 @@ export default function MatchCenterPage() {
             away={state.away.fouls}
             icon={AlertTriangle}
             ratio={ratioFor(state.home.fouls, state.away.fouls)}
+            homeColor={homeTeam.cor1}
+            awayColor={awayTeam.cor1}
           />
         </section>
 
@@ -791,12 +857,24 @@ export default function MatchCenterPage() {
             </div>
             <div className="flex items-center gap-4 text-xs text-white/50">
               <span>
-                Formação: <strong className="text-white">4-3-3</strong>
+                Formação: <strong className="text-white">{deriveFormation(userSide === "home" ? homeSquad : awaySquad)}</strong>
               </span>
               <span>
                 Sua moral:{" "}
-                <strong className="text-[#1db954]">
-                  {state.home.goals + state.away.goals === 0 ? "Equilibrada" : "Alta"}
+                <strong className={(() => {
+                  const userGoals = userSide === "home" ? state.home.goals : state.away.goals
+                  const oppGoals = userSide === "home" ? state.away.goals : state.home.goals
+                  if (userGoals > oppGoals) return "text-[#1db954]"
+                  if (userGoals < oppGoals) return "text-red-400"
+                  return "text-yellow-400"
+                })()}>
+                  {(() => {
+                    const userGoals = userSide === "home" ? state.home.goals : state.away.goals
+                    const oppGoals = userSide === "home" ? state.away.goals : state.home.goals
+                    if (userGoals > oppGoals) return "Alta"
+                    if (userGoals < oppGoals) return "Baixa"
+                    return "Equilibrada"
+                  })()}
                 </strong>
               </span>
             </div>
@@ -905,6 +983,7 @@ export default function MatchCenterPage() {
         awayTeam={awayTeam}
         state={state}
         userSide={userSide}
+        isChampion={isLeagueChampion}
         onClose={() => setShowResult(false)}
       />
     </div>
@@ -1021,12 +1100,16 @@ function StatCell({
   away,
   icon: Icon,
   ratio,
+  homeColor = "#1db954",
+  awayColor = "#ffffff",
 }: {
   label: string
   home: string | number
   away: string | number
   icon: React.ComponentType<{ className?: string }>
   ratio: number
+  homeColor?: string
+  awayColor?: string
 }) {
   return (
     <div className="bg-[#141414] p-4">
@@ -1041,8 +1124,8 @@ function StatCell({
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <div className="flex h-full">
-          <div className="bg-red-400 h-full transition-all duration-700" style={{ width: `${ratio}%` }} />
-          <div className="bg-blue-400 h-full transition-all duration-700" style={{ width: `${100 - ratio}%` }} />
+          <div className="h-full transition-all duration-700" style={{ width: `${ratio}%`, backgroundColor: homeColor }} />
+          <div className="h-full transition-all duration-700" style={{ width: `${100 - ratio}%`, backgroundColor: awayColor, opacity: 0.5 }} />
         </div>
       </div>
     </div>
@@ -1101,11 +1184,13 @@ function EventRow({
                   ? { className: "bg-cyan-400/20 text-cyan-300", label: "ESC" }
                   : event.type === "foul"
                     ? { className: "bg-white/10 text-white/60", label: "FAL" }
-                    : event.type === "halftime"
-                      ? { className: "bg-white/15 text-white", label: "HT" }
-                      : event.type === "fulltime"
-                        ? { className: "bg-white/15 text-white", label: "FT" }
-                        : { className: "bg-white/10 text-white/60", label: "INI" }
+                    : event.type === "injury"
+                      ? { className: "bg-red-400/20 text-red-300", label: "LES" }
+                      : event.type === "halftime"
+                        ? { className: "bg-white/15 text-white", label: "HT" }
+                        : event.type === "fulltime"
+                          ? { className: "bg-white/15 text-white", label: "FT" }
+                          : { className: "bg-white/10 text-white/60", label: "INI" }
 
   return (
     <li className="flex items-start gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">

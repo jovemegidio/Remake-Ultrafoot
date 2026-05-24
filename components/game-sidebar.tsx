@@ -20,21 +20,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGamepadFocusable } from "@/components/gamepad-provider"
-
-const navItems = [
-  { icon: LayoutGrid, label: "Dashboard", href: "/" },
-  { icon: Users, label: "Elenco", href: "/elenco" },
-  { icon: Dumbbell, label: "Treinamento", href: "/treinamento" },
-  { icon: CalendarDays, label: "Calendario", href: "/calendario" },
-  { icon: Trophy, label: "Competicoes", href: "/competicoes" },
-  { icon: Search, label: "Olheiros", href: "/olheiros" },
-  { icon: Building2, label: "Infraestrutura", href: "/infraestrutura" },
-  { icon: BarChart3, label: "Estatisticas", href: "/estatisticas" },
-  { icon: Heart, label: "Central do Clube", href: "/central" },
-  { icon: Wallet, label: "Financas", href: "/financas" },
-  { icon: ShoppingCart, label: "Mercado", href: "/mercado" },
-  { icon: Settings, label: "Configuracoes", href: "/configuracoes" },
-]
+import { useTranslation } from "@/lib/i18n"
 
 type NavItemDef = { icon: React.ComponentType<{ className?: string }>; label: string; href: string }
 
@@ -80,6 +66,22 @@ function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { acti
 
 export function GameSidebar() {
   const pathname = usePathname()
+  const t = useTranslation()
+
+  const navItems = [
+    { icon: LayoutGrid, label: t.sidebar.dashboard, href: "/" },
+    { icon: Users, label: t.sidebar.squad, href: "/elenco" },
+    { icon: Dumbbell, label: t.sidebar.training, href: "/treinamento" },
+    { icon: CalendarDays, label: t.sidebar.calendar, href: "/calendario" },
+    { icon: Trophy, label: t.sidebar.competitions, href: "/competicoes" },
+    { icon: Search, label: t.sidebar.scouts, href: "/olheiros" },
+    { icon: Building2, label: t.sidebar.infrastructure, href: "/infraestrutura" },
+    { icon: BarChart3, label: t.sidebar.statistics, href: "/estatisticas" },
+    { icon: Heart, label: t.sidebar.clubCenter, href: "/central" },
+    { icon: Wallet, label: t.sidebar.finances, href: "/financas" },
+    { icon: ShoppingCart, label: t.sidebar.market, href: "/mercado" },
+    { icon: Settings, label: t.sidebar.settings, href: "/configuracoes" },
+  ]
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 flex w-16 flex-col items-center bg-[#0d0d0d]/95 backdrop-blur-sm py-3">

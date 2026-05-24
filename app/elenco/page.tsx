@@ -31,9 +31,11 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
-import { useGameEngine } from "@/lib/game-engine"
+import { useDiscordActivity } from "@/hooks/use-discord-rpc"
+import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
 import { useNotifications } from "@/components/notifications-system"
+import { useTranslation } from "@/lib/i18n"
 
 // Formacoes predefinidas - EA FC style
 const FORMATIONS: Record<string, { name: string; positions: { pos: string; x: number; y: number }[] }> = {
@@ -260,7 +262,13 @@ export default function ElencoPage() {
   useNotifications()
   const engineFormation = useGameEngine(s => s.formation)
   const engineSetFormation = useGameEngine(s => s.setFormation)
+  const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
+  const engineSetStarter = useGameEngine(s => s.setStarter)
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+
+  const t = useTranslation()
+  useDiscordActivity("Gerenciando o elenco", userTeam.nome)
+
   const initialRoster = buildElencoPlayers(userTeam)
 
   const [currentView, setCurrentView] = useState<ViewType>("gerenciamento")
@@ -319,6 +327,19 @@ export default function ElencoPage() {
     setFormation(formationKeys[prevIndex])
     setPlayerPositions({})
   }
+
+  // Sincroniza titulares com o game-engine sempre que players mudar
+  // (game-engine usa nome como chave pois os IDs internos diferem)
+  useEffect(() => {
+    if (engineSquadPlayers.length === 0) return
+    const starterNames = new Set(players.map(p => p.name))
+    engineSquadPlayers.forEach((ep: EnginePlayer) => {
+      const shouldBeStarter = starterNames.has(ep.name)
+      if (ep.isStarter !== shouldBeStarter) {
+        engineSetStarter(ep.id, shouldBeStarter)
+      }
+    })
+  }, [players, engineSquadPlayers, engineSetStarter])
 
   // Navegacao por controle no elenco
   useEffect(() => {
@@ -524,7 +545,7 @@ export default function ElencoPage() {
             <TeamCrest team={userTeam} size="lg" />
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white">{userTeam.nome}</h1>
-              <p className="text-sm text-white/50">Gerenciamento de Elenco</p>
+              <p className="text-sm text-white/50">{t.squad.title}</p>
             </div>
           </div>
           
@@ -538,18 +559,18 @@ export default function ElencoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">Visao Tatica</h2>
-              <p className="text-sm text-primary mb-6">Visao tatica atual</p>
+              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.tacticalView}</h2>
+              <p className="text-sm text-primary mb-6">{t.squad.currentTactic}</p>
               
               <div className="flex justify-center mb-6">
                 <Scale className="h-20 w-20 md:h-24 md:w-24 text-white/80" />
               </div>
               
-              <p className="text-lg font-semibold text-white">Padrao</p>
-              
+              <p className="text-lg font-semibold text-white">{t.squad.standard}</p>
+
               <div className="flex items-center gap-2 mt-4 text-white/60 text-sm">
                 <X className="h-4 w-4" />
-                <span>Impacto em atleta</span>
+                <span>{t.squad.playerImpact}</span>
               </div>
             </motion.button>
             
@@ -561,8 +582,8 @@ export default function ElencoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">Gerenciamento do Time</h2>
-              <p className="text-sm text-primary mb-4">Padrao {userTeam.nome.toUpperCase()}</p>
+              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.teamManagement}</h2>
+              <p className="text-sm text-primary mb-4">{t.squad.standard} {userTeam.nome.toUpperCase()}</p>
               
               {/* Mini field preview */}
               <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-green-900/30 mb-4">
@@ -585,19 +606,19 @@ export default function ElencoPage() {
                   <div className="h-8 w-8 rounded-full border-2 border-green-500 flex items-center justify-center">
                     <Zap className="h-4 w-4 text-green-500" />
                   </div>
-                  <span className="text-[10px] text-white/60">Prep. fisico</span>
+                  <span className="text-[10px] text-white/60">{t.squad.physicalPrep}</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <div className="h-8 w-8 rounded-full border-2 border-green-500 flex items-center justify-center">
                     <Gauge className="h-4 w-4 text-green-500" />
                   </div>
-                  <span className="text-[10px] text-white/60">Ritmo</span>
+                  <span className="text-[10px] text-white/60">{t.squad.rhythm}</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <div className="h-8 w-8 rounded-full border-2 border-green-500 flex items-center justify-center">
                     <Heart className="h-4 w-4 text-green-500" />
                   </div>
-                  <span className="text-[10px] text-white/60">Moral</span>
+                  <span className="text-[10px] text-white/60">{t.squad.morale}</span>
                 </div>
               </div>
             </motion.button>
@@ -610,8 +631,8 @@ export default function ElencoPage() {
               className="relative p-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent text-left overflow-hidden group"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">Escalacoes</h2>
-              <p className="text-sm text-primary mb-6">Escalacoes criadas: 1</p>
+              <h2 className="text-xl md:text-2xl font-bold text-white mb-1">{t.squad.lineups}</h2>
+              <p className="text-sm text-primary mb-6">{t.squad.lineupsCreated}</p>
               
               <div className="flex justify-center mb-6">
                 <div className="relative w-20 h-20 md:w-24 md:h-24">
@@ -622,7 +643,7 @@ export default function ElencoPage() {
               </div>
               
               <p className="text-xs text-white/60 text-center leading-relaxed">
-                Monte e use diversas escalacoes para aproveitar o elenco ao maximo. Alterne escalacoes para se adaptar aos times adversarios.
+                {t.squad.lineupsDesc}
               </p>
             </motion.button>
           </div>
@@ -632,15 +653,15 @@ export default function ElencoPage() {
             <div className="flex items-center gap-2 md:gap-4">
               <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs md:text-sm">
                 <Gamepad2 className="h-4 w-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Selecionar</span>
+                <span className="hidden sm:inline">{t.settings.selectBtn}</span>
               </Button>
               <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs md:text-sm">
                 <ChevronLeft className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Voltar</span>
+                <span className="hidden sm:inline">{t.common.back}</span>
               </Button>
               <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs md:text-sm">
                 <Info className="h-4 w-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Tutoriais</span>
+                <span className="hidden sm:inline">{t.squad.tutorials}</span>
               </Button>
             </div>
             
@@ -649,7 +670,7 @@ export default function ElencoPage() {
               className="bg-primary hover:bg-primary/90 text-black font-semibold text-xs md:text-sm"
             >
               <Gamepad2 className="h-4 w-4 mr-1 md:mr-2" />
-              Entrar em visao tatica
+              {t.squad.enterTacticalView}
             </Button>
           </div>
         </main>
@@ -673,9 +694,9 @@ export default function ElencoPage() {
               className="text-white/60 hover:text-white"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Elenco
+              {t.sidebar.squad}
             </Button>
-            <h1 className="text-lg md:text-xl font-bold text-white">Visao Tatica</h1>
+            <h1 className="text-lg md:text-xl font-bold text-white">{t.squad.tacticalView}</h1>
             <div className="hidden md:flex items-center gap-4 text-white/60">
               <span>Gestao de Auxiliares Tec.</span>
               <span>Predefinicoes Taticas</span>
@@ -686,11 +707,11 @@ export default function ElencoPage() {
             {/* Left panel - Tactical info */}
             <div className="lg:w-1/3 space-y-6">
               <div>
-                <h2 className="text-sm text-white/60 uppercase tracking-wider mb-4">Visao tatica atual</h2>
-                
+                <h2 className="text-sm text-white/60 uppercase tracking-wider mb-4">{t.squad.currentTactic}</h2>
+
                 <div className="flex flex-col items-center text-center mb-6">
                   <Scale className="h-24 w-24 md:h-32 md:w-32 text-white/80 mb-4" />
-                  <h3 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-wider">Padrao</h3>
+                  <h3 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-wider">{t.squad.standard}</h3>
                 </div>
                 
                 <p className="text-sm text-white/60 text-center leading-relaxed mb-6">
@@ -709,7 +730,7 @@ export default function ElencoPage() {
                 
                 <Button variant="outline" className="w-full mt-4 border-white/20 text-white">
                   <Gamepad2 className="h-4 w-4 mr-2" />
-                  Alterar visao
+                  {t.squad.changeTactic}
                 </Button>
               </div>
             </div>
@@ -718,7 +739,7 @@ export default function ElencoPage() {
             <div className="lg:flex-1">
               <div className="flex items-center gap-2 mb-4">
                 <X className="h-4 w-4 text-white/40" />
-                <span className="text-sm text-white/60">Impacto em atleta</span>
+                <span className="text-sm text-white/60">{t.squad.playerImpact}</span>
               </div>
               
               <div 
@@ -811,19 +832,19 @@ export default function ElencoPage() {
                 className="text-white/60 hover:text-white text-xs md:text-sm"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
-                Voltar
+                {t.common.back}
               </Button>
               <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs md:text-sm">
                 <Info className="h-4 w-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Exibir detalhes</span>
+                <span className="hidden sm:inline">{t.squad.showDetails}</span>
               </Button>
             </div>
-            
+
             <Button
               onClick={() => setCurrentView("gerenciamento")}
               className="bg-primary/20 hover:bg-primary/30 text-primary text-xs md:text-sm"
             >
-              Ir para gerenciamento do time
+              {t.squad.goToTeamManagement}
             </Button>
           </div>
         </main>
@@ -868,7 +889,7 @@ export default function ElencoPage() {
             <div className="flex items-center gap-2 md:gap-3">
               <TeamCrest team={userTeam} size="sm" />
               <div className="hidden sm:block">
-                <h1 className="text-sm font-bold text-white">Gerenciamento do Time</h1>
+                <h1 className="text-sm font-bold text-white">{t.squad.teamManagement}</h1>
                 <p className="text-[10px] text-white/40">{userTeam.nome}</p>
               </div>
             </div>
@@ -886,7 +907,7 @@ export default function ElencoPage() {
                       : "text-white/40 hover:text-white/70"
                   )}
                 >
-                  {tab === "elenco" ? "Elenco" : tab === "taticas" ? "Taticas" : "Atribuicoes"}
+                  {tab === "elenco" ? t.sidebar.squad : tab === "taticas" ? t.squad.tactics : t.squad.assignments}
                 </button>
               ))}
             </div>
@@ -1039,8 +1060,8 @@ export default function ElencoPage() {
             {/* Reserves section - Melhorado com scroll vertical */}
             <div className="mt-2 p-3 rounded-xl bg-[#111111] border border-white/5 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Reservas ({bench.length})</h3>
-                <span className="text-[10px] text-white/40">Arraste para substituir</span>
+                <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">{t.squad.reserves} ({bench.length})</h3>
+                <span className="text-[10px] text-white/40">{t.squad.dragToSubstitute}</span>
               </div>
               
               {/* Container com altura maxima e scroll vertical */}
@@ -1104,35 +1125,35 @@ export default function ElencoPage() {
               <div className="flex-1 rounded-xl md:rounded-2xl bg-[#111111] border border-white/10 overflow-auto p-4 md:p-6">
                 <div className="max-w-4xl mx-auto space-y-6">
                   <div>
-                    <h2 className="text-lg font-bold text-white mb-2">Instrucoes Taticas</h2>
-                    <p className="text-sm text-white/50">Configure o estilo de jogo da sua equipe</p>
+                    <h2 className="text-lg font-bold text-white mb-2">{t.squad.tacticalInstructions}</h2>
+                    <p className="text-sm text-white/50">{t.squad.tacticalInstructionsDesc}</p>
                   </div>
 
                   {/* Defensive Style */}
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                       <Shield className="h-4 w-4 text-blue-400" />
-                      Estilo Defensivo
+                      {t.squad.defensiveStyle}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-white/60 block mb-2">Linha Defensiva</label>
+                        <label className="text-xs text-white/60 block mb-2">{t.squad.defensiveLine}</label>
                         <div className="flex gap-2">
-                          {["Baixa", "Media", "Alta"].map(opt => (
+                          {[t.squad.low, t.squad.medium, t.squad.high].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              opt === "Media" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-white/60 block mb-2">Marcacao</label>
+                        <label className="text-xs text-white/60 block mb-2">{t.squad.marking}</label>
                         <div className="flex gap-2">
-                          {["Pressao", "Equilibrada", "Recuada"].map(opt => (
+                          {[t.squad.pressure, t.squad.balanced, t.squad.withdrawn].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              opt === "Equilibrada" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1144,27 +1165,27 @@ export default function ElencoPage() {
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                       <Target className="h-4 w-4 text-red-400" />
-                      Estilo Ofensivo
+                      {t.squad.offensiveStyle}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-white/60 block mb-2">Estilo de Construcao</label>
+                        <label className="text-xs text-white/60 block mb-2">{t.squad.buildStyle}</label>
                         <div className="flex gap-2">
-                          {["Curto", "Misto", "Direto"].map(opt => (
+                          {[t.squad.short, t.squad.mixed, t.squad.direct].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              opt === "Misto" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-white/60 block mb-2">Velocidade de Ataque</label>
+                        <label className="text-xs text-white/60 block mb-2">{t.squad.attackSpeed}</label>
                         <div className="flex gap-2">
-                          {["Lento", "Normal", "Rapido"].map(opt => (
+                          {[t.squad.slow, t.squad.normal, t.squad.fast].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              opt === "Normal" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1176,13 +1197,13 @@ export default function ElencoPage() {
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                       <Zap className="h-4 w-4 text-yellow-400" />
-                      Mentalidade
+                      {t.squad.mentality}
                     </h3>
                     <div className="flex gap-2">
-                      {["Ultra Defensivo", "Defensivo", "Equilibrado", "Ofensivo", "Ultra Ofensivo"].map(opt => (
+                      {[t.squad.ultraDefensive, t.squad.defensive, t.squad.balanced2, t.squad.offensive, t.squad.ultraOffensive].map((opt, i) => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                          opt === "Equilibrado" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          i === 2 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -1196,28 +1217,28 @@ export default function ElencoPage() {
               <div className="flex-1 rounded-xl md:rounded-2xl bg-[#111111] border border-white/10 overflow-auto p-4 md:p-6">
                 <div className="max-w-4xl mx-auto space-y-6">
                   <div>
-                    <h2 className="text-lg font-bold text-white mb-2">Funcoes dos Jogadores</h2>
-                    <p className="text-sm text-white/50">Defina funcoes especificas para cada jogador em campo</p>
+                    <h2 className="text-lg font-bold text-white mb-2">{t.squad.playerRoles}</h2>
+                    <p className="text-sm text-white/50">{t.squad.playerRolesDesc}</p>
                   </div>
 
                   {/* Set Pieces */}
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                    <h3 className="text-sm font-semibold text-white mb-4">Bolas Paradas</h3>
+                    <h3 className="text-sm font-semibold text-white mb-4">{t.squad.setPieces}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">Cobrador de Escanteios</span>
+                        <span className="text-xs text-white/70">{t.squad.cornerKicker}</span>
                         <span className="text-xs font-medium text-[#1db954]">Eric Ramires</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">Cobrador de Faltas</span>
+                        <span className="text-xs text-white/70">{t.squad.freeKickKicker}</span>
                         <span className="text-xs font-medium text-[#1db954]">Lincoln</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">Cobrador de Penaltis</span>
+                        <span className="text-xs text-white/70">{t.squad.penaltyKicker}</span>
                         <span className="text-xs font-medium text-[#1db954]">Eduardo Sasha</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">Capitao</span>
+                        <span className="text-xs text-white/70">{t.squad.captain}</span>
                         <span className="text-xs font-medium text-[#1db954]">Pedro Henrique</span>
                       </div>
                     </div>
@@ -1225,7 +1246,7 @@ export default function ElencoPage() {
 
                   {/* Player Roles */}
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                    <h3 className="text-sm font-semibold text-white mb-4">Funcoes Individuais</h3>
+                    <h3 className="text-sm font-semibold text-white mb-4">{t.squad.individualRoles}</h3>
                     <div className="space-y-3">
                       {players.slice(0, 6).map(player => (
                         <div key={player.id} className="flex items-center gap-4 p-3 rounded-lg bg-white/5">
@@ -1281,7 +1302,7 @@ export default function ElencoPage() {
               {/* Energia com barra maior */}
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] text-white/50 font-medium">Energia</span>
+                  <span className="text-[11px] text-white/50 font-medium">{t.squad.energy}</span>
                   <span className="text-sm font-bold text-[#1db954]">{selectedPlayer.energy}%</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
@@ -1383,7 +1404,7 @@ export default function ElencoPage() {
             className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
-            <span className="hidden sm:inline">Voltar</span>
+            <span className="hidden sm:inline">{t.common.back}</span>
           </Button>
           <Button 
             variant="ghost" 
@@ -1426,7 +1447,7 @@ export default function ElencoPage() {
             className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <Info className="h-3 w-3 md:h-4 md:w-4 sm:mr-1" />
-            <span className="hidden sm:inline">Tutoriais</span>
+            <span className="hidden sm:inline">{t.squad.tutorials}</span>
           </Button>
         </div>
       </div>
@@ -1558,7 +1579,7 @@ export default function ElencoPage() {
               className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-md w-full"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">Tutoriais</h2>
+                <h2 className="text-lg font-bold text-white">{t.squad.tutorials}</h2>
                 <button onClick={() => setShowTutorials(false)} className="p-2 rounded-lg hover:bg-white/10">
                   <X className="h-5 w-5 text-white/60" />
                 </button>
