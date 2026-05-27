@@ -440,7 +440,7 @@ export default function SplashPage() {
         <div 
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none"
           style={{
-            background: "radial-gradient(ellipse at center top, rgba(6, 182, 212, 0.08) 0%, transparent 60%)",
+            background: "radial-gradient(ellipse at center top, rgba(0, 255, 200, 0.06) 0%, transparent 60%)",
             animation: "breathe 4s ease-in-out infinite",
           }}
         />
@@ -513,8 +513,8 @@ export default function SplashPage() {
                   className="h-full rounded-full transition-all duration-150 ease-out relative overflow-hidden"
                   style={{ 
                     width: `${loadingProgress}%`,
-                    background: "linear-gradient(90deg, #06b6d4 0%, #3b82f6 50%, #06b6d4 100%)",
-                    boxShadow: "0 0 20px rgba(6, 182, 212, 0.5), 0 0 40px rgba(6, 182, 212, 0.3)",
+                    background: "linear-gradient(90deg, #00ffc8 0%, #00c8ff 50%, #00ffc8 100%)",
+                    boxShadow: "0 0 20px rgba(0, 255, 200, 0.5), 0 0 40px rgba(0, 255, 200, 0.3)",
                   }}
                 >
                   {/* Shimmer effect */}
@@ -533,8 +533,8 @@ export default function SplashPage() {
                 className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full transition-all duration-150"
                 style={{ 
                   left: `calc(${loadingProgress}% - 4px)`,
-                  background: "#06b6d4",
-                  boxShadow: "0 0 12px rgba(6, 182, 212, 0.8), 0 0 24px rgba(6, 182, 212, 0.4)",
+                  background: "#00ffc8",
+                  boxShadow: "0 0 12px rgba(0, 255, 200, 0.8), 0 0 24px rgba(0, 255, 200, 0.4)",
                   opacity: loadingProgress > 0 ? 1 : 0,
                 }}
               />
@@ -546,7 +546,7 @@ export default function SplashPage() {
                 <span 
                   className="text-white/80 font-mono text-sm tabular-nums tracking-wider"
                   style={{
-                    textShadow: "0 0 20px rgba(6, 182, 212, 0.3)",
+                    textShadow: "0 0 20px rgba(0, 255, 200, 0.3)",
                   }}
                 >
                   {loadingProgress}
@@ -562,8 +562,8 @@ export default function SplashPage() {
                   key={i}
                   className="w-1 h-1 rounded-full"
                   style={{
-                    background: "rgba(6, 182, 212, 0.6)",
-                    boxShadow: "0 0 6px rgba(6, 182, 212, 0.4)",
+                    background: "rgba(0, 255, 200, 0.6)",
+                    boxShadow: "0 0 6px rgba(0, 255, 200, 0.4)",
                     animation: `dotPulse 1.2s ease-in-out infinite`,
                     animationDelay: `${i * 0.2}s`,
                   }}
@@ -685,16 +685,16 @@ export default function SplashPage() {
                     <div className={cn(
                       "relative w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-lg md:rounded-xl flex items-center justify-center transition-all duration-300 border",
                       isSelected 
-                        ? "bg-gradient-to-br from-white/15 to-white/5 border-white/30 scale-105" 
-                        : "bg-gradient-to-br from-white/5 to-transparent border-white/10 hover:border-white/15"
+                        ? "bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/10 border-[#00ffc8]/40 scale-105" 
+                        : "bg-gradient-to-br from-white/5 to-transparent border-white/10 hover:border-white/20"
                     )}
                     style={{
-                      boxShadow: isSelected ? "0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" : "none",
+                      boxShadow: isSelected ? "0 4px 24px rgba(0,255,200,0.15), inset 0 1px 0 rgba(0,255,200,0.1)" : "none",
                     }}
                     >
                       <div className={cn(
                         "transition-all duration-300 [&>svg]:h-5 [&>svg]:w-5 sm:[&>svg]:h-5 sm:[&>svg]:w-5 md:[&>svg]:h-6 md:[&>svg]:w-6",
-                        isSelected ? "text-white" : "text-white/35"
+                        isSelected ? "text-[#00ffc8]" : "text-white/35"
                       )}>
                         {option.icon}
                       </div>
@@ -712,8 +712,8 @@ export default function SplashPage() {
                   {/* Selection indicator line */}
                   <div 
                     className={cn(
-                      "absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[2px] bg-white/50 rounded-full transition-all duration-300",
-                      isSelected ? "w-10 opacity-100" : "w-0 opacity-0"
+                      "absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[2px] rounded-full transition-all duration-300",
+                      isSelected ? "w-10 opacity-100 bg-gradient-to-r from-[#00ffc8] to-[#00c8ff]" : "w-0 opacity-0 bg-white/50"
                     )}
                   />
                 </button>

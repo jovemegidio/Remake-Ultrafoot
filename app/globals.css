@@ -3,10 +3,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Custom Scrollbar Styles */
+/* ============================================
+   EA FC 26 PREMIUM DESIGN SYSTEM
+   ============================================ */
+
+/* Custom Scrollbar Styles - EA FC Teal Accent */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.05);
+  scrollbar-color: rgba(0, 255, 200, 0.3) rgba(255, 255, 255, 0.03);
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -15,17 +19,22 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(0, 255, 200, 0.4) 0%, rgba(0, 200, 255, 0.3) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, rgba(0, 255, 200, 0.6) 0%, rgba(0, 200, 255, 0.5) 100%);
+}
+
+.scrollbar-thin::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .scrollbar-none {
@@ -37,10 +46,10 @@
   display: none;
 }
 
-/* Scrollbar customizado estilo EA FC - verde */
+/* Scrollbar estilo EA FC - Teal/Cyan */
 .scrollbar-game {
   scrollbar-width: thin;
-  scrollbar-color: #1db954 rgba(255, 255, 255, 0.05);
+  scrollbar-color: #00ffc8 rgba(255, 255, 255, 0.03);
 }
 
 .scrollbar-game::-webkit-scrollbar {
@@ -49,23 +58,23 @@
 }
 
 .scrollbar-game::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 10px;
 }
 
 .scrollbar-game::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #1db954 0%, #1aa34a 100%);
+  background: linear-gradient(180deg, #00ffc8 0%, #00c8ff 100%);
   border-radius: 10px;
 }
 
 .scrollbar-game::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #1ed760 0%, #1db954 100%);
+  background: linear-gradient(180deg, #00ffdc 0%, #00dcff 100%);
 }
 
-/* Scrollbar horizontal para reservas */
+/* Scrollbar horizontal */
 .scrollbar-horizontal {
   scrollbar-width: thin;
-  scrollbar-color: rgba(29, 185, 84, 0.5) rgba(255, 255, 255, 0.05);
+  scrollbar-color: rgba(0, 255, 200, 0.4) rgba(255, 255, 255, 0.03);
 }
 
 .scrollbar-horizontal::-webkit-scrollbar {
@@ -73,18 +82,18 @@
 }
 
 .scrollbar-horizontal::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 10px;
   margin: 0 8px;
 }
 
 .scrollbar-horizontal::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, #1db954 0%, #1aa34a 100%);
+  background: linear-gradient(90deg, #00ffc8 0%, #00c8ff 100%);
   border-radius: 10px;
 }
 
 .scrollbar-horizontal::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(90deg, #1ed760 0%, #1db954 100%);
+  background: linear-gradient(90deg, #00ffdc 0%, #00dcff 100%);
 }
 
 /* Hide scrollbar class */
@@ -98,60 +107,60 @@
 }
 
 :root {
-  /* EA FC 26 Premium Dark Theme - Inspired by EA Sports FC */
-  --background: oklch(0.08 0.02 260);
+  /* EA FC 26 Premium Dark Theme */
+  --background: oklch(0.06 0.015 260);
   --foreground: oklch(0.98 0.005 240);
 
-  --card: oklch(0.12 0.025 260);
+  --card: oklch(0.10 0.02 260);
   --card-foreground: oklch(0.98 0.005 240);
 
-  --popover: oklch(0.10 0.02 260);
+  --popover: oklch(0.08 0.015 260);
   --popover-foreground: oklch(0.98 0.005 240);
 
-  /* EA FC Cyan - Primary brand color */
-  --primary: oklch(0.78 0.18 195);
-  --primary-foreground: oklch(0.08 0.02 260);
+  /* EA FC Teal/Cyan - Primary brand color */
+  --primary: oklch(0.85 0.20 175);
+  --primary-foreground: oklch(0.06 0.015 260);
 
-  --secondary: oklch(0.18 0.03 260);
+  --secondary: oklch(0.14 0.025 260);
   --secondary-foreground: oklch(0.98 0.005 240);
 
-  --muted: oklch(0.20 0.025 260);
-  --muted-foreground: oklch(0.60 0.02 240);
+  --muted: oklch(0.16 0.02 260);
+  --muted-foreground: oklch(0.55 0.015 240);
 
   /* Lime green - EA FC accent for CTAs */
-  --accent: oklch(0.85 0.22 140);
-  --accent-foreground: oklch(0.08 0.02 260);
+  --accent: oklch(0.88 0.24 145);
+  --accent-foreground: oklch(0.06 0.015 260);
 
   /* Red for destructive actions */
   --destructive: oklch(0.60 0.25 25);
   --destructive-foreground: oklch(0.98 0 0);
 
   /* Gold - Premium/Special highlight */
-  --gold: oklch(0.80 0.18 85);
+  --gold: oklch(0.82 0.18 85);
 
   /* Orange - Warning/Alert */
   --warning: oklch(0.75 0.18 55);
 
-  --border: oklch(0.22 0.03 260);
-  --input: oklch(0.16 0.025 260);
-  --ring: oklch(0.78 0.18 195);
+  --border: oklch(0.18 0.02 260);
+  --input: oklch(0.12 0.02 260);
+  --ring: oklch(0.85 0.20 175);
 
-  --chart-1: oklch(0.78 0.18 195);
-  --chart-2: oklch(0.85 0.22 140);
-  --chart-3: oklch(0.80 0.18 85);
+  --chart-1: oklch(0.85 0.20 175);
+  --chart-2: oklch(0.88 0.24 145);
+  --chart-3: oklch(0.82 0.18 85);
   --chart-4: oklch(0.60 0.25 25);
   --chart-5: oklch(0.55 0.12 280);
 
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
-  --sidebar: oklch(0.06 0.02 260);
-  --sidebar-foreground: oklch(0.75 0.01 240);
-  --sidebar-primary: oklch(0.78 0.18 195);
-  --sidebar-primary-foreground: oklch(0.08 0.02 260);
-  --sidebar-accent: oklch(0.14 0.025 260);
+  --sidebar: oklch(0.05 0.015 260);
+  --sidebar-foreground: oklch(0.70 0.01 240);
+  --sidebar-primary: oklch(0.85 0.20 175);
+  --sidebar-primary-foreground: oklch(0.06 0.015 260);
+  --sidebar-accent: oklch(0.12 0.02 260);
   --sidebar-accent-foreground: oklch(0.98 0.005 240);
-  --sidebar-border: oklch(0.18 0.025 260);
-  --sidebar-ring: oklch(0.78 0.18 195);
+  --sidebar-border: oklch(0.14 0.02 260);
+  --sidebar-ring: oklch(0.85 0.20 175);
 }
 
 @theme inline {
@@ -206,9 +215,9 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(ellipse at top left, oklch(0.15 0.06 195 / 0.25) 0%, transparent 50%),
-      radial-gradient(ellipse at bottom right, oklch(0.12 0.08 140 / 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at center, oklch(0.10 0.04 260 / 0.5) 0%, transparent 70%);
+      radial-gradient(ellipse at top left, oklch(0.12 0.08 175 / 0.20) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, oklch(0.10 0.10 145 / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at center, oklch(0.08 0.03 260 / 0.5) 0%, transparent 70%);
     background-attachment: fixed;
   }
 }
@@ -218,14 +227,14 @@
   .font-display {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
   }
 
   .font-display-italic {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     font-style: italic;
   }
@@ -234,11 +243,11 @@
   .glass-panel {
     background: linear-gradient(
       135deg,
-      oklch(0.14 0.03 260 / 0.9) 0%,
-      oklch(0.10 0.025 260 / 0.8) 100%
+      oklch(0.12 0.025 260 / 0.9) 0%,
+      oklch(0.08 0.02 260 / 0.85) 100%
     );
-    backdrop-filter: blur(16px) saturate(1.2);
-    border: 1px solid oklch(0.28 0.04 260 / 0.5);
+    backdrop-filter: blur(20px) saturate(1.3);
+    border: 1px solid oklch(0.25 0.03 260 / 0.4);
   }
 
   /* EA FC Card hover effect */
@@ -246,25 +255,52 @@
     @apply bg-card border border-border rounded-xl transition-all duration-300;
     background: linear-gradient(
       145deg,
-      oklch(0.13 0.03 260) 0%,
-      oklch(0.10 0.025 260) 100%
+      oklch(0.11 0.025 260) 0%,
+      oklch(0.08 0.02 260) 100%
     );
   }
 
   .eafc-card:hover {
-    border-color: oklch(0.78 0.18 195 / 0.4);
+    border-color: oklch(0.85 0.20 175 / 0.5);
     box-shadow:
-      0 0 0 1px oklch(0.78 0.18 195 / 0.15),
-      0 8px 32px oklch(0.78 0.18 195 / 0.1),
-      inset 0 1px 0 oklch(0.95 0.05 195 / 0.1);
+      0 0 0 1px oklch(0.85 0.20 175 / 0.2),
+      0 8px 32px oklch(0.85 0.20 175 / 0.15),
+      inset 0 1px 0 oklch(0.95 0.05 175 / 0.15);
     transform: translateY(-2px);
+  }
+
+  /* EA FC Button Primary */
+  .eafc-btn {
+    @apply relative overflow-hidden px-6 py-3 font-semibold text-sm rounded-lg transition-all duration-200;
+    background: linear-gradient(135deg, #00ffc8 0%, #00c8ff 100%);
+    color: #000;
+  }
+
+  .eafc-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0, 255, 200, 0.3);
+  }
+
+  .eafc-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+  }
+
+  .eafc-btn:hover::before {
+    left: 100%;
   }
 
   /* Subtle grid background */
   .bg-grid {
     background-image:
-      linear-gradient(oklch(0.25 0.03 260 / 0.12) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.25 0.03 260 / 0.12) 1px, transparent 1px);
+      linear-gradient(oklch(0.20 0.02 260 / 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.20 0.02 260 / 0.1) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 
@@ -273,47 +309,47 @@
     background-image:
       repeating-linear-gradient(
         0deg,
-        oklch(0.25 0.12 140 / 0.03) 0px,
-        oklch(0.25 0.12 140 / 0.03) 2px,
+        oklch(0.25 0.12 145 / 0.03) 0px,
+        oklch(0.25 0.12 145 / 0.03) 2px,
         transparent 2px,
         transparent 24px
       );
   }
 
-  /* Neon glow effects */
+  /* Neon glow effects - EA FC Teal */
   .shadow-glow-primary {
     box-shadow:
-      0 0 0 1px oklch(0.78 0.18 195 / 0.5),
-      0 0 20px oklch(0.78 0.18 195 / 0.3),
-      0 0 40px oklch(0.78 0.18 195 / 0.15),
-      inset 0 1px 0 oklch(0.95 0.05 195 / 0.2);
+      0 0 0 1px oklch(0.85 0.20 175 / 0.5),
+      0 0 20px oklch(0.85 0.20 175 / 0.35),
+      0 0 40px oklch(0.85 0.20 175 / 0.2),
+      inset 0 1px 0 oklch(0.95 0.05 175 / 0.25);
   }
 
   .shadow-glow-accent {
     box-shadow:
-      0 0 0 1px oklch(0.85 0.22 140 / 0.5),
-      0 0 20px oklch(0.85 0.22 140 / 0.3),
-      0 0 40px oklch(0.85 0.22 140 / 0.15),
-      inset 0 1px 0 oklch(0.95 0.1 140 / 0.2);
+      0 0 0 1px oklch(0.88 0.24 145 / 0.5),
+      0 0 20px oklch(0.88 0.24 145 / 0.35),
+      0 0 40px oklch(0.88 0.24 145 / 0.2),
+      inset 0 1px 0 oklch(0.95 0.1 145 / 0.25);
   }
 
   .shadow-glow-gold {
     box-shadow:
-      0 0 0 1px oklch(0.80 0.18 85 / 0.5),
-      0 0 20px oklch(0.80 0.18 85 / 0.25),
-      inset 0 1px 0 oklch(0.95 0.1 85 / 0.2);
+      0 0 0 1px oklch(0.82 0.18 85 / 0.5),
+      0 0 20px oklch(0.82 0.18 85 / 0.3),
+      inset 0 1px 0 oklch(0.95 0.1 85 / 0.25);
   }
 
   /* Text glow */
   .text-glow-primary {
-    text-shadow: 0 0 20px oklch(0.78 0.18 195 / 0.5);
+    text-shadow: 0 0 20px oklch(0.85 0.20 175 / 0.6);
   }
 
   .text-glow-accent {
-    text-shadow: 0 0 20px oklch(0.85 0.22 140 / 0.5);
+    text-shadow: 0 0 20px oklch(0.88 0.24 145 / 0.6);
   }
 
-  /* Diagonal slice — broadcast lower-third style */
+  /* Diagonal slice - broadcast lower-third style */
   .clip-slice {
     clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
   }
@@ -334,14 +370,52 @@
     right: 0;
     width: 120px;
     height: 100%;
-    background: linear-gradient(135deg, transparent 50%, oklch(0.78 0.18 195 / 0.1) 50%);
+    background: linear-gradient(135deg, transparent 50%, oklch(0.85 0.20 175 / 0.1) 50%);
     pointer-events: none;
   }
+
+  /* Gradient text - EA FC Teal/Lime */
+  .gradient-text-primary {
+    background: linear-gradient(135deg, #00ffc8, #00ff88);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-gold {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Stat bar gradient */
+  .stat-bar {
+    background: linear-gradient(90deg, #00ffc8, #00ff88);
+  }
+
+  /* Overall rating colors */
+  .overall-gold {
+    color: oklch(0.85 0.18 85);
+    text-shadow: 0 0 12px oklch(0.82 0.18 85 / 0.6);
+  }
+
+  .overall-silver {
+    color: oklch(0.75 0.02 260);
+    text-shadow: 0 0 12px oklch(0.70 0.02 260 / 0.5);
+  }
+
+  .overall-bronze {
+    color: oklch(0.65 0.12 55);
+    text-shadow: 0 0 12px oklch(0.60 0.12 55 / 0.5);
+  }
+
+  /* ===== ANIMATIONS ===== */
 
   /* Animated pulse for LIVE indicator */
   @keyframes pulse-live {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.1); }
+    50% { opacity: 0.5; transform: scale(1.15); }
   }
   .animate-pulse-live {
     animation: pulse-live 1.5s ease-in-out infinite;
@@ -354,14 +428,6 @@
   }
   .animate-scroll-x {
     animation: scroll-x 40s linear infinite;
-  }
-
-  /* Gradient text */
-  .gradient-text-primary {
-    background: linear-gradient(135deg, oklch(0.78 0.18 195), oklch(0.85 0.22 140));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   /* Shimmer loading effect */
@@ -384,33 +450,12 @@
   .animate-shimmer {
     background: linear-gradient(
       90deg,
-      oklch(0.15 0.02 260) 0%,
-      oklch(0.20 0.03 260) 50%,
-      oklch(0.15 0.02 260) 100%
+      oklch(0.12 0.015 260) 0%,
+      oklch(0.18 0.02 260) 50%,
+      oklch(0.12 0.015 260) 100%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
-  }
-
-  /* Stat bar gradient */
-  .stat-bar {
-    background: linear-gradient(90deg, oklch(0.78 0.18 195), oklch(0.85 0.22 140));
-  }
-
-  /* Overall rating colors */
-  .overall-gold {
-    color: oklch(0.85 0.18 85);
-    text-shadow: 0 0 10px oklch(0.80 0.18 85 / 0.5);
-  }
-
-  .overall-silver {
-    color: oklch(0.75 0.02 260);
-    text-shadow: 0 0 10px oklch(0.70 0.02 260 / 0.5);
-  }
-
-  .overall-bronze {
-    color: oklch(0.65 0.12 55);
-    text-shadow: 0 0 10px oklch(0.60 0.12 55 / 0.5);
   }
 
   /* Goal animation */
@@ -465,66 +510,36 @@
   /* Score flash */
   @keyframes score-flash {
     0%, 100% { text-shadow: 0 0 0 transparent; }
-    50% { text-shadow: 0 0 30px #1db954, 0 0 60px #1db954; }
+    50% { text-shadow: 0 0 30px #00ffc8, 0 0 60px #00ffc8; }
   }
   .animate-score-flash {
     animation: score-flash 0.5s ease-in-out 3;
   }
 
-  /* FIFA-style slide animations for match carousel */
+  /* Slide animations */
   @keyframes slide-out-left {
-    0% { 
-      transform: translateX(0); 
-      opacity: 1; 
-    }
-    100% { 
-      transform: translateX(-100%); 
-      opacity: 0; 
-    }
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-100%); opacity: 0; }
   }
 
   @keyframes slide-out-right {
-    0% { 
-      transform: translateX(0); 
-      opacity: 1; 
-    }
-    100% { 
-      transform: translateX(100%); 
-      opacity: 0; 
-    }
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
   }
 
   @keyframes slide-in {
-    0% { 
-      transform: translateX(20px); 
-      opacity: 0; 
-    }
-    100% { 
-      transform: translateX(0); 
-      opacity: 1; 
-    }
+    0% { transform: translateX(20px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
   }
 
   @keyframes slide-in-left {
-    0% { 
-      transform: translateX(-100%); 
-      opacity: 0; 
-    }
-    100% { 
-      transform: translateX(0); 
-      opacity: 1; 
-    }
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
   }
 
   @keyframes slide-in-right {
-    0% { 
-      transform: translateX(100%); 
-      opacity: 0; 
-    }
-    100% { 
-      transform: translateX(0); 
-      opacity: 1; 
-    }
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
   }
 
   .animate-slide-out-left {
@@ -547,7 +562,7 @@
     animation: slide-in-right 0.3s ease-out forwards;
   }
 
-  /* FIFA card flip animation */
+  /* Match card flip animation */
   @keyframes match-card-enter {
     0% {
       transform: perspective(1000px) rotateY(-30deg) translateZ(-100px);
@@ -584,21 +599,13 @@
   }
 
   @keyframes logo-float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
   }
 
   @keyframes blink {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.3;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
   }
 
   .animate-float {
@@ -615,413 +622,177 @@
 
   /* Menu animations - EAFC style */
   @keyframes slideDown {
-    0% {
-      transform: translateY(-30px);
-      opacity: 0;
-    }
-    100% {
-      transform: translateY(0);
-      opacity: 1;
-    }
+    0% { transform: translateY(-30px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
   }
 
   @keyframes slideUp {
-    0% {
-      transform: translateY(30px);
-      opacity: 0;
-    }
-    100% {
-      transform: translateY(0);
-      opacity: 1;
-    }
+    0% { transform: translateY(30px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
   }
 
   @keyframes shimmerSlow {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(200%);
-    }
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
   }
 
   /* Studio intro animations */
   @keyframes studioFadeIn {
-    0% {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
   }
 
   @keyframes logoSlideUp {
-    0% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes apresentaFadeIn {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-      letter-spacing: 0.2em;
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-      letter-spacing: 0.3em;
-    }
+    0% { opacity: 0; transform: translateY(10px); letter-spacing: 0.2em; }
+    100% { opacity: 1; transform: translateY(0); letter-spacing: 0.3em; }
   }
 
   @keyframes glowPulse {
-    0%, 100% {
-      opacity: 0.15;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.25;
-      transform: scale(1.05);
-    }
+    0%, 100% { opacity: 0.15; transform: scale(1); }
+    50% { opacity: 0.25; transform: scale(1.05); }
   }
 
   @keyframes slowZoom {
-    0% {
-      transform: scale(1);
-    }
-    100% {
-      transform: scale(1.1);
-    }
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
   }
 
   @keyframes leaguesFadeIn {
-    0% {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
   }
 
   @keyframes leaguesZoom {
-    0% {
-      transform: scale(1.05);
-    }
-    100% {
-      transform: scale(1);
-    }
+    0% { transform: scale(1.05); }
+    100% { transform: scale(1); }
   }
 
   @keyframes fadeInUp {
-    0% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes twinkle {
-    0%, 100% {
-      opacity: 0.2;
-    }
-    50% {
-      opacity: 0.8;
-    }
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.8; }
   }
 
-  /* ===== LOADING SCREEN ANIMATIONS ===== */
-  
+  /* Loading screen animations */
   @keyframes breathe {
-    0%, 100% {
-      opacity: 0.6;
-      transform: translateX(-50%) scale(1);
-    }
-    50% {
-      opacity: 1;
-      transform: translateX(-50%) scale(1.1);
-    }
+    0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
   }
 
   @keyframes pulseGlow {
-    0%, 100% {
-      opacity: 0.3;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.5;
-      transform: scale(1.05);
-    }
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.05); }
   }
 
   @keyframes logoFadeIn {
-    0% {
-      opacity: 0;
-      transform: scale(0.9) translateY(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
+    0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   @keyframes shimmerMove {
-    0% {
-      transform: translateX(-200%);
-    }
-    100% {
-      transform: translateX(200%);
-    }
+    0% { transform: translateX(-200%); }
+    100% { transform: translateX(200%); }
   }
 
   @keyframes dotPulse {
-    0%, 100% {
-      opacity: 0.3;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 1;
-      transform: scale(1.5);
-    }
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.5); }
   }
 
-  /* ===== GOAL CELEBRATION ANIMATIONS - BROADCAST STYLE ===== */
-  
-  /* Flash branco inicial */
+  /* Goal celebration animations - Broadcast style */
   @keyframes goal-flash {
-    0% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
+    0% { opacity: 1; }
+    100% { opacity: 0; }
   }
   .animate-goal-flash {
     animation: goal-flash 0.4s ease-out forwards;
   }
 
-  /* Background fade in */
   @keyframes goal-bg-in {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
   .animate-goal-bg-in {
     animation: goal-bg-in 0.3s ease-out 0.2s forwards;
     opacity: 0;
   }
 
-  /* Slide down do minuto */
   @keyframes goal-slide-down {
-    0% {
-      transform: translateX(-50%) translateY(-30px);
-      opacity: 0;
-    }
-    100% {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
+    0% { transform: translateX(-50%) translateY(-30px); opacity: 0; }
+    100% { transform: translateX(-50%) translateY(0); opacity: 1; }
   }
   .animate-goal-slide-down {
     animation: goal-slide-down 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
     opacity: 0;
   }
 
-  /* Card principal entrada */
   @keyframes goal-card-in {
-    0% {
-      transform: scale(0.8) translateY(20px);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(1) translateY(0);
-      opacity: 1;
-    }
+    0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
   }
   .animate-goal-card-in {
     animation: goal-card-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
     opacity: 0;
   }
 
-  /* Badge bounce */
   @keyframes goal-badge-bounce {
-    0%, 100% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.08);
-    }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
   }
   .animate-goal-badge-bounce {
     animation: goal-badge-bounce 1s ease-in-out infinite;
     animation-delay: 0.8s;
   }
 
-  /* Score pop quando marca */
   @keyframes goal-score-pop {
-    0% {
-      transform: scale(1);
-    }
-    30% {
-      transform: scale(1.2);
-    }
-    60% {
-      transform: scale(0.95);
-    }
-    100% {
-      transform: scale(1);
-    }
+    0% { transform: scale(1); }
+    30% { transform: scale(1.2); }
+    60% { transform: scale(0.95); }
+    100% { transform: scale(1); }
   }
   .animate-goal-score-pop {
     animation: goal-score-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s forwards;
   }
 
-  /* Texto GOOOL slide */
   @keyframes goal-text-slide {
-    0% {
-      transform: translateY(20px) scale(0.9);
-      opacity: 0;
-    }
-    100% {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
+    0% { transform: translateY(20px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
   }
   .animate-goal-text-slide {
     animation: goal-text-slide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s forwards;
     opacity: 0;
   }
 
-  /* Particulas flutuantes */
   @keyframes goal-particle {
-    0% {
-      transform: scale(0);
-      opacity: 0;
-    }
-    20% {
-      transform: scale(1);
-      opacity: 0.8;
-    }
-    100% {
-      transform: scale(0) translateY(-50px);
-      opacity: 0;
-    }
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-100px) scale(0); opacity: 0; }
   }
   .animate-goal-particle {
-    animation: goal-particle 2s ease-out forwards;
+    animation: goal-particle 1.5s ease-out forwards;
   }
 
-  /* Legado - mantido para compatibilidade */
-  @keyframes confetti {
-    0% {
-      transform: translateY(0) rotate(0deg) scale(1);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(100vh) rotate(720deg) scale(0);
-      opacity: 0;
-    }
+  @keyframes confetti-fall {
+    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
   }
   .animate-confetti {
-    animation: confetti 2.5s ease-out forwards;
+    animation: confetti-fall 3s ease-in-out forwards;
   }
 
-  @keyframes pulse-line {
-    0%, 100% {
-      opacity: 0;
-      transform: rotate(var(--rotation, 0deg)) scaleY(0);
-    }
-    50% {
-      opacity: 0.6;
-      transform: rotate(var(--rotation, 0deg)) scaleY(1);
-    }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
   }
-  .animate-pulse-line {
-    animation: pulse-line 1.5s ease-in-out infinite;
-  }
-
-  @keyframes goal-text {
-    0% {
-      transform: scale(0) rotate(-10deg);
-      opacity: 0;
-      filter: blur(20px);
-    }
-    60% {
-      transform: scale(1.15) rotate(2deg);
-      opacity: 1;
-      filter: blur(0);
-    }
-    80% {
-      transform: scale(0.95) rotate(-1deg);
-    }
-    100% {
-      transform: scale(1) rotate(0deg);
-      opacity: 1;
-    }
-  }
-  .animate-goal-text {
-    animation: goal-text 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-
-  @keyframes goal-badge {
-    0% {
-      transform: scale(0) translateY(30px);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(1) translateY(0);
-      opacity: 1;
-    }
-  }
-  .animate-goal-badge {
-    animation: goal-badge 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
-    opacity: 0;
-  }
-
-  @keyframes goal-name {
-    0% {
-      transform: translateY(20px);
-      opacity: 0;
-    }
-    100% {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  .animate-goal-name {
-    animation: goal-name 0.4s ease-out 0.5s forwards;
-    opacity: 0;
-  }
-
-  @keyframes goal-score {
-    0% {
-      transform: scale(0.5);
-      opacity: 0;
-    }
-    70% {
-      transform: scale(1.1);
-    }
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-  .animate-goal-score {
-    animation: goal-score 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s forwards;
-    opacity: 0;
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
   }
 }
