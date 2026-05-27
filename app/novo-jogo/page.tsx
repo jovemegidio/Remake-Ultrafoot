@@ -390,7 +390,7 @@ export default function NovoJogoPage() {
               <div className="text-2xl">{activeDivision.flag}</div>
               <div>
                 <h2 className="text-lg font-bold text-white">{activeDivision.label}</h2>
-                <p className="text-xs text-white/40">{activeDivision.country} • {activeDivision.teams.length} clubes</p>
+                <p className="text-xs text-white/40">{activeDivision.country} - {activeDivision.teams.length} clubes</p>
               </div>
             </div>
           </div>
