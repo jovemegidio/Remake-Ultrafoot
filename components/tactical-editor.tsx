@@ -21,102 +21,102 @@ type Position = {
   photo?: string
 }
 
-// Formacoes predefinidas - EA FC style
+// Formacoes predefinidas - EA FC style (coordenadas para campo 100x133)
 const FORMATIONS: Record<string, { name: string; positions: { pos: string; x: number; y: number }[] }> = {
   "4-3-3": {
     name: "4-3-3",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "VOL", x: 50, y: 55 },
-      { pos: "MEI", x: 75, y: 45 },
-      { pos: "MEI", x: 25, y: 45 },
-      { pos: "PD", x: 78, y: 20 },
-      { pos: "ATA", x: 50, y: 12 },
-      { pos: "PE", x: 22, y: 20 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "VOL", x: 50, y: 70 },
+      { pos: "MEI", x: 75, y: 55 },
+      { pos: "MEI", x: 25, y: 55 },
+      { pos: "PD", x: 78, y: 25 },
+      { pos: "ATA", x: 50, y: 15 },
+      { pos: "PE", x: 22, y: 25 },
     ],
   },
   "4-4-2": {
     name: "4-4-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "MD", x: 85, y: 48 },
-      { pos: "VOL", x: 60, y: 52 },
-      { pos: "VOL", x: 40, y: 52 },
-      { pos: "ME", x: 15, y: 48 },
-      { pos: "ATA", x: 60, y: 15 },
-      { pos: "ATA", x: 40, y: 15 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "MD", x: 85, y: 60 },
+      { pos: "VOL", x: 60, y: 65 },
+      { pos: "VOL", x: 40, y: 65 },
+      { pos: "ME", x: 15, y: 60 },
+      { pos: "ATA", x: 60, y: 18 },
+      { pos: "ATA", x: 40, y: 18 },
     ],
   },
   "3-5-2": {
     name: "3-5-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "ZAG", x: 75, y: 75 },
-      { pos: "ZAG", x: 50, y: 78 },
-      { pos: "ZAG", x: 25, y: 75 },
-      { pos: "ALD", x: 90, y: 50 },
-      { pos: "VOL", x: 65, y: 55 },
-      { pos: "MEI", x: 50, y: 42 },
-      { pos: "VOL", x: 35, y: 55 },
-      { pos: "ALE", x: 10, y: 50 },
-      { pos: "ATA", x: 60, y: 15 },
-      { pos: "ATA", x: 40, y: 15 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "ZAG", x: 75, y: 98 },
+      { pos: "ZAG", x: 50, y: 102 },
+      { pos: "ZAG", x: 25, y: 98 },
+      { pos: "ALD", x: 90, y: 62 },
+      { pos: "VOL", x: 65, y: 70 },
+      { pos: "MEI", x: 50, y: 52 },
+      { pos: "VOL", x: 35, y: 70 },
+      { pos: "ALE", x: 10, y: 62 },
+      { pos: "ATA", x: 60, y: 18 },
+      { pos: "ATA", x: 40, y: 18 },
     ],
   },
   "4-2-3-1": {
     name: "4-2-3-1",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "VOL", x: 60, y: 58 },
-      { pos: "VOL", x: 40, y: 58 },
-      { pos: "PD", x: 80, y: 35 },
-      { pos: "MEI", x: 50, y: 32 },
-      { pos: "PE", x: 20, y: 35 },
-      { pos: "ATA", x: 50, y: 12 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "VOL", x: 60, y: 75 },
+      { pos: "VOL", x: 40, y: 75 },
+      { pos: "PD", x: 80, y: 45 },
+      { pos: "MEI", x: 50, y: 40 },
+      { pos: "PE", x: 20, y: 45 },
+      { pos: "ATA", x: 50, y: 15 },
     ],
   },
   "5-3-2": {
     name: "5-3-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "ALD", x: 90, y: 62 },
-      { pos: "ZAG", x: 70, y: 75 },
-      { pos: "ZAG", x: 50, y: 78 },
-      { pos: "ZAG", x: 30, y: 75 },
-      { pos: "ALE", x: 10, y: 62 },
-      { pos: "MEI", x: 70, y: 45 },
-      { pos: "VOL", x: 50, y: 52 },
-      { pos: "MEI", x: 30, y: 45 },
-      { pos: "ATA", x: 60, y: 15 },
-      { pos: "ATA", x: 40, y: 15 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "ALD", x: 90, y: 80 },
+      { pos: "ZAG", x: 70, y: 98 },
+      { pos: "ZAG", x: 50, y: 102 },
+      { pos: "ZAG", x: 30, y: 98 },
+      { pos: "ALE", x: 10, y: 80 },
+      { pos: "MEI", x: 70, y: 55 },
+      { pos: "VOL", x: 50, y: 62 },
+      { pos: "MEI", x: 30, y: 55 },
+      { pos: "ATA", x: 60, y: 18 },
+      { pos: "ATA", x: 40, y: 18 },
     ],
   },
   "4-1-4-1": {
     name: "4-1-4-1",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "VOL", x: 50, y: 60 },
-      { pos: "MD", x: 85, y: 42 },
-      { pos: "MEI", x: 65, y: 38 },
-      { pos: "MEI", x: 35, y: 38 },
-      { pos: "ME", x: 15, y: 42 },
-      { pos: "ATA", x: 50, y: 12 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "VOL", x: 50, y: 78 },
+      { pos: "MD", x: 85, y: 52 },
+      { pos: "MEI", x: 65, y: 48 },
+      { pos: "MEI", x: 35, y: 48 },
+      { pos: "ME", x: 15, y: 52 },
+      { pos: "ATA", x: 50, y: 15 },
     ],
   },
 }
@@ -246,7 +246,9 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
     }
     
     const x = Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100))
-    const y = Math.max(5, Math.min(95, ((clientY - rect.top) / rect.height) * 100))
+    // Converte para coordenadas do sistema 133 (mais alto)
+    const yPercent = ((clientY - rect.top) / rect.height) * 100
+    const y = Math.max(5, Math.min(128, (yPercent / 100) * 133))
     
     setPlayers(prev => prev.map(p => 
       p.id === draggingId ? { ...p, x, y } : p
@@ -679,25 +681,38 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             
             {/* Pitch markings */}
             <svg
-              viewBox="0 0 100 100"
+              viewBox="0 0 100 133"
               className="absolute inset-0 h-full w-full"
-              preserveAspectRatio="xMidYMid slice"
+              preserveAspectRatio="none"
             >
-              <g stroke="rgba(255,255,255,0.45)" strokeWidth="0.25" fill="none">
-                <rect x="3" y="3" width="94" height="94" rx="1" />
-                <line x1="3" y1="50" x2="97" y2="50" />
-                <circle cx="50" cy="50" r="10" />
-                <circle cx="50" cy="50" r="0.6" fill="rgba(255,255,255,0.45)" />
-                <rect x="22" y="3" width="56" height="16" />
-                <rect x="36" y="3" width="28" height="6" />
-                <circle cx="50" cy="11" r="0.6" fill="rgba(255,255,255,0.45)" />
-                <path d="M35 19 A 15 15 0 0 0 65 19" />
-                <rect x="22" y="81" width="56" height="16" />
-                <rect x="36" y="91" width="28" height="6" />
-                <circle cx="50" cy="89" r="0.6" fill="rgba(255,255,255,0.45)" />
-                <path d="M35 81 A 15 15 0 0 1 65 81" />
-                <rect x="42" y="0" width="16" height="3" stroke="rgba(255,255,255,0.7)" />
-                <rect x="42" y="97" width="16" height="3" stroke="rgba(255,255,255,0.7)" />
+              <g stroke="rgba(255,255,255,0.4)" strokeWidth="0.3" fill="none">
+                {/* Campo exterior */}
+                <rect x="3" y="3" width="94" height="127" rx="1" />
+                {/* Linha do meio */}
+                <line x1="3" y1="66.5" x2="97" y2="66.5" />
+                {/* Circulo central */}
+                <circle cx="50" cy="66.5" r="12" />
+                <circle cx="50" cy="66.5" r="0.8" fill="rgba(255,255,255,0.4)" />
+                {/* Area grande - topo (ataque) */}
+                <rect x="20" y="3" width="60" height="20" />
+                {/* Area pequena - topo */}
+                <rect x="32" y="3" width="36" height="8" />
+                {/* Ponto do penalti - topo */}
+                <circle cx="50" cy="16" r="0.8" fill="rgba(255,255,255,0.4)" />
+                {/* Arco da area - topo */}
+                <path d="M 35 23 Q 50 30 65 23" />
+                {/* Area grande - baixo (defesa) */}
+                <rect x="20" y="110" width="60" height="20" />
+                {/* Area pequena - baixo */}
+                <rect x="32" y="122" width="36" height="8" />
+                {/* Ponto do penalti - baixo */}
+                <circle cx="50" cy="117" r="0.8" fill="rgba(255,255,255,0.4)" />
+                {/* Arco da area - baixo */}
+                <path d="M 35 110 Q 50 103 65 110" />
+                {/* Gol - topo */}
+                <rect x="40" y="0" width="20" height="3" strokeWidth="0.4" stroke="rgba(255,255,255,0.6)" />
+                {/* Gol - baixo */}
+                <rect x="40" y="130" width="20" height="3" strokeWidth="0.4" stroke="rgba(255,255,255,0.6)" />
               </g>
             </svg>
 
@@ -710,7 +725,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   draggingId === p.id && "z-20 scale-110",
                   selectedPlayer === p.id && "z-10"
                 )}
-                style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                style={{ left: `${p.x}%`, top: `${(p.y / 133) * 100}%` }}
                 onMouseDown={() => handleDragStart(p.id)}
                 onTouchStart={() => handleDragStart(p.id)}
               >
