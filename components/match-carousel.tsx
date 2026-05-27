@@ -246,15 +246,18 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
       <div className="flex items-center gap-3 px-4 pb-4">
         <Link 
           href="/partida" 
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-[#00ffc8] bg-[#00ffc8]/10 text-[#00ffc8] text-sm font-bold hover:bg-[#00ffc8]/20 transition-all hover:scale-[1.02] active:scale-[0.98] group"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black text-sm font-bold hover:from-[#33ffd4] hover:to-[#33d4ff] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(0,255,200,0.3)]"
         >
           <Play className="h-4 w-4 fill-current" />
           <span>Jogar Partida</span>
         </Link>
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:border-white/20 hover:bg-white/10 transition-all hover:scale-[1.02] active:scale-[0.98]">
+        <Link 
+          href="/partida/ao-vivo?simulate=true" 
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg border-2 border-white/20 bg-white/5 text-white text-sm font-medium hover:border-[#00ffc8]/50 hover:bg-white/10 hover:text-[#00ffc8] transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
           <Monitor className="h-4 w-4" />
           <span>Simular</span>
-        </button>
+        </Link>
       </div>
     </section>
   )
