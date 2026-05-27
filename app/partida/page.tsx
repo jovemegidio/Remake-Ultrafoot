@@ -39,6 +39,7 @@ import { simulateFullMatch, type MatchEvent as SimEvent } from "@/lib/match-engi
 import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
+import { getLeagueLogo } from "@/lib/league-logos"
 
 type KitVariant = "home" | "away" | "third"
 
@@ -51,11 +52,13 @@ function TeamCard({
   side,
   selectedKit,
   onKitChange,
+  leagueName,
 }: {
   team: Team
   side: "home" | "away"
   selectedKit: KitVariant
   onKitChange: (kit: KitVariant) => void
+  leagueName: string
 }) {
   const overallRating = teamRating(team.curto) || teamRating(team.nome) || 75
   
@@ -77,6 +80,8 @@ function TeamCard({
     mei: team.nome.length % 3 === 1 ? "up" : team.nome.length % 3 === 2 ? "neutral" : "down",
     def: team.nome.length % 3 === 2 ? "up" : team.nome.length % 3 === 0 ? "neutral" : "down",
   }), [team.nome])
+
+  const leagueLogo = getLeagueLogo(leagueName)
 
   const TrendIcon = ({ trend }: { trend: string }) => {
     if (trend === "up") return <TrendingUp className="h-3 w-3 text-green-400" />
@@ -164,13 +169,14 @@ function TeamCard({
 
       {/* League Badge */}
       <div className="flex flex-col items-center">
-        <span className="text-[10px] text-white/40 mb-2">Brasileirao Serie A</span>
+        <span className="text-[10px] text-white/40 mb-2">Liga</span>
         <Image
-          src="/logos/brasileirao.png"
-          alt="Brasileirao"
-          width={32}
-          height={32}
-          className="object-contain opacity-60"
+          src={leagueLogo}
+          alt={leagueName}
+          width={48}
+          height={48}
+          className="object-contain"
+          unoptimized
         />
       </div>
     </div>
@@ -371,13 +377,7 @@ export default function PartidaPage() {
             <ChevronLeft className="h-4 w-4 text-white/60" />
           </button>
           <div className="flex items-center gap-3">
-            <Image
-              src="/flags/br.svg"
-              alt="Brasil"
-              width={32}
-              height={24}
-              className="object-contain rounded"
-            />
+            <span className="text-2xl">🇧🇷</span>
             <span className="text-white font-semibold">Brasil</span>
           </div>
           <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
@@ -387,13 +387,7 @@ export default function PartidaPage() {
           {/* Flag on right */}
           <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <span className="text-white/40 text-sm">Brasil</span>
-            <Image
-              src="/flags/br.svg"
-              alt="Brasil"
-              width={32}
-              height={24}
-              className="object-contain rounded"
-            />
+            <span className="text-2xl">🇧🇷</span>
           </div>
         </div>
 
@@ -408,6 +402,7 @@ export default function PartidaPage() {
             side="home" 
             selectedKit={homeKit}
             onKitChange={setHomeKit}
+            leagueName={matchInfo.competition}
           />
 
           {/* Center Options */}
@@ -446,6 +441,7 @@ export default function PartidaPage() {
             side="away" 
             selectedKit={awayKit}
             onKitChange={setAwayKit}
+            leagueName={matchInfo.competition}
           />
 
           {/* Vertical FORA label */}
