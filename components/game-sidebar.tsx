@@ -40,14 +40,14 @@ function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { acti
       className={cn(
         "group relative flex h-10 w-full items-center justify-center rounded-lg transition-all duration-200",
         active
-          ? "bg-gradient-to-r from-[#00ffc8]/20 to-[#00c8ff]/10 text-[#00ffc8]"
+          ? "bg-[#00ffc8]/15 text-[#00ffc8]"
           : "text-white/40 hover:bg-white/5 hover:text-white/70",
         focusable.isFocused && !active && "bg-[#00ffc8]/10 text-[#00ffc8] ring-1 ring-[#00ffc8]/30",
       )}
     >
       {/* Active indicator - left bar */}
       {active && (
-        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-[#00ffc8] to-[#00c8ff]" />
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00ffc8]" />
       )}
       {focusable.isFocused && !active && (
         <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00ffc8]" />
@@ -88,7 +88,7 @@ export function GameSidebar() {
   ]
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-40 flex w-[68px] flex-col items-center bg-[#050508]/98 backdrop-blur-xl py-4 border-r border-white/[0.04]">
+    <aside className="fixed left-0 top-0 bottom-0 z-40 flex w-[68px] flex-col items-center bg-[#0a0a0c] py-4 border-r border-white/[0.06]">
       {/* Logo */}
       <Link
         href="/"
@@ -107,7 +107,7 @@ export function GameSidebar() {
       </Link>
 
       {/* Divider */}
-      <div className="w-8 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-3" />
+      <div className="w-8 h-px bg-white/10 mb-3" />
 
       {/* Navigation */}
       <nav className="flex flex-1 flex-col items-center gap-1 w-full px-2 overflow-y-auto scrollbar-none">
@@ -118,9 +118,6 @@ export function GameSidebar() {
           )
         })}
       </nav>
-
-      {/* Bottom glow effect */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-24 bg-gradient-to-t from-[#00ffc8]/5 to-transparent pointer-events-none" />
     </aside>
   )
 }
