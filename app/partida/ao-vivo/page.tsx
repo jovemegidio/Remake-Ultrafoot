@@ -521,14 +521,14 @@ export default function PartidaAoVivoPage() {
 
   return (
     <div className={cn(
-      "h-screen flex flex-col overflow-hidden",
+      "min-h-screen flex flex-col",
       "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]",
       !isMatchInProgress && "md:pl-16 pl-0 pb-20 md:pb-0"
     )}>
       {!isMatchInProgress && <GameSidebar />}
 
       {/* Conteudo Principal - Estilo EA FC */}
-      <div className="flex-1 flex flex-col relative overflow-hidden">
+      <div className="flex-1 flex flex-col relative overflow-y-auto">
         
         {/* Liga Badge - Topo Central */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
