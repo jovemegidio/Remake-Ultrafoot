@@ -5,23 +5,18 @@ import { useRouter } from "next/navigation"
 import {
   ChevronLeft,
   ChevronRight,
-  Home,
-  Plane,
-  FastForward,
-  SkipForward,
   Loader2,
   Trophy,
-  Clock,
+  Star,
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { GameSidebar } from "@/components/game-sidebar"
-import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
-import { useTranslation } from "@/lib/i18n"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
 // Mapeia rodadas para meses aproximados (temporada de Abril a Dezembro)
@@ -40,13 +35,22 @@ const MONTH_NAMES = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ]
 
+const MONTH_NAMES_SHORT = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+]
+
 const WEEK_DAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"]
+
+const WEEKDAY_NAMES = [
+  "DOMINGO", "SEGUNDA-FEIRA", "TERCA-FEIRA", "QUARTA-FEIRA", 
+  "QUINTA-FEIRA", "SEXTA-FEIRA", "SABADO"
+]
 
 export default function CalendarioPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
   useDiscordActivity("Vendo o calendario", userTeam.nome)
-  const t = useTranslation()
   const {
     seasonCalendar,
     currentWeek,
@@ -56,7 +60,7 @@ export default function CalendarioPage() {
     hydrated
   } = useGameManager()
 
-  const [currentMonth, setCurrentMonth] = useState(3) // Abril (inicio da temporada)
+  const [currentMonth, setCurrentMonth] = useState(3) // Abril
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
   const [showChampionScreen, setShowChampionScreen] = useState(false)
@@ -73,7 +77,7 @@ export default function CalendarioPage() {
   // Proxima partida do usuario
   const nextUserMatch = seasonCalendar.nextUserMatch
 
-  // Fixture selecionada (do dia clicado)
+  // Fixture selecionada
   const selectedFixture = useMemo(() => {
     if (!selectedDay) return nextUserMatch
     return monthFixtures.find(f => {
@@ -82,23 +86,19 @@ export default function CalendarioPage() {
     }) || nextUserMatch
   }, [selectedDay, monthFixtures, nextUserMatch])
 
-  // Dias do calendario com partidas
+  // Dias do calendario
   const calendarDays = useMemo(() => {
     const daysInMonth = new Date(2026, currentMonth + 1, 0).getDate()
     const firstDayOfMonth = new Date(2026, currentMonth, 1).getDay()
     const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1
-    
-    // Dias do mes anterior para preencher
     const prevMonthDays = new Date(2026, currentMonth, 0).getDate()
     
     const days: { day: number; isCurrentMonth: boolean; fixture: Fixture | null }[] = []
     
-    // Dias do mes anterior
     for (let i = startOffset - 1; i >= 0; i--) {
       days.push({ day: prevMonthDays - i, isCurrentMonth: false, fixture: null })
     }
     
-    // Dias do mes atual
     for (let d = 1; d <= daysInMonth; d++) {
       const fixture = monthFixtures.find(f => {
         const fixtureDay = roundToDay(f.round)
@@ -107,7 +107,6 @@ export default function CalendarioPage() {
       days.push({ day: d, isCurrentMonth: true, fixture: fixture || null })
     }
     
-    // Dias do proximo mes para completar a grade
     const remaining = 42 - days.length
     for (let d = 1; d <= remaining; d++) {
       days.push({ day: d, isCurrentMonth: false, fixture: null })
@@ -125,7 +124,6 @@ export default function CalendarioPage() {
     return { isOpen, daysUntil }
   }, [currentMonth])
 
-  // Avanca uma rodada completa
   const handleAdvanceRound = useCallback(async () => {
     setIsSimulating(true)
     try {
@@ -139,32 +137,8 @@ export default function CalendarioPage() {
     }
   }, [advanceWeek, standings])
 
-  // Simula ate a proxima partida do usuario
-  const handleSimulateToNextMatch = useCallback(async () => {
-    setIsSimulating(true)
-    try {
-      const nextMatch = seasonCalendar.nextUserMatch
-      if (!nextMatch) return
-      
-      let currentRound = currentWeek
-      while (currentRound < nextMatch.round - 1) {
-        const r = await advanceWeek()
-        if (r?.newSeason) {
-          setChampionTeam(standings[0]?.teamShort ?? null)
-          setShowChampionScreen(true)
-          return
-        }
-        currentRound++
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-    } finally {
-      setIsSimulating(false)
-    }
-  }, [advanceWeek, currentWeek, seasonCalendar.nextUserMatch, standings])
-
   const canSimulate = currentWeek < 38 && !isSimulating
 
-  // Navegacao por controle
   useEffect(() => {
     const handleGamepadButton = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
@@ -184,7 +158,6 @@ export default function CalendarioPage() {
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
   }, [router])
 
-  // Define o dia selecionado inicial
   useEffect(() => {
     if (nextUserMatch) {
       const day = roundToDay(nextUserMatch.round)
@@ -194,62 +167,127 @@ export default function CalendarioPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#f5f5f0] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#0ea5e9]" />
+      <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#1a1a1a] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     )
   }
 
-  // Calcula dia da semana para a data atual
-  const currentDayOfWeek = nextUserMatch ? 
-    new Date(2026, roundToMonth(nextUserMatch.round), roundToDay(nextUserMatch.round)).toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase() :
-    "QUARTA-FEIRA"
-  
-  const currentDateStr = nextUserMatch ?
-    `${roundToDay(nextUserMatch.round)} ${MONTH_NAMES[roundToMonth(nextUserMatch.round)].toUpperCase().slice(0, 3)} ${2026}` :
-    `15 ABR 2026`
+  // Data atual formatada
+  const matchDate = nextUserMatch ? new Date(2026, roundToMonth(nextUserMatch.round), roundToDay(nextUserMatch.round)) : new Date(2026, 3, 15)
+  const dayOfWeek = WEEKDAY_NAMES[matchDate.getDay()]
+  const dayNum = matchDate.getDate()
+  const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
 
   return (
-    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-gradient-to-br from-[#f0f0eb] via-[#e8e8e3] to-[#ddddd8]">
+    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 relative">
       <GameSidebar />
-      <GameHeader team={userTeam} />
+      
+      {/* Background Image - Escritorio do Estadio */}
+      <div className="absolute inset-0 md:ml-16">
+        <Image
+          src="/images/office-bg.png"
+          alt="Office Background"
+          fill
+          className="object-cover"
+          priority
+        />
+        {/* Overlay escuro para melhorar legibilidade */}
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
 
-      {/* Background Image Overlay */}
-      <div 
-        className="absolute inset-0 ml-16 pointer-events-none opacity-30"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
+      {/* Top Navigation Bar */}
+      <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
+        <div className="flex items-center gap-6">
+          <span className="text-white/60 text-sm font-medium">Office</span>
+          <span className="text-white text-sm font-bold">Calendar</span>
+          {/* Month Tabs */}
+          <div className="flex items-center gap-1 ml-4">
+            <button 
+              onClick={() => setCurrentMonth(m => (m - 1 + 12) % 12)}
+              className="p-1 text-white/40 hover:text-white"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {MONTH_NAMES.slice(3, 12).map((month, i) => {
+              const monthIndex = i + 3
+              return (
+                <button
+                  key={month}
+                  onClick={() => setCurrentMonth(monthIndex)}
+                  className={cn(
+                    "px-3 py-1 text-xs font-medium transition-all rounded",
+                    monthIndex === currentMonth 
+                      ? "bg-white/20 text-white" 
+                      : "text-white/50 hover:text-white/80"
+                  )}
+                >
+                  {month}
+                </button>
+              )
+            })}
+            <button 
+              onClick={() => setCurrentMonth(m => (m + 1) % 12)}
+              className="p-1 text-white/40 hover:text-white"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
 
-      <div className="relative flex h-[calc(100vh-48px)]">
-        {/* Left Panel - Match Preview (EA FC Style) */}
-        <aside className="w-80 flex-shrink-0 p-6 flex flex-col">
-          {/* Current Date */}
-          <div className="mb-6">
-            <div className="text-xs font-bold text-gray-500 tracking-wider">
-              {currentDayOfWeek}
+        {/* User Team */}
+        <div className="flex items-center gap-2">
+          <TeamCrest team={userTeam} size="xs" />
+          <span className="text-white text-sm font-medium">{userTeam.nome}</span>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="relative z-10 flex h-[calc(100vh-48px-56px)] p-6 gap-6">
+        {/* Left Panel - Match Info (EA FC Style) */}
+        <aside className="w-56 flex-shrink-0 flex flex-col">
+          {/* Current Date - Large */}
+          <div className="mb-8">
+            <div className="text-white/60 text-xs font-medium tracking-wider uppercase mb-1">
+              {dayOfWeek}
             </div>
-            <div className="text-2xl font-black text-gray-800 tracking-tight">
-              {currentDateStr}
+            <div className="text-white text-3xl font-black tracking-tight">
+              {monthName} {dayNum}
+            </div>
+            <div className="text-white/50 text-sm">
+              {2026}
             </div>
           </div>
 
-          {/* Competition Badge */}
+          {/* Competition */}
           {selectedFixture && (
             <div className="mb-6">
-              <div className="text-sm font-bold text-[#0ea5e9]">
-                {selectedFixture.competition}
+              <div className="text-white text-sm font-bold">
+                {selectedFixture.competition === "Brasileirao Serie A" ? "Brasileirao Serie A" : selectedFixture.competition}
               </div>
             </div>
           )}
 
-          {/* Opponent Team Crest (Large) */}
+          {/* Opponent Team with Stars */}
           {selectedFixture && (
-            <div className="flex flex-col items-start mb-6">
+            <div className="mb-8">
+              {/* Stars */}
+              <div className="flex gap-0.5 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star 
+                    key={star} 
+                    className={cn(
+                      "h-4 w-4",
+                      star <= 3 ? "fill-yellow-400 text-yellow-400" : "text-white/20"
+                    )} 
+                  />
+                ))}
+              </div>
+              
+              {/* Large Team Crest */}
               <div className="relative mb-4">
                 <div 
-                  className="absolute inset-0 blur-3xl opacity-30"
+                  className="absolute inset-0 blur-3xl opacity-40 scale-150"
                   style={{ 
                     backgroundColor: selectedFixture.homeTeam.curto === userTeam.curto 
                       ? selectedFixture.awayTeam.cor1 
@@ -261,7 +299,9 @@ export default function CalendarioPage() {
                   size="2xl" 
                 />
               </div>
-              <div className="text-2xl font-black text-gray-800">
+              
+              {/* Team Name */}
+              <div className="text-white text-xl font-black">
                 {selectedFixture.homeTeam.curto === userTeam.curto 
                   ? selectedFixture.awayTeam.nome 
                   : selectedFixture.homeTeam.nome}
@@ -272,118 +312,88 @@ export default function CalendarioPage() {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Transfer Window Info */}
-          <div className="mt-auto pt-6 border-t border-gray-300">
-            <div className="text-xs font-medium text-gray-500 mb-1">
+          {/* Transfer Window */}
+          <div className="border-t border-white/10 pt-4">
+            <div className="text-white/50 text-xs font-medium mb-1">
               {transferWindow.isOpen ? "Janela de Transferencias" : "Janela de Transferencias Fechada"}
             </div>
-            {!transferWindow.isOpen && (
+            {!transferWindow.isOpen ? (
               <>
-                <div className="text-4xl font-black text-gray-800">
-                  {transferWindow.daysUntil} Dias
+                <div className="text-white text-4xl font-black">
+                  {transferWindow.daysUntil}
                 </div>
-                <div className="text-xs text-gray-500">
-                  Ate Abrir
+                <div className="text-white/50 text-xs">
+                  Dias Ate Abrir
                 </div>
               </>
-            )}
-            {transferWindow.isOpen && (
-              <div className="text-lg font-bold text-[#00c853]">
+            ) : (
+              <div className="text-[#00ff88] text-lg font-bold">
                 Aberta
               </div>
             )}
           </div>
         </aside>
 
-        {/* Main Calendar Area */}
-        <main className="flex-1 flex flex-col p-4 overflow-hidden">
-          {/* Month Tabs (EA FC Style) */}
-          <div className="flex items-center gap-1 mb-4 px-2">
-            {MONTH_NAMES.slice(3, 12).map((month, i) => {
-              const monthIndex = i + 3
-              return (
-                <button
-                  key={month}
-                  onClick={() => setCurrentMonth(monthIndex)}
-                  className={cn(
-                    "px-4 py-2 rounded-t-lg text-sm font-semibold transition-all",
-                    monthIndex === currentMonth 
-                      ? "bg-white text-gray-800 shadow-sm" 
-                      : "text-gray-500 hover:text-gray-700"
-                  )}
-                >
-                  {month}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Calendar Grid (EA FC Style) */}
-          <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden flex flex-col">
+        {/* Calendar Grid (EA FC Glassmorphism Style) */}
+        <main className="flex-1 flex flex-col">
+          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
             {/* Week days header */}
-            <div className="grid grid-cols-7 bg-gray-100/50">
+            <div className="grid grid-cols-7 border-b border-white/10">
               {WEEK_DAYS.map((day) => (
-                <div key={day} className="p-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <div key={day} className="p-3 text-center text-xs font-bold text-white/40 uppercase tracking-wider">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar days */}
-            <div className="flex-1 grid grid-cols-7 auto-rows-fr">
+            <div className="grid grid-cols-7 auto-rows-fr h-[calc(100%-44px)]">
               {calendarDays.map((item, i) => {
                 const isSelected = item.isCurrentMonth && item.day === selectedDay
                 const hasMatch = item.fixture !== null
                 const isHome = item.fixture?.homeTeam.curto === userTeam.curto
-                const isPlayed = item.fixture?.played
+                const opponent = item.fixture ? (isHome ? item.fixture.awayTeam : item.fixture.homeTeam) : null
                 
                 return (
                   <button
                     key={i}
                     onClick={() => {
-                      if (item.isCurrentMonth) {
-                        setSelectedDay(item.day)
-                      }
+                      if (item.isCurrentMonth) setSelectedDay(item.day)
                     }}
                     disabled={!item.isCurrentMonth}
                     className={cn(
-                      "relative p-2 border-r border-b border-gray-100 flex flex-col transition-all min-h-[80px]",
-                      item.isCurrentMonth ? "bg-white hover:bg-gray-50" : "bg-gray-50/50",
-                      isSelected && "ring-2 ring-[#0ea5e9] ring-inset bg-[#0ea5e9]/5",
+                      "relative p-2 border-r border-b border-white/5 flex flex-col transition-all",
+                      item.isCurrentMonth ? "hover:bg-white/5" : "opacity-30",
+                      isSelected && "bg-white/10",
                     )}
                   >
                     {/* Day number */}
                     <span className={cn(
-                      "text-lg font-bold mb-1",
-                      !item.isCurrentMonth && "text-gray-300",
-                      item.isCurrentMonth && !hasMatch && "text-gray-600",
-                      hasMatch && "text-gray-800"
+                      "text-2xl font-bold",
+                      !item.isCurrentMonth && "text-white/20",
+                      item.isCurrentMonth && !hasMatch && "text-white/50",
+                      hasMatch && "text-white"
                     )}>
                       {item.day}
                     </span>
 
-                    {/* Match indicator */}
-                    {hasMatch && item.fixture && (
+                    {/* Match Card (EA FC Style) */}
+                    {hasMatch && opponent && (
                       <div className={cn(
-                        "absolute bottom-1 left-1 right-1 rounded-lg p-1.5 flex flex-col items-center gap-1",
-                        isPlayed 
-                          ? "bg-gray-200" 
-                          : isHome 
-                            ? "bg-[#0ea5e9]/20" 
-                            : "bg-[#00c853]/20"
+                        "absolute bottom-2 left-2 right-2 rounded-lg p-2 flex flex-col items-center gap-1",
+                        isHome 
+                          ? "bg-[#0088ff]/30 border border-[#0088ff]/50" 
+                          : "bg-[#00cc66]/30 border border-[#00cc66]/50"
                       )}>
-                        <TeamCrest 
-                          team={isHome ? item.fixture.awayTeam : item.fixture.homeTeam} 
-                          size="sm" 
-                        />
+                        <TeamCrest team={opponent} size="sm" />
                         <div className={cn(
-                          "text-[9px] font-bold uppercase tracking-wide",
-                          isPlayed ? "text-gray-500" : isHome ? "text-[#0ea5e9]" : "text-[#00c853]"
+                          "text-[10px] font-bold uppercase",
+                          isHome ? "text-[#66bbff]" : "text-[#66ff99]"
                         )}>
-                          {isHome ? "Casa" : "Fora"}
+                          {isHome ? "Home" : "Away"}
                         </div>
-                        <div className="text-[8px] font-medium text-gray-500 uppercase">
-                          {item.fixture.competition === "Brasileirao Serie A" ? "LEAGUE" : "CUP"}
+                        <div className="text-[9px] font-medium text-white/60 uppercase">
+                          {item.fixture?.competition === "Brasileirao Serie A" ? "LEAGUE" : "CUP"}
                         </div>
                       </div>
                     )}
@@ -392,77 +402,67 @@ export default function CalendarioPage() {
               })}
             </div>
           </div>
-
-          {/* Bottom Action Bar (EA FC Style) */}
-          <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white/60 backdrop-blur-sm rounded-xl">
-            <div className="flex items-center gap-6 text-xs text-gray-500">
-              <button 
-                onClick={handleAdvanceRound}
-                disabled={!canSimulate}
-                className="flex items-center gap-2 hover:text-gray-700 disabled:opacity-50"
-              >
-                <span className="w-6 h-6 rounded bg-[#0ea5e9] flex items-center justify-center text-white font-bold text-[10px]">A</span>
-                <span>Sim To Date</span>
-              </button>
-              <button 
-                onClick={() => router.back()}
-                className="flex items-center gap-2 hover:text-gray-700"
-              >
-                <span className="w-6 h-6 rounded bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-[10px]">B</span>
-                <span>Voltar</span>
-              </button>
-              {nextUserMatch && (
-                <Link 
-                  href="/partida"
-                  className="flex items-center gap-2 hover:text-gray-700"
-                >
-                  <span className="w-6 h-6 rounded bg-yellow-400 flex items-center justify-center text-gray-800 font-bold text-[10px]">X</span>
-                  <span>Ver Partida</span>
-                </Link>
-              )}
-              <button 
-                onClick={() => setCurrentMonth(m => (m - 1 + 12) % 12)}
-                className="flex items-center gap-2 hover:text-gray-700"
-              >
-                <span className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-[10px]">LB</span>
-                <ChevronLeft className="h-3 w-3" />
-              </button>
-              <button 
-                onClick={() => setCurrentMonth(m => (m + 1) % 12)}
-                className="flex items-center gap-2 hover:text-gray-700"
-              >
-                <span className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-[10px]">RB</span>
-                <span>Mes</span>
-              </button>
-            </div>
-
-            {/* User Team Badge */}
-            <div className="flex items-center gap-3">
-              <TeamCrest team={userTeam} size="sm" />
-              <span className="text-sm font-bold text-gray-700">{userTeam.nome}</span>
-            </div>
-          </div>
         </main>
       </div>
+
+      {/* Bottom Action Bar (EA FC Style) */}
+      <footer className="absolute bottom-0 left-0 right-0 md:ml-16 h-14 flex items-center justify-between px-6 bg-black/50 backdrop-blur-sm border-t border-white/10 z-10">
+        <div className="flex items-center gap-8 text-xs text-white/70">
+          <button 
+            onClick={handleAdvanceRound}
+            disabled={!canSimulate}
+            className="flex items-center gap-2 hover:text-white disabled:opacity-50 transition-colors"
+          >
+            <span className="w-5 h-5 rounded bg-[#0088ff] flex items-center justify-center text-white font-bold text-[10px]">A</span>
+            <span>Sim To Date</span>
+          </button>
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 hover:text-white transition-colors"
+          >
+            <span className="w-5 h-5 rounded bg-[#ff4444] flex items-center justify-center text-white font-bold text-[10px]">B</span>
+            <span>Back</span>
+          </button>
+          {nextUserMatch && (
+            <Link 
+              href="/partida"
+              className="flex items-center gap-2 hover:text-white transition-colors"
+            >
+              <span className="w-5 h-5 rounded bg-[#ffcc00] flex items-center justify-center text-gray-900 font-bold text-[10px]">X</span>
+              <span>View Fixture</span>
+            </Link>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center text-white font-bold text-[10px]">LB</span>
+            <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center text-white font-bold text-[10px]">RB</span>
+            <span>Month</span>
+          </div>
+        </div>
+
+        {/* FC HUB */}
+        <div className="flex items-center gap-2 text-white/50 text-xs">
+          <span>FC HUB</span>
+        </div>
+      </footer>
 
       {/* Champion Screen */}
       {showChampionScreen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-white p-10 max-w-md w-full mx-4 text-center shadow-2xl">
+          <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-[#1a1a1a] p-10 max-w-md w-full mx-4 text-center border border-white/10">
             <Trophy className="h-16 w-16 text-yellow-500" />
-            <h2 className="text-3xl font-black text-gray-800 tracking-tight">CAMPEAO!</h2>
+            <h2 className="text-3xl font-black text-white tracking-tight">CAMPEAO!</h2>
             {championTeam && (
               <div className="flex flex-col items-center gap-3">
                 <TeamCrest team={getTeamByShort(championTeam) ?? undefined} size="2xl" />
-                <p className="text-xl font-bold text-gray-700">
+                <p className="text-xl font-bold text-white/80">
                   {getTeamByShort(championTeam)?.nome ?? championTeam}
                 </p>
               </div>
             )}
-            <p className="text-gray-500 text-sm">Temporada {currentSeason} encerrada. Nova temporada iniciando!</p>
+            <p className="text-white/50 text-sm">Temporada {currentSeason} encerrada. Nova temporada iniciando!</p>
             <button
               onClick={() => setShowChampionScreen(false)}
-              className="mt-2 px-8 py-3 rounded-xl bg-[#0ea5e9] text-white font-bold text-lg hover:bg-[#0284c7] transition-colors"
+              className="mt-2 px-8 py-3 rounded-xl bg-[#0088ff] text-white font-bold text-lg hover:bg-[#0066cc] transition-colors"
             >
               Continuar
             </button>
