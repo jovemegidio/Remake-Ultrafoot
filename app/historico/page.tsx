@@ -68,7 +68,7 @@ export default function HistoricoPage() {
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
   return (
-    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 

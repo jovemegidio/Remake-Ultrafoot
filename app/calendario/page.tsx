@@ -194,7 +194,7 @@ export default function CalendarioPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen overflow-hidden pl-16 bg-[#f5f5f0] flex items-center justify-center">
+      <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#f5f5f0] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#0ea5e9]" />
       </div>
     )
@@ -210,7 +210,7 @@ export default function CalendarioPage() {
     `15 ABR 2026`
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-gradient-to-br from-[#f0f0eb] via-[#e8e8e3] to-[#ddddd8]">
+    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-gradient-to-br from-[#f0f0eb] via-[#e8e8e3] to-[#ddddd8]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
