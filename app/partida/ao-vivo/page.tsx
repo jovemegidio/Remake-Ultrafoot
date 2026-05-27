@@ -281,20 +281,23 @@ export default function PartidaAoVivoPage() {
   // Carrega contexto da partida salva ou usa valores padrao
   const matchCtx = useMemo(() => loadMatchContext(), [])
 
-  // Determina times
-  const userTeam = useMemo(() => {
-    if (matchCtx.userTeam) return getTeamByShort(matchCtx.userTeam) ?? serieATeams[0]
+  // Determina times a partir do contexto salvo
+  const homeTeam = useMemo(() => {
+    if (matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
-  }, [matchCtx.userTeam, userTeamId])
+  }, [matchCtx.homeShort, userTeamId])
 
-  const opponent = useMemo(() => {
-    if (matchCtx.opponent) return getTeamByShort(matchCtx.opponent) ?? serieATeams[1]
-    return serieATeams.find(t => t.curto !== userTeam.curto) ?? serieATeams[1]
-  }, [matchCtx.opponent, userTeam.curto])
+  const awayTeam = useMemo(() => {
+    if (matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
+    return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
+  }, [matchCtx.awayShort, homeTeam.curto])
 
-  const isHome = matchCtx.isUserHome
-  const homeTeam = isHome ? userTeam : opponent
-  const awayTeam = isHome ? opponent : userTeam
+  // Determina qual lado e o do usuario
+  const userTeam = useMemo(() => {
+    return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
+  }, [userTeamId])
+  
+  const isHome = homeTeam.curto === userTeam.curto
   const userSide: "home" | "away" = isHome ? "home" : "away"
 
   // Squads

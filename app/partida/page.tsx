@@ -272,8 +272,8 @@ export default function PartidaPage() {
   useEffect(() => {
     if (homeTeam && awayTeam) {
       saveMatchContext({
-        homeTeam: homeTeam.curto,
-        awayTeam: awayTeam.curto,
+        homeShort: homeTeam.curto,
+        awayShort: awayTeam.curto,
         homeKit,
         awayKit,
         competition: matchInfo.competition,
