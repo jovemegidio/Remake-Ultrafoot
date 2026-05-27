@@ -37,86 +37,86 @@ import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
 
-// Formacoes predefinidas - EA FC style
+// Formacoes predefinidas - EA FC style (coordenadas ajustadas para campo 100x133)
 const FORMATIONS: Record<string, { name: string; positions: { pos: string; x: number; y: number }[] }> = {
   "4-3-3": {
     name: "4-3-3",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 70 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 70 },
-      { pos: "VOL", x: 50, y: 52 },
-      { pos: "MEI", x: 75, y: 40 },
-      { pos: "MEI", x: 25, y: 40 },
-      { pos: "PD", x: 78, y: 18 },
-      { pos: "ATA", x: 50, y: 10 },
-      { pos: "PE", x: 22, y: 18 },
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "LD", x: 85, y: 75 },
+      { pos: "ZAG", x: 65, y: 80 },
+      { pos: "ZAG", x: 35, y: 80 },
+      { pos: "LE", x: 15, y: 75 },
+      { pos: "VOL", x: 50, y: 55 },
+      { pos: "MEI", x: 75, y: 42 },
+      { pos: "MEI", x: 25, y: 42 },
+      { pos: "PD", x: 80, y: 22 },
+      { pos: "ATA", x: 50, y: 12 },
+      { pos: "PE", x: 20, y: 22 },
     ],
   },
   "4-4-2": {
     name: "4-4-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 70 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 70 },
-      { pos: "MD", x: 85, y: 45 },
-      { pos: "VOL", x: 60, y: 50 },
-      { pos: "VOL", x: 40, y: 50 },
-      { pos: "ME", x: 15, y: 45 },
-      { pos: "ATA", x: 60, y: 12 },
-      { pos: "ATA", x: 40, y: 12 },
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "LD", x: 85, y: 75 },
+      { pos: "ZAG", x: 65, y: 80 },
+      { pos: "ZAG", x: 35, y: 80 },
+      { pos: "LE", x: 15, y: 75 },
+      { pos: "MD", x: 85, y: 48 },
+      { pos: "VOL", x: 60, y: 52 },
+      { pos: "VOL", x: 40, y: 52 },
+      { pos: "ME", x: 15, y: 48 },
+      { pos: "ATA", x: 62, y: 15 },
+      { pos: "ATA", x: 38, y: 15 },
     ],
   },
   "4-2-3-1": {
     name: "4-2-3-1",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 70 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 70 },
-      { pos: "VOL", x: 60, y: 55 },
-      { pos: "VOL", x: 40, y: 55 },
-      { pos: "PD", x: 80, y: 32 },
-      { pos: "MEI", x: 50, y: 28 },
-      { pos: "PE", x: 20, y: 32 },
-      { pos: "ATA", x: 50, y: 10 },
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "LD", x: 85, y: 75 },
+      { pos: "ZAG", x: 65, y: 80 },
+      { pos: "ZAG", x: 35, y: 80 },
+      { pos: "LE", x: 15, y: 75 },
+      { pos: "VOL", x: 60, y: 58 },
+      { pos: "VOL", x: 40, y: 58 },
+      { pos: "PD", x: 82, y: 35 },
+      { pos: "MEI", x: 50, y: 32 },
+      { pos: "PE", x: 18, y: 35 },
+      { pos: "ATA", x: 50, y: 12 },
     ],
   },
   "3-5-2": {
     name: "3-5-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "ZAG", x: 75, y: 75 },
-      { pos: "ZAG", x: 50, y: 78 },
-      { pos: "ZAG", x: 25, y: 75 },
-      { pos: "ALD", x: 90, y: 48 },
-      { pos: "VOL", x: 65, y: 52 },
-      { pos: "MEI", x: 50, y: 40 },
-      { pos: "VOL", x: 35, y: 52 },
-      { pos: "ALE", x: 10, y: 48 },
-      { pos: "ATA", x: 60, y: 12 },
-      { pos: "ATA", x: 40, y: 12 },
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "ZAG", x: 75, y: 78 },
+      { pos: "ZAG", x: 50, y: 82 },
+      { pos: "ZAG", x: 25, y: 78 },
+      { pos: "ALD", x: 90, y: 50 },
+      { pos: "VOL", x: 65, y: 55 },
+      { pos: "MEI", x: 50, y: 42 },
+      { pos: "VOL", x: 35, y: 55 },
+      { pos: "ALE", x: 10, y: 50 },
+      { pos: "ATA", x: 62, y: 15 },
+      { pos: "ATA", x: 38, y: 15 },
     ],
   },
   "5-3-2": {
     name: "5-3-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "ALD", x: 90, y: 60 },
-      { pos: "ZAG", x: 70, y: 75 },
-      { pos: "ZAG", x: 50, y: 78 },
-      { pos: "ZAG", x: 30, y: 75 },
-      { pos: "ALE", x: 10, y: 60 },
-      { pos: "MEI", x: 70, y: 42 },
-      { pos: "VOL", x: 50, y: 48 },
-      { pos: "MEI", x: 30, y: 42 },
-      { pos: "ATA", x: 60, y: 12 },
-      { pos: "ATA", x: 40, y: 12 },
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "ALD", x: 90, y: 65 },
+      { pos: "ZAG", x: 70, y: 78 },
+      { pos: "ZAG", x: 50, y: 82 },
+      { pos: "ZAG", x: 30, y: 78 },
+      { pos: "ALE", x: 10, y: 65 },
+      { pos: "MEI", x: 70, y: 45 },
+      { pos: "VOL", x: 50, y: 50 },
+      { pos: "MEI", x: 30, y: 45 },
+      { pos: "ATA", x: 62, y: 15 },
+      { pos: "ATA", x: 38, y: 15 },
     ],
   },
 }
@@ -743,9 +743,10 @@ export default function ElencoPage() {
               </div>
               
               <div 
-                className="relative rounded-2xl overflow-hidden aspect-[4/3]"
+                className="relative rounded-2xl overflow-hidden"
                 style={{
                   background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
+                  aspectRatio: "3 / 4",
                 }}
               >
                 {/* Pitch stripes */}
@@ -757,13 +758,31 @@ export default function ElencoPage() {
                 />
                 
                 {/* Pitch markings */}
-                <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
-                  <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.2" fill="none">
-                    <rect x="3" y="3" width="94" height="94" rx="1" />
-                    <line x1="3" y1="50" x2="97" y2="50" />
-                    <circle cx="50" cy="50" r="10" />
-                    <rect x="22" y="3" width="56" height="16" />
-                    <rect x="22" y="81" width="56" height="16" />
+                <svg viewBox="0 0 100 133" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+                  <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.3" fill="none">
+                    {/* Campo exterior */}
+                    <rect x="3" y="3" width="94" height="127" rx="1" />
+                    {/* Linha do meio */}
+                    <line x1="3" y1="66.5" x2="97" y2="66.5" />
+                    {/* Circulo central */}
+                    <circle cx="50" cy="66.5" r="12" />
+                    <circle cx="50" cy="66.5" r="0.8" fill="rgba(255,255,255,0.35)" />
+                    {/* Area grande - topo (ataque) */}
+                    <rect x="20" y="3" width="60" height="20" />
+                    {/* Area pequena - topo */}
+                    <rect x="32" y="3" width="36" height="8" />
+                    {/* Arco da area - topo */}
+                    <path d="M 35 23 Q 50 30 65 23" />
+                    {/* Area grande - baixo (defesa) */}
+                    <rect x="20" y="110" width="60" height="20" />
+                    {/* Area pequena - baixo */}
+                    <rect x="32" y="122" width="36" height="8" />
+                    {/* Arco da area - baixo */}
+                    <path d="M 35 110 Q 50 103 65 110" />
+                    {/* Gol - topo */}
+                    <rect x="40" y="0" width="20" height="3" strokeWidth="0.4" />
+                    {/* Gol - baixo */}
+                    <rect x="40" y="130" width="20" height="3" strokeWidth="0.4" />
                   </g>
                 </svg>
                 
@@ -944,7 +963,7 @@ export default function ElencoPage() {
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
-              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[250px]" 
+              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] max-h-[500px]" 
               style={{
                 background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
               }}
@@ -958,22 +977,35 @@ export default function ElencoPage() {
               />
               
               {/* Pitch markings */}
-              <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
-                <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.2" fill="none">
-                  <rect x="3" y="3" width="94" height="94" rx="1" />
-                  <line x1="3" y1="50" x2="97" y2="50" />
-                  <circle cx="50" cy="50" r="10" />
-                  <circle cx="50" cy="50" r="0.5" fill="rgba(255,255,255,0.35)" />
-                  <rect x="22" y="3" width="56" height="16" />
-                  <rect x="36" y="3" width="28" height="6" />
-                  <circle cx="50" cy="11" r="0.5" fill="rgba(255,255,255,0.35)" />
-                  <path d="M35 19 A 15 15 0 0 0 65 19" />
-                  <rect x="22" y="81" width="56" height="16" />
-                  <rect x="36" y="91" width="28" height="6" />
-                  <circle cx="50" cy="89" r="0.5" fill="rgba(255,255,255,0.35)" />
-                  <path d="M35 81 A 15 15 0 0 1 65 81" />
-                  <rect x="42" y="0" width="16" height="3" stroke="rgba(255,255,255,0.5)" />
-                  <rect x="42" y="97" width="16" height="3" stroke="rgba(255,255,255,0.5)" />
+              <svg viewBox="0 0 100 133" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+                <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.3" fill="none">
+                  {/* Campo exterior */}
+                  <rect x="3" y="3" width="94" height="127" rx="1" />
+                  {/* Linha do meio */}
+                  <line x1="3" y1="66.5" x2="97" y2="66.5" />
+                  {/* Circulo central */}
+                  <circle cx="50" cy="66.5" r="12" />
+                  <circle cx="50" cy="66.5" r="0.8" fill="rgba(255,255,255,0.35)" />
+                  {/* Area grande - topo (ataque) */}
+                  <rect x="20" y="3" width="60" height="20" />
+                  {/* Area pequena - topo */}
+                  <rect x="32" y="3" width="36" height="8" />
+                  {/* Ponto do penalti - topo */}
+                  <circle cx="50" cy="16" r="0.8" fill="rgba(255,255,255,0.35)" />
+                  {/* Arco da area - topo */}
+                  <path d="M 35 23 Q 50 30 65 23" />
+                  {/* Area grande - baixo (defesa) */}
+                  <rect x="20" y="110" width="60" height="20" />
+                  {/* Area pequena - baixo */}
+                  <rect x="32" y="122" width="36" height="8" />
+                  {/* Ponto do penalti - baixo */}
+                  <circle cx="50" cy="117" r="0.8" fill="rgba(255,255,255,0.35)" />
+                  {/* Arco da area - baixo */}
+                  <path d="M 35 110 Q 50 103 65 110" />
+                  {/* Gol - topo */}
+                  <rect x="40" y="0" width="20" height="3" strokeWidth="0.4" />
+                  {/* Gol - baixo */}
+                  <rect x="40" y="130" width="20" height="3" strokeWidth="0.4" />
                 </g>
               </svg>
 
