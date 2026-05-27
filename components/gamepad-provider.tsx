@@ -285,15 +285,33 @@ export function useGamepadFocusable(
 ) {
   const context = useContext(GamepadContext)
   
+  // Use ref to store onSelect to avoid re-registering on every render
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
+  
+  // Stable callback that always calls the latest onSelect
+  const stableOnSelect = useCallback(() => {
+    onSelectRef.current?.()
+  }, [])
+  
+  // Track if element was registered to prevent duplicate registrations
+  const registeredRef = useRef(false)
+  
   useEffect(() => {
     if (!context || !ref.current) return
     
-    context.registerFocusableElement(id, ref.current, onSelect)
+    // Only register once
+    if (registeredRef.current) return
+    registeredRef.current = true
+    
+    context.registerFocusableElement(id, ref.current, stableOnSelect)
     
     return () => {
+      registeredRef.current = false
       context.unregisterFocusableElement(id)
     }
-  }, [context, id, ref, onSelect])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context, id, stableOnSelect])
 
   const isFocused = context?.focusedElementId === id
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
@@ -34,14 +34,9 @@ const sizePixels = {
   "3xl": 144,
 }
 
-// Gera um ID unico para evitar conflitos de gradientes SVG
-function generateUniqueId(prefix: string, key: string): string {
-  return `${prefix}-${key}-${Math.random().toString(36).substr(2, 9)}`
-}
-
 /**
- * Team crest component with premium fallback design
- * Professional EA FC style shields when images aren't available
+ * Team crest component that loads real escudos from Ultrafoot repository
+ * Falls back to styled shield with team colors if image fails to load
  */
 export function TeamCrest({
   team,
@@ -59,35 +54,15 @@ export function TeamCrest({
   const escudoKey = fileKey || resolvedTeam?.file_key
   const escudoUrl = escudoKey ? getEscudoUrl(escudoKey) : null
 
-  const { container } = sizeMap[size]
+  const { container, text, inner } = sizeMap[size]
   const pixels = sizePixels[size]
 
-  // Generate unique IDs for SVG gradients
-  const uniqueIds = useMemo(() => ({
-    gradient: generateUniqueId('grad', escudoKey || 'default'),
-    shine: generateUniqueId('shine', escudoKey || 'default'),
-    clip: generateUniqueId('clip', escudoKey || 'default'),
-    stripe: generateUniqueId('stripe', escudoKey || 'default'),
-  }), [escudoKey])
-
-  // Professional fallback shield - EA FC style
+  // Professional fallback shield component
   const FallbackShield = () => {
-    const cor1 = resolvedTeam?.cor1 || "#1db954"
-    const cor2 = resolvedTeam?.cor2 || "#0d5c2a"
+    const cor1 = resolvedTeam?.cor1 || "#10b981"
+    const cor2 = resolvedTeam?.cor2 || "#064e3b"
+    const initial = resolvedTeam?.curto?.charAt(0) || teamShort?.charAt(0) || "?"
     const shortName = resolvedTeam?.curto || teamShort || "?"
-    
-    // Determine if we need light or dark text based on background brightness
-    const getBrightness = (hex: string) => {
-      const rgb = parseInt(hex.slice(1), 16)
-      const r = (rgb >> 16) & 0xff
-      const g = (rgb >> 8) & 0xff
-      const b = (rgb >> 0) & 0xff
-      return (r * 299 + g * 587 + b * 114) / 1000
-    }
-    
-    const brightness = getBrightness(cor1)
-    const textColor = brightness > 128 ? "#000000" : "#ffffff"
-    const textShadow = brightness > 128 ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.5)"
     
     return (
       <div
@@ -101,89 +76,65 @@ export function TeamCrest({
         <svg 
           viewBox="0 0 100 120" 
           className="w-full h-full"
-          style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" }}
+          style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" }}
         >
+          {/* Shield shape with gradient */}
           <defs>
-            {/* Main gradient */}
-            <linearGradient id={uniqueIds.gradient} x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id={`shield-grad-${escudoKey || 'default'}`} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={cor1} />
-              <stop offset="50%" stopColor={cor1} />
               <stop offset="100%" stopColor={cor2} />
             </linearGradient>
-            
-            {/* Shine overlay */}
-            <linearGradient id={uniqueIds.shine} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
-              <stop offset="30%" stopColor="rgba(255,255,255,0.1)" />
-              <stop offset="100%" stopColor="rgba(0,0,0,0.1)" />
+            <linearGradient id={`shine-${escudoKey || 'default'}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.3)" />
+              <stop offset="50%" stopColor="rgba(255,255,255,0)" />
             </linearGradient>
-            
-            {/* Clip path for shield shape */}
-            <clipPath id={uniqueIds.clip}>
-              <path d="M50 2 L96 18 L96 68 Q96 98 50 118 Q4 98 4 68 L4 18 Z" />
+            <clipPath id={`shield-clip-${escudoKey || 'default'}`}>
+              <path d="M50 0 L95 15 L95 70 Q95 100 50 120 Q5 100 5 70 L5 15 Z" />
             </clipPath>
-            
-            {/* Stripe pattern */}
-            <pattern id={uniqueIds.stripe} patternUnits="userSpaceOnUse" width="100" height="120">
-              <rect x="0" y="0" width="100" height="120" fill="transparent"/>
-              <rect x="0" y="48" width="100" height="24" fill={cor2} opacity="0.3"/>
-            </pattern>
           </defs>
           
-          {/* Shield base with gradient */}
+          {/* Shield background */}
           <path 
-            d="M50 2 L96 18 L96 68 Q96 98 50 118 Q4 98 4 68 L4 18 Z"
-            fill={`url(#${uniqueIds.gradient})`}
-          />
-          
-          {/* Stripe accent */}
-          <rect 
-            x="0" 
-            y="0" 
-            width="100" 
-            height="120" 
-            fill={`url(#${uniqueIds.stripe})`}
-            clipPath={`url(#${uniqueIds.clip})`}
+            d="M50 0 L95 15 L95 70 Q95 100 50 120 Q5 100 5 70 L5 15 Z"
+            fill={`url(#shield-grad-${escudoKey || 'default'})`}
           />
           
           {/* Inner border */}
           <path 
-            d="M50 8 L90 22 L90 66 Q90 92 50 110 Q10 92 10 66 L10 22 Z"
-            fill="none"
-            stroke={cor2}
-            strokeWidth="1.5"
-            opacity="0.4"
-          />
-          
-          {/* Shine overlay */}
-          <path 
-            d="M50 2 L96 18 L96 68 Q96 98 50 118 Q4 98 4 68 L4 18 Z"
-            fill={`url(#${uniqueIds.shine})`}
-          />
-          
-          {/* Outer border */}
-          <path 
-            d="M50 2 L96 18 L96 68 Q96 98 50 118 Q4 98 4 68 L4 18 Z"
+            d="M50 6 L89 19 L89 68 Q89 94 50 113 Q11 94 11 68 L11 19 Z"
             fill="none"
             stroke="rgba(255,255,255,0.2)"
             strokeWidth="1"
           />
           
+          {/* Shine overlay */}
+          <path 
+            d="M50 0 L95 15 L95 70 Q95 100 50 120 Q5 100 5 70 L5 15 Z"
+            fill={`url(#shine-${escudoKey || 'default'})`}
+          />
+          
+          {/* Horizontal stripe */}
+          <rect 
+            x="5" 
+            y="45" 
+            width="90" 
+            height="20" 
+            fill="rgba(0,0,0,0.15)"
+            clipPath={`url(#shield-clip-${escudoKey || 'default'})`}
+          />
+          
           {/* Team abbreviation */}
           <text 
             x="50" 
-            y="70" 
+            y="72" 
             textAnchor="middle" 
-            fill={textColor}
-            fontSize="26"
-            fontWeight="800"
+            fill="white" 
+            fontSize="28"
+            fontWeight="900"
             fontFamily="system-ui, -apple-system, sans-serif"
-            letterSpacing="1"
-            style={{ 
-              filter: `drop-shadow(0 1px 2px ${textShadow})`,
-            }}
+            style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
           >
-            {shortName.substring(0, 3).toUpperCase()}
+            {shortName.substring(0, 3)}
           </text>
         </svg>
       </div>
@@ -223,7 +174,7 @@ export function TeamCrest({
           imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95",
         )}
         style={{ 
-          filter: imageLoaded ? "drop-shadow(0 2px 8px rgba(0,0,0,0.4))" : undefined 
+          filter: imageLoaded ? "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" : undefined 
         }}
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
