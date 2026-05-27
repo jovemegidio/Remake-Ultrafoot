@@ -305,7 +305,7 @@ export default function PartidaAoVivoPage() {
 
   useEffect(() => {
     // Tenta usar game-engine primeiro
-    if (enginePlayers.length > 0) {
+    if (enginePlayers && enginePlayers.length > 0) {
       const { starters, bench } = enginePlayersToMatchSquad(enginePlayers, 0)
       if (isHome) {
         setHomeSquad(starters)
@@ -578,9 +578,9 @@ export default function PartidaAoVivoPage() {
           
           {/* Coluna Esquerda - Stats Casa */}
           <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-            <BigStat label="Possession %" value={state.home.possession} side="left" />
-            <BigStat label="Shots" value={state.home.shots} side="left" />
-            <BigStat label="Chances" value={state.home.shotsOnTarget} side="left" />
+            <BigStat label="Possession %" value={state.home.possession ?? 50} side="left" />
+            <BigStat label="Shots" value={state.home.shots ?? 0} side="left" />
+            <BigStat label="Chances" value={state.home.shotsOnTarget ?? 0} side="left" />
           </div>
 
           {/* Coluna Central - Timeline de Eventos */}
@@ -644,9 +644,9 @@ export default function PartidaAoVivoPage() {
               <div className="text-center">
                 <span className="text-[#00ffc8] text-[10px] font-medium uppercase">Posse</span>
                 <div className="flex justify-between items-end mt-1">
-                  <span className="text-white text-2xl font-black">{state.home.possession}</span>
+                  <span className="text-white text-2xl font-black">{state.home.possession ?? 50}</span>
                   <span className="text-white/30 text-xs">%</span>
-                  <span className="text-white text-2xl font-black">{state.away.possession}</span>
+                  <span className="text-white text-2xl font-black">{state.away.possession ?? 50}</span>
                 </div>
               </div>
               <div className="text-center">
@@ -670,9 +670,9 @@ export default function PartidaAoVivoPage() {
 
           {/* Coluna Direita - Stats Fora */}
           <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-            <BigStat label="Possession %" value={state.away.possession} side="right" />
-            <BigStat label="Shots" value={state.away.shots} side="right" />
-            <BigStat label="Chances" value={state.away.shotsOnTarget} side="right" />
+            <BigStat label="Possession %" value={state.away.possession ?? 50} side="right" />
+            <BigStat label="Shots" value={state.away.shots ?? 0} side="right" />
+            <BigStat label="Chances" value={state.away.shotsOnTarget ?? 0} side="right" />
           </div>
         </div>
 
