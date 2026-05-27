@@ -91,9 +91,9 @@ export function TeamCrest({
   }
 
   return (
-    <div 
+    <div
       className={cn(
-        "relative flex shrink-0 items-center justify-center",
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded bg-white",
         container,
         className,
       )}
@@ -101,16 +101,16 @@ export function TeamCrest({
     >
       {/* Loading shimmer */}
       {!imageLoaded && !imageError && (
-        <div className={cn("absolute inset-0 animate-shimmer rounded-full", container)} />
+        <div className={cn("absolute inset-0 animate-shimmer", container)} />
       )}
-      
+
       <Image
         src={escudoUrl}
         alt={`Escudo ${resolvedTeam?.nome || 'Time'}`}
         width={pixels}
         height={pixels}
         className={cn(
-          "object-contain transition-opacity duration-300",
+          "object-contain p-[6%] transition-opacity duration-300",
           imageLoaded ? "opacity-100" : "opacity-0"
         )}
         onLoad={() => setImageLoaded(true)}
