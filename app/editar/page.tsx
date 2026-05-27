@@ -148,7 +148,7 @@ export default function EditarPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[#0a0a0a]">
+    <div className="h-screen flex flex-col overflow-hidden bg-[#050508]">
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div 

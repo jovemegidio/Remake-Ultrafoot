@@ -70,7 +70,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
 
   if (!currentMatch) {
     return (
-      <section className={cn("rounded-xl bg-[#141414] border border-white/5 p-6", className)}>
+      <section className={cn("rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6", className)}>
         <div className="text-center text-white/40">Nenhuma partida disponivel</div>
       </section>
     )
@@ -100,9 +100,9 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
   const dateDisplay = formatDateDisplay(currentMatch.date)
 
   return (
-    <section className={cn("rounded-xl bg-[#141414] border border-white/5 overflow-hidden", className)}>
+    <section className={cn("rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden", className)}>
       {/* Header with date navigation - FIFA style */}
-      <div className="relative bg-gradient-to-r from-[#1a1a1a] to-[#141414] border-b border-white/5">
+      <div className="relative bg-gradient-to-r from-[#1a1a1a] to-[#141414] border-b border-white/[0.04]">
         {/* Navigation arrows */}
         <button
           onClick={goToPrev}
@@ -130,7 +130,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               !isAnimating && "animate-slide-in"
             )}
           >
-            <div className="flex items-center gap-2 text-[#1db954] text-sm font-bold tracking-wider">
+            <div className="flex items-center gap-2 text-[#00ffc8] text-sm font-bold tracking-wider">
               <Calendar className="h-4 w-4" />
               {getDayName(currentMatch.date)}, {dateDisplay.month.toUpperCase()} {dateDisplay.day}
             </div>
@@ -181,7 +181,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               <span className="text-[10px] font-medium text-white/60 uppercase tracking-wider">
                 {currentMatch.competition}
               </span>
-              <span className="text-[10px] text-[#1db954] font-semibold">
+              <span className="text-[10px] text-[#00ffc8] font-semibold">
                 Hoje
               </span>
             </div>
@@ -194,7 +194,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               <div className="relative">
                 {currentMatch.home && <TeamCrest team={currentMatch.home} size="2xl" />}
                 {currentMatch.home?.curto === userTeam?.curto && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1db954] flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#00ffc8] flex items-center justify-center">
                     <span className="text-[8px] font-bold text-black">YOU</span>
                   </div>
                 )}
@@ -223,7 +223,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               <div className="relative">
                 {currentMatch.away && <TeamCrest team={currentMatch.away} size="2xl" />}
                 {currentMatch.away?.curto === userTeam?.curto && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1db954] flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#00ffc8] flex items-center justify-center">
                     <span className="text-[8px] font-bold text-black">YOU</span>
                   </div>
                 )}
@@ -251,7 +251,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
 
       {/* Action buttons - sem icones de controle (aparecem na barra inferior) */}
       <div className="flex items-center gap-2 p-4 pt-0">
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-[#1db954] text-black text-sm font-bold hover:bg-[#1ed760] transition-all hover:scale-[1.02] active:scale-[0.98]">
+        <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-[#00ffc8] text-black text-sm font-bold hover:bg-[#00c8ff] transition-all hover:scale-[1.02] active:scale-[0.98]">
           <Play className="h-4 w-4" />
           <span>Jogar Partida</span>
         </button>

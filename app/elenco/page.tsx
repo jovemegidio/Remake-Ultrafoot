@@ -535,7 +535,7 @@ export default function ElencoPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+      <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
         
@@ -783,7 +783,7 @@ export default function ElencoPage() {
                     <div className={cn(
                       "px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
                       selectedPlayerId === player.id
-                        ? "bg-[#1db954] text-black"
+                        ? "bg-[#00ffc8] text-black"
                         : "bg-black/60 text-white/90"
                     )}>
                       {player.name.split(" ").pop()}
@@ -791,7 +791,7 @@ export default function ElencoPage() {
                     
                     <div className="relative">
                       {player.potential > player.overall + 3 && (
-                        <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[#1db954] flex items-center justify-center z-10">
+                        <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[#00ffc8] flex items-center justify-center z-10">
                           <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
                         </div>
                       )}
@@ -803,7 +803,7 @@ export default function ElencoPage() {
                         className={cn(
                           "border-2 transition-all",
                           selectedPlayerId === player.id
-                            ? "border-[#1db954] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
+                            ? "border-[#00ffc8] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
                             : "border-white/30"
                         )}
                       />
@@ -811,7 +811,7 @@ export default function ElencoPage() {
                       <div className={cn(
                         "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
                         "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
-                        selectedPlayerId === player.id ? "border-[#1db954]" : "border-white/30"
+                        selectedPlayerId === player.id ? "border-[#00ffc8]" : "border-white/30"
                       )}>
                         <span className={getOverallColor(player.overall)}>{player.overall}</span>
                       </div>
@@ -854,7 +854,7 @@ export default function ElencoPage() {
 
   // Gerenciamento view (main view)
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -921,7 +921,7 @@ export default function ElencoPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 min-w-[80px] md:min-w-[100px] text-center rounded-lg bg-[#1db954]/20 border border-[#1db954]/30">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 min-w-[80px] md:min-w-[100px] text-center rounded-lg bg-[#00ffc8]/20 border border-[#00ffc8]/30">
               <span className="text-base md:text-lg font-black text-white">{formation}</span>
             </div>
             <button 
@@ -999,14 +999,14 @@ export default function ElencoPage() {
                   className={cn(
                     "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing group z-10",
                     selectedPlayerId === player.id && "z-20",
-                    dragOverTarget === player.id && "ring-2 ring-[#1db954] ring-offset-2 ring-offset-transparent rounded-full"
+                    dragOverTarget === player.id && "ring-2 ring-[#00ffc8] ring-offset-2 ring-offset-transparent rounded-full"
                   )}
                 >
                   {/* Player name tag */}
                   <div className={cn(
                     "px-1.5 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
                     selectedPlayerId === player.id
-                      ? "bg-[#1db954] text-black"
+                      ? "bg-[#00ffc8] text-black"
                       : "bg-black/60 text-white/90 group-hover:bg-black/80"
                   )}>
                     {player.name.split(" ").pop()}
@@ -1021,7 +1021,7 @@ export default function ElencoPage() {
                       className={cn(
                         "border-2 transition-all",
                         selectedPlayerId === player.id
-                          ? "border-[#1db954] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
+                          ? "border-[#00ffc8] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
                           : "border-white/30 group-hover:border-white/60"
                       )}
                     />
@@ -1030,14 +1030,14 @@ export default function ElencoPage() {
                     <div className={cn(
                       "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
                       "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
-                      selectedPlayerId === player.id ? "border-[#1db954]" : "border-white/30"
+                      selectedPlayerId === player.id ? "border-[#00ffc8]" : "border-white/30"
                     )}>
                       <span className={getOverallColor(player.overall)}>{player.overall}</span>
                     </div>
                     
                     {/* Potential indicator */}
                     {player.potential > player.overall + 3 && (
-                      <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[#1db954] flex items-center justify-center">
+                      <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[#00ffc8] flex items-center justify-center">
                         <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
                       </div>
                     )}
@@ -1052,13 +1052,13 @@ export default function ElencoPage() {
               >
                 <span>{ballInstruction === "sem_bola" ? "Sem a bola" : "Com a bola"}</span>
                 <span className="text-white/40">|</span>
-                <span className="text-[#1db954]">Trocar instrucao</span>
-                <ChevronRight className="h-3 w-3 text-[#1db954]" />
+                <span className="text-[#00ffc8]">Trocar instrucao</span>
+                <ChevronRight className="h-3 w-3 text-[#00ffc8]" />
               </button>
             </div>
             
             {/* Reserves section - Melhorado com scroll vertical */}
-            <div className="mt-2 p-3 rounded-xl bg-[#111111] border border-white/5 flex-shrink-0">
+            <div className="mt-2 p-3 rounded-xl bg-[#111111] border border-white/[0.04] flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">{t.squad.reserves} ({bench.length})</h3>
                 <span className="text-[10px] text-white/40">{t.squad.dragToSubstitute}</span>
@@ -1086,9 +1086,9 @@ export default function ElencoPage() {
                         className={cn(
                           "flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
                           selectedPlayerId === player.id
-                            ? "bg-[#1db954]/15 ring-1 ring-[#1db954]/40"
+                            ? "bg-[#00ffc8]/15 ring-1 ring-[#00ffc8]/40"
                             : "bg-white/[0.03] hover:bg-white/[0.06]",
-                          dragOverTarget === player.id && "ring-2 ring-[#1db954]"
+                          dragOverTarget === player.id && "ring-2 ring-[#00ffc8]"
                         )}
                       >
                         <div className="relative mb-1">
@@ -1098,13 +1098,13 @@ export default function ElencoPage() {
                             size="xs"
                             className={cn(
                               "border-2 transition-colors",
-                              selectedPlayerId === player.id ? "border-[#1db954]/60" : "border-white/10"
+                              selectedPlayerId === player.id ? "border-[#00ffc8]/60" : "border-white/10"
                             )}
                           />
                           <div className={cn(
                             "absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-black",
                             "bg-[#1a1a1a] border",
-                            selectedPlayerId === player.id ? "border-[#1db954]/50" : "border-white/20"
+                            selectedPlayerId === player.id ? "border-[#00ffc8]/50" : "border-white/20"
                           )}>
                             <span className={getOverallColor(player.overall)}>{player.overall}</span>
                           </div>
@@ -1142,7 +1142,7 @@ export default function ElencoPage() {
                           {[t.squad.low, t.squad.medium, t.squad.high].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1153,7 +1153,7 @@ export default function ElencoPage() {
                           {[t.squad.pressure, t.squad.balanced, t.squad.withdrawn].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1174,7 +1174,7 @@ export default function ElencoPage() {
                           {[t.squad.short, t.squad.mixed, t.squad.direct].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1185,7 +1185,7 @@ export default function ElencoPage() {
                           {[t.squad.slow, t.squad.normal, t.squad.fast].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1203,7 +1203,7 @@ export default function ElencoPage() {
                       {[t.squad.ultraDefensive, t.squad.defensive, t.squad.balanced2, t.squad.offensive, t.squad.ultraOffensive].map((opt, i) => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                          i === 2 ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          i === 2 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -1227,19 +1227,19 @@ export default function ElencoPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.cornerKicker}</span>
-                        <span className="text-xs font-medium text-[#1db954]">Eric Ramires</span>
+                        <span className="text-xs font-medium text-[#00ffc8]">Eric Ramires</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.freeKickKicker}</span>
-                        <span className="text-xs font-medium text-[#1db954]">Lincoln</span>
+                        <span className="text-xs font-medium text-[#00ffc8]">Lincoln</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.penaltyKicker}</span>
-                        <span className="text-xs font-medium text-[#1db954]">Eduardo Sasha</span>
+                        <span className="text-xs font-medium text-[#00ffc8]">Eduardo Sasha</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.captain}</span>
-                        <span className="text-xs font-medium text-[#1db954]">Pedro Henrique</span>
+                        <span className="text-xs font-medium text-[#00ffc8]">Pedro Henrique</span>
                       </div>
                     </div>
                   </div>
@@ -1255,7 +1255,7 @@ export default function ElencoPage() {
                             <div className="text-sm font-medium text-white">{player.name}</div>
                             <div className="text-[10px] text-white/40">{player.position}</div>
                           </div>
-                          <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1db954]">
+                          <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ffc8]">
                             <option>{player.function}</option>
                             <option>Equilibrado</option>
                             <option>Ofensivo</option>
@@ -1271,9 +1271,9 @@ export default function ElencoPage() {
           </div>
 
           {/* Right panel - Player details (hidden on mobile, shown in drawer) */}
-          <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 border-l border-white/5 bg-[#0a0a0a] overflow-y-auto">
+          <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 border-l border-white/[0.04] bg-[#050508] overflow-y-auto">
             {/* Player header - Melhorado */}
-            <div className="p-4 border-b border-white/5" style={{
+            <div className="p-4 border-b border-white/[0.04]" style={{
               background: `linear-gradient(135deg, ${userTeam.cor1}20 0%, transparent 60%)`
             }}>
               <div className="flex items-center gap-4">
@@ -1300,14 +1300,14 @@ export default function ElencoPage() {
             {/* Player info - Melhorado */}
             <div className="p-4 space-y-4">
               {/* Energia com barra maior */}
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[11px] text-white/50 font-medium">{t.squad.energy}</span>
-                  <span className="text-sm font-bold text-[#1db954]">{selectedPlayer.energy}%</span>
+                  <span className="text-sm font-bold text-[#00ffc8]">{selectedPlayer.energy}%</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                   <motion.div 
-                    className="h-full bg-gradient-to-r from-[#1db954] to-[#1ed760] rounded-full"
+                    className="h-full bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${selectedPlayer.energy}%` }}
                     transition={{ duration: 0.5 }}
@@ -1353,12 +1353,12 @@ export default function ElencoPage() {
               </div>
               
               {/* Playstyles - Melhorado */}
-              <div className="pt-3 border-t border-white/5">
+              <div className="pt-3 border-t border-white/[0.04]">
                 <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-3">
                   Estilos de Jogo
                 </h3>
                 
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-white/60">Fintas</span>
                     <div className="flex items-center gap-0.5">
@@ -1369,12 +1369,12 @@ export default function ElencoPage() {
               </div>
               
               {/* Actions - Melhorado */}
-              <div className="pt-3 border-t border-white/5">
+              <div className="pt-3 border-t border-white/[0.04]">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowSubstitutionModal(true)}
-                  className="w-full h-10 border-white/10 text-white/70 hover:text-white hover:bg-[#1db954]/10 hover:border-[#1db954]/30 text-xs mb-2"
+                  className="w-full h-10 border-white/10 text-white/70 hover:text-white hover:bg-[#00ffc8]/10 hover:border-[#00ffc8]/30 text-xs mb-2"
                 >
                   <ArrowLeftRight className="h-4 w-4 mr-2" />
                   Substituir

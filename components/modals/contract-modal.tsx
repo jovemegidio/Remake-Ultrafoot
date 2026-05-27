@@ -119,7 +119,7 @@ export function ContractModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#141414] border-white/10">
+      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
@@ -211,13 +211,13 @@ export function ContractModal({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Valor de Mercado</div>
-                  <div className="text-xl font-bold text-[#1db954]">{formatSalary(player.marketValue)}</div>
+                  <div className="text-xl font-bold text-[#00ffc8]">{formatSalary(player.marketValue)}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-white/50 uppercase tracking-wider">Potencial</div>
                   <div className="flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4 text-[#1db954]" />
-                    <span className="text-xl font-bold text-[#1db954]">{player.potential}</span>
+                    <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
+                    <span className="text-xl font-bold text-[#00ffc8]">{player.potential}</span>
                   </div>
                 </div>
               </div>
@@ -314,8 +314,8 @@ export function ContractModal({
         {step === "success" && (
           <div className="py-12 text-center">
             <div className="relative">
-              <div className="h-20 w-20 mx-auto rounded-full bg-[#1db954]/20 flex items-center justify-center mb-6">
-                <Sparkles className="h-10 w-10 text-[#1db954]" />
+              <div className="h-20 w-20 mx-auto rounded-full bg-[#00ffc8]/20 flex items-center justify-center mb-6">
+                <Sparkles className="h-10 w-10 text-[#00ffc8]" />
               </div>
             </div>
             <h3 className="text-xl font-bold text-white mb-2">Contrato Renovado!</h3>
@@ -327,7 +327,7 @@ export function ContractModal({
               }
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10">
-              <DollarSign className="h-4 w-4 text-[#1db954]" />
+              <DollarSign className="h-4 w-4 text-[#00ffc8]" />
               <span className="text-white font-semibold">{formatSalary(newSalary)}</span>
               <span className="text-white/50">/semana</span>
             </div>
@@ -346,7 +346,7 @@ export function ContractModal({
               </Button>
               <Button 
                 onClick={() => setStep("negotiate")}
-                className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
               >
                 Renovar Contrato
               </Button>
@@ -364,7 +364,7 @@ export function ContractModal({
               <Button 
                 onClick={handleNegotiate}
                 disabled={!isProposalAcceptable || isNegotiating}
-                className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-50"
+                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
               >
                 {isNegotiating ? "Negociando..." : "Enviar Proposta"}
               </Button>
@@ -373,7 +373,7 @@ export function ContractModal({
           {step === "success" && (
             <Button 
               onClick={handleClose}
-              className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+              className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
             >
               Concluir
             </Button>

@@ -491,7 +491,7 @@ export default function MatchCenterPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen pl-16 bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen pl-16 bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando partida...
       </div>
     )
@@ -501,12 +501,12 @@ export default function MatchCenterPage() {
   const isMatchInProgress = state.phase === "first" || state.phase === "second" || state.phase === "halftime"
 
   return (
-    <div className={cn("h-screen bg-[#0a0a0a] flex flex-col overflow-hidden", !isMatchInProgress && "pl-16")}>
+    <div className={cn("h-screen bg-[#050508] flex flex-col overflow-hidden", !isMatchInProgress && "pl-16")}>
       {/* Sidebar oculta durante a partida */}
       {!isMatchInProgress && <GameSidebar />}
 
       {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl px-6">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.04] bg-[#050508]/95 backdrop-blur-xl px-6">
         <div className="flex items-center gap-3">
           {/* Botao de voltar oculto durante a partida para evitar saida acidental */}
           {!isMatchInProgress && (
@@ -540,7 +540,7 @@ export default function MatchCenterPage() {
             <Button
               size="sm"
               onClick={start}
-              className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] font-bold tracking-wider"
+              className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold tracking-wider"
             >
               <Play className="mr-1 h-3.5 w-3.5 fill-current" />
               INICIAR
@@ -554,7 +554,7 @@ export default function MatchCenterPage() {
                   PAUSAR
                 </Button>
               ) : (
-                <Button size="sm" onClick={resume} className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] font-bold">
+                <Button size="sm" onClick={resume} className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold">
                   <Play className="mr-1 h-3.5 w-3.5 fill-current" />
                   CONTINUAR
                 </Button>
@@ -644,7 +644,7 @@ export default function MatchCenterPage() {
                     </div>
                     
                     {/* Placar */}
-                    <div className="flex items-center gap-6 px-8 py-4 rounded-xl bg-black/40 border border-white/5">
+                    <div className="flex items-center gap-6 px-8 py-4 rounded-xl bg-black/40 border border-white/[0.04]">
                       <div className="flex flex-col items-center gap-1">
                         <TeamCrest team={homeTeam} size="sm" />
                         <span className="text-[10px] text-white/40 uppercase tracking-wider">{homeTeam.curto}</span>
@@ -743,10 +743,10 @@ export default function MatchCenterPage() {
         />
 
         {/* CONTROLE DE VELOCIDADE */}
-        <section className="rounded-xl border border-white/5 bg-[#141414] p-4">
+        <section className="rounded-xl border border-white/[0.04] bg-[#0c0c10] p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <Timer className="h-4 w-4 text-[#1db954]" />
+              <Timer className="h-4 w-4 text-[#00ffc8]" />
               <span className="text-xs font-medium text-white/60 tracking-wider">VELOCIDADE</span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -759,7 +759,7 @@ export default function MatchCenterPage() {
                     className={cn(
                       "rounded-md border px-3 py-1.5 text-[10px] font-bold tracking-wider transition flex flex-col items-center min-w-[64px]",
                       active
-                        ? "border-[#1db954] bg-[#1db954] text-black"
+                        ? "border-[#00ffc8] bg-[#00ffc8] text-black"
                         : "border-white/10 bg-[#1a1a1a] text-white/70 hover:border-white/20",
                     )}
                   >
@@ -773,7 +773,7 @@ export default function MatchCenterPage() {
         </section>
 
         {/* STATS */}
-        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/5 bg-white/5 md:grid-cols-3 lg:grid-cols-6">
+        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.04] bg-white/5 md:grid-cols-3 lg:grid-cols-6">
           <StatCell
             label="POSSE"
             home={`${state.home.possession}%`}
@@ -831,13 +831,13 @@ export default function MatchCenterPage() {
         </section>
 
         {/* SUBSTITUIÇÃO BAR */}
-        <section className="rounded-xl border border-white/5 bg-[#141414] p-4">
+        <section className="rounded-xl border border-white/[0.04] bg-[#0c0c10] p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => setShowSubModal(true)}
                 disabled={subsRemaining === 0 || state.phase === "fulltime" || state.phase === "pre"}
-                className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-30 font-bold tracking-wider"
+                className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-30 font-bold tracking-wider"
               >
                 <ArrowLeftRight className="mr-2 h-4 w-4" />
                 SUBSTITUIR
@@ -846,7 +846,7 @@ export default function MatchCenterPage() {
                 className={cn(
                   "rounded-full px-3 py-1 text-[10px] font-bold tracking-wider",
                   subsRemaining > 2
-                    ? "bg-[#1db954]/15 text-[#1db954]"
+                    ? "bg-[#00ffc8]/15 text-[#00ffc8]"
                     : subsRemaining > 0
                       ? "bg-yellow-400/15 text-yellow-400"
                       : "bg-red-400/15 text-red-400",
@@ -864,7 +864,7 @@ export default function MatchCenterPage() {
                 <strong className={(() => {
                   const userGoals = userSide === "home" ? state.home.goals : state.away.goals
                   const oppGoals = userSide === "home" ? state.away.goals : state.home.goals
-                  if (userGoals > oppGoals) return "text-[#1db954]"
+                  if (userGoals > oppGoals) return "text-[#00ffc8]"
                   if (userGoals < oppGoals) return "text-red-400"
                   return "text-yellow-400"
                 })()}>
@@ -883,10 +883,10 @@ export default function MatchCenterPage() {
 
         {/* PITCH + EVENTS */}
         <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
-          <section className="overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
-            <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-3">
+          <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
+            <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-5 py-3">
               <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-[#1db954]" />
+                <Zap className="h-4 w-4 text-[#00ffc8]" />
                 <h2 className="text-xs font-medium text-white tracking-wider">CAMPO TÁTICO</h2>
               </div>
               <div className="flex items-center gap-4 text-[10px] text-white/50">
@@ -918,10 +918,10 @@ export default function MatchCenterPage() {
             />
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
-            <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-3">
+          <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
+            <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-5 py-3">
               <div className="flex items-center gap-2">
-                <Goal className="h-4 w-4 text-[#1db954]" />
+                <Goal className="h-4 w-4 text-[#00ffc8]" />
                 <h2 className="text-xs font-medium text-white tracking-wider">EVENTOS</h2>
               </div>
               <span className="text-[10px] text-white/40 font-medium">
@@ -944,7 +944,7 @@ export default function MatchCenterPage() {
         </div>
 
         {/* META */}
-        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/5 bg-white/5 md:grid-cols-4">
+        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.04] bg-white/5 md:grid-cols-4">
           <MetaTile icon={CalendarDays} label="COMPETIÇÃO" value={matchCtx.competition} />
           <MetaTile
             icon={Cloud}
@@ -957,7 +957,7 @@ export default function MatchCenterPage() {
                   : "Ensolarado · 26°C"
             }
           />
-          <MetaTile icon={Activity} label="GRAMADO" value="84/100" valueClass="text-[#1db954]" />
+          <MetaTile icon={Activity} label="GRAMADO" value="84/100" valueClass="text-[#00ffc8]" />
           <MetaTile
             icon={Users}
             label="PÚBLICO"
@@ -1014,7 +1014,7 @@ function Scoreboard({
   weather: "sunny" | "cloudy" | "rain"
 }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-white/5 bg-[#141414]">
+    <section className="relative overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
       {/* Background gradient */}
       <div
         className="absolute inset-0 opacity-20"
@@ -1043,7 +1043,7 @@ function Scoreboard({
           <div
             className={cn(
               "text-5xl font-black leading-none tabular-nums transition-all",
-              state.flash?.type === "goal" && state.flash.side === "home" && "text-[#1db954] scale-125",
+              state.flash?.type === "goal" && state.flash.side === "home" && "text-[#00ffc8] scale-125",
             )}
           >
             {state.home.goals}
@@ -1052,7 +1052,7 @@ function Scoreboard({
           <div
             className={cn(
               "text-5xl font-black leading-none tabular-nums transition-all",
-              state.flash?.type === "goal" && state.flash.side === "away" && "text-[#1db954] scale-125",
+              state.flash?.type === "goal" && state.flash.side === "away" && "text-[#00ffc8] scale-125",
             )}
           >
             {state.away.goals}
@@ -1077,7 +1077,7 @@ function Scoreboard({
       </div>
 
       {/* Footer info */}
-      <div className="relative flex items-center justify-center gap-3 px-6 py-2 border-t border-white/5 bg-black/20 text-[10px] text-white/40">
+      <div className="relative flex items-center justify-center gap-3 px-6 py-2 border-t border-white/[0.04] bg-black/20 text-[10px] text-white/40">
         <span>{competition}</span>
         <span className="text-white/15">·</span>
         <span className="capitalize">{weather === "sunny" ? "Ensolarado" : weather === "cloudy" ? "Nublado" : "Chuva"}</span>
@@ -1100,7 +1100,7 @@ function StatCell({
   away,
   icon: Icon,
   ratio,
-  homeColor = "#1db954",
+  homeColor = "#00ffc8",
   awayColor = "#ffffff",
 }: {
   label: string
@@ -1112,7 +1112,7 @@ function StatCell({
   awayColor?: string
 }) {
   return (
-    <div className="bg-[#141414] p-4">
+    <div className="bg-[#0c0c10] p-4">
       <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-wider text-white/40 mb-2">
         <Icon className="h-3 w-3" />
         {label}
@@ -1144,7 +1144,7 @@ function MetaTile({
   valueClass?: string
 }) {
   return (
-    <div className="bg-[#141414] p-4">
+    <div className="bg-[#0c0c10] p-4">
       <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-wider text-white/40">
         <Icon className="h-3 w-3" />
         {label}
@@ -1169,7 +1169,7 @@ function EventRow({
 
   const badgeStyle =
     event.type === "goal"
-      ? { className: "bg-[#1db954] text-black", label: "GOL" }
+      ? { className: "bg-[#00ffc8] text-black", label: "GOL" }
       : event.type === "yellow_card"
         ? { className: "bg-yellow-400 text-black", label: "AMA" }
         : event.type === "red_card"
@@ -1210,7 +1210,7 @@ function EventRow({
           className={cn(
             "text-sm leading-snug",
             event.type === "goal"
-              ? "text-[#1db954] font-semibold"
+              ? "text-[#00ffc8] font-semibold"
               : event.important
                 ? "text-white"
                 : "text-white/70",

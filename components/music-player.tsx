@@ -240,7 +240,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
       <button
         onClick={() => setSize("mini")}
         className={cn(
-          "fixed bottom-4 right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[#1db954] text-black shadow-lg transition-all hover:scale-105",
+          "fixed bottom-4 right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[#00ffc8] text-black shadow-lg transition-all hover:scale-105",
           className
         )}
         aria-label="Abrir player"
@@ -322,7 +322,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
           </div>
           <button 
             onClick={() => toggleLike(currentTrack)}
-            className={cn("flex-shrink-0 p-1", liked.has(currentTrack) ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}
+            className={cn("flex-shrink-0 p-1", liked.has(currentTrack) ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}
           >
             <Heart className={cn("h-4 w-4", liked.has(currentTrack) && "fill-current")} />
           </button>
@@ -331,7 +331,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
         {/* Center - Controls */}
         <div className="flex flex-col items-center gap-1 max-w-[40%] w-full">
           <div className="flex items-center gap-3">
-            <button onClick={() => setShuffle(!shuffle)} className={cn("p-1", shuffle ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}>
+            <button onClick={() => setShuffle(!shuffle)} className={cn("p-1", shuffle ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}>
               <Shuffle className="h-3.5 w-3.5" />
             </button>
             <button onClick={prevTrack} className="p-1 text-[#b3b3b3] hover:text-white"><SkipBack className="h-4 w-4 fill-current" /></button>
@@ -349,7 +349,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
               )}
             </button>
             <button onClick={nextTrack} className="p-1 text-[#b3b3b3] hover:text-white"><SkipForward className="h-4 w-4 fill-current" /></button>
-            <button onClick={cycleRepeat} className={cn("p-1 relative", repeat !== "off" ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}>
+            <button onClick={cycleRepeat} className={cn("p-1 relative", repeat !== "off" ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}>
               <Repeat className="h-3.5 w-3.5" />
               {repeat === "one" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] font-bold">1</span>}
             </button>
@@ -370,7 +370,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
         <div className="flex items-center justify-end gap-2 w-[30%] min-w-[180px]">
           <button 
             onClick={() => setShowPlaylist(!showPlaylist)} 
-            className={cn("p-1.5", showPlaylist ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}
+            className={cn("p-1.5", showPlaylist ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}
           >
             <ListMusic className="h-4 w-4" />
           </button>
@@ -392,7 +392,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
         {/* Playlist Popup */}
         {showPlaylist && (
           <div className="absolute bottom-full right-4 mb-2 w-80 rounded-lg bg-[#282828] border border-white/10 shadow-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/5">
+            <div className="px-4 py-3 border-b border-white/[0.04]">
               <h3 className="text-sm font-semibold text-white">Fila de Reproducao</h3>
             </div>
             <div className="max-h-60 overflow-y-auto">
@@ -413,7 +413,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
                           {[1, 2, 3].map(bar => (
                             <div 
                               key={bar} 
-                              className="w-0.5 bg-[#1db954] animate-pulse" 
+                              className="w-0.5 bg-[#00ffc8] animate-pulse" 
                               style={{ height: `${Math.random() * 100}%`, animationDelay: `${bar * 0.1}s` }}
                             />
                           ))}
@@ -422,7 +422,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
                     )}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <div className={cn("truncate text-sm", i === currentTrack ? "text-[#1db954]" : "text-white")}>
+                    <div className={cn("truncate text-sm", i === currentTrack ? "text-[#00ffc8]" : "text-white")}>
                       {t.title}
                     </div>
                     <div className="truncate text-xs text-[#b3b3b3]">{t.artist}</div>
@@ -457,7 +457,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
         </div>
         <button 
           onClick={() => toggleLike(currentTrack)}
-          className={cn("flex-shrink-0 p-1.5 transition-colors", liked.has(currentTrack) ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}
+          className={cn("flex-shrink-0 p-1.5 transition-colors", liked.has(currentTrack) ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}
         >
           <Heart className={cn("h-4 w-4", liked.has(currentTrack) && "fill-current")} />
         </button>
@@ -466,7 +466,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
       {/* Center - Controls */}
       <div className="flex flex-col items-center gap-1.5 max-w-[45%] w-full">
         <div className="flex items-center gap-4">
-          <button onClick={() => setShuffle(!shuffle)} className={cn("p-1.5 transition-colors", shuffle ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}>
+          <button onClick={() => setShuffle(!shuffle)} className={cn("p-1.5 transition-colors", shuffle ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}>
             <Shuffle className="h-4 w-4" />
           </button>
           <button onClick={prevTrack} className="p-1.5 text-[#b3b3b3] hover:text-white transition-colors"><SkipBack className="h-5 w-5 fill-current" /></button>
@@ -484,7 +484,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
             )}
           </button>
           <button onClick={nextTrack} className="p-1.5 text-[#b3b3b3] hover:text-white transition-colors"><SkipForward className="h-5 w-5 fill-current" /></button>
-          <button onClick={cycleRepeat} className={cn("p-1.5 transition-colors relative", repeat !== "off" ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}>
+          <button onClick={cycleRepeat} className={cn("p-1.5 transition-colors relative", repeat !== "off" ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}>
             <Repeat className="h-4 w-4" />
             {repeat === "one" && <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] font-bold">1</span>}
           </button>
@@ -496,7 +496,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
               value={[progress]}
               onValueChange={seek}
               max={100}
-              className="cursor-pointer [&_[data-slot=track]]:h-1 [&_[data-slot=track]]:bg-[#4d4d4d] [&_[data-slot=range]]:bg-white group-hover:[&_[data-slot=range]]:bg-[#1db954] [&_[data-slot=thumb]]:h-3 [&_[data-slot=thumb]]:w-3 [&_[data-slot=thumb]]:opacity-0 group-hover:[&_[data-slot=thumb]]:opacity-100 [&_[data-slot=thumb]]:bg-white [&_[data-slot=thumb]]:border-0"
+              className="cursor-pointer [&_[data-slot=track]]:h-1 [&_[data-slot=track]]:bg-[#4d4d4d] [&_[data-slot=range]]:bg-white group-hover:[&_[data-slot=range]]:bg-[#00ffc8] [&_[data-slot=thumb]]:h-3 [&_[data-slot=thumb]]:w-3 [&_[data-slot=thumb]]:opacity-0 group-hover:[&_[data-slot=thumb]]:opacity-100 [&_[data-slot=thumb]]:bg-white [&_[data-slot=thumb]]:border-0"
             />
           </div>
           <span className="w-10 tabular-nums">{formatTime(duration || track.duration)}</span>
@@ -507,7 +507,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
       <div className="flex items-center justify-end gap-2 w-[30%] min-w-[180px]">
         <button 
           onClick={() => setShowPlaylist(!showPlaylist)}
-          className={cn("p-2 transition-colors", showPlaylist ? "text-[#1db954]" : "text-[#b3b3b3] hover:text-white")}
+          className={cn("p-2 transition-colors", showPlaylist ? "text-[#00ffc8]" : "text-[#b3b3b3] hover:text-white")}
         >
           <ListMusic className="h-4 w-4" />
         </button>
@@ -520,7 +520,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
             value={[muted ? 0 : volume]}
             onValueChange={(v) => { setVolume(v[0] ?? 0); setMuted(false) }}
             max={100}
-            className="flex-1 cursor-pointer [&_[data-slot=track]]:h-1 [&_[data-slot=track]]:bg-[#4d4d4d] [&_[data-slot=range]]:bg-white group-hover:[&_[data-slot=range]]:bg-[#1db954] [&_[data-slot=thumb]]:h-3 [&_[data-slot=thumb]]:w-3 [&_[data-slot=thumb]]:opacity-0 group-hover:[&_[data-slot=thumb]]:opacity-100 [&_[data-slot=thumb]]:bg-white [&_[data-slot=thumb]]:border-0"
+            className="flex-1 cursor-pointer [&_[data-slot=track]]:h-1 [&_[data-slot=track]]:bg-[#4d4d4d] [&_[data-slot=range]]:bg-white group-hover:[&_[data-slot=range]]:bg-[#00ffc8] [&_[data-slot=thumb]]:h-3 [&_[data-slot=thumb]]:w-3 [&_[data-slot=thumb]]:opacity-0 group-hover:[&_[data-slot=thumb]]:opacity-100 [&_[data-slot=thumb]]:bg-white [&_[data-slot=thumb]]:border-0"
           />
         </div>
         <button onClick={() => setSize("compact")} className="p-2 text-[#b3b3b3] hover:text-white transition-colors"><ChevronDown className="h-4 w-4" /></button>
@@ -530,7 +530,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
       {/* Playlist Popup */}
       {showPlaylist && (
         <div className="absolute bottom-full right-4 mb-2 w-96 rounded-lg bg-[#282828] border border-white/10 shadow-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-white/[0.04] flex items-center justify-between">
             <h3 className="text-sm font-semibold text-white">Fila de Reproducao</h3>
             <span className="text-xs text-white/40">{tracks.length} musicas</span>
           </div>
@@ -553,7 +553,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
                         {[1, 2, 3].map(bar => (
                           <div 
                             key={bar} 
-                            className="w-1 bg-[#1db954] rounded-full animate-pulse" 
+                            className="w-1 bg-[#00ffc8] rounded-full animate-pulse" 
                             style={{ height: `${40 + Math.random() * 60}%`, animationDelay: `${bar * 0.15}s` }}
                           />
                         ))}
@@ -562,14 +562,14 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
                   )}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <div className={cn("truncate text-sm font-medium", i === currentTrack ? "text-[#1db954]" : "text-white")}>
+                  <div className={cn("truncate text-sm font-medium", i === currentTrack ? "text-[#00ffc8]" : "text-white")}>
                     {t.title}
                   </div>
                   <div className="truncate text-xs text-[#b3b3b3]">{t.artist}</div>
                 </div>
                 <button 
                   onClick={(e) => { e.stopPropagation(); toggleLike(i) }}
-                  className={cn("p-1", liked.has(i) ? "text-[#1db954]" : "text-transparent group-hover:text-[#b3b3b3] hover:!text-white")}
+                  className={cn("p-1", liked.has(i) ? "text-[#00ffc8]" : "text-transparent group-hover:text-[#b3b3b3] hover:!text-white")}
                 >
                   <Heart className={cn("h-4 w-4", liked.has(i) && "fill-current")} />
                 </button>

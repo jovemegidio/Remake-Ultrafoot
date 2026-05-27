@@ -157,7 +157,7 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       

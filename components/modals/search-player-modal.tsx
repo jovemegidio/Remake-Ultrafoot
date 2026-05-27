@@ -78,7 +78,7 @@ export function SearchPlayerModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-[#141414] border-white/10 max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl bg-[#0c0c10] border-white/10 max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white">Buscar Jogador</DialogTitle>
           <DialogDescription className="text-white/50">
@@ -113,7 +113,7 @@ export function SearchPlayerModal({
               className={cn(
                 "px-3 py-1.5 rounded-md text-xs font-medium border transition-all",
                 !positionFilter
-                  ? "bg-[#1db954]/20 text-[#1db954] border-[#1db954]/30"
+                  ? "bg-[#00ffc8]/20 text-[#00ffc8] border-[#00ffc8]/30"
                   : "bg-white/5 text-white/40 border-white/10 hover:border-white/20"
               )}
             >
@@ -170,7 +170,7 @@ export function SearchPlayerModal({
                   {/* Player Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-white truncate group-hover:text-[#1db954] transition-colors">
+                      <span className="font-medium text-white truncate group-hover:text-[#00ffc8] transition-colors">
                         {player.name}
                       </span>
                       <span className="text-xl font-bold text-yellow-500">{player.overall}</span>
@@ -186,8 +186,8 @@ export function SearchPlayerModal({
                   {/* Value */}
                   <div className="text-right">
                     <div className="flex items-center gap-1 justify-end">
-                      <span className="text-sm font-medium text-[#1db954]">{formatCurrency(player.value)}</span>
-                      {player.trend === "up" && <TrendingUp className="h-3 w-3 text-[#1db954]" />}
+                      <span className="text-sm font-medium text-[#00ffc8]">{formatCurrency(player.value)}</span>
+                      {player.trend === "up" && <TrendingUp className="h-3 w-3 text-[#00ffc8]" />}
                       {player.trend === "down" && <TrendingDown className="h-3 w-3 text-red-500" />}
                     </div>
                     <div className="text-[10px] text-white/40 mt-0.5">Valor de mercado</div>

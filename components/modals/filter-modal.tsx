@@ -92,7 +92,7 @@ export function FilterModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#141414] border-white/10">
+      <DialogContent className="sm:max-w-md bg-[#0c0c10] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white">Filtros</DialogTitle>
           <DialogDescription className="text-white/50">
@@ -210,7 +210,7 @@ export function FilterModal({
           </Button>
           <Button 
             onClick={handleApply} 
-            className="flex-1 bg-[#1db954] text-black hover:bg-[#1ed760]"
+            className="flex-1 bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
           >
             Aplicar Filtros
           </Button>

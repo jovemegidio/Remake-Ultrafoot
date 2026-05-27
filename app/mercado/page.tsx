@@ -287,7 +287,7 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -596,7 +596,7 @@ export default function MercadoPage() {
               <div className="space-y-4">
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
-                    <div key={group} className="rounded-xl bg-[#141414]/80 border border-white/5 p-4">
+                    <div key={group} className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-white font-semibold">{group}</h3>
                         <span className="text-xs text-white/40">{t.market.readyToPlay}</span>
@@ -623,7 +623,7 @@ export default function MercadoPage() {
                   onNegotiate={handleNegotiate}
                 />
               ) : (
-                <div className="rounded-xl bg-[#141414]/80 border border-white/5 p-8 flex flex-col items-center justify-center text-center">
+                <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-8 flex flex-col items-center justify-center text-center">
                   <User className="h-20 w-20 text-white/10 mb-4" />
                   <h3 className="text-white/40 text-lg">{t.market.selectPlayer}</h3>
                   <p className="text-white/30 text-sm mt-2">{t.market.clickForDetails}</p>
@@ -646,14 +646,14 @@ export default function MercadoPage() {
                 {scouts.map((scout, index) => (
                   <ScoutCard key={scout.id} scout={scout} selected={index === 4} />
                 ))}
-                <button className="rounded-xl bg-[#141414]/50 border border-white/5 p-6 flex items-center justify-center hover:border-primary/30 transition-colors">
+                <button className="rounded-xl bg-[#0c0c10]/50 border border-white/[0.04] p-6 flex items-center justify-center hover:border-primary/30 transition-colors">
                   <span className="text-white/60 font-medium">{t.market.hireScout}</span>
                 </button>
               </div>
 
               {/* Info Panel */}
               <div className="space-y-4">
-                <div className="rounded-xl bg-[#141414]/80 border border-white/5 p-6">
+                <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-6">
                   <p className="text-white/70 text-sm leading-relaxed">
                     Seus olheiros podem criar redes no mundo todo para descobrir novos nomes.
                   </p>
@@ -662,7 +662,7 @@ export default function MercadoPage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-[#141414]/50 border border-white/5 p-6">
+                <div className="rounded-xl bg-[#0c0c10]/50 border border-white/[0.04] p-6">
                   <h3 className="text-white/30 text-2xl font-light mb-2">Disponivel</h3>
                   <p className="text-white/40 text-sm">This scout is ready for missions.</p>
                 </div>
@@ -723,7 +723,7 @@ function FilterCardComponent({
         "bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618]",
         selected 
           ? "ring-2 ring-primary shadow-lg shadow-primary/30" 
-          : "border border-white/5 hover:border-primary/30",
+          : "border border-white/[0.04] hover:border-primary/30",
         highlight && "opacity-70"
       )}
     >
@@ -764,7 +764,7 @@ function PlayerListCard({
         "bg-[#1a1a1a]/80",
         selected 
           ? "ring-2 ring-primary" 
-          : "border border-white/5 hover:border-white/10"
+          : "border border-white/[0.04] hover:border-white/10"
       )}
     >
       {/* Alert indicator */}
@@ -813,9 +813,9 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
   const isNotScouted = !player.scoutedBy
 
   return (
-    <div className="rounded-xl bg-[#141414]/80 border border-white/5 overflow-hidden">
+    <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isNew && <AlertCircle className="h-4 w-4 text-yellow-500" />}
@@ -972,7 +972,7 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
         </div>
 
         {/* Navigation dots */}
-        <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-white/5">
+        <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-white/[0.04]">
           <button className="text-white/40 hover:text-white/60">
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -1004,7 +1004,7 @@ function ScoutCard({ scout, selected }: { scout: typeof scouts[0], selected: boo
       "bg-gradient-to-br from-[#1a1a1a] to-[#141414]",
       selected 
         ? "ring-2 ring-primary" 
-        : "border border-white/5 hover:border-white/10"
+        : "border border-white/[0.04] hover:border-white/10"
     )}>
       {/* Flag */}
       <div className="text-3xl mb-3">{flagEmoji}</div>

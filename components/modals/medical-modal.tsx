@@ -110,7 +110,7 @@ export function MedicalModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-[#141414] border-white/10">
+      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <HeartPulse className="h-5 w-5 text-red-500" />
@@ -271,7 +271,7 @@ export function MedicalModal({
             <Button 
               onClick={handleTreatment}
               disabled={isProcessing}
-              className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+              className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
             >
               {isProcessing ? "Aplicando..." : "Aplicar Tratamento"}
             </Button>

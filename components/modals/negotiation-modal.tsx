@@ -77,8 +77,8 @@ export function NegotiationModal({
   const offerPercentage = Math.round((offer / fairValue) * 100)
 
   const getOfferStatus = () => {
-    if (offerPercentage >= 110) return { label: "Excelente", color: "text-[#1db954]", bgColor: "bg-[#1db954]", chance: 95 }
-    if (offerPercentage >= 100) return { label: "Justa", color: "text-[#1db954]", bgColor: "bg-[#1db954]", chance: 75 }
+    if (offerPercentage >= 110) return { label: "Excelente", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 95 }
+    if (offerPercentage >= 100) return { label: "Justa", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 75 }
     if (offerPercentage >= 90) return { label: "Razoavel", color: "text-yellow-500", bgColor: "bg-yellow-500", chance: 50 }
     if (offerPercentage >= 80) return { label: "Baixa", color: "text-orange-500", bgColor: "bg-orange-500", chance: 25 }
     return { label: "Insultuosa", color: "text-red-500", bgColor: "bg-red-500", chance: 5 }
@@ -126,7 +126,7 @@ export function NegotiationModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#141414] border-white/10 overflow-hidden">
+      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             {actionIcon}
@@ -194,7 +194,7 @@ export function NegotiationModal({
             </div>
 
             {/* Offer Slider */}
-            <div className="space-y-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+            <div className="space-y-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-white/50">Valor da Proposta</span>
                 <span className={cn("font-medium px-2 py-0.5 rounded", status.color, status.bgColor + "/20")}>
@@ -219,7 +219,7 @@ export function NegotiationModal({
             {/* Offer Status */}
             <div className={cn(
               "flex items-center gap-3 p-4 rounded-xl border transition-all",
-              status.chance >= 75 ? "bg-[#1db954]/10 border-[#1db954]/30" :
+              status.chance >= 75 ? "bg-[#00ffc8]/10 border-[#00ffc8]/30" :
               status.chance >= 50 ? "bg-yellow-500/10 border-yellow-500/30" :
               status.chance >= 25 ? "bg-orange-500/10 border-orange-500/30" :
               "bg-red-500/10 border-red-500/30"
@@ -287,12 +287,12 @@ export function NegotiationModal({
                 <>
                   {/* Success sparkles */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className="absolute -top-4 -left-4 h-6 w-6 text-[#1db954] animate-pulse" />
+                    <Sparkles className="absolute -top-4 -left-4 h-6 w-6 text-[#00ffc8] animate-pulse" />
                     <Sparkles className="absolute -top-2 right-0 h-4 w-4 text-yellow-500 animate-pulse" style={{ animationDelay: "200ms" }} />
-                    <Sparkles className="absolute bottom-0 -left-2 h-5 w-5 text-[#1db954] animate-pulse" style={{ animationDelay: "400ms" }} />
+                    <Sparkles className="absolute bottom-0 -left-2 h-5 w-5 text-[#00ffc8] animate-pulse" style={{ animationDelay: "400ms" }} />
                   </div>
                   
-                  <div className="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-[#1db954] to-[#1db954]/60 flex items-center justify-center shadow-lg shadow-[#1db954]/30 animate-in zoom-in-50 duration-500">
+                  <div className="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-[#00ffc8] to-[#00ffc8]/60 flex items-center justify-center shadow-lg shadow-[#00ffc8]/30 animate-in zoom-in-50 duration-500">
                     <Check className="h-10 w-10 text-white" strokeWidth={3} />
                   </div>
                 </>
@@ -305,7 +305,7 @@ export function NegotiationModal({
             
             <div className={cn(
               "text-2xl font-bold mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300",
-              accepted ? "text-[#1db954]" : "text-red-500"
+              accepted ? "text-[#00ffc8]" : "text-red-500"
             )} style={{ animationDelay: "200ms" }}>
               {accepted ? "Proposta Aceita!" : "Proposta Recusada"}
             </div>
@@ -332,9 +332,9 @@ export function NegotiationModal({
                       <div className="text-[10px] text-white/40">{player.team?.nome}</div>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-[#1db954]" />
+                  <ArrowRight className="h-5 w-5 text-[#00ffc8]" />
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-[#1db954]">Seu Clube</div>
+                    <div className="text-sm font-semibold text-[#00ffc8]">Seu Clube</div>
                     <div className="text-[10px] text-white/40">{isLoan ? "Emprestimo" : "Contratado"}</div>
                   </div>
                 </div>
@@ -349,7 +349,7 @@ export function NegotiationModal({
               <Button variant="outline" onClick={handleClose} className="border-white/10 text-white/70 hover:bg-white/5">
                 Cancelar
               </Button>
-              <Button onClick={handleSubmitOffer} className="bg-[#1db954] text-black hover:bg-[#1ed760] font-semibold gap-2">
+              <Button onClick={handleSubmitOffer} className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-semibold gap-2">
                 <Handshake className="h-4 w-4" />
                 Enviar Proposta
               </Button>
@@ -361,7 +361,7 @@ export function NegotiationModal({
               className={cn(
                 "w-full font-semibold",
                 accepted 
-                  ? "bg-[#1db954] text-black hover:bg-[#1ed760]" 
+                  ? "bg-[#00ffc8] text-black hover:bg-[#00c8ff]" 
                   : "bg-white/10 text-white hover:bg-white/20"
               )}
             >

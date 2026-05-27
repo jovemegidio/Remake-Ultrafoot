@@ -569,9 +569,9 @@ export default function CompeticoesPage() {
             : t.competitions.awaiting,
       userPosition: null,
       icon: Trophy,
-      color: compState.copaBrasil.eliminated ? "text-red-400" : "text-[#1db954]",
-      bgColor: compState.copaBrasil.eliminated ? "bg-red-400/10" : "bg-[#1db954]/10",
-      borderColor: compState.copaBrasil.eliminated ? "border-red-400/30" : "border-[#1db954]/30"
+      color: compState.copaBrasil.eliminated ? "text-red-400" : "text-[#00ffc8]",
+      bgColor: compState.copaBrasil.eliminated ? "bg-red-400/10" : "bg-[#00ffc8]/10",
+      borderColor: compState.copaBrasil.eliminated ? "border-red-400/30" : "border-[#00ffc8]/30"
     },
     {
       id: "estadual",
@@ -620,7 +620,7 @@ export default function CompeticoesPage() {
   ]
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -632,8 +632,8 @@ export default function CompeticoesPage() {
             <p className="text-sm text-white/50 mt-1">{t.competitions.seasonFollowup(currentSeason)}</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#141414] border border-white/5">
-              <Calendar className="h-4 w-4 text-[#1db954]" />
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0c0c10] border border-white/[0.04]">
+              <Calendar className="h-4 w-4 text-[#00ffc8]" />
               <span className="text-sm text-white/70">{t.competitions.roundProgress(currentWeek)}</span>
             </div>
           </div>
@@ -650,10 +650,10 @@ export default function CompeticoesPage() {
                 key={comp.id}
                 onClick={() => setActiveTab(comp.id)}
                 className={cn(
-                  "rounded-xl bg-[#141414] border p-5 text-left transition-all",
+                  "rounded-xl bg-[#0c0c10] border p-5 text-left transition-all",
                   isActive 
-                    ? "border-[#1db954] ring-1 ring-[#1db954]" 
-                    : "border-white/5 hover:border-white/10"
+                    ? "border-[#00ffc8] ring-1 ring-[#00ffc8]" 
+                    : "border-white/[0.04] hover:border-white/10"
                 )}
               >
                 <div className="flex items-start justify-between">
@@ -664,7 +664,7 @@ export default function CompeticoesPage() {
                     <Icon className={cn("h-5 w-5", comp.color)} />
                   </div>
                   {comp.userPosition && (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1db954]/20 text-sm font-bold text-[#1db954]">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00ffc8]/20 text-sm font-bold text-[#00ffc8]">
                       {comp.userPosition}
                     </span>
                   )}
@@ -787,9 +787,9 @@ function CopaBracket({
 
   if (!state.drawn) {
     return (
-      <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1db954]/10 mx-auto mb-6">
-          <Trophy className="h-10 w-10 text-[#1db954]" />
+      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#00ffc8]/10 mx-auto mb-6">
+          <Trophy className="h-10 w-10 text-[#00ffc8]" />
         </div>
         <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.copaDoBrasil} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
@@ -797,7 +797,7 @@ function CopaBracket({
         </p>
         <button
           onClick={onDraw}
-          className="px-6 py-3 rounded-lg bg-[#1db954] text-black font-semibold hover:bg-[#1ed760] transition-colors inline-flex items-center gap-2"
+          className="px-6 py-3 rounded-lg bg-[#00ffc8] text-black font-semibold hover:bg-[#00c8ff] transition-colors inline-flex items-center gap-2"
         >
           <Shuffle className="h-4 w-4" />
           {t.competitions.draw}
@@ -816,17 +816,17 @@ function CopaBracket({
   const canSimulate = !state.champion && !state.eliminated
 
   return (
-    <div className="rounded-xl bg-[#141414] border border-white/5 p-6 overflow-x-auto scrollbar-thin">
+    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 overflow-x-auto scrollbar-thin">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-[#1db954]" />
+          <Trophy className="h-5 w-5 text-[#00ffc8]" />
           <h3 className="text-lg font-semibold text-white">{t.competitions.copaDoBrasil} 2026 - Mata-mata</h3>
         </div>
 
         {canSimulate && (
           <button
             onClick={onSimulate}
-            className="px-4 py-2 rounded-lg bg-[#1db954] text-black font-medium text-sm hover:bg-[#1ed760] transition-colors inline-flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-[#00ffc8] text-black font-medium text-sm hover:bg-[#00c8ff] transition-colors inline-flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
             {t.competitions.simulate} {state.currentRound}
@@ -848,7 +848,7 @@ function CopaBracket({
           <div key={round.name} className="flex-1">
             <div className={cn(
               "text-xs uppercase tracking-wider mb-3 text-center font-medium",
-              round.isCurrent ? "text-[#1db954]" : "text-white/40",
+              round.isCurrent ? "text-[#00ffc8]" : "text-white/40",
               round.name === "Final" && "text-yellow-500"
             )}>
               {round.name}
@@ -872,7 +872,7 @@ function CopaBracket({
                       userLost 
                         ? "bg-red-500/10 border-red-500/30"
                         : userWon
-                          ? "bg-[#1db954]/10 border-[#1db954]/30"
+                          ? "bg-[#00ffc8]/10 border-[#00ffc8]/30"
                           : isUserMatch 
                             ? "bg-blue-500/10 border-blue-500/30" 
                             : "bg-white/5 border-white/10"
@@ -883,13 +883,13 @@ function CopaBracket({
                       <span className={cn(
                         "text-xs flex-1",
                         match.team1 === userTeam.curto && "font-bold text-white",
-                        match.played && match.winner === match.team1 && "text-[#1db954]"
+                        match.played && match.winner === match.team1 && "text-[#00ffc8]"
                       )}>
                         {match.team1 || t.competitions.toBeDefined}
                       </span>
                       <span className={cn(
                         "text-sm font-bold tabular-nums",
-                        match.played && match.winner === match.team1 ? "text-[#1db954]" : "text-white/50"
+                        match.played && match.winner === match.team1 ? "text-[#00ffc8]" : "text-white/50"
                       )}>
                         {match.score1 ?? "-"}
                       </span>
@@ -899,13 +899,13 @@ function CopaBracket({
                       <span className={cn(
                         "text-xs flex-1",
                         match.team2 === userTeam.curto && "font-bold text-white",
-                        match.played && match.winner === match.team2 && "text-[#1db954]"
+                        match.played && match.winner === match.team2 && "text-[#00ffc8]"
                       )}>
                         {match.team2 || t.competitions.toBeDefined}
                       </span>
                       <span className={cn(
                         "text-sm font-bold tabular-nums",
-                        match.played && match.winner === match.team2 ? "text-[#1db954]" : "text-white/50"
+                        match.played && match.winner === match.team2 ? "text-[#00ffc8]" : "text-white/50"
                       )}>
                         {match.score2 ?? "-"}
                       </span>
@@ -944,7 +944,7 @@ function EstadualView({
 
   if (!state.drawn) {
     return (
-      <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
+      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-orange-400/10 mx-auto mb-6">
           <MapPin className="h-10 w-10 text-orange-400" />
         </div>
@@ -964,7 +964,7 @@ function EstadualView({
   }
 
   return (
-    <div className="rounded-xl bg-[#141414] border border-white/5 p-6">
+    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-orange-400" />
@@ -1008,7 +1008,7 @@ function EstadualView({
                       className={cn(
                         "flex items-center gap-2 p-2 rounded",
                         isUser && "bg-orange-500/20",
-                        qualified && !isUser && "bg-[#1db954]/10"
+                        qualified && !isUser && "bg-[#00ffc8]/10"
                       )}
                     >
                       <span className="text-xs text-white/50 w-4">{idx + 1}.</span>
@@ -1054,7 +1054,7 @@ function LibertadoresView({
 
   if (!state.qualified) {
     return (
-      <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
+      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5 mx-auto mb-6">
           <Globe className="h-10 w-10 text-white/30" />
         </div>
@@ -1071,7 +1071,7 @@ function LibertadoresView({
 
   if (!state.group) {
     return (
-      <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center">
+      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-400/10 mx-auto mb-6">
           <Globe className="h-10 w-10 text-amber-400" />
         </div>
@@ -1091,7 +1091,7 @@ function LibertadoresView({
   }
 
   return (
-    <div className="rounded-xl bg-[#141414] border border-white/5 p-6">
+    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
       <div className="flex items-center gap-2 mb-6">
         <Globe className="h-5 w-5 text-amber-400" />
         <h3 className="text-lg font-semibold text-white">{t.competitions.libertadores} 2026 - {state.group.name}</h3>
@@ -1156,9 +1156,9 @@ function StandingsTable({
 }) {
   const t = useTranslation()
   return (
-    <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/5 bg-white/[0.02]">
+      <div className="grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/[0.04] bg-white/[0.02]">
         <span className="text-center">#</span>
         <span>{t.dashboard.col.club}</span>
         <span className="text-center">J</span>
@@ -1179,12 +1179,12 @@ function StandingsTable({
             key={row.team.curto}
             className={cn(
               "grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02]",
-              row.isUser && "bg-[#1db954]/10 border-l-2 border-[#1db954]"
+              row.isUser && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]"
             )}
           >
             <span className={cn(
               "text-center text-sm font-medium",
-              row.position <= 4 ? "text-[#1db954]" :
+              row.position <= 4 ? "text-[#00ffc8]" :
               row.position <= 6 ? "text-blue-400" :
               row.position >= 17 ? "text-red-500" :
               "text-white/50"
@@ -1204,14 +1204,14 @@ function StandingsTable({
             </div>
 
             <span className="text-center text-sm tabular-nums text-white/70">{row.played}</span>
-            <span className="text-center text-sm tabular-nums text-[#1db954]">{row.won}</span>
+            <span className="text-center text-sm tabular-nums text-[#00ffc8]">{row.won}</span>
             <span className="text-center text-sm tabular-nums text-white/50">{row.drawn}</span>
             <span className="text-center text-sm tabular-nums text-red-500">{row.lost}</span>
             <span className="text-center text-sm tabular-nums text-white/70">{row.goalsFor}</span>
             <span className="text-center text-sm tabular-nums text-white/70">{row.goalsAgainst}</span>
             <span className={cn(
               "text-center text-sm tabular-nums",
-              row.goalDiff > 0 ? "text-[#1db954]" :
+              row.goalDiff > 0 ? "text-[#00ffc8]" :
               row.goalDiff < 0 ? "text-red-500" :
               "text-white/50"
             )}>
@@ -1225,7 +1225,7 @@ function StandingsTable({
                   key={i}
                   className={cn(
                     "h-5 w-5 rounded text-[10px] font-bold flex items-center justify-center",
-                    result === "W" ? "bg-[#1db954]/20 text-[#1db954]" :
+                    result === "W" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
                     result === "D" ? "bg-white/10 text-white/50" :
                     result === "L" ? "bg-red-500/20 text-red-500" :
                     "bg-white/5 text-white/20"
@@ -1240,9 +1240,9 @@ function StandingsTable({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 px-4 py-3 text-[10px] text-white/50 border-t border-white/5 bg-white/[0.02]">
+      <div className="flex items-center gap-6 px-4 py-3 text-[10px] text-white/50 border-t border-white/[0.04] bg-white/[0.02]">
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-[#1db954]" />
+          <span className="h-2 w-2 rounded-full bg-[#00ffc8]" />
           <span>{t.competitions.libertadoresLegend}</span>
         </div>
         <div className="flex items-center gap-1.5">

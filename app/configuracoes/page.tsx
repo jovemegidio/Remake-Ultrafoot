@@ -184,7 +184,7 @@ export default function ConfiguracoesPage() {
   if (currentView === "menu") {
     return (
       <ControllerTypeContext.Provider value={controllerType}>
-        <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+        <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
           <GameSidebar />
           <GameHeader team={userTeam} />
           
@@ -264,7 +264,7 @@ export default function ConfiguracoesPage() {
       case "configuracoes":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
                 {t.settings.themeColors}
@@ -328,7 +328,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
                 {t.settings.notificationsSystem}
@@ -356,7 +356,7 @@ export default function ConfiguracoesPage() {
       case "perfil":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" />
                 {t.settings.managerInfo}
@@ -382,7 +382,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.language}
@@ -410,7 +410,7 @@ export default function ConfiguracoesPage() {
       case "tempo":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 {t.settings.matchSpeed}
@@ -440,7 +440,7 @@ export default function ConfiguracoesPage() {
       case "musica":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Volume2 className="h-4 w-4 text-primary" />
                 {t.settings.musicVolume}
@@ -463,7 +463,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
               <h3 className="text-sm font-medium text-white mb-4">{t.settings.musicPlayer}</h3>
               <p className="text-xs text-white/50 mb-4">{t.settings.musicPlayerDesc}</p>
               <MusicPlayer defaultSize="compact" autoPlay={false} offsetLeft={0} />
@@ -474,7 +474,7 @@ export default function ConfiguracoesPage() {
       case "online":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.onlineConfig}
@@ -509,7 +509,7 @@ export default function ConfiguracoesPage() {
       case "escalacoes":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Grid2X2 className="h-4 w-4 text-primary" />
                 {t.settings.savedLineups}
@@ -542,7 +542,7 @@ export default function ConfiguracoesPage() {
       case "criar_atleta":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <UserPlus className="h-4 w-4 text-primary" />
                 {t.settings.createNewPlayer}
@@ -586,7 +586,7 @@ export default function ConfiguracoesPage() {
         return (
           <div className="space-y-6">
             {/* Patrocinadores Oficiais */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
                 {t.settings.officialSponsors}
@@ -613,7 +613,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Apoiadores */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
                 {t.settings.supporters}
@@ -624,7 +624,7 @@ export default function ConfiguracoesPage() {
                   { tier: "Prata", color: "#94a3b8", supporters: [] as string[] },
                   { tier: "Bronze", color: "#cd7f32", supporters: [] as string[] },
                 ].map((level) => (
-                  <div key={level.tier} className="rounded-lg border border-white/5 overflow-hidden">
+                  <div key={level.tier} className="rounded-lg border border-white/[0.04] overflow-hidden">
                     <div
                       className="flex items-center gap-2 px-4 py-2"
                       style={{ backgroundColor: `${level.color}15` }}
@@ -653,7 +653,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Equipe de Desenvolvimento */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
                 {t.settings.devTeam}
@@ -671,7 +671,7 @@ export default function ConfiguracoesPage() {
                   </div>
                 ))}
               </div>
-              <div className="pt-2 border-t border-white/5 text-center">
+              <div className="pt-2 border-t border-white/[0.04] text-center">
                 <p className="text-[10px] text-white/25">{t.settings.copyright}</p>
               </div>
             </div>
@@ -816,7 +816,7 @@ export default function ConfiguracoesPage() {
         return (
           <div className="space-y-4">
             {/* Guia de Primeiros Passos */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-5 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <HelpCircle className="h-4 w-4 text-primary" />
                 Primeiros Passos
@@ -868,8 +868,8 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Referencia completa de controles */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-white/5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                   <Keyboard className="h-4 w-4 text-primary" />
                   Referencia Completa de Controles
@@ -877,7 +877,7 @@ export default function ConfiguracoesPage() {
               </div>
 
               {/* Tabs de tipo de input */}
-              <div className="flex border-b border-white/5">
+              <div className="flex border-b border-white/[0.04]">
                 {([
                   { id: "xbox" as const, label: "Xbox / Generico" },
                   { id: "playstation" as const, label: "PlayStation" },
@@ -899,7 +899,7 @@ export default function ConfiguracoesPage() {
               </div>
 
               {/* Nota sobre equivalencia */}
-              <div className="px-4 py-2.5 bg-white/[0.02] border-b border-white/5">
+              <div className="px-4 py-2.5 bg-white/[0.02] border-b border-white/[0.04]">
                 <p className="text-[10px] text-white/40 leading-relaxed">
                   {tutorialTab === "xbox"
                     ? "Mapeamento: A = Confirmar · B = Voltar · X = Acao · Y = Menu · LB/RB = Abas · LT/RT = Acao Secundaria · START = Menu/Pausar · SELECT = Salvar"
@@ -918,8 +918,8 @@ export default function ConfiguracoesPage() {
                     const nonDpad = allEntries.filter(([btn]) => !btn.startsWith("DPAD"))
 
                     return (
-                      <div key={ctx.id} className="border border-white/5 rounded-lg overflow-hidden">
-                        <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/5">
+                      <div key={ctx.id} className="border border-white/[0.04] rounded-lg overflow-hidden">
+                        <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.04]">
                           <div className="text-xs font-semibold text-white">{ctx.label}</div>
                           <div className="text-[10px] text-white/40">{ctx.description}</div>
                         </div>
@@ -944,8 +944,8 @@ export default function ConfiguracoesPage() {
                   })
                 ) : (
                   keyboardShortcuts.map((section) => (
-                    <div key={section.section} className="border border-white/5 rounded-lg overflow-hidden">
-                      <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/5">
+                    <div key={section.section} className="border border-white/[0.04] rounded-lg overflow-hidden">
+                      <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.04]">
                         <div className="text-xs font-semibold text-white">{section.section}</div>
                       </div>
                       <div className="p-3 space-y-2">
@@ -985,7 +985,7 @@ export default function ConfiguracoesPage() {
 
   return (
     <ControllerTypeContext.Provider value={controllerType}>
-      <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+      <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
 
@@ -1006,7 +1006,7 @@ export default function ConfiguracoesPage() {
                 <RotateCcw className="mr-2 h-3.5 w-3.5" />
                 {t.common.restore}
               </Button>
-              <Button size="sm" onClick={handleSaveSettings} disabled={saving} className={cn("text-xs transition-all", saved ? "bg-[#1db954]/20 text-[#1db954]" : "bg-[#1db954] text-black hover:bg-[#1ed760]")}>
+              <Button size="sm" onClick={handleSaveSettings} disabled={saving} className={cn("text-xs transition-all", saved ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "bg-[#00ffc8] text-black hover:bg-[#00c8ff]")}>
                 {saving ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="mr-2 h-3.5 w-3.5" /> : <Save className="mr-2 h-3.5 w-3.5" />}
                 {saved ? t.common.saved : t.common.save}
               </Button>

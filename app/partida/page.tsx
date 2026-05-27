@@ -346,14 +346,14 @@ export default function PreMatchPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen pl-16 bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen pl-16 bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -384,7 +384,7 @@ export default function PreMatchPage() {
           </div>
 
           {/* Competition Header */}
-          <div className="relative flex items-center justify-center gap-4 py-4 border-b border-white/5">
+          <div className="relative flex items-center justify-center gap-4 py-4 border-b border-white/[0.04]">
             <Image
               src="/logos/brasileirao.png"
               alt="Brasileirão"
@@ -436,7 +436,7 @@ export default function PreMatchPage() {
             </div>
           </div>
 
-          <div className="relative flex items-center justify-center gap-8 py-4 border-t border-white/5 bg-black/30">
+          <div className="relative flex items-center justify-center gap-8 py-4 border-t border-white/[0.04] bg-black/30">
             <div className="flex items-center gap-2 text-xs">
               <Star className="h-4 w-4 text-yellow-500" />
               <span className="text-white/40">Prestígio:</span>
@@ -474,7 +474,7 @@ export default function PreMatchPage() {
           <Link href="/partida/ao-vivo" className="w-full max-w-md">
             <Button
               size="lg"
-              className="relative w-full h-16 text-base font-black tracking-wider bg-gradient-to-r from-[#1db954] to-[#1ed760] text-black hover:from-[#1ed760] hover:to-[#22e766] overflow-hidden group"
+              className="relative w-full h-16 text-base font-black tracking-wider bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:from-[#00c8ff] hover:to-[#22e766] overflow-hidden group"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
               <Play className="mr-3 h-6 w-6 fill-current" />
@@ -604,7 +604,7 @@ export default function PreMatchPage() {
                     setShowQuickSim(false)
                     router.push("/")
                   }}
-                  className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold"
+                  className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold"
                 >
                   Confirmar Resultado
                 </Button>
@@ -635,7 +635,7 @@ export default function PreMatchPage() {
                     className={cn(
                       "rounded-lg border p-3 text-left transition",
                       duration === o.val
-                        ? "border-[#1db954] bg-[#1db954]/10"
+                        ? "border-[#00ffc8] bg-[#00ffc8]/10"
                         : "border-white/10 bg-white/5 hover:bg-white/10",
                     )}
                   >
@@ -667,7 +667,7 @@ export default function PreMatchPage() {
                       className={cn(
                         "rounded-lg border p-3 flex flex-col items-center gap-2 transition",
                         weather === o.val
-                          ? "border-[#1db954] bg-[#1db954]/10"
+                          ? "border-[#00ffc8] bg-[#00ffc8]/10"
                           : "border-white/10 bg-white/5 hover:bg-white/10",
                       )}
                     >
@@ -698,7 +698,7 @@ export default function PreMatchPage() {
                     className={cn(
                       "rounded-lg border p-3 text-sm font-medium transition",
                       matchMode === o.val
-                        ? "border-[#1db954] bg-[#1db954]/10 text-white"
+                        ? "border-[#00ffc8] bg-[#00ffc8]/10 text-white"
                         : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
                     )}
                   >
@@ -709,7 +709,7 @@ export default function PreMatchPage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-white/5">
+          <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-white/[0.04]">
             <Button
               variant="outline"
               onClick={() => setShowSettings(false)}
@@ -719,7 +719,7 @@ export default function PreMatchPage() {
             </Button>
             <Button
               onClick={() => setShowSettings(false)}
-              className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold"
+              className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold"
             >
               <Check className="mr-2 h-4 w-4" />
               Aplicar
@@ -747,7 +747,7 @@ function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
       <div className="w-full max-w-3xl rounded-2xl bg-gradient-to-br from-[#0f0f0f] to-[#0a0a0a] border border-white/10 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04]">
           <h3 className="text-lg font-bold text-white">{title}</h3>
           <button
             onClick={onClose}

@@ -60,7 +60,7 @@ function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { acti
       )} />
 
       {/* Tooltip */}
-      <span className="absolute left-full ml-3 hidden rounded-lg bg-[#0a0a0a] px-3 py-2 text-[11px] font-medium text-white shadow-xl group-hover:block whitespace-nowrap ring-1 ring-white/10 z-50 backdrop-blur-sm">
+      <span className="absolute left-full ml-3 hidden rounded-lg bg-[#050508] px-3 py-2 text-[11px] font-medium text-white shadow-xl group-hover:block whitespace-nowrap ring-1 ring-white/10 z-50 backdrop-blur-sm">
         {label}
         <span className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 border-4 border-transparent border-r-[#0a0a0a]" />
       </span>

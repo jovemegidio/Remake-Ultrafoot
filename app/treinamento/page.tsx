@@ -179,13 +179,13 @@ export default function TreinamentoPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
       {/* Toast de feedback de treinamento */}
       {feedback && (
-        <div className="fixed top-20 right-6 z-50 px-5 py-3 rounded-xl bg-[#1db954] text-black font-bold text-sm shadow-2xl animate-in slide-in-from-right-4 duration-300">
+        <div className="fixed top-20 right-6 z-50 px-5 py-3 rounded-xl bg-[#00ffc8] text-black font-bold text-sm shadow-2xl animate-in slide-in-from-right-4 duration-300">
           {feedback}
         </div>
       )}
@@ -198,8 +198,8 @@ export default function TreinamentoPage() {
             <p className="text-sm text-white/50 mt-1">Desenvolva os atributos dos seus jogadores</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#141414] border border-white/5">
-              <Dumbbell className="h-4 w-4 text-[#1db954]" />
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0c0c10] border border-white/[0.04]">
+              <Dumbbell className="h-4 w-4 text-[#00ffc8]" />
               <span className="text-sm text-white/70">{playersInTraining} em treinamento</span>
             </div>
           </div>
@@ -207,11 +207,11 @@ export default function TreinamentoPage() {
 
         <div className="grid gap-4 lg:grid-cols-3">
           {/* Lista de Jogadores */}
-          <div className="lg:col-span-2 rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+          <div className="lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
             {/* Filtros */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                <Users className="h-4 w-4 text-[#1db954]" />
+                <Users className="h-4 w-4 text-[#00ffc8]" />
                 ELENCO
               </div>
               <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export default function TreinamentoPage() {
                     disabled={!canPlayerTrain || isTraining}
                     className={cn(
                       "w-full flex items-center gap-4 px-5 py-4 text-left transition-colors",
-                      isSelected && "bg-[#1db954]/10 border-l-2 border-[#1db954]",
+                      isSelected && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]",
                       !isSelected && canPlayerTrain && !isTraining && "hover:bg-white/5",
                       (!canPlayerTrain || isTraining) && "opacity-60"
                     )}
@@ -294,13 +294,13 @@ export default function TreinamentoPage() {
                           <div key={type.id} className="text-center">
                             <div className={cn(
                               "text-[10px] text-white/40 flex items-center justify-center gap-1",
-                              isRecommended && "text-[#1db954]"
+                              isRecommended && "text-[#00ffc8]"
                             )}>
                               <Icon className="h-3 w-3" />
                             </div>
                             <div className={cn(
                               "text-sm font-medium",
-                              value >= 80 ? "text-[#1db954]" : 
+                              value >= 80 ? "text-[#00ffc8]" : 
                               value >= 70 ? "text-white" : "text-white/60"
                             )}>
                               {value}
@@ -331,8 +331,8 @@ export default function TreinamentoPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 justify-end">
-                          <CheckCircle2 className="h-4 w-4 text-[#1db954]" />
-                          <span className="text-xs text-[#1db954]">Disponivel</span>
+                          <CheckCircle2 className="h-4 w-4 text-[#00ffc8]" />
+                          <span className="text-xs text-[#00ffc8]">Disponivel</span>
                         </div>
                       )}
                     </div>
@@ -345,16 +345,16 @@ export default function TreinamentoPage() {
           {/* Painel de Treinamento */}
           <div className="space-y-4">
             {/* Jogador Selecionado */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
-                <Target className="h-4 w-4 text-[#1db954]" />
+                <Target className="h-4 w-4 text-[#00ffc8]" />
                 JOGADOR SELECIONADO
               </div>
 
               {selectedPlayer ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#1db954]/20 to-[#1db954]/5 flex items-center justify-center text-xl font-bold text-[#1db954]">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center text-xl font-bold text-[#00ffc8]">
                       {selectedPlayer.overall}
                     </div>
                     <div>
@@ -374,7 +374,7 @@ export default function TreinamentoPage() {
                   </div>
 
                   {/* Recomendacoes */}
-                  <div className="pt-2 border-t border-white/5">
+                  <div className="pt-2 border-t border-white/[0.04]">
                     <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Treinos Recomendados</div>
                     <div className="flex flex-wrap gap-1">
                       {getRecommendedTraining(selectedPlayer.position).map(rec => {
@@ -397,9 +397,9 @@ export default function TreinamentoPage() {
             </div>
 
             {/* Tipos de Treinamento */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
-                <Dumbbell className="h-4 w-4 text-[#1db954]" />
+                <Dumbbell className="h-4 w-4 text-[#00ffc8]" />
                 TIPO DE TREINAMENTO
               </div>
 
@@ -419,8 +419,8 @@ export default function TreinamentoPage() {
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
                         isSelected 
-                          ? "border-[#1db954] bg-[#1db954]/10" 
-                          : "border-white/5 hover:border-white/10 hover:bg-white/5",
+                          ? "border-[#00ffc8] bg-[#00ffc8]/10" 
+                          : "border-white/[0.04] hover:border-white/10 hover:bg-white/5",
                         (!selectedPlayer || !canImprove) && "opacity-50 cursor-not-allowed"
                       )}
                     >
@@ -450,7 +450,7 @@ export default function TreinamentoPage() {
               className={cn(
                 "w-full py-4 rounded-xl font-semibold text-sm transition-colors",
                 selectedPlayer && selectedTraining
-                  ? "bg-[#1db954] text-black hover:bg-[#1ed760]"
+                  ? "bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
                   : "bg-white/5 text-white/30 cursor-not-allowed"
               )}
             >
