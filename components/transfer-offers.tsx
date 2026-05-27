@@ -105,9 +105,9 @@ function OfferCard({
   return (
     <div className="rounded-xl bg-[#1a1a1a] border border-white/10 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-yellow-500/10 to-transparent border-b border-white/5">
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-yellow-500/10 to-transparent border-b border-white/[0.04]">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-[#ffd700]/20 flex items-center justify-center">
             <Building2 className="h-5 w-5 text-yellow-400" />
           </div>
           <div>
@@ -118,7 +118,7 @@ function OfferCard({
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-[#1db954]">
+          <div className="text-lg font-bold text-[#00ffc8]">
             {formatCurrency(offer.offerAmount)}
           </div>
           <div className="text-[10px] text-white/40">
@@ -140,7 +140,7 @@ function OfferCard({
                 <>
                   <span>{player.position}</span>
                   <span>{player.age} anos</span>
-                  <span className="text-[#1db954]">OVR {player.overall}</span>
+                  <span className="text-[#00ffc8]">OVR {player.overall}</span>
                 </>
               )}
             </div>
@@ -173,7 +173,7 @@ function OfferCard({
             <div className="flex items-center gap-2 text-sm">
               <TrendingUp className={cn(
                 "h-4 w-4",
-                offer.offerAmount >= player.marketValue ? "text-[#1db954]" : "text-red-400"
+                offer.offerAmount >= player.marketValue ? "text-[#00ffc8]" : "text-red-400"
               )} />
               <span className="text-white/60">
                 {offer.offerAmount >= player.marketValue ? "Acima" : "Abaixo"} do valor de mercado
@@ -181,7 +181,7 @@ function OfferCard({
             </div>
             <span className={cn(
               "text-sm font-bold",
-              offer.offerAmount >= player.marketValue ? "text-[#1db954]" : "text-red-400"
+              offer.offerAmount >= player.marketValue ? "text-[#00ffc8]" : "text-red-400"
             )}>
               {offer.offerAmount >= player.marketValue ? "+" : "-"}
               {formatCurrency(Math.abs(offer.offerAmount - player.marketValue))}
@@ -200,7 +200,7 @@ function OfferCard({
           </button>
           <button
             onClick={onAccept}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#1db954] text-black text-sm font-semibold hover:bg-[#1ed760] transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#00ffc8] text-black text-sm font-semibold hover:bg-[#00c8ff] transition-colors"
           >
             <Check className="h-4 w-4" />
             Aceitar
@@ -213,7 +213,7 @@ function OfferCard({
 
 function PastOfferRow({ offer }: { offer: TransferOffer }) {
   const statusConfig = {
-    aceita: { label: "Aceita", color: "text-[#1db954]", bg: "bg-[#1db954]/10" },
+    aceita: { label: "Aceita", color: "text-[#00ffc8]", bg: "bg-[#00ffc8]/10" },
     rejeitada: { label: "Rejeitada", color: "text-red-400", bg: "bg-red-400/10" },
     expirada: { label: "Expirada", color: "text-yellow-400", bg: "bg-yellow-400/10" },
   }

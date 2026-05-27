@@ -55,7 +55,7 @@ const CONVERSATION_OPTIONS = [
     label: "Elogiar",
     description: "Reconhecer bom desempenho",
     impact: { happy: 5, neutral: 2, unhappy: 3 },
-    color: "text-yellow-500"
+    color: "text-[#ffd700]"
   },
   {
     id: "motivate",
@@ -269,7 +269,7 @@ export default function VestiarioPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -314,7 +314,7 @@ export default function VestiarioPage() {
           <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-white/70">Jogadores Felizes</span>
-              <Smile className="h-5 w-5 text-yellow-500" />
+              <Smile className="h-5 w-5 text-[#ffd700]" />
             </div>
             <div className="text-3xl font-bold text-white mb-2">
               {playersByMorale.Feliz.length + playersByMorale.Motivado.length}
@@ -427,7 +427,7 @@ export default function VestiarioPage() {
                       "w-full p-4 rounded-lg text-left transition-all flex items-center gap-3",
                       canUse
                         ? "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20"
-                        : "bg-white/[0.02] border border-white/5 opacity-50 cursor-not-allowed"
+                        : "bg-white/[0.02] border border-white/[0.04] opacity-50 cursor-not-allowed"
                     )}
                   >
                     <div className={cn(
@@ -478,7 +478,7 @@ export default function VestiarioPage() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-[#0a0a0a] border border-white/10 rounded-xl p-6 max-w-md w-full"
+                className="bg-[#050508] border border-white/10 rounded-xl p-6 max-w-md w-full"
               >
                 {conversationResult ? (
                   <div className="text-center py-8">

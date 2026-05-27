@@ -240,7 +240,7 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
       {/* Connection Toast */}
       {showConnectionToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#1db954] text-black shadow-lg">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#00ffc8] text-black shadow-lg">
             <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center">
               {gamepad.controllerType === "playstation" ? (
                 /* PlayStation Logo - símbolo icônico */
@@ -267,7 +267,7 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
       {/* Focus indicator styles */}
       <style jsx global>{`
         [data-gamepad-focused="true"] {
-          outline: 2px solid #1db954 !important;
+          outline: 2px solid #00ffc8 !important;
           outline-offset: 2px;
           box-shadow: 0 0 0 4px rgba(29, 185, 84, 0.3);
         }
@@ -285,15 +285,37 @@ export function useGamepadFocusable(
 ) {
   const context = useContext(GamepadContext)
   
+  // Use refs to store mutable values to avoid triggering re-renders
+  const onSelectRef = useRef(onSelect)
+  const contextRef = useRef(context)
+  const idRef = useRef(id)
+  
+  // Update refs on every render
+  onSelectRef.current = onSelect
+  contextRef.current = context
+  idRef.current = id
+  
+  // Stable callback that always calls the latest onSelect
+  const stableOnSelect = useCallback(() => {
+    onSelectRef.current?.()
+  }, [])
+  
+  // Single registration effect - only runs on mount/unmount
   useEffect(() => {
-    if (!context || !ref.current) return
+    const ctx = contextRef.current
+    const element = ref.current
+    const currentId = idRef.current
     
-    context.registerFocusableElement(id, ref.current, onSelect)
+    if (!ctx || !element) return
+    
+    ctx.registerFocusableElement(currentId, element, stableOnSelect)
     
     return () => {
-      context.unregisterFocusableElement(id)
+      ctx.unregisterFocusableElement(currentId)
     }
-  }, [context, id, ref, onSelect])
+  // Empty deps - only run on mount/unmount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const isFocused = context?.focusedElementId === id
 

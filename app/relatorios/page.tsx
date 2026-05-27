@@ -157,7 +157,7 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -319,7 +319,7 @@ export default function RelatoriosPage() {
                           {playerReport.strengths.length > 0 ? (
                             playerReport.strengths.map((s, i) => (
                               <div key={i} className="text-sm text-white/80 flex items-center gap-2">
-                                <Star className="h-3 w-3 text-yellow-500" />
+                                <Star className="h-3 w-3 text-[#ffd700]" />
                                 {s}
                               </div>
                             ))
@@ -409,7 +409,7 @@ export default function RelatoriosPage() {
                   <div className="text-3xl font-bold text-green-400">{TEAM_STATS.overall.wins}</div>
                   <div className="text-xs text-white/50">Vitorias</div>
                 </div>
-                <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-xl border border-yellow-500/20 p-4 text-center">
+                <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-xl border border-[#ffd700]/20 p-4 text-center">
                   <div className="text-3xl font-bold text-yellow-400">{TEAM_STATS.overall.draws}</div>
                   <div className="text-xs text-white/50">Empates</div>
                 </div>
@@ -543,9 +543,9 @@ export default function RelatoriosPage() {
             >
               {/* Destaques */}
               <div className="grid md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-xl border border-yellow-500/20 p-6">
+                <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-xl border border-[#ffd700]/20 p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <Goal className="h-8 w-8 text-yellow-500" />
+                    <Goal className="h-8 w-8 text-[#ffd700]" />
                     <div>
                       <div className="text-xs text-white/50">Artilheiro</div>
                       <div className="font-bold text-white">{playerComparisons.topScorer?.name}</div>
@@ -605,7 +605,7 @@ export default function RelatoriosPage() {
                     <div key={player.id} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg">
                       <div className={cn(
                         "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                        i === 0 ? "bg-yellow-500/20 text-yellow-400" :
+                        i === 0 ? "bg-[#ffd700]/20 text-yellow-400" :
                         i === 1 ? "bg-gray-400/20 text-gray-300" :
                         i === 2 ? "bg-orange-600/20 text-orange-400" :
                         "bg-white/10 text-white/50"

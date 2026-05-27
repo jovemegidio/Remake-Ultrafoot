@@ -237,20 +237,20 @@ export default function CalendarioPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a] flex items-center justify-center">
+      <div className="h-screen overflow-hidden pl-16 bg-[#050508] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
       <div className="flex h-[calc(100vh-48px)]">
         {/* Left Panel - Match Info */}
-        <aside className="w-80 flex-shrink-0 border-r border-white/5 bg-[#0d0d0d] p-5 flex flex-col overflow-y-auto scrollbar-thin">
+        <aside className="w-80 flex-shrink-0 border-r border-white/[0.04] bg-[#0d0d0d] p-5 flex flex-col overflow-y-auto scrollbar-thin">
           {/* Current Date */}
           <div className="mb-4">
             <div className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
@@ -272,7 +272,7 @@ export default function CalendarioPage() {
               className={cn(
                 "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors",
                 canSimulate
-                  ? "bg-[#1db954] text-black hover:bg-[#1ed760]"
+                  ? "bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
                   : "bg-white/10 text-white/40 cursor-not-allowed"
               )}
             >
@@ -301,8 +301,8 @@ export default function CalendarioPage() {
 
           {/* Simulation Results Toast */}
           {simulationResults && (
-            <div className="mb-4 p-3 rounded-lg bg-[#1db954]/10 border border-[#1db954]/30 animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-[#1db954] mb-2">
+            <div className="mb-4 p-3 rounded-lg bg-[#00ffc8]/10 border border-[#00ffc8]/30 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-2 text-xs font-medium text-[#00ffc8] mb-2">
                 <Check className="h-3.5 w-3.5" />
                 {t.calendar.roundSimulated(simulationResults.round)}
               </div>
@@ -323,7 +323,7 @@ export default function CalendarioPage() {
           {selectedFixture ? (
             <div className="mb-4 pb-4 border-b border-white/10">
               <div className="flex items-center justify-between mb-3">
-                <div className="text-[10px] uppercase tracking-wider text-[#1db954] font-medium">
+                <div className="text-[10px] uppercase tracking-wider text-[#00ffc8] font-medium">
                   {selectedFixture.competition}
                 </div>
                 {selectedFixture.played && (
@@ -375,7 +375,7 @@ export default function CalendarioPage() {
               {!selectedFixture.played && selectedFixture.round === currentWeek + 1 && (
                 <Link
                   href="/partida"
-                  className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#1db954] text-black text-xs font-semibold hover:bg-[#1ed760] transition-colors"
+                  className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#00ffc8] text-black text-xs font-semibold hover:bg-[#00c8ff] transition-colors"
                 >
                   <Play className="h-3.5 w-3.5 fill-current" />
                   {t.match.playMatch}
@@ -402,8 +402,8 @@ export default function CalendarioPage() {
                     className={cn(
                       "flex items-center gap-2 p-2 rounded-lg text-xs",
                       f.isUserMatch 
-                        ? "bg-[#1db954]/10 border border-[#1db954]/30" 
-                        : "bg-white/[0.02] border border-white/5"
+                        ? "bg-[#00ffc8]/10 border border-[#00ffc8]/30" 
+                        : "bg-white/[0.02] border border-white/[0.04]"
                     )}
                   >
                     <TeamCrest team={f.homeTeam} size="xs" />
@@ -436,8 +436,8 @@ export default function CalendarioPage() {
                   className={cn(
                     "w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left",
                     f.round === selectedRound 
-                      ? "border-[#1db954] bg-[#1db954]/10" 
-                      : "border-white/5 bg-white/[0.02] hover:border-white/10"
+                      ? "border-[#00ffc8] bg-[#00ffc8]/10" 
+                      : "border-white/[0.04] bg-white/[0.02] hover:border-white/10"
                   )}
                 >
                   <TeamCrest team={f.homeTeam.curto === userTeam.curto ? f.awayTeam : f.homeTeam} size="sm" />
@@ -452,7 +452,7 @@ export default function CalendarioPage() {
                   <div className={cn(
                     "flex items-center justify-center h-6 w-6 rounded",
                     f.homeTeam.curto === userTeam.curto
-                      ? "bg-[#1db954]/20 text-[#1db954]" 
+                      ? "bg-[#00ffc8]/20 text-[#00ffc8]" 
                       : "bg-white/10 text-white/60"
                   )}>
                     {f.homeTeam.curto === userTeam.curto ? <Home className="h-3 w-3" /> : <Plane className="h-3 w-3" />}
@@ -467,7 +467,7 @@ export default function CalendarioPage() {
             <div className="text-[10px] text-white/40 font-medium tracking-wider mb-1">{t.calendar.transferWindow}</div>
             <div className="text-sm font-semibold text-white">
               {transferWindow.isOpen ? (
-                <span className="text-[#1db954]">{t.calendar.windowOpen}</span>
+                <span className="text-[#00ffc8]">{t.calendar.windowOpen}</span>
               ) : (
                 t.calendar.windowClosed
               )}
@@ -515,9 +515,9 @@ export default function CalendarioPage() {
           </div>
 
           {/* Calendar Grid */}
-          <div className="flex-1 bg-[#141414]/50 rounded-xl border border-white/5 overflow-hidden flex flex-col">
+          <div className="flex-1 bg-[#0c0c10]/50 rounded-xl border border-white/[0.04] overflow-hidden flex flex-col">
             {/* Week days header */}
-            <div className="grid grid-cols-7 border-b border-white/5">
+            <div className="grid grid-cols-7 border-b border-white/[0.04]">
               {weekDays.map((day) => (
                 <div key={day} className="p-3 text-center text-xs font-medium text-white/40 uppercase tracking-wider">
                   {day}
@@ -530,7 +530,7 @@ export default function CalendarioPage() {
               {calendarDays.map((item, i) => {
                 if (item.isOffset) {
                   return (
-                    <div key={`empty-${i}`} className="p-2 border-r border-b border-white/5 bg-black/20" />
+                    <div key={`empty-${i}`} className="p-2 border-r border-b border-white/[0.04] bg-black/20" />
                   )
                 }
                 
@@ -542,7 +542,7 @@ export default function CalendarioPage() {
                     key={item.day}
                     onClick={() => item.fixture && setSelectedRound(item.fixture.round)}
                     className={cn(
-                      "p-2 border-r border-b border-white/5 flex flex-col items-start transition-colors relative",
+                      "p-2 border-r border-b border-white/[0.04] flex flex-col items-start transition-colors relative",
                       isSelected ? "bg-white/10" : item.fixture ? "hover:bg-white/5 cursor-pointer" : "",
                     )}
                   >
@@ -561,7 +561,7 @@ export default function CalendarioPage() {
                         isPlayed
                           ? "bg-white/10 text-white/70 border border-white/10"
                           : item.fixture.homeTeam.curto === userTeam.curto
-                            ? "bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30" 
+                            ? "bg-[#00ffc8]/20 text-[#00ffc8] border border-[#00ffc8]/30" 
                             : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                       )}>
                         <TeamCrest team={item.fixture.homeTeam.curto === userTeam.curto ? item.fixture.awayTeam : item.fixture.homeTeam} size="xs" />
@@ -580,7 +580,7 @@ export default function CalendarioPage() {
         </main>
 
         {/* Right Panel - Standings Quick View */}
-        <aside className="w-72 flex-shrink-0 border-l border-white/5 bg-[#0d0d0d] p-4 hidden xl:flex flex-col overflow-hidden">
+        <aside className="w-72 flex-shrink-0 border-l border-white/[0.04] bg-[#0d0d0d] p-4 hidden xl:flex flex-col overflow-hidden">
           <div className="text-xs text-white/40 uppercase tracking-wider mb-4">{t.calendar.standings}</div>
           
           <div className="flex-1 overflow-y-auto scrollbar-thin">
@@ -596,12 +596,12 @@ export default function CalendarioPage() {
                     key={entry.teamShort}
                     className={cn(
                       "flex items-center gap-2 p-2 rounded-lg",
-                      isUser && "bg-[#1db954]/10 border border-[#1db954]/30"
+                      isUser && "bg-[#00ffc8]/10 border border-[#00ffc8]/30"
                     )}
                   >
                     <span className={cn(
                       "text-xs font-bold w-5 text-center",
-                      index < 4 ? "text-[#1db954]" : index >= 16 ? "text-red-500" : "text-white/50"
+                      index < 4 ? "text-[#00ffc8]" : index >= 16 ? "text-red-500" : "text-white/50"
                     )}>
                       {index + 1}
                     </span>
@@ -626,7 +626,7 @@ export default function CalendarioPage() {
       {/* Tela de campeao — aparece automaticamente ao fim da temporada */}
       {showChampionScreen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-[#141414] border border-yellow-400/30 p-10 max-w-md w-full mx-4 text-center shadow-2xl">
+          <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-[#0c0c10] border border-yellow-400/30 p-10 max-w-md w-full mx-4 text-center shadow-2xl">
             <Trophy className="h-16 w-16 text-yellow-400" />
             <h2 className="text-3xl font-black text-yellow-400 tracking-tight">CAMPEÃO!</h2>
             {championTeam && (

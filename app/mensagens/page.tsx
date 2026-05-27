@@ -242,7 +242,7 @@ export default function MensagensPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -288,7 +288,7 @@ export default function MensagensPage() {
                 <TabsTrigger value="unread" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-2 py-1.5">
                   Nao lidas
                   {unreadCount > 0 && (
-                    <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#1db954] text-[8px] text-black font-bold">
+                    <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#00ffc8] text-[8px] text-black font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -312,7 +312,7 @@ export default function MensagensPage() {
             {/* Messages List */}
             <div className="space-y-2 max-h-[calc(100vh-340px)] overflow-y-auto">
               {filteredMessages.length === 0 ? (
-                <div className="rounded-xl bg-[#141414] border border-white/5 p-8 text-center">
+                <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-8 text-center">
                   <Mail className="h-10 w-10 mx-auto text-white/20 mb-3" />
                   <p className="text-sm text-white/50">
                     {searchQuery ? "Nenhuma mensagem encontrada" : 
@@ -329,9 +329,9 @@ export default function MensagensPage() {
                     className={cn(
                       "w-full rounded-xl border p-4 text-left transition-all",
                       selectedMessage?.id === message.id 
-                        ? "border-[#1db954] bg-[#1db954]/5" 
-                        : "border-white/5 bg-[#141414] hover:border-white/10",
-                      !message.read && "bg-[#1db954]/5"
+                        ? "border-[#00ffc8] bg-[#00ffc8]/5" 
+                        : "border-white/[0.04] bg-[#0c0c10] hover:border-white/10",
+                      !message.read && "bg-[#00ffc8]/5"
                     )}
                   >
                     <div className="flex items-start gap-3">
@@ -339,7 +339,7 @@ export default function MensagensPage() {
                         "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
                         message.category === "diretoria" ? "bg-yellow-400/20 text-yellow-400" :
                         message.category === "staff" ? "bg-blue-400/20 text-blue-400" :
-                        message.category === "mercado" ? "bg-[#1db954]/20 text-[#1db954]" :
+                        message.category === "mercado" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
                         "bg-purple-400/20 text-purple-400"
                       )}>
                         <message.icon className="h-5 w-5" />
@@ -354,7 +354,7 @@ export default function MensagensPage() {
                           </span>
                           <div className="flex items-center gap-1 shrink-0">
                             {message.starred && <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />}
-                            {!message.read && <span className="h-2 w-2 rounded-full bg-[#1db954]" />}
+                            {!message.read && <span className="h-2 w-2 rounded-full bg-[#00ffc8]" />}
                           </div>
                         </div>
                         <div className={cn(
@@ -382,15 +382,15 @@ export default function MensagensPage() {
           {/* Message Detail */}
           <section className="lg:col-span-2">
             {selectedMessage ? (
-              <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden h-full">
+              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden h-full">
                 {/* Message Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/[0.02]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04] bg-white/[0.02]">
                   <div className="flex items-center gap-4">
                     <div className={cn(
                       "h-12 w-12 rounded-lg flex items-center justify-center",
                       selectedMessage.category === "diretoria" ? "bg-yellow-400/20 text-yellow-400" :
                       selectedMessage.category === "staff" ? "bg-blue-400/20 text-blue-400" :
-                      selectedMessage.category === "mercado" ? "bg-[#1db954]/20 text-[#1db954]" :
+                      selectedMessage.category === "mercado" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
                       "bg-purple-400/20 text-purple-400"
                     )}>
                       <selectedMessage.icon className="h-6 w-6" />
@@ -419,7 +419,7 @@ export default function MensagensPage() {
                         variant="ghost" 
                         size="icon" 
                         onClick={() => handleUnarchive(selectedMessage.id)}
-                        className="h-8 w-8 text-white/50 hover:text-[#1db954] hover:bg-white/5"
+                        className="h-8 w-8 text-white/50 hover:text-[#00ffc8] hover:bg-white/5"
                         title="Desarquivar"
                       >
                         <ArchiveRestore className="h-4 w-4" />
@@ -456,10 +456,10 @@ export default function MensagensPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="mt-8 pt-6 border-t border-white/5 flex items-center gap-3">
+                  <div className="mt-8 pt-6 border-t border-white/[0.04] flex items-center gap-3">
                     <Button 
                       onClick={handleReply}
-                      className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760]"
+                      className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
                     >
                       <Reply className="mr-2 h-4 w-4" />
                       Responder
@@ -476,7 +476,7 @@ export default function MensagensPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl bg-[#141414] border border-white/5 p-12 text-center h-full flex flex-col items-center justify-center">
+              <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center h-full flex flex-col items-center justify-center">
                 <MailOpen className="h-16 w-16 text-white/20 mb-4" />
                 <h3 className="font-semibold text-white">Nenhuma mensagem selecionada</h3>
                 <p className="text-sm text-white/50 mt-2">
@@ -501,8 +501,8 @@ export default function MensagensPage() {
           
           {replySent ? (
             <div className="py-8 text-center">
-              <div className="h-16 w-16 mx-auto rounded-full bg-[#1db954]/20 flex items-center justify-center mb-4">
-                <Send className="h-8 w-8 text-[#1db954]" />
+              <div className="h-16 w-16 mx-auto rounded-full bg-[#00ffc8]/20 flex items-center justify-center mb-4">
+                <Send className="h-8 w-8 text-[#00ffc8]" />
               </div>
               <p className="text-white/70">Sua resposta foi enviada com sucesso!</p>
             </div>
@@ -534,7 +534,7 @@ export default function MensagensPage() {
                 <Button 
                   onClick={handleSendReply}
                   disabled={!replyText.trim()}
-                  className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-50"
+                  className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   Enviar

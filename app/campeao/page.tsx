@@ -36,7 +36,7 @@ interface Particle {
 
 function useConfetti(count = 80): Particle[] {
   return useMemo(() => {
-    const colors = ["#1db954", "#fbbf24", "#ef4444", "#3b82f6", "#a855f7", "#fff"]
+    const colors = ["#00ffc8", "#fbbf24", "#ef4444", "#3b82f6", "#a855f7", "#fff"]
     return Array.from({ length: count }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
@@ -117,7 +117,7 @@ export default function CampeaoPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white/40 text-sm">
+      <div className="min-h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
@@ -230,7 +230,7 @@ export default function CampeaoPage() {
 
           {/* Conquista */}
           <div className="flex flex-wrap items-center justify-center gap-3 max-w-2xl">
-            <div className="flex items-center gap-3 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-5 py-2.5 backdrop-blur-sm">
+            <div className="flex items-center gap-3 rounded-full border border-[#ffd700]/30 bg-[#ffd700]/10 px-5 py-2.5 backdrop-blur-sm">
               <Medal className="h-4 w-4 text-yellow-400" />
               <span className="text-sm font-bold text-white">{competitionName}</span>
               <span className="text-xs text-yellow-400/80 tracking-wider">{seasonLabel}</span>
@@ -240,7 +240,7 @@ export default function CampeaoPage() {
           {/* Estatísticas da temporada — só exibe se houver stats reais */}
           {stats.won > 0 || stats.drawn > 0 || stats.lost > 0 || stats.goalsFor > 0 ? (
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl w-full">
-              <Stat label="VITÓRIAS" value={String(stats.won)} icon={Star} color="#1db954" />
+              <Stat label="VITÓRIAS" value={String(stats.won)} icon={Star} color="#00ffc8" />
               <Stat label="EMPATES" value={String(stats.drawn)} icon={Star} color="#eab308" />
               <Stat label="DERROTAS" value={String(stats.lost)} icon={Star} color="#ef4444" />
               <Stat label="GOLS" value={String(stats.goalsFor)} icon={Star} color="#3b82f6" />

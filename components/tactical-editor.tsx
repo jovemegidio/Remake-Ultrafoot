@@ -21,102 +21,102 @@ type Position = {
   photo?: string
 }
 
-// Formacoes predefinidas - EA FC style
+// Formacoes predefinidas - EA FC style (coordenadas para campo 100x133)
 const FORMATIONS: Record<string, { name: string; positions: { pos: string; x: number; y: number }[] }> = {
   "4-3-3": {
     name: "4-3-3",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "VOL", x: 50, y: 55 },
-      { pos: "MEI", x: 75, y: 45 },
-      { pos: "MEI", x: 25, y: 45 },
-      { pos: "PD", x: 78, y: 20 },
-      { pos: "ATA", x: 50, y: 12 },
-      { pos: "PE", x: 22, y: 20 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "VOL", x: 50, y: 70 },
+      { pos: "MEI", x: 75, y: 55 },
+      { pos: "MEI", x: 25, y: 55 },
+      { pos: "PD", x: 78, y: 25 },
+      { pos: "ATA", x: 50, y: 15 },
+      { pos: "PE", x: 22, y: 25 },
     ],
   },
   "4-4-2": {
     name: "4-4-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "MD", x: 85, y: 48 },
-      { pos: "VOL", x: 60, y: 52 },
-      { pos: "VOL", x: 40, y: 52 },
-      { pos: "ME", x: 15, y: 48 },
-      { pos: "ATA", x: 60, y: 15 },
-      { pos: "ATA", x: 40, y: 15 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "MD", x: 85, y: 60 },
+      { pos: "VOL", x: 60, y: 65 },
+      { pos: "VOL", x: 40, y: 65 },
+      { pos: "ME", x: 15, y: 60 },
+      { pos: "ATA", x: 60, y: 18 },
+      { pos: "ATA", x: 40, y: 18 },
     ],
   },
   "3-5-2": {
     name: "3-5-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "ZAG", x: 75, y: 75 },
-      { pos: "ZAG", x: 50, y: 78 },
-      { pos: "ZAG", x: 25, y: 75 },
-      { pos: "ALD", x: 90, y: 50 },
-      { pos: "VOL", x: 65, y: 55 },
-      { pos: "MEI", x: 50, y: 42 },
-      { pos: "VOL", x: 35, y: 55 },
-      { pos: "ALE", x: 10, y: 50 },
-      { pos: "ATA", x: 60, y: 15 },
-      { pos: "ATA", x: 40, y: 15 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "ZAG", x: 75, y: 98 },
+      { pos: "ZAG", x: 50, y: 102 },
+      { pos: "ZAG", x: 25, y: 98 },
+      { pos: "ALD", x: 90, y: 62 },
+      { pos: "VOL", x: 65, y: 70 },
+      { pos: "MEI", x: 50, y: 52 },
+      { pos: "VOL", x: 35, y: 70 },
+      { pos: "ALE", x: 10, y: 62 },
+      { pos: "ATA", x: 60, y: 18 },
+      { pos: "ATA", x: 40, y: 18 },
     ],
   },
   "4-2-3-1": {
     name: "4-2-3-1",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "VOL", x: 60, y: 58 },
-      { pos: "VOL", x: 40, y: 58 },
-      { pos: "PD", x: 80, y: 35 },
-      { pos: "MEI", x: 50, y: 32 },
-      { pos: "PE", x: 20, y: 35 },
-      { pos: "ATA", x: 50, y: 12 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "VOL", x: 60, y: 75 },
+      { pos: "VOL", x: 40, y: 75 },
+      { pos: "PD", x: 80, y: 45 },
+      { pos: "MEI", x: 50, y: 40 },
+      { pos: "PE", x: 20, y: 45 },
+      { pos: "ATA", x: 50, y: 15 },
     ],
   },
   "5-3-2": {
     name: "5-3-2",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "ALD", x: 90, y: 62 },
-      { pos: "ZAG", x: 70, y: 75 },
-      { pos: "ZAG", x: 50, y: 78 },
-      { pos: "ZAG", x: 30, y: 75 },
-      { pos: "ALE", x: 10, y: 62 },
-      { pos: "MEI", x: 70, y: 45 },
-      { pos: "VOL", x: 50, y: 52 },
-      { pos: "MEI", x: 30, y: 45 },
-      { pos: "ATA", x: 60, y: 15 },
-      { pos: "ATA", x: 40, y: 15 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "ALD", x: 90, y: 80 },
+      { pos: "ZAG", x: 70, y: 98 },
+      { pos: "ZAG", x: 50, y: 102 },
+      { pos: "ZAG", x: 30, y: 98 },
+      { pos: "ALE", x: 10, y: 80 },
+      { pos: "MEI", x: 70, y: 55 },
+      { pos: "VOL", x: 50, y: 62 },
+      { pos: "MEI", x: 30, y: 55 },
+      { pos: "ATA", x: 60, y: 18 },
+      { pos: "ATA", x: 40, y: 18 },
     ],
   },
   "4-1-4-1": {
     name: "4-1-4-1",
     positions: [
-      { pos: "GOL", x: 50, y: 90 },
-      { pos: "LD", x: 85, y: 72 },
-      { pos: "ZAG", x: 65, y: 75 },
-      { pos: "ZAG", x: 35, y: 75 },
-      { pos: "LE", x: 15, y: 72 },
-      { pos: "VOL", x: 50, y: 60 },
-      { pos: "MD", x: 85, y: 42 },
-      { pos: "MEI", x: 65, y: 38 },
-      { pos: "MEI", x: 35, y: 38 },
-      { pos: "ME", x: 15, y: 42 },
-      { pos: "ATA", x: 50, y: 12 },
+      { pos: "GOL", x: 50, y: 120 },
+      { pos: "LD", x: 85, y: 95 },
+      { pos: "ZAG", x: 65, y: 100 },
+      { pos: "ZAG", x: 35, y: 100 },
+      { pos: "LE", x: 15, y: 95 },
+      { pos: "VOL", x: 50, y: 78 },
+      { pos: "MD", x: 85, y: 52 },
+      { pos: "MEI", x: 65, y: 48 },
+      { pos: "MEI", x: 35, y: 48 },
+      { pos: "ME", x: 15, y: 52 },
+      { pos: "ATA", x: 50, y: 15 },
     ],
   },
 }
@@ -149,7 +149,7 @@ const DEFAULT_BENCH = [
 // Rating color helper
 function getRatingColor(rating: number): string {
   if (rating >= 85) return "from-[#d4af37] to-[#ffd700]" // Gold
-  if (rating >= 80) return "from-[#1db954] to-[#2ecc71]" // Green
+  if (rating >= 80) return "from-[#00ffc8] to-[#2ecc71]" // Green
   if (rating >= 75) return "from-[#3498db] to-[#5dade2]" // Blue
   if (rating >= 70) return "from-[#9b59b6] to-[#bb6bd9]" // Purple
   return "from-[#7f8c8d] to-[#95a5a6]" // Gray
@@ -246,7 +246,9 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
     }
     
     const x = Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100))
-    const y = Math.max(5, Math.min(95, ((clientY - rect.top) / rect.height) * 100))
+    // Converte para coordenadas do sistema 133 (mais alto)
+    const yPercent = ((clientY - rect.top) / rect.height) * 100
+    const y = Math.max(5, Math.min(128, (yPercent / 100) * 133))
     
     setPlayers(prev => prev.map(p => 
       p.id === draggingId ? { ...p, x, y } : p
@@ -265,7 +267,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
   const selectedPlayerData = players.find(p => p.id === selectedPlayer)
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#0a0a0a]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#050508]">
       {/* Header - EA FC style */}
       <header className="flex items-center justify-between h-14 px-6 border-b border-white/10 bg-[#0d0d0d]">
         <div className="flex items-center gap-4">
@@ -295,7 +297,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
               className={cn(
                 "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
                 activeTab === tab
-                  ? "bg-[#1db954] text-black"
+                  ? "bg-[#00ffc8] text-black"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               )}
             >
@@ -317,7 +319,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
           <Button
             size="sm"
             onClick={handleSave}
-            className="bg-[#1db954] text-black hover:bg-[#1ed760] font-bold"
+            className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold"
           >
             <Save className="mr-1 h-3.5 w-3.5" />
             Confirmar
@@ -344,7 +346,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
               </button>
               <button
                 onClick={() => setShowFormationMenu(!showFormationMenu)}
-                className="flex-1 mx-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#1db954]/20 to-[#1db954]/10 border border-[#1db954]/30 text-xl font-black text-white hover:from-[#1db954]/30 hover:to-[#1db954]/20 transition"
+                className="flex-1 mx-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#00ffc8]/20 to-[#00ffc8]/10 border border-[#00ffc8]/30 text-xl font-black text-white hover:from-[#00ffc8]/30 hover:to-[#00ffc8]/20 transition"
               >
                 {formation}
               </button>
@@ -365,7 +367,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                     className={cn(
                       "w-full px-4 py-3 text-sm text-left transition flex items-center justify-between",
                       f === formation 
-                        ? "bg-[#1db954] text-black font-semibold" 
+                        ? "bg-[#00ffc8] text-black font-semibold" 
                         : "text-white/70 hover:bg-white/5"
                     )}
                   >
@@ -384,7 +386,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             <div className="p-3 pb-0">
               <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2 flex items-center justify-between">
                 <span>Titulares</span>
-                <span className="text-[#1db954]">11/11</span>
+                <span className="text-[#00ffc8]">11/11</span>
               </div>
               <div className="space-y-1">
                 {players.map(p => (
@@ -394,7 +396,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all",
                       selectedPlayer === p.id 
-                        ? "bg-[#1db954]/20 border border-[#1db954]/50" 
+                        ? "bg-[#00ffc8]/20 border border-[#00ffc8]/50" 
                         : "hover:bg-white/5 border border-transparent"
                     )}
                   >
@@ -412,7 +414,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-white/40 font-medium">{p.position}</span>
                         {selectedPlayer === p.id && (
-                          <span className="text-[9px] bg-[#1db954]/30 text-[#1db954] px-1.5 rounded">
+                          <span className="text-[9px] bg-[#00ffc8]/30 text-[#00ffc8] px-1.5 rounded">
                             SELECIONADO
                           </span>
                         )}
@@ -467,7 +469,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
 
         {/* Tab: Taticas */}
         {activeTab === "tactics" && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
+          <div className="flex-1 overflow-y-auto p-6 bg-[#050508]">
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="text-center mb-8">
                 <h2 className="text-xl font-bold text-white mb-2">Instrucoes Taticas</h2>
@@ -487,7 +489,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Baixa", "Media", "Alta"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Media" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Media" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -498,7 +500,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Pressao Alta", "Equilibrada", "Recuada"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Equilibrada" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Equilibrada" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -519,7 +521,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Curto", "Misto", "Direto"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Misto" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Misto" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -530,7 +532,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Lento", "Normal", "Rapido"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Normal" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Normal" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -548,7 +550,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   {["Ultra Def.", "Defensivo", "Equilibrado", "Ofensivo", "Ultra Ofen."].map(opt => (
                     <button key={opt} className={cn(
                       "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                      opt === "Equilibrado" ? "bg-[#1db954] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                      opt === "Equilibrado" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                     )}>{opt}</button>
                   ))}
                 </div>
@@ -559,15 +561,15 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                 <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
                   <h3 className="text-sm font-bold text-white mb-4">Largura Defensiva</h3>
                   <div className="flex items-center gap-4">
-                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#1db954]" />
-                    <span className="text-xl font-bold text-[#1db954] w-8">5</span>
+                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#00ffc8]" />
+                    <span className="text-xl font-bold text-[#00ffc8] w-8">5</span>
                   </div>
                 </div>
                 <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
                   <h3 className="text-sm font-bold text-white mb-4">Profundidade</h3>
                   <div className="flex items-center gap-4">
-                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#1db954]" />
-                    <span className="text-xl font-bold text-[#1db954] w-8">5</span>
+                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#00ffc8]" />
+                    <span className="text-xl font-bold text-[#00ffc8] w-8">5</span>
                   </div>
                 </div>
               </div>
@@ -577,7 +579,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
 
         {/* Tab: Atributos */}
         {activeTab === "attributes" && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[#0a0a0a]">
+          <div className="flex-1 overflow-y-auto p-6 bg-[#050508]">
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="text-center mb-8">
                 <h2 className="text-xl font-bold text-white mb-2">Funcoes dos Jogadores</h2>
@@ -596,7 +598,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   ].map(item => (
                     <div key={item.role} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                       <span className="text-xs text-white/60">{item.role}</span>
-                      <span className="text-xs font-bold text-[#1db954]">{item.player}</span>
+                      <span className="text-xs font-bold text-[#00ffc8]">{item.player}</span>
                     </div>
                   ))}
                 </div>
@@ -618,7 +620,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                         <div className="text-sm font-medium text-white">{player.name}</div>
                         <div className="text-[10px] text-white/40">{player.position}</div>
                       </div>
-                      <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1db954] cursor-pointer">
+                      <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ffc8] cursor-pointer">
                         <option>Equilibrado</option>
                         <option>Ofensivo</option>
                         <option>Defensivo</option>
@@ -640,7 +642,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   ].map(item => (
                     <div key={item.label} className="space-y-2">
                       <label className="text-xs text-white/50 block">{item.label}</label>
-                      <select className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1db954] cursor-pointer">
+                      <select className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#00ffc8] cursor-pointer">
                         {item.options.map(opt => (
                           <option key={opt}>{opt}</option>
                         ))}
@@ -655,12 +657,15 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
 
         {/* Center - Pitch (only in formation tab) */}
         {activeTab === "formation" && (
-        <main className="flex-1 flex items-center justify-center p-4 bg-[#0a0a0a] overflow-hidden min-w-0">
+        <main className="flex-1 flex items-center justify-center p-4 bg-[#050508] overflow-auto min-w-0">
           <div
             ref={pitchRef}
-            className="relative w-full max-w-2xl aspect-[3/4] rounded-2xl overflow-hidden select-none shadow-2xl"
+            className="relative w-full max-w-xl rounded-2xl overflow-visible select-none shadow-2xl mx-auto"
             style={{
               background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
+              aspectRatio: "3 / 4",
+              minHeight: "450px",
+              maxHeight: "calc(100vh - 200px)",
             }}
             onMouseMove={draggingId ? handleDrag : undefined}
             onMouseUp={handleDragEnd}
@@ -679,25 +684,38 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             
             {/* Pitch markings */}
             <svg
-              viewBox="0 0 100 100"
+              viewBox="0 0 100 133"
               className="absolute inset-0 h-full w-full"
-              preserveAspectRatio="xMidYMid slice"
+              preserveAspectRatio="none"
             >
-              <g stroke="rgba(255,255,255,0.45)" strokeWidth="0.25" fill="none">
-                <rect x="3" y="3" width="94" height="94" rx="1" />
-                <line x1="3" y1="50" x2="97" y2="50" />
-                <circle cx="50" cy="50" r="10" />
-                <circle cx="50" cy="50" r="0.6" fill="rgba(255,255,255,0.45)" />
-                <rect x="22" y="3" width="56" height="16" />
-                <rect x="36" y="3" width="28" height="6" />
-                <circle cx="50" cy="11" r="0.6" fill="rgba(255,255,255,0.45)" />
-                <path d="M35 19 A 15 15 0 0 0 65 19" />
-                <rect x="22" y="81" width="56" height="16" />
-                <rect x="36" y="91" width="28" height="6" />
-                <circle cx="50" cy="89" r="0.6" fill="rgba(255,255,255,0.45)" />
-                <path d="M35 81 A 15 15 0 0 1 65 81" />
-                <rect x="42" y="0" width="16" height="3" stroke="rgba(255,255,255,0.7)" />
-                <rect x="42" y="97" width="16" height="3" stroke="rgba(255,255,255,0.7)" />
+              <g stroke="rgba(255,255,255,0.4)" strokeWidth="0.3" fill="none">
+                {/* Campo exterior */}
+                <rect x="3" y="3" width="94" height="127" rx="1" />
+                {/* Linha do meio */}
+                <line x1="3" y1="66.5" x2="97" y2="66.5" />
+                {/* Circulo central */}
+                <circle cx="50" cy="66.5" r="12" />
+                <circle cx="50" cy="66.5" r="0.8" fill="rgba(255,255,255,0.4)" />
+                {/* Area grande - topo (ataque) */}
+                <rect x="20" y="3" width="60" height="20" />
+                {/* Area pequena - topo */}
+                <rect x="32" y="3" width="36" height="8" />
+                {/* Ponto do penalti - topo */}
+                <circle cx="50" cy="16" r="0.8" fill="rgba(255,255,255,0.4)" />
+                {/* Arco da area - topo */}
+                <path d="M 35 23 Q 50 30 65 23" />
+                {/* Area grande - baixo (defesa) */}
+                <rect x="20" y="110" width="60" height="20" />
+                {/* Area pequena - baixo */}
+                <rect x="32" y="122" width="36" height="8" />
+                {/* Ponto do penalti - baixo */}
+                <circle cx="50" cy="117" r="0.8" fill="rgba(255,255,255,0.4)" />
+                {/* Arco da area - baixo */}
+                <path d="M 35 110 Q 50 103 65 110" />
+                {/* Gol - topo */}
+                <rect x="40" y="0" width="20" height="3" strokeWidth="0.4" stroke="rgba(255,255,255,0.6)" />
+                {/* Gol - baixo */}
+                <rect x="40" y="130" width="20" height="3" strokeWidth="0.4" stroke="rgba(255,255,255,0.6)" />
               </g>
             </svg>
 
@@ -710,20 +728,20 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   draggingId === p.id && "z-20 scale-110",
                   selectedPlayer === p.id && "z-10"
                 )}
-                style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                style={{ left: `${p.x}%`, top: `${(p.y / 133) * 100}%` }}
                 onMouseDown={() => handleDragStart(p.id)}
                 onTouchStart={() => handleDragStart(p.id)}
               >
                 {/* Selection glow */}
                 {selectedPlayer === p.id && (
-                  <div className="absolute inset-0 -m-3 rounded-full bg-[#1db954]/30 blur-md animate-pulse" />
+                  <div className="absolute inset-0 -m-3 rounded-full bg-[#00ffc8]/30 blur-md animate-pulse" />
                 )}
                 
                 {/* Player circle */}
                 <div
                   className={cn(
                     "relative h-12 w-12 rounded-full flex flex-col items-center justify-center shadow-xl border-[3px] transition-transform",
-                    selectedPlayer === p.id ? "border-[#1db954]" : "border-white/50"
+                    selectedPlayer === p.id ? "border-[#00ffc8]" : "border-white/[0.04]0"
                   )}
                   style={{
                     backgroundColor: team.cor1,
@@ -738,7 +756,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   <div className={cn(
                     "px-2 py-1 rounded-md text-[11px] font-semibold text-center shadow-lg",
                     selectedPlayer === p.id
-                      ? "bg-[#1db954] text-black"
+                      ? "bg-[#00ffc8] text-black"
                       : "bg-black/80 text-white"
                   )}>
                     {p.name}
@@ -816,7 +834,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                     </div>
                     <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                       <div 
-                        className="h-full rounded-full bg-gradient-to-r from-[#1db954] to-[#2ecc71]"
+                        className="h-full rounded-full bg-gradient-to-r from-[#00ffc8] to-[#2ecc71]"
                         style={{ width: `${stat.value}%` }}
                       />
                     </div>

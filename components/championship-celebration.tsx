@@ -219,7 +219,7 @@ export function ChampionshipCelebration({
             animationStage >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}>
             <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-              <div className="text-3xl font-black text-[#1db954]">{stats.wins}</div>
+              <div className="text-3xl font-black text-[#00ffc8]">{stats.wins}</div>
               <div className="text-xs text-white/50">Vitorias</div>
             </div>
             <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
@@ -245,7 +245,7 @@ export function ChampionshipCelebration({
             "flex gap-6 mb-8 transition-all duration-700",
             animationStage >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}>
-            <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-xl p-4 border border-yellow-500/30 flex items-center gap-4">
+            <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-xl p-4 border border-[#ffd700]/30 flex items-center gap-4">
               <Medal className="h-8 w-8 text-yellow-400" />
               <div>
                 <div className="text-[10px] text-yellow-400/60 uppercase tracking-wider">Artilheiro</div>

@@ -22,7 +22,7 @@ export function PageTabs({ tabs, className }: PageTabsProps) {
   return (
     <nav
       className={cn(
-        "flex items-center gap-1 border-b border-white/5 bg-[#0d0d0d]/80 px-4",
+        "flex items-center gap-1 border-b border-white/[0.04] bg-[#0d0d0d]/80 px-4",
         className,
       )}
       aria-label="Sub-navegacao"
@@ -42,7 +42,7 @@ export function PageTabs({ tabs, className }: PageTabsProps) {
           >
             {tab.label}
             {active && (
-              <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[#1db954]" />
+              <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[#00ffc8]" />
             )}
           </Link>
         )

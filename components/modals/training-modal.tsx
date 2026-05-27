@@ -37,7 +37,7 @@ interface TrainingModalProps {
 }
 
 const trainingOptions = [
-  { id: "pace", label: "Ritmo", icon: Zap, color: "text-yellow-500", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/30" },
+  { id: "pace", label: "Ritmo", icon: Zap, color: "text-[#ffd700]", bgColor: "bg-[#ffd700]/10", borderColor: "border-[#ffd700]/30" },
   { id: "shooting", label: "Finalizacao", icon: Target, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/30" },
   { id: "passing", label: "Passe", icon: Footprints, color: "text-blue-500", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/30" },
   { id: "dribbling", label: "Drible", icon: Star, color: "text-purple-500", bgColor: "bg-purple-500/10", borderColor: "border-purple-500/30" },
@@ -99,7 +99,7 @@ export function TrainingModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#141414] border-white/10">
+      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white">Centro de Treinamento</DialogTitle>
           <DialogDescription className="text-white/50">
@@ -119,9 +119,9 @@ export function TrainingModal({
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white">{player.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-yellow-500">{player.overall}</span>
-                    <TrendingUp className="h-4 w-4 text-[#1db954]" />
-                    <span className="text-sm text-[#1db954]">{player.potential}</span>
+                    <span className="text-xl font-bold text-[#ffd700]">{player.overall}</span>
+                    <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
+                    <span className="text-sm text-[#00ffc8]">{player.potential}</span>
                   </div>
                 </div>
                 <div className="text-sm text-white/50">{player.position}</div>
@@ -163,8 +163,8 @@ export function TrainingModal({
 
             {/* Training Info */}
             {selectedTraining && (
-              <div className="p-3 rounded-lg bg-[#1db954]/10 border border-[#1db954]/30">
-                <div className="flex items-center gap-2 text-sm text-[#1db954]">
+              <div className="p-3 rounded-lg bg-[#00ffc8]/10 border border-[#00ffc8]/30">
+                <div className="flex items-center gap-2 text-sm text-[#00ffc8]">
                   <Dumbbell className="h-4 w-4" />
                   <span>O jogador treinara {trainingOptions.find(o => o.id === selectedTraining)?.label} por 1 semana</span>
                 </div>
@@ -176,8 +176,8 @@ export function TrainingModal({
         {step === "training" && (
           <div className="py-12 text-center">
             <div className="animate-bounce">
-              <div className="h-16 w-16 mx-auto rounded-full bg-[#1db954]/20 flex items-center justify-center mb-4">
-                <Dumbbell className="h-8 w-8 text-[#1db954]" />
+              <div className="h-16 w-16 mx-auto rounded-full bg-[#00ffc8]/20 flex items-center justify-center mb-4">
+                <Dumbbell className="h-8 w-8 text-[#00ffc8]" />
               </div>
             </div>
             <div className="text-lg font-medium text-white">Treinando...</div>
@@ -190,17 +190,17 @@ export function TrainingModal({
           <div className="py-8 text-center">
             <div className={cn(
               "h-16 w-16 mx-auto rounded-full flex items-center justify-center mb-4",
-              improvement > 0 ? "bg-[#1db954]/20" : "bg-yellow-500/20"
+              improvement > 0 ? "bg-[#00ffc8]/20" : "bg-[#ffd700]/20"
             )}>
               {improvement > 0 ? (
-                <TrendingUp className="h-8 w-8 text-[#1db954]" />
+                <TrendingUp className="h-8 w-8 text-[#00ffc8]" />
               ) : (
-                <Dumbbell className="h-8 w-8 text-yellow-500" />
+                <Dumbbell className="h-8 w-8 text-[#ffd700]" />
               )}
             </div>
             <div className={cn(
               "text-lg font-medium",
-              improvement > 0 ? "text-[#1db954]" : "text-yellow-500"
+              improvement > 0 ? "text-[#00ffc8]" : "text-[#ffd700]"
             )}>
               {improvement > 0 ? "Treino Concluido!" : "Treino Mantido"}
             </div>
@@ -213,8 +213,8 @@ export function TrainingModal({
             {improvement > 0 && selectedTraining && (
               <div className="flex items-center justify-center gap-2 mt-4 text-lg">
                 <span className="text-white/50">{getAttributeValue(selectedTraining)}</span>
-                <TrendingUp className="h-4 w-4 text-[#1db954]" />
-                <span className="text-[#1db954] font-bold">{getAttributeValue(selectedTraining) + improvement}</span>
+                <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
+                <span className="text-[#00ffc8] font-bold">{getAttributeValue(selectedTraining) + improvement}</span>
               </div>
             )}
           </div>
@@ -229,14 +229,14 @@ export function TrainingModal({
               <Button 
                 onClick={handleStartTraining} 
                 disabled={!selectedTraining}
-                className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-50"
+                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
               >
                 Iniciar Treino
               </Button>
             </>
           )}
           {step === "result" && (
-            <Button onClick={handleConfirm} className="bg-[#1db954] text-black hover:bg-[#1ed760]">
+            <Button onClick={handleConfirm} className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]">
               Concluir
             </Button>
           )}

@@ -533,7 +533,7 @@ export function ControllerToolbar({ actions, controller, className, visible }: C
   
   return (
     <div className={cn(
-      "flex items-center gap-6 px-4 py-2 bg-[#0a0a0a]/95 backdrop-blur-sm border-t border-white/5",
+      "flex items-center gap-6 px-4 py-2 bg-[#050508]/95 backdrop-blur-sm border-t border-white/[0.04]",
       className
     )}>
       {actions.map((action, i) => (
@@ -573,7 +573,7 @@ export function HeaderControls({ controller, className, forceVisible }: HeaderCo
       <ControllerButton button="LB" controller={activeController} size="xs" showLabel={false} />
       <div className="flex items-center gap-1">
         <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-        <div className="w-1.5 h-1.5 rounded-full bg-[#1db954]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#00ffc8]" />
         <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
       </div>
       <ControllerButton button="RB" controller={activeController} size="xs" showLabel={false} />
@@ -646,7 +646,7 @@ export function ControllerStatus({ connected, controllerType, className }: Contr
     <div className={cn("flex items-center gap-2", className)}>
       <div className={cn(
         "w-2 h-2 rounded-full animate-pulse",
-        "bg-[#1db954]"
+        "bg-[#00ffc8]"
       )} />
       <div className="w-4 h-4 flex items-center justify-center">
         {controllerType === "playstation" ? (

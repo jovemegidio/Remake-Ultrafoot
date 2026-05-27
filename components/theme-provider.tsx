@@ -22,8 +22,8 @@ const themePresets: Record<Exclude<ThemeColor, "team">, ThemeConfig> = {
   },
   green: {
     name: "Spotify Green",
-    primary: "#1db954",
-    accent: "#1ed760",
+    primary: "#00ffc8",
+    accent: "#00c8ff",
     primaryOklch: "oklch(0.65 0.20 145)",
     accentOklch: "oklch(0.75 0.22 140)"
   },

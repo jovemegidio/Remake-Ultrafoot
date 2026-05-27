@@ -257,15 +257,14 @@ export default function NovoJogoPage() {
           
           <div className="flex items-center gap-3">
             <Image
-              src={getLogoUrl()}
-              alt="ULTRAFOOT"
-              width={40}
-              height={40}
-              className="drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+              src="/brand/ultrafoot-logo.png"
+              alt="Logo"
+              width={200}
+              height={50}
+              className="drop-shadow-[0_0_20px_rgba(16,185,129,0.3)] h-10 w-auto object-contain"
               unoptimized
             />
             <div className="hidden sm:block">
-              <div className="text-xs font-bold tracking-[0.3em] text-emerald-400">ULTRAFOOT</div>
               <div className="text-[10px] tracking-[0.2em] text-white/30">CAREER MODE</div>
             </div>
           </div>
@@ -390,7 +389,7 @@ export default function NovoJogoPage() {
               <div className="text-2xl">{activeDivision.flag}</div>
               <div>
                 <h2 className="text-lg font-bold text-white">{activeDivision.label}</h2>
-                <p className="text-xs text-white/40">{activeDivision.country} • {activeDivision.teams.length} clubes</p>
+                <p className="text-xs text-white/40">{activeDivision.country} �� {activeDivision.teams.length} clubes</p>
               </div>
             </div>
           </div>

@@ -171,7 +171,7 @@ export default function EstatisticasPage() {
   }, [matchResults, userTeam.curto])
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -185,18 +185,18 @@ export default function EstatisticasPage() {
         </div>
 
         {/* User Team Stats Summary */}
-        <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-white/5">
+        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.04]">
             <TeamCrest team={userTeam} size="sm" />
             <span className="font-semibold text-white">{userTeam.nome}</span>
             <span className="text-xs text-white/50">- Resumo da Temporada</span>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
-            <StatCard label="Gols Marcados" value={userTeamStatsLive.goalsScored} icon={Target} color="text-[#1db954]" />
+            <StatCard label="Gols Marcados" value={userTeamStatsLive.goalsScored} icon={Target} color="text-[#00ffc8]" />
             <StatCard label="Gols Sofridos" value={userTeamStatsLive.goalsConceded} icon={Target} color="text-red-500" />
             <StatCard label="Clean Sheets" value={userTeamStatsLive.cleanSheets} icon={Shirt} color="text-blue-500" />
-            <StatCard label="Vitorias" value={userTeamStatsLive.wins} icon={Trophy} color="text-yellow-500" />
+            <StatCard label="Vitorias" value={userTeamStatsLive.wins} icon={Trophy} color="text-[#ffd700]" />
             <StatCard label="Empates" value={userTeamStatsLive.draws} icon={TrendingUp} color="text-white/50" />
             <StatCard label="Derrotas" value={userTeamStatsLive.losses} icon={AlertTriangle} color="text-red-400" />
           </div>
@@ -267,7 +267,7 @@ export default function EstatisticasPage() {
                 { key: "matches", label: "Jogos", icon: Shirt },
               ]}
               primaryColumn="yellows"
-              primaryColor="text-yellow-500"
+              primaryColor="text-[#ffd700]"
             />
           </TabsContent>
 
@@ -309,7 +309,7 @@ function LeaderboardTable({
   data, 
   columns,
   primaryColumn,
-  primaryColor = "text-[#1db954]"
+  primaryColor = "text-[#00ffc8]"
 }: { 
   title: string;
   data: { pos: number; name: string; team: string; isUser?: boolean; [key: string]: string | number | boolean | undefined }[];
@@ -318,14 +318,14 @@ function LeaderboardTable({
   primaryColor?: string;
 }) {
   return (
-    <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5">
-        <Award className="h-4 w-4 text-yellow-500" />
+    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
+        <Award className="h-4 w-4 text-[#ffd700]" />
         <span className="font-semibold text-white">{title}</span>
       </div>
 
       {/* Header */}
-      <div className="grid grid-cols-[40px_1fr_60px_repeat(3,60px)] gap-2 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider border-b border-white/5 bg-white/[0.02]">
+      <div className="grid grid-cols-[40px_1fr_60px_repeat(3,60px)] gap-2 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider border-b border-white/[0.04] bg-white/[0.02]">
         <span className="text-center">#</span>
         <span>Jogador</span>
         <span className="text-center">Time</span>
@@ -343,12 +343,12 @@ function LeaderboardTable({
               key={row.pos}
               className={cn(
                 "grid grid-cols-[40px_1fr_60px_repeat(3,60px)] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02]",
-                row.isUser && "bg-[#1db954]/10 border-l-2 border-[#1db954]"
+                row.isUser && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]"
               )}
             >
               <span className={cn(
                 "text-center text-sm font-medium",
-                row.pos <= 3 ? "text-yellow-500" : "text-white/50"
+                row.pos <= 3 ? "text-[#ffd700]" : "text-white/50"
               )}>
                 {row.pos <= 3 ? (
                   <div className="flex items-center justify-center">
@@ -368,7 +368,7 @@ function LeaderboardTable({
                 )}>
                   {row.name}
                 </span>
-                {row.isUser && <Star className="h-3 w-3 text-yellow-500 shrink-0" />}
+                {row.isUser && <Star className="h-3 w-3 text-[#ffd700] shrink-0" />}
               </div>
 
               <div className="flex items-center justify-center">
@@ -400,14 +400,14 @@ function SquadStatsTable({
   data: { id: number; name: string; position: string; matches: number; goals: number; assists: number; yellows: number; reds: number; rating: number; cleanSheets?: number }[]
 }) {
   return (
-    <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5">
-        <Users className="h-4 w-4 text-[#1db954]" />
+    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
+        <Users className="h-4 w-4 text-[#00ffc8]" />
         <span className="font-semibold text-white">Estatisticas do Elenco</span>
       </div>
 
       {/* Header */}
-      <div className="grid grid-cols-[1fr_60px_50px_50px_50px_50px_50px_60px] gap-2 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider border-b border-white/5 bg-white/[0.02]">
+      <div className="grid grid-cols-[1fr_60px_50px_50px_50px_50px_50px_60px] gap-2 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider border-b border-white/[0.04] bg-white/[0.02]">
         <span>Jogador</span>
         <span className="text-center">Pos</span>
         <span className="text-center">J</span>
@@ -428,15 +428,15 @@ function SquadStatsTable({
             <span className="text-sm text-white font-medium">{player.name}</span>
             <span className="text-center text-xs text-white/50">{player.position}</span>
             <span className="text-center text-sm text-white/70 tabular-nums">{player.matches}</span>
-            <span className="text-center text-sm text-[#1db954] tabular-nums font-semibold">{player.goals}</span>
+            <span className="text-center text-sm text-[#00ffc8] tabular-nums font-semibold">{player.goals}</span>
             <span className="text-center text-sm text-blue-400 tabular-nums">{player.assists}</span>
-            <span className="text-center text-sm text-yellow-500 tabular-nums">{player.yellows}</span>
+            <span className="text-center text-sm text-[#ffd700] tabular-nums">{player.yellows}</span>
             <span className="text-center text-sm text-red-500 tabular-nums">{player.reds}</span>
             <span className={cn(
               "text-center text-sm font-bold tabular-nums",
-              player.rating >= 7.5 ? "text-[#1db954]" :
+              player.rating >= 7.5 ? "text-[#00ffc8]" :
               player.rating >= 7.0 ? "text-lime-400" :
-              player.rating >= 6.5 ? "text-yellow-500" : "text-orange-500"
+              player.rating >= 6.5 ? "text-[#ffd700]" : "text-orange-500"
             )}>
               {player.rating.toFixed(1)}
             </span>
