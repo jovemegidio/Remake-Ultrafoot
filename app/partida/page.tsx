@@ -17,8 +17,6 @@ import {
   TrendingDown,
   Minus,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
-import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
 import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
@@ -336,17 +334,15 @@ export default function PartidaPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
   }
-
+  
   return (
-    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-      <GameSidebar />
-      <GameHeader team={userTeam} />
-
+    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
+      
       {/* Main Content */}
       <main className="flex-1 relative overflow-hidden">
         {/* Background with light rays */}
