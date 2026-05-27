@@ -7,36 +7,42 @@
    EA FC 26 PREMIUM DESIGN SYSTEM
    ============================================ */
 
-/* Custom Scrollbar Styles - EA FC Teal Accent */
+/* ============================================
+   SCROLLBAR STYLES - EA FC PREMIUM
+   ============================================ */
+
+/* Scrollbar fina padrao - Vertical e Horizontal */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 255, 200, 0.3) rgba(255, 255, 255, 0.03);
+  scrollbar-color: rgba(0, 255, 200, 0.25) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(0, 255, 200, 0.4) 0%, rgba(0, 200, 255, 0.3) 100%);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 200, 0.1);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(0, 255, 200, 0.6) 0%, rgba(0, 200, 255, 0.5) 100%);
+  box-shadow: 0 0 8px rgba(0, 255, 200, 0.3);
 }
 
 .scrollbar-thin::-webkit-scrollbar-corner {
   background: transparent;
 }
 
+/* Scrollbar escondida */
 .scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -46,35 +52,42 @@
   display: none;
 }
 
-/* Scrollbar estilo EA FC - Teal/Cyan */
+/* Scrollbar estilo EA FC Premium - com glow */
 .scrollbar-game {
   scrollbar-width: thin;
-  scrollbar-color: #00ffc8 rgba(255, 255, 255, 0.03);
+  scrollbar-color: #00ffc8 rgba(0, 0, 0, 0.3);
 }
 
 .scrollbar-game::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 .scrollbar-game::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .scrollbar-game::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #00ffc8 0%, #00c8ff 100%);
-  border-radius: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 6px rgba(0, 255, 200, 0.4);
 }
 
 .scrollbar-game::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #00ffdc 0%, #00dcff 100%);
+  background: linear-gradient(180deg, #33ffd4 0%, #33d4ff 100%);
+  box-shadow: 0 0 12px rgba(0, 255, 200, 0.6);
 }
 
-/* Scrollbar horizontal */
+.scrollbar-game::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Scrollbar horizontal especifica */
 .scrollbar-horizontal {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 255, 200, 0.4) rgba(255, 255, 255, 0.03);
+  scrollbar-color: rgba(0, 255, 200, 0.35) transparent;
 }
 
 .scrollbar-horizontal::-webkit-scrollbar {
@@ -82,21 +95,60 @@
 }
 
 .scrollbar-horizontal::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
-  margin: 0 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  margin: 0 4px;
 }
 
 .scrollbar-horizontal::-webkit-scrollbar-thumb {
   background: linear-gradient(90deg, #00ffc8 0%, #00c8ff 100%);
-  border-radius: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
 }
 
 .scrollbar-horizontal::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(90deg, #00ffdc 0%, #00dcff 100%);
+  background: linear-gradient(90deg, #33ffd4 0%, #33d4ff 100%);
+  box-shadow: 0 0 8px rgba(0, 255, 200, 0.5);
 }
 
-/* Hide scrollbar class */
+/* Scrollbar premium - maior e mais visivel */
+.scrollbar-premium {
+  scrollbar-width: auto;
+  scrollbar-color: #00ffc8 rgba(0, 0, 0, 0.4);
+}
+
+.scrollbar-premium::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-premium::-webkit-scrollbar-track {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.scrollbar-premium::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00ffc8 0%, #00b8a9 50%, #00c8ff 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 200, 0.2);
+  box-shadow: 
+    0 0 8px rgba(0, 255, 200, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.scrollbar-premium::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #33ffd4 0%, #00d4b8 50%, #33d4ff 100%);
+  box-shadow: 
+    0 0 16px rgba(0, 255, 200, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.scrollbar-premium::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Scrollbar oculta mas funcional */
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -104,6 +156,35 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Estilo global para todos os elementos com overflow */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 200, 0.25) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0, 255, 200, 0.35) 0%, rgba(0, 200, 255, 0.25) 100%);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(0, 255, 200, 0.5) 0%, rgba(0, 200, 255, 0.4) 100%);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 :root {
