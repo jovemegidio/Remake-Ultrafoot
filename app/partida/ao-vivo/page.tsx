@@ -43,6 +43,7 @@ import {
 import { LivePitch } from "@/components/match/live-pitch"
 import { SubstitutionModal, type MatchPlayer } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
+import { PostMatchPress } from "@/components/match/post-match-press"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock players - usados como elenco padrão quando não houver squad real
@@ -396,6 +397,7 @@ export default function MatchCenterPage() {
 
   // Modal de fim
   const [showResult, setShowResult] = useState(false)
+  const [showPressConference, setShowPressConference] = useState(false)
   const [isLeagueChampion, setIsLeagueChampion] = useState(false)
   useEffect(() => {
     if (state.phase === "fulltime" && !showResult) {
@@ -984,7 +986,26 @@ export default function MatchCenterPage() {
         state={state}
         userSide={userSide}
         isChampion={isLeagueChampion}
-        onClose={() => setShowResult(false)}
+        onClose={() => {
+          setShowResult(false)
+          // Abre a coletiva automaticamente apos fechar o resultado
+          setTimeout(() => setShowPressConference(true), 300)
+        }}
+      />
+
+      {/* Coletiva de Imprensa Pos-Jogo */}
+      <PostMatchPress
+        isOpen={showPressConference}
+        onClose={() => setShowPressConference(false)}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+        homeGoals={state.home.goals}
+        awayGoals={state.away.goals}
+        userSide={userSide}
+        onComplete={(moraleImpact) => {
+          // Aplica impacto na moral (se houver game engine)
+          setShowPressConference(false)
+        }}
       />
     </div>
   )
@@ -1013,82 +1034,166 @@ function Scoreboard({
   competition: string
   weather: "sunny" | "cloudy" | "rain"
 }) {
+  const isLive = state.phase === "first" || state.phase === "second"
+
   return (
-    <section className="relative overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
-      {/* Background gradient */}
+    <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b from-[#0f0f12] to-[#0a0a0d] shadow-2xl">
+      {/* Barra superior do campeonato */}
+      <div className="flex items-center justify-between px-6 py-2.5 bg-gradient-to-r from-white/[0.04] via-white/[0.02] to-white/[0.04] border-b border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#00ffc8]" />
+          <span className="text-[10px] font-bold tracking-[0.2em] text-white/60 uppercase">{competition}</span>
+        </div>
+        <div className="flex items-center gap-3 text-[10px] text-white/40">
+          <span className="flex items-center gap-1.5">
+            <Cloud className="h-3 w-3" />
+            {weather === "sunny" ? "Ensolarado" : weather === "cloudy" ? "Nublado" : "Chuva"}
+          </span>
+          <span className="text-white/20">|</span>
+          <span>{homeTeam.estadio_nome}</span>
+        </div>
+      </div>
+
+      {/* Background gradient com cores dos times */}
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-15"
         style={{
-          background: `linear-gradient(90deg, ${homeTeam.cor1}30 0%, transparent 30%, transparent 70%, ${awayTeam.cor1}30 100%)`,
+          background: `linear-gradient(135deg, ${homeTeam.cor1}40 0%, transparent 40%, transparent 60%, ${awayTeam.cor1}40 100%)`,
         }}
       />
 
-      <div className="relative flex items-center justify-between gap-4 px-6 py-5">
+      {/* Conteudo principal */}
+      <div className="relative flex items-center justify-between gap-6 px-8 py-6">
         {/* Mandante */}
-        <div className="flex items-center gap-4 flex-1 min-w-0">
-          <TeamCrest team={homeTeam} size="lg" />
+        <div className="flex items-center gap-5 flex-1 min-w-0">
+          <div className="relative">
+            <div 
+              className="absolute inset-0 blur-xl opacity-40 scale-150"
+              style={{ backgroundColor: homeTeam.cor1 }}
+            />
+            <TeamCrest team={homeTeam} size="lg" />
+          </div>
           <div className="min-w-0">
-            <div className="text-[9px] font-bold tracking-[0.2em] text-white/40 uppercase">
-              MANDANTE
+            <div className="text-[9px] font-bold tracking-[0.25em] text-white/30 uppercase mb-1">
+              CASA
             </div>
-            <div className="text-lg font-black text-white tracking-tight uppercase truncate">
+            <div className="text-xl font-black text-white tracking-tight uppercase truncate">
               {homeTeam.nome}
             </div>
-            <div className="text-[10px] text-white/40">{homeTeam.estadio_nome}</div>
+            <div className="text-[10px] text-white/40 mt-0.5">{homeTeam.cidade}, {homeTeam.estado}</div>
           </div>
         </div>
 
-        {/* Placar */}
-        <div className="flex items-center gap-3 px-4 flex-shrink-0">
-          <div
-            className={cn(
-              "text-5xl font-black leading-none tabular-nums transition-all",
-              state.flash?.type === "goal" && state.flash.side === "home" && "text-[#00ffc8] scale-125",
+        {/* Placar Central - Estilo Broadcast */}
+        <div className="flex flex-col items-center flex-shrink-0">
+          {/* Tempo de jogo */}
+          <div className={cn(
+            "flex items-center gap-2 px-4 py-1.5 rounded-full mb-4",
+            isLive 
+              ? "bg-red-500/20 border border-red-500/30" 
+              : "bg-white/10 border border-white/10"
+          )}>
+            {isLive && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
+            <span className={cn(
+              "text-sm font-bold tabular-nums tracking-wider",
+              isLive ? "text-red-400" : "text-white/60"
+            )}>
+              {state.minute}&apos;
+            </span>
+            {state.phase === "halftime" && (
+              <span className="text-[10px] text-white/50 font-medium">INT</span>
             )}
-          >
-            {state.home.goals}
           </div>
-          <div className="text-lg text-white/30 font-light">×</div>
-          <div
-            className={cn(
-              "text-5xl font-black leading-none tabular-nums transition-all",
-              state.flash?.type === "goal" && state.flash.side === "away" && "text-[#00ffc8] scale-125",
-            )}
-          >
-            {state.away.goals}
+
+          {/* Placar */}
+          <div className="flex items-center gap-4 px-6 py-3 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-sm">
+            <div
+              className={cn(
+                "text-6xl font-black leading-none tabular-nums transition-all duration-300",
+                state.flash?.type === "goal" && state.flash.side === "home" 
+                  ? "text-[#00ffc8] scale-110 drop-shadow-[0_0_20px_rgba(0,255,200,0.5)]" 
+                  : "text-white",
+              )}
+            >
+              {state.home.goals}
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-1 h-1 rounded-full bg-white/30" />
+              <div className="w-1 h-1 rounded-full bg-white/30" />
+            </div>
+            <div
+              className={cn(
+                "text-6xl font-black leading-none tabular-nums transition-all duration-300",
+                state.flash?.type === "goal" && state.flash.side === "away" 
+                  ? "text-[#00ffc8] scale-110 drop-shadow-[0_0_20px_rgba(0,255,200,0.5)]" 
+                  : "text-white",
+              )}
+            >
+              {state.away.goals}
+            </div>
+          </div>
+
+          {/* Fase do jogo */}
+          <div className="mt-3 text-[10px] font-medium text-white/40 uppercase tracking-wider">
+            {state.phase === "pre" && "Aguardando inicio"}
+            {state.phase === "first" && "1o Tempo"}
+            {state.phase === "halftime" && "Intervalo"}
+            {state.phase === "second" && "2o Tempo"}
+            {state.phase === "fulltime" && "Fim de Jogo"}
           </div>
         </div>
 
         {/* Visitante */}
-        <div className="flex items-center gap-4 flex-1 min-w-0 justify-end">
+        <div className="flex items-center gap-5 flex-1 min-w-0 justify-end">
           <div className="text-right min-w-0">
-            <div className="text-[9px] font-bold tracking-[0.2em] text-white/40 uppercase">
-              VISITANTE
+            <div className="text-[9px] font-bold tracking-[0.25em] text-white/30 uppercase mb-1">
+              FORA
             </div>
-            <div className="text-lg font-black text-white tracking-tight uppercase truncate">
+            <div className="text-xl font-black text-white tracking-tight uppercase truncate">
               {awayTeam.nome}
             </div>
-            <div className="text-[10px] text-white/40">
-              {awayTeam.cidade}, {awayTeam.estado}
-            </div>
+            <div className="text-[10px] text-white/40 mt-0.5">{awayTeam.cidade}, {awayTeam.estado}</div>
           </div>
-          <TeamCrest team={awayTeam} size="lg" />
+          <div className="relative">
+            <div 
+              className="absolute inset-0 blur-xl opacity-40 scale-150"
+              style={{ backgroundColor: awayTeam.cor1 }}
+            />
+            <TeamCrest team={awayTeam} size="lg" />
+          </div>
         </div>
       </div>
 
-      {/* Footer info */}
-      <div className="relative flex items-center justify-center gap-3 px-6 py-2 border-t border-white/[0.04] bg-black/20 text-[10px] text-white/40">
-        <span>{competition}</span>
-        <span className="text-white/15">·</span>
-        <span className="capitalize">{weather === "sunny" ? "Ensolarado" : weather === "cloudy" ? "Nublado" : "Chuva"}</span>
-        <span className="text-white/15">·</span>
-        <span className="capitalize">
-          {state.phase === "pre" && "Aguardando início"}
-          {state.phase === "first" && "1º tempo"}
-          {state.phase === "halftime" && "Intervalo"}
-          {state.phase === "second" && "2º tempo"}
-          {state.phase === "fulltime" && "Encerrada"}
-        </span>
+      {/* Barra inferior com estatisticas rapidas */}
+      <div className="relative flex items-center justify-center gap-8 px-6 py-2.5 border-t border-white/[0.06] bg-black/30">
+        <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-white/40">Posse:</span>
+          <span className="font-bold text-white">{state.home.possession}%</span>
+          <div className="w-20 h-1 rounded-full bg-white/10 overflow-hidden mx-1">
+            <div 
+              className="h-full transition-all duration-500"
+              style={{ 
+                width: `${state.home.possession}%`,
+                backgroundColor: homeTeam.cor1 
+              }}
+            />
+          </div>
+          <span className="font-bold text-white">{state.away.possession}%</span>
+        </div>
+        <div className="w-px h-4 bg-white/10" />
+        <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-white/40">Chutes:</span>
+          <span className="font-bold text-white">{state.home.shots}</span>
+          <span className="text-white/30">-</span>
+          <span className="font-bold text-white">{state.away.shots}</span>
+        </div>
+        <div className="w-px h-4 bg-white/10" />
+        <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-white/40">xG:</span>
+          <span className="font-bold text-[#00ffc8]">{state.home.xG.toFixed(1)}</span>
+          <span className="text-white/30">-</span>
+          <span className="font-bold text-[#00ffc8]">{state.away.xG.toFixed(1)}</span>
+        </div>
       </div>
     </section>
   )
