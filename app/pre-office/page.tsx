@@ -185,10 +185,37 @@ export default function PreOfficePage() {
   const hasMatchToday = nextEvent.type === "match" && nextEvent.daysUntil === 0
 
   return (
-    <div className="flex h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-gradient-to-br from-[#0a0a0c] via-[#0d0e10] to-[#0a0a0c]">
+    <div className="relative flex h-screen md:pl-16 pl-0 pb-20 md:pb-0 overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/images/pre-office-bg.png')" }}
+      />
+      
+      {/* Professional Vignette Overlays */}
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/40" />
+      
+      {/* Left vignette - stronger */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+      
+      {/* Top vignette */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent" />
+      
+      {/* Bottom vignette - stronger for footer */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      
+      {/* Radial vignette for cinematic effect */}
+      <div className="absolute inset-0" style={{ 
+        background: "radial-gradient(ellipse 120% 100% at 80% 50%, transparent 40%, rgba(0,0,0,0.6) 100%)" 
+      }} />
+      
+      {/* Corner vignettes */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-transparent to-black/30" />
+      
       <GameSidebar />
 
-      <main className="flex-1 overflow-hidden flex flex-col">
+      <main className="relative z-10 flex-1 overflow-hidden flex flex-col">
         <GameHeader 
           title="Inicio"
           showTeamInfo
