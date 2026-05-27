@@ -401,7 +401,7 @@ export default function MercadoPage() {
                         </div>
                         <div className="text-[10px] text-white/40">{player.position} - {player.age} anos</div>
                       </div>
-                      <span className="text-sm font-bold text-yellow-500">{player.overall}</span>
+                      <span className="text-sm font-bold text-[#ffd700]">{player.overall}</span>
                     </button>
                   ))}
                 </div>
@@ -587,7 +587,7 @@ export default function MercadoPage() {
                   <div className="w-12 h-1 bg-green-500 rounded-full" />
                   <div className="w-12 h-1 bg-green-500/50 rounded-full" />
                 </div>
-                <Star className="h-4 w-4 text-yellow-500" />
+                <Star className="h-4 w-4 text-[#ffd700]" />
               </div>
             </div>
 
@@ -769,7 +769,7 @@ function PlayerListCard({
     >
       {/* Alert indicator */}
       {isNew && (
-        <AlertCircle className="absolute -top-1 -left-1 h-4 w-4 text-yellow-500" />
+        <AlertCircle className="absolute -top-1 -left-1 h-4 w-4 text-[#ffd700]" />
       )}
 
       {/* Player Avatar */}
@@ -818,7 +818,7 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
       <div className="p-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {isNew && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+            {isNew && <AlertCircle className="h-4 w-4 text-[#ffd700]" />}
             <span className="text-white/60 text-sm font-medium">
               {isNew ? "NOVO" : isNotScouted ? "NAO OBSERVADO" : "OBSERVADO"}
             </span>
@@ -1045,7 +1045,7 @@ function ScoutCard({ scout, selected }: { scout: typeof scouts[0], selected: boo
             key={i} 
             className={cn(
               "h-3 w-3",
-              i < scout.stars ? "text-yellow-500 fill-yellow-500" : "text-white/20"
+              i < scout.stars ? "text-[#ffd700] fill-yellow-500" : "text-white/20"
             )} 
           />
         ))}

@@ -551,9 +551,9 @@ export default function CompeticoesPage() {
       status: currentWeek > 0 ? t.common.inProgress : t.common.onTrack,
       userPosition: userPosition > 0 ? userPosition : null,
       icon: Trophy,
-      color: "text-yellow-500",
-      bgColor: "bg-yellow-500/10",
-      borderColor: "border-yellow-500/30"
+      color: "text-[#ffd700]",
+      bgColor: "bg-[#ffd700]/10",
+      borderColor: "border-[#ffd700]/30"
     },
     {
       id: "copa-do-brasil",
@@ -834,9 +834,9 @@ function CopaBracket({
         )}
 
         {state.champion && (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/30">
-            <Crown className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm font-semibold text-yellow-500">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#ffd700]/20 border border-[#ffd700]/30">
+            <Crown className="h-4 w-4 text-[#ffd700]" />
+            <span className="text-sm font-semibold text-[#ffd700]">
               {t.finances.champion}: {state.champion}
             </span>
           </div>
@@ -849,7 +849,7 @@ function CopaBracket({
             <div className={cn(
               "text-xs uppercase tracking-wider mb-3 text-center font-medium",
               round.isCurrent ? "text-[#00ffc8]" : "text-white/40",
-              round.name === "Final" && "text-yellow-500"
+              round.name === "Final" && "text-[#ffd700]"
             )}>
               {round.name}
             </div>
@@ -1200,7 +1200,7 @@ function StandingsTable({
               )}>
                 {row.team.nome}
               </span>
-              {row.isUser && <Star className="h-3 w-3 text-yellow-500 shrink-0" />}
+              {row.isUser && <Star className="h-3 w-3 text-[#ffd700] shrink-0" />}
             </div>
 
             <span className="text-center text-sm tabular-nums text-white/70">{row.played}</span>

@@ -226,7 +226,7 @@ export default function CentralPage() {
                           <div 
                             className={cn(
                               "h-full rounded-full transition-all",
-                              player.morale >= 80 ? "bg-green-500" : player.morale >= 60 ? "bg-yellow-500" : "bg-red-500"
+                              player.morale >= 80 ? "bg-green-500" : player.morale >= 60 ? "bg-[#ffd700]" : "bg-red-500"
                             )}
                             style={{ width: `${player.morale}%` }}
                           />
@@ -279,7 +279,7 @@ export default function CentralPage() {
                       <div className={cn(
                         "px-2 py-1 rounded-md text-[10px] font-semibold",
                         meeting.status === "urgente" ? "bg-red-500/20 text-red-400" :
-                        meeting.status === "pendente" ? "bg-yellow-500/20 text-yellow-400" :
+                        meeting.status === "pendente" ? "bg-[#ffd700]/20 text-yellow-400" :
                         "bg-green-500/20 text-green-400"
                       )}>
                         {meeting.status}
@@ -469,7 +469,7 @@ export default function CentralPage() {
                         <div className={cn(
                           "h-10 w-10 rounded-lg flex items-center justify-center",
                           issue.severity === "grave" ? "bg-red-500/20" :
-                          issue.severity === "moderada" ? "bg-amber-500/20" : "bg-yellow-500/20"
+                          issue.severity === "moderada" ? "bg-amber-500/20" : "bg-[#ffd700]/20"
                         )}>
                           <AlertTriangle className={cn(
                             "h-5 w-5",
@@ -484,7 +484,7 @@ export default function CentralPage() {
                               "text-[10px] px-1.5 py-0.5 rounded font-medium",
                               issue.severity === "grave" ? "bg-red-500/20 text-red-400" :
                               issue.severity === "moderada" ? "bg-amber-500/20 text-amber-400" :
-                              "bg-yellow-500/20 text-yellow-400"
+                              "bg-[#ffd700]/20 text-yellow-400"
                             )}>
                               {issue.severity}
                             </span>

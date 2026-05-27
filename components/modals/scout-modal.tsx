@@ -41,7 +41,7 @@ interface ScoutModalProps {
 const regions = [
   { id: "brasil", name: "Brasil", icon: "BR", color: "text-green-500", bgColor: "bg-green-500/10" },
   { id: "americas", name: "Americas", icon: "AM", color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  { id: "europa", name: "Europa", icon: "EU", color: "text-yellow-500", bgColor: "bg-yellow-500/10" },
+  { id: "europa", name: "Europa", icon: "EU", color: "text-[#ffd700]", bgColor: "bg-[#ffd700]/10" },
   { id: "asia", name: "Asia & Oceania", icon: "AS", color: "text-red-500", bgColor: "bg-red-500/10" },
 ]
 
@@ -234,7 +234,7 @@ export function ScoutModal({
                         <div className="h-12 w-12 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center text-lg font-bold text-white">
                           {player.name.charAt(0)}
                         </div>
-                        <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-yellow-500 flex items-center justify-center text-xs font-bold text-black">
+                        <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-[#ffd700] flex items-center justify-center text-xs font-bold text-black">
                           {player.overall}
                         </div>
                       </div>
@@ -294,7 +294,7 @@ export function ScoutModal({
                       </div>
                       <div className="text-right mr-4">
                         <div className="text-sm text-white/50">Salario</div>
-                        <div className="font-semibold text-yellow-500">{formatSalary(scout.salary)}/sem</div>
+                        <div className="font-semibold text-[#ffd700]">{formatSalary(scout.salary)}/sem</div>
                       </div>
                       <Button
                         onClick={() => onHireScout?.(scout)}

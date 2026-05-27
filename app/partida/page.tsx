@@ -184,7 +184,7 @@ function KitSelector({
               className={cn(
                 "h-5 w-5 rounded text-[9px] font-bold flex items-center justify-center",
                 result === "W" && "bg-green-500/20 text-green-400",
-                result === "D" && "bg-yellow-500/20 text-yellow-400",
+                result === "D" && "bg-[#ffd700]/20 text-yellow-400",
                 result === "L" && "bg-red-500/20 text-red-400",
               )}
             >
@@ -438,7 +438,7 @@ export default function PreMatchPage() {
 
           <div className="relative flex items-center justify-center gap-8 py-4 border-t border-white/[0.04] bg-black/30">
             <div className="flex items-center gap-2 text-xs">
-              <Star className="h-4 w-4 text-yellow-500" />
+              <Star className="h-4 w-4 text-[#ffd700]" />
               <span className="text-white/40">Prestígio:</span>
               <span className="font-bold text-white">{homeTeam.prestigio}</span>
               <span className="text-white/20 mx-2">vs</span>
@@ -462,8 +462,8 @@ export default function PreMatchPage() {
         </div>
 
         {homeKit === awayKit && (
-          <div className="mb-6 flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-            <span className="text-xs text-yellow-500">
+          <div className="mb-6 flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-[#ffd700]/10 border border-[#ffd700]/30">
+            <span className="text-xs text-[#ffd700]">
               Uniformes similares selecionados. Considere trocar um deles para evitar confusão visual.
             </span>
           </div>

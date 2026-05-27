@@ -79,7 +79,7 @@ export function NegotiationModal({
   const getOfferStatus = () => {
     if (offerPercentage >= 110) return { label: "Excelente", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 95 }
     if (offerPercentage >= 100) return { label: "Justa", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 75 }
-    if (offerPercentage >= 90) return { label: "Razoavel", color: "text-yellow-500", bgColor: "bg-yellow-500", chance: 50 }
+    if (offerPercentage >= 90) return { label: "Razoavel", color: "text-[#ffd700]", bgColor: "bg-[#ffd700]", chance: 50 }
     if (offerPercentage >= 80) return { label: "Baixa", color: "text-orange-500", bgColor: "bg-orange-500", chance: 25 }
     return { label: "Insultuosa", color: "text-red-500", bgColor: "bg-red-500", chance: 5 }
   }
@@ -152,7 +152,7 @@ export function NegotiationModal({
                   teamColor={player.team?.cor1}
                   size="lg" 
                 />
-                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-yellow-500 flex items-center justify-center border-2 border-[#141414]">
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#ffd700] flex items-center justify-center border-2 border-[#141414]">
                   <span className="text-xs font-bold text-black">{player.overall}</span>
                 </div>
               </div>
@@ -220,7 +220,7 @@ export function NegotiationModal({
             <div className={cn(
               "flex items-center gap-3 p-4 rounded-xl border transition-all",
               status.chance >= 75 ? "bg-[#00ffc8]/10 border-[#00ffc8]/30" :
-              status.chance >= 50 ? "bg-yellow-500/10 border-yellow-500/30" :
+              status.chance >= 50 ? "bg-[#ffd700]/10 border-[#ffd700]/30" :
               status.chance >= 25 ? "bg-orange-500/10 border-orange-500/30" :
               "bg-red-500/10 border-red-500/30"
             )}>
@@ -288,7 +288,7 @@ export function NegotiationModal({
                   {/* Success sparkles */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Sparkles className="absolute -top-4 -left-4 h-6 w-6 text-[#00ffc8] animate-pulse" />
-                    <Sparkles className="absolute -top-2 right-0 h-4 w-4 text-yellow-500 animate-pulse" style={{ animationDelay: "200ms" }} />
+                    <Sparkles className="absolute -top-2 right-0 h-4 w-4 text-[#ffd700] animate-pulse" style={{ animationDelay: "200ms" }} />
                     <Sparkles className="absolute bottom-0 -left-2 h-5 w-5 text-[#00ffc8] animate-pulse" style={{ animationDelay: "400ms" }} />
                   </div>
                   

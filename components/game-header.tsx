@@ -221,7 +221,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
               {/* Stats */}
               <div className="p-5 space-y-4">
                 <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2">
-                  <Trophy className="h-3 w-3 text-yellow-500" />
+                  <Trophy className="h-3 w-3 text-[#ffd700]" />
                   Estatisticas da Temporada
                 </div>
 
@@ -234,7 +234,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                     <div className="text-lg font-bold text-[#00ffc8]">{coachData.vitorias}</div>
                     <div className="text-[9px] text-white/40 uppercase">V</div>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="text-center p-3 rounded-lg bg-[#ffd700]/10 border border-[#ffd700]/20">
                     <div className="text-lg font-bold text-yellow-400">{coachData.empates}</div>
                     <div className="text-[9px] text-white/40 uppercase">E</div>
                   </div>

@@ -128,7 +128,7 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold text-white tracking-tight">{userTeam.nome}</h1>
               <div className="flex items-center gap-4 mt-2 text-xs text-white/50">
                 <span className="flex items-center gap-1">
-                  <Star className="h-3 w-3 text-yellow-500" />
+                  <Star className="h-3 w-3 text-[#ffd700]" />
                   Prestigio {userTeam.prestigio}
                 </span>
                 <span className="flex items-center gap-1">
@@ -196,7 +196,7 @@ export default function DashboardPage() {
               <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    <Trophy className="h-4 w-4 text-[#ffd700]" />
                     {t.dashboard.lastResults}
                   </div>
                 </div>
@@ -232,10 +232,10 @@ export default function DashboardPage() {
             <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Target className="h-4 w-4 text-yellow-500" />
+                  <Target className="h-4 w-4 text-[#ffd700]" />
                   {t.dashboard.boardGoals}
                 </div>
-                <span className="text-xs text-white/40">{t.dashboard.satisfaction}: <span className="text-yellow-500 font-semibold">50%</span></span>
+                <span className="text-xs text-white/40">{t.dashboard.satisfaction}: <span className="text-[#ffd700] font-semibold">50%</span></span>
               </div>
               <div className="p-5 grid gap-4 md:grid-cols-2">
                 <GoalCard title={t.dashboard.mainGoal} description="Permanecer na Serie A" progress={userPosition ? Math.max(10, 100 - userPosition * 5) : 50} status={t.common.inProgress} tone="primary" />
@@ -249,7 +249,7 @@ export default function DashboardPage() {
             <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  <Trophy className="h-4 w-4 text-[#ffd700]" />
                   {t.dashboard.standings}
                 </div>
                 <span className="text-[10px] text-white/40">{t.competitions.brasileirao.toUpperCase()}</span>

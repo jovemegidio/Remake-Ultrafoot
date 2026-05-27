@@ -263,7 +263,7 @@ export default function ReunioesPage() {
                         </div>
                         
                         {!canMeet && (
-                          <div className="ml-auto px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                          <div className="ml-auto px-4 py-2 bg-[#ffd700]/10 border border-[#ffd700]/30 rounded-lg">
                             <div className="flex items-center gap-2 text-yellow-400 text-sm">
                               <Clock className="h-4 w-4" />
                               Aguarde para nova reuniao

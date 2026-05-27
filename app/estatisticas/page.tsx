@@ -196,7 +196,7 @@ export default function EstatisticasPage() {
             <StatCard label="Gols Marcados" value={userTeamStatsLive.goalsScored} icon={Target} color="text-[#00ffc8]" />
             <StatCard label="Gols Sofridos" value={userTeamStatsLive.goalsConceded} icon={Target} color="text-red-500" />
             <StatCard label="Clean Sheets" value={userTeamStatsLive.cleanSheets} icon={Shirt} color="text-blue-500" />
-            <StatCard label="Vitorias" value={userTeamStatsLive.wins} icon={Trophy} color="text-yellow-500" />
+            <StatCard label="Vitorias" value={userTeamStatsLive.wins} icon={Trophy} color="text-[#ffd700]" />
             <StatCard label="Empates" value={userTeamStatsLive.draws} icon={TrendingUp} color="text-white/50" />
             <StatCard label="Derrotas" value={userTeamStatsLive.losses} icon={AlertTriangle} color="text-red-400" />
           </div>
@@ -267,7 +267,7 @@ export default function EstatisticasPage() {
                 { key: "matches", label: "Jogos", icon: Shirt },
               ]}
               primaryColumn="yellows"
-              primaryColor="text-yellow-500"
+              primaryColor="text-[#ffd700]"
             />
           </TabsContent>
 
@@ -320,7 +320,7 @@ function LeaderboardTable({
   return (
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
-        <Award className="h-4 w-4 text-yellow-500" />
+        <Award className="h-4 w-4 text-[#ffd700]" />
         <span className="font-semibold text-white">{title}</span>
       </div>
 
@@ -348,7 +348,7 @@ function LeaderboardTable({
             >
               <span className={cn(
                 "text-center text-sm font-medium",
-                row.pos <= 3 ? "text-yellow-500" : "text-white/50"
+                row.pos <= 3 ? "text-[#ffd700]" : "text-white/50"
               )}>
                 {row.pos <= 3 ? (
                   <div className="flex items-center justify-center">
@@ -368,7 +368,7 @@ function LeaderboardTable({
                 )}>
                   {row.name}
                 </span>
-                {row.isUser && <Star className="h-3 w-3 text-yellow-500 shrink-0" />}
+                {row.isUser && <Star className="h-3 w-3 text-[#ffd700] shrink-0" />}
               </div>
 
               <div className="flex items-center justify-center">
@@ -430,13 +430,13 @@ function SquadStatsTable({
             <span className="text-center text-sm text-white/70 tabular-nums">{player.matches}</span>
             <span className="text-center text-sm text-[#00ffc8] tabular-nums font-semibold">{player.goals}</span>
             <span className="text-center text-sm text-blue-400 tabular-nums">{player.assists}</span>
-            <span className="text-center text-sm text-yellow-500 tabular-nums">{player.yellows}</span>
+            <span className="text-center text-sm text-[#ffd700] tabular-nums">{player.yellows}</span>
             <span className="text-center text-sm text-red-500 tabular-nums">{player.reds}</span>
             <span className={cn(
               "text-center text-sm font-bold tabular-nums",
               player.rating >= 7.5 ? "text-[#00ffc8]" :
               player.rating >= 7.0 ? "text-lime-400" :
-              player.rating >= 6.5 ? "text-yellow-500" : "text-orange-500"
+              player.rating >= 6.5 ? "text-[#ffd700]" : "text-orange-500"
             )}>
               {player.rating.toFixed(1)}
             </span>

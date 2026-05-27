@@ -37,7 +37,7 @@ interface TrainingModalProps {
 }
 
 const trainingOptions = [
-  { id: "pace", label: "Ritmo", icon: Zap, color: "text-yellow-500", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/30" },
+  { id: "pace", label: "Ritmo", icon: Zap, color: "text-[#ffd700]", bgColor: "bg-[#ffd700]/10", borderColor: "border-[#ffd700]/30" },
   { id: "shooting", label: "Finalizacao", icon: Target, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/30" },
   { id: "passing", label: "Passe", icon: Footprints, color: "text-blue-500", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/30" },
   { id: "dribbling", label: "Drible", icon: Star, color: "text-purple-500", bgColor: "bg-purple-500/10", borderColor: "border-purple-500/30" },
@@ -119,7 +119,7 @@ export function TrainingModal({
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white">{player.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-yellow-500">{player.overall}</span>
+                    <span className="text-xl font-bold text-[#ffd700]">{player.overall}</span>
                     <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
                     <span className="text-sm text-[#00ffc8]">{player.potential}</span>
                   </div>
@@ -190,17 +190,17 @@ export function TrainingModal({
           <div className="py-8 text-center">
             <div className={cn(
               "h-16 w-16 mx-auto rounded-full flex items-center justify-center mb-4",
-              improvement > 0 ? "bg-[#00ffc8]/20" : "bg-yellow-500/20"
+              improvement > 0 ? "bg-[#00ffc8]/20" : "bg-[#ffd700]/20"
             )}>
               {improvement > 0 ? (
                 <TrendingUp className="h-8 w-8 text-[#00ffc8]" />
               ) : (
-                <Dumbbell className="h-8 w-8 text-yellow-500" />
+                <Dumbbell className="h-8 w-8 text-[#ffd700]" />
               )}
             </div>
             <div className={cn(
               "text-lg font-medium",
-              improvement > 0 ? "text-[#00ffc8]" : "text-yellow-500"
+              improvement > 0 ? "text-[#00ffc8]" : "text-[#ffd700]"
             )}>
               {improvement > 0 ? "Treino Concluido!" : "Treino Mantido"}
             </div>

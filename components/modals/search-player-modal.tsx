@@ -173,7 +173,7 @@ export function SearchPlayerModal({
                       <span className="font-medium text-white truncate group-hover:text-[#00ffc8] transition-colors">
                         {player.name}
                       </span>
-                      <span className="text-xl font-bold text-yellow-500">{player.overall}</span>
+                      <span className="text-xl font-bold text-[#ffd700]">{player.overall}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-white/50 mt-0.5">
                       <TeamCrest team={player.team} size="xs" />

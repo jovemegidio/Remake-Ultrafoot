@@ -55,7 +55,7 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
           title: "Proxima Partida",
           description: "RB Bragantino vs Palmeiras - Rodada 16",
           icon: Trophy,
-          color: "text-yellow-500"
+          color: "text-[#ffd700]"
         })
       }
       

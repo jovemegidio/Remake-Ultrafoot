@@ -184,11 +184,11 @@ export default function ContratosPage() {
           </div>
           
           <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
-            <div className="flex items-center gap-2 text-xs text-yellow-500 mb-2">
+            <div className="flex items-center gap-2 text-xs text-[#ffd700] mb-2">
               <AlertTriangle className="h-4 w-4" />
               Expirando
             </div>
-            <div className="text-2xl font-bold text-yellow-500">{statusCounts.expiring}</div>
+            <div className="text-2xl font-bold text-[#ffd700]">{statusCounts.expiring}</div>
             <div className="text-xs text-white/40 mt-1">nos proximos 6 meses</div>
           </div>
           
@@ -233,7 +233,7 @@ export default function ContratosPage() {
                 onClick={() => setFilter("expiring")}
                 className={cn(
                   "px-3 py-1.5 rounded text-xs font-medium transition-colors",
-                  filter === "expiring" ? "bg-yellow-500/20 text-yellow-500" : "text-white/50 hover:text-white/70"
+                  filter === "expiring" ? "bg-[#ffd700]/20 text-[#ffd700]" : "text-white/50 hover:text-white/70"
                 )}
               >
                 Expirando ({statusCounts.expiring})
@@ -271,7 +271,7 @@ export default function ContratosPage() {
                   className={cn(
                     "grid grid-cols-[1fr_100px_120px_120px_100px_100px] gap-4 px-5 py-4 items-center transition-colors hover:bg-white/[0.02]",
                     status === "expired" && "bg-red-500/5",
-                    status === "expiring" && "bg-yellow-500/5"
+                    status === "expiring" && "bg-[#ffd700]/5"
                   )}
                 >
                   {/* Jogador */}
@@ -301,11 +301,11 @@ export default function ContratosPage() {
                         <Clock className={cn(
                           "h-3 w-3",
                           status === "expired" ? "text-red-500" :
-                          status === "expiring" ? "text-yellow-500" : "text-white/40"
+                          status === "expiring" ? "text-[#ffd700]" : "text-white/40"
                         )} />
                         <span className={cn(
                           status === "expired" ? "text-red-500" :
-                          status === "expiring" ? "text-yellow-500" : "text-white/70"
+                          status === "expiring" ? "text-[#ffd700]" : "text-white/70"
                         )}>
                           {player.weeksRemaining <= 0 
                             ? "Expirado" 
@@ -321,7 +321,7 @@ export default function ContratosPage() {
                     <span className={cn(
                       "px-2 py-1 rounded text-[10px] font-medium",
                       status === "ok" && "bg-[#00ffc8]/20 text-[#00ffc8]",
-                      status === "expiring" && "bg-yellow-500/20 text-yellow-500",
+                      status === "expiring" && "bg-[#ffd700]/20 text-[#ffd700]",
                       status === "expired" && "bg-red-500/20 text-red-500"
                     )}>
                       {status === "ok" ? "Ativo" : status === "expiring" ? "Expirando" : "Expirado"}
@@ -443,7 +443,7 @@ export default function ContratosPage() {
                       <span className={cn(
                         "font-bold",
                         calculateAcceptChance() >= 70 ? "text-[#00ffc8]" :
-                        calculateAcceptChance() >= 40 ? "text-yellow-500" : "text-red-500"
+                        calculateAcceptChance() >= 40 ? "text-[#ffd700]" : "text-red-500"
                       )}>
                         {calculateAcceptChance()}%
                       </span>

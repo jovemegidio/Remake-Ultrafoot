@@ -314,8 +314,8 @@ export default function TreinamentoPage() {
                     <div className="min-w-[120px] text-right">
                       {isTraining ? (
                         <div className="flex items-center gap-2 justify-end">
-                          <Timer className="h-4 w-4 text-yellow-500" />
-                          <span className="text-xs text-yellow-500">
+                          <Timer className="h-4 w-4 text-[#ffd700]" />
+                          <span className="text-xs text-[#ffd700]">
                             {player.training.currentFocus} ({player.training.weeksTrained}/4 sem)
                           </span>
                         </div>

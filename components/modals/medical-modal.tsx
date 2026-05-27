@@ -92,7 +92,7 @@ export function MedicalModal({
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case "leve": return "text-yellow-500"
+      case "leve": return "text-[#ffd700]"
       case "media": return "text-orange-500"
       case "grave": return "text-red-500"
       default: return "text-white/50"
@@ -101,7 +101,7 @@ export function MedicalModal({
 
   const getSeverityBg = (severity: string) => {
     switch (severity) {
-      case "leve": return "bg-yellow-500/10"
+      case "leve": return "bg-[#ffd700]/10"
       case "media": return "bg-orange-500/10"
       case "grave": return "bg-red-500/10"
       default: return "bg-white/5"
@@ -136,7 +136,7 @@ export function MedicalModal({
                 <span className={cn(
                   "text-sm font-bold",
                   player.energy > 70 ? "text-green-500" :
-                  player.energy > 40 ? "text-yellow-500" : "text-red-500"
+                  player.energy > 40 ? "text-[#ffd700]" : "text-red-500"
                 )}>
                   {player.energy}%
                 </span>
@@ -149,7 +149,7 @@ export function MedicalModal({
             <div className={cn(
               "p-4 rounded-lg border",
               getSeverityBg(player.injury.severity),
-              player.injury.severity === "leve" ? "border-yellow-500/30" :
+              player.injury.severity === "leve" ? "border-[#ffd700]/30" :
               player.injury.severity === "media" ? "border-orange-500/30" : "border-red-500/30"
             )}>
               <div className="flex items-center gap-2 mb-3">
@@ -213,7 +213,7 @@ export function MedicalModal({
                           <div className="text-xs text-white/50">{treatment.description}</div>
                         </div>
                         {treatment.cost && (
-                          <div className="text-xs text-yellow-500 font-semibold">
+                          <div className="text-xs text-[#ffd700] font-semibold">
                             R$ {(treatment.cost / 1000).toFixed(0)}K
                           </div>
                         )}

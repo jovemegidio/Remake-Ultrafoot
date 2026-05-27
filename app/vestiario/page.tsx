@@ -55,7 +55,7 @@ const CONVERSATION_OPTIONS = [
     label: "Elogiar",
     description: "Reconhecer bom desempenho",
     impact: { happy: 5, neutral: 2, unhappy: 3 },
-    color: "text-yellow-500"
+    color: "text-[#ffd700]"
   },
   {
     id: "motivate",
@@ -314,7 +314,7 @@ export default function VestiarioPage() {
           <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-white/70">Jogadores Felizes</span>
-              <Smile className="h-5 w-5 text-yellow-500" />
+              <Smile className="h-5 w-5 text-[#ffd700]" />
             </div>
             <div className="text-3xl font-bold text-white mb-2">
               {playersByMorale.Feliz.length + playersByMorale.Motivado.length}

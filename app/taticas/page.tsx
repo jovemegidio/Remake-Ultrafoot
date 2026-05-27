@@ -645,7 +645,7 @@ export default function TaticasPage() {
                   
                   <div className="p-4 bg-white/5 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <AlertTriangle className="h-4 w-4 text-[#ffd700]" />
                       <span className="text-sm font-medium text-white">Impacto no Stamina</span>
                     </div>
                     <div className="text-xs text-white/60">

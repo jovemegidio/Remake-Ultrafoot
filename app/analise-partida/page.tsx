@@ -75,7 +75,7 @@ export default function AnalisePartidaPage() {
 
   const renderRatingBadge = (rating: number) => {
     const color = rating >= 7.5 ? "bg-green-500/20 text-green-400 border-green-500/30" :
-                  rating >= 6 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                  rating >= 6 ? "bg-[#ffd700]/20 text-yellow-400 border-[#ffd700]/30" :
                   "bg-red-500/20 text-red-400 border-red-500/30"
     return (
       <span className={cn("px-3 py-1 rounded-lg border text-lg font-bold", color)}>
@@ -489,7 +489,7 @@ export default function AnalisePartidaPage() {
                         </h3>
                         <div className="space-y-2">
                           {selectedAnalysis.tacticDeviations.map((dev, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 bg-yellow-500/5 rounded-lg border border-yellow-500/20">
+                            <div key={i} className="flex items-center gap-3 p-3 bg-[#ffd700]/5 rounded-lg border border-[#ffd700]/20">
                               <AlertTriangle className="h-4 w-4 text-yellow-400 flex-shrink-0" />
                               <span className="text-sm text-white/80">{dev}</span>
                             </div>

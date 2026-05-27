@@ -344,7 +344,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
                       <div className={cn(
                         "flex-shrink-0 p-2 rounded-full",
                         notification.priority === "urgent" && "bg-red-500/20",
-                        notification.priority === "high" && "bg-yellow-500/20",
+                        notification.priority === "high" && "bg-[#ffd700]/20",
                         !notification.priority || notification.priority === "medium" && "bg-white/10"
                       )}>
                         <NotificationIcon type={notification.type} priority={notification.priority} />

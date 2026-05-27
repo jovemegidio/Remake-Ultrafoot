@@ -230,7 +230,7 @@ export default function CampeaoPage() {
 
           {/* Conquista */}
           <div className="flex flex-wrap items-center justify-center gap-3 max-w-2xl">
-            <div className="flex items-center gap-3 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-5 py-2.5 backdrop-blur-sm">
+            <div className="flex items-center gap-3 rounded-full border border-[#ffd700]/30 bg-[#ffd700]/10 px-5 py-2.5 backdrop-blur-sm">
               <Medal className="h-4 w-4 text-yellow-400" />
               <span className="text-sm font-bold text-white">{competitionName}</span>
               <span className="text-xs text-yellow-400/80 tracking-wider">{seasonLabel}</span>
