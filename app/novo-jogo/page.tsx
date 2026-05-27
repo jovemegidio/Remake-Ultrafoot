@@ -14,6 +14,11 @@ import {
   Trophy,
   Globe,
   MapPin,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  Shirt,
+  TrendingUp,
 } from "lucide-react"
 import {
   serieATeams,
@@ -37,13 +42,13 @@ import {
   mlsTeams,
   ligaMXTeams,
   primeiraLigaTeams,
-  leagueInfo,
 } from "@/lib/international-teams"
 import { teamRating, getPlayersByTeam } from "@/lib/players-data"
 import { useGameManager } from "@/lib/use-game-manager"
 import { TeamCrest } from "@/components/team-crest"
 import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/lib/i18n"
+import { cn } from "@/lib/utils"
 
 interface DivisaoTab {
   key: Divisao
@@ -53,34 +58,23 @@ interface DivisaoTab {
   region: Regiao
   country?: string
   code?: string
+  flag?: string
 }
 
 const DIVISIONS: DivisaoTab[] = [
-  // Brasil
-  { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams, region: "brasil", country: "Brasil", code: "BR" },
-  { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams, region: "brasil", country: "Brasil", code: "BR" },
-  { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams, region: "brasil", country: "Brasil", code: "BR" },
-  { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams, region: "brasil", country: "Brasil", code: "BR" },
-  // Europa
-  { key: "premier_league", label: "Premier League", short: "Premier", teams: premierLeagueTeams, region: "europa", country: "Inglaterra", code: "ENG" },
-  { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams, region: "europa", country: "Espanha", code: "ESP" },
-  { key: "serie_a_ita", label: "Serie A Italia", short: "Serie A ITA", teams: serieAItaTeams, region: "europa", country: "Italia", code: "ITA" },
-  { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams, region: "europa", country: "Alemanha", code: "GER" },
-  { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams, region: "europa", country: "Franca", code: "FRA" },
-  { key: "primeira_liga", label: "Primeira Liga", short: "Portugal", teams: primeiraLigaTeams, region: "europa", country: "Portugal", code: "POR" },
-  // Americas
-  { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams, region: "americas", country: "EUA", code: "USA" },
-  { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams, region: "americas", country: "Mexico", code: "MEX" },
-  // Asia
-  { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams, region: "asia", country: "Arabia Saudita", code: "KSA" },
-]
-
-const REGIONS: { key: Regiao | "all"; label: string; code: string | null }[] = [
-  { key: "all", label: "Todas", code: null },
-  { key: "brasil", label: "Brasil", code: "BR" },
-  { key: "europa", label: "Europa", code: "EU" },
-  { key: "americas", label: "Americas", code: "AM" },
-  { key: "asia", label: "Asia", code: "AS" },
+  { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
+  { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
+  { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
+  { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
+  { key: "premier_league", label: "Premier League", short: "Premier", teams: premierLeagueTeams, region: "europa", country: "Inglaterra", code: "ENG", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams, region: "europa", country: "Espanha", code: "ESP", flag: "🇪🇸" },
+  { key: "serie_a_ita", label: "Serie A Italia", short: "Serie A", teams: serieAItaTeams, region: "europa", country: "Italia", code: "ITA", flag: "🇮🇹" },
+  { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams, region: "europa", country: "Alemanha", code: "GER", flag: "🇩🇪" },
+  { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams, region: "europa", country: "Franca", code: "FRA", flag: "🇫🇷" },
+  { key: "primeira_liga", label: "Primeira Liga", short: "Portugal", teams: primeiraLigaTeams, region: "europa", country: "Portugal", code: "POR", flag: "🇵🇹" },
+  { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams, region: "americas", country: "EUA", code: "USA", flag: "🇺🇸" },
+  { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams, region: "americas", country: "Mexico", code: "MEX", flag: "🇲🇽" },
+  { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams, region: "asia", country: "Arabia Saudita", code: "KSA", flag: "🇸🇦" },
 ]
 
 export default function NovoJogoPage() {
@@ -88,21 +82,15 @@ export default function NovoJogoPage() {
   const { initializeNewGame } = useGameManager()
   const t = useTranslation()
 
-  const regions = [
-    { key: "all" as const, label: t.newGame.filterAll, code: null as string | null },
-    { key: "brasil" as const, label: t.newGame.filterBrazil, code: "BR" as string | null },
-    { key: "europa" as const, label: t.newGame.filterEurope, code: "EU" as string | null },
-    { key: "americas" as const, label: t.newGame.filterAmericas, code: "AM" as string | null },
-    { key: "asia" as const, label: t.newGame.filterAsia, code: "AS" as string | null },
-  ]
-
   const [selectedRegion, setSelectedRegion] = useState<Regiao | "all">("all")
   const [divisao, setDivisao] = useState<Divisao>("serie_a")
   const [search, setSearch] = useState("")
   const [managerName, setManagerName] = useState("")
   const [selected, setSelected] = useState<Team | null>(null)
   const [focusedTeamIndex, setFocusedTeamIndex] = useState(0)
+  const [hoveredTeam, setHoveredTeam] = useState<Team | null>(null)
   const teamGridRef = useRef<HTMLDivElement>(null)
+  const divisionScrollRef = useRef<HTMLDivElement>(null)
 
   const filteredDivisions = useMemo(() => {
     if (selectedRegion === "all") return DIVISIONS
@@ -144,17 +132,16 @@ export default function NovoJogoPage() {
     setFocusedTeamIndex(0)
   }
 
-  // Calcula colunas do grid baseado na largura da janela
   const getGridCols = useCallback(() => {
-    const w = window.innerWidth
-    if (w >= 1536) return 5
-    if (w >= 1280) return 4
-    if (w >= 1024) return 3
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1200
+    if (w >= 1536) return 6
+    if (w >= 1280) return 5
+    if (w >= 1024) return 4
+    if (w >= 768) return 3
     if (w >= 640) return 2
-    return 1
+    return 2
   }, [])
 
-  // Scroll do item focado para dentro da visao
   useEffect(() => {
     const grid = teamGridRef.current
     if (!grid) return
@@ -165,7 +152,6 @@ export default function NovoJogoPage() {
     }
   }, [focusedTeamIndex])
 
-  // Reseta foco quando divisao ou busca mudar
   useEffect(() => {
     setFocusedTeamIndex(0)
   }, [divisao, search])
@@ -174,7 +160,6 @@ export default function NovoJogoPage() {
   useEffect(() => {
     const handleGamepadButton = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
-
       switch (button) {
         case "B":
           router.push("/splash")
@@ -200,7 +185,6 @@ export default function NovoJogoPage() {
           setFocusedTeamIndex(prev => Math.min(teams.length - 1, prev + getGridCols()))
           break
         case "LB": {
-          // Liga anterior
           const currentDivIdx = filteredDivisions.findIndex(d => d.key === divisao)
           const prevDiv = filteredDivisions[currentDivIdx - 1]
           if (prevDiv) {
@@ -210,7 +194,6 @@ export default function NovoJogoPage() {
           break
         }
         case "RB": {
-          // Proxima liga
           const currentDivIdx = filteredDivisions.findIndex(d => d.key === divisao)
           const nextDiv = filteredDivisions[currentDivIdx + 1]
           if (nextDiv) {
@@ -221,211 +204,339 @@ export default function NovoJogoPage() {
         }
       }
     }
-
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
   }, [teams, focusedTeamIndex, divisao, filteredDivisions, router, handleStart, getGridCols])
 
-  return (
-    <main className="h-screen bg-[#080808] text-white antialiased flex flex-col overflow-hidden">
-      <BackgroundFx />
+  const scrollDivisions = (dir: 'left' | 'right') => {
+    if (divisionScrollRef.current) {
+      const scrollAmount = 200
+      divisionScrollRef.current.scrollBy({
+        left: dir === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+  }
 
-      {/* Header */}
-      <header className="relative z-10 flex-shrink-0 flex items-center justify-between border-b border-white/5 px-6 h-14">
-        <button
-          onClick={() => router.push("/splash")}
-          className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </button>
-        <div className="flex items-center">
-          <Image
-            src={getLogoUrl()}
-            alt="Logo"
-            width={36}
-            height={36}
-            unoptimized
-          />
-        </div>
-        <div className="text-[10px] tracking-[0.3em] text-white/30">
-          {t.newGame.title}
+  const previewTeam = hoveredTeam || selected
+
+  return (
+    <main className="h-screen bg-[#050505] text-white antialiased flex flex-col overflow-hidden">
+      {/* Background com gradiente e particulas */}
+      <div className="fixed inset-0 z-0">
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 100% 100%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse 40% 30% at 0% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%)
+            `
+          }}
+        />
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+      </div>
+
+      {/* Header Premium */}
+      <header className="relative z-10 flex-shrink-0 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-4 md:px-8 h-16">
+          <button
+            onClick={() => router.push("/splash")}
+            className="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-all group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center group-hover:bg-white/[0.1] transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+            </div>
+            <span className="hidden sm:inline">Voltar</span>
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <Image
+              src={getLogoUrl()}
+              alt="ULTRAFOOT"
+              width={40}
+              height={40}
+              className="drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+              unoptimized
+            />
+            <div className="hidden sm:block">
+              <div className="text-xs font-bold tracking-[0.3em] text-emerald-400">ULTRAFOOT</div>
+              <div className="text-[10px] tracking-[0.2em] text-white/30">CAREER MODE</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-white/30">
+            <span className="hidden md:inline">{totalTeams} CLUBES</span>
+            <span className="hidden md:inline text-white/10">|</span>
+            <span>{DIVISIONS.length} LIGAS</span>
+          </div>
         </div>
       </header>
 
-      <div className="relative z-10 flex-1 flex flex-col mx-auto w-full max-w-[1600px] px-6 py-4 overflow-hidden">
-        <div className="flex-shrink-0 mb-4">
-          <p className="text-[11px] uppercase tracking-[0.4em] text-white/35">
-            {t.newGame.step}
-          </p>
-          <h1
-            className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight"
-            style={{
-              fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
-            }}
-          >
-            {t.newGame.chooseTeam}
-          </h1>
-          <p className="mt-1 max-w-xl text-xs text-white/50">
-            {t.newGame.teamsAvailable(totalTeams, DIVISIONS.length)}
-          </p>
-        </div>
-
-        <div className="flex-1 grid gap-4 lg:grid-cols-[1fr_360px] overflow-hidden">
-          {/* Team browser */}
-          <section className="flex flex-col overflow-hidden">
-            {/* Region selector */}
-            <div className="flex-shrink-0 mb-3">
-              <div className="flex items-center gap-1 rounded-full bg-white/[0.04] p-1 w-fit">
-                {regions.map(r => (
-                  <button
-                    key={r.key}
-                    onClick={() => handleRegionChange(r.key)}
-                    className={
-                      "rounded-full px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1.5 " +
-                      (r.key === selectedRegion
-                        ? "bg-white text-black"
-                        : "text-white/55 hover:text-white")
-                    }
-                  >
-                    {r.code
-                      ? <CountryCode code={r.code} active={r.key === selectedRegion} />
-                      : <Globe className="h-3 w-3" />
-                    }
-                    {r.label}
-                  </button>
-                ))}
+      {/* Main Content */}
+      <div className="relative z-10 flex-1 flex overflow-hidden">
+        {/* Sidebar - Team Preview */}
+        <aside className="hidden lg:flex flex-col w-[380px] border-r border-white/[0.06] bg-black/20">
+          {previewTeam ? (
+            <TeamPreviewPanel team={previewTeam} isSelected={selected?.curto === previewTeam.curto} />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-24 h-24 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
+                <Shield className="w-12 h-12 text-white/20" />
               </div>
+              <p className="text-sm text-white/40 max-w-[200px]">
+                Selecione um clube para ver os detalhes
+              </p>
+            </div>
+          )}
+        </aside>
+
+        {/* Main Panel */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Filters Bar */}
+          <div className="flex-shrink-0 px-4 md:px-6 py-4 border-b border-white/[0.06] bg-black/30">
+            {/* Region Tabs */}
+            <div className="flex items-center gap-2 mb-4">
+              <RegionTab 
+                active={selectedRegion === "all"} 
+                onClick={() => handleRegionChange("all")}
+                icon={<Globe className="w-3.5 h-3.5" />}
+              >
+                Todas
+              </RegionTab>
+              <RegionTab 
+                active={selectedRegion === "brasil"} 
+                onClick={() => handleRegionChange("brasil")}
+                flag="🇧🇷"
+              >
+                Brasil
+              </RegionTab>
+              <RegionTab 
+                active={selectedRegion === "europa"} 
+                onClick={() => handleRegionChange("europa")}
+                flag="🇪🇺"
+              >
+                Europa
+              </RegionTab>
+              <RegionTab 
+                active={selectedRegion === "americas"} 
+                onClick={() => handleRegionChange("americas")}
+                flag="🌎"
+              >
+                Americas
+              </RegionTab>
+              <RegionTab 
+                active={selectedRegion === "asia"} 
+                onClick={() => handleRegionChange("asia")}
+                flag="🌏"
+              >
+                Asia
+              </RegionTab>
             </div>
 
-            {/* Division tabs */}
-            <div className="flex-shrink-0 mb-3 flex flex-wrap items-center gap-2">
-              <div className="flex flex-wrap items-center gap-1 rounded-xl bg-white/[0.04] p-1 max-w-full overflow-x-auto">
+            {/* League Selector */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => scrollDivisions('left')}
+                className="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              <div 
+                ref={divisionScrollRef}
+                className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-none py-1"
+              >
                 {filteredDivisions.map(d => (
-                  <button
+                  <LeagueChip
                     key={d.key}
-                    onClick={() => {
-                      setDivisao(d.key)
-                      setSelected(null)
-                    }}
-                    className={
-                      "rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition whitespace-nowrap flex items-center gap-1.5 " +
-                      (d.key === divisao
-                        ? "bg-white text-black"
-                        : "text-white/55 hover:text-white hover:bg-white/5")
-                    }
+                    active={d.key === divisao}
+                    onClick={() => { setDivisao(d.key); setSelected(null) }}
+                    flag={d.flag}
+                    count={d.teams.length}
                   >
-                    {d.code && <CountryCode code={d.code} active={d.key === divisao} />}
                     {d.short}
-                    <span className="text-[10px] opacity-60">
-                      {d.teams.length}
-                    </span>
-                  </button>
+                  </LeagueChip>
                 ))}
               </div>
-              <div className="relative flex-1 min-w-[180px]">
+
+              <button 
+                onClick={() => scrollDivisions('right')}
+                className="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              <div className="hidden sm:flex relative ml-2">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                <Input
+                <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder={t.newGame.searchIn(activeDivision.label)}
-                  className="border-white/10 bg-white/[0.03] pl-9 text-sm text-white placeholder:text-white/30 h-9"
+                  placeholder="Buscar clube..."
+                  className="w-48 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] pl-9 pr-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all"
                 />
               </div>
             </div>
+          </div>
 
-            {/* League info bar */}
-            <div className="flex-shrink-0 mb-2 flex items-center gap-4 px-1">
-              <div className="flex items-center gap-2 text-xs text-white/50">
-                <Globe className="h-3.5 w-3.5" />
-                <span>{activeDivision.country}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-white/50">
-                <Trophy className="h-3.5 w-3.5" />
-                <span>{activeDivision.label}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-white/50">
-                <Users className="h-3.5 w-3.5" />
-                <span>{activeDivision.teams.length} times</span>
+          {/* League Header */}
+          <div className="flex-shrink-0 px-4 md:px-6 py-3 flex items-center justify-between bg-gradient-to-r from-white/[0.02] to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">{activeDivision.flag}</div>
+              <div>
+                <h2 className="text-lg font-bold text-white">{activeDivision.label}</h2>
+                <p className="text-xs text-white/40">{activeDivision.country} • {activeDivision.teams.length} clubes</p>
               </div>
             </div>
+          </div>
 
-            {/* Team grid - scrollable */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin pr-2">
-              <div ref={teamGridRef} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                {teams.map((team, idx) => (
-                  <TeamCard
-                    key={team.curto + team.divisao}
-                    team={team}
-                    selected={selected?.curto === team.curto && selected?.divisao === team.divisao}
-                    focused={focusedTeamIndex === idx}
-                    onClick={() => { setSelected(team); setFocusedTeamIndex(idx) }}
-                  />
-                ))}
-                {teams.length === 0 && (
-                  <div className="col-span-full rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-white/40">
-                    {t.newGame.noResults(search)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* Selection panel */}
-          <aside className="flex flex-col overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-white/[0.04] to-white/[0.01]">
-              {selected ? (
-                <div className="flex-1 overflow-y-auto scrollbar-thin">
-                  <SelectedPanel team={selected} />
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-                  <div
-                    aria-hidden
-                    className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5"
-                  >
-                    <Trophy className="h-6 w-6 text-white/30" />
-                  </div>
-                  <p className="text-sm text-white/50">
-                    {t.newGame.selectTeamHint}
+          {/* Teams Grid */}
+          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
+            <div 
+              ref={teamGridRef} 
+              className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+            >
+              {teams.map((team, idx) => (
+                <TeamCard
+                  key={team.curto + team.divisao}
+                  team={team}
+                  selected={selected?.curto === team.curto && selected?.divisao === team.divisao}
+                  focused={focusedTeamIndex === idx}
+                  onClick={() => { setSelected(team); setFocusedTeamIndex(idx) }}
+                  onHover={() => setHoveredTeam(team)}
+                  onLeave={() => setHoveredTeam(null)}
+                />
+              ))}
+              {teams.length === 0 && (
+                <div className="col-span-full rounded-2xl border border-white/[0.06] bg-white/[0.02] p-12 text-center">
+                  <Search className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                  <p className="text-sm text-white/40">
+                    Nenhum clube encontrado para &quot;{search}&quot;
                   </p>
                 </div>
               )}
+            </div>
+          </div>
 
-              {/* Manager + start */}
-              <div className="flex-shrink-0 border-t border-white/5 p-4">
-                <label className="mb-1 block text-[10px] uppercase tracking-[0.3em] text-white/40">
-                  {t.newGame.managerName}
-                </label>
-                <Input
+          {/* Bottom Action Bar */}
+          <div className="flex-shrink-0 border-t border-white/[0.06] bg-black/40 backdrop-blur-xl">
+            <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-4">
+              {/* Mobile Preview */}
+              <div className="lg:hidden flex items-center gap-3 flex-1 min-w-0">
+                {selected ? (
+                  <>
+                    <TeamCrest team={selected} size="lg" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-white truncate">{selected.nome}</div>
+                      <div className="text-xs text-white/40">{selected.cidade}, {selected.pais || selected.estado}</div>
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-sm text-white/40">Selecione um clube</span>
+                )}
+              </div>
+
+              {/* Manager Name Input */}
+              <div className="hidden sm:flex items-center gap-3">
+                <label className="text-xs text-white/40">Tecnico:</label>
+                <input
                   value={managerName}
                   onChange={e => setManagerName(e.target.value)}
-                  placeholder={t.newGame.managerPlaceholder}
+                  placeholder="Seu nome"
                   maxLength={32}
-                  className="mb-3 border-white/10 bg-white/[0.03] text-white placeholder:text-white/30 h-9"
+                  className="w-40 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
-                <button
-                  onClick={handleStart}
-                  disabled={!selected}
-                  className={
-                    "group flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition " +
-                    (selected
-                      ? "bg-white text-black hover:bg-white/90 shadow-[0_8px_30px_rgba(255,255,255,0.18)]"
-                      : "cursor-not-allowed bg-white/5 text-white/30")
-                  }
-                >
-                  <span>{t.newGame.startCareer}</span>
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </button>
-                <p className="mt-2 text-center text-[10px] text-white/30">
-                  {t.newGame.savedLocally}
-                </p>
               </div>
+
+              {/* Start Button */}
+              <button
+                onClick={handleStart}
+                disabled={!selected}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-6 py-3 font-bold text-sm transition-all",
+                  selected
+                    ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-black hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:scale-[1.02] active:scale-[0.98]"
+                    : "bg-white/[0.05] text-white/30 cursor-not-allowed"
+                )}
+              >
+                <span>INICIAR CARREIRA</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
-          </aside>
+          </div>
         </div>
       </div>
     </main>
+  )
+}
+
+function RegionTab({ 
+  children, 
+  active, 
+  onClick, 
+  icon,
+  flag 
+}: { 
+  children: React.ReactNode
+  active: boolean
+  onClick: () => void
+  icon?: React.ReactNode
+  flag?: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+        active 
+          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+          : "text-white/50 hover:text-white hover:bg-white/[0.05]"
+      )}
+    >
+      {flag && <span className="text-sm">{flag}</span>}
+      {icon}
+      {children}
+    </button>
+  )
+}
+
+function LeagueChip({ 
+  children, 
+  active, 
+  onClick, 
+  flag,
+  count 
+}: { 
+  children: React.ReactNode
+  active: boolean
+  onClick: () => void
+  flag?: string
+  count: number
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all",
+        active 
+          ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.15)]" 
+          : "bg-white/[0.05] text-white/60 hover:bg-white/[0.1] hover:text-white"
+      )}
+    >
+      {flag && <span className="text-sm">{flag}</span>}
+      <span>{children}</span>
+      <span className={cn(
+        "px-1.5 py-0.5 rounded text-[10px]",
+        active ? "bg-black/10" : "bg-white/10"
+      )}>
+        {count}
+      </span>
+    </button>
   )
 }
 
@@ -434,11 +545,15 @@ function TeamCard({
   selected,
   focused,
   onClick,
+  onHover,
+  onLeave,
 }: {
   team: Team
   selected: boolean
   focused?: boolean
   onClick: () => void
+  onHover?: () => void
+  onLeave?: () => void
 }) {
   const overall = teamRating(team.nome)
 
@@ -446,201 +561,199 @@ function TeamCard({
     <button
       data-team-card
       onClick={onClick}
-      className={
-        "group relative flex items-center gap-3 overflow-hidden rounded-xl border p-3 text-left transition " +
-        (selected
-          ? "border-white/40 bg-white/[0.06]"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      className={cn(
+        "group relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-200",
+        selected
+          ? "border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
           : focused
-            ? "border-[#1db954]/60 bg-[#1db954]/5 shadow-[0_0_0_2px_rgba(29,185,84,0.25)]"
-            : "border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]")
-      }
+            ? "border-cyan-500/50 bg-cyan-500/10"
+            : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.05]"
+      )}
     >
-      {/* Color accent bar */}
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px] transition-all"
-        style={{ background: team.cor1 }}
+      {/* Team Colors Accent */}
+      <div 
+        className="absolute inset-x-0 top-0 h-1 rounded-t-2xl opacity-80"
+        style={{ 
+          background: `linear-gradient(90deg, ${team.cor1} 0%, ${team.cor2} 100%)` 
+        }}
       />
-      <TeamCrest team={team} size="md" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold text-white">
-            {team.nome}
-          </span>
-          {overall > 0 && (
-            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white/80">
-              {overall}
-            </span>
-          )}
-        </div>
-        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-white/40">
-          <span>{team.pais || team.estado}</span>
-          <span className="text-white/15">·</span>
-          <span className="flex items-center gap-0.5">
-            <Star className="h-2.5 w-2.5" />
-            {team.prestigio}
-          </span>
-        </div>
+
+      {/* Crest */}
+      <div className="relative mb-3">
+        <TeamCrest team={team} size="xl" className="drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]" />
+        {overall > 0 && (
+          <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-lg bg-black/80 border border-white/10 flex items-center justify-center">
+            <span className="text-xs font-bold text-emerald-400">{overall}</span>
+          </div>
+        )}
       </div>
+
+      {/* Team Name */}
+      <div className="text-center w-full">
+        <h3 className="font-bold text-sm text-white truncate">{team.nome}</h3>
+        <p className="text-[10px] text-white/40 truncate mt-0.5">{team.cidade}</p>
+      </div>
+
+      {/* Prestige Stars */}
+      <div className="flex items-center gap-0.5 mt-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star 
+            key={i} 
+            className={cn(
+              "w-2.5 h-2.5",
+              i < Math.round(team.prestigio / 20) 
+                ? "fill-amber-400 text-amber-400" 
+                : "text-white/20"
+            )} 
+          />
+        ))}
+      </div>
+
+      {/* Selection indicator */}
+      {selected && (
+        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+          <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      )}
     </button>
   )
 }
 
-function SelectedPanel({ team }: { team: Team }) {
+function TeamPreviewPanel({ team, isSelected }: { team: Team; isSelected: boolean }) {
   const overall = teamRating(team.nome)
   const players = getPlayersByTeam(team.nome)
   const divisionInfo = DIVISIONS.find(d => d.key === team.divisao)
-  const t = useTranslation()
 
   return (
-    <div
-      className="relative px-5 pb-4 pt-5"
-      style={{
-        backgroundImage: `radial-gradient(ellipse at top, ${team.cor1}30 0%, transparent 65%)`,
-      }}
-    >
-      <div className="flex items-start gap-3">
-        <TeamCrest team={team} size="xl" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
-            {divisionInfo?.code && <CountryCode code={divisionInfo.code} active={false} />}
-            <span>{divisionInfo?.label || team.divisao.replace("_", " ").toUpperCase()}</span>
-          </div>
-          <h2
-            className="mt-0.5 text-xl font-extrabold leading-tight text-white"
-            style={{
-              fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
-            }}
-          >
-            {team.nome}
-          </h2>
-          <p className="mt-0.5 text-xs text-white/45 flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {team.cidade ? `${team.cidade}, ${team.pais || team.estado}` : team.pais || team.estado}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Stat icon={Star} label={t.newGame.prestige} value={team.prestigio.toString()} />
-        <Stat
-          icon={Trophy}
-          label={t.newGame.overall}
-          value={overall > 0 ? overall.toString() : "-"}
-        />
-        <Stat icon={Users} label={t.newGame.fans} value={formatNumber(team.torcida)} />
-        <Stat icon={Wallet} label={t.common.balance} value={formatCurrency(team.saldo)} />
-      </div>
-
-      <div className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
-          <Building2 className="h-3 w-3" />
-          {t.newGame.stadium}
-        </div>
-        <div className="mt-1 text-sm font-medium text-white">
-          {team.estadio_nome || "-"}
-        </div>
-        <div className="mt-0.5 text-[11px] text-white/40">
-          {t.newGame.capacity}: {team.estadio_cap.toLocaleString("pt-BR")}
-        </div>
-      </div>
-
-      {/* Additional info */}
-      <div className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/40">
-          <Globe className="h-3 w-3" />
-          {t.newGame.information}
-        </div>
-        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-          <div>
-            <span className="text-white/40">{t.newGame.country}: </span>
-            <span className="text-white/70">{team.pais || "Brasil"}</span>
-          </div>
-          <div>
-            <span className="text-white/40">{t.newGame.league}: </span>
-            <span className="text-white/70">{divisionInfo?.short || team.divisao}</span>
-          </div>
-          {team.patrocinador && (
-            <div className="col-span-2">
-              <span className="text-white/40">{t.newGame.sponsor}: </span>
-              <span className="text-white/70">{team.patrocinador}</span>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Header with gradient */}
+      <div 
+        className="relative px-6 pt-8 pb-6"
+        style={{
+          background: `linear-gradient(180deg, ${team.cor1}40 0%, transparent 100%)`
+        }}
+      >
+        <div className="flex items-start gap-4">
+          <TeamCrest team={team} size="2xl" className="drop-shadow-[0_8px_30px_rgba(0,0,0,0.5)]" />
+          <div className="flex-1 min-w-0 pt-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">{divisionInfo?.flag}</span>
+              <span className="text-xs font-medium text-white/50 uppercase tracking-wider">{divisionInfo?.label}</span>
             </div>
-          )}
+            <h2 className="text-2xl font-black text-white leading-tight">{team.nome}</h2>
+            <p className="text-sm text-white/50 flex items-center gap-1.5 mt-1">
+              <MapPin className="w-3.5 h-3.5" />
+              {team.cidade}, {team.pais || team.estado}
+            </p>
+          </div>
+        </div>
+
+        {isSelected && (
+          <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-emerald-500 text-black text-xs font-bold">
+            SELECIONADO
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="px-6 py-4 grid grid-cols-2 gap-3">
+        <StatCard 
+          icon={<TrendingUp className="w-4 h-4" />} 
+          label="Overall" 
+          value={overall > 0 ? overall.toString() : "-"}
+          accent
+        />
+        <StatCard 
+          icon={<Star className="w-4 h-4" />} 
+          label="Prestigio" 
+          value={team.prestigio.toString()} 
+        />
+        <StatCard 
+          icon={<Users className="w-4 h-4" />} 
+          label="Torcida" 
+          value={formatNumber(team.torcida)} 
+        />
+        <StatCard 
+          icon={<Wallet className="w-4 h-4" />} 
+          label="Saldo" 
+          value={formatCurrency(team.saldo)} 
+        />
+      </div>
+
+      {/* Stadium */}
+      <div className="px-6 py-3">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <div className="flex items-center gap-2 text-xs text-white/40 mb-2">
+            <Building2 className="w-3.5 h-3.5" />
+            <span className="uppercase tracking-wider">Estadio</span>
+          </div>
+          <div className="text-sm font-semibold text-white">{team.estadio_nome}</div>
+          <div className="text-xs text-white/40 mt-1">
+            Capacidade: {team.estadio_cap.toLocaleString("pt-BR")}
+          </div>
         </div>
       </div>
 
+      {/* Squad Info */}
       {players.length > 0 && (
-        <div className="mt-2 flex items-center justify-between text-[11px] text-white/45">
-          <span>{t.newGame.squad(players.length)}</span>
+        <div className="px-6 py-3">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 mb-2">
+              <Shirt className="w-3.5 h-3.5" />
+              <span className="uppercase tracking-wider">Elenco</span>
+            </div>
+            <div className="text-sm font-semibold text-white">{players.length} jogadores</div>
+          </div>
+        </div>
+      )}
+
+      {/* Sponsor */}
+      {team.patrocinador && (
+        <div className="px-6 py-3 mt-auto">
+          <div className="text-xs text-white/30 text-center">
+            Patrocinador: <span className="text-white/50">{team.patrocinador}</span>
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-function Stat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>
+function StatCard({ 
+  icon, 
+  label, 
+  value, 
+  accent 
+}: { 
+  icon: React.ReactNode
   label: string
   value: string
+  accent?: boolean
 }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-black/20 p-2.5">
-      <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] text-white/40">
-        <Icon className="h-3 w-3" />
-        {label}
+    <div className={cn(
+      "rounded-xl border p-3",
+      accent 
+        ? "border-emerald-500/20 bg-emerald-500/5" 
+        : "border-white/[0.06] bg-white/[0.02]"
+    )}>
+      <div className={cn(
+        "flex items-center gap-1.5 text-xs mb-1",
+        accent ? "text-emerald-400/60" : "text-white/40"
+      )}>
+        {icon}
+        <span className="uppercase tracking-wider">{label}</span>
       </div>
-      <div
-        className="mt-0.5 text-base font-semibold text-white"
-        style={{
-          fontFamily: "var(--font-oswald), var(--font-geist), sans-serif",
-        }}
-      >
+      <div className={cn(
+        "text-lg font-bold",
+        accent ? "text-emerald-400" : "text-white"
+      )}>
         {value}
       </div>
     </div>
-  )
-}
-
-function CountryCode({ code, active }: { code: string; active: boolean }) {
-  return (
-    <span
-      className={
-        "inline-flex shrink-0 items-center justify-center rounded px-1 py-0.5 text-[8px] font-black tracking-widest uppercase leading-none border " +
-        (active
-          ? "border-black/20 bg-black/10 text-black"
-          : "border-white/15 bg-white/5 text-white/50")
-      }
-    >
-      {code}
-    </span>
-  )
-}
-
-function BackgroundFx() {
-  return (
-    <>
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse at 30% 10%, oklch(0.32 0.10 195 / 0.18) 0%, transparent 55%)," +
-            "radial-gradient(ellipse at 80% 90%, oklch(0.30 0.18 140 / 0.12) 0%, transparent 60%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      />
-    </>
   )
 }

@@ -285,39 +285,15 @@ export function useGamepadFocusable(
 ) {
   const context = useContext(GamepadContext)
   
-  // Armazena onSelect e context em refs para manter estabilidade
-  const onSelectRef = useRef(onSelect)
-  const contextRef = useRef(context)
-  onSelectRef.current = onSelect
-  contextRef.current = context
-  
-  // Cria uma callback estavel que sempre chama a versao mais recente de onSelect
-  const stableOnSelect = useCallback(() => {
-    onSelectRef.current?.()
-  }, [])
-  
-  // Usa useRef para armazenar o elemento de forma estavel
-  const elementRef = useRef<HTMLElement | null>(null)
-  
   useEffect(() => {
-    const ctx = contextRef.current
-    const element = ref.current
+    if (!context || !ref.current) return
     
-    if (!ctx || !element) return
-    
-    // Evita re-registros se o elemento ja foi registrado
-    if (elementRef.current === element) return
-    elementRef.current = element
-    
-    ctx.registerFocusableElement(id, element, stableOnSelect)
+    context.registerFocusableElement(id, ref.current, onSelect)
     
     return () => {
-      ctx.unregisterFocusableElement(id)
-      elementRef.current = null
+      context.unregisterFocusableElement(id)
     }
-  // Usa apenas id como dependencia - element e context sao gerenciados via refs
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, stableOnSelect])
+  }, [context, id, ref, onSelect])
 
   const isFocused = context?.focusedElementId === id
 
