@@ -27,7 +27,6 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -507,7 +506,7 @@ export default function PartidaAoVivoPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando partida...
       </div>
     )
@@ -525,10 +524,8 @@ export default function PartidaAoVivoPage() {
   return (
     <div className={cn(
       "min-h-screen flex flex-col",
-      "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]",
-      !isMatchInProgress && "md:pl-16 pl-0 pb-20 md:pb-0"
+      "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]"
     )}>
-      {!isMatchInProgress && <GameSidebar />}
 
       {/* Conteudo Principal - Estilo EA FC */}
       <div className="flex-1 flex flex-col relative overflow-y-auto">
