@@ -657,12 +657,15 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
 
         {/* Center - Pitch (only in formation tab) */}
         {activeTab === "formation" && (
-        <main className="flex-1 flex items-center justify-center p-4 bg-[#050508] overflow-hidden min-w-0">
+        <main className="flex-1 flex items-center justify-center p-4 bg-[#050508] overflow-auto min-w-0">
           <div
             ref={pitchRef}
-            className="relative w-full max-w-2xl aspect-[3/4] rounded-2xl overflow-hidden select-none shadow-2xl"
+            className="relative w-full max-w-xl rounded-2xl overflow-visible select-none shadow-2xl mx-auto"
             style={{
               background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
+              aspectRatio: "3 / 4",
+              minHeight: "450px",
+              maxHeight: "calc(100vh - 200px)",
             }}
             onMouseMove={draggingId ? handleDrag : undefined}
             onMouseUp={handleDragEnd}
