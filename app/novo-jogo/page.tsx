@@ -222,11 +222,8 @@ export default function NovoJogoPage() {
               {"<"}
             </button>
 
-            <div className="flex items-center gap-3 min-w-[200px] justify-center">
-              <span className="text-white/90 font-medium tracking-wide">
-                {activeDivision.country}
-              </span>
-              <span className="text-3xl leading-none">{activeDivision.flag}</span>
+            <div className="flex items-center justify-center min-w-[80px]">
+              <span className="text-4xl leading-none">{activeDivision.flag}</span>
             </div>
 
             <button
