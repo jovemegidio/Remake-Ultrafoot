@@ -20,9 +20,9 @@ export const leagueLogos: Record<string, string> = {
   "conmebol-sudamericana":  "/ligas/04.png",
 
   // European
-  "premier-league":  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Fzxp3udEZnT3wDxSYsM5MYbJKFILs6.png",
-  "premier_league":  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Fzxp3udEZnT3wDxSYsM5MYbJKFILs6.png",
-  "bundesliga":      "/ligas/08.png",
+  "premier-league":  "/ligas/11.png",
+  "premier_league":  "/ligas/11.png",
+  "bundesliga":      "/ligas/12.png",
   "la-liga":         "/ligas/07.png",
   "la_liga":         "/ligas/07.png",
   "laliga":          "/ligas/07.png",
