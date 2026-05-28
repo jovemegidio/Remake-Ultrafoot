@@ -30,7 +30,19 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { TeamCrest } from "@/components/team-crest"
 import { ControllerButton } from "@/components/controller-buttons"
 import { useTheme } from "@/components/theme-provider"
+import { useGamepadContext } from "@/components/gamepad-provider"
 import { cn } from "@/lib/utils"
+
+const FLAG_CDN: Record<string, string> = {
+  BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
+  GER: "de", FRA: "fr", POR: "pt", USA: "us",
+  MEX: "mx", KSA: "sa",
+}
+
+function getFlagUrl(code: string) {
+  const key = FLAG_CDN[code] || code.toLowerCase()
+  return `https://flagcdn.com/w80/${key}.png`
+}
 
 interface DivisaoTab {
   key: Divisao
@@ -67,6 +79,7 @@ export default function NovoJogoPage() {
   const router = useRouter()
   const { initializeNewGame } = useGameManager()
   const { setTheme, setTeamColors } = useTheme()
+  const { isGamepadConnected } = useGamepadContext()
 
   const [divisaoIndex, setDivisaoIndex] = useState(0)
   const [teamIndex, setTeamIndex] = useState(0)
@@ -213,22 +226,31 @@ export default function NovoJogoPage() {
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col">
         {/* Top Bar - Country & Flag */}
-        <header className="flex items-center justify-center py-6 px-6">
+        <header className="flex items-center justify-center py-3 sm:py-5 px-4">
           <div className="flex items-center gap-4">
             <button
               onClick={prevDivision}
-              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none"
+              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none px-2"
             >
               {"<"}
             </button>
 
-            <div className="flex items-center justify-center min-w-[80px]">
-              <span className="text-4xl leading-none">{activeDivision.flag}</span>
+            <div className="flex items-center justify-center w-20 h-14">
+              {activeDivision.code && (
+                <Image
+                  src={getFlagUrl(activeDivision.code)}
+                  alt={activeDivision.country || ""}
+                  width={80}
+                  height={56}
+                  className="object-contain rounded drop-shadow-lg"
+                  unoptimized
+                />
+              )}
             </div>
 
             <button
               onClick={nextDivision}
-              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none"
+              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none px-2"
             >
               {">"}
             </button>
@@ -236,57 +258,54 @@ export default function NovoJogoPage() {
         </header>
 
         {/* Main Content - Team Display */}
-        <div className="flex-1 flex items-center justify-center px-6">
-          <div className="flex items-center gap-6">
+        <div className="flex-1 flex items-center justify-center px-2 sm:px-6 overflow-hidden">
+          <div className="flex items-center gap-2 sm:gap-6 w-full max-w-sm sm:max-w-none justify-center">
             {/* Left Arrow */}
             <button
               onClick={prevTeam}
-              className="text-white/40 hover:text-white/70 transition-colors text-4xl font-extralight select-none"
+              className="text-white/40 hover:text-white/70 transition-colors text-3xl sm:text-4xl font-extralight select-none shrink-0 px-1"
             >
               {"◀"}
             </button>
 
             {/* Team Card - FIFA Style */}
-            <div className="relative">
+            <div className="flex flex-col items-center min-w-0">
               {/* Card Container */}
-              <div 
-                className="relative bg-gradient-to-b from-white/[0.12] to-white/[0.06] backdrop-blur-md border border-white/20 rounded-lg overflow-hidden"
-                style={{ width: "280px" }}
-              >
+              <div className="relative bg-linear-to-b from-white/12 to-white/6 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden w-65 sm:w-70">
                 {/* Team Name Header */}
-                <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-                  <h1 className="text-xl font-bold text-white text-center">
+                <div className="px-4 py-2 sm:py-3 border-b border-white/10 bg-white/5">
+                  <h1 className="text-lg sm:text-xl font-bold text-white text-center truncate">
                     {selectedTeam?.nome}
                   </h1>
                 </div>
 
-                {/* Team Crest */}
-                <div className="py-6 flex justify-center">
-                  <div 
-                    className="w-36 h-36 flex items-center justify-center rounded-full"
+                {/* Team Crest — sem fundo: radial gradient apenas como aura */}
+                <div className="py-4 sm:py-6 flex justify-center">
+                  <div
+                    className="w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center"
                     style={{
-                      background: `radial-gradient(circle, ${selectedTeam?.cor1}20 0%, transparent 70%)`,
+                      background: `radial-gradient(circle, ${selectedTeam?.cor1}30 0%, transparent 65%)`,
                     }}
                   >
-                    <TeamCrest 
-                      team={selectedTeam} 
-                      size="2xl" 
-                      className="w-28 h-28 drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]" 
+                    <TeamCrest
+                      team={selectedTeam}
+                      size="2xl"
+                      className="w-24 h-24 sm:w-28 sm:h-28"
                     />
                   </div>
                 </div>
 
                 {/* Stars Rating */}
-                <div className="flex items-center justify-center gap-0.5 pb-4">
+                <div className="flex items-center justify-center gap-0.5 pb-3 sm:pb-4">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star 
-                      key={i} 
+                    <Star
+                      key={i}
                       className={cn(
                         "w-4 h-4",
-                        i < prestigeStars 
-                          ? "fill-amber-400 text-amber-400" 
+                        i < prestigeStars
+                          ? "fill-amber-400 text-amber-400"
                           : "text-white/20"
-                      )} 
+                      )}
                     />
                   ))}
                 </div>
@@ -317,16 +336,17 @@ export default function NovoJogoPage() {
                 </div>
               </div>
 
-              {/* League Info - Below Card */}
-              <div className="flex flex-col items-center mt-4 gap-2">
+              {/* League Info — abaixo do card, logo sem fundo quadrado */}
+              <div className="flex flex-col items-center mt-3 gap-1.5">
                 <span className="text-xs text-white/60">{activeDivision.label}</span>
                 {leagueLogo && (
                   <Image
                     src={leagueLogo}
                     alt={activeDivision.label}
-                    width={100}
-                    height={50}
+                    width={90}
+                    height={45}
                     className="object-contain"
+                    style={{ mixBlendMode: "screen" }}
                     unoptimized
                   />
                 )}
@@ -336,7 +356,7 @@ export default function NovoJogoPage() {
             {/* Right Arrow */}
             <button
               onClick={nextTeam}
-              className="text-white/40 hover:text-white/70 transition-colors text-4xl font-extralight select-none"
+              className="text-white/40 hover:text-white/70 transition-colors text-3xl sm:text-4xl font-extralight select-none shrink-0 px-1"
             >
               {"▶"}
             </button>
@@ -344,43 +364,45 @@ export default function NovoJogoPage() {
         </div>
 
         {/* Bottom Bar - Actions */}
-        <footer className="py-4 px-6 bg-gradient-to-t from-black/60 to-transparent">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            {/* Controls Legend - FIFA Style with Controller Icons */}
-            <div className="flex items-center gap-6 text-xs">
-              <div className="flex items-center gap-2">
-                <ControllerButton button="A" controller="playstation" size="sm" showLabel={false} />
-                <span className="text-white/70">Selecionar</span>
+        <footer className="py-3 sm:py-4 px-3 sm:px-6 bg-linear-to-t from-black/60 to-transparent">
+          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between">
+            {/* Controls Legend — só aparece com controle conectado */}
+            {isGamepadConnected && (
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <ControllerButton button="A" controller="playstation" size="sm" showLabel={false} />
+                  <span className="text-white/70">Selecionar</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <ControllerButton button="B" controller="playstation" size="sm" showLabel={false} />
+                  <span className="text-white/70">Voltar</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <ControllerButton button="X" controller="playstation" size="sm" showLabel={false} />
+                  <span className="text-white/70">Aleatório</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <ControllerButton button="B" controller="playstation" size="sm" showLabel={false} />
-                <span className="text-white/70">Voltar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ControllerButton button="X" controller="playstation" size="sm" showLabel={false} />
-                <span className="text-white/70">Aleatorio</span>
-              </div>
-            </div>
+            )}
 
             {/* Center - Manager Input & Start */}
-            <div className="flex items-center gap-3">
+            <div className={cn("flex items-center gap-3", !isGamepadConnected && "sm:mx-auto")}>
               <input
                 value={managerName}
                 onChange={e => setManagerName(e.target.value)}
-                placeholder="Nome do Tecnico"
+                placeholder="Nome do Técnico"
                 maxLength={32}
-                className="w-44 h-9 rounded border border-white/20 bg-black/50 backdrop-blur-sm px-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-emerald-500/50 transition-all"
+                className="w-36 sm:w-44 h-9 rounded border border-white/20 bg-black/50 backdrop-blur-sm px-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-emerald-500/50 transition-all"
               />
               <button
                 onClick={handleStart}
-                className="flex items-center gap-2 rounded px-5 py-2 font-bold text-sm bg-emerald-500 text-black hover:bg-emerald-400 transition-all"
+                className="rounded px-4 sm:px-5 py-2 font-bold text-sm bg-emerald-500 text-black hover:bg-emerald-400 transition-all whitespace-nowrap"
               >
                 INICIAR CARREIRA
               </button>
             </div>
 
-            {/* Right - Team Counter & Icons */}
-            <div className="flex items-center gap-4 text-white/50 text-xs">
+            {/* Right - Team Counter */}
+            <div className="text-white/50 text-xs">
               <span>{teamIndex + 1} / {teams.length}</span>
             </div>
           </div>

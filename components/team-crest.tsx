@@ -173,8 +173,9 @@ export function TeamCrest({
           "object-contain transition-all duration-300",
           imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95",
         )}
-        style={{ 
-          filter: imageLoaded ? "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" : undefined 
+        style={{
+          filter: imageLoaded ? "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" : undefined,
+          mixBlendMode: "multiply",
         }}
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
