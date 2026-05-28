@@ -175,7 +175,6 @@ export function TeamCrest({
         )}
         style={{
           filter: imageLoaded ? "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" : undefined,
-          mixBlendMode: "multiply",
         }}
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
