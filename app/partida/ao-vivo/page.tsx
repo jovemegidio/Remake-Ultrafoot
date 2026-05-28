@@ -723,22 +723,6 @@ export default function PartidaAoVivoPage() {
     setAwaySquad(prev => prev.map(p => ({ ...p, stamina: Math.max(0, p.stamina - 1.1) })))
   }, [state.minute, state.phase])
 
-  // Animacao de gol/cartao
-  const [animation, setAnimation] = useState<{ type: "goal" | "card"; side: "home" | "away"; cardColor?: "yellow" | "red" } | null>(null)
-  useEffect(() => {
-    if (!state.flash) return
-    if (state.flash.type === "goal") {
-      setAnimation({ type: "goal", side: state.flash.side })
-      const t = setTimeout(() => setAnimation(null), 2500)
-      return () => clearTimeout(t)
-    }
-    if (state.flash.type === "card") {
-      setAnimation({ type: "card", side: state.flash.side, cardColor: state.flash.cardColor })
-      const t = setTimeout(() => setAnimation(null), 2000)
-      return () => clearTimeout(t)
-    }
-  }, [state.flash])
-
   // Substituicao
   const userStarters = userSide === "home" ? homeSquad : awaySquad
   const userBench = userSide === "home" ? homeBench : awayBench
@@ -1093,40 +1077,6 @@ export default function PartidaAoVivoPage() {
         </div>
       </div>
 
-      {/* Animacao de Gol */}
-      {animation?.type === "goal" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 bg-black/80 animate-fade-in" />
-          <div className="relative z-10 flex flex-col items-center animate-scale-in">
-            <TeamCrest team={animation.side === "home" ? homeTeam : awayTeam} size="xl" />
-            <div 
-              className="mt-6 text-6xl sm:text-8xl font-black uppercase"
-              style={{ color: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
-            >
-              GOOOL!
-            </div>
-            <div className="mt-4 text-white text-2xl font-bold">
-              {state.home.goals} - {state.away.goals}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Animacao de Cartao */}
-      {animation?.type === "card" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="absolute inset-0 bg-black/60 animate-fade-in" />
-          <div className="relative animate-scale-in">
-            <div
-              className={cn(
-                "w-20 h-28 rounded-lg shadow-2xl",
-                animation.cardColor === "yellow" ? "bg-yellow-400" : "bg-red-500",
-              )}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Modal de Substituicao */}
       {showSubModal && (
         <SubstitutionModal
@@ -1142,13 +1092,13 @@ export default function PartidaAoVivoPage() {
       {/* Modal de Resultado */}
       {showResult && (
         <MatchResultModal
+          open={showResult}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
-          homeScore={state.home.goals}
-          awayScore={state.away.goals}
-          events={state.events}
+          state={state}
           userSide={userSide}
-          isLeagueChampion={isLeagueChampion}
+          isFinal={false}
+          isChampion={isLeagueChampion}
           onClose={() => {
             setShowResult(false)
             setShowPressConference(true)
@@ -1158,14 +1108,20 @@ export default function PartidaAoVivoPage() {
 
   {/* Coletiva pos-jogo */}
   {showPressConference && (
-  <PostMatchPress
-  homeTeam={homeTeam}
-  awayTeam={awayTeam}
-  homeScore={state.home.goals}
-  awayScore={state.away.goals}
-  userSide={userSide}
-  onClose={() => setShowPressConference(false)}
-  />
+    <PostMatchPress
+      isOpen={showPressConference}
+      homeTeam={homeTeam}
+      awayTeam={awayTeam}
+      homeGoals={state.home.goals}
+      awayGoals={state.away.goals}
+      userSide={userSide}
+      onClose={() => setShowPressConference(false)}
+      onComplete={(moraleImpact) => {
+        setShowPressConference(false)
+        // Navegar para a pagina de pre-jogo (dashboard/escritorio)
+        window.location.href = "/"
+      }}
+    />
   )}
 
   {/* Animacoes de eventos */}
