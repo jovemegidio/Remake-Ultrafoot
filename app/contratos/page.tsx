@@ -253,7 +253,7 @@ export default function ContratosPage() {
           {/* Header da tabela */}
           <div className="grid grid-cols-[1fr_100px_120px_120px_100px_100px] gap-4 px-5 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/[0.04] bg-white/[0.02]">
             <span>Jogador</span>
-            <span>Posicao</span>
+            <span>Posição</span>
             <span>Salario</span>
             <span>Expira em</span>
             <span>Status</span>

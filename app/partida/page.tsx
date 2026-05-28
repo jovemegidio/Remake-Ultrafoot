@@ -225,10 +225,12 @@ export default function PartidaPage() {
   }, [currentMatch])
 
   const matchInfo = useMemo(() => {
-    const leagueName = getLeagueName(league)
+    // league é a chave de divisao (ex: "serie_a") — usar diretamente para o logo
+    const leagueName = getLeagueName(homeTeam.curto)
     return {
       competition: leagueName,
-      round: `Rodada ${currentRound}`,
+      leagueKey: league,
+      round: `Rodada ${currentRound ?? 1}`,
       date: "01 ABR 2026",
       time: "16:00",
       stadium: homeTeam.estadio_nome,
@@ -236,7 +238,7 @@ export default function PartidaPage() {
   }, [league, currentRound, homeTeam])
 
   const competitionTheme = useMemo(() => {
-    const competitionId = league === "serie-a" ? "brasileirao" : (league as CompetitionId)
+    const competitionId = (league ?? "serie_a").replace(/_/g, "-") as CompetitionId
     return getCompetitionTheme(competitionId)
   }, [league])
 
@@ -367,14 +369,16 @@ export default function PartidaPage() {
             {/* League Logo - Centered */}
             <div className="flex flex-col items-center gap-2">
               <span className="text-[9px] text-white/40 font-medium tracking-wider uppercase">{matchInfo.competition}</span>
-              <Image
-                src={getLeagueLogo(matchInfo.competition)}
-                alt={matchInfo.competition}
-                width={56}
-                height={56}
-                className="object-contain opacity-90"
-                unoptimized
-              />
+              {getLeagueLogo(matchInfo.leagueKey) && (
+                <Image
+                  src={getLeagueLogo(matchInfo.leagueKey)!}
+                  alt={matchInfo.competition}
+                  width={56}
+                  height={56}
+                  className="object-contain opacity-90"
+                  unoptimized
+                />
+              )}
             </div>
 
             {/* Live Phase Toggle */}
@@ -436,7 +440,7 @@ export default function PartidaPage() {
       {showQuickSim && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="bg-[#0c0c10] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white text-center mb-6">Simulacao Rapida</h3>
+            <h3 className="text-xl font-bold text-white text-center mb-6">Simulação Rápida</h3>
             
             {quickSimResult ? (
               <div className="text-center">

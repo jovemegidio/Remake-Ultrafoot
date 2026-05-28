@@ -488,11 +488,11 @@ export default function AdversariosPage() {
                         </div>
                       </div>
 
-                      {/* Recomendacoes Taticas */}
+                      {/* Recomendações Táticas */}
                       <div className="md:col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/20 p-6">
                         <h3 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
                           <Info className="h-5 w-5" />
-                          Recomendacoes Taticas
+                          Recomendações Táticas
                         </h3>
                         
                         <div className="grid md:grid-cols-2 gap-4">

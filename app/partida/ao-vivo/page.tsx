@@ -92,22 +92,34 @@ const POSITION_ORDER: Record<string, number> = {
   GOL: 0, LD: 1, ZAG: 2, LE: 3, VOL: 4, MEI: 5, PD: 6, PE: 7, ATA: 8,
 }
 
+// Hash determinístico por nome de jogador — elimina Math.random() nos atributos
+function playerHash(name: string, seed: number): number {
+  let h = seed
+  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0
+  return Math.abs(h)
+}
+
 function playersToMatchSquad(players: Player[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
   const sorted = sortByPosition(players)
-  const starters: MatchPlayer[] = sorted.slice(0, 11).map((p, i) => ({
-    id: idOffset + i + 1,
-    name: p.nome,
-    number: POSITION_NUMBER_MAP[p.pos] ?? i + 1,
-    position: p.pos,
-    rating: p.base,
-    stamina: 100,
-    pace: p.pos === "GOL" ? 50 : 65 + Math.floor(Math.random() * 25),
-    shooting: p.pos === "GOL" ? 20 : 50 + Math.floor(Math.random() * 35),
-    passing: 55 + Math.floor(Math.random() * 30),
-    dribbling: p.pos === "GOL" ? 30 : 50 + Math.floor(Math.random() * 35),
-    defending: p.pos === "ATA" || p.pos === "PE" || p.pos === "PD" ? 30 + Math.floor(Math.random() * 20) : 60 + Math.floor(Math.random() * 25),
-    physical: 60 + Math.floor(Math.random() * 25),
-  }))
+  const starters: MatchPlayer[] = sorted.slice(0, 11).map((p, i) => {
+    const h = (seed: number) => playerHash(p.nome, seed)
+    const isGK = p.pos === "GOL"
+    const isAtt = ["ATA", "PE", "PD"].includes(p.pos)
+    return {
+      id: idOffset + i + 1,
+      name: p.nome,
+      number: POSITION_NUMBER_MAP[p.pos] ?? i + 1,
+      position: p.pos,
+      rating: p.base,
+      stamina: 100,
+      pace:      isGK ? 50 : 65 + (h(1) % 25),
+      shooting:  isGK ? 20 : 50 + (h(2) % 35),
+      passing:   55 + (h(3) % 30),
+      dribbling: isGK ? 30 : 50 + (h(4) % 35),
+      defending: isAtt ? 30 + (h(5) % 20) : 60 + (h(6) % 25),
+      physical:  60 + (h(7) % 25),
+    }
+  })
   const bench: MatchPlayer[] = sorted.slice(11, 18).map((p, i) => ({
     id: idOffset + 100 + i + 1,
     name: p.nome,
@@ -360,7 +372,7 @@ function TimelineEvent({ event, homeTeam, awayTeam }: {
       case "substitution":
         return (
           <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
-            <span className="text-[#00ffc8] text-xs font-medium uppercase">Substituicao</span>
+            <span className="text-[#00ffc8] text-xs font-medium uppercase">Substituição</span>
             <span className="text-white/90 text-sm">{event.playerOut || "Saiu"}</span>
             <span className="text-white/50 text-xs">{event.playerIn || "Entrou"}</span>
           </div>
@@ -368,7 +380,7 @@ function TimelineEvent({ event, homeTeam, awayTeam }: {
       case "penalty":
         return (
           <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
-            <span className="text-amber-400 text-sm font-bold">Penalti</span>
+            <span className="text-amber-400 text-sm font-bold">Pênalti</span>
             <span className="text-white/70 text-xs">{event.player || teamName}</span>
           </div>
         )
@@ -627,6 +639,9 @@ export default function PartidaAoVivoPage() {
   // Handler de teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        if (state.phase === "pre") { start(); return }
+      }
       if (e.key === "Escape") {
         if (state.phase !== "pre" && state.phase !== "fulltime") {
           if (isRunning) pause()
@@ -636,7 +651,7 @@ export default function PartidaAoVivoPage() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isRunning, pause, resume, state.phase])
+  }, [isRunning, pause, resume, start, state.phase])
 
   // Handler de gamepad
   useEffect(() => {
@@ -723,7 +738,7 @@ export default function PartidaAoVivoPage() {
     setAwaySquad(prev => prev.map(p => ({ ...p, stamina: Math.max(0, p.stamina - 1.1) })))
   }, [state.minute, state.phase])
 
-  // Substituicao
+  // Substituição
   const userStarters = userSide === "home" ? homeSquad : awaySquad
   const userBench = userSide === "home" ? homeBench : awayBench
   const userTeamForSub = userSide === "home" ? homeTeam : awayTeam
@@ -771,9 +786,38 @@ export default function PartidaAoVivoPage() {
       "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]"
     )}>
 
+      {/* Overlay de pré-jogo — fase "pre" */}
+      {state.phase === "pre" && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="flex items-center gap-8 mb-8">
+            <div className="flex flex-col items-center gap-2">
+              <TeamCrest team={homeTeam} size="3xl" />
+              <span className="text-white text-lg font-bold">{homeTeam.nome}</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-white/40 text-xs uppercase tracking-widest">{matchCtx.competition || "Brasileirão"}</span>
+              <span className="text-white/40 text-xs">{matchCtx.round || ""}</span>
+              <span className="text-white text-3xl font-thin my-2">VS</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <TeamCrest team={awayTeam} size="3xl" />
+              <span className="text-white text-lg font-bold">{awayTeam.nome}</span>
+            </div>
+          </div>
+          <button
+            onClick={start}
+            className="flex items-center gap-3 px-10 py-4 rounded-xl bg-[#00ffc8] text-black font-black text-lg hover:bg-[#00e6b5] transition-all shadow-lg shadow-[#00ffc8]/30 animate-pulse"
+          >
+            <Play className="h-6 w-6 fill-current" />
+            INICIAR PARTIDA
+          </button>
+          <p className="text-white/30 text-xs mt-4">Pressione <kbd className="bg-white/10 px-2 py-0.5 rounded text-white/50">Enter</kbd> ou o botão A do controle</p>
+        </div>
+      )}
+
       {/* Conteudo Principal - Estilo EA FC */}
       <div className="flex-1 flex flex-col relative overflow-y-auto">
-        
+
         {/* Liga Badge - Topo Central */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10">
@@ -835,7 +879,7 @@ export default function PartidaAoVivoPage() {
               <div className="flex-1 overflow-y-auto p-4">
                 {activeTab === "stats" && (
                   <div className="space-y-4">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Estatisticas da Partida</h3>
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Estatísticas da Partida</h3>
                     
   {/* Stats Comparativas */}
   <div className="space-y-3">
@@ -1077,7 +1121,7 @@ export default function PartidaAoVivoPage() {
         </div>
       </div>
 
-      {/* Modal de Substituicao */}
+      {/* Modal de Substituição */}
       {showSubModal && (
         <SubstitutionModal
           team={userTeamForSub}

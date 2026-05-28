@@ -34,7 +34,7 @@ import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-// Premiacoes por posicao no Brasileirao 2026 (total ~R$435M distribuidos)
+// Premiações por posição no Brasileirao 2026 (total ~R$435M distribuidos)
 const PRIZE_MONEY = {
   champion: 77000000,   // R$77M - Campeao
   second: 60000000,     // R$60M
@@ -59,7 +59,7 @@ const PRIZE_MONEY = {
   twentieth: 2000000,   // R$2M
 }
 
-// Premiacoes da Copa do Brasil 2026
+// Premiações da Copa do Brasil 2026
 const COPA_PRIZE = {
   firstRound: 1600000,
   secondRound: 1950000,
@@ -71,7 +71,7 @@ const COPA_PRIZE = {
   champion: 80000000,
 }
 
-// Premiacoes Libertadores 2026 (USD x cambio BRL ~5.85)
+// Premiações Libertadores 2026 (USD x cambio BRL ~5.85)
 const LIBERTADORES_PRIZE = {
   groupStage: 3000000 * 5.85,   // USD to BRL
   roundOf16: 1500000 * 5.85,

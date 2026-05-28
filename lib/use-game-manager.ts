@@ -569,6 +569,11 @@ export function useGameManager() {
     })
   }, [setSaveState])
 
+  const league = useMemo(
+    () => getTeamByShort(saveState.selectedTeamShort ?? "")?.divisao ?? "serie_a",
+    [saveState.selectedTeamShort]
+  )
+
   return {
     // Estado
     hydrated,
@@ -578,6 +583,11 @@ export function useGameManager() {
     seasonCalendar,
     currentWeek: saveState.week,
     currentSeason: saveState.season,
+
+    // Convenências derivadas (usadas por /partida e /partida/ao-vivo)
+    league,
+    currentMatch: seasonCalendar.nextUserMatch ?? null,
+    currentRound: seasonCalendar.currentRound,
 
     // Game Engine direto
     gameEngine,

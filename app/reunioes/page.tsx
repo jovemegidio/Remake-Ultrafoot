@@ -392,7 +392,7 @@ export default function ReunioesPage() {
                       )}
                     </AnimatePresence>
 
-                    {/* Historico de reunioes com este jogador */}
+                    {/* Histórico de reuniões com este jogador */}
                     {playerRecentMeetings.length > 0 && (
                       <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
                         <h3 className="text-sm font-semibold text-white/80 mb-4">Historico de Reunioes</h3>

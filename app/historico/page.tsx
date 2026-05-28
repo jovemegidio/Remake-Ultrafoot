@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 
 import {
@@ -19,54 +19,89 @@ import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { useUserTeam } from "@/lib/save-system"
+import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
+// Gera dados históricos determinísticos baseados no time (sem Math.random)
+function getTeamHistory(teamShort: string, teamName: string, prestige: number) {
+  const hash = (s: string, seed: number) => {
+    let h = seed
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0
+    return Math.abs(h)
+  }
 
-// Historical data
-const clubHistory = {
-  founded: 1928,
-  seasons: 98,
-  bestPosition: "Campeao Serie B (2019)",
-  totalTitles: 5,
-  stadiumCapacity: userTeam.estadio_cap,
+  const founded = 1900 + (hash(teamShort, 1) % 70) + 10
+  const titleCount = Math.max(1, Math.round(prestige / 18))
+  const seasons = new Date().getFullYear() - founded
+
+  const titleNames = [
+    "Campeonato Brasileiro", "Copa do Brasil", "Copa Libertadores",
+    "Campeonato Estadual", "Supercopa do Brasil", "Recopa Sul-Americana",
+    "Copa Sul-Americana", "Copa do Nordeste",
+  ]
+  const titles = Array.from({ length: Math.min(titleCount, 5) }, (_, i) => ({
+    name: titleNames[hash(teamShort, i + 10) % titleNames.length],
+    year: founded + 20 + (hash(teamShort, i + 20) % (seasons - 20)),
+    icon: i < 2 ? Trophy : Medal,
+  }))
+
+  const firstNames = ["Carlos", "Roberto", "Paulo", "Felipe", "Lucas", "André", "Pedro", "Rafael"]
+  const lastNames = ["Silva", "Santos", "Oliveira", "Costa", "Ferreira", "Souza", "Lima", "Pereira"]
+  const positions = ["GOL", "ZAG", "VOL", "MEI", "ATA", "PD", "PE", "LD"]
+  const legends = Array.from({ length: 4 }, (_, i) => {
+    const fn = firstNames[hash(teamShort, i + 30) % firstNames.length]
+    const ln = lastNames[hash(teamShort, i + 40) % lastNames.length]
+    const startYear = founded + 30 + (hash(teamShort, i + 50) % 40)
+    return {
+      name: `${fn} ${ln}`,
+      position: positions[hash(teamShort, i + 60) % positions.length],
+      years: `${startYear}-${startYear + 3}`,
+      goals: 15 + (hash(teamShort, i + 70) % 50),
+    }
+  })
+
+  const managerNames = ["Dorival Jr.", "Renato Gaúcho", "Abel Ferreira", "Artur Jorge", "Tite", "Cuca"]
+  const seasonHistory = Array.from({ length: 6 }, (_, i) => {
+    const year = 2025 - i
+    const pos = 1 + (hash(teamShort, year) % 20)
+    const pts = 70 - pos * 2 + (hash(teamShort, year + 1) % 6)
+    return {
+      year,
+      competition: "Serie A",
+      position: pos,
+      points: pts,
+      manager: managerNames[hash(teamShort, year + 2) % managerNames.length],
+    }
+  })
+
+  return { founded, seasons, titleCount: titles.length, titles, legends, seasonHistory }
 }
-
-const titles = [
-  { name: "Campeonato Brasileiro Serie B", year: 2019, icon: Trophy },
-  { name: "Copa Paulista", year: 2007, icon: Trophy },
-  { name: "Campeonato Paulista A2", year: 1990, icon: Medal },
-  { name: "Campeonato Paulista A3", year: 1965, icon: Medal },
-]
-
-const seasonHistory = [
-  { year: 2025, competition: "Serie A", position: 12, points: 48, manager: "Pedro Caixinha" },
-  { year: 2024, competition: "Serie A", position: 8, points: 54, manager: "Pedro Caixinha" },
-  { year: 2023, competition: "Serie A", position: 10, points: 50, manager: "Mauricio Barbieri" },
-  { year: 2022, competition: "Serie A", position: 15, points: 44, manager: "Mauricio Barbieri" },
-  { year: 2021, competition: "Serie A", position: 5, points: 56, manager: "Mauricio Barbieri" },
-  { year: 2020, competition: "Serie A", position: 6, points: 53, manager: "Mauricio Barbieri" },
-]
-
-const legends = [
-  { name: "Walter", position: "ATA", years: "2018-2020", goals: 45 },
-  { name: "Claudinho", position: "MEI", years: "2019-2021", goals: 25 },
-  { name: "Ytalo", position: "ATA", years: "2017-2019", goals: 38 },
-  { name: "Artur", position: "PD", years: "2019-2021", goals: 18 },
-]
 
 export default function HistoricoPage() {
   const router = useRouter()
+  const { data: teamShort } = useUserTeam()
+  const { saveState } = useGameManager()
 
-  // Gamepad support
+  const userTeam = useMemo(
+    () => getTeamByShort(teamShort ?? saveState.selectedTeamShort ?? "") || serieATeams[0],
+    [teamShort, saveState.selectedTeamShort]
+  )
+
+  const history = useMemo(
+    () => getTeamHistory(userTeam.curto, userTeam.nome, userTeam.prestigio),
+    [userTeam]
+  )
+
   useEffect(() => {
     const handler = (e: Event) => {
       const btn = (e as CustomEvent).detail?.button
-      if (btn === 'B') router.back()
+      if (btn === "B") router.back()
     }
-    window.addEventListener('gamepad:button', handler)
-    return () => window.removeEventListener('gamepad:button', handler)
+    window.addEventListener("gamepad:button", handler)
+    return () => window.removeEventListener("gamepad:button", handler)
   }, [router])
+
   return (
     <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
@@ -83,11 +118,13 @@ export default function HistoricoPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">{userTeam.nome.toUpperCase()}</h1>
-            <p className="text-white/50 mt-1">Fundado em {clubHistory.founded} - {clubHistory.seasons} anos de historia</p>
+            <p className="text-white/50 mt-1">
+              Fundado em {history.founded} · {history.seasons} anos de história
+            </p>
             <div className="flex items-center gap-4 mt-3">
               <span className="flex items-center gap-1.5 text-sm text-white/70">
                 <Trophy className="h-4 w-4 text-yellow-400" />
-                {clubHistory.totalTitles} titulos
+                {history.titleCount} títulos
               </span>
               <span className="flex items-center gap-1.5 text-sm text-white/70">
                 <MapPin className="h-4 w-4 text-[#00ffc8]" />
@@ -102,19 +139,19 @@ export default function HistoricoPage() {
           <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <Calendar className="h-4 w-4 text-blue-400" />
-              FUNDACAO
+              FUNDAÇÃO
             </div>
-            <div className="mt-2 text-3xl font-bold text-white">{clubHistory.founded}</div>
-            <div className="text-xs text-white/40 mt-1">{clubHistory.seasons} temporadas</div>
+            <div className="mt-2 text-3xl font-bold text-white">{history.founded}</div>
+            <div className="text-xs text-white/40 mt-1">{history.seasons} temporadas</div>
           </div>
 
           <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <Trophy className="h-4 w-4 text-yellow-400" />
-              TITULOS
+              TÍTULOS
             </div>
-            <div className="mt-2 text-3xl font-bold text-yellow-400">{clubHistory.totalTitles}</div>
-            <div className="text-xs text-white/40 mt-1">Conquistas na historia</div>
+            <div className="mt-2 text-3xl font-bold text-yellow-400">{history.titleCount}</div>
+            <div className="text-xs text-white/40 mt-1">Conquistas na história</div>
           </div>
 
           <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
@@ -131,7 +168,7 @@ export default function HistoricoPage() {
           <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <Target className="h-4 w-4 text-purple-400" />
-              ESTADIO
+              ESTÁDIO
             </div>
             <div className="mt-2 text-xl font-bold text-white truncate">{userTeam.estadio_nome}</div>
             <div className="text-xs text-white/40 mt-1">{userTeam.estadio_cap.toLocaleString()} lugares</div>
@@ -143,10 +180,10 @@ export default function HistoricoPage() {
           <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
               <Trophy className="h-4 w-4 text-yellow-400" />
-              <h2 className="text-xs font-medium text-white tracking-wider">TITULOS</h2>
+              <h2 className="text-xs font-medium text-white tracking-wider">TÍTULOS</h2>
             </div>
             <div className="divide-y divide-white/5">
-              {titles.map((title, index) => (
+              {history.titles.map((title, index) => (
                 <div key={index} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
                   <div className="h-12 w-12 rounded-lg bg-yellow-400/20 flex items-center justify-center">
                     <title.icon className="h-6 w-6 text-yellow-400" />
@@ -168,16 +205,14 @@ export default function HistoricoPage() {
               <h2 className="text-xs font-medium text-white tracking-wider">LENDAS DO CLUBE</h2>
             </div>
             <div className="divide-y divide-white/5">
-              {legends.map((legend, index) => (
+              {history.legends.map((legend, index) => (
                 <div key={index} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
                   <div className="h-12 w-12 rounded-lg bg-[#1a1a1a] flex items-center justify-center">
-                    <span className="text-xl font-bold text-white/50">
-                      {legend.name.charAt(0)}
-                    </span>
+                    <span className="text-xl font-bold text-white/50">{legend.name.charAt(0)}</span>
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-white">{legend.name}</div>
-                    <div className="text-sm text-white/50">{legend.position} - {legend.years}</div>
+                    <div className="text-sm text-white/50">{legend.position} · {legend.years}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-xl font-bold text-[#00ffc8]">{legend.goals}</div>
@@ -193,21 +228,21 @@ export default function HistoricoPage() {
         <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
             <History className="h-4 w-4 text-blue-400" />
-            <h2 className="text-xs font-medium text-white tracking-wider">HISTORICO DE TEMPORADAS</h2>
+            <h2 className="text-xs font-medium text-white tracking-wider">HISTÓRICO DE TEMPORADAS</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[0.04] text-[10px] font-medium tracking-wider text-white/40">
                   <th className="px-5 py-3 text-left">ANO</th>
-                  <th className="px-5 py-3 text-left">COMPETICAO</th>
-                  <th className="px-5 py-3 text-center">POSICAO</th>
+                  <th className="px-5 py-3 text-left">COMPETIÇÃO</th>
+                  <th className="px-5 py-3 text-center">POSIÇÃO</th>
                   <th className="px-5 py-3 text-center">PONTOS</th>
                   <th className="px-5 py-3 text-left">TREINADOR</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {seasonHistory.map((season) => (
+                {history.seasonHistory.map((season) => (
                   <tr key={season.year} className="hover:bg-white/[0.02] transition-colors">
                     <td className="px-5 py-3 text-lg font-semibold text-white">{season.year}</td>
                     <td className="px-5 py-3 text-white/70">{season.competition}</td>

@@ -513,7 +513,8 @@ export default function SplashPage() {
               alt="Ultrafoot"
               width={320}
               height={70}
-              className="object-contain h-auto w-auto"
+              className="object-contain w-auto"
+              style={{ height: "auto" }}
               priority
             />
           </div>
@@ -676,7 +677,8 @@ export default function SplashPage() {
               alt="Ultrafoot"
               width={280}
               height={60}
-              className="object-contain h-auto w-auto max-w-[200px] sm:max-w-[240px] md:max-w-[280px]"
+              className="object-contain w-auto max-w-[200px] sm:max-w-[240px] md:max-w-[280px]"
+              style={{ height: "auto" }}
               priority
             />
           </div>

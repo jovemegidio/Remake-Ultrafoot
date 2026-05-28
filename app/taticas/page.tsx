@@ -219,7 +219,7 @@ export default function TaticasPage() {
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Salvar Taticas
+                Salvar Táticas
               </>
             )}
           </Button>
@@ -531,7 +531,7 @@ export default function TaticasPage() {
                       className="w-4 h-4 rounded border-white/20 bg-white/10 text-primary focus:ring-primary"
                     />
                     <div>
-                      <div className="text-sm font-medium text-white">Manter Posicao</div>
+                      <div className="text-sm font-medium text-white">Manter Posição</div>
                       <div className="text-xs text-white/50">Jogadores ficam em suas zonas</div>
                     </div>
                   </label>
@@ -759,7 +759,7 @@ export default function TaticasPage() {
                                     : "bg-white/10 text-white/70 hover:bg-white/15"
                                 )}
                               >
-                                {opt === "ficar_posicao" ? "Ficar na Posicao" :
+                                {opt === "ficar_posicao" ? "Ficar na Posição" :
                                  opt === "liberdade_moderada" ? "Liberdade Moderada" : "Liberdade Total"}
                               </button>
                             ))}
@@ -794,7 +794,7 @@ export default function TaticasPage() {
                           { key: "stayWider", label: "Abrir na Lateral" },
                           { key: "cutInside", label: "Cortar para Dentro" },
                           { key: "getForward", label: "Chegar na Area" },
-                          { key: "holdPosition", label: "Manter Posicao" },
+                          { key: "holdPosition", label: "Manter Posição" },
                         ].map(({ key, label }) => (
                           <label key={key} className="flex items-center gap-2 cursor-pointer p-3 bg-white/5 rounded-lg">
                             <input

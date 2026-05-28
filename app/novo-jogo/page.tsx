@@ -33,15 +33,15 @@ import { useTheme } from "@/components/theme-provider"
 import { useGamepadContext } from "@/components/gamepad-provider"
 import { cn } from "@/lib/utils"
 
-const FLAG_CDN: Record<string, string> = {
+const FLAG_MAP: Record<string, string> = {
   BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
   GER: "de", FRA: "fr", POR: "pt", USA: "us",
   MEX: "mx", KSA: "sa",
 }
 
 function getFlagUrl(code: string) {
-  const key = FLAG_CDN[code] || code.toLowerCase()
-  return `https://flagcdn.com/w80/${key}.png`
+  const key = FLAG_MAP[code] || code.toLowerCase()
+  return `/flags/${key}.png`
 }
 
 interface DivisaoTab {
@@ -72,8 +72,7 @@ const DIVISIONS: DivisaoTab[] = [
   { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams, region: "asia", country: "Arabia Saudita", code: "KSA", flag: "🇸🇦" },
 ]
 
-// Background image URL
-const STADIUM_BG = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1-3pD8rjnjCI4PN1QCaVGJHPsocZwO8L.png"
+const STADIUM_BG = "/images/stadium-bg.png"
 
 export default function NovoJogoPage() {
   const router = useRouter()

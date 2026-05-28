@@ -493,7 +493,7 @@ export default function ImprensaPage() {
               <div className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6">
                 <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <Newspaper className="h-5 w-5 text-primary" />
-                  Historico de Coletivas
+                  Histórico de Coletivas
                 </h2>
                 
                 <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
