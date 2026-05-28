@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Loader2, Sparkles } from "lucide-react"
+import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Sparkles } from "lucide-react"
+import { getNewsImageUrl, seedFromString } from "@/lib/news-image"
 import { motion, AnimatePresence } from "framer-motion"
 import { TeamCrest } from "@/components/team-crest"
 import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
@@ -418,7 +419,7 @@ function SourceLogo({ source, size = "md" }: { source: keyof typeof NEWS_SOURCES
         src={sourceData.logo}
         alt={sourceData.name}
         fill
-        className="object-cover"
+        className="object-contain p-1"
         sizes={size === "sm" ? "32px" : "40px"}
         onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
       />
@@ -544,48 +545,26 @@ function MatchPreviewCard({
   )
 }
 
+// Mapeamento de tipo de noticia para categoria do Pollinations
+const NEWS_TYPE_TO_IMAGE_CATEGORY: Record<string, string> = {
+  transfer: "transfer",
+  injury: "injury",
+  highlight: "highlight",
+  ranking: "ranking",
+  announcement: "announcement",
+  match_preview: "match",
+}
+
 // Card de conteudo de noticia padrao com suporte a imagens geradas por IA
 function NewsContentCard({ news }: { news: NewsItem }) {
   const source = NEWS_SOURCES[news.source]
-  const [aiImage, setAiImage] = useState<string | null>(news.generatedImage || null)
-  const [isLoadingImage, setIsLoadingImage] = useState(false)
-  const hasAttempted = useRef(false)
+  const [imgError, setImgError] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
 
-  const generateAIImage = useCallback(async () => {
-    if (isLoadingImage || hasAttempted.current) return
-    hasAttempted.current = true
-    setIsLoadingImage(true)
-
-    try {
-      const response = await fetch("/api/generate-news-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          newsType: news.type,
-          title: news.title,
-          teamName: news.teamName,
-          playerName: news.playerName,
-        }),
-      })
-
-      if (!response.ok) throw new Error("Failed to generate image")
-
-      const data = await response.json()
-      if (data.imageUrl) {
-        setAiImage(data.imageUrl)
-      }
-    } catch (error) {
-      console.warn("[v0] Error generating AI image:", error)
-    } finally {
-      setIsLoadingImage(false)
-    }
-  }, [isLoadingImage, news.type, news.title, news.teamName, news.playerName])
-
-  useEffect(() => {
-    if (!aiImage) {
-      generateAIImage()
-    }
-  }, [aiImage, generateAIImage])
+  const imageCategory = NEWS_TYPE_TO_IMAGE_CATEGORY[news.type] ?? "match"
+  const seed = seedFromString(news.id)
+  const aiImageUrl = getNewsImageUrl(imageCategory, seed, 800, 450)
+  const aiImage = imgError ? null : aiImageUrl
   
   const typeColors: Record<string, string> = {
     transfer: "from-yellow-900/50 to-yellow-950/30",
@@ -608,38 +587,57 @@ function NewsContentCard({ news }: { news: NewsItem }) {
       "relative aspect-video bg-gradient-to-br overflow-hidden",
       typeColors[news.type] || "from-gray-900/50 to-gray-950/30"
     )}>
-      {/* Background - Imagem gerada por IA ou padrao */}
-      {aiImage ? (
-        <div className="absolute inset-0">
-          <Image
-            src={aiImage}
-            alt={news.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 50vw"
+      {/* Background - Imagem via Pollinations.ai (gratuito, sem API key) */}
+      <div className="absolute inset-0">
+        {/* Fallback sempre visivel até imagem carregar */}
+        {!imgLoaded && !imgError && (
+          <div
+            className="absolute inset-0 opacity-90 animate-pulse"
+            style={{
+              background: `linear-gradient(135deg, ${source.color}33 0%, rgba(0,255,200,0.16) 42%, rgba(255,255,255,0.06) 100%)`,
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        )}
+
+        {/* Fallback permanente em caso de erro */}
+        {imgError && (
+          <div className="absolute inset-0">
+            <div
+              className="absolute inset-0 opacity-90"
+              style={{
+                background: `linear-gradient(135deg, ${source.color}33 0%, rgba(0,255,200,0.16) 42%, rgba(255,255,255,0.06) 100%)`,
+              }}
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.08)_0_1px,transparent_1px_18px)] opacity-40" />
+            <div className="absolute inset-x-6 top-1/2 h-px bg-white/20" />
+            <div className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20" />
+            <div className="absolute right-4 top-4 flex h-20 w-20 items-center justify-center rounded-full bg-black/25 text-white/70">
+              {news.icon || typeIcons[news.type]}
+            </div>
+          </div>
+        )}
+
+        {/* Imagem Pollinations.ai */}
+        <img
+          src={aiImageUrl}
+          alt=""
+          aria-hidden="true"
+          onLoad={() => setImgLoaded(true)}
+          onError={() => setImgError(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+        />
+
+        {/* Overlay gradiente */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+        {/* Badge AI */}
+        {imgLoaded && (
           <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary/20 border border-primary/30 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-primary" />
             <span className="text-[10px] text-primary font-medium">AI</span>
           </div>
-        </div>
-      ) : (
-        <>
-          {/* Background pattern padrao */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-          </div>
-
-          {/* Indicador de carregamento da imagem AI (automatico) */}
-          {isLoadingImage && (
-            <div className="absolute top-2 right-2 px-2.5 py-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
-              <Loader2 className="h-3 w-3 text-primary animate-spin" />
-              <span className="text-[10px] text-primary font-medium">Gerando...</span>
-            </div>
-          )}
-        </>
-      )}
+        )}
+      </div>
       
       {/* Icon */}
       <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
