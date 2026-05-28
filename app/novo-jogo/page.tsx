@@ -28,6 +28,7 @@ import { getLeagueLogo } from "@/lib/league-logos"
 import { teamRating } from "@/lib/players-data"
 import { useGameManager } from "@/lib/use-game-manager"
 import { TeamCrest } from "@/components/team-crest"
+import { ControllerButton } from "@/components/controller-buttons"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
@@ -348,18 +349,18 @@ export default function NovoJogoPage() {
         {/* Bottom Bar - Actions */}
         <footer className="py-4 px-6 bg-gradient-to-t from-black/60 to-transparent">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
-            {/* Controls Legend - FIFA Style */}
+            {/* Controls Legend - FIFA Style with Controller Icons */}
             <div className="flex items-center gap-6 text-xs">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-sm bg-blue-600 flex items-center justify-center text-white font-bold text-xs">X</span>
+                <ControllerButton button="A" controller="playstation" size="sm" showLabel={false} />
                 <span className="text-white/70">Selecionar</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-sm bg-red-600 flex items-center justify-center text-white font-bold text-xs">O</span>
+                <ControllerButton button="B" controller="playstation" size="sm" showLabel={false} />
                 <span className="text-white/70">Voltar</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-sm bg-pink-600 flex items-center justify-center text-white font-bold text-xs">□</span>
+                <ControllerButton button="X" controller="playstation" size="sm" showLabel={false} />
                 <span className="text-white/70">Aleatorio</span>
               </div>
             </div>
