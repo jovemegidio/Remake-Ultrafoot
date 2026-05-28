@@ -81,13 +81,16 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
     const days = ["DOMINGO", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"]
     const months = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
     
-    // Parse date like "Jan 15" -> day and month
+    // Parse date like "Abr 15" -> day and month
     const parts = dateStr.split(" ")
     const monthIndex = months.findIndex(m => parts[0].toUpperCase().startsWith(m))
     const day = parseInt(parts[1])
-    
-    // For demo, return a random weekday based on day number
-    return days[day % 7]
+
+    if (monthIndex >= 0 && Number.isFinite(day)) {
+      return days[new Date(2026, monthIndex, day).getDay()]
+    }
+
+    return dateStr
   }
 
   const formatDateDisplay = (dateStr: string) => {
@@ -136,6 +139,10 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               {getDayName(currentMatch.date)}, RODADA {currentMatch.matchday || currentIndex + 1}
             </div>
             <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-white/70 font-semibold uppercase">
+                {dateDisplay.day} {dateDisplay.month}
+              </span>
+              <span className="h-1 w-1 rounded-full bg-white/20" />
               <span className="text-[10px] text-white/40 uppercase tracking-wider">
                 {currentMatch.competition}
               </span>
@@ -178,9 +185,11 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               <span className="text-[10px] font-medium text-white/60 uppercase tracking-wider">
                 {currentMatch.competition}
               </span>
-              <span className="text-[10px] text-[#00ffc8] font-semibold">
-                Hoje
-              </span>
+              {currentIndex === 0 && (
+                <span className="text-[10px] text-[#00ffc8] font-semibold">
+                  Proxima
+                </span>
+              )}
             </div>
           </div>
 
@@ -200,9 +209,10 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
                 <div className="text-sm font-bold text-white tracking-wide max-w-[120px] truncate">
                   {currentMatch.home?.nome || "A definir"}
                 </div>
-                <div className="text-[9px] text-white/40 uppercase tracking-wider">
-                  {currentMatch.home?.curto === userTeam?.curto ? "Seu time" : "Mandante"}
-                </div>
+                <div className="text-[9px] text-white/40 uppercase tracking-wider">Mandante</div>
+                {currentMatch.home?.curto === userTeam?.curto && (
+                  <div className="text-[8px] text-[#00ffc8] font-bold uppercase tracking-wider">Seu time</div>
+                )}
               </div>
             </div>
 
@@ -225,9 +235,10 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
                 <div className="text-sm font-bold text-white tracking-wide max-w-[120px] truncate">
                   {currentMatch.away?.nome || "A definir"}
                 </div>
-                <div className="text-[9px] text-white/40 uppercase tracking-wider">
-                  {currentMatch.away?.curto === userTeam?.curto ? "Seu time" : "Visitante"}
-                </div>
+                <div className="text-[9px] text-white/40 uppercase tracking-wider">Visitante</div>
+                {currentMatch.away?.curto === userTeam?.curto && (
+                  <div className="text-[8px] text-[#00ffc8] font-bold uppercase tracking-wider">Seu time</div>
+                )}
               </div>
             </div>
           </div>
