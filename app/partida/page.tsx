@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  Settings2,
   Zap,
   TrendingUp,
   TrendingDown,
@@ -50,13 +49,11 @@ function TeamCard({
   side,
   selectedKit,
   onKitChange,
-  leagueName,
 }: {
   team: Team
   side: "home" | "away"
   selectedKit: KitVariant
   onKitChange: (kit: KitVariant) => void
-  leagueName: string
 }) {
   const overallRating = teamRating(team.curto) || teamRating(team.nome) || 75
   
@@ -78,8 +75,6 @@ function TeamCard({
     mei: team.nome.length % 3 === 1 ? "up" : team.nome.length % 3 === 2 ? "neutral" : "down",
     def: team.nome.length % 3 === 2 ? "up" : team.nome.length % 3 === 0 ? "neutral" : "down",
   }), [team.nome])
-
-  const leagueLogo = getLeagueLogo(leagueName)
 
   const TrendIcon = ({ trend }: { trend: string }) => {
     if (trend === "up") return <TrendingUp className="h-3 w-3 text-green-400" />
@@ -365,18 +360,21 @@ export default function PartidaPage() {
             side="home" 
             selectedKit={homeKit}
             onKitChange={setHomeKit}
-            leagueName={matchInfo.competition}
           />
 
           {/* Center Options */}
           <div className="flex flex-col items-center justify-center px-6 md:px-8 gap-5 min-w-[180px]">
-            {/* Advantage Options */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="flex items-center gap-2 text-white/50">
-                <Settings2 className="h-4 w-4" />
-                <span className="text-sm font-medium">Nao</span>
-              </div>
-              <span className="text-[9px] text-white/30 tracking-wide uppercase">Opcoes de vantagem</span>
+            {/* League Logo - Centered */}
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[9px] text-white/40 font-medium tracking-wider uppercase">{matchInfo.competition}</span>
+              <Image
+                src={getLeagueLogo(matchInfo.competition)}
+                alt={matchInfo.competition}
+                width={56}
+                height={56}
+                className="object-contain opacity-90"
+                unoptimized
+              />
             </div>
 
             {/* Live Phase Toggle */}
@@ -404,7 +402,6 @@ export default function PartidaPage() {
             side="away" 
             selectedKit={awayKit}
             onKitChange={setAwayKit}
-            leagueName={matchInfo.competition}
           />
 
           {/* Vertical FORA label */}
