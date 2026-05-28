@@ -195,8 +195,11 @@ function deriveFormation(squad: MatchPlayer[]): string {
 
 // Stat lateral grande - estilo EA FC
 function BigStat({ label, value, side }: { label: string; value: string | number; side: "left" | "right" }) {
-  // Garante que o valor nunca seja NaN
-  const displayValue = typeof value === "number" && isNaN(value) ? 0 : value
+  // Garante que o valor nunca seja NaN ou undefined
+  let displayValue: string | number = value
+  if (typeof value === "number") {
+    displayValue = isNaN(value) || value === undefined || value === null ? 0 : Math.round(value)
+  }
   return (
     <div className={cn("flex flex-col", side === "left" ? "items-start" : "items-end")}>
       <span className="text-[#00ffc8] text-xs font-medium tracking-wider uppercase mb-1">{label}</span>
@@ -755,12 +758,12 @@ export default function PartidaAoVivoPage() {
         {/* Area Principal - 3 Colunas */}
         <div className="flex-1 flex px-4 sm:px-8 pb-4 gap-4 sm:gap-8 min-h-0">
           
-          {/* Coluna Esquerda - Stats Casa */}
-          <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-            <BigStat label="Possession %" value={state.home.possession ?? 50} side="left" />
-            <BigStat label="Shots" value={state.home.shots ?? 0} side="left" />
-            <BigStat label="Chances" value={state.home.shotsOnTarget ?? 0} side="left" />
-          </div>
+  {/* Coluna Esquerda - Stats Casa */}
+  <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
+  <BigStat label="Possession %" value={state.home?.possession ?? 50} side="left" />
+  <BigStat label="Shots" value={state.home?.shots ?? 0} side="left" />
+  <BigStat label="Chances" value={state.home?.shotsOnTarget ?? 0} side="left" />
+  </div>
 
           {/* Coluna Central - Conteudo baseado na Tab ativa */}
           <div className="flex-1 flex flex-col min-h-0">
@@ -772,16 +775,16 @@ export default function PartidaAoVivoPage() {
                   <div className="space-y-4">
                     <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Estatisticas da Partida</h3>
                     
-                    {/* Stats Comparativas */}
-                    <div className="space-y-3">
-                      <StatBar label="Posse de Bola" homeValue={state.home.possession ?? 50} awayValue={state.away.possession ?? 50} suffix="%" />
-                      <StatBar label="Chutes" homeValue={state.home.shots ?? 0} awayValue={state.away.shots ?? 0} />
-                      <StatBar label="Chutes no Alvo" homeValue={state.home.shotsOnTarget ?? 0} awayValue={state.away.shotsOnTarget ?? 0} />
-                      <StatBar label="Escanteios" homeValue={state.home.corners ?? 0} awayValue={state.away.corners ?? 0} />
-                      <StatBar label="Faltas" homeValue={state.home.fouls ?? 0} awayValue={state.away.fouls ?? 0} />
-                      <StatBar label="Impedimentos" homeValue={state.home.offsides ?? 0} awayValue={state.away.offsides ?? 0} />
-                      <StatBar label="Defesas" homeValue={state.home.saves ?? 0} awayValue={state.away.saves ?? 0} />
-                    </div>
+  {/* Stats Comparativas */}
+  <div className="space-y-3">
+  <StatBar label="Posse de Bola" homeValue={state.home?.possession ?? 50} awayValue={state.away?.possession ?? 50} suffix="%" />
+  <StatBar label="Chutes" homeValue={state.home?.shots ?? 0} awayValue={state.away?.shots ?? 0} />
+  <StatBar label="Chutes no Alvo" homeValue={state.home?.shotsOnTarget ?? 0} awayValue={state.away?.shotsOnTarget ?? 0} />
+  <StatBar label="Escanteios" homeValue={state.home?.corners ?? 0} awayValue={state.away?.corners ?? 0} />
+  <StatBar label="Faltas" homeValue={state.home?.fouls ?? 0} awayValue={state.away?.fouls ?? 0} />
+  <StatBar label="Impedimentos" homeValue={state.home?.offsides ?? 0} awayValue={state.away?.offsides ?? 0} />
+  <StatBar label="Defesas" homeValue={state.home?.saves ?? 0} awayValue={state.away?.saves ?? 0} />
+  </div>
                   </div>
                 )}
 
@@ -935,12 +938,12 @@ export default function PartidaAoVivoPage() {
             </div>
           </div>
 
-          {/* Coluna Direita - Stats Fora */}
-          <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-            <BigStat label="Possession %" value={state.away.possession ?? 50} side="right" />
-            <BigStat label="Shots" value={state.away.shots ?? 0} side="right" />
-            <BigStat label="Chances" value={state.away.shotsOnTarget ?? 0} side="right" />
-          </div>
+  {/* Coluna Direita - Stats Fora */}
+  <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
+  <BigStat label="Possession %" value={state.away?.possession ?? 50} side="right" />
+  <BigStat label="Shots" value={state.away?.shots ?? 0} side="right" />
+  <BigStat label="Chances" value={state.away?.shotsOnTarget ?? 0} side="right" />
+  </div>
         </div>
 
         {/* Barra de Acoes - Rodape */}
