@@ -32,7 +32,291 @@ export interface PlayerContract {
   // Clausula de revenda (% para time anterior)
   resaleClause?: number // 0-50%
   previousClub?: string | null
+  // Clausulas toxicas
+  clauses?: ContractClause[]
+  // Fatiamento de direitos de passe
+  ownedPercentage?: number // 0-100 — % que o clube possui
+  fundPercentage?: number  // % pertencente a fundo de investimento
+  fundName?: string        // Nome do fundo
+  fundForceSaleWeek?: number // Semana em que o fundo pode forcar venda
 }
+
+// ============================================
+// CLAUSULAS TOXICAS DE CONTRATO
+// ============================================
+
+export type ContractClauseType =
+  | "min_starter_pct"    // Jogador precisa ser titular X% dos jogos
+  | "no_bench_streak"    // Nao pode ficar X jogos seguidos no banco
+  | "performance_bonus_mandatory" // Bonus obrigatorio se atingir meta
+  | "loan_recall"        // Clube pode chamar de volta antes do fim
+
+export interface ContractClause {
+  id: number
+  type: ContractClauseType
+  description: string
+  threshold: number   // ex: 80 para "80% como titular"
+  penaltyAmount: number  // multa se descumprir
+  weeksToAudit: number   // frequencia da auditoria
+  lastAuditedWeek: number
+  breached: boolean
+  active: boolean
+}
+
+// ============================================
+// STATUS EFFECTS (TRAUMAS E VIRTUDES)
+// ============================================
+
+export type StatusEffectType =
+  // Traumas (negativos)
+  | "trauma_derrota_historica"  // Ex: Maracanasso — -15% atributos mentais
+  | "trauma_lesao_grave"        // Medo de se machucar — -10% pace/physical
+  | "trauma_vaias_torcida"      // Publico hostil — -10% em jogos em casa
+  | "bode_expiatorio"           // Torcida pegou no pe — -12% geral
+  // Virtudes (positivos)
+  | "heroi_titulo"              // Fez gol do titulo — +10% lideranca/moral permanente
+  | "idolo_historico"           // Lenda do clube — +8% geral em partidas em casa
+  | "veterano_invicto"          // Nunca perdeu derby — +5% em clasicos
+  | "destaque_midia"            // Destaque da semana — +5% forma por 4 semanas
+  // Psicologicos
+  | "momentum_positivo"         // 3+ vitorias seguidas — +8% confianca
+  | "crise_confianca"           // 3+ derrotas seguidas — -10% geral
+  | "peso_camisa"               // Grande clube lutando contra rebaixamento — -12% geral
+
+export interface StatusEffect {
+  id: number
+  type: StatusEffectType
+  label: string
+  description: string
+  // Modificadores numericos (aplicados ao overall para calculo de partida)
+  overallModifier: number  // -20 a +20
+  moraleModifier: number   // -20 a +20
+  // Duracao (null = permanente)
+  durationWeeks: number | null
+  appliedWeek: number
+  // Condicoes de cura (para traumas curáveis)
+  cureCondition?: {
+    type: "win_derby" | "win_title" | "clean_sheet_streak" | "time" | "sold"
+    threshold: number // ex: 5 clean sheets seguidos
+    progress: number
+  }
+  isPermanent: boolean
+  isPositive: boolean
+}
+
+export const STATUS_EFFECT_TEMPLATES: Record<StatusEffectType, Omit<StatusEffect, "id" | "appliedWeek">> = {
+  trauma_derrota_historica: {
+    type: "trauma_derrota_historica", label: "Trauma: Derrota Histórica",
+    description: "Carrega o peso de uma derrota marcante. Atributos mentais reduzidos.",
+    overallModifier: -8, moraleModifier: -15, durationWeeks: null,
+    cureCondition: { type: "win_derby", threshold: 1, progress: 0 },
+    isPermanent: false, isPositive: false
+  },
+  trauma_lesao_grave: {
+    type: "trauma_lesao_grave", label: "Medo de Lesão",
+    description: "Recuperado fisicamente mas psicologicamente abalado. Evita disputas duras.",
+    overallModifier: -5, moraleModifier: -8, durationWeeks: 12,
+    cureCondition: { type: "time", threshold: 12, progress: 0 },
+    isPermanent: false, isPositive: false
+  },
+  trauma_vaias_torcida: {
+    type: "trauma_vaias_torcida", label: "Trauma: Vaias da Torcida",
+    description: "A torcida o perseguiu. Rende menos jogando em casa.",
+    overallModifier: -10, moraleModifier: -12, durationWeeks: null,
+    cureCondition: { type: "win_title", threshold: 1, progress: 0 },
+    isPermanent: false, isPositive: false
+  },
+  bode_expiatorio: {
+    type: "bode_expiatorio", label: "Bode Expiatório",
+    description: "A torcida colocou toda a culpa nele. Precisa ser vendido ou curado.",
+    overallModifier: -12, moraleModifier: -20, durationWeeks: null,
+    cureCondition: { type: "sold", threshold: 1, progress: 0 },
+    isPermanent: false, isPositive: false
+  },
+  heroi_titulo: {
+    type: "heroi_titulo", label: "Herói do Título",
+    description: "Fez o gol que trouxe o título. Ídolo eterno da torcida.",
+    overallModifier: 6, moraleModifier: 15, durationWeeks: null,
+    isPermanent: true, isPositive: true
+  },
+  idolo_historico: {
+    type: "idolo_historico", label: "Ídolo Histórico",
+    description: "Reconhecido como lenda pelo clube e pela torcida.",
+    overallModifier: 8, moraleModifier: 20, durationWeeks: null,
+    isPermanent: true, isPositive: true
+  },
+  veterano_invicto: {
+    type: "veterano_invicto", label: "Veterano Invicto em Clássicos",
+    description: "Nunca perdeu um clássico. Emana autoridade nos duelos.",
+    overallModifier: 5, moraleModifier: 10, durationWeeks: null,
+    isPermanent: true, isPositive: true
+  },
+  destaque_midia: {
+    type: "destaque_midia", label: "Destaque da Semana",
+    description: "Está em alta na mídia. Maior confiança por algumas semanas.",
+    overallModifier: 5, moraleModifier: 8, durationWeeks: 4,
+    isPermanent: false, isPositive: true
+  },
+  momentum_positivo: {
+    type: "momentum_positivo", label: "Momento Positivo",
+    description: "O time está em uma sequência de vitórias. Confiança elevada.",
+    overallModifier: 8, moraleModifier: 12, durationWeeks: null,
+    cureCondition: { type: "time", threshold: 0, progress: 0 },
+    isPermanent: false, isPositive: true
+  },
+  crise_confianca: {
+    type: "crise_confianca", label: "Crise de Confiança",
+    description: "3 ou mais derrotas seguidas. O grupo está abalado.",
+    overallModifier: -10, moraleModifier: -15, durationWeeks: null,
+    cureCondition: { type: "win_derby", threshold: 2, progress: 0 },
+    isPermanent: false, isPositive: false
+  },
+  peso_camisa: {
+    type: "peso_camisa", label: "Peso da Camisa",
+    description: "Grande clube em crise. A ansiedade coletiva compromete o rendimento.",
+    overallModifier: -12, moraleModifier: -18, durationWeeks: null,
+    cureCondition: { type: "time", threshold: 0, progress: 0 },
+    isPermanent: false, isPositive: false
+  },
+}
+
+// ============================================
+// PANELINHAS (GRUPOS DE AFINIDADE)
+// ============================================
+
+export type AffinityGroupType =
+  | "mesma_nacionalidade"
+  | "mesmo_ex_clube"
+  | "mesma_faixa_etaria"
+  | "companheiros_selecao"
+
+export interface AffinityGroup {
+  id: number
+  type: AffinityGroupType
+  label: string
+  memberIds: number[]    // IDs dos jogadores do grupo
+  leaderId: number       // Jogador com mais influencia
+  cohesion: number       // 0-100 — unidade do grupo
+  loyaltyToCoach: number // 0-100 — lealdade ao treinador
+  // Modificador de entrosamento em campo
+  chemistryBonus: number // +1 a +5 no overall de partida para membros do grupo
+}
+
+// ============================================
+// MARKETING DINAMICO
+// ============================================
+
+export type MarketingCampaignType =
+  | "esquadrao_imbativel"   // Promete time invencivel — alta receita, meta de G4
+  | "revelacao_da_base"     // Foca em jovens — receita moderada, sem meta rigida
+  | "retorno_da_lenda"      // Contrata estrela — mega receita, meta de titulo
+  | "projeto_futuro"        // Vende ideia de reconstrucao — baixa receita, sem pressao
+
+export interface MarketingContract {
+  id: number
+  type: MarketingCampaignType
+  name: string
+  description: string
+  sponsor: string
+  // Financeiro
+  upfrontPayment: number     // Pagamento imediato
+  weeklyBonus: number        // Bonus semanal se cumprir meta
+  penaltyAmount: number      // Multa por quebra de meta
+  // Meta de desempenho
+  performanceGoal: {
+    type: "min_table_position" | "win_title" | "no_relegation" | "none"
+    threshold: number // ex: 4 para "estar no G4"
+    checkWeek: number // semana que a meta é auditada
+  }
+  startWeek: number
+  endWeek: number
+  active: boolean
+  breached: boolean
+  fulfilled: boolean
+}
+
+export const MARKETING_CAMPAIGN_TEMPLATES: Record<MarketingCampaignType, Omit<MarketingContract, "id" | "startWeek" | "endWeek" | "active" | "breached" | "fulfilled">> = {
+  esquadrao_imbativel: {
+    type: "esquadrao_imbativel", name: "Esquadrão Imbatível",
+    description: "Campanha agressiva que posiciona o time como favorito absoluto.",
+    sponsor: "Bet+ Sports",
+    upfrontPayment: 8000000, weeklyBonus: 200000, penaltyAmount: 15000000,
+    performanceGoal: { type: "min_table_position", threshold: 4, checkWeek: 38 }
+  },
+  revelacao_da_base: {
+    type: "revelacao_da_base", name: "Revelação da Base",
+    description: "Campanha focada em jovens talentos. Imagem positiva sem metas agressivas.",
+    sponsor: "Globo Esporte",
+    upfrontPayment: 3000000, weeklyBonus: 80000, penaltyAmount: 0,
+    performanceGoal: { type: "none", threshold: 0, checkWeek: 38 }
+  },
+  retorno_da_lenda: {
+    type: "retorno_da_lenda", name: "Retorno da Lenda",
+    description: "Grande contratação como âncora da campanha. Expectativa máxima.",
+    sponsor: "Nike Brasil",
+    upfrontPayment: 12000000, weeklyBonus: 400000, penaltyAmount: 25000000,
+    performanceGoal: { type: "win_title", threshold: 1, checkWeek: 38 }
+  },
+  projeto_futuro: {
+    type: "projeto_futuro", name: "Projeto Futuro",
+    description: "Vende reconstrução ao torcedor. Baixa pressão, receita moderada.",
+    sponsor: "Banco do Brasil",
+    upfrontPayment: 2000000, weeklyBonus: 50000, penaltyAmount: 0,
+    performanceGoal: { type: "no_relegation", threshold: 16, checkWeek: 38 }
+  },
+}
+
+// ============================================
+// GESTAO DE STAFF
+// ============================================
+
+export type StaffRole =
+  | "diretor_futebol"
+  | "chefe_seguranca"
+  | "psicologo_chefe"
+  | "diretor_marketing"
+  | "chefe_medico"
+  | "coordenador_base"
+
+export interface StaffMember {
+  id: number
+  name: string
+  role: StaffRole
+  // Atributos (0-100)
+  competence: number
+  loyalty: number
+  // Efeitos passivos
+  passiveEffect: string // descricao do efeito passivo
+  salary: number // semanal
+  hiredWeek: number
+  hiredSeason: number
+  // Chance de causar problemas se competencia baixa
+  problemChance: number // 0-1
+}
+
+export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
+  diretor_futebol: "Diretor de Futebol",
+  chefe_seguranca: "Chefe de Segurança",
+  psicologo_chefe: "Psicólogo Chefe",
+  diretor_marketing: "Diretor de Marketing",
+  chefe_medico: "Chefe Médico",
+  coordenador_base: "Coordenador de Base",
+}
+
+export const AVAILABLE_STAFF: Omit<StaffMember, "hiredWeek" | "hiredSeason">[] = [
+  { id: 101, name: "Eduardo Barros", role: "diretor_futebol", competence: 82, loyalty: 75, passiveEffect: "Negocia contratos com 15% de desconto. Bônus +10% qualidade de scouting.", salary: 80000, problemChance: 0.05 },
+  { id: 102, name: "Marcus Silva", role: "diretor_futebol", competence: 65, loyalty: 90, passiveEffect: "Bônus +5% qualidade de scouting. Pode impor metas irreais.", salary: 45000, problemChance: 0.15 },
+  { id: 103, name: "Roberto Campos", role: "chefe_seguranca", competence: 88, loyalty: 80, passiveEffect: "Reduz probabilidade de eventos negativos de torcida em 60%.", salary: 35000, problemChance: 0.03 },
+  { id: 104, name: "Antônio Ramos", role: "chefe_seguranca", competence: 55, loyalty: 70, passiveEffect: "Reduz probabilidade de eventos negativos em 20%.", salary: 20000, problemChance: 0.20 },
+  { id: 105, name: "Dra. Paula Menezes", role: "psicologo_chefe", competence: 90, loyalty: 85, passiveEffect: "Curas de trauma 2x mais rápidas. Bônus +8 moral do elenco.", salary: 50000, problemChance: 0.02 },
+  { id: 106, name: "Dr. Sérgio Lima", role: "psicologo_chefe", competence: 68, loyalty: 65, passiveEffect: "Curas de trauma ligeiramente aceleradas. Bônus +3 moral.", salary: 30000, problemChance: 0.10 },
+  { id: 107, name: "Carlos Menezes", role: "diretor_marketing", competence: 85, loyalty: 75, passiveEffect: "Receita de marketing +20%. Negocia cláusulas mais justas.", salary: 70000, problemChance: 0.08 },
+  { id: 108, name: "Fábio Alves", role: "diretor_marketing", competence: 62, loyalty: 80, passiveEffect: "Receita de marketing +8%. Pode criar expectativas irreais.", salary: 40000, problemChance: 0.18 },
+  { id: 109, name: "Dr. André Costa", role: "chefe_medico", competence: 88, loyalty: 90, passiveEffect: "Recuperação de lesões 25% mais rápida. Risco de lesão -15%.", salary: 55000, problemChance: 0.02 },
+  { id: 110, name: "Dr. Renato Melo", role: "chefe_medico", competence: 70, loyalty: 75, passiveEffect: "Recuperação de lesões 10% mais rápida.", salary: 35000, problemChance: 0.08 },
+  { id: 111, name: "Júnior Santos", role: "coordenador_base", competence: 80, loyalty: 85, passiveEffect: "Jovens gerados pela base chegam com +5 overall e +8 potencial.", salary: 40000, problemChance: 0.04 },
+  { id: 112, name: "Marcos Oliveira", role: "coordenador_base", competence: 60, loyalty: 70, passiveEffect: "Leve melhora na qualidade dos jovens da base.", salary: 25000, problemChance: 0.12 },
+]
 
 // Historico de confrontos entre times
 export interface HeadToHead {
@@ -134,6 +418,12 @@ export interface Player {
 
   // Escalacao manual (true = titular, false = reserva)
   isStarter?: boolean
+
+  // Status Effects permanentes/temporarios (traumas, virtudes, momentum)
+  statusEffects?: StatusEffect[]
+
+  // Ex-clube (para deteccao de panelinhas)
+  previousClubShort?: string
 }
 
 export interface Scout {
@@ -176,6 +466,86 @@ export const AVAILABLE_SCOUTS: Omit<Scout, "isSearching" | "searchProgress" | "f
 ]
 
 export const DISCOVERABLE_PLAYERS: ScoutedPlayer[] = []
+
+export interface ScoutedLead {
+  id: number
+  name: string
+  position: string
+  age: number
+  nationality: string
+  overall: number
+  potential: number
+  marketValue: number
+  revealedAttributes: boolean
+  scoutedRegion: string
+  discoveredWeek: number
+  pace: number
+  shooting: number
+  passing: number
+  dribbling: number
+  defending: number
+  physical: number
+}
+
+const SCOUT_NAMES_BY_REGION: Record<string, { names: string[]; nationalities: string[] }> = {
+  brasil: {
+    names: ["Lucas Mendes", "Gabriel Rodrigues", "Matheus Costa", "Felipe Oliveira", "Bruno Santos", "Rafael Lima", "Thiago Alves", "Vitor Pereira", "Diego Ferreira", "Caio Martins", "Henrique Souza", "Guilherme Barbosa", "Pedro Carvalho", "Enzo Ribeiro", "Kaue Nascimento"],
+    nationalities: ["Brasil"],
+  },
+  americas: {
+    names: ["Juan Rodriguez", "Carlos Diaz", "Diego Herrera", "Alejandro Torres", "Sebastian Romero", "Nicolas Vargas", "Andres Morales", "Santiago Reyes", "Matias Gonzalez", "Pablo Soto", "Facundo Lopez", "Lautaro Medina"],
+    nationalities: ["Argentina", "Colombia", "Uruguai", "Chile", "Mexico", "Peru"],
+  },
+  europa: {
+    names: ["Marco Rossi", "Pierre Dubois", "Jonas Weber", "Luca Bianchi", "Erik Lindqvist", "Andrei Popescu", "Tomas Novak", "Sven Hansen", "Mikel Arroyo", "Fionn O'Brien", "Daan Visser", "Nikola Petrovic"],
+    nationalities: ["Italia", "Franca", "Alemanha", "Holanda", "Portugal", "Espanha", "Belgica", "Serbia"],
+  },
+  asia: {
+    names: ["Kenji Yamada", "Park Ji-sung", "Chen Wei", "Ryo Kobayashi", "Kim Tae-yang", "Arif Hasan", "Takuya Morita", "Li Xiang", "Ryota Suzuki", "Min-jun Lee"],
+    nationalities: ["Japao", "Coreia do Sul", "China", "Arabia Saudita", "Ira"],
+  },
+  africa: {
+    names: ["Kwame Asante", "Ibrahim Diallo", "Moussa Camara", "Youssef El Arbi", "Emmanuel Mensah", "Cheikh Diop", "Abdi Hassan", "Sekou Kouyate", "Oumar Toure", "Mamadou Sylla"],
+    nationalities: ["Gana", "Senegal", "Costa do Marfim", "Nigeria", "Marrocos", "Mali"],
+  },
+}
+
+const LEAD_POSITIONS = ["GOL", "ZAG", "ZAG", "LE", "LD", "VOL", "VOL", "MEI", "ALA", "ALA", "ATA", "ATA"]
+
+function randAttr(base: number): number {
+  return Math.min(99, Math.max(30, base + Math.floor((Math.random() - 0.5) * 28)))
+}
+
+export function generateScoutedLead(region: string, scoutSkill: number, week: number): ScoutedLead {
+  const key = region.toLowerCase().replace(/[^a-z]/g, "")
+  const regionData = SCOUT_NAMES_BY_REGION[key] ?? SCOUT_NAMES_BY_REGION.brasil
+  const name = regionData.names[Math.floor(Math.random() * regionData.names.length)]
+  const nationality = regionData.nationalities[Math.floor(Math.random() * regionData.nationalities.length)]
+  const position = LEAD_POSITIONS[Math.floor(Math.random() * LEAD_POSITIONS.length)]
+  const age = 16 + Math.floor(Math.random() * 10)
+
+  const minOvr = 50 + scoutSkill * 4
+  const maxOvr = 65 + scoutSkill * 6
+  const overall = Math.min(99, Math.max(50, Math.floor(Math.random() * (maxOvr - minOvr) + minOvr)))
+  const potential = Math.min(99, overall + Math.floor(Math.random() * 20))
+
+  const ageMultiplier = age <= 19 ? 2.5 : age <= 22 ? 1.8 : 1.0
+  const marketValue = Math.round(overall * 80000 * ageMultiplier * (0.8 + Math.random() * 0.4))
+
+  return {
+    id: Date.now() + Math.floor(Math.random() * 9999),
+    name, position, age, nationality, overall, potential, marketValue,
+    revealedAttributes: false,
+    scoutedRegion: region,
+    discoveredWeek: week,
+    pace: randAttr(overall),
+    shooting: randAttr(overall),
+    passing: randAttr(overall),
+    dribbling: randAttr(overall),
+    defending: randAttr(overall),
+    physical: randAttr(overall),
+  }
+}
 
 // ============================================
 // SISTEMA DE INFRAESTRUTURA DO CLUBE
@@ -512,34 +882,41 @@ export function calculateMatchModifiers(
   weather: MatchModifiers["weather"],
   altitude: number,
   isDerby: boolean,
-  matchImportance: MatchModifiers["matchImportance"]
+  matchImportance: MatchModifiers["matchImportance"],
+  options?: {
+    homeSquadPlayers?: Player[]    // para calcular Bola de Ouro
+    homeTablePosition?: number     // posicao na tabela (1-20)
+    awayTablePosition?: number
+    homeClubPrestige?: number      // prestigio esperado (0-100)
+    leagueSize?: number
+  }
 ): MatchModifiers {
   let homeAdvantage = 5 + (homeInfra.acousticsLevel * 2) + (homeInfra.soundSystemLevel)
   let crowdPressure = 5 + (homeInfra.acousticsLevel * 3)
-  
+
   // Gramado afeta tecnica
   let technicalPenalty = 0
   if (homeInfra.pitchHeight === "alto") technicalPenalty += 5
   if (homeInfra.pitchQuality < 3) technicalPenalty += (3 - homeInfra.pitchQuality) * 3
-  
+
   // Clima
   if (weather === "chuva") technicalPenalty += 8
   if (weather === "tempestade") technicalPenalty += 15
   if (weather === "neve") technicalPenalty += 12
-  
+
   // Altitude
   let staminaDrainMultiplier = 1
   if (altitude > 2500) staminaDrainMultiplier = 1.5
   else if (altitude > 1500) staminaDrainMultiplier = 1.25
   else if (altitude > 800) staminaDrainMultiplier = 1.1
-  
+
   // Derby intensifica tudo
   const derbyIntensity = isDerby ? 80 : 0
   if (isDerby) {
     homeAdvantage += 5
     crowdPressure += 10
   }
-  
+
   // Importancia
   if (matchImportance === "decisivo") {
     crowdPressure += 5
@@ -548,9 +925,44 @@ export function calculateMatchModifiers(
     crowdPressure += 10
     homeAdvantage += 5
   }
-  
+
+  // === EFEITO BOLA DE OURO ===
+  // Estrela (overall >= 88) no elenco intimida adversário e eleva companheiros
+  let starPlayerBoost = 0
+  let starPlayerAwayDebuff = 0
+  if (options?.homeSquadPlayers) {
+    const stars = options.homeSquadPlayers.filter(p => p.overall >= 88 && !p.injury)
+    if (stars.length > 0) {
+      const topStar = stars.reduce((best, p) => p.overall > best.overall ? p : best)
+      // Cada estrela acima de 88 adiciona 2pts; acima de 92 adiciona 5pts
+      starPlayerBoost += stars.length * 2
+      if (topStar.overall >= 92) starPlayerBoost += 3
+      starPlayerAwayDebuff += Math.round(topStar.overall / 20) // 4-5 pts de debuff no time rival
+      // Status effects da estrela também contam
+      const effectBonus = (topStar.statusEffects ?? [])
+        .filter(e => e.isPositive)
+        .reduce((sum, e) => sum + Math.max(0, e.overallModifier), 0)
+      starPlayerBoost += Math.min(5, effectBonus)
+    }
+  }
+
+  // === PESO DA CAMISA / DEBUFF DE ANSIEDADE ===
+  // Grande clube esperado (prestigio >= 75) que está lutando contra rebaixamento
+  let anxietyDebuff = 0
+  const tablePos = options?.homeTablePosition ?? 0
+  const prestige = options?.homeClubPrestige ?? 0
+  const leagueSize = options?.leagueSize ?? 20
+  if (prestige >= 75 && tablePos > leagueSize - 6 && tablePos > 0) {
+    // Quanto mais próximo do rebaixamento e mais famoso o clube, maior a ansiedade
+    const relegationPressure = (tablePos - (leagueSize - 6)) // 1-5
+    anxietyDebuff = relegationPressure * 3 + Math.round((prestige - 75) / 5)
+  }
+
+  const finalHomeBoost = homeAdvantage + starPlayerBoost
+  const finalAwayDebuff = Math.round(crowdPressure * 0.7) + starPlayerAwayDebuff
+
   return {
-    homeAdvantage: Math.min(homeAdvantage, 25),
+    homeAdvantage: Math.min(finalHomeBoost, 30),
     crowdPressure: Math.min(crowdPressure, 25),
     weather,
     temperature: weather === "neve" ? -2 : weather === "sol" ? 30 : 22,
@@ -558,8 +970,8 @@ export function calculateMatchModifiers(
     isDerby,
     derbyIntensity,
     matchImportance,
-    homeTeamBoost: homeAdvantage,
-    awayTeamDebuff: Math.round(crowdPressure * 0.7),
+    homeTeamBoost: Math.max(0, finalHomeBoost - anxietyDebuff),
+    awayTeamDebuff: finalAwayDebuff,
     staminaDrainMultiplier,
     technicalPenalty
   }
@@ -1298,7 +1710,7 @@ interface GameEngineState {
   buyPlayer: (player: Player, fee: number) => void
   loanPlayer: (player: Player, weeks: number, salary: number) => void
   hireScout: (scout: Scout) => void
-  startScoutSearch: (scoutId: number, region: string) => void
+  startScoutSearch: (scoutId: number, region: string, weeksToComplete?: number, searchCost?: number) => void
   stopScoutSearch: (scoutId: number) => void
   fireScout: (scoutId: number) => void
   simulateOtherMatches: () => void
@@ -1339,6 +1751,57 @@ interface GameEngineState {
   
   // Analise pos-partida
   generatePostMatchAnalysis: (matchResult: MatchResult, isHome: boolean, stats: any) => PostMatchAnalysis
+
+  // Panelinhas
+  affinityGroups: AffinityGroup[]
+  detectAffinityGroups: () => void
+
+  // Marketing dinamico
+  marketingContracts: MarketingContract[]
+  createMarketingContract: (type: MarketingCampaignType) => void
+  cancelMarketingContract: (id: number) => void
+
+  // Gestao de staff
+  staffMembers: StaffMember[]
+  hireStaff: (staffId: number) => void
+  fireStaff: (staffId: number) => void
+
+  // Status effects (traumas e virtudes)
+  addStatusEffect: (playerId: number, type: StatusEffectType) => void
+  removeStatusEffect: (playerId: number, effectId: number) => void
+
+  // Fundo de investimento (fatiamento de direitos)
+  pendingFundOffers: InvestmentFundOffer[]
+  respondToFundOffer: (offerId: number, accept: boolean) => void
+
+  // Eventos aleatorios
+  pendingEvents: RandomEvent[]
+  resolveRandomEvent: (eventId: number, choiceId: number) => void
+
+  // Leads de scouting
+  scoutedLeads: ScoutedLead[]
+  revealScoutedLead: (leadId: number) => void
+  dismissScoutedLead: (leadId: number) => void
+
+  // Infraestrutura do clube
+  clubInfrastructure: Record<string, number>
+  infraUpgradesInProgress: Record<string, { weeksLeft: number; targetLevel: number }>
+  startInfrastructureUpgrade: (areaId: string, cost: number) => void
+
+  // Processar fim de temporada (envelhecimento, aposentadoria, jovens da base)
+  processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => void
+}
+
+export interface InvestmentFundOffer {
+  id: number
+  playerId: number
+  playerName: string
+  fundName: string
+  offerAmount: number
+  fundPercentage: number
+  createdWeek: number
+  expiresWeek: number
+  status: "pendente" | "aceita" | "rejeitada"
 }
 
 // Jogadores iniciais do Bragantino (exemplo)
@@ -1700,7 +2163,27 @@ export const useGameEngine = create<GameEngineState>()(
       topScorers: [],
       
       transferOffers: [],
-      
+
+      // Panelinhas
+      affinityGroups: [],
+
+      // Marketing dinamico
+      marketingContracts: [],
+
+      // Staff
+      staffMembers: [],
+
+      // Fundo de investimento
+      pendingFundOffers: [],
+
+      // Eventos aleatorios e leads de scouting
+      pendingEvents: [],
+      scoutedLeads: [],
+
+      // Infraestrutura do clube
+      clubInfrastructure: { stadium: 2, acoustics: 1, pitch: 2, training: 2, youth: 1, medical: 2, security: 1, data: 1 },
+      infraUpgradesInProgress: {},
+
       // Taticas padrao
       teamTactics: {
         mentality: "equilibrado",
@@ -1786,7 +2269,7 @@ export const useGameEngine = create<GameEngineState>()(
                 const attribute = player.training.currentFocus as keyof Player
                 const currentValue = player[attribute] as number
                 const maxValue = player.potential
-                
+
                 if (currentValue < maxValue) {
                   const improvement = Math.random() < 0.7 ? 1 : 0
                   return {
@@ -1795,6 +2278,12 @@ export const useGameEngine = create<GameEngineState>()(
                     energy: newEnergy,
                     training: { ...player.training, weeksTrained: 0 }
                   }
+                }
+                // Jogador no potencial maximo — reseta contador para nao acumular
+                return {
+                  ...player,
+                  energy: newEnergy,
+                  training: { ...player.training, weeksTrained: 0 }
                 }
               }
               
@@ -1808,92 +2297,11 @@ export const useGameEngine = create<GameEngineState>()(
             return { ...player, energy: newEnergy }
           })
           
-          // Verificar fim de temporada (semana 48)
-          let newSeason = s.currentSeason
-          let finalWeek = newWeek
-          let seasonPlayers = updatedPlayers
-          let lastStandings = s.lastSeasonStandings
-          if (newWeek >= 48) {
-            newSeason = s.currentSeason + 1
-            finalWeek = 0
-            lastStandings = [...s.serieAStandings]
-
-            // Envelhece jogadores e reseta stats
-            const agedPlayers = updatedPlayers.map(p => ({
-              ...p,
-              age: p.age + 1,
-              seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 }
-            }))
-
-            // Aposentadoria: 38+ se aposentam, 35-37 têm 30% de chance
-            const retiredPositions: string[] = []
-            const activePlayers = agedPlayers.filter(p => {
-              if (p.isLoanedIn) return true
-              if (p.age >= 38) { retiredPositions.push(p.position); return false }
-              if (p.age >= 35 && Math.random() < 0.30) { retiredPositions.push(p.position); return false }
-              return true
-            })
-
-            // Decay de valor de mercado com a idade
-            const playersWithMarketUpdate = activePlayers.map(p => {
-              let mult = 1.0
-              if (p.age >= 34) mult = 0.78
-              else if (p.age >= 31) mult = 0.92
-              else if (p.age <= 22 && p.potential > p.overall + 5) mult = 1.08
-              return { ...p, marketValue: Math.round(p.marketValue * mult) }
-            })
-
-            // Gera jovens da base para substituir aposentados
-            const YOUTH_NAMES = ["Lucas","Gabriel","Pedro","Matheus","João","Rafael","Felipe","André","Bruno","Carlos","Thiago","Vitor","Diego","Leandro","Ricardo"]
-            const YOUTH_SURNAMES = ["Silva","Santos","Oliveira","Lima","Costa","Ferreira","Ribeiro","Alves","Carvalho","Nascimento","Gomes","Martins","Pereira","Araújo","Souza"]
-            const FALLBACK_POSITIONS = ["GOL","ZAG","ZAG","LAT","LAT","VOL","VOL","MEI","MEI","ATA","PD","PE"]
-            const MIN_SQUAD = 18
-            const needed = Math.max(retiredPositions.length, Math.max(0, MIN_SQUAD - playersWithMarketUpdate.length))
-            const youthPlayers: Player[] = Array.from({ length: needed }).map((_, i) => {
-              const firstName = YOUTH_NAMES[Math.floor(Math.random() * YOUTH_NAMES.length)]
-              const lastName = YOUTH_SURNAMES[Math.floor(Math.random() * YOUTH_SURNAMES.length)]
-              const pos = retiredPositions[i] ?? FALLBACK_POSITIONS[i % FALLBACK_POSITIONS.length]
-              const age = 17 + Math.floor(Math.random() * 4)
-              const base = 58 + Math.floor(Math.random() * 12)
-              const potential = Math.min(90, base + 10 + Math.floor(Math.random() * 16))
-              return {
-                id: Date.now() + i * 7 + 5000,
-                name: `${firstName} ${lastName}`,
-                position: pos,
-                age,
-                overall: base,
-                potential,
-                nationality: "Brasil",
-                pace: Math.min(99, base + Math.floor(Math.random() * 15)),
-                shooting: Math.min(99, base - 10 + Math.floor(Math.random() * 20)),
-                passing: Math.min(99, base - 5 + Math.floor(Math.random() * 15)),
-                dribbling: Math.min(99, base - 8 + Math.floor(Math.random() * 18)),
-                defending: Math.min(99, base - 10 + Math.floor(Math.random() * 20)),
-                physical: Math.min(99, base - 5 + Math.floor(Math.random() * 15)),
-                energy: 100,
-                morale: "Motivado" as const,
-                form: base - 5,
-                contract: {
-                  salary: Math.round(base * 400),
-                  endDate: 78 + Math.floor(Math.random() * 78),
-                  releaseClause: null,
-                  signedWeek: 0,
-                  signedSeason: newSeason
-                },
-                injury: null,
-                seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
-                training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
-                nationalTeam: null,
-                calledUp: false,
-                marketValue: base * 80000,
-                joinedClubWeek: 0,
-                joinedClubSeason: newSeason,
-                isLoanedIn: false,
-              }
-            })
-
-            seasonPlayers = [...playersWithMarketUpdate, ...youthPlayers]
-          }
+          // Fim de temporada e gerenciado por processSeasonEnd() chamado via use-game-manager
+          const newSeason = s.currentSeason
+          const finalWeek = newWeek
+          const seasonPlayers = updatedPlayers
+          const lastStandings = s.lastSeasonStandings
           
           // Processar convocacoes de selecao
           const isFifaDate = s.fifaDates.includes(newWeek)
@@ -1908,18 +2316,161 @@ export const useGameEngine = create<GameEngineState>()(
             }
             return offer
           })
-          
+
+          // ---- STATUS EFFECTS: processar duracao e curas por tempo ----
+          const playersAfterEffects = seasonPlayers.map(player => {
+            if (!player.statusEffects?.length) return player
+            const updatedEffects = player.statusEffects.filter(effect => {
+              // Remove efeitos temporarios expirados
+              if (!effect.isPermanent && effect.durationWeeks !== null) {
+                const elapsed = newWeek - effect.appliedWeek
+                if (elapsed >= effect.durationWeeks) return false
+              }
+              // Avanca progresso de cura por tempo
+              if (effect.cureCondition?.type === "time" && effect.cureCondition.threshold > 0) {
+                effect = {
+                  ...effect,
+                  cureCondition: {
+                    ...effect.cureCondition,
+                    progress: effect.cureCondition.progress + 1
+                  }
+                }
+                if (effect.cureCondition!.progress >= effect.cureCondition!.threshold) return false
+              }
+              return true
+            })
+            return { ...player, statusEffects: updatedEffects }
+          })
+
+          // ---- MARKETING: bonus semanal e verificacao de meta no fim da temporada ----
+          let marketingBonus = 0
+          let updatedMarketing = s.marketingContracts.map(c => {
+            if (!c.active || c.breached) return c
+            marketingBonus += c.weeklyBonus
+            // Verifica meta no final da temporada
+            if (newWeek === c.performanceGoal.checkWeek) {
+              const userPos = s.serieAStandings.findIndex(e => e.teamShort === (s.serieAStandings[0]?.teamShort ?? ""))
+              const goal = c.performanceGoal
+              let metGoal = false
+              if (goal.type === "none") metGoal = true
+              else if (goal.type === "no_relegation") metGoal = userPos < goal.threshold - 1
+              // outros tipos (min_table_position, win_title) verificados externamente
+              if (!metGoal && goal.type !== "none" && goal.type !== "no_relegation") {
+                return { ...c, active: false, breached: true }
+              }
+              if (metGoal) return { ...c, active: false, fulfilled: true }
+            }
+            return c
+          })
+
+          // ---- CLAUSULAS TOXICAS: auditoria semanal ----
+          let penaltyTotal = 0
+          const playersAfterClauses = playersAfterEffects.map(player => {
+            if (!player.contract?.clauses?.length) return player
+            const updatedClauses = player.contract.clauses.map(clause => {
+              if (!clause.active || clause.breached) return clause
+              if (newWeek - clause.lastAuditedWeek < clause.weeksToAudit) return clause
+              // Verifica clausula min_starter_pct
+              if (clause.type === "min_starter_pct") {
+                const total = player.seasonStats.matchesPlayed
+                const started = Math.round(total * ((player.isStarter ? 0.8 : 0.4)))
+                const pct = total > 0 ? (started / total) * 100 : 100
+                if (pct < clause.threshold) {
+                  penaltyTotal += clause.penaltyAmount
+                  return { ...clause, breached: true, active: false, lastAuditedWeek: newWeek }
+                }
+              }
+              // Verifica clausula no_bench_streak
+              if (clause.type === "no_bench_streak" && !player.isStarter) {
+                return { ...clause, breached: true, active: false, lastAuditedWeek: newWeek }
+              }
+              return { ...clause, lastAuditedWeek: newWeek }
+            })
+            return { ...player, contract: { ...player.contract, clauses: updatedClauses } }
+          })
+
+          // ---- FUNDO DE INVESTIMENTO: forcar venda se chegou a semana ----
+          const fundOffers: InvestmentFundOffer[] = [...s.pendingFundOffers]
+          const FUND_NAMES = ["Alpha Capital", "Sport Ventures", "Global FC Fund", "Emerald Sports"]
+          playersAfterClauses.forEach(player => {
+            if (!player.contract?.fundPercentage || player.contract.fundForceSaleWeek !== newWeek) return
+            const offer: InvestmentFundOffer = {
+              id: Date.now() + player.id,
+              playerId: player.id,
+              playerName: player.name,
+              fundName: player.contract.fundName ?? FUND_NAMES[Math.floor(Math.random() * FUND_NAMES.length)],
+              offerAmount: Math.round(player.marketValue * (player.contract.fundPercentage / 100)),
+              fundPercentage: player.contract.fundPercentage ?? 30,
+              createdWeek: newWeek,
+              expiresWeek: newWeek + 3,
+              status: "pendente" as const,
+            }
+            if (!fundOffers.some(o => o.playerId === player.id && o.status === "pendente")) {
+              fundOffers.push(offer)
+            }
+          })
+
           return {
             ...s,
             currentWeek: finalWeek,
             currentSeason: newSeason,
-            squadPlayers: seasonPlayers,
+            squadPlayers: playersAfterClauses,
             transferOffers: updatedOffers,
-            balance: s.balance + weeklyBalance,
+            marketingContracts: updatedMarketing,
+            pendingFundOffers: fundOffers,
+            balance: s.balance + weeklyBalance + marketingBonus - penaltyTotal,
             lastSeasonStandings: lastStandings,
           }
         })
         
+        // Processar progresso dos olheiros
+        set((s) => {
+          const newLeads: ScoutedLead[] = []
+          const updatedScouts = s.scouts.map(scout => {
+            if (!scout.isSearching) return scout
+            const elapsed = (scout.weeksSearching ?? 0) + 1
+            const remaining = Math.max(0, (scout.weeksToComplete ?? 4) - 1)
+            const total = elapsed + remaining
+            const progress = Math.round((elapsed / total) * 100)
+            if (remaining === 0) {
+              const lead = generateScoutedLead(scout.region, scout.skill, newWeek)
+              newLeads.push(lead)
+              return { ...scout, isSearching: false, searchProgress: 100, weeksToComplete: 0, weeksSearching: elapsed, foundPlayers: [...scout.foundPlayers, lead.id] }
+            }
+            return { ...scout, weeksToComplete: remaining, weeksSearching: elapsed, searchProgress: progress }
+          })
+          return { scouts: updatedScouts, scoutedLeads: [...s.scoutedLeads, ...newLeads] }
+        })
+
+        // Processar melhorias de infraestrutura
+        set((s) => {
+          const completed: Record<string, number> = {}
+          const remaining: Record<string, { weeksLeft: number; targetLevel: number }> = {}
+          for (const [areaId, upgrade] of Object.entries(s.infraUpgradesInProgress)) {
+            if (upgrade.weeksLeft <= 1) {
+              completed[areaId] = upgrade.targetLevel
+            } else {
+              remaining[areaId] = { ...upgrade, weeksLeft: upgrade.weeksLeft - 1 }
+            }
+          }
+          return {
+            infraUpgradesInProgress: remaining,
+            clubInfrastructure: { ...s.clubInfrastructure, ...completed }
+          }
+        })
+
+        // Gerar evento aleatorio (~18% de chance por semana, sem repetir tipo ja pendente)
+        if (Math.random() < 0.18) {
+          const s = get()
+          const pendingTypes = new Set(s.pendingEvents.filter(e => !e.resolved).map(e => e.type))
+          const available = RANDOM_EVENTS_POOL.filter(e => !pendingTypes.has(e.type))
+          if (available.length > 0) {
+            const template = available[Math.floor(Math.random() * available.length)]
+            const newEvent: RandomEvent = { ...template, id: Date.now() + Math.floor(Math.random() * 9999), week: newWeek, resolved: false, selectedChoice: null }
+            set(cur => ({ pendingEvents: [...cur.pendingEvents, newEvent] }))
+          }
+        }
+
         // Gera novas ofertas da IA
         get().generateAIOffers()
       },
@@ -2032,11 +2583,11 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
-      startScoutSearch: (scoutId, region) => {
+      startScoutSearch: (scoutId, region, weeksToComplete, searchCost) => {
         set((s) => ({
           scouts: s.scouts.map(scout =>
             scout.id === scoutId
-              ? { ...scout, isSearching: true, searchProgress: 0, searchTarget: region, region }
+              ? { ...scout, isSearching: true, searchProgress: 0, searchTarget: region, region, weeksToComplete: weeksToComplete ?? 4, weeksSearching: 0, searchCost: searchCost ?? scout.searchCost ?? 0 }
               : scout
           )
         }))
@@ -2060,6 +2611,41 @@ export const useGameEngine = create<GameEngineState>()(
             weeklyExpenses: s.weeklyExpenses - (scout?.salary ?? 0),
           }
         })
+      },
+
+      resolveRandomEvent: (eventId, choiceId) => {
+        set((s) => ({
+          pendingEvents: s.pendingEvents.map(e =>
+            e.id === eventId ? { ...e, resolved: true, selectedChoice: choiceId } : e
+          )
+        }))
+      },
+
+      revealScoutedLead: (leadId) => {
+        set((s) => ({
+          scoutedLeads: s.scoutedLeads.map(l =>
+            l.id === leadId ? { ...l, revealedAttributes: true } : l
+          ),
+          balance: s.balance - 50000,
+        }))
+      },
+
+      dismissScoutedLead: (leadId) => {
+        set((s) => ({ scoutedLeads: s.scoutedLeads.filter(l => l.id !== leadId) }))
+      },
+
+      startInfrastructureUpgrade: (areaId, cost) => {
+        const s = get()
+        const currentLevel = s.clubInfrastructure[areaId] ?? 1
+        if (currentLevel >= 5 || s.infraUpgradesInProgress[areaId]) return
+        if (s.balance < cost) return
+        set(cur => ({
+          balance: cur.balance - cost,
+          infraUpgradesInProgress: {
+            ...cur.infraUpgradesInProgress,
+            [areaId]: { weeksLeft: 4, targetLevel: currentLevel + 1 }
+          }
+        }))
       },
 
       simulateOtherMatches: () => {
@@ -2432,6 +3018,15 @@ export const useGameEngine = create<GameEngineState>()(
           seedPlayers = seedPlayers.map(p => ({ ...p, isStarter: starterIds.has(p.id) }))
         }
 
+        const initialBalance = chosenTeam?.saldo ?? 27500000
+        const initialWeeklyExpenses = (seedPlayers.length > 0 ? seedPlayers : initialPlayers)
+          .reduce((sum, p) => sum + (p.contract?.salary ?? 0), 0)
+        const prestige = chosenTeam?.prestigio ?? 70
+        const initialWeeklyIncome = prestige >= 85 ? 4500000
+          : prestige >= 75 ? 2500000
+          : prestige >= 60 ? 1400000
+          : 800000
+
         set({
           currentWeek: 0,
           currentSeason: 2026,
@@ -2443,6 +3038,19 @@ export const useGameEngine = create<GameEngineState>()(
           squadPlayers: seedPlayers.length > 0 ? seedPlayers : initialPlayers,
           lastSeasonStandings: [],
           currentConferenceResponses: [],
+          balance: initialBalance,
+          transferBudget: Math.round(initialBalance * 0.25),
+          wageBudget: Math.round(initialBalance * 0.08),
+          weeklyIncome: initialWeeklyIncome,
+          weeklyExpenses: initialWeeklyExpenses,
+          pressConferences: [],
+          performanceReports: [],
+          playerMeetings: [],
+          meetingCooldowns: {},
+          postMatchAnalyses: [],
+          scoutedLeads: [],
+          transferOffers: [],
+          formation: "4-3-3",
         })
       },
       
@@ -3248,12 +3856,359 @@ export const useGameEngine = create<GameEngineState>()(
         set((s) => ({
           postMatchAnalyses: [analysis, ...s.postMatchAnalyses.slice(0, 19)]
         }))
-        
+
         return analysis
-      }
+      },
+
+      // ============================================
+      // STATUS EFFECTS (TRAUMAS E VIRTUDES)
+      // ============================================
+
+      addStatusEffect: (playerId: number, type: StatusEffectType) => {
+        const template = STATUS_EFFECT_TEMPLATES[type]
+        const effect: StatusEffect = {
+          ...template,
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          appliedWeek: get().currentWeek,
+          cureCondition: template.cureCondition ? { ...template.cureCondition, progress: 0 } : undefined,
+        }
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p =>
+            p.id === playerId
+              ? { ...p, statusEffects: [...(p.statusEffects ?? []).filter(e => e.type !== type), effect] }
+              : p
+          )
+        }))
+      },
+
+      removeStatusEffect: (playerId: number, effectId: number) => {
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p =>
+            p.id === playerId
+              ? { ...p, statusEffects: (p.statusEffects ?? []).filter(e => e.id !== effectId) }
+              : p
+          )
+        }))
+      },
+
+      // ============================================
+      // PANELINHAS (GRUPOS DE AFINIDADE)
+      // ============================================
+
+      detectAffinityGroups: () => {
+        const { squadPlayers, currentWeek } = get()
+        const groups: AffinityGroup[] = []
+        let gid = currentWeek * 100
+
+        // Agrupa por nacionalidade (minimo 3 jogadores)
+        const byNat: Record<string, number[]> = {}
+        squadPlayers.forEach(p => {
+          const key = p.nationality
+          if (!byNat[key]) byNat[key] = []
+          byNat[key].push(p.id)
+        })
+        Object.entries(byNat).forEach(([, ids]) => {
+          if (ids.length >= 3) {
+            const sorted = [...ids].sort((a, b) => {
+              const pa = squadPlayers.find(p => p.id === a)!
+              const pb = squadPlayers.find(p => p.id === b)!
+              return pb.overall - pa.overall
+            })
+            groups.push({
+              id: ++gid,
+              type: "mesma_nacionalidade",
+              label: `Grupo: ${squadPlayers.find(p => p.id === sorted[0])?.nationality ?? ""}`,
+              memberIds: sorted,
+              leaderId: sorted[0],
+              cohesion: 60 + Math.floor(Math.random() * 30),
+              loyaltyToCoach: 70,
+              chemistryBonus: 2,
+            })
+          }
+        })
+
+        // Agrupa por ex-clube (previousClubShort)
+        const byClub: Record<string, number[]> = {}
+        squadPlayers.forEach(p => {
+          if (!p.previousClubShort) return
+          const key = p.previousClubShort
+          if (!byClub[key]) byClub[key] = []
+          byClub[key].push(p.id)
+        })
+        Object.entries(byClub).forEach(([club, ids]) => {
+          if (ids.length >= 2) {
+            const sorted = [...ids].sort((a, b) => {
+              const pa = squadPlayers.find(p => p.id === a)!
+              const pb = squadPlayers.find(p => p.id === b)!
+              return pb.overall - pa.overall
+            })
+            groups.push({
+              id: ++gid,
+              type: "mesmo_ex_clube",
+              label: `Ex-companheiros: ${club}`,
+              memberIds: sorted,
+              leaderId: sorted[0],
+              cohesion: 50 + Math.floor(Math.random() * 35),
+              loyaltyToCoach: 65,
+              chemistryBonus: 3,
+            })
+          }
+        })
+
+        // Agrupa por faixa etaria (17-23 jovens, 24-29 meia-idade, 30+ veteranos)
+        const ageGroups: Record<string, number[]> = { jovens: [], adultos: [], veteranos: [] }
+        squadPlayers.forEach(p => {
+          if (p.age <= 23) ageGroups.jovens.push(p.id)
+          else if (p.age <= 29) ageGroups.adultos.push(p.id)
+          else ageGroups.veteranos.push(p.id)
+        })
+        const ageLabels: Record<string, string> = { jovens: "Turma dos Jovens", adultos: "Núcleo Adulto", veteranos: "Veteranos" }
+        Object.entries(ageGroups).forEach(([key, ids]) => {
+          if (ids.length >= 4) {
+            const sorted = [...ids].sort((a, b) => {
+              const pa = squadPlayers.find(p => p.id === a)!
+              const pb = squadPlayers.find(p => p.id === b)!
+              return pb.overall - pa.overall
+            })
+            groups.push({
+              id: ++gid,
+              type: "mesma_faixa_etaria",
+              label: ageLabels[key],
+              memberIds: sorted,
+              leaderId: sorted[0],
+              cohesion: 55 + Math.floor(Math.random() * 25),
+              loyaltyToCoach: 70,
+              chemistryBonus: 2,
+            })
+          }
+        })
+
+        set({ affinityGroups: groups })
+      },
+
+      // ============================================
+      // MARKETING DINAMICO
+      // ============================================
+
+      createMarketingContract: (type: MarketingCampaignType) => {
+        const state = get()
+        const template = MARKETING_CAMPAIGN_TEMPLATES[type]
+        const staffMarketing = state.staffMembers.find(s => s.role === "diretor_marketing")
+        const bonusMultiplier = staffMarketing ? (0.8 + staffMarketing.competence / 500) : 1
+        const contract: MarketingContract = {
+          ...template,
+          id: Date.now(),
+          startWeek: state.currentWeek,
+          endWeek: state.currentWeek + 38,
+          active: true,
+          breached: false,
+          fulfilled: false,
+          upfrontPayment: Math.round(template.upfrontPayment * bonusMultiplier),
+          weeklyBonus: Math.round(template.weeklyBonus * bonusMultiplier),
+          performanceGoal: { ...template.performanceGoal },
+        }
+        set((s) => ({
+          marketingContracts: [...s.marketingContracts, contract],
+          balance: s.balance + contract.upfrontPayment,
+        }))
+      },
+
+      cancelMarketingContract: (id: number) => {
+        const contract = get().marketingContracts.find(c => c.id === id)
+        if (!contract || !contract.active) return
+        set((s) => ({
+          marketingContracts: s.marketingContracts.map(c =>
+            c.id === id ? { ...c, active: false, breached: true } : c
+          ),
+          balance: s.balance - Math.round(contract.penaltyAmount * 0.5),
+        }))
+      },
+
+      // ============================================
+      // GESTAO DE STAFF
+      // ============================================
+
+      hireStaff: (staffId: number) => {
+        const state = get()
+        const template = AVAILABLE_STAFF.find(s => s.id === staffId)
+        if (!template) return
+        // Nao pode ter dois no mesmo cargo
+        if (state.staffMembers.some(s => s.role === template.role)) return
+        const member: StaffMember = {
+          ...template,
+          hiredWeek: state.currentWeek,
+          hiredSeason: state.currentSeason,
+        }
+        set((s) => ({
+          staffMembers: [...s.staffMembers, member],
+          weeklyExpenses: s.weeklyExpenses + member.salary,
+        }))
+      },
+
+      fireStaff: (staffId: number) => {
+        const state = get()
+        const member = state.staffMembers.find(s => s.id === staffId)
+        if (!member) return
+        set((s) => ({
+          staffMembers: s.staffMembers.filter(s => s.id !== staffId),
+          weeklyExpenses: s.weeklyExpenses - member.salary,
+        }))
+      },
+
+      // ============================================
+      // FUNDO DE INVESTIMENTO (FATIAMENTO DE DIREITOS)
+      // ============================================
+
+      respondToFundOffer: (offerId: number, accept: boolean) => {
+        const state = get()
+        const offer = state.pendingFundOffers.find(o => o.id === offerId)
+        if (!offer || offer.status !== "pendente") return
+        if (accept) {
+          set((s) => ({
+            pendingFundOffers: s.pendingFundOffers.map(o =>
+              o.id === offerId ? { ...o, status: "aceita" as const } : o
+            ),
+            squadPlayers: s.squadPlayers.map(p =>
+              p.id === offer.playerId
+                ? {
+                    ...p,
+                    contract: p.contract ? {
+                      ...p.contract,
+                      ownedPercentage: 100 - offer.fundPercentage,
+                      fundPercentage: offer.fundPercentage,
+                      fundName: offer.fundName,
+                      fundForceSaleWeek: s.currentWeek + 26 + Math.floor(Math.random() * 26),
+                    } : p.contract
+                  }
+                : p
+            ),
+            balance: s.balance + offer.offerAmount,
+          }))
+        } else {
+          set((s) => ({
+            pendingFundOffers: s.pendingFundOffers.map(o =>
+              o.id === offerId ? { ...o, status: "rejeitada" as const } : o
+            ),
+          }))
+        }
+      },
+
+      // ============================================
+      // FIM DE TEMPORADA (envelhecimento, aposentadoria, jovens da base)
+      // Chamado por use-game-manager quando a rodada final e concluida
+      // ============================================
+
+      processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => {
+        set((s) => {
+          // Envelhece jogadores e reseta stats da temporada
+          const agedPlayers = s.squadPlayers.map(p => ({
+            ...p,
+            age: p.age + 1,
+            seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 }
+          }))
+
+          // Aposentadoria: 38+ se aposentam, 35-37 tem 30% de chance
+          const retiredPositions: string[] = []
+          const activePlayers = agedPlayers.filter(p => {
+            if (p.isLoanedIn) return true
+            if (p.age >= 38) { retiredPositions.push(p.position); return false }
+            if (p.age >= 35 && Math.random() < 0.30) { retiredPositions.push(p.position); return false }
+            return true
+          })
+
+          // Decay de valor de mercado com a idade
+          const playersWithMarketUpdate = activePlayers.map(p => {
+            let mult = 1.0
+            if (p.age >= 34) mult = 0.78
+            else if (p.age >= 31) mult = 0.92
+            else if (p.age <= 22 && p.potential > p.overall + 5) mult = 1.08
+            return { ...p, marketValue: Math.round(p.marketValue * mult) }
+          })
+
+          // Gera jovens da base para substituir aposentados
+          const youthAcadLevel = (s as any).infrastructure?.youthAcademyLevel ?? 2
+          const staffCoord = (s as any).staffMembers?.find((sm: StaffMember) => sm.role === "coordenador_base")
+          const coordBonus = staffCoord ? Math.round(staffCoord.competence / 20) : 0
+
+          const YOUTH_NAMES = ["Lucas","Gabriel","Pedro","Matheus","João","Rafael","Felipe","André","Bruno","Carlos","Thiago","Vitor","Diego","Leandro","Ricardo","Kauan","Luan","Kayke","Guilherme","Alexandre"]
+          const YOUTH_SURNAMES = ["Silva","Santos","Oliveira","Lima","Costa","Ferreira","Ribeiro","Alves","Carvalho","Nascimento","Gomes","Martins","Pereira","Araújo","Souza","Teixeira","Freitas","Castro","Barbosa","Rocha"]
+          const REGIONS_BY_LEVEL: Record<number, { names: string[], nationality: string, physBonus: number, techBonus: number }> = {
+            1: { names: YOUTH_NAMES, nationality: "Brasil", physBonus: 0, techBonus: 0 },
+            2: { names: YOUTH_NAMES, nationality: "Brasil", physBonus: 1, techBonus: 1 },
+            3: { names: [...YOUTH_NAMES, "Nduka","Diallo","Mensah"], nationality: "África", physBonus: 5, techBonus: 2 },
+            4: { names: [...YOUTH_NAMES, "Tran","Park","Kim","Santos"], nationality: "Misto", physBonus: 3, techBonus: 5 },
+            5: { names: YOUTH_NAMES, nationality: "Brasil", physBonus: 4, techBonus: 6 },
+          }
+          const region = REGIONS_BY_LEVEL[Math.min(5, youthAcadLevel)]
+          const FALLBACK_POSITIONS = ["GOL","ZAG","ZAG","LAT","LAT","VOL","VOL","MEI","MEI","ATA","PD","PE"]
+          const MIN_SQUAD = 18
+          const needed = Math.max(retiredPositions.length, Math.max(0, MIN_SQUAD - playersWithMarketUpdate.length))
+          const baseMin = 55 + youthAcadLevel * 3 + coordBonus
+          const baseRange = 10 + youthAcadLevel * 2
+          const potentialBonus = youthAcadLevel * 3 + coordBonus
+
+          const youthPlayers: Player[] = Array.from({ length: needed }).map((_, i) => {
+            const firstName = region.names[Math.floor(Math.random() * region.names.length)]
+            const lastName = YOUTH_SURNAMES[Math.floor(Math.random() * YOUTH_SURNAMES.length)]
+            const pos = retiredPositions[i] ?? FALLBACK_POSITIONS[i % FALLBACK_POSITIONS.length]
+            const age = 17 + Math.floor(Math.random() * 4)
+            const base = Math.min(82, baseMin + Math.floor(Math.random() * baseRange))
+            const potential = Math.min(95, base + 8 + potentialBonus + Math.floor(Math.random() * 12))
+            const nationality = region.nationality === "Misto"
+              ? (Math.random() > 0.5 ? "Brasil" : "Internacional")
+              : region.nationality
+            return {
+              id: Date.now() + i * 7 + 5000,
+              name: `${firstName} ${lastName}`,
+              position: pos,
+              age,
+              overall: base,
+              potential,
+              nationality,
+              pace: Math.min(99, base + Math.floor(Math.random() * 15) + region.physBonus),
+              shooting: Math.min(99, base - 10 + Math.floor(Math.random() * 20) + region.techBonus),
+              passing: Math.min(99, base - 5 + Math.floor(Math.random() * 15) + region.techBonus),
+              dribbling: Math.min(99, base - 8 + Math.floor(Math.random() * 18) + region.techBonus),
+              defending: Math.min(99, base - 10 + Math.floor(Math.random() * 20) + region.physBonus),
+              physical: Math.min(99, base - 5 + Math.floor(Math.random() * 15) + region.physBonus),
+              energy: 100,
+              morale: "Motivado" as const,
+              form: base - 5,
+              contract: {
+                salary: Math.round(base * 400),
+                endDate: 78 + Math.floor(Math.random() * 78),
+                releaseClause: null,
+                signedWeek: 0,
+                signedSeason: nextSeason
+              },
+              injury: null,
+              seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
+              training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
+              nationalTeam: null,
+              calledUp: false,
+              marketValue: base * 80000,
+              joinedClubWeek: 0,
+              joinedClubSeason: nextSeason,
+              isLoanedIn: false,
+              statusEffects: [],
+            }
+          })
+
+          return {
+            squadPlayers: [...playersWithMarketUpdate, ...youthPlayers],
+            serieAStandings: newStandings,
+            lastSeasonStandings,
+            currentWeek: 0,
+            currentSeason: nextSeason,
+            matchResults: [],
+          }
+        })
+      },
     }),
     {
       name: 'ultrafoot-game-engine',
+      version: 2,
+      migrate: () => undefined,
       storage: createJSONStorage(() => {
         if (typeof window !== "undefined" && window.localStorage) {
           return window.localStorage

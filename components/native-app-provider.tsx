@@ -4,13 +4,6 @@ import { useEffect } from "react"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Mostra a janela Tauri só depois que o React montou (evita flash branco)
-    if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-      import("@tauri-apps/api/window").then(({ getCurrentWindow }) => {
-        getCurrentWindow().show()
-      })
-    }
-
     const disableContextMenu = (e: MouseEvent) => e.preventDefault()
 
     const disableBrowserShortcuts = (e: KeyboardEvent) => {

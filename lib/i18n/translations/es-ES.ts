@@ -72,6 +72,13 @@ export const esES: Translations = {
     navHint: "Usa las flechas para navegar, Enter para seleccionar",
     deleteSave: "Eliminar Guardado",
     goodbye: "¡Gracias por jugar Ultrafoot 26!",
+    cloudOr: "o descargar de la nube",
+    cloudCodeLabel: "Código del Guardado",
+    cloudCodePlaceholder: "ABC123",
+    cloudDownloading: "Descargando...",
+    cloudSuccess: "¡Guardado descargado! Haz clic para cargar.",
+    cloudNotFound: "Código no encontrado. Verifica e intenta de nuevo.",
+    cloudError: "No se pudo conectar al servidor. Inténtalo de nuevo.",
   },
   newGame: {
     title: "NUEVA CARRERA",

@@ -24,7 +24,7 @@ test.describe("Critical flow — team selection → quick sim → standings upda
 
   test("pre-match: quick sim produces a score and advances week", async ({ page }) => {
     // Start with a clean game state
-    await injectTeamState(page, "FLM")
+    await injectTeamState(page, "FLA")
     await page.goto("/partida")
 
     // Click the "Sim Rápido" / "X" button to trigger quick simulation
@@ -51,7 +51,7 @@ test.describe("Critical flow — team selection → quick sim → standings upda
   })
 
   test("standings: after injecting a played round, table shows team with points", async ({ page }) => {
-    await injectTeamState(page, "FLM")
+    await injectTeamState(page, "FLA")
 
     // Inject a match result directly into game engine state
     await page.evaluate(() => {
@@ -62,7 +62,7 @@ test.describe("Critical flow — team selection → quick sim → standings upda
       if (!engineState.serieAStandings) return
 
       // Give FLM a win
-      const flmIdx = engineState.serieAStandings.findIndex((s: { teamShort: string }) => s.teamShort === "FLM")
+      const flmIdx = engineState.serieAStandings.findIndex((s: { teamShort: string }) => s.teamShort === "FLA")
       if (flmIdx >= 0) {
         engineState.serieAStandings[flmIdx].played = 1
         engineState.serieAStandings[flmIdx].won = 1
@@ -71,9 +71,10 @@ test.describe("Critical flow — team selection → quick sim → standings upda
         engineState.serieAStandings[flmIdx].form = ["W"]
         localStorage.setItem(engineKey, JSON.stringify(engineState))
       }
+      sessionStorage.setItem("ultrafoot:session-active", "true")
     })
 
-    await page.goto("/dashboard")
+    await page.goto("/")
     await page.waitForTimeout(2000)
 
     // Dashboard should render without crash
@@ -85,7 +86,7 @@ test.describe("Critical flow — team selection → quick sim → standings upda
   })
 
   test("calendario: fixture for round 1 shown after week 0 state", async ({ page }) => {
-    await injectTeamState(page, "FLM")
+    await injectTeamState(page, "FLA")
     await page.goto("/calendario")
 
     // Page should load without errors

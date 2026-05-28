@@ -1,5 +1,6 @@
 "use client"
 
+import { invoke } from "@tauri-apps/api/core"
 import { useEffect, useCallback, useRef, useState } from "react"
 
 // Standard Gamepad Button Mapping (Xbox/PlayStation)
@@ -30,6 +31,7 @@ export interface GamepadState {
   connected: boolean
   controllerType: "xbox" | "playstation" | "generic"
   controllerName: string
+  battery: number | null // 0–1, null when not exposed by the browser
   buttons: Record<GamepadButtonName, boolean>
   leftStick: { x: number; y: number }
   rightStick: { x: number; y: number }
@@ -87,6 +89,7 @@ export function useGamepad(options: UseGamepadOptions = {}) {
     connected: false,
     controllerType: "generic",
     controllerName: "",
+    battery: null,
     buttons: Object.keys(GAMEPAD_BUTTONS).reduce((acc, key) => {
       acc[key as GamepadButtonName] = false
       return acc
@@ -104,6 +107,7 @@ export function useGamepad(options: UseGamepadOptions = {}) {
 
   const animationFrameRef = useRef<number>(undefined)
   const lastPollRef = useRef<number>(0)
+  const nativeBatteryRef = useRef<number | null>(null)
 
   const pollGamepad = useCallback(() => {
     const now = performance.now()
@@ -158,10 +162,22 @@ export function useGamepad(options: UseGamepadOptions = {}) {
       y: applyDeadzone(gamepad.axes[3] || 0),
     }
 
+    // battery is non-standard — available on some Chromium/WebView2 builds
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawBattery = (gamepad as any).battery
+    const browserBattery: number | null =
+      typeof rawBattery === "number"
+        ? rawBattery
+        : typeof rawBattery?.batteryLevel === "number"
+          ? rawBattery.batteryLevel
+          : null
+    const battery = browserBattery ?? nativeBatteryRef.current
+
     setState({
       connected: true,
       controllerType: detectControllerType(gamepad.id),
       controllerName: gamepad.id,
+      battery,
       buttons: newButtons,
       leftStick,
       rightStick,
@@ -200,6 +216,40 @@ export function useGamepad(options: UseGamepadOptions = {}) {
       }
     }
   }, [pollGamepad, onConnect, onDisconnect])
+
+  useEffect(() => {
+    if (!state.connected || !("__TAURI_INTERNALS__" in window)) {
+      nativeBatteryRef.current = null
+      return
+    }
+
+    let active = true
+    const refreshNativeBattery = async () => {
+      try {
+        const level = await invoke<number | null>("get_bluetooth_gamepad_battery", {
+          controllerName: state.controllerName,
+        })
+        if (!active) return
+
+        nativeBatteryRef.current =
+          typeof level === "number" ? Math.max(0, Math.min(1, level)) : null
+        setState(prev => ({
+          ...prev,
+          battery: nativeBatteryRef.current,
+        }))
+      } catch {
+        if (active) nativeBatteryRef.current = null
+      }
+    }
+
+    void refreshNativeBattery()
+    const interval = setInterval(refreshNativeBattery, 30_000)
+
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [state.connected, state.controllerName])
 
   return state
 }

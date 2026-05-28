@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { getPlayerPhotoUrl } from "@/lib/player-photos"
 import { memo, useState } from "react"
 
 export interface PlayerAvatarProps {
@@ -129,11 +130,13 @@ function PlayerAvatarBase({
   size = "md",
   className,
   rounded,
-  photoUrl,
+  photoUrl: photoUrlProp,
   position,
+  playerId,
 }: PlayerAvatarProps & { rounded: "xl" | "full" }) {
   const [imgFailed, setImgFailed] = useState(false)
 
+  const photoUrl = photoUrlProp ?? getPlayerPhotoUrl(name, playerId)
   const hue = hashHue(name)
   const background = teamColor
     ? `linear-gradient(135deg, ${teamColor}66 0%, hsl(${hue} 55% 22%) 100%)`

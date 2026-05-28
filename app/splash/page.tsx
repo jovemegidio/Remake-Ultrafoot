@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut } from "lucide-react"
-import { loadGameState, hasSave, clearGameState } from "@/lib/save-system"
+import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud } from "lucide-react"
+import { loadGameState, hasSave, clearAllGameData } from "@/lib/save-system"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useTranslation } from "@/lib/i18n"
+import { isTauri } from "@/lib/game-asset"
+import { downloadSave, getSavedCloudCode } from "@/lib/cloud-save"
 import {
   Dialog,
   DialogContent,
@@ -42,6 +44,19 @@ export default function SplashPage() {
   const [registerError, setRegisterError] = useState("")
   const [isValidating, setIsValidating] = useState(false)
   const [selectedSaveIndex, setSelectedSaveIndex] = useState(0)
+  // Cloud save
+  const [cloudCode, setCloudCode] = useState("")
+  const [cloudLoading, setCloudLoading] = useState(false)
+  const [cloudError, setCloudError] = useState("")
+  const [cloudSuccess, setCloudSuccess] = useState("")
+  const [cloudSaveReady, setCloudSaveReady] = useState(false)
+
+  // Carrega estado de registro e código de nuvem do localStorage ao montar
+  useEffect(() => {
+    setIsRegistered(window.localStorage.getItem("ultrafoot:registered") === "1")
+    const savedCode = getSavedCloudCode()
+    if (savedCode) setCloudCode(savedCode)
+  }, [])
 
   // Save real do localStorage
   const realSave = typeof window !== "undefined" ? loadGameState() : null
@@ -74,29 +89,29 @@ export default function SplashPage() {
       setPhase("studio-logo")
       
       // Fase 2: Logo do estudio
-      await delay(2500)
+      await delay(2000)
       setPhase("ea-warning")
       
       // Fase 3: Aviso legal
-      await delay(3000)
+      await delay(2000)
       setPhase("leagues")
       
       // Fase 4: Logos das ligas e competicoes
-      await delay(3500)
+      await delay(2500)
       setPhase("loading")
       
       // Fase 5: Tela de carregamento
-      for (let i = 0; i <= 100; i += 2) {
-        await delay(40)
+      for (let i = 0; i <= 100; i += 4) {
+        await delay(30)
         setLoadingProgress(i)
       }
       
-      await delay(500)
+      await delay(400)
       setPhase("main-menu")
     }
     
     sequence()
-  }, [])
+  }, [hasSaveGame])
 
   // Handler para navegacao no menu
   const handleMenuSelect = useCallback((index: number) => {
@@ -117,14 +132,15 @@ export default function SplashPage() {
       return
     }
     
-    // Se for sair, fecha a janela ou volta
+    // Se for sair, fecha a janela
     if (menuOption?.id === "sair") {
-      if (typeof window !== "undefined") {
+      if (isTauri()) {
+        // Tauri v2: fecha a janela nativa corretamente
+        import("@tauri-apps/api/window").then(({ getCurrentWindow }) => {
+          getCurrentWindow().close()
+        }).catch(() => window.close())
+      } else {
         window.close()
-        // Fallback: se nao conseguir fechar, mostra mensagem
-        setTimeout(() => {
-          alert(t.splash.goodbye)
-        }, 100)
       }
       return
     }
@@ -141,6 +157,9 @@ export default function SplashPage() {
 
   // Handler para carregar save
   const handleLoadSave = useCallback((saveId: number) => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("ultrafoot:session-active", "true")
+    }
     setIsExiting(true)
     setPhase("fade-out")
     setTimeout(() => {
@@ -160,9 +179,9 @@ export default function SplashPage() {
     const validKeyPattern = /^ULTRA-FOOT-2026-[A-Z0-9]{4}$/
     
     if (validKeyPattern.test(serialKey.toUpperCase())) {
+      window.localStorage.setItem("ultrafoot:registered", "1")
       setIsRegistered(true)
       setIsValidating(false)
-      // Fecha o modal apos 2 segundos de sucesso
       setTimeout(() => {
         setShowRegisterModal(false)
       }, 2000)
@@ -171,6 +190,27 @@ export default function SplashPage() {
       setIsValidating(false)
     }
   }, [serialKey])
+
+  // Handler para baixar save da nuvem
+  const handleCloudDownload = useCallback(async () => {
+    if (cloudCode.length !== 6) return
+    setCloudLoading(true)
+    setCloudError("")
+    setCloudSuccess("")
+    setCloudSaveReady(false)
+
+    const result = await downloadSave(cloudCode)
+
+    if (result.success) {
+      setCloudSuccess(t.splash.cloudSuccess)
+      setCloudSaveReady(true)
+    } else if (result.error?.includes("não encontrado") || result.error?.includes("nao encontrado") || result.error?.includes("not found") || result.error?.includes("404")) {
+      setCloudError(t.splash.cloudNotFound)
+    } else {
+      setCloudError(t.splash.cloudError)
+    }
+    setCloudLoading(false)
+  }, [cloudCode, t.splash])
 
   // Navegacao por teclado e controle
   useEffect(() => {
@@ -266,7 +306,8 @@ export default function SplashPage() {
   }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, showLoadModal, isRegistered, selectedSaveIndex, savedGames, handleLoadSave])
 
   return (
-    <div 
+    <div
+      data-gamepad-exclude
       className={cn(
         "fixed inset-0 flex flex-col overflow-hidden transition-opacity duration-400",
         isExiting && "opacity-0"
@@ -390,7 +431,7 @@ export default function SplashPage() {
         >
           {/* Imagem das ligas */}
           <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Ligas%20-%20Ultrafoot-mviTl8G52mNA9cparkkPpC2TVaR7MY.jpg"
+            src="/images/leagues-logos.jpg"
             alt="Ligas e competicoes licenciadas"
             fill
             className="object-contain"
@@ -891,7 +932,7 @@ export default function SplashPage() {
                 {t.splash.navHint}
               </div>
               <button
-                onClick={() => { clearGameState(); setShowLoadModal(false) }}
+                onClick={() => { clearAllGameData(); setShowLoadModal(false) }}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400/60 hover:text-red-400 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -899,6 +940,70 @@ export default function SplashPage() {
               </button>
             </div>
           )}
+
+          {/* Divisor cloud save */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-gray-900 px-3 text-white/30 flex items-center gap-1.5">
+                <Cloud className="h-3 w-3" />
+                {t.splash.cloudOr}
+              </span>
+            </div>
+          </div>
+
+          {/* Seção cloud save */}
+          <div className="space-y-2">
+            <label className="text-sm text-white/60 font-medium">{t.splash.cloudCodeLabel}</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={cloudCode}
+                onChange={(e) => {
+                  setCloudCode(e.target.value.toUpperCase().replace(/[^A-F0-9]/g, ""))
+                  setCloudError("")
+                  setCloudSuccess("")
+                  setCloudSaveReady(false)
+                }}
+                placeholder={t.splash.cloudCodePlaceholder}
+                maxLength={6}
+                disabled={cloudLoading}
+                className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/40 font-mono tracking-[0.3em] uppercase transition-all"
+              />
+              {cloudSaveReady ? (
+                <button
+                  onClick={() => handleLoadSave(1)}
+                  className="px-4 py-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-semibold text-sm flex items-center gap-2 hover:bg-emerald-500/30 transition-colors"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleCloudDownload}
+                  disabled={cloudCode.length !== 6 || cloudLoading}
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-opacity"
+                >
+                  {cloudLoading
+                    ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : <Download className="h-4 w-4" />}
+                </button>
+              )}
+            </div>
+            {cloudError && (
+              <div className="flex items-center gap-2 text-red-400 text-sm">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {cloudError}
+              </div>
+            )}
+            {cloudSuccess && (
+              <div className="flex items-center gap-2 text-emerald-400 text-sm">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                {cloudSuccess}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

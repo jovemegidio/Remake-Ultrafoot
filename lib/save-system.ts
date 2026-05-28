@@ -6,7 +6,152 @@ import { useEffect, useState } from "react"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 
 const STORAGE_KEY = "ultrafoot:save"
-const VERSION = 2
+const VERSION = 3
+
+// ============================================
+// ARVORE DE HABILIDADES DO TREINADOR
+// ============================================
+
+export type CoachSkillId =
+  | "fechamento_casinha"     // Resiliencia defensiva nos ultimos 10 min
+  | "motivacao_vestiario"    // Discurso pre-jogo da uma moral extra
+  | "gestao_crise"           // Reduz impacto de eventos negativos
+  | "olho_clinico"           // Descobre atributos ocultos dos jogadores mais rapido
+  | "fidelizador"            // Jogadores felizes renovam por salarios menores
+  | "mestre_tatico"          // Mudancas de formacao em jogo tem mais efeito
+  | "identificacao_talentos" // Base gera jovens com maior potencial
+  | "negociador_nato"        // Negocia transferencias com desconto de 10%
+  | "psicologia_aplicada"    // Traumas curam 50% mais rapido
+  | "lideranca_carismo"      // Capitaes tem 50% mais influencia no vestiario
+
+export interface CoachSkill {
+  id: CoachSkillId
+  name: string
+  description: string
+  effect: string // descricao do efeito em jogo
+  xpCost: number // XP necessario para desbloquear
+  unlocked: boolean
+  unlockedSeason: number | null
+  // Evento que desbloqueia (Just-in-Time)
+  unlockTrigger: {
+    type: "crisis_resolved" | "win_streak" | "title_won" | "youth_breakout" | "manual"
+    threshold: number
+    description: string
+  }
+}
+
+export const COACH_SKILL_CATALOG: CoachSkill[] = [
+  {
+    id: "fechamento_casinha", name: "Fechamento de Casinha",
+    description: "Seu time fica mais resistente nos minutos finais.",
+    effect: "+8% rendimento defensivo nos últimos 10 min.",
+    xpCost: 100,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "crisis_resolved", threshold: 3, description: "Supere 3 viradas sofridas" }
+  },
+  {
+    id: "motivacao_vestiario", name: "Motivação no Vestiário",
+    description: "Discurso pré-jogo eleva o nível de entrega.",
+    effect: "+5% moral do elenco antes de cada partida.",
+    xpCost: 80,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "win_streak", threshold: 5, description: "Vença 5 jogos seguidos" }
+  },
+  {
+    id: "gestao_crise", name: "Gestão de Crise",
+    description: "Você mantém o barco estável em momentos difíceis.",
+    effect: "Eventos negativos causam 30% menos impacto na moral.",
+    xpCost: 150,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "crisis_resolved", threshold: 5, description: "Supere 5 eventos de crise sem demissão" }
+  },
+  {
+    id: "olho_clinico", name: "Olho Clínico",
+    description: "Você enxerga potencial onde outros não veem.",
+    effect: "Atributos de jogadores descobertos são revelados 50% mais rápido.",
+    xpCost: 120,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "youth_breakout", threshold: 2, description: "Revele 2 jovens com potencial >= 85" }
+  },
+  {
+    id: "fidelizador", name: "Fidelizador",
+    description: "Jogadores contentes não querem sair.",
+    effect: "Renovações de contrato custam 15% menos quando moral está alta.",
+    xpCost: 100,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "win_streak", threshold: 3, description: "Mantenha moral acima de 80 por 10 semanas" }
+  },
+  {
+    id: "mestre_tatico", name: "Mestre Tático",
+    description: "Suas mudanças táticas no intervalo fazem diferença real.",
+    effect: "+10% eficácia das substituições e ajustes de formação.",
+    xpCost: 180,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "manual", threshold: 0, description: "Ganhe 20 pontos acima da expectativa em uma temporada" }
+  },
+  {
+    id: "identificacao_talentos", name: "Identificação de Talentos",
+    description: "A base produz jogadores acima da média.",
+    effect: "+5 overall e +8 potencial em jovens gerados pela categoria de base.",
+    xpCost: 160,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "youth_breakout", threshold: 5, description: "Revele 5 jovens com potencial >= 82" }
+  },
+  {
+    id: "negociador_nato", name: "Negociador Nato",
+    description: "Você sempre fecha o melhor negócio.",
+    effect: "-10% em taxas de transferência e comissões de agentes.",
+    xpCost: 140,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "manual", threshold: 0, description: "Complete 10 transferências em uma temporada" }
+  },
+  {
+    id: "psicologia_aplicada", name: "Psicologia Aplicada",
+    description: "Você entende o lado humano dos atletas.",
+    effect: "Traumas e crises de confiança curam 50% mais rápido.",
+    xpCost: 130,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "crisis_resolved", threshold: 8, description: "Cure 8 status effects negativos de jogadores" }
+  },
+  {
+    id: "lideranca_carismo", name: "Liderança e Carisma",
+    description: "Sua presença inspira os líderes do vestiário.",
+    effect: "Capitães têm 50% mais influência sobre companheiros.",
+    xpCost: 200,
+    unlocked: false, unlockedSeason: null,
+    unlockTrigger: { type: "title_won", threshold: 1, description: "Conquiste um título" }
+  },
+]
+
+// ============================================
+// LEGADO ENTRE CARREIRAS (ROGUELIKE)
+// ============================================
+
+export interface CareerRecord {
+  teamShort: string
+  teamName: string
+  seasons: number
+  titles: string[]
+  bestPosition: number
+  youthAcademyLevelLeft: number // nivel que o clube ficou quando saiu
+  startedSeason: number
+  endedSeason: number
+  endReason: "demitido" | "aposentado" | "novo_desafio"
+}
+
+export interface CoachLegacy {
+  totalSeasons: number
+  totalTitles: number
+  careerRecords: CareerRecord[]
+  // Bonus que persistem entre carreiras
+  legacySkills: CoachSkillId[] // skills desbloqueadas em carreiras anteriores
+  reputationLevel: number // 0-5 — desbloqueia times maiores
+  legacyXP: number
+}
+
+// ============================================
+// CONFIGURACAO DE CONFIGURACOES
+// ============================================
 
 // Configuracao de um tecnico/jogador
 export interface ManagerProfile {
@@ -34,6 +179,23 @@ export interface GameState {
   // Configuracoes de controle
   controllerType: "xbox" | "playstation"
   controllerBindings: Record<string, Record<string, string>> // context -> button -> action
+  // Arvore de habilidades do treinador (Just-in-Time)
+  coachSkills: CoachSkill[]
+  coachXP: number
+  coachCrisisCount: number   // quantas crises resolvidas (gatilho de habilidades)
+  coachWinStreak: number     // sequencia atual de vitorias
+  coachTotalTitles: number
+  // Legado entre carreiras (Roguelike)
+  coachLegacy: CoachLegacy
+}
+
+export const DEFAULT_COACH_LEGACY: CoachLegacy = {
+  totalSeasons: 0,
+  totalTitles: 0,
+  careerRecords: [],
+  legacySkills: [],
+  reputationLevel: 0,
+  legacyXP: 0,
 }
 
 export const DEFAULT_STATE: GameState = {
@@ -53,12 +215,34 @@ export const DEFAULT_STATE: GameState = {
   // Controles
   controllerType: "playstation",
   controllerBindings: {},
+  // Treinador
+  coachSkills: COACH_SKILL_CATALOG.map(s => ({ ...s })),
+  coachXP: 0,
+  coachCrisisCount: 0,
+  coachWinStreak: 0,
+  coachTotalTitles: 0,
+  // Legado
+  coachLegacy: DEFAULT_COACH_LEGACY,
 }
 
 function safeParse(raw: string | null): GameState | null {
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as GameState
+    // Migra version 2 para version 3 (adiciona campos de treinador e legado)
+    if (parsed.version === 2) {
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        version: VERSION,
+        coachSkills: DEFAULT_STATE.coachSkills,
+        coachXP: 0,
+        coachCrisisCount: 0,
+        coachWinStreak: 0,
+        coachTotalTitles: 0,
+        coachLegacy: DEFAULT_COACH_LEGACY,
+      }
+    }
     if (parsed.version !== VERSION) return null
     return { ...DEFAULT_STATE, ...parsed }
   } catch {
@@ -81,6 +265,13 @@ export function saveGameState(state: GameState): void {
 export function clearGameState(): void {
   if (typeof window === "undefined") return
   window.localStorage.removeItem(STORAGE_KEY)
+  window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }))
+}
+
+export function clearAllGameData(): void {
+  if (typeof window === "undefined") return
+  window.localStorage.removeItem(STORAGE_KEY)
+  window.localStorage.removeItem("ultrafoot-game-engine")
   window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }))
 }
 

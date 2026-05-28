@@ -6,6 +6,7 @@ import { Trophy, Star, Sparkles, Home, ArrowRight, Crown, Medal } from "lucide-r
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { useUserTeam } from "@/lib/save-system"
+import { useRequireTeam } from "@/lib/use-require-team"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
@@ -77,6 +78,7 @@ function Confetti() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CampeaoPage() {
+  useRequireTeam()
   const { team, hydrated } = useUserTeam()
   const { currentSeason } = useGameManager()
   const router = useRouter()

@@ -72,6 +72,13 @@ export const enUS: Translations = {
     navHint: "Use arrows to navigate, Enter to select",
     deleteSave: "Delete Save",
     goodbye: "Thanks for playing Ultrafoot 26!",
+    cloudOr: "or download from cloud",
+    cloudCodeLabel: "Save Code",
+    cloudCodePlaceholder: "ABC123",
+    cloudDownloading: "Downloading...",
+    cloudSuccess: "Save downloaded! Click to load.",
+    cloudNotFound: "Code not found. Please check and try again.",
+    cloudError: "Could not connect to server. Try again.",
   },
   newGame: {
     title: "NEW CAREER",

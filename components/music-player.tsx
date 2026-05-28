@@ -61,26 +61,16 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
   useEffect(() => {
     fetch("/music/tracks.json")
       .then(r => r.json())
-      .then(async (data: Track[]) => {
-        let resolvedTracks = data
-
-        try {
-          const [{ isTauri, convertFileSrc }, { resolveResource }] = await Promise.all([
-            import("@tauri-apps/api/core"),
-            import("@tauri-apps/api/path"),
-          ])
-
-          if (isTauri()) {
-            resolvedTracks = await Promise.all(data.map(async track => {
+      .then((data: Track[]) => {
+        const isTauriProd = typeof window !== "undefined"
+          && "__TAURI_INTERNALS__" in window
+          && process.env.NODE_ENV === "production"
+        const resolvedTracks = isTauriProd
+          ? data.map(track => {
               const fileName = decodeURIComponent(track.src.replace(/^\/music\//, ""))
-              const resourcePath = await resolveResource(`music/${fileName}`)
-              return { ...track, src: convertFileSrc(resourcePath) }
-            }))
-          }
-        } catch {
-          resolvedTracks = data
-        }
-
+              return { ...track, src: `game-asset://localhost/music/${fileName}` }
+            })
+          : data
         const shuffled = [...resolvedTracks].sort(() => Math.random() - 0.5)
         setTracks(shuffled)
       })

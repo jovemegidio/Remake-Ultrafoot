@@ -114,9 +114,154 @@ const teamAliasOverrides: Record<string, string[]> = {
   sporting: ["sporting_por"],
   braga: ["sportingbraga_por", "SC Braga"],
   vitoria_guimaraes: ["vitoriaguimaraes_por", "Vitoria de Guimaraes", "Vitória de Guimarães"],
-  nycfc: ["New York City", "NYCFC"],
-  ny_red_bulls: ["NY Red Bulls", "New York Red Bulls"],
-  borussia_mgladbach: ["Borussia Monchengladbach", "Borussia Mgladbach"],
+  nycfc: ["newyorkcity433_eua", "New York City", "NYCFC"],
+  ny_red_bulls: ["nwredbull433_eua", "NY Red Bulls", "New York Red Bulls"],
+  borussia_mgladbach: ["monchengladbach_ale"],
+  mainz: ["fsvmainz_ale"],
+  // Ligue 1 extras
+  psg: ["parissaintgermain_fr"],
+  // La Liga extras
+  real_betis: ["betis_esp"],
+  alaves: ["alaves_esp"],
+  // Premier League extras
+  newcastle: ["newcastle_ing"],
+  ipswich: ["ipswichtown_ing"],
+  // Eredivisie extras
+  twente: ["twente_hol"],
+  groningen: ["groningen_hol"],
+  go_ahead: ["goaheadeagles_hol"],
+  // Belgian Pro League extras
+  union_sg: ["union_bel"],
+  // Primeira Liga extras
+  nacional_portugal: ["nacional_por"],
+  // MLS extras
+  ne_revolution: ["newengland433_eua"],
+  // Liga MX extras
+  necaxa: ["necaxa_mex"],
+  puebla: ["puebla_mex"],
+  atletico_san_luis: ["sanluis_mex"],
+  tijuana: ["tijuana_mex"],
+  // J-League
+  vissel_kobe: ["visselkobe_jap"],
+  yokohama_marinos: ["yokohamamarinos_jap"],
+  urawa_reds: ["urawareds_jap"],
+  kashima_antlers: ["kashimaantlers_jap"],
+  gamba_osaka: ["gambaosaka_jap"],
+  kawasaki_frontale: ["kawasakifrontale_jap"],
+  fc_tokyo: ["fctokyo_jap"],
+  nagoya_grampus: ["nagoyagrampus_jap"],
+  sanfrecce_hiroshima: ["sanfreccehiroshima_jap"],
+  cerezo_osaka: ["cerezoosaka_jap"],
+  kashiwa_reysol: ["kashiwareysol_jap", "Kashiwa Reysol"],
+  avispa_fukuoka: ["avispafukuoka_jap", "Avispa Fukuoka"],
+  shonan_bellmare: ["shonan_jap", "Shonan Bellmare"],
+  sagan_tosu: ["sagantosu_jap", "Sagan Tosu"],
+  jubilo_iwata: ["jubilo_jap", "Jubilo Iwata"],
+  albirex_niigata: ["albirex_jap", "Albirex Niigata"],
+  tokyo_verdy: ["tokyoverdy_jap", "Tokyo Verdy"],
+  machida_zelvia: ["machida_jap", "Machida Zelvia"],
+  // Scottish Premiership
+  hearts: ["hearts_esc", "Heart of Midlothian"],
+  kilmarnock: ["kilmarnock_esc", "Kilmarnock"],
+  livingston: ["livingston_esc"],
+  // Super Lig
+  fenerbahce: ["fenerbahce_tur"],
+  basaksehir: ["basaksehir_tur"],
+  sivasspor: ["sivasspor_tur"],
+  konyaspor: ["konyaspor_tur"],
+  antalyaspor: ["antalyspor_tur"],
+  kasimpasa: ["kasimpasa_tur"],
+  fatih_karagumruk: ["fatihkaragumruk_tur"],
+  rizespor: ["caykur_tur", "Rizespor"],
+  // Pro League Belgium
+  standard_liege: ["standardliege_bel"],
+  mechelen: ["kvmechelen_bel"],
+  ohl_leuven: ["ohleuven_bel"],
+  sint_truiden: ["sinttruidenvv_bel", "VV Sint-Truiden"],
+  eupen: ["eupen_bel"],
+  // Russian Premier League
+  zenit: ["zenit_rus"],
+  dynamo_moscow: ["dynamo_rus"],
+  lokomotiv_moscow: ["lokomotiv_rus"],
+  akhmat_grozny: ["terekgroznyi_rus", "Akhmat Grozny"],
+  urals_yekaterinburg: ["ural_rus", "Ural Yekaterinburg"],
+  fakel_voronezh: ["fakel_rus"],
+  sochi: ["fksochi_rus", "FK Sochi"],
+  rubin_kazan: ["rubinkazan_rus", "Rubin Kazan"],
+  rostov: ["rostov_rus"],
+  krasnodar: ["krasnodar_rus"],
+  cska_moscow: ["cskamoscow_rus", "CSKA Moscow"],
+  spartak_moscow: ["spartakmoscow_rus", "Spartak Moscow"],
+  // Liga Argentina
+  estudiantes_lp: ["estudiantes_ar", "Estudiantes de La Plata"],
+  velez_sarsfield: ["velezsarsfield_arg", "velez_arg"],
+  talleres_cordoba: ["talleres_arg"],
+  belgrano_cordoba: ["belgrano_arg"],
+  colon_sf: ["colon_arg"],
+  san_martin_sj: ["sanmartinsj_ar", "sanmartin_arg"],
+  gimnasia_la_plata: ["gimnasialp_arg"],
+  // Primera A Colombia
+  atletico_nacional: ["nacional_col"],
+  junior_baq: ["junior_col"],
+  america_cali: ["americacali_col"],
+  ind_medellin: ["indepmedellin_col"],
+  la_equidad: ["laequidad_col"],
+  jaguares_cordoba: ["jaguares_col"],
+  boyaca_chico: ["boyaca_col"],
+  aguilas_doradas: ["rionegro_col"],
+  alianza_fc_col: ["alianza_col"],
+  dep_pasto: ["deportivopasto_col"],
+  dep_pereira: ["deportivopereira_col"],
+  envigado_fc: ["envigado_col"],
+  cucuta_dep: ["cucuta_col"],
+  // Primera Division Chile
+  u_de_chile: ["universidadchile_chi"],
+  everton_vina: ["everton_chi"],
+  dep_antofagasta: ["antofagasta_chi"],
+  dep_iquique: ["deportesiquique_chi"],
+  dep_la_serena: ["laserena_chi"],
+  rangers_talca: ["rangers_chi"],
+  // Primera Division Uruguay
+  penarol: ["penarol_uru"],
+  nacional_ury: ["nacional_uru"],
+  city_torque: ["montevideotorque_uru", "Montevideo City Torque"],
+  river_plate_ury: ["riverplate_uru"],
+  liverpool_ury: ["liverpool_uru"],
+  wanderers_ury: ["wanderers_uru"],
+  fenix_ury: ["fenix_uru"],
+  racing_ury: ["racing_uru"],
+  sud_america_ury: ["sudamerica_uru"],
+  cerro_ury: ["cerro_uru"],
+  danubio_ury: ["danubio_uru"],
+  progreso_ury: ["progreso_uru"],
+  // K-League 1
+  jeonbuk_hyundai: ["jeonbuk_cor"],
+  ulsan_hd: ["ulsan_jap"],
+  suwon_samsung: ["suwon_kor"],
+  daegu_fc: ["daegu_cor"],
+  pohang_steelers: ["pohangsteelers_cor"],
+  fc_seoul: ["fcseoul_cor"],
+  // Chinese Super League
+  shanghai_port: ["shangaisipg_chn", "Shanghai Port"],
+  shandong_taishan: ["shandong_chn", "Shandong Taishan"],
+  beijing_guoan: ["beijinggoan_chn"],
+  chengdu_rongcheng: ["chengduqbao_chn"],
+  zhejiang_fc: ["zhejiangYiteng_chn"],
+  henan_fc: ["henanjianye_chn"],
+  tianjin_jinmen: ["tianjinquanjian_chn"],
+  qingdao_hainiu: ["qingdao_chn"],
+  shenzhen_fc: ["shenzhen_chn"],
+  wuhan_fc: ["wuhanzall_chn"],
+  // Saudi Pro League extras
+  al_nassr: ["alnassr_ara"],
+  al_ahli_saudi: ["al_ahli_ara"],
+  al_kholood: ["alkholood_ara"],
+  abha_club: ["abha_ara"],
+  damac_fc: ["damacfc_ara"],
+  // Saudi First Division extras
+  al_qadisiyah: ["al_qadisiya_ara"],
+  al_faisaly_harma: ["alfaisaly_ara"],
+  hajer_fc: ["hajer_ara"],
 }
 
 const manualPlayersByTeam: Record<string, Player[]> = {
@@ -247,8 +392,18 @@ export function getPlayersByTeam(teamName: string): Player[] {
   return importedPlayersByTeam[teamName] ?? manualPlayersByTeam[teamName] ?? []
 }
 
+const DIVISION_RATING_CAP: Record<string, number> = {
+  serie_a: 92,
+  serie_b: 81,
+  serie_c: 74,
+  serie_d: 67,
+}
+
 export function getPlayersForTeam(team: Team): Player[] {
-  return ensurePlayableSquad(team, getPlayersByTeam(team.nome))
+  const players = ensurePlayableSquad(team, getPlayersByTeam(team.nome))
+  const cap = DIVISION_RATING_CAP[team.divisao as string] ?? 92
+  if (cap >= 92) return players
+  return players.map(p => p.base > cap ? { ...p, base: cap } : p)
 }
 
 const POSITION_ORDER: Record<string, number> = {

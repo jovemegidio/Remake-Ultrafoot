@@ -3,8 +3,8 @@
 
 "use client"
 
-import { useCallback, useMemo, useRef } from "react"
-import { useGameState } from "@/lib/save-system"
+import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useGameState, type CoachSkillId } from "@/lib/save-system"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
 import { getTeamsByDivision, getTeamByShort, type Team } from "@/lib/teams-data"
 import { getPlayersByTeam } from "@/lib/players-data"
@@ -198,7 +198,7 @@ function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, seaso
   return {
     week,
     season,
-    competition: "Brasileirao Serie A",
+    competition: getLeagueName(homeTeam.curto),
     homeTeam: homeTeam.curto,
     awayTeam: awayTeam.curto,
     homeScore,
@@ -230,6 +230,22 @@ export function useGameManager() {
   const saveStateRef = useRef(saveState)
   saveStateRef.current = saveState
   const seasonCalendarRef = useRef<SeasonCalendar>({ fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null })
+
+  // Auto-reinit: engine resetou (versão nova) mas save tem time selecionado
+  useEffect(() => {
+    if (!hydrated) return
+    if (!saveState.selectedTeamShort) return
+    // Reinit se standings ou squad estiverem vazios (initialPlayers tem 1 jogador default)
+    if (gameEngine.squadPlayers.length > 1 && gameEngine.serieAStandings.length > 0) return
+    const teamShort = saveState.selectedTeamShort
+    const leagueTeams = getUserLeagueTeams(teamShort)
+    gameEngine.initializeGame(teamShort)
+    useGameEngine.setState({
+      serieAStandings: initializeStandings(leagueTeams),
+      currentWeek: saveState.week,
+      currentSeason: saveState.season,
+    })
+  }, [hydrated, saveState.selectedTeamShort, saveState.week, saveState.season, gameEngine.squadPlayers.length, gameEngine.serieAStandings.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inicializa o jogo quando o usuario seleciona um time
   const initializeNewGame = useCallback((teamShort: string, managerName?: string) => {
@@ -291,7 +307,8 @@ export function useGameManager() {
     })
     
     // Encontra rodada atual
-    const currentRound = Math.max(1, Math.min(38, currentWeek))
+    const totalRounds = (leagueTeams.length - 1) * 2
+    const currentRound = Math.max(1, Math.min(totalRounds, currentWeek))
     
     // Proxima partida do usuario
     const nextUserMatch = fixtures.find(f => f.isUserMatch && !f.played) || null
@@ -323,20 +340,26 @@ export function useGameManager() {
       const currentStandings = useGameEngine.getState().serieAStandings
       const nextSeason = currentState.season + 1
 
+      // Determina o campeao ANTES de resetar as standings
+      const sortedForChampion = [...currentStandings].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points
+        const sgA = a.goalsFor - a.goalsAgainst
+        const sgB = b.goalsFor - b.goalsAgainst
+        if (sgB !== sgA) return sgB - sgA
+        return b.goalsFor - a.goalsFor
+      })
+      const champion = sortedForChampion[0]?.teamShort ?? null
+
       const teamsForReset = getUserLeagueTeams(userShort)
       const newStandings = initializeStandings(teamsForReset)
-      useGameEngine.setState({
-        serieAStandings: newStandings,
-        lastSeasonStandings: currentStandings,
-        currentWeek: 0,
-        currentSeason: nextSeason,
-        matchResults: []
-      })
+
+      // Processa fim de temporada: envelhece jogadores, aposentadorias, jovens da base, reseta standings
+      gameEngine.processSeasonEnd(nextSeason, newStandings, currentStandings)
 
       saveStateRef.current = { ...currentState, week: 0, season: nextSeason }
       setSaveState({ week: 0, season: nextSeason })
 
-      return { newSeason: true }
+      return { newSeason: true, champion }
     }
 
     // Simula partidas de outros times desta rodada
@@ -427,7 +450,39 @@ export function useGameManager() {
     }
 
     gameEngine.updateStandings(result)
-  }, [gameEngine])
+
+    // === XP e habilidades do treinador ===
+    const userShort = currentState.selectedTeamShort ?? ""
+    const userIsHome = homeTeam === userShort
+    const userScore = userIsHome ? homeScore : awayScore
+    const oppScore = userIsHome ? awayScore : homeScore
+    const won = userScore > oppScore
+    const lost = userScore < oppScore
+
+    // XP: +10 por jogo, +15 por vitoria, +5 por empate
+    const xpGain = 10 + (won ? 15 : userScore === oppScore ? 5 : 0)
+    const newXP = currentState.coachXP + xpGain
+
+    // Sequencia de vitorias
+    const newStreak = won ? currentState.coachWinStreak + 1 : 0
+
+    // Verifica desbloqueio de habilidades Just-in-Time
+    const skillsToUnlock: CoachSkillId[] = []
+    const updatedSkills = currentState.coachSkills.map(skill => {
+      if (skill.unlocked) return skill
+      if (skill.unlockTrigger.type === "win_streak" && newStreak >= skill.unlockTrigger.threshold) {
+        skillsToUnlock.push(skill.id)
+        return { ...skill, unlocked: true, unlockedSeason: currentState.season }
+      }
+      return skill
+    })
+
+    setSaveState({
+      coachXP: newXP,
+      coachWinStreak: newStreak,
+      coachSkills: updatedSkills,
+    })
+  }, [gameEngine, setSaveState])
   
   // Classificacao atual ordenada
   const standings = useMemo(() => {
@@ -454,6 +509,66 @@ export function useGameManager() {
       : null
   }, [saveState.selectedTeamShort])
   
+  // Desbloqueia habilidade do treinador manualmente (crise resolvida, titulo, etc)
+  const unlockCoachSkill = useCallback((skillId: CoachSkillId) => {
+    const currentState = saveStateRef.current
+    setSaveState({
+      coachSkills: currentState.coachSkills.map(s =>
+        s.id === skillId && !s.unlocked
+          ? { ...s, unlocked: true, unlockedSeason: currentState.season }
+          : s
+      )
+    })
+  }, [setSaveState])
+
+  // Incrementa contador de crises e verifica desbloqueio de habilidades por crise
+  const recordCrisisResolved = useCallback(() => {
+    const currentState = saveStateRef.current
+    const newCount = currentState.coachCrisisCount + 1
+    const updatedSkills = currentState.coachSkills.map(skill => {
+      if (skill.unlocked) return skill
+      if (skill.unlockTrigger.type === "crisis_resolved" && newCount >= skill.unlockTrigger.threshold) {
+        return { ...skill, unlocked: true, unlockedSeason: currentState.season }
+      }
+      return skill
+    })
+    setSaveState({ coachCrisisCount: newCount, coachSkills: updatedSkills })
+  }, [setSaveState])
+
+  // Salva historico de carreira (chamado quando treinador e demitido ou muda de clube)
+  const saveCareerRecord = useCallback((params: {
+    teamShort: string, teamName: string, titles: string[],
+    bestPosition: number, youthAcademyLevelLeft: number,
+    endReason: "demitido" | "aposentado" | "novo_desafio"
+  }) => {
+    const currentState = saveStateRef.current
+    const record = {
+      ...params,
+      seasons: currentState.season - (currentState.coachLegacy.careerRecords.length > 0
+        ? (currentState.coachLegacy.careerRecords[currentState.coachLegacy.careerRecords.length - 1].endedSeason + 1)
+        : 2026),
+      startedSeason: 2026,
+      endedSeason: currentState.season,
+    }
+    // Habilidades desbloqueadas nessa carreira ficam no legado
+    const newLegacySkills = Array.from(new Set([
+      ...currentState.coachLegacy.legacySkills,
+      ...currentState.coachSkills.filter(s => s.unlocked).map(s => s.id),
+    ])) as CoachSkillId[]
+    const newRep = Math.min(5, currentState.coachLegacy.reputationLevel + (params.titles.length > 0 ? 1 : 0))
+    setSaveState({
+      coachLegacy: {
+        ...currentState.coachLegacy,
+        totalSeasons: currentState.coachLegacy.totalSeasons + record.seasons,
+        totalTitles: currentState.coachLegacy.totalTitles + params.titles.length,
+        careerRecords: [...currentState.coachLegacy.careerRecords, record],
+        legacySkills: newLegacySkills,
+        reputationLevel: newRep,
+        legacyXP: currentState.coachLegacy.legacyXP + currentState.coachXP,
+      }
+    })
+  }, [setSaveState])
+
   return {
     // Estado
     hydrated,
@@ -463,15 +578,18 @@ export function useGameManager() {
     seasonCalendar,
     currentWeek: saveState.week,
     currentSeason: saveState.season,
-    
+
     // Game Engine direto
     gameEngine,
-    
+
     // Acoes
     initializeNewGame,
     advanceWeek,
     registerUserMatchResult,
-    
+    unlockCoachSkill,
+    recordCrisisResolved,
+    saveCareerRecord,
+
     // Save state
     saveState,
     setSaveState

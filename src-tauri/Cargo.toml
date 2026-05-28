@@ -24,12 +24,20 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 discord-rich-presence = "0.2"
 
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61.3", features = [
+  "Devices_Enumeration",
+  "Foundation",
+  "Win32_UI_Input_XboxController",
+] }
+windows-collections = "0.2.0"
+
 [profile.dev]
 incremental = true
 
 [profile.release]
-codegen-units = 1
-lto = true
+codegen-units = 4
+lto = "thin"
 opt-level = "s"
 panic = "abort"
 strip = true

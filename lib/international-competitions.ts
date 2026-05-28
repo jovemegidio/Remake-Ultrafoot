@@ -442,6 +442,23 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
     },
   ],
 
+  saudi_first_div: [
+    {
+      id: "saudi_first_division",
+      name: "Saudi First Division League",
+      shortName: "Saudi 1st",
+      type: "league",
+      region: "arabia_saudita",
+      format: "points",
+      teams: 16,
+      rounds: 30,
+      prize: 5000000,
+      prestige: 45,
+      promotion: 2,
+      relegation: 2,
+    },
+  ],
+
   // Estados Unidos
   mls: [
     {
@@ -589,7 +606,7 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
     },
   ],
 
-  // J-League (placeholder)
+  // J-League
   j_league: [
     {
       id: "j_league",
@@ -604,6 +621,118 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       prestige: 60,
       relegation: 3,
     },
+  ],
+
+  // Eredivisie - Holanda
+  eredivisie: [
+    { id: "eredivisie", name: "Eredivisie", shortName: "Eredivisie", type: "league", region: "holanda", format: "points", teams: 18, rounds: 34, prize: 40000000, prestige: 72, relegation: 2 },
+  ],
+
+  // Scottish Premiership - Escocia
+  scottish_prem: [
+    { id: "scottish_prem", name: "Scottish Premiership", shortName: "SPFL Prem", type: "league", region: "escocia", format: "points", teams: 12, rounds: 38, prize: 15000000, prestige: 65, relegation: 2 },
+  ],
+
+  // Super Lig - Turquia
+  super_lig: [
+    { id: "super_lig", name: "Trendyol Süper Lig", shortName: "Süper Lig", type: "league", region: "turquia", format: "points", teams: 18, rounds: 34, prize: 35000000, prestige: 70, relegation: 3 },
+  ],
+
+  // Belgian Pro League - Belgica
+  pro_league_bel: [
+    { id: "pro_league_bel", name: "Belgian Pro League", shortName: "Pro League", type: "league", region: "belgica", format: "points", teams: 16, rounds: 30, prize: 20000000, prestige: 66, relegation: 2 },
+  ],
+
+  // Russian Premier League - Russia
+  russian_prem: [
+    { id: "russian_prem", name: "Russian Premier League", shortName: "RPL", type: "league", region: "russia", format: "points", teams: 16, rounds: 30, prize: 25000000, prestige: 68, relegation: 2 },
+  ],
+
+  // Liga Argentina
+  liga_argentina: [
+    { id: "liga_argentina", name: "Liga Profesional de Fútbol", shortName: "Liga Argentina", type: "league", region: "argentina", format: "points", teams: 28, rounds: 27, prize: 20000000, prestige: 75, relegation: 3 },
+  ],
+
+  // Primera A - Colombia
+  primera_a_col: [
+    { id: "primera_a_col", name: "Liga BetPlay Dimayor", shortName: "Primera A", type: "league", region: "colombia", format: "points", teams: 20, rounds: 38, prize: 8000000, prestige: 62, relegation: 2 },
+  ],
+
+  // Primera Division - Chile
+  primera_div_chi: [
+    { id: "primera_div_chi", name: "Primera División de Chile", shortName: "Primera Chile", type: "league", region: "chile", format: "points", teams: 16, rounds: 30, prize: 6000000, prestige: 60, relegation: 3 },
+  ],
+
+  // Primera Division - Uruguay
+  primera_div_ury: [
+    { id: "primera_div_ury", name: "Primera División del Uruguay", shortName: "Primera Uruguay", type: "league", region: "uruguai", format: "points", teams: 16, rounds: 30, prize: 4000000, prestige: 58, relegation: 2 },
+  ],
+
+  // K-League 1 - Coreia do Sul
+  k_league_1: [
+    { id: "k_league_1", name: "K League 1", shortName: "K-League 1", type: "league", region: "coreia_do_sul", format: "points", teams: 12, rounds: 33, prize: 15000000, prestige: 58, relegation: 2 },
+  ],
+
+  // Chinese Super League - China
+  chinese_super: [
+    { id: "chinese_super", name: "Chinese Super League", shortName: "CSL", type: "league", region: "china", format: "points", teams: 16, rounds: 30, prize: 20000000, prestige: 55, relegation: 3 },
+  ],
+
+  // 2as divisoes - Europa
+  championship: [
+    { id: "championship", name: "EFL Championship", shortName: "Championship", type: "league", region: "inglaterra", format: "points", teams: 24, rounds: 46, prize: 20000000, prestige: 55, promotion: 3, relegation: 3 },
+  ],
+  la_liga_2: [
+    { id: "la_liga_2", name: "La Liga 2", shortName: "La Liga 2", type: "league", region: "espanha", format: "points", teams: 22, rounds: 42, prize: 8000000, prestige: 45, promotion: 3, relegation: 4 },
+  ],
+  serie_b_ita: [
+    { id: "serie_b_ita", name: "Serie B", shortName: "Serie B Ita", type: "league", region: "italia", format: "points", teams: 20, rounds: 38, prize: 10000000, prestige: 48, promotion: 3, relegation: 3 },
+  ],
+  bundesliga_2: [
+    { id: "bundesliga_2", name: "2. Bundesliga", shortName: "2. Bundesliga", type: "league", region: "alemanha", format: "points", teams: 18, rounds: 34, prize: 8000000, prestige: 46, promotion: 2, relegation: 2 },
+  ],
+  ligue_2: [
+    { id: "ligue_2", name: "Ligue 2", shortName: "Ligue 2", type: "league", region: "franca", format: "points", teams: 18, rounds: 34, prize: 5000000, prestige: 40, promotion: 2, relegation: 2 },
+  ],
+  liga_portugal_2: [
+    { id: "liga_portugal_2", name: "Liga Portugal 2", shortName: "Liga 2", type: "league", region: "portugal", format: "points", teams: 18, rounds: 34, prize: 3000000, prestige: 38, promotion: 2, relegation: 2 },
+  ],
+  eerste_divisie: [
+    { id: "eerste_divisie", name: "Eerste Divisie", shortName: "Eerste Div", type: "league", region: "holanda", format: "points", teams: 20, rounds: 38, prize: 2000000, prestige: 35, promotion: 2, relegation: 2 },
+  ],
+  challenger_pro: [
+    { id: "challenger_pro", name: "Challenger Pro League", shortName: "Challenger", type: "league", region: "belgica", format: "points", teams: 8, rounds: 14, prize: 1500000, prestige: 32, promotion: 1, relegation: 1 },
+  ],
+  tff_1_lig: [
+    { id: "tff_1_lig", name: "TFF 1. Lig", shortName: "1. Lig", type: "league", region: "turquia", format: "points", teams: 18, rounds: 34, prize: 2500000, prestige: 36, promotion: 2, relegation: 2 },
+  ],
+  russian_first: [
+    { id: "russian_first", name: "Russian First League", shortName: "RPL 2", type: "league", region: "russia", format: "points", teams: 20, rounds: 38, prize: 2000000, prestige: 35, promotion: 2, relegation: 2 },
+  ],
+
+  // 2as divisoes - Americas
+  primera_b_arg: [
+    { id: "primera_b_arg", name: "Primera Nacional", shortName: "Primera B Arg", type: "league", region: "argentina", format: "points", teams: 38, rounds: 37, prize: 2000000, prestige: 40, promotion: 4 },
+  ],
+  torneo_betplay: [
+    { id: "torneo_betplay", name: "Torneo BetPlay Dimayor II", shortName: "Torneo Betplay", type: "league", region: "colombia", format: "points", teams: 14, rounds: 26, prize: 1500000, prestige: 35, promotion: 2 },
+  ],
+  primera_b_chi: [
+    { id: "primera_b_chi", name: "Primera B de Chile", shortName: "Primera B Chi", type: "league", region: "chile", format: "points", teams: 14, rounds: 26, prize: 1000000, prestige: 32, promotion: 2, relegation: 2 },
+  ],
+  segunda_div_ury: [
+    { id: "segunda_div_ury", name: "Segunda Division de Uruguay", shortName: "Segunda Uruguay", type: "league", region: "uruguai", format: "points", teams: 16, rounds: 30, prize: 500000, prestige: 28, promotion: 2, relegation: 2 },
+  ],
+
+  // 2as divisoes - Asia
+  j2_league: [
+    { id: "j2_league", name: "J2 League", shortName: "J2 League", type: "league", region: "japao", format: "points", teams: 22, rounds: 42, prize: 5000000, prestige: 38, promotion: 2, relegation: 2 },
+  ],
+  k_league_2: [
+    { id: "k_league_2", name: "K League 2", shortName: "K-League 2", type: "league", region: "coreia_do_sul", format: "points", teams: 13, rounds: 36, prize: 3000000, prestige: 32, promotion: 2, relegation: 2 },
+  ],
+  china_league_one: [
+    { id: "china_league_one", name: "China League One", shortName: "China Liga 1", type: "league", region: "china", format: "points", teams: 16, rounds: 30, prize: 3000000, prestige: 30, promotion: 2, relegation: 2 },
   ],
 }
 

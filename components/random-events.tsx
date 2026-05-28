@@ -20,131 +20,13 @@ import {
 } from "lucide-react"
 import type { RandomEvent, EventChoice } from "@/lib/game-engine"
 
-// Eventos mockados para demonstracao
-const MOCK_EVENTS: RandomEvent[] = [
-  {
-    id: 1,
-    type: "investidor_interesse",
-    title: "Interesse de Investidor",
-    description: "Um grupo de investidores demonstrou interesse em aportar capital no clube. Eles querem uma reuniao para discutir os termos.",
-    week: 15,
-    severity: "baixa",
-    financialImpact: 0,
-    moraleImpact: 5,
-    choices: [
-      {
-        id: 1,
-        text: "Abrir negociacoes",
-        cost: 50000,
-        moraleEffect: 10,
-        reputationEffect: 5,
-        successChance: 60,
-        outcomes: {
-          success: { description: "Acordo fechado! Aporte de R$ 10M.", effects: [{ type: "financial", value: 10000000 }] },
-          failure: { description: "Negociacoes nao avancaram.", effects: [] }
-        }
-      },
-      {
-        id: 2,
-        text: "Recusar - manter independencia",
-        cost: 0,
-        moraleEffect: 0,
-        reputationEffect: 5,
-        successChance: 100,
-        outcomes: {
-          success: { description: "Clube mantem sua identidade.", effects: [] },
-          failure: { description: "", effects: [] }
-        }
-      }
-    ],
-    resolved: false,
-    selectedChoice: null
-  },
-  {
-    id: 2,
-    type: "protestos_ct",
-    title: "Protestos no CT",
-    description: "Torcedores insatisfeitos com os ultimos resultados invadiram o CT exigindo mudancas na direcao tecnica.",
-    week: 15,
-    severity: "media",
-    financialImpact: -100000,
-    moraleImpact: -15,
-    choices: [
-      {
-        id: 1,
-        text: "Reunir com lideres da torcida",
-        cost: 0,
-        moraleEffect: 10,
-        reputationEffect: 5,
-        successChance: 70,
-        outcomes: {
-          success: { description: "Dialogo produtivo. Torcida deu voto de confianca.", effects: [{ type: "morale", value: 10 }] },
-          failure: { description: "Reuniao terminou em discussao.", effects: [{ type: "morale", value: -10 }] }
-        }
-      },
-      {
-        id: 2,
-        text: "Ignorar e focar nos treinos",
-        cost: 0,
-        moraleEffect: -10,
-        reputationEffect: -10,
-        successChance: 50,
-        outcomes: {
-          success: { description: "Protestos diminuiram com o tempo.", effects: [] },
-          failure: { description: "Protestos intensificaram.", effects: [{ type: "morale", value: -20 }] }
-        }
-      }
-    ],
-    resolved: false,
-    selectedChoice: null
-  },
-  {
-    id: 3,
-    type: "jogador_destaque",
-    title: "Jogador em Destaque",
-    description: "Lincoln foi eleito o melhor jogador do mes pela CBF! A imprensa quer uma entrevista exclusiva.",
-    week: 14,
-    severity: "baixa",
-    financialImpact: 0,
-    moraleImpact: 10,
-    choices: [
-      {
-        id: 1,
-        text: "Conceder entrevista",
-        cost: 0,
-        moraleEffect: 5,
-        reputationEffect: 10,
-        successChance: 90,
-        outcomes: {
-          success: { description: "Otima repercussao! Moral do elenco aumentou.", effects: [{ type: "morale", value: 8 }] },
-          failure: { description: "Entrevista foi normal.", effects: [] }
-        }
-      },
-      {
-        id: 2,
-        text: "Declinar - foco no trabalho",
-        cost: 0,
-        moraleEffect: -3,
-        reputationEffect: -5,
-        successChance: 100,
-        outcomes: {
-          success: { description: "Time mantem foco nos treinos.", effects: [] },
-          failure: { description: "", effects: [] }
-        }
-      }
-    ],
-    resolved: true,
-    selectedChoice: 1
-  }
-]
-
 interface RandomEventsProps {
   events?: RandomEvent[]
   onResolveEvent?: (eventId: number, choiceId: number) => void
   compact?: boolean
 }
 
-export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = false }: RandomEventsProps) {
+export function RandomEvents({ events = [], onResolveEvent, compact = false }: RandomEventsProps) {
   const [selectedEvent, setSelectedEvent] = useState<RandomEvent | null>(null)
   const [processingChoice, setProcessingChoice] = useState<number | null>(null)
 

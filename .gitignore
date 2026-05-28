@@ -56,6 +56,10 @@ public/escudos-selecoes/
 # Claude Code local settings (machine-specific permissions)
 .claude/
 
+# Deploy scripts (contêm configuração de servidor local)
+deploy_vps.py
+.env.deploy
+
 # QA / browser profiles
 .qa-chrome-profile/
 

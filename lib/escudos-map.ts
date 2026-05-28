@@ -1,6 +1,8 @@
 // Mapeamento centralizado de escudos
 // Este arquivo nao deve importar de teams-data.ts ou international-teams.ts para evitar dependencias circulares
 
+import { gameAssetUrl } from "@/lib/game-asset"
+
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
 // Mapeamento de file_keys para nomes de arquivos de escudos no repositorio
@@ -68,6 +70,7 @@ const localEscudoMap: Record<string, string> = {
   "novorinzontino_sp": "/escudos/novorinzontino_sp.png",
   "botafogosp_bra": "/escudos/botafogosp_bra.png",
   // Serie B - novos
+  "saobernardo_sp": "/escudos/saobernardo_sp.png",
   "guaranisp_bra": "/escudos/guaranisp_bra.png",
   "pontepreta_bra": "/escudos/pontepreta_bra.png",
   "criciuma_bra": "/escudos/criciuma_bra.png",
@@ -303,18 +306,16 @@ const localEscudoMap: Record<string, string> = {
 }
 
 export function getEscudoUrl(fileKey: string): string {
-  // 1. Mapeamento explícito (internacionais, subpastas, overrides)
-  if (localEscudoMap[fileKey]) {
-    return localEscudoMap[fileKey]
-  }
-  // 2. Arquivo local nomeado pelo fileKey — cobre os 3300+ PNGs em /public/escudos/
-  //    Se não existir, TeamCrest.onError mostra o escudo colorido como fallback
-  return `/escudos/${fileKey}.png`
+  const raw = localEscudoMap[fileKey] ?? `/escudos/${fileKey}.png`
+  return gameAssetUrl(raw)
+}
+
+export function getRemoteEscudoUrl(fileKey: string): string {
+  const key = escudoMap[fileKey] || fileKey
+  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${key}.png`
 }
 
 export function getEscudoMiniUrl(fileKey: string): string {
-  if (localEscudoMap[fileKey]) {
-    return localEscudoMap[fileKey]
-  }
-  return `/escudos/${fileKey}.png`
+  const raw = localEscudoMap[fileKey] ?? `/escudos/${fileKey}.png`
+  return gameAssetUrl(raw)
 }

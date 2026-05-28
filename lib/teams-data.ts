@@ -1,6 +1,8 @@
 // Dados dos times brasileiros importados do repositório Ultrafoot
 // https://github.com/jovemegidio/Ultrafoot
 
+import { gameAssetUrl } from "@/lib/game-asset"
+
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
 // Divisões / regiões suportadas pelo jogo
@@ -20,6 +22,41 @@ export type Divisao =
   | "mls"
   | "liga_mx"
   | "primeira_liga"
+  // Europa - demais ligas
+  | "eredivisie"
+  | "scottish_prem"
+  | "super_lig"
+  | "pro_league_bel"
+  | "russian_prem"
+  // Americas - Sul
+  | "liga_argentina"
+  | "primera_a_col"
+  | "primera_div_chi"
+  | "primera_div_ury"
+  // Asia
+  | "k_league_1"
+  | "chinese_super"
+  // 2as divisões - Europa
+  | "championship"
+  | "la_liga_2"
+  | "serie_b_ita"
+  | "bundesliga_2"
+  | "ligue_2"
+  | "liga_portugal_2"
+  | "eerste_divisie"
+  | "challenger_pro"
+  | "tff_1_lig"
+  | "russian_first"
+  // 2as divisões - Americas
+  | "primera_b_arg"
+  | "torneo_betplay"
+  | "primera_b_chi"
+  | "segunda_div_ury"
+  // 2as divisões - Asia
+  | "saudi_first_div"
+  | "j2_league"
+  | "k_league_2"
+  | "china_league_one"
   // Estaduais
   | "paulistao"
   | "carioca"
@@ -91,13 +128,197 @@ const escudoMap: Record<string, string> = {
   "bragantino_bra": "bragantino_bra",
 }
 
+// Mapeamento de file_keys internacionais → nome do arquivo local em /public/camisas/
+const localCamisaMap: Record<string, string> = {
+  // Premier League
+  "manchester_city": "machestercity_ing",
+  "manchester_united": "utdman_ing",
+  "arsenal": "arsenal",
+  "liverpool": "liverpool_ing",
+  "chelsea": "chelsea",
+  "tottenham": "tottenhamhotspur_ing",
+  "newcastle": "newcastle_ing",
+  "aston_villa": "astonvilla_ing",
+  "west_ham": "westham_eng",
+  "brighton": "brighton_ing",
+  "everton": "everton_ing",
+  "crystal_palace": "crystalpalace_ing",
+  "bournemouth": "bournemouth_ing",
+  "wolves": "wolverhampton_ing",
+  "fulham": "fulham",
+  "brentford": "brentford_ing",
+  "nottingham_forest": "nottinghamforest_ing",
+  "leicester": "leicestercity_ing",
+  "southampton": "southampton_eng",
+  "ipswich": "ipswichtown_ing",
+  // La Liga
+  "real_madrid": "realmadrid_esp",
+  "barcelona": "barcelona_esp",
+  "atletico_madrid": "atleticomadrid_esp",
+  "sevilla": "sevilla_esp",
+  "villarreal": "villareal_esp",
+  "real_sociedad": "realsociedad_esp",
+  "athletic_bilbao": "atleticobilbao_esp",
+  "valencia": "valencia_esp",
+  "real_betis": "betis_esp",
+  "girona": "girona_esp",
+  "celta_vigo": "celtadevigo_esp",
+  "getafe": "getafe_esp",
+  "rayo_vallecano": "rayovallecano_esp",
+  "osasuna": "osasuna_esp",
+  "espanyol": "espanyol_esp",
+  "las_palmas": "laspalmas_esp",
+  "alaves": "alaves_esp",
+  "leganes": "leganes_esp",
+  "valladolid": "valladolid_esp",
+  "mallorca": "mallorca_esp",
+  // Serie A Italia
+  "inter": "inter_it",
+  "inter_milan": "inter_it",
+  "ac_milan": "milan_it",
+  "juventus": "juventus_it",
+  "napoli": "napoli_it",
+  "roma": "roma_it",
+  "lazio": "lazio_it",
+  "atalanta": "atalanta_it",
+  "fiorentina": "fiorentina_ita",
+  "bologna": "bologna_it",
+  "torino": "torino_it",
+  "udinese": "udinese_it",
+  "genoa": "genoa_it",
+  "verona": "verona_it",
+  "hellas_verona": "verona_it",
+  "sassuolo": "sassuolo_it",
+  "empoli": "empoli_it",
+  "lecce": "lecce_ita",
+  "cagliari": "cagliari_it",
+  "como": "como_it",
+  "parma": "parma_ita",
+  "venezia": "venezia_ita",
+  "monza": "monza_ita",
+  // Bundesliga
+  "bayern_munich": "bayern_ale",
+  "borussia_dortmund": "borussia_ale",
+  "rb_leipzig": "leipzig_ale",
+  "bayer_leverkusen": "bayerleverkusen_ale",
+  "eintracht_frankfurt": "Frankfurt_ale",
+  "freiburg": "freiburg_ale",
+  "wolfsburg": "wolfsburg_ale",
+  "borussia_mgladbach": "monchengladbach_ale",
+  "borussia_monchengladbach": "monchengladbach_ale",
+  "werder_bremen": "werderbremen_ale",
+  "union_berlin": "unionberlin_ale",
+  "mainz": "fsvmainz_ale",
+  "fc_koln": "fckoln_ale",
+  "augsburg": "augsburg_ale",
+  "bochum": "bochum_ale",
+  "heidenheim": "heidenheim_ale",
+  "darmstadt": "darmstadt98_ale",
+  "st_pauli": "stpauli_ale",
+  "holstein_kiel": "holsteinkiel_ale",
+  // Ligue 1
+  "psg": "paris_fra",
+  "monaco": "monaco_fr",
+  "marseille": "olympiquemarseile_fra",
+  "lille": "lille_fra",
+  "lyon": "lyon",
+  "rennes": "rennes_fr",
+  "nice": "nice_fra",
+  "lens": "lens_fr",
+  "reims": "reims_fr",
+  "nantes": "nantes_fr",
+  "strasbourg": "strasbourg_fra",
+  "montpellier": "montpellier_fra",
+  "angers": "angers_fr",
+  "toulouse": "toulouse_fr",
+  "brest": "brest_fr",
+  "auxerre": "auxerre_fr",
+  "le_havre": "lehavre_fr",
+  "lorient": "lorient_fr",
+  "clermont": "clermont_fr",
+  // Saudi Pro League
+  "al_hilal": "al_hilal",
+  "al_nassr": "alnassr_ara",
+  "al_ittihad": "alittihad_ara",
+  "al_ahli": "al_ahli_ara",
+  "al_ahli_saudi": "al_ahli_ara",
+  "al_shabab": "al_shabab_ara",
+  "al_taawoun": "al_taawon_ara",
+  "al_fateh": "al_fateh_ara",
+  "al_fayha": "al_fayha_ara",
+  "al_ettifaq": "ettifaq_ara",
+  "damac": "damacfc_ara",
+  "al_riyadh": "alriyadh_ara",
+  "al_raed": "al_raed_ara",
+  "al_hazm": "al_hazem_ara",
+  "al_orobah": "alorobah_ara",
+  "al_wehda": "al_wehda_ara",
+  "al_qadisiyah": "al_qadisiya_ara",
+  // MLS
+  "inter_miami": "intermiami433_eua",
+  "la_galaxy": "lagalaxy433_eua",
+  "lafc": "lafc433_eua",
+  "atlanta_united": "atlantaunited_eua",
+  "seattle_sounders": "seattlesounders433_eua",
+  "new_york_city": "newyorkcity433_eua",
+  "nycfc": "newyorkcity433_eua",
+  "toronto_fc": "toronto433_eua",
+  "cf_montreal": "montreal433_eua",
+  "austin_fc": "austin_usa",
+  "columbus_crew": "columbuscrew_eua",
+  "fc_cincinnati": "cincinnati433_eua",
+  "nashville_sc": "nashville433_eua",
+  "orlando_city": "orlandocity433_eua",
+  "portland_timbers": "portlandtimbers_eua",
+  "minnesota_united": "minnesota433_eua",
+  "charlotte_fc": "charlotte433_eua",
+  "dc_united": "dcunited433_eua",
+  "houston_dynamo": "houstondynamo433_eua",
+  // Liga MX
+  "club_america": "america_mex",
+  "chivas": "dep_guadalajara_mex",
+  "cruz_azul": "cruzazul_mex",
+  "tigres": "tigres_mex",
+  "monterrey": "monterrey_mex",
+  "pumas": "pumasunam_mex",
+  "leon": "leon_mex",
+  "santos_laguna": "santos_mex",
+  "toluca": "toluca_mex",
+  "pachuca": "pachuca_mex",
+  "tijuana": "tijuana_mex",
+  // Primeira Liga Portugal
+  "benfica": "benfica_por",
+  "porto": "porto",
+  "sporting": "sporting_por",
+  "braga": "sportingbraga_por",
+  "vitoria_guimaraes": "vitoriaguimaraes_por",
+  "boavista": "boavista_por",
+  "santa_clara": "santaclara_por",
+  "famalicao": "famalicao_por",
+  "rio_ave": "rioave_por",
+  "moreirense": "moreirense_por",
+  "gil_vicente": "gilvicente_por",
+  "arouca": "arouca_por",
+  "estoril": "estoril_por",
+  "nacional": "nacional_por",
+  "estrela_amadora": "estrelaamadora_por",
+  "farense": "farense_por",
+  "avs": "avs_por",
+}
+
 // Importar funcoes de escudo do arquivo separado (evita dependencia circular)
-import { getEscudoUrl, getEscudoMiniUrl } from "./escudos-map"
-export { getEscudoUrl, getEscudoMiniUrl }
+import { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl } from "./escudos-map"
+export { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl }
 
 export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
+  const localKey = localCamisaMap[fileKey]
+  const key = localKey ?? (escudoMap[fileKey] || fileKey)
+  const folder = variant === "home" ? "camisas" : variant === "away" ? "camisas2" : "camisas3"
+  return gameAssetUrl(`/${folder}/${key}.png`)
+}
+
+export function getRemoteCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
   const key = escudoMap[fileKey] || fileKey
-  // home -> camisas, away -> camisas2, third -> camisas3
   const folder = variant === "home" ? "camisas" : variant === "away" ? "camisas2" : "camisas3"
   return `${ULTRAFOOT_RAW_URL}/teams/${folder}/${key}.png`
 }

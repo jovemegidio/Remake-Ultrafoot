@@ -17,9 +17,9 @@ test.describe("Smoke — pages load without crash", () => {
 
   test("dashboard loads with injected save", async ({ page }) => {
     await injectTeamState(page)
-    await page.goto("/dashboard")
-    // Should not show a fatal error; header or sidebar should be present
-    await expect(page.locator("nav, aside, [data-sidebar]").first()).toBeVisible({ timeout: 10000 })
+    await page.goto("/")
+    // Dashboard renders GameSidebar (<aside>) when session + save are valid
+    await expect(page.locator("aside").first()).toBeVisible({ timeout: 12000 })
   })
 
   test("calendario page loads", async ({ page }) => {

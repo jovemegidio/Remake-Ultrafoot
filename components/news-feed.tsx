@@ -188,6 +188,24 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   const [direction, setDirection] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [isClient, setIsClient] = useState(false)
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set())
+  const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set())
+
+  const toggleLike = (id: string) => {
+    setLikedItems(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleBookmark = (id: string) => {
+    setBookmarkedItems(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   // Gera noticias apenas no cliente para evitar erro de hidratacao
   useEffect(() => {
@@ -334,9 +352,17 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
         {/* Footer - Engagement */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.04]">
           <div className="flex items-center gap-6">
-            <button className="flex items-center gap-1.5 text-white/50 hover:text-red-400 transition-colors">
-              <Heart className="h-4 w-4" />
-              <span className="text-xs">{formatEngagement(currentNews.likes)}</span>
+            <button
+              onClick={() => toggleLike(currentNews.id)}
+              className={cn(
+                "flex items-center gap-1.5 transition-colors",
+                likedItems.has(currentNews.id) ? "text-red-400" : "text-white/50 hover:text-red-400"
+              )}
+            >
+              <Heart className={cn("h-4 w-4 transition-all", likedItems.has(currentNews.id) && "fill-red-400")} />
+              <span className="text-xs">
+                {formatEngagement(currentNews.likes + (likedItems.has(currentNews.id) ? 1 : 0))}
+              </span>
             </button>
             <button className="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors">
               <MessageCircle className="h-4 w-4" />
@@ -347,8 +373,14 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
             <button className="text-white/50 hover:text-white transition-colors">
               <Share2 className="h-4 w-4" />
             </button>
-            <button className="text-white/50 hover:text-white transition-colors">
-              <Bookmark className="h-4 w-4" />
+            <button
+              onClick={() => toggleBookmark(currentNews.id)}
+              className={cn(
+                "transition-colors",
+                bookmarkedItems.has(currentNews.id) ? "text-[#1db954]" : "text-white/50 hover:text-white"
+              )}
+            >
+              <Bookmark className={cn("h-4 w-4 transition-all", bookmarkedItems.has(currentNews.id) && "fill-[#1db954]")} />
             </button>
           </div>
         </div>
@@ -373,20 +405,24 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   )
 }
 
-// Logo do veiculo de comunicacao usando imagens reais
+// Logo do veiculo de comunicacao — fallback para ícone colorido se imagem não carregar
 function SourceLogo({ source, size = "md" }: { source: keyof typeof NEWS_SOURCES; size?: "sm" | "md" }) {
   const sourceData = NEWS_SOURCES[source]
   const sizeClass = size === "sm" ? "w-8 h-8" : "w-10 h-10"
-  
+  const textSize = size === "sm" ? "text-[9px]" : "text-[10px]"
+  const initials = sourceData.name.split(" ").map(w => w[0]).join("").slice(0, 3)
+
   return (
-    <div className={cn(sizeClass, "rounded-full overflow-hidden relative")}>
+    <div className={cn(sizeClass, "rounded-full overflow-hidden relative flex items-center justify-center")} style={{ backgroundColor: sourceData.color }}>
       <Image
         src={sourceData.logo}
         alt={sourceData.name}
         fill
         className="object-cover"
         sizes={size === "sm" ? "32px" : "40px"}
+        onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
       />
+      <span className={cn(textSize, "font-bold text-white absolute inset-0 flex items-center justify-center leading-none select-none")}>{initials}</span>
     </div>
   )
 }
