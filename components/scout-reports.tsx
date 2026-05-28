@@ -112,7 +112,7 @@ export function ScoutReports() {
         </div>
         <button
           onClick={() => setShowHireModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1db954] text-black text-sm font-semibold hover:bg-[#1ed760] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00ffc8] text-black text-sm font-semibold hover:bg-[#00c8ff] transition-colors"
         >
           <User className="h-4 w-4" />
           Contratar Olheiro
@@ -142,7 +142,7 @@ export function ScoutReports() {
             </p>
             <button
               onClick={() => setShowHireModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1db954] text-black text-sm font-semibold hover:bg-[#1ed760] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00ffc8] text-black text-sm font-semibold hover:bg-[#00c8ff] transition-colors"
             >
               <User className="h-4 w-4" />
               Contratar Primeiro Olheiro
@@ -153,8 +153,8 @@ export function ScoutReports() {
 
       {/* Discovered Players */}
       {discoveredPlayers.length > 0 && (
-        <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+        <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-400" />
               <h3 className="text-xs font-medium text-white tracking-wider uppercase">
@@ -175,7 +175,7 @@ export function ScoutReports() {
       {showHireModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="w-full max-w-2xl mx-4 rounded-xl bg-[#1a1a1a] border border-white/10 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.04]">
               <h3 className="text-lg font-semibold text-white">Contratar Olheiro</h3>
               <button
                 onClick={() => setShowHireModal(false)}
@@ -190,7 +190,7 @@ export function ScoutReports() {
                   {availableScouts.map(scout => (
                     <div
                       key={scout.id}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-white/[0.03] border border-white/5 hover:border-white/10 transition-colors"
+                      className="flex items-center gap-4 p-4 rounded-lg bg-white/[0.03] border border-white/[0.04] hover:border-white/10 transition-colors"
                     >
                       <div className="h-12 w-12 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
                         <User className="h-6 w-6 text-white/50" />
@@ -216,7 +216,7 @@ export function ScoutReports() {
                         <div className="text-sm font-medium text-white">{formatCurrency(scout.salary)}/sem</div>
                         <button
                           onClick={() => handleHireScout(scout)}
-                          className="mt-1 text-xs text-[#1db954] hover:underline"
+                          className="mt-1 text-xs text-[#00ffc8] hover:underline"
                         >
                           Contratar
                         </button>
@@ -280,7 +280,7 @@ function ScoutCard({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-white/50">Buscando em {scout.searchTarget}</span>
-              <span className="text-[#1db954]">{scout.searchProgress}%</span>
+              <span className="text-[#00ffc8]">{scout.searchProgress}%</span>
             </div>
             <Progress value={scout.searchProgress} className="h-1.5" />
             <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ function ScoutCard({
             ) : (
               <button
                 onClick={() => setShowRegions(true)}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#1db954] text-black text-xs font-semibold hover:bg-[#1ed760] transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#00ffc8] text-black text-xs font-semibold hover:bg-[#00c8ff] transition-colors"
               >
                 <Search className="h-3.5 w-3.5" />
                 Iniciar Busca
@@ -333,9 +333,9 @@ function ScoutCard({
         
         {/* Found Players Count */}
         {scout.foundPlayers && scout.foundPlayers.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
+          <div className="mt-3 pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs">
             <span className="text-white/50">Jogadores descobertos</span>
-            <span className="font-medium text-[#1db954]">{scout.foundPlayers.length}</span>
+            <span className="font-medium text-[#00ffc8]">{scout.foundPlayers.length}</span>
           </div>
         )}
       </div>
@@ -364,7 +364,7 @@ function DiscoveredPlayerRow({ player }: { player: ScoutedPlayer }) {
       
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <div className="text-lg font-bold text-[#1db954]">{player.overall}</div>
+          <div className="text-lg font-bold text-[#00ffc8]">{player.overall}</div>
           <div className="text-[10px] text-white/40">OVR</div>
         </div>
         <div className="text-center">

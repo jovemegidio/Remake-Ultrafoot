@@ -287,7 +287,7 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -320,6 +320,27 @@ export default function MercadoPage() {
                 className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
               >
                 {t.market.scouts}
+              </TabsTrigger>
+              <span className="text-white/20">|</span>
+              <TabsTrigger
+                value="central"
+                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+              >
+                Central de Transf.
+              </TabsTrigger>
+              <span className="text-white/20">|</span>
+              <TabsTrigger
+                value="enviadas"
+                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+              >
+                Propostas Enviadas
+              </TabsTrigger>
+              <span className="text-white/20">|</span>
+              <TabsTrigger
+                value="recebidas"
+                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+              >
+                Propostas Recebidas
               </TabsTrigger>
             </TabsList>
 
@@ -401,7 +422,7 @@ export default function MercadoPage() {
                         </div>
                         <div className="text-[10px] text-white/40">{player.position} - {player.age} anos</div>
                       </div>
-                      <span className="text-sm font-bold text-yellow-500">{player.overall}</span>
+                      <span className="text-sm font-bold text-[#ffd700]">{player.overall}</span>
                     </button>
                   ))}
                 </div>
@@ -587,7 +608,7 @@ export default function MercadoPage() {
                   <div className="w-12 h-1 bg-green-500 rounded-full" />
                   <div className="w-12 h-1 bg-green-500/50 rounded-full" />
                 </div>
-                <Star className="h-4 w-4 text-yellow-500" />
+                <Star className="h-4 w-4 text-[#ffd700]" />
               </div>
             </div>
 
@@ -596,7 +617,7 @@ export default function MercadoPage() {
               <div className="space-y-4">
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
-                    <div key={group} className="rounded-xl bg-[#141414]/80 border border-white/5 p-4">
+                    <div key={group} className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-white font-semibold">{group}</h3>
                         <span className="text-xs text-white/40">{t.market.readyToPlay}</span>
@@ -623,7 +644,7 @@ export default function MercadoPage() {
                   onNegotiate={handleNegotiate}
                 />
               ) : (
-                <div className="rounded-xl bg-[#141414]/80 border border-white/5 p-8 flex flex-col items-center justify-center text-center">
+                <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-8 flex flex-col items-center justify-center text-center">
                   <User className="h-20 w-20 text-white/10 mb-4" />
                   <h3 className="text-white/40 text-lg">{t.market.selectPlayer}</h3>
                   <p className="text-white/30 text-sm mt-2">{t.market.clickForDetails}</p>
@@ -646,14 +667,14 @@ export default function MercadoPage() {
                 {scouts.map((scout, index) => (
                   <ScoutCard key={scout.id} scout={scout} selected={index === 4} />
                 ))}
-                <button className="rounded-xl bg-[#141414]/50 border border-white/5 p-6 flex items-center justify-center hover:border-primary/30 transition-colors">
+                <button className="rounded-xl bg-[#0c0c10]/50 border border-white/[0.04] p-6 flex items-center justify-center hover:border-primary/30 transition-colors">
                   <span className="text-white/60 font-medium">{t.market.hireScout}</span>
                 </button>
               </div>
 
               {/* Info Panel */}
               <div className="space-y-4">
-                <div className="rounded-xl bg-[#141414]/80 border border-white/5 p-6">
+                <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-6">
                   <p className="text-white/70 text-sm leading-relaxed">
                     Seus olheiros podem criar redes no mundo todo para descobrir novos nomes.
                   </p>
@@ -662,7 +683,7 @@ export default function MercadoPage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl bg-[#141414]/50 border border-white/5 p-6">
+                <div className="rounded-xl bg-[#0c0c10]/50 border border-white/[0.04] p-6">
                   <h3 className="text-white/30 text-2xl font-light mb-2">Disponivel</h3>
                   <p className="text-white/40 text-sm">This scout is ready for missions.</p>
                 </div>
@@ -676,6 +697,278 @@ export default function MercadoPage() {
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white/40 font-bold text-sm">2</div>
               <div className="w-32 h-0.5 bg-white/10" />
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white/40 font-bold text-sm">3</div>
+            </div>
+          </TabsContent>
+
+          {/* Central de Transferencias Tab */}
+          <TabsContent value="central" className="mt-0">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <span className="text-xs border border-white/20 rounded px-1.5 py-0.5 text-white/50">z</span>
+                <span className="text-white font-semibold">Transferencia</span>
+              </div>
+              <span className="text-white/20">|</span>
+              <span className="text-white/40">Qualidades</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
+              {/* Left Column - Actions and Saved Lists */}
+              <div className="space-y-4">
+                {/* Action Cards Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Nova Escalacao Card */}
+                  <button 
+                    onClick={() => setActiveTab("buscar")}
+                    className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] hover:border-primary/30 group"
+                  >
+                    <h3 className="text-white font-semibold text-lg mb-1">Nova escalacao</h3>
+                    <div className="flex items-center justify-center h-[calc(100%-3rem)]">
+                      <div className="w-20 h-20 rounded-full border-4 border-white/40 flex items-center justify-center group-hover:border-primary transition-colors">
+                        <svg className="w-10 h-10 text-white/60 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Importar Escalacao Card */}
+                  <button className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] hover:border-primary/30 group">
+                    <h3 className="text-white font-semibold text-lg mb-1">Importar escalacao</h3>
+                    <div className="flex items-center justify-center h-[calc(100%-3rem)]">
+                      <svg className="w-16 h-16 text-white/40 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Saved List Card */}
+                <button className="relative w-full rounded-xl p-4 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-primary hover:border-primary group">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-white font-semibold truncate">Padrao {userTeam?.curto || "TIME"}...</h3>
+                      <span className="text-white/60 text-sm">4-3-3</span>
+                      <span className="text-[#00ffc8] text-sm ml-2">ABERTO</span>
+                    </div>
+                    <button className="p-1 hover:bg-white/10 rounded transition-colors">
+                      <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="12" cy="5" r="1" />
+                        <circle cx="12" cy="19" r="1" />
+                      </svg>
+                    </button>
+                  </div>
+                  {/* Mini field preview */}
+                  <div className="mt-3 h-24 bg-[#1a3d2e] rounded-lg relative overflow-hidden">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-12 h-12 border border-white/20 rounded-full" />
+                    </div>
+                    {/* Mini players dots */}
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute top-6 left-1/4 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute top-6 right-1/4 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute top-6 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute top-12 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute top-12 right-1/3 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute top-12 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute bottom-6 left-1/4 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute bottom-6 right-1/4 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-yellow-400" />
+                  </div>
+                  <div className="flex items-center gap-2 mt-3 text-red-400 text-xs">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Nao disponivel</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Right Column - Big Field Preview */}
+              <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04]">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-white text-2xl font-bold">Padrao {userTeam?.nome?.toUpperCase() || "TIME"}</h2>
+                    <span className="text-white/60">4-3-3</span>
+                    <span className="text-[#00ffc8] ml-2">ABERTO</span>
+                  </div>
+                  <TeamCrest team={userTeam} size="lg" />
+                </div>
+
+                {/* Big Field */}
+                <div className="relative w-full h-[calc(100%-80px)] bg-gradient-to-b from-[#2d5a3d] to-[#1a3d2e] rounded-xl overflow-hidden">
+                  {/* Field lines */}
+                  <div className="absolute inset-4 border-2 border-white/30 rounded-lg" />
+                  <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white/30" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/30 rounded-full" />
+                  {/* Penalty areas */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-40 h-16 border-2 border-white/30 border-t-0" />
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-40 h-16 border-2 border-white/30 border-b-0" />
+
+                  {/* Players in 4-3-3 formation */}
+                  {/* Goalkeeper */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-t-full flex items-center justify-center text-black font-bold text-xs">81</div>
+                    <span className="text-white text-[10px] mt-1">Goleiro</span>
+                  </div>
+                  {/* Defenders */}
+                  <div className="absolute bottom-20 left-[15%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">78</div>
+                    <span className="text-white text-[10px] mt-1">LE</span>
+                  </div>
+                  <div className="absolute bottom-20 left-[35%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">80</div>
+                    <span className="text-white text-[10px] mt-1">ZAG</span>
+                  </div>
+                  <div className="absolute bottom-20 right-[35%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">79</div>
+                    <span className="text-white text-[10px] mt-1">ZAG</span>
+                  </div>
+                  <div className="absolute bottom-20 right-[15%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">84</div>
+                    <span className="text-white text-[10px] mt-1">LD</span>
+                  </div>
+                  {/* Midfielders */}
+                  <div className="absolute top-[45%] left-[25%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">85</div>
+                    <span className="text-white text-[10px] mt-1">MC</span>
+                  </div>
+                  <div className="absolute top-[45%] left-1/2 -translate-x-1/2 flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">88</div>
+                    <span className="text-white text-[10px] mt-1">MC</span>
+                  </div>
+                  <div className="absolute top-[45%] right-[25%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">82</div>
+                    <span className="text-white text-[10px] mt-1">MC</span>
+                  </div>
+                  {/* Forwards */}
+                  <div className="absolute top-16 left-[20%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">79</div>
+                    <span className="text-white text-[10px] mt-1">PE</span>
+                  </div>
+                  <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">81</div>
+                    <span className="text-white text-[10px] mt-1">ATA</span>
+                  </div>
+                  <div className="absolute top-16 right-[20%] flex flex-col items-center">
+                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">79</div>
+                    <span className="text-white text-[10px] mt-1">PD</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions Bar */}
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-white/10 rounded px-2 py-1 text-white/60">Esc</span>
+                    <span className="text-white/60 text-sm">Voltar</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-white/10 rounded px-2 py-1 text-white/60">q</span>
+                    <span className="text-white/60 text-sm">Procurar atletas</span>
+                  </div>
+                </div>
+                <TeamCrest team={userTeam} size="sm" />
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Propostas Enviadas Tab */}
+          <TabsContent value="enviadas" className="mt-0">
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-white font-semibold">Propostas Enviadas</span>
+              <span className="text-white/20">|</span>
+              <span className="text-white/40">Negociacoes em andamento</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
+              {/* Left Card - Network Info */}
+              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
+                <Globe className="w-16 h-16 text-white/20 mb-6" />
+                <p className="text-white/60 text-lg leading-relaxed max-w-md">
+                  Use a Rede Mundial de Transferencias e designe olheiros para procurar atletas, ou busque atletas por conta propria.
+                </p>
+                <div className="flex items-center gap-2 mt-6 text-white/80">
+                  <span>Pressione</span>
+                  <span className="text-xs bg-primary/20 text-primary rounded px-2 py-1 font-bold">q</span>
+                  <span>para procurar atletas.</span>
+                </div>
+              </div>
+
+              {/* Right Card - Shortlist */}
+              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
+                <p className="text-white/60 text-lg leading-relaxed">
+                  Voce nao fez nenhuma proposta ainda.
+                </p>
+                <p className="text-white/40 text-sm mt-4">
+                  Busque jogadores na aba de transferencias e faca propostas para ve-las aqui.
+                </p>
+              </div>
+            </div>
+
+            {/* Bottom Actions Bar */}
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-white/10 rounded px-2 py-1 text-white/60">Esc</span>
+                    <span className="text-white/60 text-sm">Voltar</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-white/10 rounded px-2 py-1 text-white/60">q</span>
+                    <span className="text-white/60 text-sm">Procurar atletas</span>
+                  </div>
+                </div>
+                <TeamCrest team={userTeam} size="sm" />
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Propostas Recebidas Tab */}
+          <TabsContent value="recebidas" className="mt-0">
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-white font-semibold">Propostas Recebidas</span>
+              <span className="text-white/20">|</span>
+              <span className="text-white/40">Ofertas de outros clubes</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
+              {/* Left Card */}
+              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
+                <ArrowLeftRight className="w-16 h-16 text-white/20 mb-6" />
+                <p className="text-white/60 text-lg leading-relaxed max-w-md">
+                  Outros clubes podem fazer propostas pelos seus jogadores a qualquer momento durante a janela de transferencias.
+                </p>
+                <p className="text-white/40 text-sm mt-4">
+                  Jogadores com alta visibilidade e bom desempenho atraem mais interessados.
+                </p>
+              </div>
+
+              {/* Right Card - Received Offers */}
+              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
+                <p className="text-white/60 text-lg leading-relaxed">
+                  Voce nao recebeu nenhuma proposta.
+                </p>
+                <p className="text-white/40 text-sm mt-4">
+                  Quando outros times fizerem propostas pelos seus jogadores, elas aparecerao aqui.
+                </p>
+              </div>
+            </div>
+
+            {/* Bottom Actions Bar */}
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-white/10 rounded px-2 py-1 text-white/60">Esc</span>
+                    <span className="text-white/60 text-sm">Voltar</span>
+                  </div>
+                </div>
+                <TeamCrest team={userTeam} size="sm" />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -723,7 +1016,7 @@ function FilterCardComponent({
         "bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618]",
         selected 
           ? "ring-2 ring-primary shadow-lg shadow-primary/30" 
-          : "border border-white/5 hover:border-primary/30",
+          : "border border-white/[0.04] hover:border-primary/30",
         highlight && "opacity-70"
       )}
     >
@@ -764,12 +1057,12 @@ function PlayerListCard({
         "bg-[#1a1a1a]/80",
         selected 
           ? "ring-2 ring-primary" 
-          : "border border-white/5 hover:border-white/10"
+          : "border border-white/[0.04] hover:border-white/10"
       )}
     >
       {/* Alert indicator */}
       {isNew && (
-        <AlertCircle className="absolute -top-1 -left-1 h-4 w-4 text-yellow-500" />
+        <AlertCircle className="absolute -top-1 -left-1 h-4 w-4 text-[#ffd700]" />
       )}
 
       {/* Player Avatar */}
@@ -813,12 +1106,12 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
   const isNotScouted = !player.scoutedBy
 
   return (
-    <div className="rounded-xl bg-[#141414]/80 border border-white/5 overflow-hidden">
+    <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {isNew && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+            {isNew && <AlertCircle className="h-4 w-4 text-[#ffd700]" />}
             <span className="text-white/60 text-sm font-medium">
               {isNew ? "NOVO" : isNotScouted ? "NAO OBSERVADO" : "OBSERVADO"}
             </span>
@@ -972,7 +1265,7 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
         </div>
 
         {/* Navigation dots */}
-        <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-white/5">
+        <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-white/[0.04]">
           <button className="text-white/40 hover:text-white/60">
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -1004,7 +1297,7 @@ function ScoutCard({ scout, selected }: { scout: typeof scouts[0], selected: boo
       "bg-gradient-to-br from-[#1a1a1a] to-[#141414]",
       selected 
         ? "ring-2 ring-primary" 
-        : "border border-white/5 hover:border-white/10"
+        : "border border-white/[0.04] hover:border-white/10"
     )}>
       {/* Flag */}
       <div className="text-3xl mb-3">{flagEmoji}</div>
@@ -1045,7 +1338,7 @@ function ScoutCard({ scout, selected }: { scout: typeof scouts[0], selected: boo
             key={i} 
             className={cn(
               "h-3 w-3",
-              i < scout.stars ? "text-yellow-500 fill-yellow-500" : "text-white/20"
+              i < scout.stars ? "text-[#ffd700] fill-yellow-500" : "text-white/20"
             )} 
           />
         ))}

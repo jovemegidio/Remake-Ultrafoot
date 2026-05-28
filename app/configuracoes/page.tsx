@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -184,7 +184,7 @@ export default function ConfiguracoesPage() {
   if (currentView === "menu") {
     return (
       <ControllerTypeContext.Provider value={controllerType}>
-        <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+        <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
           <GameSidebar />
           <GameHeader team={userTeam} />
           
@@ -238,7 +238,7 @@ export default function ConfiguracoesPage() {
             </div>
             
             {/* Bottom controls */}
-            <div className="fixed bottom-0 left-16 right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
               <div className="flex items-center gap-4">
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs">
                   <Gamepad2 className="h-4 w-4 mr-2" />
@@ -264,7 +264,7 @@ export default function ConfiguracoesPage() {
       case "configuracoes":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
                 {t.settings.themeColors}
@@ -328,7 +328,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
                 {t.settings.notificationsSystem}
@@ -356,7 +356,7 @@ export default function ConfiguracoesPage() {
       case "perfil":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" />
                 {t.settings.managerInfo}
@@ -382,7 +382,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.language}
@@ -410,7 +410,7 @@ export default function ConfiguracoesPage() {
       case "tempo":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 {t.settings.matchSpeed}
@@ -440,7 +440,7 @@ export default function ConfiguracoesPage() {
       case "musica":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Volume2 className="h-4 w-4 text-primary" />
                 {t.settings.musicVolume}
@@ -463,7 +463,7 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
               <h3 className="text-sm font-medium text-white mb-4">{t.settings.musicPlayer}</h3>
               <p className="text-xs text-white/50 mb-4">{t.settings.musicPlayerDesc}</p>
               <MusicPlayer defaultSize="compact" autoPlay={false} offsetLeft={0} />
@@ -474,7 +474,7 @@ export default function ConfiguracoesPage() {
       case "online":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.onlineConfig}
@@ -509,7 +509,7 @@ export default function ConfiguracoesPage() {
       case "escalacoes":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Grid2X2 className="h-4 w-4 text-primary" />
                 {t.settings.savedLineups}
@@ -542,7 +542,7 @@ export default function ConfiguracoesPage() {
       case "criar_atleta":
         return (
           <div className="space-y-6">
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <UserPlus className="h-4 w-4 text-primary" />
                 {t.settings.createNewPlayer}
@@ -586,7 +586,7 @@ export default function ConfiguracoesPage() {
         return (
           <div className="space-y-6">
             {/* Patrocinadores Oficiais */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
                 {t.settings.officialSponsors}
@@ -613,7 +613,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Apoiadores */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
                 {t.settings.supporters}
@@ -624,7 +624,7 @@ export default function ConfiguracoesPage() {
                   { tier: "Prata", color: "#94a3b8", supporters: [] as string[] },
                   { tier: "Bronze", color: "#cd7f32", supporters: [] as string[] },
                 ].map((level) => (
-                  <div key={level.tier} className="rounded-lg border border-white/5 overflow-hidden">
+                  <div key={level.tier} className="rounded-lg border border-white/[0.04] overflow-hidden">
                     <div
                       className="flex items-center gap-2 px-4 py-2"
                       style={{ backgroundColor: `${level.color}15` }}
@@ -653,7 +653,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Equipe de Desenvolvimento */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-6 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
                 {t.settings.devTeam}
@@ -671,7 +671,7 @@ export default function ConfiguracoesPage() {
                   </div>
                 ))}
               </div>
-              <div className="pt-2 border-t border-white/5 text-center">
+              <div className="pt-2 border-t border-white/[0.04] text-center">
                 <p className="text-[10px] text-white/25">{t.settings.copyright}</p>
               </div>
             </div>
@@ -734,6 +734,7 @@ export default function ConfiguracoesPage() {
               { keys: ["← →"], label: "Navegar entre as opcoes do menu" },
               { keys: ["Enter"], label: "Confirmar selecao de time / opcao" },
               { keys: ["Esc"], label: "Voltar ao menu anterior" },
+              { keys: ["LB / RB"], label: "Trocar divisao / liga (Serie A, B, C, D, internacionais)" },
             ],
           },
           {
@@ -774,9 +775,53 @@ export default function ConfiguracoesPage() {
             section: "Calendario",
             items: [
               { keys: ["← →"], label: "Mes anterior / proximo (= LB / RB)" },
-              { keys: ["Enter"], label: "Avançar rodada (= A / X no PS)" },
+              { keys: ["Enter"], label: "Avancar rodada (= A / X no PS)" },
               { keys: ["X"], label: "Simular ate a proxima partida do usuario" },
               { keys: ["Y"], label: "Ir direto para sua proxima partida" },
+            ],
+          },
+          {
+            section: "Treinamento",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre jogadores / sessoes" },
+              { keys: ["Enter"], label: "Iniciar sessao de treino" },
+              { keys: ["← →"], label: "Mudar tipo de treino (Tecnico, Fisico, Tatico)" },
+              { keys: ["Tab"], label: "Alternar entre abas (Individual, Coletivo)" },
+            ],
+          },
+          {
+            section: "Olheiros",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre jogadores observados" },
+              { keys: ["Enter"], label: "Ver relatorio completo do jogador" },
+              { keys: ["X"], label: "Adicionar jogador a lista de interesse" },
+              { keys: ["← →"], label: "Mudar regiao de busca (= LB / RB)" },
+            ],
+          },
+          {
+            section: "Financas",
+            items: [
+              { keys: ["← →"], label: "Navegar entre abas (Resumo, Salarios, Receitas)" },
+              { keys: ["Enter"], label: "Ver detalhes da transacao" },
+              { keys: ["Tab"], label: "Proxima aba de financas" },
+            ],
+          },
+          {
+            section: "Contratos",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre jogadores" },
+              { keys: ["Enter"], label: "Abrir negociacao de contrato" },
+              { keys: ["← →"], label: "Ajustar valores da proposta" },
+              { keys: ["X"], label: "Propor renovacao direta" },
+              { keys: ["Esc"], label: "Cancelar negociacao" },
+            ],
+          },
+          {
+            section: "Infraestrutura",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre instalacoes" },
+              { keys: ["Enter"], label: "Iniciar upgrade de instalacao" },
+              { keys: ["X"], label: "Ver detalhes da instalacao" },
             ],
           },
           {
@@ -816,7 +861,7 @@ export default function ConfiguracoesPage() {
         return (
           <div className="space-y-4">
             {/* Guia de Primeiros Passos */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 p-5 space-y-4">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <HelpCircle className="h-4 w-4 text-primary" />
                 Primeiros Passos
@@ -826,12 +871,12 @@ export default function ConfiguracoesPage() {
                   {
                     step: 1,
                     title: "Crie seu perfil e selecione o time",
-                    desc: "Na tela inicial (Splash), use o D-pad ← → ou as setas do teclado para navegar entre as opcoes. Pressione A (Xbox) / X (PS) / Enter para confirmar. Use LB/RB ou ← → para trocar a divisao e explorar os times.",
+                    desc: "Na tela inicial (Splash), use o D-pad ← → ou as setas do teclado para navegar entre as opcoes. Pressione A (Xbox) / X (PS) / Enter para confirmar. Use LB/RB ou ← → para trocar a divisao (Serie A, B, C, D, e ligas internacionais).",
                   },
                   {
                     step: 2,
                     title: "Explore o Dashboard e a barra lateral",
-                    desc: "Use o D-pad Cima/Baixo (ou ↑↓ no teclado) para navegar pela barra lateral esquerda. Acesse: Elenco, Calendario, Mercado, Taticas, Financas, Noticias e muito mais.",
+                    desc: "Use o D-pad Cima/Baixo (ou ↑↓ no teclado) para navegar pela barra lateral esquerda. Acesse: Elenco, Calendario, Mercado, Taticas, Financas, Treinamento, Olheiros, Contratos e muito mais.",
                   },
                   {
                     step: 3,
@@ -840,18 +885,28 @@ export default function ConfiguracoesPage() {
                   },
                   {
                     step: 4,
-                    title: "Use o Mercado para reforcar o elenco",
-                    desc: "No Mercado, use LB/RB para alternar entre as abas: Buscar, Rede de Agentes e Olheiros. Pressione A / X (PS) para negociar a compra, X / □ (PS) para propor emprestimo. Fique de olho no orcamento!",
+                    title: "Treine sua equipe",
+                    desc: "No Treinamento, escolha entre treinos tecnicos, fisicos ou taticos. Selecione jogadores especificos para treinos individuais ou sessoes coletivas para melhorar o desempenho geral do elenco.",
                   },
                   {
                     step: 5,
-                    title: "Gerencie o Calendario de rodadas",
-                    desc: "No Calendario, pressione A / X (PS) / Enter para avançar a rodada. Use X no Xbox (□ no PS) para simular ate sua proxima partida. Use Y (△ no PS) para pular diretamente ao seu proximo jogo.",
+                    title: "Use o Mercado e Olheiros para reforcar",
+                    desc: "No Mercado, use LB/RB para alternar entre as abas. Os Olheiros vasculham regioes em busca de talentos. Gerencie Contratos para renovar ou liberar jogadores. Fique de olho no orcamento em Financas!",
                   },
                   {
                     step: 6,
+                    title: "Gerencie o Calendario de rodadas",
+                    desc: "No Calendario, pressione A / X (PS) / Enter para avancar a rodada. Use X no Xbox (□ no PS) para simular ate sua proxima partida. Use Y (△ no PS) para pular diretamente ao seu proximo jogo.",
+                  },
+                  {
+                    step: 7,
                     title: "Jogue a partida ao vivo!",
                     desc: "Na tela de Pre-Jogo, configure o uniforme com LB/RB e LT/RT, ajuste as taticas com X/□ e pressione A/X (PS)/Enter para jogar. Na partida: START/OPTIONS pausa, A/X acelera, B/O desacelera, SELECT/SHARE pula ao resultado.",
+                  },
+                  {
+                    step: 8,
+                    title: "Invista na Infraestrutura",
+                    desc: "Melhore as instalacoes do clube (CT, Estadio, Base) para aumentar receitas, desenvolver jovens talentos e atrair jogadores de maior nivel. Cada upgrade impacta diretamente o desempenho a longo prazo.",
                   },
                 ].map(({ step, title, desc }) => (
                   <div key={step} className="flex gap-3 p-3 rounded-lg bg-white/5">
@@ -868,8 +923,8 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Referencia completa de controles */}
-            <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-white/5">
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                   <Keyboard className="h-4 w-4 text-primary" />
                   Referencia Completa de Controles
@@ -877,7 +932,7 @@ export default function ConfiguracoesPage() {
               </div>
 
               {/* Tabs de tipo de input */}
-              <div className="flex border-b border-white/5">
+              <div className="flex border-b border-white/[0.04]">
                 {([
                   { id: "xbox" as const, label: "Xbox / Generico" },
                   { id: "playstation" as const, label: "PlayStation" },
@@ -899,7 +954,7 @@ export default function ConfiguracoesPage() {
               </div>
 
               {/* Nota sobre equivalencia */}
-              <div className="px-4 py-2.5 bg-white/[0.02] border-b border-white/5">
+              <div className="px-4 py-2.5 bg-white/[0.02] border-b border-white/[0.04]">
                 <p className="text-[10px] text-white/40 leading-relaxed">
                   {tutorialTab === "xbox"
                     ? "Mapeamento: A = Confirmar · B = Voltar · X = Acao · Y = Menu · LB/RB = Abas · LT/RT = Acao Secundaria · START = Menu/Pausar · SELECT = Salvar"
@@ -918,8 +973,8 @@ export default function ConfiguracoesPage() {
                     const nonDpad = allEntries.filter(([btn]) => !btn.startsWith("DPAD"))
 
                     return (
-                      <div key={ctx.id} className="border border-white/5 rounded-lg overflow-hidden">
-                        <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/5">
+                      <div key={ctx.id} className="border border-white/[0.04] rounded-lg overflow-hidden">
+                        <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.04]">
                           <div className="text-xs font-semibold text-white">{ctx.label}</div>
                           <div className="text-[10px] text-white/40">{ctx.description}</div>
                         </div>
@@ -944,8 +999,8 @@ export default function ConfiguracoesPage() {
                   })
                 ) : (
                   keyboardShortcuts.map((section) => (
-                    <div key={section.section} className="border border-white/5 rounded-lg overflow-hidden">
-                      <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/5">
+                    <div key={section.section} className="border border-white/[0.04] rounded-lg overflow-hidden">
+                      <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.04]">
                         <div className="text-xs font-semibold text-white">{section.section}</div>
                       </div>
                       <div className="p-3 space-y-2">
@@ -985,7 +1040,7 @@ export default function ConfiguracoesPage() {
 
   return (
     <ControllerTypeContext.Provider value={controllerType}>
-      <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+      <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
 
@@ -1006,7 +1061,7 @@ export default function ConfiguracoesPage() {
                 <RotateCcw className="mr-2 h-3.5 w-3.5" />
                 {t.common.restore}
               </Button>
-              <Button size="sm" onClick={handleSaveSettings} disabled={saving} className={cn("text-xs transition-all", saved ? "bg-[#1db954]/20 text-[#1db954]" : "bg-[#1db954] text-black hover:bg-[#1ed760]")}>
+              <Button size="sm" onClick={handleSaveSettings} disabled={saving} className={cn("text-xs transition-all", saved ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "bg-[#00ffc8] text-black hover:bg-[#00c8ff]")}>
                 {saving ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="mr-2 h-3.5 w-3.5" /> : <Save className="mr-2 h-3.5 w-3.5" />}
                 {saved ? t.common.saved : t.common.save}
               </Button>

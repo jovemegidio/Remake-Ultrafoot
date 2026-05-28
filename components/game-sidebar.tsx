@@ -38,27 +38,31 @@ function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { acti
       tabIndex={focusable.tabIndex}
       data-gamepad-focused={focusable["data-gamepad-focused"]}
       className={cn(
-        "group relative flex h-9 w-full items-center justify-center rounded-md transition-all duration-150",
+        "group relative flex h-10 w-full items-center justify-center rounded-lg transition-all duration-200",
         active
-          ? "bg-white/10 text-white"
+          ? "bg-[#00ffc8]/15 text-[#00ffc8]"
           : "text-white/40 hover:bg-white/5 hover:text-white/70",
-        focusable.isFocused && !active && "bg-[#1db954]/10 text-[#1db954]",
+        focusable.isFocused && !active && "bg-[#00ffc8]/10 text-[#00ffc8] ring-1 ring-[#00ffc8]/30",
       )}
     >
+      {/* Active indicator - left bar */}
       {active && (
-        <span className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 bg-white rounded-r-full" />
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00ffc8]" />
       )}
       {focusable.isFocused && !active && (
-        <span className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 bg-[#1db954] rounded-r-full" />
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00ffc8]" />
       )}
 
       <Icon className={cn(
-        "h-4 w-4 transition-transform duration-150",
-        (active || focusable.isFocused) && "scale-105"
+        "h-[18px] w-[18px] transition-all duration-200",
+        active && "drop-shadow-[0_0_8px_rgba(0,255,200,0.5)]",
+        (active || focusable.isFocused) && "scale-110"
       )} />
 
-      <span className="absolute left-full ml-2 hidden rounded bg-[#1a1a1a] px-2.5 py-1.5 text-[10px] font-medium text-white shadow-xl group-hover:block whitespace-nowrap ring-1 ring-white/10 z-50">
+      {/* Tooltip */}
+      <span className="absolute left-full ml-3 hidden rounded-lg bg-[#050508] px-3 py-2 text-[11px] font-medium text-white shadow-xl group-hover:block whitespace-nowrap ring-1 ring-white/10 z-50 backdrop-blur-sm">
         {label}
+        <span className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 border-4 border-transparent border-r-[#0a0a0a]" />
       </span>
     </Link>
   )
@@ -84,26 +88,29 @@ export function GameSidebar() {
   ]
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-40 flex w-16 flex-col items-center bg-[#0d0d0d]/95 backdrop-blur-sm py-3">
+    <aside className="fixed left-0 top-0 bottom-0 z-40 flex w-[68px] flex-col items-center bg-[#0a0a0c] py-4 border-r border-white/[0.06]">
+      {/* Logo */}
       <Link
         href="/"
-        className="mb-3 flex h-10 w-12 items-center justify-center transition-all hover:opacity-80"
+        className="mb-4 flex h-11 w-14 items-center justify-center transition-all hover:opacity-80 group"
       >
         <Image
           src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo%20-%20UF26-PgrXUhQ0ZaH6AlitOWzutXO1SK42me.png"
           alt="UF26"
-          width={48}
-          height={20}
-          className="object-contain"
+          width={52}
+          height={22}
+          className="object-contain transition-transform group-hover:scale-105"
           style={{ width: 'auto', height: 'auto' }}
           priority
           unoptimized
         />
       </Link>
 
-      <div className="w-7 h-px bg-white/10 mb-2" />
+      {/* Divider */}
+      <div className="w-8 h-px bg-white/10 mb-3" />
 
-      <nav className="flex flex-1 flex-col items-center gap-0.5 w-full px-1.5">
+      {/* Navigation */}
+      <nav className="flex flex-1 flex-col items-center gap-1 w-full px-2 overflow-y-auto scrollbar-none">
         {navItems.map(({ icon, label, href }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href)
           return (

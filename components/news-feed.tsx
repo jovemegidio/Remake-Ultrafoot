@@ -217,7 +217,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   // Renderiza placeholder enquanto carrega no cliente ou nao ha noticias
   if (!isClient || news.length === 0 || !currentNews) {
     return (
-      <div className={cn("rounded-2xl bg-[#141414] border border-white/5 animate-pulse", className)}>
+      <div className={cn("rounded-2xl bg-[#0c0c10] border border-white/[0.04] animate-pulse", className)}>
         <div className="h-64 flex items-center justify-center">
           <div className="text-white/30 text-sm">Carregando noticias...</div>
         </div>
@@ -277,12 +277,12 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
 
       {/* News Card with Animation */}
       <div 
-        className="rounded-2xl overflow-hidden bg-[#141414] border border-white/5"
+        className="rounded-2xl overflow-hidden bg-[#0c0c10] border border-white/[0.04]"
         onMouseEnter={() => setIsAutoPlaying(false)}
         onMouseLeave={() => setIsAutoPlaying(true)}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
           <div className="flex items-center gap-3">
             <SourceLogo source={currentNews.source} size="md" />
             <div>
@@ -332,7 +332,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
         </div>
 
         {/* Footer - Engagement */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.04]">
           <div className="flex items-center gap-6">
             <button className="flex items-center gap-1.5 text-white/50 hover:text-red-400 transition-colors">
               <Heart className="h-4 w-4" />
@@ -363,7 +363,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
             className={cn(
               "rounded-full transition-all",
               i === currentIndex 
-                ? "w-5 h-1.5 bg-[#1db954]" 
+                ? "w-5 h-1.5 bg-[#00ffc8]" 
                 : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
             )}
           />
@@ -442,7 +442,7 @@ function MatchPreviewCard({
             ))}
           </g>
           {/* Pontos de cidade */}
-          <g fill="#1db954">
+          <g fill="#00ffc8">
             <circle cx="280" cy="100" r="3" opacity="0.6"/>
             <circle cx="300" cy="150" r="3" opacity="0.6"/>
             <circle cx="270" cy="200" r="3" opacity="0.6"/>
@@ -484,9 +484,9 @@ function MatchPreviewCard({
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 300">
         <defs>
           <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#1db954" stopOpacity="0"/>
-            <stop offset="50%" stopColor="#1db954" stopOpacity="0.5"/>
-            <stop offset="100%" stopColor="#1db954" stopOpacity="0"/>
+            <stop offset="0%" stopColor="#00ffc8" stopOpacity="0"/>
+            <stop offset="50%" stopColor="#00ffc8" stopOpacity="0.5"/>
+            <stop offset="100%" stopColor="#00ffc8" stopOpacity="0"/>
           </linearGradient>
         </defs>
         <path 
@@ -637,7 +637,7 @@ function NewsItemCompact({ news }: { news: NewsItem }) {
   const source = NEWS_SOURCES[news.source]
   
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors cursor-pointer">
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:border-white/10 transition-colors cursor-pointer">
       <SourceLogo source={news.source} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">

@@ -208,7 +208,7 @@ export default function FinancasPage() {
 
   if (!hydrated || !userTeam || !dynamicFinances) {
     return (
-      <div className="h-screen pl-16 bg-[#0a0a0a] flex items-center justify-center">
+      <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
@@ -217,7 +217,7 @@ export default function FinancasPage() {
   const wagePercentage = (dynamicFinances.wageUsed / dynamicFinances.wageBudget) * 100
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -236,17 +236,17 @@ export default function FinancasPage() {
 
         {/* Balance Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
-              <Wallet className="h-4 w-4 text-[#1db954]" />
+              <Wallet className="h-4 w-4 text-[#00ffc8]" />
               {t.finances.currentBalanceHeader}
             </div>
-            <div className="mt-2 text-2xl font-semibold text-[#1db954]">
+            <div className="mt-2 text-2xl font-semibold text-[#00ffc8]">
               {formatCurrency(dynamicFinances.balance)}
             </div>
             <div className={cn(
               "mt-1 flex items-center gap-1 text-xs",
-              dynamicFinances.netIncome >= 0 ? "text-[#1db954]" : "text-red-400"
+              dynamicFinances.netIncome >= 0 ? "text-[#00ffc8]" : "text-red-400"
             )}>
               {dynamicFinances.netIncome >= 0 ? (
                 <TrendingUp className="h-3 w-3" />
@@ -257,7 +257,7 @@ export default function FinancasPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <TrendingUp className="h-4 w-4 text-blue-400" />
               {t.finances.monthlyIncomeHeader}
@@ -270,7 +270,7 @@ export default function FinancasPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <TrendingDown className="h-4 w-4 text-red-400" />
               {t.finances.monthlyExpensesHeader}
@@ -283,7 +283,7 @@ export default function FinancasPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <DollarSign className="h-4 w-4 text-yellow-400" />
               {t.finances.transferBudgetHeader}
@@ -300,8 +300,8 @@ export default function FinancasPage() {
         {/* Breakdown Section */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Income Breakdown */}
-          <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
               <TrendingUp className="h-4 w-4 text-blue-400" />
               <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.income.toUpperCase()}</h2>
             </div>
@@ -344,8 +344,8 @@ export default function FinancasPage() {
           </div>
 
           {/* Expense Breakdown */}
-          <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
               <TrendingDown className="h-4 w-4 text-red-400" />
               <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.expenses.toUpperCase()}</h2>
             </div>
@@ -397,22 +397,22 @@ export default function FinancasPage() {
         </div>
 
         {/* Prize Money Section */}
-        <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+        <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
             <Award className="h-4 w-4 text-yellow-400" />
             <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.prizesByCompetition}</h2>
           </div>
           <div className="p-4 grid gap-4 md:grid-cols-3">
             {/* Brasileirao */}
-            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5">
+            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center gap-2 mb-3">
-                <Trophy className="h-5 w-5 text-[#1db954]" />
+                <Trophy className="h-5 w-5 text-[#00ffc8]" />
                 <span className="text-sm font-medium text-white">{t.competitions.brasileirao}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-white/50">{t.finances.champion}</span>
-                  <span className="text-[#1db954] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
+                  <span className="text-[#00ffc8] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-white/50">G4 (4o lugar)</span>
@@ -428,7 +428,7 @@ export default function FinancasPage() {
             </div>
 
             {/* Copa do Brasil */}
-            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5">
+            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-yellow-400" />
                 <span className="text-sm font-medium text-white">{t.competitions.copaDoBrasil}</span>
@@ -450,7 +450,7 @@ export default function FinancasPage() {
             </div>
 
             {/* Libertadores */}
-            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/5">
+            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-amber-400" />
                 <span className="text-sm font-medium text-white">{t.competitions.libertadores}</span>
@@ -476,7 +476,7 @@ export default function FinancasPage() {
         {/* Wage Budget & Recent Transactions */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Wage Budget */}
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-4">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider mb-4">
               <Users className="h-4 w-4" />
               {t.finances.wageBill}
@@ -497,7 +497,7 @@ export default function FinancasPage() {
                 <span className={wagePercentage > 90 ? "text-red-400" : "text-white/50"}>
                   {t.finances.usedPercentage(wagePercentage.toFixed(0))}
                 </span>
-                <span className="text-[#1db954]">
+                <span className="text-[#00ffc8]">
                   {formatCurrency(Math.max(0, dynamicFinances.wageBudget - dynamicFinances.wageUsed))} {t.finances.availableForHiring}
                 </span>
               </div>
@@ -505,8 +505,8 @@ export default function FinancasPage() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="lg:col-span-2 rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.02]">
+          <div className="lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-yellow-400" />
                 <h2 className="text-xs font-medium text-white tracking-wider">{t.finances.recentTransactions}</h2>
@@ -518,10 +518,10 @@ export default function FinancasPage() {
                   <div key={index} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-3">
                       <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                        tx.type === "income" ? "bg-[#1db954]/20" : "bg-red-400/20"
+                        tx.type === "income" ? "bg-[#00ffc8]/20" : "bg-red-400/20"
                       }`}>
                         {tx.type === "income" ? (
-                          <ArrowUpRight className="h-4 w-4 text-[#1db954]" />
+                          <ArrowUpRight className="h-4 w-4 text-[#00ffc8]" />
                         ) : (
                           <ArrowDownRight className="h-4 w-4 text-red-400" />
                         )}
@@ -532,7 +532,7 @@ export default function FinancasPage() {
                       </div>
                     </div>
                     <span className={`text-sm font-medium ${
-                      tx.type === "income" ? "text-[#1db954]" : "text-red-400"
+                      tx.type === "income" ? "text-[#00ffc8]" : "text-red-400"
                     }`}>
                       {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.value)}
                     </span>
@@ -584,7 +584,7 @@ function FinanceItem({
             <span className="text-sm text-white">{label}</span>
             {subtitle && <div className="text-[10px] text-white/40">{subtitle}</div>}
           </div>
-          <span className={cn("text-sm font-medium", isIncome ? "text-[#1db954]" : "text-red-400")}>
+          <span className={cn("text-sm font-medium", isIncome ? "text-[#00ffc8]" : "text-red-400")}>
             {formatCurrency(value)}
           </span>
         </div>

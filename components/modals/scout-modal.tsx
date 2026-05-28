@@ -41,7 +41,7 @@ interface ScoutModalProps {
 const regions = [
   { id: "brasil", name: "Brasil", icon: "BR", color: "text-green-500", bgColor: "bg-green-500/10" },
   { id: "americas", name: "Americas", icon: "AM", color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  { id: "europa", name: "Europa", icon: "EU", color: "text-yellow-500", bgColor: "bg-yellow-500/10" },
+  { id: "europa", name: "Europa", icon: "EU", color: "text-[#ffd700]", bgColor: "bg-[#ffd700]/10" },
   { id: "asia", name: "Asia & Oceania", icon: "AS", color: "text-red-500", bgColor: "bg-red-500/10" },
 ]
 
@@ -91,10 +91,10 @@ export function ScoutModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-[#141414] border-white/10">
+      <DialogContent className="sm:max-w-2xl bg-[#0c0c10] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
-            <Eye className="h-5 w-5 text-[#1db954]" />
+            <Eye className="h-5 w-5 text-[#00ffc8]" />
             Central de Olheiros
           </DialogTitle>
           <DialogDescription className="text-white/50">
@@ -109,7 +109,7 @@ export function ScoutModal({
             className={cn(
               "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all",
               activeTab === "scouts" 
-                ? "bg-[#1db954] text-black" 
+                ? "bg-[#00ffc8] text-black" 
                 : "text-white/50 hover:text-white"
             )}
           >
@@ -120,7 +120,7 @@ export function ScoutModal({
             className={cn(
               "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all",
               activeTab === "discover" 
-                ? "bg-[#1db954] text-black" 
+                ? "bg-[#00ffc8] text-black" 
                 : "text-white/50 hover:text-white"
             )}
           >
@@ -131,7 +131,7 @@ export function ScoutModal({
             className={cn(
               "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all",
               activeTab === "hire" 
-                ? "bg-[#1db954] text-black" 
+                ? "bg-[#00ffc8] text-black" 
                 : "text-white/50 hover:text-white"
             )}
           >
@@ -151,7 +151,7 @@ export function ScoutModal({
                   <p className="text-white/50">Voce ainda nao tem olheiros contratados</p>
                   <Button 
                     onClick={() => setActiveTab("hire")}
-                    className="mt-4 bg-[#1db954] text-black hover:bg-[#1ed760]"
+                    className="mt-4 bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Contratar Olheiro
@@ -161,8 +161,8 @@ export function ScoutModal({
                 scouts.map(scout => (
                   <div key={scout.id} className="p-4 rounded-lg bg-white/5 border border-white/10">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-[#1db954]/20 flex items-center justify-center">
-                        <Eye className="h-6 w-6 text-[#1db954]" />
+                      <div className="h-12 w-12 rounded-full bg-[#00ffc8]/20 flex items-center justify-center">
+                        <Eye className="h-6 w-6 text-[#00ffc8]" />
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold text-white">{scout.name}</div>
@@ -180,9 +180,9 @@ export function ScoutModal({
                     </div>
 
                     {scout.isSearching ? (
-                      <div className="mt-4 p-3 rounded-lg bg-[#1db954]/10 border border-[#1db954]/30">
+                      <div className="mt-4 p-3 rounded-lg bg-[#00ffc8]/10 border border-[#00ffc8]/30">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-[#1db954]">Buscando em {scout.region}...</span>
+                          <span className="text-sm text-[#00ffc8]">Buscando em {scout.region}...</span>
                           <span className="text-sm text-white">{scout.searchProgress}%</span>
                         </div>
                         <Progress value={scout.searchProgress} className="h-2" />
@@ -234,12 +234,12 @@ export function ScoutModal({
                         <div className="h-12 w-12 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center text-lg font-bold text-white">
                           {player.name.charAt(0)}
                         </div>
-                        <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-yellow-500 flex items-center justify-center text-xs font-bold text-black">
+                        <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-[#ffd700] flex items-center justify-center text-xs font-bold text-black">
                           {player.overall}
                         </div>
                       </div>
                       <div className="flex-1">
-                        <div className="font-semibold text-white group-hover:text-[#1db954] transition-colors">
+                        <div className="font-semibold text-white group-hover:text-[#00ffc8] transition-colors">
                           {player.name}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-white/50">
@@ -251,7 +251,7 @@ export function ScoutModal({
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="flex items-center gap-1 text-[#1db954]">
+                        <div className="flex items-center gap-1 text-[#00ffc8]">
                           <TrendingUp className="h-4 w-4" />
                           <span className="font-bold">{player.potential}</span>
                         </div>
@@ -273,7 +273,7 @@ export function ScoutModal({
             <div className="space-y-3">
               {unhiredScouts.length === 0 ? (
                 <div className="text-center py-12">
-                  <CheckCircle2 className="h-12 w-12 mx-auto text-[#1db954] mb-4" />
+                  <CheckCircle2 className="h-12 w-12 mx-auto text-[#00ffc8] mb-4" />
                   <p className="text-white">Todos os olheiros disponiveis foram contratados!</p>
                 </div>
               ) : (
@@ -294,12 +294,12 @@ export function ScoutModal({
                       </div>
                       <div className="text-right mr-4">
                         <div className="text-sm text-white/50">Salario</div>
-                        <div className="font-semibold text-yellow-500">{formatSalary(scout.salary)}/sem</div>
+                        <div className="font-semibold text-[#ffd700]">{formatSalary(scout.salary)}/sem</div>
                       </div>
                       <Button
                         onClick={() => onHireScout?.(scout)}
                         disabled={teamBalance < scout.salary * 4}
-                        className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-50"
+                        className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
                       >
                         Contratar
                       </Button>

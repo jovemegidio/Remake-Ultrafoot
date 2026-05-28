@@ -190,7 +190,7 @@ export default function TaticasPage() {
   }, [router, activeTab, squadPlayers])
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -645,7 +645,7 @@ export default function TaticasPage() {
                   
                   <div className="p-4 bg-white/5 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <AlertTriangle className="h-4 w-4 text-[#ffd700]" />
                       <span className="text-sm font-medium text-white">Impacto no Stamina</span>
                     </div>
                     <div className="text-xs text-white/60">

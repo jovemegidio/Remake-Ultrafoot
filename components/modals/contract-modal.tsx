@@ -119,7 +119,7 @@ export function ContractModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#141414] border-white/10">
+      <DialogContent className="sm:max-w-lg bg-[#0c0c10] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
@@ -140,7 +140,7 @@ export function ContractModal({
                 <div className="text-sm text-white/50">{player.position} - {player.age} anos</div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-yellow-500">{player.overall}</div>
+                <div className="text-2xl font-bold text-[#ffd700]">{player.overall}</div>
                 <div className="text-xs text-white/50">Overall</div>
               </div>
             </div>
@@ -149,21 +149,21 @@ export function ContractModal({
             <div className={cn(
               "p-4 rounded-lg border",
               contractStatus === "ok" ? "bg-green-500/10 border-green-500/30" :
-              contractStatus === "expiring" ? "bg-yellow-500/10 border-yellow-500/30" :
+              contractStatus === "expiring" ? "bg-[#ffd700]/10 border-[#ffd700]/30" :
               "bg-red-500/10 border-red-500/30"
             )}>
               <div className="flex items-center gap-2 mb-3">
                 {contractStatus === "ok" ? (
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 ) : contractStatus === "expiring" ? (
-                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                  <AlertTriangle className="h-5 w-5 text-[#ffd700]" />
                 ) : (
                   <AlertTriangle className="h-5 w-5 text-red-500" />
                 )}
                 <span className={cn(
                   "font-semibold",
                   contractStatus === "ok" ? "text-green-500" :
-                  contractStatus === "expiring" ? "text-yellow-500" : "text-red-500"
+                  contractStatus === "expiring" ? "text-[#ffd700]" : "text-red-500"
                 )}>
                   {contractStatus === "ok" ? "Contrato Ativo" :
                    contractStatus === "expiring" ? "Contrato Expirando" : "Sem Contrato"}
@@ -197,7 +197,7 @@ export function ContractModal({
                   {player.contract.releaseClause && (
                     <div className="flex justify-between">
                       <span className="text-white/50">Clausula de rescisao:</span>
-                      <span className="text-yellow-500 font-semibold">
+                      <span className="text-[#ffd700] font-semibold">
                         {formatSalary(player.contract.releaseClause)}
                       </span>
                     </div>
@@ -211,13 +211,13 @@ export function ContractModal({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Valor de Mercado</div>
-                  <div className="text-xl font-bold text-[#1db954]">{formatSalary(player.marketValue)}</div>
+                  <div className="text-xl font-bold text-[#00ffc8]">{formatSalary(player.marketValue)}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-white/50 uppercase tracking-wider">Potencial</div>
                   <div className="flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4 text-[#1db954]" />
-                    <span className="text-xl font-bold text-[#1db954]">{player.potential}</span>
+                    <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
+                    <span className="text-xl font-bold text-[#00ffc8]">{player.potential}</span>
                   </div>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export function ContractModal({
               />
               <div className="flex justify-between text-xs text-white/40">
                 <span>{formatSalary(Math.round(currentSalary * 0.5))}</span>
-                <span className="text-yellow-500">Demanda: {formatSalary(playerDemand)}</span>
+                <span className="text-[#ffd700]">Demanda: {formatSalary(playerDemand)}</span>
                 <span>{formatSalary(Math.round(currentSalary * 2))}</span>
               </div>
             </div>
@@ -314,8 +314,8 @@ export function ContractModal({
         {step === "success" && (
           <div className="py-12 text-center">
             <div className="relative">
-              <div className="h-20 w-20 mx-auto rounded-full bg-[#1db954]/20 flex items-center justify-center mb-6">
-                <Sparkles className="h-10 w-10 text-[#1db954]" />
+              <div className="h-20 w-20 mx-auto rounded-full bg-[#00ffc8]/20 flex items-center justify-center mb-6">
+                <Sparkles className="h-10 w-10 text-[#00ffc8]" />
               </div>
             </div>
             <h3 className="text-xl font-bold text-white mb-2">Contrato Renovado!</h3>
@@ -327,7 +327,7 @@ export function ContractModal({
               }
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10">
-              <DollarSign className="h-4 w-4 text-[#1db954]" />
+              <DollarSign className="h-4 w-4 text-[#00ffc8]" />
               <span className="text-white font-semibold">{formatSalary(newSalary)}</span>
               <span className="text-white/50">/semana</span>
             </div>
@@ -346,7 +346,7 @@ export function ContractModal({
               </Button>
               <Button 
                 onClick={() => setStep("negotiate")}
-                className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
               >
                 Renovar Contrato
               </Button>
@@ -364,7 +364,7 @@ export function ContractModal({
               <Button 
                 onClick={handleNegotiate}
                 disabled={!isProposalAcceptable || isNegotiating}
-                className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-50"
+                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
               >
                 {isNegotiating ? "Negociando..." : "Enviar Proposta"}
               </Button>
@@ -373,7 +373,7 @@ export function ContractModal({
           {step === "success" && (
             <Button 
               onClick={handleClose}
-              className="bg-[#1db954] text-black hover:bg-[#1ed760]"
+              className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
             >
               Concluir
             </Button>

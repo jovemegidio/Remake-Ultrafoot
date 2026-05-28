@@ -118,7 +118,7 @@ export default function ReunioesPage() {
   }, [selectedPlayerId, playerMeetings])
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -148,8 +148,8 @@ export default function ReunioesPage() {
             <div className="grid grid-cols-12 gap-6">
               
               {/* Lista de Jogadores */}
-              <div className="col-span-4 bg-[#12121a] rounded-xl border border-white/5 overflow-hidden">
-                <div className="p-4 border-b border-white/5">
+              <div className="col-span-4 bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
+                <div className="p-4 border-b border-white/[0.04]">
                   <h3 className="text-sm font-semibold text-white/80 mb-3">Selecionar Jogador</h3>
                   
                   {/* Busca */}
@@ -193,7 +193,7 @@ export default function ReunioesPage() {
                         key={player.id}
                         onClick={() => setSelectedPlayerId(player.id)}
                         className={cn(
-                          "w-full p-3 flex items-center gap-3 border-b border-white/5 transition-all text-left",
+                          "w-full p-3 flex items-center gap-3 border-b border-white/[0.04] transition-all text-left",
                           isSelected
                             ? "bg-primary/20 border-l-2 border-l-primary"
                             : "hover:bg-white/5"
@@ -238,7 +238,7 @@ export default function ReunioesPage() {
                 {/* Info do jogador selecionado */}
                 {selectedPlayer ? (
                   <>
-                    <div className="bg-[#12121a] rounded-xl border border-white/5 p-5">
+                    <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
                       <div className="flex items-center gap-4 mb-4">
                         <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
                           {selectedPlayer.shirtNumber ?? selectedPlayer.id}
@@ -263,7 +263,7 @@ export default function ReunioesPage() {
                         </div>
                         
                         {!canMeet && (
-                          <div className="ml-auto px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                          <div className="ml-auto px-4 py-2 bg-[#ffd700]/10 border border-[#ffd700]/30 rounded-lg">
                             <div className="flex items-center gap-2 text-yellow-400 text-sm">
                               <Clock className="h-4 w-4" />
                               Aguarde para nova reuniao
@@ -294,7 +294,7 @@ export default function ReunioesPage() {
                     </div>
 
                     {/* Opcoes de Reuniao */}
-                    <div className="bg-[#12121a] rounded-xl border border-white/5 p-5">
+                    <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
                       <h3 className="text-sm font-semibold text-white/80 mb-4">Escolha o Tipo de Conversa</h3>
                       
                       <div className="grid grid-cols-3 gap-3">
@@ -313,7 +313,7 @@ export default function ReunioesPage() {
                                   ? "bg-primary/20 border-primary"
                                   : canMeet
                                     ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                                    : "bg-white/5 border-white/5 opacity-50 cursor-not-allowed"
+                                    : "bg-white/5 border-white/[0.04] opacity-50 cursor-not-allowed"
                               )}
                             >
                               <div className="flex items-center gap-2 mb-2">
@@ -394,7 +394,7 @@ export default function ReunioesPage() {
 
                     {/* Historico de reunioes com este jogador */}
                     {playerRecentMeetings.length > 0 && (
-                      <div className="bg-[#12121a] rounded-xl border border-white/5 p-5">
+                      <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
                         <h3 className="text-sm font-semibold text-white/80 mb-4">Historico de Reunioes</h3>
                         <div className="space-y-2">
                           {playerRecentMeetings.map(meeting => (
@@ -431,7 +431,7 @@ export default function ReunioesPage() {
                     )}
                   </>
                 ) : (
-                  <div className="bg-[#12121a] rounded-xl border border-white/5 p-12 text-center">
+                  <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-12 text-center">
                     <Users className="h-12 w-12 text-white/20 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-white/60">Selecione um jogador</h3>
                     <p className="text-sm text-white/40 mt-1">
@@ -443,7 +443,7 @@ export default function ReunioesPage() {
             </div>
 
             {/* Reunioes Recentes (Geral) */}
-            <div className="bg-[#12121a] rounded-xl border border-white/5 p-5">
+            <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
               <h3 className="text-sm font-semibold text-white/80 mb-4">Todas as Reunioes Recentes</h3>
               
               {playerMeetings.length > 0 ? (
@@ -451,7 +451,7 @@ export default function ReunioesPage() {
                   {playerMeetings.slice(0, 6).map(meeting => (
                     <div
                       key={meeting.id}
-                      className="p-4 bg-white/5 rounded-lg border border-white/5"
+                      className="p-4 bg-white/5 rounded-lg border border-white/[0.04]"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-white">{meeting.playerName}</span>

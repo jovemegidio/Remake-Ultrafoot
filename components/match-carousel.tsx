@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Play, Calendar, MapPin, Clock } from "lucide-react"
+import { ChevronLeft, ChevronRight, Play, Monitor, Calendar, MapPin, Clock } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { CarouselDots } from "@/components/controller-buttons"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
+import Link from "next/link"
 
 interface Match {
   home: Team
@@ -70,7 +71,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
 
   if (!currentMatch) {
     return (
-      <section className={cn("rounded-xl bg-[#141414] border border-white/5 p-6", className)}>
+      <section className={cn("rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6", className)}>
         <div className="text-center text-white/40">Nenhuma partida disponivel</div>
       </section>
     )
@@ -100,28 +101,28 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
   const dateDisplay = formatDateDisplay(currentMatch.date)
 
   return (
-    <section className={cn("rounded-xl bg-[#141414] border border-white/5 overflow-hidden", className)}>
-      {/* Header with date navigation - FIFA style */}
-      <div className="relative bg-gradient-to-r from-[#1a1a1a] to-[#141414] border-b border-white/5">
+    <section className={cn("rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden", className)}>
+      {/* Header with date navigation - FIFA style - compact */}
+      <div className="relative bg-gradient-to-r from-[#1a1a1a] to-[#141414] border-b border-white/[0.04]">
         {/* Navigation arrows */}
         <button
           onClick={goToPrev}
           disabled={isAnimating}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-4 w-4" />
         </button>
 
         <button
           onClick={goToNext}
           disabled={isAnimating}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-4 w-4" />
         </button>
 
         {/* Date display with animation */}
-        <div className="relative overflow-hidden py-4 px-16">
+        <div className="relative overflow-hidden py-3 px-14">
           <div
             className={cn(
               "flex flex-col items-center transition-all duration-300 ease-out",
@@ -130,15 +131,11 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               !isAnimating && "animate-slide-in"
             )}
           >
-            <div className="flex items-center gap-2 text-[#1db954] text-sm font-bold tracking-wider">
-              <Calendar className="h-4 w-4" />
-              {getDayName(currentMatch.date)}, {dateDisplay.month.toUpperCase()} {dateDisplay.day}
+            <div className="flex items-center gap-2 text-[#00ffc8] text-xs font-bold tracking-wider">
+              <Calendar className="h-3.5 w-3.5" />
+              {getDayName(currentMatch.date)}, RODADA {currentMatch.matchday || currentIndex + 1}
             </div>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-[10px] text-white/40 uppercase tracking-wider">
-                Rodada {currentMatch.matchday || currentIndex + 1}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
+            <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[10px] text-white/40 uppercase tracking-wider">
                 {currentMatch.competition}
               </span>
@@ -146,8 +143,8 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
           </div>
         </div>
 
-        {/* Match indicators - FIFA style with controller buttons (auto-detect gamepad) */}
-        <div className="flex justify-center pb-3">
+        {/* Match indicators */}
+        <div className="flex justify-center pb-2">
           <CarouselDots 
             total={validMatches.length}
             current={currentIndex}
@@ -169,70 +166,66 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
       <div className="relative overflow-hidden">
         <div
           className={cn(
-            "p-6 transition-all duration-300 ease-out",
+            "px-4 py-3 transition-all duration-300 ease-out",
             isAnimating && direction === "right" && "animate-slide-out-left",
             isAnimating && direction === "left" && "animate-slide-out-right",
             !isAnimating && "animate-slide-in"
           )}
         >
           {/* Competition badge */}
-          <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+          <div className="flex justify-center mb-2">
+            <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10">
               <span className="text-[10px] font-medium text-white/60 uppercase tracking-wider">
                 {currentMatch.competition}
               </span>
-              <span className="text-[10px] text-[#1db954] font-semibold">
+              <span className="text-[10px] text-[#00ffc8] font-semibold">
                 Hoje
               </span>
             </div>
           </div>
 
-          {/* Teams matchup */}
-          <div className="flex items-center justify-between">
+          {/* Teams matchup - inline compact */}
+          <div className="flex items-center justify-center gap-6">
             {/* Home team */}
-            <div className="flex flex-col items-center gap-3 flex-1">
+            <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                {currentMatch.home && <TeamCrest team={currentMatch.home} size="2xl" />}
+                {currentMatch.home && <TeamCrest team={currentMatch.home} size="xl" />}
                 {currentMatch.home?.curto === userTeam?.curto && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1db954] flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-black">YOU</span>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#00ffc8] flex items-center justify-center">
+                    <span className="text-[7px] font-bold text-black">YOU</span>
                   </div>
                 )}
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-white tracking-wide">
-                  {currentMatch.home?.curto || "TBD"}
+                <div className="text-sm font-bold text-white tracking-wide max-w-[120px] truncate">
+                  {currentMatch.home?.nome || "A definir"}
                 </div>
-                <div className="text-[10px] text-white/40 uppercase tracking-wider mt-0.5">
-                  {currentMatch.home?.curto === userTeam?.curto ? "Seu time" : "Casa"}
+                <div className="text-[9px] text-white/40 uppercase tracking-wider">
+                  {currentMatch.home?.curto === userTeam?.curto ? "Seu time" : "Mandante"}
                 </div>
               </div>
             </div>
 
             {/* VS divider */}
-            <div className="flex flex-col items-center px-6">
-              <div className="text-3xl font-black text-white/10 tracking-tighter">VS</div>
-              <div className="flex items-center gap-2 mt-2 text-white/60">
-                <Clock className="h-3 w-3" />
-                <span className="text-sm font-medium">{currentMatch.time}</span>
-              </div>
+            <div className="flex flex-col items-center px-2">
+              <div className="text-2xl font-black text-white/15 tracking-tighter">VS</div>
             </div>
 
             {/* Away team */}
-            <div className="flex flex-col items-center gap-3 flex-1">
+            <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                {currentMatch.away && <TeamCrest team={currentMatch.away} size="2xl" />}
+                {currentMatch.away && <TeamCrest team={currentMatch.away} size="xl" />}
                 {currentMatch.away?.curto === userTeam?.curto && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1db954] flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-black">YOU</span>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#00ffc8] flex items-center justify-center">
+                    <span className="text-[7px] font-bold text-black">YOU</span>
                   </div>
                 )}
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-white tracking-wide">
-                  {currentMatch.away?.curto || "TBD"}
+                <div className="text-sm font-bold text-white tracking-wide max-w-[120px] truncate">
+                  {currentMatch.away?.nome || "A definir"}
                 </div>
-                <div className="text-[10px] text-white/40 uppercase tracking-wider mt-0.5">
+                <div className="text-[9px] text-white/40 uppercase tracking-wider">
                   {currentMatch.away?.curto === userTeam?.curto ? "Seu time" : "Visitante"}
                 </div>
               </div>
@@ -241,24 +234,30 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
 
           {/* Stadium info */}
           {currentMatch.stadium && (
-            <div className="flex items-center justify-center gap-2 mt-4 text-white/40">
-              <MapPin className="h-3 w-3" />
-              <span className="text-xs">{currentMatch.stadium}</span>
+            <div className="flex items-center justify-center gap-1.5 mt-2 text-white/40">
+              <MapPin className="h-2.5 w-2.5" />
+              <span className="text-[10px]">{currentMatch.stadium}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Action buttons - sem icones de controle (aparecem na barra inferior) */}
-      <div className="flex items-center gap-2 p-4 pt-0">
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-[#1db954] text-black text-sm font-bold hover:bg-[#1ed760] transition-all hover:scale-[1.02] active:scale-[0.98]">
-          <Play className="h-4 w-4" />
+      {/* Action buttons - EA FC style */}
+      <div className="flex items-center gap-3 px-4 pb-4">
+        <Link 
+          href="/partida" 
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black text-sm font-bold hover:from-[#33ffd4] hover:to-[#33d4ff] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(0,255,200,0.3)]"
+        >
+          <Play className="h-4 w-4 fill-current" />
           <span>Jogar Partida</span>
-        </button>
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors">
-          <Calendar className="h-4 w-4" />
+        </Link>
+        <Link 
+          href="/partida/ao-vivo?simulate=true" 
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg border-2 border-white/20 bg-white/5 text-white text-sm font-medium hover:border-[#00ffc8]/50 hover:bg-white/10 hover:text-[#00ffc8] transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Monitor className="h-4 w-4" />
           <span>Simular</span>
-        </button>
+        </Link>
       </div>
     </section>
   )

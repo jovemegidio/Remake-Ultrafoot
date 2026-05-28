@@ -5,66 +5,65 @@ import { useRouter } from "next/navigation"
 import {
   ChevronLeft,
   ChevronRight,
-  MapPin,
-  Clock,
-  Play,
-  Calendar as CalendarIcon,
-  Home,
-  Plane,
-  FastForward,
-  SkipForward,
-  Check,
   Loader2,
   Trophy,
+  Star,
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { GameSidebar } from "@/components/game-sidebar"
-import { GameHeader } from "@/components/game-header"
+import { ActionHint, GamepadButton, ShoulderHints } from "@/components/gamepad-icons"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
-import { useTranslation } from "@/lib/i18n"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
 // Mapeia rodadas para meses aproximados (temporada de Abril a Dezembro)
 function roundToMonth(round: number): number {
-  // Distribui 38 rodadas linearmente por 9 meses: Abril(3) ate Dezembro(11)
   const monthOffset = Math.floor((round - 1) * 9 / 38)
   return Math.min(11, 3 + monthOffset)
 }
 
 function roundToDay(round: number): number {
-  // Distribui os jogos ao longo do mes
   const daysInRound = [1, 5, 8, 12, 15, 19, 22, 26, 29]
   return daysInRound[(round - 1) % 9] || 15
 }
 
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+]
+
+const MONTH_NAMES_SHORT = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+]
+
+const WEEK_DAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"]
+
+const WEEKDAY_NAMES = [
+  "DOMINGO", "SEGUNDA-FEIRA", "TERCA-FEIRA", "QUARTA-FEIRA", 
+  "QUINTA-FEIRA", "SEXTA-FEIRA", "SABADO"
+]
+
 export default function CalendarioPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
-  useDiscordActivity("Vendo o calendário", userTeam.nome)
-  const t = useTranslation()
-  const monthsShort = t.calendar.months
-  const weekDays = t.calendar.days
+  useDiscordActivity("Vendo o calendario", userTeam.nome)
   const {
     seasonCalendar,
     currentWeek,
     currentSeason,
     advanceWeek,
     standings,
-    userPosition,
     hydrated
   } = useGameManager()
 
-  const [currentMonth, setCurrentMonth] = useState(3) // Abril (inicio da temporada)
-  const [selectedRound, setSelectedRound] = useState<number | null>(currentWeek + 1)
+  const [currentMonth, setCurrentMonth] = useState(3) // Abril
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
-  const [simulationResults, setSimulationResults] = useState<{
-    round: number;
-    matches: { home: string; away: string; homeScore: number; awayScore: number }[];
-  } | null>(null)
   const [showChampionScreen, setShowChampionScreen] = useState(false)
   const [championTeam, setChampionTeam] = useState<string | null>(null)
 
@@ -76,151 +75,42 @@ export default function CalendarioPage() {
     })
   }, [seasonCalendar.fixtures, currentMonth])
 
-  // Fixture selecionada (partida do usuario na rodada)
+  // Proxima partida do usuario
+  const nextUserMatch = seasonCalendar.nextUserMatch
+
+  // Fixture selecionada
   const selectedFixture = useMemo(() => {
-    if (!selectedRound) return null
-    return seasonCalendar.fixtures.find(f => f.round === selectedRound && f.isUserMatch)
-  }, [seasonCalendar.fixtures, selectedRound])
+    if (!selectedDay) return nextUserMatch
+    return monthFixtures.find(f => {
+      const fixtureDay = roundToDay(f.round)
+      return fixtureDay === selectedDay && f.isUserMatch
+    }) || nextUserMatch
+  }, [selectedDay, monthFixtures, nextUserMatch])
 
-  // Todas as partidas da rodada selecionada
-  const roundMatches = useMemo(() => {
-    if (!selectedRound) return []
-    return seasonCalendar.fixtures.filter(f => f.round === selectedRound)
-  }, [seasonCalendar.fixtures, selectedRound])
-
-  // Proximas partidas do usuario
-  const nextUserFixtures = useMemo(() => {
-    return seasonCalendar.fixtures
-      .filter(f => f.isUserMatch && !f.played)
-      .slice(0, 6)
-  }, [seasonCalendar.fixtures])
-
-  // Avanca uma rodada completa
-  const handleAdvanceRound = useCallback(async () => {
-    setIsSimulating(true)
-    try {
-      const result = await advanceWeek()
-      if (result?.newSeason) {
-        setChampionTeam(standings[0]?.teamShort ?? null)
-        setShowChampionScreen(true)
-        return
-      }
-      
-      // Mostra resultados simulados
-      const simulatedMatches = seasonCalendar.fixtures
-        .filter(f => f.round === currentWeek + 1 && !f.isUserMatch && f.played)
-        .map(f => ({
-          home: f.homeTeam.curto,
-          away: f.awayTeam.curto,
-          homeScore: f.homeScore || 0,
-          awayScore: f.awayScore || 0
-        }))
-      
-      setSimulationResults({
-        round: currentWeek + 1,
-        matches: simulatedMatches
-      })
-      
-      // Limpa apos 3 segundos
-      setTimeout(() => setSimulationResults(null), 3000)
-    } catch (error) {
-      console.error("[v0] Error advancing week:", error)
-    } finally {
-      setIsSimulating(false)
-    }
-  }, [advanceWeek, currentWeek, seasonCalendar.fixtures])
-
-  // Simula ate a proxima partida do usuario
-  const handleSimulateToNextMatch = useCallback(async () => {
-    setIsSimulating(true)
-    try {
-      const nextMatch = seasonCalendar.nextUserMatch
-      if (!nextMatch) return
-      
-      let currentRound = currentWeek
-      while (currentRound < nextMatch.round - 1) {
-        const r = await advanceWeek()
-        if (r?.newSeason) {
-          setChampionTeam(standings[0]?.teamShort ?? null)
-          setShowChampionScreen(true)
-          return
-        }
-        currentRound++
-        // Pequeno delay para mostrar progresso
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-    } catch (error) {
-      console.error("[v0] Error simulating:", error)
-    } finally {
-      setIsSimulating(false)
-    }
-  }, [advanceWeek, currentWeek, seasonCalendar.nextUserMatch])
-
-  const nextMonth = () => setCurrentMonth(m => (m + 1) % 12)
-  const prevMonth = () => setCurrentMonth(m => (m - 1 + 12) % 12)
-
-  // Primeira partida disponivel para simular
-  const canSimulate = currentWeek < 38 && !isSimulating
-
-  // Navegacao por controle no calendario
-  useEffect(() => {
-    const handleGamepadButton = (e: Event) => {
-      const { button } = (e as CustomEvent<{ button: string }>).detail
-      switch (button) {
-        case "B":
-          router.back()
-          break
-        case "A":
-          if (canSimulate) handleAdvanceRound()
-          break
-        case "X":
-          if (canSimulate) handleSimulateToNextMatch()
-          break
-        case "LB":
-          prevMonth()
-          break
-        case "RB":
-          nextMonth()
-          break
-        case "DPAD_UP":
-          setSelectedRound(prev => prev != null ? Math.max(1, prev - 1) : currentWeek + 1)
-          break
-        case "DPAD_DOWN":
-          setSelectedRound(prev => prev != null ? Math.min(38, prev + 1) : currentWeek + 1)
-          break
-        case "Y":
-          if (seasonCalendar.nextUserMatch) {
-            setSelectedRound(seasonCalendar.nextUserMatch.round)
-          }
-          break
-      }
-    }
-
-    window.addEventListener("gamepad:button", handleGamepadButton)
-    return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [router, canSimulate, handleAdvanceRound, handleSimulateToNextMatch, currentWeek, seasonCalendar.nextUserMatch])
-
-  // Dias do calendario com partidas
+  // Dias do calendario
   const calendarDays = useMemo(() => {
     const daysInMonth = new Date(2026, currentMonth + 1, 0).getDate()
     const firstDayOfMonth = new Date(2026, currentMonth, 1).getDay()
     const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1
+    const prevMonthDays = new Date(2026, currentMonth, 0).getDate()
     
-    const days: { day: number; fixture: Fixture | null; isOffset: boolean }[] = []
+    const days: { day: number; isCurrentMonth: boolean; fixture: Fixture | null }[] = []
     
-    // Offset days
-    for (let i = 0; i < startOffset; i++) {
-      days.push({ day: 0, fixture: null, isOffset: true })
+    for (let i = startOffset - 1; i >= 0; i--) {
+      days.push({ day: prevMonthDays - i, isCurrentMonth: false, fixture: null })
     }
     
-    // Dias do mes
     for (let d = 1; d <= daysInMonth; d++) {
-      // Encontra fixture para este dia
       const fixture = monthFixtures.find(f => {
         const fixtureDay = roundToDay(f.round)
         return fixtureDay === d && f.isUserMatch
       })
-      days.push({ day: d, fixture: fixture || null, isOffset: false })
+      days.push({ day: d, isCurrentMonth: true, fixture: fixture || null })
+    }
+    
+    const remaining = 42 - days.length
+    for (let d = 1; d <= remaining; d++) {
+      days.push({ day: d, isCurrentMonth: false, fixture: null })
     }
     
     return days
@@ -229,347 +119,293 @@ export default function CalendarioPage() {
   // Janela de transferencias
   const transferWindow = useMemo(() => {
     const currentMonthNum = currentMonth + 1
-    const isOpen = currentMonthNum >= 1 && currentMonthNum <= 2 || currentMonthNum >= 7 && currentMonthNum <= 8
+    const isOpen = (currentMonthNum >= 1 && currentMonthNum <= 2) || (currentMonthNum >= 7 && currentMonthNum <= 8)
     const nextOpenMonth = currentMonthNum < 7 ? 7 : 1
     const daysUntil = isOpen ? 0 : Math.abs((nextOpenMonth - currentMonthNum) * 30)
     return { isOpen, daysUntil }
   }, [currentMonth])
 
+  const handleAdvanceRound = useCallback(async () => {
+    setIsSimulating(true)
+    try {
+      const result = await advanceWeek()
+      if (result?.newSeason) {
+        setChampionTeam(standings[0]?.teamShort ?? null)
+        setShowChampionScreen(true)
+      }
+    } finally {
+      setIsSimulating(false)
+    }
+  }, [advanceWeek, standings])
+
+  const canSimulate = currentWeek < 38 && !isSimulating
+
+  useEffect(() => {
+    const handleGamepadButton = (e: Event) => {
+      const { button } = (e as CustomEvent<{ button: string }>).detail
+      switch (button) {
+        case "B":
+          router.back()
+          break
+        case "LB":
+          setCurrentMonth(m => (m - 1 + 12) % 12)
+          break
+        case "RB":
+          setCurrentMonth(m => (m + 1) % 12)
+          break
+      }
+    }
+    window.addEventListener("gamepad:button", handleGamepadButton)
+    return () => window.removeEventListener("gamepad:button", handleGamepadButton)
+  }, [router])
+
+  useEffect(() => {
+    if (nextUserMatch) {
+      const day = roundToDay(nextUserMatch.round)
+      setSelectedDay(day)
+    }
+  }, [nextUserMatch])
+
   if (!hydrated) {
     return (
-      <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#1a1a1a] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     )
   }
 
+  // Data atual formatada
+  const matchDate = nextUserMatch ? new Date(2026, roundToMonth(nextUserMatch.round), roundToDay(nextUserMatch.round)) : new Date(2026, 3, 15)
+  const dayOfWeek = WEEKDAY_NAMES[matchDate.getDay()]
+  const dayNum = matchDate.getDate()
+  const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
+
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
-      <GameSidebar />
-      <GameHeader team={userTeam} />
+  <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 relative">
+  <GameSidebar />
+  
+  {/* Background Image - Futuristic Grid */}
+  <div className="absolute inset-0 md:ml-16">
+  <Image
+  src="/images/calendario-bg.png"
+  alt="Calendar Background"
+  fill
+  className="object-cover"
+  priority
+  />
+  {/* Professional Vignette Overlays */}
+  {/* Base dark overlay for readability */}
+  <div className="absolute inset-0 bg-black/30" />
+  
+  {/* Left vignette - stronger for sidebar info */}
+  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
+  
+  {/* Top vignette for month tabs */}
+  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
+  
+  {/* Bottom vignette for footer controls */}
+  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+  
+  {/* Radial vignette for cinematic depth */}
+  <div className="absolute inset-0" style={{ 
+  background: "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 30%, rgba(0,0,0,0.5) 100%)" 
+  }} />
+  
+  {/* Subtle corner accents to complement cyan glow */}
+  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/40" />
+  </div>
 
-      <div className="flex h-[calc(100vh-48px)]">
-        {/* Left Panel - Match Info */}
-        <aside className="w-80 flex-shrink-0 border-r border-white/5 bg-[#0d0d0d] p-5 flex flex-col overflow-y-auto scrollbar-thin">
-          {/* Current Date */}
-          <div className="mb-4">
-            <div className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
-              {t.common.season} {currentSeason}
-            </div>
-            <div className="text-xl font-semibold text-white">
-              {t.common.week} {currentWeek}<span className="text-white/40">/38</span>
-            </div>
-            <div className="text-sm text-white/50 mt-1">
-              {userPosition > 0 ? t.calendar.positionLabel(userPosition) : t.calendar.positionPending}
-            </div>
-          </div>
-
-          {/* Simulation Controls */}
-          <div className="mb-4 space-y-2">
-            <button
-              onClick={handleAdvanceRound}
-              disabled={!canSimulate}
-              className={cn(
-                "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors",
-                canSimulate
-                  ? "bg-[#1db954] text-black hover:bg-[#1ed760]"
-                  : "bg-white/10 text-white/40 cursor-not-allowed"
-              )}
+      {/* Top Navigation Bar */}
+      <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
+        <div className="flex items-center gap-6">
+          <span className="text-white/60 text-sm font-medium">Office</span>
+          <span className="text-white text-sm font-bold">Calendar</span>
+          {/* Month Tabs */}
+          <div className="flex items-center gap-1 ml-4">
+            <button 
+              onClick={() => setCurrentMonth(m => (m - 1 + 12) % 12)}
+              className="p-1 text-white/40 hover:text-white"
             >
-              {isSimulating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FastForward className="h-4 w-4" />
-              )}
-              {t.calendar.advanceRound}
+              <ChevronLeft className="h-4 w-4" />
             </button>
-            
-            {seasonCalendar.nextUserMatch && currentWeek < seasonCalendar.nextUserMatch.round - 1 && (
-              <button
-                onClick={handleSimulateToNextMatch}
-                disabled={isSimulating}
-                className={cn(
-                  "w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors",
-                  "bg-white/5 text-white/70 hover:bg-white/10"
-                )}
-              >
-                <SkipForward className="h-3.5 w-3.5" />
-                {t.calendar.simulateToNext}
-              </button>
-            )}
+            {MONTH_NAMES.slice(3, 12).map((month, i) => {
+              const monthIndex = i + 3
+              return (
+                <button
+                  key={month}
+                  onClick={() => setCurrentMonth(monthIndex)}
+                  className={cn(
+                    "px-3 py-1 text-xs font-medium transition-all rounded",
+                    monthIndex === currentMonth 
+                      ? "bg-white/20 text-white" 
+                      : "text-white/50 hover:text-white/80"
+                  )}
+                >
+                  {month}
+                </button>
+              )
+            })}
+            <button 
+              onClick={() => setCurrentMonth(m => (m + 1) % 12)}
+              className="p-1 text-white/40 hover:text-white"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* User Team */}
+        <div className="flex items-center gap-2">
+          <TeamCrest team={userTeam} size="xs" />
+          <span className="text-white text-sm font-medium">{userTeam.nome}</span>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="relative z-10 flex h-[calc(100vh-48px-56px)] p-6 gap-6">
+        {/* Left Panel - Match Info (EA FC Style) */}
+        <aside className="w-56 flex-shrink-0 flex flex-col">
+          {/* Current Date - Large */}
+          <div className="mb-8">
+            <div className="text-white/60 text-xs font-medium tracking-wider uppercase mb-1">
+              {dayOfWeek}
+            </div>
+            <div className="text-white text-3xl font-black tracking-tight">
+              {monthName} {dayNum}
+            </div>
+            <div className="text-white/50 text-sm">
+              {2026}
+            </div>
           </div>
 
-          {/* Simulation Results Toast */}
-          {simulationResults && (
-            <div className="mb-4 p-3 rounded-lg bg-[#1db954]/10 border border-[#1db954]/30 animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-[#1db954] mb-2">
-                <Check className="h-3.5 w-3.5" />
-                {t.calendar.roundSimulated(simulationResults.round)}
-              </div>
-              <div className="space-y-1 text-[10px] text-white/60">
-                {simulationResults.matches.slice(0, 3).map((m, i) => (
-                  <div key={i}>
-                    {m.home} {m.homeScore} x {m.awayScore} {m.away}
-                  </div>
-                ))}
-                {simulationResults.matches.length > 3 && (
-                  <div className="text-white/40">{t.calendar.moreMatches(simulationResults.matches.length - 3)}</div>
-                )}
+          {/* Competition */}
+          {selectedFixture && (
+            <div className="mb-6">
+              <div className="text-white text-sm font-bold">
+                {selectedFixture.competition === "Brasileirao Serie A" ? "Brasileirao Serie A" : selectedFixture.competition}
               </div>
             </div>
           )}
 
-          {/* Selected Match */}
-          {selectedFixture ? (
-            <div className="mb-4 pb-4 border-b border-white/10">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-[10px] uppercase tracking-wider text-[#1db954] font-medium">
-                  {selectedFixture.competition}
-                </div>
-                {selectedFixture.played && (
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/60">
-                    {t.calendar.finished}
-                  </span>
-                )}
+          {/* Opponent Team with Stars */}
+          {selectedFixture && (
+            <div className="mb-8">
+              {/* Stars */}
+              <div className="flex gap-0.5 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star 
+                    key={star} 
+                    className={cn(
+                      "h-4 w-4",
+                      star <= 3 ? "fill-yellow-400 text-yellow-400" : "text-white/20"
+                    )} 
+                  />
+                ))}
               </div>
               
-              <div className="flex items-center gap-3 mb-3">
-                <TeamCrest team={selectedFixture.homeTeam} size="md" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-white truncate">
-                    {selectedFixture.homeTeam.nome}
-                  </div>
-                  {selectedFixture.played && (
-                    <div className="text-xl font-bold text-white">{selectedFixture.homeScore}</div>
-                  )}
-                </div>
+              {/* Large Team Crest */}
+              <div className="relative mb-4">
+                <TeamCrest 
+                  team={selectedFixture.homeTeam.curto === userTeam.curto ? selectedFixture.awayTeam : selectedFixture.homeTeam} 
+                  size="2xl" 
+                />
               </div>
-
-              <div className="flex items-center gap-3 mb-4">
-                <TeamCrest team={selectedFixture.awayTeam} size="md" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-white truncate">
-                    {selectedFixture.awayTeam.nome}
-                  </div>
-                  {selectedFixture.played && (
-                    <div className="text-xl font-bold text-white">{selectedFixture.awayScore}</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2 text-white/50">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>{t.common.week} {selectedFixture.round}</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/50">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span className="truncate">
-                    {selectedFixture.homeTeam.curto === userTeam.curto 
-                      ? userTeam.estadio_nome 
-                      : selectedFixture.homeTeam.estadio_nome}
-                  </span>
-                </div>
-              </div>
-
-              {!selectedFixture.played && selectedFixture.round === currentWeek + 1 && (
-                <Link
-                  href="/partida"
-                  className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#1db954] text-black text-xs font-semibold hover:bg-[#1ed760] transition-colors"
-                >
-                  <Play className="h-3.5 w-3.5 fill-current" />
-                  {t.match.playMatch}
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="mb-4 pb-4 border-b border-white/10 flex flex-col items-center justify-center text-center py-4">
-              <CalendarIcon className="h-8 w-8 text-white/20 mb-2" />
-              <div className="text-white/40 text-xs">{t.calendar.selectRound}</div>
-            </div>
-          )}
-
-          {/* Round Matches */}
-          {selectedRound && roundMatches.length > 0 && (
-            <div className="mb-4">
-              <div className="text-[10px] font-medium tracking-wider text-white/40 uppercase mb-3">
-                {t.calendar.roundAllMatches(selectedRound)}
-              </div>
-              <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
-                {roundMatches.map((f) => (
-                  <div
-                    key={f.id}
-                    className={cn(
-                      "flex items-center gap-2 p-2 rounded-lg text-xs",
-                      f.isUserMatch 
-                        ? "bg-[#1db954]/10 border border-[#1db954]/30" 
-                        : "bg-white/[0.02] border border-white/5"
-                    )}
-                  >
-                    <TeamCrest team={f.homeTeam} size="xs" />
-                    <span className="flex-1 truncate text-white/80">{f.homeTeam.curto}</span>
-                    {f.played ? (
-                      <span className="font-bold text-white">
-                        {f.homeScore} - {f.awayScore}
-                      </span>
-                    ) : (
-                      <span className="text-white/40">vs</span>
-                    )}
-                    <span className="flex-1 truncate text-right text-white/80">{f.awayTeam.curto}</span>
-                    <TeamCrest team={f.awayTeam} size="xs" />
-                  </div>
-                ))}
+              
+              {/* Team Name */}
+              <div className="text-white text-xl font-black">
+                {selectedFixture.homeTeam.curto === userTeam.curto 
+                  ? selectedFixture.awayTeam.nome 
+                  : selectedFixture.homeTeam.nome}
               </div>
             </div>
           )}
 
-          {/* Proximas Partidas */}
-          <div className="flex-1">
-            <div className="text-[10px] font-medium tracking-wider text-white/40 uppercase mb-3">
-              {t.dashboard.nextMatches}
-            </div>
-            <div className="space-y-2">
-              {nextUserFixtures.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setSelectedRound(f.round)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left",
-                    f.round === selectedRound 
-                      ? "border-[#1db954] bg-[#1db954]/10" 
-                      : "border-white/5 bg-white/[0.02] hover:border-white/10"
-                  )}
-                >
-                  <TeamCrest team={f.homeTeam.curto === userTeam.curto ? f.awayTeam : f.homeTeam} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-white truncate">
-                      {f.homeTeam.curto === userTeam.curto ? "vs" : "@"} {f.homeTeam.curto === userTeam.curto ? f.awayTeam.nome : f.homeTeam.nome}
-                    </div>
-                    <div className="text-[10px] text-white/40">
-                      {t.common.week} {f.round}
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "flex items-center justify-center h-6 w-6 rounded",
-                    f.homeTeam.curto === userTeam.curto
-                      ? "bg-[#1db954]/20 text-[#1db954]" 
-                      : "bg-white/10 text-white/60"
-                  )}>
-                    {f.homeTeam.curto === userTeam.curto ? <Home className="h-3 w-3" /> : <Plane className="h-3 w-3" />}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Spacer */}
+          <div className="flex-1" />
 
           {/* Transfer Window */}
-          <div className="pt-4 border-t border-white/10 mt-4">
-            <div className="text-[10px] text-white/40 font-medium tracking-wider mb-1">{t.calendar.transferWindow}</div>
-            <div className="text-sm font-semibold text-white">
-              {transferWindow.isOpen ? (
-                <span className="text-[#1db954]">{t.calendar.windowOpen}</span>
-              ) : (
-                t.calendar.windowClosed
-              )}
+          <div className="border-t border-white/10 pt-4">
+            <div className="text-white/50 text-xs font-medium mb-1">
+              {transferWindow.isOpen ? "Janela de Transferencias" : "Janela de Transferencias Fechada"}
             </div>
-            {!transferWindow.isOpen && (
-              <div className="text-[10px] text-white/50">{t.calendar.windowOpensIn(transferWindow.daysUntil)}</div>
+            {!transferWindow.isOpen ? (
+              <>
+                <div className="text-white text-4xl font-black">
+                  {transferWindow.daysUntil}
+                </div>
+                <div className="text-white/50 text-xs">
+                  Dias Ate Abrir
+                </div>
+              </>
+            ) : (
+              <div className="text-[#00ff88] text-lg font-bold">
+                Aberta
+              </div>
             )}
           </div>
         </aside>
 
-        {/* Main Calendar */}
-        <main className="flex-1 p-4 overflow-hidden flex flex-col">
-          {/* Month Navigation */}
-          <div className="flex items-center gap-2 mb-6">
-            <button 
-              onClick={prevMonth}
-              className="p-2 rounded-lg hover:bg-white/5 text-white/60 hover:text-white transition-colors"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            
-            <div className="flex items-center gap-1">
-              {monthsShort.map((m, i) => (
-                <button
-                  key={m}
-                  onClick={() => setCurrentMonth(i)}
-                  className={cn(
-                    "px-3 py-1.5 rounded text-xs font-medium transition-colors",
-                    i === currentMonth 
-                      ? "bg-white/10 text-white" 
-                      : "text-white/40 hover:text-white/70"
-                  )}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-
-            <button 
-              onClick={nextMonth}
-              className="p-2 rounded-lg hover:bg-white/5 text-white/60 hover:text-white transition-colors"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="flex-1 bg-[#141414]/50 rounded-xl border border-white/5 overflow-hidden flex flex-col">
+        {/* Calendar Grid (EA FC Glassmorphism Style) */}
+        <main className="flex-1 flex flex-col">
+          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
             {/* Week days header */}
-            <div className="grid grid-cols-7 border-b border-white/5">
-              {weekDays.map((day) => (
-                <div key={day} className="p-3 text-center text-xs font-medium text-white/40 uppercase tracking-wider">
+            <div className="grid grid-cols-7 border-b border-white/10">
+              {WEEK_DAYS.map((day) => (
+                <div key={day} className="p-3 text-center text-xs font-bold text-white/40 uppercase tracking-wider">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar days */}
-            <div className="flex-1 grid grid-cols-7 auto-rows-fr">
+            <div className="grid grid-cols-7 auto-rows-fr h-[calc(100%-44px)]">
               {calendarDays.map((item, i) => {
-                if (item.isOffset) {
-                  return (
-                    <div key={`empty-${i}`} className="p-2 border-r border-b border-white/5 bg-black/20" />
-                  )
-                }
-                
-                const isSelected = item.fixture?.round === selectedRound
-                const isPlayed = item.fixture?.played
+                const isSelected = item.isCurrentMonth && item.day === selectedDay
+                const hasMatch = item.fixture !== null
+                const isHome = item.fixture?.homeTeam.curto === userTeam.curto
+                const opponent = item.fixture ? (isHome ? item.fixture.awayTeam : item.fixture.homeTeam) : null
                 
                 return (
                   <button
-                    key={item.day}
-                    onClick={() => item.fixture && setSelectedRound(item.fixture.round)}
+                    key={i}
+                    onClick={() => {
+                      if (item.isCurrentMonth) setSelectedDay(item.day)
+                    }}
+                    disabled={!item.isCurrentMonth}
                     className={cn(
-                      "p-2 border-r border-b border-white/5 flex flex-col items-start transition-colors relative",
-                      isSelected ? "bg-white/10" : item.fixture ? "hover:bg-white/5 cursor-pointer" : "",
+                      "relative p-2 border-r border-b border-white/5 flex flex-col transition-all",
+                      item.isCurrentMonth ? "hover:bg-white/5" : "opacity-30",
+                      isSelected && "bg-white/10",
                     )}
                   >
                     {/* Day number */}
                     <span className={cn(
-                      "text-lg font-medium mb-1",
-                      isSelected ? "text-white" : "text-white/60"
+                      "text-2xl font-bold",
+                      !item.isCurrentMonth && "text-white/20",
+                      item.isCurrentMonth && !hasMatch && "text-white/50",
+                      hasMatch && "text-white"
                     )}>
                       {item.day}
                     </span>
 
-                    {/* Fixture indicator */}
-                    {item.fixture && (
+                    {/* Match Card (EA FC Style) */}
+                    {hasMatch && opponent && (
                       <div className={cn(
-                        "absolute bottom-2 left-2 right-2 rounded px-2 py-1 text-[10px] font-medium flex items-center gap-1.5",
-                        isPlayed
-                          ? "bg-white/10 text-white/70 border border-white/10"
-                          : item.fixture.homeTeam.curto === userTeam.curto
-                            ? "bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30" 
-                            : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                        "absolute bottom-2 left-2 right-2 rounded-lg p-2 flex flex-col items-center gap-1",
+                        isHome 
+                          ? "bg-[#0088ff]/30 border border-[#0088ff]/50" 
+                          : "bg-[#00cc66]/30 border border-[#00cc66]/50"
                       )}>
-                        <TeamCrest team={item.fixture.homeTeam.curto === userTeam.curto ? item.fixture.awayTeam : item.fixture.homeTeam} size="xs" />
-                        <span className="truncate flex items-center gap-1">
-                          {item.fixture.homeTeam.curto === userTeam.curto ? <Home className="h-2.5 w-2.5" /> : <Plane className="h-2.5 w-2.5" />}
-                          {isPlayed ? `${item.fixture.homeScore}-${item.fixture.awayScore}` : item.fixture.homeTeam.curto === userTeam.curto ? t.common.home : t.common.away}
-                        </span>
-                        <span className="ml-auto text-[9px] opacity-60">R{item.fixture.round}</span>
+                        <TeamCrest team={opponent} size="sm" />
+                        <div className={cn(
+                          "text-[10px] font-bold uppercase",
+                          isHome ? "text-[#66bbff]" : "text-[#66ff99]"
+                        )}>
+                          {isHome ? "Home" : "Away"}
+                        </div>
+                        <div className="text-[9px] font-medium text-white/60 uppercase">
+                          {item.fixture?.competition === "Brasileirao Serie A" ? "LEAGUE" : "CUP"}
+                        </div>
                       </div>
                     )}
                   </button>
@@ -578,61 +414,58 @@ export default function CalendarioPage() {
             </div>
           </div>
         </main>
-
-        {/* Right Panel - Standings Quick View */}
-        <aside className="w-72 flex-shrink-0 border-l border-white/5 bg-[#0d0d0d] p-4 hidden xl:flex flex-col overflow-hidden">
-          <div className="text-xs text-white/40 uppercase tracking-wider mb-4">{t.calendar.standings}</div>
-          
-          <div className="flex-1 overflow-y-auto scrollbar-thin">
-            <div className="space-y-1">
-              {standings.slice(0, 10).map((entry, index) => {
-                const team = getTeamByShort(entry.teamShort)
-                if (!team) return null
-                
-                const isUser = entry.teamShort === userTeam.curto
-                
-                return (
-                  <div
-                    key={entry.teamShort}
-                    className={cn(
-                      "flex items-center gap-2 p-2 rounded-lg",
-                      isUser && "bg-[#1db954]/10 border border-[#1db954]/30"
-                    )}
-                  >
-                    <span className={cn(
-                      "text-xs font-bold w-5 text-center",
-                      index < 4 ? "text-[#1db954]" : index >= 16 ? "text-red-500" : "text-white/50"
-                    )}>
-                      {index + 1}
-                    </span>
-                    <TeamCrest team={team} size="xs" />
-                    <span className="flex-1 text-xs text-white truncate">{team.curto}</span>
-                    <span className="text-xs font-bold text-white">{entry.points}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          <Link 
-            href="/competicoes"
-            className="mt-4 text-center text-xs text-primary hover:text-primary/80 transition-colors"
-          >
-            {t.common.viewFullTable}
-          </Link>
-        </aside>
       </div>
 
-      {/* Tela de campeao — aparece automaticamente ao fim da temporada */}
+      {/* Bottom Action Bar (EA FC Style) */}
+      <footer className="absolute bottom-0 left-0 right-0 md:ml-16 h-14 flex items-center justify-between px-6 bg-black/50 backdrop-blur-sm border-t border-white/10 z-10">
+        <div className="flex items-center gap-6 text-xs text-white/70">
+          <button 
+            onClick={handleAdvanceRound}
+            disabled={!canSimulate}
+            className="flex items-center gap-2 hover:text-white disabled:opacity-50 transition-colors"
+          >
+            <GamepadButton button="cross" platform="playstation" size="sm" />
+            <span>Sim To Date</span>
+          </button>
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 hover:text-white transition-colors"
+          >
+            <GamepadButton button="circle" platform="playstation" size="sm" />
+            <span>Back</span>
+          </button>
+          {nextUserMatch && (
+            <Link 
+              href="/partida"
+              className="flex items-center gap-2 hover:text-white transition-colors"
+            >
+              <GamepadButton button="square" platform="playstation" size="sm" />
+              <span>View Fixture</span>
+            </Link>
+          )}
+          <div className="flex items-center gap-1.5">
+            <GamepadButton button="l1" platform="playstation" size="xs" />
+            <GamepadButton button="r1" platform="playstation" size="xs" />
+            <span className="ml-1">Month</span>
+          </div>
+        </div>
+
+        {/* FC HUB */}
+        <div className="flex items-center gap-2 text-white/50 text-xs">
+          <span>FC HUB</span>
+        </div>
+      </footer>
+
+      {/* Champion Screen */}
       {showChampionScreen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-[#141414] border border-yellow-400/30 p-10 max-w-md w-full mx-4 text-center shadow-2xl">
-            <Trophy className="h-16 w-16 text-yellow-400" />
-            <h2 className="text-3xl font-black text-yellow-400 tracking-tight">CAMPEÃO!</h2>
+          <div className="relative flex flex-col items-center gap-6 rounded-2xl bg-[#1a1a1a] p-10 max-w-md w-full mx-4 text-center border border-white/10">
+            <Trophy className="h-16 w-16 text-yellow-500" />
+            <h2 className="text-3xl font-black text-white tracking-tight">CAMPEAO!</h2>
             {championTeam && (
               <div className="flex flex-col items-center gap-3">
                 <TeamCrest team={getTeamByShort(championTeam) ?? undefined} size="2xl" />
-                <p className="text-xl font-bold text-white">
+                <p className="text-xl font-bold text-white/80">
                   {getTeamByShort(championTeam)?.nome ?? championTeam}
                 </p>
               </div>
@@ -640,10 +473,20 @@ export default function CalendarioPage() {
             <p className="text-white/50 text-sm">Temporada {currentSeason} encerrada. Nova temporada iniciando!</p>
             <button
               onClick={() => setShowChampionScreen(false)}
-              className="mt-2 px-8 py-3 rounded-xl bg-yellow-400 text-black font-bold text-lg hover:bg-yellow-300 transition-colors"
+              className="mt-2 px-8 py-3 rounded-xl bg-[#0088ff] text-white font-bold text-lg hover:bg-[#0066cc] transition-colors"
             >
               Continuar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isSimulating && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-white" />
+            <span className="text-white font-medium">Simulando...</span>
           </div>
         </div>
       )}

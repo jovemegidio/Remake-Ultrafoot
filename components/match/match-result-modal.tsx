@@ -43,8 +43,8 @@ export function MatchResultModal({
     win: {
       label: "VITORIA",
       subtitle: "Parabens pela conquista!",
-      color: "#1db954",
-      gradient: "from-[#1db954]",
+      color: "#00ffc8",
+      gradient: "from-[#00ffc8]",
     },
     draw: {
       label: "EMPATE",
@@ -100,7 +100,7 @@ export function MatchResultModal({
           className="relative w-full max-w-3xl"
         >
           {/* Main Card */}
-          <div className="relative rounded-2xl bg-[#0a0a0a]/95 border border-white/10 overflow-hidden shadow-2xl backdrop-blur-sm">
+          <div className="relative rounded-2xl bg-[#050508]/95 border border-white/10 overflow-hidden shadow-2xl backdrop-blur-sm">
             
             {/* Top accent line */}
             <div 
@@ -151,7 +151,7 @@ export function MatchResultModal({
                     />
                     <TeamCrest team={homeTeam} size="xl" />
                     {userSide === "home" && (
-                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[#1db954] text-[8px] font-bold text-black">
+                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[#00ffc8] text-[8px] font-bold text-black">
                         SEU TIME
                       </div>
                     )}
@@ -201,7 +201,7 @@ export function MatchResultModal({
                     />
                     <TeamCrest team={awayTeam} size="xl" />
                     {userSide === "away" && (
-                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[#1db954] text-[8px] font-bold text-black">
+                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[#00ffc8] text-[8px] font-bold text-black">
                         SEU TIME
                       </div>
                     )}
@@ -240,7 +240,7 @@ export function MatchResultModal({
               transition={{ delay: 0.5 }}
               className="px-6 pb-6"
             >
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 overflow-hidden">
+              <div className="rounded-xl bg-white/[0.03] border border-white/[0.04] overflow-hidden">
                 <div className="grid grid-cols-3 gap-px bg-white/5">
                   <StatCard 
                     label="POSSE" 
@@ -289,7 +289,7 @@ export function MatchResultModal({
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="px-6 pb-6 pt-2 flex flex-col sm:flex-row items-center gap-3 justify-center border-t border-white/5"
+              className="px-6 pb-6 pt-2 flex flex-col sm:flex-row items-center gap-3 justify-center border-t border-white/[0.04]"
             >
               {((isFinal && result === "win") || isChampion) && (
                 <Link href="/campeao" className="w-full sm:w-auto">
@@ -306,7 +306,7 @@ export function MatchResultModal({
               <Link href="/imprensa" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto bg-gradient-to-r from-[#1db954] to-[#1ed760] text-black hover:opacity-90 font-bold"
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:opacity-90 font-bold"
                 >
                   <Mic className="mr-2 h-4 w-4" />
                   Coletiva de Imprensa
@@ -350,7 +350,7 @@ function StatCard({
   homeWin: boolean
 }) {
   return (
-    <div className="bg-[#0a0a0a] p-4 flex flex-col">
+    <div className="bg-[#050508] p-4 flex flex-col">
       <div className="text-[9px] font-bold tracking-wider text-white/30 mb-3 text-center uppercase">
         {label}
       </div>
@@ -358,17 +358,17 @@ function StatCard({
         <div className="flex items-center gap-2">
           <span className={cn(
             "text-lg sm:text-xl font-bold tabular-nums",
-            homeWin ? "text-[#1db954]" : "text-white/60"
+            homeWin ? "text-[#00ffc8]" : "text-white/60"
           )}>
             {home}
           </span>
-          {homeWin && <Zap className="h-3 w-3 text-[#1db954]" />}
+          {homeWin && <Zap className="h-3 w-3 text-[#00ffc8]" />}
         </div>
         <div className="flex items-center gap-2">
-          {!homeWin && <Zap className="h-3 w-3 text-[#1db954]" />}
+          {!homeWin && <Zap className="h-3 w-3 text-[#00ffc8]" />}
           <span className={cn(
             "text-lg sm:text-xl font-bold tabular-nums",
-            !homeWin ? "text-[#1db954]" : "text-white/60"
+            !homeWin ? "text-[#00ffc8]" : "text-white/60"
           )}>
             {away}
           </span>
@@ -379,14 +379,14 @@ function StatCard({
         <div 
           className={cn(
             "h-full transition-all",
-            homeWin ? "bg-[#1db954]" : "bg-white/20"
+            homeWin ? "bg-[#00ffc8]" : "bg-white/20"
           )}
           style={{ width: `${typeof home === 'number' && typeof away === 'number' ? (home / (home + away + 0.01)) * 100 : 50}%` }}
         />
         <div 
           className={cn(
             "h-full transition-all",
-            !homeWin ? "bg-[#1db954]" : "bg-white/20"
+            !homeWin ? "bg-[#00ffc8]" : "bg-white/20"
           )}
           style={{ width: `${typeof home === 'number' && typeof away === 'number' ? (away / (home + away + 0.01)) * 100 : 50}%` }}
         />

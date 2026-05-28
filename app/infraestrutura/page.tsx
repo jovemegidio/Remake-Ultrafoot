@@ -38,7 +38,7 @@ const INFRASTRUCTURE_AREAS = [
     name: "Estadio",
     icon: Building2,
     description: "Capacidade e estrutura do estadio",
-    color: "#1db954",
+    color: "#00ffc8",
     levels: [
       { level: 1, name: "Basico", capacity: 15000, cost: 0, benefits: ["15.000 lugares"] },
       { level: 2, name: "Intermediario", capacity: 25000, cost: 5000000, benefits: ["25.000 lugares", "+20% renda de bilheteria"] },
@@ -208,17 +208,17 @@ export default function InfraestruturaPage() {
   const selectedAreaData = selectedArea ? INFRASTRUCTURE_AREAS.find(a => a.id === selectedArea) : null
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam ?? undefined} />
 
       <main className="h-[calc(100vh-48px-56px)] flex flex-col">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-white/5 bg-[#0d0d0d]">
+        <div className="px-4 py-3 border-b border-white/[0.04] bg-[#0d0d0d]">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-[#1db954]" />
+                <Building2 className="h-5 w-5 text-[#00ffc8]" />
                 Infraestrutura do Clube
               </h1>
               <p className="text-xs text-white/50 mt-0.5">Gerencie e evolua as instalacoes do {userTeam?.nome || "seu clube"}</p>
@@ -232,7 +232,7 @@ export default function InfraestruturaPage() {
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-white/40 uppercase">Saldo Disponivel</p>
-                <p className="text-sm font-semibold text-[#1db954]">
+                <p className="text-sm font-semibold text-[#00ffc8]">
                   R$ {balance.toLocaleString("pt-BR")}
                 </p>
               </div>
@@ -244,7 +244,7 @@ export default function InfraestruturaPage() {
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
           {/* Stats gerais */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+            <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
               <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                 <Building2 className="h-3.5 w-3.5" />
                 Capacidade
@@ -253,16 +253,16 @@ export default function InfraestruturaPage() {
                 {INFRASTRUCTURE_AREAS[0].levels[infrastructure.stadium - 1]?.capacity?.toLocaleString("pt-BR") || "15.000"}
               </div>
             </div>
-            <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+            <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
               <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                 <TrendingUp className="h-3.5 w-3.5" />
                 Nivel Medio
               </div>
-              <div className="text-2xl font-bold text-[#1db954]">
+              <div className="text-2xl font-bold text-[#00ffc8]">
                 {(Object.values(infrastructure).reduce((a, b) => a + b, 0) / Object.keys(infrastructure).length).toFixed(1)}
               </div>
             </div>
-            <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+            <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
               <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                 <Wrench className="h-3.5 w-3.5" />
                 Em Construcao
@@ -271,7 +271,7 @@ export default function InfraestruturaPage() {
                 {Object.keys(upgradesInProgress).length}
               </div>
             </div>
-            <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+            <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
               <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                 <Zap className="h-3.5 w-3.5" />
                 Pressao Casa
@@ -301,8 +301,8 @@ export default function InfraestruturaPage() {
                     isUpgrading 
                       ? "bg-amber-500/10 border-amber-500/30" 
                       : isMaxLevel
-                      ? "bg-[#1db954]/10 border-[#1db954]/30"
-                      : "bg-[#111] border-white/5 hover:border-white/20"
+                      ? "bg-[#00ffc8]/10 border-[#00ffc8]/30"
+                      : "bg-[#111] border-white/[0.04] hover:border-white/20"
                   )}
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -318,7 +318,7 @@ export default function InfraestruturaPage() {
                           key={i}
                           className={cn(
                             "w-2 h-2 rounded-full",
-                            i < currentLevel ? "bg-[#1db954]" : "bg-white/10"
+                            i < currentLevel ? "bg-[#00ffc8]" : "bg-white/10"
                           )}
                         />
                       ))}
@@ -328,7 +328,7 @@ export default function InfraestruturaPage() {
                   <h3 className="font-semibold text-white text-sm">{area.name}</h3>
                   <p className="text-[10px] text-white/40 mt-0.5">{area.description}</p>
 
-                  <div className="mt-3 pt-3 border-t border-white/5">
+                  <div className="mt-3 pt-3 border-t border-white/[0.04]">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-white/60">
                         Nivel {currentLevel}: {currentLevelData?.name}
@@ -339,7 +339,7 @@ export default function InfraestruturaPage() {
                           {isUpgrading.weeksLeft} sem
                         </span>
                       ) : isMaxLevel ? (
-                        <span className="text-[10px] text-[#1db954] flex items-center gap-1">
+                        <span className="text-[10px] text-[#00ffc8] flex items-center gap-1">
                           <Check className="h-3 w-3" />
                           MAX
                         </span>
@@ -398,7 +398,7 @@ export default function InfraestruturaPage() {
                         key={i}
                         className={cn(
                           "w-3 h-3 rounded-full",
-                          i < infrastructure[selectedArea] ? "bg-[#1db954]" : "bg-white/10"
+                          i < infrastructure[selectedArea] ? "bg-[#00ffc8]" : "bg-white/10"
                         )}
                       />
                     ))}
@@ -410,7 +410,7 @@ export default function InfraestruturaPage() {
                 <div className="mt-2 space-y-1">
                   {selectedAreaData.levels[infrastructure[selectedArea] - 1]?.benefits.map((benefit, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs text-white/60">
-                      <Check className="h-3 w-3 text-[#1db954]" />
+                      <Check className="h-3 w-3 text-[#00ffc8]" />
                       {benefit}
                     </div>
                   ))}
@@ -419,10 +419,10 @@ export default function InfraestruturaPage() {
 
               {/* Proximo nivel */}
               {infrastructure[selectedArea] < 5 && (
-                <div className="p-4 rounded-xl border border-[#1db954]/30 bg-[#1db954]/5 mb-6">
+                <div className="p-4 rounded-xl border border-[#00ffc8]/30 bg-[#00ffc8]/5 mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-[#1db954]">Proximo Nivel</span>
-                    <span className="text-sm font-semibold text-[#1db954]">
+                    <span className="text-sm text-[#00ffc8]">Proximo Nivel</span>
+                    <span className="text-sm font-semibold text-[#00ffc8]">
                       R$ {selectedAreaData.levels[infrastructure[selectedArea]]?.cost.toLocaleString("pt-BR")}
                     </span>
                   </div>
@@ -431,7 +431,7 @@ export default function InfraestruturaPage() {
                   </h4>
                   <div className="mt-2 space-y-1">
                     {selectedAreaData.levels[infrastructure[selectedArea]]?.benefits.map((benefit, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-[#1db954]">
+                      <div key={i} className="flex items-center gap-2 text-xs text-[#00ffc8]">
                         <ArrowUp className="h-3 w-3" />
                         {benefit}
                       </div>
@@ -456,7 +456,7 @@ export default function InfraestruturaPage() {
                   <Button
                     onClick={() => handleUpgrade(selectedArea)}
                     disabled={balance < (selectedAreaData.levels[infrastructure[selectedArea]]?.cost || 0)}
-                    className="flex-1 bg-[#1db954] hover:bg-[#1ed760] text-black disabled:opacity-50"
+                    className="flex-1 bg-[#00ffc8] hover:bg-[#00c8ff] text-black disabled:opacity-50"
                   >
                     <ArrowUp className="h-4 w-4 mr-2" />
                     Evoluir

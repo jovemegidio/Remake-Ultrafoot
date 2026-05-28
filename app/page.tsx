@@ -76,9 +76,9 @@ export default function DashboardPage() {
   // Aguarda hidratacao
   if (!hydrated || !userTeam) {
     return (
-      <div className="h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="h-screen bg-[#050508] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-[#1db954] border-t-transparent animate-spin" />
+          <div className="w-12 h-12 rounded-full border-2 border-[#00ffc8] border-t-transparent animate-spin" />
           <span className="text-white/40 text-sm">{t.common.loading}</span>
         </div>
       </div>
@@ -98,13 +98,13 @@ export default function DashboardPage() {
   const balance = gameEngine.balance ?? userTeam.saldo
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Hero - Club Identity */}
-        <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/5">
+        <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/[0.04]">
           <div
             className="absolute inset-0 opacity-20"
             style={{
@@ -115,20 +115,20 @@ export default function DashboardPage() {
           <div className="relative flex items-center gap-6 p-6">
             <div className="relative">
               <TeamCrest team={userTeam} size="2xl" />
-              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-[#1db954] text-[10px] font-bold text-[#1db954]">
+              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-[#00ffc8] text-[10px] font-bold text-[#00ffc8]">
                 {userTeam.prestigio}
               </div>
             </div>
 
             <div className="flex-1">
-              <div className="flex items-center gap-2 text-[10px] text-[#1db954] font-medium tracking-wider uppercase mb-1">
+              <div className="flex items-center gap-2 text-[10px] text-[#00ffc8] font-medium tracking-wider uppercase mb-1">
                 <Shield className="h-3 w-3" />
                 {userTeam.cidade}, {userTeam.estado}
               </div>
               <h1 className="text-3xl font-bold text-white tracking-tight">{userTeam.nome}</h1>
               <div className="flex items-center gap-4 mt-2 text-xs text-white/50">
                 <span className="flex items-center gap-1">
-                  <Star className="h-3 w-3 text-yellow-500" />
+                  <Star className="h-3 w-3 text-[#ffd700]" />
                   Prestigio {userTeam.prestigio}
                 </span>
                 <span className="flex items-center gap-1">
@@ -145,7 +145,7 @@ export default function DashboardPage() {
             <div className="flex gap-6">
               <div className="text-right">
                 <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.balance}</div>
-                <div className="text-xl font-bold text-[#1db954]">{formatCurrency(balance)}</div>
+                <div className="text-xl font-bold text-[#00ffc8]">{formatCurrency(balance)}</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.position}</div>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-px border-t border-white/5 bg-black/30">
+          <div className="flex items-center gap-px border-t border-white/[0.04] bg-black/30">
             <Link href="/partida" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
               <Play className="h-4 w-4" /> {t.common.nextMatch}
             </Link>
@@ -193,10 +193,10 @@ export default function DashboardPage() {
 
             {/* Resultados recentes */}
             {recentResults.length > 0 && (
-              <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+              <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    <Trophy className="h-4 w-4 text-[#ffd700]" />
                     {t.dashboard.lastResults}
                   </div>
                 </div>
@@ -210,13 +210,13 @@ export default function DashboardPage() {
 
             {/* Proximas partidas */}
             {nextMatches.length > 0 && (
-              <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+              <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                    <Calendar className="h-4 w-4 text-[#1db954]" />
+                    <Calendar className="h-4 w-4 text-[#00ffc8]" />
                     {t.dashboard.nextMatches}
                   </div>
-                  <Link href="/calendario" className="text-xs text-[#1db954] hover:text-[#1ed760] transition-colors">
+                  <Link href="/calendario" className="text-xs text-[#00ffc8] hover:text-[#00c8ff] transition-colors">
                     {t.common.viewAll} <ChevronRight className="inline h-3 w-3 ml-0.5" />
                   </Link>
                 </div>
@@ -229,13 +229,13 @@ export default function DashboardPage() {
             )}
 
             {/* Metas */}
-            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Target className="h-4 w-4 text-yellow-500" />
+                  <Target className="h-4 w-4 text-[#ffd700]" />
                   {t.dashboard.boardGoals}
                 </div>
-                <span className="text-xs text-white/40">{t.dashboard.satisfaction}: <span className="text-yellow-500 font-semibold">50%</span></span>
+                <span className="text-xs text-white/40">{t.dashboard.satisfaction}: <span className="text-[#ffd700] font-semibold">50%</span></span>
               </div>
               <div className="p-5 grid gap-4 md:grid-cols-2">
                 <GoalCard title={t.dashboard.mainGoal} description="Permanecer na Serie A" progress={userPosition ? Math.max(10, 100 - userPosition * 5) : 50} status={t.common.inProgress} tone="primary" />
@@ -246,10 +246,10 @@ export default function DashboardPage() {
 
           <div className="space-y-5">
             {/* Classificacao */}
-            <section className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  <Trophy className="h-4 w-4 text-[#ffd700]" />
                   {t.dashboard.standings}
                 </div>
                 <span className="text-[10px] text-white/40">{t.competitions.brasileirao.toUpperCase()}</span>
@@ -267,7 +267,7 @@ export default function DashboardPage() {
                       s.teamShort === userTeam.curto && "bg-primary/10 border-l-2 border-primary"
                     )}
                   >
-                    <span className={cn("text-xs font-medium", i < 4 ? "text-[#1db954]" : i >= 16 ? "text-red-500" : "text-white/50")}>{i + 1}</span>
+                    <span className={cn("text-xs font-medium", i < 4 ? "text-[#00ffc8]" : i >= 16 ? "text-red-500" : "text-white/50")}>{i + 1}</span>
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="truncate text-xs text-white">{s.teamShort}</span>
                     </div>
@@ -278,7 +278,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-              <Link href="/competicoes" className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/5">
+              <Link href="/competicoes" className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/[0.04]">
                 {t.common.viewFullTable} <ChevronRight className="h-3 w-3" />
               </Link>
             </section>
@@ -295,20 +295,20 @@ export default function DashboardPage() {
             </section>
 
             {/* Financas */}
-            <section className="rounded-xl bg-[#141414] border border-white/5 p-5">
+            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
-                <CircleDollarSign className="h-4 w-4 text-[#1db954]" />
+                <CircleDollarSign className="h-4 w-4 text-[#00ffc8]" />
                 {t.dashboard.finances}
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">{t.dashboard.currentBalance}</span>
-                  <span className="text-lg font-bold text-[#1db954]">{formatCurrency(balance)}</span>
+                  <span className="text-lg font-bold text-[#00ffc8]">{formatCurrency(balance)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">{t.finances.weeklyIncome}</span>
                   <span className="text-sm font-medium text-white flex items-center gap-1">
-                    <ArrowUpRight className="h-3 w-3 text-[#1db954]" />
+                    <ArrowUpRight className="h-3 w-3 text-[#00ffc8]" />
                     {formatCurrency(weeklyIncome)}
                   </span>
                 </div>
@@ -338,9 +338,9 @@ function GoalCard({ title, description, progress, status, tone }: {
 }) {
   const t = useTranslation()
   return (
-    <div className="rounded-lg bg-white/5 p-4 border border-white/5">
+    <div className="rounded-lg bg-white/5 p-4 border border-white/[0.04]">
       <div className="flex items-center justify-between mb-2">
-        <span className={cn("text-[10px] font-medium tracking-wider uppercase", tone === "success" ? "text-[#1db954]" : "text-primary")}>{title}</span>
+        <span className={cn("text-[10px] font-medium tracking-wider uppercase", tone === "success" ? "text-[#00ffc8]" : "text-primary")}>{title}</span>
         <span className="text-[10px] text-white/40">{status}</span>
       </div>
       <div className="text-sm font-medium text-white mb-3">{description}</div>
@@ -363,12 +363,12 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
   const nextLabel = t.common.nextMatch.toUpperCase()
 
   return (
-    <div className={cn("flex items-center gap-4 px-5 py-3", isNext && "bg-[#1db954]/5")}>
+    <div className={cn("flex items-center gap-4 px-5 py-3", isNext && "bg-[#00ffc8]/5")}>
       <div className="w-16 text-xs">
         <div className="text-white/80">Rod. {fixture.round}</div>
         <div className={cn("text-[10px] font-medium", fixture.played ? (
           fixture.homeScore !== undefined && fixture.awayScore !== undefined
-            ? (isHome ? fixture.homeScore > fixture.awayScore! : fixture.awayScore! > fixture.homeScore) ? "text-[#1db954]"
+            ? (isHome ? fixture.homeScore > fixture.awayScore! : fixture.awayScore! > fixture.homeScore) ? "text-[#00ffc8]"
               : (isHome ? fixture.homeScore < fixture.awayScore! : fixture.awayScore! < fixture.homeScore) ? "text-red-400"
               : "text-white/50"
             : "text-white/50"
@@ -391,12 +391,12 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
         <TeamCrest team={fixture.awayTeam} size="sm" />
       </div>
 
-      <span className={cn("px-2 py-0.5 rounded text-[10px] font-medium", isHome ? "bg-[#1db954]/20 text-[#1db954]" : "bg-white/10 text-white/60")}>
+      <span className={cn("px-2 py-0.5 rounded text-[10px] font-medium", isHome ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "bg-white/10 text-white/60")}>
         {isHome ? homeLabel : awayLabel}
       </span>
 
       {isNext && !fixture.played && (
-        <span className="px-2 py-0.5 rounded bg-[#1db954] text-black text-[10px] font-semibold">{nextLabel}</span>
+        <span className="px-2 py-0.5 rounded bg-[#00ffc8] text-black text-[10px] font-semibold">{nextLabel}</span>
       )}
     </div>
   )

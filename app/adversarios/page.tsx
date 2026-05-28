@@ -188,7 +188,7 @@ export default function AdversariosPage() {
   const selectedAnalysis = selectedTeam ? getAnalysis(selectedTeam) : null
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -344,7 +344,7 @@ export default function AdversariosPage() {
                                 className={cn(
                                   "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
                                   f === "W" ? "bg-green-500/20 text-green-400" :
-                                  f === "D" ? "bg-yellow-500/20 text-yellow-400" :
+                                  f === "D" ? "bg-[#ffd700]/20 text-yellow-400" :
                                   "bg-red-500/20 text-red-400"
                                 )}
                               >
@@ -366,7 +366,7 @@ export default function AdversariosPage() {
                       className="bg-gradient-to-br from-white/5 to-white/[0.02] rounded-xl border border-white/10 p-6"
                     >
                       <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <Star className="h-5 w-5 text-yellow-500" />
+                        <Star className="h-5 w-5 text-[#ffd700]" />
                         Jogadores-Chave
                       </h3>
                       
@@ -501,7 +501,7 @@ export default function AdversariosPage() {
                             <div className="space-y-1">
                               {selectedTeamData.dangerZones.map((z, i) => (
                                 <div key={i} className="text-sm text-white/80 flex items-center gap-2">
-                                  <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                                  <AlertTriangle className="h-3 w-3 text-[#ffd700]" />
                                   {z}
                                 </div>
                               ))}

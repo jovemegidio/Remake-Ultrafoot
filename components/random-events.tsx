@@ -153,7 +153,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
 
   const getSeverityColor = (severity: RandomEvent["severity"]) => {
     switch (severity) {
-      case "baixa": return "text-[#1db954] bg-[#1db954]/10 border-[#1db954]/30"
+      case "baixa": return "text-[#00ffc8] bg-[#00ffc8]/10 border-[#00ffc8]/30"
       case "media": return "text-amber-400 bg-amber-400/10 border-amber-400/30"
       case "alta": return "text-red-400 bg-red-400/10 border-red-400/30"
     }
@@ -186,7 +186,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
       <div className="space-y-2">
         {activeEvents.length === 0 ? (
           <div className="p-4 rounded-lg bg-white/5 text-center">
-            <CheckCircle2 className="h-8 w-8 mx-auto text-[#1db954]/40 mb-2" />
+            <CheckCircle2 className="h-8 w-8 mx-auto text-[#00ffc8]/40 mb-2" />
             <p className="text-sm text-white/40">Nenhum evento pendente</p>
           </div>
         ) : (
@@ -257,7 +257,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
                   {event.financialImpact !== 0 && (
                     <span className={cn(
                       "flex items-center gap-1",
-                      event.financialImpact > 0 ? "text-[#1db954]" : "text-red-400"
+                      event.financialImpact > 0 ? "text-[#00ffc8]" : "text-red-400"
                     )}>
                       <DollarSign className="h-3 w-3" />
                       {event.financialImpact > 0 ? "+" : ""}
@@ -267,7 +267,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
                   {event.moraleImpact !== 0 && (
                     <span className={cn(
                       "flex items-center gap-1",
-                      event.moraleImpact > 0 ? "text-[#1db954]" : "text-red-400"
+                      event.moraleImpact > 0 ? "text-[#00ffc8]" : "text-red-400"
                     )}>
                       {event.moraleImpact > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                       Moral {event.moraleImpact > 0 ? "+" : ""}{event.moraleImpact}
@@ -291,7 +291,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
             {resolvedEvents.slice(0, 3).map((event) => (
               <div
                 key={event.id}
-                className="p-3 rounded-lg bg-white/5 border border-white/5 opacity-60"
+                className="p-3 rounded-lg bg-white/5 border border-white/[0.04] opacity-60"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm">{event.title}</span>
@@ -305,8 +305,8 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
 
       {/* Sem eventos */}
       {activeEvents.length === 0 && resolvedEvents.length === 0 && (
-        <div className="p-8 rounded-xl bg-[#111] border border-white/5 text-center">
-          <CheckCircle2 className="h-12 w-12 mx-auto text-[#1db954]/30 mb-3" />
+        <div className="p-8 rounded-xl bg-[#111] border border-white/[0.04] text-center">
+          <CheckCircle2 className="h-12 w-12 mx-auto text-[#00ffc8]/30 mb-3" />
           <p className="text-white/50">Nenhum evento no momento</p>
           <p className="text-white/30 text-sm mt-1">Eventos aleatorios aparecerao conforme o jogo avanca</p>
         </div>
@@ -360,7 +360,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
                   {selectedEvent.financialImpact !== 0 && (
                     <div className={cn(
                       "flex items-center gap-2",
-                      selectedEvent.financialImpact > 0 ? "text-[#1db954]" : "text-red-400"
+                      selectedEvent.financialImpact > 0 ? "text-[#00ffc8]" : "text-red-400"
                     )}>
                       <DollarSign className="h-4 w-4" />
                       <span className="text-sm font-medium">
@@ -372,7 +372,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
                   {selectedEvent.moraleImpact !== 0 && (
                     <div className={cn(
                       "flex items-center gap-2",
-                      selectedEvent.moraleImpact > 0 ? "text-[#1db954]" : "text-red-400"
+                      selectedEvent.moraleImpact > 0 ? "text-[#00ffc8]" : "text-red-400"
                     )}>
                       {selectedEvent.moraleImpact > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                       <span className="text-sm font-medium">
@@ -393,7 +393,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
                       className={cn(
                         "w-full p-4 rounded-xl border text-left transition-all",
                         processingChoice === choice.id
-                          ? "bg-[#1db954]/20 border-[#1db954]/50"
+                          ? "bg-[#00ffc8]/20 border-[#00ffc8]/50"
                           : "bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10"
                       )}
                     >
@@ -413,7 +413,7 @@ export function RandomEvents({ events = MOCK_EVENTS, onResolveEvent, compact = f
                           </div>
                         </div>
                         {processingChoice === choice.id && (
-                          <div className="w-5 h-5 border-2 border-[#1db954] border-t-transparent rounded-full animate-spin" />
+                          <div className="w-5 h-5 border-2 border-[#00ffc8] border-t-transparent rounded-full animate-spin" />
                         )}
                       </div>
                     </button>

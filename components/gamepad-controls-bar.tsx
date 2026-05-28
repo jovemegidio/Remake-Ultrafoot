@@ -154,8 +154,9 @@ export function GamepadControlsBar({
 
   return (
     <div className={cn(
-      "fixed bottom-0 left-16 right-0 z-40 flex items-center justify-center gap-6 px-6 py-2.5",
-      "bg-[#0a0a0a]/95 backdrop-blur-sm border-t border-white/5",
+      "fixed bottom-0 left-0 md:left-16 right-0 z-30 items-center justify-center gap-6 px-6 py-2.5",
+      "bg-[#050508]/95 backdrop-blur-sm border-t border-white/[0.04]",
+      "hidden md:flex", // Esconde em mobile pois usamos bottom nav
       className
     )}>
       {actions.map((action, i) => (
@@ -212,7 +213,7 @@ export function GamepadHeaderControls({
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#1db954] animate-pulse" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#00ffc8] animate-pulse" />
         {controllerIcon}
       </div>
 
@@ -231,7 +232,7 @@ export function GamepadHeaderControls({
                 className={cn(
                   "rounded-full transition-all",
                   i === currentTab 
-                    ? "w-4 h-1.5 bg-[#1db954]" 
+                    ? "w-4 h-1.5 bg-[#00ffc8]" 
                     : "w-1.5 h-1.5 bg-white/20"
                 )}
               />

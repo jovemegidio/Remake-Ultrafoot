@@ -159,7 +159,7 @@ export default function ContratosPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -174,7 +174,7 @@ export default function ContratosPage() {
 
         {/* Cards de resumo */}
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-5">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 text-xs text-white/50 mb-2">
               <Users className="h-4 w-4" />
               Elenco Total
@@ -183,16 +183,16 @@ export default function ContratosPage() {
             <div className="text-xs text-white/40 mt-1">jogadores</div>
           </div>
           
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-5">
-            <div className="flex items-center gap-2 text-xs text-yellow-500 mb-2">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+            <div className="flex items-center gap-2 text-xs text-[#ffd700] mb-2">
               <AlertTriangle className="h-4 w-4" />
               Expirando
             </div>
-            <div className="text-2xl font-bold text-yellow-500">{statusCounts.expiring}</div>
+            <div className="text-2xl font-bold text-[#ffd700]">{statusCounts.expiring}</div>
             <div className="text-xs text-white/40 mt-1">nos proximos 6 meses</div>
           </div>
           
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-5">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 text-xs text-red-500 mb-2">
               <XCircle className="h-4 w-4" />
               Expirados
@@ -201,7 +201,7 @@ export default function ContratosPage() {
             <div className="text-xs text-white/40 mt-1">livre no mercado</div>
           </div>
           
-          <div className="rounded-xl bg-[#141414] border border-white/5 p-5">
+          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
             <div className="flex items-center gap-2 text-xs text-white/50 mb-2">
               <DollarSign className="h-4 w-4" />
               Folha Salarial
@@ -212,11 +212,11 @@ export default function ContratosPage() {
         </div>
 
         {/* Lista de Contratos */}
-        <div className="rounded-xl bg-[#141414] border border-white/5 overflow-hidden">
+        <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
           {/* Filtros */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
             <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-              <FileText className="h-4 w-4 text-[#1db954]" />
+              <FileText className="h-4 w-4 text-[#00ffc8]" />
               CONTRATOS DO ELENCO
             </div>
             <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export default function ContratosPage() {
                 onClick={() => setFilter("expiring")}
                 className={cn(
                   "px-3 py-1.5 rounded text-xs font-medium transition-colors",
-                  filter === "expiring" ? "bg-yellow-500/20 text-yellow-500" : "text-white/50 hover:text-white/70"
+                  filter === "expiring" ? "bg-[#ffd700]/20 text-[#ffd700]" : "text-white/50 hover:text-white/70"
                 )}
               >
                 Expirando ({statusCounts.expiring})
@@ -251,7 +251,7 @@ export default function ContratosPage() {
           </div>
 
           {/* Header da tabela */}
-          <div className="grid grid-cols-[1fr_100px_120px_120px_100px_100px] gap-4 px-5 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/5 bg-white/[0.02]">
+          <div className="grid grid-cols-[1fr_100px_120px_120px_100px_100px] gap-4 px-5 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/[0.04] bg-white/[0.02]">
             <span>Jogador</span>
             <span>Posicao</span>
             <span>Salario</span>
@@ -271,7 +271,7 @@ export default function ContratosPage() {
                   className={cn(
                     "grid grid-cols-[1fr_100px_120px_120px_100px_100px] gap-4 px-5 py-4 items-center transition-colors hover:bg-white/[0.02]",
                     status === "expired" && "bg-red-500/5",
-                    status === "expiring" && "bg-yellow-500/5"
+                    status === "expiring" && "bg-[#ffd700]/5"
                   )}
                 >
                   {/* Jogador */}
@@ -301,11 +301,11 @@ export default function ContratosPage() {
                         <Clock className={cn(
                           "h-3 w-3",
                           status === "expired" ? "text-red-500" :
-                          status === "expiring" ? "text-yellow-500" : "text-white/40"
+                          status === "expiring" ? "text-[#ffd700]" : "text-white/40"
                         )} />
                         <span className={cn(
                           status === "expired" ? "text-red-500" :
-                          status === "expiring" ? "text-yellow-500" : "text-white/70"
+                          status === "expiring" ? "text-[#ffd700]" : "text-white/70"
                         )}>
                           {player.weeksRemaining <= 0 
                             ? "Expirado" 
@@ -320,8 +320,8 @@ export default function ContratosPage() {
                   <div>
                     <span className={cn(
                       "px-2 py-1 rounded text-[10px] font-medium",
-                      status === "ok" && "bg-[#1db954]/20 text-[#1db954]",
-                      status === "expiring" && "bg-yellow-500/20 text-yellow-500",
+                      status === "ok" && "bg-[#00ffc8]/20 text-[#00ffc8]",
+                      status === "expiring" && "bg-[#ffd700]/20 text-[#ffd700]",
                       status === "expired" && "bg-red-500/20 text-red-500"
                     )}>
                       {status === "ok" ? "Ativo" : status === "expiring" ? "Expirando" : "Expirado"}
@@ -332,7 +332,7 @@ export default function ContratosPage() {
                   <div>
                     <button
                       onClick={() => handleOpenRenewal(player)}
-                      className="px-3 py-1.5 rounded bg-[#1db954] text-black text-xs font-medium hover:bg-[#1ed760] transition-colors"
+                      className="px-3 py-1.5 rounded bg-[#00ffc8] text-black text-xs font-medium hover:bg-[#00c8ff] transition-colors"
                     >
                       Renovar
                     </button>
@@ -349,11 +349,11 @@ export default function ContratosPage() {
       {/* Modal de Renovacao */}
       {showRenewalModal && selectedPlayer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg mx-4 rounded-2xl bg-[#141414] border border-white/10 overflow-hidden">
+          <div className="w-full max-w-lg mx-4 rounded-2xl bg-[#0c0c10] border border-white/10 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
-                <Handshake className="h-5 w-5 text-[#1db954]" />
+                <Handshake className="h-5 w-5 text-[#00ffc8]" />
                 <span className="font-semibold text-white">Renovacao de Contrato</span>
               </div>
               <button
@@ -368,7 +368,7 @@ export default function ContratosPage() {
             <div className="p-6 space-y-6">
               {/* Info do jogador */}
               <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#1db954]/20 to-[#1db954]/5 flex items-center justify-center text-xl font-bold text-[#1db954]">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center text-xl font-bold text-[#00ffc8]">
                   {selectedPlayer.overall}
                 </div>
                 <div>
@@ -395,7 +395,7 @@ export default function ContratosPage() {
                         onChange={(e) => setProposedSalary(Number(e.target.value))}
                         className="flex-1"
                       />
-                      <span className="text-lg font-bold text-[#1db954] min-w-[120px] text-right">
+                      <span className="text-lg font-bold text-[#00ffc8] min-w-[120px] text-right">
                         {formatCurrency(proposedSalary)}
                       </span>
                     </div>
@@ -426,7 +426,7 @@ export default function ContratosPage() {
                           className={cn(
                             "py-3 rounded-lg text-sm font-medium transition-colors",
                             proposedYears === years
-                              ? "bg-[#1db954] text-black"
+                              ? "bg-[#00ffc8] text-black"
                               : "bg-white/5 text-white/70 hover:bg-white/10"
                           )}
                         >
@@ -442,8 +442,8 @@ export default function ContratosPage() {
                       <span className="text-white/60">Chance de aceitar</span>
                       <span className={cn(
                         "font-bold",
-                        calculateAcceptChance() >= 70 ? "text-[#1db954]" :
-                        calculateAcceptChance() >= 40 ? "text-yellow-500" : "text-red-500"
+                        calculateAcceptChance() >= 70 ? "text-[#00ffc8]" :
+                        calculateAcceptChance() >= 40 ? "text-[#ffd700]" : "text-red-500"
                       )}>
                         {calculateAcceptChance()}%
                       </span>
@@ -464,10 +464,10 @@ export default function ContratosPage() {
 
               {negotiationStatus === "accepted" && (
                 <div className="text-center py-8">
-                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-[#1db954]/20 flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-[#1db954]" />
+                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-[#00ffc8]/20 flex items-center justify-center">
+                    <CheckCircle2 className="h-6 w-6 text-[#00ffc8]" />
                   </div>
-                  <div className="text-[#1db954] font-semibold text-lg">Contrato Renovado!</div>
+                  <div className="text-[#00ffc8] font-semibold text-lg">Contrato Renovado!</div>
                   <div className="text-white/50 text-sm mt-2">
                     {selectedPlayer.name} assinou por mais {proposedYears} {proposedYears === 1 ? "ano" : "anos"}
                   </div>
@@ -488,7 +488,7 @@ export default function ContratosPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/5">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/[0.04]">
               {negotiationStatus === "idle" && (
                 <>
                   <button
@@ -499,7 +499,7 @@ export default function ContratosPage() {
                   </button>
                   <button
                     onClick={handleSubmitProposal}
-                    className="px-6 py-2 rounded-lg bg-[#1db954] text-black font-semibold hover:bg-[#1ed760] transition-colors"
+                    className="px-6 py-2 rounded-lg bg-[#00ffc8] text-black font-semibold hover:bg-[#00c8ff] transition-colors"
                   >
                     Enviar Proposta
                   </button>

@@ -90,7 +90,7 @@ function PlayerCard({
 }) {
   const tier = getCardTier(player.rating)
   const stamColor =
-    player.stamina > 70 ? "#1db954" : player.stamina > 40 ? "#eab308" : "#ef4444"
+    player.stamina > 70 ? "#00ffc8" : player.stamina > 40 ? "#eab308" : "#ef4444"
 
   return (
     <button
@@ -102,7 +102,7 @@ function PlayerCard({
         selected
           ? variant === "out"
             ? "border-red-400 scale-[1.02] shadow-[0_0_24px_rgba(248,113,113,0.4)]"
-            : "border-[#1db954] scale-[1.02] shadow-[0_0_24px_rgba(29,185,84,0.4)]"
+            : "border-[#00ffc8] scale-[1.02] shadow-[0_0_24px_rgba(29,185,84,0.4)]"
           : "border-transparent hover:scale-[1.01]",
         disabled && "opacity-30 cursor-not-allowed",
       )}
@@ -212,13 +212,13 @@ function PlayerCard({
         <div
           className={cn(
             "absolute inset-0 flex items-center justify-center backdrop-blur-[1px]",
-            variant === "out" ? "bg-red-500/30" : "bg-[#1db954]/30",
+            variant === "out" ? "bg-red-500/30" : "bg-[#00ffc8]/30",
           )}
         >
           <div
             className={cn(
               "h-12 w-12 rounded-full flex items-center justify-center shadow-lg",
-              variant === "out" ? "bg-red-500" : "bg-[#1db954]",
+              variant === "out" ? "bg-red-500" : "bg-[#00ffc8]",
             )}
           >
             {variant === "out" ? (
@@ -274,7 +274,7 @@ export function SubstitutionModal({
       <div className="w-full max-w-5xl rounded-2xl bg-gradient-to-br from-[#0f0f0f] to-[#0a0a0a] border border-white/10 overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
         {/* Header */}
         <div
-          className="relative flex items-center justify-between px-6 py-5 border-b border-white/5"
+          className="relative flex items-center justify-between px-6 py-5 border-b border-white/[0.04]"
           style={{
             background: `linear-gradient(90deg, ${team.cor1}30 0%, transparent 60%)`,
           }}
@@ -301,7 +301,7 @@ export function SubstitutionModal({
               className={cn(
                 "rounded-full px-3 py-1 text-[10px] font-bold tracking-wider",
                 subsRemaining > 2
-                  ? "bg-[#1db954]/15 text-[#1db954]"
+                  ? "bg-[#00ffc8]/15 text-[#00ffc8]"
                   : subsRemaining > 0
                     ? "bg-yellow-400/15 text-yellow-400"
                     : "bg-red-400/15 text-red-400",
@@ -356,7 +356,7 @@ export function SubstitutionModal({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-[11px] font-bold text-white/60 tracking-[0.2em] flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#1db954]" />
+                <span className="h-2 w-2 rounded-full bg-[#00ffc8]" />
                 ENTRA EM CAMPO
               </h4>
               <span className="text-[10px] text-white/40 tracking-wider">
@@ -375,7 +375,7 @@ export function SubstitutionModal({
                 />
               ))}
               {bench.length === 0 && (
-                <div className="col-span-full rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-xs text-white/40">
+                <div className="col-span-full rounded-xl border border-white/[0.04] bg-white/[0.02] p-8 text-center text-xs text-white/40">
                   Banco vazio
                 </div>
               )}
@@ -384,7 +384,7 @@ export function SubstitutionModal({
         </div>
 
         {/* Footer com preview da substituição */}
-        <div className="border-t border-white/5 bg-black/40 px-6 py-4">
+        <div className="border-t border-white/[0.04] bg-black/40 px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {out ? (
@@ -405,12 +405,12 @@ export function SubstitutionModal({
 
               {inPlayer ? (
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1db954]/15 text-[#1db954] font-bold text-xs flex-shrink-0">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00ffc8]/15 text-[#00ffc8] font-bold text-xs flex-shrink-0">
                     #{inPlayer.number}
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-white truncate">{inPlayer.name}</div>
-                    <div className="text-[10px] text-[#1db954]">ENTRA · OVR {inPlayer.rating}</div>
+                    <div className="text-[10px] text-[#00ffc8]">ENTRA · OVR {inPlayer.rating}</div>
                   </div>
                 </div>
               ) : (
@@ -429,7 +429,7 @@ export function SubstitutionModal({
               <Button
                 onClick={handleConfirm}
                 disabled={!canConfirm}
-                className="text-xs bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-30 font-bold tracking-wide"
+                className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-30 font-bold tracking-wide"
               >
                 <Check className="mr-2 h-3.5 w-3.5" />
                 CONFIRMAR

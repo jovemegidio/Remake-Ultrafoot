@@ -121,7 +121,7 @@ export default function CentralPage() {
   const averageMorale = Math.round(playerMorale.reduce((acc, p) => acc + p.morale, 0) / playerMorale.length)
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -144,7 +144,7 @@ export default function CentralPage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap",
                 activeTab === tab.id
-                  ? "bg-[#1db954] text-black"
+                  ? "bg-[#00ffc8] text-black"
                   : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
               )}
             >
@@ -174,7 +174,7 @@ export default function CentralPage() {
             >
               {/* Team Morale Overview */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-white/50">Moral do Elenco</span>
                     {getMoraleIcon(averageMorale)}
@@ -185,7 +185,7 @@ export default function CentralPage() {
                   <p className="text-[10px] text-white/40 mt-1">Media geral do plantel</p>
                 </div>
                 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-white/50">Jogadores Felizes</span>
                     <Smile className="h-4 w-4 text-green-400" />
@@ -196,7 +196,7 @@ export default function CentralPage() {
                   <p className="text-[10px] text-white/40 mt-1">de {playerMorale.length} jogadores</p>
                 </div>
                 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-white/50">Atencao Necessaria</span>
                     <AlertCircle className="h-4 w-4 text-orange-400" />
@@ -209,7 +209,7 @@ export default function CentralPage() {
               </div>
 
               {/* Player List */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white mb-4">Moral Individual</h3>
                 <div className="space-y-2">
                   {playerMorale.map((player, idx) => (
@@ -226,7 +226,7 @@ export default function CentralPage() {
                           <div 
                             className={cn(
                               "h-full rounded-full transition-all",
-                              player.morale >= 80 ? "bg-green-500" : player.morale >= 60 ? "bg-yellow-500" : "bg-red-500"
+                              player.morale >= 80 ? "bg-green-500" : player.morale >= 60 ? "bg-[#ffd700]" : "bg-red-500"
                             )}
                             style={{ width: `${player.morale}%` }}
                           />
@@ -250,10 +250,10 @@ export default function CentralPage() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-4"
             >
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-white">Reunioes Pendentes</h3>
-                  <Button size="sm" className="bg-[#1db954] text-black hover:bg-[#1ed760] text-xs">
+                  <Button size="sm" className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] text-xs">
                     Agendar Reuniao
                   </Button>
                 </div>
@@ -279,7 +279,7 @@ export default function CentralPage() {
                       <div className={cn(
                         "px-2 py-1 rounded-md text-[10px] font-semibold",
                         meeting.status === "urgente" ? "bg-red-500/20 text-red-400" :
-                        meeting.status === "pendente" ? "bg-yellow-500/20 text-yellow-400" :
+                        meeting.status === "pendente" ? "bg-[#ffd700]/20 text-yellow-400" :
                         "bg-green-500/20 text-green-400"
                       )}>
                         {meeting.status}
@@ -300,26 +300,26 @@ export default function CentralPage() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-4"
             >
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white mb-4">Caixa de Entrada</h3>
                 <div className="space-y-2">
                   {messages.map((msg, idx) => (
                     <div key={idx} className={cn(
                       "flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer",
-                      msg.unread ? "bg-[#1db954]/10 hover:bg-[#1db954]/15" : "bg-white/[0.03] hover:bg-white/[0.06]"
+                      msg.unread ? "bg-[#00ffc8]/10 hover:bg-[#00ffc8]/15" : "bg-white/[0.03] hover:bg-white/[0.06]"
                     )}>
                       <div className={cn(
                         "h-10 w-10 rounded-lg flex items-center justify-center",
-                        msg.unread ? "bg-[#1db954]/20" : "bg-white/10"
+                        msg.unread ? "bg-[#00ffc8]/20" : "bg-white/10"
                       )}>
-                        <Mail className={cn("h-5 w-5", msg.unread ? "text-[#1db954]" : "text-white/40")} />
+                        <Mail className={cn("h-5 w-5", msg.unread ? "text-[#00ffc8]" : "text-white/40")} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className={cn("text-sm font-medium", msg.unread ? "text-white" : "text-white/70")}>
                             {msg.from}
                           </span>
-                          {msg.unread && <div className="h-2 w-2 rounded-full bg-[#1db954]" />}
+                          {msg.unread && <div className="h-2 w-2 rounded-full bg-[#00ffc8]" />}
                         </div>
                         <div className="text-[11px] text-white/50">{msg.subject}</div>
                       </div>
@@ -342,7 +342,7 @@ export default function CentralPage() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-4"
             >
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white mb-4">Contratos Proximos do Vencimento</h3>
                 <div className="space-y-2">
                   {contracts.map((contract, idx) => (
@@ -352,7 +352,7 @@ export default function CentralPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-white">{contract.name}</span>
                           <span className="text-[10px] text-white/40 px-1.5 py-0.5 rounded bg-white/10">{contract.position}</span>
-                          <span className="text-xs font-bold text-[#1db954]">{contract.overall}</span>
+                          <span className="text-xs font-bold text-[#00ffc8]">{contract.overall}</span>
                         </div>
                         <div className="text-[10px] text-white/40">Salario: {contract.salary}/mes</div>
                       </div>
@@ -397,7 +397,7 @@ export default function CentralPage() {
               className="space-y-6"
             >
               {/* Hierarquia do Vestiario */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                   <Crown className="h-4 w-4 text-amber-400" />
                   Hierarquia do Vestiario
@@ -447,7 +447,7 @@ export default function CentralPage() {
               </div>
 
               {/* Questoes Disciplinares */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 text-red-400" />
@@ -456,7 +456,7 @@ export default function CentralPage() {
                 </div>
                 {disciplineIssues.length === 0 ? (
                   <div className="p-6 text-center">
-                    <CheckCircle2 className="h-10 w-10 mx-auto text-[#1db954]/40 mb-2" />
+                    <CheckCircle2 className="h-10 w-10 mx-auto text-[#00ffc8]/40 mb-2" />
                     <p className="text-sm text-white/50">Nenhum problema disciplinar</p>
                   </div>
                 ) : (
@@ -469,7 +469,7 @@ export default function CentralPage() {
                         <div className={cn(
                           "h-10 w-10 rounded-lg flex items-center justify-center",
                           issue.severity === "grave" ? "bg-red-500/20" :
-                          issue.severity === "moderada" ? "bg-amber-500/20" : "bg-yellow-500/20"
+                          issue.severity === "moderada" ? "bg-amber-500/20" : "bg-[#ffd700]/20"
                         )}>
                           <AlertTriangle className={cn(
                             "h-5 w-5",
@@ -484,7 +484,7 @@ export default function CentralPage() {
                               "text-[10px] px-1.5 py-0.5 rounded font-medium",
                               issue.severity === "grave" ? "bg-red-500/20 text-red-400" :
                               issue.severity === "moderada" ? "bg-amber-500/20 text-amber-400" :
-                              "bg-yellow-500/20 text-yellow-400"
+                              "bg-[#ffd700]/20 text-yellow-400"
                             )}>
                               {issue.severity}
                             </span>
@@ -499,7 +499,7 @@ export default function CentralPage() {
                         </div>
                         {issue.resolved ? (
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-[#1db954]" />
+                            <CheckCircle2 className="h-4 w-4 text-[#00ffc8]" />
                             <span className="text-xs text-white/50">{issue.punishment}</span>
                           </div>
                         ) : (

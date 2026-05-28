@@ -75,7 +75,7 @@ export default function AnalisePartidaPage() {
 
   const renderRatingBadge = (rating: number) => {
     const color = rating >= 7.5 ? "bg-green-500/20 text-green-400 border-green-500/30" :
-                  rating >= 6 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                  rating >= 6 ? "bg-[#ffd700]/20 text-yellow-400 border-[#ffd700]/30" :
                   "bg-red-500/20 text-red-400 border-red-500/30"
     return (
       <span className={cn("px-3 py-1 rounded-lg border text-lg font-bold", color)}>
@@ -112,7 +112,7 @@ export default function AnalisePartidaPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -156,7 +156,7 @@ export default function AnalisePartidaPage() {
             </div>
 
             {postMatchAnalyses.length === 0 ? (
-              <div className="bg-[#12121a] rounded-xl border border-white/5 p-12 text-center">
+              <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-12 text-center">
                 <BarChart3 className="h-16 w-16 text-white/20 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-white/60 mb-2">Nenhuma analise disponivel</h3>
                 <p className="text-white/40">
@@ -167,8 +167,8 @@ export default function AnalisePartidaPage() {
               <div className="grid grid-cols-12 gap-6">
                 
                 {/* Lista de Partidas */}
-                <div className="col-span-4 bg-[#12121a] rounded-xl border border-white/5 overflow-hidden">
-                  <div className="p-4 border-b border-white/5">
+                <div className="col-span-4 bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
+                  <div className="p-4 border-b border-white/[0.04]">
                     <h3 className="text-sm font-semibold text-white/80">Partidas Analisadas</h3>
                   </div>
                   
@@ -186,7 +186,7 @@ export default function AnalisePartidaPage() {
                           key={analysis.matchId}
                           onClick={() => setSelectedAnalysisIndex(index)}
                           className={cn(
-                            "w-full p-4 border-b border-white/5 text-left transition-all",
+                            "w-full p-4 border-b border-white/[0.04] text-left transition-all",
                             selectedAnalysisIndex === index
                               ? "bg-primary/20 border-l-2 border-l-primary"
                               : "hover:bg-white/5"
@@ -228,7 +228,7 @@ export default function AnalisePartidaPage() {
                   <div className="col-span-8 space-y-6">
                     
                     {/* Cabecalho da Analise */}
-                    <div className="bg-[#12121a] rounded-xl border border-white/5 p-6">
+                    <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <div className="text-sm text-white/50 mb-1">Semana {selectedAnalysis.week}</div>
@@ -264,7 +264,7 @@ export default function AnalisePartidaPage() {
                     </div>
 
                     {/* Pontos Positivos */}
-                    <div className="bg-[#12121a] rounded-xl border border-white/5 overflow-hidden">
+                    <div className="bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
                       <button
                         onClick={() => setExpandedSection(expandedSection === "positives" ? null : "positives")}
                         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
@@ -301,7 +301,7 @@ export default function AnalisePartidaPage() {
                     </div>
 
                     {/* Pontos Negativos */}
-                    <div className="bg-[#12121a] rounded-xl border border-white/5 overflow-hidden">
+                    <div className="bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
                       <button
                         onClick={() => setExpandedSection(expandedSection === "negatives" ? null : "negatives")}
                         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
@@ -338,7 +338,7 @@ export default function AnalisePartidaPage() {
                     </div>
 
                     {/* Jogadores Destaque */}
-                    <div className="bg-[#12121a] rounded-xl border border-white/5 overflow-hidden">
+                    <div className="bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
                       <button
                         onClick={() => setExpandedSection(expandedSection === "players" ? null : "players")}
                         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
@@ -400,7 +400,7 @@ export default function AnalisePartidaPage() {
                     </div>
 
                     {/* Estatisticas Chave */}
-                    <div className="bg-[#12121a] rounded-xl border border-white/5 overflow-hidden">
+                    <div className="bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
                       <button
                         onClick={() => setExpandedSection(expandedSection === "stats" ? null : "stats")}
                         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
@@ -464,7 +464,7 @@ export default function AnalisePartidaPage() {
 
                     {/* Recomendacoes */}
                     {selectedAnalysis.recommendations.length > 0 && (
-                      <div className="bg-[#12121a] rounded-xl border border-white/5 p-5">
+                      <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
                         <h3 className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2">
                           <Target className="h-4 w-4 text-primary" />
                           Recomendacoes para Proximos Jogos
@@ -482,14 +482,14 @@ export default function AnalisePartidaPage() {
 
                     {/* Desvios Taticos */}
                     {selectedAnalysis.tacticDeviations.length > 0 && (
-                      <div className="bg-[#12121a] rounded-xl border border-white/5 p-5">
+                      <div className="bg-[#12121a] rounded-xl border border-white/[0.04] p-5">
                         <h3 className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2">
                           <AlertTriangle className="h-4 w-4 text-yellow-400" />
                           Desvios do Plano Tatico
                         </h3>
                         <div className="space-y-2">
                           {selectedAnalysis.tacticDeviations.map((dev, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 bg-yellow-500/5 rounded-lg border border-yellow-500/20">
+                            <div key={i} className="flex items-center gap-3 p-3 bg-[#ffd700]/5 rounded-lg border border-[#ffd700]/20">
                               <AlertTriangle className="h-4 w-4 text-yellow-400 flex-shrink-0" />
                               <span className="text-sm text-white/80">{dev}</span>
                             </div>

@@ -158,13 +158,13 @@ export default function OlheirosPage() {
   ]
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#0a0a0a]">
+    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam ?? undefined} />
 
       <main className="h-[calc(100vh-48px-56px)] flex flex-col">
         {/* Tabs */}
-        <div className="flex items-center gap-1 px-4 py-3 border-b border-white/5 bg-[#0d0d0d]">
+        <div className="flex items-center gap-1 px-4 py-3 border-b border-white/[0.04] bg-[#0d0d0d]">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -172,14 +172,14 @@ export default function OlheirosPage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 activeTab === tab.id
-                  ? "bg-[#1db954]/20 text-[#1db954]"
+                  ? "bg-[#00ffc8]/20 text-[#00ffc8]"
                   : "text-white/50 hover:text-white/80 hover:bg-white/5"
               )}
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
               {tab.id === "descobertos" && discoveredPlayers.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[#1db954] text-black text-[10px] font-bold">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[#00ffc8] text-black text-[10px] font-bold">
                   {discoveredPlayers.length}
                 </span>
               )}
@@ -201,28 +201,28 @@ export default function OlheirosPage() {
               >
                 {/* Stats gerais */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+                  <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
                     <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                       <Users className="h-3.5 w-3.5" />
                       Olheiros Ativos
                     </div>
                     <div className="text-2xl font-bold text-white">{myScouts.length}</div>
                   </div>
-                  <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+                  <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
                     <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                       <Search className="h-3.5 w-3.5" />
                       Em Busca
                     </div>
-                    <div className="text-2xl font-bold text-[#1db954]">{myScouts.filter(s => s.isSearching).length}</div>
+                    <div className="text-2xl font-bold text-[#00ffc8]">{myScouts.filter(s => s.isSearching).length}</div>
                   </div>
-                  <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+                  <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
                     <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                       <Eye className="h-3.5 w-3.5" />
                       Descobertos
                     </div>
                     <div className="text-2xl font-bold text-amber-400">{discoveredPlayers.length}</div>
                   </div>
-                  <div className="p-4 rounded-xl bg-[#111] border border-white/5">
+                  <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
                     <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
                       <DollarSign className="h-3.5 w-3.5" />
                       Custo Semanal
@@ -240,7 +240,7 @@ export default function OlheirosPage() {
                     <Button
                       size="sm"
                       onClick={() => setActiveTab("contratar")}
-                      className="bg-[#1db954] hover:bg-[#1ed760] text-black text-xs"
+                      className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
                     >
                       <Plus className="h-3.5 w-3.5 mr-1" />
                       Contratar Olheiro
@@ -248,7 +248,7 @@ export default function OlheirosPage() {
                   </div>
 
                   {myScouts.length === 0 ? (
-                    <div className="p-8 rounded-xl bg-[#111] border border-white/5 text-center">
+                    <div className="p-8 rounded-xl bg-[#111] border border-white/[0.04] text-center">
                       <Search className="h-12 w-12 mx-auto text-white/20 mb-3" />
                       <p className="text-white/50">Voce ainda nao tem olheiros</p>
                       <p className="text-white/30 text-sm mt-1">Contrate olheiros para descobrir talentos</p>
@@ -258,7 +258,7 @@ export default function OlheirosPage() {
                       {myScouts.map((scout) => (
                         <div
                           key={scout.id}
-                          className="p-4 rounded-xl bg-[#111] border border-white/5 hover:border-white/10 transition-all"
+                          className="p-4 rounded-xl bg-[#111] border border-white/[0.04] hover:border-white/10 transition-all"
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-4">
@@ -294,13 +294,13 @@ export default function OlheirosPage() {
                             <div className="text-right">
                               {scout.isSearching ? (
                                 <div className="space-y-2">
-                                  <div className="flex items-center gap-2 text-[#1db954]">
+                                  <div className="flex items-center gap-2 text-[#00ffc8]">
                                     <Search className="h-4 w-4 animate-pulse" />
                                     <span className="text-sm font-medium">Buscando...</span>
                                   </div>
                                   <div className="w-32 h-2 rounded-full bg-white/10 overflow-hidden">
                                     <motion.div
-                                      className="h-full bg-[#1db954]"
+                                      className="h-full bg-[#00ffc8]"
                                       initial={{ width: 0 }}
                                       animate={{ width: `${scout.searchProgress}%` }}
                                       transition={{ duration: 0.5 }}
@@ -328,7 +328,7 @@ export default function OlheirosPage() {
                                   <Button
                                     size="sm"
                                     onClick={() => setSelectedRegion(selectedRegion === scout.id.toString() ? null : scout.id.toString())}
-                                    className="bg-[#1db954] hover:bg-[#1ed760] text-black text-xs"
+                                    className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
                                   >
                                     <Play className="h-3 w-3 mr-1" />
                                     Iniciar Busca
@@ -345,7 +345,7 @@ export default function OlheirosPage() {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="mt-4 pt-4 border-t border-white/5"
+                                className="mt-4 pt-4 border-t border-white/[0.04]"
                               >
                                 <p className="text-xs text-white/50 mb-3">Selecione a regiao para buscar:</p>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -353,7 +353,7 @@ export default function OlheirosPage() {
                                     <button
                                       key={region.id}
                                       onClick={() => handleStartSearch(scout.id, region.id)}
-                                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-[#1db954]/30 transition-all text-left"
+                                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/[0.04] hover:border-[#00ffc8]/30 transition-all text-left"
                                     >
                                       <div className="flex items-center gap-2 mb-1">
                                         <span className="text-lg">{region.icon}</span>
@@ -378,9 +378,9 @@ export default function OlheirosPage() {
 
                           {/* Jogadores encontrados */}
                           {scout.foundPlayers.length > 0 && (
-                            <div className="mt-4 pt-4 border-t border-white/5">
+                            <div className="mt-4 pt-4 border-t border-white/[0.04]">
                               <div className="flex items-center gap-2 text-xs text-white/50 mb-2">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-[#1db954]" />
+                                <CheckCircle2 className="h-3.5 w-3.5 text-[#00ffc8]" />
                                 {scout.foundPlayers.length} jogador(es) descoberto(s)
                               </div>
                             </div>
@@ -412,7 +412,7 @@ export default function OlheirosPage() {
                   {AVAILABLE_SCOUTS.filter(s => !myScouts.find(ms => ms.name === s.name)).map((scout, idx) => (
                     <div
                       key={idx}
-                      className="p-4 rounded-xl bg-[#111] border border-white/5 hover:border-white/10 transition-all"
+                      className="p-4 rounded-xl bg-[#111] border border-white/[0.04] hover:border-white/10 transition-all"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-4">
@@ -445,7 +445,7 @@ export default function OlheirosPage() {
                         </div>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                      <div className="mt-4 pt-4 border-t border-white/[0.04] flex items-center justify-between">
                         <div>
                           <p className="text-xs text-white/40">Salario Semanal</p>
                           <p className="text-sm font-semibold text-white">
@@ -458,7 +458,7 @@ export default function OlheirosPage() {
                             setSelectedScoutToHire(scout)
                             setShowHireModal(true)
                           }}
-                          className="bg-[#1db954] hover:bg-[#1ed760] text-black text-xs"
+                          className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
                         >
                           <UserPlus className="h-3.5 w-3.5 mr-1" />
                           Contratar
@@ -489,7 +489,7 @@ export default function OlheirosPage() {
                 </div>
 
                 {discoveredPlayers.length === 0 ? (
-                  <div className="p-8 rounded-xl bg-[#111] border border-white/5 text-center">
+                  <div className="p-8 rounded-xl bg-[#111] border border-white/[0.04] text-center">
                     <Eye className="h-12 w-12 mx-auto text-white/20 mb-3" />
                     <p className="text-white/50">Nenhum jogador descoberto ainda</p>
                     <p className="text-white/30 text-sm mt-1">Envie seus olheiros para buscar talentos</p>
@@ -499,13 +499,13 @@ export default function OlheirosPage() {
                     {discoveredPlayers.map((player) => (
                       <div
                         key={player.id}
-                        className="p-4 rounded-xl bg-[#111] border border-white/5 hover:border-white/10 transition-all"
+                        className="p-4 rounded-xl bg-[#111] border border-white/[0.04] hover:border-white/10 transition-all"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="relative">
-                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1db954]/20 to-[#1db954]/5 flex items-center justify-center">
-                                <span className="text-xl font-black text-[#1db954]">
+                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center">
+                                <span className="text-xl font-black text-[#00ffc8]">
                                   {player.revealedAttributes ? player.overall : "?"}
                                 </span>
                               </div>
@@ -552,7 +552,7 @@ export default function OlheirosPage() {
                               )}
                               <Button
                                 size="sm"
-                                className="bg-[#1db954] hover:bg-[#1ed760] text-black text-xs"
+                                className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
                               >
                                 <Target className="h-3.5 w-3.5 mr-1" />
                                 Negociar
@@ -562,7 +562,7 @@ export default function OlheirosPage() {
                         </div>
 
                         {player.revealedAttributes && (
-                          <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-6 gap-2">
+                          <div className="mt-4 pt-4 border-t border-white/[0.04] grid grid-cols-6 gap-2">
                             {[
                               { label: "RIT", value: 78 },
                               { label: "FIN", value: 82 },
@@ -575,7 +575,7 @@ export default function OlheirosPage() {
                                 <p className="text-[10px] text-white/40">{attr.label}</p>
                                 <p className={cn(
                                   "text-sm font-bold",
-                                  attr.value >= 80 ? "text-[#1db954]" :
+                                  attr.value >= 80 ? "text-[#00ffc8]" :
                                   attr.value >= 70 ? "text-amber-400" :
                                   attr.value >= 60 ? "text-white" : "text-white/50"
                                 )}>
@@ -670,7 +670,7 @@ export default function OlheirosPage() {
                 </Button>
                 <Button
                   onClick={() => handleHireScout(selectedScoutToHire)}
-                  className="flex-1 bg-[#1db954] hover:bg-[#1ed760] text-black"
+                  className="flex-1 bg-[#00ffc8] hover:bg-[#00c8ff] text-black"
                 >
                   Confirmar Contratacao
                 </Button>

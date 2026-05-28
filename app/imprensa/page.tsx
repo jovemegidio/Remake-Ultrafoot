@@ -262,7 +262,7 @@ export default function ImprensaPage() {
   }
 
   return (
-    <div className="h-screen pl-16 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
       
@@ -352,7 +352,7 @@ export default function ImprensaPage() {
                               <span className={cn(
                                 "text-xs px-2 py-0.5 rounded-full",
                                 option.tone === "positivo" ? "bg-green-500/20 text-green-400" :
-                                option.tone === "neutro" ? "bg-yellow-500/20 text-yellow-400" :
+                                option.tone === "neutro" ? "bg-[#ffd700]/20 text-yellow-400" :
                                 option.tone === "negativo" ? "bg-red-500/20 text-red-400" :
                                 "bg-orange-500/20 text-orange-400"
                               )}>
@@ -508,7 +508,7 @@ export default function ImprensaPage() {
                           "text-xs px-2 py-0.5 rounded-full",
                           conf.overallTone === "positivo" ? "bg-green-500/20 text-green-400" :
                           conf.overallTone === "negativo" ? "bg-red-500/20 text-red-400" :
-                          "bg-yellow-500/20 text-yellow-400"
+                          "bg-[#ffd700]/20 text-yellow-400"
                         )}>
                           {conf.overallTone.charAt(0).toUpperCase() + conf.overallTone.slice(1)}
                         </span>

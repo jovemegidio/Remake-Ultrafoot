@@ -612,7 +612,7 @@ function updatePossession(state: MatchState, config: MatchConfig): void {
   const midBase = midTotal > 0 ? (homeSt.midfield / midTotal) * 100 : 50
 
   const rTotal = config.homeRating + config.awayRating
-  const ratingBase = (config.homeRating / rTotal) * 100
+  const ratingBase = rTotal > 0 ? (config.homeRating / rTotal) * 100 : 50
 
   // 60% do midfield, 40% rating bruto
   let target = midBase * 0.6 + ratingBase * 0.4
@@ -625,7 +625,11 @@ function updatePossession(state: MatchState, config: MatchConfig): void {
   const noise = (rnd() - 0.5) * 6
   const homeTarget = Math.max(28, Math.min(72, target + noise))
 
-  state.home.possession = Math.round(state.home.possession * 0.93 + homeTarget * 0.07)
+  // Garante que possession nunca seja NaN
+  const prevPossession = isNaN(state.home.possession) ? 50 : state.home.possession
+  const newPossession = Math.round(prevPossession * 0.93 + homeTarget * 0.07)
+  
+  state.home.possession = isNaN(newPossession) ? 50 : newPossession
   state.away.possession = 100 - state.home.possession
 
   const passes = 10 + Math.floor(rnd() * 10)

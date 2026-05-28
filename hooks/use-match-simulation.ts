@@ -74,10 +74,15 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
 
   const start = useCallback(() => {
     const cfg = configRef.current
-    if (!cfg) return
+    console.log("[v0] start() called, config:", cfg)
+    if (!cfg) {
+      console.log("[v0] config is null, aborting start")
+      return
+    }
     const initial = startMatch(stateRef.current.phase === "pre"
       ? createInitialState()
       : stateRef.current)
+    console.log("[v0] initial state:", initial)
     stateRef.current = initial
     setState(initial)
     setIsRunning(true)

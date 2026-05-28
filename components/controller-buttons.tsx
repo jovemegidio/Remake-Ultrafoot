@@ -18,12 +18,13 @@ interface ControllerButtonProps {
   showLabel?: boolean
 }
 
-// Xbox button icons - outline style as shown in reference image
+// Xbox button icons - outline style matching reference image (white outline, letter inside)
 function XboxAButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="#10b981" strokeWidth="2" fill="transparent" />
-      <text x="16" y="21" textAnchor="middle" fill="#10b981" fontSize="14" fontWeight="bold" fontFamily="system-ui">A</text>
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="10" stroke="white" strokeWidth="1" strokeOpacity="0.3" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">A</text>
     </svg>
   )
 }
@@ -31,8 +32,9 @@ function XboxAButton({ className }: { className?: string }) {
 function XboxBButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="#ef4444" strokeWidth="2" fill="transparent" />
-      <text x="16" y="21" textAnchor="middle" fill="#ef4444" fontSize="14" fontWeight="bold" fontFamily="system-ui">B</text>
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="10" stroke="white" strokeWidth="1" strokeOpacity="0.3" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">B</text>
     </svg>
   )
 }
@@ -40,8 +42,9 @@ function XboxBButton({ className }: { className?: string }) {
 function XboxXButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="#3b82f6" strokeWidth="2" fill="transparent" />
-      <text x="16" y="21" textAnchor="middle" fill="#3b82f6" fontSize="14" fontWeight="bold" fontFamily="system-ui">X</text>
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="10" stroke="white" strokeWidth="1" strokeOpacity="0.3" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">X</text>
     </svg>
   )
 }
@@ -49,62 +52,67 @@ function XboxXButton({ className }: { className?: string }) {
 function XboxYButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="#eab308" strokeWidth="2" fill="transparent" />
-      <text x="16" y="21" textAnchor="middle" fill="#eab308" fontSize="14" fontWeight="bold" fontFamily="system-ui">Y</text>
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="10" stroke="white" strokeWidth="1" strokeOpacity="0.3" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">Y</text>
     </svg>
   )
 }
 
 function XboxLBButton({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">LB</text>
+    <svg viewBox="0 0 44 28" className={className} fill="none">
+      <rect x="2" y="2" width="40" height="24" rx="6" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="22" y="18" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">LB</text>
     </svg>
   )
 }
 
 function XboxRBButton({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">RB</text>
+    <svg viewBox="0 0 44 28" className={className} fill="none">
+      <rect x="2" y="2" width="40" height="24" rx="6" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="22" y="18" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">RB</text>
     </svg>
   )
 }
 
 function XboxLTButton({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 28" className={className} fill="none">
-      <path d="M4 24V8C4 4 8 2 12 2H28C32 2 36 4 36 8V24" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="20" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">LT</text>
+    <svg viewBox="0 0 36 40" className={className} fill="none">
+      {/* Trigger shape - wider at top, narrower at bottom */}
+      <path d="M4 6C4 3 7 2 10 2H26C29 2 32 3 32 6V32C32 36 28 38 18 38C8 38 4 36 4 32V6Z" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="18" y="24" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">LT</text>
     </svg>
   )
 }
 
 function XboxRTButton({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 28" className={className} fill="none">
-      <path d="M4 24V8C4 4 8 2 12 2H28C32 2 36 4 36 8V24" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="20" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">RT</text>
+    <svg viewBox="0 0 36 40" className={className} fill="none">
+      {/* Trigger shape - wider at top, narrower at bottom */}
+      <path d="M4 6C4 3 7 2 10 2H26C29 2 32 3 32 6V32C32 36 28 38 18 38C8 38 4 36 4 32V6Z" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="18" y="24" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">RT</text>
     </svg>
   )
 }
 
-function XboxLStickButton({ className }: { className?: string }) {
+function XboxLSButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="16" y="21" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">L</text>
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="8" stroke="white" strokeWidth="1" strokeOpacity="0.5" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="system-ui">LS</text>
     </svg>
   )
 }
 
-function XboxRStickButton({ className }: { className?: string }) {
+function XboxRSButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="16" y="21" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">R</text>
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="8" stroke="white" strokeWidth="1" strokeOpacity="0.5" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="system-ui">RS</text>
     </svg>
   )
 }
@@ -112,8 +120,13 @@ function XboxRStickButton({ className }: { className?: string }) {
 function XboxDpadButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <rect x="12" y="2" width="8" height="28" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
-      <rect x="2" y="12" width="28" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      {/* D-Pad cross shape */}
+      <path d="M11 3H21V11H29V21H21V29H11V21H3V11H11V3Z" stroke="white" strokeWidth="1.5" fill="transparent" />
+      {/* Direction arrows */}
+      <path d="M16 7L13 10H19L16 7Z" fill="white" fillOpacity="0.6" />
+      <path d="M16 25L13 22H19L16 25Z" fill="white" fillOpacity="0.6" />
+      <path d="M7 16L10 13V19L7 16Z" fill="white" fillOpacity="0.6" />
+      <path d="M25 16L22 13V19L25 16Z" fill="white" fillOpacity="0.6" />
     </svg>
   )
 }
@@ -182,29 +195,30 @@ function XboxR3Button({ className }: { className?: string }) {
 
 function XboxMenuButton({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} fill="none">
-      <rect x="4" y="8" width="24" height="3" rx="1" stroke="white" strokeWidth="1.5" fill="white" />
-      <rect x="4" y="14.5" width="24" height="3" rx="1" stroke="white" strokeWidth="1.5" fill="white" />
-      <rect x="4" y="21" width="24" height="3" rx="1" stroke="white" strokeWidth="1.5" fill="white" />
+    <svg viewBox="0 0 32 24" className={className} fill="none">
+      <rect x="2" y="2" width="28" height="20" rx="3" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <line x1="8" y1="8" x2="24" y2="8" stroke="white" strokeWidth="1.5" />
+      <line x1="8" y1="12" x2="24" y2="12" stroke="white" strokeWidth="1.5" />
+      <line x1="8" y1="16" x2="24" y2="16" stroke="white" strokeWidth="1.5" />
     </svg>
   )
 }
 
 function XboxViewButton({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} fill="none">
-      <rect x="4" y="6" width="14" height="10" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
-      <rect x="14" y="16" width="14" height="10" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+    <svg viewBox="0 0 32 24" className={className} fill="none">
+      <rect x="2" y="4" width="14" height="10" rx="2" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <rect x="16" y="10" width="14" height="10" rx="2" stroke="white" strokeWidth="1.5" fill="transparent" />
     </svg>
   )
 }
 
-// PlayStation button icons - outline style as shown in reference image
+// PlayStation button icons - outline style matching reference image
 function PSCrossButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="white" strokeWidth="2" fill="transparent" />
-      <path d="M10 10L22 22M22 10L10 22" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <path d="M10 10L22 22M22 10L10 22" stroke="white" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }
@@ -212,8 +226,8 @@ function PSCrossButton({ className }: { className?: string }) {
 function PSCircleButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="white" strokeWidth="2" fill="transparent" />
-      <circle cx="16" cy="16" r="6" stroke="white" strokeWidth="2.5" fill="transparent" />
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="6" stroke="white" strokeWidth="2" fill="transparent" />
     </svg>
   )
 }
@@ -221,8 +235,8 @@ function PSCircleButton({ className }: { className?: string }) {
 function PSSquareButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="white" strokeWidth="2" fill="transparent" />
-      <rect x="9" y="9" width="14" height="14" stroke="white" strokeWidth="2.5" fill="transparent" />
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <rect x="9" y="9" width="14" height="14" stroke="white" strokeWidth="2" fill="transparent" />
     </svg>
   )
 }
@@ -230,62 +244,66 @@ function PSSquareButton({ className }: { className?: string }) {
 function PSTriangleButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="14" stroke="white" strokeWidth="2" fill="transparent" />
-      <path d="M16 8L24 24H8L16 8Z" stroke="white" strokeWidth="2.5" fill="transparent" strokeLinejoin="round" />
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <path d="M16 8L24 24H8L16 8Z" stroke="white" strokeWidth="2" fill="transparent" strokeLinejoin="round" />
     </svg>
   )
 }
 
 function PSL1Button({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">L1</text>
+    <svg viewBox="0 0 44 28" className={className} fill="none">
+      <rect x="2" y="2" width="40" height="24" rx="10" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="22" y="18" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">L1</text>
     </svg>
   )
 }
 
 function PSR1Button({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">R1</text>
+    <svg viewBox="0 0 44 28" className={className} fill="none">
+      <rect x="2" y="2" width="40" height="24" rx="10" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="22" y="18" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">R1</text>
     </svg>
   )
 }
 
 function PSL2Button({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">L2</text>
+    <svg viewBox="0 0 36 40" className={className} fill="none">
+      {/* Trigger shape matching reference */}
+      <path d="M4 6C4 3 7 2 10 2H26C29 2 32 3 32 6V32C32 36 28 38 18 38C8 38 4 36 4 32V6Z" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="18" y="24" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">L2</text>
     </svg>
   )
 }
 
 function PSR2Button({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">R2</text>
+    <svg viewBox="0 0 36 40" className={className} fill="none">
+      {/* Trigger shape matching reference */}
+      <path d="M4 6C4 3 7 2 10 2H26C29 2 32 3 32 6V32C32 36 28 38 18 38C8 38 4 36 4 32V6Z" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <text x="18" y="24" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui">R2</text>
     </svg>
   )
 }
 
 function PSL3Button({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">L3</text>
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="8" stroke="white" strokeWidth="1" strokeOpacity="0.5" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="system-ui">L3</text>
     </svg>
   )
 }
 
 function PSR3Button({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 24" className={className} fill="none">
-      <rect x="1" y="1" width="38" height="22" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <text x="20" y="17" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="system-ui">R3</text>
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <circle cx="16" cy="16" r="13" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="16" cy="16" r="8" stroke="white" strokeWidth="1" strokeOpacity="0.5" fill="transparent" />
+      <text x="16" y="20" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="system-ui">R3</text>
     </svg>
   )
 }
@@ -293,8 +311,13 @@ function PSR3Button({ className }: { className?: string }) {
 function PSDpadButton({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <rect x="12" y="2" width="8" height="28" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
-      <rect x="2" y="12" width="28" height="8" rx="1" stroke="white" strokeWidth="2" fill="transparent" />
+      {/* D-Pad cross shape */}
+      <path d="M11 3H21V11H29V21H21V29H11V21H3V11H11V3Z" stroke="white" strokeWidth="1.5" fill="transparent" />
+      {/* Direction arrows */}
+      <path d="M16 7L13 10H19L16 7Z" fill="white" fillOpacity="0.6" />
+      <path d="M16 25L13 22H19L16 25Z" fill="white" fillOpacity="0.6" />
+      <path d="M7 16L10 13V19L7 16Z" fill="white" fillOpacity="0.6" />
+      <path d="M25 16L22 13V19L25 16Z" fill="white" fillOpacity="0.6" />
     </svg>
   )
 }
@@ -345,19 +368,39 @@ function PSDpadRightButton({ className }: { className?: string }) {
 
 function PSOptionsButton({ className }: { className?: string }) {
   return (
+    <svg viewBox="0 0 32 24" className={className} fill="none">
+      <rect x="2" y="2" width="28" height="20" rx="3" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <line x1="8" y1="8" x2="24" y2="8" stroke="white" strokeWidth="1.5" />
+      <line x1="8" y1="12" x2="24" y2="12" stroke="white" strokeWidth="1.5" />
+      <line x1="8" y1="16" x2="24" y2="16" stroke="white" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+function PSShareButton({ className }: { className?: string }) {
+  return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
-      <rect x="4" y="8" width="24" height="3" rx="1" stroke="white" strokeWidth="1.5" fill="white" />
-      <rect x="4" y="14.5" width="24" height="3" rx="1" stroke="white" strokeWidth="1.5" fill="white" />
-      <rect x="4" y="21" width="24" height="3" rx="1" stroke="white" strokeWidth="1.5" fill="white" />
+      <rect x="4" y="4" width="24" height="24" rx="4" stroke="white" strokeWidth="1.5" fill="transparent" />
+      {/* Share icon - lines radiating */}
+      <circle cx="16" cy="10" r="2" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="10" cy="20" r="2" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <circle cx="22" cy="20" r="2" stroke="white" strokeWidth="1.5" fill="transparent" />
+      <line x1="14" y1="11" x2="11" y2="18" stroke="white" strokeWidth="1.5" />
+      <line x1="18" y1="11" x2="21" y2="18" stroke="white" strokeWidth="1.5" />
     </svg>
   )
 }
 
 function PSTouchpadButton({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 24" className={className} fill="none">
-      <rect x="2" y="2" width="44" height="20" rx="4" stroke="white" strokeWidth="2" fill="transparent" />
-      <line x1="24" y1="6" x2="24" y2="18" stroke="white" strokeWidth="1.5" />
+    <svg viewBox="0 0 56 28" className={className} fill="none">
+      <rect x="2" y="2" width="52" height="24" rx="4" stroke="white" strokeWidth="1.5" fill="transparent" />
+      {/* Dotted texture */}
+      <g opacity="0.3">
+        {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+          <line key={i} x1={10 + i * 5} y1="8" x2={10 + i * 5} y2="20" stroke="white" strokeWidth="0.5" strokeDasharray="1 2" />
+        ))}
+      </g>
     </svg>
   )
 }
@@ -401,8 +444,8 @@ export function ControllerButton({
         case "RB": return <XboxRBButton className={sizeClass} />
         case "LT": return <XboxLTButton className={sizeClass} />
         case "RT": return <XboxRTButton className={sizeClass} />
-        case "LS": case "L": return <XboxLStickButton className={sizeClass} />
-        case "RS": case "R": return <XboxRStickButton className={sizeClass} />
+        case "LS": case "L": return <XboxLSButton className={sizeClass} />
+        case "RS": case "R": return <XboxRSButton className={sizeClass} />
         case "L3": return <XboxL3Button className={sizeClass} />
         case "R3": return <XboxR3Button className={sizeClass} />
         case "DPAD": return <XboxDpadButton className={sizeClass} />
@@ -533,7 +576,7 @@ export function ControllerToolbar({ actions, controller, className, visible }: C
   
   return (
     <div className={cn(
-      "flex items-center gap-6 px-4 py-2 bg-[#0a0a0a]/95 backdrop-blur-sm border-t border-white/5",
+      "flex items-center gap-6 px-4 py-2 bg-[#050508]/95 backdrop-blur-sm border-t border-white/[0.04]",
       className
     )}>
       {actions.map((action, i) => (
@@ -573,7 +616,7 @@ export function HeaderControls({ controller, className, forceVisible }: HeaderCo
       <ControllerButton button="LB" controller={activeController} size="xs" showLabel={false} />
       <div className="flex items-center gap-1">
         <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-        <div className="w-1.5 h-1.5 rounded-full bg-[#1db954]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#00ffc8]" />
         <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
       </div>
       <ControllerButton button="RB" controller={activeController} size="xs" showLabel={false} />
@@ -646,7 +689,7 @@ export function ControllerStatus({ connected, controllerType, className }: Contr
     <div className={cn("flex items-center gap-2", className)}>
       <div className={cn(
         "w-2 h-2 rounded-full animate-pulse",
-        "bg-[#1db954]"
+        "bg-[#00ffc8]"
       )} />
       <div className="w-4 h-4 flex items-center justify-center">
         {controllerType === "playstation" ? (
