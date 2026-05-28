@@ -101,9 +101,11 @@ export default function NovoJogoPage() {
 
   const handleStart = useCallback(() => {
     if (!selectedTeam) return
+    console.log("[v0] handleStart called with team:", selectedTeam.curto, "manager:", managerName)
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
     initializeNewGame(selectedTeam.curto, managerName)
+    console.log("[v0] initializeNewGame called, redirecting to /")
     router.push("/")
   }, [selectedTeam, managerName, initializeNewGame, router, setTeamColors, setTheme])
 
