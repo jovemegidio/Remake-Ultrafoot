@@ -305,14 +305,6 @@ export default function CalendarioPage() {
               
               {/* Large Team Crest */}
               <div className="relative mb-4">
-                <div 
-                  className="absolute inset-0 blur-3xl opacity-40 scale-150"
-                  style={{ 
-                    backgroundColor: selectedFixture.homeTeam.curto === userTeam.curto 
-                      ? selectedFixture.awayTeam.cor1 
-                      : selectedFixture.homeTeam.cor1 
-                  }}
-                />
                 <TeamCrest 
                   team={selectedFixture.homeTeam.curto === userTeam.curto ? selectedFixture.awayTeam : selectedFixture.homeTeam} 
                   size="2xl" 
