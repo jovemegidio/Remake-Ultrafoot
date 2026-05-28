@@ -93,18 +93,18 @@ function TeamCard({
       side === "home" ? "pr-4" : "pl-4"
     )}>
       {/* Team Name */}
-      <h2 className="text-2xl font-bold text-white mb-6 tracking-wide">
+      <h2 className="text-xl md:text-2xl font-semibold text-white mb-5 tracking-tight uppercase">
         {team.nome}
       </h2>
 
       {/* Large Crest with glow */}
-      <div className="relative mb-6">
+      <div className="relative mb-5">
         <div 
-          className="absolute inset-0 blur-3xl opacity-40 scale-150"
+          className="absolute inset-0 blur-3xl opacity-30 scale-150"
           style={{ backgroundColor: team.cor1 }}
         />
         <div className="relative">
-          <TeamCrest team={team} size="2xl" className="w-40 h-40" />
+          <TeamCrest team={team} size="2xl" className="w-32 h-32 md:w-40 md:h-40" />
         </div>
       </div>
 
@@ -114,25 +114,25 @@ function TeamCard({
           <Star
             key={i}
             className={cn(
-              "h-5 w-5",
+              "h-4 w-4 md:h-5 md:w-5",
               i < stars
-                ? "text-yellow-400 fill-yellow-400"
+                ? "text-amber-400 fill-amber-400"
                 : halfStar && i === stars
-                ? "text-yellow-400 fill-yellow-400/50"
-                : "text-white/20"
+                ? "text-amber-400 fill-amber-400/50"
+                : "text-white/15"
             )}
           />
         ))}
       </div>
 
       {/* Stats Row */}
-      <div className="flex items-center gap-6 mb-6">
+      <div className="flex items-center gap-5 md:gap-8 mb-5">
         <div className="flex flex-col items-center">
-          <span className="text-[10px] text-white/40 font-bold tracking-wider mb-1">ATA</span>
+          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">ATA</span>
           <div className="flex items-center gap-1">
             <span className={cn(
-              "text-xl font-bold",
-              trends.ata === "up" ? "text-green-400" : trends.ata === "down" ? "text-red-400" : "text-white"
+              "text-lg md:text-xl font-semibold tabular-nums",
+              trends.ata === "up" ? "text-emerald-400" : trends.ata === "down" ? "text-rose-400" : "text-white"
             )}>
               {stats.ata}
             </span>
@@ -140,11 +140,11 @@ function TeamCard({
           </div>
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-[10px] text-white/40 font-bold tracking-wider mb-1">MEI</span>
+          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">MEI</span>
           <div className="flex items-center gap-1">
             <span className={cn(
-              "text-xl font-bold",
-              trends.mei === "up" ? "text-green-400" : trends.mei === "down" ? "text-red-400" : "text-white"
+              "text-lg md:text-xl font-semibold tabular-nums",
+              trends.mei === "up" ? "text-emerald-400" : trends.mei === "down" ? "text-rose-400" : "text-white"
             )}>
               {stats.mei}
             </span>
@@ -152,11 +152,11 @@ function TeamCard({
           </div>
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-[10px] text-white/40 font-bold tracking-wider mb-1">DEF</span>
+          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">DEF</span>
           <div className="flex items-center gap-1">
             <span className={cn(
-              "text-xl font-bold",
-              trends.def === "up" ? "text-green-400" : trends.def === "down" ? "text-red-400" : "text-white"
+              "text-lg md:text-xl font-semibold tabular-nums",
+              trends.def === "up" ? "text-emerald-400" : trends.def === "down" ? "text-rose-400" : "text-white"
             )}>
               {stats.def}
             </span>
@@ -167,13 +167,13 @@ function TeamCard({
 
       {/* League Badge */}
       <div className="flex flex-col items-center">
-        <span className="text-[10px] text-white/40 mb-2">Liga</span>
+        <span className="text-[9px] md:text-[10px] text-white/40 font-medium tracking-wider uppercase mb-2">Liga</span>
         <Image
           src={leagueLogo}
           alt={leagueName}
-          width={48}
-          height={48}
-          className="object-contain"
+          width={44}
+          height={44}
+          className="object-contain opacity-80"
           unoptimized
         />
       </div>
@@ -189,10 +189,10 @@ function VerticalLabel({ text, side }: { text: string; side: "left" | "right" })
   return (
     <div className={cn(
       "absolute top-1/2 -translate-y-1/2 flex items-center justify-center",
-      side === "left" ? "left-0" : "right-0"
+      side === "left" ? "left-2" : "right-2"
     )}>
       <span 
-        className="text-5xl font-black text-white/10 tracking-[0.5em] uppercase"
+        className="text-4xl md:text-5xl font-black text-white/[0.06] tracking-[0.4em] uppercase select-none"
         style={{ 
           writingMode: "vertical-rl",
           textOrientation: "mixed",
@@ -368,22 +368,22 @@ export default function PartidaPage() {
         </div>
 
         {/* Country/League Selector - Top */}
-        <div className="relative flex items-center justify-center gap-4 py-4 border-b border-white/[0.04] bg-black/30">
+        <div className="relative flex items-center justify-center gap-4 py-3.5 border-b border-white/[0.04] bg-black/40">
           <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <ChevronLeft className="h-4 w-4 text-white/60" />
+            <ChevronLeft className="h-4 w-4 text-white/50" />
           </button>
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🇧🇷</span>
-            <span className="text-white font-semibold">Brasil</span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🇧🇷</span>
+            <span className="text-white font-medium text-sm tracking-wide">Brasil</span>
           </div>
           <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <ChevronRight className="h-4 w-4 text-white/60" />
+            <ChevronRight className="h-4 w-4 text-white/50" />
           </button>
 
           {/* Flag on right */}
           <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <span className="text-white/40 text-sm">Brasil</span>
-            <span className="text-2xl">🇧🇷</span>
+            <span className="text-white/30 text-xs font-medium tracking-wide">Brasil</span>
+            <span className="text-xl">🇧🇷</span>
           </div>
         </div>
 
@@ -402,14 +402,14 @@ export default function PartidaPage() {
           />
 
           {/* Center Options */}
-          <div className="flex flex-col items-center justify-center px-8 gap-6 min-w-[200px]">
+          <div className="flex flex-col items-center justify-center px-6 md:px-8 gap-5 min-w-[180px]">
             {/* Advantage Options */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 text-white/40">
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex items-center gap-2 text-white/50">
                 <Settings2 className="h-4 w-4" />
-                <span className="text-sm">Nao</span>
+                <span className="text-sm font-medium">Nao</span>
               </div>
-              <span className="text-[10px] text-white/30">Opcoes de vantagem</span>
+              <span className="text-[9px] text-white/30 tracking-wide uppercase">Opcoes de vantagem</span>
             </div>
 
             {/* Live Phase Toggle */}
@@ -417,17 +417,17 @@ export default function PartidaPage() {
               <button 
                 onClick={() => setLivePhase(!livePhase)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg transition-all",
+                  "flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium",
                   livePhase 
-                    ? "bg-green-500/20 border border-green-500/50 text-green-400" 
+                    ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400" 
                     : "bg-white/5 border border-white/10 text-white/40"
                 )}
               >
                 {livePhase && <Check className="h-4 w-4" />}
                 <Zap className="h-4 w-4" />
               </button>
-              <span className="text-sm text-white/60">Fase ao vivo</span>
-              <span className="text-xs text-white/40">{livePhase ? "Sim" : "Nao"}</span>
+              <span className="text-xs text-white/60 font-medium">Fase ao vivo</span>
+              <span className="text-[10px] text-white/40">{livePhase ? "Sim" : "Nao"}</span>
             </div>
           </div>
 
@@ -445,21 +445,21 @@ export default function PartidaPage() {
         </div>
 
         {/* Bottom Action Bar */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent py-4 px-6">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent py-5 px-6">
           <div className="flex items-center justify-between">
             {/* Left Actions */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-5">
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-blue-500 text-white rounded px-2 py-1 font-bold">X</span>
-                <span className="text-white/60 text-sm">Selecionar</span>
+                <span className="text-[10px] bg-blue-500 text-white rounded px-1.5 py-0.5 font-bold">X</span>
+                <span className="text-white/50 text-xs font-medium">Selecionar</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold">O</span>
-                <span className="text-white/60 text-sm">Voltar</span>
+                <span className="text-[10px] bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold">O</span>
+                <span className="text-white/50 text-xs font-medium">Voltar</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-white/20 text-white rounded px-2 py-1 font-bold">R3</span>
-                <span className="text-white/60 text-sm">Aleatorio</span>
+                <span className="text-[10px] bg-white/20 text-white rounded px-1.5 py-0.5 font-bold">R3</span>
+                <span className="text-white/50 text-xs font-medium">Aleatorio</span>
               </div>
             </div>
 
@@ -467,15 +467,15 @@ export default function PartidaPage() {
             <Link href="/partida/ao-vivo">
               <Button
                 size="lg"
-                className="h-12 px-8 text-base font-black tracking-wider bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:from-[#00c8ff] hover:to-[#22e766]"
+                className="h-11 px-8 text-sm font-bold tracking-wide bg-[#00ffc8] text-black hover:bg-[#00e6b5] transition-colors shadow-lg shadow-[#00ffc8]/20"
               >
-                <Play className="mr-2 h-5 w-5 fill-current" />
+                <Play className="mr-2 h-4 w-4 fill-current" />
                 INICIAR PARTIDA
               </Button>
             </Link>
 
             {/* Right - Team Badge */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <TeamCrest team={userTeam} size="sm" />
             </div>
           </div>
