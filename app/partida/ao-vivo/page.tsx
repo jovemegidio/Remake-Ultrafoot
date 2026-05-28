@@ -5,9 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ChevronLeft,
   Activity,
-  Cloud,
   Users,
-  CalendarDays,
   Goal,
   Target as TargetIcon,
   Flag,
@@ -20,8 +18,15 @@ import {
   Pause,
   FastForward,
   RotateCcw,
+  BarChart3,
+  Heart,
+  Star,
+  Settings2,
+  ArrowDownUp,
+  Triangle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -46,7 +51,7 @@ import { MatchResultModal } from "@/components/match/match-result-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mock players - usados como elenco padrão quando não houver squad real
+// Mock players - usados como elenco padrao quando nao houver squad real
 // ─────────────────────────────────────────────────────────────────────────────
 
 const buildSquad = (offset = 0, prefix = ""): MatchPlayer[] => [
@@ -112,12 +117,11 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
   return { starters, bench }
 }
 
-// Converte jogadores do game-engine (com atributos reais) para MatchPlayer
+// Converte jogadores do game-engine para MatchPlayer
 function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
   const available = players
     .filter(p => !p.injury && !p.calledUp)
     .sort((a, b) => {
-      // Manual starters come first; fall back to position order
       const aStarter = a.isStarter === true ? 0 : a.isStarter === false ? 2 : 1
       const bStarter = b.isStarter === true ? 0 : b.isStarter === false ? 2 : 1
       if (aStarter !== bStarter) return aStarter - bStarter
@@ -157,163 +161,201 @@ function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { sta
   return { starters, bench }
 }
 
-// Deriva formação tática a partir do elenco titular
-function deriveFormation(players: MatchPlayer[]): string {
-  const def = players.filter(p => ["ZAG", "LD", "LE", "ZD", "ZE"].includes(p.position)).length
-  const mid = players.filter(p => ["VOL", "MEI", "MCO", "MC"].includes(p.position)).length
-  const att = players.filter(p => ["ATA", "PE", "PD", "SA"].includes(p.position)).length
-  if (def > 0 || mid > 0 || att > 0) return `${def}-${mid}-${att}`
-  return "4-3-3"
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Velocidades
+// Velocidades de simulacao
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SPEEDS: { id: MatchSpeed; label: string; sublabel: string }[] = [
-  { id: "slow", label: "LENTO", sublabel: "1x" },
-  { id: "normal", label: "NORMAL", sublabel: "2x" },
-  { id: "fast", label: "RÁPIDO", sublabel: "5x" },
-  { id: "ultra", label: "ULTRA", sublabel: "12x" },
-  { id: "hyper", label: "HIPER", sublabel: "30x" },
+  { id: "slow", label: "0.5x", sublabel: "Lento" },
+  { id: "normal", label: "1x", sublabel: "Normal" },
+  { id: "fast", label: "2x", sublabel: "Rapido" },
+  { id: "ultra", label: "5x", sublabel: "Ultra" },
+  { id: "hyper", label: "10x", sublabel: "Hyper" },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Página principal
+// Utilitarios
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function MatchCenterPage() {
-  const { team: userTeam, hydrated } = useUserTeam()
-  const { registerUserMatchResult, advanceWeek } = useGameManager()
-  const { squadPlayers } = useGameEngine()
+function ratioFor(home: number, away: number) {
+  if (home + away === 0) return 50
+  return Math.round((home / (home + away)) * 100)
+}
 
-  // Flag para evitar duplo registro do resultado
+function deriveFormation(squad: MatchPlayer[]): string {
+  const def = squad.filter(p => ["LD", "LE", "ZAG"].includes(p.position)).length
+  const mid = squad.filter(p => ["VOL", "MEI"].includes(p.position)).length
+  const att = squad.filter(p => ["PE", "PD", "ATA", "SA"].includes(p.position)).length
+  return `${def}-${mid}-${att}`
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Componentes auxiliares - Estilo EA FC
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Stat lateral grande - estilo EA FC
+function BigStat({ label, value, side }: { label: string; value: string | number; side: "left" | "right" }) {
+  return (
+    <div className={cn("flex flex-col", side === "left" ? "items-start" : "items-end")}>
+      <span className="text-[#00ffc8] text-xs font-medium tracking-wider uppercase mb-1">{label}</span>
+      <span className="text-white text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums leading-none">{value}</span>
+    </div>
+  )
+}
+
+// Evento de substituicao na timeline
+function SubstitutionEvent({ 
+  minute, 
+  playerOut, 
+  playerIn, 
+  side 
+}: { 
+  minute: number
+  playerOut: string
+  playerIn: string
+  side: "home" | "away"
+}) {
+  const isHome = side === "home"
+  return (
+    <div className={cn("flex items-center gap-3", isHome ? "flex-row" : "flex-row-reverse")}>
+      <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+        <span className="text-white/90 text-sm font-medium">{playerOut}</span>
+        <span className="text-white/50 text-xs">{playerIn}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <ArrowDownUp className="w-3.5 h-3.5 text-[#00ffc8]" />
+      </div>
+      <span className="text-white/60 text-sm font-bold tabular-nums">{minute}&apos;</span>
+    </div>
+  )
+}
+
+// Tab button estilo EA FC
+function TabButton({ 
+  label, 
+  active, 
+  onClick, 
+  shortcut 
+}: { 
+  label: string
+  active?: boolean
+  onClick?: () => void
+  shortcut?: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-4 py-2 text-sm font-medium transition-colors relative",
+        active 
+          ? "text-white" 
+          : "text-white/40 hover:text-white/60"
+      )}
+    >
+      {shortcut && (
+        <span className="absolute -top-1 left-1/2 -translate-x-1/2 text-[8px] bg-white/10 px-1.5 py-0.5 rounded text-white/50">
+          {shortcut}
+        </span>
+      )}
+      {label}
+      {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+    </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Componente Principal
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function PartidaAoVivoPage() {
+  const { data: userTeamId } = useUserTeam()
+  const { registerUserMatchResult, advanceWeek } = useGameManager()
+  const { players: enginePlayers } = useGameEngine()
   const resultRegistered = useRef(false)
 
-  // Carrega contexto da partida
-  const [matchCtx, setMatchCtx] = useState(() => loadMatchContext())
+  // Hydration guard
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
+
+  // Carrega contexto da partida salva ou usa valores padrao
+  const matchCtx = useMemo(() => loadMatchContext(), [])
+
+  // Determina times a partir do contexto salvo
+  const homeTeam = useMemo(() => {
+    if (matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
+    return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
+  }, [matchCtx.homeShort, userTeamId])
+
+  const awayTeam = useMemo(() => {
+    if (matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
+    return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
+  }, [matchCtx.awayShort, homeTeam.curto])
+
+  // Determina qual lado e o do usuario
+  const userTeam = useMemo(() => {
+    return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
+  }, [userTeamId])
+  
+  const isHome = homeTeam.curto === userTeam.curto
+  const userSide: "home" | "away" = isHome ? "home" : "away"
+
+  // Squads
+  const [homeSquad, setHomeSquad] = useState<MatchPlayer[]>([])
+  const [awaySquad, setAwaySquad] = useState<MatchPlayer[]>([])
+  const [homeBench, setHomeBench] = useState<MatchPlayer[]>([])
+  const [awayBench, setAwayBench] = useState<MatchPlayer[]>([])
+
   useEffect(() => {
-    setMatchCtx(loadMatchContext())
-  }, [])
-
-  // Determina mandante e visitante a partir do contexto
-  const homeTeam: Team = useMemo(() => {
-    return getTeamByShort(matchCtx.homeShort) || userTeam || serieATeams[0]
-  }, [matchCtx.homeShort, userTeam])
-
-  const awayTeam: Team = useMemo(() => {
-    const t = getTeamByShort(matchCtx.awayShort)
-    if (t) return t
-    // Pega outro time qualquer diferente do home
-    return serieATeams.find(t => t.curto !== homeTeam.curto) || serieATeams[1]
-  }, [matchCtx.awayShort, homeTeam])
-
-  // O jogador está como mandante ou visitante?
-  const userSide: "home" | "away" = userTeam.curto === awayTeam.curto ? "away" : "home"
-
-  // Público do estádio — calculado uma única vez para evitar flicker por re-render
-  const attendance = useMemo(
-    () => Math.floor(homeTeam.estadio_cap * (0.6 + Math.random() * 0.35)),
-    [homeTeam.estadio_cap]
-  )
-
-  // Partículas de gol — posições fixas para evitar reposicionamento a cada render
-  const goalParticles = useMemo(
-    () =>
-      Array.from({ length: 20 }, (_, i) => ({
-        id: i,
-        left: 10 + Math.random() * 80,
-        top: 10 + Math.random() * 80,
-        delay: Math.random() * 0.5,
-      })),
-    []
-  )
-
-  // Inicia polling do gamepad para que eventos sejam despachados via window
-  useGamepad()
-
-  // Squads — inicializados com mocks, substituídos por dados reais via useEffect
-  const [homeSquad, setHomeSquad] = useState<MatchPlayer[]>(() => buildSquad(0, ""))
-  const [awaySquad, setAwaySquad] = useState<MatchPlayer[]>(() => buildSquad(200, ""))
-  const [homeBench, setHomeBench] = useState<MatchPlayer[]>(() => buildBench(100, ""))
-  const [awayBench, setAwayBench] = useState<MatchPlayer[]>(() => buildBench(300, ""))
-
-  // Carrega jogadores reais quando os times forem resolvidos
-  // Para o time do usuario: usa o elenco real do game-engine (reflete transfers, treinos e lesoes)
-  // Para o adversario: usa os dados de seed do banco de jogadores
-  useEffect(() => {
-    const isUserHome = userTeam.curto === homeTeam.curto
-
-    if (isUserHome && squadPlayers.length >= 11) {
-      const { starters, bench } = enginePlayersToMatchSquad(squadPlayers, 0)
-      setHomeSquad(starters)
-      setHomeBench(bench)
+    // Tenta usar game-engine primeiro
+    if (enginePlayers && enginePlayers.length > 0) {
+      const { starters, bench } = enginePlayersToMatchSquad(enginePlayers, 0)
+      if (isHome) {
+        setHomeSquad(starters)
+        setHomeBench(bench)
+      } else {
+        setAwaySquad(starters)
+        setAwayBench(bench)
+      }
     } else {
-      const homePlayers = getPlayersForTeam(homeTeam)
+      // Fallback para players-data
+      const homePlayers = getPlayersForTeam(homeTeam.curto)
+      const awayPlayers = getPlayersForTeam(awayTeam.curto)
       if (homePlayers.length >= 11) {
         const { starters, bench } = playersToMatchSquad(homePlayers, 0)
         setHomeSquad(starters)
         setHomeBench(bench)
+      } else {
+        setHomeSquad(buildSquad(0, "H_"))
+        setHomeBench(buildBench(100, "H_"))
       }
-    }
-
-    const isUserAway = userTeam.curto === awayTeam.curto
-    if (isUserAway && squadPlayers.length >= 11) {
-      const { starters, bench } = enginePlayersToMatchSquad(squadPlayers, 200)
-      setAwaySquad(starters)
-      setAwayBench(bench)
-    } else {
-      const awayPlayers = getPlayersForTeam(awayTeam)
       if (awayPlayers.length >= 11) {
         const { starters, bench } = playersToMatchSquad(awayPlayers, 200)
         setAwaySquad(starters)
         setAwayBench(bench)
+      } else {
+        setAwaySquad(buildSquad(200, "A_"))
+        setAwayBench(buildBench(300, "A_"))
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [homeTeam.nome, awayTeam.nome, userTeam.curto, squadPlayers])
+  }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome])
 
-  // Configuração da simulação
+  // Config da simulacao
   const config = useMemo(() => ({
     homeTeam,
     awayTeam,
-    homeRating: Math.round(homeSquad.reduce((s, p) => s + p.rating, 0) / homeSquad.length),
-    awayRating: Math.round(awaySquad.reduce((s, p) => s + p.rating, 0) / awaySquad.length),
-    durationMinutes: matchCtx.duration,
-    weatherFactor: matchCtx.weather === "rain" ? 0.9 : 1,
-    homeSquad: homeSquad.map(p => ({
-      nome: p.name,
-      pos: p.position,
-      rating: p.rating,
-      shooting: p.shooting,
-      passing: p.passing,
-      dribbling: p.dribbling,
-      defending: p.defending,
-      physical: p.physical,
-      pace: p.pace,
-      stamina: p.stamina,
-    })),
-    awaySquad: awaySquad.map(p => ({
-      nome: p.name,
-      pos: p.position,
-      rating: p.rating,
-      shooting: p.shooting,
-      passing: p.passing,
-      dribbling: p.dribbling,
-      defending: p.defending,
-      physical: p.physical,
-      pace: p.pace,
-      stamina: p.stamina,
-    })),
+    homeSquad,
+    awaySquad,
+    duration: matchCtx.duration,
+    weather: matchCtx.weather,
   }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, matchCtx.weather])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
 
-  // Discord Rich Presence — mostra time da casa x visitante + placar no Discord
+  // Discord Rich Presence
   useDiscordRPC(state, homeTeam, awayTeam)
 
-  // Determina contexto atual da partida
+  // Contexto atual
   const gameContext: GameContext = state.phase === "pre" 
     ? "match_preview" 
     : state.phase === "fulltime" 
@@ -322,11 +364,14 @@ export default function MatchCenterPage() {
         ? "match_live" 
         : "match_paused"
 
-  // Modal substituição - declarado antes dos useEffects que o utilizam
+  // Modal substituicao
   const [showSubModal, setShowSubModal] = useState(false)
   const [subsRemaining, setSubsRemaining] = useState(5)
 
-  // Handler de teclado (ESC para pausar)
+  // Tab ativa
+  const [activeTab, setActiveTab] = useState<"fitness" | "ratings" | "stats" | "gameplan">("stats")
+
+  // Handler de teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -340,17 +385,13 @@ export default function MatchCenterPage() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isRunning, pause, resume, state.phase])
 
-  // Handler de gamepad com mapeamento completo de botoes
+  // Handler de gamepad
   useEffect(() => {
     const handleGamepadButton = (e: CustomEvent<{ button: GamepadButtonName }>) => {
       const button = e.detail.button
       const action = getActionForButton(button, gameContext)
-      
       if (!action) return
-
-      // Executa acao baseada no mapeamento
       switch (action) {
-        // Controle de partida
         case "pause_resume":
           if (state.phase !== "pre" && state.phase !== "fulltime") {
             if (isRunning) pause()
@@ -363,23 +404,10 @@ export default function MatchCenterPage() {
           else if (speed === "fast") setSpeed("ultra")
           else if (speed === "ultra") setSpeed("hyper")
           break
-        case "slow_motion":
-          if (speed === "hyper") setSpeed("ultra")
-          else if (speed === "ultra") setSpeed("fast")
-          else if (speed === "fast") setSpeed("normal")
-          else if (speed === "normal") setSpeed("slow")
-          break
-        case "skip_to_result":
-          fastForward()
-          break
         case "substitute":
           if (subsRemaining > 0 && state.phase !== "fulltime") {
             setShowSubModal(true)
           }
-          break
-        case "show_stats":
-          // Scroll para estatisticas
-          document.querySelector('[data-section="stats"]')?.scrollIntoView({ behavior: "smooth" })
           break
         case "confirm":
           if (state.phase === "pre") start()
@@ -389,19 +417,17 @@ export default function MatchCenterPage() {
           break
       }
     }
-
-    // Escuta eventos de botao do gamepad
     window.addEventListener("gamepad:button" as any, handleGamepadButton)
     return () => window.removeEventListener("gamepad:button" as any, handleGamepadButton)
-  }, [gameContext, isRunning, pause, resume, speed, setSpeed, fastForward, start, subsRemaining, state.phase, showSubModal])
+  }, [gameContext, isRunning, pause, resume, speed, setSpeed, start, subsRemaining, state.phase, showSubModal])
 
   // Modal de fim
   const [showResult, setShowResult] = useState(false)
   const [showPressConference, setShowPressConference] = useState(false)
   const [isLeagueChampion, setIsLeagueChampion] = useState(false)
+
   useEffect(() => {
     if (state.phase === "fulltime" && !showResult) {
-      // Registra o resultado no jogo uma unica vez
       if (!resultRegistered.current) {
         resultRegistered.current = true
         const events = state.events
@@ -432,32 +458,19 @@ export default function MatchCenterPage() {
           }
         }).catch(() => {})
       }
-      // Mostra após pequena pausa para ver placar final
       const t = setTimeout(() => setShowResult(true), 1200)
       return () => clearTimeout(t)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, showResult])
+  }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek])
 
-  // Stamina drena por minuto de jogo (independente da velocidade de simulação)
-  // 100 stamina / 90 minutos = ~1.1 por minuto para esgotar totalmente
+  // Stamina drena por minuto
   useEffect(() => {
     if (state.phase !== "first" && state.phase !== "second") return
-    setHomeSquad(prev =>
-      prev.map(p => ({
-        ...p,
-        stamina: Math.max(0, p.stamina - 1.1),
-      }))
-    )
-    setAwaySquad(prev =>
-      prev.map(p => ({
-        ...p,
-        stamina: Math.max(0, p.stamina - 1.1),
-      }))
-    )
+    setHomeSquad(prev => prev.map(p => ({ ...p, stamina: Math.max(0, p.stamina - 1.1) })))
+    setAwaySquad(prev => prev.map(p => ({ ...p, stamina: Math.max(0, p.stamina - 1.1) })))
   }, [state.minute, state.phase])
 
-  // Animação de gol/cartão (durante 2.5s)
+  // Animacao de gol/cartao
   const [animation, setAnimation] = useState<{ type: "goal" | "card"; side: "home" | "away"; cardColor?: "yellow" | "red" } | null>(null)
   useEffect(() => {
     if (!state.flash) return
@@ -473,7 +486,7 @@ export default function MatchCenterPage() {
     }
   }, [state.flash])
 
-  // Substituição
+  // Substituicao
   const userStarters = userSide === "home" ? homeSquad : awaySquad
   const userBench = userSide === "home" ? homeBench : awayBench
   const userTeamForSub = userSide === "home" ? homeTeam : awayTeam
@@ -488,846 +501,324 @@ export default function MatchCenterPage() {
     setShowSubModal(false)
   }
 
-  // Selected pitch player
-  const [selectedPitchPlayer, setSelectedPitchPlayer] = useState<number | null>(null)
+  // Filtra eventos de substituicao
+  const substitutionEvents = state.events.filter(e => e.type === "substitution")
 
   if (!hydrated) {
     return (
-      <div className="h-screen pl-16 bg-[#050508] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando partida...
       </div>
     )
   }
 
-  // Durante a partida ao vivo, ocultar a sidebar para evitar reinicio
   const isMatchInProgress = state.phase === "first" || state.phase === "second" || state.phase === "halftime"
 
+  // Acrescimos
+  const extraTime = state.minute > 45 && state.minute <= 47 
+    ? `+${state.minute - 45}` 
+    : state.minute > 90 
+      ? `+${state.minute - 90}` 
+      : null
+
   return (
-    <div className={cn("h-screen bg-[#050508] flex flex-col overflow-hidden", !isMatchInProgress && "pl-16")}>
-      {/* Sidebar oculta durante a partida */}
-      {!isMatchInProgress && <GameSidebar />}
+    <div className={cn(
+      "min-h-screen flex flex-col",
+      "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]"
+    )}>
 
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.04] bg-[#050508]/95 backdrop-blur-xl px-6">
-        <div className="flex items-center gap-3">
-          {/* Botao de voltar oculto durante a partida para evitar saida acidental */}
-          {!isMatchInProgress && (
-            <Link
-              href="/partida"
-              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white/5 transition text-white/60 hover:text-white"
-              aria-label="Voltar"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Link>
-          )}
-          <h1 className="text-xl font-semibold text-white">Partida</h1>
-          {state.phase !== "fulltime" && state.phase !== "pre" && (
-            <span className="ml-2 flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-[10px] font-medium tracking-wider text-red-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-              AO VIVO
-            </span>
-          )}
-          {state.phase === "fulltime" && (
-            <span className="ml-2 px-2.5 py-1 rounded-full bg-white/10 text-[10px] font-medium tracking-wider text-white/70">
-              ENCERRADA
-            </span>
-          )}
-          <span className="ml-2 px-2 py-1 rounded bg-white/10 text-xs font-bold text-white tabular-nums">
-            {state.minute}&apos;
-          </span>
+      {/* Conteudo Principal - Estilo EA FC */}
+      <div className="flex-1 flex flex-col relative overflow-y-auto">
+        
+        {/* Liga Badge - Topo Central */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10">
+            <span className="text-white text-sm font-bold">{matchCtx.competition || "Brasileirao"}</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {state.phase === "pre" && (
-            <Button
-              size="sm"
-              onClick={start}
-              className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold tracking-wider"
-            >
-              <Play className="mr-1 h-3.5 w-3.5 fill-current" />
-              INICIAR
-            </Button>
-          )}
-          {(state.phase === "first" || state.phase === "second" || state.phase === "halftime") && (
-            <>
-              {isRunning ? (
-                <Button size="sm" onClick={pause} variant="outline" className="text-xs border-white/10 bg-transparent text-white/80 hover:bg-white/5">
-                  <Pause className="mr-1 h-3.5 w-3.5 fill-current" />
-                  PAUSAR
-                </Button>
-              ) : (
-                <Button size="sm" onClick={resume} className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold">
-                  <Play className="mr-1 h-3.5 w-3.5 fill-current" />
-                  CONTINUAR
-                </Button>
-              )}
-              <Button size="sm" variant="outline" onClick={fastForward} className="text-xs border-white/10 bg-transparent text-white/80 hover:bg-white/5">
-                <FastForward className="mr-1 h-3.5 w-3.5" />
-                FIM
-              </Button>
-            </>
-          )}
-          {state.phase === "fulltime" && (
-            <Button size="sm" variant="outline" onClick={reset} className="text-xs border-white/10 bg-transparent text-white/80 hover:bg-white/5">
-              <RotateCcw className="mr-1 h-3.5 w-3.5" />
-              REJOGAR
-            </Button>
-          )}
-        </div>
-      </header>
+        {/* Header do Placar */}
+        <header className="relative z-10 pt-16 pb-4 px-4 sm:px-8">
+          <div className="flex items-center justify-center gap-4 sm:gap-8">
+            {/* Time Casa */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="text-white text-lg sm:text-xl font-semibold">{homeTeam.nome}</span>
+              <div className="w-2 h-2 rounded-full bg-white/20" />
+              <TeamCrest team={homeTeam} size="lg" className="w-12 h-12 sm:w-16 sm:h-16" />
+            </div>
 
-      <main className="space-y-4 p-4">
-        {/* Animacao de gol - Estilo Broadcast Profissional */}
-        {animation?.type === "goal" && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
-            {/* Flash branco inicial */}
-            <div className="absolute inset-0 bg-white animate-goal-flash" />
-            
-            {/* Background escuro com vinheta */}
-            <div 
-              className="absolute inset-0 animate-goal-bg-in"
-              style={{
-                background: `
-                  radial-gradient(ellipse 80% 50% at 50% 50%, transparent 0%, rgba(0,0,0,0.98) 100%),
-                  linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)
-                `
-              }}
-            />
-            
-            {/* Linhas horizontais estilo TV */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)',
-            }} />
-
-            {/* Barra superior - Minuto */}
-            <div className="absolute top-8 left-1/2 -translate-x-1/2 animate-goal-slide-down">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm border border-white/10">
-                <span className="text-xs font-medium text-white/60 uppercase tracking-wider">Gol aos</span>
-                <span className="text-sm font-bold text-white tabular-nums">{state.minute}&apos;</span>
+            {/* Placar Central */}
+            <div className="flex flex-col items-center">
+              <div className="flex items-baseline gap-3 sm:gap-4">
+                <span className="text-white text-5xl sm:text-7xl font-black tabular-nums">{state.home.goals}</span>
+                <span className="text-white/30 text-3xl sm:text-5xl font-light">:</span>
+                <span className="text-white text-5xl sm:text-7xl font-black tabular-nums">{state.away.goals}</span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-white/80 text-sm font-bold tabular-nums">
+                  {state.minute > 90 ? "90" : state.minute}&apos;00
+                </span>
+                {extraTime && (
+                  <span className="text-[#00ffc8] text-sm font-bold">{extraTime}&apos;</span>
+                )}
               </div>
             </div>
 
-            {/* Container central */}
-            <div className="relative flex flex-col items-center z-10">
+            {/* Time Fora */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <TeamCrest team={awayTeam} size="lg" className="w-12 h-12 sm:w-16 sm:h-16" />
+              <div className="w-2 h-2 rounded-full bg-white/20" />
+              <span className="text-white text-lg sm:text-xl font-semibold">{awayTeam.nome}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Area Principal - 3 Colunas */}
+        <div className="flex-1 flex px-4 sm:px-8 pb-4 gap-4 sm:gap-8 min-h-0">
+          
+          {/* Coluna Esquerda - Stats Casa */}
+          <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
+            <BigStat label="Possession %" value={state.home.possession ?? 50} side="left" />
+            <BigStat label="Shots" value={state.home.shots ?? 0} side="left" />
+            <BigStat label="Chances" value={state.home.shotsOnTarget ?? 0} side="left" />
+          </div>
+
+          {/* Coluna Central - Timeline de Eventos */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 rounded-2xl bg-[#1a2a2a]/60 backdrop-blur-sm border border-white/[0.06] overflow-hidden flex flex-col">
               
-              {/* Card principal do gol */}
-              <div className="relative animate-goal-card-in">
-                {/* Glow do time */}
-                <div 
-                  className="absolute -inset-8 rounded-3xl blur-3xl opacity-30 animate-pulse"
-                  style={{ backgroundColor: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
-                />
-                
-                {/* Card */}
-                <div className="relative bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-2xl border border-white/10 overflow-hidden">
-                  {/* Barra colorida do time no topo */}
-                  <div 
-                    className="h-1.5 w-full"
-                    style={{ backgroundColor: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
-                  />
+              {/* Timeline de Substituicoes */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                <div className="relative">
+                  {/* Linha central vertical */}
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/10" />
                   
-                  <div className="px-12 py-8 flex flex-col items-center gap-5">
-                    {/* Escudo */}
-                    <div className="relative">
-                      <div 
-                        className="absolute inset-0 blur-2xl opacity-40 scale-150"
-                        style={{ backgroundColor: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
-                      />
-                      <div className="relative animate-goal-badge-bounce">
-                        <TeamCrest team={animation.side === "home" ? homeTeam : awayTeam} size="xl" />
-                      </div>
-                    </div>
-                    
-                    {/* Nome do time */}
-                    <div className="text-center">
-                      <div className="text-2xl sm:text-3xl font-bold text-white tracking-wide uppercase">
-                        {animation.side === "home" ? homeTeam.nome : awayTeam.nome}
-                      </div>
-                    </div>
-                    
-                    {/* Placar */}
-                    <div className="flex items-center gap-6 px-8 py-4 rounded-xl bg-black/40 border border-white/[0.04]">
-                      <div className="flex flex-col items-center gap-1">
-                        <TeamCrest team={homeTeam} size="sm" />
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">{homeTeam.curto}</span>
-                      </div>
-                      <div className="flex items-baseline gap-3">
-                        <span 
-                          className={cn(
-                            "text-5xl sm:text-6xl font-black tabular-nums transition-all",
-                            animation.side === "home" ? "text-white animate-goal-score-pop" : "text-white/60"
-                          )}
-                        >
-                          {state.home.goals}
-                        </span>
-                        <span className="text-2xl text-white/20 font-light">-</span>
-                        <span
-                          className={cn(
-                            "text-5xl sm:text-6xl font-black tabular-nums transition-all",
-                            animation.side === "away" ? "text-white animate-goal-score-pop" : "text-white/60"
-                          )}
-                        >
-                          {state.away.goals}
+                  {/* Eventos */}
+                  <div className="space-y-4">
+                    {substitutionEvents.length > 0 ? (
+                      substitutionEvents.map((event, i) => (
+                        <SubstitutionEvent
+                          key={i}
+                          minute={event.minute}
+                          playerOut={event.playerOut || "Jogador"}
+                          playerIn={event.playerIn || "Substituto"}
+                          side={event.side}
+                        />
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        {/* Marcador de tempo do intervalo */}
+                        <div className="text-white/40 text-sm font-bold mb-4 tabular-nums">45:00</div>
+                        
+                        {/* Icone de apito */}
+                        <div className="mb-4">
+                          <svg className="w-10 h-10 text-white/20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                          </svg>
+                        </div>
+                        
+                        <span className="text-white/50 text-lg font-medium uppercase tracking-wider">
+                          NO EVENTS
                         </span>
                       </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <TeamCrest team={awayTeam} size="sm" />
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">{awayTeam.curto}</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Texto GOOOOL abaixo do card */}
-              <div className="mt-6 animate-goal-text-slide">
-                <div 
-                  className="text-6xl sm:text-8xl font-black tracking-tighter uppercase"
-                  style={{ 
-                    color: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1,
-                    textShadow: `0 0 40px ${animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1}60`
-                  }}
-                >
-                  GOOOL!
+              {/* Tabs no rodape do card */}
+              <div className="border-t border-white/[0.06] bg-[#0d1a1a]/50">
+                <div className="flex items-center justify-center gap-1 px-4 py-2">
+                  <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 mr-2">L1</span>
+                  <TabButton label="Fitness" active={activeTab === "fitness"} onClick={() => setActiveTab("fitness")} />
+                  <TabButton label="Ratings" active={activeTab === "ratings"} onClick={() => setActiveTab("ratings")} />
+                  <TabButton label="Stats" active={activeTab === "stats"} onClick={() => setActiveTab("stats")} />
+                  <TabButton label="Gameplan" active={activeTab === "gameplan"} onClick={() => setActiveTab("gameplan")} />
+                  <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 ml-2">R1</span>
                 </div>
               </div>
             </div>
 
-            {/* Particulas sutis */}
-            <div className="absolute inset-0 overflow-hidden">
-              {goalParticles.map(p => (
-                <div
-                  key={p.id}
-                  className="absolute w-1 h-1 rounded-full animate-goal-particle"
-                  style={{
-                    left: `${p.left}%`,
-                    top: `${p.top}%`,
-                    backgroundColor: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1,
-                    animationDelay: `${p.delay}s`,
-                    opacity: 0.6,
-                  }}
-                />
+            {/* Stats mobile - abaixo do card central */}
+            <div className="lg:hidden grid grid-cols-3 gap-4 mt-4">
+              <div className="text-center">
+                <span className="text-[#00ffc8] text-[10px] font-medium uppercase">Posse</span>
+                <div className="flex justify-between items-end mt-1">
+                  <span className="text-white text-2xl font-black">{state.home.possession ?? 50}</span>
+                  <span className="text-white/30 text-xs">%</span>
+                  <span className="text-white text-2xl font-black">{state.away.possession ?? 50}</span>
+                </div>
+              </div>
+              <div className="text-center">
+                <span className="text-[#00ffc8] text-[10px] font-medium uppercase">Chutes</span>
+                <div className="flex justify-between items-end mt-1">
+                  <span className="text-white text-2xl font-black">{state.home.shots}</span>
+                  <span className="text-white/30 text-xs">-</span>
+                  <span className="text-white text-2xl font-black">{state.away.shots}</span>
+                </div>
+              </div>
+              <div className="text-center">
+                <span className="text-[#00ffc8] text-[10px] font-medium uppercase">No Alvo</span>
+                <div className="flex justify-between items-end mt-1">
+                  <span className="text-white text-2xl font-black">{state.home.shotsOnTarget}</span>
+                  <span className="text-white/30 text-xs">-</span>
+                  <span className="text-white text-2xl font-black">{state.away.shotsOnTarget}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna Direita - Stats Fora */}
+          <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
+            <BigStat label="Possession %" value={state.away.possession ?? 50} side="right" />
+            <BigStat label="Shots" value={state.away.shots ?? 0} side="right" />
+            <BigStat label="Chances" value={state.away.shotsOnTarget ?? 0} side="right" />
+          </div>
+        </div>
+
+        {/* Barra de Acoes - Rodape */}
+        <div className="border-t border-white/[0.06] bg-[#0a1515]/80 backdrop-blur-sm px-4 sm:px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 sm:gap-6">
+              {/* Controles da partida */}
+              {state.phase === "pre" && (
+                <Button
+                  size="sm"
+                  onClick={start}
+                  className="text-xs bg-[#00ffc8] text-black hover:bg-[#00ffc8]/80 font-bold"
+                >
+                  <Play className="mr-1 h-3.5 w-3.5 fill-current" />
+                  INICIAR
+                </Button>
+              )}
+              {isMatchInProgress && (
+                <>
+                  {isRunning ? (
+                    <Button size="sm" onClick={pause} variant="ghost" className="text-xs text-white/70 hover:text-white hover:bg-white/10">
+                      <Pause className="mr-1 h-3.5 w-3.5" />
+                      PAUSAR
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={resume} className="text-xs bg-[#00ffc8] text-black hover:bg-[#00ffc8]/80 font-bold">
+                      <Play className="mr-1 h-3.5 w-3.5 fill-current" />
+                      CONTINUAR
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {/* Advance Button */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/50 font-bold">X</span>
+                <span className="text-white/60 text-sm">Advance</span>
+              </div>
+
+              {/* Post-Match Interview */}
+              {state.phase === "fulltime" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/50">
+                    <Triangle className="w-3 h-3 fill-current" />
+                  </span>
+                  <span className="text-white/60 text-sm">Post-Match Interview</span>
+                </div>
+              )}
+            </div>
+
+            {/* Velocidade */}
+            <div className="hidden sm:flex items-center gap-2">
+              {SPEEDS.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setSpeed(s.id)}
+                  className={cn(
+                    "px-2 py-1 text-[10px] font-bold rounded transition",
+                    speed === s.id
+                      ? "bg-[#00ffc8] text-black"
+                      : "bg-white/10 text-white/50 hover:bg-white/20"
+                  )}
+                >
+                  {s.label}
+                </button>
               ))}
             </div>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Animação de cartão */}
-        {animation?.type === "card" && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 bg-black/60 animate-fade-in" />
-            <div className="relative animate-scale-in">
-              <div
-                className={cn(
-                  "w-20 h-28 rounded-lg shadow-2xl",
-                  animation.cardColor === "yellow" ? "bg-yellow-400" : "bg-red-500",
-                )}
-              />
-              <div
-                className={cn(
-                  "absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-bold uppercase tracking-wider whitespace-nowrap",
-                  animation.cardColor === "yellow" ? "text-yellow-400" : "text-red-500",
-                )}
-              >
-                Cartão {animation.cardColor === "yellow" ? "Amarelo" : "Vermelho"}
-              </div>
+      {/* Animacao de Gol */}
+      {animation?.type === "goal" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 bg-black/80 animate-fade-in" />
+          <div className="relative z-10 flex flex-col items-center animate-scale-in">
+            <TeamCrest team={animation.side === "home" ? homeTeam : awayTeam} size="xl" />
+            <div 
+              className="mt-6 text-6xl sm:text-8xl font-black uppercase"
+              style={{ color: animation.side === "home" ? homeTeam.cor1 : awayTeam.cor1 }}
+            >
+              GOOOL!
+            </div>
+            <div className="mt-4 text-white text-2xl font-bold">
+              {state.home.goals} - {state.away.goals}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* PLACAR */}
-        <Scoreboard
+      {/* Animacao de Cartao */}
+      {animation?.type === "card" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-black/60 animate-fade-in" />
+          <div className="relative animate-scale-in">
+            <div
+              className={cn(
+                "w-20 h-28 rounded-lg shadow-2xl",
+                animation.cardColor === "yellow" ? "bg-yellow-400" : "bg-red-500",
+              )}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Substituicao */}
+      {showSubModal && (
+        <SubstitutionModal
+          team={userTeamForSub}
+          starters={userStarters}
+          bench={userBench}
+          subsRemaining={subsRemaining}
+          onClose={() => setShowSubModal(false)}
+          onConfirm={handleSub}
+        />
+      )}
+
+      {/* Modal de Resultado */}
+      {showResult && (
+        <MatchResultModal
           homeTeam={homeTeam}
           awayTeam={awayTeam}
-          state={state}
-          competition={matchCtx.competition}
-          weather={matchCtx.weather}
+          homeScore={state.home.goals}
+          awayScore={state.away.goals}
+          events={state.events}
+          userSide={userSide}
+          isLeagueChampion={isLeagueChampion}
+          onClose={() => {
+            setShowResult(false)
+            setShowPressConference(true)
+          }}
         />
+      )}
 
-        {/* CONTROLE DE VELOCIDADE */}
-        <section className="rounded-xl border border-white/[0.04] bg-[#0c0c10] p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Timer className="h-4 w-4 text-[#00ffc8]" />
-              <span className="text-xs font-medium text-white/60 tracking-wider">VELOCIDADE</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {SPEEDS.map(s => {
-                const active = speed === s.id
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => setSpeed(s.id)}
-                    className={cn(
-                      "rounded-md border px-3 py-1.5 text-[10px] font-bold tracking-wider transition flex flex-col items-center min-w-[64px]",
-                      active
-                        ? "border-[#00ffc8] bg-[#00ffc8] text-black"
-                        : "border-white/10 bg-[#1a1a1a] text-white/70 hover:border-white/20",
-                    )}
-                  >
-                    <span>{s.label}</span>
-                    <span className={cn("text-[9px] opacity-60", active && "opacity-80")}>{s.sublabel}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* STATS */}
-        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.04] bg-white/5 md:grid-cols-3 lg:grid-cols-6">
-          <StatCell
-            label="POSSE"
-            home={`${state.home.possession}%`}
-            away={`${state.away.possession}%`}
-            icon={Activity}
-            ratio={state.home.possession}
-            homeColor={homeTeam.cor1}
-            awayColor={awayTeam.cor1}
-          />
-          <StatCell
-            label="FINALIZAÇÕES"
-            home={state.home.shots}
-            away={state.away.shots}
-            icon={TargetIcon}
-            ratio={ratioFor(state.home.shots, state.away.shots)}
-            homeColor={homeTeam.cor1}
-            awayColor={awayTeam.cor1}
-          />
-          <StatCell
-            label="NO ALVO"
-            home={state.home.shotsOnTarget}
-            away={state.away.shotsOnTarget}
-            icon={TargetIcon}
-            ratio={ratioFor(state.home.shotsOnTarget, state.away.shotsOnTarget)}
-            homeColor={homeTeam.cor1}
-            awayColor={awayTeam.cor1}
-          />
-          <StatCell
-            label="xG"
-            home={state.home.xG.toFixed(2)}
-            away={state.away.xG.toFixed(2)}
-            icon={Sparkles}
-            ratio={ratioFor(state.home.xG, state.away.xG)}
-            homeColor={homeTeam.cor1}
-            awayColor={awayTeam.cor1}
-          />
-          <StatCell
-            label="ESCANTEIOS"
-            home={state.home.corners}
-            away={state.away.corners}
-            icon={Flag}
-            ratio={ratioFor(state.home.corners, state.away.corners)}
-            homeColor={homeTeam.cor1}
-            awayColor={awayTeam.cor1}
-          />
-          <StatCell
-            label="FALTAS"
-            home={state.home.fouls}
-            away={state.away.fouls}
-            icon={AlertTriangle}
-            ratio={ratioFor(state.home.fouls, state.away.fouls)}
-            homeColor={homeTeam.cor1}
-            awayColor={awayTeam.cor1}
-          />
-        </section>
-
-        {/* SUBSTITUIÇÃO BAR */}
-        <section className="rounded-xl border border-white/[0.04] bg-[#0c0c10] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setShowSubModal(true)}
-                disabled={subsRemaining === 0 || state.phase === "fulltime" || state.phase === "pre"}
-                className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-30 font-bold tracking-wider"
-              >
-                <ArrowLeftRight className="mr-2 h-4 w-4" />
-                SUBSTITUIR
-              </Button>
-              <span
-                className={cn(
-                  "rounded-full px-3 py-1 text-[10px] font-bold tracking-wider",
-                  subsRemaining > 2
-                    ? "bg-[#00ffc8]/15 text-[#00ffc8]"
-                    : subsRemaining > 0
-                      ? "bg-yellow-400/15 text-yellow-400"
-                      : "bg-red-400/15 text-red-400",
-                )}
-              >
-                {subsRemaining}/5 RESTANTES
-              </span>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-white/50">
-              <span>
-                Formação: <strong className="text-white">{deriveFormation(userSide === "home" ? homeSquad : awaySquad)}</strong>
-              </span>
-              <span>
-                Sua moral:{" "}
-                <strong className={(() => {
-                  const userGoals = userSide === "home" ? state.home.goals : state.away.goals
-                  const oppGoals = userSide === "home" ? state.away.goals : state.home.goals
-                  if (userGoals > oppGoals) return "text-[#00ffc8]"
-                  if (userGoals < oppGoals) return "text-red-400"
-                  return "text-yellow-400"
-                })()}>
-                  {(() => {
-                    const userGoals = userSide === "home" ? state.home.goals : state.away.goals
-                    const oppGoals = userSide === "home" ? state.away.goals : state.home.goals
-                    if (userGoals > oppGoals) return "Alta"
-                    if (userGoals < oppGoals) return "Baixa"
-                    return "Equilibrada"
-                  })()}
-                </strong>
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* PITCH + EVENTS */}
-        <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
-          <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
-            <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-5 py-3">
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-[#00ffc8]" />
-                <h2 className="text-xs font-medium text-white tracking-wider">CAMPO TÁTICO</h2>
-              </div>
-              <div className="flex items-center gap-4 text-[10px] text-white/50">
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ background: homeTeam.cor1 }}
-                  />
-                  {homeTeam.curto}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ background: awayTeam.cor1 }}
-                  />
-                  {awayTeam.curto}
-                </span>
-              </div>
-            </div>
-            <LivePitch
-              ball={state.ball}
-              homeTeam={homeTeam}
-              awayTeam={awayTeam}
-              homePlayers={homeSquad}
-              awayPlayers={awaySquad}
-              selectedPlayer={selectedPitchPlayer}
-              onSelectPlayer={setSelectedPitchPlayer}
-              flash={state.flash}
-            />
-          </section>
-
-          <section className="overflow-hidden rounded-xl border border-white/[0.04] bg-[#0c0c10]">
-            <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-5 py-3">
-              <div className="flex items-center gap-2">
-                <Goal className="h-4 w-4 text-[#00ffc8]" />
-                <h2 className="text-xs font-medium text-white tracking-wider">EVENTOS</h2>
-              </div>
-              <span className="text-[10px] text-white/40 font-medium">
-                {state.events.length} eventos
-              </span>
-            </div>
-
-            <ul className="max-h-[420px] overflow-y-auto divide-y divide-white/5">
-              {state.events.length === 0 ? (
-                <li className="px-4 py-8 text-center text-xs text-white/40">
-                  Inicie a partida para ver os eventos.
-                </li>
-              ) : (
-                state.events.map(e => (
-                  <EventRow key={e.id} event={e} homeTeam={homeTeam} awayTeam={awayTeam} />
-                ))
-              )}
-            </ul>
-          </section>
-        </div>
-
-        {/* META */}
-        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.04] bg-white/5 md:grid-cols-4">
-          <MetaTile icon={CalendarDays} label="COMPETIÇÃO" value={matchCtx.competition} />
-          <MetaTile
-            icon={Cloud}
-            label="CLIMA"
-            value={
-              matchCtx.weather === "rain"
-                ? "Chuva · 18°C"
-                : matchCtx.weather === "cloudy"
-                  ? "Nublado · 22°C"
-                  : "Ensolarado · 26°C"
-            }
-          />
-          <MetaTile icon={Activity} label="GRAMADO" value="84/100" valueClass="text-[#00ffc8]" />
-          <MetaTile
-            icon={Users}
-            label="PÚBLICO"
-            value={attendance.toLocaleString("pt-BR")}
-          />
-        </section>
-      </main>
-
-      {/* MODAIS */}
-      <SubstitutionModal
-        open={showSubModal}
-        onClose={() => setShowSubModal(false)}
-        team={userTeamForSub}
-        starters={userStarters}
-        bench={userBench}
-        subsRemaining={subsRemaining}
-        onConfirm={handleSub}
-      />
-
-      <MatchResultModal
-        open={showResult}
-        homeTeam={homeTeam}
-        awayTeam={awayTeam}
-        state={state}
-        userSide={userSide}
-        isChampion={isLeagueChampion}
-        onClose={() => {
-          setShowResult(false)
-          // Abre a coletiva automaticamente apos fechar o resultado
-          setTimeout(() => setShowPressConference(true), 300)
-        }}
-      />
-
-      {/* Coletiva de Imprensa Pos-Jogo */}
-      <PostMatchPress
-        isOpen={showPressConference}
-        onClose={() => setShowPressConference(false)}
-        homeTeam={homeTeam}
-        awayTeam={awayTeam}
-        homeGoals={state.home.goals}
-        awayGoals={state.away.goals}
-        userSide={userSide}
-        onComplete={(moraleImpact) => {
-          // Aplica impacto na moral (se houver game engine)
-          setShowPressConference(false)
-        }}
-      />
+      {/* Coletiva pos-jogo */}
+      {showPressConference && (
+        <PostMatchPress
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          homeScore={state.home.goals}
+          awayScore={state.away.goals}
+          userSide={userSide}
+          onClose={() => setShowPressConference(false)}
+        />
+      )}
     </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Componentes auxiliares
-// ─────────────────────────────────────────────────────────────────────────────
-
-function ratioFor(home: number, away: number): number {
-  const total = home + away
-  if (total === 0) return 50
-  return Math.round((home / total) * 100)
-}
-
-function Scoreboard({
-  homeTeam,
-  awayTeam,
-  state,
-  competition,
-  weather,
-}: {
-  homeTeam: Team
-  awayTeam: Team
-  state: MatchState
-  competition: string
-  weather: "sunny" | "cloudy" | "rain"
-}) {
-  const isLive = state.phase === "first" || state.phase === "second"
-
-  return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b from-[#0f0f12] to-[#0a0a0d] shadow-2xl">
-      {/* Barra superior do campeonato */}
-      <div className="flex items-center justify-between px-6 py-2.5 bg-gradient-to-r from-white/[0.04] via-white/[0.02] to-white/[0.04] border-b border-white/[0.06]">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#00ffc8]" />
-          <span className="text-[10px] font-bold tracking-[0.2em] text-white/60 uppercase">{competition}</span>
-        </div>
-        <div className="flex items-center gap-3 text-[10px] text-white/40">
-          <span className="flex items-center gap-1.5">
-            <Cloud className="h-3 w-3" />
-            {weather === "sunny" ? "Ensolarado" : weather === "cloudy" ? "Nublado" : "Chuva"}
-          </span>
-          <span className="text-white/20">|</span>
-          <span>{homeTeam.estadio_nome}</span>
-        </div>
-      </div>
-
-      {/* Background gradient com cores dos times */}
-      <div
-        className="absolute inset-0 opacity-15"
-        style={{
-          background: `linear-gradient(135deg, ${homeTeam.cor1}40 0%, transparent 40%, transparent 60%, ${awayTeam.cor1}40 100%)`,
-        }}
-      />
-
-      {/* Conteudo principal */}
-      <div className="relative flex items-center justify-between gap-6 px-8 py-6">
-        {/* Mandante */}
-        <div className="flex items-center gap-5 flex-1 min-w-0">
-          <div className="relative">
-            <div 
-              className="absolute inset-0 blur-xl opacity-40 scale-150"
-              style={{ backgroundColor: homeTeam.cor1 }}
-            />
-            <TeamCrest team={homeTeam} size="lg" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[9px] font-bold tracking-[0.25em] text-white/30 uppercase mb-1">
-              CASA
-            </div>
-            <div className="text-xl font-black text-white tracking-tight uppercase truncate">
-              {homeTeam.nome}
-            </div>
-            <div className="text-[10px] text-white/40 mt-0.5">{homeTeam.cidade}, {homeTeam.estado}</div>
-          </div>
-        </div>
-
-        {/* Placar Central - Estilo Broadcast */}
-        <div className="flex flex-col items-center flex-shrink-0">
-          {/* Tempo de jogo */}
-          <div className={cn(
-            "flex items-center gap-2 px-4 py-1.5 rounded-full mb-4",
-            isLive 
-              ? "bg-red-500/20 border border-red-500/30" 
-              : "bg-white/10 border border-white/10"
-          )}>
-            {isLive && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
-            <span className={cn(
-              "text-sm font-bold tabular-nums tracking-wider",
-              isLive ? "text-red-400" : "text-white/60"
-            )}>
-              {state.minute}&apos;
-            </span>
-            {state.phase === "halftime" && (
-              <span className="text-[10px] text-white/50 font-medium">INT</span>
-            )}
-          </div>
-
-          {/* Placar */}
-          <div className="flex items-center gap-4 px-6 py-3 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-sm">
-            <div
-              className={cn(
-                "text-6xl font-black leading-none tabular-nums transition-all duration-300",
-                state.flash?.type === "goal" && state.flash.side === "home" 
-                  ? "text-[#00ffc8] scale-110 drop-shadow-[0_0_20px_rgba(0,255,200,0.5)]" 
-                  : "text-white",
-              )}
-            >
-              {state.home.goals}
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-1 h-1 rounded-full bg-white/30" />
-              <div className="w-1 h-1 rounded-full bg-white/30" />
-            </div>
-            <div
-              className={cn(
-                "text-6xl font-black leading-none tabular-nums transition-all duration-300",
-                state.flash?.type === "goal" && state.flash.side === "away" 
-                  ? "text-[#00ffc8] scale-110 drop-shadow-[0_0_20px_rgba(0,255,200,0.5)]" 
-                  : "text-white",
-              )}
-            >
-              {state.away.goals}
-            </div>
-          </div>
-
-          {/* Fase do jogo */}
-          <div className="mt-3 text-[10px] font-medium text-white/40 uppercase tracking-wider">
-            {state.phase === "pre" && "Aguardando inicio"}
-            {state.phase === "first" && "1o Tempo"}
-            {state.phase === "halftime" && "Intervalo"}
-            {state.phase === "second" && "2o Tempo"}
-            {state.phase === "fulltime" && "Fim de Jogo"}
-          </div>
-        </div>
-
-        {/* Visitante */}
-        <div className="flex items-center gap-5 flex-1 min-w-0 justify-end">
-          <div className="text-right min-w-0">
-            <div className="text-[9px] font-bold tracking-[0.25em] text-white/30 uppercase mb-1">
-              FORA
-            </div>
-            <div className="text-xl font-black text-white tracking-tight uppercase truncate">
-              {awayTeam.nome}
-            </div>
-            <div className="text-[10px] text-white/40 mt-0.5">{awayTeam.cidade}, {awayTeam.estado}</div>
-          </div>
-          <div className="relative">
-            <div 
-              className="absolute inset-0 blur-xl opacity-40 scale-150"
-              style={{ backgroundColor: awayTeam.cor1 }}
-            />
-            <TeamCrest team={awayTeam} size="lg" />
-          </div>
-        </div>
-      </div>
-
-      {/* Barra inferior com estatisticas rapidas */}
-      <div className="relative flex items-center justify-center gap-8 px-6 py-2.5 border-t border-white/[0.06] bg-black/30">
-        <div className="flex items-center gap-2 text-[10px]">
-          <span className="text-white/40">Posse:</span>
-          <span className="font-bold text-white">{state.home.possession}%</span>
-          <div className="w-20 h-1 rounded-full bg-white/10 overflow-hidden mx-1">
-            <div 
-              className="h-full transition-all duration-500"
-              style={{ 
-                width: `${state.home.possession}%`,
-                backgroundColor: homeTeam.cor1 
-              }}
-            />
-          </div>
-          <span className="font-bold text-white">{state.away.possession}%</span>
-        </div>
-        <div className="w-px h-4 bg-white/10" />
-        <div className="flex items-center gap-2 text-[10px]">
-          <span className="text-white/40">Chutes:</span>
-          <span className="font-bold text-white">{state.home.shots}</span>
-          <span className="text-white/30">-</span>
-          <span className="font-bold text-white">{state.away.shots}</span>
-        </div>
-        <div className="w-px h-4 bg-white/10" />
-        <div className="flex items-center gap-2 text-[10px]">
-          <span className="text-white/40">xG:</span>
-          <span className="font-bold text-[#00ffc8]">{state.home.xG.toFixed(1)}</span>
-          <span className="text-white/30">-</span>
-          <span className="font-bold text-[#00ffc8]">{state.away.xG.toFixed(1)}</span>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function StatCell({
-  label,
-  home,
-  away,
-  icon: Icon,
-  ratio,
-  homeColor = "#00ffc8",
-  awayColor = "#ffffff",
-}: {
-  label: string
-  home: string | number
-  away: string | number
-  icon: React.ComponentType<{ className?: string }>
-  ratio: number
-  homeColor?: string
-  awayColor?: string
-}) {
-  return (
-    <div className="bg-[#0c0c10] p-4">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-wider text-white/40 mb-2">
-        <Icon className="h-3 w-3" />
-        {label}
-      </div>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-lg font-bold tabular-nums text-white">{home}</span>
-        <span className="text-white/20 text-xs">vs</span>
-        <span className="text-lg font-bold tabular-nums text-white">{away}</span>
-      </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div className="flex h-full">
-          <div className="h-full transition-all duration-700" style={{ width: `${ratio}%`, backgroundColor: homeColor }} />
-          <div className="h-full transition-all duration-700" style={{ width: `${100 - ratio}%`, backgroundColor: awayColor, opacity: 0.5 }} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MetaTile({
-  icon: Icon,
-  label,
-  value,
-  valueClass,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  valueClass?: string
-}) {
-  return (
-    <div className="bg-[#0c0c10] p-4">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-wider text-white/40">
-        <Icon className="h-3 w-3" />
-        {label}
-      </div>
-      <div className={cn("mt-1 text-base font-semibold leading-tight text-white truncate", valueClass)}>
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function EventRow({
-  event,
-  homeTeam,
-  awayTeam,
-}: {
-  event: MatchEvent
-  homeTeam: Team
-  awayTeam: Team
-}) {
-  const teamColor = event.side === "home" ? homeTeam.cor1 : awayTeam.cor1
-
-  const badgeStyle =
-    event.type === "goal"
-      ? { className: "bg-[#00ffc8] text-black", label: "GOL" }
-      : event.type === "yellow_card"
-        ? { className: "bg-yellow-400 text-black", label: "AMA" }
-        : event.type === "red_card"
-          ? { className: "bg-red-500 text-white", label: "VER" }
-          : event.type === "penalty"
-            ? { className: "bg-purple-400/20 text-purple-300", label: "PEN" }
-            : event.type === "post"
-              ? { className: "bg-orange-400/20 text-orange-300", label: "TRA" }
-              : event.type === "save"
-                ? { className: "bg-blue-400/20 text-blue-300", label: "DEF" }
-                : event.type === "corner"
-                  ? { className: "bg-cyan-400/20 text-cyan-300", label: "ESC" }
-                  : event.type === "foul"
-                    ? { className: "bg-white/10 text-white/60", label: "FAL" }
-                    : event.type === "injury"
-                      ? { className: "bg-red-400/20 text-red-300", label: "LES" }
-                      : event.type === "halftime"
-                        ? { className: "bg-white/15 text-white", label: "HT" }
-                        : event.type === "fulltime"
-                          ? { className: "bg-white/15 text-white", label: "FT" }
-                          : { className: "bg-white/10 text-white/60", label: "INI" }
-
-  return (
-    <li className="flex items-start gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-[10px] font-bold text-white/40 tabular-nums w-6">{event.minute}&apos;</span>
-        <div
-          className={cn(
-            "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider min-w-[28px] text-center",
-            badgeStyle.className,
-          )}
-        >
-          {badgeStyle.label}
-        </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            "text-sm leading-snug",
-            event.type === "goal"
-              ? "text-[#00ffc8] font-semibold"
-              : event.important
-                ? "text-white"
-                : "text-white/70",
-          )}
-        >
-          {event.text}
-        </p>
-      </div>
-      <div
-        className="h-6 w-1 rounded-full flex-shrink-0"
-        style={{ background: teamColor, opacity: 0.6 }}
-      />
-    </li>
   )
 }

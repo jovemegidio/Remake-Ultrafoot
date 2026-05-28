@@ -158,7 +158,7 @@ export default function OlheirosPage() {
   ]
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
+    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam ?? undefined} />
 

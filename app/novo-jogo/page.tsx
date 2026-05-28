@@ -48,6 +48,7 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { TeamCrest } from "@/components/team-crest"
 import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/lib/i18n"
+import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
 interface DivisaoTab {
@@ -80,6 +81,7 @@ const DIVISIONS: DivisaoTab[] = [
 export default function NovoJogoPage() {
   const router = useRouter()
   const { initializeNewGame } = useGameManager()
+  const { setTheme, setTeamColors } = useTheme()
   const t = useTranslation()
 
   const [selectedRegion, setSelectedRegion] = useState<Regiao | "all">("all")
@@ -116,9 +118,12 @@ export default function NovoJogoPage() {
 
   const handleStart = useCallback(() => {
     if (!selected) return
+    // Define as cores do time como tema padrao
+    setTeamColors({ primary: selected.cor1, secondary: selected.cor2 })
+    setTheme("team")
     initializeNewGame(selected.curto, managerName)
     router.push("/")
-  }, [selected, managerName, initializeNewGame, router])
+  }, [selected, managerName, initializeNewGame, router, setTeamColors, setTheme])
 
   const handleRegionChange = (region: Regiao | "all") => {
     setSelectedRegion(region)

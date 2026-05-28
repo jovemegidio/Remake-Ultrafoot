@@ -184,7 +184,7 @@ export default function ConfiguracoesPage() {
   if (currentView === "menu") {
     return (
       <ControllerTypeContext.Provider value={controllerType}>
-        <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
+        <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
           <GameSidebar />
           <GameHeader team={userTeam} />
           
@@ -238,7 +238,7 @@ export default function ConfiguracoesPage() {
             </div>
             
             {/* Bottom controls */}
-            <div className="fixed bottom-0 left-16 right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
               <div className="flex items-center gap-4">
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs">
                   <Gamepad2 className="h-4 w-4 mr-2" />
@@ -985,7 +985,7 @@ export default function ConfiguracoesPage() {
 
   return (
     <ControllerTypeContext.Provider value={controllerType}>
-      <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
+      <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
 

@@ -6,26 +6,17 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowRight,
-  MapPin,
-  Clock,
-  Users,
-  Shirt,
-  Check,
-  ChevronRight,
   Play,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Check,
   Zap,
   TrendingUp,
-  Target,
-  Star,
-  X,
-  Cloud,
-  Sun,
-  CloudRain,
-  Settings2,
+  TrendingDown,
+  Minus,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
-import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
+import { ActionHint } from "@/components/gamepad-icons"
 import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
 import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
 import { TeamCrest } from "@/components/team-crest"
@@ -45,265 +36,255 @@ import { simulateFullMatch, type MatchEvent as SimEvent } from "@/lib/match-engi
 import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
+import { getLeagueLogo } from "@/lib/league-logos"
 
 type KitVariant = "home" | "away" | "third"
-type Weather = "sunny" | "cloudy" | "rain"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KitSelector
+// TeamCard Component - Estilo EA FC
 // ─────────────────────────────────────────────────────────────────────────────
 
-function KitSelector({
+function TeamCard({
   team,
-  selected,
-  onSelect,
   side,
-  form,
+  selectedKit,
+  onKitChange,
 }: {
   team: Team
-  selected: KitVariant
-  onSelect: (kit: KitVariant) => void
   side: "home" | "away"
-  form?: ("W" | "D" | "L")[]
+  selectedKit: KitVariant
+  onKitChange: (kit: KitVariant) => void
 }) {
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
-  const uniforms = getTeamUniforms(team)
-  const kits: { id: KitVariant; label: string }[] = [
-    { id: "home", label: "1" },
-    { id: "away", label: "2" },
-    { id: "third", label: "3" },
-  ]
+  const overallRating = teamRating(team.curto) || teamRating(team.nome) || 75
+  
+  // Calcula estrelas baseado no prestigio
+  const stars = Math.min(5, Math.max(1, Math.round(team.prestigio / 2)))
+  const halfStar = team.prestigio % 2 !== 0
+
+  // Stats baseados no overall rating com pequena variacao
+  const baseRating = overallRating || 75
+  const stats = useMemo(() => ({
+    ata: Math.round(baseRating + (team.curto.charCodeAt(0) % 5) - 2),
+    mei: Math.round(baseRating + (team.curto.charCodeAt(1) % 5) - 2),
+    def: Math.round(baseRating + (team.curto.charCodeAt(2) % 5) - 2),
+  }), [baseRating, team.curto])
+
+  // Tendencia baseada em hash do nome para ser deterministica
+  const trends = useMemo(() => ({
+    ata: team.nome.length % 3 === 0 ? "up" : team.nome.length % 3 === 1 ? "neutral" : "down",
+    mei: team.nome.length % 3 === 1 ? "up" : team.nome.length % 3 === 2 ? "neutral" : "down",
+    def: team.nome.length % 3 === 2 ? "up" : team.nome.length % 3 === 0 ? "neutral" : "down",
+  }), [team.nome])
+
+  const TrendIcon = ({ trend }: { trend: string }) => {
+    if (trend === "up") return <TrendingUp className="h-3 w-3 text-green-400" />
+    if (trend === "down") return <TrendingDown className="h-3 w-3 text-red-400" />
+    return <Minus className="h-3 w-3 text-white/30" />
+  }
 
   return (
-    <div className={cn("flex flex-col", side === "away" && "items-end")}>
-      <div className={cn("relative mb-6", side === "away" && "flex flex-col items-end")}>
-        <div
-          className="absolute inset-0 blur-3xl opacity-30 rounded-full scale-150"
-          style={{ background: `radial-gradient(circle, ${team.cor1} 0%, transparent 70%)` }}
+    <div className={cn(
+      "flex-1 flex flex-col items-center justify-center relative",
+      side === "home" ? "pr-4" : "pl-4"
+    )}>
+      {/* Team Name */}
+      <h2 className="text-xl md:text-2xl font-semibold text-white mb-5 tracking-tight uppercase">
+        {team.nome}
+      </h2>
+
+      {/* Large Crest with glow */}
+      <div className="relative mb-5">
+        <div 
+          className="absolute inset-0 blur-3xl opacity-30 scale-150"
+          style={{ backgroundColor: team.cor1 }}
         />
-
         <div className="relative">
-          <TeamCrest team={team} size="2xl" />
-          <div
-            className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2"
-            style={{
-              backgroundColor: team.cor1,
-              borderColor: team.cor2,
-              color: team.cor2,
-            }}
-          >
-            {team.prestigio}
-          </div>
-        </div>
-
-        <div className={cn("mt-4", side === "away" && "text-right")}>
-          <div
-            className="text-[10px] font-bold tracking-[0.3em] mb-1"
-            style={{ color: team.cor1 === "#ffffff" ? "#aaa" : team.cor1 }}
-          >
-            {side === "home" ? "MANDANTE" : "VISITANTE"}
-          </div>
-          <div className="text-2xl font-black text-white tracking-tight uppercase">{team.nome}</div>
-          <div className="text-xs text-white/40 mt-1">
-            {team.cidade}, {team.estado}
-          </div>
+          <TeamCrest team={team} size="2xl" className="w-32 h-32 md:w-40 md:h-40" />
         </div>
       </div>
 
-      <div className={cn("flex gap-2", side === "away" && "flex-row-reverse")}>
-        {kits.map(kit => {
-          const active = selected === kit.id
-          const camisaUrl = getCamisaUrl(team.file_key, kit.id)
-          const hasError = imageErrors[kit.id]
-          const uniform = uniforms[kit.id]
-
-          return (
-            <button
-              key={kit.id}
-              onClick={() => onSelect(kit.id)}
-              className={cn(
-                "relative group w-20 h-24 rounded-lg overflow-hidden transition-all duration-300",
-                active
-                  ? "ring-2 ring-offset-2 ring-offset-[#0a0a0a] scale-105"
-                  : "opacity-60 hover:opacity-100 hover:scale-[1.02]",
-              )}
-              style={{
-                background: `linear-gradient(180deg, ${team.cor1}20 0%, ${team.cor2}10 100%)`,
-              }}
-            >
-              <div
-                className={cn(
-                  "absolute top-1 left-1 h-5 w-5 rounded text-[10px] font-bold flex items-center justify-center z-10 transition-all",
-                  active ? "bg-white text-black" : "bg-white/20 text-white/60",
-                )}
-              >
-                {kit.label}
-              </div>
-
-              {active && (
-                <div
-                  className="absolute top-1 right-1 h-5 w-5 rounded-full flex items-center justify-center z-10"
-                  style={{ backgroundColor: team.cor1 }}
-                >
-                  <Check className="h-3 w-3 text-white" />
-                </div>
-              )}
-
-              <div className="absolute inset-0 flex items-center justify-center p-2">
-                {!hasError ? (
-                  <Image
-                    src={camisaUrl}
-                    alt={`Kit ${kit.label}`}
-                    fill
-                    className="object-contain p-2 drop-shadow-lg"
-                    onError={() => setImageErrors(prev => ({ ...prev, [kit.id]: true }))}
-                    unoptimized
-                  />
-                ) : (
-                  <div
-                    className="w-12 h-14 rounded flex items-center justify-center"
-                    style={{
-                      background: `linear-gradient(135deg, ${uniform.primary} 0%, ${uniform.secondary} 100%)`,
-                    }}
-                  >
-                    <Shirt className="h-5 w-5 text-white/80" />
-                  </div>
-                )}
-              </div>
-            </button>
-          )
-        })}
+      {/* Star Rating */}
+      <div className="flex items-center gap-0.5 mb-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star
+            key={i}
+            className={cn(
+              "h-4 w-4 md:h-5 md:w-5",
+              i < stars
+                ? "text-amber-400 fill-amber-400"
+                : halfStar && i === stars
+                ? "text-amber-400 fill-amber-400/50"
+                : "text-white/15"
+            )}
+          />
+        ))}
       </div>
 
-      {form && form.length > 0 && (
-        <div className={cn("flex items-center gap-1 mt-4", side === "away" && "flex-row-reverse")}>
-          <span className="text-[10px] text-white/40 mr-2">FORMA:</span>
-          {form.slice(-5).map((result, i) => (
-            <div
-              key={i}
-              className={cn(
-                "h-5 w-5 rounded text-[9px] font-bold flex items-center justify-center",
-                result === "W" && "bg-green-500/20 text-green-400",
-                result === "D" && "bg-[#ffd700]/20 text-yellow-400",
-                result === "L" && "bg-red-500/20 text-red-400",
-              )}
-            >
-              {result === "W" ? "V" : result === "D" ? "E" : "D"}
-            </div>
-          ))}
+      {/* Stats Row */}
+      <div className="flex items-center gap-5 md:gap-8 mb-5">
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">ATA</span>
+          <div className="flex items-center gap-1">
+            <span className={cn(
+              "text-lg md:text-xl font-semibold tabular-nums",
+              trends.ata === "up" ? "text-emerald-400" : trends.ata === "down" ? "text-rose-400" : "text-white"
+            )}>
+              {stats.ata}
+            </span>
+            <TrendIcon trend={trends.ata} />
+          </div>
         </div>
-      )}
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">MEI</span>
+          <div className="flex items-center gap-1">
+            <span className={cn(
+              "text-lg md:text-xl font-semibold tabular-nums",
+              trends.mei === "up" ? "text-emerald-400" : trends.mei === "down" ? "text-rose-400" : "text-white"
+            )}>
+              {stats.mei}
+            </span>
+            <TrendIcon trend={trends.mei} />
+          </div>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">DEF</span>
+          <div className="flex items-center gap-1">
+            <span className={cn(
+              "text-lg md:text-xl font-semibold tabular-nums",
+              trends.def === "up" ? "text-emerald-400" : trends.def === "down" ? "text-rose-400" : "text-white"
+            )}>
+              {stats.def}
+            </span>
+            <TrendIcon trend={trends.def} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Página
-// ───────────────────────────────────�����─────────────────────────────────────────
+// VerticalLabel Component
+// ─────────────────────────────────────────────────────────────────────────────
 
-export default function PreMatchPage() {
+function VerticalLabel({ text, side }: { text: string; side: "left" | "right" }) {
+  return (
+    <div className={cn(
+      "absolute top-1/2 -translate-y-1/2 flex items-center justify-center",
+      side === "left" ? "left-2" : "right-2"
+    )}>
+      <span 
+        className="text-4xl md:text-5xl font-black text-white/[0.06] tracking-[0.4em] uppercase select-none"
+        style={{ 
+          writingMode: "vertical-rl",
+          textOrientation: "mixed",
+          transform: side === "left" ? "rotate(180deg)" : "rotate(0deg)"
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Page Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function PartidaPage() {
   const router = useRouter()
-  const { team: userTeam, hydrated } = useUserTeam()
-  const { seasonCalendar, currentWeek, currentSeason, registerUserMatchResult, advanceWeek, standings } = useGameManager()
+  const userTeam = useUserTeam()
+  const { currentMatch, standings, league, currentRound } = useGameManager()
 
+  const [hydrated, setHydrated] = useState(false)
   const [homeKit, setHomeKit] = useState<KitVariant>("home")
   const [awayKit, setAwayKit] = useState<KitVariant>("away")
-  const [showLineup, setShowLineup] = useState(false)
+  const [livePhase, setLivePhase] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickSim, setShowQuickSim] = useState(false)
   const [quickSimResult, setQuickSimResult] = useState<{
     homeGoals: number
     awayGoals: number
-    events: SimEvent[]
+    events: (SimEvent | EngineEvent)[]
   } | null>(null)
 
-  // Configurações da partida
-  const [duration, setDuration] = useState(90)
-  const [weather, setWeather] = useState<Weather>("sunny")
-  const [matchMode, setMatchMode] = useState<"normal" | "highlights" | "commentary">("normal")
+  // Hydration
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
-  // Determina proxima partida do calendario
-  const nextMatch = seasonCalendar.nextUserMatch
-  
-  // Determina adversário baseado na proxima partida do calendario
-  const opponent = useMemo(() => {
-    if (nextMatch) {
-      return nextMatch.homeTeam.curto === userTeam.curto 
-        ? nextMatch.awayTeam 
-        : nextMatch.homeTeam
+  // Resolve teams
+  const homeTeam = useMemo(() => {
+    if (!currentMatch) return getTeamByShort("FLA") || serieATeams[0]
+    return getTeamByShort(currentMatch.homeTeam) || serieATeams[0]
+  }, [currentMatch])
+
+  const awayTeam = useMemo(() => {
+    if (!currentMatch) return getTeamByShort("MIR") || serieATeams[1]
+    return getTeamByShort(currentMatch.awayTeam) || serieATeams[1]
+  }, [currentMatch])
+
+  const matchInfo = useMemo(() => {
+    const leagueName = getLeagueName(league)
+    return {
+      competition: leagueName,
+      round: `Rodada ${currentRound}`,
+      date: "01 ABR 2026",
+      time: "16:00",
+      stadium: homeTeam.estadio_nome,
     }
-    return serieATeams.find(t => t.curto !== userTeam.curto) || serieATeams[1]
-  }, [nextMatch, userTeam.curto])
-  
-  // Verifica se o usuario joga em casa
-  const isHome = nextMatch ? nextMatch.homeTeam.curto === userTeam.curto : true
+  }, [league, currentRound, homeTeam])
 
-  const matchInfo = {
-    competition: nextMatch?.competition || getLeagueName(userTeam.curto),
-    competitionId: "brasileirao" as CompetitionId,
-    round: nextMatch ? `Rodada ${nextMatch.round}` : `Rodada ${currentWeek + 1}`,
-    stadium: isHome ? userTeam.estadio_nome : opponent.estadio_nome,
-    city: isHome ? userTeam.cidade : opponent.cidade,
-    date: `${currentSeason}`,
-    time: "16:00",
-    isHome,
-  }
+  const competitionTheme = useMemo(() => {
+    const competitionId = league === "serie-a" ? "brasileirao" : (league as CompetitionId)
+    return getCompetitionTheme(competitionId)
+  }, [league])
 
-  // Obtem tema da competicao
-  const competitionTheme = getCompetitionTheme(matchInfo.competitionId)
-
-  const homeTeam = matchInfo.isHome ? userTeam : opponent
-  const awayTeam = matchInfo.isHome ? opponent : userTeam
-
-  // Salva no sessionStorage sempre que muda algo
-  useEffect(() => {
-    if (!hydrated) return
-    saveMatchContext({
-      homeShort: homeTeam.curto,
-      awayShort: awayTeam.curto,
-      homeKit,
-      awayKit,
-      competition: matchInfo.competition,
-      round: matchInfo.round,
-      duration,
-      weather,
-      matchMode,
-    })
-  }, [hydrated, homeTeam.curto, awayTeam.curto, homeKit, awayKit, duration, weather, matchMode])
-
+  // Quick sim handler
   const handleQuickSim = useCallback(() => {
-    const final = simulateFullMatch({
-      homeTeam,
-      awayTeam,
-      homeRating: teamRating(homeTeam.nome) || homeTeam.prestigio,
-      awayRating: teamRating(awayTeam.nome) || awayTeam.prestigio,
-      durationMinutes: duration,
-      weatherFactor: weather === "rain" ? 0.9 : 1,
-    })
-    setQuickSimResult({ homeGoals: final.home.goals, awayGoals: final.away.goals, events: final.events })
+    if (!homeTeam || !awayTeam) return
     setShowQuickSim(true)
-  }, [homeTeam, awayTeam, duration, weather])
+    const result = simulateFullMatch(homeTeam, awayTeam, "home")
+    setTimeout(() => {
+      setQuickSimResult({
+        homeGoals: result.homeGoals,
+        awayGoals: result.awayGoals,
+        events: result.events,
+      })
+    }, 1500)
+  }, [homeTeam, awayTeam])
 
-  // Navegacao por controle na tela de pre-partida
+  // Save match context before navigation
   useEffect(() => {
-    const KITS: KitVariant[] = ["home", "away", "third"]
-    const cycleKit = (current: KitVariant, dir: 1 | -1): KitVariant =>
-      KITS[(KITS.indexOf(current) + dir + 3) % 3]
+    if (homeTeam && awayTeam) {
+      saveMatchContext({
+        homeShort: homeTeam.curto,
+        awayShort: awayTeam.curto,
+        homeKit,
+        awayKit,
+        competition: matchInfo.competition,
+        round: matchInfo.round,
+      })
+    }
+  }, [homeTeam, awayTeam, homeKit, awayKit, matchInfo])
+
+  // Gamepad controls
+  useEffect(() => {
+    const cycleKit = (current: KitVariant, direction: number): KitVariant => {
+      const kits: KitVariant[] = ["home", "away", "third"]
+      const idx = kits.indexOf(current)
+      const newIdx = (idx + direction + kits.length) % kits.length
+      return kits[newIdx]
+    }
 
     const handleGamepadButton = (e: Event) => {
-      const { button } = (e as CustomEvent<{ button: string }>).detail
-
-      // Fecha modais abertos primeiro
-      if (showLineup) {
-        if (button === "B") setShowLineup(false)
-        return
-      }
-      if (showSettings) {
-        if (button === "B" || button === "Y") setShowSettings(false)
-        return
-      }
+      const { button } = (e as CustomEvent).detail
+      
       if (showQuickSim) {
-        if (button === "B") { setShowQuickSim(false); setQuickSimResult(null) }
+        if (button === "B") {
+          setShowQuickSim(false)
+          setQuickSimResult(null)
+        }
         return
       }
 
@@ -320,446 +301,182 @@ export default function PreMatchPage() {
         case "Y":
           setShowSettings(true)
           break
-        case "SELECT":
-          setShowLineup(true)
-          break
-        // LB/RB ciclam o kit do time mandante
         case "LB":
           setHomeKit(prev => cycleKit(prev, -1))
           break
         case "RB":
           setHomeKit(prev => cycleKit(prev, 1))
           break
-        // LT/RT ciclam o kit do time visitante
-        case "LT":
-          setAwayKit(prev => cycleKit(prev, -1))
-          break
-        case "RT":
-          setAwayKit(prev => cycleKit(prev, 1))
-          break
       }
     }
 
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [showLineup, showSettings, showQuickSim, router, handleQuickSim])
+  }, [showQuickSim, router, handleQuickSim])
 
   if (!hydrated) {
     return (
-      <div className="h-screen pl-16 bg-[#050508] flex items-center justify-center text-white/40 text-sm">
+      <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
         Carregando...
       </div>
     )
   }
-
+  
   return (
-    <div className="h-screen pl-16 bg-[#050508] flex flex-col overflow-hidden">
-      <GameSidebar />
-      <GameHeader team={userTeam} />
-
-      <main className="flex-1 p-4 overflow-y-auto">
-        <div className="relative rounded-2xl overflow-hidden mb-6">
-          {/* Background da competicao */}
-          {competitionTheme.backgroundImage && (
-            <div 
-              className="absolute inset-0 bg-cover bg-center opacity-30"
-              style={{ backgroundImage: `url(${competitionTheme.backgroundImage})` }}
-            />
-          )}
-          <div
-            className="absolute inset-0"
+    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
+      
+      {/* Main Content */}
+      <main className="flex-1 relative overflow-hidden">
+        {/* Background with light rays */}
+        <div className="absolute inset-0">
+          {/* Dark gradient base */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#050508]" />
+          
+          {/* Light rays from center */}
+          <div 
+            className="absolute inset-0 opacity-30"
             style={{
-              background: `linear-gradient(135deg, ${competitionTheme.colors.primary}20 0%, #0a0a0a 40%, #0a0a0a 60%, ${competitionTheme.colors.primary}20 100%)`,
+              background: `radial-gradient(ellipse 80% 50% at 50% 60%, rgba(255,255,255,0.1) 0%, transparent 50%)`,
             }}
           />
-
-          <div className="absolute inset-0 opacity-5">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `repeating-linear-gradient(45deg, white 0, white 1px, transparent 0, transparent 50%)`,
-                backgroundSize: "10px 10px",
-              }}
-            />
-          </div>
-
-          {/* Competition Header */}
-          <div className="relative flex items-center justify-center gap-4 py-4 border-b border-white/[0.04]">
-            <Image
-              src="/logos/brasileirao.png"
-              alt="Brasileirão"
-              width={40}
-              height={40}
-              className="object-contain"
-            />
-            <div className="text-center">
-              <div className="text-xs font-bold tracking-[0.2em] text-white/60">
-                {matchInfo.competition.toUpperCase()}
-              </div>
-              <div className="text-[10px] text-white/40">
-                {matchInfo.round} · {matchInfo.date}
-              </div>
-            </div>
-          </div>
-
-          <div className="relative px-8 py-10">
-            <div className="flex items-center justify-between">
-              <KitSelector team={homeTeam} selected={homeKit} onSelect={setHomeKit} side="home" form={standings.find(s => s.teamShort === homeTeam.curto)?.form} />
-
-              <div className="flex flex-col items-center px-8">
-                <div className="mb-6 text-center">
-                  <div className="text-5xl font-black text-white tracking-tighter">{matchInfo.time}</div>
-                  <div className="text-xs text-white/40 mt-1">HORÁRIO LOCAL</div>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute -left-16 top-1/2 h-px w-12 bg-gradient-to-r from-transparent to-white/20" />
-                  <div className="absolute -right-16 top-1/2 h-px w-12 bg-gradient-to-l from-transparent to-white/20" />
-                  <div className="h-16 w-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                    <span className="text-xl font-black text-white/30">VS</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2 text-xs text-white/50">
-                    <MapPin className="h-3.5 w-3.5 text-white/30" />
-                    {matchInfo.stadium}
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-white/30">
-                    <Users className="h-3 w-3" />
-                    {homeTeam.estadio_cap.toLocaleString("pt-BR")} lugares
-                  </div>
-                </div>
-              </div>
-
-              <KitSelector team={awayTeam} selected={awayKit} onSelect={setAwayKit} side="away" form={standings.find(s => s.teamShort === awayTeam.curto)?.form} />
-            </div>
-          </div>
-
-          <div className="relative flex items-center justify-center gap-8 py-4 border-t border-white/[0.04] bg-black/30">
-            <div className="flex items-center gap-2 text-xs">
-              <Star className="h-4 w-4 text-[#ffd700]" />
-              <span className="text-white/40">Prestígio:</span>
-              <span className="font-bold text-white">{homeTeam.prestigio}</span>
-              <span className="text-white/20 mx-2">vs</span>
-              <span className="font-bold text-white">{awayTeam.prestigio}</span>
-            </div>
-            <div className="h-4 w-px bg-white/10" />
-            <div className="flex items-center gap-2 text-xs">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-              <span className="text-white/40">H2H:</span>
-              <span className="font-bold text-green-400">3V</span>
-              <span className="font-bold text-white/40">2E</span>
-              <span className="font-bold text-red-400">1D</span>
-            </div>
-            <div className="h-4 w-px bg-white/10" />
-            <div className="flex items-center gap-2 text-xs">
-              <Target className="h-4 w-4 text-blue-400" />
-              <span className="text-white/40">Gols esperados:</span>
-              <span className="font-bold text-white">2.4</span>
-            </div>
-          </div>
+          
+          {/* Stadium silhouette hint */}
+          <div 
+            className="absolute bottom-0 left-0 right-0 h-1/3 opacity-10"
+            style={{
+              background: `linear-gradient(to top, #000 0%, transparent 100%)`,
+            }}
+          />
         </div>
 
-        {homeKit === awayKit && (
-          <div className="mb-6 flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-[#ffd700]/10 border border-[#ffd700]/30">
-            <span className="text-xs text-[#ffd700]">
-              Uniformes similares selecionados. Considere trocar um deles para evitar confusão visual.
-            </span>
-          </div>
-        )}
+        {/* Teams Section */}
+        <div className="relative flex-1 flex items-stretch h-[calc(100%-140px)]">
+          {/* Vertical CASA label */}
+          <VerticalLabel text="CASA" side="left" />
 
-        {/* Action Buttons */}
-        <div className="flex flex-col items-center gap-4">
-          <Link href="/partida/ao-vivo" className="w-full max-w-md">
-            <Button
-              size="lg"
-              className="relative w-full h-16 text-base font-black tracking-wider bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:from-[#00c8ff] hover:to-[#22e766] overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              <Play className="mr-3 h-6 w-6 fill-current" />
-              INICIAR PARTIDA
-              <ArrowRight className="ml-3 h-6 w-6" />
-            </Button>
-          </Link>
+          {/* Home Team */}
+          <TeamCard 
+            team={homeTeam} 
+            side="home" 
+            selectedKit={homeKit}
+            onKitChange={setHomeKit}
+          />
 
-          <div className="flex items-center gap-3 text-xs text-white/40">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {duration} minutos
-            </span>
-            <span className="text-white/20">·</span>
-            <span className="capitalize">
-              {matchMode === "normal" ? "Modo Normal" : matchMode === "highlights" ? "Destaques" : "Narração"}
-            </span>
-            <span className="text-white/20">·</span>
-            <span className="capitalize flex items-center gap-1">
-              {weather === "sunny" && <Sun className="h-3 w-3" />}
-              {weather === "cloudy" && <Cloud className="h-3 w-3" />}
-              {weather === "rain" && <CloudRain className="h-3 w-3" />}
-              {weather === "sunny" ? "Ensolarado" : weather === "cloudy" ? "Nublado" : "Chuva"}
-            </span>
+          {/* Center Options */}
+          <div className="flex flex-col items-center justify-center px-6 md:px-8 gap-5 min-w-[180px]">
+            {/* League Logo - Centered */}
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[9px] text-white/40 font-medium tracking-wider uppercase">{matchInfo.competition}</span>
+              <Image
+                src={getLeagueLogo(matchInfo.competition)}
+                alt={matchInfo.competition}
+                width={56}
+                height={56}
+                className="object-contain opacity-90"
+                unoptimized
+              />
+            </div>
+
+            {/* Live Phase Toggle */}
+            <div className="flex flex-col items-center gap-2">
+              <button 
+                onClick={() => setLivePhase(!livePhase)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium",
+                  livePhase 
+                    ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400" 
+                    : "bg-white/5 border border-white/10 text-white/40"
+                )}
+              >
+                {livePhase && <Check className="h-4 w-4" />}
+                <Zap className="h-4 w-4" />
+              </button>
+              <span className="text-xs text-white/60 font-medium">Fase ao vivo</span>
+              <span className="text-[10px] text-white/40">{livePhase ? "Sim" : "Nao"}</span>
+            </div>
           </div>
+
+          {/* Away Team */}
+          <TeamCard 
+            team={awayTeam} 
+            side="away" 
+            selectedKit={awayKit}
+            onKitChange={setAwayKit}
+          />
+
+          {/* Vertical FORA label */}
+          <VerticalLabel text="FORA" side="right" />
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
-          <button
-            onClick={() => setShowLineup(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition text-sm text-white/70 hover:text-white"
-          >
-            <Users className="h-4 w-4" />
-            Ver Escalação
-            <ChevronRight className="h-3 w-3" />
-          </button>
-          <button
-            onClick={handleQuickSim}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition text-sm text-white/70 hover:text-white"
-          >
-            <Zap className="h-4 w-4" />
-            Simular Rápido
-          </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition text-sm text-white/70 hover:text-white"
-          >
-            <Settings2 className="h-4 w-4" />
-            Configurações
-          </button>
-        </div>
-  </main>
-  
-  <GamepadControlsBar />
-  <MusicPlayer />
-  
-  {/* Editor Tatico - Ver Escalação */}
-      {showLineup && (
-        <TacticalEditor
-          team={userTeam}
-          onClose={() => setShowLineup(false)}
-          onSave={(formation, players) => {
-            console.log("[v0] Formation saved:", formation, players)
-          }}
-        />
-      )}
+        {/* Bottom Action Bar */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent py-5 px-6">
+          <div className="flex items-center justify-between">
+            {/* Left Actions */}
+            <div className="flex items-center gap-5">
+              <ActionHint button="cross" action="Selecionar" platform="playstation" size="sm" />
+              <ActionHint button="circle" action="Voltar" platform="playstation" size="sm" />
+              <ActionHint button="r3" action="Aleatorio" platform="playstation" size="sm" />
+            </div>
 
-      {/* Modal: Simular Rápido - Resultado direto */}
-      {showQuickSim && quickSimResult && (
-        <Modal
-          title="Resultado Final"
-          onClose={() => {
-            setShowQuickSim(false)
-            setQuickSimResult(null)
-          }}
-        >
-          <div className="text-center py-6">
-            <div className="space-y-6">
-              <div className="text-[10px] font-bold tracking-[0.3em] text-white/50">PLACAR FINAL</div>
-              <div className="flex items-center justify-center gap-6">
-                <div className="flex flex-col items-center gap-2">
-                  <TeamCrest team={homeTeam} size="lg" />
-                  <span className="text-xs font-medium text-white/70">{homeTeam.curto}</span>
+            {/* Center - Start Button */}
+            <Link href="/partida/ao-vivo">
+              <Button
+                size="lg"
+                className="h-11 px-8 text-sm font-bold tracking-wide bg-[#00ffc8] text-black hover:bg-[#00e6b5] transition-colors shadow-lg shadow-[#00ffc8]/20"
+              >
+                <Play className="mr-2 h-4 w-4 fill-current" />
+                INICIAR PARTIDA
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </main>
+
+      {/* Quick Sim Modal */}
+      {showQuickSim && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0c0c10] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-white text-center mb-6">Simulacao Rapida</h3>
+            
+            {quickSimResult ? (
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-8 mb-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <TeamCrest team={homeTeam} size="lg" />
+                    <span className="text-4xl font-black text-white">{quickSimResult.homeGoals}</span>
+                  </div>
+                  <span className="text-2xl text-white/30">x</span>
+                  <div className="flex flex-col items-center gap-2">
+                    <TeamCrest team={awayTeam} size="lg" />
+                    <span className="text-4xl font-black text-white">{quickSimResult.awayGoals}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-5xl font-black tabular-nums text-white">{quickSimResult.homeGoals}</span>
-                  <span className="text-xl font-light text-white/30">×</span>
-                  <span className="text-5xl font-black tabular-nums text-white">{quickSimResult.awayGoals}</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <TeamCrest team={awayTeam} size="lg" />
-                  <span className="text-xs font-medium text-white/70">{awayTeam.curto}</span>
-                </div>
-              </div>
-              <div className="text-xs text-white/40">
-                {duration} minutos · {matchInfo.competition}
-              </div>
-              <div className="flex justify-center gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleQuickSim}
-                  className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
+                <Button 
+                  onClick={() => { setShowQuickSim(false); setQuickSimResult(null) }}
+                  className="w-full"
                 >
-                  Simular Novamente
-                </Button>
-                <Button
-                  onClick={async () => {
-                    if (quickSimResult) {
-                      const engineEvents: EngineEvent[] = quickSimResult.events
-                        .filter(e => e.type === "goal")
-                        .map(e => ({
-                          minute: e.minute,
-                          type: "goal" as const,
-                          playerId: 0,
-                          playerName: e.player ?? (e.side === "home" ? homeTeam.curto : awayTeam.curto),
-                        }))
-                      registerUserMatchResult(
-                        homeTeam.curto,
-                        awayTeam.curto,
-                        quickSimResult.homeGoals,
-                        quickSimResult.awayGoals,
-                        engineEvents
-                      )
-                      await advanceWeek()
-                    }
-                    setShowQuickSim(false)
-                    router.push("/")
-                  }}
-                  className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold"
-                >
-                  Confirmar Resultado
+                  Fechar
                 </Button>
               </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* Modal: Configurações da partida */}
-      {showSettings && (
-        <Modal title="Configurações da Partida" onClose={() => setShowSettings(false)}>
-          <div className="space-y-6">
-            {/* Duração */}
-            <div>
-              <label className="text-[10px] font-bold tracking-[0.2em] text-white/50 mb-2 block">
-                DURAÇÃO
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { val: 30, label: "30 MIN", sub: "Rápida" },
-                  { val: 45, label: "45 MIN", sub: "Curta" },
-                  { val: 90, label: "90 MIN", sub: "Padrão" },
-                ].map(o => (
-                  <button
-                    key={o.val}
-                    onClick={() => setDuration(o.val)}
-                    className={cn(
-                      "rounded-lg border p-3 text-left transition",
-                      duration === o.val
-                        ? "border-[#00ffc8] bg-[#00ffc8]/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10",
-                    )}
-                  >
-                    <div className="text-sm font-bold text-white">{o.label}</div>
-                    <div className="text-[10px] text-white/50">{o.sub}</div>
-                  </button>
-                ))}
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="text-white/60">Simulando partida...</span>
               </div>
-            </div>
-
-            {/* Clima */}
-            <div>
-              <label className="text-[10px] font-bold tracking-[0.2em] text-white/50 mb-2 block">
-                CLIMA
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(
-                  [
-                    { val: "sunny", label: "Ensolarado", icon: Sun, color: "text-yellow-400" },
-                    { val: "cloudy", label: "Nublado", icon: Cloud, color: "text-zinc-400" },
-                    { val: "rain", label: "Chuva", icon: CloudRain, color: "text-blue-400" },
-                  ] as const
-                ).map(o => {
-                  const Icon = o.icon
-                  return (
-                    <button
-                      key={o.val}
-                      onClick={() => setWeather(o.val)}
-                      className={cn(
-                        "rounded-lg border p-3 flex flex-col items-center gap-2 transition",
-                        weather === o.val
-                          ? "border-[#00ffc8] bg-[#00ffc8]/10"
-                          : "border-white/10 bg-white/5 hover:bg-white/10",
-                      )}
-                    >
-                      <Icon className={cn("h-5 w-5", o.color)} />
-                      <span className="text-xs font-medium text-white">{o.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Modo */}
-            <div>
-              <label className="text-[10px] font-bold tracking-[0.2em] text-white/50 mb-2 block">
-                MODO DE PARTIDA
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(
-                  [
-                    { val: "normal", label: "Normal" },
-                    { val: "highlights", label: "Destaques" },
-                    { val: "commentary", label: "Narração" },
-                  ] as const
-                ).map(o => (
-                  <button
-                    key={o.val}
-                    onClick={() => setMatchMode(o.val)}
-                    className={cn(
-                      "rounded-lg border p-3 text-sm font-medium transition",
-                      matchMode === o.val
-                        ? "border-[#00ffc8] bg-[#00ffc8]/10 text-white"
-                        : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
-                    )}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
-
-          <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-white/[0.04]">
-            <Button
-              variant="outline"
-              onClick={() => setShowSettings(false)}
-              className="border-white/10 bg-transparent text-white/70 hover:bg-white/5"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => setShowSettings(false)}
-              className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold"
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Aplicar
-            </Button>
-          </div>
-        </Modal>
-      )}
+        </div>
+  )}
+  
+  <GamepadControlsBar
+        controls={[
+          { button: "A", label: "Iniciar Partida" },
+          { button: "B", label: "Voltar" },
+          { button: "X", label: "Sim. Rapida" },
+          { button: "LB", label: "Kit Casa", showBumper: true },
+          { button: "RB", label: "Kit Fora", showBumper: true },
+        ]}
+      />
     </div>
   )
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Componentes utilitários
-// ─────────────────────────────────────────────────────────────────────────────
-
-function Modal({
-  title,
-  children,
-  onClose,
-}: {
-  title: string
-  children: React.ReactNode
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-      <div className="w-full max-w-3xl rounded-2xl bg-gradient-to-br from-[#0f0f0f] to-[#0a0a0a] border border-white/10 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04]">
-          <h3 className="text-lg font-bold text-white">{title}</h3>
-          <button
-            onClick={onClose}
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
-      </div>
-    </div>
-  )
-}
-

@@ -287,7 +287,7 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
+    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
@@ -859,7 +859,7 @@ export default function MercadoPage() {
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="fixed bottom-0 left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -910,7 +910,7 @@ export default function MercadoPage() {
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="fixed bottom-0 left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -959,7 +959,7 @@ export default function MercadoPage() {
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="fixed bottom-0 left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
+            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
