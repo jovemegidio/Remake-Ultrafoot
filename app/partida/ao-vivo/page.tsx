@@ -457,9 +457,10 @@ function TabButton({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PartidaAoVivoPage() {
-  const { data: userTeamId } = useUserTeam()
+  const { team: _userTeamHook } = useUserTeam()
+  const userTeamId = _userTeamHook.curto
   const { registerUserMatchResult, advanceWeek } = useGameManager()
-  const { players: enginePlayers } = useGameEngine()
+  const { squadPlayers: enginePlayers } = useGameEngine()
   const resultRegistered = useRef(false)
 
   // Hydration guard
@@ -507,8 +508,8 @@ export default function PartidaAoVivoPage() {
       }
     } else {
       // Fallback para players-data
-      const homePlayers = getPlayersForTeam(homeTeam.curto)
-      const awayPlayers = getPlayersForTeam(awayTeam.curto)
+      const homePlayers = getPlayersForTeam(homeTeam)
+      const awayPlayers = getPlayersForTeam(awayTeam)
       if (homePlayers.length >= 11) {
         const { starters, bench } = playersToMatchSquad(homePlayers, 0)
         setHomeSquad(starters)
@@ -528,15 +529,29 @@ export default function PartidaAoVivoPage() {
     }
   }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome])
 
+  const toSquadPlayer = (p: MatchPlayer) => ({
+    nome: p.name,
+    pos: p.position,
+    rating: p.rating,
+    stamina: p.stamina,
+    shooting: p.shooting,
+    passing: p.passing,
+    pace: p.pace,
+    defending: p.defending,
+    physical: p.physical,
+    dribbling: p.dribbling,
+  })
+
   // Config da simulacao
   const config = useMemo(() => ({
     homeTeam,
     awayTeam,
-    homeSquad,
-    awaySquad,
-    duration: matchCtx.duration,
-    weather: matchCtx.weather,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, matchCtx.weather])
+    homeRating: homeTeam.prestigio,
+    awayRating: awayTeam.prestigio,
+    homeSquad: homeSquad.map(toSquadPlayer),
+    awaySquad: awaySquad.map(toSquadPlayer),
+    durationMinutes: matchCtx.duration,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
@@ -754,11 +769,11 @@ export default function PartidaAoVivoPage() {
   }
 
   // Filtra eventos importantes (gols, cartoes, substituicoes)
-  const importantEvents = state.events.filter(e => 
-    e.type === "goal" || 
-    e.type === "yellow_card" || 
-    e.type === "red_card" || 
-    e.type === "substitution" ||
+  const importantEvents = state.events.filter(e =>
+    e.type === "goal" ||
+    e.type === "yellow_card" ||
+    e.type === "red_card" ||
+    e.type === "sub" ||
     e.type === "penalty" ||
     e.type === "var"
   ).sort((a, b) => b.minute - a.minute) // Mais recentes primeiro
@@ -788,30 +803,70 @@ export default function PartidaAoVivoPage() {
 
       {/* Overlay de pré-jogo — fase "pre" */}
       {state.phase === "pre" && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="flex items-center gap-8 mb-8">
-            <div className="flex flex-col items-center gap-2">
-              <TeamCrest team={homeTeam} size="3xl" />
-              <span className="text-white text-lg font-bold">{homeTeam.nome}</span>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md">
+          <div className="relative w-[480px] max-w-[92vw] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#0c0c14]">
+            {/* Faixa de cores dos times */}
+            <div
+              className="h-1 w-full"
+              style={{ background: `linear-gradient(to right, ${homeTeam.cor1 || "#00ffc8"} 50%, ${awayTeam.cor1 || "#ffffff"} 50%)` }}
+            />
+
+            {/* Header da competição */}
+            <div className="flex flex-col items-center py-4 border-b border-white/[0.06] bg-white/[0.02]">
+              <span className="text-white/70 text-[11px] font-bold uppercase tracking-[0.2em]">
+                {matchCtx.competition || "Brasileirão Serie A"}
+              </span>
+              <span className="text-white/35 text-[10px] mt-0.5 tracking-wider">
+                {matchCtx.round || "Rodada 1"}
+              </span>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-white/40 text-xs uppercase tracking-widest">{matchCtx.competition || "Brasileirão"}</span>
-              <span className="text-white/40 text-xs">{matchCtx.round || ""}</span>
-              <span className="text-white text-3xl font-thin my-2">VS</span>
+
+            {/* Times */}
+            <div className="flex items-center justify-between px-8 py-8 gap-4">
+              {/* Time da casa */}
+              <div className="flex flex-col items-center gap-3 flex-1">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 blur-2xl opacity-40 scale-150 rounded-full"
+                    style={{ backgroundColor: homeTeam.cor1 || "#00ffc8" }}
+                  />
+                  <TeamCrest team={homeTeam} size="3xl" className="relative drop-shadow-xl" />
+                </div>
+                <span className="text-white text-sm font-bold text-center leading-tight">{homeTeam.nome}</span>
+              </div>
+
+              {/* VS central */}
+              <div className="flex flex-col items-center shrink-0 px-2">
+                <span className="text-white/20 text-4xl font-black tracking-tight select-none">VS</span>
+              </div>
+
+              {/* Time visitante */}
+              <div className="flex flex-col items-center gap-3 flex-1">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 blur-2xl opacity-40 scale-150 rounded-full"
+                    style={{ backgroundColor: awayTeam.cor1 || "#ffffff" }}
+                  />
+                  <TeamCrest team={awayTeam} size="3xl" className="relative drop-shadow-xl" />
+                </div>
+                <span className="text-white text-sm font-bold text-center leading-tight">{awayTeam.nome}</span>
+              </div>
             </div>
-            <div className="flex flex-col items-center gap-2">
-              <TeamCrest team={awayTeam} size="3xl" />
-              <span className="text-white text-lg font-bold">{awayTeam.nome}</span>
+
+            {/* Botão e hint */}
+            <div className="px-6 pb-6 flex flex-col items-center gap-3 border-t border-white/[0.04] pt-5">
+              <button
+                onClick={start}
+                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-[#00ffc8] text-black font-black text-base hover:bg-[#00e6b5] transition-all shadow-lg shadow-[#00ffc8]/25 active:scale-[0.98]"
+              >
+                <Play className="h-5 w-5 fill-current" />
+                INICIAR PARTIDA
+              </button>
+              <p className="text-white/30 text-xs">
+                Pressione <kbd className="bg-white/10 px-2 py-0.5 rounded text-white/50">Enter</kbd> ou o botão A do controle
+              </p>
             </div>
           </div>
-          <button
-            onClick={start}
-            className="flex items-center gap-3 px-10 py-4 rounded-xl bg-[#00ffc8] text-black font-black text-lg hover:bg-[#00e6b5] transition-all shadow-lg shadow-[#00ffc8]/30 animate-pulse"
-          >
-            <Play className="h-6 w-6 fill-current" />
-            INICIAR PARTIDA
-          </button>
-          <p className="text-white/30 text-xs mt-4">Pressione <kbd className="bg-white/10 px-2 py-0.5 rounded text-white/50">Enter</kbd> ou o botão A do controle</p>
         </div>
       )}
 
@@ -866,9 +921,9 @@ export default function PartidaAoVivoPage() {
           
   {/* Coluna Esquerda - Stats Casa */}
   <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-  <BigStat label="Possession %" value={state.home?.possession ?? 50} side="left" />
-  <BigStat label="Shots" value={state.home?.shots ?? 0} side="left" />
-  <BigStat label="Chances" value={state.home?.shotsOnTarget ?? 0} side="left" />
+  <BigStat label="Posse" value={state.home?.possession ?? 50} side="left" />
+  <BigStat label="Chutes" value={state.home?.shots ?? 0} side="left" />
+  <BigStat label="No alvo" value={state.home?.shotsOnTarget ?? 0} side="left" />
   </div>
 
           {/* Coluna Central - Conteudo baseado na Tab ativa */}
@@ -883,13 +938,18 @@ export default function PartidaAoVivoPage() {
                     
   {/* Stats Comparativas */}
   <div className="space-y-3">
+  <div className="grid grid-cols-[1fr_auto_1fr] items-center text-[10px] font-bold uppercase tracking-wider text-white/40">
+  <span>{homeTeam.curto}</span>
+  <span className="px-2 text-white/20">estatistica</span>
+  <span className="text-right">{awayTeam.curto}</span>
+  </div>
   <StatBar label="Posse de Bola" homeValue={state.home?.possession ?? 50} awayValue={state.away?.possession ?? 50} suffix="%" />
   <StatBar label="Chutes" homeValue={state.home?.shots ?? 0} awayValue={state.away?.shots ?? 0} />
   <StatBar label="Chutes no Alvo" homeValue={state.home?.shotsOnTarget ?? 0} awayValue={state.away?.shotsOnTarget ?? 0} />
   <StatBar label="Escanteios" homeValue={state.home?.corners ?? 0} awayValue={state.away?.corners ?? 0} />
   <StatBar label="Faltas" homeValue={state.home?.fouls ?? 0} awayValue={state.away?.fouls ?? 0} />
-  <StatBar label="Impedimentos" homeValue={state.home?.offsides ?? 0} awayValue={state.away?.offsides ?? 0} />
-  <StatBar label="Defesas" homeValue={state.home?.saves ?? 0} awayValue={state.away?.saves ?? 0} />
+  <StatBar label="Passes" homeValue={state.home?.passes ?? 0} awayValue={state.away?.passes ?? 0} />
+  <StatBar label="xG" homeValue={Math.round((state.home?.xG ?? 0) * 10) / 10} awayValue={Math.round((state.away?.xG ?? 0) * 10) / 10} />
   </div>
                   </div>
                 )}
@@ -980,17 +1040,15 @@ export default function PartidaAoVivoPage() {
                         <span className="text-white/40 text-xs uppercase tracking-wider">Substituicoes</span>
                         <span className="text-[#00ffc8] text-xs font-bold">{subsRemaining}/5 restantes</span>
                       </div>
-                      {state.events.filter(e => e.type === "substitution" && e.team === "home").length > 0 ? (
+                      {state.events.filter(e => e.type === "sub" && e.side === "home").length > 0 ? (
                         <div className="space-y-1">
                           {state.events
-                            .filter(e => e.type === "substitution" && e.team === "home")
+                            .filter(e => e.type === "sub" && e.side === "home")
                             .map((sub, i) => (
                               <div key={i} className="flex items-center gap-2 text-xs bg-white/5 rounded p-2">
                                 <span className="text-white/40">{sub.minute}&apos;</span>
                                 <ArrowDownUp className="h-3 w-3 text-amber-400" />
-                                <span className="text-white">{sub.playerIn}</span>
-                                <span className="text-white/40">por</span>
-                                <span className="text-white/60">{sub.player}</span>
+                                <span className="text-white">{sub.player}</span>
                               </div>
                             ))}
                         </div>
@@ -1024,6 +1082,10 @@ export default function PartidaAoVivoPage() {
                   <span className="text-white/30 text-xs">%</span>
                   <span className="text-white text-2xl font-black">{state.away.possession ?? 50}</span>
                 </div>
+                <div className="mt-0.5 flex justify-between text-[9px] font-semibold uppercase text-white/35">
+                  <span>{homeTeam.curto}</span>
+                  <span>{awayTeam.curto}</span>
+                </div>
               </div>
               <div className="text-center">
                 <span className="text-[#00ffc8] text-[10px] font-medium uppercase">Chutes</span>
@@ -1031,6 +1093,10 @@ export default function PartidaAoVivoPage() {
                   <span className="text-white text-2xl font-black">{state.home.shots}</span>
                   <span className="text-white/30 text-xs">-</span>
                   <span className="text-white text-2xl font-black">{state.away.shots}</span>
+                </div>
+                <div className="mt-0.5 flex justify-between text-[9px] font-semibold uppercase text-white/35">
+                  <span>{homeTeam.curto}</span>
+                  <span>{awayTeam.curto}</span>
                 </div>
               </div>
               <div className="text-center">
@@ -1040,15 +1106,19 @@ export default function PartidaAoVivoPage() {
                   <span className="text-white/30 text-xs">-</span>
                   <span className="text-white text-2xl font-black">{state.away.shotsOnTarget}</span>
                 </div>
+                <div className="mt-0.5 flex justify-between text-[9px] font-semibold uppercase text-white/35">
+                  <span>{homeTeam.curto}</span>
+                  <span>{awayTeam.curto}</span>
+                </div>
               </div>
             </div>
           </div>
 
   {/* Coluna Direita - Stats Fora */}
   <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-  <BigStat label="Possession %" value={state.away?.possession ?? 50} side="right" />
-  <BigStat label="Shots" value={state.away?.shots ?? 0} side="right" />
-  <BigStat label="Chances" value={state.away?.shotsOnTarget ?? 0} side="right" />
+  <BigStat label="Posse" value={state.away?.possession ?? 50} side="right" />
+  <BigStat label="Chutes" value={state.away?.shots ?? 0} side="right" />
+  <BigStat label="No alvo" value={state.away?.shotsOnTarget ?? 0} side="right" />
   </div>
         </div>
 
@@ -1086,7 +1156,7 @@ export default function PartidaAoVivoPage() {
               {/* Advance Button */}
               <div className="flex items-center gap-2">
                 <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/50 font-bold">X</span>
-                <span className="text-white/60 text-sm">Advance</span>
+                <span className="text-white/60 text-sm">Avancar</span>
               </div>
 
               {/* Post-Match Interview */}
@@ -1095,7 +1165,7 @@ export default function PartidaAoVivoPage() {
                   <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/50">
                     <Triangle className="w-3 h-3 fill-current" />
                   </span>
-                  <span className="text-white/60 text-sm">Post-Match Interview</span>
+                  <span className="text-white/60 text-sm">Coletiva pos-jogo</span>
                 </div>
               )}
             </div>
@@ -1124,6 +1194,7 @@ export default function PartidaAoVivoPage() {
       {/* Modal de Substituição */}
       {showSubModal && (
         <SubstitutionModal
+          open={showSubModal}
           team={userTeamForSub}
           starters={userStarters}
           bench={userBench}
@@ -1182,7 +1253,7 @@ export default function PartidaAoVivoPage() {
     isOpen={showPenaltyModal}
     team={userSide === "home" ? homeTeam : awayTeam}
     players={userSide === "home" ? homeSquad : awaySquad}
-    onSelectPlayer={handlePenaltyTaker}
+    onSelectPlayer={(p) => handlePenaltyTaker(p as unknown as MatchPlayer)}
     onClose={() => {
       setShowPenaltyModal(false)
       setPendingPenalty(null)
