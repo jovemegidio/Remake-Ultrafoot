@@ -1,9 +1,8 @@
 "use client"
 
 import { useMemo, useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Star, ChevronUp, ChevronDown, Minus } from "lucide-react"
+import { Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight, User } from "lucide-react"
 import {
   serieATeams,
   serieBTeams,
@@ -32,6 +31,7 @@ import { ControllerButton } from "@/components/controller-buttons"
 import { useTheme } from "@/components/theme-provider"
 import { useGamepadContext } from "@/components/gamepad-provider"
 import { cn } from "@/lib/utils"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 const FLAG_MAP: Record<string, string> = {
   BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
@@ -75,7 +75,6 @@ const DIVISIONS: DivisaoTab[] = [
 const STADIUM_BG = "/images/stadium-bg.png"
 
 export default function NovoJogoPage() {
-  const router = useRouter()
   const { initializeNewGame } = useGameManager()
   const { setTheme, setTeamColors } = useTheme()
   const { isGamepadConnected } = useGamepadContext()
@@ -89,8 +88,7 @@ export default function NovoJogoPage() {
   const selectedTeam = teams[teamIndex]
 
   const overall = useMemo(() => teamRating(selectedTeam?.nome || ""), [selectedTeam])
-  
-  // Calculate stats using deterministic hash based on team name
+
   const stats = useMemo(() => {
     const base = overall || 70
     const teamName = selectedTeam?.nome || ""
@@ -116,8 +114,9 @@ export default function NovoJogoPage() {
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
     initializeNewGame(selectedTeam.curto, managerName)
-    router.push("/")
-  }, [selectedTeam, managerName, initializeNewGame, router, setTeamColors, setTheme])
+    window.sessionStorage.setItem("ultrafoot:session-active", "true")
+    hardNavigate("/")
+  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme])
 
   const nextTeam = useCallback(() => {
     setTeamIndex(prev => (prev + 1) % teams.length)
@@ -141,268 +140,308 @@ export default function NovoJogoPage() {
     setTeamIndex(Math.floor(Math.random() * teams.length))
   }, [teams.length])
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case "ArrowLeft":
-          prevTeam()
-          break
-        case "ArrowRight":
-          nextTeam()
-          break
-        case "Enter":
-          handleStart()
-          break
+        case "ArrowLeft": prevTeam(); break
+        case "ArrowRight": nextTeam(); break
+        case "Enter": handleStart(); break
         case "Escape":
-        case "Backspace":
-          router.push("/splash")
-          break
+        case "Backspace": hardNavigate("/splash"); break
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleStart, router, prevTeam, nextTeam])
+  }, [handleStart, prevTeam, nextTeam])
 
-  // Gamepad navigation
   useEffect(() => {
     const handleGamepadButton = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
       switch (button) {
-        case "B":
-          router.push("/splash")
-          break
+        case "B": hardNavigate("/splash"); break
         case "A":
-        case "START":
-          handleStart()
-          break
-        case "DPAD_LEFT":
-          prevTeam()
-          break
-        case "DPAD_RIGHT":
-          nextTeam()
-          break
-        case "LB":
-          prevDivision()
-          break
-        case "RB":
-          nextDivision()
-          break
-        case "X":
-          selectRandomTeam()
-          break
+        case "START": handleStart(); break
+        case "DPAD_LEFT": prevTeam(); break
+        case "DPAD_RIGHT": nextTeam(); break
+        case "LB": prevDivision(); break
+        case "RB": nextDivision(); break
+        case "X": selectRandomTeam(); break
       }
     }
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [handleStart, router, prevTeam, nextTeam, prevDivision, nextDivision, selectRandomTeam])
+  }, [handleStart, prevTeam, nextTeam, prevDivision, nextDivision, selectRandomTeam])
 
   const leagueLogo = getLeagueLogo(activeDivision.key)
   const prestigeStars = Math.round((selectedTeam?.prestigio || 50) / 20)
+  const cor1 = selectedTeam?.cor1 || "#10b981"
+  const cor2 = selectedTeam?.cor2 || "#059669"
 
-  // Stat trend indicator component
   const TrendIndicator = ({ trend }: { trend: string }) => {
     if (trend === "up") return <ChevronUp className="w-3 h-3 text-emerald-400" />
     if (trend === "down") return <ChevronDown className="w-3 h-3 text-red-400" />
-    return <Minus className="w-3 h-3 text-white/40" />
+    return <Minus className="w-3 h-3 text-white/30" />
   }
 
   return (
     <main className="h-screen w-screen overflow-hidden relative">
-      {/* Background Image */}
+      {/* Background */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src={STADIUM_BG}
-          alt="Stadium Background"
-          fill
-          className="object-cover"
-          priority
-          unoptimized
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+        <Image src={STADIUM_BG} alt="Stadium Background" fill className="object-cover" priority unoptimized />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 h-full flex flex-col">
-        {/* Top Bar - Country & Flag */}
-        <header className="flex items-center justify-center py-3 sm:py-5 px-4">
-          <div className="flex items-center gap-4">
+
+        {/* ── ÁREA 1: Seletor de país/liga ── */}
+        <header className="flex items-center justify-center pt-5 pb-2 px-4">
+          <div
+            className="flex items-center gap-3 rounded-full px-4 py-2.5 shadow-xl"
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)",
+            }}
+          >
             <button
               onClick={prevDivision}
-              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none px-2"
+              className="w-7 h-7 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all"
             >
-              {"<"}
+              <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center justify-center w-14 h-10">
-              {activeDivision.code && (
-                <Image
-                  src={getFlagUrl(activeDivision.code)}
-                  alt={activeDivision.country || ""}
-                  width={56}
-                  height={40}
-                  className="object-contain rounded drop-shadow-lg"
-                  unoptimized
-                />
-              )}
+            <div className="flex items-center gap-2.5 min-w-[130px] justify-center">
+              <div className="w-9 h-6 rounded overflow-hidden shadow-md flex-shrink-0">
+                {activeDivision.code && (
+                  <Image
+                    src={getFlagUrl(activeDivision.code)}
+                    alt={activeDivision.country || ""}
+                    width={36}
+                    height={24}
+                    className="object-cover w-full h-full"
+                    unoptimized
+                  />
+                )}
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="text-white font-semibold text-sm tracking-wide">{activeDivision.country}</span>
+                <span className="text-white/45 text-[10px] mt-0.5">{activeDivision.short}</span>
+              </div>
             </div>
 
             <button
               onClick={nextDivision}
-              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none px-2"
+              className="w-7 h-7 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all"
             >
-              {">"}
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </header>
 
-        {/* Main Content - Team Display */}
+        {/* ── ÁREA 2 + 3: Card do time + badge da liga ── */}
         <div className="flex-1 flex items-center justify-center px-2 sm:px-6 overflow-hidden">
-          <div className="flex items-center gap-2 sm:gap-6 w-full max-w-sm sm:max-w-none justify-center">
-            {/* Left Arrow */}
+          <div className="flex items-center gap-4 sm:gap-8 w-full max-w-sm sm:max-w-none justify-center">
+
+            {/* Seta esquerda */}
             <button
               onClick={prevTeam}
-              className="text-white/40 hover:text-white/70 transition-colors text-3xl sm:text-4xl font-extralight select-none shrink-0 px-1"
+              className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all shrink-0 border border-white/10 backdrop-blur-sm"
             >
-              {"◀"}
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
-            {/* Team Card - FIFA Style */}
+            {/* Card + Liga */}
             <div className="flex flex-col items-center min-w-0">
-              {/* Card Container */}
-              <div className="relative bg-linear-to-b from-white/12 to-white/6 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden w-76 sm:w-84">
-                {/* Team Name Header */}
-                <div className="px-4 py-2 sm:py-3 border-b border-white/10 bg-white/5">
-                  <h1 className="text-xl sm:text-2xl font-bold text-white text-center truncate">
+              {/* Card principal */}
+              <div
+                className="relative rounded-2xl overflow-hidden shadow-2xl w-72 sm:w-80"
+                style={{
+                  background: `linear-gradient(160deg, ${cor1}22 0%, rgba(5,10,15,0.88) 55%, ${cor2}15 100%)`,
+                  border: `1px solid ${cor1}50`,
+                  boxShadow: `0 0 60px ${cor1}18, 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)`,
+                }}
+              >
+                {/* Faixa de cor do time no topo */}
+                <div
+                  className="h-1 w-full"
+                  style={{ background: `linear-gradient(90deg, ${cor1}, ${cor2})` }}
+                />
+
+                {/* Nome do time */}
+                <div
+                  className="px-5 py-3 border-b"
+                  style={{ borderColor: `${cor1}25`, background: `${cor1}10` }}
+                >
+                  <h1 className="text-xl sm:text-2xl font-bold text-white text-center tracking-wide truncate">
                     {selectedTeam?.nome}
                   </h1>
                 </div>
 
-                {/* Team Crest — sem fundo: radial gradient apenas como aura */}
-                <div className="py-4 sm:py-6 flex justify-center">
+                {/* Escudo */}
+                <div className="py-5 sm:py-7 flex justify-center">
                   <div
-                    className="w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center"
+                    className="w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center rounded-full"
                     style={{
-                      background: `radial-gradient(circle, ${selectedTeam?.cor1}30 0%, transparent 65%)`,
+                      background: `radial-gradient(circle, ${cor1}28 0%, transparent 68%)`,
                     }}
                   >
-                    <TeamCrest
-                      team={selectedTeam}
-                      size="2xl"
-                      className="w-32 h-32 sm:w-36 sm:h-36"
-                    />
+                    <TeamCrest team={selectedTeam} size="2xl" className="w-32 h-32 sm:w-36 sm:h-36" />
                   </div>
                 </div>
 
-                {/* Stars Rating */}
-                <div className="flex items-center justify-center gap-0.5 pb-3 sm:pb-4">
+                {/* Estrelas de prestígio */}
+                <div className="flex items-center justify-center gap-1 pb-4">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       className={cn(
-                        "w-5 h-5",
+                        "w-5 h-5 sm:w-6 sm:h-6",
                         i < prestigeStars
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-white/20"
+                          ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]"
+                          : "text-white/15"
                       )}
                     />
                   ))}
                 </div>
 
-                {/* Stats Bar */}
-                <div className="flex items-center justify-center gap-8 py-4 border-t border-white/10 bg-black/20">
-                  <div className="text-center">
-                    <div className="text-xs text-white/50 uppercase tracking-widest mb-1">ATA</div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xl font-bold text-white">{stats.ata.value}</span>
+                {/* Stats */}
+                <div
+                  className="flex items-stretch border-t"
+                  style={{ borderColor: `${cor1}25`, background: "rgba(0,0,0,0.35)" }}
+                >
+                  <div className="flex-1 text-center py-3.5 px-2">
+                    <div className="text-[9px] font-bold text-orange-400/70 uppercase tracking-[0.15em] mb-1.5">ATA</div>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <span className="text-2xl font-black text-white leading-none">{stats.ata.value}</span>
                       <TrendIndicator trend={stats.ata.trend} />
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-xs text-white/50 uppercase tracking-widest mb-1">MEI</div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xl font-bold text-white">{stats.mei.value}</span>
+                  <div className="w-px" style={{ background: `${cor1}25` }} />
+                  <div className="flex-1 text-center py-3.5 px-2">
+                    <div className="text-[9px] font-bold text-sky-400/70 uppercase tracking-[0.15em] mb-1.5">MEI</div>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <span className="text-2xl font-black text-white leading-none">{stats.mei.value}</span>
                       <TrendIndicator trend={stats.mei.trend} />
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-xs text-white/50 uppercase tracking-widest mb-1">DEF</div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xl font-bold text-white">{stats.def.value}</span>
+                  <div className="w-px" style={{ background: `${cor1}25` }} />
+                  <div className="flex-1 text-center py-3.5 px-2">
+                    <div className="text-[9px] font-bold text-emerald-400/70 uppercase tracking-[0.15em] mb-1.5">DEF</div>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <span className="text-2xl font-black text-white leading-none">{stats.def.value}</span>
                       <TrendIndicator trend={stats.def.trend} />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* League Info — abaixo do card, logo sem fundo quadrado */}
-              <div className="flex flex-col items-center mt-2 gap-1">
-                <span className="text-[10px] text-white/50">{activeDivision.label}</span>
+              {/* ── ÁREA 3: Badge da liga ── */}
+              <div
+                className="flex items-center gap-2.5 mt-3 rounded-full px-4 py-2 shadow-lg"
+                style={{
+                  background: "rgba(0,0,0,0.55)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                }}
+              >
                 {leagueLogo && (
                   <Image
                     src={leagueLogo}
                     alt={activeDivision.label}
-                    width={64}
-                    height={32}
-                    className="object-contain"
+                    width={32}
+                    height={16}
+                    className="object-contain flex-shrink-0"
                     style={{ mixBlendMode: "screen" }}
                     unoptimized
                   />
                 )}
+                <span className="text-sm font-medium text-white/75 tracking-wide whitespace-nowrap">
+                  {activeDivision.label}
+                </span>
               </div>
             </div>
 
-            {/* Right Arrow */}
+            {/* Seta direita */}
             <button
               onClick={nextTeam}
-              className="text-white/40 hover:text-white/70 transition-colors text-3xl sm:text-4xl font-extralight select-none shrink-0 px-1"
+              className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all shrink-0 border border-white/10 backdrop-blur-sm"
             >
-              {"▶"}
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>
 
-        {/* Bottom Bar - Actions */}
-        <footer className="py-3 sm:py-4 px-3 sm:px-6 bg-linear-to-t from-black/60 to-transparent">
+        {/* ── ÁREA 4: Footer com input e botão ── */}
+        <footer className="py-4 sm:py-5 px-4 sm:px-6 bg-gradient-to-t from-black/75 via-black/30 to-transparent">
           <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between">
-            {/* Controls Legend — só aparece com controle conectado */}
+
+            {/* Controles do gamepad */}
             {isGamepadConnected && (
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5">
                   <ControllerButton button="A" controller="playstation" size="sm" showLabel={false} />
-                  <span className="text-white/70">Selecionar</span>
+                  <span className="text-white/60">Selecionar</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <ControllerButton button="B" controller="playstation" size="sm" showLabel={false} />
-                  <span className="text-white/70">Voltar</span>
+                  <span className="text-white/60">Voltar</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <ControllerButton button="X" controller="playstation" size="sm" showLabel={false} />
-                  <span className="text-white/70">Aleatório</span>
+                  <span className="text-white/60">Aleatório</span>
                 </div>
               </div>
             )}
 
-            {/* Center - Manager Input & Start */}
+            {/* Input + botão */}
             <div className={cn("flex items-center gap-3", !isGamepadConnected && "sm:mx-auto")}>
-              <input
-                value={managerName}
-                onChange={e => setManagerName(e.target.value)}
-                placeholder="Nome do Técnico"
-                maxLength={32}
-                className="w-36 sm:w-44 h-9 rounded border border-white/20 bg-black/50 backdrop-blur-sm px-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-emerald-500/50 transition-all"
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35 pointer-events-none" />
+                <input
+                  value={managerName}
+                  onChange={e => setManagerName(e.target.value)}
+                  placeholder="Nome do Técnico"
+                  maxLength={32}
+                  className="w-44 sm:w-52 h-10 rounded-xl pl-9 pr-3 text-sm text-white placeholder:text-white/35 focus:outline-none transition-all"
+                  style={{
+                    background: "rgba(0,0,0,0.6)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    backdropFilter: "blur(8px)",
+                  }}
+                  onFocus={e => {
+                    e.currentTarget.style.borderColor = `${cor1}80`
+                    e.currentTarget.style.boxShadow = `0 0 0 2px ${cor1}20`
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"
+                    e.currentTarget.style.boxShadow = "none"
+                  }}
+                />
+              </div>
               <button
                 onClick={handleStart}
-                className="rounded px-4 sm:px-5 py-2 font-bold text-sm bg-emerald-500 text-black hover:bg-emerald-400 transition-all whitespace-nowrap"
+                className="h-10 rounded-xl px-5 sm:px-6 font-bold text-sm text-white tracking-wide transition-all whitespace-nowrap active:scale-95"
+                style={{
+                  background: `linear-gradient(135deg, ${cor1}, ${cor2})`,
+                  boxShadow: `0 4px 20px ${cor1}45, inset 0 1px 0 rgba(255,255,255,0.15)`,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.boxShadow = `0 6px 28px ${cor1}60, inset 0 1px 0 rgba(255,255,255,0.15)`
+                  e.currentTarget.style.filter = "brightness(1.1)"
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.boxShadow = `0 4px 20px ${cor1}45, inset 0 1px 0 rgba(255,255,255,0.15)`
+                  e.currentTarget.style.filter = "none"
+                }}
               >
                 INICIAR CARREIRA
               </button>
             </div>
 
-            {/* Right - Team Counter */}
-            <div className="text-white/50 text-xs">
-              <span>{teamIndex + 1} / {teams.length}</span>
+            {/* Contador */}
+            <div className="text-white/35 text-xs font-mono tabular-nums">
+              {teamIndex + 1} / {teams.length}
             </div>
           </div>
         </footer>
