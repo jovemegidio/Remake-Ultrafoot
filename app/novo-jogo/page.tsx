@@ -235,13 +235,13 @@ export default function NovoJogoPage() {
               {"<"}
             </button>
 
-            <div className="flex items-center justify-center w-20 h-14">
+            <div className="flex items-center justify-center w-14 h-10">
               {activeDivision.code && (
                 <Image
                   src={getFlagUrl(activeDivision.code)}
                   alt={activeDivision.country || ""}
-                  width={80}
-                  height={56}
+                  width={56}
+                  height={40}
                   className="object-contain rounded drop-shadow-lg"
                   unoptimized
                 />
@@ -271,10 +271,10 @@ export default function NovoJogoPage() {
             {/* Team Card - FIFA Style */}
             <div className="flex flex-col items-center min-w-0">
               {/* Card Container */}
-              <div className="relative bg-linear-to-b from-white/12 to-white/6 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden w-65 sm:w-70">
+              <div className="relative bg-linear-to-b from-white/12 to-white/6 backdrop-blur-md border border-white/20 rounded-lg overflow-hidden w-76 sm:w-84">
                 {/* Team Name Header */}
                 <div className="px-4 py-2 sm:py-3 border-b border-white/10 bg-white/5">
-                  <h1 className="text-lg sm:text-xl font-bold text-white text-center truncate">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white text-center truncate">
                     {selectedTeam?.nome}
                   </h1>
                 </div>
@@ -282,7 +282,7 @@ export default function NovoJogoPage() {
                 {/* Team Crest — sem fundo: radial gradient apenas como aura */}
                 <div className="py-4 sm:py-6 flex justify-center">
                   <div
-                    className="w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center"
+                    className="w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center"
                     style={{
                       background: `radial-gradient(circle, ${selectedTeam?.cor1}30 0%, transparent 65%)`,
                     }}
@@ -290,7 +290,7 @@ export default function NovoJogoPage() {
                     <TeamCrest
                       team={selectedTeam}
                       size="2xl"
-                      className="w-24 h-24 sm:w-28 sm:h-28"
+                      className="w-32 h-32 sm:w-36 sm:h-36"
                     />
                   </div>
                 </div>
@@ -301,7 +301,7 @@ export default function NovoJogoPage() {
                     <Star
                       key={i}
                       className={cn(
-                        "w-4 h-4",
+                        "w-5 h-5",
                         i < prestigeStars
                           ? "fill-amber-400 text-amber-400"
                           : "text-white/20"
@@ -311,25 +311,25 @@ export default function NovoJogoPage() {
                 </div>
 
                 {/* Stats Bar */}
-                <div className="flex items-center justify-center gap-6 py-3 border-t border-white/10 bg-black/20">
+                <div className="flex items-center justify-center gap-8 py-4 border-t border-white/10 bg-black/20">
                   <div className="text-center">
-                    <div className="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">ATA</div>
+                    <div className="text-xs text-white/50 uppercase tracking-widest mb-1">ATA</div>
                     <div className="flex items-center gap-1">
-                      <span className="text-lg font-bold text-white">{stats.ata.value}</span>
+                      <span className="text-xl font-bold text-white">{stats.ata.value}</span>
                       <TrendIndicator trend={stats.ata.trend} />
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">MEI</div>
+                    <div className="text-xs text-white/50 uppercase tracking-widest mb-1">MEI</div>
                     <div className="flex items-center gap-1">
-                      <span className="text-lg font-bold text-white">{stats.mei.value}</span>
+                      <span className="text-xl font-bold text-white">{stats.mei.value}</span>
                       <TrendIndicator trend={stats.mei.trend} />
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">DEF</div>
+                    <div className="text-xs text-white/50 uppercase tracking-widest mb-1">DEF</div>
                     <div className="flex items-center gap-1">
-                      <span className="text-lg font-bold text-white">{stats.def.value}</span>
+                      <span className="text-xl font-bold text-white">{stats.def.value}</span>
                       <TrendIndicator trend={stats.def.trend} />
                     </div>
                   </div>
@@ -337,14 +337,14 @@ export default function NovoJogoPage() {
               </div>
 
               {/* League Info — abaixo do card, logo sem fundo quadrado */}
-              <div className="flex flex-col items-center mt-3 gap-1.5">
-                <span className="text-xs text-white/60">{activeDivision.label}</span>
+              <div className="flex flex-col items-center mt-2 gap-1">
+                <span className="text-[10px] text-white/50">{activeDivision.label}</span>
                 {leagueLogo && (
                   <Image
                     src={leagueLogo}
                     alt={activeDivision.label}
-                    width={90}
-                    height={45}
+                    width={64}
+                    height={32}
                     className="object-contain"
                     style={{ mixBlendMode: "screen" }}
                     unoptimized
