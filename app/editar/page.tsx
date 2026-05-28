@@ -29,12 +29,33 @@ import {
 import { allInternationalTeams } from "@/lib/international-teams"
 import { TeamCrest } from "@/components/team-crest"
 
-// Mock players data generator based on team
-const generatePlayersForTeam = (team: Team) => {
-  const positions = ["GOL", "LAT", "ZAG", "VOL", "MEI", "ATA"]
-  const characteristics = ["Reflexos", "Marcacao", "Passe", "Drible", "Finalizacao", "Cabecada", "Velocidade"]
-  const countries = ["BRA", "ARG", "URU", "COL", "CHI", "PAR"]
-  const sides = ["D", "E", "A"]
+// Mock players data generator based on team - completamente deterministico (sem Math.random)
+const generatePlayersForTeam = () => {
+  // Arrays com valores fixos para evitar hydration mismatch
+  const playerData = [
+    { pos: "GOL", pais: "BRA", idade: 31, ovr: 75, carac: "Reflexos", lado: "D" },
+    { pos: "GOL", pais: "BRA", idade: 21, ovr: 60, carac: "Reflexos", lado: "E" },
+    { pos: "GOL", pais: "BRA", idade: 19, ovr: 88, carac: "Reflexos", lado: "A" },
+    { pos: "GOL", pais: "ARG", idade: 20, ovr: 65, carac: "Reflexos", lado: "D" },
+    { pos: "LAT", pais: "BRA", idade: 28, ovr: 85, carac: "Velocidade", lado: "D" },
+    { pos: "LAT", pais: "BRA", idade: 27, ovr: 70, carac: "Velocidade", lado: "E" },
+    { pos: "LAT", pais: "URU", idade: 23, ovr: 55, carac: "Marcacao", lado: "D" },
+    { pos: "LAT", pais: "BRA", idade: 35, ovr: 57, carac: "Passe", lado: "E" },
+    { pos: "ZAG", pais: "BRA", idade: 27, ovr: 75, carac: "Marcacao", lado: "D" },
+    { pos: "ZAG", pais: "BRA", idade: 31, ovr: 62, carac: "Cabecada", lado: "E" },
+    { pos: "ZAG", pais: "ARG", idade: 30, ovr: 80, carac: "Marcacao", lado: "A" },
+    { pos: "ZAG", pais: "COL", idade: 31, ovr: 75, carac: "Cabecada", lado: "D" },
+    { pos: "VOL", pais: "BRA", idade: 33, ovr: 60, carac: "Marcacao", lado: "E" },
+    { pos: "VOL", pais: "BRA", idade: 19, ovr: 83, carac: "Passe", lado: "A" },
+    { pos: "VOL", pais: "CHI", idade: 27, ovr: 80, carac: "Marcacao", lado: "D" },
+    { pos: "VOL", pais: "PAR", idade: 23, ovr: 65, carac: "Passe", lado: "E" },
+    { pos: "MEI", pais: "BRA", idade: 26, ovr: 70, carac: "Drible", lado: "A" },
+    { pos: "MEI", pais: "BRA", idade: 35, ovr: 55, carac: "Passe", lado: "D" },
+    { pos: "MEI", pais: "ARG", idade: 29, ovr: 57, carac: "Finalizacao", lado: "E" },
+    { pos: "MEI", pais: "BRA", idade: 27, ovr: 75, carac: "Drible", lado: "A" },
+    { pos: "ATA", pais: "BRA", idade: 22, ovr: 60, carac: "Finalizacao", lado: "D" },
+    { pos: "ATA", pais: "COL", idade: 30, ovr: 59, carac: "Velocidade", lado: "E" },
+  ]
   
   const names = [
     "Silva", "Santos", "Oliveira", "Souza", "Lima", "Pereira", "Costa", "Ferreira",
@@ -44,18 +65,19 @@ const generatePlayersForTeam = (team: Team) => {
   
   const firstNames = [
     "Lucas", "Gabriel", "Rafael", "Bruno", "Matheus", "Felipe", "Gustavo", "Pedro",
-    "Thiago", "Marcos", "Andre", "Carlos", "Diego", "Eduardo", "Fernando", "Henrique"
+    "Thiago", "Marcos", "Andre", "Carlos", "Diego", "Eduardo", "Fernando", "Henrique",
+    "Paulo", "Ricardo", "Sergio", "Victor", "William", "Yago"
   ]
 
-  return Array.from({ length: 22 }, (_, i) => ({
+  return playerData.map((data, i) => ({
     id: i + 1,
-    nome: `${firstNames[i % firstNames.length]} ${names[i % names.length]}`,
-    posicao: positions[Math.floor(i / 4) % positions.length],
-    pais: countries[Math.floor(Math.random() * countries.length)],
-    idade: 18 + Math.floor(Math.random() * 18),
-    overall: 55 + Math.floor(Math.random() * 35),
-    caracteristica: characteristics[Math.floor(Math.random() * characteristics.length)],
-    lado: sides[Math.floor(Math.random() * sides.length)]
+    nome: `${firstNames[i]} ${names[i]}`,
+    posicao: data.pos,
+    pais: data.pais,
+    idade: data.idade,
+    overall: data.ovr,
+    caracteristica: data.carac,
+    lado: data.lado
   }))
 }
 
@@ -81,12 +103,12 @@ export default function EditarPage() {
   const [activeTab, setActiveTab] = useState<"principal" | "juniores">("principal")
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [players, setPlayers] = useState(() => generatePlayersForTeam(allTeams[0]))
+  const [players, setPlayers] = useState(() => generatePlayersForTeam())
 
   // Update players when team changes
   useEffect(() => {
     if (selectedTeam) {
-      setPlayers(generatePlayersForTeam(selectedTeam))
+      setPlayers(generatePlayersForTeam())
       setSelectedPlayerIndex(0)
     }
   }, [selectedTeam])
@@ -149,20 +171,17 @@ export default function EditarPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#050508]">
-      {/* Animated background */}
+      {/* Stadium background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.03]"
-          style={{
-            background: "radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%)",
-          }}
+        <Image
+          src="/images/stadium-night.png"
+          alt="Stadium"
+          fill
+          className="object-cover opacity-50"
+          priority
         />
-        <div 
-          className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.03]"
-          style={{
-            background: "radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, transparent 70%)",
-          }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/70 to-[#050508]/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#050508]/80 via-transparent to-[#050508]/80" />
       </div>
 
       {/* Header - Fixed height */}
