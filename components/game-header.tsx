@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useState, useContext, useRef, useEffect } from "react"
 import { ChevronRight, Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
@@ -11,6 +11,7 @@ import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 interface GameHeaderProps {
   team?: Team
@@ -29,7 +30,6 @@ const navItems = [
 
 export function GameHeader({ team, showNav = true, className }: GameHeaderProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const { state, setState } = useGameState()
   const { advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar } = useGameManager()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
@@ -80,7 +80,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     const result = await advanceGameWeek()
     setAdvancing(false)
     if (seasonCalendar.nextUserMatch) {
-      router.push("/partida")
+      hardNavigate("/partida")
     }
   }
 
@@ -163,14 +163,14 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           onClick={handleAdvance}
           disabled={advancing}
           className={cn(
-            "eafc-btn flex items-center gap-2 px-4 py-2 text-[10px] font-bold tracking-wider uppercase",
+            "eafc-btn flex items-center gap-2.5 px-6 py-2.5 text-xs font-bold tracking-wider uppercase",
             advancing && "opacity-50 cursor-wait"
           )}
         >
           {advancing ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <FastForward className="h-3.5 w-3.5" />
+            <FastForward className="h-4 w-4" />
           )}
           <span>Avancar</span>
         </button>

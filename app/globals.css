@@ -1,5 +1,11 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
 @import 'tw-animate-css';
+
+@source "../app";
+@source "../components";
+@source "../hooks";
+@source "../lib";
+@source "../styles";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -199,6 +205,8 @@
 }
 
 :root {
+  --game-view-scale: 0.70;
+
   /* EA FC 26 Premium Dark Theme */
   --background: oklch(0.06 0.015 260);
   --foreground: oklch(0.98 0.005 240);
@@ -304,8 +312,15 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    zoom: var(--game-view-scale);
+    width: calc(100vw / var(--game-view-scale));
+    min-height: calc(100vh / var(--game-view-scale));
+    overflow: hidden;
     background-image:
       radial-gradient(ellipse at top left, oklch(0.12 0.08 175 / 0.20) 0%, transparent 50%),
       radial-gradient(ellipse at bottom right, oklch(0.10 0.10 145 / 0.12) 0%, transparent 50%),
@@ -315,6 +330,30 @@
 }
 
 @layer utilities {
+  .h-screen {
+    height: calc(100vh / var(--game-view-scale)) !important;
+  }
+
+  .min-h-screen {
+    min-height: calc(100vh / var(--game-view-scale)) !important;
+  }
+
+  .max-h-screen {
+    max-height: calc(100vh / var(--game-view-scale)) !important;
+  }
+
+  .w-screen {
+    width: calc(100vw / var(--game-view-scale)) !important;
+  }
+
+  .min-w-screen {
+    min-width: calc(100vw / var(--game-view-scale)) !important;
+  }
+
+  .max-w-screen {
+    max-width: calc(100vw / var(--game-view-scale)) !important;
+  }
+
   /* EA FC Display font - Bold condensed for titles */
   .font-display {
     font-family: var(--font-display);
