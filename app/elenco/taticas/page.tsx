@@ -93,12 +93,12 @@ export default function TaticasPage() {
   }
 
   return (
-    <div className="flex h-screen pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen md:pl-[68px] pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
       <GameSidebar />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
         
-        <main className="flex-1 overflow-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-6 lg:p-8">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <button
@@ -117,7 +117,7 @@ export default function TaticasPage() {
           </div>
 
           {/* Tactical Presets Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 min-w-0">
             {TACTICAL_PRESETS.map((preset) => (
               <motion.div
                 key={preset.id}

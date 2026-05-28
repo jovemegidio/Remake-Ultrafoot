@@ -182,7 +182,7 @@ export default function EscalacoesPage() {
   const formationPositions = FORMATIONS[selectedLineup?.formation || "4-3-3"]?.positions || FORMATIONS["4-3-3"].positions
 
   return (
-    <div className="flex h-screen pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen md:pl-[68px] pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
       <GameSidebar />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
@@ -202,7 +202,7 @@ export default function EscalacoesPage() {
           <span className="text-white/60 text-sm">Escalacoes</span>
         </div>
         
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-hidden min-h-0">
           {/* Background gradient - EA FC style */}
           <div 
             className="h-full w-full flex"
@@ -214,7 +214,7 @@ export default function EscalacoesPage() {
             }}
           >
             {/* Left Column - Actions and Lineup List */}
-            <div className="w-[420px] flex-shrink-0 p-6 overflow-auto">
+            <div className="w-[260px] md:w-[340px] lg:w-[420px] flex-shrink-0 p-6 overflow-auto">
               {/* Action Cards */}
               <div className="flex gap-4 mb-6">
                 {/* Nova Escalacao */}

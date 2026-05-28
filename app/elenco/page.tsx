@@ -103,11 +103,7 @@ export default function ElencoHubPage() {
   }, [teamPlayers])
 
   // Discord RPC
-  useDiscordActivity({
-    state: `Gerenciando ${userTeam.nome}`,
-    details: "Elenco",
-    largeImageKey: "logo",
-  })
+  useDiscordActivity("Elenco", `Gerenciando ${userTeam.nome}`)
 
   const cards = [
     {
@@ -160,12 +156,12 @@ export default function ElencoHubPage() {
   }
 
   return (
-    <div className="flex h-screen pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen md:pl-[68px] pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
       <GameSidebar />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
         
-        <main className="flex-1 overflow-hidden relative">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
           {/* Background com gradiente e pattern */}
           <div 
             className="absolute inset-0 opacity-30"
@@ -212,7 +208,7 @@ export default function ElencoHubPage() {
 
             {/* Cards Grid */}
             <div className="flex-1 flex items-center justify-center">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl w-full min-w-0">
                 {cards.map((card, index) => (
                   <motion.div
                     key={card.id}
@@ -234,7 +230,7 @@ export default function ElencoHubPage() {
                         "bg-gradient-to-br",
                         card.color,
                         hoveredCard === card.id ? "border-cyan-400/60 shadow-lg shadow-cyan-500/20" : card.borderColor,
-                        "h-[380px] flex flex-col"
+                        "h-[320px] lg:h-[380px] flex flex-col"
                       )}
                     >
                       {/* Glow effect on hover */}
