@@ -3,11 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import {
-  ChevronLeft,
-  ChevronRight,
-  Star,
-} from "lucide-react"
+import { Star, ChevronUp, ChevronDown, Minus } from "lucide-react"
 import {
   serieATeams,
   serieBTeams,
@@ -44,6 +40,7 @@ interface DivisaoTab {
   country?: string
   code?: string
   flag?: string
+  flagImg?: string
 }
 
 const DIVISIONS: DivisaoTab[] = [
@@ -84,7 +81,6 @@ export default function NovoJogoPage() {
   const stats = useMemo(() => {
     const base = overall || 70
     const teamName = selectedTeam?.nome || ""
-    // Simple deterministic hash function
     const hash = (str: string, seed: number) => {
       let h = seed
       for (let i = 0; i < str.length; i++) {
@@ -92,44 +88,45 @@ export default function NovoJogoPage() {
       }
       return Math.abs(h % 100) / 100 - 0.5
     }
+    const ataVal = Math.round(base + hash(teamName, 1) * 10)
+    const meiVal = Math.round(base + hash(teamName, 2) * 8)
+    const defVal = Math.round(base + hash(teamName, 3) * 10)
     return {
-      ata: Math.round(base + hash(teamName, 1) * 10),
-      mei: Math.round(base + hash(teamName, 2) * 8),
-      def: Math.round(base + hash(teamName, 3) * 10),
+      ata: { value: ataVal, trend: hash(teamName, 4) > 0.1 ? "up" : hash(teamName, 4) < -0.1 ? "down" : "neutral" },
+      mei: { value: meiVal, trend: hash(teamName, 5) > 0.1 ? "up" : hash(teamName, 5) < -0.1 ? "down" : "neutral" },
+      def: { value: defVal, trend: hash(teamName, 6) > 0.1 ? "up" : hash(teamName, 6) < -0.1 ? "down" : "neutral" },
     }
   }, [overall, selectedTeam])
 
   const handleStart = useCallback(() => {
     if (!selectedTeam) return
-    console.log("[v0] handleStart called with team:", selectedTeam.curto, "manager:", managerName)
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
     initializeNewGame(selectedTeam.curto, managerName)
-    console.log("[v0] initializeNewGame called, redirecting to /")
     router.push("/")
   }, [selectedTeam, managerName, initializeNewGame, router, setTeamColors, setTheme])
 
-  const nextTeam = () => {
+  const nextTeam = useCallback(() => {
     setTeamIndex(prev => (prev + 1) % teams.length)
-  }
+  }, [teams.length])
 
-  const prevTeam = () => {
+  const prevTeam = useCallback(() => {
     setTeamIndex(prev => (prev - 1 + teams.length) % teams.length)
-  }
+  }, [teams.length])
 
-  const nextDivision = () => {
+  const nextDivision = useCallback(() => {
     setDivisaoIndex(prev => (prev + 1) % DIVISIONS.length)
     setTeamIndex(0)
-  }
+  }, [])
 
-  const prevDivision = () => {
+  const prevDivision = useCallback(() => {
     setDivisaoIndex(prev => (prev - 1 + DIVISIONS.length) % DIVISIONS.length)
     setTeamIndex(0)
-  }
+  }, [])
 
-  const selectRandomTeam = () => {
+  const selectRandomTeam = useCallback(() => {
     setTeamIndex(Math.floor(Math.random() * teams.length))
-  }
+  }, [teams.length])
 
   // Keyboard navigation
   useEffect(() => {
@@ -152,7 +149,7 @@ export default function NovoJogoPage() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleStart, router, teams.length])
+  }, [handleStart, router, prevTeam, nextTeam])
 
   // Gamepad navigation
   useEffect(() => {
@@ -185,10 +182,17 @@ export default function NovoJogoPage() {
     }
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [handleStart, router, teams.length])
+  }, [handleStart, router, prevTeam, nextTeam, prevDivision, nextDivision, selectRandomTeam])
 
   const leagueLogo = getLeagueLogo(activeDivision.key)
   const prestigeStars = Math.round((selectedTeam?.prestigio || 50) / 20)
+
+  // Stat trend indicator component
+  const TrendIndicator = ({ trend }: { trend: string }) => {
+    if (trend === "up") return <ChevronUp className="w-3 h-3 text-emerald-400" />
+    if (trend === "down") return <ChevronDown className="w-3 h-3 text-red-400" />
+    return <Minus className="w-3 h-3 text-white/40" />
+  }
 
   return (
     <main className="h-screen w-screen overflow-hidden relative">
@@ -202,131 +206,129 @@ export default function NovoJogoPage() {
           priority
           unoptimized
         />
-        {/* Overlay for better contrast */}
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col">
-        {/* Top Bar - League Selector */}
-        <header className="flex items-center justify-center py-4 px-6">
+        {/* Top Bar - Country & Flag */}
+        <header className="flex items-center justify-center py-6 px-6">
           <div className="flex items-center gap-4">
             <button
               onClick={prevDivision}
-              className="w-10 h-10 rounded-lg bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all border border-white/10"
+              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none"
             >
-              <ChevronLeft className="w-5 h-5" />
+              {"<"}
             </button>
 
-            <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-black/40 backdrop-blur-sm border border-white/10 min-w-[250px] justify-center">
-              {leagueLogo ? (
-                <Image
-                  src={leagueLogo}
-                  alt={activeDivision.label}
-                  width={28}
-                  height={28}
-                  className="object-contain"
-                  unoptimized
-                />
-              ) : (
-                <span className="text-xl">{activeDivision.flag}</span>
-              )}
-              <span className="font-semibold text-white text-sm">
+            <div className="flex items-center gap-3 min-w-[200px] justify-center">
+              <span className="text-white/90 font-medium tracking-wide">
                 {activeDivision.country}
               </span>
+              <span className="text-2xl">{activeDivision.flag}</span>
             </div>
 
             <button
               onClick={nextDivision}
-              className="w-10 h-10 rounded-lg bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all border border-white/10"
+              className="text-white/50 hover:text-white transition-colors text-2xl font-light select-none"
             >
-              <ChevronRight className="w-5 h-5" />
+              {">"}
             </button>
           </div>
         </header>
 
         {/* Main Content - Team Display */}
         <div className="flex-1 flex items-center justify-center px-6">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             {/* Left Arrow */}
             <button
               onClick={prevTeam}
-              className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all border border-white/10"
+              className="text-white/40 hover:text-white/70 transition-colors text-4xl font-extralight select-none"
             >
-              <ChevronLeft className="w-6 h-6" />
+              {"◀"}
             </button>
 
-            {/* Team Card */}
-            <div className="flex flex-col items-center">
-              {/* Team Name */}
-              <h1 className="text-3xl md:text-4xl font-black text-white text-center mb-2 drop-shadow-lg">
-                {selectedTeam?.nome}
-              </h1>
-              
-              {/* Location */}
-              <p className="text-white/60 text-sm mb-6 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-white/40" />
-                {selectedTeam?.cidade}, {selectedTeam?.pais || selectedTeam?.estado}
-              </p>
-
-              {/* Team Crest Container */}
+            {/* Team Card - FIFA Style */}
+            <div className="relative">
+              {/* Card Container */}
               <div 
-                className="relative rounded-2xl p-8 mb-6"
-                style={{
-                  background: `linear-gradient(180deg, ${selectedTeam?.cor1}40 0%, ${selectedTeam?.cor1}10 100%)`,
-                  boxShadow: `0 0 60px ${selectedTeam?.cor1}30`
-                }}
+                className="relative bg-gradient-to-b from-white/[0.12] to-white/[0.06] backdrop-blur-md border border-white/20 rounded-lg overflow-hidden"
+                style={{ width: "280px" }}
               >
-                <div className="w-40 h-40 md:w-52 md:h-52 flex items-center justify-center">
-                  <TeamCrest 
-                    team={selectedTeam} 
-                    size="2xl" 
-                    className="w-full h-full drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]" 
-                  />
+                {/* Team Name Header */}
+                <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+                  <h1 className="text-xl font-bold text-white text-center">
+                    {selectedTeam?.nome}
+                  </h1>
+                </div>
+
+                {/* Team Crest */}
+                <div className="py-6 flex justify-center">
+                  <div 
+                    className="w-36 h-36 flex items-center justify-center rounded-full"
+                    style={{
+                      background: `radial-gradient(circle, ${selectedTeam?.cor1}20 0%, transparent 70%)`,
+                    }}
+                  >
+                    <TeamCrest 
+                      team={selectedTeam} 
+                      size="2xl" 
+                      className="w-28 h-28 drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]" 
+                    />
+                  </div>
+                </div>
+
+                {/* Stars Rating */}
+                <div className="flex items-center justify-center gap-0.5 pb-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star 
+                      key={i} 
+                      className={cn(
+                        "w-4 h-4",
+                        i < prestigeStars 
+                          ? "fill-amber-400 text-amber-400" 
+                          : "text-white/20"
+                      )} 
+                    />
+                  ))}
+                </div>
+
+                {/* Stats Bar */}
+                <div className="flex items-center justify-center gap-6 py-3 border-t border-white/10 bg-black/20">
+                  <div className="text-center">
+                    <div className="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">ATA</div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-lg font-bold text-white">{stats.ata.value}</span>
+                      <TrendIndicator trend={stats.ata.trend} />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">MEI</div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-lg font-bold text-white">{stats.mei.value}</span>
+                      <TrendIndicator trend={stats.mei.trend} />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[10px] text-white/50 uppercase tracking-widest mb-0.5">DEF</div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-lg font-bold text-white">{stats.def.value}</span>
+                      <TrendIndicator trend={stats.def.trend} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Stars Rating */}
-              <div className="flex items-center gap-1 mb-6">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className={cn(
-                      "w-5 h-5",
-                      i < prestigeStars 
-                        ? "fill-amber-400 text-amber-400" 
-                        : "text-white/30"
-                    )} 
-                  />
-                ))}
-              </div>
-
-              {/* Stats */}
-              <div className="flex items-center gap-8 mb-8">
-                <div className="text-center">
-                  <div className="text-xs text-white/40 uppercase tracking-wider mb-1">ATA</div>
-                  <div className="text-2xl font-bold text-white">{stats.ata}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-white/40 uppercase tracking-wider mb-1">MEI</div>
-                  <div className="text-2xl font-bold text-white">{stats.mei}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-white/40 uppercase tracking-wider mb-1">DEF</div>
-                  <div className="text-2xl font-bold text-white">{stats.def}</div>
-                </div>
-              </div>
-
-              {/* League Logo */}
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-xs text-white/40">{activeDivision.label}</span>
+              {/* League Info - Below Card */}
+              <div className="flex flex-col items-center mt-4 gap-2">
+                <span className="text-xs text-white/60">{activeDivision.label}</span>
                 {leagueLogo && (
                   <Image
                     src={leagueLogo}
                     alt={activeDivision.label}
-                    width={80}
-                    height={40}
-                    className="object-contain opacity-80"
+                    width={100}
+                    height={50}
+                    className="object-contain"
                     unoptimized
                   />
                 )}
@@ -336,54 +338,52 @@ export default function NovoJogoPage() {
             {/* Right Arrow */}
             <button
               onClick={nextTeam}
-              className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all border border-white/10"
+              className="text-white/40 hover:text-white/70 transition-colors text-4xl font-extralight select-none"
             >
-              <ChevronRight className="w-6 h-6" />
+              {"▶"}
             </button>
           </div>
         </div>
 
         {/* Bottom Bar - Actions */}
-        <footer className="py-4 px-6">
-          <div className="max-w-2xl mx-auto flex items-center justify-between">
-            {/* Controls Legend */}
-            <div className="flex items-center gap-4 text-xs text-white/50">
+        <footer className="py-4 px-6 bg-gradient-to-t from-black/60 to-transparent">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            {/* Controls Legend - FIFA Style */}
+            <div className="flex items-center gap-6 text-xs">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-1 rounded bg-white/10 text-white/70 font-medium">A</span>
-                <span>Selecionar</span>
+                <span className="w-6 h-6 rounded-sm bg-blue-600 flex items-center justify-center text-white font-bold text-xs">X</span>
+                <span className="text-white/70">Selecionar</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-1 rounded bg-white/10 text-white/70 font-medium">B</span>
-                <span>Voltar</span>
+                <span className="w-6 h-6 rounded-sm bg-red-600 flex items-center justify-center text-white font-bold text-xs">O</span>
+                <span className="text-white/70">Voltar</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-1 rounded bg-white/10 text-white/70 font-medium">X</span>
-                <span>Aleatorio</span>
+                <span className="w-6 h-6 rounded-sm bg-pink-600 flex items-center justify-center text-white font-bold text-xs">□</span>
+                <span className="text-white/70">Aleatorio</span>
               </div>
             </div>
 
-            {/* Manager Name Input */}
+            {/* Center - Manager Input & Start */}
             <div className="flex items-center gap-3">
               <input
                 value={managerName}
                 onChange={e => setManagerName(e.target.value)}
                 placeholder="Nome do Tecnico"
                 maxLength={32}
-                className="w-48 h-10 rounded-lg border border-white/20 bg-black/40 backdrop-blur-sm px-4 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-emerald-500/50 transition-all"
+                className="w-44 h-9 rounded border border-white/20 bg-black/50 backdrop-blur-sm px-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-emerald-500/50 transition-all"
               />
-              
-              {/* Start Button */}
               <button
                 onClick={handleStart}
-                className="flex items-center gap-2 rounded-lg px-6 py-2.5 font-bold text-sm bg-gradient-to-r from-emerald-500 to-emerald-600 text-black hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg shadow-emerald-500/30"
+                className="flex items-center gap-2 rounded px-5 py-2 font-bold text-sm bg-emerald-500 text-black hover:bg-emerald-400 transition-all"
               >
                 INICIAR CARREIRA
               </button>
             </div>
 
-            {/* Team Counter */}
-            <div className="text-xs text-white/40">
-              {teamIndex + 1} / {teams.length}
+            {/* Right - Team Counter & Icons */}
+            <div className="flex items-center gap-4 text-white/50 text-xs">
+              <span>{teamIndex + 1} / {teams.length}</span>
             </div>
           </div>
         </footer>
