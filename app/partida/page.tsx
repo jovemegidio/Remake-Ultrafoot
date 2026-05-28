@@ -17,7 +17,7 @@ import {
   Minus,
 } from "lucide-react"
 import { ActionHint } from "@/components/gamepad-icons"
-import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
+import { GamepadControlsBar, useGamepadDetection } from "@/components/gamepad-controls-bar"
 import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
@@ -88,18 +88,19 @@ function TeamCard({
       side === "home" ? "pr-4" : "pl-4"
     )}>
       {/* Team Name */}
-      <h2 className="text-xl md:text-2xl font-semibold text-white mb-5 tracking-tight uppercase">
+      <h2 className="text-2xl md:text-3xl font-bold text-white mb-5 tracking-widest uppercase"
+        style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
         {team.nome}
       </h2>
 
       {/* Large Crest with glow */}
       <div className="relative mb-5">
-        <div 
-          className="absolute inset-0 blur-3xl opacity-30 scale-150"
+        <div
+          className="absolute inset-0 blur-3xl opacity-40 scale-150"
           style={{ backgroundColor: team.cor1 }}
         />
         <div className="relative">
-          <TeamCrest team={team} size="2xl" className="w-32 h-32 md:w-40 md:h-40" />
+          <TeamCrest team={team} size="2xl" className="w-44 h-44 md:w-52 md:h-52" />
         </div>
       </div>
 
@@ -122,42 +123,28 @@ function TeamCard({
 
       {/* Stats Row */}
       <div className="flex items-center gap-5 md:gap-8 mb-5">
-        <div className="flex flex-col items-center">
-          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">ATA</span>
-          <div className="flex items-center gap-1">
-            <span className={cn(
-              "text-lg md:text-xl font-semibold tabular-nums",
-              trends.ata === "up" ? "text-emerald-400" : trends.ata === "down" ? "text-rose-400" : "text-white"
-            )}>
-              {stats.ata}
+        {(["ata", "mei", "def"] as const).map((key) => (
+          <div key={key} className="flex flex-col items-center">
+            <span
+              className="text-[10px] md:text-xs text-white/40 font-bold tracking-[0.2em] mb-1 uppercase"
+              style={{ fontFamily: "var(--font-oswald), sans-serif" }}
+            >
+              {key.toUpperCase()}
             </span>
-            <TrendIcon trend={trends.ata} />
+            <div className="flex items-center gap-1">
+              <span
+                className={cn(
+                  "text-xl md:text-2xl font-bold tabular-nums",
+                  trends[key] === "up" ? "text-emerald-400" : trends[key] === "down" ? "text-rose-400" : "text-white"
+                )}
+                style={{ fontFamily: "var(--font-oswald), sans-serif" }}
+              >
+                {stats[key]}
+              </span>
+              <TrendIcon trend={trends[key]} />
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">MEI</span>
-          <div className="flex items-center gap-1">
-            <span className={cn(
-              "text-lg md:text-xl font-semibold tabular-nums",
-              trends.mei === "up" ? "text-emerald-400" : trends.mei === "down" ? "text-rose-400" : "text-white"
-            )}>
-              {stats.mei}
-            </span>
-            <TrendIcon trend={trends.mei} />
-          </div>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-[9px] md:text-[10px] text-white/50 font-medium tracking-widest mb-1">DEF</span>
-          <div className="flex items-center gap-1">
-            <span className={cn(
-              "text-lg md:text-xl font-semibold tabular-nums",
-              trends.def === "up" ? "text-emerald-400" : trends.def === "down" ? "text-rose-400" : "text-white"
-            )}>
-              {stats.def}
-            </span>
-            <TrendIcon trend={trends.def} />
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )
@@ -173,12 +160,13 @@ function VerticalLabel({ text, side }: { text: string; side: "left" | "right" })
       "absolute top-1/2 -translate-y-1/2 flex items-center justify-center",
       side === "left" ? "left-2" : "right-2"
     )}>
-      <span 
-        className="text-4xl md:text-5xl font-black text-white/[0.06] tracking-[0.4em] uppercase select-none"
-        style={{ 
+      <span
+        className="text-5xl md:text-6xl font-black text-white/9 tracking-[0.5em] uppercase select-none"
+        style={{
+          fontFamily: "var(--font-oswald), sans-serif",
           writingMode: "vertical-rl",
           textOrientation: "mixed",
-          transform: side === "left" ? "rotate(180deg)" : "rotate(0deg)"
+          transform: side === "left" ? "rotate(180deg)" : "rotate(0deg)",
         }}
       >
         {text}
@@ -196,6 +184,7 @@ export default function PartidaPage() {
   const userTeam = useUserTeam()
   const { currentMatch, standings, league, currentRound } = useGameManager()
 
+  const { connected: gamepadConnected } = useGamepadDetection()
   const [hydrated, setHydrated] = useState(false)
   const [homeKit, setHomeKit] = useState<KitVariant>("home")
   const [awayKit, setAwayKit] = useState<KitVariant>("away")
@@ -216,12 +205,12 @@ export default function PartidaPage() {
   // Resolve teams
   const homeTeam = useMemo(() => {
     if (!currentMatch) return getTeamByShort("FLA") || serieATeams[0]
-    return getTeamByShort(currentMatch.homeTeam) || serieATeams[0]
+    return currentMatch.homeTeam
   }, [currentMatch])
 
   const awayTeam = useMemo(() => {
     if (!currentMatch) return getTeamByShort("MIR") || serieATeams[1]
-    return getTeamByShort(currentMatch.awayTeam) || serieATeams[1]
+    return currentMatch.awayTeam
   }, [currentMatch])
 
   const matchInfo = useMemo(() => {
@@ -246,11 +235,11 @@ export default function PartidaPage() {
   const handleQuickSim = useCallback(() => {
     if (!homeTeam || !awayTeam) return
     setShowQuickSim(true)
-    const result = simulateFullMatch(homeTeam, awayTeam, "home")
+    const result = simulateFullMatch({ homeTeam, awayTeam, homeRating: homeTeam.prestigio, awayRating: awayTeam.prestigio })
     setTimeout(() => {
       setQuickSimResult({
-        homeGoals: result.homeGoals,
-        awayGoals: result.awayGoals,
+        homeGoals: result.home.goals,
+        awayGoals: result.away.goals,
         events: result.events,
       })
     }, 1500)
@@ -332,7 +321,7 @@ export default function PartidaPage() {
         {/* Background with light rays */}
         <div className="absolute inset-0">
           {/* Dark gradient base */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#050508]" />
+          <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#050508]" />
           
           {/* Light rays from center */}
           <div 
@@ -365,16 +354,15 @@ export default function PartidaPage() {
           />
 
           {/* Center Options */}
-          <div className="flex flex-col items-center justify-center px-6 md:px-8 gap-5 min-w-[180px]">
+          <div className="flex flex-col items-center justify-center px-6 md:px-8 gap-5 min-w-45">
             {/* League Logo - Centered */}
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[9px] text-white/40 font-medium tracking-wider uppercase">{matchInfo.competition}</span>
+            <div className="flex flex-col items-center gap-0">
               {getLeagueLogo(matchInfo.leagueKey) && (
                 <Image
                   src={getLeagueLogo(matchInfo.leagueKey)!}
                   alt={matchInfo.competition}
-                  width={56}
-                  height={56}
+                  width={88}
+                  height={88}
                   className="object-contain opacity-90"
                   unoptimized
                 />
@@ -413,13 +401,17 @@ export default function PartidaPage() {
         </div>
 
         {/* Bottom Action Bar */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent py-5 px-6">
+        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black via-black/95 to-transparent py-5 px-6">
           <div className="flex items-center justify-between">
-            {/* Left Actions */}
+            {/* Left Actions - only when gamepad is connected */}
             <div className="flex items-center gap-5">
-              <ActionHint button="cross" action="Selecionar" platform="playstation" size="sm" />
-              <ActionHint button="circle" action="Voltar" platform="playstation" size="sm" />
-              <ActionHint button="r3" action="Aleatorio" platform="playstation" size="sm" />
+              {gamepadConnected && (
+                <>
+                  <ActionHint button="cross" action="Selecionar" platform="playstation" size="sm" />
+                  <ActionHint button="circle" action="Voltar" platform="playstation" size="sm" />
+                  <ActionHint button="r3" action="Aleatorio" platform="playstation" size="sm" />
+                </>
+              )}
             </div>
 
             {/* Center - Start Button */}
@@ -473,12 +465,12 @@ export default function PartidaPage() {
   )}
   
   <GamepadControlsBar
-        controls={[
+        customActions={[
           { button: "A", label: "Iniciar Partida" },
           { button: "B", label: "Voltar" },
           { button: "X", label: "Sim. Rapida" },
-          { button: "LB", label: "Kit Casa", showBumper: true },
-          { button: "RB", label: "Kit Fora", showBumper: true },
+          { button: "LB", label: "Kit Casa" },
+          { button: "RB", label: "Kit Fora" },
         ]}
       />
     </div>
