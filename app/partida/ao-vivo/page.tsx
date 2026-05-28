@@ -49,6 +49,8 @@ import { LivePitch } from "@/components/match/live-pitch"
 import { SubstitutionModal, type MatchPlayer } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
+import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
+import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock players - usados como elenco padrao quando nao houver squad real
@@ -195,10 +197,47 @@ function deriveFormation(squad: MatchPlayer[]): string {
 
 // Stat lateral grande - estilo EA FC
 function BigStat({ label, value, side }: { label: string; value: string | number; side: "left" | "right" }) {
+  // Garante que o valor nunca seja NaN ou undefined
+  let displayValue: string | number = value
+  if (typeof value === "number") {
+    displayValue = isNaN(value) || value === undefined || value === null ? 0 : Math.round(value)
+  }
   return (
     <div className={cn("flex flex-col", side === "left" ? "items-start" : "items-end")}>
       <span className="text-[#00ffc8] text-xs font-medium tracking-wider uppercase mb-1">{label}</span>
-      <span className="text-white text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums leading-none">{value}</span>
+      <span className="text-white text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums leading-none">{displayValue}</span>
+    </div>
+  )
+}
+
+// Barra de estatistica comparativa - estilo EA FC
+function StatBar({ label, homeValue, awayValue, suffix = "" }: { 
+  label: string
+  homeValue: number
+  awayValue: number
+  suffix?: string
+}) {
+  const total = (homeValue || 0) + (awayValue || 0)
+  const homePercent = total > 0 ? ((homeValue || 0) / total) * 100 : 50
+  const awayPercent = total > 0 ? ((awayValue || 0) / total) * 100 : 50
+  
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-white font-bold tabular-nums">{homeValue ?? 0}{suffix}</span>
+        <span className="text-white/50 uppercase tracking-wider text-[10px]">{label}</span>
+        <span className="text-white font-bold tabular-nums">{awayValue ?? 0}{suffix}</span>
+      </div>
+      <div className="flex h-1.5 rounded-full overflow-hidden bg-white/10">
+        <div 
+          className="bg-[#00ffc8] transition-all duration-500"
+          style={{ width: `${homePercent}%` }}
+        />
+        <div 
+          className="bg-white/40 transition-all duration-500"
+          style={{ width: `${awayPercent}%` }}
+        />
+      </div>
     </div>
   )
 }
@@ -226,6 +265,144 @@ function SubstitutionEvent({
         <ArrowDownUp className="w-3.5 h-3.5 text-[#00ffc8]" />
       </div>
       <span className="text-white/60 text-sm font-bold tabular-nums">{minute}&apos;</span>
+    </div>
+  )
+}
+
+// Componente generico de evento na timeline
+function TimelineEvent({ event, homeTeam, awayTeam }: { 
+  event: { 
+    minute: number
+    type: string
+    side: "home" | "away"
+    player?: string
+    playerOut?: string
+    playerIn?: string
+    text?: string
+  }
+  homeTeam: string
+  awayTeam: string
+}) {
+  const isHome = event.side === "home"
+  const teamName = isHome ? homeTeam : awayTeam
+  
+  // Icone e cor baseados no tipo de evento
+  const getEventIcon = () => {
+    switch (event.type) {
+      case "goal":
+        return (
+          <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <circle cx="12" cy="12" r="4" fill="currentColor"/>
+            </svg>
+          </div>
+        )
+      case "yellow_card":
+        return (
+          <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-3 h-4 bg-yellow-400 rounded-sm" />
+          </div>
+        )
+      case "red_card":
+        return (
+          <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-3 h-4 bg-red-500 rounded-sm" />
+          </div>
+        )
+      case "substitution":
+        return (
+          <div className="w-8 h-8 rounded-full bg-[#00ffc8]/20 flex items-center justify-center flex-shrink-0">
+            <ArrowDownUp className="w-4 h-4 text-[#00ffc8]" />
+          </div>
+        )
+      case "penalty":
+        return (
+          <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-amber-400 text-xs font-bold">PEN</span>
+          </div>
+        )
+      case "var":
+        return (
+          <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-blue-400 text-xs font-bold">VAR</span>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+  
+  // Texto do evento
+  const getEventText = () => {
+    switch (event.type) {
+      case "goal":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-emerald-400 text-sm font-bold uppercase">GOL!</span>
+            <span className="text-white/90 text-sm font-medium">{event.player || teamName}</span>
+          </div>
+        )
+      case "yellow_card":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-yellow-400 text-sm font-bold">Cartao Amarelo</span>
+            <span className="text-white/70 text-xs">{event.player || teamName}</span>
+          </div>
+        )
+      case "red_card":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-red-400 text-sm font-bold">Cartao Vermelho</span>
+            <span className="text-white/70 text-xs">{event.player || teamName}</span>
+          </div>
+        )
+      case "substitution":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-[#00ffc8] text-xs font-medium uppercase">Substituicao</span>
+            <span className="text-white/90 text-sm">{event.playerOut || "Saiu"}</span>
+            <span className="text-white/50 text-xs">{event.playerIn || "Entrou"}</span>
+          </div>
+        )
+      case "penalty":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-amber-400 text-sm font-bold">Penalti</span>
+            <span className="text-white/70 text-xs">{event.player || teamName}</span>
+          </div>
+        )
+      case "var":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-blue-400 text-sm font-bold">Revisao VAR</span>
+            <span className="text-white/70 text-xs">{event.text || "Checando..."}</span>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+  
+  return (
+    <div className={cn(
+      "flex items-center gap-3 py-2 px-4",
+      isHome ? "justify-start" : "justify-end"
+    )}>
+      {isHome && (
+        <>
+          <span className="text-white/50 text-sm font-bold tabular-nums w-10">{event.minute}&apos;</span>
+          {getEventIcon()}
+          {getEventText()}
+        </>
+      )}
+      {!isHome && (
+        <>
+          {getEventText()}
+          {getEventIcon()}
+          <span className="text-white/50 text-sm font-bold tabular-nums w-10 text-right">{event.minute}&apos;</span>
+        </>
+      )}
     </div>
   )
 }
@@ -371,6 +548,82 @@ export default function PartidaAoVivoPage() {
   // Tab ativa
   const [activeTab, setActiveTab] = useState<"fitness" | "ratings" | "stats" | "gameplan">("stats")
 
+  // Estado para animacoes de eventos
+  const [currentAnimation, setCurrentAnimation] = useState<{
+    type: AnimatableEvent
+    team?: typeof homeTeam
+    player?: string
+    minute?: number
+  } | null>(null)
+
+  // Estado para modal de penalti
+  const [showPenaltyModal, setShowPenaltyModal] = useState(false)
+  const [pendingPenalty, setPendingPenalty] = useState<{
+    side: "home" | "away"
+    minute: number
+  } | null>(null)
+
+  // Ref para rastrear ultimo evento processado
+  const lastProcessedEventId = useRef<string | null>(null)
+
+  // Monitora eventos para mostrar animacoes
+  useEffect(() => {
+    if (state.events.length === 0) return
+    
+    const lastEvent = state.events[state.events.length - 1]
+    const eventId = `${lastEvent.type}-${lastEvent.minute}-${lastEvent.side}`
+    
+    // Evita processar o mesmo evento duas vezes
+    if (lastProcessedEventId.current === eventId) return
+    lastProcessedEventId.current = eventId
+
+    const animatableTypes: AnimatableEvent[] = ["goal", "penalty", "yellow_card", "red_card", "foul", "var"]
+    
+    if (animatableTypes.includes(lastEvent.type as AnimatableEvent)) {
+      const eventTeam = lastEvent.side === "home" ? homeTeam : awayTeam
+      
+      // Se for penalti a favor do usuario, mostra modal de selecao
+      if (lastEvent.type === "penalty" && lastEvent.side === userSide) {
+        pause()
+        setShowPenaltyModal(true)
+        setPendingPenalty({ side: lastEvent.side, minute: lastEvent.minute })
+      } else {
+        // Mostra animacao normal
+        pause()
+        setCurrentAnimation({
+          type: lastEvent.type as AnimatableEvent,
+          team: eventTeam,
+          player: lastEvent.player,
+          minute: lastEvent.minute
+        })
+      }
+    }
+  }, [state.events, homeTeam, awayTeam, userSide, pause])
+
+  // Handler para quando o usuario seleciona batedor de penalti
+  const handlePenaltyTaker = (player: MatchPlayer) => {
+    setShowPenaltyModal(false)
+    
+    // Mostra animacao do penalti
+    setCurrentAnimation({
+      type: "penalty",
+      team: userSide === "home" ? homeTeam : awayTeam,
+      player: player.name,
+      minute: pendingPenalty?.minute
+    })
+    
+    setPendingPenalty(null)
+  }
+
+  // Handler para fechar animacao
+  const handleAnimationComplete = () => {
+    setCurrentAnimation(null)
+    // Resume a partida apos a animacao
+    if (state.phase !== "fulltime" && state.phase !== "pre") {
+      resume()
+    }
+  }
+
   // Handler de teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -501,8 +754,15 @@ export default function PartidaAoVivoPage() {
     setShowSubModal(false)
   }
 
-  // Filtra eventos de substituicao
-  const substitutionEvents = state.events.filter(e => e.type === "substitution")
+  // Filtra eventos importantes (gols, cartoes, substituicoes)
+  const importantEvents = state.events.filter(e => 
+    e.type === "goal" || 
+    e.type === "yellow_card" || 
+    e.type === "red_card" || 
+    e.type === "substitution" ||
+    e.type === "penalty" ||
+    e.type === "var"
+  ).sort((a, b) => b.minute - a.minute) // Mais recentes primeiro
 
   if (!hydrated) {
     return (
@@ -576,54 +836,142 @@ export default function PartidaAoVivoPage() {
         {/* Area Principal - 3 Colunas */}
         <div className="flex-1 flex px-4 sm:px-8 pb-4 gap-4 sm:gap-8 min-h-0">
           
-          {/* Coluna Esquerda - Stats Casa */}
-          <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-            <BigStat label="Possession %" value={state.home.possession ?? 50} side="left" />
-            <BigStat label="Shots" value={state.home.shots ?? 0} side="left" />
-            <BigStat label="Chances" value={state.home.shotsOnTarget ?? 0} side="left" />
-          </div>
+  {/* Coluna Esquerda - Stats Casa */}
+  <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
+  <BigStat label="Possession %" value={state.home?.possession ?? 50} side="left" />
+  <BigStat label="Shots" value={state.home?.shots ?? 0} side="left" />
+  <BigStat label="Chances" value={state.home?.shotsOnTarget ?? 0} side="left" />
+  </div>
 
-          {/* Coluna Central - Timeline de Eventos */}
+          {/* Coluna Central - Conteudo baseado na Tab ativa */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 rounded-2xl bg-[#1a2a2a]/60 backdrop-blur-sm border border-white/[0.06] overflow-hidden flex flex-col">
               
-              {/* Timeline de Substituicoes */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                <div className="relative">
-                  {/* Linha central vertical */}
-                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/10" />
-                  
-                  {/* Eventos */}
+              {/* Conteudo da Tab */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {activeTab === "stats" && (
                   <div className="space-y-4">
-                    {substitutionEvents.length > 0 ? (
-                      substitutionEvents.map((event, i) => (
-                        <SubstitutionEvent
-                          key={i}
-                          minute={event.minute}
-                          playerOut={event.playerOut || "Jogador"}
-                          playerIn={event.playerIn || "Substituto"}
-                          side={event.side}
-                        />
-                      ))
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        {/* Marcador de tempo do intervalo */}
-                        <div className="text-white/40 text-sm font-bold mb-4 tabular-nums">45:00</div>
-                        
-                        {/* Icone de apito */}
-                        <div className="mb-4">
-                          <svg className="w-10 h-10 text-white/20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-                          </svg>
-                        </div>
-                        
-                        <span className="text-white/50 text-lg font-medium uppercase tracking-wider">
-                          NO EVENTS
-                        </span>
-                      </div>
-                    )}
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Estatisticas da Partida</h3>
+                    
+  {/* Stats Comparativas */}
+  <div className="space-y-3">
+  <StatBar label="Posse de Bola" homeValue={state.home?.possession ?? 50} awayValue={state.away?.possession ?? 50} suffix="%" />
+  <StatBar label="Chutes" homeValue={state.home?.shots ?? 0} awayValue={state.away?.shots ?? 0} />
+  <StatBar label="Chutes no Alvo" homeValue={state.home?.shotsOnTarget ?? 0} awayValue={state.away?.shotsOnTarget ?? 0} />
+  <StatBar label="Escanteios" homeValue={state.home?.corners ?? 0} awayValue={state.away?.corners ?? 0} />
+  <StatBar label="Faltas" homeValue={state.home?.fouls ?? 0} awayValue={state.away?.fouls ?? 0} />
+  <StatBar label="Impedimentos" homeValue={state.home?.offsides ?? 0} awayValue={state.away?.offsides ?? 0} />
+  <StatBar label="Defesas" homeValue={state.home?.saves ?? 0} awayValue={state.away?.saves ?? 0} />
+  </div>
                   </div>
-                </div>
+                )}
+
+                {activeTab === "fitness" && (
+                  <div className="space-y-4">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Condicao Fisica - {homeTeam.curto}</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {homeSquad.slice(0, 11).map((player) => (
+                        <div key={player.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
+                          <span className="text-white/40 text-xs w-5">{player.number}</span>
+                          <span className="text-white text-xs flex-1 truncate">{player.name}</span>
+                          <div className="flex items-center gap-1">
+                            <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                              <div 
+                                className={cn(
+                                  "h-full rounded-full transition-all",
+                                  (player.stamina ?? 100) > 70 ? "bg-emerald-500" : 
+                                  (player.stamina ?? 100) > 40 ? "bg-amber-500" : "bg-red-500"
+                                )}
+                                style={{ width: `${player.stamina ?? 100}%` }}
+                              />
+                            </div>
+                            <span className="text-white/60 text-[10px] w-6 text-right">{player.stamina ?? 100}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "ratings" && (
+                  <div className="space-y-4">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Avaliacoes - {homeTeam.curto}</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {homeSquad.slice(0, 11).map((player) => {
+                        const rating = player.rating ?? 70
+                        return (
+                          <div key={player.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
+                            <span className="text-white/40 text-xs w-5">{player.number}</span>
+                            <span className="text-white text-xs flex-1 truncate">{player.name}</span>
+                            <span className={cn(
+                              "text-xs font-bold px-1.5 py-0.5 rounded",
+                              rating >= 80 ? "bg-emerald-500/20 text-emerald-400" :
+                              rating >= 70 ? "bg-amber-500/20 text-amber-400" :
+                              "bg-red-500/20 text-red-400"
+                            )}>
+                              {rating.toFixed(1)}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "gameplan" && (
+                  <div className="space-y-4">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Plano de Jogo</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Formacao Casa */}
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TeamCrest team={homeTeam} size="xs" />
+                          <span className="text-white text-sm font-medium">{homeTeam.curto}</span>
+                        </div>
+                        <div className="text-[#00ffc8] text-lg font-bold">4-3-3</div>
+                        <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
+                        <div className="text-white/40 text-xs">Mentalidade: Normal</div>
+                      </div>
+
+                      {/* Formacao Fora */}
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TeamCrest team={awayTeam} size="xs" />
+                          <span className="text-white text-sm font-medium">{awayTeam.curto}</span>
+                        </div>
+                        <div className="text-[#00ffc8] text-lg font-bold">4-4-2</div>
+                        <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
+                        <div className="text-white/40 text-xs">Mentalidade: Normal</div>
+                      </div>
+                    </div>
+
+                    {/* Substituicoes */}
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white/40 text-xs uppercase tracking-wider">Substituicoes</span>
+                        <span className="text-[#00ffc8] text-xs font-bold">{subsRemaining}/5 restantes</span>
+                      </div>
+                      {state.events.filter(e => e.type === "substitution" && e.team === "home").length > 0 ? (
+                        <div className="space-y-1">
+                          {state.events
+                            .filter(e => e.type === "substitution" && e.team === "home")
+                            .map((sub, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs bg-white/5 rounded p-2">
+                                <span className="text-white/40">{sub.minute}&apos;</span>
+                                <ArrowDownUp className="h-3 w-3 text-amber-400" />
+                                <span className="text-white">{sub.playerIn}</span>
+                                <span className="text-white/40">por</span>
+                                <span className="text-white/60">{sub.player}</span>
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="text-white/30 text-xs">Nenhuma substituicao realizada</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Tabs no rodape do card */}
@@ -668,12 +1016,12 @@ export default function PartidaAoVivoPage() {
             </div>
           </div>
 
-          {/* Coluna Direita - Stats Fora */}
-          <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-            <BigStat label="Possession %" value={state.away.possession ?? 50} side="right" />
-            <BigStat label="Shots" value={state.away.shots ?? 0} side="right" />
-            <BigStat label="Chances" value={state.away.shotsOnTarget ?? 0} side="right" />
-          </div>
+  {/* Coluna Direita - Stats Fora */}
+  <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
+  <BigStat label="Possession %" value={state.away?.possession ?? 50} side="right" />
+  <BigStat label="Shots" value={state.away?.shots ?? 0} side="right" />
+  <BigStat label="Chances" value={state.away?.shotsOnTarget ?? 0} side="right" />
+  </div>
         </div>
 
         {/* Barra de Acoes - Rodape */}
@@ -808,17 +1156,39 @@ export default function PartidaAoVivoPage() {
         />
       )}
 
-      {/* Coletiva pos-jogo */}
-      {showPressConference && (
-        <PostMatchPress
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-          homeScore={state.home.goals}
-          awayScore={state.away.goals}
-          userSide={userSide}
-          onClose={() => setShowPressConference(false)}
-        />
-      )}
-    </div>
+  {/* Coletiva pos-jogo */}
+  {showPressConference && (
+  <PostMatchPress
+  homeTeam={homeTeam}
+  awayTeam={awayTeam}
+  homeScore={state.home.goals}
+  awayScore={state.away.goals}
+  userSide={userSide}
+  onClose={() => setShowPressConference(false)}
+  />
+  )}
+
+  {/* Animacoes de eventos */}
+  <EventAnimation
+    event={currentAnimation?.type ?? null}
+    team={currentAnimation?.team}
+    player={currentAnimation?.player}
+    minute={currentAnimation?.minute}
+    onComplete={handleAnimationComplete}
+  />
+
+  {/* Modal de selecao de batedor de penalti */}
+  <PenaltyTakerModal
+    isOpen={showPenaltyModal}
+    team={userSide === "home" ? homeTeam : awayTeam}
+    players={userSide === "home" ? homeSquad : awaySquad}
+    onSelectPlayer={handlePenaltyTaker}
+    onClose={() => {
+      setShowPenaltyModal(false)
+      setPendingPenalty(null)
+      resume()
+    }}
+  />
+  </div>
   )
 }
