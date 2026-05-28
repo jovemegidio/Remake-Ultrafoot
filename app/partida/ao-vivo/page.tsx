@@ -49,6 +49,8 @@ import { LivePitch } from "@/components/match/live-pitch"
 import { SubstitutionModal, type MatchPlayer } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
+import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
+import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock players - usados como elenco padrao quando nao houver squad real
@@ -545,6 +547,82 @@ export default function PartidaAoVivoPage() {
 
   // Tab ativa
   const [activeTab, setActiveTab] = useState<"fitness" | "ratings" | "stats" | "gameplan">("stats")
+
+  // Estado para animacoes de eventos
+  const [currentAnimation, setCurrentAnimation] = useState<{
+    type: AnimatableEvent
+    team?: typeof homeTeam
+    player?: string
+    minute?: number
+  } | null>(null)
+
+  // Estado para modal de penalti
+  const [showPenaltyModal, setShowPenaltyModal] = useState(false)
+  const [pendingPenalty, setPendingPenalty] = useState<{
+    side: "home" | "away"
+    minute: number
+  } | null>(null)
+
+  // Ref para rastrear ultimo evento processado
+  const lastProcessedEventId = useRef<string | null>(null)
+
+  // Monitora eventos para mostrar animacoes
+  useEffect(() => {
+    if (state.events.length === 0) return
+    
+    const lastEvent = state.events[state.events.length - 1]
+    const eventId = `${lastEvent.type}-${lastEvent.minute}-${lastEvent.side}`
+    
+    // Evita processar o mesmo evento duas vezes
+    if (lastProcessedEventId.current === eventId) return
+    lastProcessedEventId.current = eventId
+
+    const animatableTypes: AnimatableEvent[] = ["goal", "penalty", "yellow_card", "red_card", "foul", "var"]
+    
+    if (animatableTypes.includes(lastEvent.type as AnimatableEvent)) {
+      const eventTeam = lastEvent.side === "home" ? homeTeam : awayTeam
+      
+      // Se for penalti a favor do usuario, mostra modal de selecao
+      if (lastEvent.type === "penalty" && lastEvent.side === userSide) {
+        pause()
+        setShowPenaltyModal(true)
+        setPendingPenalty({ side: lastEvent.side, minute: lastEvent.minute })
+      } else {
+        // Mostra animacao normal
+        pause()
+        setCurrentAnimation({
+          type: lastEvent.type as AnimatableEvent,
+          team: eventTeam,
+          player: lastEvent.player,
+          minute: lastEvent.minute
+        })
+      }
+    }
+  }, [state.events, homeTeam, awayTeam, userSide, pause])
+
+  // Handler para quando o usuario seleciona batedor de penalti
+  const handlePenaltyTaker = (player: MatchPlayer) => {
+    setShowPenaltyModal(false)
+    
+    // Mostra animacao do penalti
+    setCurrentAnimation({
+      type: "penalty",
+      team: userSide === "home" ? homeTeam : awayTeam,
+      player: player.name,
+      minute: pendingPenalty?.minute
+    })
+    
+    setPendingPenalty(null)
+  }
+
+  // Handler para fechar animacao
+  const handleAnimationComplete = () => {
+    setCurrentAnimation(null)
+    // Resume a partida apos a animacao
+    if (state.phase !== "fulltime" && state.phase !== "pre") {
+      resume()
+    }
+  }
 
   // Handler de teclado
   useEffect(() => {
@@ -1078,17 +1156,39 @@ export default function PartidaAoVivoPage() {
         />
       )}
 
-      {/* Coletiva pos-jogo */}
-      {showPressConference && (
-        <PostMatchPress
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-          homeScore={state.home.goals}
-          awayScore={state.away.goals}
-          userSide={userSide}
-          onClose={() => setShowPressConference(false)}
-        />
-      )}
-    </div>
+  {/* Coletiva pos-jogo */}
+  {showPressConference && (
+  <PostMatchPress
+  homeTeam={homeTeam}
+  awayTeam={awayTeam}
+  homeScore={state.home.goals}
+  awayScore={state.away.goals}
+  userSide={userSide}
+  onClose={() => setShowPressConference(false)}
+  />
+  )}
+
+  {/* Animacoes de eventos */}
+  <EventAnimation
+    event={currentAnimation?.type ?? null}
+    team={currentAnimation?.team}
+    player={currentAnimation?.player}
+    minute={currentAnimation?.minute}
+    onComplete={handleAnimationComplete}
+  />
+
+  {/* Modal de selecao de batedor de penalti */}
+  <PenaltyTakerModal
+    isOpen={showPenaltyModal}
+    team={userSide === "home" ? homeTeam : awayTeam}
+    players={userSide === "home" ? homeSquad : awaySquad}
+    onSelectPlayer={handlePenaltyTaker}
+    onClose={() => {
+      setShowPenaltyModal(false)
+      setPendingPenalty(null)
+      resume()
+    }}
+  />
+  </div>
   )
 }
