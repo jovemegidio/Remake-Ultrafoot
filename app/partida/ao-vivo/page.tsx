@@ -205,6 +205,38 @@ function BigStat({ label, value, side }: { label: string; value: string | number
   )
 }
 
+// Barra de estatistica comparativa - estilo EA FC
+function StatBar({ label, homeValue, awayValue, suffix = "" }: { 
+  label: string
+  homeValue: number
+  awayValue: number
+  suffix?: string
+}) {
+  const total = (homeValue || 0) + (awayValue || 0)
+  const homePercent = total > 0 ? ((homeValue || 0) / total) * 100 : 50
+  const awayPercent = total > 0 ? ((awayValue || 0) / total) * 100 : 50
+  
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-white font-bold tabular-nums">{homeValue ?? 0}{suffix}</span>
+        <span className="text-white/50 uppercase tracking-wider text-[10px]">{label}</span>
+        <span className="text-white font-bold tabular-nums">{awayValue ?? 0}{suffix}</span>
+      </div>
+      <div className="flex h-1.5 rounded-full overflow-hidden bg-white/10">
+        <div 
+          className="bg-[#00ffc8] transition-all duration-500"
+          style={{ width: `${homePercent}%` }}
+        />
+        <div 
+          className="bg-white/40 transition-all duration-500"
+          style={{ width: `${awayPercent}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
 // Evento de substituicao na timeline
 function SubstitutionEvent({ 
   minute, 
@@ -730,47 +762,133 @@ export default function PartidaAoVivoPage() {
             <BigStat label="Chances" value={state.home.shotsOnTarget ?? 0} side="left" />
           </div>
 
-          {/* Coluna Central - Timeline de Eventos */}
+          {/* Coluna Central - Conteudo baseado na Tab ativa */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 rounded-2xl bg-[#1a2a2a]/60 backdrop-blur-sm border border-white/[0.06] overflow-hidden flex flex-col">
               
-              {/* Timeline de Eventos */}
-              <div className="flex-1 overflow-y-auto">
-                {importantEvents.length > 0 ? (
-                  <div className="divide-y divide-white/[0.06]">
-                    {importantEvents.map((event, i) => (
-                      <TimelineEvent
-                        key={event.id || i}
-                        event={event}
-                        homeTeam={homeTeam.curto}
-                        awayTeam={awayTeam.curto}
-                      />
-                    ))}
+              {/* Conteudo da Tab */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {activeTab === "stats" && (
+                  <div className="space-y-4">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Estatisticas da Partida</h3>
+                    
+                    {/* Stats Comparativas */}
+                    <div className="space-y-3">
+                      <StatBar label="Posse de Bola" homeValue={state.home.possession ?? 50} awayValue={state.away.possession ?? 50} suffix="%" />
+                      <StatBar label="Chutes" homeValue={state.home.shots ?? 0} awayValue={state.away.shots ?? 0} />
+                      <StatBar label="Chutes no Alvo" homeValue={state.home.shotsOnTarget ?? 0} awayValue={state.away.shotsOnTarget ?? 0} />
+                      <StatBar label="Escanteios" homeValue={state.home.corners ?? 0} awayValue={state.away.corners ?? 0} />
+                      <StatBar label="Faltas" homeValue={state.home.fouls ?? 0} awayValue={state.away.fouls ?? 0} />
+                      <StatBar label="Impedimentos" homeValue={state.home.offsides ?? 0} awayValue={state.away.offsides ?? 0} />
+                      <StatBar label="Defesas" homeValue={state.home.saves ?? 0} awayValue={state.away.saves ?? 0} />
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-                    {/* Marcador de tempo atual */}
-                    <div className="text-white/40 text-sm font-bold mb-4 tabular-nums">
-                      {state.minute > 0 ? `${state.minute}:00` : "00:00"}
+                )}
+
+                {activeTab === "fitness" && (
+                  <div className="space-y-4">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Condicao Fisica - {homeTeam.curto}</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {homeSquad.slice(0, 11).map((player) => (
+                        <div key={player.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
+                          <span className="text-white/40 text-xs w-5">{player.number}</span>
+                          <span className="text-white text-xs flex-1 truncate">{player.name}</span>
+                          <div className="flex items-center gap-1">
+                            <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                              <div 
+                                className={cn(
+                                  "h-full rounded-full transition-all",
+                                  (player.stamina ?? 100) > 70 ? "bg-emerald-500" : 
+                                  (player.stamina ?? 100) > 40 ? "bg-amber-500" : "bg-red-500"
+                                )}
+                                style={{ width: `${player.stamina ?? 100}%` }}
+                              />
+                            </div>
+                            <span className="text-white/60 text-[10px] w-6 text-right">{player.stamina ?? 100}%</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    
-                    {/* Icone de campo */}
-                    <div className="mb-4">
-                      <svg className="w-12 h-12 text-white/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <rect x="2" y="4" width="20" height="16" rx="1" />
-                        <line x1="12" y1="4" x2="12" y2="20" />
-                        <circle cx="12" cy="12" r="3" />
-                        <rect x="2" y="8" width="4" height="8" />
-                        <rect x="18" y="8" width="4" height="8" />
-                      </svg>
+                  </div>
+                )}
+
+                {activeTab === "ratings" && (
+                  <div className="space-y-4">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Avaliacoes - {homeTeam.curto}</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {homeSquad.slice(0, 11).map((player) => {
+                        const rating = player.rating ?? 70
+                        return (
+                          <div key={player.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
+                            <span className="text-white/40 text-xs w-5">{player.number}</span>
+                            <span className="text-white text-xs flex-1 truncate">{player.name}</span>
+                            <span className={cn(
+                              "text-xs font-bold px-1.5 py-0.5 rounded",
+                              rating >= 80 ? "bg-emerald-500/20 text-emerald-400" :
+                              rating >= 70 ? "bg-amber-500/20 text-amber-400" :
+                              "bg-red-500/20 text-red-400"
+                            )}>
+                              {rating.toFixed(1)}
+                            </span>
+                          </div>
+                        )
+                      })}
                     </div>
+                  </div>
+                )}
+
+                {activeTab === "gameplan" && (
+                  <div className="space-y-4">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Plano de Jogo</h3>
                     
-                    <span className="text-white/40 text-sm font-medium uppercase tracking-wider">
-                      Aguardando eventos...
-                    </span>
-                    <span className="text-white/25 text-xs mt-1">
-                      Gols, cartoes e substituicoes aparecerao aqui
-                    </span>
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Formacao Casa */}
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TeamCrest team={homeTeam} size="xs" />
+                          <span className="text-white text-sm font-medium">{homeTeam.curto}</span>
+                        </div>
+                        <div className="text-[#00ffc8] text-lg font-bold">4-3-3</div>
+                        <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
+                        <div className="text-white/40 text-xs">Mentalidade: Normal</div>
+                      </div>
+
+                      {/* Formacao Fora */}
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TeamCrest team={awayTeam} size="xs" />
+                          <span className="text-white text-sm font-medium">{awayTeam.curto}</span>
+                        </div>
+                        <div className="text-[#00ffc8] text-lg font-bold">4-4-2</div>
+                        <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
+                        <div className="text-white/40 text-xs">Mentalidade: Normal</div>
+                      </div>
+                    </div>
+
+                    {/* Substituicoes */}
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white/40 text-xs uppercase tracking-wider">Substituicoes</span>
+                        <span className="text-[#00ffc8] text-xs font-bold">{subsRemaining}/5 restantes</span>
+                      </div>
+                      {state.events.filter(e => e.type === "substitution" && e.team === "home").length > 0 ? (
+                        <div className="space-y-1">
+                          {state.events
+                            .filter(e => e.type === "substitution" && e.team === "home")
+                            .map((sub, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs bg-white/5 rounded p-2">
+                                <span className="text-white/40">{sub.minute}&apos;</span>
+                                <ArrowDownUp className="h-3 w-3 text-amber-400" />
+                                <span className="text-white">{sub.playerIn}</span>
+                                <span className="text-white/40">por</span>
+                                <span className="text-white/60">{sub.player}</span>
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="text-white/30 text-xs">Nenhuma substituicao realizada</div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
