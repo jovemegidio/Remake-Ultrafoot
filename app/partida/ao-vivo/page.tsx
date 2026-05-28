@@ -195,10 +195,12 @@ function deriveFormation(squad: MatchPlayer[]): string {
 
 // Stat lateral grande - estilo EA FC
 function BigStat({ label, value, side }: { label: string; value: string | number; side: "left" | "right" }) {
+  // Garante que o valor nunca seja NaN
+  const displayValue = typeof value === "number" && isNaN(value) ? 0 : value
   return (
     <div className={cn("flex flex-col", side === "left" ? "items-start" : "items-end")}>
       <span className="text-[#00ffc8] text-xs font-medium tracking-wider uppercase mb-1">{label}</span>
-      <span className="text-white text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums leading-none">{value}</span>
+      <span className="text-white text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums leading-none">{displayValue}</span>
     </div>
   )
 }
@@ -226,6 +228,144 @@ function SubstitutionEvent({
         <ArrowDownUp className="w-3.5 h-3.5 text-[#00ffc8]" />
       </div>
       <span className="text-white/60 text-sm font-bold tabular-nums">{minute}&apos;</span>
+    </div>
+  )
+}
+
+// Componente generico de evento na timeline
+function TimelineEvent({ event, homeTeam, awayTeam }: { 
+  event: { 
+    minute: number
+    type: string
+    side: "home" | "away"
+    player?: string
+    playerOut?: string
+    playerIn?: string
+    text?: string
+  }
+  homeTeam: string
+  awayTeam: string
+}) {
+  const isHome = event.side === "home"
+  const teamName = isHome ? homeTeam : awayTeam
+  
+  // Icone e cor baseados no tipo de evento
+  const getEventIcon = () => {
+    switch (event.type) {
+      case "goal":
+        return (
+          <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <circle cx="12" cy="12" r="4" fill="currentColor"/>
+            </svg>
+          </div>
+        )
+      case "yellow_card":
+        return (
+          <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-3 h-4 bg-yellow-400 rounded-sm" />
+          </div>
+        )
+      case "red_card":
+        return (
+          <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-3 h-4 bg-red-500 rounded-sm" />
+          </div>
+        )
+      case "substitution":
+        return (
+          <div className="w-8 h-8 rounded-full bg-[#00ffc8]/20 flex items-center justify-center flex-shrink-0">
+            <ArrowDownUp className="w-4 h-4 text-[#00ffc8]" />
+          </div>
+        )
+      case "penalty":
+        return (
+          <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-amber-400 text-xs font-bold">PEN</span>
+          </div>
+        )
+      case "var":
+        return (
+          <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-blue-400 text-xs font-bold">VAR</span>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+  
+  // Texto do evento
+  const getEventText = () => {
+    switch (event.type) {
+      case "goal":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-emerald-400 text-sm font-bold uppercase">GOL!</span>
+            <span className="text-white/90 text-sm font-medium">{event.player || teamName}</span>
+          </div>
+        )
+      case "yellow_card":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-yellow-400 text-sm font-bold">Cartao Amarelo</span>
+            <span className="text-white/70 text-xs">{event.player || teamName}</span>
+          </div>
+        )
+      case "red_card":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-red-400 text-sm font-bold">Cartao Vermelho</span>
+            <span className="text-white/70 text-xs">{event.player || teamName}</span>
+          </div>
+        )
+      case "substitution":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-[#00ffc8] text-xs font-medium uppercase">Substituicao</span>
+            <span className="text-white/90 text-sm">{event.playerOut || "Saiu"}</span>
+            <span className="text-white/50 text-xs">{event.playerIn || "Entrou"}</span>
+          </div>
+        )
+      case "penalty":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-amber-400 text-sm font-bold">Penalti</span>
+            <span className="text-white/70 text-xs">{event.player || teamName}</span>
+          </div>
+        )
+      case "var":
+        return (
+          <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
+            <span className="text-blue-400 text-sm font-bold">Revisao VAR</span>
+            <span className="text-white/70 text-xs">{event.text || "Checando..."}</span>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+  
+  return (
+    <div className={cn(
+      "flex items-center gap-3 py-2 px-4",
+      isHome ? "justify-start" : "justify-end"
+    )}>
+      {isHome && (
+        <>
+          <span className="text-white/50 text-sm font-bold tabular-nums w-10">{event.minute}&apos;</span>
+          {getEventIcon()}
+          {getEventText()}
+        </>
+      )}
+      {!isHome && (
+        <>
+          {getEventText()}
+          {getEventIcon()}
+          <span className="text-white/50 text-sm font-bold tabular-nums w-10 text-right">{event.minute}&apos;</span>
+        </>
+      )}
     </div>
   )
 }
@@ -501,8 +641,15 @@ export default function PartidaAoVivoPage() {
     setShowSubModal(false)
   }
 
-  // Filtra eventos de substituicao
-  const substitutionEvents = state.events.filter(e => e.type === "substitution")
+  // Filtra eventos importantes (gols, cartoes, substituicoes)
+  const importantEvents = state.events.filter(e => 
+    e.type === "goal" || 
+    e.type === "yellow_card" || 
+    e.type === "red_card" || 
+    e.type === "substitution" ||
+    e.type === "penalty" ||
+    e.type === "var"
+  ).sort((a, b) => b.minute - a.minute) // Mais recentes primeiro
 
   if (!hydrated) {
     return (
@@ -587,43 +734,45 @@ export default function PartidaAoVivoPage() {
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 rounded-2xl bg-[#1a2a2a]/60 backdrop-blur-sm border border-white/[0.06] overflow-hidden flex flex-col">
               
-              {/* Timeline de Substituicoes */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                <div className="relative">
-                  {/* Linha central vertical */}
-                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/10" />
-                  
-                  {/* Eventos */}
-                  <div className="space-y-4">
-                    {substitutionEvents.length > 0 ? (
-                      substitutionEvents.map((event, i) => (
-                        <SubstitutionEvent
-                          key={i}
-                          minute={event.minute}
-                          playerOut={event.playerOut || "Jogador"}
-                          playerIn={event.playerIn || "Substituto"}
-                          side={event.side}
-                        />
-                      ))
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        {/* Marcador de tempo do intervalo */}
-                        <div className="text-white/40 text-sm font-bold mb-4 tabular-nums">45:00</div>
-                        
-                        {/* Icone de apito */}
-                        <div className="mb-4">
-                          <svg className="w-10 h-10 text-white/20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-                          </svg>
-                        </div>
-                        
-                        <span className="text-white/50 text-lg font-medium uppercase tracking-wider">
-                          NO EVENTS
-                        </span>
-                      </div>
-                    )}
+              {/* Timeline de Eventos */}
+              <div className="flex-1 overflow-y-auto">
+                {importantEvents.length > 0 ? (
+                  <div className="divide-y divide-white/[0.06]">
+                    {importantEvents.map((event, i) => (
+                      <TimelineEvent
+                        key={event.id || i}
+                        event={event}
+                        homeTeam={homeTeam.curto}
+                        awayTeam={awayTeam.curto}
+                      />
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center h-full">
+                    {/* Marcador de tempo atual */}
+                    <div className="text-white/40 text-sm font-bold mb-4 tabular-nums">
+                      {state.minute > 0 ? `${state.minute}:00` : "00:00"}
+                    </div>
+                    
+                    {/* Icone de campo */}
+                    <div className="mb-4">
+                      <svg className="w-12 h-12 text-white/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="2" y="4" width="20" height="16" rx="1" />
+                        <line x1="12" y1="4" x2="12" y2="20" />
+                        <circle cx="12" cy="12" r="3" />
+                        <rect x="2" y="8" width="4" height="8" />
+                        <rect x="18" y="8" width="4" height="8" />
+                      </svg>
+                    </div>
+                    
+                    <span className="text-white/40 text-sm font-medium uppercase tracking-wider">
+                      Aguardando eventos...
+                    </span>
+                    <span className="text-white/25 text-xs mt-1">
+                      Gols, cartoes e substituicoes aparecerao aqui
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Tabs no rodape do card */}
