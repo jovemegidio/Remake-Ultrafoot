@@ -43,6 +43,7 @@ import {
   ligaMXTeams,
   primeiraLigaTeams,
 } from "@/lib/international-teams"
+import { getLeagueLogo } from "@/lib/league-logos"
 import { teamRating, getPlayersByTeam } from "@/lib/players-data"
 import { useGameManager } from "@/lib/use-game-manager"
 import { TeamCrest } from "@/components/team-crest"
@@ -356,17 +357,18 @@ export default function NovoJogoPage() {
                 ref={divisionScrollRef}
                 className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-none py-1"
               >
-                {filteredDivisions.map(d => (
-                  <LeagueChip
-                    key={d.key}
-                    active={d.key === divisao}
-                    onClick={() => { setDivisao(d.key); setSelected(null) }}
-                    flag={d.flag}
-                    count={d.teams.length}
-                  >
-                    {d.short}
-                  </LeagueChip>
-                ))}
+{filteredDivisions.map(d => (
+                    <LeagueChip
+                      key={d.key}
+                      active={d.key === divisao}
+                      onClick={() => { setDivisao(d.key); setSelected(null) }}
+                      flag={d.flag}
+                      count={d.teams.length}
+                      leagueKey={d.key}
+                    >
+                      {d.short}
+                    </LeagueChip>
+                  ))}
               </div>
 
               <button 
@@ -391,10 +393,21 @@ export default function NovoJogoPage() {
           {/* League Header */}
           <div className="flex-shrink-0 px-4 md:px-6 py-3 flex items-center justify-between bg-gradient-to-r from-white/[0.02] to-transparent">
             <div className="flex items-center gap-3">
-              <div className="text-2xl">{activeDivision.flag}</div>
+              {getLeagueLogo(activeDivision.key) ? (
+                <Image
+                  src={getLeagueLogo(activeDivision.key)!}
+                  alt={activeDivision.label}
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                  unoptimized
+                />
+              ) : (
+                <div className="text-2xl">{activeDivision.flag}</div>
+              )}
               <div>
                 <h2 className="text-lg font-bold text-white">{activeDivision.label}</h2>
-                <p className="text-xs text-white/40">{activeDivision.country} �� {activeDivision.teams.length} clubes</p>
+                <p className="text-xs text-white/40">{activeDivision.country} - {activeDivision.teams.length} clubes</p>
               </div>
             </div>
           </div>
@@ -514,14 +527,18 @@ function LeagueChip({
   active, 
   onClick, 
   flag,
-  count 
+  count,
+  leagueKey,
 }: { 
   children: React.ReactNode
   active: boolean
   onClick: () => void
   flag?: string
   count: number
+  leagueKey: string
 }) {
+  const leagueLogo = getLeagueLogo(leagueKey)
+  
   return (
     <button
       onClick={onClick}
@@ -532,7 +549,18 @@ function LeagueChip({
           : "bg-white/[0.05] text-white/60 hover:bg-white/[0.1] hover:text-white"
       )}
     >
-      {flag && <span className="text-sm">{flag}</span>}
+      {leagueLogo ? (
+        <Image 
+          src={leagueLogo} 
+          alt="" 
+          width={20} 
+          height={20} 
+          className="object-contain"
+          unoptimized
+        />
+      ) : flag ? (
+        <span className="text-sm">{flag}</span>
+      ) : null}
       <span>{children}</span>
       <span className={cn(
         "px-1.5 py-0.5 rounded text-[10px]",

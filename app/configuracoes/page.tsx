@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -734,6 +734,7 @@ export default function ConfiguracoesPage() {
               { keys: ["← →"], label: "Navegar entre as opcoes do menu" },
               { keys: ["Enter"], label: "Confirmar selecao de time / opcao" },
               { keys: ["Esc"], label: "Voltar ao menu anterior" },
+              { keys: ["LB / RB"], label: "Trocar divisao / liga (Serie A, B, C, D, internacionais)" },
             ],
           },
           {
@@ -774,9 +775,53 @@ export default function ConfiguracoesPage() {
             section: "Calendario",
             items: [
               { keys: ["← →"], label: "Mes anterior / proximo (= LB / RB)" },
-              { keys: ["Enter"], label: "Avançar rodada (= A / X no PS)" },
+              { keys: ["Enter"], label: "Avancar rodada (= A / X no PS)" },
               { keys: ["X"], label: "Simular ate a proxima partida do usuario" },
               { keys: ["Y"], label: "Ir direto para sua proxima partida" },
+            ],
+          },
+          {
+            section: "Treinamento",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre jogadores / sessoes" },
+              { keys: ["Enter"], label: "Iniciar sessao de treino" },
+              { keys: ["← →"], label: "Mudar tipo de treino (Tecnico, Fisico, Tatico)" },
+              { keys: ["Tab"], label: "Alternar entre abas (Individual, Coletivo)" },
+            ],
+          },
+          {
+            section: "Olheiros",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre jogadores observados" },
+              { keys: ["Enter"], label: "Ver relatorio completo do jogador" },
+              { keys: ["X"], label: "Adicionar jogador a lista de interesse" },
+              { keys: ["← →"], label: "Mudar regiao de busca (= LB / RB)" },
+            ],
+          },
+          {
+            section: "Financas",
+            items: [
+              { keys: ["← →"], label: "Navegar entre abas (Resumo, Salarios, Receitas)" },
+              { keys: ["Enter"], label: "Ver detalhes da transacao" },
+              { keys: ["Tab"], label: "Proxima aba de financas" },
+            ],
+          },
+          {
+            section: "Contratos",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre jogadores" },
+              { keys: ["Enter"], label: "Abrir negociacao de contrato" },
+              { keys: ["← →"], label: "Ajustar valores da proposta" },
+              { keys: ["X"], label: "Propor renovacao direta" },
+              { keys: ["Esc"], label: "Cancelar negociacao" },
+            ],
+          },
+          {
+            section: "Infraestrutura",
+            items: [
+              { keys: ["↑ ↓"], label: "Navegar entre instalacoes" },
+              { keys: ["Enter"], label: "Iniciar upgrade de instalacao" },
+              { keys: ["X"], label: "Ver detalhes da instalacao" },
             ],
           },
           {
@@ -826,12 +871,12 @@ export default function ConfiguracoesPage() {
                   {
                     step: 1,
                     title: "Crie seu perfil e selecione o time",
-                    desc: "Na tela inicial (Splash), use o D-pad ← → ou as setas do teclado para navegar entre as opcoes. Pressione A (Xbox) / X (PS) / Enter para confirmar. Use LB/RB ou ← → para trocar a divisao e explorar os times.",
+                    desc: "Na tela inicial (Splash), use o D-pad ← → ou as setas do teclado para navegar entre as opcoes. Pressione A (Xbox) / X (PS) / Enter para confirmar. Use LB/RB ou ← → para trocar a divisao (Serie A, B, C, D, e ligas internacionais).",
                   },
                   {
                     step: 2,
                     title: "Explore o Dashboard e a barra lateral",
-                    desc: "Use o D-pad Cima/Baixo (ou ↑↓ no teclado) para navegar pela barra lateral esquerda. Acesse: Elenco, Calendario, Mercado, Taticas, Financas, Noticias e muito mais.",
+                    desc: "Use o D-pad Cima/Baixo (ou ↑↓ no teclado) para navegar pela barra lateral esquerda. Acesse: Elenco, Calendario, Mercado, Taticas, Financas, Treinamento, Olheiros, Contratos e muito mais.",
                   },
                   {
                     step: 3,
@@ -840,18 +885,28 @@ export default function ConfiguracoesPage() {
                   },
                   {
                     step: 4,
-                    title: "Use o Mercado para reforcar o elenco",
-                    desc: "No Mercado, use LB/RB para alternar entre as abas: Buscar, Rede de Agentes e Olheiros. Pressione A / X (PS) para negociar a compra, X / □ (PS) para propor emprestimo. Fique de olho no orcamento!",
+                    title: "Treine sua equipe",
+                    desc: "No Treinamento, escolha entre treinos tecnicos, fisicos ou taticos. Selecione jogadores especificos para treinos individuais ou sessoes coletivas para melhorar o desempenho geral do elenco.",
                   },
                   {
                     step: 5,
-                    title: "Gerencie o Calendario de rodadas",
-                    desc: "No Calendario, pressione A / X (PS) / Enter para avançar a rodada. Use X no Xbox (□ no PS) para simular ate sua proxima partida. Use Y (△ no PS) para pular diretamente ao seu proximo jogo.",
+                    title: "Use o Mercado e Olheiros para reforcar",
+                    desc: "No Mercado, use LB/RB para alternar entre as abas. Os Olheiros vasculham regioes em busca de talentos. Gerencie Contratos para renovar ou liberar jogadores. Fique de olho no orcamento em Financas!",
                   },
                   {
                     step: 6,
+                    title: "Gerencie o Calendario de rodadas",
+                    desc: "No Calendario, pressione A / X (PS) / Enter para avancar a rodada. Use X no Xbox (□ no PS) para simular ate sua proxima partida. Use Y (△ no PS) para pular diretamente ao seu proximo jogo.",
+                  },
+                  {
+                    step: 7,
                     title: "Jogue a partida ao vivo!",
                     desc: "Na tela de Pre-Jogo, configure o uniforme com LB/RB e LT/RT, ajuste as taticas com X/□ e pressione A/X (PS)/Enter para jogar. Na partida: START/OPTIONS pausa, A/X acelera, B/O desacelera, SELECT/SHARE pula ao resultado.",
+                  },
+                  {
+                    step: 8,
+                    title: "Invista na Infraestrutura",
+                    desc: "Melhore as instalacoes do clube (CT, Estadio, Base) para aumentar receitas, desenvolver jovens talentos e atrair jogadores de maior nivel. Cada upgrade impacta diretamente o desempenho a longo prazo.",
                   },
                 ].map(({ step, title, desc }) => (
                   <div key={step} className="flex gap-3 p-3 rounded-lg bg-white/5">
