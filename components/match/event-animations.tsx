@@ -21,7 +21,9 @@ interface EventAnimationProps {
 // Animacao de GOL - Estilo EA FC
 function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimationProps, "event">) {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 4000)
+    const timer = setTimeout(() => {
+      if (onComplete) onComplete()
+    }, 4000)
     return () => clearTimeout(timer)
   }, [onComplete])
 
@@ -30,7 +32,9 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
+      transition={{ duration: 0.3 }}
+      onClick={onComplete}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md cursor-pointer"
     >
       {/* Particulas de fundo */}
       <div className="absolute inset-0 overflow-hidden">
@@ -127,7 +131,9 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
 // Animacao de PENALTI
 function PenaltyAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "event">) {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 3000)
+    const timer = setTimeout(() => {
+      if (onComplete) onComplete()
+    }, 3000)
     return () => clearTimeout(timer)
   }, [onComplete])
 
@@ -136,7 +142,9 @@ function PenaltyAnimation({ team, minute, onComplete }: Omit<EventAnimationProps
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md"
+      transition={{ duration: 0.3 }}
+      onClick={onComplete}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md cursor-pointer"
     >
       {/* Spotlight */}
       <motion.div
@@ -196,7 +204,9 @@ function PenaltyAnimation({ team, minute, onComplete }: Omit<EventAnimationProps
 // Animacao de CARTAO AMARELO
 function YellowCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimationProps, "event">) {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2500)
+    const timer = setTimeout(() => {
+      if (onComplete) onComplete()
+    }, 2500)
     return () => clearTimeout(timer)
   }, [onComplete])
 
@@ -205,7 +215,9 @@ function YellowCardAnimation({ team, player, minute, onComplete }: Omit<EventAni
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm"
+      transition={{ duration: 0.3 }}
+      onClick={onComplete}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm cursor-pointer"
     >
       <div className="flex flex-col items-center">
         {/* Cartao */}
@@ -242,7 +254,9 @@ function YellowCardAnimation({ team, player, minute, onComplete }: Omit<EventAni
 // Animacao de CARTAO VERMELHO
 function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimationProps, "event">) {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 3500)
+    const timer = setTimeout(() => {
+      if (onComplete) onComplete()
+    }, 3500)
     return () => clearTimeout(timer)
   }, [onComplete])
 
@@ -251,7 +265,9 @@ function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimat
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md"
+      transition={{ duration: 0.3 }}
+      onClick={onComplete}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md cursor-pointer"
     >
       {/* Flash vermelho */}
       <motion.div
@@ -310,7 +326,9 @@ function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimat
 // Animacao de FALTA
 function FoulAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "event">) {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2000)
+    const timer = setTimeout(() => {
+      if (onComplete) onComplete()
+    }, 2000)
     return () => clearTimeout(timer)
   }, [onComplete])
 
@@ -350,16 +368,20 @@ function FoulAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "
 // Animacao de VAR
 function VarAnimation({ onComplete }: Omit<EventAnimationProps, "event">) {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 3000)
+    const timer = setTimeout(() => {
+      if (onComplete) onComplete()
+    }, 3000)
     return () => clearTimeout(timer)
   }, [onComplete])
-
+  
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
+      transition={{ duration: 0.3 }}
+      onClick={onComplete}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md cursor-pointer"
     >
       <div className="flex flex-col items-center">
         {/* Linhas de scan */}
