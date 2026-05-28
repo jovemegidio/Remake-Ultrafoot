@@ -180,21 +180,39 @@ export default function CalendarioPage() {
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
 
   return (
-    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 relative">
-      <GameSidebar />
-      
-      {/* Background Image - Escritorio do Estadio */}
-      <div className="absolute inset-0 md:ml-16">
-        <Image
-          src="/images/office-bg.png"
-          alt="Office Background"
-          fill
-          className="object-cover"
-          priority
-        />
-        {/* Overlay escuro para melhorar legibilidade */}
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
+  <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 relative">
+  <GameSidebar />
+  
+  {/* Background Image - Futuristic Grid */}
+  <div className="absolute inset-0 md:ml-16">
+  <Image
+  src="/images/calendario-bg.png"
+  alt="Calendar Background"
+  fill
+  className="object-cover"
+  priority
+  />
+  {/* Professional Vignette Overlays */}
+  {/* Base dark overlay for readability */}
+  <div className="absolute inset-0 bg-black/30" />
+  
+  {/* Left vignette - stronger for sidebar info */}
+  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
+  
+  {/* Top vignette for month tabs */}
+  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
+  
+  {/* Bottom vignette for footer controls */}
+  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+  
+  {/* Radial vignette for cinematic depth */}
+  <div className="absolute inset-0" style={{ 
+  background: "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 30%, rgba(0,0,0,0.5) 100%)" 
+  }} />
+  
+  {/* Subtle corner accents to complement cyan glow */}
+  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/40" />
+  </div>
 
       {/* Top Navigation Bar */}
       <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
