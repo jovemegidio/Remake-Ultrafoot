@@ -258,7 +258,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
         </div>
         
         {/* Track info */}
-        <div className="min-w-0 max-w-[120px]">
+        <div className="min-w-0 w-[180px] max-w-[42vw] md:w-[220px]">
           <div className="truncate text-sm font-medium text-white">{track.title}</div>
           <div className="truncate text-xs text-[#a7a7a7]">{track.artist}</div>
         </div>
@@ -536,8 +536,8 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
             <div className="px-2 py-1 text-xs font-bold text-[#a7a7a7] uppercase tracking-wider">
               Proximas
             </div>
-            <div className="max-h-48 overflow-y-auto">
-              {tracks.slice(currentTrack + 1, currentTrack + 6).map((t, i) => (
+            <div className="max-h-64 overflow-y-auto">
+              {tracks.slice(currentTrack + 1).map((t, i) => (
                 <button
                   key={i}
                   onClick={() => { setCurrentTrack(currentTrack + 1 + i); setShowPlaylist(false) }}
