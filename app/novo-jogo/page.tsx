@@ -225,7 +225,7 @@ export default function NovoJogoPage() {
               <span className="text-white/90 font-medium tracking-wide">
                 {activeDivision.country}
               </span>
-              <span className="text-2xl">{activeDivision.flag}</span>
+              <span className="text-3xl leading-none">{activeDivision.flag}</span>
             </div>
 
             <button
