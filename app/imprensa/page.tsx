@@ -428,7 +428,7 @@ export default function ImprensaPage() {
                   </div>
                 </div>
 
-                <Button onClick={() => setShowResult(false)} className="w-full">
+                <Button onClick={() => router.push("/pre-office")} className="w-full">
                   Fechar
                 </Button>
               </div>
