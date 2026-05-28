@@ -17,7 +17,7 @@ import {
   TrendingDown,
   Minus,
 } from "lucide-react"
-import { MusicPlayer } from "@/components/music-player"
+import { ActionHint } from "@/components/gamepad-icons"
 import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
 import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
 import { TeamCrest } from "@/components/team-crest"
@@ -163,19 +163,6 @@ function TeamCard({
             <TrendIcon trend={trends.def} />
           </div>
         </div>
-      </div>
-
-      {/* League Badge */}
-      <div className="flex flex-col items-center">
-        <span className="text-[9px] md:text-[10px] text-white/40 font-medium tracking-wider uppercase mb-2">Liga</span>
-        <Image
-          src={leagueLogo}
-          alt={leagueName}
-          width={44}
-          height={44}
-          className="object-contain opacity-80"
-          unoptimized
-        />
       </div>
     </div>
   )
@@ -367,26 +354,6 @@ export default function PartidaPage() {
           />
         </div>
 
-        {/* Country/League Selector - Top */}
-        <div className="relative flex items-center justify-center gap-4 py-3.5 border-b border-white/[0.04] bg-black/40">
-          <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <ChevronLeft className="h-4 w-4 text-white/50" />
-          </button>
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">🇧🇷</span>
-            <span className="text-white font-medium text-sm tracking-wide">Brasil</span>
-          </div>
-          <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <ChevronRight className="h-4 w-4 text-white/50" />
-          </button>
-
-          {/* Flag on right */}
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <span className="text-white/30 text-xs font-medium tracking-wide">Brasil</span>
-            <span className="text-xl">🇧🇷</span>
-          </div>
-        </div>
-
         {/* Teams Section */}
         <div className="relative flex-1 flex items-stretch h-[calc(100%-140px)]">
           {/* Vertical CASA label */}
@@ -449,18 +416,9 @@ export default function PartidaPage() {
           <div className="flex items-center justify-between">
             {/* Left Actions */}
             <div className="flex items-center gap-5">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-blue-500 text-white rounded px-1.5 py-0.5 font-bold">X</span>
-                <span className="text-white/50 text-xs font-medium">Selecionar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold">O</span>
-                <span className="text-white/50 text-xs font-medium">Voltar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-white/20 text-white rounded px-1.5 py-0.5 font-bold">R3</span>
-                <span className="text-white/50 text-xs font-medium">Aleatorio</span>
-              </div>
+              <ActionHint button="cross" action="Selecionar" platform="playstation" size="sm" />
+              <ActionHint button="circle" action="Voltar" platform="playstation" size="sm" />
+              <ActionHint button="r3" action="Aleatorio" platform="playstation" size="sm" />
             </div>
 
             {/* Center - Start Button */}
@@ -473,11 +431,6 @@ export default function PartidaPage() {
                 INICIAR PARTIDA
               </Button>
             </Link>
-
-            {/* Right - Team Badge */}
-            <div className="flex items-center gap-3">
-              <TeamCrest team={userTeam} size="sm" />
-            </div>
           </div>
         </div>
       </main>
@@ -516,10 +469,9 @@ export default function PartidaPage() {
             )}
           </div>
         </div>
-      )}
-
-      <MusicPlayer />
-      <GamepadControlsBar
+  )}
+  
+  <GamepadControlsBar
         controls={[
           { button: "A", label: "Iniciar Partida" },
           { button: "B", label: "Voltar" },

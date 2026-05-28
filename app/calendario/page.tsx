@@ -12,6 +12,7 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { GameSidebar } from "@/components/game-sidebar"
+import { ActionHint, GamepadButton, ShoulderHints } from "@/components/gamepad-icons"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
@@ -425,20 +426,20 @@ export default function CalendarioPage() {
 
       {/* Bottom Action Bar (EA FC Style) */}
       <footer className="absolute bottom-0 left-0 right-0 md:ml-16 h-14 flex items-center justify-between px-6 bg-black/50 backdrop-blur-sm border-t border-white/10 z-10">
-        <div className="flex items-center gap-8 text-xs text-white/70">
+        <div className="flex items-center gap-6 text-xs text-white/70">
           <button 
             onClick={handleAdvanceRound}
             disabled={!canSimulate}
             className="flex items-center gap-2 hover:text-white disabled:opacity-50 transition-colors"
           >
-            <span className="w-5 h-5 rounded bg-[#0088ff] flex items-center justify-center text-white font-bold text-[10px]">A</span>
+            <GamepadButton button="cross" platform="playstation" size="sm" />
             <span>Sim To Date</span>
           </button>
           <button 
             onClick={() => router.back()}
             className="flex items-center gap-2 hover:text-white transition-colors"
           >
-            <span className="w-5 h-5 rounded bg-[#ff4444] flex items-center justify-center text-white font-bold text-[10px]">B</span>
+            <GamepadButton button="circle" platform="playstation" size="sm" />
             <span>Back</span>
           </button>
           {nextUserMatch && (
@@ -446,14 +447,14 @@ export default function CalendarioPage() {
               href="/partida"
               className="flex items-center gap-2 hover:text-white transition-colors"
             >
-              <span className="w-5 h-5 rounded bg-[#ffcc00] flex items-center justify-center text-gray-900 font-bold text-[10px]">X</span>
+              <GamepadButton button="square" platform="playstation" size="sm" />
               <span>View Fixture</span>
             </Link>
           )}
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center text-white font-bold text-[10px]">LB</span>
-            <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center text-white font-bold text-[10px]">RB</span>
-            <span>Month</span>
+          <div className="flex items-center gap-1.5">
+            <GamepadButton button="l1" platform="playstation" size="xs" />
+            <GamepadButton button="r1" platform="playstation" size="xs" />
+            <span className="ml-1">Month</span>
           </div>
         </div>
 
