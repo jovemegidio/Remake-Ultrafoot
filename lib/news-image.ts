@@ -34,7 +34,7 @@ export function getNewsImageUrl(
   height = 450,
 ): string | null {
   // No app desktop offline nao ha acesso a servicos externos de imagem.
-  if (isTauri) return null
+  if (isTauri()) return null
 
   // picsum.photos aceita um seed para retornar sempre a mesma imagem.
   // A categoria entra no seed para variar entre tipos de noticia.

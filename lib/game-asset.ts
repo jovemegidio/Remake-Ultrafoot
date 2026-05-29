@@ -3,10 +3,11 @@
 // Dentro do app Tauri eles sao servidos pelo protocolo customizado "game-asset://".
 
 // Detecta se o codigo esta rodando dentro do app desktop Tauri.
-export const isTauri: boolean =
-  typeof window !== "undefined" &&
+export function isTauri(): boolean {
+  if (typeof window === "undefined") return false
   // @ts-expect-error - propriedades injetadas pelo runtime do Tauri
-  (typeof window.__TAURI__ !== "undefined" || typeof window.__TAURI_INTERNALS__ !== "undefined")
+  return typeof window.__TAURI__ !== "undefined" || typeof window.__TAURI_INTERNALS__ !== "undefined"
+}
 
 // Prefixo do protocolo customizado registrado no Tauri (ver src-tauri/src/lib.rs)
 const TAURI_ASSET_PREFIX = "game-asset://localhost"
@@ -26,7 +27,7 @@ export function gameAssetUrl(raw: string): string {
   }
 
   // No ambiente web, basta usar o caminho relativo a partir da raiz publica.
-  if (!isTauri) {
+  if (!isTauri()) {
     return raw.startsWith("/") ? raw : `/${raw}`
   }
 

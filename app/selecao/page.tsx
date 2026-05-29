@@ -475,23 +475,37 @@ export default function SelecaoPage() {
                         disabled={done}
                         onClick={() => startCompetition(comp.id)}
                         className={cn(
-                          "flex items-center gap-3 rounded-xl border p-4 text-left transition-colors",
+                          "group relative flex items-center gap-3 rounded-xl border p-4 text-left transition-all overflow-hidden min-h-[88px]",
                           done
-                            ? "border-white/[0.04] bg-white/[0.01] opacity-50 cursor-not-allowed"
-                            : "border-white/[0.06] bg-[#0c0c10] hover:border-[#00ffc8]/30 hover:bg-[#00ffc8]/[0.03]",
+                            ? "border-white/[0.04] opacity-50 cursor-not-allowed"
+                            : "border-white/[0.06] hover:border-white/20",
                         )}
                       >
-                        <div className="h-10 w-10 rounded-lg bg-[#00ffc8]/10 flex items-center justify-center shrink-0">
-                          {comp.kind === "title" ? <Crown className="h-5 w-5 text-[#00ffc8]" /> : <Star className="h-5 w-5 text-[#00ffc8]" />}
+                        {/* Fundo tema */}
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            backgroundImage: `url(${comp.theme})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }}
+                          aria-hidden
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#0c0c10] via-[#0c0c10]/85 to-[#0c0c10]/55 group-hover:from-[#0c0c10] group-hover:via-[#0c0c10]/75 transition-colors" />
+                        <div
+                          className="relative h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg"
+                          style={{ backgroundColor: comp.accent }}
+                        >
+                          {comp.kind === "title" ? <Crown className="h-5 w-5 text-white" /> : <Star className="h-5 w-5 text-white" />}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white">{comp.name}</p>
-                          <p className="text-xs text-white/40">
+                        <div className="relative flex-1 min-w-0">
+                          <p className="font-semibold text-white drop-shadow">{comp.name}</p>
+                          <p className="text-xs text-white/60 drop-shadow">
                             {comp.kind === "title" ? "Titulo" : "Classificatoria"} - Prestigio {comp.prestige}
                             {done ? " - concluida" : ""}
                           </p>
                         </div>
-                        {!done && <ChevronRight className="h-4 w-4 text-white/30" />}
+                        {!done && <ChevronRight className="relative h-4 w-4 text-white/50" />}
                       </button>
                     )
                   })}

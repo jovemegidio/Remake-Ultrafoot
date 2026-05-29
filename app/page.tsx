@@ -32,6 +32,8 @@ import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { useGameEngine } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTranslation } from "@/lib/i18n"
+import { useNationalTeam } from "@/lib/use-national-team"
+import { Flag } from "lucide-react"
 
 const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const HOME_WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
@@ -62,6 +64,7 @@ function fixtureDateLine(round: number): string {
 
 export default function DashboardPage() {
   const { hydrated, userTeam, seasonCalendar, standings, userPosition, currentSeason, saveState } = useGameManager()
+  const { offers: nationalOffers, hasNationalTeam } = useNationalTeam()
   const gameEngine = useGameEngine()
   const t = useTranslation()
   const [sessionChecked, setSessionChecked] = useState(false)
@@ -142,6 +145,29 @@ export default function DashboardPage() {
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
+        {/* Proposta de selecao nacional */}
+        {!hasNationalTeam && nationalOffers.length > 0 && (
+          <Link
+            href="/selecao"
+            className="group flex items-center gap-4 rounded-xl border border-[#00ffc8]/30 bg-[#00ffc8]/[0.06] p-4 transition-colors hover:bg-[#00ffc8]/[0.1]"
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#00ffc8]/15">
+              <Flag className="h-5 w-5 text-[#00ffc8]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-white">
+                {nationalOffers.length === 1
+                  ? `${nationalOffers[0].nationalTeamName} quer voce no comando!`
+                  : `${nationalOffers.length} selecoes querem te contratar!`}
+              </p>
+              <p className="truncate text-sm text-white/60">
+                Voce recebeu uma proposta para comandar uma selecao nacional. Toque para ver os detalhes.
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-[#00ffc8] transition-transform group-hover:translate-x-1" />
+          </Link>
+        )}
+
         {/* Hero - Club Identity */}
         <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/[0.04]">
           <div
