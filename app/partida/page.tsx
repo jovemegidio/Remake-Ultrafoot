@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowRight,
@@ -31,7 +31,7 @@ import {
 } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
-import { saveMatchContext } from "@/lib/match-context"
+import { clearMatchContext, saveMatchContext } from "@/lib/match-context"
 import { simulateFullMatch, type MatchEvent as SimEvent } from "@/lib/match-engine"
 import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
@@ -182,7 +182,7 @@ function VerticalLabel({ text, side }: { text: string; side: "left" | "right" })
 export default function PartidaPage() {
   const router = useRouter()
   const userTeam = useUserTeam()
-  const { currentMatch, standings, league, currentRound } = useGameManager()
+  const { currentMatch, standings, league, currentRound, registerUserMatchResult, advanceWeek } = useGameManager()
 
   const { connected: gamepadConnected } = useGamepadDetection()
   const [hydrated, setHydrated] = useState(false)
@@ -196,6 +196,7 @@ export default function PartidaPage() {
     awayGoals: number
     events: (SimEvent | EngineEvent)[]
   } | null>(null)
+  const quickSimRegistered = useRef(false)
 
   // Hydration
   useEffect(() => {
@@ -239,7 +240,9 @@ export default function PartidaPage() {
   // Quick sim handler
   const handleQuickSim = useCallback(() => {
     if (!homeTeam || !awayTeam) return
+    quickSimRegistered.current = false
     setShowQuickSim(true)
+    setQuickSimResult(null)
     const result = simulateFullMatch({ homeTeam, awayTeam, homeRating: homeTeam.prestigio, awayRating: awayTeam.prestigio })
     setTimeout(() => {
       setQuickSimResult({
@@ -247,8 +250,30 @@ export default function PartidaPage() {
         awayGoals: result.away.goals,
         events: result.events,
       })
+
+      if (!quickSimRegistered.current) {
+        quickSimRegistered.current = true
+        const goalEvents: EngineEvent[] = result.events
+          .filter(e => e.type === "goal")
+          .map(e => ({
+            minute: e.minute,
+            type: "goal" as const,
+            playerId: 0,
+            playerName: e.player || (e.side === "home" ? homeTeam.curto : awayTeam.curto),
+          }))
+
+        registerUserMatchResult(
+          homeTeam.curto,
+          awayTeam.curto,
+          result.home.goals,
+          result.away.goals,
+          goalEvents
+        )
+        clearMatchContext()
+        void advanceWeek()
+      }
     }, 1500)
-  }, [homeTeam, awayTeam])
+  }, [homeTeam, awayTeam, registerUserMatchResult, advanceWeek])
 
   // Save match context before navigation
   useEffect(() => {
@@ -456,7 +481,7 @@ export default function PartidaPage() {
                   onClick={() => { setShowQuickSim(false); setQuickSimResult(null) }}
                   className="w-full"
                 >
-                  Fechar
+                  Continuar
                 </Button>
               </div>
             ) : (
