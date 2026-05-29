@@ -399,13 +399,15 @@ export default function PartidaPage() {
                   unoptimized
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center w-22 h-22 rounded-full bg-white/5 border border-white/10">
-                  <Trophy className="h-8 w-8 text-white/40" />
-                </div>
+                <>
+                  <div className="flex flex-col items-center justify-center w-22 h-22 rounded-full bg-white/5 border border-white/10">
+                    <Trophy className="h-8 w-8 text-white/40" />
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60 text-center max-w-28 text-balance">
+                    {matchInfo.competition}
+                  </span>
+                </>
               )}
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60 text-center max-w-28 text-balance">
-                {matchInfo.competition}
-              </span>
             </div>
 
             {/* Live Phase Toggle */}
