@@ -60,50 +60,157 @@ function getFlagUrl(code: string) {
   return `/flags/${key}.png`
 }
 
-interface DivisaoTab {
+interface LeagueTab {
   key: Divisao
   label: string
   short: string
   teams: Team[]
-  region: Regiao
-  country?: string
-  code?: string
-  flag?: string
-  flagImg?: string
 }
 
-const DIVISIONS: DivisaoTab[] = [
-  // Brasil
-  { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
-  { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
-  { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
-  { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams, region: "brasil", country: "Brasil", code: "BRA", flag: "🇧🇷" },
-  // Europa - Top 5
-  { key: "premier_league", label: "Premier League", short: "Premier", teams: premierLeagueTeams, region: "europa", country: "Inglaterra", code: "ENG", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams, region: "europa", country: "Espanha", code: "ESP", flag: "🇪🇸" },
-  { key: "serie_a_ita", label: "Serie A Italia", short: "Serie A", teams: serieAItaTeams, region: "europa", country: "Italia", code: "ITA", flag: "🇮🇹" },
-  { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams, region: "europa", country: "Alemanha", code: "GER", flag: "🇩🇪" },
-  { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams, region: "europa", country: "Franca", code: "FRA", flag: "🇫🇷" },
-  // Europa - Demais
-  { key: "primeira_liga", label: "Primeira Liga", short: "Portugal", teams: primeiraLigaTeams, region: "europa", country: "Portugal", code: "POR", flag: "🇵🇹" },
-  { key: "eredivisie", label: "Eredivisie", short: "Eredivisie", teams: eredivisieTeams, region: "europa", country: "Holanda", code: "NED", flag: "🇳🇱" },
-  { key: "scottish_prem", label: "Scottish Premiership", short: "Scotland", teams: scottishPremTeams, region: "europa", country: "Escocia", code: "SCO", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
-  { key: "super_lig", label: "Super Lig", short: "Super Lig", teams: superLigTeams, region: "europa", country: "Turquia", code: "TUR", flag: "🇹🇷" },
-  { key: "pro_league_bel", label: "Belgian Pro League", short: "Pro League", teams: proLeagueBelTeams, region: "europa", country: "Belgica", code: "BEL", flag: "🇧🇪" },
-  { key: "russian_prem", label: "Russian Premier League", short: "Russia", teams: russianPremTeams, region: "europa", country: "Russia", code: "RUS", flag: "🇷🇺" },
-  // Americas
-  { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams, region: "americas", country: "EUA", code: "USA", flag: "🇺🇸" },
-  { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams, region: "americas", country: "Mexico", code: "MEX", flag: "🇲🇽" },
-  { key: "liga_argentina", label: "Liga Argentina", short: "Argentina", teams: ligaArgentinaTeams, region: "americas", country: "Argentina", code: "ARG", flag: "🇦🇷" },
-  { key: "primera_a_col", label: "Primera A Colombia", short: "Colombia", teams: primeiraAColTeams, region: "americas", country: "Colombia", code: "COL", flag: "🇨🇴" },
-  { key: "primera_div_chi", label: "Primera Division Chile", short: "Chile", teams: primeraDivChileTeams, region: "americas", country: "Chile", code: "CHI", flag: "🇨🇱" },
-  { key: "primera_div_ury", label: "Primera Division Uruguay", short: "Uruguai", teams: primeraDivUryTeams, region: "americas", country: "Uruguai", code: "URU", flag: "🇺🇾" },
-  // Asia
-  { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams, region: "asia", country: "Arabia Saudita", code: "KSA", flag: "🇸🇦" },
-  { key: "saudi_first_div", label: "Saudi First Division", short: "Saudi Div 1", teams: saudiFirstDivTeams, region: "asia", country: "Arabia Saudita", code: "KSA", flag: "🇸🇦" },
-  { key: "j_league", label: "J-League", short: "J-League", teams: jLeagueTeams, region: "asia", country: "Japao", code: "JPN", flag: "🇯🇵" },
-  { key: "k_league_1", label: "K-League 1", short: "K-League", teams: kLeague1Teams, region: "asia", country: "Coreia do Sul", code: "KOR", flag: "🇰🇷" },
-  { key: "chinese_super", label: "Chinese Super League", short: "China", teams: chineseSuperTeams, region: "asia", country: "China", code: "CHN", flag: "🇨🇳" },
+interface CountryTab {
+  name: string
+  code: string
+  region: Regiao
+  leagues: LeagueTab[]
+}
+
+const COUNTRIES: CountryTab[] = [
+  {
+    name: "Brasil", code: "BRA", region: "brasil",
+    leagues: [
+      { key: "serie_a", label: "Brasileirao Serie A", short: "Serie A", teams: serieATeams },
+      { key: "serie_b", label: "Brasileirao Serie B", short: "Serie B", teams: serieBTeams },
+      { key: "serie_c", label: "Brasileirao Serie C", short: "Serie C", teams: serieCTeams },
+      { key: "serie_d", label: "Brasileirao Serie D", short: "Serie D", teams: serieDTeams },
+    ],
+  },
+  {
+    name: "Inglaterra", code: "ENG", region: "europa",
+    leagues: [
+      { key: "premier_league", label: "Premier League", short: "Premier League", teams: premierLeagueTeams },
+    ],
+  },
+  {
+    name: "Espanha", code: "ESP", region: "europa",
+    leagues: [
+      { key: "la_liga", label: "La Liga", short: "La Liga", teams: laLigaTeams },
+    ],
+  },
+  {
+    name: "Italia", code: "ITA", region: "europa",
+    leagues: [
+      { key: "serie_a_ita", label: "Serie A", short: "Serie A", teams: serieAItaTeams },
+    ],
+  },
+  {
+    name: "Alemanha", code: "GER", region: "europa",
+    leagues: [
+      { key: "bundesliga", label: "Bundesliga", short: "Bundesliga", teams: bundesligaTeams },
+    ],
+  },
+  {
+    name: "Franca", code: "FRA", region: "europa",
+    leagues: [
+      { key: "ligue_1", label: "Ligue 1", short: "Ligue 1", teams: ligue1Teams },
+    ],
+  },
+  {
+    name: "Portugal", code: "POR", region: "europa",
+    leagues: [
+      { key: "primeira_liga", label: "Primeira Liga", short: "Primeira Liga", teams: primeiraLigaTeams },
+    ],
+  },
+  {
+    name: "Holanda", code: "NED", region: "europa",
+    leagues: [
+      { key: "eredivisie", label: "Eredivisie", short: "Eredivisie", teams: eredivisieTeams },
+    ],
+  },
+  {
+    name: "Escocia", code: "SCO", region: "europa",
+    leagues: [
+      { key: "scottish_prem", label: "Scottish Premiership", short: "Scottish Prem", teams: scottishPremTeams },
+    ],
+  },
+  {
+    name: "Turquia", code: "TUR", region: "europa",
+    leagues: [
+      { key: "super_lig", label: "Super Lig", short: "Super Lig", teams: superLigTeams },
+    ],
+  },
+  {
+    name: "Belgica", code: "BEL", region: "europa",
+    leagues: [
+      { key: "pro_league_bel", label: "Belgian Pro League", short: "Pro League", teams: proLeagueBelTeams },
+    ],
+  },
+  {
+    name: "Russia", code: "RUS", region: "europa",
+    leagues: [
+      { key: "russian_prem", label: "Russian Premier League", short: "Russian Prem", teams: russianPremTeams },
+    ],
+  },
+  {
+    name: "EUA", code: "USA", region: "americas",
+    leagues: [
+      { key: "mls", label: "MLS", short: "MLS", teams: mlsTeams },
+    ],
+  },
+  {
+    name: "Mexico", code: "MEX", region: "americas",
+    leagues: [
+      { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams },
+    ],
+  },
+  {
+    name: "Argentina", code: "ARG", region: "americas",
+    leagues: [
+      { key: "liga_argentina", label: "Liga Argentina", short: "Liga Argentina", teams: ligaArgentinaTeams },
+    ],
+  },
+  {
+    name: "Colombia", code: "COL", region: "americas",
+    leagues: [
+      { key: "primera_a_col", label: "Primera A", short: "Primera A", teams: primeiraAColTeams },
+    ],
+  },
+  {
+    name: "Chile", code: "CHI", region: "americas",
+    leagues: [
+      { key: "primera_div_chi", label: "Primera Division", short: "Primera Div", teams: primeraDivChileTeams },
+    ],
+  },
+  {
+    name: "Uruguai", code: "URU", region: "americas",
+    leagues: [
+      { key: "primera_div_ury", label: "Primera Division", short: "Primera Div", teams: primeraDivUryTeams },
+    ],
+  },
+  {
+    name: "Arabia Saudita", code: "KSA", region: "asia",
+    leagues: [
+      { key: "saudi_pro", label: "Saudi Pro League", short: "Saudi Pro", teams: saudiProTeams },
+      { key: "saudi_first_div", label: "Saudi First Division", short: "Saudi 1a Div", teams: saudiFirstDivTeams },
+    ],
+  },
+  {
+    name: "Japao", code: "JPN", region: "asia",
+    leagues: [
+      { key: "j_league", label: "J-League", short: "J-League", teams: jLeagueTeams },
+    ],
+  },
+  {
+    name: "Coreia do Sul", code: "KOR", region: "asia",
+    leagues: [
+      { key: "k_league_1", label: "K-League 1", short: "K-League 1", teams: kLeague1Teams },
+    ],
+  },
+  {
+    name: "China", code: "CHN", region: "asia",
+    leagues: [
+      { key: "chinese_super", label: "Chinese Super League", short: "Super League", teams: chineseSuperTeams },
+    ],
+  },
 ]
 
 const STADIUM_BG = "/images/stadium-bg.png"
@@ -113,12 +220,14 @@ export default function NovoJogoPage() {
   const { setTheme, setTeamColors } = useTheme()
   const { isGamepadConnected } = useGamepadContext()
 
-  const [divisaoIndex, setDivisaoIndex] = useState(0)
+  const [countryIndex, setCountryIndex] = useState(0)
+  const [leagueIndex, setLeagueIndex] = useState(0)
   const [teamIndex, setTeamIndex] = useState(0)
   const [managerName, setManagerName] = useState("")
 
-  const activeDivision = DIVISIONS[divisaoIndex]
-  const teams = activeDivision.teams
+  const activeCountry = COUNTRIES[countryIndex]
+  const activeLeague = activeCountry.leagues[leagueIndex]
+  const teams = activeLeague.teams
   const selectedTeam = teams[teamIndex]
 
   const overall = useMemo(() => teamRating(selectedTeam?.nome || ""), [selectedTeam])
@@ -152,27 +261,30 @@ export default function NovoJogoPage() {
     hardNavigate("/")
   }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme])
 
-  const nextTeam = useCallback(() => {
-    setTeamIndex(prev => (prev + 1) % teams.length)
-  }, [teams.length])
+  const nextTeam = useCallback(() => setTeamIndex(prev => (prev + 1) % teams.length), [teams.length])
+  const prevTeam = useCallback(() => setTeamIndex(prev => (prev - 1 + teams.length) % teams.length), [teams.length])
 
-  const prevTeam = useCallback(() => {
-    setTeamIndex(prev => (prev - 1 + teams.length) % teams.length)
-  }, [teams.length])
-
-  const nextDivision = useCallback(() => {
-    setDivisaoIndex(prev => (prev + 1) % DIVISIONS.length)
+  const nextCountry = useCallback(() => {
+    setCountryIndex(prev => (prev + 1) % COUNTRIES.length)
+    setLeagueIndex(0)
+    setTeamIndex(0)
+  }, [])
+  const prevCountry = useCallback(() => {
+    setCountryIndex(prev => (prev - 1 + COUNTRIES.length) % COUNTRIES.length)
+    setLeagueIndex(0)
     setTeamIndex(0)
   }, [])
 
-  const prevDivision = useCallback(() => {
-    setDivisaoIndex(prev => (prev - 1 + DIVISIONS.length) % DIVISIONS.length)
+  const nextLeague = useCallback(() => {
+    setLeagueIndex(prev => (prev + 1) % activeCountry.leagues.length)
     setTeamIndex(0)
-  }, [])
+  }, [activeCountry.leagues.length])
+  const prevLeague = useCallback(() => {
+    setLeagueIndex(prev => (prev - 1 + activeCountry.leagues.length) % activeCountry.leagues.length)
+    setTeamIndex(0)
+  }, [activeCountry.leagues.length])
 
-  const selectRandomTeam = useCallback(() => {
-    setTeamIndex(Math.floor(Math.random() * teams.length))
-  }, [teams.length])
+  const selectRandomTeam = useCallback(() => setTeamIndex(Math.floor(Math.random() * teams.length)), [teams.length])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -197,25 +309,60 @@ export default function NovoJogoPage() {
         case "START": handleStart(); break
         case "DPAD_LEFT": prevTeam(); break
         case "DPAD_RIGHT": nextTeam(); break
-        case "LB": prevDivision(); break
-        case "RB": nextDivision(); break
+        case "LB": prevCountry(); break
+        case "RB": nextCountry(); break
+        case "LT": prevLeague(); break
+        case "RT": nextLeague(); break
         case "X": selectRandomTeam(); break
       }
     }
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [handleStart, prevTeam, nextTeam, prevDivision, nextDivision, selectRandomTeam])
+  }, [handleStart, prevTeam, nextTeam, prevCountry, nextCountry, prevLeague, nextLeague, selectRandomTeam])
 
-  const leagueLogo = getLeagueLogo(activeDivision.key)
+  const leagueLogo = getLeagueLogo(activeLeague.key)
   const prestigeStars = Math.round((selectedTeam?.prestigio || 50) / 20)
   const cor1 = selectedTeam?.cor1 || "#10b981"
   const cor2 = selectedTeam?.cor2 || "#059669"
+  const hasMultipleLeagues = activeCountry.leagues.length > 1
 
   const TrendIndicator = ({ trend }: { trend: string }) => {
     if (trend === "up") return <ChevronUp className="w-3 h-3 text-emerald-400" />
     if (trend === "down") return <ChevronDown className="w-3 h-3 text-red-400" />
     return <Minus className="w-3 h-3 text-white/30" />
   }
+
+  const SelectorPill = ({
+    onPrev, onNext, children, showArrows = true,
+  }: { onPrev: () => void; onNext: () => void; children: React.ReactNode; showArrows?: boolean }) => (
+    <div
+      className="flex items-center gap-2 rounded-full px-3 py-2 shadow-xl"
+      style={{
+        background: "rgba(0,0,0,0.65)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.14)",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+      }}
+    >
+      {showArrows && (
+        <button
+          onClick={onPrev}
+          className="w-6 h-6 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+      )}
+      {children}
+      {showArrows && (
+        <button
+          onClick={onNext}
+          className="w-6 h-6 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <main className="h-screen w-screen overflow-hidden relative">
@@ -227,11 +374,11 @@ export default function NovoJogoPage() {
 
       <div className="relative z-10 h-full flex flex-col">
 
-        {/* ── ÁREA 1+2+3: Card do time + seletor de país (overlay) + badge da liga ── */}
+        {/* ── Card central + seletores ── */}
         <div className="flex-1 flex items-center justify-center px-2 sm:px-6 overflow-hidden">
           <div className="flex items-center gap-4 sm:gap-8 w-full max-w-sm sm:max-w-none justify-center">
 
-            {/* Seta esquerda */}
+            {/* Seta esquerda — times */}
             <button
               onClick={prevTeam}
               className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all shrink-0 border border-white/10 backdrop-blur-sm"
@@ -239,74 +386,43 @@ export default function NovoJogoPage() {
               <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
-            {/* Card + Liga */}
-            <div className="flex flex-col items-center min-w-0">
+            {/* Coluna central: país → card → liga */}
+            <div className="flex flex-col items-center min-w-0 gap-3">
 
-              {/* ── Seletor de país/liga flutuando acima do card ── */}
-              <div
-                className="flex items-center gap-3 rounded-full px-4 py-2.5 shadow-xl mb-[-1px] z-10 relative"
-                style={{
-                  background: "rgba(0,0,0,0.65)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-                }}
-              >
-                <button
-                  onClick={prevDivision}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                <div className="flex items-center gap-2.5 min-w-[130px] justify-center">
-                  <div className="w-9 h-6 rounded overflow-hidden shadow-md flex-shrink-0">
-                    {activeDivision.code && (
-                      <Image
-                        src={getFlagUrl(activeDivision.code)}
-                        alt={activeDivision.country || ""}
-                        width={36}
-                        height={24}
-                        className="object-cover w-full h-full"
-                        unoptimized
-                      />
-                    )}
+              {/* ── Seletor de PAÍS ── */}
+              <SelectorPill onPrev={prevCountry} onNext={nextCountry}>
+                <div className="flex items-center gap-2.5 min-w-[140px] justify-center">
+                  <div className="w-8 h-5 rounded overflow-hidden shadow-md flex-shrink-0">
+                    <Image
+                      src={getFlagUrl(activeCountry.code)}
+                      alt={activeCountry.name}
+                      width={32}
+                      height={20}
+                      className="object-cover w-full h-full"
+                      unoptimized
+                    />
                   </div>
                   <div className="flex flex-col leading-none">
-                    <span className="text-white font-semibold text-sm tracking-wide">{activeDivision.country}</span>
-                    <span className="text-white/45 text-[10px] mt-0.5">{activeDivision.short}</span>
+                    <span className="text-white font-semibold text-sm tracking-wide">{activeCountry.name}</span>
+                    <span className="text-white/40 text-[10px] mt-0.5">{COUNTRIES.length} países</span>
                   </div>
                 </div>
+              </SelectorPill>
 
-                <button
-                  onClick={nextDivision}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Card principal */}
+              {/* ── Card principal ── */}
               <div
-                className="relative rounded-b-2xl rounded-t-lg overflow-hidden shadow-2xl w-72 sm:w-80"
+                className="relative rounded-2xl overflow-hidden shadow-2xl w-72 sm:w-80"
                 style={{
                   background: `linear-gradient(160deg, ${cor1}22 0%, rgba(5,10,15,0.88) 55%, ${cor2}15 100%)`,
                   border: `1px solid ${cor1}50`,
-                  borderTop: `1px solid ${cor1}30`,
-                  boxShadow: `0 0 60px ${cor1}18, 0 20px 60px rgba(0,0,0,0.6)`,
+                  boxShadow: `0 0 60px ${cor1}18, 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)`,
                 }}
               >
-                {/* Faixa de cor do time no topo */}
-                <div
-                  className="h-1 w-full"
-                  style={{ background: `linear-gradient(90deg, ${cor1}, ${cor2})` }}
-                />
+                {/* Faixa de cor */}
+                <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${cor1}, ${cor2})` }} />
 
                 {/* Nome do time */}
-                <div
-                  className="px-5 py-3 border-b"
-                  style={{ borderColor: `${cor1}25`, background: `${cor1}10` }}
-                >
+                <div className="px-5 py-3 border-b" style={{ borderColor: `${cor1}25`, background: `${cor1}10` }}>
                   <h1 className="text-xl sm:text-2xl font-bold text-white text-center tracking-wide truncate">
                     {selectedTeam?.nome}
                   </h1>
@@ -316,15 +432,13 @@ export default function NovoJogoPage() {
                 <div className="py-5 sm:py-7 flex justify-center">
                   <div
                     className="w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center rounded-full"
-                    style={{
-                      background: `radial-gradient(circle, ${cor1}28 0%, transparent 68%)`,
-                    }}
+                    style={{ background: `radial-gradient(circle, ${cor1}28 0%, transparent 68%)` }}
                   >
                     <TeamCrest team={selectedTeam} size="2xl" className="w-32 h-32 sm:w-36 sm:h-36" />
                   </div>
                 </div>
 
-                {/* Estrelas de prestígio */}
+                {/* Estrelas */}
                 <div className="flex items-center justify-center gap-1 pb-4">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
@@ -340,10 +454,7 @@ export default function NovoJogoPage() {
                 </div>
 
                 {/* Stats */}
-                <div
-                  className="flex items-stretch border-t"
-                  style={{ borderColor: `${cor1}25`, background: "rgba(0,0,0,0.35)" }}
-                >
+                <div className="flex items-stretch border-t" style={{ borderColor: `${cor1}25`, background: "rgba(0,0,0,0.35)" }}>
                   <div className="flex-1 text-center py-3.5 px-2">
                     <div className="text-[9px] font-bold text-orange-400/70 uppercase tracking-[0.15em] mb-1.5">ATA</div>
                     <div className="flex items-center justify-center gap-0.5">
@@ -370,33 +481,36 @@ export default function NovoJogoPage() {
                 </div>
               </div>
 
-              {/* ── ÁREA 3: Badge da liga ── */}
-              <div
-                className="flex items-center gap-2.5 mt-3 rounded-full px-4 py-2 shadow-lg"
-                style={{
-                  background: "rgba(0,0,0,0.55)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255,255,255,0.10)",
-                }}
-              >
-                {leagueLogo && (
-                  <Image
-                    src={leagueLogo}
-                    alt={activeDivision.label}
-                    width={32}
-                    height={16}
-                    className="object-contain flex-shrink-0"
-                    style={{ mixBlendMode: "screen" }}
-                    unoptimized
-                  />
-                )}
-                <span className="text-sm font-medium text-white/75 tracking-wide whitespace-nowrap">
-                  {activeDivision.label}
-                </span>
-              </div>
+              {/* ── Seletor de LIGA ── */}
+              <SelectorPill onPrev={prevLeague} onNext={nextLeague} showArrows={hasMultipleLeagues}>
+                <div className="flex items-center gap-2 min-w-[160px] justify-center">
+                  {leagueLogo && (
+                    <Image
+                      src={leagueLogo}
+                      alt={activeLeague.label}
+                      width={28}
+                      height={14}
+                      className="object-contain flex-shrink-0"
+                      style={{ mixBlendMode: "screen" }}
+                      unoptimized
+                    />
+                  )}
+                  <div className="flex flex-col leading-none">
+                    <span className="text-white font-semibold text-sm tracking-wide whitespace-nowrap">
+                      {activeLeague.short}
+                    </span>
+                    <span className="text-white/40 text-[10px] mt-0.5">
+                      {activeCountry.leagues.length > 1
+                        ? `${leagueIndex + 1} / ${activeCountry.leagues.length} ligas`
+                        : `${teams.length} times`}
+                    </span>
+                  </div>
+                </div>
+              </SelectorPill>
+
             </div>
 
-            {/* Seta direita */}
+            {/* Seta direita — times */}
             <button
               onClick={nextTeam}
               className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all shrink-0 border border-white/10 backdrop-blur-sm"
@@ -406,13 +520,13 @@ export default function NovoJogoPage() {
           </div>
         </div>
 
-        {/* ── ÁREA 4: Footer com input e botão ── */}
+        {/* ── Footer ── */}
         <footer className="py-4 sm:py-5 px-4 sm:px-6 bg-gradient-to-t from-black/75 via-black/30 to-transparent">
           <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between">
 
-            {/* Controles do gamepad */}
+            {/* Controles gamepad */}
             {isGamepadConnected && (
-              <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-3 text-xs flex-wrap justify-center">
                 <div className="flex items-center gap-1.5">
                   <ControllerButton button="A" controller="playstation" size="sm" showLabel={false} />
                   <span className="text-white/60">Selecionar</span>
@@ -425,6 +539,7 @@ export default function NovoJogoPage() {
                   <ControllerButton button="X" controller="playstation" size="sm" showLabel={false} />
                   <span className="text-white/60">Aleatório</span>
                 </div>
+                <span className="text-white/30">LB/RB País · LT/RT Liga</span>
               </div>
             )}
 
