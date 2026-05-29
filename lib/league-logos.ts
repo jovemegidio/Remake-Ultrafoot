@@ -17,7 +17,9 @@ export const leagueLogos: Record<string, string | null> = {
   "libertadores":           "/ligas/03.png",
   "conmebol-libertadores":  "/ligas/03.png",
   "sudamericana":           "/ligas/04.png",
+  "sul-americana":          "/ligas/04.png",
   "conmebol-sudamericana":  "/ligas/04.png",
+  "conmebol-sul-americana": "/ligas/04.png",
 
   // European
   "premier-league":  "/ligas/11.png",
