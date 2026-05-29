@@ -520,78 +520,93 @@ export default function NovoJogoPage() {
           </div>
         </div>
 
-        {/* ── Footer ── */}
-        <footer className="py-4 sm:py-5 px-4 sm:px-6 bg-gradient-to-t from-black/75 via-black/30 to-transparent">
-          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between">
+        {/* ── Footer Profissional ── */}
+        <footer className="relative pt-4 pb-6 px-4 sm:px-8">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent pointer-events-none" />
 
-            {/* Controles gamepad */}
-            {isGamepadConnected && (
-              <div className="flex items-center gap-3 text-xs flex-wrap justify-center">
-                <div className="flex items-center gap-1.5">
-                  <ControllerButton button="A" controller="playstation" size="sm" showLabel={false} />
-                  <span className="text-white/60">Selecionar</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <ControllerButton button="B" controller="playstation" size="sm" showLabel={false} />
-                  <span className="text-white/60">Voltar</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <ControllerButton button="X" controller="playstation" size="sm" showLabel={false} />
-                  <span className="text-white/60">Aleatório</span>
-                </div>
-                <span className="text-white/30">LB/RB País · LT/RT Liga</span>
-              </div>
-            )}
+          <div className="relative flex flex-col items-center gap-4">
 
-            {/* Input + botão */}
-            <div className={cn("flex items-center gap-3", !isGamepadConnected && "sm:mx-auto")}>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35 pointer-events-none" />
-                <input
-                  value={managerName}
-                  onChange={e => setManagerName(e.target.value)}
-                  placeholder="Nome do Técnico"
-                  maxLength={32}
-                  className="w-44 sm:w-52 h-10 rounded-xl pl-9 pr-3 text-sm text-white placeholder:text-white/35 focus:outline-none transition-all"
-                  style={{
-                    background: "rgba(0,0,0,0.6)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    backdropFilter: "blur(8px)",
-                  }}
-                  onFocus={e => {
-                    e.currentTarget.style.borderColor = `${cor1}80`
-                    e.currentTarget.style.boxShadow = `0 0 0 2px ${cor1}20`
-                  }}
-                  onBlur={e => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"
-                    e.currentTarget.style.boxShadow = "none"
-                  }}
-                />
-              </div>
-              <button
-                onClick={handleStart}
-                className="h-10 rounded-xl px-5 sm:px-6 font-bold text-sm text-white tracking-wide transition-all whitespace-nowrap active:scale-95"
+            {/* Separador com label */}
+            <div className="flex items-center gap-3 w-full max-w-xs">
+              <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${cor1}40)` }} />
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em]" style={{ color: `${cor1}99` }}>
+                Seu Técnico
+              </span>
+              <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${cor1}40)` }} />
+            </div>
+
+            {/* Input de nome */}
+            <div className="relative w-full max-w-xs">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: `${cor1}70` }} />
+              <input
+                value={managerName}
+                onChange={e => setManagerName(e.target.value)}
+                placeholder="Digite seu nome..."
+                maxLength={32}
+                className="w-full h-12 rounded-xl pl-11 pr-4 text-sm text-white placeholder:text-white/25 focus:outline-none transition-all text-center"
                 style={{
-                  background: `linear-gradient(135deg, ${cor1}, ${cor2})`,
-                  boxShadow: `0 4px 20px ${cor1}45, inset 0 1px 0 rgba(255,255,255,0.15)`,
+                  background: "rgba(0,0,0,0.55)",
+                  border: `1px solid ${cor1}30`,
+                  backdropFilter: "blur(12px)",
+                  letterSpacing: "0.05em",
                 }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = `0 6px 28px ${cor1}60, inset 0 1px 0 rgba(255,255,255,0.15)`
-                  e.currentTarget.style.filter = "brightness(1.1)"
+                onFocus={e => {
+                  e.currentTarget.style.borderColor = `${cor1}70`
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${cor1}15, 0 0 20px ${cor1}10`
                 }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = `0 4px 20px ${cor1}45, inset 0 1px 0 rgba(255,255,255,0.15)`
-                  e.currentTarget.style.filter = "none"
+                onBlur={e => {
+                  e.currentTarget.style.borderColor = `${cor1}30`
+                  e.currentTarget.style.boxShadow = "none"
                 }}
-              >
-                INICIAR CARREIRA
-              </button>
+              />
             </div>
 
-            {/* Contador */}
-            <div className="text-white/35 text-xs font-mono tabular-nums">
-              {teamIndex + 1} / {teams.length}
+            {/* Botão INICIAR CARREIRA */}
+            <button
+              onClick={handleStart}
+              className="relative w-full max-w-xs h-14 rounded-2xl font-black text-base tracking-[0.2em] uppercase text-white transition-all active:scale-[0.97] overflow-hidden group"
+              style={{
+                background: `linear-gradient(135deg, ${cor1} 0%, ${cor2} 100%)`,
+                boxShadow: `0 8px 32px ${cor1}50, 0 2px 0 rgba(255,255,255,0.12) inset, 0 -2px 0 rgba(0,0,0,0.2) inset`,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.boxShadow = `0 12px 40px ${cor1}70, 0 2px 0 rgba(255,255,255,0.12) inset`
+                e.currentTarget.style.filter = "brightness(1.08)"
+                e.currentTarget.style.transform = "translateY(-1px)"
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.boxShadow = `0 8px 32px ${cor1}50, 0 2px 0 rgba(255,255,255,0.12) inset, 0 -2px 0 rgba(0,0,0,0.2) inset`
+                e.currentTarget.style.filter = "none"
+                e.currentTarget.style.transform = "none"
+              }}
+            >
+              {/* Brilho superior */}
+              <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
+              <span className="relative z-10 drop-shadow-sm">⚽ INICIAR CARREIRA</span>
+            </button>
+
+            {/* Rodapé: gamepad + contador */}
+            <div className="flex items-center justify-between w-full max-w-xs">
+              {isGamepadConnected ? (
+                <div className="flex items-center gap-3 text-[10px] text-white/40">
+                  <div className="flex items-center gap-1">
+                    <ControllerButton button="A" controller="playstation" size="sm" showLabel={false} />
+                    <span>Iniciar</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ControllerButton button="B" controller="playstation" size="sm" showLabel={false} />
+                    <span>Voltar</span>
+                  </div>
+                  <span className="text-white/20">LB/RB · LT/RT</span>
+                </div>
+              ) : (
+                <div />
+              )}
+              <span className="text-white/30 text-xs font-mono tabular-nums">
+                {teamIndex + 1} / {teams.length}
+              </span>
             </div>
+
           </div>
         </footer>
       </div>

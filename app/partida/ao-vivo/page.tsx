@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
-import { loadMatchContext } from "@/lib/match-context"
+import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
 import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
 import { useGamepad, type GamepadButtonName } from "@/hooks/use-gamepad"
@@ -52,6 +52,7 @@ import { MatchResultModal } from "@/components/match/match-result-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
+import { useMatchSounds } from "@/hooks/use-match-sounds"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock players - usados como elenco padrao quando nao houver squad real
@@ -460,7 +461,7 @@ function TabButton({
 export default function PartidaAoVivoPage() {
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
-  const { registerUserMatchResult, advanceWeek } = useGameManager()
+  const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
   const { squadPlayers: enginePlayers } = useGameEngine()
   const resultRegistered = useRef(false)
   const t = useTranslation()
@@ -474,14 +475,19 @@ export default function PartidaAoVivoPage() {
 
   // Determina times a partir do contexto salvo
   const homeTeam = useMemo(() => {
+    if (currentMatch) return currentMatch.homeTeam
     if (matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
-  }, [matchCtx.homeShort, userTeamId])
+  }, [currentMatch, matchCtx.homeShort, userTeamId])
 
   const awayTeam = useMemo(() => {
+    if (currentMatch) return currentMatch.awayTeam
     if (matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
-  }, [matchCtx.awayShort, homeTeam.curto])
+  }, [currentMatch, matchCtx.awayShort, homeTeam.curto])
+
+  const displayCompetition = currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A"
+  const displayRound = currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1")
 
   // Determina qual lado e o do usuario
   const userTeam = useMemo(() => {
@@ -560,6 +566,38 @@ export default function PartidaAoVivoPage() {
 
   // Discord Rich Presence
   useDiscordRPC(state, homeTeam, awayTeam)
+
+  // Sons da partida
+  const { play: playSound } = useMatchSounds()
+  const lastSoundEventId = useRef<string | null>(null)
+  const lastPhase = useRef<string | null>(null)
+
+  // Som por mudança de fase (apito de início/intervalo/fim)
+  useEffect(() => {
+    if (!hydrated) return
+    if (lastPhase.current === state.phase) return
+    lastPhase.current = state.phase
+    if (state.phase === "first") playSound("apito_inicio")
+    else if (state.phase === "halftime") playSound("apito_intervalo")
+    else if (state.phase === "fulltime") playSound("apito_fim")
+  }, [state.phase, hydrated, playSound])
+
+  // Som por evento (gol, falta, cartão, etc.)
+  useEffect(() => {
+    if (state.events.length === 0) return
+    const last = state.events[state.events.length - 1]
+    const id = `snd-${last.type}-${last.minute}-${last.side}`
+    if (lastSoundEventId.current === id) return
+    lastSoundEventId.current = id
+    switch (last.type) {
+      case "goal":    playSound("gol"); break
+      case "foul":    playSound("apito_falta"); break
+      case "yellow_card": playSound("cartao_amarelo"); break
+      case "red_card":    playSound("cartao_vermelho"); break
+      case "penalty":     playSound("penalti"); break
+      case "sub":         playSound("substituicao"); break
+    }
+  }, [state.events, playSound])
 
   // Contexto atual
   const gameContext: GameContext = state.phase === "pre" 
@@ -694,6 +732,9 @@ export default function PartidaAoVivoPage() {
             setShowSubModal(true)
           }
           break
+        case "skip_to_result":
+          fastForward()
+          break
         case "confirm":
           if (state.phase === "pre") start()
           break
@@ -704,7 +745,7 @@ export default function PartidaAoVivoPage() {
     }
     window.addEventListener("gamepad:button" as any, handleGamepadButton)
     return () => window.removeEventListener("gamepad:button" as any, handleGamepadButton)
-  }, [gameContext, isRunning, pause, resume, speed, setSpeed, start, subsRemaining, state.phase, showSubModal])
+  }, [fastForward, gameContext, isRunning, pause, resume, speed, setSpeed, start, subsRemaining, state.phase, showSubModal])
 
   // Modal de fim
   const [showResult, setShowResult] = useState(false)
@@ -730,6 +771,7 @@ export default function PartidaAoVivoPage() {
           state.away.goals,
           events
         )
+        clearMatchContext()
         advanceWeek().then(result => {
           if (result && "leagueChampion" in result && result.leagueChampion) {
             const champ = result.leagueChampion
@@ -801,7 +843,7 @@ export default function PartidaAoVivoPage() {
     <div className={cn(
       "min-h-screen flex flex-col",
       "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]"
-    )}>
+    )} data-match-end={state.phase === "fulltime" ? "true" : undefined}>
 
       {/* Overlay de pré-jogo — fase "pre" */}
       {state.phase === "pre" && (
@@ -816,10 +858,10 @@ export default function PartidaAoVivoPage() {
             {/* Header da competição */}
             <div className="flex flex-col items-center py-4 border-b border-white/[0.06] bg-white/[0.02]">
               <span className="text-white/70 text-[11px] font-bold uppercase tracking-[0.2em]">
-                {matchCtx.competition || "Brasileirão Serie A"}
+                {displayCompetition}
               </span>
               <span className="text-white/35 text-[10px] mt-0.5 tracking-wider">
-                {matchCtx.round || "Rodada 1"}
+                {displayRound}
               </span>
             </div>
 
@@ -878,7 +920,7 @@ export default function PartidaAoVivoPage() {
         {/* Liga Badge - Topo Central */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10">
-            <span className="text-white text-sm font-bold">{matchCtx.competition || "Brasileirao"}</span>
+            <span className="text-white text-sm font-bold">{displayCompetition}</span>
           </div>
         </div>
 
@@ -1222,10 +1264,15 @@ export default function PartidaAoVivoPage() {
               )}
 
               {/* Advance Button */}
-              <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={fastForward}
+                disabled={state.phase === "fulltime"}
+                className="flex items-center gap-2 hover:text-white disabled:opacity-40 disabled:hover:text-white/60 transition-colors"
+              >
                 <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/50 font-bold">X</span>
                 <span className="text-white/60 text-sm">Avancar</span>
-              </div>
+              </button>
 
               {/* Post-Match Interview */}
               {state.phase === "fulltime" && (
