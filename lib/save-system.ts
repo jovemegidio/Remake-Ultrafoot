@@ -225,6 +225,8 @@ export const DEFAULT_NATIONAL_CAREER: NationalCareer = {
   losses: 0,
   currentCompetition: null,
   completedThisSeason: [],
+  completedWindows: [],
+  activeWindow: null,
 }
 
 export interface GameState {
