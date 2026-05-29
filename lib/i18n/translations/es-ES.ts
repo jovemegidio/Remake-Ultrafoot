@@ -33,6 +33,7 @@ export const esES: Translations = {
     training: "Entrenamiento",
     calendar: "Calendario",
     competitions: "Competiciones",
+    nationalTeam: "Seleccion Nacional",
     scouts: "Ojeadores",
     infrastructure: "Infraestructura",
     statistics: "Estadisticas",
