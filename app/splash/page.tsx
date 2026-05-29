@@ -637,7 +637,39 @@ export default function SplashPage() {
         "absolute inset-0 flex flex-col transition-all duration-700",
         phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-        
+
+        {/* Cinematic stadium backdrop */}
+        <div className="absolute inset-0 overflow-hidden">
+          <Image
+            src="/images/stadium-bg.png"
+            alt=""
+            fill
+            className="object-cover"
+            style={{
+              transform: phase === "main-menu" ? "scale(1.08)" : "scale(1)",
+              transition: "transform 12s ease-out",
+              filter: "saturate(0.85) brightness(0.55)",
+            }}
+            priority
+            unoptimized
+          />
+          {/* Darkening gradients for depth + readability */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(5,8,12,0.85) 0%, rgba(5,8,12,0.45) 35%, rgba(5,8,12,0.55) 65%, rgba(5,8,12,0.95) 100%)",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 38%, rgba(0,255,200,0.08) 0%, transparent 55%)",
+            }}
+          />
+        </div>
+
         {/* Subtle top gradient - EAFC style */}
         <div 
           className="absolute inset-0 opacity-20"

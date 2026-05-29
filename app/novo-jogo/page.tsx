@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react"
 import Image from "next/image"
-import { Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight, User } from "lucide-react"
+import { Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight, User, Play } from "lucide-react"
 import {
   serieATeams,
   serieBTeams,
@@ -582,7 +582,10 @@ export default function NovoJogoPage() {
             >
               {/* Brilho superior */}
               <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
-              <span className="relative z-10 drop-shadow-sm">⚽ INICIAR CARREIRA</span>
+              <span className="relative z-10 drop-shadow-sm inline-flex items-center justify-center gap-2">
+                <Play className="h-5 w-5" fill="currentColor" strokeWidth={0} />
+                INICIAR CARREIRA
+              </span>
             </button>
 
             {/* Rodapé: gamepad + contador */}
