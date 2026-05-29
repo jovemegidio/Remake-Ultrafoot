@@ -393,9 +393,9 @@ export default function PartidaPage() {
                 <Image
                   src={getLeagueLogo(matchInfo.leagueKey)!}
                   alt={matchInfo.competition}
-                  width={88}
-                  height={88}
-                  className="object-contain opacity-90"
+                  width={160}
+                  height={160}
+                  className="object-contain opacity-95 w-28 h-28 md:w-36 md:h-36"
                   unoptimized
                 />
               ) : (
