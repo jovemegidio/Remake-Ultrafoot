@@ -3,24 +3,21 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  Heart, 
-  MessageSquare, 
-  PlayCircle,
-  AlertTriangle,
+import {
+  MessageSquare,
   FileText,
   Target,
   Dumbbell,
   Users,
   Calendar,
   ChevronRight,
-  ChevronLeft,
   Trophy,
   Newspaper
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
+import { NewsFeed } from "@/components/news-feed"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort } from "@/lib/teams-data"
@@ -75,43 +72,6 @@ const mockTasks = [
   },
 ]
 
-// Mock news feed
-const mockNewsFeed = [
-  {
-    id: 1,
-    source: "FC FOOTBALL",
-    date: "30/06",
-    image: "/stadiums/maracana.jpg",
-    title: "Janela de Transferencias Abre",
-    description: "Semanas intensas pela frente, torcedores e clubes aguardam ansiosos...",
-    likes: 2400,
-    comments: 88,
-    isNew: true
-  },
-  {
-    id: 2,
-    source: "ESPORTE NEWS",
-    date: "29/06",
-    image: "/stadiums/morumbi.jpg",
-    title: "Brasileirao Esquenta na Reta Final",
-    description: "Disputa acirrada pelo titulo com 5 times na briga...",
-    likes: 1800,
-    comments: 156,
-    isNew: false
-  },
-  {
-    id: 3,
-    source: "MERCADO DA BOLA",
-    date: "28/06",
-    image: "/stadiums/beira-rio.jpg",
-    title: "Clubes Europeus de Olho no Brasil",
-    description: "Jovens promessas atraem olheiros de grandes clubes...",
-    likes: 3200,
-    comments: 234,
-    isNew: false
-  }
-]
-
 // Mock upcoming events
 const mockEvents = [
   { type: "match", opponent: "Palmeiras", competition: "Brasileirao", daysUntil: 3 },
@@ -126,16 +86,10 @@ export default function PreOfficePage() {
   const t = useTranslation()
 
   // Current game date
-  const [currentDate, setCurrentDate] = useState(() => {
-    if (state?.currentDate) {
-      return new Date(state.currentDate)
-    }
-    return new Date(2026, 3, 1) // 1 de Abril de 2026
-  })
+  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 3, 1))
 
   const [isAdvancing, setIsAdvancing] = useState(false)
   const [selectedTask, setSelectedTask] = useState(0)
-  const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
 
   // Find next event
   const nextEvent = mockEvents.reduce((min, event) => 
@@ -174,8 +128,8 @@ export default function PreOfficePage() {
       if (btn === 'X') handleAdvance()
       if (btn === 'DPAD_UP') setSelectedTask(prev => Math.max(0, prev - 1))
       if (btn === 'DPAD_DOWN') setSelectedTask(prev => Math.min(mockTasks.length - 1, prev + 1))
-      if (btn === 'RB') setCurrentNewsIndex(prev => (prev + 1) % mockNewsFeed.length)
-      if (btn === 'LB') setCurrentNewsIndex(prev => (prev - 1 + mockNewsFeed.length) % mockNewsFeed.length)
+      if (btn === 'RB') {} // navegação do feed tratada pelo NewsFeed
+      if (btn === 'LB') {}
     }
     window.addEventListener('gamepad:button', handler)
     return () => window.removeEventListener('gamepad:button', handler)
@@ -216,20 +170,7 @@ export default function PreOfficePage() {
       <GameSidebar />
 
       <main className="relative z-10 flex-1 overflow-hidden flex flex-col">
-        <GameHeader 
-          title="Inicio"
-          showTeamInfo
-          showNavigation
-          navItems={[
-            { label: "Central", href: "/central", active: false },
-            { label: "Notificacoes", href: "/mensagens", active: false },
-            { label: "Elenco", href: "/elenco", active: false },
-            { label: "Transferencias", href: "/mercado", active: false },
-            { label: "Academia", href: "/treinamento", active: false },
-            { label: "Escritorio", href: "/reunioes", active: false },
-            { label: "Personalizar", href: "/configuracoes", active: false },
-          ]}
-        />
+        <GameHeader team={userTeam} />
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr,420px] gap-8 max-w-7xl mx-auto">
@@ -369,105 +310,11 @@ export default function PreOfficePage() {
 
             {/* Right Column - News Feed */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-white/50 text-sm font-medium flex items-center gap-2">
-                  <Newspaper className="w-4 h-4" />
-                  Feed de Noticias
-                </h2>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setCurrentNewsIndex(prev => (prev - 1 + mockNewsFeed.length) % mockNewsFeed.length)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-white/60" />
-                  </button>
-                  <button 
-                    onClick={() => setCurrentNewsIndex(prev => (prev + 1) % mockNewsFeed.length)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <ChevronRight className="w-4 h-4 text-white/60" />
-                  </button>
-                </div>
-              </div>
-
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentNewsIndex}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="rounded-2xl overflow-hidden bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]"
-                >
-                  {/* News Image */}
-                  <div className="relative aspect-[16/10] bg-gradient-to-br from-green-900/50 to-green-800/30">
-                    <div className="absolute inset-0 bg-[url('/stadiums/maracana.jpg')] bg-cover bg-center opacity-80" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    
-                    {mockNewsFeed[currentNewsIndex].isNew && (
-                      <span className="absolute top-3 right-3 px-3 py-1 rounded-lg bg-[#c8ff00] text-black text-xs font-bold">
-                        New
-                      </span>
-                    )}
-                  </div>
-
-                  {/* News Content */}
-                  <div className="p-5 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">FC</span>
-                      </div>
-                      <span className="text-white font-semibold text-sm">
-                        {mockNewsFeed[currentNewsIndex].source}
-                      </span>
-                      <span className="text-white/40 text-sm">
-                        {mockNewsFeed[currentNewsIndex].date}
-                      </span>
-                    </div>
-
-                    <p className="text-white/80 text-sm leading-relaxed">
-                      {mockNewsFeed[currentNewsIndex].title} - {mockNewsFeed[currentNewsIndex].description}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
-                      <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-1.5 text-white/50 hover:text-red-400 transition-colors">
-                          <Heart className="w-4 h-4" />
-                          <span className="text-sm">
-                            {mockNewsFeed[currentNewsIndex].likes >= 1000 
-                              ? `${(mockNewsFeed[currentNewsIndex].likes / 1000).toFixed(1)}K`
-                              : mockNewsFeed[currentNewsIndex].likes
-                            }
-                          </span>
-                        </button>
-                        <button className="flex items-center gap-1.5 text-white/50 hover:text-primary transition-colors">
-                          <MessageSquare className="w-4 h-4" />
-                          <span className="text-sm">{mockNewsFeed[currentNewsIndex].comments}</span>
-                        </button>
-                      </div>
-                      
-                      <button className="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors text-sm">
-                        <PlayCircle className="w-4 h-4" />
-                        Ver Comentarios
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-
-              {/* News Indicators */}
-              <div className="flex items-center justify-center gap-2">
-                {mockNewsFeed.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentNewsIndex(index)}
-                    className={cn(
-                      "w-2 h-2 rounded-full transition-all",
-                      index === currentNewsIndex ? "bg-white w-6" : "bg-white/30 hover:bg-white/50"
-                    )}
-                  />
-                ))}
-              </div>
+              <h2 className="text-white/50 text-sm font-medium flex items-center gap-2">
+                <Newspaper className="w-4 h-4" />
+                Feed de Noticias
+              </h2>
+              <NewsFeed className="px-4" />
             </div>
           </div>
         </div>

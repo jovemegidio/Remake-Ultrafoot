@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Sparkles } from "lucide-react"
+import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Sparkles, Zap, Star, AlertCircle } from "lucide-react"
 import { getNewsImageUrl, seedFromString } from "@/lib/news-image"
 import { motion, AnimatePresence } from "framer-motion"
 import { TeamCrest } from "@/components/team-crest"
 import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
+import { useGameEngine, type MatchResult, type StandingsEntry, type TopScorer } from "@/lib/game-engine"
 import { cn } from "@/lib/utils"
 
-// Veiculos de comunicacao brasileiros com logos reais
 const NEWS_SOURCES = {
   ge: {
     name: "ge",
@@ -48,28 +48,24 @@ interface NewsItem {
   id: string
   source: keyof typeof NEWS_SOURCES
   date: string
-  type: "match_preview" | "transfer" | "highlight" | "announcement" | "ranking" | "injury"
+  type: "match_preview" | "match_result" | "transfer" | "highlight" | "announcement" | "ranking" | "injury" | "standings"
   title: string
   description?: string
   image?: string
-  generatedImage?: string // Imagem gerada por IA
-  matches?: Array<{
-    home: Team
-    away: Team
-  }>
+  matches?: Array<{ home: Team; away: Team }>
   likes: number
   comments: number
   isNew?: boolean
   icon?: React.ReactNode
-  teamName?: string
-  playerName?: string
 }
 
-// Gera noticias simuladas baseadas no estado do jogo
-function generateSimulatedNews(
-  userTeam: Team | null,
+function generateDynamicNews(
+  userTeamShort: string | null,
   season: number,
-  week: number
+  week: number,
+  matchResults: MatchResult[],
+  standings: StandingsEntry[],
+  topScorers: TopScorer[]
 ): NewsItem[] {
   const teams = serieATeams
   const randomTeam = () => teams[Math.floor(Math.random() * teams.length)]
@@ -77,102 +73,236 @@ function generateSimulatedNews(
     const names = [
       "Gabriel Silva", "Lucas Oliveira", "Matheus Santos", "Pedro Henrique",
       "Gustavo Ferreira", "Rafael Costa", "Bruno Almeida", "Vinicius Lima",
-      "Felipe Souza", "Arthur Pereira", "Caio Ribeiro", "Diego Martins"
+      "Felipe Souza", "Arthur Pereira", "Caio Ribeiro", "Diego Martins",
+      "Ronaldo Jr", "Neymar Filho", "Carlos Eduardo", "Thiago Maia"
     ]
     return names[Math.floor(Math.random() * names.length)]
   }
-  
-  const randomValue = () => Math.floor(Math.random() * 20 + 5) * 1000000
-  const randomAge = () => Math.floor(Math.random() * 15 + 18)
-  
-  // Gera confrontos para proxima rodada
-  const generateMatches = () => {
-    const shuffled = [...teams].sort(() => Math.random() - 0.5)
-    const matches: Array<{ home: Team; away: Team }> = []
-    for (let i = 0; i < Math.min(4, shuffled.length - 1); i += 2) {
-      matches.push({ home: shuffled[i], away: shuffled[i + 1] })
-    }
-    return matches
+
+  const news: NewsItem[] = []
+  const userTeam = userTeamShort ? getTeamByShort(userTeamShort) : null
+
+  // === NOTÍCIA 1: Resultado recente do time do usuário ===
+  const userResults = matchResults
+    .filter(r => r.homeTeam === userTeamShort || r.awayTeam === userTeamShort)
+    .slice(-3)
+    .reverse()
+
+  if (userResults.length > 0 && userTeam) {
+    const last = userResults[0]
+    const isHome = last.homeTeam === userTeamShort
+    const myScore = isHome ? last.homeScore : last.awayScore
+    const oppScore = isHome ? last.awayScore : last.homeScore
+    const oppShort = isHome ? last.awayTeam : last.homeTeam
+    const oppTeam = getTeamByShort(oppShort)
+    const oppName = oppTeam?.nome ?? oppShort
+
+    const result = myScore > oppScore ? "venceu" : myScore < oppScore ? "perdeu" : "empatou"
+    const resultLabel = myScore > oppScore ? "VITORIA" : myScore < oppScore ? "DERROTA" : "EMPATE"
+    const resultEmphasis = myScore > oppScore
+      ? `${userTeam.nome} goleia em grande estilo!`
+      : myScore < oppScore
+      ? `Derrota deixa torcida preocupada`
+      : `Ponto valioso fora de casa`
+
+    news.push({
+      id: `result-${last.week}-${last.season}`,
+      source: "espn",
+      date: `Rod. ${last.week}`,
+      type: "match_result",
+      title: `${userTeam.nome} ${result} o ${oppName} por ${myScore}-${oppScore}`,
+      description: resultEmphasis,
+      isNew: true,
+      icon: myScore > oppScore ? <Trophy className="h-5 w-5 text-yellow-400" /> : <AlertCircle className="h-5 w-5 text-red-400" />,
+      likes: Math.floor(Math.random() * 40000 + 15000),
+      comments: Math.floor(Math.random() * 4000 + 800),
+    })
   }
 
-  // Noticias templates simuladas
-  const newsTemplates: NewsItem[] = [
-    // Proximos jogos
-    {
-      id: "matches-" + season + "-" + week,
+  // === NOTÍCIA 2: Outros resultados recentes (destaques da rodada) ===
+  const otherResults = matchResults
+    .filter(r => r.homeTeam !== userTeamShort && r.awayTeam !== userTeamShort)
+    .slice(-6)
+  const bigGame = otherResults.find(r => r.homeScore + r.awayScore >= 4) ?? otherResults[0]
+
+  if (bigGame) {
+    const homeTeam = getTeamByShort(bigGame.homeTeam)
+    const awayTeam = getTeamByShort(bigGame.awayTeam)
+    if (homeTeam && awayTeam) {
+      const totalGols = bigGame.homeScore + bigGame.awayScore
+      news.push({
+        id: `bigresult-${bigGame.week}-${bigGame.homeTeam}`,
+        source: "ge",
+        date: `Rod. ${bigGame.week}`,
+        type: "match_result",
+        title: `${homeTeam.nome} ${bigGame.homeScore}x${bigGame.awayScore} ${awayTeam.nome}`,
+        description: totalGols >= 5
+          ? `Goleada historica na rodada ${bigGame.week}!`
+          : totalGols >= 4
+          ? `Jogo eletrizante com ${totalGols} gols`
+          : `Resultado define nova configuracao da tabela`,
+        icon: <Zap className="h-5 w-5 text-yellow-400" />,
+        likes: Math.floor(Math.random() * 55000 + 20000),
+        comments: Math.floor(Math.random() * 6000 + 1500),
+      })
+    }
+  }
+
+  // === NOTÍCIA 3: Artilharia atualizada ===
+  if (topScorers.length > 0) {
+    const leader = topScorers[0]
+    const leaderTeam = getTeamByShort(leader.teamShort)
+    news.push({
+      id: `artilharia-${season}-${week}`,
       source: "brasileirao",
       date: "Agora",
-      type: "match_preview",
-      title: "PROXIMOS JOGOS",
-      description: `Rodada ${week + 1} do Brasileirao ${season} - Confira os confrontos`,
-      matches: generateMatches(),
-      likes: Math.floor(Math.random() * 50000 + 30000),
-      comments: Math.floor(Math.random() * 5000 + 2000),
-      isNew: true,
-    },
-    // Transferencia
-    {
-      id: "transfer-" + Date.now(),
-      source: "ge",
-      date: "2h",
-      type: "transfer",
-      title: `${randomTeam().nome} anuncia contratacao de ${randomPlayer()}`,
-      description: `Jogador de ${randomAge()} anos chega por ${formatCurrency(randomValue())} e assina ate ${season + 3}`,
-      icon: <DollarSign className="h-5 w-5" />,
-      likes: Math.floor(Math.random() * 30000 + 10000),
-      comments: Math.floor(Math.random() * 3000 + 500),
-    },
-    // Destaque do time do usuario
-    ...(userTeam ? [{
-      id: "user-team-" + Date.now(),
-      source: "espn" as const,
-      date: "4h",
-      type: "highlight" as const,
-      title: `${userTeam.nome}: tecnico projeta temporada ${season}`,
-      description: `Comissao tecnica define estrategia para buscar titulo do Brasileirao`,
-      icon: <Trophy className="h-5 w-5" />,
-      likes: Math.floor(Math.random() * 25000 + 15000),
-      comments: Math.floor(Math.random() * 2000 + 800),
-    }] : []),
-    // Ranking
-    {
-      id: "ranking-" + Date.now(),
-      source: "cazeTv",
-      date: "6h",
+      type: "ranking",
+      title: `${leader.playerName} lidera artilharia com ${leader.goals} gols`,
+      description: `${leaderTeam?.nome ?? leader.teamShort} tem o melhor atacante do campeonato na temporada ${season}`,
+      isNew: week > 0,
+      icon: <TrendingUp className="h-5 w-5 text-purple-400" />,
+      likes: Math.floor(Math.random() * 45000 + 20000),
+      comments: Math.floor(Math.random() * 5000 + 1500),
+    })
+  } else {
+    news.push({
+      id: `artilharia-${season}-${week}`,
+      source: "brasileirao",
+      date: "Agora",
       type: "ranking",
       title: "Artilharia do Brasileirao atualizada",
       description: `${randomPlayer()} assume lideranca com ${Math.floor(Math.random() * 10 + 5)} gols`,
-      icon: <TrendingUp className="h-5 w-5" />,
+      icon: <TrendingUp className="h-5 w-5 text-purple-400" />,
       likes: Math.floor(Math.random() * 40000 + 20000),
       comments: Math.floor(Math.random() * 4000 + 1500),
-    },
-    // Lesao
-    {
-      id: "injury-" + Date.now(),
-      source: "tntSports",
-      date: "8h",
-      type: "injury",
-      title: `${randomPlayer()} sofre lesao e desfalca ${randomTeam().nome}`,
-      description: `Jogador passa por exames e deve ficar de fora por ${Math.floor(Math.random() * 6 + 2)} semanas`,
-      icon: <Users className="h-5 w-5" />,
-      likes: Math.floor(Math.random() * 15000 + 5000),
-      comments: Math.floor(Math.random() * 2000 + 300),
-    },
-    // Mercado agitado
-    {
-      id: "market-" + Date.now(),
-      source: "ge",
-      date: "12h",
-      type: "transfer",
-      title: "Clubes da Serie A movimentam mercado",
-      description: `Janela de transferencias aquece com propostas milionarias`,
-      icon: <DollarSign className="h-5 w-5" />,
-      likes: Math.floor(Math.random() * 35000 + 15000),
-      comments: Math.floor(Math.random() * 3500 + 1000),
-    },
-  ]
+    })
+  }
 
-  return newsTemplates
+  // === NOTÍCIA 4: Posição na tabela do time do usuário ===
+  if (standings.length > 0 && userTeamShort && userTeam) {
+    const pos = standings.findIndex(s => s.teamShort === userTeamShort)
+    if (pos >= 0) {
+      const entry = standings[pos]
+      const position = pos + 1
+      const zoneLabel =
+        position <= 4 ? "zona de Libertadores" :
+        position <= 6 ? "zona de Sul-Americana" :
+        position >= standings.length - 3 ? "zona de rebaixamento" :
+        "parte do meio da tabela"
+
+      const leader = standings[0]
+      const leaderTeam = getTeamByShort(leader.teamShort)
+      const diff = leader.points - entry.points
+
+      news.push({
+        id: `standings-${season}-${week}-${userTeamShort}`,
+        source: "ge",
+        date: `${week}ª rod.`,
+        type: "standings",
+        title: `${userTeam.nome} ocupa a ${position}ª posicao`,
+        description: position === 1
+          ? `Lider isolado com ${entry.points} pts! Vantagem sobre o segundo`
+          : `${diff} ponto${diff !== 1 ? "s" : ""} do lider ${leaderTeam?.nome ?? ""}. ${entry.won}V ${entry.drawn}E ${entry.lost}D`,
+        icon: position <= 4 ? <Trophy className="h-5 w-5 text-yellow-400" /> : <Star className="h-5 w-5 text-white/60" />,
+        likes: Math.floor(Math.random() * 30000 + 10000),
+        comments: Math.floor(Math.random() * 3000 + 500),
+      })
+    }
+  }
+
+  // === NOTÍCIA 5: Próximos jogos (rodada) ===
+  const shuffled = [...teams].sort(() => Math.random() - 0.5)
+  const nextMatches: Array<{ home: Team; away: Team }> = []
+  for (let i = 0; i < Math.min(4, shuffled.length - 1); i += 2) {
+    nextMatches.push({ home: shuffled[i], away: shuffled[i + 1] })
+  }
+  news.push({
+    id: `matches-${season}-${week}`,
+    source: "brasileirao",
+    date: "Agora",
+    type: "match_preview",
+    title: "PROXIMOS JOGOS",
+    description: `Rodada ${week + 1} do Brasileirao ${season}`,
+    matches: nextMatches,
+    likes: Math.floor(Math.random() * 50000 + 30000),
+    comments: Math.floor(Math.random() * 5000 + 2000),
+    isNew: true,
+  })
+
+  // === NOTÍCIA 6: Destaque do time do usuário ===
+  if (userTeam) {
+    const headlines = [
+      `${userTeam.nome}: Comissao tecnica projeta temporada forte`,
+      `${userTeam.nome} aquece para rodada decisiva`,
+      `Torcida do ${userTeam.nome} lota treino aberto`,
+      `Diretoria do ${userTeam.nome} confirma reforco surpresa`,
+    ]
+    news.push({
+      id: `user-highlight-${season}-${week}`,
+      source: "espn",
+      date: "4h",
+      type: "highlight",
+      title: headlines[week % headlines.length],
+      description: `Temporada ${season}: expectativa alta no clube`,
+      icon: <Trophy className="h-5 w-5 text-blue-400" />,
+      likes: Math.floor(Math.random() * 25000 + 15000),
+      comments: Math.floor(Math.random() * 2000 + 800),
+    })
+  }
+
+  // === NOTÍCIA 7: Transferência ===
+  const transferHeadlines = [
+    () => `${randomTeam().nome} anuncia contratacao de ${randomPlayer()}`,
+    () => `${randomPlayer()} rescinde com ${randomTeam().nome} e ja tem novo clube`,
+    () => `Proposta milionaria: ${randomTeam().nome} mira jogador europeu`,
+  ]
+  const headline = transferHeadlines[Math.floor(Math.random() * transferHeadlines.length)]
+  news.push({
+    id: `transfer-${season}-${week}-${Math.floor(Math.random() * 1000)}`,
+    source: "ge",
+    date: "2h",
+    type: "transfer",
+    title: headline(),
+    description: `Janela de transferencias agita o mercado nacional`,
+    icon: <DollarSign className="h-5 w-5 text-yellow-400" />,
+    likes: Math.floor(Math.random() * 30000 + 10000),
+    comments: Math.floor(Math.random() * 3000 + 500),
+  })
+
+  // === NOTÍCIA 8: Lesão ou suspensão ===
+  const injuryTeam = randomTeam()
+  const injuryWeeks = Math.floor(Math.random() * 6 + 2)
+  news.push({
+    id: `injury-${season}-${week}-${Math.floor(Math.random() * 1000)}`,
+    source: "tntSports",
+    date: "8h",
+    type: "injury",
+    title: `${randomPlayer()} sofre lesao e desfalca ${injuryTeam.nome}`,
+    description: `Jogador deve ficar de fora por ${injuryWeeks} semanas; torcida preocupada`,
+    icon: <Users className="h-5 w-5 text-red-400" />,
+    likes: Math.floor(Math.random() * 15000 + 5000),
+    comments: Math.floor(Math.random() * 2000 + 300),
+  })
+
+  // === NOTÍCIA 9: Mercado agitado (CazeTV) ===
+  const cazeTvHeadlines = [
+    "Clubes da Serie A movimentam mercado antes do fechamento da janela",
+    `Semana de decisoes: ${Math.floor(Math.random() * 4 + 2)} transferencias confirmadas`,
+    "Agente revela bastidores de negociacao bilionaria",
+  ]
+  news.push({
+    id: `market-${season}-${week}`,
+    source: "cazeTv",
+    date: "12h",
+    type: "transfer",
+    title: cazeTvHeadlines[week % cazeTvHeadlines.length],
+    description: "Bastidores esquentam com propostas milionarias entre clubes",
+    icon: <DollarSign className="h-5 w-5 text-blue-400" />,
+    likes: Math.floor(Math.random() * 35000 + 15000),
+    comments: Math.floor(Math.random() * 3500 + 1000),
+  })
+
+  return news
 }
 
 interface NewsFeedProps {
@@ -182,8 +312,9 @@ interface NewsFeedProps {
 
 export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   const { state } = useGameState()
-  const userTeam = state.selectedTeamShort ? getTeamByShort(state.selectedTeamShort) : null
-  
+  const engine = useGameEngine()
+  const userTeamShort = state.selectedTeamShort ?? null
+
   const [news, setNews] = useState<NewsItem[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -208,23 +339,28 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
     })
   }
 
-  // Gera noticias apenas no cliente para evitar erro de hidratacao
   useEffect(() => {
     setIsClient(true)
-    setNews(generateSimulatedNews(userTeam ?? null, state.season, state.week))
-  }, [userTeam, state.season, state.week])
+    setNews(generateDynamicNews(
+      userTeamShort,
+      state.season,
+      state.week,
+      engine.matchResults ?? [],
+      engine.serieAStandings ?? [],
+      engine.topScorers ?? []
+    ))
+  }, [userTeamShort, state.season, state.week, engine.matchResults, engine.serieAStandings, engine.topScorers])
 
   const nextNews = useCallback(() => {
     setDirection(1)
     setCurrentIndex((i) => (i + 1) % news.length)
   }, [news.length])
-  
+
   const prevNews = useCallback(() => {
     setDirection(-1)
     setCurrentIndex((i) => (i - 1 + news.length) % news.length)
   }, [news.length])
 
-  // Auto-play news carousel
   useEffect(() => {
     if (!isAutoPlaying) return
     const interval = setInterval(nextNews, 6000)
@@ -233,7 +369,6 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
 
   const currentNews = news[currentIndex]
 
-  // Renderiza placeholder enquanto carrega no cliente ou nao ha noticias
   if (!isClient || news.length === 0 || !currentNews) {
     return (
       <div className={cn("rounded-2xl bg-[#0c0c10] border border-white/[0.04] animate-pulse", className)}>
@@ -246,25 +381,10 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
 
   const source = NEWS_SOURCES[currentNews.source]
 
-  // Variants para animacao
   const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.95
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-      scale: 1
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.95
-    })
+    enter: (dir: number) => ({ x: dir > 0 ? 300 : -300, opacity: 0, scale: 0.95 }),
+    center: { zIndex: 1, x: 0, opacity: 1, scale: 1 },
+    exit: (dir: number) => ({ zIndex: 0, x: dir < 0 ? 300 : -300, opacity: 0, scale: 0.95 }),
   }
 
   if (compact) {
@@ -279,23 +399,20 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
 
   return (
     <div className={cn("relative", className)}>
-      {/* Navigation Arrows */}
-      <button 
+      <button
         onClick={prevNews}
         className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full bg-black/80 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-black transition-colors"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
-      
-      <button 
+      <button
         onClick={nextNews}
         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full bg-black/80 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-black transition-colors"
       >
         <ChevronRight className="h-5 w-5" />
       </button>
 
-      {/* News Card with Animation */}
-      <div 
+      <div
         className="rounded-2xl overflow-hidden bg-[#0c0c10] border border-white/[0.04]"
         onMouseEnter={() => setIsAutoPlaying(false)}
         onMouseLeave={() => setIsAutoPlaying(true)}
@@ -312,7 +429,6 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
               <span className="text-xs text-white/40">{currentNews.date}</span>
             </div>
           </div>
-          
           {currentNews.isNew && (
             <span className="px-2.5 py-1 rounded-full bg-yellow-400 text-black text-[10px] font-bold tracking-wider">
               New
@@ -320,7 +436,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
           )}
         </div>
 
-        {/* Content with smooth transitions */}
+        {/* Content */}
         <div className="relative overflow-hidden">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             <motion.div
@@ -333,12 +449,12 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
               transition={{
                 x: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.2 },
-                scale: { duration: 0.2 }
+                scale: { duration: 0.2 },
               }}
             >
               {currentNews.type === "match_preview" && currentNews.matches ? (
-                <MatchPreviewCard 
-                  matches={currentNews.matches} 
+                <MatchPreviewCard
+                  matches={currentNews.matches}
                   title={currentNews.title}
                   description={currentNews.description}
                   season={state.season}
@@ -350,7 +466,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
           </AnimatePresence>
         </div>
 
-        {/* Footer - Engagement */}
+        {/* Footer */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.04]">
           <div className="flex items-center gap-6">
             <button
@@ -387,7 +503,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
         </div>
       </div>
 
-      {/* Dots indicator */}
+      {/* Dots */}
       <div className="flex items-center justify-center gap-1.5 mt-3">
         {news.map((_, i) => (
           <button
@@ -395,8 +511,8 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
             onClick={() => setCurrentIndex(i)}
             className={cn(
               "rounded-full transition-all",
-              i === currentIndex 
-                ? "w-5 h-1.5 bg-[#00ffc8]" 
+              i === currentIndex
+                ? "w-5 h-1.5 bg-[#00ffc8]"
                 : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
             )}
           />
@@ -406,7 +522,6 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   )
 }
 
-// Logo do veiculo de comunicacao — fallback para ícone colorido se imagem não carregar
 function SourceLogo({ source, size = "md" }: { source: keyof typeof NEWS_SOURCES; size?: "sm" | "md" }) {
   const sourceData = NEWS_SOURCES[source]
   const sizeClass = size === "sm" ? "w-8 h-8" : "w-10 h-10"
@@ -428,7 +543,6 @@ function SourceLogo({ source, size = "md" }: { source: keyof typeof NEWS_SOURCES
   )
 }
 
-// Badge de verificado
 function VerifiedBadge() {
   return (
     <svg className="w-4 h-4 text-[#1da1f2]" viewBox="0 0 24 24" fill="currentColor">
@@ -437,13 +551,12 @@ function VerifiedBadge() {
   )
 }
 
-// Card de preview de partidas com mapa do Brasil estilizado
-function MatchPreviewCard({ 
-  matches, 
-  title, 
+function MatchPreviewCard({
+  matches,
+  title,
   description,
-  season 
-}: { 
+  season,
+}: {
   matches: Array<{ home: Team; away: Team }>
   title: string
   description?: string
@@ -451,16 +564,13 @@ function MatchPreviewCard({
 }) {
   return (
     <div className="relative aspect-[4/3] bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#081020] overflow-hidden">
-      {/* Background - Mapa do Brasil estilizado */}
       <div className="absolute inset-0 opacity-40">
         <svg viewBox="0 0 400 300" className="w-full h-full">
-          {/* Contorno simplificado do Brasil */}
           <path
             d="M180,25 Q240,20 280,35 Q320,50 350,90 Q370,130 365,170 Q360,210 340,240 Q310,270 270,280 Q230,290 190,285 Q150,280 120,260 Q90,240 70,200 Q50,160 55,120 Q60,80 90,55 Q120,30 180,25"
             fill="none"
             stroke="url(#brazilGradient)"
             strokeWidth="2"
-            className="drop-shadow-lg"
           />
           <defs>
             <linearGradient id="brazilGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -469,16 +579,10 @@ function MatchPreviewCard({
               <stop offset="100%" stopColor="#00875A" stopOpacity="0.6"/>
             </linearGradient>
           </defs>
-          {/* Grid de fundo */}
           <g stroke="white" strokeWidth="0.3" opacity="0.1">
-            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-              <line key={`h${i}`} x1="0" y1={i * 50} x2="400" y2={i * 50} />
-            ))}
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <line key={`v${i}`} x1={i * 50} y1="0" x2={i * 50} y2="300" />
-            ))}
+            {[0,1,2,3,4,5,6].map(i => <line key={`h${i}`} x1="0" y1={i*50} x2="400" y2={i*50} />)}
+            {[0,1,2,3,4,5,6,7,8].map(i => <line key={`v${i}`} x1={i*50} y1="0" x2={i*50} y2="300" />)}
           </g>
-          {/* Pontos de cidade */}
           <g fill="#00ffc8">
             <circle cx="280" cy="100" r="3" opacity="0.6"/>
             <circle cx="300" cy="150" r="3" opacity="0.6"/>
@@ -488,23 +592,15 @@ function MatchPreviewCard({
           </g>
         </svg>
       </div>
-
-      {/* Titulo e temporada */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-white tracking-wide drop-shadow-lg">
-            {title}
-          </h3>
-          {description && (
-            <p className="text-xs text-white/60 mt-0.5">{description}</p>
-          )}
+          <h3 className="text-xl font-bold text-white tracking-wide drop-shadow-lg">{title}</h3>
+          {description && <p className="text-xs text-white/60 mt-0.5">{description}</p>}
         </div>
         <div className="px-3 py-1 rounded-full bg-[#00875A]/20 border border-[#00875A]/30">
           <span className="text-[#00875A] text-xs font-bold">{season}</span>
         </div>
       </div>
-
-      {/* Confrontos */}
       <div className="absolute inset-x-0 bottom-0 top-16 flex items-center justify-center px-6">
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           {matches.map((match, i) => (
@@ -516,8 +612,6 @@ function MatchPreviewCard({
           ))}
         </div>
       </div>
-
-      {/* Rotas decorativas */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 300">
         <defs>
           <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -526,26 +620,13 @@ function MatchPreviewCard({
             <stop offset="100%" stopColor="#00ffc8" stopOpacity="0"/>
           </linearGradient>
         </defs>
-        <path 
-          d="M60,150 Q200,80 340,150" 
-          fill="none" 
-          stroke="url(#routeGradient)" 
-          strokeWidth="1.5" 
-          strokeDasharray="6,4"
-        />
-        <path 
-          d="M80,200 Q200,130 320,200" 
-          fill="none" 
-          stroke="url(#routeGradient)" 
-          strokeWidth="1.5" 
-          strokeDasharray="6,4"
-        />
+        <path d="M60,150 Q200,80 340,150" fill="none" stroke="url(#routeGradient)" strokeWidth="1.5" strokeDasharray="6,4"/>
+        <path d="M80,200 Q200,130 320,200" fill="none" stroke="url(#routeGradient)" strokeWidth="1.5" strokeDasharray="6,4"/>
       </svg>
     </div>
   )
 }
 
-// Mapeamento de tipo de noticia para categoria do Pollinations
 const NEWS_TYPE_TO_IMAGE_CATEGORY: Record<string, string> = {
   transfer: "transfer",
   injury: "injury",
@@ -553,9 +634,10 @@ const NEWS_TYPE_TO_IMAGE_CATEGORY: Record<string, string> = {
   ranking: "ranking",
   announcement: "announcement",
   match_preview: "match",
+  match_result: "match",
+  standings: "highlight",
 }
 
-// Card de conteudo de noticia padrao com suporte a imagens geradas por IA
 function NewsContentCard({ news }: { news: NewsItem }) {
   const source = NEWS_SOURCES[news.source]
   const [imgError, setImgError] = useState(false)
@@ -564,14 +646,15 @@ function NewsContentCard({ news }: { news: NewsItem }) {
   const imageCategory = NEWS_TYPE_TO_IMAGE_CATEGORY[news.type] ?? "match"
   const seed = seedFromString(news.id)
   const aiImageUrl = getNewsImageUrl(imageCategory, seed, 800, 450)
-  const aiImage = imgError ? null : aiImageUrl
-  
+
   const typeColors: Record<string, string> = {
     transfer: "from-yellow-900/50 to-yellow-950/30",
     highlight: "from-blue-900/50 to-blue-950/30",
     ranking: "from-purple-900/50 to-purple-950/30",
     injury: "from-red-900/50 to-red-950/30",
     announcement: "from-green-900/50 to-green-950/30",
+    match_result: "from-emerald-900/50 to-emerald-950/30",
+    standings: "from-indigo-900/50 to-indigo-950/30",
   }
 
   const typeIcons: Record<string, React.ReactNode> = {
@@ -580,6 +663,18 @@ function NewsContentCard({ news }: { news: NewsItem }) {
     ranking: <TrendingUp className="h-6 w-6 text-purple-400" />,
     injury: <Users className="h-6 w-6 text-red-400" />,
     announcement: <Trophy className="h-6 w-6 text-green-400" />,
+    match_result: <Zap className="h-6 w-6 text-yellow-400" />,
+    standings: <Star className="h-6 w-6 text-indigo-400" />,
+  }
+
+  const typeLabels: Record<string, string> = {
+    transfer: "Mercado",
+    highlight: "Destaque",
+    ranking: "Ranking",
+    injury: "Lesao",
+    announcement: "Noticia",
+    match_result: "Resultado",
+    standings: "Tabela",
   }
 
   return (
@@ -587,37 +682,22 @@ function NewsContentCard({ news }: { news: NewsItem }) {
       "relative aspect-video bg-gradient-to-br overflow-hidden",
       typeColors[news.type] || "from-gray-900/50 to-gray-950/30"
     )}>
-      {/* Background - Imagem via Pollinations.ai (gratuito, sem API key) */}
       <div className="absolute inset-0">
-        {/* Fallback sempre visivel até imagem carregar */}
         {!imgLoaded && !imgError && (
           <div
             className="absolute inset-0 opacity-90 animate-pulse"
-            style={{
-              background: `linear-gradient(135deg, ${source.color}33 0%, rgba(0,255,200,0.16) 42%, rgba(255,255,255,0.06) 100%)`,
-            }}
+            style={{ background: `linear-gradient(135deg, ${source.color}33 0%, rgba(0,255,200,0.16) 42%, rgba(255,255,255,0.06) 100%)` }}
           />
         )}
-
-        {/* Fallback permanente em caso de erro */}
         {imgError && (
           <div className="absolute inset-0">
-            <div
-              className="absolute inset-0 opacity-90"
-              style={{
-                background: `linear-gradient(135deg, ${source.color}33 0%, rgba(0,255,200,0.16) 42%, rgba(255,255,255,0.06) 100%)`,
-              }}
-            />
+            <div className="absolute inset-0 opacity-90" style={{ background: `linear-gradient(135deg, ${source.color}33 0%, rgba(0,255,200,0.16) 42%, rgba(255,255,255,0.06) 100%)` }} />
             <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.08)_0_1px,transparent_1px_18px)] opacity-40" />
-            <div className="absolute inset-x-6 top-1/2 h-px bg-white/20" />
-            <div className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20" />
             <div className="absolute right-4 top-4 flex h-20 w-20 items-center justify-center rounded-full bg-black/25 text-white/70">
               {news.icon || typeIcons[news.type]}
             </div>
           </div>
         )}
-
-        {/* Imagem Pollinations.ai */}
         <img
           src={aiImageUrl}
           alt=""
@@ -626,11 +706,7 @@ function NewsContentCard({ news }: { news: NewsItem }) {
           onError={() => setImgError(true)}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
         />
-
-        {/* Overlay gradiente */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-        {/* Badge AI */}
         {imgLoaded && (
           <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary/20 border border-primary/30 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-primary" />
@@ -638,23 +714,18 @@ function NewsContentCard({ news }: { news: NewsItem }) {
           </div>
         )}
       </div>
-      
-      {/* Icon */}
+
       <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
         {news.icon || typeIcons[news.type]}
       </div>
 
-      {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
         <div className="flex items-center gap-2 mb-2">
-          <span 
+          <span
             className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
             style={{ backgroundColor: source.color + "20", color: source.color }}
           >
-            {news.type === "transfer" ? "Mercado" : 
-             news.type === "highlight" ? "Destaque" :
-             news.type === "ranking" ? "Ranking" :
-             news.type === "injury" ? "Lesao" : "Noticia"}
+            {typeLabels[news.type] ?? "Noticia"}
           </span>
         </div>
         <h3 className="text-lg font-bold text-white mb-1 line-clamp-2">{news.title}</h3>
@@ -666,10 +737,8 @@ function NewsContentCard({ news }: { news: NewsItem }) {
   )
 }
 
-// Item compacto de noticia
 function NewsItemCompact({ news }: { news: NewsItem }) {
   const source = NEWS_SOURCES[news.source]
-  
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:border-white/10 transition-colors cursor-pointer">
       <SourceLogo source={news.source} size="sm" />
@@ -678,9 +747,7 @@ function NewsItemCompact({ news }: { news: NewsItem }) {
           <span className="text-xs font-medium text-white/60">{source.name}</span>
           <span className="text-[10px] text-white/30">{news.date}</span>
           {news.isNew && (
-            <span className="px-1.5 py-0.5 rounded bg-yellow-400/20 text-yellow-400 text-[9px] font-bold">
-              New
-            </span>
+            <span className="px-1.5 py-0.5 rounded bg-yellow-400/20 text-yellow-400 text-[9px] font-bold">New</span>
           )}
         </div>
         <p className="text-sm text-white line-clamp-2">{news.title}</p>
