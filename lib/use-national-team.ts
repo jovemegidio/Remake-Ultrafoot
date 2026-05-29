@@ -199,7 +199,6 @@ export function useNationalTeam() {
 
   const playNextRound = useCallback(() => {
     const current = state.nationalCareer?.currentCompetition
-    console.log("[v0] playNextRound chamado", { hasCurrent: !!current, hasNT: !!nationalTeam, status: current?.status, round: current?.currentRound })
     if (!current || !nationalTeam) return
     if (current.status !== "active") return
 
@@ -246,7 +245,6 @@ export function useNationalTeam() {
       }
     }
 
-    console.log("[v0] playNextRound resultado", { newRound: updated.currentRound, newStatus: updated.status, played: updated.fixtures.filter(f => f.played).length })
     setState({ nationalCareer: careerPatch, ...coachPatch })
   }, [state.nationalCareer, state.coachTotalTitles, state.coachXP, nationalTeam, setState])
 
