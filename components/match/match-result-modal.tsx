@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Trophy, ChevronRight, BarChart3, Home, Star, Zap, Mic } from "lucide-react"
+import { Trophy, ChevronRight, Star, Zap, Mic } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -313,23 +313,6 @@ export function MatchResultModal({
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto bg-white/5 border border-white/10 text-white hover:bg-white/10 font-medium"
-                >
-                  <Home className="mr-2 h-4 w-4 text-white/60" />
-                  Dashboard
-                </Button>
-              </Link>
-              <Button
-                size="lg"
-                onClick={onClose}
-                className="w-full sm:w-auto bg-white/5 border border-white/10 text-white hover:bg-white/10 font-medium"
-              >
-                <BarChart3 className="mr-2 h-4 w-4 text-white/60" />
-                Estatisticas
-              </Button>
             </motion.div>
           </div>
         </motion.div>
