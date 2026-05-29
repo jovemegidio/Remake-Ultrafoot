@@ -6,8 +6,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useGameState, type CoachSkillId } from "@/lib/save-system"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getPlayersByTeam } from "@/lib/players-data"
+import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -160,6 +161,221 @@ function getLeagueRounds(division: string): number {
   return LEAGUE_CALENDAR[division]?.rounds ?? 38
 }
 
+// ── Copas e competicoes continentais ─────────────────────────────────────────
+// O calendario jogavel inclui, alem da liga (e do estadual no Brasil), as copas
+// nacionais e as competicoes continentais que o time do usuario disputa. Apenas
+// as partidas do usuario sao geradas (acompanhamos a campanha dele); os
+// resultados nao alteram a classificacao da liga.
+
+// Divisoes por confederacao (para sortear adversarios continentais coerentes)
+const SOUTH_AMERICAN_DIVISIONS = new Set([
+  "serie_a", "serie_b", "serie_c", "serie_d",
+  "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury",
+  "primera_b_arg", "torneo_betplay", "primera_b_chi", "segunda_div_ury",
+])
+const EUROPEAN_DIVISIONS = new Set([
+  "premier_league", "la_liga", "serie_a_ita", "bundesliga", "ligue_1",
+  "primeira_liga", "eredivisie", "scottish_prem", "super_lig", "pro_league_bel",
+  "russian_prem", "championship", "la_liga_2", "serie_b_ita", "bundesliga_2",
+  "ligue_2", "liga_portugal_2", "eerste_divisie", "challenger_pro", "tff_1_lig",
+  "russian_first",
+])
+
+// RNG deterministico por seed (mantém adversarios estaveis entre re-renders)
+function seededRandom(seed: string): () => number {
+  let h = 2166136261 >>> 0
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i)
+    h = Math.imul(h, 16777619) >>> 0
+  }
+  return () => {
+    h += 0x6d2b79f5
+    let t = Math.imul(h ^ (h >>> 15), 1 | h)
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// Confederacao por divisao (para derivar competicoes continentais quando os
+// dados da liga nao as declaram explicitamente)
+function getConfederation(division: string): "uefa" | "conmebol" | "afc" | "concacaf" | null {
+  if (EUROPEAN_DIVISIONS.has(division)) return "uefa"
+  if (division === "liga_argentina" || division === "primera_a_col" ||
+      division === "primera_div_chi" || division === "primera_div_ury" ||
+      division === "primera_b_arg" || division === "torneo_betplay" ||
+      division === "primera_b_chi" || division === "segunda_div_ury") return "conmebol"
+  if (division === "saudi_pro" || division === "saudi_first_div" ||
+      division === "j_league" || division === "j2_league" ||
+      division === "k_league_1" || division === "k_league_2" ||
+      division === "chinese_super" || division === "china_league_one") return "afc"
+  if (division === "mls" || division === "liga_mx") return "concacaf"
+  return null
+}
+
+// Cria um Competition sintetico (usado nos fallbacks por confederacao)
+function makeComp(id: string, name: string, prestige: number, region: string, type: "cup" | "continental"): Competition {
+  return { id, name, shortName: name, type, region, format: type === "cup" ? "knockout" : "group_knockout", teams: 32, prize: 0, prestige }
+}
+
+// Competicoes continentais por confederacao, da mais para a menos prestigiada
+const CONTINENTAL_FALLBACK: Record<string, Competition[]> = {
+  uefa: [
+    makeComp("champions_league", "UEFA Champions League", 100, "europa", "continental"),
+    makeComp("europa_league", "UEFA Europa League", 80, "europa", "continental"),
+    makeComp("conference_league", "UEFA Conference League", 65, "europa", "continental"),
+  ],
+  conmebol: [
+    makeComp("libertadores", "CONMEBOL Libertadores", 95, "america_sul", "continental"),
+    makeComp("sulamericana", "CONMEBOL Sul-Americana", 70, "america_sul", "continental"),
+  ],
+  afc: [makeComp("afc_champions", "AFC Champions League Elite", 78, "asia", "continental")],
+  concacaf: [makeComp("concacaf_champions", "CONCACAF Champions Cup", 72, "concacaf", "continental")],
+}
+
+// Copa nacional por divisao quando a liga nao declara uma copa (principais ligas)
+const NATIONAL_CUP_FALLBACK: Record<string, string> = {
+  eredivisie: "KNVB Beker",
+  scottish_prem: "Scottish Cup",
+  super_lig: "Turkiye Kupasi",
+  pro_league_bel: "Croky Cup",
+  russian_prem: "Copa da Russia",
+  liga_argentina: "Copa Argentina",
+  primera_a_col: "Copa Colombia",
+  primera_div_chi: "Copa Chile",
+  primera_div_ury: "Copa Uruguay",
+  j_league: "Copa do Imperador",
+  k_league_1: "Copa da Coreia",
+  chinese_super: "Copa da China",
+}
+
+interface CupCompetitionPlan {
+  competition: Competition
+  competitionType: "cup" | "continental"
+  matchCount: number
+}
+
+// Define se uma divisao e de primeiro nivel (top flight) — so o top flight tem
+// vaga continental; copas nacionais valem para 1a e 2a divisao.
+const TOP_FLIGHT_DIVISIONS = new Set([
+  "serie_a", "premier_league", "la_liga", "serie_a_ita", "bundesliga", "ligue_1",
+  "primeira_liga", "eredivisie", "scottish_prem", "super_lig", "pro_league_bel",
+  "russian_prem", "saudi_pro", "mls", "liga_mx", "j_league", "k_league_1",
+  "chinese_super", "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury",
+])
+
+// Determina quais copas/continentais o time do usuario disputa e quantos jogos.
+// Usa os dados de competitionsByLeague e, quando faltam, deriva por confederacao.
+function getUserCupPlan(userTeam: Team): CupCompetitionPlan[] {
+  const division = String(userTeam.divisao)
+  const comps = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
+  const plans: CupCompetitionPlan[] = []
+
+  // ── Copa nacional ──────────────────────────────────────────────────────
+  const nationalCups = comps.filter(c => c.type === "cup").sort((a, b) => b.prestige - a.prestige)
+  if (nationalCups.length > 0) {
+    plans.push({ competition: nationalCups[0], competitionType: "cup", matchCount: 5 })
+  } else if (NATIONAL_CUP_FALLBACK[division]) {
+    plans.push({
+      competition: makeComp(`${division}_cup`, NATIONAL_CUP_FALLBACK[division], 60, "nacional", "cup"),
+      competitionType: "cup",
+      matchCount: 5,
+    })
+  }
+
+  // ── Competicao continental (apenas top flight) ─────────────────────────
+  let continentals = comps.filter(c => c.type === "continental").sort((a, b) => b.prestige - a.prestige)
+  if (continentals.length === 0 && TOP_FLIGHT_DIVISIONS.has(division)) {
+    const conf = getConfederation(division)
+    if (conf) continentals = CONTINENTAL_FALLBACK[conf] ?? []
+  }
+  if (continentals.length > 0 && TOP_FLIGHT_DIVISIONS.has(division)) {
+    const leagueTeams = [...getUserLeagueTeams(userTeam.curto)].sort((a, b) => b.prestigio - a.prestigio)
+    const rank = leagueTeams.findIndex(t => t.curto === userTeam.curto)
+    let chosen: Competition | null = null
+    if (rank >= 0 && rank < 4) chosen = continentals[0]
+    else if (rank >= 0 && rank < 10) chosen = continentals[1] ?? continentals[0]
+    else if (continentals.length >= 3) chosen = continentals[2]
+    // Times de elite (prestigio alto) garantem ao menos a continental secundaria
+    if (!chosen && userTeam.prestigio >= 75) chosen = continentals[continentals.length - 1]
+    if (chosen) {
+      const matchCount = chosen.prestige >= 90 ? 8 : 6
+      plans.push({ competition: chosen, competitionType: "continental", matchCount })
+    }
+  }
+
+  return plans
+}
+
+// Conta deterministicamente quantos jogos de copa/continental o usuario tem na temporada
+function getUserCupMatchCount(userTeamShort: string): number {
+  const userTeam = getTeamByShort(userTeamShort)
+  if (!userTeam) return 0
+  return getUserCupPlan(userTeam).reduce((sum, p) => sum + p.matchCount, 0)
+}
+
+// Monta o pool de adversarios para uma competicao
+function getOpponentPool(userTeam: Team, plan: CupCompetitionPlan): Team[] {
+  const userShort = userTeam.curto
+  if (plan.competitionType === "cup") {
+    // Copa nacional: times do mesmo pais/divisao
+    if (isBrazilianDivision(userTeam.divisao)) {
+      return allBrazilianTeams.filter(t => t.curto !== userShort)
+    }
+    const sameLeague = getTeamsByDivision(userTeam.divisao).filter(t => t.curto !== userShort)
+    return sameLeague.length >= 4 ? sameLeague : allTeams.filter(t => t.curto !== userShort)
+  }
+  // Continental: times da mesma confederacao
+  const region = plan.competition.region
+  let divisionSet: Set<string> | null = null
+  if (region === "america_sul") divisionSet = SOUTH_AMERICAN_DIVISIONS
+  else if (region === "europa") divisionSet = EUROPEAN_DIVISIONS
+  const pool = divisionSet
+    ? allTeams.filter(t => t.curto !== userShort && divisionSet!.has(String(t.divisao)))
+    : allTeams.filter(t => t.curto !== userShort)
+  // Prioriza times mais fortes (campeonato continental reune a elite)
+  return [...pool].sort((a, b) => b.prestigio - a.prestigio).slice(0, 60)
+}
+
+// Gera as partidas do usuario em uma copa/continental (somente o time do usuario joga)
+interface CupMatchDescriptor {
+  competition: string
+  competitionType: "cup" | "continental"
+  homeTeam: Team
+  awayTeam: Team
+}
+
+function generateUserCupMatches(userTeam: Team, plan: CupCompetitionPlan, season: number): CupMatchDescriptor[] {
+  const rng = seededRandom(`${userTeam.curto}:${plan.competition.id}:${season}`)
+  const pool = getOpponentPool(userTeam, plan)
+  if (pool.length === 0) return []
+
+  const matches: CupMatchDescriptor[] = []
+  const used = new Set<string>()
+  for (let i = 0; i < plan.matchCount; i++) {
+    // Escolhe adversario evitando repeticao imediata quando possivel
+    let opponent: Team | null = null
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const cand = pool[Math.floor(rng() * pool.length)]
+      if (!used.has(cand.curto) || used.size >= pool.length) {
+        opponent = cand
+        break
+      }
+    }
+    if (!opponent) opponent = pool[Math.floor(rng() * pool.length)]
+    used.add(opponent.curto)
+
+    // Mando alterna por jogo (ida/volta)
+    const userIsHome = i % 2 === 0
+    matches.push({
+      competition: plan.competition.name,
+      competitionType: plan.competitionType,
+      homeTeam: userIsHome ? userTeam : opponent,
+      awayTeam: userIsHome ? opponent : userTeam,
+    })
+  }
+  return matches
+}
+
 // Gera fixtures do campeonato estadual (Jan-Mar)
 function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: string, competition: string): Fixture[] {
   const fixtures: Fixture[] = []
@@ -239,7 +455,7 @@ export interface Fixture {
   awayScore?: number
   isUserMatch: boolean
   month: number
-  competitionType: "state" | "league"
+  competitionType: "state" | "league" | "cup" | "continental"
 }
 
 export interface SeasonCalendar {
@@ -495,8 +711,83 @@ export function useGameManager() {
 
     const leagueTeams = getUserLeagueTeams(userTeamShort)
     const competition = getLeagueName(userTeamShort)
+    // Gera a liga com round=1..L (semana sera reatribuida ao intercalar as copas)
     const leagueFixtures = generateBrasileirao(leagueTeams, userTeamShort, competition, division, stateChampRoundsCount)
-    allFixtures.push(...leagueFixtures)
+
+    // ── Intercala copas nacionais e competicoes continentais ────────────────
+    // Cada partida do usuario ocupa uma semana unica (1 jogo por semana). As
+    // partidas de copa entram em "meios de semana" distribuidos ao longo da liga.
+    const leagueRoundCount = (leagueTeams.length - 1) * 2
+    const cupMatches: CupMatchDescriptor[] = []
+    if (userTeam) {
+      for (const plan of getUserCupPlan(userTeam)) {
+        cupMatches.push(...generateUserCupMatches(userTeam, plan, saveState.season))
+      }
+    }
+
+    if (cupMatches.length === 0) {
+      // Sem copas: comportamento original (liga apos o estadual)
+      allFixtures.push(...leagueFixtures)
+    } else {
+      // Agrupa fixtures da liga por rodada para reatribuir semanas
+      const leagueByRound = new Map<number, Fixture[]>()
+      for (const f of leagueFixtures) {
+        const arr = leagueByRound.get(f.round)
+        if (arr) arr.push(f)
+        else leagueByRound.set(f.round, [f])
+      }
+
+      const C = cupMatches.length
+      let week = stateChampRoundsCount
+      let cupIdx = 0
+      let cupFixtureId = 50000
+
+      for (let r = 1; r <= leagueRoundCount; r++) {
+        week++
+        const roundFixtures = leagueByRound.get(r) ?? []
+        const roundMonth = roundFixtures[0]?.month ?? 0
+        for (const f of roundFixtures) {
+          f.week = week
+          allFixtures.push(f)
+        }
+        // Insere as partidas de copa devidas ate aqui (distribuidas uniformemente)
+        while (cupIdx < C && r >= Math.round(((cupIdx + 1) * leagueRoundCount) / (C + 1))) {
+          week++
+          const cm = cupMatches[cupIdx]
+          allFixtures.push({
+            id: cupFixtureId++,
+            round: cupIdx + 1,
+            week,
+            homeTeam: cm.homeTeam,
+            awayTeam: cm.awayTeam,
+            competition: cm.competition,
+            played: false,
+            isUserMatch: true,
+            month: roundMonth,
+            competitionType: cm.competitionType,
+          })
+          cupIdx++
+        }
+      }
+      // Partidas de copa restantes vao para o fim da temporada
+      while (cupIdx < C) {
+        week++
+        const cm = cupMatches[cupIdx]
+        allFixtures.push({
+          id: cupFixtureId++,
+          round: cupIdx + 1,
+          week,
+          homeTeam: cm.homeTeam,
+          awayTeam: cm.awayTeam,
+          competition: cm.competition,
+          played: false,
+          isUserMatch: true,
+          month: 11,
+          competitionType: cm.competitionType,
+        })
+        cupIdx++
+      }
+    }
 
     // Marca partidas ja jogadas
     allFixtures.forEach(f => {
@@ -519,15 +810,20 @@ export function useGameManager() {
       }
     })
 
-    // Encontra rodada atual
-    const totalWeeks = stateChampRoundsCount + (leagueTeams.length - 1) * 2
+    // Encontra rodada atual — total inclui estadual + liga + copas/continentais
+    const cupMatchCount = getUserCupMatchCount(userTeamShort)
+    const totalWeeks = stateChampRoundsCount + (leagueTeams.length - 1) * 2 + cupMatchCount
     const currentRound = Math.max(1, Math.min(totalWeeks, currentWeek))
 
-    // Proxima partida do usuario
-    const nextUserMatch = allFixtures.find(f => f.isUserMatch && !f.played) || null
+    // Proxima partida do usuario (a de menor semana ainda nao jogada)
+    const nextUserMatch = allFixtures
+      .filter(f => f.isUserMatch && !f.played)
+      .sort((a, b) => a.week - b.week)[0] || null
 
-    // Ultima partida do usuario
-    const playedUserMatches = allFixtures.filter(f => f.isUserMatch && f.played)
+    // Ultima partida do usuario (a de maior semana ja jogada)
+    const playedUserMatches = allFixtures
+      .filter(f => f.isUserMatch && f.played)
+      .sort((a, b) => a.week - b.week)
     const previousUserMatch = playedUserMatches.length > 0
       ? playedUserMatches[playedUserMatches.length - 1]
       : null
@@ -544,12 +840,13 @@ export function useGameManager() {
     const currentWeek = currentState.week
     const newWeek = currentWeek + 1
 
-    // Verifica fim de temporada — total inclui estadual + liga
+    // Verifica fim de temporada — total inclui estadual + liga + copas/continentais
     const userShort = currentState.selectedTeamShort ?? ""
     const leagueTeamsForEnd = getUserLeagueTeams(userShort)
     const stateRoundsForEnd = getStateChampRounds(userShort)
     const leagueRoundsForEnd = (leagueTeamsForEnd.length - 1) * 2
-    const seasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd
+    const cupMatchesForEnd = getUserCupMatchCount(userShort)
+    const seasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd + cupMatchesForEnd
 
     if (newWeek > seasonEndWeek) {
       const currentStandings = useGameEngine.getState().serieAStandings
@@ -660,13 +957,23 @@ export function useGameManager() {
 
     const leagueName = getLeagueName(currentState.selectedTeamShort ?? "")
     const stateRounds = getStateChampRounds(currentState.selectedTeamShort ?? "")
-    const isLeagueMatch = targetWeek > stateRounds
-
-    // Para o estadual, usa o nome do campeonato estadual; para liga, usa o nome da liga
     const userTeamForComp = getTeamByShort(currentState.selectedTeamShort ?? "")
-    const competitionName = isLeagueMatch
+
+    // Busca o fixture real desta semana para saber a competicao exata (liga,
+    // estadual, copa ou continental). Copas/continentais NAO alteram a classificacao.
+    const fixtureForWeek = seasonCalendarRef.current.fixtures.find(
+      f => f.week === targetWeek && f.isUserMatch &&
+           ((f.homeTeam.curto === homeTeam && f.awayTeam.curto === awayTeam) ||
+            (f.homeTeam.curto === awayTeam && f.awayTeam.curto === homeTeam))
+    )
+    const competitionType = fixtureForWeek?.competitionType
+      ?? (targetWeek > stateRounds ? "league" : "state")
+    const isLeagueMatch = competitionType === "league"
+
+    const fallbackName = isLeagueMatch
       ? leagueName
       : (ESTADO_CAMPEONATO[userTeamForComp?.estado ?? ""] ?? leagueName)
+    const competitionName = fixtureForWeek?.competition ?? fallbackName
 
     const result: MatchResult = {
       week: targetWeek,
@@ -679,7 +986,7 @@ export function useGameManager() {
       events
     }
 
-    // So atualiza standings da liga principal (nao do estadual)
+    // So atualiza standings da liga principal (nao do estadual/copas/continentais)
     if (isLeagueMatch) {
       gameEngine.updateStandings(result)
     } else {
