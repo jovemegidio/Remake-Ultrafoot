@@ -154,10 +154,18 @@ function CompetitionPanel() {
         <div className="relative flex items-end justify-between w-full gap-3">
           <div className="flex items-center gap-3">
             <div
-              className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0 shadow-lg"
+              className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0 shadow-lg overflow-hidden"
               style={{ backgroundColor: def?.accent ?? "#00ffc8" }}
             >
-              <Trophy className="h-5 w-5 text-white" />
+              {def?.logo ? (
+                <img
+                  src={def.logo || "/placeholder.svg"}
+                  alt={comp.competitionName}
+                  className="h-full w-full object-contain p-1"
+                />
+              ) : (
+                <Trophy className="h-5 w-5 text-white" />
+              )}
             </div>
             <div>
               <h3 className="text-xl font-bold text-white drop-shadow">{comp.competitionName}</h3>
@@ -493,10 +501,20 @@ export default function SelecaoPage() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-[#0c0c10] via-[#0c0c10]/85 to-[#0c0c10]/55 group-hover:from-[#0c0c10] group-hover:via-[#0c0c10]/75 transition-colors" />
                         <div
-                          className="relative h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg"
+                          className="relative h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg overflow-hidden"
                           style={{ backgroundColor: comp.accent }}
                         >
-                          {comp.kind === "title" ? <Crown className="h-5 w-5 text-white" /> : <Star className="h-5 w-5 text-white" />}
+                          {comp.logo ? (
+                            <img
+                              src={comp.logo || "/placeholder.svg"}
+                              alt={comp.name}
+                              className="h-full w-full object-contain p-0.5"
+                            />
+                          ) : comp.kind === "title" ? (
+                            <Crown className="h-5 w-5 text-white" />
+                          ) : (
+                            <Star className="h-5 w-5 text-white" />
+                          )}
                         </div>
                         <div className="relative flex-1 min-w-0">
                           <p className="font-semibold text-white drop-shadow">{comp.name}</p>

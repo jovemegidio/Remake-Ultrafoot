@@ -20,7 +20,7 @@ export interface NationalCompetitionDef {
   shortName: string
   confederations: Confederation[]
   format: "group_knockout" | "league"
-  kind: "title" | "qualifier"
+  kind: "title" | "qualifier" | "friendly"
   prestige: number
   groupSize?: number
   qualifyFromGroup?: number
@@ -29,6 +29,8 @@ export interface NationalCompetitionDef {
   leagueQualify?: number
   /** Imagem de tema da competicao (fundo) */
   theme: string
+  /** Logo oficial da competicao (exibida no emblema) */
+  logo?: string
   /** Cor de destaque para a competicao */
   accent: string
 }
@@ -46,6 +48,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     qualifyFromGroup: 2,
     knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
     theme: "/competitions/7.png",
+    logo: "/competicoes/copa-america-2028.png",
     accent: "#e11d2a",
   },
   {
@@ -100,7 +103,21 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     qualifyFromGroup: 2,
     knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
     theme: "/competitions/9.jpg",
+    logo: "/competicoes/copa-do-mundo-2026.png",
     accent: "#1e3a8a",
+  },
+  {
+    id: "amistosos",
+    name: "Amistosos Internacionais",
+    shortName: "Amistosos",
+    confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC"],
+    format: "league",
+    kind: "friendly",
+    prestige: 45,
+    leagueTeams: 4,
+    leagueQualify: 0,
+    theme: "/competitions/8.jpg",
+    accent: "#64748b",
   },
 ]
 
@@ -156,7 +173,7 @@ export interface NationalCompetitionState {
   competitionId: string
   competitionName: string
   shortName: string
-  kind: "title" | "qualifier"
+  kind: "title" | "qualifier" | "friendly"
   format: "group_knockout" | "league"
   season: number
   participants: { id: string; name: string; code: string }[]
@@ -256,7 +273,7 @@ export function createNationalCompetition(
   ]
 
   const stageLabel = def.format === "league"
-    ? (def.kind === "qualifier" ? "Eliminatorias" : "Fase de Grupos")
+    ? (def.kind === "qualifier" ? "Eliminatorias" : def.kind === "friendly" ? "Amistosos" : "Fase de Grupos")
     : "Fase de Grupos"
 
   const schedule = roundRobinSchedule(participants.length)
@@ -404,7 +421,13 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
     const sorted = sortTable(next.table)
     const userPos = sorted.findIndex(r => r.teamId === userId) + 1
     const def = getCompetitionDef(next.competitionId)
-    if (next.kind === "qualifier") {
+    if (next.kind === "friendly") {
+      const userRow = next.table.find(r => r.teamId === userId)
+      next.status = "finished"
+      next.lastSummary = userRow
+        ? `Amistosos encerrados: ${userRow.won}V ${userRow.drawn}E ${userRow.lost}D.`
+        : "Amistosos encerrados."
+    } else if (next.kind === "qualifier") {
       const qualify = def?.leagueQualify ?? 4
       if (userPos <= qualify) {
         next.status = "qualified"

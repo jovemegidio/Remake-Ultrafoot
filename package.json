@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build --webpack && node scripts/fix-next-export-rsc.mjs",
-    "build:tauri": "npm run build && node scripts/prune-export-music.mjs",
+    "build:tauri": "cross-env TAURI_BUILD=1 npm run build && node scripts/prune-export-music.mjs",
     "start": "next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",
@@ -84,6 +84,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^10.4.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",

@@ -181,6 +181,20 @@ export interface NationalTitle {
   season: number
 }
 
+// Janela FIFA ativa: quando o jogo desvia para a Selecao durante o calendario
+// do clube. Rastreia quantos jogos faltam disputar antes de voltar ao clube.
+export interface NationalWindow {
+  season: number
+  month: number
+  competitionId: string
+  /** Jogos do usuario ja disputados na competicao quando a janela comecou. */
+  gamesAtStart: number
+  /** Quantos jogos disputar nesta janela (alto = torneio em bloco unico). */
+  gamesTarget: number
+  isFinalTournament: boolean
+  label: string
+}
+
 export interface NationalCareer {
   nationalTeamId: string | null
   nationalTeamName: string | null
@@ -193,6 +207,10 @@ export interface NationalCareer {
   losses: number
   currentCompetition: NationalCompetitionState | null
   completedThisSeason: string[]
+  /** Janelas FIFA ja cumpridas (chave temporada-mes), para nao repetir. */
+  completedWindows: string[]
+  /** Janela FIFA em andamento (null fora de uma janela). */
+  activeWindow: NationalWindow | null
 }
 
 export const DEFAULT_NATIONAL_CAREER: NationalCareer = {
