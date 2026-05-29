@@ -4,9 +4,10 @@
 
 import { useEffect, useState } from "react"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import type { NationalCompetitionState } from "@/lib/national-competitions"
 
 const STORAGE_KEY = "ultrafoot:save"
-const VERSION = 3
+const VERSION = 4
 
 // ============================================
 // ARVORE DE HABILIDADES DO TREINADOR
@@ -162,6 +163,52 @@ export interface ManagerProfile {
   controllerIndex: number // -1 = teclado, 0-3 = controles
 }
 
+// ============================================
+// SELECAO NACIONAL
+// ============================================
+
+export interface NationalOffer {
+  nationalTeamId: string
+  nationalTeamName: string
+  code: string
+  confederation: string
+  strength: number
+  createdSeason: number
+}
+
+export interface NationalTitle {
+  competition: string
+  season: number
+}
+
+export interface NationalCareer {
+  nationalTeamId: string | null
+  nationalTeamName: string | null
+  acceptedSeason: number | null
+  titles: NationalTitle[]
+  worldCupQualifications: number
+  matchesPlayed: number
+  wins: number
+  draws: number
+  losses: number
+  currentCompetition: NationalCompetitionState | null
+  completedThisSeason: string[]
+}
+
+export const DEFAULT_NATIONAL_CAREER: NationalCareer = {
+  nationalTeamId: null,
+  nationalTeamName: null,
+  acceptedSeason: null,
+  titles: [],
+  worldCupQualifications: 0,
+  matchesPlayed: 0,
+  wins: 0,
+  draws: 0,
+  losses: 0,
+  currentCompetition: null,
+  completedThisSeason: [],
+}
+
 export interface GameState {
   version: number
   selectedTeamShort: string | null
@@ -187,6 +234,11 @@ export interface GameState {
   coachTotalTitles: number
   // Legado entre carreiras (Roguelike)
   coachLegacy: CoachLegacy
+  // Selecao nacional
+  nationalCareer: NationalCareer
+  pendingNationalOffers: NationalOffer[]
+  declinedNationalTeamIds: string[]
+  lastNationalOfferSeason: number | null
 }
 
 export const DEFAULT_COACH_LEGACY: CoachLegacy = {
@@ -223,13 +275,18 @@ export const DEFAULT_STATE: GameState = {
   coachTotalTitles: 0,
   // Legado
   coachLegacy: DEFAULT_COACH_LEGACY,
+  // Selecao nacional
+  nationalCareer: DEFAULT_NATIONAL_CAREER,
+  pendingNationalOffers: [],
+  declinedNationalTeamIds: [],
+  lastNationalOfferSeason: null,
 }
 
 function safeParse(raw: string | null): GameState | null {
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as GameState
-    // Migra version 2 para version 3 (adiciona campos de treinador e legado)
+    // Migra version 2 para a atual (adiciona campos de treinador e legado)
     if (parsed.version === 2) {
       return {
         ...DEFAULT_STATE,
@@ -241,6 +298,22 @@ function safeParse(raw: string | null): GameState | null {
         coachWinStreak: 0,
         coachTotalTitles: 0,
         coachLegacy: DEFAULT_COACH_LEGACY,
+        nationalCareer: DEFAULT_NATIONAL_CAREER,
+        pendingNationalOffers: [],
+        declinedNationalTeamIds: [],
+        lastNationalOfferSeason: null,
+      }
+    }
+    // Migra version 3 para a atual (adiciona campos de selecao nacional)
+    if (parsed.version === 3) {
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        version: VERSION,
+        nationalCareer: DEFAULT_NATIONAL_CAREER,
+        pendingNationalOffers: [],
+        declinedNationalTeamIds: [],
+        lastNationalOfferSeason: null,
       }
     }
     if (parsed.version !== VERSION) return null
