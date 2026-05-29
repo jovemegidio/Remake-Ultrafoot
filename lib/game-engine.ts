@@ -1716,6 +1716,7 @@ interface GameEngineState {
   simulateOtherMatches: () => void
   drawCopaBracket: () => void
   updateStandings: (result: MatchResult) => void
+  addMatchResultOnly: (result: MatchResult) => void
   callUpPlayer: (playerId: number, call: NationalTeamCall) => void
   returnFromNationalTeam: (playerId: number) => void
   getPlayerById: (playerId: number) => Player | undefined
@@ -2907,7 +2908,11 @@ export const useGameEngine = create<GameEngineState>()(
           return { serieAStandings: sorted, matchResults: [...s.matchResults, result] }
         })
       },
-      
+
+      addMatchResultOnly: (result) => {
+        set((s) => ({ matchResults: [...s.matchResults, result] }))
+      },
+
       callUpPlayer: (playerId, call) => {
         set((s) => ({
           squadPlayers: s.squadPlayers.map(p => 

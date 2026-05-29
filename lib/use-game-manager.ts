@@ -3,10 +3,10 @@
 
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useGameState, type CoachSkillId } from "@/lib/save-system"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, type Team } from "@/lib/teams-data"
 import { getPlayersByTeam } from "@/lib/players-data"
 
 const LEAGUE_NAMES: Record<string, string> = {
@@ -28,6 +28,183 @@ const LEAGUE_NAMES: Record<string, string> = {
   carioca: "Campeonato Carioca",
   mineiro: "Campeonato Mineiro",
   gaucho: "Campeonato Gaucho",
+}
+
+// Configuracao do calendario de cada liga: mes de inicio (0=Jan) e duracao em meses
+interface LeagueCalendarConfig {
+  startMonth: number
+  monthsInSeason: number
+  rounds: number
+}
+
+const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
+  // Ligas brasileiras: parte nacional comeca em abril
+  serie_a:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
+  serie_b:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
+  serie_c:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
+  serie_d:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
+  // Estaduais isolados (divisao propria)
+  paulistao:      { startMonth: 0,  monthsInSeason: 3,  rounds: 14 },
+  carioca:        { startMonth: 0,  monthsInSeason: 3,  rounds: 12 },
+  mineiro:        { startMonth: 0,  monthsInSeason: 3,  rounds: 12 },
+  gaucho:         { startMonth: 0,  monthsInSeason: 3,  rounds: 12 },
+  // Europa: agosto a maio
+  premier_league: { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  la_liga:        { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  serie_a_ita:    { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  bundesliga:     { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  ligue_1:        { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  primeira_liga:  { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  eredivisie:     { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  scottish_prem:  { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  super_lig:      { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  pro_league_bel: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  russian_prem:   { startMonth: 6,  monthsInSeason: 11, rounds: 30 },
+  // Americas nao-Brasil
+  mls:            { startMonth: 2,  monthsInSeason: 9,  rounds: 34 },
+  liga_mx:        { startMonth: 6,  monthsInSeason: 11, rounds: 34 },
+  liga_argentina: { startMonth: 0,  monthsInSeason: 12, rounds: 46 },
+  primera_a_col:  { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
+  primera_div_chi:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  primera_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  // Asia
+  saudi_pro:      { startMonth: 7,  monthsInSeason: 10, rounds: 30 },
+  j_league:       { startMonth: 1,  monthsInSeason: 11, rounds: 34 },
+  k_league_1:     { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
+  chinese_super:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  // 2as divisoes Europa
+  championship:   { startMonth: 7,  monthsInSeason: 10, rounds: 46 },
+  la_liga_2:      { startMonth: 7,  monthsInSeason: 10, rounds: 42 },
+  serie_b_ita:    { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  bundesliga_2:   { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  ligue_2:        { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  liga_portugal_2:{ startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  eerste_divisie: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  challenger_pro: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  tff_1_lig:      { startMonth: 7,  monthsInSeason: 10, rounds: 36 },
+  russian_first:  { startMonth: 6,  monthsInSeason: 11, rounds: 30 },
+  // 2as divisoes Americas
+  primera_b_arg:  { startMonth: 0,  monthsInSeason: 12, rounds: 46 },
+  torneo_betplay: { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
+  primera_b_chi:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  segunda_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  // 2as divisoes Asia
+  saudi_first_div:{ startMonth: 7,  monthsInSeason: 10, rounds: 30 },
+  j2_league:      { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
+  k_league_2:     { startMonth: 1,  monthsInSeason: 11, rounds: 36 },
+  china_league_one:{ startMonth: 1, monthsInSeason: 10, rounds: 30 },
+}
+
+const ESTADO_CAMPEONATO: Record<string, string> = {
+  SP: "Campeonato Paulista",
+  RJ: "Campeonato Carioca",
+  RS: "Campeonato Gaucho",
+  MG: "Campeonato Mineiro",
+  BA: "Campeonato Baiano",
+  PR: "Campeonato Paranaense",
+  PE: "Campeonato Pernambucano",
+  CE: "Campeonato Cearense",
+  GO: "Campeonato Goiano",
+  SC: "Campeonato Catarinense",
+  AL: "Campeonato Alagoano",
+  PA: "Campeonato Paraense",
+  AM: "Campeonato Amazonense",
+  DF: "Campeonato Brasiliense",
+  ES: "Campeonato Capixaba",
+  MT: "Campeonato Mato-Grossense",
+  RN: "Campeonato Potiguar",
+  PB: "Campeonato Paraibano",
+  MA: "Campeonato Maranhense",
+  PI: "Campeonato Piauiense",
+  SE: "Campeonato Sergipano",
+  RO: "Campeonato Rondoniense",
+  AP: "Campeonato Amapaense",
+}
+
+const BRAZILIAN_DIVISIONS = ["serie_a", "serie_b", "serie_c", "serie_d"]
+
+function isBrazilianDivision(division: string): boolean {
+  return BRAZILIAN_DIVISIONS.includes(division)
+}
+
+// Mapeia rodada para mes com base na config do calendario da liga
+function getRoundMonth(round: number, startMonth: number, monthsInSeason: number, totalRounds: number): number {
+  const monthOffset = Math.floor((round - 1) * monthsInSeason / totalRounds)
+  return (startMonth + monthOffset) % 12
+}
+
+// Retorna os times do campeonato estadual do usuario (minimo 4, maximo 8)
+function getStateChampionshipTeams(userTeamShort: string): Team[] {
+  const userTeam = getTeamByShort(userTeamShort)
+  if (!userTeam || !isBrazilianDivision(userTeam.divisao)) return []
+  const estado = userTeam.estado
+  if (!ESTADO_CAMPEONATO[estado]) return []
+  const stateTeams = allBrazilianTeams.filter(t => t.estado === estado)
+  if (stateTeams.length < 4) return []
+  // Cap em 8 para um campeonato de 14 rodadas
+  const capped = stateTeams.slice(0, 8)
+  const hasUser = capped.some(t => t.curto === userTeamShort)
+  if (!hasUser) capped[0] = userTeam
+  return capped
+}
+
+// Retorna o numero de rodadas do campeonato estadual
+function getStateChampRounds(userTeamShort: string): number {
+  const teams = getStateChampionshipTeams(userTeamShort)
+  if (teams.length < 4) return 0
+  return (teams.length - 1) * 2
+}
+
+// Retorna o total de rodadas da liga principal
+function getLeagueRounds(division: string): number {
+  return LEAGUE_CALENDAR[division]?.rounds ?? 38
+}
+
+// Gera fixtures do campeonato estadual (Jan-Mar)
+function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: string, competition: string): Fixture[] {
+  const fixtures: Fixture[] = []
+  let fixtureId = 10000
+  const halfSeason = stateTeams.length - 1
+  const totalRounds = halfSeason * 2
+
+  for (let round = 1; round <= halfSeason; round++) {
+    const matchups = generateRoundMatchups(stateTeams, round)
+    matchups.forEach(([home, away]) => {
+      fixtures.push({
+        id: fixtureId++,
+        round,
+        week: round,
+        homeTeam: home,
+        awayTeam: away,
+        competition,
+        played: false,
+        isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort,
+        month: getRoundMonth(round, 0, 3, totalRounds),
+        competitionType: "state",
+      })
+    })
+  }
+
+  for (let round = halfSeason + 1; round <= totalRounds; round++) {
+    const turnoRound = round - halfSeason
+    const turnoFixtures = fixtures.filter(f => f.round === turnoRound)
+    turnoFixtures.forEach(f => {
+      fixtures.push({
+        id: fixtureId++,
+        round,
+        week: round,
+        homeTeam: f.awayTeam,
+        awayTeam: f.homeTeam,
+        competition,
+        played: false,
+        isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort,
+        month: getRoundMonth(round, 0, 3, totalRounds),
+        competitionType: "state",
+      })
+    })
+  }
+
+  return fixtures
 }
 
 function getUserLeagueTeams(teamShort: string): Team[] {
@@ -61,6 +238,8 @@ export interface Fixture {
   homeScore?: number
   awayScore?: number
   isUserMatch: boolean
+  month: number
+  competitionType: "state" | "league"
 }
 
 export interface SeasonCalendar {
@@ -71,10 +250,13 @@ export interface SeasonCalendar {
 }
 
 // Gera confrontos da liga (todos contra todos, turno e returno) — dinamico por qtd de times
-function generateBrasileirao(teams: Team[], userTeamShort: string, competition: string): Fixture[] {
+// weekOffset: deslocamento de semanas para colocar a liga apos o estadual (para times brasileiros)
+function generateBrasileirao(teams: Team[], userTeamShort: string, competition: string, division: string, weekOffset = 0): Fixture[] {
   const fixtures: Fixture[] = []
   let fixtureId = 1
   const halfSeason = teams.length - 1
+  const totalRounds = halfSeason * 2
+  const calCfg = LEAGUE_CALENDAR[division] ?? { startMonth: 3, monthsInSeason: 8, rounds: 38 }
 
   // Primeira fase - turno
   for (let round = 1; round <= halfSeason; round++) {
@@ -83,30 +265,34 @@ function generateBrasileirao(teams: Team[], userTeamShort: string, competition: 
       fixtures.push({
         id: fixtureId++,
         round,
-        week: round,
+        week: round + weekOffset,
         homeTeam: home,
         awayTeam: away,
         competition,
         played: false,
-        isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort
+        isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort,
+        month: getRoundMonth(round, calCfg.startMonth, calCfg.monthsInSeason, totalRounds),
+        competitionType: "league",
       })
     })
   }
 
   // Segunda fase - returno (inverte mando)
-  for (let round = halfSeason + 1; round <= halfSeason * 2; round++) {
+  for (let round = halfSeason + 1; round <= totalRounds; round++) {
     const turnoRound = round - halfSeason
     const turnoFixtures = fixtures.filter(f => f.round === turnoRound)
     turnoFixtures.forEach(f => {
       fixtures.push({
         id: fixtureId++,
         round,
-        week: round,
+        week: round + weekOffset,
         homeTeam: f.awayTeam,
         awayTeam: f.homeTeam,
         competition,
         played: false,
-        isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort
+        isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort,
+        month: getRoundMonth(round, calCfg.startMonth, calCfg.monthsInSeason, totalRounds),
+        competitionType: "league",
       })
     })
   }
@@ -225,15 +411,25 @@ function initializeStandings(teams: Team[]): StandingsEntry[] {
 export function useGameManager() {
   const { state: saveState, setState: setSaveState, hydrated } = useGameState()
   const gameEngine = useGameEngine()
+  const [engineHydrated, setEngineHydrated] = useState(() => useGameEngine.persist.hasHydrated())
 
   // Refs always pointing at latest values — prevents stale closures in callbacks called in loops
   const saveStateRef = useRef(saveState)
   saveStateRef.current = saveState
   const seasonCalendarRef = useRef<SeasonCalendar>({ fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null })
 
+  useEffect(() => {
+    setEngineHydrated(useGameEngine.persist.hasHydrated())
+    const unsub = useGameEngine.persist.onFinishHydration(() => {
+      setEngineHydrated(true)
+    })
+    return unsub
+  }, [])
+
   // Auto-reinit: engine resetou (versão nova) mas save tem time selecionado
   useEffect(() => {
     if (!hydrated) return
+    if (!engineHydrated) return
     if (!saveState.selectedTeamShort) return
     // Reinit se standings ou squad estiverem vazios (initialPlayers tem 1 jogador default)
     if (gameEngine.squadPlayers.length > 1 && gameEngine.serieAStandings.length > 0) return
@@ -245,7 +441,7 @@ export function useGameManager() {
       currentWeek: saveState.week,
       currentSeason: saveState.season,
     })
-  }, [hydrated, saveState.selectedTeamShort, saveState.week, saveState.season, gameEngine.squadPlayers.length, gameEngine.serieAStandings.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hydrated, engineHydrated, saveState.selectedTeamShort, saveState.week, saveState.season, gameEngine.squadPlayers.length, gameEngine.serieAStandings.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inicializa o jogo quando o usuario seleciona um time
   const initializeNewGame = useCallback((teamShort: string, managerName?: string) => {
@@ -277,19 +473,36 @@ export function useGameManager() {
     if (!saveState.selectedTeamShort) {
       return { fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null }
     }
-    
+
     const userTeamShort = saveState.selectedTeamShort
     const currentWeek = saveState.week
+    const userTeam = getTeamByShort(userTeamShort)
+    const division = userTeam?.divisao ?? "serie_a"
+
+    // Para times brasileiros: gera campeonato estadual (Jan-Mar) + liga nacional (Abr+)
+    let allFixtures: Fixture[] = []
+    let stateChampRoundsCount = 0
+
+    if (isBrazilianDivision(division)) {
+      const stateTeams = getStateChampionshipTeams(userTeamShort)
+      if (stateTeams.length >= 4) {
+        const stateName = ESTADO_CAMPEONATO[userTeam?.estado ?? ""] ?? "Campeonato Estadual"
+        const stateFixtures = generateStateChampionshipFixtures(stateTeams, userTeamShort, stateName)
+        stateChampRoundsCount = (stateTeams.length - 1) * 2
+        allFixtures.push(...stateFixtures)
+      }
+    }
 
     const leagueTeams = getUserLeagueTeams(userTeamShort)
     const competition = getLeagueName(userTeamShort)
-    const fixtures = generateBrasileirao(leagueTeams, userTeamShort, competition)
-    
+    const leagueFixtures = generateBrasileirao(leagueTeams, userTeamShort, competition, division, stateChampRoundsCount)
+    allFixtures.push(...leagueFixtures)
+
     // Marca partidas ja jogadas
-    fixtures.forEach(f => {
+    allFixtures.forEach(f => {
       if (f.week <= currentWeek) {
         const result = gameEngine.matchResults.find(
-          r => r.week === f.week && 
+          r => r.week === f.week &&
                ((r.homeTeam === f.homeTeam.curto && r.awayTeam === f.awayTeam.curto) ||
                 (r.homeTeam === f.awayTeam.curto && r.awayTeam === f.homeTeam.curto))
         )
@@ -305,21 +518,21 @@ export function useGameManager() {
         }
       }
     })
-    
+
     // Encontra rodada atual
-    const totalRounds = (leagueTeams.length - 1) * 2
-    const currentRound = Math.max(1, Math.min(totalRounds, currentWeek))
-    
+    const totalWeeks = stateChampRoundsCount + (leagueTeams.length - 1) * 2
+    const currentRound = Math.max(1, Math.min(totalWeeks, currentWeek))
+
     // Proxima partida do usuario
-    const nextUserMatch = fixtures.find(f => f.isUserMatch && !f.played) || null
-    
+    const nextUserMatch = allFixtures.find(f => f.isUserMatch && !f.played) || null
+
     // Ultima partida do usuario
-    const playedUserMatches = fixtures.filter(f => f.isUserMatch && f.played)
-    const previousUserMatch = playedUserMatches.length > 0 
-      ? playedUserMatches[playedUserMatches.length - 1] 
+    const playedUserMatches = allFixtures.filter(f => f.isUserMatch && f.played)
+    const previousUserMatch = playedUserMatches.length > 0
+      ? playedUserMatches[playedUserMatches.length - 1]
       : null
-    
-    const result = { fixtures, currentRound, nextUserMatch, previousUserMatch }
+
+    const result = { fixtures: allFixtures, currentRound, nextUserMatch, previousUserMatch }
     seasonCalendarRef.current = result
     return result
   }, [saveState.selectedTeamShort, saveState.week, gameEngine.matchResults])
@@ -331,10 +544,12 @@ export function useGameManager() {
     const currentWeek = currentState.week
     const newWeek = currentWeek + 1
 
-    // Verifica fim de temporada — total de rodadas depende do tamanho da liga
+    // Verifica fim de temporada — total inclui estadual + liga
     const userShort = currentState.selectedTeamShort ?? ""
     const leagueTeamsForEnd = getUserLeagueTeams(userShort)
-    const seasonEndWeek = (leagueTeamsForEnd.length - 1) * 2
+    const stateRoundsForEnd = getStateChampRounds(userShort)
+    const leagueRoundsForEnd = (leagueTeamsForEnd.length - 1) * 2
+    const seasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd
 
     if (newWeek > seasonEndWeek) {
       const currentStandings = useGameEngine.getState().serieAStandings
@@ -374,7 +589,12 @@ export function useGameManager() {
         newWeek,
         currentState.season
       )
-      gameEngine.updateStandings(result)
+      // Apenas atualiza standings da liga principal (nao do estadual)
+      if (fixture.competitionType === "league") {
+        gameEngine.updateStandings(result)
+      } else {
+        gameEngine.addMatchResultOnly(result)
+      }
     }
 
     // Avanca game engine
@@ -438,10 +658,20 @@ export function useGameManager() {
     )
     if (alreadyRegistered) return
 
+    const leagueName = getLeagueName(currentState.selectedTeamShort ?? "")
+    const stateRounds = getStateChampRounds(currentState.selectedTeamShort ?? "")
+    const isLeagueMatch = targetWeek > stateRounds
+
+    // Para o estadual, usa o nome do campeonato estadual; para liga, usa o nome da liga
+    const userTeamForComp = getTeamByShort(currentState.selectedTeamShort ?? "")
+    const competitionName = isLeagueMatch
+      ? leagueName
+      : (ESTADO_CAMPEONATO[userTeamForComp?.estado ?? ""] ?? leagueName)
+
     const result: MatchResult = {
       week: targetWeek,
       season: currentState.season,
-      competition: getLeagueName(currentState.selectedTeamShort ?? ""),
+      competition: competitionName,
       homeTeam,
       awayTeam,
       homeScore,
@@ -449,7 +679,12 @@ export function useGameManager() {
       events
     }
 
-    gameEngine.updateStandings(result)
+    // So atualiza standings da liga principal (nao do estadual)
+    if (isLeagueMatch) {
+      gameEngine.updateStandings(result)
+    } else {
+      gameEngine.addMatchResultOnly(result)
+    }
 
     // === XP e habilidades do treinador ===
     const userShort = currentState.selectedTeamShort ?? ""

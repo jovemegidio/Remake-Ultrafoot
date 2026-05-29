@@ -20,15 +20,31 @@ import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
-// Mapeia rodadas para meses aproximados (temporada de Abril a Dezembro)
-function roundToMonth(round: number): number {
-  const monthOffset = Math.floor((round - 1) * 9 / 38)
-  return Math.min(11, 3 + monthOffset)
-}
-
 function roundToDay(round: number): number {
   const daysInRound = [1, 5, 8, 12, 15, 19, 22, 26, 29]
   return daysInRound[(round - 1) % 9] || 15
+}
+
+// Meses visiveis no calendario dependendo da regiao do time
+const EUROPE_DIVISIONS = ["premier_league","la_liga","serie_a_ita","bundesliga","ligue_1","primeira_liga","eredivisie","scottish_prem","super_lig","pro_league_bel","russian_prem","championship","la_liga_2","serie_b_ita","bundesliga_2","ligue_2","liga_portugal_2","eerste_divisie","challenger_pro","tff_1_lig","russian_first"]
+const SUMMER_LEAGUES = ["mls","j_league","k_league_1","chinese_super","j2_league","k_league_2","china_league_one"] // Fev-Nov/Dez
+const SAUDI_LIKES = ["saudi_pro","saudi_first_div","liga_mx","liga_argentina","primera_a_col","primera_div_chi","primera_div_ury","primera_b_arg","torneo_betplay","primera_b_chi","segunda_div_ury"]
+
+function getSeasonMonths(division: string): number[] {
+  if (EUROPE_DIVISIONS.includes(division)) {
+    // Agosto a Maio do ano seguinte: [7,8,9,10,11,0,1,2,3,4]
+    return [7,8,9,10,11,0,1,2,3,4]
+  }
+  if (SUMMER_LEAGUES.includes(division)) {
+    // Fevereiro a Dezembro
+    return [1,2,3,4,5,6,7,8,9,10,11]
+  }
+  if (SAUDI_LIKES.includes(division)) {
+    // Julho a Maio
+    return [6,7,8,9,10,11,0,1,2,3,4]
+  }
+  // Brasileirao + outros: Janeiro a Novembro
+  return [0,1,2,3,4,5,6,7,8,9,10]
 }
 
 const MONTH_NAMES = [
@@ -58,20 +74,21 @@ export default function CalendarioPage() {
     currentSeason,
     advanceWeek,
     standings,
-    hydrated
+    hydrated,
+    league,
   } = useGameManager()
 
-  const [currentMonth, setCurrentMonth] = useState(3) // Abril
+  const seasonMonths = useMemo(() => getSeasonMonths(league ?? "serie_a"), [league])
+  const [currentMonth, setCurrentMonth] = useState(() => seasonMonths[0])
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
   const [showChampionScreen, setShowChampionScreen] = useState(false)
   const [championTeam, setChampionTeam] = useState<string | null>(null)
 
-  // Filtra fixtures por mes
+  // Filtra fixtures por mes usando o campo month do fixture
   const monthFixtures = useMemo(() => {
     return seasonCalendar.fixtures.filter(f => {
-      const fixtureMonth = roundToMonth(f.round)
-      return fixtureMonth === currentMonth
+      return f.month === currentMonth
     })
   }, [seasonCalendar.fixtures, currentMonth])
 
@@ -125,6 +142,14 @@ export default function CalendarioPage() {
     return { isOpen, daysUntil }
   }, [currentMonth])
 
+  const seasonCompetitions = useMemo(() => {
+    const comps = new Set<string>()
+    // Inclui todas as competicoes presentes nos fixtures do usuario
+    seasonCalendar.fixtures.filter(f => f.isUserMatch).forEach(f => comps.add(f.competition))
+    if (comps.size === 0) comps.add("Liga")
+    return Array.from(comps)
+  }, [seasonCalendar.fixtures])
+
   const handleAdvanceRound = useCallback(async () => {
     setIsSimulating(true)
     try {
@@ -138,7 +163,13 @@ export default function CalendarioPage() {
     }
   }, [advanceWeek, standings])
 
-  const canSimulate = currentWeek < 38 && !isSimulating
+  const totalSeasonWeeks = useMemo(() => {
+    return seasonCalendar.fixtures.length > 0
+      ? Math.max(...seasonCalendar.fixtures.map(f => f.week))
+      : 38
+  }, [seasonCalendar.fixtures])
+
+  const canSimulate = currentWeek < totalSeasonWeeks && !isSimulating
 
   useEffect(() => {
     const handleGamepadButton = (e: Event) => {
@@ -148,21 +179,29 @@ export default function CalendarioPage() {
           router.back()
           break
         case "LB":
-          setCurrentMonth(m => (m - 1 + 12) % 12)
+          setCurrentMonth(m => {
+            const idx = seasonMonths.indexOf(m)
+            return seasonMonths[(idx - 1 + seasonMonths.length) % seasonMonths.length]
+          })
           break
         case "RB":
-          setCurrentMonth(m => (m + 1) % 12)
+          setCurrentMonth(m => {
+            const idx = seasonMonths.indexOf(m)
+            return seasonMonths[(idx + 1) % seasonMonths.length]
+          })
           break
       }
     }
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [router])
+  }, [router, seasonMonths])
 
   useEffect(() => {
     if (nextUserMatch) {
       const day = roundToDay(nextUserMatch.round)
       setSelectedDay(day)
+      // Navega para o mes da proxima partida
+      setCurrentMonth(nextUserMatch.month)
     }
   }, [nextUserMatch])
 
@@ -174,8 +213,10 @@ export default function CalendarioPage() {
     )
   }
 
-  // Data atual formatada
-  const matchDate = nextUserMatch ? new Date(2026, roundToMonth(nextUserMatch.round), roundToDay(nextUserMatch.round)) : new Date(2026, 3, 15)
+  // Data atual formatada usando month do fixture
+  const matchMonth = nextUserMatch ? nextUserMatch.month : seasonMonths[0]
+  const matchDay = nextUserMatch ? roundToDay(nextUserMatch.round) : 15
+  const matchDate = new Date(2026, matchMonth, matchDay)
   const dayOfWeek = WEEKDAY_NAMES[matchDate.getDay()]
   const dayNum = matchDate.getDate()
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
@@ -222,31 +263,34 @@ export default function CalendarioPage() {
           <span className="text-white text-sm font-bold">Calendario</span>
           {/* Month Tabs */}
           <div className="flex items-center gap-1 ml-4">
-            <button 
-              onClick={() => setCurrentMonth(m => (m - 1 + 12) % 12)}
+            <button
+              onClick={() => setCurrentMonth(m => {
+                const idx = seasonMonths.indexOf(m)
+                return seasonMonths[(idx - 1 + seasonMonths.length) % seasonMonths.length]
+              })}
               className="p-1 text-white/40 hover:text-white"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            {MONTH_NAMES.slice(3, 12).map((month, i) => {
-              const monthIndex = i + 3
-              return (
-                <button
-                  key={month}
-                  onClick={() => setCurrentMonth(monthIndex)}
-                  className={cn(
-                    "px-3 py-1 text-xs font-medium transition-all rounded",
-                    monthIndex === currentMonth 
-                      ? "bg-white/20 text-white" 
-                      : "text-white/50 hover:text-white/80"
-                  )}
-                >
-                  {month}
-                </button>
-              )
-            })}
-            <button 
-              onClick={() => setCurrentMonth(m => (m + 1) % 12)}
+            {seasonMonths.map((monthIndex) => (
+              <button
+                key={monthIndex}
+                onClick={() => setCurrentMonth(monthIndex)}
+                className={cn(
+                  "px-3 py-1 text-xs font-medium transition-all rounded",
+                  monthIndex === currentMonth
+                    ? "bg-white/20 text-white"
+                    : "text-white/50 hover:text-white/80"
+                )}
+              >
+                {MONTH_NAMES[monthIndex]}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentMonth(m => {
+                const idx = seasonMonths.indexOf(m)
+                return seasonMonths[(idx + 1) % seasonMonths.length]
+              })}
               className="p-1 text-white/40 hover:text-white"
             >
               <ChevronRight className="h-4 w-4" />
@@ -286,6 +330,20 @@ export default function CalendarioPage() {
               </div>
             </div>
           )}
+
+          <Link href="/competicoes" className="mb-6 group block">
+            <div className="flex items-center gap-2 text-white/50 text-xs font-medium uppercase tracking-wider mb-2 group-hover:text-white/70 transition-colors">
+              <Trophy className="h-3.5 w-3.5 text-yellow-400" />
+              Campeonatos
+            </div>
+            <div className="space-y-1.5">
+              {seasonCompetitions.map((competition) => (
+                <div key={competition} className="text-white/80 text-xs font-semibold leading-tight group-hover:text-white transition-colors">
+                  {competition}
+                </div>
+              ))}
+            </div>
+          </Link>
 
           {/* Opponent Team with Stars */}
           {selectedFixture && (
@@ -457,6 +515,13 @@ export default function CalendarioPage() {
               <span>Ver partida</span>
             </Link>
           )}
+          <Link 
+            href="/competicoes"
+            className="flex items-center gap-2 hover:text-white transition-colors"
+          >
+            <Trophy className="h-4 w-4 text-yellow-400" />
+            <span>Competicoes</span>
+          </Link>
           <div className="flex items-center gap-1.5">
             <GamepadButton button="l1" platform="playstation" size="xs" />
             <GamepadButton button="r1" platform="playstation" size="xs" />
