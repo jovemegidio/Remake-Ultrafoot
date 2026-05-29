@@ -13,6 +13,10 @@ export const leagueLogos: Record<string, string | null> = {
   "copa-do-brasil":     "/ligas/02.png",
   "copa_brasil":        "/ligas/02.png",
 
+  // Estaduais
+  "campeonato-carioca": "/ligas/14.png",
+  "carioca":            "/ligas/14.png",
+
   // South American
   "libertadores":           "/ligas/03.png",
   "conmebol-libertadores":  "/ligas/03.png",

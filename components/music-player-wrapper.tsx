@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation"
 import { MusicPlayer } from "@/components/music-player"
 
-const EXCLUDED_PATHS = ["/novo-jogo", "/splash"]
+const EXCLUDED_PATHS = ["/novo-jogo", "/splash", "/pre-office"]
 
 export function MusicPlayerWrapper() {
   const pathname = usePathname()

@@ -498,9 +498,9 @@ export default function NovoJogoPage() {
                     <Image
                       src={leagueLogo}
                       alt={activeLeague.label}
-                      width={28}
-                      height={14}
-                      className="object-contain flex-shrink-0"
+                      width={48}
+                      height={48}
+                      className="object-contain flex-shrink-0 h-9 w-auto max-w-12"
                       style={{ mixBlendMode: "screen" }}
                       unoptimized
                     />

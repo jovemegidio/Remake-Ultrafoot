@@ -393,19 +393,21 @@ export default function PartidaPage() {
                 <Image
                   src={getLeagueLogo(matchInfo.leagueKey)!}
                   alt={matchInfo.competition}
-                  width={88}
-                  height={88}
-                  className="object-contain opacity-90"
+                  width={160}
+                  height={160}
+                  className="object-contain opacity-95 w-28 h-28 md:w-36 md:h-36"
                   unoptimized
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center w-22 h-22 rounded-full bg-white/5 border border-white/10">
-                  <Trophy className="h-8 w-8 text-white/40" />
-                </div>
+                <>
+                  <div className="flex flex-col items-center justify-center w-22 h-22 rounded-full bg-white/5 border border-white/10">
+                    <Trophy className="h-8 w-8 text-white/40" />
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60 text-center max-w-28 text-balance">
+                    {matchInfo.competition}
+                  </span>
+                </>
               )}
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60 text-center max-w-28 text-balance">
-                {matchInfo.competition}
-              </span>
             </div>
 
             {/* Live Phase Toggle */}
