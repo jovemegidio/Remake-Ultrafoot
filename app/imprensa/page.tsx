@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Mic,
   MicOff,
   MessageCircle,
   Camera,
@@ -25,16 +24,13 @@ import {
   Shield,
   ThumbsUp,
   ThumbsDown,
-  Meh
+  Meh,
+  X
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
-import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import { useGameState } from "@/lib/save-system"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, type PressQuestion } from "@/lib/game-engine"
 
 // Perguntas de conferencia
@@ -150,8 +146,6 @@ export default function ImprensaPage() {
     window.addEventListener('gamepad:button', handler)
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
-  const { state } = useGameState()
-  const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   const gameEngine = useGameEngine()
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -181,6 +175,12 @@ export default function ImprensaPage() {
     setAnsweredQuestions([])
     setShowResult(false)
   }
+
+  // Abrir direto na coletiva ao entrar na tela (sem passar pelo dashboard)
+  useEffect(() => {
+    startConference()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Responder pergunta
   const answerQuestion = (optionIndex: number) => {
@@ -262,24 +262,24 @@ export default function ImprensaPage() {
   }
 
   return (
-    <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-      <GameSidebar />
-      <GameHeader team={userTeam} />
-      
+    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
       <main className="flex-1 p-4 md:p-6 overflow-y-auto scrollbar-premium">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 max-w-3xl mx-auto w-full">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-white">Sala de Imprensa</h1>
             <p className="text-sm text-white/50">Gerencie sua relacao com a midia e imagem publica</p>
           </div>
-          
-          {!isConferenceActive && !showResult && (
-            <Button onClick={startConference} className="gap-2">
-              <Mic className="h-4 w-4" />
-              Iniciar Coletiva
-            </Button>
-          )}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/pre-office")}
+            className="text-white/60 hover:text-white shrink-0"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Fechar</span>
+          </Button>
         </div>
 
         <AnimatePresence mode="wait">
