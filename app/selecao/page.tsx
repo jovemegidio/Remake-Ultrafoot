@@ -29,7 +29,7 @@ import {
   CONFEDERATION_LABEL,
   type NationalTeam,
 } from "@/lib/national-teams"
-import { getCompetitionsForConfederation } from "@/lib/national-competitions"
+import { getCompetitionsForConfederation, getCompetitionDef } from "@/lib/national-competitions"
 import type { NationalOffer } from "@/lib/save-system"
 
 function NationalCrest({ team, size = 48 }: { team: { code: string; cor1: string; cor2: string }; size?: number }) {
@@ -122,6 +122,7 @@ function CompetitionPanel() {
   if (!currentCompetition || !nationalTeam) return null
 
   const comp = currentCompetition
+  const def = getCompetitionDef(comp.competitionId)
   const isActive = comp.status === "active"
   const statusBanner = (() => {
     switch (comp.status) {
@@ -139,21 +140,37 @@ function CompetitionPanel() {
   })()
 
   return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-5 space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-[#00ffc8]/10 flex items-center justify-center">
-            <Trophy className="h-5 w-5 text-[#00ffc8]" />
+    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] overflow-hidden">
+      {/* Banner com tema da competicao */}
+      <div
+        className="relative h-32 sm:h-36 flex items-end p-5"
+        style={
+          def?.theme
+            ? { backgroundImage: `url(${def.theme})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : undefined
+        }
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c10] via-[#0c0c10]/70 to-[#0c0c10]/20" />
+        <div className="relative flex items-end justify-between w-full gap-3">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0 shadow-lg"
+              style={{ backgroundColor: def?.accent ?? "#00ffc8" }}
+            >
+              <Trophy className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white drop-shadow">{comp.competitionName}</h3>
+              <p className="text-xs text-white/70 drop-shadow">Temporada {comp.season} - {comp.stage}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">{comp.competitionName}</h3>
-            <p className="text-xs text-white/50">Temporada {comp.season} - {comp.stage}</p>
-          </div>
+          {comp.lastSummary && isActive && (
+            <span className="hidden sm:block text-xs text-white/70 max-w-[40%] text-right drop-shadow">{comp.lastSummary}</span>
+          )}
         </div>
-        {comp.lastSummary && isActive && (
-          <span className="hidden sm:block text-xs text-white/50 max-w-[40%] text-right">{comp.lastSummary}</span>
-        )}
       </div>
+
+      <div className="p-5 space-y-5">
 
       {statusBanner && (
         <div className={cn("flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium", statusBanner.tone)}>
@@ -254,6 +271,7 @@ function CompetitionPanel() {
           <Flag className="h-4 w-4" /> Encerrar competicao
         </button>
       ) : null}
+      </div>
     </div>
   )
 }

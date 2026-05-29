@@ -31,6 +31,7 @@ export const ptBR = {
     training: "Treinamento",
     calendar: "Calendario",
     competitions: "Competicoes",
+    nationalTeam: "Selecao Nacional",
     scouts: "Olheiros",
     infrastructure: "Infraestrutura",
     statistics: "Estatisticas",

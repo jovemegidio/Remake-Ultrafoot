@@ -27,6 +27,10 @@ export interface NationalCompetitionDef {
   knockoutStages?: string[]
   leagueTeams?: number
   leagueQualify?: number
+  /** Imagem de tema da competicao (fundo) */
+  theme: string
+  /** Cor de destaque para a competicao */
+  accent: string
 }
 
 export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
@@ -41,6 +45,8 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     groupSize: 4,
     qualifyFromGroup: 2,
     knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
+    theme: "/competitions/7.png",
+    accent: "#e11d2a",
   },
   {
     id: "eurocopa",
@@ -53,6 +59,8 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     groupSize: 4,
     qualifyFromGroup: 2,
     knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
+    theme: "/competitions/8.jpg",
+    accent: "#1d4ed8",
   },
   {
     id: "nations_league",
@@ -64,6 +72,8 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     prestige: 78,
     leagueTeams: 4,
     leagueQualify: 1,
+    theme: "/competitions/8.jpg",
+    accent: "#0d9488",
   },
   {
     id: "eliminatorias",
@@ -75,6 +85,8 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     prestige: 70,
     leagueTeams: 6,
     leagueQualify: 4,
+    theme: "/competitions/9.jpg",
+    accent: "#ca8a04",
   },
   {
     id: "copa_mundo",
@@ -87,6 +99,8 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     groupSize: 4,
     qualifyFromGroup: 2,
     knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
+    theme: "/competitions/9.jpg",
+    accent: "#1e3a8a",
   },
 ]
 

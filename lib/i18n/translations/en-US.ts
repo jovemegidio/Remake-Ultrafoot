@@ -33,6 +33,7 @@ export const enUS: Translations = {
     training: "Training",
     calendar: "Calendar",
     competitions: "Competitions",
+    nationalTeam: "National Team",
     scouts: "Scouts",
     infrastructure: "Infrastructure",
     statistics: "Statistics",

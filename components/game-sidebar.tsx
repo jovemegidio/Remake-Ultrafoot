@@ -17,15 +17,17 @@ import {
   Heart,
   Search,
   Building2,
+  Flag,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGamepadFocusable } from "@/components/gamepad-provider"
 import { useTranslation } from "@/lib/i18n"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { useGameState } from "@/lib/save-system"
 
-type NavItemDef = { icon: React.ComponentType<{ className?: string }>; label: string; href: string }
+type NavItemDef = { icon: React.ComponentType<{ className?: string }>; label: string; href: string; badge?: number }
 
-function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { active: boolean }) {
+function SidebarNavItem({ icon: Icon, label, href, active, badge }: NavItemDef & { active: boolean }) {
   const ref = useRef<HTMLAnchorElement>(null)
   const focusable = useGamepadFocusable(`sidebar-${href}`, ref as React.RefObject<HTMLElement | null>, () => hardNavigate(href))
 
@@ -59,6 +61,13 @@ function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { acti
         (active || focusable.isFocused) && "scale-110"
       )} />
 
+      {/* Badge de notificacao */}
+      {badge && badge > 0 ? (
+        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00ffc8] px-1 text-[9px] font-bold text-[#050508] shadow-[0_0_8px_rgba(0,255,200,0.6)]">
+          {badge > 9 ? "9+" : badge}
+        </span>
+      ) : null}
+
       {/* Tooltip */}
       <span className="absolute left-full ml-3 hidden rounded-lg bg-[#050508] px-3 py-2 text-[11px] font-medium text-white shadow-xl group-hover:block whitespace-nowrap ring-1 ring-white/10 z-50 backdrop-blur-sm">
         {label}
@@ -71,13 +80,16 @@ function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { acti
 export function GameSidebar() {
   const pathname = usePathname()
   const t = useTranslation()
+  const { state } = useGameState()
+  const pendingOffers = state.pendingNationalOffers?.length ?? 0
 
-  const navItems = [
+  const navItems: NavItemDef[] = [
     { icon: LayoutGrid, label: t.sidebar.dashboard, href: "/" },
     { icon: Users, label: t.sidebar.squad, href: "/elenco" },
     { icon: Dumbbell, label: t.sidebar.training, href: "/treinamento" },
     { icon: CalendarDays, label: t.sidebar.calendar, href: "/calendario" },
     { icon: Trophy, label: t.sidebar.competitions, href: "/competicoes" },
+    { icon: Flag, label: t.sidebar.nationalTeam, href: "/selecao", badge: pendingOffers },
     { icon: Search, label: t.sidebar.scouts, href: "/olheiros" },
     { icon: Building2, label: t.sidebar.infrastructure, href: "/infraestrutura" },
     { icon: BarChart3, label: t.sidebar.statistics, href: "/estatisticas" },
@@ -111,10 +123,10 @@ export function GameSidebar() {
 
       {/* Navigation */}
       <nav className="flex flex-1 flex-col items-center gap-1 w-full px-2 overflow-visible scrollbar-none">
-        {navItems.map(({ icon, label, href }) => {
+        {navItems.map(({ icon, label, href, badge }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href)
           return (
-            <SidebarNavItem key={href} icon={icon} label={label} href={href} active={active} />
+            <SidebarNavItem key={href} icon={icon} label={label} href={href} active={active} badge={badge} />
           )
         })}
       </nav>
