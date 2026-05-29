@@ -216,15 +216,20 @@ export default function PartidaPage() {
   const matchInfo = useMemo(() => {
     // league é a chave de divisao (ex: "serie_a") — usar diretamente para o logo
     const leagueName = getLeagueName(homeTeam.curto)
+    // Para copas/continentais, o nome real da competicao vem do fixture atual.
+    const isCupMatch =
+      currentMatch?.competitionType === "cup" || currentMatch?.competitionType === "continental"
+    const competition = currentMatch?.competition ?? leagueName
     return {
-      competition: leagueName,
+      competition,
+      // Em copas a fase ja vem no nome da competicao; mantemos o rotulo de rodada para a liga
       leagueKey: league,
-      round: `Rodada ${currentRound ?? 1}`,
+      round: isCupMatch ? competition : `Rodada ${currentRound ?? 1}`,
       date: "01 ABR 2026",
       time: "16:00",
       stadium: homeTeam.estadio_nome,
     }
-  }, [league, currentRound, homeTeam])
+  }, [league, currentRound, homeTeam, currentMatch])
 
   const competitionTheme = useMemo(() => {
     const competitionId = (league ?? "serie_a").replace(/_/g, "-") as CompetitionId
