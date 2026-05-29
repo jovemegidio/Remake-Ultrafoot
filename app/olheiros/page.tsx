@@ -30,7 +30,9 @@ import {
   Briefcase,
   CheckCircle2,
   AlertCircle,
-  X
+  X,
+  Landmark,
+  Compass
 } from "lucide-react"
 import type { Scout } from "@/lib/game-engine"
 
@@ -39,7 +41,7 @@ const SCOUTING_REGIONS = [
   { 
     id: "brasil", 
     name: "Brasil", 
-    icon: "🇧🇷", 
+    icon: MapPin, 
     searchCost: 50000, 
     weeksToComplete: 2,
     description: "Promessas das series A, B e C",
@@ -48,7 +50,7 @@ const SCOUTING_REGIONS = [
   { 
     id: "americas", 
     name: "Americas", 
-    icon: "🌎", 
+    icon: Globe, 
     searchCost: 150000, 
     weeksToComplete: 3,
     description: "Argentina, Colombia, Mexico, EUA",
@@ -57,7 +59,7 @@ const SCOUTING_REGIONS = [
   { 
     id: "europa", 
     name: "Europa", 
-    icon: "🇪🇺", 
+    icon: Landmark, 
     searchCost: 300000, 
     weeksToComplete: 4,
     description: "Ligas europeias menores e jovens",
@@ -66,7 +68,7 @@ const SCOUTING_REGIONS = [
   { 
     id: "asia", 
     name: "Asia/Africa", 
-    icon: "🌏", 
+    icon: Compass, 
     searchCost: 100000, 
     weeksToComplete: 3,
     description: "Mercados emergentes",
@@ -356,7 +358,7 @@ export default function OlheirosPage() {
                                       className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/[0.04] hover:border-[#00ffc8]/30 transition-all text-left"
                                     >
                                       <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-lg">{region.icon}</span>
+                                        <region.icon className="h-4 w-4 text-[#00ffc8]" />
                                         <span className="text-sm font-medium text-white">{region.name}</span>
                                       </div>
                                       <p className="text-[10px] text-white/40 mb-2">{region.description}</p>

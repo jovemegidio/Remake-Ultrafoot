@@ -15,6 +15,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Trophy,
 } from "lucide-react"
 import { ActionHint } from "@/components/gamepad-icons"
 import { GamepadControlsBar, useGamepadDetection } from "@/components/gamepad-controls-bar"
@@ -217,15 +218,16 @@ export default function PartidaPage() {
   const matchInfo = useMemo(() => {
     // league é a chave de divisao (ex: "serie_a") — usar diretamente para o logo
     const leagueName = getLeagueName(homeTeam.curto)
-    // Para copas/continentais, o nome real da competicao vem do fixture atual.
-    const isCupMatch =
-      currentMatch?.competitionType === "cup" || currentMatch?.competitionType === "continental"
+    // Jogos de liga usam a divisao; estaduais/copas/continentais usam o nome real da competicao.
+    const compType = currentMatch?.competitionType
+    const isLeagueMatch = !compType || compType === "league"
     const competition = currentMatch?.competition ?? leagueName
     return {
       competition,
-      // Em copas a fase ja vem no nome da competicao; mantemos o rotulo de rodada para a liga
-      leagueKey: league,
-      round: isCupMatch ? competition : `Rodada ${currentRound ?? 1}`,
+      // O logo central segue a competicao real da partida
+      leagueKey: isLeagueMatch ? league : competition,
+      // Em copas/estaduais a fase ja vem no nome da competicao; na liga mostramos a rodada
+      round: isLeagueMatch ? `Rodada ${currentRound ?? 1}` : competition,
       date: "01 ABR 2026",
       time: "16:00",
       stadium: homeTeam.estadio_nome,
@@ -386,8 +388,8 @@ export default function PartidaPage() {
           {/* Center Options */}
           <div className="flex flex-col items-center justify-center px-6 md:px-8 gap-5 min-w-45">
             {/* League Logo - Centered */}
-            <div className="flex flex-col items-center gap-0">
-              {getLeagueLogo(matchInfo.leagueKey) && (
+            <div className="flex flex-col items-center gap-2">
+              {getLeagueLogo(matchInfo.leagueKey) ? (
                 <Image
                   src={getLeagueLogo(matchInfo.leagueKey)!}
                   alt={matchInfo.competition}
@@ -396,7 +398,14 @@ export default function PartidaPage() {
                   className="object-contain opacity-90"
                   unoptimized
                 />
+              ) : (
+                <div className="flex flex-col items-center justify-center w-22 h-22 rounded-full bg-white/5 border border-white/10">
+                  <Trophy className="h-8 w-8 text-white/40" />
+                </div>
               )}
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60 text-center max-w-28 text-balance">
+                {matchInfo.competition}
+              </span>
             </div>
 
             {/* Live Phase Toggle */}

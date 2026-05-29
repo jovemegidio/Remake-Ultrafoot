@@ -1882,9 +1882,6 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
 
 // Legacy scout card kept for visual experiments.
 function _ScoutCard({ scout, selected }: { scout: { name: string; nationality: string; area: string; assigned: number; stars: number }, selected: boolean }) {
-  const flagEmoji = scout.nationality === "Inglaterra" ? "🏴󠁧󠁢󠁥󠁮󠁧󠁿" : 
-                    scout.nationality === "Suica" ? "🇨🇭" : "🇨🇿"
-
   return (
     <div className={cn(
       "rounded-xl p-6 text-center transition-all",
@@ -1894,7 +1891,9 @@ function _ScoutCard({ scout, selected }: { scout: { name: string; nationality: s
         : "border border-white/[0.04] hover:border-white/10"
     )}>
       {/* Flag */}
-      <div className="text-3xl mb-3">{flagEmoji}</div>
+      <div className="flex justify-center mb-3">
+        <Flag className="h-7 w-7 text-white/40" />
+      </div>
 
       {/* Name */}
       <div className="text-white font-bold text-lg uppercase tracking-wide">

@@ -1183,45 +1183,6 @@ export default function PartidaAoVivoPage() {
               </div>
             </div>
 
-            {/* Stats mobile - abaixo do card central */}
-            <div className="lg:hidden grid grid-cols-3 gap-4 mt-4">
-              <div className="text-center">
-                <span className="text-[#00ffc8] text-[10px] font-medium uppercase">Posse</span>
-                <div className="flex justify-between items-end mt-1">
-                  <span className="text-white text-2xl font-black">{state.home.possession ?? 50}</span>
-                  <span className="text-white/30 text-xs">%</span>
-                  <span className="text-white text-2xl font-black">{state.away.possession ?? 50}</span>
-                </div>
-                <div className="mt-0.5 flex justify-between text-[9px] font-semibold uppercase text-white/35">
-                  <span>{homeTeam.curto}</span>
-                  <span>{awayTeam.curto}</span>
-                </div>
-              </div>
-              <div className="text-center">
-                <span className="text-[#00ffc8] text-[10px] font-medium uppercase">Chutes</span>
-                <div className="flex justify-between items-end mt-1">
-                  <span className="text-white text-2xl font-black">{state.home.shots}</span>
-                  <span className="text-white/30 text-xs">-</span>
-                  <span className="text-white text-2xl font-black">{state.away.shots}</span>
-                </div>
-                <div className="mt-0.5 flex justify-between text-[9px] font-semibold uppercase text-white/35">
-                  <span>{homeTeam.curto}</span>
-                  <span>{awayTeam.curto}</span>
-                </div>
-              </div>
-              <div className="text-center">
-                <span className="text-[#00ffc8] text-[10px] font-medium uppercase">No Alvo</span>
-                <div className="flex justify-between items-end mt-1">
-                  <span className="text-white text-2xl font-black">{state.home.shotsOnTarget}</span>
-                  <span className="text-white/30 text-xs">-</span>
-                  <span className="text-white text-2xl font-black">{state.away.shotsOnTarget}</span>
-                </div>
-                <div className="mt-0.5 flex justify-between text-[9px] font-semibold uppercase text-white/35">
-                  <span>{homeTeam.curto}</span>
-                  <span>{awayTeam.curto}</span>
-                </div>
-              </div>
-            </div>
           </div>
 
   {/* Coluna Direita - Stats Fora */}

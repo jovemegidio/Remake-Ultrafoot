@@ -1,8 +1,8 @@
 "use client"
 
-import { useMemo, useState, useEffect, useCallback } from "react"
+import { useMemo, useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
-import { Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight, User } from "lucide-react"
+import { Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight, User, Play } from "lucide-react"
 import {
   serieATeams,
   serieBTeams,
@@ -224,6 +224,8 @@ export default function NovoJogoPage() {
   const [leagueIndex, setLeagueIndex] = useState(0)
   const [teamIndex, setTeamIndex] = useState(0)
   const [managerName, setManagerName] = useState("")
+  const [nameError, setNameError] = useState(false)
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   const activeCountry = COUNTRIES[countryIndex]
   const activeLeague = activeCountry.leagues[leagueIndex]
@@ -254,12 +256,20 @@ export default function NovoJogoPage() {
 
   const handleStart = useCallback(() => {
     if (!selectedTeam) return
+    if (managerName.trim().length === 0) {
+      setNameError(true)
+      // foca o input para o usuario digitar o nome
+      nameInputRef.current?.focus()
+      return
+    }
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
     initializeNewGame(selectedTeam.curto, managerName)
     window.sessionStorage.setItem("ultrafoot:session-active", "true")
     hardNavigate("/")
   }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme])
+
+  const isNameValid = managerName.trim().length > 0
 
   const nextTeam = useCallback(() => setTeamIndex(prev => (prev + 1) % teams.length), [teams.length])
   const prevTeam = useCallback(() => setTeamIndex(prev => (prev - 1 + teams.length) % teams.length), [teams.length])
@@ -539,50 +549,69 @@ export default function NovoJogoPage() {
             <div className="relative w-full max-w-xs">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: `${cor1}70` }} />
               <input
+                ref={nameInputRef}
                 value={managerName}
-                onChange={e => setManagerName(e.target.value)}
+                onChange={e => {
+                  setManagerName(e.target.value)
+                  if (nameError) setNameError(false)
+                }}
                 placeholder="Digite seu nome..."
                 maxLength={32}
+                aria-invalid={nameError}
                 className="w-full h-12 rounded-xl pl-11 pr-4 text-sm text-white placeholder:text-white/25 focus:outline-none transition-all text-center"
                 style={{
                   background: "rgba(0,0,0,0.55)",
-                  border: `1px solid ${cor1}30`,
+                  border: `1px solid ${nameError ? "#ef4444" : `${cor1}30`}`,
                   backdropFilter: "blur(12px)",
                   letterSpacing: "0.05em",
                 }}
                 onFocus={e => {
-                  e.currentTarget.style.borderColor = `${cor1}70`
-                  e.currentTarget.style.boxShadow = `0 0 0 3px ${cor1}15, 0 0 20px ${cor1}10`
+                  e.currentTarget.style.borderColor = nameError ? "#ef4444" : `${cor1}70`
+                  e.currentTarget.style.boxShadow = nameError
+                    ? "0 0 0 3px rgba(239,68,68,0.15)"
+                    : `0 0 0 3px ${cor1}15, 0 0 20px ${cor1}10`
                 }}
                 onBlur={e => {
-                  e.currentTarget.style.borderColor = `${cor1}30`
+                  e.currentTarget.style.borderColor = nameError ? "#ef4444" : `${cor1}30`
                   e.currentTarget.style.boxShadow = "none"
                 }}
               />
+              {nameError && (
+                <p className="absolute -bottom-5 left-0 right-0 text-center text-[11px] font-medium text-red-400">
+                  Digite o nome do treinador para continuar
+                </p>
+              )}
             </div>
 
             {/* Botão INICIAR CARREIRA */}
             <button
               onClick={handleStart}
+              aria-disabled={!isNameValid}
               className="relative w-full max-w-xs h-14 rounded-2xl font-black text-base tracking-[0.2em] uppercase text-white transition-all active:scale-[0.97] overflow-hidden group"
               style={{
                 background: `linear-gradient(135deg, ${cor1} 0%, ${cor2} 100%)`,
                 boxShadow: `0 8px 32px ${cor1}50, 0 2px 0 rgba(255,255,255,0.12) inset, 0 -2px 0 rgba(0,0,0,0.2) inset`,
+                opacity: isNameValid ? 1 : 0.5,
+                filter: isNameValid ? "none" : "grayscale(0.4)",
               }}
               onMouseEnter={e => {
+                if (!isNameValid) return
                 e.currentTarget.style.boxShadow = `0 12px 40px ${cor1}70, 0 2px 0 rgba(255,255,255,0.12) inset`
                 e.currentTarget.style.filter = "brightness(1.08)"
                 e.currentTarget.style.transform = "translateY(-1px)"
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.boxShadow = `0 8px 32px ${cor1}50, 0 2px 0 rgba(255,255,255,0.12) inset, 0 -2px 0 rgba(0,0,0,0.2) inset`
-                e.currentTarget.style.filter = "none"
+                e.currentTarget.style.filter = isNameValid ? "none" : "grayscale(0.4)"
                 e.currentTarget.style.transform = "none"
               }}
             >
               {/* Brilho superior */}
               <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10 rounded-t-2xl" />
-              <span className="relative z-10 drop-shadow-sm">⚽ INICIAR CARREIRA</span>
+              <span className="relative z-10 drop-shadow-sm inline-flex items-center justify-center gap-2">
+                <Play className="h-5 w-5" fill="currentColor" strokeWidth={0} />
+                INICIAR CARREIRA
+              </span>
             </button>
 
             {/* Rodapé: gamepad + contador */}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
@@ -396,7 +397,16 @@ export default function ConfiguracoesPage() {
                       language === lang.id ? "border-primary bg-primary/10" : "border-white/10 bg-white/5 hover:border-white/20"
                     )}
                   >
-                    <span className="text-lg">{lang.flag === "BR" ? "🇧🇷" : lang.flag === "US" ? "🇺🇸" : "🇪🇸"}</span>
+                    <span className="w-7 h-5 rounded overflow-hidden shadow-sm flex-shrink-0 ring-1 ring-white/10">
+                      <Image
+                        src={`/flags/${lang.flag === "BR" ? "br" : lang.flag === "US" ? "us" : "es"}.png`}
+                        alt={lang.label}
+                        width={28}
+                        height={20}
+                        className="object-cover w-full h-full"
+                        unoptimized
+                      />
+                    </span>
                     <span className="text-sm text-white">{lang.label}</span>
                     {language === lang.id && <Check className="h-4 w-4 text-primary ml-auto" />}
                   </button>

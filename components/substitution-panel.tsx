@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useContext } from "react"
-import { X, ArrowLeftRight, ChevronLeft, ChevronRight, User } from "lucide-react"
+import { X, ArrowLeftRight, ChevronLeft, ChevronRight, User, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TeamCrest } from "@/components/team-crest"
 import { ControllerButton, ControllerToolbar, ControllerTypeContext } from "@/components/controller-buttons"
@@ -128,7 +128,7 @@ export function SubstitutionPanel({
               "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
               step === "select-out" ? "bg-[#00ffc8] text-black" : selectedOut ? "bg-[#00ffc8] text-black" : "bg-white/10"
             )}>
-              {selectedOut ? "✓" : "1"}
+              {selectedOut ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : "1"}
             </div>
             <span className="text-sm font-medium">Jogador Sai</span>
           </div>
@@ -143,7 +143,7 @@ export function SubstitutionPanel({
               "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
               step === "select-in" ? "bg-[#00ffc8] text-black" : selectedIn ? "bg-[#00ffc8] text-black" : "bg-white/10"
             )}>
-              {selectedIn ? "✓" : "2"}
+              {selectedIn ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : "2"}
             </div>
             <span className="text-sm font-medium">Jogador Entra</span>
           </div>
