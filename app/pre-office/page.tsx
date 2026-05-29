@@ -254,19 +254,24 @@ export default function PreOfficePage() {
 
   return (
     <div className="relative flex h-screen md:pl-16 pl-0 pb-20 md:pb-0 overflow-hidden">
-      {/* Background */}
+      {/* Background base escura */}
+      <div className="absolute inset-0 bg-[#050b07]" />
+      {/* Textura de futebol em baixa opacidade */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/images/pre-office-bg.png')" }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
+        style={{ backgroundImage: "url('/images/pre-office-pattern.png')" }}
       />
-      <div className="absolute inset-0 bg-black/40" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      {/* Brilho verde radial para profundidade */}
       <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse 120% 100% at 80% 50%, transparent 40%, rgba(0,0,0,0.6) 100%)"
+        background: "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.15) 0%, transparent 60%)"
       }} />
-      <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-transparent to-black/30" />
+      {/* Camadas de escurecimento para legibilidade do conteudo */}
+      <div className="absolute inset-0 bg-[#050b07]/55" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#050b07] via-[#050b07]/70 to-[#050b07]/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050b07] via-transparent to-[#050b07]/60" />
+      <div className="absolute inset-0" style={{
+        background: "radial-gradient(ellipse 120% 100% at 50% 50%, transparent 35%, rgba(0,0,0,0.55) 100%)"
+      }} />
 
       <GameSidebar />
 
