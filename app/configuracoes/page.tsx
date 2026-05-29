@@ -193,9 +193,9 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-xl md:text-2xl font-semibold text-white/70">{t.settings.customize}</h1>
               <div className="flex items-center gap-2 text-white/50 text-sm">
-                <span>{state.managerName || "7spt"}</span>
+                <span>{state.managerName || "Tecnico"}</span>
                 <span className="text-white/30">|</span>
-                <span>{t.settings.reconnect}</span>
+                <span>{userTeam.nome}</span>
               </div>
             </div>
             
@@ -252,7 +252,6 @@ export default function ConfiguracoesPage() {
             </div>
           </main>
           
-          <MusicPlayer defaultSize="mini" autoPlay={false} />
         </div>
       </ControllerTypeContext.Provider>
     )
@@ -1074,7 +1073,6 @@ export default function ConfiguracoesPage() {
           </div>
         </main>
         
-        <MusicPlayer defaultSize="mini" autoPlay={false} />
       </div>
     </ControllerTypeContext.Provider>
   )

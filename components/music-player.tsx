@@ -45,6 +45,24 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
   const [shuffle, setShuffle] = useState(false)
   const [repeat, setRepeat] = useState<"off" | "all" | "one">("off")
   const [currentTrack, setCurrentTrack] = useState(0)
+
+  // Restaura preferencias do localStorage apos hidratacao
+  useEffect(() => {
+    const savedVolume = localStorage.getItem("ultrafoot:music-volume")
+    if (savedVolume !== null) setVolume(parseInt(savedVolume, 10))
+    const savedShuffle = localStorage.getItem("ultrafoot:music-shuffle")
+    if (savedShuffle !== null) setShuffle(savedShuffle === "true")
+    const savedRepeat = localStorage.getItem("ultrafoot:music-repeat")
+    if (savedRepeat !== null) setRepeat(savedRepeat as "off" | "all" | "one")
+    const savedSize = localStorage.getItem("ultrafoot:music-size")
+    if (savedSize !== null) setSize(savedSize as PlayerSize)
+  }, [])
+
+  // Persiste preferencias no localStorage
+  useEffect(() => { localStorage.setItem("ultrafoot:music-volume", String(volume)) }, [volume])
+  useEffect(() => { localStorage.setItem("ultrafoot:music-shuffle", String(shuffle)) }, [shuffle])
+  useEffect(() => { localStorage.setItem("ultrafoot:music-repeat", repeat) }, [repeat])
+  useEffect(() => { localStorage.setItem("ultrafoot:music-size", size) }, [size])
   const [isLoading, setIsLoading] = useState(false)
   const [showPlaylist, setShowPlaylist] = useState(false)
   const [tracks, setTracks] = useState<Track[]>([])

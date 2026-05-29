@@ -20,10 +20,10 @@ import {
   Target,
   Calendar,
   Award,
+  AlertTriangle,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/teams-data"
@@ -233,6 +233,20 @@ export default function FinancasPage() {
             {t.common.week} {currentWeek}/38
           </div>
         </div>
+
+        {wagePercentage >= 100 && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 text-red-400" />
+              <div>
+                <h2 className="text-sm font-semibold text-red-200">Limite salarial excedido</h2>
+                <p className="mt-1 text-xs leading-relaxed text-red-100/70">
+                  A folha esta em {wagePercentage.toFixed(0)}% do limite. Renegocie contratos, venda atletas ou aumente receitas para liberar margem de contratacao.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Balance Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -548,7 +562,6 @@ export default function FinancasPage() {
         </div>
       </main>
 
-      <MusicPlayer />
     </div>
   )
 }

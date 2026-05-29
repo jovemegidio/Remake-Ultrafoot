@@ -218,9 +218,8 @@ export default function PreOfficePage() {
       const nextMatch = result?.nextUserMatch
       if (nextMatch && nextMatch.round === (saveState.week + 1)) {
         hardNavigate("/partida", true)
-      } else {
-        hardNavigate("/", true)
       }
+      // Sem jogo nesta rodada: fica na pre-office, data atualiza via saveState
     } finally {
       setIsAdvancing(false)
     }

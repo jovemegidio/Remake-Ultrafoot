@@ -19,7 +19,6 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
@@ -242,6 +241,26 @@ export default function TreinamentoPage() {
                 >
                   Em Treino
                 </button>
+              </div>
+            </div>
+
+            <div className="hidden md:flex items-center gap-4 px-5 py-2 border-b border-white/[0.04] bg-white/[0.02]">
+              <div className="min-w-[180px] text-[10px] font-medium uppercase tracking-wider text-white/35">
+                Jogador
+              </div>
+              <div className="flex-1 grid grid-cols-6 gap-2">
+                {trainingTypes.map(type => {
+                  const Icon = type.icon
+                  return (
+                    <div key={type.id} className="flex items-center justify-center gap-1 text-[10px] font-medium text-white/45">
+                      <Icon className={cn("h-3 w-3", type.color)} />
+                      <span className="truncate">{type.name}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="min-w-[120px] text-right text-[10px] font-medium uppercase tracking-wider text-white/35">
+                Status
               </div>
             </div>
 
@@ -474,7 +493,6 @@ export default function TreinamentoPage() {
         </div>
       </main>
 
-      <MusicPlayer />
     </div>
   )
 }

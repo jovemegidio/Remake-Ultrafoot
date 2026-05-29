@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   Calendar,
@@ -18,33 +17,67 @@ import {
   MapPin,
   ArrowUpRight,
   ArrowDownRight,
+  AlertTriangle,
 } from "lucide-react"
 
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { MatchCarousel } from "@/components/match-carousel"
 import { NewsFeed } from "@/components/news-feed"
-import { formatCurrency, formatNumber, type Team } from "@/lib/teams-data"
+import { formatCurrency, formatNumber, getTeamByShort, type Team } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { useGameEngine } from "@/lib/game-engine"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { useTranslation } from "@/lib/i18n"
 
+const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+const HOME_WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
+
+function roundToMonth(round: number): number {
+  const monthOffset = Math.floor((round - 1) * 9 / 38)
+  return Math.min(11, 3 + monthOffset)
+}
+
+function roundToDay(round: number): number {
+  const daysInRound = [1, 5, 8, 12, 15, 19, 22, 26, 29]
+  return daysInRound[(round - 1) % 9] || 15
+}
+
+function fixtureDate(round: number): Date {
+  return new Date(2026, roundToMonth(round), roundToDay(round))
+}
+
+function fixtureDateShort(round: number): string {
+  const date = fixtureDate(round)
+  return `${HOME_MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`
+}
+
+function fixtureDateLine(round: number): string {
+  const date = fixtureDate(round)
+  return `${HOME_WEEKDAYS_SHORT[date.getDay()]}, ${date.getDate()} ${HOME_MONTHS_SHORT[date.getMonth()]}`
+}
+
 export default function DashboardPage() {
-  const router = useRouter()
   const { hydrated, userTeam, seasonCalendar, standings, userPosition, currentSeason, saveState } = useGameManager()
   const gameEngine = useGameEngine()
   const t = useTranslation()
+  const [sessionChecked, setSessionChecked] = useState(false)
+  const [sessionActive, setSessionActive] = useState(false)
 
-  // Redireciona para splash se nao houver time selecionado
   useEffect(() => {
-    if (hydrated && !saveState.selectedTeamShort) {
-      router.replace("/splash")
+    setSessionActive(window.sessionStorage.getItem("ultrafoot:session-active") === "true")
+    setSessionChecked(true)
+  }, [])
+
+  // Redireciona para splash quando a home foi aberta fora do fluxo do jogo.
+  useEffect(() => {
+    if (hydrated && sessionChecked && (!saveState.selectedTeamShort || !sessionActive)) {
+      hardNavigate("/splash", true)
     }
-  }, [hydrated, saveState.selectedTeamShort, router])
+  }, [hydrated, saveState.selectedTeamShort, sessionActive, sessionChecked])
 
   // Navegacao por controle no dashboard
   useEffect(() => {
@@ -53,28 +86,28 @@ export default function DashboardPage() {
       switch (button) {
         case "A":
         case "START":
-          router.push("/partida")
+          hardNavigate("/partida")
           break
         case "X":
-          router.push("/calendario")
+          hardNavigate("/calendario")
           break
         case "Y":
-          router.push("/elenco")
+          hardNavigate("/elenco")
           break
         case "LB":
-          router.push("/mercado")
+          hardNavigate("/mercado")
           break
         case "RB":
-          router.push("/competicoes")
+          hardNavigate("/competicoes")
           break
       }
     }
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
-  }, [router])
+  }, [])
 
   // Aguarda hidratacao
-  if (!hydrated || !userTeam) {
+  if (!hydrated || !sessionChecked || !sessionActive || !userTeam) {
     return (
       <div className="h-screen bg-[#050508] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -96,6 +129,12 @@ export default function DashboardPage() {
   const weeklyIncome = gameEngine.weeklyIncome ?? 0
   const weeklyExpenses = gameEngine.weeklyExpenses ?? 0
   const balance = gameEngine.balance ?? userTeam.saldo
+  const monthlyWages = gameEngine.squadPlayers.reduce((sum, p) => sum + (p.contract?.salary || 0), 0) * 4
+  const monthlyScoutWages = gameEngine.scouts.reduce((sum, s) => sum + s.salary, 0) * 4
+  const wageBudget = gameEngine.wageBudget ?? 0
+  const wageUsed = monthlyWages + monthlyScoutWages
+  const wagePercentage = wageBudget > 0 ? (wageUsed / wageBudget) * 100 : 0
+  const salaryCritical = wagePercentage >= 100
 
   return (
     <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
@@ -181,7 +220,7 @@ export default function DashboardPage() {
                 matches={nextMatches.map((f, i) => ({
                   home: f.homeTeam,
                   away: f.awayTeam,
-                  date: `Rodada ${f.round}`,
+                  date: fixtureDateShort(f.round),
                   time: "",
                   competition: f.competition,
                   matchday: f.round,
@@ -245,6 +284,20 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-5">
+            {salaryCritical && (
+              <section className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 text-red-400" />
+                  <div>
+                    <div className="text-sm font-semibold text-red-200">Folha salarial acima do limite</div>
+                    <p className="mt-1 text-xs leading-relaxed text-red-100/70">
+                      Uso em {wagePercentage.toFixed(0)}%. Ajuste contratos ou vendas antes de novas contratacoes.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* Classificacao */}
             <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
@@ -252,31 +305,35 @@ export default function DashboardPage() {
                   <Trophy className="h-4 w-4 text-[#ffd700]" />
                   {t.dashboard.standings}
                 </div>
-                <span className="text-[10px] text-white/40">{t.competitions.brasileirao.toUpperCase()}</span>
+                <span className="text-[10px] text-white/40">TOP 8 DE {standings.length || 20}</span>
               </div>
               <div className="divide-y divide-white/5">
                 <div className="grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider">
                   <span>#</span><span>{t.dashboard.col.club}</span><span className="text-center">{t.dashboard.col.pts}</span>
                   <span className="text-center">{t.dashboard.col.w}</span><span className="text-center">{t.dashboard.col.d}</span><span className="text-center">{t.dashboard.col.l}</span>
                 </div>
-                {standings.slice(0, 8).map((s, i) => (
-                  <div
-                    key={s.teamShort}
-                    className={cn(
-                      "grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2.5 items-center text-sm",
-                      s.teamShort === userTeam.curto && "bg-primary/10 border-l-2 border-primary"
-                    )}
-                  >
-                    <span className={cn("text-xs font-medium", i < 4 ? "text-[#00ffc8]" : i >= 16 ? "text-red-500" : "text-white/50")}>{i + 1}</span>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="truncate text-xs text-white">{s.teamShort}</span>
+                {standings.slice(0, 8).map((s, i) => {
+                  const standingTeam = getTeamByShort(s.teamShort)
+                  return (
+                    <div
+                      key={s.teamShort}
+                      className={cn(
+                        "grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2.5 items-center text-sm",
+                        s.teamShort === userTeam.curto && "bg-primary/10 border-l-2 border-primary"
+                      )}
+                    >
+                      <span className={cn("text-xs font-medium", i < 4 ? "text-[#00ffc8]" : i >= 16 ? "text-red-500" : "text-white/50")}>{i + 1}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {standingTeam && <TeamCrest team={standingTeam} size="xs" />}
+                        <span className="truncate text-xs text-white">{standingTeam?.curto ?? s.teamShort}</span>
+                      </div>
+                      <span className="text-center font-semibold text-white">{s.points}</span>
+                      <span className="text-center text-xs text-white/50">{s.won}</span>
+                      <span className="text-center text-xs text-white/50">{s.drawn}</span>
+                      <span className="text-center text-xs text-white/50">{s.lost}</span>
                     </div>
-                    <span className="text-center font-semibold text-white">{s.points}</span>
-                    <span className="text-center text-xs text-white/50">{s.won}</span>
-                    <span className="text-center text-xs text-white/50">{s.drawn}</span>
-                    <span className="text-center text-xs text-white/50">{s.lost}</span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               <Link href="/competicoes" className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/[0.04]">
                 {t.common.viewFullTable} <ChevronRight className="h-3 w-3" />
@@ -328,7 +385,6 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      <MusicPlayer />
     </div>
   )
 }
@@ -364,8 +420,9 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
 
   return (
     <div className={cn("flex items-center gap-4 px-5 py-3", isNext && "bg-[#00ffc8]/5")}>
-      <div className="w-16 text-xs">
+      <div className="w-20 text-xs">
         <div className="text-white/80">Rod. {fixture.round}</div>
+        <div className="text-[10px] text-white/45">{fixtureDateLine(fixture.round)}</div>
         <div className={cn("text-[10px] font-medium", fixture.played ? (
           fixture.homeScore !== undefined && fixture.awayScore !== undefined
             ? (isHome ? fixture.homeScore > fixture.awayScore! : fixture.awayScore! > fixture.homeScore) ? "text-[#00ffc8]"

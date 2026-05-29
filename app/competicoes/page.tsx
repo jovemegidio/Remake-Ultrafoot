@@ -22,13 +22,13 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, getTeamsByDivision, serieBTeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { useTranslation } from "@/lib/i18n"
+import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
 
 // Tipos para competicoes
@@ -724,11 +724,11 @@ export default function CompeticoesPage() {
           </TabsList>
 
           <TabsContent value="brasileirao" className="mt-4">
-            <StandingsTable standings={serieAStandings} userTeam={userTeam} />
+            <StandingsTable standings={serieAStandings} userTeam={userTeam} division={userTeam.divisao} />
           </TabsContent>
 
           <TabsContent value="serie-b" className="mt-4">
-            <StandingsTable standings={serieBStandings} userTeam={userTeam} />
+            <StandingsTable standings={serieBStandings} userTeam={userTeam} division="serie_b" />
           </TabsContent>
 
           <TabsContent value="copa-do-brasil" className="mt-4">
@@ -762,7 +762,6 @@ export default function CompeticoesPage() {
         </Tabs>
       </main>
 
-      <MusicPlayer />
     </div>
   )
 }
@@ -1136,7 +1135,8 @@ function LibertadoresView({
 
 function StandingsTable({ 
   standings, 
-  userTeam 
+  userTeam,
+  division,
 }: { 
   standings: {
     position: number
@@ -1153,8 +1153,14 @@ function StandingsTable({
     isUser: boolean
   }[]
   userTeam: Team
+  division: string
 }) {
   const t = useTranslation()
+  const zones = useMemo(
+    () => getStandingZones(division, standings.length),
+    [division, standings.length]
+  )
+
   return (
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
       {/* Header */}
@@ -1174,85 +1180,85 @@ function StandingsTable({
 
       {/* Rows */}
       <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto scrollbar-thin">
-        {standings.map((row) => (
-          <div
-            key={row.team.curto}
-            className={cn(
-              "grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02]",
-              row.isUser && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]"
-            )}
-          >
-            <span className={cn(
-              "text-center text-sm font-medium",
-              row.position <= 4 ? "text-[#00ffc8]" :
-              row.position <= 6 ? "text-blue-400" :
-              row.position >= 17 ? "text-red-500" :
-              "text-white/50"
-            )}>
-              {row.position}
-            </span>
-            
-            <div className="flex items-center gap-2 min-w-0">
-              <TeamCrest team={row.team} size="sm" />
-              <span className={cn(
-                "truncate text-sm",
-                row.isUser ? "font-semibold text-white" : "text-white/80"
-              )}>
-                {row.team.nome}
+        {standings.map((row) => {
+          const zone = getStandingZone(row.position, zones)
+
+          return (
+            <div
+              key={row.team.curto}
+              className={cn(
+                "grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02]",
+                row.isUser && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]"
+              )}
+            >
+              <span
+                className={cn(
+                  "text-center text-sm font-medium",
+                  !zone && "text-white/50"
+                )}
+                style={zone ? { color: zone.color } : undefined}
+              >
+                {row.position}
               </span>
-              {row.isUser && <Star className="h-3 w-3 text-[#ffd700] shrink-0" />}
-            </div>
-
-            <span className="text-center text-sm tabular-nums text-white/70">{row.played}</span>
-            <span className="text-center text-sm tabular-nums text-[#00ffc8]">{row.won}</span>
-            <span className="text-center text-sm tabular-nums text-white/50">{row.drawn}</span>
-            <span className="text-center text-sm tabular-nums text-red-500">{row.lost}</span>
-            <span className="text-center text-sm tabular-nums text-white/70">{row.goalsFor}</span>
-            <span className="text-center text-sm tabular-nums text-white/70">{row.goalsAgainst}</span>
-            <span className={cn(
-              "text-center text-sm tabular-nums",
-              row.goalDiff > 0 ? "text-[#00ffc8]" :
-              row.goalDiff < 0 ? "text-red-500" :
-              "text-white/50"
-            )}>
-              {row.goalDiff > 0 ? "+" : ""}{row.goalDiff}
-            </span>
-            <span className="text-center text-sm tabular-nums font-bold text-white">{row.points}</span>
-
-            <div className="flex items-center justify-center gap-1">
-              {row.form.map((result, i) => (
-                <span
-                  key={i}
-                  className={cn(
-                    "h-5 w-5 rounded text-[10px] font-bold flex items-center justify-center",
-                    result === "W" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
-                    result === "D" ? "bg-white/10 text-white/50" :
-                    result === "L" ? "bg-red-500/20 text-red-500" :
-                    "bg-white/5 text-white/20"
-                  )}
-                >
-                  {result || "-"}
+              
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                  <TeamCrest team={row.team} size="table" />
+                </div>
+                <span className={cn(
+                  "truncate text-sm",
+                  row.isUser ? "font-semibold text-white" : "text-white/80"
+                )}>
+                  {row.team.nome}
                 </span>
-              ))}
+                {row.isUser && <Star className="h-3 w-3 text-[#ffd700] shrink-0" />}
+              </div>
+
+              <span className="text-center text-sm tabular-nums text-white/70">{row.played}</span>
+              <span className="text-center text-sm tabular-nums text-[#00ffc8]">{row.won}</span>
+              <span className="text-center text-sm tabular-nums text-white/50">{row.drawn}</span>
+              <span className="text-center text-sm tabular-nums text-red-500">{row.lost}</span>
+              <span className="text-center text-sm tabular-nums text-white/70">{row.goalsFor}</span>
+              <span className="text-center text-sm tabular-nums text-white/70">{row.goalsAgainst}</span>
+              <span className={cn(
+                "text-center text-sm tabular-nums",
+                row.goalDiff > 0 ? "text-[#00ffc8]" :
+                row.goalDiff < 0 ? "text-red-500" :
+                "text-white/50"
+              )}>
+                {row.goalDiff > 0 ? "+" : ""}{row.goalDiff}
+              </span>
+              <span className="text-center text-sm tabular-nums font-bold text-white">{row.points}</span>
+
+              <div className="flex items-center justify-center gap-1">
+                {row.form.map((result, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "h-5 w-5 rounded text-[10px] font-bold flex items-center justify-center",
+                      result === "W" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
+                      result === "D" ? "bg-white/10 text-white/50" :
+                      result === "L" ? "bg-red-500/20 text-red-500" :
+                      "bg-white/5 text-white/20"
+                    )}
+                  >
+                    {result || "-"}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 px-4 py-3 text-[10px] text-white/50 border-t border-white/[0.04] bg-white/[0.02]">
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-[#00ffc8]" />
-          <span>{t.competitions.libertadoresLegend}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-blue-400" />
-          <span>{t.competitions.sulAmericanaLegend}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-red-500" />
-          <span>{t.competitions.relegationLegend}</span>
-        </div>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 text-[10px] text-white/50 border-t border-white/[0.04] bg-white/[0.02]">
+        {zones.map((zone) => (
+          <div key={zone.id} className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: zone.color }} />
+            <span>{zone.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   )

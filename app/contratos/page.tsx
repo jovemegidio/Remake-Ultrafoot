@@ -17,7 +17,6 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
@@ -344,7 +343,6 @@ export default function ContratosPage() {
         </div>
       </main>
 
-      <MusicPlayer />
 
       {/* Modal de Renovacao */}
       {showRenewalModal && selectedPlayer && (

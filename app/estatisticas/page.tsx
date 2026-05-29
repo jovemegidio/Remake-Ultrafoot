@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, type Team } from "@/lib/teams-data"
@@ -277,7 +276,6 @@ export default function EstatisticasPage() {
         </Tabs>
       </main>
 
-      <MusicPlayer />
     </div>
   )
 }

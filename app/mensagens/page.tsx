@@ -23,7 +23,6 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -488,7 +487,6 @@ export default function MensagensPage() {
         </div>
       </main>
 
-      <MusicPlayer />
 
       {/* Reply Modal */}
       <Dialog open={replyModalOpen} onOpenChange={setReplyModalOpen}>

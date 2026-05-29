@@ -16,11 +16,9 @@ import {
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
 // Gera dados históricos determinísticos baseados no time (sem Math.random)
@@ -80,13 +78,7 @@ function getTeamHistory(teamShort: string, teamName: string, prestige: number) {
 
 export default function HistoricoPage() {
   const router = useRouter()
-  const { data: teamShort } = useUserTeam()
-  const { saveState } = useGameManager()
-
-  const userTeam = useMemo(
-    () => getTeamByShort(teamShort ?? saveState.selectedTeamShort ?? "") || serieATeams[0],
-    [teamShort, saveState.selectedTeamShort]
-  )
+  const { team: userTeam } = useUserTeam()
 
   const history = useMemo(
     () => getTeamHistory(userTeam.curto, userTeam.nome, userTeam.prestigio),
@@ -267,7 +259,6 @@ export default function HistoricoPage() {
         </section>
       </main>
 
-      <MusicPlayer />
     </div>
   )
 }

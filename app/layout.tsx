@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
 import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
 import { NativeAppProvider } from "@/components/native-app-provider"
+import { MusicPlayer } from "@/components/music-player"
 import "./globals.css"
 
 const geist = Geist({
@@ -46,6 +47,7 @@ export default function RootLayout({
               <NotificationsProvider>
                 {children}
                 <NotificationToastContainer />
+                <MusicPlayer defaultSize="hidden" />
               </NotificationsProvider>
             </GamepadProvider>
           </ThemeProvider>
