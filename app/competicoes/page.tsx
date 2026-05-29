@@ -724,7 +724,7 @@ export default function CompeticoesPage() {
           </TabsList>
 
           <TabsContent value="brasileirao" className="mt-4">
-            <StandingsTable standings={serieAStandings} userTeam={userTeam} division={userTeam.divisao} />
+            <StandingsTable standings={serieAStandings} userTeam={userTeam} division="serie_a" />
           </TabsContent>
 
           <TabsContent value="serie-b" className="mt-4">

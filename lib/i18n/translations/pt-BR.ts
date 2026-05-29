@@ -386,6 +386,20 @@ export const ptBR = {
     playMatch: "Jogar Partida",
     simulate: "Simular",
     calendar: "CALENDARIO",
+    live: {
+      tabFitness: "Física",
+      tabRatings: "Notas",
+      tabStats: "Estatísticas",
+      tabGameplan: "Tática",
+      sectionFitness: "Condição Física",
+      sectionRatings: "Avaliações",
+      sectionStats: "Estatísticas da Partida",
+      sectionGameplan: "Plano de Jogo",
+      substitutions: "Substituições",
+      noSubs: "Nenhuma substituição realizada",
+      subsRemaining: (n: number) => `${n}/5 restantes`,
+      statLabel: "estatística",
+    },
   },
 }
 

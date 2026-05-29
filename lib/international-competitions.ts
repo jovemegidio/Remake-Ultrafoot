@@ -36,8 +36,8 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       prestige: 85,
       relegation: 4,
       continentalSpots: [
-        { competition: "libertadores", spots: 4 },
-        { competition: "sulamericana", spots: 4 },
+        { competition: "libertadores", spots: 5 },
+        { competition: "sulamericana", spots: 6 },
       ],
     },
     {
@@ -122,6 +122,7 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       prize: 2000000,
       prestige: 25,
       promotion: 4,
+      relegation: 4,
     },
   ],
 
@@ -140,7 +141,7 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       prestige: 98,
       relegation: 3,
       continentalSpots: [
-        { competition: "champions_league", spots: 4 },
+        { competition: "champions_league", spots: 5 },
         { competition: "europa_league", spots: 2 },
         { competition: "conference_league", spots: 1 },
       ],

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
@@ -9,13 +9,14 @@ interface TeamCrestProps {
   team?: Team
   teamShort?: string
   fileKey?: string
-  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl"
+  size?: "xs" | "table" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl"
   className?: string
   showFallback?: boolean
 }
 
 const sizeMap = {
   xs: { container: "h-5 w-5", text: "text-[6px]", inner: "text-[5px]" },
+  table: { container: "h-6 w-6", text: "text-[7px]", inner: "text-[6px]" },
   sm: { container: "h-8 w-8", text: "text-[8px]", inner: "text-[7px]" },
   md: { container: "h-12 w-12", text: "text-[10px]", inner: "text-[9px]" },
   lg: { container: "h-16 w-16", text: "text-xs", inner: "text-[10px]" },
@@ -26,6 +27,7 @@ const sizeMap = {
 
 const sizePixels = {
   xs: 20,
+  table: 24,
   sm: 32,
   md: 48,
   lg: 64,
@@ -56,6 +58,11 @@ export function TeamCrest({
 
   const { container, text, inner } = sizeMap[size]
   const pixels = sizePixels[size]
+
+  useEffect(() => {
+    setImageError(false)
+    setImageLoaded(false)
+  }, [escudoUrl])
 
   // Professional fallback shield component
   const FallbackShield = () => {

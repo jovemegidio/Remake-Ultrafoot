@@ -14,7 +14,7 @@ import { Slider } from "@/components/ui/slider"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { formatCurrency, type Team } from "@/lib/teams-data"
-import { DollarSign, TrendingUp, TrendingDown, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles } from "lucide-react"
+import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Player {
@@ -33,6 +33,12 @@ interface NegotiationModalProps {
   type: "buy" | "sell" | "loan"
   team?: Team
   onConfirm?: (offer: number) => void
+  onNegotiationResult?: (result: {
+    player: Player
+    type: "buy" | "sell" | "loan"
+    offer: number
+    accepted: boolean
+  }) => void
 }
 
 export function NegotiationModal({
@@ -40,8 +46,8 @@ export function NegotiationModal({
   onOpenChange,
   player,
   type,
-  team,
   onConfirm,
+  onNegotiationResult,
 }: NegotiationModalProps) {
   const [offer, setOffer] = useState(player?.value || 0)
   const [step, setStep] = useState<"offer" | "response" | "result">("offer")
@@ -104,7 +110,9 @@ export function NegotiationModal({
     // Show result after animation
     setTimeout(() => {
       const random = Math.random() * 100
-      setAccepted(random <= status.chance)
+      const acceptedResult = random <= status.chance
+      setAccepted(acceptedResult)
+      onNegotiationResult?.({ player, type, offer, accepted: acceptedResult })
       setStep("result")
     }, 1800)
   }

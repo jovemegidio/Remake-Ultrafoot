@@ -231,7 +231,6 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "paulistao",
     name: "Campeonato Paulista",
     shortName: "PAULISTAO",
-    backgroundImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Paulista%20-%20Tema-sB2HM0pQbu7hPN631QTtF5wAbyEVws.png",
     colors: {
       primary: "#1a4fd6",
       secondary: "#0a0a1a",
@@ -262,7 +261,6 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "mineiro",
     name: "Campeonato Mineiro",
     shortName: "MINEIRO",
-    backgroundImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Mineiro%20-%20Ultrafoot-Th9nsdUvrGVSgbfj1ySYMaMH3CMOjF.png",
     colors: {
       primary: "#0d7377",
       secondary: "#0a1f20",
@@ -293,7 +291,6 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "supercopa",
     name: "Supercopa do Brasil",
     shortName: "SUPERCOPA",
-    backgroundImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Supermundial%20-%20Tema-2zUBa2ZyfA7ATeb0pLren401XTXRm7.png",
     colors: {
       primary: "#d4af37",
       secondary: "#0a0a0a",
@@ -324,7 +321,6 @@ export const competitionThemes: Record<CompetitionId, CompetitionTheme> = {
     id: "mundial_clubes",
     name: "Mundial de Clubes FIFA",
     shortName: "MUNDIAL",
-    backgroundImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Copa%20do%20Mundo%20-%20Tema-6h6CJ5kXdNAjLdvitnxjKdMhuGFM8Y.png",
     colors: {
       primary: "#5b6cf0",
       secondary: "#00c853",

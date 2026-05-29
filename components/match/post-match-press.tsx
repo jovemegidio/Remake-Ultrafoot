@@ -27,21 +27,21 @@ const MEDIA_OUTLETS = [
   {
     id: "globo",
     name: "TV Globo",
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-8h5gZei89JfESKEiBARFySGDWhjwCu.png",
+    logo: null,
     bgColor: "#1e40af",
     type: "TV"
   },
   {
     id: "cbn",
     name: "CBN",
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-KEO7rfspwIP8Bh1TOQHHK3ivwSLbl7.png",
+    logo: null,
     bgColor: "#dc2626",
     type: "Radio"
   },
   {
     id: "folha",
     name: "Folha de S.Paulo",
-    logo: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Ox4UIAqtcHFVTv1hUFmnsXx2Pa7Z0r.png",
+    logo: null,
     bgColor: "#0ea5e9",
     type: "Jornal"
   },

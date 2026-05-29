@@ -640,12 +640,14 @@ const NEWS_TYPE_TO_IMAGE_CATEGORY: Record<string, string> = {
 
 function NewsContentCard({ news }: { news: NewsItem }) {
   const source = NEWS_SOURCES[news.source]
-  const [imgError, setImgError] = useState(false)
-  const [imgLoaded, setImgLoaded] = useState(false)
 
   const imageCategory = NEWS_TYPE_TO_IMAGE_CATEGORY[news.type] ?? "match"
   const seed = seedFromString(news.id)
   const aiImageUrl = getNewsImageUrl(imageCategory, seed, 800, 450)
+
+  // Em modo Tauri offline, aiImageUrl é null — mostra fallback imediatamente
+  const [imgError, setImgError] = useState(!aiImageUrl)
+  const [imgLoaded, setImgLoaded] = useState(false)
 
   const typeColors: Record<string, string> = {
     transfer: "from-yellow-900/50 to-yellow-950/30",
@@ -698,16 +700,18 @@ function NewsContentCard({ news }: { news: NewsItem }) {
             </div>
           </div>
         )}
-        <img
-          src={aiImageUrl}
-          alt=""
-          aria-hidden="true"
-          onLoad={() => setImgLoaded(true)}
-          onError={() => setImgError(true)}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-        />
+        {aiImageUrl && (
+          <img
+            src={aiImageUrl}
+            alt=""
+            aria-hidden="true"
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        {imgLoaded && (
+        {imgLoaded && aiImageUrl && (
           <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary/20 border border-primary/30 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-primary" />
             <span className="text-[10px] text-primary font-medium">AI</span>

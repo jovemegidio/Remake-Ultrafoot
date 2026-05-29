@@ -214,7 +214,7 @@ export default function FinancasPage() {
     )
   }
 
-  const wagePercentage = (dynamicFinances.wageUsed / dynamicFinances.wageBudget) * 100
+  const wagePercentage = dynamicFinances.wageBudget > 0 ? (dynamicFinances.wageUsed / dynamicFinances.wageBudget) * 100 : 0
 
   return (
     <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">

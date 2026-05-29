@@ -1454,10 +1454,12 @@ export default function ElencoPage() {
             variant="ghost" 
             size="sm" 
             onClick={() => setShowSuggestedSubs(true)}
-            className="text-white/60 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
+            aria-label="Substituicoes sugeridas"
+            title="Substituicoes sugeridas"
+            className="bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
           >
             <Shuffle className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1" />
-            <span className="hidden sm:inline">Substituicoes sugeridas</span>
+            <span className="inline max-w-[76px] truncate sm:max-w-none">Substituicoes sugeridas</span>
           </Button>
           <Button 
             variant="ghost" 

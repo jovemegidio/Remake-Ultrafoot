@@ -19,9 +19,22 @@ import {
   bundesligaTeams,
   ligue1Teams,
   saudiProTeams,
+  saudiFirstDivTeams,
   mlsTeams,
   ligaMXTeams,
   primeiraLigaTeams,
+  jLeagueTeams,
+  eredivisieTeams,
+  scottishPremTeams,
+  superLigTeams,
+  proLeagueBelTeams,
+  russianPremTeams,
+  ligaArgentinaTeams,
+  primeiraAColTeams,
+  primeraDivChileTeams,
+  primeraDivUryTeams,
+  kLeague1Teams,
+  chineseSuperTeams,
 } from "@/lib/international-teams"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { teamRating } from "@/lib/players-data"
@@ -36,7 +49,10 @@ import { hardNavigate } from "@/lib/hard-navigation"
 const FLAG_MAP: Record<string, string> = {
   BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
   GER: "de", FRA: "fr", POR: "pt", USA: "us",
-  MEX: "mx", KSA: "sa",
+  MEX: "mx", KSA: "sa", NED: "nl", SCO: "gb-sct",
+  TUR: "tr", BEL: "be", RUS: "ru", ARG: "ar",
+  COL: "co", CHI: "cl", URU: "uy", JPN: "jp",
+  KOR: "kr", CHN: "cn",
 }
 
 function getFlagUrl(code: string) {

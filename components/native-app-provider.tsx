@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { normalizeAppHref } from "@/lib/hard-navigation"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -24,15 +25,44 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
 
     const disableDrag = (e: DragEvent) => e.preventDefault()
 
+    const forceStaticAnchorNavigation = (e: MouseEvent) => {
+      if (
+        e.defaultPrevented ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return
+      }
+
+      const target = e.target as HTMLElement | null
+      const anchor = target?.closest("a[href]") as HTMLAnchorElement | null
+      if (!anchor || (anchor.target && anchor.target !== "_self")) return
+
+      const url = new URL(anchor.href, window.location.href)
+      if (url.origin !== window.location.origin) return
+
+      const nextHref = normalizeAppHref(`${url.pathname}${url.search}${url.hash}`)
+      const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      if (nextHref === currentHref) return
+
+      e.preventDefault()
+      window.location.assign(nextHref)
+    }
+
     document.addEventListener("contextmenu", disableContextMenu)
     document.addEventListener("keydown", disableBrowserShortcuts)
     document.addEventListener("dragstart", disableDrag)
+    document.addEventListener("click", forceStaticAnchorNavigation, true)
     document.documentElement.style.userSelect = "none"
 
     return () => {
       document.removeEventListener("contextmenu", disableContextMenu)
       document.removeEventListener("keydown", disableBrowserShortcuts)
       document.removeEventListener("dragstart", disableDrag)
+      document.removeEventListener("click", forceStaticAnchorNavigation, true)
     }
   }, [])
 

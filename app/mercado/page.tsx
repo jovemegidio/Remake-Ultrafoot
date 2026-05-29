@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import Image from "next/image"
 import {
   Search,
   User,
@@ -13,6 +14,15 @@ import {
   Star,
   AlertCircle,
   Globe,
+  Clock,
+  Check,
+  X,
+  UserPlus,
+  Play,
+  Pause,
+  Eye,
+  EyeOff,
+  Briefcase,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -21,7 +31,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { serieATeams, formatCurrency } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
+import {
+  AVAILABLE_SCOUTS,
+  useGameEngine,
+  type Player as EnginePlayer,
+  type Scout,
+  type TransferOffer,
+} from "@/lib/game-engine"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { useTranslation } from "@/lib/i18n"
@@ -92,16 +108,31 @@ const transferTargets = [
   },
 ]
 
-// Mock scouts
-const scouts = [
-  { id: 1, name: "Dan Burrows", nationality: "Inglaterra", area: "Area Scouting", assigned: 15, stars: 4 },
-  { id: 2, name: "Liam Atkins", nationality: "Inglaterra", area: "Area Scouting", assigned: 0, stars: 5 },
-  { id: 3, name: "Sean Rowley", nationality: "Inglaterra", area: "Area Scouting", assigned: 0, stars: 4 },
-  { id: 4, name: "Bastien Favre", nationality: "Suica", area: "Scout Available", assigned: 0, stars: 4 },
-  { id: 5, name: "Marek Bosko", nationality: "Republica Tcheca", area: "Scout Available", assigned: 0, stars: 5 },
-]
-
 type Player = typeof transferTargets[0]
+type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "enviadas" | "recebidas"
+type SentProposalStatus = "aceita" | "rejeitada"
+
+interface SentTransferProposal {
+  id: number
+  playerName: string
+  teamName: string
+  position: string
+  overall: number
+  type: "buy" | "loan"
+  amount: number
+  status: SentProposalStatus
+  week: number
+}
+
+const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "enviadas", "recebidas"]
+
+const scoutingRegions = [
+  { id: "Brasil", name: "Brasil", weeksToComplete: 2, searchCost: 50000 },
+  { id: "Americas", name: "Americas", weeksToComplete: 3, searchCost: 150000 },
+  { id: "Europa", name: "Europa", weeksToComplete: 4, searchCost: 300000 },
+  { id: "Africa", name: "Africa", weeksToComplete: 3, searchCost: 120000 },
+  { id: "Asia", name: "Asia", weeksToComplete: 3, searchCost: 100000 },
+]
 
 // Filter card types
 type FilterType = "nome" | "posicao" | "nacionalidade" | "status" | "idade" | "pais" | "liga" | "time"
@@ -148,16 +179,19 @@ function marketPlayerToEnginePlayer(p: Player): EnginePlayer {
 export default function MercadoPage() {
   const { team: userTeam } = useUserTeam()
   const t = useTranslation()
-  const { buyPlayer, loanPlayer } = useGameEngine()
+  const gameEngine = useGameEngine()
 
-  useDiscordActivity("No mercado de transferências", userTeam.nome)
+  useDiscordActivity("No mercado de transferências", userTeam?.nome ?? "Sem clube")
 
-  const [activeTab, setActiveTab] = useState("buscar")
+  const [activeTab, setActiveTab] = useState<MarketTab>("buscar")
   const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [negotiationType, setNegotiationType] = useState<"buy" | "loan">("buy")
   const [positionFilter, setPositionFilter] = useState<string>("Tudo")
+  const [expandedScoutId, setExpandedScoutId] = useState<number | null>(null)
+  const [marketNotice, setMarketNotice] = useState<string | null>(null)
+  const [sentProposals, setSentProposals] = useState<SentTransferProposal[]>([])
 
   // Filter states
   const [nameFilter, setNameFilter] = useState("")
@@ -179,6 +213,24 @@ export default function MercadoPage() {
     { id: "liga", label: t.market.league, icon: <Trophy className="h-10 w-10 text-white/30" />, value: t.market.any },
     { id: "time", label: t.market.team, icon: <Shield className="h-12 w-12 text-white/20" />, value: t.market.any },
   ]
+
+  const hiredScouts = gameEngine.scouts
+  const scoutedLeads = gameEngine.scoutedLeads
+  const availableScouts = useMemo(() => {
+    const hiredIds = new Set(hiredScouts.map((scout) => scout.id))
+    return AVAILABLE_SCOUTS.filter((scout) => !hiredIds.has(scout.id))
+  }, [hiredScouts])
+
+  const pendingReceivedOffers = useMemo(() => {
+    return gameEngine.transferOffers.filter((offer) => offer.status === "pendente")
+  }, [gameEngine.transferOffers])
+
+  const pastReceivedOffers = useMemo(() => {
+    return gameEngine.transferOffers
+      .filter((offer) => offer.status !== "pendente")
+      .slice(-8)
+      .reverse()
+  }, [gameEngine.transferOffers])
 
   // Filter players by all criteria
   const filteredPlayers = useMemo(() => {
@@ -213,8 +265,6 @@ export default function MercadoPage() {
 
   // Gamepad support
   useEffect(() => {
-    const TABS = ["buscar", "rede", "olheiros"]
-
     const handler = (e: Event) => {
       const { button } = (e as CustomEvent).detail
 
@@ -225,9 +275,10 @@ export default function MercadoPage() {
       }
 
       if (button === "LB" || button === "RB") {
-        const idx = TABS.indexOf(activeTab)
-        const next = button === "LB" ? Math.max(0, idx - 1) : Math.min(TABS.length - 1, idx + 1)
-        setActiveTab(TABS[next])
+        const idx = MARKET_TABS.indexOf(activeTab)
+        const fallbackIdx = idx === -1 ? 0 : idx
+        const next = button === "LB" ? Math.max(0, fallbackIdx - 1) : Math.min(MARKET_TABS.length - 1, fallbackIdx + 1)
+        setActiveTab(MARKET_TABS[next])
         return
       }
 
@@ -249,6 +300,52 @@ export default function MercadoPage() {
     return () => window.removeEventListener("gamepad:button", handler)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, negotiationOpen, filteredPlayers, selectedPlayer])
+
+  // Keyboard support for the transfer hub shortcuts shown on screen.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      const isTyping =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable
+
+      if (isTyping) return
+
+      if (e.key === "Escape") {
+        if (negotiationOpen) {
+          setNegotiationOpen(false)
+          return
+        }
+        window.history.back()
+        return
+      }
+
+      if (e.key === "q" || e.key === "Q") {
+        setActiveTab("buscar")
+        return
+      }
+
+      if (e.key === "z" || e.key === "Z") {
+        setActiveTab("central")
+        return
+      }
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const idx = MARKET_TABS.indexOf(activeTab)
+        const fallbackIdx = idx === -1 ? 0 : idx
+        const next =
+          e.key === "ArrowLeft"
+            ? Math.max(0, fallbackIdx - 1)
+            : Math.min(MARKET_TABS.length - 1, fallbackIdx + 1)
+        setActiveTab(MARKET_TABS[next])
+      }
+    }
+
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [activeTab, negotiationOpen])
 
   // Group players by position type
   const groupedPlayers = useMemo(() => {
@@ -286,68 +383,181 @@ export default function MercadoPage() {
     setActiveTab("rede")
   }
 
+  const handleHireScout = (scoutData: typeof AVAILABLE_SCOUTS[number]) => {
+    if (gameEngine.balance < scoutData.salary * 4) {
+      setMarketNotice("Saldo insuficiente para contratar este olheiro.")
+      return
+    }
+
+    const newScout: Scout = {
+      ...scoutData,
+      isSearching: false,
+      searchProgress: 0,
+      searchTarget: null,
+      foundPlayers: [],
+      weeksSearching: 0,
+    }
+
+    gameEngine.hireScout(newScout)
+    setMarketNotice(`${scoutData.name} foi contratado para o departamento de olheiros.`)
+  }
+
+  const handleStartScoutSearch = (scoutId: number, regionId: string) => {
+    const region = scoutingRegions.find((item) => item.id === regionId)
+    if (!region) return
+
+    if (gameEngine.balance < region.searchCost) {
+      setMarketNotice("Saldo insuficiente para iniciar esta busca.")
+      return
+    }
+
+    gameEngine.startScoutSearch(scoutId, region.id, region.weeksToComplete, region.searchCost)
+    setExpandedScoutId(null)
+    setMarketNotice(`Busca iniciada em ${region.name}. Avance semanas para receber relatorios.`)
+  }
+
+  const handleNegotiationResult = ({
+    player,
+    type,
+    offer,
+    accepted,
+  }: {
+    player: { name: string; position: string; overall: number; team?: { nome?: string } }
+    type: "buy" | "sell" | "loan"
+    offer: number
+    accepted: boolean
+  }) => {
+    if (type === "sell") return
+
+    const proposalStatus: SentProposalStatus = accepted ? "aceita" : "rejeitada"
+
+    setSentProposals((current) => [
+      {
+        id: Date.now(),
+        playerName: player.name,
+        teamName: player.team?.nome ?? "Clube",
+        position: player.position,
+        overall: player.overall,
+        type,
+        amount: offer,
+        status: proposalStatus,
+        week: gameEngine.currentWeek,
+      },
+      ...current,
+    ].slice(0, 12))
+  }
+
+  const handleGenerateReceivedOffer = () => {
+    const before = useGameEngine.getState().transferOffers.length
+    gameEngine.generateAIOffers()
+    const after = useGameEngine.getState().transferOffers.length
+    setMarketNotice(
+      after > before
+        ? "Um clube enviou uma nova proposta."
+        : "Nenhum clube apresentou proposta nesta rodada."
+    )
+  }
+
   return (
-    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    <div className="relative h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
+      {/* Background stadium image */}
+      <div className="absolute inset-0 md:ml-16 pointer-events-none">
+        <Image
+          src="/images/stadium-bg.png"
+          alt="Stadium Background"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        {/* Base dark overlay */}
+        <div className="absolute inset-0 bg-black/60" />
+        {/* Top gradient to darken header area */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/70" />
+        {/* Subtle dark blue tint for game atmosphere */}
+        <div className="absolute inset-0 bg-[#050508]/40" />
+      </div>
+
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="p-4 h-[calc(100vh-48px)] overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <main className="relative z-10 p-4 h-[calc(100vh-48px)] overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as MarketTab)}>
           {/* EA FC Style Header Navigation */}
-          <div className="flex items-center gap-6 mb-8">
-            <div className="flex items-center gap-2 text-white/50 text-sm">
+          <div className="flex items-center gap-4 mb-8 min-w-0">
+            <div className="flex shrink-0 items-center gap-2 text-white/50 text-sm">
               <span className="text-xs border border-white/20 rounded px-1.5 py-0.5">w</span>
               <span>Transferencias</span>
             </div>
-            
-            <TabsList className="bg-transparent border-0 p-0 h-auto gap-6">
-              <TabsTrigger
-                value="buscar"
-                className="bg-transparent border-0 px-0 py-0 text-lg font-semibold data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
-              >
-                {t.market.searchAthletes}
-              </TabsTrigger>
-              <span className="text-white/20">|</span>
-              <TabsTrigger
-                value="rede"
-                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
-              >
-                {t.market.transferNetwork}
-              </TabsTrigger>
-              <span className="text-white/20">|</span>
-              <TabsTrigger
-                value="olheiros"
-                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
-              >
-                {t.market.scouts}
-              </TabsTrigger>
-              <span className="text-white/20">|</span>
-              <TabsTrigger
-                value="central"
-                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
-              >
-                Central de Transf.
-              </TabsTrigger>
-              <span className="text-white/20">|</span>
-              <TabsTrigger
-                value="enviadas"
-                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
-              >
-                Propostas Enviadas
-              </TabsTrigger>
-              <span className="text-white/20">|</span>
-              <TabsTrigger
-                value="recebidas"
-                className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
-              >
-                Propostas Recebidas
-              </TabsTrigger>
-            </TabsList>
 
-            <div className="ml-auto flex items-center gap-4">
+            <div className="relative min-w-0 flex-1">
+              <div className="overflow-x-auto pr-10 scrollbar-thin">
+                <TabsList className="min-w-max bg-transparent border-0 p-0 h-auto gap-6">
+                  <TabsTrigger
+                    value="buscar"
+                    className="bg-transparent border-0 px-0 py-0 text-lg font-semibold data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+                  >
+                    {t.market.searchAthletes}
+                  </TabsTrigger>
+                  <span className="text-white/20">|</span>
+                  <TabsTrigger
+                    value="rede"
+                    className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+                  >
+                    {t.market.transferNetwork}
+                  </TabsTrigger>
+                  <span className="text-white/20">|</span>
+                  <TabsTrigger
+                    value="olheiros"
+                    className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+                  >
+                    {t.market.scouts}
+                  </TabsTrigger>
+                  <span className="text-white/20">|</span>
+                  <TabsTrigger
+                    value="central"
+                    className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+                  >
+                    Central de Transf.
+                  </TabsTrigger>
+                  <span className="text-white/20">|</span>
+                  <TabsTrigger
+                    value="enviadas"
+                    className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+                  >
+                    Propostas Enviadas
+                  </TabsTrigger>
+                  <span className="text-white/20">|</span>
+                  <TabsTrigger
+                    value="recebidas"
+                    className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+                  >
+                    Propostas Recebidas
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-[#050508] via-[#050508] to-transparent pl-8">
+                <ChevronRight className="h-4 w-4 text-white/35" />
+              </div>
+            </div>
+
+            <div className="hidden xl:flex shrink-0 items-center gap-4">
               <span className="text-sm text-white/40">{t.market.searchFilters}</span>
             </div>
           </div>
+
+          {marketNotice && (
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/10 px-4 py-2 text-sm text-[#00ffc8]">
+              <span>{marketNotice}</span>
+              <button
+                type="button"
+                onClick={() => setMarketNotice(null)}
+                className="rounded p-1 text-[#00ffc8]/70 hover:bg-white/10 hover:text-[#00ffc8]"
+                aria-label="Fechar aviso"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
 
           {/* Search Filters Tab */}
           <TabsContent value="buscar" className="mt-0">
@@ -617,7 +827,7 @@ export default function MercadoPage() {
               <div className="space-y-4">
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
-                    <div key={group} className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-4">
+                    <div key={group} className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-white font-semibold">{group}</h3>
                         <span className="text-xs text-white/40">{t.market.readyToPlay}</span>
@@ -644,7 +854,7 @@ export default function MercadoPage() {
                   onNegotiate={handleNegotiate}
                 />
               ) : (
-                <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-8 flex flex-col items-center justify-center text-center">
+                <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 flex flex-col items-center justify-center text-center">
                   <User className="h-20 w-20 text-white/10 mb-4" />
                   <h3 className="text-white/40 text-lg">{t.market.selectPlayer}</h3>
                   <p className="text-white/30 text-sm mt-2">{t.market.clickForDetails}</p>
@@ -658,45 +868,189 @@ export default function MercadoPage() {
             <div className="flex items-center gap-4 mb-6">
               <span className="text-white font-semibold">{t.market.scouts}</span>
               <span className="text-white/20">|</span>
-              <span className="text-white/40">{t.market.instructions}</span>
+              <span className="text-white/40">Contrate, envie e acompanhe relatorios</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
-              {/* Scouts Grid */}
-              <div className="col-span-2 grid grid-cols-3 gap-4">
-                {scouts.map((scout, index) => (
-                  <ScoutCard key={scout.id} scout={scout} selected={index === 4} />
-                ))}
-                <button className="rounded-xl bg-[#0c0c10]/50 border border-white/[0.04] p-6 flex items-center justify-center hover:border-primary/30 transition-colors">
-                  <span className="text-white/60 font-medium">{t.market.hireScout}</span>
-                </button>
-              </div>
-
-              {/* Info Panel */}
-              <div className="space-y-4">
-                <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] p-6">
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    Seus olheiros podem criar redes no mundo todo para descobrir novos nomes.
-                  </p>
-                  <p className="text-white/50 text-sm leading-relaxed mt-4">
-                    Se quiser receber relatorios de atletas dos proximos times adversarios, deixe livre um de seus olheiros.
-                  </p>
+            <div className="grid grid-cols-12 gap-4 h-[calc(100vh-220px)] overflow-hidden">
+              <div className="col-span-12 xl:col-span-7 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                    <p className="text-xs text-white/40">Olheiros</p>
+                    <p className="mt-1 text-2xl font-bold text-white">{hiredScouts.length}</p>
+                  </div>
+                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                    <p className="text-xs text-white/40">Em busca</p>
+                    <p className="mt-1 text-2xl font-bold text-[#00ffc8]">{hiredScouts.filter((scout) => scout.isSearching).length}</p>
+                  </div>
+                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                    <p className="text-xs text-white/40">Relatorios</p>
+                    <p className="mt-1 text-2xl font-bold text-[#ffd700]">{scoutedLeads.length}</p>
+                  </div>
                 </div>
 
-                <div className="rounded-xl bg-[#0c0c10]/50 border border-white/[0.04] p-6">
-                  <h3 className="text-white/30 text-2xl font-light mb-2">Disponivel</h3>
-                  <p className="text-white/40 text-sm">This scout is ready for missions.</p>
+                {hiredScouts.length === 0 ? (
+                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 text-center">
+                    <Briefcase className="mx-auto mb-3 h-10 w-10 text-white/25" />
+                    <p className="text-white font-semibold">Nenhum olheiro contratado</p>
+                    <p className="mt-1 text-sm text-white/45">Contrate um olheiro para liberar buscas por regiao.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {hiredScouts.map((scout) => (
+                      <div key={scout.id} className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="truncate text-white font-semibold">{scout.name}</h3>
+                              <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] text-white/50">{scout.nationality ?? scout.region}</span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-1">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={cn("h-3.5 w-3.5", i < scout.skill ? "text-[#ffd700] fill-yellow-500" : "text-white/15")}
+                                />
+                              ))}
+                            </div>
+                            <p className="mt-2 text-xs text-white/45">
+                              {scout.isSearching
+                                ? `Buscando em ${scout.searchTarget ?? scout.region} - ${scout.searchProgress}%`
+                                : `Disponivel para nova busca - ${formatCurrency(scout.salary)}/sem`}
+                            </p>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-2">
+                            {scout.isSearching ? (
+                              <button
+                                type="button"
+                                onClick={() => gameEngine.stopScoutSearch(scout.id)}
+                                className="inline-flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/20"
+                              >
+                                <Pause className="h-3.5 w-3.5" />
+                                Parar
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedScoutId(expandedScoutId === scout.id ? null : scout.id)}
+                                className="inline-flex items-center gap-2 rounded-lg bg-[#00ffc8] px-3 py-2 text-xs font-semibold text-black hover:bg-[#00c8ff]"
+                              >
+                                <Play className="h-3.5 w-3.5" />
+                                Iniciar busca
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {expandedScoutId === scout.id && !scout.isSearching && (
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-2 border-t border-white/[0.04] pt-4">
+                            {scoutingRegions.map((region) => (
+                              <button
+                                key={region.id}
+                                type="button"
+                                onClick={() => handleStartScoutSearch(scout.id, region.id)}
+                                className="rounded-lg border border-white/[0.04] bg-white/[0.03] p-3 text-left hover:border-[#00ffc8]/40 hover:bg-[#00ffc8]/10"
+                              >
+                                <p className="text-sm font-semibold text-white">{region.name}</p>
+                                <p className="mt-1 text-[10px] text-white/40">{region.weeksToComplete} sem.</p>
+                                <p className="text-[10px] text-[#ffd700]">{formatCurrency(region.searchCost)}</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="col-span-12 xl:col-span-5 overflow-y-auto space-y-4 scrollbar-thin">
+                <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white">Contratar olheiro</h3>
+                    <span className="text-xs text-white/35">{availableScouts.length} disponiveis</span>
+                  </div>
+
+                  {availableScouts.length === 0 ? (
+                    <p className="text-sm text-white/45">Todos os olheiros disponiveis ja foram contratados.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {availableScouts.slice(0, 4).map((scout) => (
+                        <div key={scout.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/[0.03] p-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-white">{scout.name}</p>
+                            <p className="text-xs text-white/45">{scout.region} - {formatCurrency(scout.salary)}/sem</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleHireScout(scout)}
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-[#00ffc8] hover:text-black"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            Contratar
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white">Relatorios descobertos</h3>
+                    <span className="text-xs text-white/35">{scoutedLeads.length}</span>
+                  </div>
+
+                  {scoutedLeads.length === 0 ? (
+                    <div className="rounded-lg bg-white/[0.03] p-5 text-center">
+                      <EyeOff className="mx-auto mb-2 h-8 w-8 text-white/20" />
+                      <p className="text-sm text-white/45">Nenhum jogador descoberto ainda.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {scoutedLeads.map((lead) => (
+                        <div key={lead.id} className="rounded-lg bg-white/[0.03] p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-white">{lead.name}</p>
+                              <p className="text-xs text-white/45">{lead.position} - {lead.age} anos - {lead.nationality}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-[#00ffc8]">{lead.revealedAttributes ? lead.overall : "?"}</p>
+                              <p className="text-[10px] text-white/35">OVR</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between gap-2">
+                            <span className="text-xs text-white/45">
+                              Potencial {lead.revealedAttributes ? lead.potential : "??"} - {formatCurrency(lead.marketValue)}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              {!lead.revealedAttributes && (
+                                <button
+                                  type="button"
+                                  onClick={() => gameEngine.revealScoutedLead(lead.id)}
+                                  disabled={gameEngine.balance < 50000}
+                                  className="inline-flex items-center gap-1 rounded bg-[#00ffc8]/15 px-2 py-1 text-[10px] font-semibold text-[#00ffc8] hover:bg-[#00ffc8]/25 disabled:opacity-40"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  Revelar
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => gameEngine.dismissScoutedLead(lead.id)}
+                                className="rounded bg-white/10 px-2 py-1 text-[10px] font-semibold text-white/60 hover:bg-red-500/15 hover:text-red-300"
+                              >
+                                Dispensar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-
-            {/* Progress Steps */}
-            <div className="flex items-center justify-center gap-0 mt-8">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">1</div>
-              <div className="w-32 h-0.5 bg-primary" />
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white/40 font-bold text-sm">2</div>
-              <div className="w-32 h-0.5 bg-white/10" />
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white/40 font-bold text-sm">3</div>
             </div>
           </TabsContent>
 
@@ -719,7 +1073,7 @@ export default function MercadoPage() {
                   {/* Nova Escalacao Card */}
                   <button 
                     onClick={() => setActiveTab("buscar")}
-                    className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] hover:border-primary/30 group"
+                    className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] hover:border-primary/30 group"
                   >
                     <h3 className="text-white font-semibold text-lg mb-1">Nova escalacao</h3>
                     <div className="flex items-center justify-center h-[calc(100%-3rem)]">
@@ -732,8 +1086,12 @@ export default function MercadoPage() {
                   </button>
 
                   {/* Importar Escalacao Card */}
-                  <button className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] hover:border-primary/30 group">
-                    <h3 className="text-white font-semibold text-lg mb-1">Importar escalacao</h3>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("olheiros")}
+                    className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] hover:border-primary/30 group"
+                  >
+                    <h3 className="text-white font-semibold text-lg mb-1">Importar relatorios</h3>
                     <div className="flex items-center justify-center h-[calc(100%-3rem)]">
                       <svg className="w-16 h-16 text-white/40 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
@@ -744,20 +1102,24 @@ export default function MercadoPage() {
                 </div>
 
                 {/* Saved List Card */}
-                <button className="relative w-full rounded-xl p-4 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-primary hover:border-primary group">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("rede")}
+                  className="relative w-full rounded-xl p-4 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-primary hover:border-primary group"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-white font-semibold truncate">Padrao {userTeam?.curto || "TIME"}...</h3>
                       <span className="text-white/60 text-sm">4-3-3</span>
                       <span className="text-[#00ffc8] text-sm ml-2">ABERTO</span>
                     </div>
-                    <button className="p-1 hover:bg-white/10 rounded transition-colors">
+                    <span className="p-1 rounded transition-colors group-hover:bg-white/10">
                       <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="1" />
                         <circle cx="12" cy="5" r="1" />
                         <circle cx="12" cy="19" r="1" />
                       </svg>
-                    </button>
+                    </span>
                   </div>
                   {/* Mini field preview */}
                   <div className="mt-3 h-24 bg-[#1a3d2e] rounded-lg relative overflow-hidden">
@@ -777,15 +1139,15 @@ export default function MercadoPage() {
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-yellow-400" />
                   </div>
-                  <div className="flex items-center gap-2 mt-3 text-red-400 text-xs">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>Nao disponivel</span>
+                  <div className="flex items-center gap-2 mt-3 text-[#00ffc8] text-xs">
+                    <Check className="w-4 h-4" />
+                    <span>Abrir rede mundial</span>
                   </div>
                 </button>
               </div>
 
               {/* Right Column - Big Field Preview */}
-              <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04]">
+              <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-white text-2xl font-bold">Padrao {userTeam?.nome?.toUpperCase() || "TIME"}</h2>
@@ -885,27 +1247,85 @@ export default function MercadoPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
-              {/* Left Card - Network Info */}
-              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
-                <Globe className="w-16 h-16 text-white/20 mb-6" />
-                <p className="text-white/60 text-lg leading-relaxed max-w-md">
-                  Use a Rede Mundial de Transferencias e designe olheiros para procurar atletas, ou busque atletas por conta propria.
+              <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-white/40">Resumo</p>
+                    <h3 className="mt-1 text-xl font-bold text-white">Negociacoes recentes</h3>
+                  </div>
+                  <Globe className="w-10 h-10 text-white/20" />
+                </div>
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-white/[0.04] p-4">
+                    <p className="text-xs text-white/40">Enviadas</p>
+                    <p className="mt-1 text-2xl font-bold text-white">{sentProposals.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.04] p-4">
+                    <p className="text-xs text-white/40">Aceitas</p>
+                    <p className="mt-1 text-2xl font-bold text-[#00ffc8]">{sentProposals.filter((proposal) => proposal.status === "aceita").length}</p>
+                  </div>
+                </div>
+                <p className="mt-6 text-sm text-white/50 leading-relaxed">
+                  As propostas feitas pelo modal de negociacao aparecem aqui com o resultado da resposta do clube.
                 </p>
-                <div className="flex items-center gap-2 mt-6 text-white/80">
-                  <span>Pressione</span>
-                  <span className="text-xs bg-primary/20 text-primary rounded px-2 py-1 font-bold">q</span>
-                  <span>para procurar atletas.</span>
+                <div className="mt-6 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("buscar")}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2 text-sm font-semibold text-black hover:bg-[#00c8ff]"
+                  >
+                    <Search className="h-4 w-4" />
+                    Buscar atletas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("rede")}
+                    className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15"
+                  >
+                    <ArrowLeftRight className="h-4 w-4" />
+                    Abrir rede
+                  </button>
                 </div>
               </div>
 
-              {/* Right Card - Shortlist */}
-              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
-                <p className="text-white/60 text-lg leading-relaxed">
-                  Voce nao fez nenhuma proposta ainda.
-                </p>
-                <p className="text-white/40 text-sm mt-4">
-                  Busque jogadores na aba de transferencias e faca propostas para ve-las aqui.
-                </p>
+              <div className="rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
+                <div className="flex items-center justify-between border-b border-white/[0.04] px-5 py-4">
+                  <h3 className="text-sm font-semibold text-white">Historico enviado</h3>
+                  <span className="text-xs text-white/35">{sentProposals.length} registros</span>
+                </div>
+
+                {sentProposals.length === 0 ? (
+                  <div className="flex h-[calc(100%-57px)] flex-col items-center justify-center p-8 text-center">
+                    <ArrowLeftRight className="mb-4 h-12 w-12 text-white/20" />
+                    <p className="text-white/60">Voce nao fez nenhuma proposta ainda.</p>
+                    <p className="mt-2 text-sm text-white/40">Escolha um jogador na Rede Mundial e negocie compra ou emprestimo.</p>
+                  </div>
+                ) : (
+                  <div className="max-h-[calc(100vh-280px)] overflow-y-auto divide-y divide-white/[0.04] scrollbar-thin">
+                    {sentProposals.map((proposal) => (
+                      <div key={proposal.id} className="flex items-center gap-4 px-5 py-4">
+                        <div className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                          proposal.status === "aceita" ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-red-500/15 text-red-300"
+                        )}>
+                          {proposal.status === "aceita" ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-white">{proposal.playerName}</p>
+                          <p className="text-xs text-white/45">
+                            {proposal.teamName} - {proposal.type === "loan" ? "Emprestimo" : "Compra"} - Semana {proposal.week}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-white">{formatCurrency(proposal.amount)}</p>
+                          <p className={cn("text-[10px] uppercase", proposal.status === "aceita" ? "text-[#00ffc8]" : "text-red-300")}>
+                            {proposal.status === "aceita" ? "Aceita" : "Rejeitada"}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -936,25 +1356,76 @@ export default function MercadoPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
-              {/* Left Card */}
-              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
-                <ArrowLeftRight className="w-16 h-16 text-white/20 mb-6" />
-                <p className="text-white/60 text-lg leading-relaxed max-w-md">
-                  Outros clubes podem fazer propostas pelos seus jogadores a qualquer momento durante a janela de transferencias.
+              <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-white/40">Entrada</p>
+                    <h3 className="mt-1 text-xl font-bold text-white">Ofertas pendentes</h3>
+                  </div>
+                  <ArrowLeftRight className="w-10 h-10 text-white/20" />
+                </div>
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-white/[0.04] p-4">
+                    <p className="text-xs text-white/40">Pendentes</p>
+                    <p className="mt-1 text-2xl font-bold text-[#ffd700]">{pendingReceivedOffers.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.04] p-4">
+                    <p className="text-xs text-white/40">Historico</p>
+                    <p className="mt-1 text-2xl font-bold text-white">{pastReceivedOffers.length}</p>
+                  </div>
+                </div>
+                <p className="mt-6 text-sm text-white/50 leading-relaxed">
+                  Aceitar uma proposta de compra remove o jogador do elenco e atualiza saldo, verba de transferencia e folha salarial.
                 </p>
-                <p className="text-white/40 text-sm mt-4">
-                  Jogadores com alta visibilidade e bom desempenho atraem mais interessados.
-                </p>
+                <button
+                  type="button"
+                  onClick={handleGenerateReceivedOffer}
+                  className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2 text-sm font-semibold text-black hover:bg-[#00c8ff]"
+                >
+                  <Clock className="h-4 w-4" />
+                  Atualizar interesse
+                </button>
               </div>
 
-              {/* Right Card - Received Offers */}
-              <div className="rounded-xl p-8 bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-white/[0.04] flex flex-col items-center justify-center text-center">
-                <p className="text-white/60 text-lg leading-relaxed">
-                  Voce nao recebeu nenhuma proposta.
-                </p>
-                <p className="text-white/40 text-sm mt-4">
-                  Quando outros times fizerem propostas pelos seus jogadores, elas aparecerao aqui.
-                </p>
+              <div className="rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
+                <div className="flex items-center justify-between border-b border-white/[0.04] px-5 py-4">
+                  <h3 className="text-sm font-semibold text-white">Caixa de ofertas</h3>
+                  <span className="text-xs text-white/35">{gameEngine.transferOffers.length} total</span>
+                </div>
+
+                {pendingReceivedOffers.length === 0 && pastReceivedOffers.length === 0 ? (
+                  <div className="flex h-[calc(100%-57px)] flex-col items-center justify-center p-8 text-center">
+                    <ArrowLeftRight className="mb-4 h-12 w-12 text-white/20" />
+                    <p className="text-white/60">Voce nao recebeu nenhuma proposta.</p>
+                    <p className="mt-2 text-sm text-white/40">Avance semanas ou use Atualizar interesse para simular movimentacao do mercado.</p>
+                  </div>
+                ) : (
+                  <div className="max-h-[calc(100vh-280px)] overflow-y-auto p-4 scrollbar-thin">
+                    {pendingReceivedOffers.length > 0 && (
+                      <div className="space-y-3">
+                        {pendingReceivedOffers.map((offer) => (
+                          <ReceivedOfferCard
+                            key={offer.id}
+                            offer={offer}
+                            currentWeek={gameEngine.currentWeek}
+                            player={gameEngine.squadPlayers.find((item) => item.id === offer.playerId)}
+                            onAccept={() => gameEngine.respondToOffer(offer.id, true)}
+                            onReject={() => gameEngine.respondToOffer(offer.id, false)}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {pastReceivedOffers.length > 0 && (
+                      <div className={cn("space-y-2", pendingReceivedOffers.length > 0 && "mt-5 border-t border-white/[0.04] pt-4")}>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-white/40">Historico</p>
+                        {pastReceivedOffers.map((offer) => (
+                          <PastReceivedOfferRow key={offer.id} offer={offer} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -984,12 +1455,135 @@ export default function MercadoPage() {
           if (!selectedPlayer) return
           const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer)
           if (negotiationType === "loan") {
-            loanPlayer(enginePlayer, 26, Math.round(fee / 26))
+            gameEngine.loanPlayer(enginePlayer, 26, Math.round(fee / 26))
+            setMarketNotice(`${selectedPlayer.name} chegou por emprestimo.`)
           } else {
-            buyPlayer(enginePlayer, fee)
+            if (gameEngine.balance < fee) {
+              setMarketNotice("Saldo insuficiente para concluir esta transferencia.")
+              setActiveTab("enviadas")
+              return
+            }
+            gameEngine.buyPlayer(enginePlayer, fee)
+            setMarketNotice(`${selectedPlayer.name} foi contratado por ${formatCurrency(fee)}.`)
           }
+          setActiveTab("enviadas")
         }}
+        onNegotiationResult={handleNegotiationResult}
       />
+    </div>
+  )
+}
+
+function ReceivedOfferCard({
+  offer,
+  currentWeek,
+  player,
+  onAccept,
+  onReject,
+}: {
+  offer: TransferOffer
+  currentWeek: number
+  player?: EnginePlayer
+  onAccept: () => void
+  onReject: () => void
+}) {
+  const expiresIn = Math.max(0, offer.expiresWeek - currentWeek)
+  const belowMarket = player && offer.offerType === "compra" && offer.offerAmount < player.marketValue
+
+  return (
+    <div className="rounded-xl bg-[#0c0c10]/85 border border-white/[0.06] overflow-hidden">
+      <div className="flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-white">{offer.fromTeam}</p>
+          <p className="text-[10px] uppercase tracking-wider text-white/45">
+            {offer.offerType === "emprestimo" ? "Emprestimo" : "Compra"} por {offer.playerName}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-bold text-[#00ffc8]">{formatCurrency(offer.offerAmount)}</p>
+          <p className="text-[10px] text-white/40">Expira em {expiresIn} sem.</p>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">{offer.playerName}</p>
+            <p className="text-xs text-white/45">
+              {player ? `${player.position} - ${player.age} anos - OVR ${player.overall}` : "Jogador nao encontrado no elenco"}
+            </p>
+          </div>
+          {player && (
+            <div className="text-right">
+              <p className="text-xs text-white/35">Valor mercado</p>
+              <p className="text-sm font-semibold text-white">{formatCurrency(player.marketValue)}</p>
+            </div>
+          )}
+        </div>
+
+        {offer.offerType === "emprestimo" && (
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-white/[0.03] p-3">
+            <div>
+              <p className="text-[10px] uppercase text-white/35">Duracao</p>
+              <p className="text-sm font-semibold text-white">{offer.loanWeeks ?? 0} semanas</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-white/35">Salario coberto</p>
+              <p className="text-sm font-semibold text-white">{offer.wageCoverage ?? 0}%</p>
+            </div>
+          </div>
+        )}
+
+        {belowMarket && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            <AlertCircle className="h-4 w-4" />
+            Oferta abaixo do valor de mercado.
+          </div>
+        )}
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onReject}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-500/10 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-500/20"
+          >
+            <X className="h-4 w-4" />
+            Recusar
+          </button>
+          <button
+            type="button"
+            onClick={onAccept}
+            disabled={!player}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#00ffc8] py-2.5 text-sm font-semibold text-black hover:bg-[#00c8ff] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Check className="h-4 w-4" />
+            Aceitar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PastReceivedOfferRow({ offer }: { offer: TransferOffer }) {
+  const statusLabel = offer.status === "aceita" ? "Aceita" : offer.status === "rejeitada" ? "Rejeitada" : "Expirada"
+  const statusClass =
+    offer.status === "aceita"
+      ? "text-[#00ffc8] bg-[#00ffc8]/10"
+      : offer.status === "rejeitada"
+        ? "text-red-300 bg-red-500/10"
+        : "text-[#ffd700] bg-[#ffd700]/10"
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2.5">
+      <div className={cn("rounded px-2 py-1 text-[10px] font-semibold uppercase", statusClass)}>
+        {statusLabel}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm text-white">{offer.playerName}</p>
+        <p className="text-xs text-white/40">{offer.fromTeam}</p>
+      </div>
+      <p className="text-sm font-semibold text-white">{formatCurrency(offer.offerAmount)}</p>
     </div>
   )
 }
@@ -1106,7 +1700,7 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
   const isNotScouted = !player.scoutedBy
 
   return (
-    <div className="rounded-xl bg-[#0c0c10]/80 border border-white/[0.04] overflow-hidden">
+    <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-white/[0.04]">
         <div className="flex items-center justify-between">
@@ -1286,8 +1880,8 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
   )
 }
 
-// Scout Card Component  
-function ScoutCard({ scout, selected }: { scout: typeof scouts[0], selected: boolean }) {
+// Legacy scout card kept for visual experiments.
+function _ScoutCard({ scout, selected }: { scout: { name: string; nationality: string; area: string; assigned: number; stars: number }, selected: boolean }) {
   const flagEmoji = scout.nationality === "Inglaterra" ? "🏴󠁧󠁢󠁥󠁮󠁧󠁿" : 
                     scout.nationality === "Suica" ? "🇨🇭" : "🇨🇿"
 

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud } from "lucide-react"
@@ -9,6 +8,7 @@ import { loadGameState, hasSave, clearAllGameData } from "@/lib/save-system"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useTranslation } from "@/lib/i18n"
 import { isTauri } from "@/lib/game-asset"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { downloadSave, getSavedCloudCode } from "@/lib/cloud-save"
 import {
   Dialog,
@@ -31,7 +31,6 @@ type SplashPhase =
 type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
 export default function SplashPage() {
-  const router = useRouter()
   const t = useTranslation()
   const [phase, setPhase] = useState<SplashPhase>("black")
   const [loadingProgress, setLoadingProgress] = useState(0)
@@ -150,10 +149,10 @@ export default function SplashPage() {
       setIsExiting(true)
       setPhase("fade-out")
       setTimeout(() => {
-        router.push(href)
+        hardNavigate(href)
       }, 400)
     }
-  }, [isExiting, router, mainMenuOptions, isRegistered])
+  }, [isExiting, mainMenuOptions, isRegistered])
 
   // Handler para carregar save
   const handleLoadSave = useCallback((saveId: number) => {
@@ -163,9 +162,9 @@ export default function SplashPage() {
     setIsExiting(true)
     setPhase("fade-out")
     setTimeout(() => {
-      router.push("/")
+      hardNavigate("/")
     }, 400)
-  }, [router])
+  }, [])
 
   // Funcao para validar e registrar o jogo
   const handleRegister = useCallback(async () => {

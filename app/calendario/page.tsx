@@ -218,8 +218,8 @@ export default function CalendarioPage() {
       {/* Top Navigation Bar */}
       <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
         <div className="flex items-center gap-6">
-          <span className="text-white/60 text-sm font-medium">Office</span>
-          <span className="text-white text-sm font-bold">Calendar</span>
+          <span className="text-white/60 text-sm font-medium">Escritorio</span>
+          <span className="text-white text-sm font-bold">Calendario</span>
           {/* Month Tabs */}
           <div className="flex items-center gap-1 ml-4">
             <button 
@@ -373,38 +373,52 @@ export default function CalendarioPage() {
                     }}
                     disabled={!item.isCurrentMonth}
                     className={cn(
-                      "relative p-2 border-r border-b border-white/5 flex flex-col transition-all",
+                      "relative overflow-hidden border-r border-b border-white/5 transition-all",
                       item.isCurrentMonth ? "hover:bg-white/5" : "opacity-30",
                       isSelected && "bg-white/10",
                     )}
                   >
                     {/* Day number */}
                     <span className={cn(
-                      "text-2xl font-bold",
+                      "absolute left-0 right-0 z-10 text-center font-bold",
                       !item.isCurrentMonth && "text-white/20",
                       item.isCurrentMonth && !hasMatch && "text-white/50",
                       hasMatch && "text-white"
-                    )}>
+                    )}
+                    style={{ top: 8, fontSize: 24, lineHeight: "24px" }}
+                    >
                       {item.day}
                     </span>
 
                     {/* Match Card (EA FC Style) */}
                     {hasMatch && opponent && (
-                      <div className={cn(
-                        "absolute bottom-2 left-2 right-2 rounded-lg p-2 flex flex-col items-center gap-1",
-                        isHome 
-                          ? "bg-[#0088ff]/30 border border-[#0088ff]/50" 
-                          : "bg-[#00cc66]/30 border border-[#00cc66]/50"
-                      )}>
-                        <TeamCrest team={opponent} size="sm" />
-                        <div className={cn(
-                          "text-[10px] font-bold uppercase",
-                          isHome ? "text-[#66bbff]" : "text-[#66ff99]"
-                        )}>
-                          {isHome ? "Home" : "Away"}
-                        </div>
-                        <div className="text-[9px] font-medium text-white/60 uppercase">
-                          {item.fixture?.competition === "Brasileirao Serie A" ? "LEAGUE" : "CUP"}
+                      <div
+                        className="absolute left-2 right-2 rounded-lg px-2 flex items-center justify-center gap-1.5 overflow-hidden shadow-lg border"
+                        style={{
+                          bottom: 6,
+                          height: 32,
+                          backgroundColor: isHome ? "rgba(0, 136, 255, 0.35)" : "rgba(0, 204, 102, 0.35)",
+                          borderColor: isHome ? "rgba(0, 136, 255, 0.6)" : "rgba(0, 204, 102, 0.6)",
+                        }}
+                      >
+                        <TeamCrest team={opponent} size="xs" />
+                        <div className="min-w-0 flex flex-col items-start leading-none">
+                          <div
+                            className="font-black uppercase"
+                            style={{
+                              color: isHome ? "#8ed0ff" : "#86ffb0",
+                              fontSize: 9,
+                              lineHeight: "10px",
+                            }}
+                          >
+                            {isHome ? "Casa" : "Fora"}
+                          </div>
+                          <div
+                            className="font-bold text-white/60 uppercase"
+                            style={{ fontSize: 8, lineHeight: "9px" }}
+                          >
+                            {item.fixture?.competition === "Brasileirao Serie A" ? "Liga" : "Copa"}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -425,14 +439,14 @@ export default function CalendarioPage() {
             className="flex items-center gap-2 hover:text-white disabled:opacity-50 transition-colors"
           >
             <GamepadButton button="cross" platform="playstation" size="sm" />
-            <span>Sim To Date</span>
+            <span>Simular ate data</span>
           </button>
           <button 
             onClick={() => router.back()}
             className="flex items-center gap-2 hover:text-white transition-colors"
           >
             <GamepadButton button="circle" platform="playstation" size="sm" />
-            <span>Back</span>
+            <span>Voltar</span>
           </button>
           {nextUserMatch && (
             <Link 
@@ -440,19 +454,19 @@ export default function CalendarioPage() {
               className="flex items-center gap-2 hover:text-white transition-colors"
             >
               <GamepadButton button="square" platform="playstation" size="sm" />
-              <span>View Fixture</span>
+              <span>Ver partida</span>
             </Link>
           )}
           <div className="flex items-center gap-1.5">
             <GamepadButton button="l1" platform="playstation" size="xs" />
             <GamepadButton button="r1" platform="playstation" size="xs" />
-            <span className="ml-1">Month</span>
+            <span className="ml-1">Mes</span>
           </div>
         </div>
 
         {/* FC HUB */}
         <div className="flex items-center gap-2 text-white/50 text-xs">
-          <span>FC HUB</span>
+          <span>Central UF</span>
         </div>
       </footer>
 

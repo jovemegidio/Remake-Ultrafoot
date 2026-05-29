@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useRef } from "react"
 import {
   LayoutGrid,
@@ -21,13 +21,13 @@ import {
 import { cn } from "@/lib/utils"
 import { useGamepadFocusable } from "@/components/gamepad-provider"
 import { useTranslation } from "@/lib/i18n"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 type NavItemDef = { icon: React.ComponentType<{ className?: string }>; label: string; href: string }
 
 function SidebarNavItem({ icon: Icon, label, href, active }: NavItemDef & { active: boolean }) {
   const ref = useRef<HTMLAnchorElement>(null)
-  const router = useRouter()
-  const focusable = useGamepadFocusable(`sidebar-${href}`, ref as React.RefObject<HTMLElement | null>, () => router.push(href))
+  const focusable = useGamepadFocusable(`sidebar-${href}`, ref as React.RefObject<HTMLElement | null>, () => hardNavigate(href))
 
   return (
     <Link
@@ -95,7 +95,7 @@ export function GameSidebar() {
         className="mb-4 flex h-11 w-14 items-center justify-center transition-all hover:opacity-80 group"
       >
         <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo%20-%20UF26-PgrXUhQ0ZaH6AlitOWzutXO1SK42me.png"
+          src="/logo.png"
           alt="UF26"
           width={52}
           height={22}
@@ -110,7 +110,7 @@ export function GameSidebar() {
       <div className="w-8 h-px bg-white/10 mb-3" />
 
       {/* Navigation */}
-      <nav className="flex flex-1 flex-col items-center gap-1 w-full px-2 overflow-y-auto scrollbar-none">
+      <nav className="flex flex-1 flex-col items-center gap-1 w-full px-2 overflow-visible scrollbar-none">
         {navItems.map(({ icon, label, href }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href)
           return (

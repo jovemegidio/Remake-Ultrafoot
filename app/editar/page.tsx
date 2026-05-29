@@ -101,6 +101,7 @@ export default function EditarPage() {
   const [searchTeam, setSearchTeam] = useState("")
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)
   const [activeTab, setActiveTab] = useState<"principal" | "juniores">("principal")
+  const [kitErrors, setKitErrors] = useState<Record<string, boolean>>({})
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [players, setPlayers] = useState(() => generatePlayersForTeam())
@@ -110,6 +111,7 @@ export default function EditarPage() {
     if (selectedTeam) {
       setPlayers(generatePlayersForTeam())
       setSelectedPlayerIndex(0)
+      setKitErrors({})
     }
   }, [selectedTeam])
 
@@ -323,21 +325,41 @@ export default function EditarPage() {
 
                   {/* Kits */}
                   <div className="hidden lg:flex items-center gap-2">
-                    {["home", "away", "third"].map((variant) => (
-                      <div 
-                        key={variant} 
-                        className="w-12 h-14 bg-white/[0.05] rounded-lg flex items-center justify-center p-1.5 hover:bg-white/[0.1] transition-all duration-200 cursor-pointer border border-white/[0.06] hover:border-white/[0.12]"
-                      >
-                        <Image
-                          src={getCamisaUrl(selectedTeam.file_key, variant as "home" | "away" | "third")}
-                          alt={`${selectedTeam.nome} ${variant}`}
-                          width={40}
-                          height={50}
-                          className="object-contain h-auto w-auto"
-                          unoptimized
-                        />
-                      </div>
-                    ))}
+                    {(["home", "away", "third"] as const).map((variant, vi) => {
+                      const kitKey = `${selectedTeam.file_key}-${variant}`
+                      const hasError = kitErrors[kitKey]
+                      const kitColors = [
+                        { bg: selectedTeam.cor1, stripe: selectedTeam.cor2 },
+                        { bg: selectedTeam.cor2, stripe: selectedTeam.cor1 },
+                        { bg: "#1a1a2e", stripe: selectedTeam.cor1 },
+                      ]
+                      const { bg, stripe } = kitColors[vi]
+                      return (
+                        <div
+                          key={variant}
+                          className="w-12 h-14 bg-white/[0.05] rounded-lg flex items-center justify-center p-1 hover:bg-white/[0.1] transition-all duration-200 cursor-pointer border border-white/[0.06] hover:border-white/[0.12]"
+                          title={variant === "home" ? "Principal" : variant === "away" ? "Alternativo" : "Terceiro"}
+                        >
+                          {!hasError ? (
+                            <Image
+                              src={getCamisaUrl(selectedTeam.file_key, variant)}
+                              alt={`${selectedTeam.nome} ${variant}`}
+                              width={40}
+                              height={50}
+                              className="object-contain h-full w-auto"
+                              unoptimized
+                              onError={() => setKitErrors(prev => ({ ...prev, [kitKey]: true }))}
+                            />
+                          ) : (
+                            <svg viewBox="0 0 40 50" className="h-full w-auto">
+                              <path d="M14 2 L8 8 L2 6 L2 22 L8 22 L8 46 L32 46 L32 22 L38 22 L38 6 L32 8 Z"
+                                fill={bg} stroke={stripe} strokeWidth="1.5" />
+                              <path d="M14 2 L20 5 L26 2 L32 8 L20 12 L8 8 Z" fill={stripe} opacity="0.7" />
+                            </svg>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
 
                   {/* Team OVR */}

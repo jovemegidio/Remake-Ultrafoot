@@ -39,6 +39,7 @@ import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
 import { useGamepad, type GamepadButtonName } from "@/hooks/use-gamepad"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useDiscordRPC } from "@/hooks/use-discord-rpc"
+import { useTranslation } from "@/lib/i18n"
 import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
 import {
   type MatchSpeed,
@@ -462,6 +463,7 @@ export default function PartidaAoVivoPage() {
   const { registerUserMatchResult, advanceWeek } = useGameManager()
   const { squadPlayers: enginePlayers } = useGameEngine()
   const resultRegistered = useRef(false)
+  const t = useTranslation()
 
   // Hydration guard
   const [hydrated, setHydrated] = useState(false)
@@ -934,13 +936,13 @@ export default function PartidaAoVivoPage() {
               <div className="flex-1 overflow-y-auto p-4">
                 {activeTab === "stats" && (
                   <div className="space-y-4">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Estatísticas da Partida</h3>
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">{t.match.live.sectionStats}</h3>
                     
   {/* Stats Comparativas */}
   <div className="space-y-3">
   <div className="grid grid-cols-[1fr_auto_1fr] items-center text-[10px] font-bold uppercase tracking-wider text-white/40">
   <span>{homeTeam.curto}</span>
-  <span className="px-2 text-white/20">estatistica</span>
+  <span className="px-2 text-white/20">{t.match.live.statLabel}</span>
   <span className="text-right">{awayTeam.curto}</span>
   </div>
   <StatBar label="Posse de Bola" homeValue={state.home?.possession ?? 50} awayValue={state.away?.possession ?? 50} suffix="%" />
@@ -955,60 +957,126 @@ export default function PartidaAoVivoPage() {
                 )}
 
                 {activeTab === "fitness" && (
-                  <div className="space-y-4">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Condicao Fisica - {homeTeam.curto}</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {homeSquad.slice(0, 11).map((player) => (
-                        <div key={player.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
-                          <span className="text-white/40 text-xs w-5">{player.number}</span>
-                          <span className="text-white text-xs flex-1 truncate">{player.name}</span>
-                          <div className="flex items-center gap-1">
-                            <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                              <div 
-                                className={cn(
-                                  "h-full rounded-full transition-all",
-                                  (player.stamina ?? 100) > 70 ? "bg-emerald-500" : 
-                                  (player.stamina ?? 100) > 40 ? "bg-amber-500" : "bg-red-500"
-                                )}
-                                style={{ width: `${player.stamina ?? 100}%` }}
-                              />
-                            </div>
-                            <span className="text-white/60 text-[10px] w-6 text-right">{player.stamina ?? 100}%</span>
-                          </div>
+                  <div className="space-y-3">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider">{t.match.live.sectionFitness}</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0">
+                      {/* Time da Casa */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
+                          <TeamCrest team={homeTeam} size="xs" />
+                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{homeTeam.curto}</span>
                         </div>
-                      ))}
+                        {homeSquad.slice(0, 11).map((player) => {
+                          const staminaVal = Math.round(player.stamina ?? 100)
+                          return (
+                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
+                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
+                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
+                              <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden shrink-0">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-all",
+                                    staminaVal > 70 ? "bg-emerald-500" :
+                                    staminaVal > 40 ? "bg-amber-500" : "bg-red-500"
+                                  )}
+                                  style={{ width: `${staminaVal}%` }}
+                                />
+                              </div>
+                              <span className="text-white/50 text-[10px] w-7 text-right tabular-nums shrink-0">{staminaVal}%</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {/* Time Visitante */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
+                          <TeamCrest team={awayTeam} size="xs" />
+                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{awayTeam.curto}</span>
+                        </div>
+                        {awaySquad.slice(0, 11).map((player) => {
+                          const staminaVal = Math.round(player.stamina ?? 100)
+                          return (
+                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
+                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
+                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
+                              <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden shrink-0">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-all",
+                                    staminaVal > 70 ? "bg-emerald-500" :
+                                    staminaVal > 40 ? "bg-amber-500" : "bg-red-500"
+                                  )}
+                                  style={{ width: `${staminaVal}%` }}
+                                />
+                              </div>
+                              <span className="text-white/50 text-[10px] w-7 text-right tabular-nums shrink-0">{staminaVal}%</span>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {activeTab === "ratings" && (
-                  <div className="space-y-4">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Avaliacoes - {homeTeam.curto}</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {homeSquad.slice(0, 11).map((player) => {
-                        const rating = player.rating ?? 70
-                        return (
-                          <div key={player.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
-                            <span className="text-white/40 text-xs w-5">{player.number}</span>
-                            <span className="text-white text-xs flex-1 truncate">{player.name}</span>
-                            <span className={cn(
-                              "text-xs font-bold px-1.5 py-0.5 rounded",
-                              rating >= 80 ? "bg-emerald-500/20 text-emerald-400" :
-                              rating >= 70 ? "bg-amber-500/20 text-amber-400" :
-                              "bg-red-500/20 text-red-400"
-                            )}>
-                              {rating.toFixed(1)}
-                            </span>
-                          </div>
-                        )
-                      })}
+                  <div className="space-y-3">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider">{t.match.live.sectionRatings}</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0">
+                      {/* Time da Casa */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
+                          <TeamCrest team={homeTeam} size="xs" />
+                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{homeTeam.curto}</span>
+                        </div>
+                        {homeSquad.slice(0, 11).map((player) => {
+                          const rating = Math.round(player.rating ?? 70)
+                          return (
+                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
+                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
+                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
+                              <span className={cn(
+                                "text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums shrink-0",
+                                rating >= 80 ? "bg-emerald-500/20 text-emerald-400" :
+                                rating >= 70 ? "bg-amber-500/20 text-amber-400" :
+                                "bg-red-500/20 text-red-400"
+                              )}>
+                                {rating}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {/* Time Visitante */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
+                          <TeamCrest team={awayTeam} size="xs" />
+                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{awayTeam.curto}</span>
+                        </div>
+                        {awaySquad.slice(0, 11).map((player) => {
+                          const rating = Math.round(player.rating ?? 70)
+                          return (
+                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
+                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
+                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
+                              <span className={cn(
+                                "text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums shrink-0",
+                                rating >= 80 ? "bg-emerald-500/20 text-emerald-400" :
+                                rating >= 70 ? "bg-amber-500/20 text-amber-400" :
+                                "bg-red-500/20 text-red-400"
+                              )}>
+                                {rating}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {activeTab === "gameplan" && (
                   <div className="space-y-4">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">Plano de Jogo</h3>
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">{t.match.live.sectionGameplan}</h3>
                     
                     <div className="grid grid-cols-2 gap-4">
                       {/* Formacao Casa */}
@@ -1037,8 +1105,8 @@ export default function PartidaAoVivoPage() {
                     {/* Substituicoes */}
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/40 text-xs uppercase tracking-wider">Substituicoes</span>
-                        <span className="text-[#00ffc8] text-xs font-bold">{subsRemaining}/5 restantes</span>
+                        <span className="text-white/40 text-xs uppercase tracking-wider">{t.match.live.substitutions}</span>
+                        <span className="text-[#00ffc8] text-xs font-bold">{t.match.live.subsRemaining(subsRemaining)}</span>
                       </div>
                       {state.events.filter(e => e.type === "sub" && e.side === "home").length > 0 ? (
                         <div className="space-y-1">
@@ -1053,7 +1121,7 @@ export default function PartidaAoVivoPage() {
                             ))}
                         </div>
                       ) : (
-                        <div className="text-white/30 text-xs">Nenhuma substituicao realizada</div>
+                        <div className="text-white/30 text-xs">{t.match.live.noSubs}</div>
                       )}
                     </div>
                   </div>
@@ -1064,10 +1132,10 @@ export default function PartidaAoVivoPage() {
               <div className="border-t border-white/[0.06] bg-[#0d1a1a]/50">
                 <div className="flex items-center justify-center gap-1 px-4 py-2">
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 mr-2">L1</span>
-                  <TabButton label="Fitness" active={activeTab === "fitness"} onClick={() => setActiveTab("fitness")} />
-                  <TabButton label="Ratings" active={activeTab === "ratings"} onClick={() => setActiveTab("ratings")} />
-                  <TabButton label="Stats" active={activeTab === "stats"} onClick={() => setActiveTab("stats")} />
-                  <TabButton label="Gameplan" active={activeTab === "gameplan"} onClick={() => setActiveTab("gameplan")} />
+                  <TabButton label={t.match.live.tabFitness} active={activeTab === "fitness"} onClick={() => setActiveTab("fitness")} />
+                  <TabButton label={t.match.live.tabRatings} active={activeTab === "ratings"} onClick={() => setActiveTab("ratings")} />
+                  <TabButton label={t.match.live.tabStats} active={activeTab === "stats"} onClick={() => setActiveTab("stats")} />
+                  <TabButton label={t.match.live.tabGameplan} active={activeTab === "gameplan"} onClick={() => setActiveTab("gameplan")} />
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 ml-2">R1</span>
                 </div>
               </div>

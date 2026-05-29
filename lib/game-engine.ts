@@ -2577,20 +2577,30 @@ export const useGameEngine = create<GameEngineState>()(
       },
       
       hireScout: (scout) => {
-        set((s) => ({
-          scouts: [...s.scouts, scout],
-          weeklyExpenses: s.weeklyExpenses + scout.salary
-        }))
+        set((s) => {
+          if (s.scouts.some((item) => item.id === scout.id)) return s
+          return {
+            scouts: [...s.scouts, scout],
+            weeklyExpenses: s.weeklyExpenses + scout.salary
+          }
+        })
       },
       
       startScoutSearch: (scoutId, region, weeksToComplete, searchCost) => {
-        set((s) => ({
-          scouts: s.scouts.map(scout =>
-            scout.id === scoutId
-              ? { ...scout, isSearching: true, searchProgress: 0, searchTarget: region, region, weeksToComplete: weeksToComplete ?? 4, weeksSearching: 0, searchCost: searchCost ?? scout.searchCost ?? 0 }
-              : scout
-          )
-        }))
+        set((s) => {
+          const scout = s.scouts.find((item) => item.id === scoutId)
+          const cost = searchCost ?? scout?.searchCost ?? 0
+          if (!scout || scout.isSearching || s.balance < cost) return s
+
+          return {
+            balance: s.balance - cost,
+            scouts: s.scouts.map((item) =>
+              item.id === scoutId
+                ? { ...item, isSearching: true, searchProgress: 0, searchTarget: region, region, weeksToComplete: weeksToComplete ?? 4, weeksSearching: 0, searchCost: cost }
+                : item
+            )
+          }
+        })
       },
 
       stopScoutSearch: (scoutId) => {
@@ -2622,12 +2632,17 @@ export const useGameEngine = create<GameEngineState>()(
       },
 
       revealScoutedLead: (leadId) => {
-        set((s) => ({
-          scoutedLeads: s.scoutedLeads.map(l =>
-            l.id === leadId ? { ...l, revealedAttributes: true } : l
-          ),
-          balance: s.balance - 50000,
-        }))
+        set((s) => {
+          const lead = s.scoutedLeads.find((item) => item.id === leadId)
+          if (!lead || lead.revealedAttributes || s.balance < 50000) return s
+
+          return {
+            scoutedLeads: s.scoutedLeads.map((item) =>
+              item.id === leadId ? { ...item, revealedAttributes: true } : item
+            ),
+            balance: s.balance - 50000,
+          }
+        })
       },
 
       dismissScoutedLead: (leadId) => {
@@ -2789,19 +2804,21 @@ export const useGameEngine = create<GameEngineState>()(
               )
             }))
           } else {
-            // Empresta o jogador
-            const loanedPlayer = {
-              ...player,
-              isLoanedIn: false, // Saindo por emprestimo
-              loanEndWeek: state.currentWeek + (offer.loanWeeks || 26),
-              parentClub: offer.fromTeam
-            }
-            
+            // Empresta o jogador — marca como loanedOut para manter rastreio no elenco
             set((s) => ({
-              squadPlayers: s.squadPlayers.filter(p => p.id !== offer.playerId),
+              squadPlayers: s.squadPlayers.map(p =>
+                p.id === offer.playerId
+                  ? {
+                      ...p,
+                      loanedOut: true,
+                      loanEndWeek: state.currentWeek + (offer.loanWeeks || 26),
+                      parentClub: offer.fromTeam,
+                    }
+                  : p
+              ),
               balance: s.balance + offer.offerAmount,
               weeklyExpenses: s.weeklyExpenses - (player.contract?.salary || 0) * ((offer.wageCoverage || 100) / 100),
-              transferOffers: s.transferOffers.map(o => 
+              transferOffers: s.transferOffers.map(o =>
                 o.id === offerId ? { ...o, status: "aceita" as const } : o
               )
             }))
