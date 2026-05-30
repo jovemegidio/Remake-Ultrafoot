@@ -2,9 +2,10 @@
 
 import { ChevronDown, ChevronUp, Heart, ListMusic, Maximize2, Mic2, Minimize2, MonitorSpeaker, Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume1, Volume2, VolumeX, X } from "lucide-react"
 import Image from "next/image"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useMemo, useSyncExternalStore } from "react"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
+import { musicStore } from "@/lib/music-store"
 
 type PlayerSize = "full" | "compact" | "mini" | "hidden"
 
@@ -13,14 +14,6 @@ interface MusicPlayerProps {
   defaultSize?: PlayerSize
   autoPlay?: boolean
   offsetLeft?: number
-}
-
-interface Track {
-  title: string
-  artist: string
-  cover: string
-  src: string
-  duration: number
 }
 
 function formatTime(seconds: number): string {
@@ -34,205 +27,55 @@ const SPOTIFY_GREEN = "#1db954"
 const SPOTIFY_GREEN_HOVER = "#1ed760"
 
 export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, offsetLeft = 72 }: MusicPlayerProps) {
+  // Estado de reproducao compartilhado (singleton) — sobrevive a troca de paginas
+  const snap = useSyncExternalStore(
+    musicStore.subscribe,
+    musicStore.getSnapshot,
+    musicStore.getServerSnapshot,
+  )
+  const {
+    tracks,
+    currentTrack,
+    playing,
+    currentTime,
+    duration,
+    volume,
+    muted,
+    shuffle,
+    repeat,
+    isLoading,
+  } = snap
+
+  // Tamanho/UI sao locais a cada instancia do player
   const [size, setSize] = useState<PlayerSize>(defaultSize)
-  const [playing, setPlaying] = useState(false)
-  const [hasAutoPlayed, setHasAutoPlayed] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(70)
-  const [muted, setMuted] = useState(false)
-  const [liked, setLiked] = useState<Set<number>>(new Set())
-  const [shuffle, setShuffle] = useState(false)
-  const [repeat, setRepeat] = useState<"off" | "all" | "one">("off")
-  const [currentTrack, setCurrentTrack] = useState(0)
-
-  // Restaura preferencias do localStorage apos hidratacao
-  useEffect(() => {
-    const savedVolume = localStorage.getItem("ultrafoot:music-volume")
-    if (savedVolume !== null) setVolume(parseInt(savedVolume, 10))
-    const savedShuffle = localStorage.getItem("ultrafoot:music-shuffle")
-    if (savedShuffle !== null) setShuffle(savedShuffle === "true")
-    const savedRepeat = localStorage.getItem("ultrafoot:music-repeat")
-    if (savedRepeat !== null) setRepeat(savedRepeat as "off" | "all" | "one")
-    const savedSize = localStorage.getItem("ultrafoot:music-size")
-    if (savedSize !== null) setSize(savedSize as PlayerSize)
-  }, [])
-
-  // Persiste preferencias no localStorage
-  useEffect(() => { localStorage.setItem("ultrafoot:music-volume", String(volume)) }, [volume])
-  useEffect(() => { localStorage.setItem("ultrafoot:music-shuffle", String(shuffle)) }, [shuffle])
-  useEffect(() => { localStorage.setItem("ultrafoot:music-repeat", repeat) }, [repeat])
-  useEffect(() => { localStorage.setItem("ultrafoot:music-size", size) }, [size])
-  const [isLoading, setIsLoading] = useState(false)
   const [showPlaylist, setShowPlaylist] = useState(false)
-  const [tracks, setTracks] = useState<Track[]>([])
   const [isHoveringProgress, setIsHoveringProgress] = useState(false)
   const [isHoveringVolume, setIsHoveringVolume] = useState(false)
 
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const playingRef = useRef(playing)
-
+  // Restaura/persiste apenas o tamanho do player (preferencia visual)
   useEffect(() => {
-    playingRef.current = playing
-  }, [playing])
-
-  useEffect(() => {
-    fetch("/music/tracks.json")
-      .then(r => r.json())
-      .then((data: Track[]) => {
-        const isTauriProd = typeof window !== "undefined"
-          && "__TAURI_INTERNALS__" in window
-          && process.env.NODE_ENV === "production"
-        const resolvedTracks = isTauriProd
-          ? data.map(track => {
-              const fileName = decodeURIComponent(track.src.replace(/^\/music\//, ""))
-              return { ...track, src: `game-asset://localhost/music/${fileName}` }
-            })
-          : data
-        const shuffled = [...resolvedTracks].sort(() => Math.random() - 0.5)
-        setTracks(shuffled)
-      })
-      .catch(() => {})
+    const savedSize = localStorage.getItem("ultrafoot:music-size")
+    if (savedSize !== null) setSize(savedSize as PlayerSize)
   }, [])
+  useEffect(() => { localStorage.setItem("ultrafoot:music-size", size) }, [size])
 
+  // Autoplay (apenas instancias com autoPlay habilitado)
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio()
-      audioRef.current.preload = "metadata"
-    }
+    if (autoPlay) musicStore.requestAutoplay()
+  }, [autoPlay, tracks.length])
 
-    const audio = audioRef.current
-    const currentDuration = tracks[currentTrack]?.duration ?? 0
+  const liked = useMemo(() => new Set(snap.liked), [snap.liked])
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime)
-    const handleDurationChange = () => setDuration(audio.duration || currentDuration)
-    const handleEnded = () => {
-      if (repeat === "one") {
-        audio.currentTime = 0
-        audio.play()
-      } else {
-        nextTrack()
-      }
-    }
-    const handleCanPlay = () => setIsLoading(false)
-    const handleWaiting = () => setIsLoading(true)
-
-    audio.addEventListener("timeupdate", handleTimeUpdate)
-    audio.addEventListener("durationchange", handleDurationChange)
-    audio.addEventListener("ended", handleEnded)
-    audio.addEventListener("canplay", handleCanPlay)
-    audio.addEventListener("waiting", handleWaiting)
-
-    return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate)
-      audio.removeEventListener("durationchange", handleDurationChange)
-      audio.removeEventListener("ended", handleEnded)
-      audio.removeEventListener("canplay", handleCanPlay)
-      audio.removeEventListener("waiting", handleWaiting)
-    }
-  }, [currentTrack, repeat, tracks])
-
-  const currentSrc = tracks[currentTrack]?.src
-
-  useEffect(() => {
-    if (audioRef.current && currentSrc) {
-      audioRef.current.src = currentSrc
-      audioRef.current.load()
-      if (playingRef.current) {
-        audioRef.current.play().catch(() => {})
-      }
-    }
-  }, [currentSrc])
-
-  useEffect(() => {
-    if (autoPlay && !hasAutoPlayed && audioRef.current) {
-      const tryAutoPlay = () => {
-        if (audioRef.current && !playing) {
-          audioRef.current.play()
-            .then(() => {
-              setPlaying(true)
-              setHasAutoPlayed(true)
-            })
-            .catch(() => {})
-        }
-      }
-      
-      const timer = setTimeout(tryAutoPlay, 500)
-      
-      const handleInteraction = () => {
-        tryAutoPlay()
-        document.removeEventListener("click", handleInteraction)
-        document.removeEventListener("keydown", handleInteraction)
-      }
-      document.addEventListener("click", handleInteraction, { once: true })
-      document.addEventListener("keydown", handleInteraction, { once: true })
-      
-      return () => {
-        clearTimeout(timer)
-        document.removeEventListener("click", handleInteraction)
-        document.removeEventListener("keydown", handleInteraction)
-      }
-    }
-  }, [autoPlay, hasAutoPlayed, playing])
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (playing) {
-        audioRef.current.play().catch(() => setPlaying(false))
-      } else {
-        audioRef.current.pause()
-      }
-    }
-  }, [playing])
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = muted ? 0 : volume / 100
-    }
-  }, [volume, muted])
-
-  const togglePlay = useCallback(() => setPlaying(p => !p), [])
-
-  const nextTrack = useCallback(() => {
-    if (shuffle) {
-      const next = Math.floor(Math.random() * tracks.length)
-      setCurrentTrack(next)
-    } else {
-      setCurrentTrack(i => (i + 1) % tracks.length)
-    }
-  }, [shuffle, tracks.length])
-
-  const prevTrack = useCallback(() => {
-    if (audioRef.current && audioRef.current.currentTime > 3) {
-      audioRef.current.currentTime = 0
-    } else {
-      setCurrentTrack(i => (i - 1 + tracks.length) % tracks.length)
-    }
-  }, [tracks.length])
-
-  const seek = useCallback((value: number[]) => {
-    const newTime = (value[0] / 100) * duration
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime
-    }
-    setCurrentTime(newTime)
-  }, [duration])
-
-  const toggleLike = useCallback((index: number) => {
-    setLiked(prev => {
-      const next = new Set(prev)
-      if (next.has(index)) {
-        next.delete(index)
-      } else {
-        next.add(index)
-      }
-      return next
-    })
-  }, [])
-
-  const cycleRepeat = useCallback(() => {
-    setRepeat(r => r === "off" ? "all" : r === "all" ? "one" : "off")
-  }, [])
+  const togglePlay = () => musicStore.toggle()
+  const nextTrack = () => musicStore.next()
+  const prevTrack = () => musicStore.prev()
+  const seek = (value: number[]) => musicStore.seekRatio(value[0] ?? 0)
+  const toggleLike = (index: number) => musicStore.toggleLike(index)
+  const cycleRepeat = () => musicStore.cycleRepeat()
+  const setShuffle = (s: boolean) => musicStore.setShuffle(s)
+  const setMuted = (m: boolean) => musicStore.setMuted(m)
+  const setVolume = (v: number) => musicStore.setVolume(v)
+  const setCurrentTrack = (i: number) => musicStore.setCurrentTrack(i)
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
