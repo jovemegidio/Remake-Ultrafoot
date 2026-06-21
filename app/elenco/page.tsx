@@ -229,7 +229,9 @@ export default function ElencoHubPage() {
                         "relative overflow-hidden rounded-2xl border-2 transition-all duration-300",
                         "bg-gradient-to-br",
                         card.color,
-                        hoveredCard === card.id ? "border-cyan-400/60 shadow-lg shadow-cyan-500/20" : card.borderColor,
+                        hoveredCard === card.id
+                          ? "border-cyan-400/80 shadow-[0_0_30px_rgba(0,255,200,0.22)]"
+                          : "border-cyan-500/20 shadow-[0_0_18px_rgba(0,255,200,0.06)]",
                         "h-[320px] lg:h-[380px] flex flex-col"
                       )}
                     >
@@ -332,9 +334,11 @@ export default function ElencoHubPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => router.push("/elenco/gerenciamento")}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-shadow"
+                className="group flex items-center gap-3 pl-2 pr-6 py-2 rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400 text-white font-semibold shadow-[0_0_24px_rgba(56,128,255,0.45)] hover:shadow-[0_0_32px_rgba(0,255,200,0.5)] transition-shadow"
               >
-                <Users className="h-5 w-5" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-sm">
+                  &#9166;
+                </span>
                 Entrar em gerenciamento
               </motion.button>
             </div>

@@ -302,6 +302,14 @@ function generateDynamicNews(
     comments: Math.floor(Math.random() * 3500 + 1000),
   })
 
+  // A materia em destaque (indice 0) deve ser sempre uma noticia com imagem,
+  // como nas telas de referencia. Os "proximos jogos" (globo) vao para o fim.
+  news.sort((a, b) => {
+    const aPreview = a.type === "match_preview" ? 1 : 0
+    const bPreview = b.type === "match_preview" ? 1 : 0
+    return aPreview - bPreview
+  })
+
   return news
 }
 
