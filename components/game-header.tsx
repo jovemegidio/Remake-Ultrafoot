@@ -52,6 +52,7 @@ const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
   { prefix: "/infraestrutura", meta: { parent: "Escritorio", parentHref: "/financas", title: "Infraestrutura" } },
   { prefix: "/analise-partida", meta: { parent: "Escritorio", parentHref: "/financas", title: "Analise da Partida" } },
   { prefix: "/configuracoes", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Configuracoes" } },
+  { prefix: "/salvar", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Salvar" } },
 ]
 function getRouteMeta(pathname: string): RouteMeta {
   const found = ROUTE_META.find((r) => pathname.startsWith(r.prefix))
