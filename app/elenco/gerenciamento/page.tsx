@@ -535,7 +535,7 @@ export default function ElencoPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
         
@@ -681,7 +681,7 @@ export default function ElencoPage() {
   // Visao Tatica view
   if (currentView === "visao_tatica") {
     return (
-      <div className="h-screen md:pl-16 pl-0 pb-20 md:pb-0 bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10 flex flex-col overflow-hidden">
+      <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10 flex flex-col overflow-hidden">
         <GameSidebar />
         <GameHeader team={userTeam} />
         

@@ -93,7 +93,7 @@ export default function TaticasPage() {
   }
 
   return (
-    <div className="flex h-screen md:pl-[68px] pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
+    <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
       <GameSidebar />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />

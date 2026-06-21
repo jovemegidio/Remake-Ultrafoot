@@ -5,6 +5,7 @@ import { GamepadProvider } from "@/components/gamepad-provider"
 import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
 import { NativeAppProvider } from "@/components/native-app-provider"
 import { MusicPlayerWrapper } from "@/components/music-player-wrapper"
+import { EaActionBarProvider, EaActionBar } from "@/components/ea-action-bar"
 import "./globals.css"
 
 const geist = Geist({
@@ -45,7 +46,10 @@ export default function RootLayout({
           <ThemeProvider>
             <GamepadProvider>
               <NotificationsProvider>
-                {children}
+                <EaActionBarProvider>
+                  {children}
+                  <EaActionBar />
+                </EaActionBarProvider>
                 <NotificationToastContainer />
                 <MusicPlayerWrapper />
               </NotificationsProvider>

@@ -207,7 +207,7 @@ export default function CalendarioPage() {
 
   if (!hydrated) {
     return (
-      <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#1a1a1a] flex items-center justify-center">
+      <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#1a1a1a] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     )
@@ -222,7 +222,7 @@ export default function CalendarioPage() {
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
 
   return (
-  <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 relative">
+  <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 relative">
   <GameSidebar />
   
   {/* Background Image - Futuristic Grid */}

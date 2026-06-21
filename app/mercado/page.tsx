@@ -459,7 +459,7 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="relative h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    <div className="relative h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
       {/* Background stadium image */}
       <div className="absolute inset-0 md:ml-16 pointer-events-none">
         <Image

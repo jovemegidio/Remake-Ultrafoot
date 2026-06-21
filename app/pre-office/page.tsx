@@ -253,7 +253,7 @@ export default function PreOfficePage() {
   }
 
   return (
-    <div className="relative flex h-screen md:pl-16 pl-0 pb-20 md:pb-0 overflow-hidden">
+    <div className="relative flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 overflow-hidden">
       {/* Background base escura */}
       <div className="absolute inset-0 bg-[#050b07]" />
       {/* Textura de futebol em baixa opacidade */}

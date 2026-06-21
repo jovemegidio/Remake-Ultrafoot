@@ -208,7 +208,7 @@ export default function InfraestruturaPage() {
   const selectedAreaData = selectedArea ? INFRASTRUCTURE_AREAS.find(a => a.id === selectedArea) : null
 
   return (
-    <div className="h-screen overflow-hidden md:pl-16 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
       <GameSidebar />
       <GameHeader team={userTeam ?? undefined} />
 

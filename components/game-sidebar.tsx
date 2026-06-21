@@ -78,6 +78,13 @@ function SidebarNavItem({ icon: Icon, label, href, active, badge }: NavItemDef &
 }
 
 export function GameSidebar() {
+  // O layout estilo EA FC Manager nao usa sidebar de icones:
+  // a navegacao acontece no top-nav (GameHeader). Mantido como no-op
+  // para nao quebrar as ~27 telas que ainda importam este componente.
+  return null
+}
+
+function GameSidebarLegacy() {
   const pathname = usePathname()
   const t = useTranslation()
   const { state } = useGameState()
