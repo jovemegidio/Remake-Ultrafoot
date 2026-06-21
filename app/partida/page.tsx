@@ -469,23 +469,6 @@ export default function PartidaPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/30" />
         </div>
 
-        {/* Grafismo dourado "VS" no fundo direito */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-1/2 items-center justify-end overflow-hidden md:flex">
-          <span
-            className="select-none pr-4 text-[22rem] font-black italic leading-none"
-            style={{
-              fontFamily: "var(--font-oswald), sans-serif",
-              background: "linear-gradient(135deg, #b8860b 0%, #ffd700 45%, #fff4c2 55%, #b8860b 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              opacity: 0.5,
-              transform: "skewX(-8deg)",
-            }}
-          >
-            VS
-          </span>
-        </div>
-
         {/* Header */}
         <div className="relative z-20 flex items-center gap-4 px-8 pt-6">
           <span
