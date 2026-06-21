@@ -150,7 +150,7 @@ function getStateChampionshipTeams(userTeamShort: string): Team[] {
 }
 
 // Retorna o numero de rodadas do campeonato estadual
-function getStateChampRounds(userTeamShort: string): number {
+export function getStateChampRounds(userTeamShort: string): number {
   const teams = getStateChampionshipTeams(userTeamShort)
   if (teams.length < 4) return 0
   return (teams.length - 1) * 2

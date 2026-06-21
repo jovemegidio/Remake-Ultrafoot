@@ -300,8 +300,11 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const awayDefEff = awaySt.defense * awayStFactor
 
   // ── Chance de finalização por time ────────────────────────────────────────
+  // Calibrado para ~11-15 chutes por time (jogo realista). Como resolveShot roda
+  // no maximo 1x por minuto/time (~90 ticks), a probabilidade base deve ficar
+  // proxima de 0.13-0.18, nao acima de 0.35 (senao estoura para 30+ chutes e xG irreal).
   const avg = total / 2
-  const baseShot = Math.min(0.50, 0.17 + (avg - 60) * 0.011)
+  const baseShot = Math.min(0.20, 0.10 + (avg - 60) * 0.003)
 
   // Diferencial ataque vs defesa adversária
   const homeAttDiff = (homeAttEff - awayDefEff) * 0.0010
@@ -325,10 +328,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     if (diff === 0 && minute >= 85) { homeLateBonus += 0.02; awayLateBonus += 0.02 }
   }
 
-  const homeShotChance = Math.max(0.06, Math.min(0.48,
+  const homeShotChance = Math.max(0.05, Math.min(0.30,
     baseShot + homeAttDiff + homeMomBonus - homeRedShotPen + homeLateBonus
   ))
-  const awayShotChance = Math.max(0.06, Math.min(0.48,
+  const awayShotChance = Math.max(0.05, Math.min(0.30,
     baseShot + awayAttDiff + awayMomBonus - awayRedShotPen + awayLateBonus
   ))
 
@@ -750,7 +753,7 @@ export function startMatch(state: MatchState): MatchState {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Simulação rápida (sem ticks visuais)
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────��─────────────────────────────────────────────
 
 export function simulateFullMatch(config: MatchConfig): MatchState {
   let state = startMatch(createInitialState())

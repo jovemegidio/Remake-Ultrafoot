@@ -25,7 +25,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, getTeamsByDivision, serieBTeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName, getStateChampRounds } from "@/lib/use-game-manager"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
@@ -541,14 +541,19 @@ export default function CompeticoesPage() {
 
   const serieBStandings = useMemo(() => generateStandings(serieBTeams, userTeam.curto), [userTeam.curto])
 
+  // No Brasil, a liga nacional so comeca apos o campeonato estadual. Antes disso
+  // a tabela da Serie A esta zerada e o status deve refletir "a comecar".
+  const stateChampRounds = getStateChampRounds(userTeam.curto)
+  const leagueStarted = currentWeek > stateChampRounds
+
   const competitions = [
     {
       id: "brasileirao",
       name: getLeagueName(userTeam.curto),
       type: "Liga",
       teams: getTeamsByDivision(userTeam.divisao).length,
-      status: currentWeek > 0 ? t.common.inProgress : t.common.onTrack,
-      userPosition: userPosition > 0 ? userPosition : null,
+      status: leagueStarted ? t.common.inProgress : t.common.onTrack,
+      userPosition: leagueStarted && userPosition > 0 ? userPosition : null,
       icon: Trophy,
       color: "text-[#ffd700]",
       bgColor: "bg-[#ffd700]/10",
