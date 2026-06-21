@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 
 import { GameHeader } from "@/components/game-header"
+import { CtaPill } from "@/components/cta-pill"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { MatchCarousel } from "@/components/match-carousel"
@@ -234,12 +235,9 @@ export default function DashboardPage() {
                         </div>
                         <TeamCrest team={awayTeam} size="lg" />
                       </div>
-                      <Link
-                        href="/partida"
-                        className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
-                      >
-                        <Play className="h-4 w-4" /> Dia de jogo
-                      </Link>
+                      <div className="mt-5">
+                        <CtaPill href="/partida">Dia de jogo</CtaPill>
+                      </div>
                     </div>
                   ) : null}
 

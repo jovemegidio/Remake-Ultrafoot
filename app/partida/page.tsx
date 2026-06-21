@@ -24,6 +24,7 @@ import { ActionHint } from "@/components/gamepad-icons"
 import { GamepadControlsBar, useGamepadDetection } from "@/components/gamepad-controls-bar"
 import { getCompetitionTheme, type CompetitionId } from "@/lib/competition-themes"
 import { TeamCrest } from "@/components/team-crest"
+import { CtaPill } from "@/components/cta-pill"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -573,16 +574,7 @@ export default function PartidaPage() {
             </div>
 
             {/* Botao iniciar (acesso direto) */}
-            <Button
-              asChild
-              size="lg"
-              className="h-11 px-8 text-sm font-bold tracking-wide bg-[#00ffc8] text-black hover:bg-[#00e6b5] transition-colors shadow-lg shadow-[#00ffc8]/20"
-            >
-              <Link href="/partida/ao-vivo">
-                <Play className="mr-2 h-4 w-4 fill-current" />
-                INICIAR PARTIDA
-              </Link>
-            </Button>
+            <CtaPill href="/partida/ao-vivo">INICIAR PARTIDA</CtaPill>
           </div>
         </div>
       </main>
