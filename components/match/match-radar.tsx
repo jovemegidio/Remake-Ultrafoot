@@ -59,9 +59,10 @@ function placeTeam(squad: RadarPlayer[], isHome: boolean): PlacedPlayer[] {
 
   return starters.map((p, i) => {
     const slot = FORMATION_433[i] ?? { depth: 0.5, x: 0.5 }
-    // Profundidade vira eixo Y. Casa defende embaixo, fora defende em cima (espelhado).
-    const y = isHome ? 0.97 - slot.depth * 0.46 : 0.03 + slot.depth * 0.46
-    const x = isHome ? slot.x : 1 - slot.x
+    // Orientacao horizontal: profundidade vira eixo X. Casa defende a esquerda,
+    // fora defende a direita (espelhado). A largura da formacao vira eixo Y.
+    const x = isHome ? 0.03 + slot.depth * 0.46 : 0.97 - slot.depth * 0.46
+    const y = isHome ? slot.x : 1 - slot.x
     return { ...p, x, y }
   })
 }
@@ -132,18 +133,18 @@ export function MatchRadar({ homeTeam, awayTeam, homeSquad, awaySquad, homePosse
         </span>
       </div>
 
-      {/* Campo (pitch) — orientacao vertical */}
+      {/* Campo (pitch) — orientacao horizontal */}
       <div
-        className="relative w-full max-w-[360px] overflow-hidden rounded-xl border border-white/10"
+        className="relative w-full max-w-[440px] overflow-hidden rounded-xl border border-white/10"
         style={{
-          aspectRatio: "3 / 4",
-          background: "linear-gradient(180deg, #0f2a1e 0%, #123524 50%, #0f2a1e 100%)",
+          aspectRatio: "4 / 3",
+          background: "linear-gradient(90deg, #0f2a1e 0%, #123524 50%, #0f2a1e 100%)",
         }}
         role="img"
         aria-label="Radar de posicionamento dos times em campo"
       >
-        {/* Listras do gramado */}
-        <div className="pointer-events-none absolute inset-0 flex flex-col">
+        {/* Listras do gramado (verticais) */}
+        <div className="pointer-events-none absolute inset-0 flex flex-row">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
@@ -154,21 +155,21 @@ export function MatchRadar({ homeTeam, awayTeam, homeSquad, awaySquad, homePosse
         </div>
 
         {/* Marcacoes do campo */}
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 133" preserveAspectRatio="none">
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 133 100" preserveAspectRatio="none">
           <g fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.5">
             {/* Borda */}
-            <rect x="3" y="3" width="94" height="127" />
-            {/* Linha de meio-campo */}
-            <line x1="3" y1="66.5" x2="97" y2="66.5" />
+            <rect x="3" y="3" width="127" height="94" />
+            {/* Linha de meio-campo (vertical) */}
+            <line x1="66.5" y1="3" x2="66.5" y2="97" />
             {/* Circulo central */}
-            <circle cx="50" cy="66.5" r="11" />
-            <circle cx="50" cy="66.5" r="0.8" fill="rgba(255,255,255,0.5)" />
-            {/* Grande area inferior (casa) */}
-            <rect x="26" y="106" width="48" height="24" />
-            <rect x="38" y="122" width="24" height="8" />
-            {/* Grande area superior (fora) */}
-            <rect x="26" y="3" width="48" height="24" />
-            <rect x="38" y="3" width="24" height="8" />
+            <circle cx="66.5" cy="50" r="11" />
+            <circle cx="66.5" cy="50" r="0.8" fill="rgba(255,255,255,0.5)" />
+            {/* Grande area esquerda (casa) */}
+            <rect x="3" y="26" width="24" height="48" />
+            <rect x="3" y="38" width="8" height="24" />
+            {/* Grande area direita (fora) */}
+            <rect x="106" y="26" width="24" height="48" />
+            <rect x="122" y="38" width="8" height="24" />
           </g>
         </svg>
 
