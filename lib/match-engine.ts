@@ -339,9 +339,9 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   if (mods?.matchImportance === "final") baseFoul = 0.15
   if (state.phase === "second") baseFoul *= 1.15
 
-  // Jogadores cansados faltam mais
-  const homeFatigue = Math.max(0, (80 - homeSt.avgStamina) * 0.002)
-  const awayFatigue = Math.max(0, (80 - awaySt.avgStamina) * 0.002)
+  // Jogadores cansados faltam um pouco mais (efeito sutil para nao estourar o total)
+  const homeFatigue = Math.max(0, (80 - homeSt.avgStamina) * 0.0011)
+  const awayFatigue = Math.max(0, (80 - awaySt.avgStamina) * 0.0011)
 
   let cardChance = 0.038
   if (mods?.isDerby) cardChance = 0.072
@@ -370,8 +370,8 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     homeShotChance,
     awayShotChance,
     homeAdvantage,
-    homeFoulChance: Math.min(0.40, baseFoul + homeFatigue),
-    awayFoulChance: Math.min(0.40, baseFoul + awayFatigue),
+    homeFoulChance: Math.min(0.28, baseFoul + homeFatigue),
+    awayFoulChance: Math.min(0.28, baseFoul + awayFatigue),
     cardChance: Math.min(0.15, cardChance),
     staminaDrain,
     technicalPenalty,

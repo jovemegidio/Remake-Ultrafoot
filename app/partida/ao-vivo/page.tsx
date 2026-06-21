@@ -755,11 +755,16 @@ export default function PartidaAoVivoPage() {
   const [showResult, setShowResult] = useState(false)
   const [showPressConference, setShowPressConference] = useState(false)
   const [isLeagueChampion, setIsLeagueChampion] = useState(false)
+  // Congela os times do confronto no apito final, ANTES de advanceWeek mudar o
+  // currentMatch para a proxima partida (senao o modal mostra o adversario errado).
+  const [finalMatch, setFinalMatch] = useState<{ home: Team; away: Team; userSide: "home" | "away" } | null>(null)
 
   useEffect(() => {
     if (state.phase === "fulltime" && !showResult) {
       if (!resultRegistered.current) {
         resultRegistered.current = true
+        // Snapshot dos times ANTES de avancar a semana (que troca o currentMatch)
+        setFinalMatch({ home: homeTeam, away: awayTeam, userSide })
         const events = state.events
           .filter(e => e.type === "goal")
           .map(e => ({
@@ -1298,14 +1303,14 @@ export default function PartidaAoVivoPage() {
         />
       )}
 
-      {/* Modal de Resultado */}
+      {/* Modal de Resultado — usa os times congelados no apito final */}
       {showResult && (
         <MatchResultModal
           open={showResult}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
+          homeTeam={finalMatch?.home ?? homeTeam}
+          awayTeam={finalMatch?.away ?? awayTeam}
           state={state}
-          userSide={userSide}
+          userSide={finalMatch?.userSide ?? userSide}
           isFinal={false}
           isChampion={isLeagueChampion}
           onClose={() => {
@@ -1319,11 +1324,11 @@ export default function PartidaAoVivoPage() {
   {showPressConference && (
     <PostMatchPress
       isOpen={showPressConference}
-      homeTeam={homeTeam}
-      awayTeam={awayTeam}
+      homeTeam={finalMatch?.home ?? homeTeam}
+      awayTeam={finalMatch?.away ?? awayTeam}
       homeGoals={state.home.goals}
       awayGoals={state.away.goals}
-      userSide={userSide}
+      userSide={finalMatch?.userSide ?? userSide}
       onClose={() => setShowPressConference(false)}
       onComplete={(moraleImpact) => {
         setShowPressConference(false)
