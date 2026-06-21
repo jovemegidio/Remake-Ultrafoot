@@ -20,13 +20,13 @@ interface GameHeaderProps {
 
 // Abas secundarias do hub (estilo EA FC Manager)
 const navItems = [
-  { label: "Central", href: "/central" },
-  { label: "Notificacoes", href: "/mensagens" },
-  { label: "Elenco", href: "/elenco" },
-  { label: "Transferencias", href: "/mercado" },
-  { label: "Academia", href: "/treinamento" },
-  { label: "Escritorio", href: "/financas" },
-  { label: "Personalizar", href: "/configuracoes" },
+  { label: "Central", href: "/central", match: ["/central"] },
+  { label: "Notificacoes", href: "/notificacoes", match: ["/notificacoes", "/mensagens"] },
+  { label: "Elenco", href: "/elenco", match: ["/elenco"] },
+  { label: "Transferencias", href: "/transferencias", match: ["/transferencias", "/mercado"] },
+  { label: "Academia", href: "/treinamento", match: ["/treinamento"] },
+  { label: "Escritorio", href: "/financas", match: ["/financas"] },
+  { label: "Personalizar", href: "/configuracoes", match: ["/configuracoes"] },
 ]
 
 // Pequeno "key chip" de teclado
@@ -149,7 +149,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         {showNav && (
           <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none">
             {navItems.map((item) => {
-              const isActive = pathname.startsWith(item.href)
+              const isActive = item.match.some((m) => pathname.startsWith(m))
               return (
                 <Link
                   key={item.href}
