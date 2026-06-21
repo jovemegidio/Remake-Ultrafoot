@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Play,
   Star,
+  StarHalf,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
@@ -88,13 +89,11 @@ function TeamPanel({
   const overallRating = teamRating(team.curto) || teamRating(team.nome) || 75
   const country = getCountryInfo(team)
 
-  // Estrelas baseadas no prestigio
-  const stars = Math.min(5, Math.max(1, Math.round(team.prestigio / 2)))
-  const halfStar = team.prestigio % 2 !== 0
+  // Avaliacao em estrelas com suporte a meia-estrela (prestigio em escala 0-10)
+  const ratingHalf = Math.max(0.5, Math.min(5, Math.round(team.prestigio) / 2))
 
   const baseRating = overallRating || 75
   const cor1 = team.cor1 || "#10b981"
-  const cor2 = team.cor2 || "#059669"
   const stats = useMemo(() => {
     const trends = ["up", "neutral", "down"] as const
     return {
@@ -105,151 +104,147 @@ function TeamPanel({
   }, [baseRating, team.curto])
 
   const TrendIndicator = ({ trend }: { trend: string }) => {
-    if (trend === "up") return <ChevronUp className="h-3 w-3 text-emerald-400" />
-    if (trend === "down") return <ChevronDown className="h-3 w-3 text-red-400" />
-    return <Minus className="h-3 w-3 text-white/30" />
+    if (trend === "up") return <ChevronUp className="h-3.5 w-3.5 text-emerald-400" />
+    if (trend === "down") return <ChevronDown className="h-3.5 w-3.5 text-red-400" />
+    return <Minus className="h-3.5 w-3.5 text-white/35" />
   }
 
   return (
-    <div className="flex w-full max-w-[400px] flex-col gap-4">
-      {/* Pilula de pais */}
-      <div
-        className="flex items-center justify-center gap-3 rounded-full px-4 py-2.5 shadow-xl backdrop-blur-md"
-        style={{
-          background: "rgba(0,0,0,0.65)",
-          border: "1px solid rgba(255,255,255,0.14)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-        }}
-      >
-        <span className="text-sm font-semibold tracking-wide text-white">{country.name}</span>
+    <div className="flex w-full max-w-[400px] flex-col items-center gap-3">
+      {/* Toggle Times masculinos / femininos */}
+      <div className="flex w-full items-stretch gap-2">
+        <div className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0e1116]/85 px-3 py-2.5 backdrop-blur-sm">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+            <Check className="h-3 w-3 text-black" strokeWidth={3} />
+          </span>
+          <span className="text-sm font-semibold text-white">Times masculinos</span>
+        </div>
+        <div className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0e1116]/55 px-3 py-2.5 backdrop-blur-sm">
+          <span className="h-5 w-5 rounded-full border-2 border-white/25" />
+          <span className="text-sm font-semibold text-white/55">Times femininos</span>
+        </div>
+      </div>
+
+      {/* Card de PAIS */}
+      <div className="relative flex w-full items-center justify-center rounded-2xl bg-[#0e1116]/85 px-5 py-3.5 backdrop-blur-sm">
+        <span className="text-base font-bold tracking-wide text-white">{country.name}</span>
         <img
           src={`https://flagcdn.com/h40/${country.code}.png`}
           alt={country.name}
-          className="h-5 w-8 rounded-[3px] object-cover shadow-md"
+          className="absolute right-5 top-1/2 h-6 w-9 -translate-y-1/2 rounded-[3px] object-cover shadow-md"
         />
       </div>
 
       {/* Card de selecao de time */}
-      <div className="flex items-center gap-3">
-        {/* Seta esquerda */}
-        <button
-          onClick={onPrev}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 text-white/50 backdrop-blur-sm transition-all hover:bg-white/10 hover:text-white"
-          aria-label="Time anterior"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onSelect}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect() }}
+        className={cn(
+          "relative w-full cursor-pointer overflow-hidden rounded-2xl transition-all",
+          selected
+            ? "border-2 border-[#00ffc8]/70 bg-[linear-gradient(160deg,rgba(22,30,40,0.96)_0%,rgba(10,14,20,0.96)_100%)] shadow-[0_0_38px_rgba(0,255,200,0.16),0_20px_60px_rgba(0,0,0,0.6)]"
+            : "border border-white/[0.07] bg-[linear-gradient(160deg,rgba(20,26,34,0.85)_0%,rgba(10,14,20,0.9)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.55)]",
+        )}
+      >
+        {/* Nome do time */}
+        <div className="px-6 pt-4 pb-1">
+          <h2 className="truncate text-center text-xl font-bold tracking-wide text-white">{team.nome}</h2>
+        </div>
 
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={onSelect}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect() }}
-          className="relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-2xl transition-all"
-          style={{
-            background: `linear-gradient(160deg, ${cor1}22 0%, rgba(5,10,15,0.88) 55%, ${cor2}15 100%)`,
-            border: selected ? `1px solid ${cor1}` : `1px solid ${cor1}50`,
-            boxShadow: selected
-              ? `0 0 50px ${cor1}40, 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)`
-              : `0 0 40px ${cor1}18, 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)`,
-          }}
-        >
-          {/* Faixa de cor */}
-          <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${cor1}, ${cor2})` }} />
-
-          {/* Nome do time */}
-          <div className="border-b px-5 py-3" style={{ borderColor: `${cor1}25`, background: `${cor1}10` }}>
-            <h2 className="truncate text-center text-xl font-bold tracking-wide text-white">{team.nome}</h2>
+        {/* Escudo + setas internas */}
+        <div className="relative flex justify-center py-3 sm:py-4">
+          <button
+            onClick={(e) => { e.stopPropagation(); onPrev() }}
+            aria-label="Time anterior"
+            className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white/55 transition-all hover:bg-white/10 hover:text-white"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <div
+            className="flex h-32 w-32 items-center justify-center rounded-full sm:h-36 sm:w-36"
+            style={{ background: `radial-gradient(circle, ${cor1}22 0%, transparent 68%)` }}
+          >
+            <TeamCrest team={team} size="2xl" className="h-28 w-28 sm:h-32 sm:w-32" />
           </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onNext() }}
+            aria-label="Próximo time"
+            className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white/55 transition-all hover:bg-white/10 hover:text-white"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </div>
 
-          {/* Escudo */}
-          <div className="flex justify-center py-6">
-            <div
-              className="flex h-40 w-40 items-center justify-center rounded-full"
-              style={{ background: `radial-gradient(circle, ${cor1}28 0%, transparent 68%)` }}
-            >
-              <TeamCrest team={team} size="2xl" className="h-36 w-36" />
+        {/* Estrelas (com meia-estrela) */}
+        <div className="flex items-center justify-center gap-1 pb-4">
+          {Array.from({ length: 5 }).map((_, i) => {
+            const fill = ratingHalf - i
+            if (fill >= 1) {
+              return (
+                <Star
+                  key={i}
+                  className="h-5 w-5 fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]"
+                />
+              )
+            }
+            if (fill >= 0.5) {
+              return (
+                <span key={i} className="relative inline-block h-5 w-5">
+                  <Star className="absolute inset-0 h-full w-full text-white/15" />
+                  <StarHalf className="absolute inset-0 h-full w-full fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]" />
+                </span>
+              )
+            }
+            return <Star key={i} className="h-5 w-5 text-white/15" />
+          })}
+        </div>
+
+        {/* ATA / MEI / DEF */}
+        <div className="flex items-stretch border-t border-white/[0.07] bg-black/30">
+          <div className="flex-1 px-2 py-3.5 text-center">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/45">ATA</div>
+            <div className="flex items-center justify-center gap-0.5">
+              <span className="text-2xl font-black leading-none tabular-nums text-white">{stats.ata.value}</span>
+              <TrendIndicator trend={stats.ata.trend} />
             </div>
           </div>
-
-          {/* Estrelas */}
-          <div className="flex items-center justify-center gap-1 pb-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={cn(
-                  "h-5 w-5",
-                  i < stars
-                    ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]"
-                    : halfStar && i === stars
-                    ? "fill-amber-400/50 text-amber-400"
-                    : "text-white/15",
-                )}
-              />
-            ))}
+          <div className="w-px bg-white/[0.07]" />
+          <div className="flex-1 px-2 py-3.5 text-center">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/45">MEI</div>
+            <div className="flex items-center justify-center gap-0.5">
+              <span className="text-2xl font-black leading-none tabular-nums text-white">{stats.mei.value}</span>
+              <TrendIndicator trend={stats.mei.trend} />
+            </div>
           </div>
-
-          {/* ATA / MEI / DEF */}
-          <div className="flex items-stretch border-t" style={{ borderColor: `${cor1}25`, background: "rgba(0,0,0,0.35)" }}>
-            <div className="flex-1 px-2 py-3.5 text-center">
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-cyan-400/80">ATA</div>
-              <div className="flex items-center justify-center gap-0.5">
-                <span className="text-2xl font-black leading-none text-white">{stats.ata.value}</span>
-                <TrendIndicator trend={stats.ata.trend} />
-              </div>
-            </div>
-            <div className="w-px" style={{ background: `${cor1}25` }} />
-            <div className="flex-1 px-2 py-3.5 text-center">
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-blue-400/80">MEI</div>
-              <div className="flex items-center justify-center gap-0.5">
-                <span className="text-2xl font-black leading-none text-white">{stats.mei.value}</span>
-                <TrendIndicator trend={stats.mei.trend} />
-              </div>
-            </div>
-            <div className="w-px" style={{ background: `${cor1}25` }} />
-            <div className="flex-1 px-2 py-3.5 text-center">
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-orange-400/80">DEF</div>
-              <div className="flex items-center justify-center gap-0.5">
-                <span className="text-2xl font-black leading-none text-white">{stats.def.value}</span>
-                <TrendIndicator trend={stats.def.trend} />
-              </div>
+          <div className="w-px bg-white/[0.07]" />
+          <div className="flex-1 px-2 py-3.5 text-center">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/45">DEF</div>
+            <div className="flex items-center justify-center gap-0.5">
+              <span className="text-2xl font-black leading-none tabular-nums text-white">{stats.def.value}</span>
+              <TrendIndicator trend={stats.def.trend} />
             </div>
           </div>
         </div>
-
-        {/* Seta direita */}
-        <button
-          onClick={onNext}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 text-white/50 backdrop-blur-sm transition-all hover:bg-white/10 hover:text-white"
-          aria-label="Próximo time"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
       </div>
 
-      {/* Pilula de liga */}
-      <div
-        className="flex items-center justify-center gap-3 self-center rounded-full px-4 py-2.5 shadow-xl backdrop-blur-md"
-        style={{
-          background: "rgba(0,0,0,0.65)",
-          border: "1px solid rgba(255,255,255,0.14)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-        }}
-      >
+      {/* Card de LIGA */}
+      <div className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[#0e1116]/85 px-5 py-3.5 backdrop-blur-sm">
+        <span className="text-base font-bold tracking-wide text-white">{leagueName}</span>
         {leagueLogo ? (
           <Image
             src={leagueLogo || "/placeholder.svg"}
             alt={leagueName}
-            width={48}
-            height={48}
-            className="h-8 w-auto max-w-12 object-contain"
+            width={160}
+            height={40}
+            className="h-8 w-auto max-w-[180px] object-contain"
             style={{ mixBlendMode: "screen" }}
             unoptimized
           />
         ) : (
-          <Trophy className="h-5 w-5 text-white/60" />
+          <Trophy className="h-7 w-7 text-white/60" />
         )}
-        <span className="whitespace-nowrap text-sm font-semibold tracking-wide text-white">{leagueName}</span>
       </div>
     </div>
   )
