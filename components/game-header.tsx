@@ -18,16 +18,45 @@ interface GameHeaderProps {
   className?: string
 }
 
-// Abas secundarias do hub (estilo EA FC Manager)
-const navItems = [
-  { label: "Central", href: "/central", match: ["/central"] },
-  { label: "Notificacoes", href: "/notificacoes", match: ["/notificacoes", "/mensagens"] },
-  { label: "Elenco", href: "/elenco", match: ["/elenco"] },
-  { label: "Transferencias", href: "/transferencias", match: ["/transferencias", "/mercado"] },
-  { label: "Academia", href: "/treinamento", match: ["/treinamento"] },
-  { label: "Escritorio", href: "/financas", match: ["/financas"] },
-  { label: "Personalizar", href: "/configuracoes", match: ["/configuracoes"] },
+// Trilha de navegacao (estilo EA FC Manager): [w] SecaoPai > PaginaAtual
+// Mapeia o inicio da rota para { secao pai, href do pai, titulo da pagina }
+interface RouteMeta {
+  parent: string
+  parentHref: string
+  title: string
+}
+const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
+  { prefix: "/central", meta: { parent: "Inicio", parentHref: "/", title: "Central" } },
+  { prefix: "/notificacoes", meta: { parent: "Notificacoes", parentHref: "/notificacoes", title: "Caixa de Entrada" } },
+  { prefix: "/mensagens", meta: { parent: "Notificacoes", parentHref: "/notificacoes", title: "Mensagens" } },
+  { prefix: "/elenco/gerenciamento", meta: { parent: "Elenco", parentHref: "/elenco", title: "Gerenciamento" } },
+  { prefix: "/elenco/taticas", meta: { parent: "Elenco", parentHref: "/elenco", title: "Taticas" } },
+  { prefix: "/elenco/escalacoes", meta: { parent: "Elenco", parentHref: "/elenco", title: "Escalacoes" } },
+  { prefix: "/elenco", meta: { parent: "Elenco", parentHref: "/elenco", title: "Visao Geral" } },
+  { prefix: "/taticas", meta: { parent: "Elenco", parentHref: "/elenco", title: "Taticas" } },
+  { prefix: "/vestiario", meta: { parent: "Elenco", parentHref: "/elenco", title: "Vestiario" } },
+  { prefix: "/adversarios", meta: { parent: "Elenco", parentHref: "/elenco", title: "Adversarios" } },
+  { prefix: "/transferencias", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Visao Geral" } },
+  { prefix: "/mercado", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Buscar Atletas" } },
+  { prefix: "/olheiros", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Olheiros" } },
+  { prefix: "/relatorios", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Relatorios" } },
+  { prefix: "/contratos", meta: { parent: "Transferencias", parentHref: "/transferencias", title: "Contratos" } },
+  { prefix: "/treinamento", meta: { parent: "Academia", parentHref: "/treinamento", title: "Treinamento" } },
+  { prefix: "/financas", meta: { parent: "Escritorio", parentHref: "/financas", title: "Financas" } },
+  { prefix: "/estatisticas", meta: { parent: "Escritorio", parentHref: "/financas", title: "Estatisticas: Atletas" } },
+  { prefix: "/competicoes", meta: { parent: "Escritorio", parentHref: "/financas", title: "Competicoes" } },
+  { prefix: "/calendario", meta: { parent: "Escritorio", parentHref: "/financas", title: "Calendario" } },
+  { prefix: "/historico", meta: { parent: "Escritorio", parentHref: "/financas", title: "Historico" } },
+  { prefix: "/reunioes", meta: { parent: "Escritorio", parentHref: "/financas", title: "Reunioes" } },
+  { prefix: "/imprensa", meta: { parent: "Escritorio", parentHref: "/financas", title: "Imprensa" } },
+  { prefix: "/infraestrutura", meta: { parent: "Escritorio", parentHref: "/financas", title: "Infraestrutura" } },
+  { prefix: "/analise-partida", meta: { parent: "Escritorio", parentHref: "/financas", title: "Analise da Partida" } },
+  { prefix: "/configuracoes", meta: { parent: "Personalizar", parentHref: "/configuracoes", title: "Configuracoes" } },
 ]
+function getRouteMeta(pathname: string): RouteMeta {
+  const found = ROUTE_META.find((r) => pathname.startsWith(r.prefix))
+  return found?.meta || { parent: "Inicio", parentHref: "/", title: "Escritorio" }
+}
 
 // Pequeno "key chip" de teclado
 function KeyCap({ label, className }: { label: string; className?: string }) {
@@ -62,6 +91,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const { state, setState } = useGameState()
   const { advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar } = useGameManager()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  const routeMeta = getRouteMeta(pathname)
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -120,54 +150,36 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         className,
       )}
     >
-      {/* Esquerda: emblema + secao primaria + abas secundarias */}
+      {/* Esquerda: emblema circular "mc" + trilha [w] SecaoPai > PaginaAtual */}
       <div className="flex items-center gap-4 min-w-0">
-        {/* Emblema circular do treinador */}
+        {/* Emblema circular estilo "mc" */}
         <Link
           href="/"
           aria-label="Inicio"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/25 bg-transparent text-[15px] font-bold italic tracking-tight text-white/85 transition-colors hover:border-white/40 hover:text-white"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-transparent text-[14px] font-bold italic tracking-tight text-white/85 transition-colors hover:border-white/50 hover:text-white"
           style={{ fontFamily: "var(--font-display, var(--font-oswald)), sans-serif" }}
         >
           UF
         </Link>
 
-        {/* Secao primaria Inicio */}
-        <Link
-          href="/"
-          className={cn(
-            "relative flex items-center gap-1.5 pb-0.5 text-[13px] font-bold uppercase tracking-wider transition-colors",
-            pathname === "/" ? "text-white" : "text-white/45 hover:text-white/70",
-          )}
-        >
-          Inicio
-          <ChevronRight className="h-3.5 w-3.5 text-white/25" />
-        </Link>
-
-        {/* Divisor */}
-        <div className="h-6 w-px bg-white/10" />
-
-        {/* Abas secundarias */}
+        {/* Trilha de navegacao */}
         {showNav && (
-          <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-            {navItems.map((item) => {
-              const isActive = item.match.some((m) => pathname.startsWith(m))
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "relative whitespace-nowrap px-3 py-2 text-[12px] font-semibold tracking-wide transition-colors",
-                    isActive ? "text-white" : "text-white/40 hover:text-white/70",
-                  )}
-                >
-                  {item.label}
-                  {isActive && (
-                    <span className="absolute inset-x-2 -bottom-[1px] h-[2px] rounded-full bg-[#00ffc8] shadow-[0_0_8px_rgba(0,255,200,0.6)]" />
-                  )}
-                </Link>
-              )
-            })}
+          <nav className="flex items-end gap-4 min-w-0 overflow-x-auto scrollbar-none">
+            {/* Secao pai (dimmed) com keycap [w] */}
+            <Link
+              href={routeMeta.parentHref}
+              className="group relative flex shrink-0 flex-col items-center gap-1"
+            >
+              <KeyCap label="W" className="opacity-70" />
+              <span className="whitespace-nowrap text-[15px] font-semibold tracking-wide text-white/40 transition-colors group-hover:text-white/70">
+                {routeMeta.parent}
+              </span>
+            </Link>
+
+            {/* Pagina atual (bold/branco) */}
+            <span className="shrink-0 whitespace-nowrap pb-[2px] text-[17px] font-extrabold tracking-tight text-white">
+              {routeMeta.title}
+            </span>
           </nav>
         )}
       </div>

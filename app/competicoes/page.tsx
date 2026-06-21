@@ -626,8 +626,7 @@ export default function CompeticoesPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">{t.sidebar.competitions}</h1>
-            <p className="text-sm text-white/50 mt-1">{t.competitions.seasonFollowup(currentSeason)}</p>
+            <p className="text-sm text-white/50">{t.competitions.seasonFollowup(currentSeason)}</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0c0c10] border border-white/[0.04]">

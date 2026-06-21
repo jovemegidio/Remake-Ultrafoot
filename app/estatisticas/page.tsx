@@ -225,8 +225,6 @@ export default function EstatisticasPage() {
         {/* Titulo + sub-abas estilo EA FC */}
         <div className="flex items-end justify-between border-b border-white/[0.06] pb-3">
           <div className="flex items-center gap-6 overflow-x-auto">
-            <h1 className="shrink-0 text-lg font-bold text-white">Estatísticas: Atletas</h1>
-            <span className="hidden h-5 w-px shrink-0 bg-white/15 sm:block" />
             {cats.map((c) => {
               const active = activeTab === c.id
               return (

@@ -223,8 +223,7 @@ export default function FinancasPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">{t.sidebar.finances}</h1>
-            <p className="text-sm text-white/50 mt-1">{t.common.season} {currentSeason}</p>
+            <p className="text-sm text-white/50">{t.common.season} {currentSeason}</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-white/50">
             <Calendar className="h-4 w-4" />
