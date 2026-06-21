@@ -206,7 +206,7 @@ function TeamPanel({
           {/* ATA / MEI / DEF */}
           <div className="flex items-stretch border-t" style={{ borderColor: `${cor1}25`, background: "rgba(0,0,0,0.35)" }}>
             <div className="flex-1 px-2 py-3.5 text-center">
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-orange-400/70">ATA</div>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-cyan-400/80">ATA</div>
               <div className="flex items-center justify-center gap-0.5">
                 <span className="text-2xl font-black leading-none text-white">{stats.ata.value}</span>
                 <TrendIndicator trend={stats.ata.trend} />
@@ -214,7 +214,7 @@ function TeamPanel({
             </div>
             <div className="w-px" style={{ background: `${cor1}25` }} />
             <div className="flex-1 px-2 py-3.5 text-center">
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-sky-400/70">MEI</div>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-blue-400/80">MEI</div>
               <div className="flex items-center justify-center gap-0.5">
                 <span className="text-2xl font-black leading-none text-white">{stats.mei.value}</span>
                 <TrendIndicator trend={stats.mei.trend} />
@@ -222,7 +222,7 @@ function TeamPanel({
             </div>
             <div className="w-px" style={{ background: `${cor1}25` }} />
             <div className="flex-1 px-2 py-3.5 text-center">
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-emerald-400/70">DEF</div>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-orange-400/80">DEF</div>
               <div className="flex items-center justify-center gap-0.5">
                 <span className="text-2xl font-black leading-none text-white">{stats.def.value}</span>
                 <TrendIndicator trend={stats.def.trend} />
