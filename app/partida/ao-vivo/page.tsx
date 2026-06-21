@@ -52,6 +52,7 @@ import { MatchResultModal } from "@/components/match/match-result-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
+import { MatchRadar } from "@/components/match/match-radar"
 import { useMatchSounds } from "@/hooks/use-match-sounds"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -504,36 +505,39 @@ export default function PartidaAoVivoPage() {
   const [awayBench, setAwayBench] = useState<MatchPlayer[]>([])
 
   useEffect(() => {
-    // Tenta usar game-engine primeiro
+    // Monta um lado a partir dos dados reais (players-data), com fallback generico.
+    const buildSideFromData = (team: typeof homeTeam, offset: number, prefix: string) => {
+      const players = getPlayersForTeam(team)
+      if (players.length >= 11) return playersToMatchSquad(players, offset)
+      return { starters: buildSquad(offset, prefix), bench: buildBench(offset + 100, prefix) }
+    }
+
+    // O game-engine so fornece o elenco do time do usuario. O adversario sempre
+    // vem dos dados reais, garantindo que AMBOS os lados sejam preenchidos
+    // (radar, condicao fisica e notas dependem disso).
     if (enginePlayers && enginePlayers.length > 0) {
-      const { starters, bench } = enginePlayersToMatchSquad(enginePlayers, 0)
+      const userSquad = enginePlayersToMatchSquad(enginePlayers, isHome ? 0 : 200)
       if (isHome) {
-        setHomeSquad(starters)
-        setHomeBench(bench)
+        const opp = buildSideFromData(awayTeam, 200, "A_")
+        setHomeSquad(userSquad.starters)
+        setHomeBench(userSquad.bench)
+        setAwaySquad(opp.starters)
+        setAwayBench(opp.bench)
       } else {
-        setAwaySquad(starters)
-        setAwayBench(bench)
+        const opp = buildSideFromData(homeTeam, 0, "H_")
+        setAwaySquad(userSquad.starters)
+        setAwayBench(userSquad.bench)
+        setHomeSquad(opp.starters)
+        setHomeBench(opp.bench)
       }
     } else {
-      // Fallback para players-data
-      const homePlayers = getPlayersForTeam(homeTeam)
-      const awayPlayers = getPlayersForTeam(awayTeam)
-      if (homePlayers.length >= 11) {
-        const { starters, bench } = playersToMatchSquad(homePlayers, 0)
-        setHomeSquad(starters)
-        setHomeBench(bench)
-      } else {
-        setHomeSquad(buildSquad(0, "H_"))
-        setHomeBench(buildBench(100, "H_"))
-      }
-      if (awayPlayers.length >= 11) {
-        const { starters, bench } = playersToMatchSquad(awayPlayers, 200)
-        setAwaySquad(starters)
-        setAwayBench(bench)
-      } else {
-        setAwaySquad(buildSquad(200, "A_"))
-        setAwayBench(buildBench(300, "A_"))
-      }
+      // Fallback para players-data nos dois times
+      const home = buildSideFromData(homeTeam, 0, "H_")
+      const away = buildSideFromData(awayTeam, 200, "A_")
+      setHomeSquad(home.starters)
+      setHomeBench(home.bench)
+      setAwaySquad(away.starters)
+      setAwayBench(away.bench)
     }
   }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome])
 
@@ -613,7 +617,7 @@ export default function PartidaAoVivoPage() {
   const [subsRemaining, setSubsRemaining] = useState(5)
 
   // Tab ativa
-  const [activeTab, setActiveTab] = useState<"fitness" | "ratings" | "stats" | "gameplan">("stats")
+  const [activeTab, setActiveTab] = useState<"pitch" | "fitness" | "ratings" | "stats" | "gameplan">("stats")
 
   // Estado para animacoes de eventos
   const [currentAnimation, setCurrentAnimation] = useState<{
@@ -998,6 +1002,19 @@ export default function PartidaAoVivoPage() {
                   </div>
                 )}
 
+                {activeTab === "pitch" && (
+                  <div className="space-y-3">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider">{t.match.live.sectionPitch}</h3>
+                    <MatchRadar
+                      homeTeam={homeTeam}
+                      awayTeam={awayTeam}
+                      homeSquad={homeSquad}
+                      awaySquad={awaySquad}
+                      homePossession={state.home?.possession ?? 50}
+                    />
+                  </div>
+                )}
+
                 {activeTab === "fitness" && (
                   <div className="space-y-3">
                     <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider">{t.match.live.sectionFitness}</h3>
@@ -1174,6 +1191,7 @@ export default function PartidaAoVivoPage() {
               <div className="border-t border-white/[0.06] bg-[#0d1a1a]/50">
                 <div className="flex items-center justify-center gap-1 px-4 py-2">
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 mr-2">L1</span>
+                  <TabButton label={t.match.live.tabPitch} active={activeTab === "pitch"} onClick={() => setActiveTab("pitch")} />
                   <TabButton label={t.match.live.tabFitness} active={activeTab === "fitness"} onClick={() => setActiveTab("fitness")} />
                   <TabButton label={t.match.live.tabRatings} active={activeTab === "ratings"} onClick={() => setActiveTab("ratings")} />
                   <TabButton label={t.match.live.tabStats} active={activeTab === "stats"} onClick={() => setActiveTab("stats")} />

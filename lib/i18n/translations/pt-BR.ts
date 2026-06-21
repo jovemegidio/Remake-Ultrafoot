@@ -388,10 +388,12 @@ export const ptBR = {
     simulate: "Simular",
     calendar: "CALENDARIO",
     live: {
+      tabPitch: "Campo",
       tabFitness: "Física",
       tabRatings: "Notas",
       tabStats: "Estatísticas",
       tabGameplan: "Tática",
+      sectionPitch: "Posicionamento em Campo",
       sectionFitness: "Condição Física",
       sectionRatings: "Avaliações",
       sectionStats: "Estatísticas da Partida",

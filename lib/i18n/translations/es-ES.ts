@@ -390,10 +390,12 @@ export const esES: Translations = {
     simulate: "Simular",
     calendar: "CALENDARIO",
     live: {
+      tabPitch: "Campo",
       tabFitness: "Física",
       tabRatings: "Notas",
       tabStats: "Estadísticas",
       tabGameplan: "Táctica",
+      sectionPitch: "Posicionamiento en Campo",
       sectionFitness: "Condición Física",
       sectionRatings: "Valoraciones",
       sectionStats: "Estadísticas del Partido",

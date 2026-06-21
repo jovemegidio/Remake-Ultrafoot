@@ -390,10 +390,12 @@ export const enUS: Translations = {
     simulate: "Simulate",
     calendar: "SCHEDULE",
     live: {
+      tabPitch: "Pitch",
       tabFitness: "Fitness",
       tabRatings: "Ratings",
       tabStats: "Stats",
       tabGameplan: "Gameplan",
+      sectionPitch: "Pitch Positioning",
       sectionFitness: "Physical Condition",
       sectionRatings: "Player Ratings",
       sectionStats: "Match Statistics",
