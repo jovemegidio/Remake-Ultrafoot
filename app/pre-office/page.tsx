@@ -17,7 +17,6 @@ import {
   TrendingUp,
   ShoppingBag,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
 import { TeamCrest } from "@/components/team-crest"
@@ -273,7 +272,6 @@ export default function PreOfficePage() {
         background: "radial-gradient(ellipse 120% 100% at 50% 50%, transparent 35%, rgba(0,0,0,0.55) 100%)"
       }} />
 
-      <GameSidebar />
 
       <main className="relative z-10 flex-1 overflow-hidden flex flex-col">
         <GameHeader team={userTeam} />

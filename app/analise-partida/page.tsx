@@ -24,7 +24,6 @@ import {
   ThumbsUp,
   ThumbsDown
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -113,7 +112,6 @@ export default function AnalisePartidaPage() {
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-      <GameSidebar />
       <GameHeader team={userTeam} />
       
       <main className="flex-1 p-6 overflow-y-auto">

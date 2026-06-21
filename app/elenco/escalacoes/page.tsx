@@ -12,7 +12,6 @@ import {
   AlertCircle,
   Gamepad2
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
@@ -183,7 +182,6 @@ export default function EscalacoesPage() {
 
   return (
     <div className="flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
-      <GameSidebar />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
         

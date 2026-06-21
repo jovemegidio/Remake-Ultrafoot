@@ -4,7 +4,6 @@ import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import type { LucideIcon } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { cn } from "@/lib/utils"
@@ -45,7 +44,6 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
 
   return (
     <div className="flex h-screen pl-0 pb-20 md:pb-0 bg-[#050508] overflow-hidden">
-      <GameSidebar />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
 
@@ -103,6 +101,8 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
               >
                 {cards.map((card, index) => {
                   const Icon = card.icon
+                  // Card "ativo": o que esta sob hover, ou o primeiro por padrao
+                  const isActive = hoveredCard === card.id || (hoveredCard === null && index === 0)
                   return (
                     <motion.div
                       key={card.id}
@@ -116,47 +116,33 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
                     >
                       <div
                         className={cn(
-                          "relative overflow-hidden rounded-2xl border-2 transition-all duration-300 bg-gradient-to-br from-cyan-500/20 to-teal-500/10",
-                          hoveredCard === card.id
-                            ? "border-cyan-400/80 shadow-[0_0_30px_rgba(0,255,200,0.22)]"
-                            : "border-cyan-500/20 shadow-[0_0_18px_rgba(0,255,200,0.06)]",
+                          "relative overflow-hidden rounded-2xl border transition-all duration-300",
                           "h-[320px] lg:h-[380px] flex flex-col",
+                          isActive
+                            ? "border-[#00ffc8]/70 shadow-[0_0_34px_rgba(0,255,200,0.18)]"
+                            : "border-white/[0.07] shadow-[0_18px_40px_rgba(0,0,0,0.5)]",
                         )}
+                        style={{
+                          background: isActive
+                            ? "linear-gradient(160deg, rgba(0,255,200,0.10) 0%, rgba(8,14,18,0.92) 42%, rgba(0,0,0,0.85) 100%)"
+                            : "linear-gradient(160deg, rgba(0,255,200,0.05) 0%, rgba(10,12,16,0.92) 38%, rgba(0,0,0,0.85) 100%)",
+                        }}
                       >
-                        {/* Glow on hover */}
-                        <div
-                          className={cn(
-                            "absolute inset-0 opacity-0 transition-opacity duration-300",
-                            hoveredCard === card.id && "opacity-100",
-                          )}
-                          style={{
-                            background: "radial-gradient(circle at 50% 0%, rgba(0,255,200,0.15) 0%, transparent 60%)",
-                          }}
-                        />
-
                         <div className="relative flex flex-col h-full p-6">
                           <div className="text-center mb-4">
                             <h2 className="text-xl font-bold text-white mb-1">{card.title}</h2>
-                            <p className="text-sm font-medium text-cyan-400">{card.subtitle}</p>
+                            <p className="text-sm font-semibold text-[#00ffc8]">{card.subtitle}</p>
                           </div>
 
                           <div className="flex-1 flex flex-col items-center justify-center px-2">
-                            {card.visual ?? <Icon className="h-24 w-24 text-white/80 mb-4" strokeWidth={1.5} />}
+                            {card.visual ?? <Icon className="h-24 w-24 text-white/85 mb-4" strokeWidth={1.5} />}
                             {card.description && (
-                              <p className="text-xs text-white/60 text-center leading-relaxed mt-2">
+                              <p className="text-xs text-white/55 text-center leading-relaxed mt-2">
                                 {card.description}
                               </p>
                             )}
                           </div>
                         </div>
-
-                        {/* Hover indicator */}
-                        <div
-                          className={cn(
-                            "absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 to-teal-400 transition-opacity duration-300",
-                            hoveredCard === card.id ? "opacity-100" : "opacity-0",
-                          )}
-                        />
                       </div>
                     </motion.div>
                   )

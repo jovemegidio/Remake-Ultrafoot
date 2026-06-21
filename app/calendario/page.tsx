@@ -11,7 +11,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { GameSidebar } from "@/components/game-sidebar"
 import { ActionHint, GamepadButton, ShoulderHints } from "@/components/gamepad-icons"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort } from "@/lib/teams-data"
@@ -223,7 +222,6 @@ export default function CalendarioPage() {
 
   return (
   <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 relative">
-  <GameSidebar />
   
   {/* Background Image - Futuristic Grid */}
   <div className="absolute inset-0 md:ml-16">

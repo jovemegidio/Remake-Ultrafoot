@@ -20,7 +20,6 @@ import {
   X,
   Crown,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -621,7 +620,6 @@ export default function CompeticoesPage() {
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-      <GameSidebar />
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto scrollbar-premium space-y-4">

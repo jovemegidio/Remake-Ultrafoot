@@ -23,7 +23,6 @@ import {
   X,
   Gamepad2
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
@@ -536,7 +535,6 @@ export default function ElencoPage() {
   if (currentView === "menu") {
     return (
       <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-        <GameSidebar />
         <GameHeader team={userTeam} />
         
         <main className="flex-1 p-4 overflow-y-auto">
@@ -682,7 +680,6 @@ export default function ElencoPage() {
   if (currentView === "visao_tatica") {
     return (
       <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-gradient-to-br from-primary/20 via-[#0a0a0a] to-primary/10 flex flex-col overflow-hidden">
-        <GameSidebar />
         <GameHeader team={userTeam} />
         
         <main className="flex-1 p-4 overflow-y-auto">
@@ -874,7 +871,6 @@ export default function ElencoPage() {
   // Gerenciamento view (main view)
   return (
     <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
-      <GameSidebar />
       <GameHeader team={userTeam} />
       
       {/* Match notification toast - only shows during actual match simulations */}

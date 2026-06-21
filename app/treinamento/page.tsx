@@ -17,7 +17,6 @@ import {
   Timer,
   Users,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
@@ -179,7 +178,6 @@ export default function TreinamentoPage() {
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-      <GameSidebar />
       <GameHeader team={userTeam} />
 
       {/* Toast de feedback de treinamento */}

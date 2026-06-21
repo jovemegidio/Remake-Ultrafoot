@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { useGameManager } from "@/lib/use-game-manager"
@@ -161,7 +160,6 @@ export default function OlheirosPage() {
 
   return (
     <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
-      <GameSidebar />
       <GameHeader team={userTeam ?? undefined} />
 
       <main className="h-[calc(100vh-48px-56px)] flex flex-col">

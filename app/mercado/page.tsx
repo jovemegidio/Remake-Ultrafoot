@@ -24,7 +24,6 @@ import {
   EyeOff,
   Briefcase,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -477,7 +476,6 @@ export default function MercadoPage() {
         <div className="absolute inset-0 bg-[#050508]/40" />
       </div>
 
-      <GameSidebar />
       <GameHeader team={userTeam} />
 
       <main className="relative z-10 p-4 h-[calc(100vh-48px)] overflow-hidden">

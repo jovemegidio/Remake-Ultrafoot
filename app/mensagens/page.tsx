@@ -21,7 +21,6 @@ import {
   ArchiveRestore,
   Inbox,
 } from "lucide-react"
-import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
@@ -242,7 +241,6 @@ export default function MensagensPage() {
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-      <GameSidebar />
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto">

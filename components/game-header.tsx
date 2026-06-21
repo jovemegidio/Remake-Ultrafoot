@@ -125,7 +125,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         {/* Emblema circular do treinador */}
         <Link
           href="/"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/5 text-[11px] font-bold tracking-tight text-[#00ffc8]"
+          aria-label="Inicio"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/25 bg-transparent text-[15px] font-bold italic tracking-tight text-white/85 transition-colors hover:border-white/40 hover:text-white"
+          style={{ fontFamily: "var(--font-display, var(--font-oswald)), sans-serif" }}
         >
           UF
         </Link>
