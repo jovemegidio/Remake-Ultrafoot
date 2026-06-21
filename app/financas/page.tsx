@@ -247,7 +247,7 @@ export default function FinancasPage() {
 
         {/* Balance Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
+          <div className="stat-card stat-card-teal">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <Wallet className="h-4 w-4 text-[#00ffc8]" />
               {t.finances.currentBalanceHeader}
@@ -268,7 +268,7 @@ export default function FinancasPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
+          <div className="stat-card stat-card-blue">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <TrendingUp className="h-4 w-4 text-blue-400" />
               {t.finances.monthlyIncomeHeader}
@@ -281,7 +281,7 @@ export default function FinancasPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
+          <div className="stat-card stat-card-red">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <TrendingDown className="h-4 w-4 text-red-400" />
               {t.finances.monthlyExpensesHeader}
@@ -294,7 +294,7 @@ export default function FinancasPage() {
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
+          <div className="stat-card stat-card-amber">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
               <DollarSign className="h-4 w-4 text-yellow-400" />
               {t.finances.transferBudgetHeader}

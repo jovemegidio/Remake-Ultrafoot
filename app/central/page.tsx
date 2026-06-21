@@ -172,7 +172,7 @@ export default function CentralPage() {
             >
               {/* Team Morale Overview */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <div className="stat-card stat-card-teal">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-white/50">Moral do Elenco</span>
                     {getMoraleIcon(averageMorale)}
@@ -183,7 +183,7 @@ export default function CentralPage() {
                   <p className="text-[10px] text-white/40 mt-1">Media geral do plantel</p>
                 </div>
                 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <div className="stat-card stat-card-green">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-white/50">Jogadores Felizes</span>
                     <Smile className="h-4 w-4 text-green-400" />
@@ -194,7 +194,7 @@ export default function CentralPage() {
                   <p className="text-[10px] text-white/40 mt-1">de {playerMorale.length} jogadores</p>
                 </div>
                 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <div className="stat-card stat-card-amber">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-white/50">Atencao Necessaria</span>
                     <AlertCircle className="h-4 w-4 text-orange-400" />
