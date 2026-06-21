@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useState, useRef, useEffect } from "react"
 import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star } from "lucide-react"
@@ -153,14 +154,20 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     >
       {/* Esquerda: emblema circular "mc" + trilha [w] SecaoPai > PaginaAtual */}
       <div className="flex items-center gap-4 min-w-0">
-        {/* Emblema circular estilo "mc" */}
+        {/* Logo UF26 */}
         <Link
           href="/"
           aria-label="Inicio"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-transparent text-[14px] font-bold italic tracking-tight text-white/85 transition-colors hover:border-white/50 hover:text-white"
-          style={{ fontFamily: "var(--font-display, var(--font-oswald)), sans-serif" }}
+          className="flex h-11 shrink-0 items-center justify-center rounded-lg px-1 transition-opacity hover:opacity-80"
         >
-          UF
+          <Image
+            src="/brand/uf26-logo.png"
+            alt="UF26"
+            width={120}
+            height={44}
+            className="h-9 w-auto object-contain"
+            priority
+          />
         </Link>
 
         {/* Trilha de navegacao */}
