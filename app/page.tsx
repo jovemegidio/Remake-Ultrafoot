@@ -6,7 +6,6 @@ import {
   Calendar,
   ChevronRight,
   CircleDollarSign,
-  Newspaper,
   Shield,
   Star,
   Target,
@@ -18,6 +17,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
+  UserPlus,
+  ClipboardList,
+  ArrowLeftRight,
 } from "lucide-react"
 
 import { GameSidebar } from "@/components/game-sidebar"
@@ -37,6 +39,8 @@ import { Flag } from "lucide-react"
 
 const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const HOME_WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
+const HOME_WEEKDAYS_LONG = ["Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"]
+const HOME_MONTHS_LONG = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
 function roundToMonth(round: number): number {
   const monthOffset = Math.floor((round - 1) * 9 / 38)
@@ -60,6 +64,11 @@ function fixtureDateShort(round: number): string {
 function fixtureDateLine(round: number): string {
   const date = fixtureDate(round)
   return `${HOME_WEEKDAYS_SHORT[date.getDay()]}, ${date.getDate()} ${HOME_MONTHS_SHORT[date.getMonth()]}`
+}
+
+function fixtureDateHeadline(round: number): string {
+  const date = fixtureDate(round)
+  return `${HOME_WEEKDAYS_LONG[date.getDay()]}, ${date.getDate()} de ${HOME_MONTHS_LONG[date.getMonth()]}`
 }
 
 export default function DashboardPage() {
@@ -168,74 +177,102 @@ export default function DashboardPage() {
           </Link>
         )}
 
-        {/* Hero - Club Identity */}
-        <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-white/[0.04]">
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              background: `radial-gradient(ellipse at left, ${userTeam.cor1}60, transparent 50%), radial-gradient(ellipse at right, ${userTeam.cor2}30, transparent 60%)`
-            }}
-          />
+        {/* Central hub estilo EA FC */}
+        <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr] items-start">
+          {/* Coluna esquerda: data, proximo jogo e tarefas */}
+          <div>
+            {(() => {
+              const next = nextMatches[0]
+              const round = next?.round ?? saveState?.week ?? 1
+              const positionOf = (curto?: string) => {
+                if (!curto) return null
+                const idx = standings.findIndex(s => s.teamShort === curto)
+                return idx >= 0 ? idx + 1 : null
+              }
+              const homeTeam = next?.homeTeam
+              const awayTeam = next?.awayTeam
+              const tasks = [
+                { href: "/partida", icon: Play, label: t.common.nextMatch, highlight: true },
+                { href: "/elenco", icon: Users, label: t.sidebar.squad, highlight: false },
+                { href: "/gerenciar-time", icon: ClipboardList, label: "Gerenciamento do Time", highlight: false },
+                { href: "/mercado", icon: ArrowLeftRight, label: t.sidebar.market, highlight: false },
+              ]
+              return (
+                <>
+                  {/* Manchete de data */}
+                  <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white text-balance">
+                    {fixtureDateHeadline(round)}
+                  </h1>
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#00ffc8]">Rodada {round}</span>
+                    <span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" />
+                  </div>
 
-          <div className="relative flex items-center gap-6 p-6">
-            <div className="relative">
-              <TeamCrest team={userTeam} size="2xl" />
-              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-[#00ffc8] text-[10px] font-bold text-[#00ffc8]">
-                {userTeam.prestigio}
-              </div>
-            </div>
+                  {/* Proximo jogo */}
+                  {homeTeam && awayTeam ? (
+                    <div className="mt-6">
+                      <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-white/45">
+                        <Trophy className="h-3.5 w-3.5 text-[#ffd700]" />
+                        {next?.competition ?? "Liga"}
+                        <span className="text-white/30">• Hoje</span>
+                      </div>
+                      <div className="mt-3 flex items-center gap-4">
+                        <TeamCrest team={homeTeam} size="lg" />
+                        <div className="flex-1 space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold uppercase tracking-tight text-white">{homeTeam.nome}</span>
+                            {positionOf(homeTeam.curto) && (
+                              <span className="text-sm font-medium text-white/40">{positionOf(homeTeam.curto)}°</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold uppercase tracking-tight text-white/70">{awayTeam.nome}</span>
+                            {positionOf(awayTeam.curto) && (
+                              <span className="text-sm font-medium text-white/40">{positionOf(awayTeam.curto)}°</span>
+                            )}
+                          </div>
+                        </div>
+                        <TeamCrest team={awayTeam} size="lg" />
+                      </div>
+                      <Link
+                        href="/partida"
+                        className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+                      >
+                        <Play className="h-4 w-4" /> Dia de jogo
+                      </Link>
+                    </div>
+                  ) : null}
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2 text-[10px] text-[#00ffc8] font-medium tracking-wider uppercase mb-1">
-                <Shield className="h-3 w-3" />
-                {userTeam.cidade}, {userTeam.estado}
-              </div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">{userTeam.nome}</h1>
-              <div className="flex items-center gap-4 mt-2 text-xs text-white/50">
-                <span className="flex items-center gap-1">
-                  <Star className="h-3 w-3 text-[#ffd700]" />
-                  Prestigio {userTeam.prestigio}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {formatNumber(userTeam.torcida)} torcedores
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {userTeam.estadio_nome}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-6">
-              <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.balance}</div>
-                <div className="text-xl font-bold text-[#00ffc8]">{formatCurrency(balance)}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.position}</div>
-                <div className="text-xl font-bold text-white">{userPosition ? `${userPosition}°` : "-"}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-[10px] text-white/40 uppercase tracking-wider">{t.common.season}</div>
-                <div className="text-xl font-bold text-white">{currentSeason}</div>
-              </div>
-            </div>
+                  {/* Lista de tarefas */}
+                  <div className="mt-7 space-y-px">
+                    {tasks.map((task, i) => (
+                      <Link
+                        key={i}
+                        href={task.href}
+                        className={cn(
+                          "group flex items-center gap-3 px-4 py-3.5 transition-colors",
+                          task.highlight
+                            ? "rounded-lg border border-[#00ffc8]/40 bg-[#00ffc8]/[0.06] hover:bg-[#00ffc8]/[0.1]"
+                            : "border-b border-white/[0.06] hover:bg-white/5"
+                        )}
+                      >
+                        <task.icon className={cn("h-5 w-5 shrink-0", task.highlight ? "text-[#00ffc8]" : "text-white/50")} />
+                        <span className="flex-1 text-sm font-medium text-white">{task.label}</span>
+                        <ChevronRight className="h-4 w-4 text-white/30 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                    ))}
+                    <div className="px-4 pt-3 text-xs text-white/40">
+                      {tasks.length} tarefas
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
           </div>
 
-          <div className="flex items-center gap-px border-t border-white/[0.04] bg-black/30">
-            <Link href="/partida" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <Play className="h-4 w-4" /> {t.common.nextMatch}
-            </Link>
-            <Link href="/calendario" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <Calendar className="h-4 w-4" /> {t.sidebar.calendar}
-            </Link>
-            <Link href="/elenco" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <Users className="h-4 w-4" /> {t.sidebar.squad}
-            </Link>
-            <Link href="/mercado" className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-              <TrendingUp className="h-4 w-4" /> {t.sidebar.market}
-            </Link>
+          {/* Coluna direita: noticia em destaque */}
+          <div>
+            <NewsFeed />
           </div>
         </section>
 
@@ -364,17 +401,6 @@ export default function DashboardPage() {
               <Link href="/competicoes" className="flex items-center justify-center gap-1 py-3 text-xs text-white/50 hover:text-white hover:bg-white/5 transition-colors border-t border-white/[0.04]">
                 {t.common.viewFullTable} <ChevronRight className="h-3 w-3" />
               </Link>
-            </section>
-
-            {/* Noticias */}
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Newspaper className="h-4 w-4 text-primary" />
-                  {t.dashboard.news}
-                </div>
-              </div>
-              <NewsFeed />
             </section>
 
             {/* Financas */}

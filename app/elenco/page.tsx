@@ -339,17 +339,6 @@ export default function ElencoHubPage() {
               </motion.button>
             </div>
 
-            {/* Footer controls hint */}
-            <div className="flex items-center justify-center gap-8 mt-4 text-xs text-white/30">
-              <div className="flex items-center gap-2">
-                <div className="px-2 py-1 rounded bg-white/10 text-[10px] font-medium">A</div>
-                <span>Selecionar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="px-2 py-1 rounded bg-white/10 text-[10px] font-medium">B</div>
-                <span>Voltar</span>
-              </div>
-            </div>
           </div>
         </main>
       </div>
