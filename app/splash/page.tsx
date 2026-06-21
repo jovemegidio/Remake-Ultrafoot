@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud } from "lucide-react"
+import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight } from "lucide-react"
 import { loadGameState, hasSave, clearAllGameData } from "@/lib/save-system"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useTranslation } from "@/lib/i18n"
@@ -239,10 +239,10 @@ export default function SplashPage() {
 
       if (phase !== "main-menu") return
 
-      if (e.key === "ArrowLeft") {
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
         e.preventDefault()
         setSelectedIndex(prev => prev > 0 ? prev - 1 : mainMenuOptions.length - 1)
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
         e.preventDefault()
         setSelectedIndex(prev => prev < mainMenuOptions.length - 1 ? prev + 1 : 0)
       } else if (e.key === "Enter" || e.key === " ") {
@@ -285,9 +285,9 @@ export default function SplashPage() {
 
       if (phase !== "main-menu") return
 
-      if (button === "DPAD_LEFT" || button === "LB") {
+      if (button === "DPAD_UP" || button === "DPAD_LEFT" || button === "LB") {
         setSelectedIndex(prev => prev > 0 ? prev - 1 : mainMenuOptions.length - 1)
-      } else if (button === "DPAD_RIGHT" || button === "RB") {
+      } else if (button === "DPAD_DOWN" || button === "DPAD_RIGHT" || button === "RB") {
         setSelectedIndex(prev => prev < mainMenuOptions.length - 1 ? prev + 1 : 0)
       } else if (button === "A") {
         handleMenuSelect(selectedIndex)
@@ -694,105 +694,125 @@ export default function SplashPage() {
           ))}
         </div>
 
-        {/* Header with ULTRAFOOT logo */}
-        <div 
-          className="flex flex-col items-center pt-10 md:pt-14 lg:pt-16 pb-4"
-          style={{
-            animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
-          }}
-        >
-          {/* Logo Image */}
-          <div className="relative mb-4">
-            <Image
-              src="/brand/ultrafoot-logo.png"
-              alt="Ultrafoot"
-              width={280}
-              height={60}
-              className="object-contain w-auto max-w-[200px] sm:max-w-[240px] md:max-w-[280px]"
-              style={{ height: "auto" }}
-              priority
-            />
+        {/* Conteudo do menu - layout cinematografico alinhado a esquerda */}
+        <div className="relative z-10 flex h-full flex-col justify-center px-8 sm:px-12 md:px-16 lg:px-24 pt-16 pb-24">
+          <div className="w-full max-w-md">
+
+            {/* Logo + badge de registro */}
+            <div
+              className="mb-6"
+              style={{
+                animation: phase === "main-menu" ? "slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+              }}
+            >
+              <Image
+                src="/brand/ultrafoot-logo.png"
+                alt="Ultrafoot"
+                width={300}
+                height={64}
+                className="object-contain w-auto max-w-[220px] sm:max-w-[260px] md:max-w-[300px]"
+                style={{ height: "auto" }}
+                priority
+              />
+              <div className="mt-3 flex items-center gap-3">
+                <span className="text-white/45 text-[11px] tracking-[0.25em] uppercase font-medium">
+                  Modo Carreira · 2026
+                </span>
+                <span className="h-1 w-1 rounded-full bg-white/20" />
+                {!isRegistered ? (
+                  <span className="text-amber-500/80 text-[10px] font-semibold tracking-widest uppercase">
+                    {t.splash.unregistered}
+                  </span>
+                ) : (
+                  <span className="text-emerald-400/90 text-[10px] font-semibold tracking-widest uppercase flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {t.splash.registered}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Menu vertical estilo EA FC */}
+            <nav className="flex flex-col gap-1.5">
+              {mainMenuOptions.map((option, index) => {
+                const isSelected = selectedIndex === index
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => handleMenuSelect(index)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    className={cn(
+                      "group relative flex items-center gap-4 rounded-xl border px-4 py-3 text-left transition-all duration-300 overflow-hidden",
+                      isSelected
+                        ? "border-[#00ffc8]/40 translate-x-1.5"
+                        : "border-white/[0.06] hover:border-white/15"
+                    )}
+                    style={{
+                      animation: phase === "main-menu" ? `slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + index * 0.07}s forwards` : "none",
+                      opacity: 0,
+                      background: isSelected
+                        ? "linear-gradient(90deg, rgba(0,255,200,0.14) 0%, rgba(0,200,255,0.05) 45%, rgba(8,12,18,0.2) 100%)"
+                        : "rgba(8,12,18,0.35)",
+                      boxShadow: isSelected ? "0 8px 30px rgba(0,255,200,0.12)" : "none",
+                    }}
+                  >
+                    {/* Barra de acento esquerda */}
+                    <span
+                      className={cn(
+                        "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full transition-all duration-300",
+                        isSelected ? "h-8 bg-gradient-to-b from-[#00ffc8] to-[#00c8ff]" : "h-0 bg-transparent"
+                      )}
+                    />
+
+                    {/* Icone */}
+                    <div className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-all duration-300 [&>svg]:h-5 [&>svg]:w-5",
+                      isSelected ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/[0.04] text-white/40 group-hover:text-white/60"
+                    )}>
+                      {option.icon}
+                    </div>
+
+                    {/* Label */}
+                    <span className={cn(
+                      "flex-1 font-bold text-sm tracking-wide transition-colors duration-300",
+                      isSelected ? "text-white" : "text-white/45 group-hover:text-white/70"
+                    )}>
+                      {option.label}
+                    </span>
+
+                    {/* Chevron do item selecionado */}
+                    <ChevronRight className={cn(
+                      "h-4 w-4 shrink-0 transition-all duration-300",
+                      isSelected ? "text-[#00ffc8] opacity-100 translate-x-0" : "text-white/0 opacity-0 -translate-x-2"
+                    )} />
+                  </button>
+                )
+              })}
+            </nav>
           </div>
-          
-          {/* Version warning - minimal style */}
-          {!isRegistered ? (
-            <span className="text-amber-500/70 text-[10px] font-medium tracking-widest uppercase">
-              {t.splash.unregistered}
-            </span>
-          ) : (
-            <span className="text-emerald-500/70 text-[10px] font-medium tracking-widest uppercase flex items-center gap-1.5">
-              <CheckCircle2 className="h-3 w-3" />
-              {t.splash.registered}
-            </span>
-          )}
         </div>
 
-        {/* Main menu options - horizontal row */}
-        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-8">
-          <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-10">
-            {mainMenuOptions.map((option, index) => {
-              const isSelected = selectedIndex === index
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => handleMenuSelect(index)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  className="relative flex flex-col items-center gap-3 sm:gap-4 md:gap-5 px-2 sm:px-3 md:px-4 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all duration-300"
-                  style={{
-                    animation: phase === "main-menu" ? `slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + index * 0.1}s forwards` : "none",
-                    opacity: 0,
-                  }}
-                >
-                  {/* Minimal selection background */}
-                  <div 
-                    className={cn(
-                      "absolute inset-0 rounded-xl transition-all duration-300",
-                      isSelected ? "opacity-100" : "opacity-0"
-                    )}
-                    style={{
-                      background: "radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, transparent 60%)",
-                    }}
-                  />
-                  
-                  {/* Icon container */}
-                  <div className="relative">
-                    <div className={cn(
-                      "relative w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-lg md:rounded-xl flex items-center justify-center transition-all duration-300 border",
-                      isSelected 
-                        ? "bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/10 border-[#00ffc8]/40 scale-105" 
-                        : "bg-gradient-to-br from-white/5 to-transparent border-white/10 hover:border-white/20"
-                    )}
-                    style={{
-                      boxShadow: isSelected ? "0 4px 24px rgba(0,255,200,0.15), inset 0 1px 0 rgba(0,255,200,0.1)" : "none",
-                    }}
-                    >
-                      <div className={cn(
-                        "transition-all duration-300 [&>svg]:h-5 [&>svg]:w-5 sm:[&>svg]:h-5 sm:[&>svg]:w-5 md:[&>svg]:h-6 md:[&>svg]:w-6",
-                        isSelected ? "text-[#00ffc8]" : "text-white/35"
-                      )}>
-                        {option.icon}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Label */}
-                  <span className={cn(
-                    "font-bold text-[10px] sm:text-xs md:text-sm tracking-wide transition-all duration-300 whitespace-nowrap",
-                    isSelected ? "text-white" : "text-white/35"
-                  )}>
-                    {option.label}
-                  </span>
-                  
-                  {/* Selection indicator line */}
-                  <div 
-                    className={cn(
-                      "absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-[2px] rounded-full transition-all duration-300",
-                      isSelected ? "w-10 opacity-100 bg-gradient-to-r from-[#00ffc8] to-[#00c8ff]" : "w-0 opacity-0 bg-white/50"
-                    )}
-                  />
-                </button>
-              )
-            })}
+        {/* Barra de dicas de controle - estilo EA FC */}
+        <div
+          className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between gap-4 px-6 py-4 sm:px-10"
+          style={{
+            background: "linear-gradient(0deg, rgba(5,8,12,0.92) 0%, transparent 100%)",
+            animation: phase === "main-menu" ? "fadeIn 0.6s ease-out 0.5s forwards" : "none",
+            opacity: 0,
+          }}
+        >
+          <span className="text-white/25 text-[10px] tracking-[0.2em] uppercase font-medium">
+            Ultrafoot 26 · Agencia do Japa
+          </span>
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-2 text-white/45 text-[11px] font-medium">
+              <kbd className="flex h-5 min-w-5 items-center justify-center rounded border border-white/15 bg-white/[0.06] px-1 text-[10px]">↑↓</kbd>
+              Navegar
+            </span>
+            <span className="flex items-center gap-2 text-white/45 text-[11px] font-medium">
+              <kbd className="flex h-5 min-w-5 items-center justify-center rounded border border-[#00ffc8]/30 bg-[#00ffc8]/10 px-1 text-[10px] text-[#00ffc8]">↵</kbd>
+              Selecionar
+            </span>
           </div>
         </div>
 
