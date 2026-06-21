@@ -153,6 +153,9 @@ function ensureInit() {
 
       setState({ tracks: shuffled, currentTrack: startIndex })
 
+      // Sem faixas cadastradas: nao tenta carregar nada (evita crash de indice).
+      if (shuffled.length === 0) return
+
       if (audio) {
         audio.src = shuffled[startIndex].src
         audio.load()

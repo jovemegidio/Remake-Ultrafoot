@@ -333,9 +333,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   ))
 
   // ── Faltas e cartões ──────────────────────────────────────────────────────
-  let baseFoul = 0.20
-  if (mods?.isDerby) baseFoul = 0.28
-  if (mods?.matchImportance === "final") baseFoul = 0.24
+  // baseFoul calibrado para ~12-14 faltas por time (jogo realista ~24-28 no total).
+  let baseFoul = 0.13
+  if (mods?.isDerby) baseFoul = 0.17
+  if (mods?.matchImportance === "final") baseFoul = 0.15
   if (state.phase === "second") baseFoul *= 1.15
 
   // Jogadores cansados faltam mais
@@ -602,7 +603,7 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Atualização de posse (baseada em midfield + momentum)
-// ─────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────���──────────────────────────────────────
 
 function updatePossession(state: MatchState, config: MatchConfig): void {
   const homeSt = deriveStrengths(config.homeSquad, config.homeRating)

@@ -573,15 +573,16 @@ export default function PartidaPage() {
             </div>
 
             {/* Botao iniciar (acesso direto) */}
-            <Link href="/partida/ao-vivo">
-              <Button
-                size="lg"
-                className="h-11 px-8 text-sm font-bold tracking-wide bg-[#00ffc8] text-black hover:bg-[#00e6b5] transition-colors shadow-lg shadow-[#00ffc8]/20"
-              >
+            <Button
+              asChild
+              size="lg"
+              className="h-11 px-8 text-sm font-bold tracking-wide bg-[#00ffc8] text-black hover:bg-[#00e6b5] transition-colors shadow-lg shadow-[#00ffc8]/20"
+            >
+              <Link href="/partida/ao-vivo">
                 <Play className="mr-2 h-4 w-4 fill-current" />
                 INICIAR PARTIDA
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </main>

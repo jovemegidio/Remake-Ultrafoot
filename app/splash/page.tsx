@@ -430,7 +430,7 @@ export default function SplashPage() {
         >
           {/* Imagem das ligas */}
           <Image
-            src="/images/leagues-logos.jpg"
+            src="/images/leagues-logos.png"
             alt="Ligas e competicoes licenciadas"
             fill
             className="object-contain"

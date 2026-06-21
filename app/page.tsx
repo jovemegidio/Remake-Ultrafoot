@@ -51,22 +51,24 @@ function roundToDay(round: number): number {
   return daysInRound[(round - 1) % 9] || 15
 }
 
-function fixtureDate(round: number): Date {
-  return new Date(2026, roundToMonth(round), roundToDay(round))
+// Usa o mes real do fixture (fonte de verdade do calendario da temporada) quando
+// disponivel; roundToMonth e apenas fallback. Mantem a Central sincronizada com o Calendario.
+function fixtureDate(round: number, month?: number): Date {
+  return new Date(2026, month ?? roundToMonth(round), roundToDay(round))
 }
 
-function fixtureDateShort(round: number): string {
-  const date = fixtureDate(round)
+function fixtureDateShort(round: number, month?: number): string {
+  const date = fixtureDate(round, month)
   return `${HOME_MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`
 }
 
-function fixtureDateLine(round: number): string {
-  const date = fixtureDate(round)
+function fixtureDateLine(round: number, month?: number): string {
+  const date = fixtureDate(round, month)
   return `${HOME_WEEKDAYS_SHORT[date.getDay()]}, ${date.getDate()} ${HOME_MONTHS_SHORT[date.getMonth()]}`
 }
 
-function fixtureDateHeadline(round: number): string {
-  const date = fixtureDate(round)
+function fixtureDateHeadline(round: number, month?: number): string {
+  const date = fixtureDate(round, month)
   return `${HOME_WEEKDAYS_LONG[date.getDay()]}, ${date.getDate()} de ${HOME_MONTHS_LONG[date.getMonth()]}`
 }
 
@@ -199,7 +201,7 @@ export default function DashboardPage() {
                 <>
                   {/* Manchete de data */}
                   <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white text-balance">
-                    {fixtureDateHeadline(round)}
+                    {fixtureDateHeadline(round, next?.month)}
                   </h1>
                   <div className="mt-3 flex items-center gap-3">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[#00ffc8]">Rodada {round}</span>
@@ -281,7 +283,7 @@ export default function DashboardPage() {
                 matches={nextMatches.map((f, i) => ({
                   home: f.homeTeam,
                   away: f.awayTeam,
-                  date: fixtureDateShort(f.round),
+                  date: fixtureDateShort(f.round, f.month),
                   time: "",
                   competition: f.competition,
                   matchday: f.round,
@@ -472,7 +474,7 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
     <div className={cn("flex items-center gap-4 px-5 py-3", isNext && "bg-[#00ffc8]/5")}>
       <div className="w-20 text-xs">
         <div className="text-white/80">Rod. {fixture.round}</div>
-        <div className="text-[10px] text-white/45">{fixtureDateLine(fixture.round)}</div>
+        <div className="text-[10px] text-white/45">{fixtureDateLine(fixture.round, fixture.month)}</div>
         <div className={cn("text-[10px] font-medium", fixture.played ? (
           fixture.homeScore !== undefined && fixture.awayScore !== undefined
             ? (isHome ? fixture.homeScore > fixture.awayScore! : fixture.awayScore! > fixture.homeScore) ? "text-[#00ffc8]"

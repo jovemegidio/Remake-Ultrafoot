@@ -1,7 +1,7 @@
 // Mapeamento centralizado de escudos
 // Este arquivo nao deve importar de teams-data.ts ou international-teams.ts para evitar dependencias circulares
 
-import { gameAssetUrl } from "@/lib/game-asset"
+import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -306,16 +306,25 @@ const localEscudoMap: Record<string, string> = {
 }
 
 export function getEscudoUrl(fileKey: string): string {
-  const raw = localEscudoMap[fileKey] ?? `/escudos/${fileKey}.png`
-  return gameAssetUrl(raw)
+  // No app desktop (Tauri) os escudos sao empacotados localmente.
+  // Na web nao existe pasta public/escudos, entao usamos o repositorio remoto
+  // (padrao /teams/escudos/{file_key}.png), evitando 404 e o fallback generico.
+  if (isTauri()) {
+    const raw = localEscudoMap[fileKey] ?? `/escudos/${fileKey}.png`
+    return gameAssetUrl(raw)
+  }
+  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${fileKey}.png`
 }
 
 export function getRemoteEscudoUrl(fileKey: string): string {
-  const key = escudoMap[fileKey] || fileKey
-  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${key}.png`
+  // O repositorio nomeia os arquivos pelo proprio file_key (ex: botafogorj_bra.png).
+  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${fileKey}.png`
 }
 
 export function getEscudoMiniUrl(fileKey: string): string {
-  const raw = localEscudoMap[fileKey] ?? `/escudos/${fileKey}.png`
-  return gameAssetUrl(raw)
+  if (isTauri()) {
+    const raw = localEscudoMap[fileKey] ?? `/escudos/${fileKey}.png`
+    return gameAssetUrl(raw)
+  }
+  return `${ULTRAFOOT_RAW_URL}/teams/escudos/${fileKey}.png`
 }
