@@ -10,7 +10,10 @@ import {
   TrendingUp,
   Award,
   Users,
-  Shirt
+  Shirt,
+  ChevronLeft,
+  ChevronRight,
+  CornerDownLeft,
 } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -89,13 +92,40 @@ const userSquadStats = [
   { id: 11, name: "Helinho", position: "PE", matches: 12, goals: 3, assists: 2, yellows: 1, reds: 0, rating: 7.1 },
 ]
 
+// Lideres de jogos sem sofrer gols (goleiros)
+const topCleanSheets = [
+  { pos: 1, name: "Cleiton Silva", team: "FLA", clean: 6, matches: 15, isUser: true, nat: "br" },
+  { pos: 2, name: "Weverton", team: "PAL", clean: 5, matches: 15, nat: "br" },
+  { pos: 3, name: "Cassio", team: "COR", clean: 4, matches: 14, nat: "br" },
+  { pos: 4, name: "Rafael", team: "SAO", clean: 4, matches: 15, nat: "br" },
+  { pos: 5, name: "Marcelo Lomba", team: "BAH", clean: 3, matches: 13, nat: "br" },
+]
+
+// Notas medias
+const topRatings = [
+  { pos: 1, name: "Arrascaeta", team: "FLA", rating: 8.4, matches: 15, nat: "uy" },
+  { pos: 2, name: "Hulk", team: "CAM", rating: 8.1, matches: 15, nat: "br" },
+  { pos: 3, name: "Lincoln", team: "BGT", rating: 7.9, matches: 15, isUser: true, nat: "br" },
+  { pos: 4, name: "Raphael Veiga", team: "PAL", rating: 7.8, matches: 15, nat: "br" },
+  { pos: 5, name: "Gabriel Barbosa", team: "FLA", rating: 7.7, matches: 15, nat: "br" },
+]
+
+// Nacionalidade padrao por jogador conhecido (ISO-2). Default: br
+const PLAYER_NATIONALITY: Record<string, string> = {
+  Endrick: "br", Arrascaeta: "uy", "German Cano": "ar", "Juan Dinenno": "ar",
+  Vegetti: "ar", Hulk: "br",
+}
+function flagUrl(code: string) {
+  return `https://flagcdn.com/h20/${code}.png`
+}
+
 export default function EstatisticasPage() {
   const { team: userTeam } = useUserTeam()
   const { squadPlayers, matchResults, currentSeason } = useGameEngine()
   const { standings } = useGameManager()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("artilharia")
-  const estatTabsOrder = ["artilharia", "assistencias", "cartoes", "elenco"]
+  const [activeTab, setActiveTab] = useState("artilheiros")
+  const estatTabsOrder = ["artilheiros", "assistencias", "clean", "amarelos", "vermelhos", "notas"]
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -169,111 +199,161 @@ export default function EstatisticasPage() {
     }
   }, [matchResults, userTeam.curto])
 
+  interface StatRow {
+    pos: number
+    name: string
+    team: string
+    matches: number
+    isUser?: boolean
+    nat?: string
+    valueStr: string
+  }
+  const cats: { id: string; label: string; statLabel: string; rows: StatRow[] }[] = [
+    { id: "artilheiros", label: "Artilheiros", statLabel: "Gols", rows: topScorers.map((r) => ({ ...r, valueStr: String(r.goals) })) },
+    { id: "assistencias", label: "Assistências", statLabel: "Assistências", rows: topAssisters.map((r) => ({ ...r, valueStr: String(r.assists) })) },
+    { id: "clean", label: "S/ Gols Sofr.", statLabel: "S/ Gols Sofr.", rows: topCleanSheets.map((r) => ({ ...r, valueStr: String(r.clean) })) },
+    { id: "amarelos", label: "Cartões Amarelos", statLabel: "Cartões Amarelos", rows: topYellowCards.map((r) => ({ ...r, valueStr: String(r.yellows) })) },
+    { id: "vermelhos", label: "Cartões Vermelhos", statLabel: "Cartões Vermelhos", rows: [] },
+    { id: "notas", label: "Notas Médias", statLabel: "Nota média", rows: topRatings.map((r) => ({ ...r, valueStr: r.rating.toFixed(2).replace(".", ",") })) },
+  ]
+  const activeCat = cats.find((c) => c.id === activeTab) || cats[0]
+
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
       <GameSidebar />
       <GameHeader team={userTeam} />
 
-      <main className="flex-1 p-4 overflow-y-auto space-y-4">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Estatisticas</h1>
-            <p className="text-sm text-white/50 mt-1">Temporada {currentSeason} - {getLeagueName(userTeam.curto)}</p>
+      <main className="flex-1 overflow-y-auto px-6 pt-5 pb-24">
+        {/* Titulo + sub-abas estilo EA FC */}
+        <div className="flex items-end justify-between border-b border-white/[0.06] pb-3">
+          <div className="flex items-center gap-6 overflow-x-auto">
+            <h1 className="shrink-0 text-lg font-bold text-white">Estatísticas: Atletas</h1>
+            <span className="hidden h-5 w-px shrink-0 bg-white/15 sm:block" />
+            {cats.map((c) => {
+              const active = activeTab === c.id
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveTab(c.id)}
+                  className={cn(
+                    "relative shrink-0 whitespace-nowrap pb-3 text-sm font-semibold transition-colors",
+                    active ? "text-white" : "text-white/40 hover:text-white/70",
+                  )}
+                >
+                  {c.label}
+                  {active && <span className="absolute -bottom-[13px] left-0 right-0 h-0.5 bg-[#00ffc8]" />}
+                </button>
+              )
+            })}
           </div>
+          <span className="hidden shrink-0 pl-6 text-sm text-white/45 lg:block">Temporada atual</span>
         </div>
 
-        {/* User Team Stats Summary */}
-        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.04]">
-            <TeamCrest team={userTeam} size="sm" />
-            <span className="font-semibold text-white">{userTeam.nome}</span>
-            <span className="text-xs text-white/50">- Resumo da Temporada</span>
+        {/* Card de estatistica */}
+        <div className="mt-6 overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-b from-[#12141b] to-[#0b0c11]">
+          {/* Header: competicao + ano */}
+          <div className="flex items-center justify-between px-6 py-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white/5">
+                <Trophy className="h-5 w-5 text-[#ffd700]" />
+              </div>
+              <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] font-medium text-white/60">
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Num
+                <ChevronRight className="h-3.5 w-3.5" />
+              </div>
+              <h2 className="text-xl font-extrabold uppercase tracking-tight text-white">
+                {getLeagueName(userTeam.curto)}
+              </h2>
+            </div>
+            <span className="text-3xl font-light text-white/30">{currentSeason}</span>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
-            <StatCard label="Gols Marcados" value={userTeamStatsLive.goalsScored} icon={Target} color="text-[#00ffc8]" />
-            <StatCard label="Gols Sofridos" value={userTeamStatsLive.goalsConceded} icon={Target} color="text-red-500" />
-            <StatCard label="Clean Sheets" value={userTeamStatsLive.cleanSheets} icon={Shirt} color="text-blue-500" />
-            <StatCard label="Vitorias" value={userTeamStatsLive.wins} icon={Trophy} color="text-[#ffd700]" />
-            <StatCard label="Empates" value={userTeamStatsLive.draws} icon={TrendingUp} color="text-white/50" />
-            <StatCard label="Derrotas" value={userTeamStatsLive.losses} icon={AlertTriangle} color="text-red-400" />
-          </div>
-        </section>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto">
-            <TabsTrigger 
-              value="artilharia" 
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              Artilharia
-            </TabsTrigger>
-            <TabsTrigger 
-              value="assistencias" 
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              Assistencias
-            </TabsTrigger>
-            <TabsTrigger 
-              value="cartoes" 
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              Cartoes
-            </TabsTrigger>
-            <TabsTrigger 
-              value="elenco" 
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              Meu Elenco
-            </TabsTrigger>
-          </TabsList>
+          {activeCat.rows.length === 0 ? (
+            <div className="flex h-72 items-center justify-center border-t border-white/[0.04]">
+              <span className="text-2xl font-bold text-white/80">Não há dados disponíveis</span>
+            </div>
+          ) : (
+            <>
+              {/* Cabecalho de colunas */}
+              <div className="grid grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.2fr)_120px_110px] items-center border-t border-white/[0.04] px-6 py-3 text-sm text-white/45">
+                <span />
+                <span>Atleta</span>
+                <span>Time atual</span>
+                <span className="text-center font-semibold text-white">{activeCat.statLabel}</span>
+                <span className="text-center">Partidas</span>
+              </div>
 
-          <TabsContent value="artilharia" className="mt-4">
-            <LeaderboardTable 
-              title="Artilharia do Campeonato"
-              data={topScorers}
-              columns={[
-                { key: "goals", label: "Gols", icon: Target },
-                { key: "assists", label: "Assist", icon: Footprints },
-                { key: "matches", label: "Jogos", icon: Shirt },
-              ]}
-              primaryColumn="goals"
-            />
-          </TabsContent>
+              {/* Linhas */}
+              <div>
+                {activeCat.rows.map((row, idx) => {
+                  const team = getTeamByShort(row.team)
+                  const parts = row.name.split(" ")
+                  const first = parts.length > 1 ? parts[0] : ""
+                  const last = parts.length > 1 ? parts.slice(1).join(" ") : row.name
+                  const selected = idx === 0
+                  return (
+                    <div
+                      key={row.pos}
+                      className={cn(
+                        "grid grid-cols-[56px_minmax(0,1.5fr)_minmax(0,1.2fr)_120px_110px] items-center border-t border-white/[0.04] px-6 transition-colors hover:bg-white/[0.03]",
+                        selected && "bg-white/[0.04]",
+                      )}
+                    >
+                      {/* chip de selecao */}
+                      <div className="flex items-center">
+                        {selected && (
+                          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-white/15 bg-white/10 text-white">
+                            <CornerDownLeft className="h-4 w-4" />
+                          </span>
+                        )}
+                      </div>
 
-          <TabsContent value="assistencias" className="mt-4">
-            <LeaderboardTable 
-              title="Garcons do Campeonato"
-              data={topAssisters}
-              columns={[
-                { key: "assists", label: "Assist", icon: Footprints },
-                { key: "goals", label: "Gols", icon: Target },
-                { key: "matches", label: "Jogos", icon: Shirt },
-              ]}
-              primaryColumn="assists"
-            />
-          </TabsContent>
+                      {/* Atleta */}
+                      <div className="flex items-center gap-4 py-3">
+                        <div className="flex h-14 w-12 shrink-0 items-end justify-center overflow-hidden rounded-md bg-gradient-to-b from-white/10 to-white/[0.02]">
+                          <span className="pb-1 text-base font-bold text-white/70">
+                            {(first[0] || last[0] || "").toUpperCase()}
+                            {(last[0] || "").toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="min-w-0 leading-tight">
+                          {first && <div className="truncate text-sm font-light uppercase text-white/55">{first}</div>}
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={flagUrl(PLAYER_NATIONALITY[row.name] || row.nat || "br") || "/placeholder.svg"}
+                              alt=""
+                              className="h-3 w-5 rounded-[2px] object-cover"
+                            />
+                            <span className="truncate text-base font-bold uppercase text-white">{last}</span>
+                          </div>
+                        </div>
+                      </div>
 
-          <TabsContent value="cartoes" className="mt-4">
-            <LeaderboardTable 
-              title="Cartoes Amarelos"
-              data={topYellowCards}
-              columns={[
-                { key: "yellows", label: "Amarelos", icon: AlertTriangle },
-                { key: "reds", label: "Vermelhos", icon: AlertTriangle },
-                { key: "matches", label: "Jogos", icon: Shirt },
-              ]}
-              primaryColumn="yellows"
-              primaryColor="text-[#ffd700]"
-            />
-          </TabsContent>
+                      {/* Time atual */}
+                      <div className="flex items-center gap-3 py-3">
+                        {team && <TeamCrest team={team} size="sm" />}
+                        <span className={cn("truncate text-base", selected ? "font-bold text-white" : "text-white/80")}>
+                          {team?.nome || row.team}
+                        </span>
+                      </div>
 
-          <TabsContent value="elenco" className="mt-4">
-            <SquadStatsTable data={userSquadStatsLive.length > 0 ? userSquadStatsLive : userSquadStats} />
-          </TabsContent>
-        </Tabs>
+                      {/* Stat principal */}
+                      <span className={cn("text-center text-lg tabular-nums", selected ? "font-bold text-white" : "font-semibold text-white/90")}>
+                        {row.valueStr}
+                      </span>
+
+                      {/* Partidas */}
+                      <span className={cn("text-center text-lg tabular-nums", selected ? "font-bold text-white" : "text-white/70")}>
+                        {row.matches}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </main>
 
     </div>
