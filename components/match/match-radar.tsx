@@ -76,33 +76,27 @@ function PlayerDot({
   color: string
   textColor: string
 }) {
-  const stamina = Math.round(player.stamina ?? 100)
   return (
     <div
       className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
       style={{ left: `${player.x * 100}%`, top: `${player.y * 100}%` }}
     >
+      {/* Icone do jogador (pitch_player_icon_size = 28, com numero) */}
       <div
         className="relative flex items-center justify-center rounded-full font-bold ring-2 ring-white/80"
         style={{
-          width: 24,
-          height: 24,
+          width: 28,
+          height: 28,
           background: color,
           color: textColor,
-          fontSize: 11,
+          fontSize: 12,
           boxShadow: "0 1px 4px rgba(0,0,0,0.6)",
         }}
       >
         {player.number}
-        {/* Anel de condicao fisica */}
-        {stamina < 60 && (
-          <span
-            className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-1 ring-black/40"
-            style={{ background: stamina < 40 ? "#ef4444" : "#f59e0b" }}
-          />
-        )}
       </div>
-      <span className="max-w-[60px] truncate text-[8px] leading-none text-white/70">
+      {/* Nome do jogador (show_player_names = true) */}
+      <span className="max-w-[64px] truncate text-[8px] leading-none text-white/75">
         {player.name.split(" ").slice(-1)[0]}
       </span>
     </div>
@@ -133,43 +127,36 @@ export function MatchRadar({ homeTeam, awayTeam, homeSquad, awaySquad, homePosse
         </span>
       </div>
 
-      {/* Campo (pitch) — orientacao horizontal */}
+      {/* Campo (pitch) — orientacao horizontal. Cores conforme spec FM:
+          fundo rgb(17,38,29) = #11261D, linhas rgb(43,79,59) = #2B4F3B */}
       <div
         className="relative w-full max-w-[440px] overflow-hidden rounded-xl border border-white/10"
         style={{
           aspectRatio: "4 / 3",
-          background: "linear-gradient(90deg, #0f2a1e 0%, #123524 50%, #0f2a1e 100%)",
+          background: "#11261D",
         }}
         role="img"
         aria-label="Radar de posicionamento dos times em campo"
       >
-        {/* Listras do gramado (verticais) */}
-        <div className="pointer-events-none absolute inset-0 flex flex-row">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex-1"
-              style={{ background: i % 2 === 0 ? "rgba(255,255,255,0.025)" : "transparent" }}
-            />
-          ))}
-        </div>
-
-        {/* Marcacoes do campo */}
+        {/* Marcacoes do campo (com gols) */}
         <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 133 100" preserveAspectRatio="none">
-          <g fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.5">
+          <g fill="none" stroke="#2B4F3B" strokeWidth="0.7">
             {/* Borda */}
             <rect x="3" y="3" width="127" height="94" />
             {/* Linha de meio-campo (vertical) */}
             <line x1="66.5" y1="3" x2="66.5" y2="97" />
             {/* Circulo central */}
             <circle cx="66.5" cy="50" r="11" />
-            <circle cx="66.5" cy="50" r="0.8" fill="rgba(255,255,255,0.5)" />
+            <circle cx="66.5" cy="50" r="0.8" fill="#2B4F3B" />
             {/* Grande area esquerda (casa) */}
             <rect x="3" y="26" width="24" height="48" />
             <rect x="3" y="38" width="8" height="24" />
             {/* Grande area direita (fora) */}
             <rect x="106" y="26" width="24" height="48" />
             <rect x="122" y="38" width="8" height="24" />
+            {/* Gols */}
+            <rect x="0.5" y="44" width="2.5" height="12" fill="#2B4F3B" fillOpacity="0.4" />
+            <rect x="130" y="44" width="2.5" height="12" fill="#2B4F3B" fillOpacity="0.4" />
           </g>
         </svg>
 
@@ -190,7 +177,7 @@ export function MatchRadar({ homeTeam, awayTeam, homeSquad, awaySquad, homePosse
 
       {/* Legenda */}
       <p className="text-center text-[10px] text-white/40">
-        A bola acompanha a posse de bola. Indicadores mostram jogadores cansados.
+        A bola acompanha a posse de bola da partida.
       </p>
     </div>
   )
