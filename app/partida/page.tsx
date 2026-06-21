@@ -112,20 +112,6 @@ function TeamPanel({
 
   return (
     <div className="flex w-full max-w-[400px] flex-col gap-4">
-      {/* Toggle masculinos / femininos */}
-      <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-sm">
-        <div className="flex items-center justify-center gap-2 border-r border-white/10 bg-white/[0.04] py-3">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-            <Check className="h-3 w-3 text-black" strokeWidth={3} />
-          </span>
-          <span className="text-sm font-semibold text-white">Times masculinos</span>
-        </div>
-        <div className="flex items-center justify-center gap-2 py-3">
-          <span className="h-5 w-5 rounded-full border-2 border-white/30" />
-          <span className="text-sm font-medium text-white/45">Times femininos</span>
-        </div>
-      </div>
-
       {/* Pilula de pais */}
       <div
         className="flex items-center justify-center gap-3 rounded-full px-4 py-2.5 shadow-xl backdrop-blur-md"
