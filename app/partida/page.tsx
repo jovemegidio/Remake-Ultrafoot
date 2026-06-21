@@ -41,28 +41,55 @@ import { getLeagueLogo } from "@/lib/league-logos"
 
 type KitVariant = "home" | "away" | "third"
 
+// Mapeia o pais do time para o codigo de bandeira (flagcdn) e nome exibido
+function getCountryInfo(team: Team): { name: string; code: string } {
+  const pais = (team.pais || "").toLowerCase()
+  const map: Record<string, { name: string; code: string }> = {
+    brasil: { name: "Brasil", code: "br" },
+    brazil: { name: "Brasil", code: "br" },
+    argentina: { name: "Argentina", code: "ar" },
+    alemanha: { name: "Alemanha", code: "de" },
+    inglaterra: { name: "Inglaterra", code: "gb-eng" },
+    espanha: { name: "Espanha", code: "es" },
+    franca: { name: "França", code: "fr" },
+    italia: { name: "Itália", code: "it" },
+    portugal: { name: "Portugal", code: "pt" },
+  }
+  if (map[pais]) return map[pais]
+  // fallback por regiao
+  if (team.regiao === "americas") return { name: "Argentina", code: "ar" }
+  if (team.regiao === "europa") return { name: "Europa", code: "eu" }
+  return { name: "Brasil", code: "br" }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// TeamCard Component - Estilo EA FC
+// TeamPanel Component - Estilo EA FC (Selecionar Times)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function TeamCard({
+function TeamPanel({
   team,
-  side,
-  selectedKit,
-  onKitChange,
+  selected,
+  leagueName,
+  leagueLogo,
+  onPrev,
+  onNext,
+  onSelect,
 }: {
   team: Team
-  side: "home" | "away"
-  selectedKit: KitVariant
-  onKitChange: (kit: KitVariant) => void
+  selected: boolean
+  leagueName: string
+  leagueLogo: string | null
+  onPrev: () => void
+  onNext: () => void
+  onSelect: () => void
 }) {
   const overallRating = teamRating(team.curto) || teamRating(team.nome) || 75
-  
-  // Calcula estrelas baseado no prestigio
+  const country = getCountryInfo(team)
+
+  // Estrelas baseadas no prestigio
   const stars = Math.min(5, Math.max(1, Math.round(team.prestigio / 2)))
   const halfStar = team.prestigio % 2 !== 0
 
-  // Stats baseados no overall rating com pequena variacao
   const baseRating = overallRating || 75
   const stats = useMemo(() => ({
     ata: Math.round(baseRating + (team.curto.charCodeAt(0) % 5) - 2),
@@ -70,82 +97,124 @@ function TeamCard({
     def: Math.round(baseRating + (team.curto.charCodeAt(2) % 5) - 2),
   }), [baseRating, team.curto])
 
-  // Tendencia baseada em hash do nome para ser deterministica
-  const trends = useMemo(() => ({
-    ata: team.nome.length % 3 === 0 ? "up" : team.nome.length % 3 === 1 ? "neutral" : "down",
-    mei: team.nome.length % 3 === 1 ? "up" : team.nome.length % 3 === 2 ? "neutral" : "down",
-    def: team.nome.length % 3 === 2 ? "up" : team.nome.length % 3 === 0 ? "neutral" : "down",
-  }), [team.nome])
-
-  const TrendIcon = ({ trend }: { trend: string }) => {
-    if (trend === "up") return <TrendingUp className="h-3 w-3 text-green-400" />
-    if (trend === "down") return <TrendingDown className="h-3 w-3 text-red-400" />
-    return <Minus className="h-3 w-3 text-white/30" />
-  }
-
   return (
-    <div className={cn(
-      "flex-1 flex flex-col items-center justify-center relative",
-      side === "home" ? "pr-4" : "pl-4"
-    )}>
-      {/* Team Name */}
-      <h2 className="text-2xl md:text-3xl font-bold text-white mb-5 tracking-widest uppercase"
-        style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-        {team.nome}
-      </h2>
-
-      {/* Large Crest with glow */}
-      <div className="relative mb-5">
-        <div
-          className="absolute inset-0 blur-3xl opacity-40 scale-150"
-          style={{ backgroundColor: team.cor1 }}
-        />
-        <div className="relative">
-          <TeamCrest team={team} size="2xl" className="w-44 h-44 md:w-52 md:h-52" />
+    <div className="flex w-full max-w-[420px] flex-col gap-4">
+      {/* Toggle masculinos / femininos */}
+      <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-sm">
+        <div className="flex items-center justify-center gap-2 border-r border-white/10 bg-white/[0.04] py-3">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+            <Check className="h-3 w-3 text-black" strokeWidth={3} />
+          </span>
+          <span className="text-sm font-semibold text-white">Times masculinos</span>
+        </div>
+        <div className="flex items-center justify-center gap-2 py-3">
+          <span className="h-5 w-5 rounded-full border-2 border-white/30" />
+          <span className="text-sm font-medium text-white/45">Times femininos</span>
         </div>
       </div>
 
-      {/* Star Rating */}
-      <div className="flex items-center gap-0.5 mb-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Star
-            key={i}
-            className={cn(
-              "h-4 w-4 md:h-5 md:w-5",
-              i < stars
-                ? "text-amber-400 fill-amber-400"
-                : halfStar && i === stars
-                ? "text-amber-400 fill-amber-400/50"
-                : "text-white/15"
-            )}
-          />
-        ))}
+      {/* Pilula de pais */}
+      <div className="flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-black/40 py-4 backdrop-blur-sm">
+        <span className="text-base font-bold text-white">{country.name}</span>
+        <img
+          src={`https://flagcdn.com/h40/${country.code}.png`}
+          alt={country.name}
+          className="h-6 w-9 rounded-[3px] object-cover shadow"
+        />
       </div>
 
-      {/* Stats Row */}
-      <div className="flex items-center gap-5 md:gap-8 mb-5">
-        {(["ata", "mei", "def"] as const).map((key) => (
-          <div key={key} className="flex flex-col items-center">
-            <span
-              className="text-[10px] md:text-xs text-white/40 font-bold tracking-[0.2em] mb-1 uppercase"
-              style={{ fontFamily: "var(--font-oswald), sans-serif" }}
-            >
-              {key.toUpperCase()}
-            </span>
-            <div className="flex items-center gap-1">
-              <span
-                className={cn(
-                  "text-xl md:text-2xl font-bold tabular-nums",
-                  trends[key] === "up" ? "text-emerald-400" : trends[key] === "down" ? "text-rose-400" : "text-white"
-                )}
-                style={{ fontFamily: "var(--font-oswald), sans-serif" }}
-              >
-                {stats[key]}
-              </span>
-              <TrendIcon trend={trends[key]} />
-            </div>
+      {/* Card de selecao de time */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onSelect}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect() }}
+        className={cn(
+          "group relative flex cursor-pointer flex-col items-center rounded-2xl border bg-black/45 px-6 pb-6 pt-5 backdrop-blur-sm transition-all",
+          selected
+            ? "border-[#00ffc8] shadow-[0_0_30px_rgba(0,255,200,0.25)]"
+            : "border-white/10 hover:border-white/25",
+        )}
+      >
+        {/* Nome do time */}
+        <h2 className="mb-2 text-center text-xl font-bold text-white">{team.nome}</h2>
+
+        {/* Setas + escudo */}
+        <div className="flex w-full items-center justify-center gap-3">
+          <button
+            onClick={(e) => { e.stopPropagation(); onPrev() }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-white/40 transition-colors hover:text-white"
+            aria-label="Time anterior"
+          >
+            <ChevronLeft className="h-7 w-7" strokeWidth={2.5} />
+          </button>
+
+          <div className="relative flex h-40 w-40 items-center justify-center">
+            <div
+              className="absolute inset-0 scale-110 rounded-full opacity-30 blur-2xl"
+              style={{ backgroundColor: team.cor1 }}
+            />
+            <TeamCrest team={team} size="2xl" className="relative h-36 w-36" />
           </div>
-        ))}
+
+          <button
+            onClick={(e) => { e.stopPropagation(); onNext() }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-white/40 transition-colors hover:text-white"
+            aria-label="Próximo time"
+          >
+            <ChevronRight className="h-7 w-7" strokeWidth={2.5} />
+          </button>
+        </div>
+
+        {/* Estrelas */}
+        <div className="mb-4 mt-3 flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={cn(
+                "h-4 w-4",
+                i < stars
+                  ? "fill-amber-400 text-amber-400"
+                  : halfStar && i === stars
+                  ? "fill-amber-400/50 text-amber-400"
+                  : "fill-transparent text-white/20",
+              )}
+            />
+          ))}
+        </div>
+
+        {/* ATA / MEI / DEF */}
+        <div className="flex w-full items-start justify-center gap-8">
+          {(["ata", "mei", "def"] as const).map((key) => (
+            <div key={key} className="flex flex-col items-center gap-1">
+              <span className="text-xs font-semibold tracking-wider text-white/45">{key.toUpperCase()}</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-light tabular-nums text-white">{stats[key]}</span>
+                <Minus className="h-3 w-3 text-white/30" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pilula de liga */}
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-black/40 py-4 backdrop-blur-sm">
+        <span className="text-sm font-bold text-white">{leagueName}</span>
+        {leagueLogo ? (
+          <Image
+            src={leagueLogo || "/placeholder.svg"}
+            alt={leagueName}
+            width={140}
+            height={32}
+            className="h-7 w-auto object-contain"
+            unoptimized
+          />
+        ) : (
+          <div className="flex items-center gap-2 text-white/60">
+            <Trophy className="h-5 w-5" />
+            <span className="text-base font-extrabold uppercase tracking-wide">{leagueName}</span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -158,11 +227,11 @@ function TeamCard({
 function VerticalLabel({ text, side }: { text: string; side: "left" | "right" }) {
   return (
     <div className={cn(
-      "absolute top-1/2 -translate-y-1/2 flex items-center justify-center",
-      side === "left" ? "left-2" : "right-2"
+      "pointer-events-none absolute top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center lg:flex",
+      side === "left" ? "left-3" : "right-3"
     )}>
       <span
-        className="text-5xl md:text-6xl font-black text-white/9 tracking-[0.5em] uppercase select-none"
+        className="select-none text-6xl font-black uppercase tracking-[0.4em] text-white/15"
         style={{
           fontFamily: "var(--font-oswald), sans-serif",
           writingMode: "vertical-rl",
@@ -190,6 +259,8 @@ export default function PartidaPage() {
   const [homeKit, setHomeKit] = useState<KitVariant>("home")
   const [awayKit, setAwayKit] = useState<KitVariant>("away")
   const [livePhase, setLivePhase] = useState(true)
+  const [advantageOptions, setAdvantageOptions] = useState(false)
+  const [focusedSide, setFocusedSide] = useState<"home" | "away">("home")
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickSim, setShowQuickSim] = useState(false)
   const [quickSimResult, setQuickSimResult] = useState<{
@@ -345,117 +416,150 @@ export default function PartidaPage() {
     )
   }
   
+  const homeLeague = getLeagueName(homeTeam.curto)
+  const awayLeague = getLeagueName(awayTeam.curto)
+
   return (
     <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
-      
+
       {/* Main Content */}
-      <main className="flex-1 relative overflow-hidden">
-        {/* Background with light rays */}
+      <main className="relative flex-1 overflow-hidden">
+        {/* Background - estadio noturno */}
         <div className="absolute inset-0">
-          {/* Dark gradient base */}
-          <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#050508]" />
-          
-          {/* Light rays from center */}
-          <div 
-            className="absolute inset-0 opacity-30"
-            style={{
-              background: `radial-gradient(ellipse 80% 50% at 50% 60%, rgba(255,255,255,0.1) 0%, transparent 50%)`,
-            }}
+          <Image
+            src="/images/stadium-night.png"
+            alt=""
+            fill
+            priority
+            className="object-cover"
+            unoptimized
           />
-          
-          {/* Stadium silhouette hint */}
-          <div 
-            className="absolute bottom-0 left-0 right-0 h-1/3 opacity-10"
+          {/* Escurecimento para legibilidade */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/65 to-black/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/30" />
+        </div>
+
+        {/* Grafismo dourado "VS" no fundo direito */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-1/2 items-center justify-end overflow-hidden md:flex">
+          <span
+            className="select-none pr-4 text-[22rem] font-black italic leading-none"
             style={{
-              background: `linear-gradient(to top, #000 0%, transparent 100%)`,
+              fontFamily: "var(--font-oswald), sans-serif",
+              background: "linear-gradient(135deg, #b8860b 0%, #ffd700 45%, #fff4c2 55%, #b8860b 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              opacity: 0.5,
+              transform: "skewX(-8deg)",
             }}
-          />
+          >
+            VS
+          </span>
+        </div>
+
+        {/* Header */}
+        <div className="relative z-20 flex items-center gap-4 px-8 pt-6">
+          <span
+            className="text-2xl font-black italic tracking-tighter text-white"
+            style={{ fontFamily: "var(--font-oswald), sans-serif" }}
+          >
+            KO
+          </span>
+          <h1 className="text-lg font-bold text-white">Partida Clássica</h1>
+          <span className="h-5 w-px bg-white/25" />
+          <span className="text-base font-semibold text-white/80">Selecionar Times</span>
         </div>
 
         {/* Teams Section */}
-        <div className="relative flex-1 flex items-stretch h-[calc(100%-140px)]">
-          {/* Vertical CASA label */}
+        <div className="relative z-10 flex h-[calc(100%-150px)] items-center justify-center gap-4 px-6 xl:gap-10 xl:px-20">
           <VerticalLabel text="CASA" side="left" />
 
-          {/* Home Team */}
-          <TeamCard 
-            team={homeTeam} 
-            side="home" 
-            selectedKit={homeKit}
-            onKitChange={setHomeKit}
+          {/* Painel CASA */}
+          <TeamPanel
+            team={homeTeam}
+            selected={focusedSide === "home"}
+            leagueName={homeLeague}
+            leagueLogo={getLeagueLogo(matchInfo.leagueKey)}
+            onPrev={() => setHomeKit((k) => (k === "home" ? "third" : k === "away" ? "home" : "away"))}
+            onNext={() => setHomeKit((k) => (k === "home" ? "away" : k === "away" ? "third" : "home"))}
+            onSelect={() => setFocusedSide("home")}
           />
 
-          {/* Center Options */}
-          <div className="flex flex-col items-center justify-center px-6 md:px-8 gap-5 min-w-45">
-            {/* League Logo - Centered */}
-            <div className="flex flex-col items-center gap-2">
-              {getLeagueLogo(matchInfo.leagueKey) ? (
-                <Image
-                  src={getLeagueLogo(matchInfo.leagueKey)!}
-                  alt={matchInfo.competition}
-                  width={160}
-                  height={160}
-                  className="object-contain opacity-95 w-28 h-28 md:w-36 md:h-36"
-                  unoptimized
-                />
-              ) : (
-                <>
-                  <div className="flex flex-col items-center justify-center w-22 h-22 rounded-full bg-white/5 border border-white/10">
-                    <Trophy className="h-8 w-8 text-white/40" />
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60 text-center max-w-28 text-balance">
-                    {matchInfo.competition}
-                  </span>
-                </>
-              )}
-            </div>
+          {/* Coluna central de opcoes */}
+          <div className="flex shrink-0 flex-col items-center justify-center gap-10 px-2">
+            <button
+              onClick={() => setAdvantageOptions((v) => !v)}
+              className="flex flex-col items-center gap-1.5 text-center"
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 text-xs font-bold text-white/70">
+                  q
+                </span>
+                <span className="text-base font-semibold text-white">{advantageOptions ? "Sim" : "Não"}</span>
+              </div>
+              <span className="max-w-24 text-sm leading-tight text-white/55 text-balance">Opções de vantagem</span>
+            </button>
 
-            {/* Live Phase Toggle */}
-            <div className="flex flex-col items-center gap-2">
-              <button 
-                onClick={() => setLivePhase(!livePhase)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium",
-                  livePhase 
-                    ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400" 
-                    : "bg-white/5 border border-white/10 text-white/40"
+            <button
+              onClick={() => setLivePhase((v) => !v)}
+              className="flex flex-col items-center gap-1.5 text-center"
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 text-xs font-bold text-white/70">
+                  d
+                </span>
+                {livePhase ? (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500">
+                    <Check className="h-3.5 w-3.5 text-black" strokeWidth={3} />
+                  </span>
+                ) : (
+                  <span className="h-6 w-6 rounded-full border-2 border-white/30" />
                 )}
-              >
-                {livePhase && <Check className="h-4 w-4" />}
-                <Zap className="h-4 w-4" />
-              </button>
-              <span className="text-xs text-white/60 font-medium">Fase ao vivo</span>
-              <span className="text-[10px] text-white/40">{livePhase ? "Sim" : "Nao"}</span>
-            </div>
+              </div>
+              <span className="text-sm leading-tight text-white/55">Fase ao vivo</span>
+              <span className="text-sm font-medium text-white/75">{livePhase ? "Sim" : "Não"}</span>
+            </button>
           </div>
 
-          {/* Away Team */}
-          <TeamCard 
-            team={awayTeam} 
-            side="away" 
-            selectedKit={awayKit}
-            onKitChange={setAwayKit}
+          {/* Painel FORA */}
+          <TeamPanel
+            team={awayTeam}
+            selected={focusedSide === "away"}
+            leagueName={awayLeague}
+            leagueLogo={getLeagueLogo(matchInfo.leagueKey)}
+            onPrev={() => setAwayKit((k) => (k === "home" ? "third" : k === "away" ? "home" : "away"))}
+            onNext={() => setAwayKit((k) => (k === "home" ? "away" : k === "away" ? "third" : "home"))}
+            onSelect={() => setFocusedSide("away")}
           />
 
-          {/* Vertical FORA label */}
           <VerticalLabel text="FORA" side="right" />
         </div>
 
         {/* Bottom Action Bar */}
-        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black via-black/95 to-transparent py-5 px-6">
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent px-8 py-5">
           <div className="flex items-center justify-between">
-            {/* Left Actions - only when gamepad is connected */}
-            <div className="flex items-center gap-5">
-              {gamepadConnected && (
-                <>
-                  <ActionHint button="cross" action="Selecionar" platform="playstation" size="sm" />
-                  <ActionHint button="circle" action="Voltar" platform="playstation" size="sm" />
-                  <ActionHint button="r3" action="Aleatorio" platform="playstation" size="sm" />
-                </>
-              )}
+            {/* Atalhos estilo EA FC */}
+            <div className="flex items-center gap-7">
+              <Link href="/partida/ao-vivo" className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
+                <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
+                  ⏎
+                </span>
+                <span className="text-sm font-semibold">Selecionar</span>
+              </Link>
+              <button onClick={() => router.back()} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
+                <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
+                  Esc
+                </span>
+                <span className="text-sm font-semibold">Voltar</span>
+              </button>
+              <button onClick={handleQuickSim} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
+                <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
+                  s
+                </span>
+                <span className="text-sm font-semibold">Aleatório</span>
+              </button>
             </div>
 
-            {/* Center - Start Button */}
+            {/* Botao iniciar (acesso direto) */}
             <Link href="/partida/ao-vivo">
               <Button
                 size="lg"
