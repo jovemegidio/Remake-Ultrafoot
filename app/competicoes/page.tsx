@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import {
   Trophy,
@@ -480,6 +480,7 @@ export default function CompeticoesPage() {
   const t = useTranslation()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("brasileirao")
+  const didInitTab = useRef(false)
   const tabsOrder = ["brasileirao", "copabrasil", "estadual", "libertadores", "sulamericana"]
 
   useEffect(() => {
@@ -545,6 +546,13 @@ export default function CompeticoesPage() {
   // a tabela da Serie A esta zerada e o status deve refletir "a comecar".
   const stateChampRounds = getStateChampRounds(userTeam.curto)
   const leagueStarted = currentWeek > stateChampRounds
+
+  // Abre por padrao na competicao em andamento: estadual antes da liga comecar.
+  useEffect(() => {
+    if (didInitTab.current) return
+    didInitTab.current = true
+    if (!leagueStarted) setActiveTab("estadual")
+  }, [leagueStarted])
 
   const competitions = [
     {
