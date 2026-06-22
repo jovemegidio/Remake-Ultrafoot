@@ -431,7 +431,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
   if (onTarget) {
     teamStats.shotsOnTarget += 1
 
-    if (rnd() < Math.min(0.60, xg * 1.35)) {
+    if (rnd() < Math.min(0.62, xg * 2.0)) {
       // GOL
       teamStats.goals += 1
       const team = isHome ? config.homeTeam : config.awayTeam
@@ -743,7 +743,7 @@ export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
   return next
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────���─────────
 // Inicia primeiro tempo
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -752,7 +752,7 @@ export function startMatch(state: MatchState): MatchState {
   return { ...state, phase: "first", minute: 0 }
 }
 
-// ────────────────────────────────────────���────────────────────────────────────
+// ──────────��─────────────────────────────���────────────────────────────────────
 // Simulação rápida (sem ticks visuais)
 // ───────────────────────────────��─────────────────────────────────────────────
 

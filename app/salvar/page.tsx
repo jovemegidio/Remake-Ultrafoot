@@ -90,10 +90,16 @@ export default function SalvarPage() {
         <button
           onClick={() => router.push("/")}
           aria-label="Inicio"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 text-[14px] font-bold italic tracking-tight text-white/85 transition-colors hover:border-white/50 hover:text-white"
-          style={{ fontFamily: "var(--font-display, var(--font-oswald)), sans-serif" }}
+          className="flex h-11 shrink-0 items-center justify-center rounded-lg px-1 transition-opacity hover:opacity-80"
         >
-          UF
+          <Image
+            src="/brand/uf26-logo.png"
+            alt="UF26"
+            width={120}
+            height={44}
+            className="h-9 w-auto object-contain"
+            priority
+          />
         </button>
 
         {/* Secao pai */}
