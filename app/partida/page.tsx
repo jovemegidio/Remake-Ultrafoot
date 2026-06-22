@@ -112,18 +112,12 @@ function TeamPanel({
 
   return (
     <div className="flex w-full max-w-[400px] flex-col items-center gap-3">
-      {/* Toggle Times masculinos / femininos */}
-      <div className="flex w-full items-stretch gap-2">
-        <div className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0e1116]/85 px-3 py-2.5 backdrop-blur-sm">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-            <Check className="h-3 w-3 text-black" strokeWidth={3} />
-          </span>
-          <span className="text-sm font-semibold text-white">Times masculinos</span>
-        </div>
-        <div className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#0e1116]/55 px-3 py-2.5 backdrop-blur-sm">
-          <span className="h-5 w-5 rounded-full border-2 border-white/25" />
-          <span className="text-sm font-semibold text-white/55">Times femininos</span>
-        </div>
+      {/* Indicador Times masculinos */}
+      <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e1116]/85 px-3 py-2.5 backdrop-blur-sm">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+          <Check className="h-3 w-3 text-black" strokeWidth={3} />
+        </span>
+        <span className="text-sm font-semibold text-white">Times masculinos</span>
       </div>
 
       {/* Card de PAIS */}
@@ -472,12 +466,14 @@ export default function PartidaPage() {
 
         {/* Header */}
         <div className="relative z-20 flex items-center gap-4 px-8 pt-6">
-          <span
-            className="text-2xl font-black italic tracking-tighter text-white"
-            style={{ fontFamily: "var(--font-oswald), sans-serif" }}
-          >
-            KO
-          </span>
+          <Image
+            src="/brand/uf26-logo.png"
+            alt="UF26"
+            width={120}
+            height={44}
+            className="h-9 w-auto object-contain"
+            priority
+          />
           <h1 className="text-lg font-bold text-white">Partida Clássica</h1>
           <span className="h-5 w-px bg-white/25" />
           <span className="text-base font-semibold text-white/80">Selecionar Times</span>
@@ -492,7 +488,7 @@ export default function PartidaPage() {
             team={homeTeam}
             selected={focusedSide === "home"}
             leagueName={homeLeague}
-            leagueLogo={getLeagueLogo(matchInfo.leagueKey)}
+            leagueLogo={getLeagueLogo(homeTeam.divisao)}
             onPrev={() => setHomeKit((k) => (k === "home" ? "third" : k === "away" ? "home" : "away"))}
             onNext={() => setHomeKit((k) => (k === "home" ? "away" : k === "away" ? "third" : "home"))}
             onSelect={() => setFocusedSide("home")}
@@ -539,7 +535,7 @@ export default function PartidaPage() {
             team={awayTeam}
             selected={focusedSide === "away"}
             leagueName={awayLeague}
-            leagueLogo={getLeagueLogo(matchInfo.leagueKey)}
+            leagueLogo={getLeagueLogo(awayTeam.divisao)}
             onPrev={() => setAwayKit((k) => (k === "home" ? "third" : k === "away" ? "home" : "away"))}
             onNext={() => setAwayKit((k) => (k === "home" ? "away" : k === "away" ? "third" : "home"))}
             onSelect={() => setFocusedSide("away")}
