@@ -829,18 +829,15 @@ export default function SplashPage() {
       {/* Modal de Registro */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
         <DialogContent 
-          className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 border-white/10 text-white max-w-md"
+          className="bg-gradient-to-br from-[#0a1414] via-[#091018] to-[#060b0e] border-[#00ffc8]/15 text-white max-w-md"
           showCloseButton={!isValidating}
         >
+          {/* Glow teal sutil no topo, alinhado a identidade do jogo */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/40 to-transparent" />
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%)"
-                }}
-              >
-                <Key className="h-5 w-5 text-white" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#00ffc8] to-[#00c8ff] shadow-lg shadow-[#00ffc8]/25">
+                <Key className="h-5 w-5 text-black" />
               </div>
               {t.splash.registerTitle}
             </DialogTitle>
@@ -868,7 +865,7 @@ export default function SplashPage() {
                   "w-full px-4 py-3 bg-black/40 border rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 transition-all duration-300 font-mono tracking-wider",
                   registerError 
                     ? "border-red-500/50 focus:ring-red-500/30" 
-                    : "border-white/10 focus:ring-white/20 focus:border-white/30"
+                    : "border-white/10 focus:ring-[#00ffc8]/30 focus:border-[#00ffc8]/40"
                 )}
               />
               
@@ -891,7 +888,7 @@ export default function SplashPage() {
                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                   : !serialKey.trim() || isValidating
                     ? "bg-white/5 text-white/30 cursor-not-allowed"
-                    : "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 hover:scale-[1.02]"
+                    : "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black shadow-lg shadow-[#00ffc8]/25 hover:opacity-90 hover:scale-[1.02]"
               )}
             >
               {isValidating ? (
@@ -920,14 +917,14 @@ export default function SplashPage() {
       {/* Modal de Carregar Jogo */}
       <Dialog open={showLoadModal} onOpenChange={setShowLoadModal}>
         <DialogContent 
-          className="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 border-white/10 text-white max-w-lg"
+          className="bg-gradient-to-br from-[#0a1414] via-[#091018] to-[#060b0e] border-[#00ffc8]/15 text-white max-w-lg"
         >
+          {/* Glow teal sutil no topo, alinhado a identidade do jogo */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/40 to-transparent" />
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600"
-              >
-                <Save className="h-5 w-5 text-white" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#00ffc8] to-[#00c8ff] shadow-lg shadow-[#00ffc8]/25">
+                <Save className="h-5 w-5 text-black" />
               </div>
               {t.splash.loadTitle}
             </DialogTitle>
@@ -952,14 +949,17 @@ export default function SplashPage() {
                   className={cn(
                     "w-full p-4 rounded-xl border transition-all duration-200 text-left",
                     selectedSaveIndex === index
-                      ? "bg-gradient-to-r from-cyan-500/20 via-blue-500/10 to-transparent border-cyan-500/40"
+                      ? "bg-gradient-to-r from-[#00ffc8]/15 via-[#00c8ff]/8 to-transparent border-[#00ffc8]/40"
                       : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
                   )}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                        <span className="text-lg font-bold text-white/80">{save.teamName.charAt(0)}</span>
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                        selectedSaveIndex === index ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/10 text-white/80"
+                      )}>
+                        <span className="text-lg font-bold">{save.teamName.charAt(0)}</span>
                       </div>
                       <div>
                         <div className="font-semibold text-white">{save.teamName}</div>
@@ -1000,7 +1000,7 @@ export default function SplashPage() {
               <span className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-gray-900 px-3 text-white/30 flex items-center gap-1.5">
+              <span className="bg-[#091018] px-3 text-white/30 flex items-center gap-1.5">
                 <Cloud className="h-3 w-3" />
                 {t.splash.cloudOr}
               </span>
@@ -1023,7 +1023,7 @@ export default function SplashPage() {
                 placeholder={t.splash.cloudCodePlaceholder}
                 maxLength={6}
                 disabled={cloudLoading}
-                className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/40 font-mono tracking-[0.3em] uppercase transition-all"
+                className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#00ffc8]/30 focus:border-[#00ffc8]/40 font-mono tracking-[0.3em] uppercase transition-all"
               />
               {cloudSaveReady ? (
                 <button
@@ -1036,7 +1036,7 @@ export default function SplashPage() {
                 <button
                   onClick={handleCloudDownload}
                   disabled={cloudCode.length !== 6 || cloudLoading}
-                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-opacity"
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black font-semibold text-sm shadow-lg shadow-[#00ffc8]/25 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-opacity"
                 >
                   {cloudLoading
                     ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
