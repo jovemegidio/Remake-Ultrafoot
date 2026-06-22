@@ -1015,7 +1015,10 @@ export default function PartidaAoVivoPage() {
                       awayTeam={awayTeam}
                       homeSquad={homeSquad}
                       awaySquad={awaySquad}
+                      ball={state.ball}
                       homePossession={state.home?.possession ?? 50}
+                      minute={state.minute}
+                      phase={state.phase}
                     />
                   </div>
                 )}
