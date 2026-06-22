@@ -236,7 +236,7 @@ export default function EditarPage() {
                 value={searchTeam}
                 onChange={(e) => setSearchTeam(e.target.value)}
                 placeholder="Procurar time..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all duration-300"
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#00ffc8]/40 focus:bg-white/[0.05] focus:ring-1 focus:ring-[#00ffc8]/20 transition-all duration-300"
               />
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function EditarPage() {
                 className={cn(
                   "w-full grid grid-cols-[1fr_60px_50px] text-sm border-b border-white/[0.04] transition-all duration-200",
                   selectedTeam?.curto === team.curto && selectedTeam?.divisao === team.divisao
-                    ? "bg-gradient-to-r from-violet-500/20 via-purple-500/15 to-transparent border-l-2 border-l-violet-400" 
+                    ? "bg-gradient-to-r from-[#00ffc8]/15 via-[#00c8ff]/10 to-transparent border-l-2 border-l-[#00ffc8]" 
                     : "hover:bg-white/[0.03]"
                 )}
               >
@@ -298,10 +298,13 @@ export default function EditarPage() {
           {selectedTeam && (
             <>
               {/* Team Info Header - Compact */}
-              <div className="flex-shrink-0 bg-gradient-to-r from-[#1a1a2e] via-[#16162b] to-[#1a1a2e] border-b border-white/[0.06]">
-                <div className="px-6 py-4 flex items-center gap-6">
+              <div className="relative flex-shrink-0 border-b border-white/[0.06] overflow-hidden bg-gradient-to-r from-[#0a1414] via-[#091018] to-[#0a1414]">
+                {/* Glow teal sutil no topo, alinhado a paleta do jogo */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/40 to-transparent" />
+                <div className="pointer-events-none absolute -top-16 left-1/4 h-32 w-1/2 rounded-full bg-[#00ffc8]/[0.06] blur-3xl" />
+                <div className="relative px-6 py-4 flex items-center gap-6">
                   {/* Team Crest */}
-                  <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-white/[0.05] rounded-xl border border-white/[0.08]">
+                  <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-white/[0.05] rounded-xl border border-[#00ffc8]/15">
                     <TeamCrest team={selectedTeam} size="md" />
                   </div>
 
@@ -364,7 +367,7 @@ export default function EditarPage() {
 
                   {/* Team OVR */}
                   <div className="flex-shrink-0 text-center">
-                    <div className="text-4xl font-black text-white tracking-tight">{selectedTeam.prestigio}</div>
+                    <div className="text-4xl font-black tracking-tight gradient-text-primary">{selectedTeam.prestigio}</div>
                     <div className="text-[10px] text-white/40 font-medium tracking-widest mt-0.5">OVERALL</div>
                   </div>
 
@@ -375,7 +378,7 @@ export default function EditarPage() {
                       className={cn(
                         "px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300",
                         activeTab === "principal"
-                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20"
+                          ? "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black shadow-lg shadow-[#00ffc8]/25"
                           : "bg-white/[0.05] text-white/50 hover:bg-white/[0.1] hover:text-white/80"
                       )}
                     >
@@ -386,7 +389,7 @@ export default function EditarPage() {
                       className={cn(
                         "px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300",
                         activeTab === "juniores"
-                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20"
+                          ? "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black shadow-lg shadow-[#00ffc8]/25"
                           : "bg-white/[0.05] text-white/50 hover:bg-white/[0.1] hover:text-white/80"
                       )}
                     >
@@ -441,7 +444,7 @@ export default function EditarPage() {
                       className={cn(
                         "w-full grid grid-cols-[1fr_70px_55px_50px_50px_90px_45px] text-sm border-b border-white/[0.04] transition-all duration-200",
                         selectedPlayerIndex === index 
-                          ? "bg-gradient-to-r from-amber-500/20 via-orange-500/10 to-transparent border-l-2 border-l-amber-400" 
+                          ? "bg-gradient-to-r from-[#00ffc8]/15 via-[#00c8ff]/8 to-transparent border-l-2 border-l-[#00ffc8]" 
                           : "hover:bg-white/[0.02]"
                       )}
                     >
@@ -479,7 +482,7 @@ export default function EditarPage() {
                   <span className="text-white/40">/55 jogadores</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white rounded-lg transition-all duration-200 border border-white/[0.06]">
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#00ffc8]/10 hover:bg-[#00ffc8]/20 text-[#00ffc8] hover:text-[#33ffd4] rounded-lg transition-all duration-200 border border-[#00ffc8]/20">
                     <Plus className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Adicionar</span>
                   </button>
