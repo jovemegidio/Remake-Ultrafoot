@@ -213,7 +213,7 @@ const COUNTRIES: CountryTab[] = [
   },
 ]
 
-const STADIUM_BG = "/images/stadium-bg.png"
+const STADIUM_BG = "/images/field-bg.png"
 
 export default function NovoJogoPage() {
   const { initializeNewGame } = useGameManager()
@@ -383,7 +383,8 @@ export default function NovoJogoPage() {
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image src={STADIUM_BG} alt="Stadium Background" fill className="object-cover" priority unoptimized />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/80" />
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
       </div>
 
       <div className="relative z-10 h-full flex flex-col">
