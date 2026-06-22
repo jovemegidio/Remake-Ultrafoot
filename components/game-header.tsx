@@ -330,7 +330,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
               <div className="p-4 border-t border-white/[0.04] bg-white/[0.01]">
                 <Link
-                  href="/perfil"
+                  href="/configuracoes"
                   onClick={() => setShowCoachDropdown(false)}
                   className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-[#00ffc8] hover:text-[#00ffdc] transition-colors rounded-lg hover:bg-[#00ffc8]/10"
                 >
