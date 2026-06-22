@@ -224,7 +224,6 @@ export default function NovoJogoPage() {
   const [teamIndex, setTeamIndex] = useState(0)
   const [uniformIndex, setUniformIndex] = useState(0)
   const [kitError, setKitError] = useState(false)
-  const [genderTab, setGenderTab] = useState<"masculino" | "feminino">("masculino")
   const [managerName, setManagerName] = useState("")
   const [nameError, setNameError] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -395,28 +394,12 @@ export default function NovoJogoPage() {
 
             {/* ── Zona 1: Info do clube ── */}
             <div className="flex flex-col w-full lg:w-[300px] shrink-0">
-              {/* Abas masculino / feminino */}
-              <div className="flex items-center gap-4 mb-5">
-                <button
-                  onClick={() => setGenderTab("masculino")}
-                  className="flex items-center gap-2 text-sm font-semibold transition-colors"
-                >
-                  <span className={cn(
-                    "flex items-center justify-center w-5 h-5 rounded-full border-2 transition-colors",
-                    genderTab === "masculino" ? "border-[#00ffc8] bg-[#00ffc8]" : "border-white/30"
-                  )}>
-                    {genderTab === "masculino" && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
-                  </span>
-                  <span className={cn(genderTab === "masculino" ? "text-white" : "text-white/50")}>Times masculinos</span>
-                </button>
-                <button
-                  onClick={() => setGenderTab("masculino")}
-                  className="flex items-center gap-2 text-sm font-semibold text-white/35"
-                  aria-label="Times femininos (indisponivel)"
-                >
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-white/20" />
-                  <span>Times femininos</span>
-                </button>
+              {/* Indicador Times masculinos */}
+              <div className="flex items-center gap-2 text-sm font-semibold mb-5">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-[#00ffc8] bg-[#00ffc8]">
+                  <Check className="w-3 h-3 text-black" strokeWidth={3} />
+                </span>
+                <span className="text-white">Times masculinos</span>
               </div>
 
               {/* Pais (clicavel) */}
