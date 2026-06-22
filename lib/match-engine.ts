@@ -304,7 +304,7 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   // no maximo 1x por minuto/time (~90 ticks), a probabilidade base deve ficar
   // proxima de 0.13-0.18, nao acima de 0.35 (senao estoura para 30+ chutes e xG irreal).
   const avg = total / 2
-  const baseShot = Math.min(0.20, 0.10 + (avg - 60) * 0.003)
+  const baseShot = Math.min(0.15, 0.075 + (avg - 60) * 0.0022)
 
   // Diferencial ataque vs defesa adversária
   const homeAttDiff = (homeAttEff - awayDefEff) * 0.0010
@@ -328,18 +328,18 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     if (diff === 0 && minute >= 85) { homeLateBonus += 0.02; awayLateBonus += 0.02 }
   }
 
-  const homeShotChance = Math.max(0.05, Math.min(0.30,
+  const homeShotChance = Math.max(0.04, Math.min(0.22,
     baseShot + homeAttDiff + homeMomBonus - homeRedShotPen + homeLateBonus
   ))
-  const awayShotChance = Math.max(0.05, Math.min(0.30,
+  const awayShotChance = Math.max(0.04, Math.min(0.22,
     baseShot + awayAttDiff + awayMomBonus - awayRedShotPen + awayLateBonus
   ))
 
   // ── Faltas e cartões ──────────────────────────────────────────────────────
   // baseFoul calibrado para ~12-14 faltas por time (jogo realista ~24-28 no total).
-  let baseFoul = 0.13
-  if (mods?.isDerby) baseFoul = 0.17
-  if (mods?.matchImportance === "final") baseFoul = 0.15
+  let baseFoul = 0.11
+  if (mods?.isDerby) baseFoul = 0.15
+  if (mods?.matchImportance === "final") baseFoul = 0.13
   if (state.phase === "second") baseFoul *= 1.15
 
   // Jogadores cansados faltam um pouco mais (efeito sutil para nao estourar o total)
@@ -373,8 +373,8 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     homeShotChance,
     awayShotChance,
     homeAdvantage,
-    homeFoulChance: Math.min(0.28, baseFoul + homeFatigue),
-    awayFoulChance: Math.min(0.28, baseFoul + awayFatigue),
+    homeFoulChance: Math.min(0.22, baseFoul + homeFatigue),
+    awayFoulChance: Math.min(0.22, baseFoul + awayFatigue),
     cardChance: Math.min(0.15, cardChance),
     staminaDrain,
     technicalPenalty,
@@ -392,11 +392,12 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
 // ─────────────────────────────────────────────────────────────────────────────
 
 function computeXG(shooterShooting: number, gkDefending: number, minute: number): number {
-  const base = 0.06 + rnd() * 0.22
-  const shooterBonus = (shooterShooting - 70) * 0.0025  // bom chutador aumenta
-  const gkPenalty = (gkDefending - 70) * 0.0020         // bom goleiro reduz
-  const lateBonus = minute >= 85 ? 0.04 : minute >= 78 ? 0.02 : 0
-  return Math.max(0.02, Math.min(0.70, base + shooterBonus - gkPenalty + lateBonus))
+  // Calibrado para xG/chute medio ~0.11 (realista). Total ~2.6-2.9 por jogo.
+  const base = 0.04 + rnd() * 0.145
+  const shooterBonus = (shooterShooting - 70) * 0.002   // bom chutador aumenta
+  const gkPenalty = (gkDefending - 70) * 0.0018         // bom goleiro reduz
+  const lateBonus = minute >= 85 ? 0.03 : minute >= 78 ? 0.015 : 0
+  return Math.max(0.02, Math.min(0.55, base + shooterBonus - gkPenalty + lateBonus))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -604,7 +605,7 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ──────���──────────────────────────────────────────────────────────────────────
 // Atualização de posse (baseada em midfield + momentum)
 // ──────────────────────────────────────���──────────────────────────────────────
 
@@ -751,7 +752,7 @@ export function startMatch(state: MatchState): MatchState {
   return { ...state, phase: "first", minute: 0 }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────���────────────────────────────────────
 // Simulação rápida (sem ticks visuais)
 // ───────────────────────────────��─────────────────────────────────────────────
 
