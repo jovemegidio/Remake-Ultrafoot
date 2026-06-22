@@ -1,7 +1,7 @@
 // Dados dos times brasileiros importados do repositório Ultrafoot
 // https://github.com/jovemegidio/Ultrafoot
 
-import { gameAssetUrl } from "@/lib/game-asset"
+import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -311,10 +311,17 @@ import { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl } from "./escudos-ma
 export { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl }
 
 export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
-  const localKey = localCamisaMap[fileKey]
-  const key = localKey ?? (escudoMap[fileKey] || fileKey)
   const folder = variant === "home" ? "camisas" : variant === "away" ? "camisas2" : "camisas3"
-  return gameAssetUrl(`/${folder}/${key}.png`)
+  // No app desktop (Tauri) as camisas sao empacotadas localmente.
+  // Na web nao existe pasta public/camisas, entao usamos o repositorio remoto
+  // (padrao /teams/camisas/{file_key}.png), igual aos escudos, evitando 404.
+  if (isTauri()) {
+    const localKey = localCamisaMap[fileKey]
+    const key = localKey ?? (escudoMap[fileKey] || fileKey)
+    return gameAssetUrl(`/${folder}/${key}.png`)
+  }
+  const key = escudoMap[fileKey] || fileKey
+  return `${ULTRAFOOT_RAW_URL}/teams/${folder}/${key}.png`
 }
 
 export function getRemoteCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {

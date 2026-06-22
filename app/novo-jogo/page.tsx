@@ -9,6 +9,7 @@ import {
   serieCTeams,
   serieDTeams,
   getTeamUniforms,
+  getCamisaUrl,
   type Divisao,
   type Team,
   type Regiao,
@@ -222,6 +223,7 @@ export default function NovoJogoPage() {
   const [leagueIndex, setLeagueIndex] = useState(0)
   const [teamIndex, setTeamIndex] = useState(0)
   const [uniformIndex, setUniformIndex] = useState(0)
+  const [kitError, setKitError] = useState(false)
   const [genderTab, setGenderTab] = useState<"masculino" | "feminino">("masculino")
   const [managerName, setManagerName] = useState("")
   const [nameError, setNameError] = useState(false)
@@ -368,6 +370,8 @@ export default function NovoJogoPage() {
 
   // Reseta o uniforme exibido ao trocar de time
   useEffect(() => { setUniformIndex(0) }, [teamIndex, leagueIndex, countryIndex])
+  // Tenta novamente a imagem real ao trocar de time ou de uniforme
+  useEffect(() => { setKitError(false) }, [teamIndex, leagueIndex, countryIndex, uniformIndex])
 
   const cardBase = "rounded-2xl bg-[#0c1118]/85 border border-white/[0.07] backdrop-blur-sm"
   const fan = levelInfo(profile.fanAdmiration)
@@ -420,9 +424,6 @@ export default function NovoJogoPage() {
                 aria-label={`Pais: ${activeCountry.name}. Trocar pais`}
                 className="group flex items-center gap-2.5 mb-2 w-fit"
               >
-                <span className="w-7 h-5 rounded-sm overflow-hidden shadow shrink-0">
-                  <Image src={getFlagUrl(activeCountry.code)} alt={activeCountry.name} width={28} height={20} className="object-cover w-full h-full" unoptimized />
-                </span>
                 <span className="text-base font-bold uppercase tracking-wide text-white/80 group-hover:text-white transition-colors">{activeCountry.name}</span>
               </button>
 
@@ -505,7 +506,18 @@ export default function NovoJogoPage() {
                 <span className="text-xs text-white/50 tracking-wide">Uniforme</span>
                 <span className="text-base font-black uppercase tracking-wide text-white mb-2">Uniforme {uniformIndex + 1}</span>
                 <div className="flex-1 flex items-center justify-center w-full px-6">
-                  {activeUniform && (
+                  {selectedTeam && !kitError ? (
+                    <Image
+                      key={`${selectedTeam.file_key}-${activeVariant}`}
+                      src={getCamisaUrl(selectedTeam.file_key, activeVariant)}
+                      alt={`Uniforme ${uniformIndex + 1} do ${selectedTeam.nome}`}
+                      width={150}
+                      height={188}
+                      className="max-w-[150px] w-full h-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
+                      onError={() => setKitError(true)}
+                      unoptimized
+                    />
+                  ) : activeUniform ? (
                     <Jersey
                       variant={activeVariant}
                       primary={activeUniform.primary}
@@ -513,7 +525,7 @@ export default function NovoJogoPage() {
                       pattern={activeUniform.pattern}
                       className="max-w-[150px]"
                     />
-                  )}
+                  ) : null}
                 </div>
                 {/* Indicador de carrossel */}
                 <div className="flex items-center gap-2 mt-3">
