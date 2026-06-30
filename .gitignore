@@ -1,0 +1,86 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+.env
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+
+# pnpm
+.pnpm-debug.log*
+
+# Tauri / Rust
+src-tauri/target/
+src-tauri/gen/
+
+# Electron dist
+/dist/
+
+# Desktop.ini (Windows)
+desktop.ini
+
+# Logs
+*.log
+
+# Large binary / asset folders (not versioned)
+music/
+BF2026-27/
+Remake VIII/
+Remake X/
+backup/
+.local-backup-*/
+
+# Public binary assets (large image sets — servidas via CDN ou bundled no instalador)
+public/camisas/
+public/camisas2/
+public/camisas3/
+public/escudos/
+public/escudos-mini/
+public/escudos-selecoes/
+
+# Claude Code local settings (machine-specific permissions)
+.claude/
+
+# QA / browser profiles
+.qa-chrome-profile/
+
+# npm lock (projeto usa pnpm)
+package-lock.json
+
+# Build outputs (variantes duplicadas geradas no Windows)
+.next*/
+*.next/
+/test-results/
+/out*/
+
+# Python venvs das ferramentas
+**/.venv/
+**/.venv*/
+
+# Versoes antigas / propostas (arquivos grandes, nao versionados)
+propostas-de-selecao/
+propostas-de-selecao.zip
+Remake*.zip
+
+# Pasta de arquivamento de entulho (criada na reorganizacao)
+_archive/
+
+# Backups extras / projeto aninhado duplicado (tem repos git embutidos e
+# arquivos cloud-only ilegiveis que quebram o git add)
+backup (1)/
+dev/

@@ -1,0 +1,712 @@
+[
+  {
+    "countryCode": "AFG",
+    "divisions": [
+      {
+        "nome": "Série A",
+        "divisao": "Série B"
+      },
+      {
+        "nome": "Copa São Paulo",
+        "divisao": "Série C"
+      },
+      {
+        "nome": "Copa São Paulo",
+        "divisao": "Série D"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "AFS",
+    "divisions": [
+      {
+        "nome": "Serie A",
+        "divisao": "Serie B"
+      },
+      {
+        "nome": "Campeonato da Africa do Sul",
+        "divisao": "Campeonato da Africa do Sul"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "AUS",
+    "divisions": [
+      {
+        "nome": "FIFA LEAGUE",
+        "divisao": "GOLD"
+      },
+      {
+        "nome": "FIFA LEAGUE",
+        "divisao": "SILVER"
+      },
+      {
+        "nome": "Campeonato Australiano",
+        "divisao": "Campeonato Australiano"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "ARS",
+    "divisions": [
+      {
+        "nome": "Saudi Pro League",
+        "divisao": "Saudi 1st Division"
+      },
+      {
+        "nome": "Campeonato da Arábia Saudita",
+        "divisao": "Campeonato da Arábia Saudita"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "AUT",
+    "divisions": [
+      {
+        "nome": "Austrian Bundesliga",
+        "divisao": "2. Liga"
+      },
+      {
+        "nome": "3. Liga",
+        "divisao": "4. Liga"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "BEL",
+    "divisions": [
+      {
+        "nome": "Pro League",
+        "divisao": "Challenger Pro League"
+      },
+      {
+        "nome": "Reserve League 1A",
+        "divisao": "Reserve League 2A"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "CAT",
+    "divisions": [
+      {
+        "nome": "Stars League",
+        "divisao": "Campeonato do Catar"
+      },
+      {
+        "nome": "2ª divisão",
+        "divisao": "Campeonato do Catar"
+      },
+      {
+        "nome": "3ª divisão",
+        "divisao": "Campeonato do Catar"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "CHN",
+    "divisions": [
+      {
+        "nome": "Chinese Super League",
+        "divisao": "Chinese League 1"
+      },
+      {
+        "nome": "Chinese League 2",
+        "divisao": "Campeonato Chinês"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "COL",
+    "divisions": [
+      {
+        "nome": "Primera A",
+        "divisao": "Primera B"
+      },
+      {
+        "nome": "Campeonato Colombiano",
+        "divisao": "Campeonato Colombiano"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "CRO",
+    "divisions": [
+      {
+        "nome": "HNL",
+        "divisao": "1. NL"
+      },
+      {
+        "nome": "2. NL",
+        "divisao": "Campeonato Croata"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "DIN",
+    "divisions": [
+      {
+        "nome": "Danish Superliga",
+        "divisao": "Betinia Liga"
+      },
+      {
+        "nome": "Campeonato Dinamarquês",
+        "divisao": "Campeonato Dinamarquês"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "EGI",
+    "divisions": [
+      {
+        "nome": "Egyptian Premier League",
+        "divisao": "Campeonato Egípcio"
+      },
+      {
+        "nome": "Campeonato Egípcio",
+        "divisao": "Campeonato Egípcio"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "EMI",
+    "divisions": [
+      {
+        "nome": "UAE Pro League",
+        "divisao": "Campeonato dos Emirados Árabes"
+      },
+      {
+        "nome": "Campeonato dos Emirados Árabes",
+        "divisao": "Campeonato dos Emirados Árabes"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "EQU",
+    "divisions": [
+      {
+        "nome": "Campeonato Equatoriano",
+        "divisao": "Campeonato Equatoriano"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "ESC",
+    "divisions": [
+      {
+        "nome": "Scottish Premiership",
+        "divisao": "Scottish Championship"
+      },
+      {
+        "nome": "Scottish League One",
+        "divisao": "Scottish League Two"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "EUA",
+    "divisions": [
+      {
+        "nome": "MLS",
+        "divisao": "USL Championship"
+      },
+      {
+        "nome": "USL League One",
+        "divisao": "USL League Two"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "GRE",
+    "divisions": [
+      {
+        "nome": "Stoiximan Super League",
+        "divisao": "Super League 2"
+      },
+      {
+        "nome": "Campeonato Grego",
+        "divisao": "Campeonato Grego"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "HOL",
+    "divisions": [
+      {
+        "nome": "Eredivisie",
+        "divisao": "Eerste Divisie"
+      },
+      {
+        "nome": "Tweede Divisie",
+        "divisao": "Vierde Divise"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "ITA",
+    "divisions": [
+      {
+        "nome": "Serie A",
+        "divisao": "Serie B"
+      },
+      {
+        "nome": "Serie C",
+        "divisao": "Serie D"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "JAP",
+    "divisions": [
+      {
+        "nome": "J1 League",
+        "divisao": "Campeonato Japonês"
+      },
+      {
+        "nome": "Campeonato Japonês",
+        "divisao": "Campeonato Japonês"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "MAR",
+    "divisions": [
+      {
+        "nome": "Botola Pro",
+        "divisao": "Campeonato Marroquino"
+      },
+      {
+        "nome": "2ª divisão",
+        "divisao": "Campeonato Marroquino"
+      },
+      {
+        "nome": "3ª divisão",
+        "divisao": "Campeonato Marroquino"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "MEX",
+    "divisions": [
+      {
+        "nome": "Campeonato Mexicano",
+        "divisao": "2ª divisão"
+      },
+      {
+        "nome": "Campeonato Mexicano",
+        "divisao": "3ª divisão"
+      },
+      {
+        "nome": "Campeonato Mexicano",
+        "divisao": "4ª divisão"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "PAR",
+    "divisions": [
+      {
+        "nome": "Primera División",
+        "divisao": "División Intermedia"
+      },
+      {
+        "nome": "Campeonato Paraguaio",
+        "divisao": "Campeonato Paraguaio"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "PER",
+    "divisions": [
+      {
+        "nome": "Campeonato Peruano",
+        "divisao": "Campeonato Peruano"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "POR",
+    "divisions": [],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "SER",
+    "divisions": [
+      {
+        "nome": "Superliga",
+        "divisao": "Prva Liga"
+      },
+      {
+        "nome": "Campeonato Sérvio",
+        "divisao": "Campeonato Sérvio"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "SUE",
+    "divisions": [
+      {
+        "nome": "Allsvenskan",
+        "divisao": "Superettan"
+      },
+      {
+        "nome": "Campeonato Sueco",
+        "divisao": "Campeonato Sueco"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "NOR",
+    "divisions": [
+      {
+        "nome": "Eliteserien",
+        "divisao": "Campeonato da Noruega"
+      },
+      {
+        "nome": "Campeonato da Noruega",
+        "divisao": "Campeonato da Noruega"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "TUR",
+    "divisions": [
+      {
+        "nome": "Süper Lig",
+        "divisao": "1.Lig"
+      },
+      {
+        "nome": "2.Lig",
+        "divisao": "3.Lig"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "UCR",
+    "divisions": [
+      {
+        "nome": "Ukrainian Premier League",
+        "divisao": "Persha Liha"
+      },
+      {
+        "nome": "Campeonato Ucraniano",
+        "divisao": "Campeonato Ucraniano"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "URU",
+    "divisions": [
+      {
+        "nome": "Uruguayan Segunda División",
+        "divisao": "Campeonato Uruguaio"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "RUS",
+    "divisions": [
+      {
+        "nome": "Russian Premier League",
+        "divisao": "First League"
+      },
+      {
+        "nome": "Second League, Division A",
+        "divisao": "Second League, Division B"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "BOL",
+    "divisions": [
+      {
+        "nome": "División Profesional",
+        "divisao": "Primera A"
+      },
+      {
+        "nome": "Campeonato Boliviano",
+        "divisao": "Campeonato Boliviano"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "CHI",
+    "divisions": [
+      {
+        "nome": "Segunda División",
+        "divisao": "Tercero División"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "SUI",
+    "divisions": [
+      {
+        "nome": "Swiss Super League",
+        "divisao": "Challenge League"
+      },
+      {
+        "nome": "Promotion League",
+        "divisao": "Campeonato Suiço"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "ALE",
+    "divisions": [
+      {
+        "nome": "Bundesliga",
+        "divisao": "2.Bundesliga"
+      },
+      {
+        "nome": "3.Liga",
+        "divisao": "Regionalliga"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "VEN",
+    "divisions": [
+      {
+        "nome": "Primera Division",
+        "divisao": "Campeonato Venezuelano"
+      },
+      {
+        "nome": "Campeonato Venezuelano",
+        "divisao": "Campeonato Venezuelano"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "ESP",
+    "divisions": [
+      {
+        "nome": "Primera Federación",
+        "divisao": "Segunda Federación"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "ARG",
+    "divisions": [
+      {
+        "nome": "Primera Nacional",
+        "divisao": "Primera B"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "BRA",
+    "divisions": [
+      {
+        "nome": "Brasileirão",
+        "divisao": "Serie A"
+      },
+      {
+        "nome": "Brasileirão",
+        "divisao": "Serie B"
+      },
+      {
+        "nome": "Brasileirão",
+        "divisao": "Serie C"
+      },
+      {
+        "nome": "Brasileirão",
+        "divisao": "Serie D"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "FRA",
+    "divisions": [
+      {
+        "nome": "National 1",
+        "divisao": "National 2"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "countryCode": "ING",
+    "divisions": [
+      {
+        "nome": "Premier League",
+        "divisao": "Championship"
+      }
+    ],
+    "type": "nacional"
+  },
+  {
+    "stateCode": "AM",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "AP",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "BA",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "CE",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "MA",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "MS",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "MT",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "PA",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "PB",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "PE",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "PI",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "MG",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "AC",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "AL",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "DF",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "ES",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "GO",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "RJ",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "RN",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "RO",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "RR",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "SC",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "SE",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "TO",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "PR",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "RS",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  },
+  {
+    "stateCode": "SP",
+    "nome": "Ljava/util/ArrayList;",
+    "type": "estadual"
+  }
+]

@@ -1,0 +1,520 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
+import { 
+  Heart, 
+  MessageSquare, 
+  Users, 
+  TrendingUp, 
+  TrendingDown,
+  Smile,
+  Meh,
+  Frown,
+  Mail,
+  Clock,
+  ChevronRight,
+  Star,
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  Calendar,
+  Zap,
+  Shield,
+  AlertTriangle,
+  Crown,
+  Gavel
+} from "lucide-react"
+import { GameHeader } from "@/components/game-header"
+import { TeamCrest } from "@/components/team-crest"
+import { PlayerAvatarCircle } from "@/components/player-avatar"
+import { Button } from "@/components/ui/button"
+import { RandomEvents } from "@/components/random-events"
+import { cn } from "@/lib/utils"
+import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { useGameState, useUserTeam } from "@/lib/save-system"
+
+type TabType = "vestiario" | "reunioes" | "mensagens" | "contratos" | "eventos" | "disciplina"
+
+// Mock data
+const playerMorale = [
+  { name: "Eduardo Sasha", position: "ATA", morale: 92, trend: "up" },
+  { name: "Lincoln", position: "MEI", morale: 88, trend: "up" },
+  { name: "Eric Ramires", position: "MEI", morale: 85, trend: "stable" },
+  { name: "Helinho", position: "PE", morale: 78, trend: "down" },
+  { name: "Cleiton", position: "GOL", morale: 82, trend: "stable" },
+  { name: "Pedro Henrique", position: "ZAG", morale: 80, trend: "up" },
+]
+
+const meetings = [
+  { type: "individual", player: "Lincoln", topic: "Renovacao de contrato", status: "pendente" },
+  { type: "coletiva", topic: "Preparacao para o classico", status: "agendada", date: "Amanha, 10h" },
+  { type: "individual", player: "Helinho", topic: "Moral baixa", status: "urgente" },
+]
+
+const messages = [
+  { from: "Diretoria", subject: "Meta de classificacao", time: "2h atras", unread: true },
+  { from: "Agente - Lincoln", subject: "Proposta de renovacao", time: "5h atras", unread: true },
+  { from: "Imprensa", subject: "Solicitacao de entrevista", time: "1 dia", unread: false },
+  { from: "Olheiro", subject: "Relatorio - Jovem promessa", time: "2 dias", unread: false },
+]
+
+const contracts = [
+  { name: "Lincoln", position: "MEI", overall: 78, endsIn: "6 meses", salary: "R$ 180.000", status: "expirando" },
+  { name: "Helinho", position: "PE", overall: 75, endsIn: "1 ano", salary: "R$ 120.000", status: "ok" },
+  { name: "Estevao", position: "MD", overall: 79, endsIn: "3 meses", salary: "R$ 250.000", status: "critico" },
+]
+
+// Mock data para disciplina
+const disciplineIssues = [
+  { id: 1, player: "Helinho", type: "atraso_treino", date: "Ontem", severity: "leve", resolved: false },
+  { id: 2, player: "Lincoln", type: "discussao_vestiario", date: "3 dias atras", severity: "moderada", resolved: true, punishment: "advertencia" },
+]
+
+const playerHierarchy = [
+  { name: "Eduardo Sasha", role: "capitao", influence: 95, respect: 92 },
+  { name: "Pedro Henrique", role: "vice_capitao", influence: 85, respect: 88 },
+  { name: "Cleiton", role: "veterano", influence: 78, respect: 85 },
+  { name: "Lincoln", role: "referencia", influence: 72, respect: 80 },
+  { name: "Helinho", role: "jovem", influence: 45, respect: 65 },
+]
+
+export default function CentralPage() {
+  const router = useRouter()
+
+  // Gamepad support
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const btn = (e as CustomEvent).detail?.button
+      if (btn === 'B') router.back()
+    }
+    window.addEventListener('gamepad:button', handler)
+    return () => window.removeEventListener('gamepad:button', handler)
+  }, [router])
+  const { state } = useGameState()
+  const { team: userTeam } = useUserTeam()
+  const [activeTab, setActiveTab] = useState<TabType>("vestiario")
+
+  const tabs = [
+    { id: "vestiario" as TabType, label: "Vestiario", icon: Heart, count: null },
+    { id: "eventos" as TabType, label: "Eventos", icon: Zap, count: 2 },
+    { id: "disciplina" as TabType, label: "Disciplina", icon: Gavel, count: disciplineIssues.filter(d => !d.resolved).length },
+    { id: "reunioes" as TabType, label: "Reunioes", icon: Users, count: meetings.filter(m => m.status === "urgente").length },
+    { id: "mensagens" as TabType, label: "Mensagens", icon: Mail, count: messages.filter(m => m.unread).length },
+    { id: "contratos" as TabType, label: "Contratos", icon: FileText, count: contracts.filter(c => c.status === "critico").length },
+  ]
+
+  const getMoraleIcon = (morale: number) => {
+    if (morale >= 80) return <Smile className="h-4 w-4 text-green-400" />
+    if (morale >= 60) return <Meh className="h-4 w-4 text-yellow-400" />
+    return <Frown className="h-4 w-4 text-red-400" />
+  }
+
+  const getMoraleColor = (morale: number) => {
+    if (morale >= 80) return "text-green-400"
+    if (morale >= 60) return "text-yellow-400"
+    return "text-red-400"
+  }
+
+  const averageMorale = Math.round(playerMorale.reduce((acc, p) => acc + p.morale, 0) / playerMorale.length)
+
+  return (
+    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+      <GameHeader team={userTeam} />
+      
+      <main className="flex-1 p-4 md:p-6 overflow-y-auto pb-20">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <TeamCrest team={userTeam} size="lg" />
+          <div>
+            <h1 className="text-2xl font-bold text-white">Central do Clube</h1>
+            <p className="text-sm text-white/50">{userTeam.nome}</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap",
+                activeTab === tab.id
+                  ? "bg-[#00ffc8] text-black"
+                  : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+              )}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+              {tab.count && tab.count > 0 && (
+                <span className={cn(
+                  "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                  activeTab === tab.id ? "bg-black/20 text-black" : "bg-red-500 text-white"
+                )}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <AnimatePresence mode="wait">
+          {activeTab === "vestiario" && (
+            <motion.div
+              key="vestiario"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {/* Team Morale Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="stat-card stat-card-teal">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-white/50">Moral do Elenco</span>
+                    {getMoraleIcon(averageMorale)}
+                  </div>
+                  <div className={cn("text-3xl font-black", getMoraleColor(averageMorale))}>
+                    {averageMorale}%
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">Media geral do plantel</p>
+                </div>
+                
+                <div className="stat-card stat-card-green">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-white/50">Jogadores Felizes</span>
+                    <Smile className="h-4 w-4 text-green-400" />
+                  </div>
+                  <div className="text-3xl font-black text-green-400">
+                    {playerMorale.filter(p => p.morale >= 80).length}
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">de {playerMorale.length} jogadores</p>
+                </div>
+                
+                <div className="stat-card stat-card-amber">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-white/50">Atencao Necessaria</span>
+                    <AlertCircle className="h-4 w-4 text-orange-400" />
+                  </div>
+                  <div className="text-3xl font-black text-orange-400">
+                    {playerMorale.filter(p => p.morale < 70).length}
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1">jogadores com moral baixa</p>
+                </div>
+              </div>
+
+              {/* Player List */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white mb-4">Moral Individual</h3>
+                <div className="space-y-2">
+                  {playerMorale.map((player, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                      <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="sm" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-white">{player.name}</div>
+                        <div className="text-[10px] text-white/40">{player.position}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {player.trend === "up" && <TrendingUp className="h-3 w-3 text-green-400" />}
+                        {player.trend === "down" && <TrendingDown className="h-3 w-3 text-red-400" />}
+                        <div className="w-20 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                          <div 
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              player.morale >= 80 ? "bg-green-500" : player.morale >= 60 ? "bg-[#ffd700]" : "bg-red-500"
+                            )}
+                            style={{ width: `${player.morale}%` }}
+                          />
+                        </div>
+                        <span className={cn("text-xs font-bold w-8 text-right", getMoraleColor(player.morale))}>
+                          {player.morale}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "reunioes" && (
+            <motion.div
+              key="reunioes"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-white">Reunioes Pendentes</h3>
+                  <Button size="sm" className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] text-xs">
+                    Agendar Reuniao
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {meetings.map((meeting, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                      <div className={cn(
+                        "h-10 w-10 rounded-lg flex items-center justify-center",
+                        meeting.type === "individual" ? "bg-blue-500/20" : "bg-purple-500/20"
+                      )}>
+                        {meeting.type === "individual" ? (
+                          <MessageSquare className="h-5 w-5 text-blue-400" />
+                        ) : (
+                          <Users className="h-5 w-5 text-purple-400" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-white">{meeting.topic}</div>
+                        <div className="text-[10px] text-white/40">
+                          {meeting.player ? `Com ${meeting.player}` : meeting.date}
+                        </div>
+                      </div>
+                      <div className={cn(
+                        "px-2 py-1 rounded-md text-[10px] font-semibold",
+                        meeting.status === "urgente" ? "bg-red-500/20 text-red-400" :
+                        meeting.status === "pendente" ? "bg-[#ffd700]/20 text-yellow-400" :
+                        "bg-green-500/20 text-green-400"
+                      )}>
+                        {meeting.status}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-white/30" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "mensagens" && (
+            <motion.div
+              key="mensagens"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white mb-4">Caixa de Entrada</h3>
+                <div className="space-y-2">
+                  {messages.map((msg, idx) => (
+                    <div key={idx} className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer",
+                      msg.unread ? "bg-[#00ffc8]/10 hover:bg-[#00ffc8]/15" : "bg-white/[0.03] hover:bg-white/[0.06]"
+                    )}>
+                      <div className={cn(
+                        "h-10 w-10 rounded-lg flex items-center justify-center",
+                        msg.unread ? "bg-[#00ffc8]/20" : "bg-white/10"
+                      )}>
+                        <Mail className={cn("h-5 w-5", msg.unread ? "text-[#00ffc8]" : "text-white/40")} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={cn("text-sm font-medium", msg.unread ? "text-white" : "text-white/70")}>
+                            {msg.from}
+                          </span>
+                          {msg.unread && <div className="h-2 w-2 rounded-full bg-[#00ffc8]" />}
+                        </div>
+                        <div className="text-[11px] text-white/50">{msg.subject}</div>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-white/40">
+                        <Clock className="h-3 w-3" />
+                        {msg.time}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "contratos" && (
+            <motion.div
+              key="contratos"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white mb-4">Contratos Proximos do Vencimento</h3>
+                <div className="space-y-2">
+                  {contracts.map((contract, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                      <PlayerAvatarCircle name={contract.name} teamColor={userTeam.cor1} size="sm" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-white">{contract.name}</span>
+                          <span className="text-[10px] text-white/40 px-1.5 py-0.5 rounded bg-white/10">{contract.position}</span>
+                          <span className="text-xs font-bold text-[#00ffc8]">{contract.overall}</span>
+                        </div>
+                        <div className="text-[10px] text-white/40">Salario: {contract.salary}/mes</div>
+                      </div>
+                      <div className="text-right">
+                        <div className={cn(
+                          "text-xs font-semibold",
+                          contract.status === "critico" ? "text-red-400" :
+                          contract.status === "expirando" ? "text-yellow-400" : "text-white/60"
+                        )}>
+                          {contract.endsIn}
+                        </div>
+                        <div className="text-[10px] text-white/40">ate o fim</div>
+                      </div>
+                      <Button size="sm" variant="outline" className="text-xs border-white/10 hover:bg-white/10">
+                        Renovar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "eventos" && (
+            <motion.div
+              key="eventos"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              <RandomEvents />
+            </motion.div>
+          )}
+
+          {activeTab === "disciplina" && (
+            <motion.div
+              key="disciplina"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {/* Hierarquia do Vestiario */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-400" />
+                  Hierarquia do Vestiario
+                </h3>
+                <div className="space-y-2">
+                  {playerHierarchy.map((player, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                      <div className="relative">
+                        <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="sm" />
+                        {player.role === "capitao" && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 flex items-center justify-center">
+                            <span className="text-[8px] font-black text-black">C</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-white">{player.name}</span>
+                          <span className={cn(
+                            "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                            player.role === "capitao" ? "bg-amber-400/20 text-amber-400" :
+                            player.role === "vice_capitao" ? "bg-amber-400/10 text-amber-300" :
+                            player.role === "veterano" ? "bg-blue-400/20 text-blue-400" :
+                            player.role === "referencia" ? "bg-purple-400/20 text-purple-400" :
+                            "bg-white/10 text-white/60"
+                          )}>
+                            {player.role === "capitao" ? "Capitao" :
+                             player.role === "vice_capitao" ? "Vice-Capitao" :
+                             player.role === "veterano" ? "Veterano" :
+                             player.role === "referencia" ? "Referencia" : "Jovem"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1">
+                          <div className="flex items-center gap-1 text-[10px] text-white/40">
+                            <Users className="h-3 w-3" />
+                            Influencia: <span className="text-white/70">{player.influence}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] text-white/40">
+                            <Shield className="h-3 w-3" />
+                            Respeito: <span className="text-white/70">{player.respect}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Questoes Disciplinares */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400" />
+                    Questoes Disciplinares
+                  </h3>
+                </div>
+                {disciplineIssues.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <CheckCircle2 className="h-10 w-10 mx-auto text-[#00ffc8]/40 mb-2" />
+                    <p className="text-sm text-white/50">Nenhum problema disciplinar</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {disciplineIssues.map((issue) => (
+                      <div key={issue.id} className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg transition-colors",
+                        issue.resolved ? "bg-white/[0.02] opacity-60" : "bg-red-500/10 border border-red-500/20"
+                      )}>
+                        <div className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          issue.severity === "grave" ? "bg-red-500/20" :
+                          issue.severity === "moderada" ? "bg-amber-500/20" : "bg-[#ffd700]/20"
+                        )}>
+                          <AlertTriangle className={cn(
+                            "h-5 w-5",
+                            issue.severity === "grave" ? "text-red-400" :
+                            issue.severity === "moderada" ? "text-amber-400" : "text-yellow-400"
+                          )} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-white">{issue.player}</span>
+                            <span className={cn(
+                              "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                              issue.severity === "grave" ? "bg-red-500/20 text-red-400" :
+                              issue.severity === "moderada" ? "bg-amber-500/20 text-amber-400" :
+                              "bg-[#ffd700]/20 text-yellow-400"
+                            )}>
+                              {issue.severity}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-white/40">
+                            {issue.type === "atraso_treino" ? "Atraso no treino" :
+                             issue.type === "falta_treino" ? "Falta no treino" :
+                             issue.type === "discussao_vestiario" ? "Discussao no vestiario" :
+                             issue.type === "desrespeito_tecnico" ? "Desrespeito ao tecnico" :
+                             "Problema extracampo"} - {issue.date}
+                          </div>
+                        </div>
+                        {issue.resolved ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-[#00ffc8]" />
+                            <span className="text-xs text-white/50">{issue.punishment}</span>
+                          </div>
+                        ) : (
+                          <Button size="sm" variant="outline" className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
+                            <Gavel className="h-3 w-3 mr-1" />
+                            Punir
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+    </div>
+  )
+}

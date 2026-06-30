@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Ultrafoot 26",
+  "version": "1.0.1",
+  "identifier": "com.ultrafoot.remake",
+  "build": {
+    "frontendDist": "../out",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build:tauri"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "Ultrafoot 26",
+        "url": "splash/",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1024,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "shadow": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": false
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "resources": {
+      "../public/music/**/*": "music/",
+      "../public/camisas/**/*": "camisas/",
+      "../public/camisas2/**/*": "camisas2/",
+      "../public/camisas3/**/*": "camisas3/",
+      "../public/escudos/**/*": "escudos/",
+      "../public/escudos-mini/**/*": "escudos-mini/",
+      "../public/escudos-selecoes/**/*": "escudos-selecoes/",
+      "../public/selecoes/**/*": "selecoes/",
+      "../public/trofeus/**/*": "trofeus/"
+    },
+    "publisher": "Ultrafoot Studio",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["PortugueseBR"],
+        "displayLanguageSelector": false
+      },
+      "wix": {
+        "language": "pt-BR"
+      }
+    },
+    "shortDescription": "Ultrafoot 26 - Football Manager",
+    "longDescription": "Ultrafoot 26 é um jogo de gerenciamento de futebol com times do mundo inteiro.",
+    "copyright": "Copyright © 2026 Ultrafoot Studio"
+  }
+}
