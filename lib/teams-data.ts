@@ -2,6 +2,7 @@
 // https://github.com/jovemegidio/Ultrafoot
 
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
+import { getTeamOverride } from "@/lib/team-overrides"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -311,6 +312,12 @@ import { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl } from "./escudos-ma
 export { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl }
 
 export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
+  // Uniforme importado pelo usuario no editor de clubes tem prioridade — igual ao
+  // escudo customizado. Leitura sincrona do cache do persistent-store; se o clube
+  // tiver um kit importado, ele e usado no jogo inteiro no lugar do padrao.
+  const custom = getTeamOverride(fileKey)?.kits?.[variant]?.imageUrl
+  if (custom) return custom
+
   const folder = variant === "home" ? "camisas" : variant === "away" ? "camisas2" : "camisas3"
   // No app desktop (Tauri) as camisas sao empacotadas localmente.
   // Na web nao existe pasta public/camisas, entao usamos o repositorio remoto

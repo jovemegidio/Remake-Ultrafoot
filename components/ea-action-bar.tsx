@@ -27,6 +27,27 @@ const DEFAULT_ACTIONS: ActionHint[] = [
   { keyLabel: "Esc", label: "Voltar" },
 ]
 
+// Telas onde o Esc global NAO deve navegar "pra tras":
+// - pre-jogo/hub: voltar dali sairia do jogo em direcao a splash;
+// - "/partida": durante a partida o Esc pausa/retoma (a propria tela trata);
+// - editor/mercado/salvar: ja tem listener proprio de Esc (evita duplo "voltar").
+// O hub "/" e tratado a parte (match exato).
+const ESC_BACK_BLOCKED_PREFIXES = [
+  "/splash",
+  "/novo-jogo",
+  "/pre-office",
+  "/partida",
+  "/editar",
+  "/editor",
+  "/mercado",
+  "/salvar",
+]
+
+function isEscBackBlocked(pathname: string): boolean {
+  if (pathname === "/" || pathname === "") return true
+  return ESC_BACK_BLOCKED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))
+}
+
 interface ActionBarContextValue {
   actions: ActionHint[]
   setActions: (actions: ActionHint[] | null) => void
@@ -59,8 +80,19 @@ export function EaActionBarProvider({ children }: { children: React.ReactNode })
         // listener de "B" que chama router.back() (ou fecha um modal) — repassar o
         // evento faria essa logica disparar de novo, navegando duas vezes pra tras.
         const action = actionsRef.current.find((a) => a.keyLabel.toLowerCase() === "esc")
-        if (action?.onClick) action.onClick()
-        else router.back()
+        if (action?.onClick) {
+          action.onClick()
+          return
+        }
+        // Fallback "Voltar" LIMITADO. Antes era um router.back() cego: como toda
+        // navegacao e um reload completo (historico real), segurar Esc andava o
+        // historico ate a splash — saindo do jogo mesmo dentro de uma partida ou
+        // do escritorio. Agora o Esc global e no-op no hub (/), nas telas de
+        // pre-jogo/partida e nas telas que ja tratam Esc por conta propria (evita
+        // tambem o duplo "voltar"). Nas demais telas de feature, volta um nivel —
+        // e, como o hub e no-op, nunca cruza de volta para a splash.
+        if (isEscBackBlocked(window.location.pathname)) return
+        router.back()
       } else if (e.key === "Enter") {
         const action = actionsRef.current.find((a) => a.keyLabel.toLowerCase() === "enter")
         // Tambem dispara o canal gamepad:button (A) para telas como /partida e /pre-office,
