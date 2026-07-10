@@ -57,9 +57,22 @@ export default function SplashPage() {
     if (savedCode) setCloudCode(savedCode)
   }, [])
 
-  // Save real do localStorage
-  const realSave = typeof window !== "undefined" ? loadGameState() : null
-  const hasSaveGame = typeof window !== "undefined" ? hasSave() : false
+  // Save real (persistent-store). Como o store carrega do disco de forma async,
+  // lemos em estado e re-lemos quando ele fica pronto / muda — senao o menu
+  // "Carregar" apareceria vazio no primeiro render mesmo havendo save.
+  const [saveInfo, setSaveInfo] = useState<{ realSave: ReturnType<typeof loadGameState> | null; hasSaveGame: boolean }>({ realSave: null, hasSaveGame: false })
+  useEffect(() => {
+    const refresh = () => setSaveInfo({ realSave: loadGameState(), hasSaveGame: hasSave() })
+    refresh()
+    window.addEventListener("ultrafoot:store:ready", refresh)
+    window.addEventListener("ultrafoot:store:changed", refresh)
+    return () => {
+      window.removeEventListener("ultrafoot:store:ready", refresh)
+      window.removeEventListener("ultrafoot:store:changed", refresh)
+    }
+  }, [])
+  const realSave = saveInfo.realSave
+  const hasSaveGame = saveInfo.hasSaveGame
   const savedTeam = realSave?.selectedTeamShort ? getTeamByShort(realSave.selectedTeamShort) : null
   const savedGames = hasSaveGame && realSave?.selectedTeamShort
     ? [{
@@ -83,6 +96,12 @@ export default function SplashPage() {
   // Sequencia de fases da splash
   useEffect(() => {
     const sequence = async () => {
+      // Se vier com ?menu=1 (ex: ao pressionar Voltar de outra tela), pula direto pro menu
+      if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("menu") === "1") {
+        setPhase("main-menu")
+        return
+      }
+
       // Fase 1: Tela preta inicial
       await delay(800)
       setPhase("studio-logo")

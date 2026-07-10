@@ -4,8 +4,10 @@
 
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import { createTauriZustandStorage } from "@/lib/persistent-store"
 import { allTeams, getTeamByShort } from "@/lib/teams-data"
 import { getPlayersForTeam } from "@/lib/players-data"
+import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -2390,10 +2392,57 @@ export const useGameEngine = create<GameEngineState>()(
             return { ...player, contract: { ...player.contract, clauses: updatedClauses } }
           })
 
+          // ---- SELEÇÕES: retornos e convocações automáticas em data FIFA ----
+          let updatedCalls = s.nationalTeamCalls
+          let playersAfterNT = playersAfterClauses
+
+          // Retorno de convocados (janela terminou)
+          const returningCalls = updatedCalls.filter(c => c.startWeek + c.weeksAway <= newWeek)
+          if (returningCalls.length > 0) {
+            const returningIds = new Set(returningCalls.map(c => c.playerId))
+            playersAfterNT = playersAfterNT.map(p => returningIds.has(p.id)
+              ? { ...p, calledUp: false, energy: Math.max(50, p.energy - 15) }
+              : p)
+            updatedCalls = updatedCalls.filter(c => !returningIds.has(c.playerId))
+          }
+
+          // Novas convocações: overall alto garante vaga; jovens promissores vão ao Sub-23
+          if (isFifaDate) {
+            const competition = newWeek >= 30 ? "Eliminatorias da Copa" : "Amistosos Internacionais"
+            const newCalls: NationalTeamCall[] = []
+            const calledIds = new Set<number>()
+            for (const p of playersAfterNT) {
+              if (p.calledUp || p.injury || p.loanedOut) continue
+              // Brasil tem elenco mais profundo — corte mais alto
+              const seniorCut = p.nationality === "Brasil" ? 82 : 77
+              const isSenior = p.overall >= seniorCut
+              const isU23 = !isSenior && p.age <= 23 && p.potential >= 82 && p.overall >= 74
+              if (!isSenior && !isU23) continue
+              // Forma influencia a convocação; titular indiscutível quase sempre vai
+              const callChance = isSenior
+                ? Math.min(0.95, 0.65 + Math.max(0, p.form - p.overall) * 0.03 + (p.overall - seniorCut) * 0.04)
+                : 0.45
+              if (Math.random() > callChance) continue
+              newCalls.push({
+                playerId: p.id,
+                playerName: p.name,
+                country: isU23 ? `${p.nationality} Sub-23` : p.nationality,
+                competition,
+                weeksAway: 2,
+                startWeek: newWeek,
+              })
+              calledIds.add(p.id)
+            }
+            if (newCalls.length > 0) {
+              updatedCalls = [...updatedCalls, ...newCalls]
+              playersAfterNT = playersAfterNT.map(p => calledIds.has(p.id) ? { ...p, calledUp: true } : p)
+            }
+          }
+
           // ---- FUNDO DE INVESTIMENTO: forcar venda se chegou a semana ----
           const fundOffers: InvestmentFundOffer[] = [...s.pendingFundOffers]
           const FUND_NAMES = ["Alpha Capital", "Sport Ventures", "Global FC Fund", "Emerald Sports"]
-          playersAfterClauses.forEach(player => {
+          playersAfterNT.forEach(player => {
             if (!player.contract?.fundPercentage || player.contract.fundForceSaleWeek !== newWeek) return
             const offer: InvestmentFundOffer = {
               id: Date.now() + player.id,
@@ -2415,7 +2464,8 @@ export const useGameEngine = create<GameEngineState>()(
             ...s,
             currentWeek: finalWeek,
             currentSeason: newSeason,
-            squadPlayers: playersAfterClauses,
+            squadPlayers: playersAfterNT,
+            nationalTeamCalls: updatedCalls,
             transferOffers: updatedOffers,
             marketingContracts: updatedMarketing,
             pendingFundOffers: fundOffers,
@@ -2730,57 +2780,92 @@ export const useGameEngine = create<GameEngineState>()(
       
       generateAIOffers: () => {
         const state = get()
-        
-        // Chance de gerar ofertas (20% por semana)
-        if (Math.random() > 0.2) return
-        
-        // Seleciona jogadores atraentes (overall >= 75, idade < 30)
-        const attractivePlayers = state.squadPlayers.filter(p => 
-          p.overall >= 75 && p.age < 30 && !p.isLoanedIn
+
+        // Jogadores com mercado: overall alto, jovens com potencial ou em boa forma
+        const marketable = state.squadPlayers.filter(p => {
+          if (p.isLoanedIn || p.injury) return false
+          if (p.calledUp) return false
+          const youngGem = p.age <= 22 && p.potential >= 80
+          const goodForm = p.form >= p.overall + 3 && p.overall >= 72
+          return p.overall >= 75 || youngGem || goodForm
+        })
+        if (marketable.length === 0) return
+
+        // Interesse por jogador cresce com overall/forma; janela ativa gera mais ofertas
+        const newOffers: TransferOffer[] = []
+        const pendingIds = new Set(
+          state.transferOffers.filter(o => o.status === "pendente").map(o => o.playerId)
         )
-        
-        if (attractivePlayers.length === 0) return
-        
-        // Seleciona um jogador aleatorio
-        const targetPlayer = attractivePlayers[Math.floor(Math.random() * attractivePlayers.length)]
-        
-        // Seleciona um time para fazer oferta
-        const possibleTeams = AI_TEAMS.filter(t => t.budget >= targetPlayer.marketValue * 0.5)
-        if (possibleTeams.length === 0) return
-        
-        const buyingTeam = possibleTeams[Math.floor(Math.random() * possibleTeams.length)]
-        
-        // Determina tipo de oferta
-        const isLoan = Math.random() < 0.3 || buyingTeam.budget < targetPlayer.marketValue
-        
-        // Calcula valor da oferta
-        let offerAmount: number
-        if (isLoan) {
-          // Emprestimo: paga parte do salario
-          offerAmount = targetPlayer.contract?.salary ? Math.round(targetPlayer.contract.salary * 4 * (0.5 + Math.random() * 0.5)) : 100000
-        } else {
-          // Compra: 60-120% do valor de mercado
-          const multiplier = 0.6 + Math.random() * 0.6
-          offerAmount = Math.round(targetPlayer.marketValue * multiplier)
+
+        for (const player of marketable) {
+          // No máximo 1 oferta pendente por jogador; frequência escala com atratividade
+          if (pendingIds.has(player.id)) continue
+          const attractiveness = (player.overall - 70) * 0.012
+            + (player.potential - player.overall) * 0.008
+            + Math.max(0, player.form - player.overall) * 0.01
+          if (Math.random() > Math.max(0.03, Math.min(0.28, attractiveness))) continue
+
+          // Clubes candidatos avaliados pela própria IA (perfil + orçamento)
+          const interested = AI_TEAMS
+            .map(t => {
+              const cfg = getClubAIConfig(t.short, t.prestige)
+              const verdict = evaluateBuy(cfg, {
+                overall: player.overall,
+                age: player.age,
+                value: player.marketValue,
+                nationality: player.nationality,
+              })
+              return { team: t, cfg, verdict }
+            })
+            .filter(({ team, verdict }) =>
+              verdict.wants &&
+              team.budget >= verdict.maxFee * 0.6 &&
+              // Clube grande não busca reserva mediano; clube menor não alcança estrela
+              Math.abs(team.prestige - (player.overall + 5)) <= 18
+            )
+          if (interested.length === 0) continue
+
+          const { team: buyingTeam, cfg, verdict } =
+            interested[Math.floor(Math.random() * interested.length)]
+
+          // Empréstimo: jovens fora do time titular ou clube sem caixa para compra
+          const wantsLoan =
+            (player.age <= 22 && !player.isStarter && Math.random() < 0.55) ||
+            buyingTeam.budget < verdict.maxFee
+
+          let offerAmount: number
+          if (wantsLoan) {
+            offerAmount = player.contract?.salary
+              ? Math.round(player.contract.salary * 4 * (0.5 + Math.random() * 0.5))
+              : 100000
+          } else {
+            // Abertura de negociação: 78-95% do teto do clube (deixa espaço p/ contraproposta)
+            const opening = 0.78 + Math.random() * 0.17
+            offerAmount = Math.round((verdict.maxFee * opening) / 100_000) * 100_000
+          }
+
+          newOffers.push({
+            id: Date.now() + player.id,
+            playerId: player.id,
+            playerName: player.name,
+            fromTeam: buyingTeam.name,
+            offerType: wantsLoan ? "emprestimo" : "compra",
+            offerAmount,
+            wageCoverage: wantsLoan
+              ? Math.round(cfg.budgetCaution < 45 ? 80 + Math.random() * 20 : 50 + Math.random() * 40)
+              : undefined,
+            loanWeeks: wantsLoan ? Math.round(26 + Math.random() * 26) : undefined,
+            status: "pendente",
+            createdWeek: state.currentWeek,
+            expiresWeek: state.currentWeek + 3,
+          })
+          pendingIds.add(player.id)
+          if (newOffers.length >= 2) break // máx 2 ofertas novas por semana
         }
-        
-        const newOffer: TransferOffer = {
-          id: Date.now(),
-          playerId: targetPlayer.id,
-          playerName: targetPlayer.name,
-          fromTeam: buyingTeam.name,
-          offerType: isLoan ? "emprestimo" : "compra",
-          offerAmount,
-          wageCoverage: isLoan ? Math.round(50 + Math.random() * 50) : undefined,
-          loanWeeks: isLoan ? Math.round(26 + Math.random() * 26) : undefined,
-          status: "pendente",
-          createdWeek: state.currentWeek,
-          expiresWeek: state.currentWeek + 3
+
+        if (newOffers.length > 0) {
+          set((s) => ({ transferOffers: [...s.transferOffers, ...newOffers] }))
         }
-        
-        set((s) => ({
-          transferOffers: [...s.transferOffers, newOffer]
-        }))
       },
       
       respondToOffer: (offerId: number, accept: boolean) => {
@@ -4234,17 +4319,10 @@ export const useGameEngine = create<GameEngineState>()(
       name: 'ultrafoot-game-engine',
       version: 2,
       migrate: () => undefined,
-      storage: createJSONStorage(() => {
-        if (typeof window !== "undefined" && window.localStorage) {
-          return window.localStorage
-        }
-
-        return {
-          getItem: () => null,
-          setItem: () => {},
-          removeItem: () => {},
-        }
-      }),
+      // Persistido no persistent-store (arquivo, sobrevive a reinstalacao) em vez do
+      // localStorage da webview, que era limpo nos updates e fazia o elenco/tabela
+      // "sumir". O adaptador migra automaticamente qualquer save legado do localStorage.
+      storage: createJSONStorage(() => createTauriZustandStorage()),
     }
   )
 )

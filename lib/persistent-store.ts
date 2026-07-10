@@ -139,6 +139,31 @@ async function _writeAsync(key: string, value: string): Promise<void> {
   }
 }
 
+// Storage compativel com o middleware `persist` do zustand, backed pelo
+// persistent-store (sobrevive a reinstalacoes). getItem e async de proposito: o
+// zustand aguarda a carga do disco antes de hidratar, evitando que a store inicie
+// vazia (elenco/tabela em branco) logo apos abrir o app.
+export function createTauriZustandStorage() {
+  return {
+    getItem: async (name: string): Promise<string | null> => {
+      await initPersistentStore()
+      let value = storeGet(name)
+      // Migra dado legado que so exista no localStorage da webview (saves de versoes
+      // que nao sobreviviam a reinstalacao). Uma unica vez: passa a viver no store.
+      if (value == null && typeof window !== "undefined" && window.localStorage) {
+        const legacy = window.localStorage.getItem(name)
+        if (legacy != null) {
+          storeSet(name, legacy)
+          value = legacy
+        }
+      }
+      return value
+    },
+    setItem: (name: string, value: string): void => storeSet(name, value),
+    removeItem: (name: string): void => storeRemove(name),
+  }
+}
+
 async function _deleteAsync(key: string): Promise<void> {
   if (typeof window === "undefined") return
   try {

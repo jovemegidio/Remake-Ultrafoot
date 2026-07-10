@@ -6,6 +6,7 @@
 
 import { useEffect } from "react"
 import { loadGameState } from "@/lib/save-system"
+import { initPersistentStore } from "@/lib/persistent-store"
 import { hardNavigate } from "@/lib/hard-navigation"
 
 /**
@@ -14,9 +15,17 @@ import { hardNavigate } from "@/lib/hard-navigation"
  */
 export function useRequireTeam(redirectTo = "/splash"): void {
   useEffect(() => {
-    const state = loadGameState()
-    if (!state || !state.selectedTeamShort) {
-      hardNavigate(redirectTo)
-    }
+    let cancelled = false
+    // Espera o persistent-store carregar do disco antes de decidir. O save chega de
+    // forma async; sem esperar, o usuario seria expulso de toda tela do jogo para a
+    // splash no primeiro render mesmo tendo um jogo em andamento.
+    void initPersistentStore().then(() => {
+      if (cancelled) return
+      const state = loadGameState()
+      if (!state || !state.selectedTeamShort) {
+        hardNavigate(redirectTo)
+      }
+    })
+    return () => { cancelled = true }
   }, [redirectTo])
 }

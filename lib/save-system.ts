@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
+import { storeGet, storeSet, storeRemove, initPersistentStore } from "@/lib/persistent-store"
 
 const STORAGE_KEY = "ultrafoot:save"
 const VERSION = 4
@@ -229,6 +230,28 @@ export const DEFAULT_NATIONAL_CAREER: NationalCareer = {
   activeWindow: null,
 }
 
+/** Dados do time escolhido pelo usuário, persistidos no save. */
+export interface SavedTeam {
+  nome: string
+  curto: string
+  cor1: string
+  cor2: string
+  prestigio: number
+  saldo: number
+  divisao: string
+  pais: string
+  cidade?: string
+  estado?: string
+  torcida?: number
+  estadio_cap?: number
+  /** Chave de arquivo (usada para carregar escudos/camisas). */
+  fileKey: string
+  /** Nome do estádio. */
+  estadio: string
+  patrocinador?: string
+  escudo?: string
+}
+
 export interface GameState {
   version: number
   selectedTeamShort: string | null
@@ -343,34 +366,36 @@ function safeParse(raw: string | null): GameState | null {
   }
 }
 
+// O save agora vive no persistent-store (tauri-plugin-store, baseado em arquivo),
+// que SOBREVIVE a reinstalacoes/updates — ao contrario do localStorage da webview,
+// que era limpo ao atualizar e fazia o jogo "sumir" (calendario/partidas em mock).
+// storeGet/storeSet leem/escrevem no cache sincrono; a persistencia em disco e async.
 export function loadGameState(): GameState {
   if (typeof window === "undefined") return DEFAULT_STATE
-  return safeParse(window.localStorage.getItem(STORAGE_KEY)) ?? DEFAULT_STATE
+  return safeParse(storeGet(STORAGE_KEY)) ?? DEFAULT_STATE
 }
 
 export function saveGameState(state: GameState): void {
   if (typeof window === "undefined") return
   const next = { ...state, version: VERSION, updatedAt: Date.now() }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-  window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }))
+  // storeSet ja dispara "ultrafoot:store:changed" para sincronizar as telas.
+  storeSet(STORAGE_KEY, JSON.stringify(next))
 }
 
 export function clearGameState(): void {
   if (typeof window === "undefined") return
-  window.localStorage.removeItem(STORAGE_KEY)
-  window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }))
+  storeRemove(STORAGE_KEY)
 }
 
 export function clearAllGameData(): void {
   if (typeof window === "undefined") return
-  window.localStorage.removeItem(STORAGE_KEY)
-  window.localStorage.removeItem("ultrafoot-game-engine")
-  window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }))
+  storeRemove(STORAGE_KEY)
+  storeRemove("ultrafoot-game-engine")
 }
 
 export function hasSave(): boolean {
   if (typeof window === "undefined") return false
-  return window.localStorage.getItem(STORAGE_KEY) !== null
+  return storeGet(STORAGE_KEY) !== null
 }
 
 /**
@@ -387,26 +412,32 @@ export function useGameState(): {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    // Carrega estado inicial de forma sincrona
-    const saved = loadGameState()
-    setStateInternal(saved)
-    setHydrated(true)
-  }, [])
-
-  useEffect(() => {
-    // Listener separado para sincronizar entre abas
-    if (!hydrated) return
-    
-    const onStorage = (e: StorageEvent) => {
-      if (e.key && e.key !== STORAGE_KEY) return
-      // Usa setTimeout para evitar setState durante render
-      setTimeout(() => {
-        setStateInternal(loadGameState())
-      }, 0)
+    let mounted = true
+    const refresh = () => { if (mounted) setStateInternal(loadGameState()) }
+    // Leitura imediata (o cache pode ja estar populado por outra tela)
+    refresh()
+    // O persistent-store carrega do disco de forma async; so entao hidratamos de
+    // verdade. Sem isso, o save (que sobrevive a reinstalacao) chegaria depois do
+    // primeiro render e as telas ficariam em mock/vazio.
+    initPersistentStore().then(() => {
+      if (!mounted) return
+      refresh()
+      setHydrated(true)
+    })
+    // Sincroniza quando o save muda em qualquer tela e quando o store fica pronto.
+    const onChange = (e: Event) => {
+      const key = (e as CustomEvent).detail?.key
+      if (key && key !== STORAGE_KEY) return
+      setTimeout(refresh, 0)
     }
-    window.addEventListener("storage", onStorage)
-    return () => window.removeEventListener("storage", onStorage)
-  }, [hydrated])
+    window.addEventListener("ultrafoot:store:changed", onChange)
+    window.addEventListener("ultrafoot:store:ready", refresh)
+    return () => {
+      mounted = false
+      window.removeEventListener("ultrafoot:store:changed", onChange)
+      window.removeEventListener("ultrafoot:store:ready", refresh)
+    }
+  }, [])
 
   const setState = (next: Partial<GameState>) => {
     setStateInternal(prev => {
@@ -431,6 +462,35 @@ export function useGameState(): {
  */
 const FALLBACK_TEAM: Team =
   serieATeams[0] ?? allTeams[0]
+
+/**
+ * Converte um SavedTeam (persistido no save) para o tipo Team usado pelos componentes.
+ * Se já for um Team (tem file_key), retorna sem conversão.
+ */
+export function savedTeamToTeam(t: Team | SavedTeam | null | undefined): Team | null {
+  if (!t) return null
+  // Team já tem file_key; SavedTeam tem fileKey
+  if ("file_key" in t) return t as Team
+  const s = t as SavedTeam
+  return {
+    nome: s.nome,
+    curto: s.curto,
+    cor1: s.cor1,
+    cor2: s.cor2,
+    prestigio: s.prestigio,
+    saldo: s.saldo,
+    divisao: s.divisao as Team["divisao"],
+    pais: s.pais,
+    cidade: s.cidade ?? "",
+    estado: s.estado ?? "",
+    torcida: s.torcida ?? 50000,
+    estadio_cap: s.estadio_cap ?? 30000,
+    file_key: s.fileKey || s.curto.toLowerCase(),
+    estadio_nome: s.estadio,
+    patrocinador: s.patrocinador ?? "",
+    escudo_url: s.escudo,
+  }
+}
 
 export function useUserTeam(): { team: Team; hydrated: boolean } {
   const { state, hydrated } = useGameState()
