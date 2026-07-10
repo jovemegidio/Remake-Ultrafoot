@@ -8,6 +8,8 @@
     "core:path:default",
     "core:event:default",
     "core:window:default",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-is-fullscreen",
     "core:app:default",
     "core:image:default",
     "core:resources:default",
@@ -16,6 +18,8 @@
     "opener:default",
     "fs:default",
     "dialog:default",
-    "store:default"
+    "store:default",
+    "updater:default",
+    "process:default"
   ]
 }
