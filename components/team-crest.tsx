@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
+import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
 
 interface TeamCrestProps {
   team?: Team
@@ -40,6 +41,23 @@ const sizePixels = {
  * Team crest component that loads real escudos from Ultrafoot repository
  * Falls back to styled shield with team colors if image fails to load
  */
+const CUSTOM_LOGO_KEY = (key: string) => `ultrafoot:logo:${key}`
+
+export function getCustomLogoUrl(fileKey: string): string | null {
+  if (typeof window === "undefined") return null
+  return storeGet(CUSTOM_LOGO_KEY(fileKey))
+}
+
+export function setCustomLogoUrl(fileKey: string, dataUrl: string): void {
+  storeSet(CUSTOM_LOGO_KEY(fileKey), dataUrl)
+  window.dispatchEvent(new CustomEvent("ultrafoot:logo:changed", { detail: { key: fileKey } }))
+}
+
+export function removeCustomLogoUrl(fileKey: string): void {
+  storeRemove(CUSTOM_LOGO_KEY(fileKey))
+  window.dispatchEvent(new CustomEvent("ultrafoot:logo:changed", { detail: { key: fileKey } }))
+}
+
 export function TeamCrest({
   team,
   teamShort,
@@ -51,12 +69,33 @@ export function TeamCrest({
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [customLogo, setCustomLogo] = useState<string | null>(null)
   const MAX_RETRIES = 2
 
   // Resolve team data
   const resolvedTeam = team || (teamShort ? getTeamByShort(teamShort) : undefined)
   const escudoKey = fileKey || resolvedTeam?.file_key
   const escudoUrl = escudoKey ? getEscudoUrl(escudoKey) : null
+
+  // Check for custom imported logo
+  useEffect(() => {
+    if (!escudoKey) return
+    const refresh = () => setCustomLogo(getCustomLogoUrl(escudoKey))
+    refresh()
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.key === escudoKey) refresh()
+    }
+    window.addEventListener("ultrafoot:logo:changed", handler)
+    // O persistent-store carrega o cache do disco de forma assincrona (e cada
+    // navegacao reinicia esse cache). Sem re-ler aqui, um escudo ja importado
+    // continuaria caindo no fallback ate ser reimportado.
+    window.addEventListener("ultrafoot:store:ready", refresh)
+    return () => {
+      window.removeEventListener("ultrafoot:logo:changed", handler)
+      window.removeEventListener("ultrafoot:store:ready", refresh)
+    }
+  }, [escudoKey])
 
   const { container, text, inner } = sizeMap[size]
   const pixels = sizePixels[size]
@@ -65,7 +104,7 @@ export function TeamCrest({
     setImageError(false)
     setImageLoaded(false)
     setRetryCount(0)
-  }, [escudoUrl])
+  }, [escudoUrl, customLogo])
 
   // O protocolo game-asset:// (Tauri) por vezes falha numa primeira tentativa logo apos
   // a janela abrir. Antes de cair pro escudo generico, tenta de novo algumas vezes.
@@ -161,12 +200,14 @@ export function TeamCrest({
     )
   }
 
-  if (!escudoUrl || (imageError && showFallback)) {
+  const activeUrl = customLogo ?? escudoUrl
+
+  if (!activeUrl || (imageError && showFallback)) {
     return <FallbackShield />
   }
 
   return (
-    <div 
+    <div
       className={cn(
         "relative flex shrink-0 items-center justify-center",
         container,
@@ -176,17 +217,17 @@ export function TeamCrest({
     >
       {/* Loading shimmer */}
       {!imageLoaded && !imageError && (
-        <div 
+        <div
           className={cn(
             "absolute inset-0 rounded-xl animate-pulse bg-gradient-to-br from-white/10 to-white/5",
             container
-          )} 
+          )}
         />
       )}
-      
+
       <Image
-        key={retryCount}
-        src={escudoUrl}
+        key={`${retryCount}-${customLogo ? "custom" : "default"}`}
+        src={activeUrl}
         alt={`Escudo ${resolvedTeam?.nome || 'Time'}`}
         width={pixels}
         height={pixels}
