@@ -685,7 +685,7 @@ export function useGameManager() {
           nome: userTeam.nome, curto: userTeam.curto,
           cor1: userTeam.cor1, cor2: userTeam.cor2,
           prestigio: userTeam.prestigio, saldo: userTeam.saldo,
-          divisao: userTeam.divisao, pais: userTeam.pais,
+          divisao: userTeam.divisao, pais: userTeam.pais ?? "",
           cidade: userTeam.cidade, estado: userTeam.estado,
           torcida: userTeam.torcida, estadio_cap: userTeam.estadio_cap,
           fileKey: userTeam.file_key, estadio: userTeam.estadio_nome ?? "",
@@ -914,7 +914,7 @@ export function useGameManager() {
     )
 
     // Atualiza fixtures no gameState para rastreamento de fim de temporada
-    const prevFixtures = (saveStateRef.current as Record<string, unknown>).fixtures as import("@/lib/career-types").MatchFixture[] | undefined ?? []
+    const prevFixtures = (saveStateRef.current as unknown as Record<string, unknown>).fixtures as import("@/lib/career-types").MatchFixture[] | undefined ?? []
     let updatedStateFixtures = [...prevFixtures]
 
     for (const fixture of roundFixtures) {

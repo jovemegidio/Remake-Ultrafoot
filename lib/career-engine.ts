@@ -48,7 +48,7 @@ export function getLeagueTeams(userTeam: SavedTeam): Team[] {
     file_key: userTeam.fileKey || userTeam.curto.toLowerCase(),
     estadio_nome: userTeam.estadio,
     patrocinador: userTeam.patrocinador ?? "",
-    escudo_url: userTeam.escudo,
+    escudo_url: userTeam.escudo ?? "",
   }
 
   const sorted = [...base].sort((a, b) => b.prestigio - a.prestigio)

@@ -1794,7 +1794,7 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
               <h4 className="text-white/50 text-xs font-medium mb-2">Financas</h4>
               <div className="flex items-center justify-between">
                 <span className="text-white/60 text-sm">Multa rescisoria</span>
-                <span className="text-white font-medium">{formatCurrency(player.releaseClause)}</span>
+                <span className="text-white font-medium">{formatCurrency(player.releaseClause ?? 0)}</span>
               </div>
             </div>
           </div>

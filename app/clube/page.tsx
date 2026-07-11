@@ -32,7 +32,7 @@ export default function ClubePage() {
             <h1 className="text-3xl font-bold text-white tracking-tight">CLUBE</h1>
             <p className="text-white/50 mt-1 flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5" />
-              {team.cidade ?? team.pais} · {team.estadio || "Estádio"}
+              {team.cidade ?? team.pais} · {team.estadio_nome || "Estádio"}
             </p>
           </div>
         </header>

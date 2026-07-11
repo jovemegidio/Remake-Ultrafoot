@@ -29,7 +29,7 @@ function _isTauri(): boolean {
 async function _getStore(): Promise<TauriStore> {
   if (!_tauriStore) {
     const { load } = await import("@tauri-apps/plugin-store")
-    _tauriStore = (await load("ultrafoot-clubs.json", { autoSave: false })) as TauriStore
+    _tauriStore = (await load("ultrafoot-clubs.json", { autoSave: false } as Parameters<typeof load>[1])) as TauriStore
   }
   return _tauriStore
 }

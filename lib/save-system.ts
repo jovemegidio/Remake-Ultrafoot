@@ -6,8 +6,33 @@ import { useEffect, useState } from "react"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
 import { storeGet, storeSet, storeRemove, initPersistentStore } from "@/lib/persistent-store"
+import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceEntry, SeasonRecord, InjuryRecord, FatigueMap } from "@/lib/career-types"
 
 const STORAGE_KEY = "ultrafoot:save"
+
+/**
+ * Jogador do elenco/base persistido no save. Forma gerada por
+ * [lib/youth-engine.ts](lib/youth-engine.ts) `generateYouthBatch` e consumida por
+ * base/mercado/transferencias. Distinto do SquadPlayer (nome/pos) do match-engine.
+ */
+export interface SquadPlayer {
+  id: string
+  name: string
+  position: string
+  age: number
+  overall: number
+  potential: number
+  value: number
+  pace?: number
+  shooting?: number
+  passing?: number
+  dribbling?: number
+  defending?: number
+  physical?: number
+  fromTeam?: string
+  trend?: "up" | "down" | "stable"
+  seasonSigned?: number
+}
 const VERSION = 4
 
 // ============================================
@@ -282,6 +307,22 @@ export interface GameState {
   pendingNationalOffers: NationalOffer[]
   declinedNationalTeamIds: string[]
   lastNationalOfferSeason: number | null
+  // Estado de carreira detalhado (opcional — semeado ao iniciar/carregar uma carreira).
+  // Convive com o useGameEngine; estas telas (base/mercado/calendario/partida) leem daqui.
+  squadPlayers?: SquadPlayer[]
+  youthPlayers?: SquadPlayer[]
+  balance?: number
+  selectedTeam?: SavedTeam
+  currentRound?: number
+  transfers?: TransferRecord[]
+  fixtures?: MatchFixture[]
+  standings?: StandingEntry[]
+  results?: MatchResult[]
+  finances?: FinanceEntry[]
+  seasonHistory?: SeasonRecord[]
+  injuries?: InjuryRecord[]
+  playerFatigue?: FatigueMap
+  teamMorale?: number
 }
 
 export const DEFAULT_COACH_LEGACY: CoachLegacy = {
@@ -488,7 +529,7 @@ export function savedTeamToTeam(t: Team | SavedTeam | null | undefined): Team | 
     file_key: s.fileKey || s.curto.toLowerCase(),
     estadio_nome: s.estadio,
     patrocinador: s.patrocinador ?? "",
-    escudo_url: s.escudo,
+    escudo_url: s.escudo ?? "",
   }
 }
 

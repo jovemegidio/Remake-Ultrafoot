@@ -15,7 +15,7 @@ export default function BasePage() {
   const { team } = useUserTeam()
   const { state, setState } = useGameState()
   const youth = state.youthPlayers ?? []
-  const balance = state.balance > 0 ? state.balance : team.saldo
+  const balance = state.balance && state.balance > 0 ? state.balance : team.saldo
 
   const promote = (player: SquadPlayer) => {
     if (balance < PROMOTION_FEE) {
@@ -115,12 +115,12 @@ export default function BasePage() {
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-1 text-center">
-                    <Stat label="VEL" v={p.pace} />
-                    <Stat label="FIN" v={p.shooting} />
-                    <Stat label="PAS" v={p.passing} />
-                    <Stat label="DRI" v={p.dribbling} />
-                    <Stat label="DEF" v={p.defending} />
-                    <Stat label="FÍS" v={p.physical} />
+                    <Stat label="VEL" v={p.pace ?? 0} />
+                    <Stat label="FIN" v={p.shooting ?? 0} />
+                    <Stat label="PAS" v={p.passing ?? 0} />
+                    <Stat label="DRI" v={p.dribbling ?? 0} />
+                    <Stat label="DEF" v={p.defending ?? 0} />
+                    <Stat label="FÍS" v={p.physical ?? 0} />
                   </div>
 
                   <div className="mt-4 flex gap-2">
