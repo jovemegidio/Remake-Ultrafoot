@@ -84,3 +84,26 @@ _archive/
 # arquivos cloud-only ilegiveis que quebram o git add)
 backup (1)/
 dev/
+
+# Chaves de assinatura (NUNCA versionar)
+*.key
+*.key.pub
+
+# Backups, testes soltos e material de trabalho — NAO versionar (entulho local,
+# arquivos grandes e possivelmente dados sensiveis dentro de backups)
+Backup Jogo/
+Donwloader/
+Nova pasta/
+Templates de Noticias/
+sortitoutsi/
+*.zip
+eltest*.js
+dl-electron.js
+VEREDITO_*.md
+assets-missing.md
+*.docx
+
+# Imagens/logos soltos na raiz (fontes de trabalho; os assets usados ficam em public/)
+/*.png
+/*.jpg
+/*.jpeg

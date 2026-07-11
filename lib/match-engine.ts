@@ -54,6 +54,7 @@ export interface MatchEvent {
   side: Side
   text: string
   player?: string
+  assist?: string
   important?: boolean
 }
 
@@ -116,6 +117,14 @@ export interface MatchConfig {
   homeSquad?: SquadPlayer[]
   awaySquad?: SquadPlayer[]
   modifiers?: MatchModifiers
+  // Overrides táticos (formação/mentalidade/moral já aplicados pela UI).
+  // Quando presentes, substituem as forças derivadas do elenco.
+  homeAttack?: number
+  homeDefense?: number
+  homeMidfield?: number
+  awayAttack?: number
+  awayDefense?: number
+  awayMidfield?: number
 }
 
 export interface MatchModifiers {
@@ -263,6 +272,13 @@ interface DynamicProbs {
 function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs {
   const homeSt = deriveStrengths(config.homeSquad, config.homeRating)
   const awaySt = deriveStrengths(config.awaySquad, config.awayRating)
+  // Overrides táticos vindos da UI (formação/mentalidade/estilo/moral aplicados)
+  if (config.homeAttack != null) homeSt.attack = config.homeAttack
+  if (config.homeDefense != null) homeSt.defense = config.homeDefense
+  if (config.homeMidfield != null) homeSt.midfield = config.homeMidfield
+  if (config.awayAttack != null) awaySt.attack = config.awayAttack
+  if (config.awayDefense != null) awaySt.defense = config.awayDefense
+  if (config.awayMidfield != null) awaySt.midfield = config.awayMidfield
   const mods = config.modifiers
   const total = config.homeRating + config.awayRating
   const minute = state.minute
@@ -328,11 +344,14 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     if (diff === 0 && minute >= 85) { homeLateBonus += 0.02; awayLateBonus += 0.02 }
   }
 
+  // weatherFactor (0.85-1.0): chuva/gramado ruim reduz a criação de chances
+  const wf = config.weatherFactor != null ? Math.max(0.75, Math.min(1, config.weatherFactor)) : 1
+
   const homeShotChance = Math.max(0.04, Math.min(0.22,
-    baseShot + homeAttDiff + homeMomBonus - homeRedShotPen + homeLateBonus
+    (baseShot + homeAttDiff + homeMomBonus - homeRedShotPen + homeLateBonus) * wf
   ))
   const awayShotChance = Math.max(0.04, Math.min(0.22,
-    baseShot + awayAttDiff + awayMomBonus - awayRedShotPen + awayLateBonus
+    (baseShot + awayAttDiff + awayMomBonus - awayRedShotPen + awayLateBonus) * wf
   ))
 
   // ── Faltas e cartões ──────────────────────────────────────────────────────
@@ -435,10 +454,18 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       // GOL
       teamStats.goals += 1
       const team = isHome ? config.homeTeam : config.awayTeam
+      // ~72% dos gols em jogo aberto têm assistência (taxa realista)
+      let assistName: string | undefined
+      if (rnd() < 0.72) {
+        const assistData = pickPlayerFull(side, config, ["MEI", "VOL", "PD", "PE", "LD", "LE"])
+        if (assistData && assistData.nome !== shooterName) assistName = assistData.nome
+      }
       state.events = [{
         id: nameId(), minute, type: "goal", side,
-        text: `GOOOOL! ${shooterName} marca para o ${team.curto}!`,
-        player: shooterName, important: true,
+        text: assistName
+          ? `GOOOOL! ${shooterName} marca para o ${team.curto} após passe de ${assistName}!`
+          : `GOOOOL! ${shooterName} marca para o ${team.curto}!`,
+        player: shooterName, assist: assistName, important: true,
       }, ...state.events]
       state.flash = { side, type: "goal" }
       state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
@@ -475,6 +502,44 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
         text: `Escanteio para ${team.curto}`,
       }, ...state.events]
       state.momentum += isHome ? 6 : -6
+
+      // Resolução do escanteio: ~30% vira cabeçada perigosa (~4% do total de escanteios = gol)
+      if (rnd() < 0.30) {
+        const hdrData = pickPlayerFull(side, config, ["ZAG", "ATA", "VOL"])
+        const hdrName = hdrData?.nome ?? pickPlayer(side, config, ["ZAG", "ATA", "VOL"])
+        const hdrShooting = (hdrData?.shooting ?? (isHome ? probs.homeAttStr : probs.awayAttStr)) * 0.82
+        const oppGK = isHome ? probs.awayGKStr : probs.homeGKStr
+        teamStats.shots += 1
+        const hdrXG = computeXG(hdrShooting, oppGK, minute) * 0.72
+        teamStats.xG += hdrXG
+        // 42% de cabeçadas no alvo (taxa real em escanteios); 30% das no alvo = gol
+        if (rnd() < 0.42) {
+          teamStats.shotsOnTarget += 1
+          if (rnd() < 0.30) {
+            teamStats.goals += 1
+            const takerData = pickPlayerFull(side, config, ["MEI", "PD", "PE"])
+            const cornerTaker = takerData?.nome !== hdrName ? takerData?.nome : undefined
+            state.events = [{
+              id: nameId(), minute, type: "goal", side,
+              text: cornerTaker
+                ? `GOOOOL! ${hdrName} marca de cabeça no escanteio cobrado por ${cornerTaker}!`
+                : `GOOOOL! ${hdrName} marca de cabeça no escanteio!`,
+              player: hdrName, assist: cornerTaker, important: true,
+            }, ...state.events]
+            state.flash = { side, type: "goal" }
+            state.ball = { x: 50, y: 50, side: isHome ? "away" : "home" }
+            state.momentum = isHome ? 20 : -20
+          } else {
+            state.events = [{
+              id: nameId(), minute, type: "save", side,
+              text: `${hdrName} cabeceia no escanteio, goleiro defende!`,
+              player: hdrName,
+            }, ...state.events]
+            state.flash = { side, type: "chance" }
+            state.momentum += isHome ? -5 : 5
+          }
+        }
+      }
     }
   }
 }
@@ -523,6 +588,41 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
       text: `Falta de ${player}`,
       player,
     }, ...state.events]
+  }
+
+  // Falta perigosa → cobrança direta: ~12% das faltas viram finalização
+  if (rnd() < 0.12) {
+    const fkSide: Side = isHome ? "away" : "home"  // time que cobra a falta
+    const fkIsHome = fkSide === "home"
+    const fkData = pickPlayerFull(fkSide, config, ["MEI", "ATA", "VOL"])
+    const fkName = fkData?.nome ?? pickPlayer(fkSide, config, ["MEI", "ATA"])
+    const fkShooting = (fkData?.shooting ?? (fkIsHome ? probs.homeAttStr : probs.awayAttStr)) * 0.85
+    const fkGKDef = fkIsHome ? probs.awayGKStr : probs.homeGKStr
+    const fkStats = fkIsHome ? state.home : state.away
+    fkStats.shots += 1
+    const fkXG = computeXG(fkShooting, fkGKDef, minute) * 0.75
+    fkStats.xG += fkXG
+    if (rnd() < Math.min(0.42, fkXG * 1.6)) {
+      fkStats.shotsOnTarget += 1
+      if (rnd() < Math.min(0.38, fkXG * 1.4)) {
+        fkStats.goals += 1
+        state.events = [{
+          id: nameId(), minute, type: "goal", side: fkSide,
+          text: `GOOOOL! ${fkName} marca de falta direto!`,
+          player: fkName, important: true,
+        }, ...state.events]
+        state.flash = { side: fkSide, type: "goal" }
+        state.ball = { x: 50, y: 50, side: fkIsHome ? "away" : "home" }
+        state.momentum = fkIsHome ? 20 : -20
+      } else {
+        state.events = [{
+          id: nameId(), minute, type: "save", side: fkSide,
+          text: `${fkName} cobra falta, goleiro defende!`,
+          player: fkName,
+        }, ...state.events]
+        state.flash = { side: fkSide, type: "chance" }
+      }
+    }
   }
 }
 
@@ -612,6 +712,8 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
 function updatePossession(state: MatchState, config: MatchConfig): void {
   const homeSt = deriveStrengths(config.homeSquad, config.homeRating)
   const awaySt = deriveStrengths(config.awaySquad, config.awayRating)
+  if (config.homeMidfield != null) homeSt.midfield = config.homeMidfield
+  if (config.awayMidfield != null) awaySt.midfield = config.awayMidfield
 
   const midTotal = homeSt.midfield + awaySt.midfield
   const midBase = midTotal > 0 ? (homeSt.midfield / midTotal) * 100 : 50
@@ -690,15 +792,28 @@ export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
   const halfDuration = Math.floor(durationMinutes / 2)
   next.minute = state.minute + 1
 
-  // Transições de fase
+  // ── Transições de fase ────────────────────────────────────────────────────
+
+  // Ao atingir o minuto 45: rola o acréscimo (1-4 min) em vez de entrar no intervalo
   if (next.minute === halfDuration && state.phase === "first") {
+    next.addedTime = 1 + Math.floor(rnd() * 4)
+    generateMinuteEvents(next, config)
+    updatePossession(next, config)
+    moveBall(next)
+    next.momentum = Math.max(-50, Math.min(50, next.momentum))
+    return next
+  }
+
+  // Entra no intervalo depois de esgotar o acréscimo do 1º tempo
+  if (state.phase === "first" && state.minute >= halfDuration && next.minute > halfDuration + state.addedTime) {
     next.phase = "halftime"
     next.events = [{
       id: nameId(),
       minute: halfDuration,
+      addedTime: state.addedTime,
       type: "halftime",
       side: "home",
-      text: "Fim do 1º tempo",
+      text: `Fim do 1º tempo (+${state.addedTime}')`,
       important: true,
     }, ...next.events]
     next.ball = { x: 50, y: 50, side: "away" }
@@ -707,17 +822,30 @@ export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
 
   if (state.phase === "halftime") {
     next.phase = "second"
-    next.momentum = 0  // intervalo reseta o momentum
+    next.momentum = 0   // intervalo reseta o momentum
+    next.addedTime = 0  // zera para o acréscimo do 2º tempo
   }
 
-  if (next.minute >= durationMinutes && state.phase === "second") {
+  // Ao atingir o minuto 90: rola o acréscimo (2-5 min) em vez de encerrar
+  if (next.minute === durationMinutes && state.phase === "second") {
+    next.addedTime = 2 + Math.floor(rnd() * 5)
+    generateMinuteEvents(next, config)
+    updatePossession(next, config)
+    moveBall(next)
+    next.momentum = Math.max(-50, Math.min(50, next.momentum))
+    return next
+  }
+
+  // Encerra depois de esgotar o acréscimo do 2º tempo
+  if (state.phase === "second" && state.minute >= durationMinutes && next.minute > durationMinutes + state.addedTime) {
     next.phase = "fulltime"
     next.events = [{
       id: nameId(),
       minute: durationMinutes,
+      addedTime: state.addedTime,
       type: "fulltime",
       side: "home",
-      text: `Fim de jogo. ${config.homeTeam.curto} ${state.home.goals} x ${state.away.goals} ${config.awayTeam.curto}`,
+      text: `Fim de jogo. ${config.homeTeam.curto} ${next.home.goals} x ${next.away.goals} ${config.awayTeam.curto}`,
       important: true,
     }, ...next.events]
     return next
@@ -760,7 +888,7 @@ export function simulateFullMatch(config: MatchConfig): MatchState {
   let state = startMatch(createInitialState())
   while (state.phase !== "fulltime") {
     if (state.phase === "halftime") {
-      state = { ...state, phase: "second", momentum: 0 }
+      state = { ...state, phase: "second", momentum: 0, addedTime: 0 }
     }
     state = tickMinute(state, config)
   }

@@ -449,10 +449,11 @@ export default function SplashPage() {
         >
           {/* Imagem das ligas */}
           <Image
-            src="/images/leagues-logos.png"
+            src="/images/leagues-ultrafoot.jpg"
             alt="Ligas e competicoes licenciadas"
             fill
             className="object-contain"
+            unoptimized
             style={{
               animation: phase === "leagues" ? "leaguesZoom 3.5s ease-out forwards" : "none",
             }}
@@ -660,7 +661,7 @@ export default function SplashPage() {
         {/* Cinematic stadium backdrop */}
         <div className="absolute inset-0 overflow-hidden">
           <Image
-            src="/images/stadium-bg.png"
+            src="/images/menu-bg.png"
             alt=""
             fill
             className="object-cover"

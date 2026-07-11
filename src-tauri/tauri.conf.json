@@ -77,7 +77,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEwNDU2ODFGOUM4QUMwNDMKUldSRHdJcWNIMmhGRUc2VnhERnFDMHQwSDU4WGRaSWZLS213Z0wzSnhLS1Yvd3kwRWpvd20zRksK",
       "endpoints": [
-        "https://github.com/SEU-USUARIO/ultrafoot/releases/latest/download/latest.json"
+        "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"

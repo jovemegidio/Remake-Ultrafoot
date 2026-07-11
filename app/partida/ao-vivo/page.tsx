@@ -841,12 +841,18 @@ export default function PartidaAoVivoPage() {
 
   const isMatchInProgress = state.phase === "first" || state.phase === "second" || state.phase === "halftime"
 
-  // Acrescimos
-  const extraTime = state.minute > 45 && state.minute <= 47 
-    ? `+${state.minute - 45}` 
-    : state.minute > 90 
-      ? `+${state.minute - 90}` 
-      : null
+  // Acréscimos: mostra +N quando o addedTime for não-zero (acréscimo ativo)
+  const extraTime = (() => {
+    if (state.phase === "first" && state.addedTime > 0) {
+      const n = state.minute - 45
+      return n > 0 ? `+${n}` : null
+    }
+    if (state.phase === "second" && state.addedTime > 0) {
+      const n = state.minute - 90
+      return n > 0 ? `+${n}` : null
+    }
+    return null
+  })()
 
   return (
     <div className={cn(
@@ -952,7 +958,9 @@ export default function PartidaAoVivoPage() {
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-white/80 text-sm font-bold tabular-nums">
-                  {state.minute > 90 ? "90" : state.minute}&apos;00
+                  {(state.phase === "first" && state.addedTime > 0) ? "45" :
+                   (state.phase === "second" && state.addedTime > 0) ? "90" :
+                   state.minute}&apos;00
                 </span>
                 {extraTime && (
                   <span className="text-[#00ffc8] text-sm font-bold">{extraTime}&apos;</span>

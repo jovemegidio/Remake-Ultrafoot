@@ -525,7 +525,6 @@ export default function NovoJogoPage() {
                       unoptimized
                     />
                   )}
-                  <span className="text-base font-black uppercase tracking-[0.1em] text-white">{activeLeague.short}</span>
                   {hasMultipleLeagues && (
                     <span className="text-white/35 text-[10px]">{leagueIndex + 1} / {activeCountry.leagues.length} ligas</span>
                   )}

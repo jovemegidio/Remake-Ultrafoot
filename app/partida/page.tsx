@@ -35,6 +35,7 @@ import {
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { clearMatchContext, saveMatchContext } from "@/lib/match-context"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { simulateFullMatch, type MatchEvent as SimEvent } from "@/lib/match-engine"
 import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
@@ -206,7 +207,6 @@ function TeamPanel({
 
       {/* Card de LIGA */}
       <div className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[#0e1116]/85 px-5 py-3.5 backdrop-blur-sm">
-        <span className="text-base font-bold tracking-wide text-white">{leagueName}</span>
         {leagueLogo ? (
           <Image
             src={leagueLogo || "/placeholder.svg"}
@@ -367,7 +367,7 @@ export default function PartidaPage() {
           router.push("/partida/ao-vivo")
           break
         case "B":
-          router.back()
+          hardNavigate("/splash?menu=1")
           break
         case "X":
           handleQuickSim()
@@ -502,7 +502,7 @@ export default function PartidaPage() {
                 </span>
                 <span className="text-sm font-semibold">Selecionar</span>
               </Link>
-              <button onClick={() => router.back()} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
+              <button onClick={() => hardNavigate("/splash?menu=1")} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
                 <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
                   Esc
                 </span>

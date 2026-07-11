@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition, generatePlayerStats } from "@/lib/players-data"
 import { useUserTeam, useGameState, savedTeamToTeam } from "@/lib/save-system"
+import { useGameEngine } from "@/lib/game-engine"
 import {
   updateStandings,
   calcRoundFinances,
@@ -109,6 +110,8 @@ const SPEEDS: { id: MatchSpeed; label: string; sublabel: string }[] = [
 export default function MatchCenterClient() {
   const { team: userTeam, hydrated } = useUserTeam()
   const { state: gameState, setState: setGameState } = useGameState()
+  const tactics = useGameEngine(s => s.teamTactics)
+  const formation = useGameEngine(s => s.formation)
 
   const [matchCtx, setMatchCtx] = useState(() => loadMatchContext())
   useEffect(() => {
@@ -201,7 +204,7 @@ export default function MatchCenterClient() {
       return Math.round(sum / def.length)
     }
 
-    // Modificadores de formação (somente time do usuário)
+    // Modificadores de formação (somente time do usuário) — lidos do game-engine
     const formationMods: Record<string, { atk: number; def: number }> = {
       '4-4-2':   { atk: 1.00, def: 1.00 },
       '4-3-3':   { atk: 1.06, def: 0.96 },
@@ -209,16 +212,32 @@ export default function MatchCenterClient() {
       '5-3-2':   { atk: 0.92, def: 1.08 },
       '4-2-3-1': { atk: 1.04, def: 1.02 },
     }
-    const styleMods: Record<string, { atk: number; def: number }> = {
-      balanced: { atk: 1.00, def: 1.00 },
-      attack:   { atk: 1.06, def: 0.96 },
-      defense:  { atk: 0.96, def: 1.06 },
+    // Mentalidade → modificador ataque/defesa
+    const mentalityMods: Record<string, { atk: number; def: number }> = {
+      muito_defensivo: { atk: 0.88, def: 1.12 },
+      defensivo:       { atk: 0.94, def: 1.06 },
+      equilibrado:     { atk: 1.00, def: 1.00 },
+      ofensivo:        { atk: 1.06, def: 0.94 },
+      muito_ofensivo:  { atk: 1.12, def: 0.88 },
     }
-    const fm = formationMods[gameState.formation ?? '4-4-2'] ?? formationMods['4-4-2']
-    const sm = styleMods[gameState.tacticStyle ?? 'balanced'] ?? styleMods.balanced
+    // Estilo de jogo → modificador sutil
+    const styleMods: Record<string, { atk: number; def: number }> = {
+      posse_bola:    { atk: 1.02, def: 1.02 },
+      contra_ataque: { atk: 1.04, def: 1.04 },
+      pressao_alta:  { atk: 1.06, def: 0.96 },
+      jogo_direto:   { atk: 1.03, def: 0.98 },
+      jogo_posicional: { atk: 1.01, def: 1.01 },
+    }
+    const activeFormation = formation ?? gameState.formation ?? '4-4-2'
+    const activeMentality = tactics?.mentality ?? 'equilibrado'
+    const activeStyle = tactics?.playingStyle ?? 'jogo_posicional'
+
+    const fm = formationMods[activeFormation] ?? formationMods['4-4-2']
+    const mm = mentalityMods[activeMentality] ?? mentalityMods['equilibrado']
+    const sm = styleMods[activeStyle] ?? styleMods['jogo_posicional']
     const moraleMod = moraleMatchModifier(gameState.teamMorale ?? 70)
-    const userAtkMod = fm.atk * sm.atk * moraleMod
-    const userDefMod = fm.def * sm.def * moraleMod
+    const userAtkMod = fm.atk * mm.atk * sm.atk * moraleMod
+    const userDefMod = fm.def * mm.def * sm.def * moraleMod
 
     const homeAttackRaw = aggregateAttack(homeSquad)
     const homeDefenseRaw = aggregateDefense(homeSquad)
@@ -239,10 +258,20 @@ export default function MatchCenterClient() {
       awayDefense: userSide === "away" ? apply(awayDefenseRaw, userDefMod) : awayDefenseRaw,
       durationMinutes: matchCtx.duration,
       weatherFactor: matchCtx.weather === "rain" ? 0.9 : 1,
-      homeSquad: homeSquad.map(p => ({ nome: p.name, pos: p.position })),
-      awaySquad: awaySquad.map(p => ({ nome: p.name, pos: p.position })),
+      homeSquad: homeSquad.map(p => ({
+        nome: p.name, pos: p.position, rating: p.rating,
+        shooting: p.shooting, passing: p.passing, dribbling: p.dribbling,
+        defending: p.defending, physical: p.physical, pace: p.pace,
+        stamina: p.stamina,
+      })),
+      awaySquad: awaySquad.map(p => ({
+        nome: p.name, pos: p.position, rating: p.rating,
+        shooting: p.shooting, passing: p.passing, dribbling: p.dribbling,
+        defending: p.defending, physical: p.physical, pace: p.pace,
+        stamina: p.stamina,
+      })),
     }
-  }, [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, matchCtx.weather, gameState.formation, gameState.tacticStyle, gameState.teamMorale, userSide])
+  }, [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, matchCtx.weather, formation, tactics, gameState.teamMorale, userSide])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
@@ -715,7 +744,7 @@ export default function MatchCenterClient() {
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs text-white/50">
-              <span>Formação: <strong className="text-white">{gameState.formation ?? '4-4-2'}</strong></span>
+              <span>Formação: <strong className="text-white">{formation ?? '4-4-2'}</strong></span>
               <span>Sua moral: <strong className="text-[#1db954]">{state.home.goals + state.away.goals === 0 ? "Equilibrada" : "Alta"}</strong></span>
             </div>
           </div>
@@ -748,8 +777,8 @@ export default function MatchCenterClient() {
               selectedPlayer={selectedPitchPlayer}
               onSelectPlayer={setSelectedPitchPlayer}
               flash={state.flash}
-              homeFormation={userSide === "home" ? gameState.formation : undefined}
-              awayFormation={userSide === "away" ? gameState.formation : undefined}
+              homeFormation={userSide === "home" ? (formation ?? "4-4-2") : undefined}
+              awayFormation={userSide === "away" ? (formation ?? "4-4-2") : undefined}
             />
           </section>
 

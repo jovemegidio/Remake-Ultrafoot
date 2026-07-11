@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useGameState, type CoachSkillId } from "@/lib/save-system"
+import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
 import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getPlayersByTeam } from "@/lib/players-data"
@@ -663,6 +664,7 @@ export function useGameManager() {
   const initializeNewGame = useCallback((teamShort: string, managerName?: string) => {
     const leagueTeams = getUserLeagueTeams(teamShort)
     const standings = initializeStandings(leagueTeams)
+    const userTeam = getTeamByShort(teamShort)
 
     // Inicializa no game engine (carrega elenco do seed para o time)
     gameEngine.initializeGame(teamShort)
@@ -675,12 +677,44 @@ export function useGameManager() {
       matchResults: [],
     })
 
+    // Gera fixtures de carreira para persistir no save state
+    // Isso permite que ao-vivo/client.tsx rastreie quais partidas foram jogadas
+    // e detecte fim de temporada corretamente.
+    const careerTeam = userTeam
+      ? {
+          nome: userTeam.nome, curto: userTeam.curto,
+          cor1: userTeam.cor1, cor2: userTeam.cor2,
+          prestigio: userTeam.prestigio, saldo: userTeam.saldo,
+          divisao: userTeam.divisao, pais: userTeam.pais,
+          cidade: userTeam.cidade, estado: userTeam.estado,
+          torcida: userTeam.torcida, estadio_cap: userTeam.estadio_cap,
+          fileKey: userTeam.file_key, estadio: userTeam.estadio_nome ?? "",
+          patrocinador: userTeam.patrocinador, escudo: userTeam.escudo_url,
+        }
+      : null
+    let initialFixtures: import("@/lib/career-types").MatchFixture[] = []
+    let initialStandings: import("@/lib/career-types").StandingEntry[] = []
+    if (careerTeam) {
+      const cLeagueTeams = getLeagueTeams(careerTeam)
+      initialFixtures = generateSeasonFixtures(cLeagueTeams, teamShort, 2026)
+      initialStandings = initStandings(cLeagueTeams)
+    }
+
     // Atualiza save state (reseta progresso, preserva nome do tecnico)
     setSaveState({
       selectedTeamShort: teamShort,
       week: 0,
       season: 2026,
       ...(managerName ? { managerName: managerName.trim() || "Tecnico" } : {}),
+      // Fixtures semeadas para rastreamento de fim de temporada
+      fixtures: initialFixtures,
+      standings: initialStandings,
+      results: [],
+      finances: [],
+      seasonHistory: [],
+      injuries: [],
+      playerFatigue: {},
+      teamMorale: 70,
     })
   }, [gameEngine, setSaveState])
   
@@ -879,6 +913,10 @@ export function useGameManager() {
       f => f.week === newWeek && !f.isUserMatch
     )
 
+    // Atualiza fixtures no gameState para rastreamento de fim de temporada
+    const prevFixtures = (saveStateRef.current as Record<string, unknown>).fixtures as import("@/lib/career-types").MatchFixture[] | undefined ?? []
+    let updatedStateFixtures = [...prevFixtures]
+
     for (const fixture of roundFixtures) {
       const result = simulateMatchResult(
         fixture.homeTeam,
@@ -892,14 +930,27 @@ export function useGameManager() {
       } else {
         gameEngine.addMatchResultOnly(result)
       }
+      // Marca fixture correspondente como jogada no gameState
+      const idx = updatedStateFixtures.findIndex(
+        f => !f.isUserMatch && f.round === (fixture.round ?? newWeek)
+          && f.homeCurto === fixture.homeTeam.curto && f.awayCurto === fixture.awayTeam.curto
+      )
+      if (idx !== -1) {
+        updatedStateFixtures[idx] = {
+          ...updatedStateFixtures[idx],
+          played: true,
+          homeGoals: result.homeScore,
+          awayGoals: result.awayScore,
+        }
+      }
     }
 
     // Avanca game engine
     gameEngine.advanceWeek()
 
     // Update ref immediately so the next loop iteration sees the incremented week
-    saveStateRef.current = { ...currentState, week: newWeek }
-    setSaveState({ week: newWeek })
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures } as Partial<typeof currentState> & { fixtures: unknown })
 
     // Detecta campeao da liga apenas ao final da ultima rodada
     let leagueChampion: { competition: string; season: string; stats: { won: number; drawn: number; lost: number; goalsFor: number } } | null = null

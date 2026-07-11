@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -20,6 +19,7 @@ import {
   X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { hardNavigate } from "@/lib/hard-navigation"
 import {
   serieATeams,
   serieBTeams,
@@ -74,10 +74,37 @@ const DIV_COUNTRY: Record<string, string> = {
   j_league: "JPN", k_league_1: "KOR", chinese_super: "CHN",
 }
 
+// Nome do país (PT-BR) por código, para os cabeçalhos de grupo do editor.
+const COUNTRY_NAME: Record<string, string> = {
+  BRA: "Brasil", ENG: "Inglaterra", ESP: "Espanha", ITA: "Itália",
+  GER: "Alemanha", FRA: "França", POR: "Portugal", NED: "Holanda",
+  SCO: "Escócia", TUR: "Turquia", BEL: "Bélgica", RUS: "Rússia",
+  USA: "Estados Unidos", MEX: "México", ARG: "Argentina", COL: "Colômbia",
+  CHI: "Chile", URU: "Uruguai", KSA: "Arábia Saudita", JPN: "Japão",
+  KOR: "Coreia do Sul", CHN: "China", INT: "Internacional",
+}
+
+// Sigla do estado -> nome completo, usado para os subgrupos (estaduais) do Brasil.
+const ESTADO_LABEL: Record<string, string> = {
+  AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia",
+  CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás",
+  MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais",
+  PA: "Pará", PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí",
+  RJ: "Rio de Janeiro", RN: "Rio Grande do Norte", RS: "Rio Grande do Sul",
+  RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina", SP: "São Paulo",
+  SE: "Sergipe", TO: "Tocantins",
+}
+
 const formatDivisao = (div: string) =>
   DIV_LABEL[div] ?? div.replace(/_/g, " ").toUpperCase()
 
-const getTeamCountry = (team: Team) => DIV_COUNTRY[team.divisao] ?? "INT"
+const countryCodeOf = (team: Team) => DIV_COUNTRY[team.divisao] ?? "INT"
+
+// Segundo nível de agrupamento: por estado (Brasil) ou por liga (internacional).
+const subGroupOf = (team: Team): { key: string; label: string } =>
+  countryCodeOf(team) === "BRA"
+    ? { key: `BRA|${team.estado}`, label: ESTADO_LABEL[team.estado] ?? team.estado }
+    : { key: `${countryCodeOf(team)}|${team.divisao}`, label: formatDivisao(team.divisao) }
 
 // Mock players data generator based on team - completamente deterministico (sem Math.random)
 const generatePlayersForTeam = () => {
@@ -143,16 +170,14 @@ const POS_STYLE: Record<string, { text: string; bg: string }> = {
 }
 
 export default function EditarPage() {
-  const router = useRouter()
-
   useEffect(() => {
     const handler = (e: Event) => {
       const btn = (e as CustomEvent).detail?.button
-      if (btn === "B") router.back()
+      if (btn === "B") hardNavigate("/splash?menu=1")
     }
     window.addEventListener("gamepad:button", handler)
     return () => window.removeEventListener("gamepad:button", handler)
-  }, [router])
+  }, [])
 
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(allTeams[0])
   const [searchTeam, setSearchTeam] = useState("")
@@ -336,6 +361,77 @@ export default function EditarPage() {
     )
   }, [searchTeam])
 
+  // Agrupa os times por País > (estados no Brasil / ligas no exterior).
+  // Países e subgrupos são ordenados por prestígio (o mais forte primeiro),
+  // com o Brasil sempre no topo.
+  const groupedTeams = useMemo(() => {
+    const byCountry = new Map<string, {
+      code: string
+      name: string
+      subs: Map<string, { key: string; label: string; teams: Team[] }>
+    }>()
+
+    for (const team of filteredTeams) {
+      const code = countryCodeOf(team)
+      if (!byCountry.has(code)) {
+        byCountry.set(code, { code, name: COUNTRY_NAME[code] ?? code, subs: new Map() })
+      }
+      const country = byCountry.get(code)!
+      const sub = subGroupOf(team)
+      if (!country.subs.has(sub.key)) {
+        country.subs.set(sub.key, { key: sub.key, label: sub.label, teams: [] })
+      }
+      country.subs.get(sub.key)!.teams.push(team)
+    }
+
+    const maxPrestige = (teams: Team[]) => teams.reduce((m, t) => Math.max(m, t.prestigio), 0)
+
+    return Array.from(byCountry.values())
+      .map(country => {
+        const subs = Array.from(country.subs.values())
+          .map(sub => ({
+            ...sub,
+            teams: [...sub.teams].sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome)),
+          }))
+          .sort((a, b) => maxPrestige(b.teams) - maxPrestige(a.teams) || a.label.localeCompare(b.label))
+        const count = subs.reduce((n, s) => n + s.teams.length, 0)
+        const prestige = subs.reduce((m, s) => Math.max(m, maxPrestige(s.teams)), 0)
+        return { ...country, subs, count, prestige }
+      })
+      .sort((a, b) => {
+        if (a.code === "BRA") return -1
+        if (b.code === "BRA") return 1
+        return b.prestige - a.prestige || a.name.localeCompare(b.name)
+      })
+  }, [filteredTeams])
+
+  const isSearching = searchTeam.trim().length > 0
+  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(() => new Set(["BRA"]))
+  const [expandedSubs, setExpandedSubs] = useState<Set<string>>(() => new Set())
+
+  // Mantém o grupo do time selecionado sempre aberto (ao trocar de time).
+  useEffect(() => {
+    if (!selectedTeam) return
+    const code = countryCodeOf(selectedTeam)
+    const sub = subGroupOf(selectedTeam)
+    setExpandedCountries(prev => (prev.has(code) ? prev : new Set(prev).add(code)))
+    setExpandedSubs(prev => (prev.has(sub.key) ? prev : new Set(prev).add(sub.key)))
+  }, [selectedTeam])
+
+  const toggleCountry = (code: string) =>
+    setExpandedCountries(prev => {
+      const next = new Set(prev)
+      next.has(code) ? next.delete(code) : next.add(code)
+      return next
+    })
+
+  const toggleSub = (key: string) =>
+    setExpandedSubs(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+
   const sortedPlayers = useMemo(() => {
     if (!sortColumn) return players
     return [...players].sort((a, b) => {
@@ -361,11 +457,11 @@ export default function EditarPage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") router.push("/splash")
+      if (e.key === "Escape") hardNavigate("/splash?menu=1")
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [router])
+  }, [])
 
   const ovrColor = (ovr: number) =>
     ovr >= 85 ? "text-emerald-400" :
@@ -394,7 +490,7 @@ export default function EditarPage() {
       <header className="relative z-10 h-14 flex-shrink-0 bg-black/70 backdrop-blur-xl border-b border-white/[0.06] px-5 flex items-center justify-between">
         <div className="flex items-center gap-5">
           <Link
-            href="/splash"
+            href="/splash?menu=1"
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white rounded-lg transition-all text-sm font-medium border border-white/[0.06]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -435,43 +531,78 @@ export default function EditarPage() {
           </div>
 
           {/* Column header */}
-          <div className="grid grid-cols-[1fr_44px_44px] bg-white/[0.03] text-white/30 text-[10px] font-semibold uppercase tracking-wider border-b border-white/[0.06]">
-            <div className="px-3 py-2">Time</div>
-            <div className="px-1 py-2 text-center">País</div>
+          <div className="grid grid-cols-[1fr_44px] bg-white/[0.03] text-white/30 text-[10px] font-semibold uppercase tracking-wider border-b border-white/[0.06]">
+            <div className="px-3 py-2">País · Estadual · Time</div>
             <div className="px-1 py-2 text-center">OVR</div>
           </div>
 
-          {/* Teams List */}
+          {/* Teams List — agrupada por País > Estadual/Liga */}
           <div className="flex-1 overflow-y-auto scrollbar-thin">
-            {filteredTeams.map((team) => {
-              const isSelected = selectedTeam?.curto === team.curto && selectedTeam?.divisao === team.divisao
+            {groupedTeams.map((country) => {
+              const countryOpen = isSearching || expandedCountries.has(country.code)
               return (
-                <button
-                  key={`${team.curto}-${team.divisao}`}
-                  onClick={() => setSelectedTeam(team)}
-                  className={cn(
-                    "w-full grid grid-cols-[1fr_44px_44px] text-xs border-b border-white/[0.03] transition-all",
-                    isSelected
-                      ? "bg-white/[0.07] border-l-2 border-l-[#00ffc8]"
-                      : "hover:bg-white/[0.03]"
-                  )}
-                >
-                  <div className="px-3 py-2.5 text-left truncate flex items-center gap-2">
-                    <TeamCrest team={team} size="xs" />
-                    <span className={cn(
-                      "truncate",
-                      isSelected ? "text-white font-semibold" : "text-white/60"
-                    )}>{team.nome}</span>
-                  </div>
-                  <div className="px-1 py-2.5 flex items-center justify-center text-[10px] text-white/30">
-                    {getTeamCountry(team)}
-                  </div>
-                  <div className={cn("px-1 py-2.5 text-center font-bold text-xs", ovrColor(team.prestigio))}>
-                    {team.prestigio}
-                  </div>
-                </button>
+                <div key={country.code}>
+                  {/* Cabeçalho do país */}
+                  <button
+                    onClick={() => toggleCountry(country.code)}
+                    className="w-full flex items-center gap-2 px-3 py-2 bg-[#0a1210] hover:bg-white/[0.05] border-b border-white/[0.06] transition-colors"
+                  >
+                    <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-white/40 transition-transform", countryOpen ? "" : "-rotate-90")} />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-white/30 w-7 text-left shrink-0">{country.code}</span>
+                    <span className="flex-1 text-left text-xs font-semibold text-white/80 truncate">{country.name}</span>
+                    <span className="text-[10px] text-white/25 shrink-0">{country.count}</span>
+                  </button>
+
+                  {countryOpen && country.subs.map((sub) => {
+                    const subOpen = isSearching || expandedSubs.has(sub.key)
+                    return (
+                      <div key={sub.key}>
+                        {/* Cabeçalho do estadual / liga */}
+                        <button
+                          onClick={() => toggleSub(sub.key)}
+                          className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 bg-white/[0.015] hover:bg-white/[0.045] border-b border-white/[0.03] transition-colors"
+                        >
+                          <ChevronDown className={cn("h-3 w-3 shrink-0 text-white/25 transition-transform", subOpen ? "" : "-rotate-90")} />
+                          <span className="flex-1 text-left text-[11px] font-medium text-[#00ffc8]/70 truncate">{sub.label}</span>
+                          <span className="text-[9px] text-white/20 shrink-0">{sub.teams.length}</span>
+                        </button>
+
+                        {subOpen && sub.teams.map((team) => {
+                          const isSelected = selectedTeam?.curto === team.curto && selectedTeam?.divisao === team.divisao
+                          return (
+                            <button
+                              key={`${team.curto}-${team.divisao}`}
+                              onClick={() => setSelectedTeam(team)}
+                              className={cn(
+                                "w-full grid grid-cols-[1fr_44px] text-xs border-b border-white/[0.03] transition-all",
+                                isSelected
+                                  ? "bg-white/[0.07] border-l-2 border-l-[#00ffc8]"
+                                  : "hover:bg-white/[0.03]"
+                              )}
+                            >
+                              <div className="pl-8 pr-3 py-2.5 text-left truncate flex items-center gap-2">
+                                <TeamCrest team={team} size="xs" />
+                                <span className={cn(
+                                  "truncate",
+                                  isSelected ? "text-white font-semibold" : "text-white/60"
+                                )}>{team.nome}</span>
+                              </div>
+                              <div className={cn("px-1 py-2.5 text-center font-bold text-xs", ovrColor(team.prestigio))}>
+                                {team.prestigio}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
+                </div>
               )
             })}
+
+            {groupedTeams.length === 0 && (
+              <div className="px-3 py-10 text-center text-[11px] text-white/25">Nenhum time encontrado</div>
+            )}
           </div>
 
           {/* Footer count */}

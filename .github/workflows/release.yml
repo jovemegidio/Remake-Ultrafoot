@@ -1,0 +1,67 @@
+name: Release
+
+# Gera a ÚNICA build oficial do Ultrafoot 26: builda, ASSINA e publica o
+# instalador NSIS + latest.json no GitHub Release. O jogo instalado pega essa
+# atualização sozinho (tauri-plugin-updater). Assim ninguém precisa gerar .exe
+# na mão — evita "build em cima de build" e binários desatualizados.
+#
+# Como publicar uma versão:
+#   1. Bump da versão em package.json E src-tauri/tauri.conf.json
+#   2. git commit -am "chore: bump versao X.Y.Z"
+#   3. git tag vX.Y.Z && git push origin master --tags
+#   O push da tag dispara este workflow.
+#
+# Segredos necessários (Settings -> Secrets and variables -> Actions):
+#   TAURI_SIGNING_PRIVATE_KEY           conteúdo de ~/.ultrafoot-keys/ultrafoot-updater.key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  (vazio — a chave foi gerada sem senha)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build, sign & publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Ultrafoot 26 ${{ github.ref_name }}"
+          releaseBody: "Atualização automática do Ultrafoot 26. O jogo baixa e instala sozinho na próxima abertura."
+          releaseDraft: false
+          prerelease: false

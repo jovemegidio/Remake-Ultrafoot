@@ -28,7 +28,8 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
-import { serieATeams, formatCurrency } from "@/lib/teams-data"
+import { formatCurrency } from "@/lib/teams-data"
+import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useUserTeam } from "@/lib/save-system"
 import {
   AVAILABLE_SCOUTS,
@@ -42,72 +43,9 @@ import { PlayerAvatar } from "@/components/player-avatar"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-// Mock transfer targets
-const palTeam = serieATeams[1]
-const flaTeam = serieATeams[2]
-const corTeam = serieATeams[6]
-const saoTeam = serieATeams[5]
-
-const transferTargets = [
-  { 
-    id: 1, name: "Gabriel Veron", team: palTeam, position: "ATA", secondaryPositions: ["PD", "PE"], 
-    age: 21, overall: 78, potential: 88, value: 18000000, trend: "up" as const,
-    nationality: "Brasil", height: "175 cm", weight: "68 kg", foot: "D",
-    stats: { pace: 88, shooting: 76, passing: 62, dribbling: 84, defense: 42, physical: 56 },
-    releaseClause: 45000000, scoutedBy: "Ricardo Silva", scoutProgress: 85
-  },
-  { 
-    id: 2, name: "Gustavo Scarpa", team: palTeam, position: "MEI", secondaryPositions: ["ME", "MD"], 
-    age: 30, overall: 81, potential: 81, value: 12000000, trend: "down" as const,
-    nationality: "Brasil", height: "180 cm", weight: "72 kg", foot: "E",
-    stats: { pace: 72, shooting: 78, passing: 82, dribbling: 80, defense: 58, physical: 65 },
-    releaseClause: 30000000, scoutedBy: null, scoutProgress: 0
-  },
-  { 
-    id: 3, name: "Bruno Henrique", team: flaTeam, position: "PE", secondaryPositions: ["ATA", "PD"], 
-    age: 33, overall: 80, potential: 80, value: 8000000, trend: "down" as const,
-    nationality: "Brasil", height: "182 cm", weight: "74 kg", foot: "D",
-    stats: { pace: 85, shooting: 79, passing: 68, dribbling: 78, defense: 35, physical: 72 },
-    releaseClause: 20000000, scoutedBy: "Matty Bailey", scoutProgress: 100
-  },
-  { 
-    id: 4, name: "Yuri Alberto", team: corTeam, position: "ATA", secondaryPositions: ["PE", "PD"], 
-    age: 23, overall: 79, potential: 86, value: 22000000, trend: "up" as const,
-    nationality: "Brasil", height: "184 cm", weight: "78 kg", foot: "D",
-    stats: { pace: 82, shooting: 80, passing: 58, dribbling: 75, defense: 38, physical: 78 },
-    releaseClause: 55000000, scoutedBy: "Matty Bailey", scoutProgress: 45
-  },
-  { 
-    id: 5, name: "Luciano", team: saoTeam, position: "ATA", secondaryPositions: ["MEI"], 
-    age: 30, overall: 80, potential: 80, value: 15000000, trend: "stable" as const,
-    nationality: "Brasil", height: "178 cm", weight: "71 kg", foot: "D",
-    stats: { pace: 78, shooting: 82, passing: 70, dribbling: 77, defense: 42, physical: 68 },
-    releaseClause: 38000000, scoutedBy: null, scoutProgress: 0
-  },
-  { 
-    id: 6, name: "Dudu", team: palTeam, position: "PE", secondaryPositions: ["PD", "MEI"], 
-    age: 32, overall: 82, potential: 82, value: 10000000, trend: "down" as const,
-    nationality: "Brasil", height: "165 cm", weight: "62 kg", foot: "D",
-    stats: { pace: 84, shooting: 75, passing: 78, dribbling: 86, defense: 40, physical: 58 },
-    releaseClause: 25000000, scoutedBy: "Ricardo Silva", scoutProgress: 100
-  },
-  { 
-    id: 7, name: "Raphael Veiga", team: palTeam, position: "MEI", secondaryPositions: ["ME"], 
-    age: 29, overall: 83, potential: 83, value: 25000000, trend: "up" as const,
-    nationality: "Brasil", height: "176 cm", weight: "70 kg", foot: "D",
-    stats: { pace: 70, shooting: 84, passing: 83, dribbling: 82, defense: 52, physical: 62 },
-    releaseClause: 62000000, scoutedBy: "Matty Bailey", scoutProgress: 20
-  },
-  { 
-    id: 8, name: "Arrascaeta", team: flaTeam, position: "MEI", secondaryPositions: ["ME", "ATA"], 
-    age: 30, overall: 85, potential: 85, value: 30000000, trend: "stable" as const,
-    nationality: "Uruguai", height: "172 cm", weight: "68 kg", foot: "D",
-    stats: { pace: 72, shooting: 82, passing: 86, dribbling: 88, defense: 45, physical: 60 },
-    releaseClause: 75000000, scoutedBy: null, scoutProgress: 0
-  },
-]
-
-type Player = typeof transferTargets[0]
+// Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
+// via generateDetailedMarketTargets. Determinístico por temporada.
+type Player = DetailedMarketTarget
 type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "enviadas" | "recebidas"
 type SentProposalStatus = "aceita" | "rejeitada"
 
@@ -231,6 +169,12 @@ export default function MercadoPage() {
       .reverse()
   }, [gameEngine.transferOffers])
 
+  // Vitrine dinâmica: alvos do banco real, estáveis dentro da temporada
+  const transferTargets = useMemo(
+    () => generateDetailedMarketTargets(userTeam?.curto ?? "", 60, gameEngine.currentSeason),
+    [userTeam?.curto, gameEngine.currentSeason],
+  )
+
   // Filter players by all criteria
   const filteredPlayers = useMemo(() => {
     return transferTargets.filter(p => {
@@ -253,7 +197,7 @@ export default function MercadoPage() {
       }
       return true
     })
-  }, [nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter])
+  }, [transferTargets, nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter])
   
   // Auto-select first player when filtered results change
   useEffect(() => {

@@ -1,0 +1,33 @@
+CONTRATO DE LICENÇA DE USUÁRIO FINAL — ULTRAFOOT 26
+
+Copyright (c) 2026 Ultrafoot Studio. Todos os direitos reservados.
+
+1. LICENÇA
+Este Contrato concede a você uma licença pessoal, não exclusiva e
+intransferível para instalar e usar o Ultrafoot 26 ("Software") em seus
+dispositivos, para fins de entretenimento pessoal e não comercial.
+
+2. RESTRIÇÕES
+Você não pode: (a) revender, alugar ou redistribuir o Software; (b) realizar
+engenharia reversa, descompilar ou desmontar o Software, exceto quando
+expressamente permitido por lei; (c) remover avisos de direitos autorais.
+
+3. CONTEÚDO DE TERCEIROS
+Escudos, nomes de clubes, jogadores e demais elementos podem ser marcas de
+seus respectivos titulares e são usados apenas para fins de identificação
+dentro de um produto de simulação. O Ultrafoot 26 não é afiliado, patrocinado
+ou endossado por nenhuma entidade esportiva oficial.
+
+4. ATUALIZAÇÕES
+O Software pode verificar e instalar atualizações automaticamente para
+melhorar a experiência, corrigir falhas e adicionar conteúdo.
+
+5. ISENÇÃO DE GARANTIA
+O Software é fornecido "no estado em que se encontra", sem garantias de
+qualquer tipo. O uso é por sua conta e risco.
+
+6. LIMITAÇÃO DE RESPONSABILIDADE
+Em nenhuma hipótese o Ultrafoot Studio será responsável por danos diretos ou
+indiretos decorrentes do uso ou da impossibilidade de uso do Software.
+
+Ao clicar em "Aceito", você concorda com os termos deste Contrato.

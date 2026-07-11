@@ -185,6 +185,8 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .register_uri_scheme_protocol("game-asset", |_app, request| {
             let path = request.uri().path().trim_start_matches('/');
             // Use exe directory — assets are bundled alongside ultrafoot.exe

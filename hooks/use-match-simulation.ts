@@ -61,7 +61,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
       }
       // No intervalo, pula automaticamente após 1 tick
       if (current.phase === "halftime") {
-        const next = { ...current, phase: "second" as const }
+        const next = { ...current, phase: "second" as const, momentum: 0, addedTime: 0 }
         stateRef.current = next
         setState(next)
         return
@@ -154,7 +154,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     let safety = 200
     while (cur.phase !== "fulltime" && safety-- > 0) {
       if (cur.phase === "halftime") {
-        cur = { ...cur, phase: "second" }
+        cur = { ...cur, phase: "second", momentum: 0, addedTime: 0 }
       }
       cur = tickMinute(cur, cfg)
     }
