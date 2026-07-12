@@ -12,9 +12,12 @@
     "test:e2e:ui": "playwright test --ui",
     "qa:smoke": "tsx scripts/qa-smoke.ts",
     "qa:ui": "node scripts/qa-ui.mjs",
+    "qa:audit": "node scripts/qa-audit.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
+    "build:fast": "tauri build --no-bundle",
+    "update:installed": "powershell -File scripts/fast-update.ps1",
     "tauri:build:debug": "tauri build --debug",
     "tauri:icon": "tauri icon Icone.png"
   },

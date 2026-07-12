@@ -27,7 +27,7 @@ type Tab = "principais" | "controle"
 
 export default function SalvarPage() {
   const router = useRouter()
-  const { state } = useGameState()
+  const { state, hydrated } = useGameState()
   const { seasonCalendar } = useGameManager()
 
   const [tab, setTab] = useState<Tab>("principais")
@@ -40,13 +40,16 @@ export default function SalvarPage() {
     [state.selectedTeamShort],
   )
   const managerName = (state.managerName || "Tecnico").toUpperCase()
-  const lastModified = formatLongDate(state.updatedAt)
+  // Datas so apos hidratacao: evita mismatch de hydration (#418), pois o fallback
+  // Date.now() renderizado no prerender difere do valor em runtime.
+  const lastModified = hydrated ? formatLongDate(state.updatedAt) : ""
   const nextMatch = seasonCalendar.nextUserMatch
 
   const currentDate = useMemo(() => {
+    if (!hydrated) return ""
     const d = new Date(state.updatedAt || Date.now())
     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
-  }, [state.updatedAt])
+  }, [state.updatedAt, hydrated])
 
   // Barra de acoes inferior fiel a referencia
   useActionBar(

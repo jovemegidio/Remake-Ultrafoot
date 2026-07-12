@@ -195,7 +195,7 @@ export default function DashboardPage() {
               const tasks = [
                 { href: "/partida", icon: Play, label: t.common.nextMatch, highlight: true },
                 { href: "/elenco", icon: Users, label: t.sidebar.squad, highlight: false },
-                { href: "/gerenciar-time", icon: ClipboardList, label: "Gerenciamento do Time", highlight: false },
+                { href: "/elenco/gerenciamento", icon: ClipboardList, label: "Gerenciamento do Time", highlight: false },
                 { href: "/mercado", icon: ArrowLeftRight, label: t.sidebar.market, highlight: false },
               ]
               return (
