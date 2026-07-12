@@ -223,7 +223,7 @@ const COUNTRIES: CountryTab[] = [
   },
 ]
 
-const STADIUM_BG = "/images/field-bg.png"
+const STADIUM_BG = "/images/novo-jogo-bg.png"
 
 export default function NovoJogoPage() {
   const { initializeNewGame } = useGameManager()
@@ -389,8 +389,8 @@ export default function NovoJogoPage() {
   // a janela abrir. Antes de cair pro uniforme generico, tenta de novo algumas vezes.
   const handleKitError = useCallback(() => {
     setKitRetryCount((c) => {
-      if (c < 2) {
-        setTimeout(() => setKitRetryCount((n) => n + 1), 350)
+      if (c < 4) {
+        setTimeout(() => setKitRetryCount((n) => n + 1), 120)
         return c
       }
       setKitError(true)

@@ -70,7 +70,7 @@ export function TeamCrest({
   const [imageLoaded, setImageLoaded] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [customLogo, setCustomLogo] = useState<string | null>(null)
-  const MAX_RETRIES = 2
+  const MAX_RETRIES = 4
 
   // Resolve team data
   const resolvedTeam = team || (teamShort ? getTeamByShort(teamShort) : undefined)
@@ -110,7 +110,7 @@ export function TeamCrest({
   // a janela abrir. Antes de cair pro escudo generico, tenta de novo algumas vezes.
   const handleError = () => {
     if (retryCount < MAX_RETRIES) {
-      setTimeout(() => setRetryCount((c) => c + 1), 350)
+      setTimeout(() => setRetryCount((c) => c + 1), 120)
     } else {
       setImageError(true)
     }
@@ -226,7 +226,7 @@ export function TeamCrest({
       )}
 
       <Image
-        key={`${retryCount}-${customLogo ? "custom" : "default"}`}
+        key={`${escudoKey ?? ""}-${retryCount}-${customLogo ? "custom" : "default"}`}
         src={activeUrl}
         alt={`Escudo ${resolvedTeam?.nome || 'Time'}`}
         width={pixels}
