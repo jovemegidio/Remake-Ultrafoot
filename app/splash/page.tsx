@@ -838,14 +838,6 @@ export default function SplashPage() {
 
       </div>
 
-      {/* Vignette overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%)`,
-        }}
-      />
-
       {/* Modal de Registro */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
         <DialogContent 
