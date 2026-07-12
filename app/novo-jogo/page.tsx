@@ -420,13 +420,6 @@ export default function NovoJogoPage() {
 
             {/* ── Zona 1: Info do clube ── */}
             <div className="flex flex-col w-full lg:w-[300px] shrink-0">
-              {/* Indicador Times masculinos */}
-              <div className="flex items-center gap-2 text-sm font-semibold mb-5">
-                <span className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-[#00ffc8] bg-[#00ffc8]">
-                  <Check className="w-3 h-3 text-black" strokeWidth={3} />
-                </span>
-                <span className="text-white">Times masculinos</span>
-              </div>
 
               {/* Pais (com setas, navega nos dois sentidos por todos os ${COUNTRIES.length} paises do jogo) */}
               <div className="flex items-center gap-1.5 mb-2">

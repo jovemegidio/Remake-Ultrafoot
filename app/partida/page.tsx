@@ -107,13 +107,6 @@ function TeamPanel({
 
   return (
     <div className="flex w-full max-w-[400px] flex-col items-center gap-3">
-      {/* Indicador Times masculinos */}
-      <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e1116]/85 px-3 py-2.5 backdrop-blur-sm">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-          <Check className="h-3 w-3 text-black" strokeWidth={3} />
-        </span>
-        <span className="text-sm font-semibold text-white">Times masculinos</span>
-      </div>
 
       {/* Card de PAIS */}
       <div className="relative flex w-full items-center justify-center rounded-2xl bg-[#0e1116]/85 px-5 py-3.5 backdrop-blur-sm">

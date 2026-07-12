@@ -14,13 +14,13 @@ import { cn } from "@/lib/utils"
 export const NEWS_SOURCES = {
   ge: {
     name: "ge",
-    logo: "/logos/ge.png",
+    logo: "/logos/ge.jpg",
     color: "#00A859",
     bgColor: "bg-[#00A859]",
   },
   espn: {
     name: "ESPN Brasil",
-    logo: "/logos/espn.png",
+    logo: "/logos/espn.jpg",
     color: "#E60000",
     bgColor: "bg-[#E60000]",
   },

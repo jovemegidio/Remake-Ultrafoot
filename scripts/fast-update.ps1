@@ -23,7 +23,7 @@ foreach ($f in @('app','components','lib','hooks','styles','scripts','data')) {
 foreach ($f in @('package.json','next.config.mjs','tsconfig.json','postcss.config.mjs','components.json','next-env.d.ts')) {
   if (Test-Path "$G\$f") { Copy-Item "$G\$f" "$C\$f" -Force }
 }
-foreach ($d in @('images','brand')) {
+foreach ($d in @('images','brand','logos','flags')) {
   if (Test-Path "$G\public\$d") { robocopy "$G\public\$d" "$C\public\$d" '/XF' 'desktop.ini' '/R:1' '/W:1' '/MT:16' '/NP' '/NFL' '/NDL' '/NJH' '/NJS' | Out-Null }
 }
 
