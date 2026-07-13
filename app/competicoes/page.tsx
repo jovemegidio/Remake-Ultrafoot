@@ -28,7 +28,7 @@ import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto } from "@/lib/cup-engine"
-import { getCountryCompetitions } from "@/lib/country-competitions"
+import { getCountryCompetitions, getContinentalSpot } from "@/lib/country-competitions"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
@@ -565,6 +565,8 @@ export default function CompeticoesPage() {
   // Barcelona via "Copa do Brasil", "Paulistao" e "Libertadores".
   const countryComps = getCountryCompetitions(userTeam.divisao)
   const isBrazilian = countryComps.hasStateChampionship
+  // Champions ou Europa League? Depende da posicao do clube na liga.
+  const continentalSpot = getContinentalSpot(userTeam.divisao, userPosition)
 
   // So no Brasil a liga nacional comeca depois do estadual. Fora do Brasil nao existe
   // estadual, entao a liga esta em andamento desde a 1a rodada.
@@ -630,9 +632,10 @@ export default function CompeticoesPage() {
     },
     {
       id: "libertadores",
-      // Continental do continente do clube (Champions League para europeus).
-      name: countryComps.continental,
-      type: "Continental",
+      // A continental depende de ONDE o clube terminou, nao so do continente:
+      // G4 -> Champions/Libertadores; 5o-6o -> Europa League/Sul-Americana.
+      name: continentalSpot.competition ?? countryComps.continental,
+      type: continentalSpot.isSecondary ? "Continental (2a)" : "Continental",
       teams: 32,
       status: compState.libertadores.qualified
         ? compState.libertadores.champion
