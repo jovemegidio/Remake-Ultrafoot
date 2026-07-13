@@ -19,6 +19,7 @@ import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { getGameDate } from "@/lib/game-date"
 import { cn } from "@/lib/utils"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
@@ -106,19 +107,48 @@ export default function CalendarioPage() {
     }) || nextUserMatch
   }, [selectedDay, monthFixtures, nextUserMatch])
 
-  // Simula todas as semanas ate a partida escolhida e leva direto para o jogo.
-  // advanceWeek usa refs internamente ("prevents stale closures in callbacks called
-  // in loops"), entao pode ser chamado em sequencia com seguranca.
+  // Data que corre na animacao (DIA a DIA, para dar imersao — antes o jogo pulava
+  // de semana em semana). O engine continua avancando por semana nos bastidores:
+  // a cada ~7 dias percorridos chamamos advanceWeek() (que usa refs, por isso pode
+  // ser chamado em sequencia com seguranca).
+  const [simDate, setSimDate] = useState<Date | null>(null)
+  const [simProgress, setSimProgress] = useState(0)
+
   const simulateUntilMatch = useCallback(
-    (target: Fixture) => {
+    async (target: Fixture) => {
       if (isSimulating) return
       setIsSimulating(true)
-      const steps = Math.max(0, target.week - currentWeek - 1)
-      for (let i = 0; i < steps; i++) advanceWeek()
-      // Navegacao hard: recarrega a tela de partida ja com o estado avancado.
+
+      const weeks = Math.max(0, target.week - currentWeek - 1)
+      const start = getGameDate(currentSeason, currentWeek)
+      const end = new Date(currentSeason, target.month ?? start.getMonth(), roundToDay(target.round))
+      const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000))
+
+      // Quanto mais longe a data, mais rapido o dia corre (mantem a animacao curta).
+      const delay = totalDays > 60 ? 18 : totalDays > 30 ? 32 : 55
+      const perWeek = totalDays / Math.max(1, weeks)
+
+      let advanced = 0
+      for (let d = 1; d <= totalDays; d++) {
+        setSimDate(new Date(start.getTime() + d * 86_400_000))
+        setSimProgress(Math.round((d / totalDays) * 100))
+
+        // Cruzou mais uma semana de calendario -> simula essa rodada no engine.
+        if (advanced < weeks && d >= Math.round((advanced + 1) * perWeek)) {
+          advanceWeek()
+          advanced++
+        }
+        await new Promise(r => setTimeout(r, delay))
+      }
+      // Garante que nenhuma semana ficou para tras por arredondamento.
+      while (advanced < weeks) {
+        advanceWeek()
+        advanced++
+      }
+
       hardNavigate("/partida")
     },
-    [advanceWeek, currentWeek, isSimulating],
+    [advanceWeek, currentWeek, currentSeason, isSimulating],
   )
 
   // Dias do calendario
@@ -240,7 +270,32 @@ export default function CalendarioPage() {
 
   return (
   <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 relative">
-  
+
+  {/* Overlay de simulacao DIA A DIA (imersao: a data corre dia por dia ate a partida) */}
+  {isSimulating && simDate && (
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/88 backdrop-blur-sm">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-[#00ffc8]">
+        Simulando dias
+      </div>
+      <div className="mt-4 text-7xl font-black tabular-nums leading-none text-white">
+        {String(simDate.getDate()).padStart(2, "0")}
+        <span className="ml-3 text-4xl font-black uppercase text-white/70">
+          {MONTH_NAMES_SHORT[simDate.getMonth()]}
+        </span>
+      </div>
+      <div className="mt-3 text-sm font-medium uppercase tracking-wider text-white/45">
+        {["Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"][simDate.getDay()]}
+      </div>
+      <div className="mt-8 h-1.5 w-72 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] transition-[width] duration-100"
+          style={{ width: `${simProgress}%` }}
+        />
+      </div>
+      <div className="mt-3 text-xs text-white/35">{simProgress}%</div>
+    </div>
+  )}
+
   {/* Background Image - Futuristic Grid */}
   <div className="absolute inset-0 md:ml-16">
   <Image

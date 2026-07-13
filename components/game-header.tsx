@@ -101,6 +101,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [advancing, setAdvancing] = useState(false)
+  // Data "correndo" durante o avanco (animacao dia a dia)
+  const [advanceDate, setAdvanceDate] = useState<Date | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showCoachDropdown, setShowCoachDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -172,7 +174,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
   // O jogo e organizado por temporada (comecando 01/01) e nao por "rodada" isolada —
   // mostra a data corrente do calendario em vez de um contador de rodadas.
-  const gameDate = getGameDate(currentSeason, currentWeek)
+  // Durante o avanco mostra a data da animacao (dia a dia); fora dele, a data real.
+  const gameDate = advanceDate ?? getGameDate(currentSeason, currentWeek)
   const gameDateLabel = `${gameDate.getDate().toString().padStart(2, "0")} ${MONTHS_SHORT[gameDate.getMonth()]}`
 
   const handleSave = async () => {
@@ -184,10 +187,21 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     setTimeout(() => setSaved(false), 2000)
   }
 
+  // Avanca com animacao DIA A DIA (imersao) em vez de pular a semana de uma vez.
+  // O engine continua avancando por semana: a data corre os 7 dias e so entao a
+  // rodada e simulada.
   const handleAdvance = async () => {
+    if (advancing) return
     setAdvancing(true)
-    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    const start = getGameDate(currentSeason, currentWeek)
+    for (let d = 1; d <= 7; d++) {
+      setAdvanceDate(new Date(start.getTime() + d * 86_400_000))
+      await new Promise(resolve => setTimeout(resolve, 95))
+    }
+
     await advanceGameWeek()
+    setAdvanceDate(null)
     setAdvancing(false)
     if (seasonCalendar.nextUserMatch) {
       hardNavigate("/partida")
