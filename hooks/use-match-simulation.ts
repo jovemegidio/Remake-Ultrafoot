@@ -5,8 +5,10 @@ import {
   createInitialState,
   startMatch,
   tickMinute,
+  getFootballClock,
   SPEED_TICKS_PER_SEC,
   type MatchConfig,
+  type MatchEvent,
   type MatchState,
   type MatchSpeed,
 } from "@/lib/match-engine"
@@ -22,6 +24,8 @@ export interface UseMatchSimulation {
   setSpeed: (s: MatchSpeed) => void
   // Atalho para forçar um gol (botão de teste / DEV)
   forceGoal: (side: "home" | "away") => void
+  // Registra um evento vindo da UI (substituição) na timeline da partida
+  addEvent: (ev: Omit<MatchEvent, "id" | "minute" | "addedTime">) => void
   // Simular até o fim instantaneamente
   fastForward: () => void
 }
@@ -59,13 +63,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
         setIsRunning(false)
         return
       }
-      // No intervalo, pula automaticamente após 1 tick
-      if (current.phase === "halftime") {
-        const next = { ...current, phase: "second" as const, momentum: 0, addedTime: 0 }
-        stateRef.current = next
-        setState(next)
-        return
-      }
+      // No intervalo, tickMinute devolve o relogio para 45' e sai do halftime num tick.
       const next = tickMinute(current, cfg)
       stateRef.current = next
       setState(next)
@@ -145,6 +143,27 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     setState(next)
   }, [])
 
+  /**
+   * Registra na timeline um evento criado pela UI (ex.: substituicao). O minuto vem do
+   * relogio do motor, entao uma troca no acrescimo aparece como "90+2'".
+   */
+  const addEvent = useCallback((ev: Omit<MatchEvent, "id" | "minute" | "addedTime">) => {
+    const current = stateRef.current
+    const next: MatchState = {
+      ...current,
+      events: [
+        {
+          id: Math.random().toString(36).slice(2, 9),
+          ...getFootballClock(current, configRef.current ?? undefined),
+          ...ev,
+        },
+        ...current.events,
+      ],
+    }
+    stateRef.current = next
+    setState(next)
+  }, [])
+
   const fastForward = useCallback(() => {
     const cfg = configRef.current
     if (!cfg) return
@@ -153,9 +172,6 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     if (cur.phase === "pre") cur = startMatch(cur)
     let safety = 200
     while (cur.phase !== "fulltime" && safety-- > 0) {
-      if (cur.phase === "halftime") {
-        cur = { ...cur, phase: "second", momentum: 0, addedTime: 0 }
-      }
       cur = tickMinute(cur, cfg)
     }
     stateRef.current = cur
@@ -178,6 +194,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     reset,
     setSpeed: changeSpeed,
     forceGoal,
+    addEvent,
     fastForward,
   }
 }
