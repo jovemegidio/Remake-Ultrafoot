@@ -50,6 +50,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { Cutscene } from "@/components/cutscene"
 
 const FLAG_MAP: Record<string, string> = {
   BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
@@ -236,6 +237,7 @@ export default function NovoJogoPage() {
   const [kitError, setKitError] = useState(false)
   const [kitRetryCount, setKitRetryCount] = useState(0)
   const [managerName, setManagerName] = useState("")
+  const [showIntro, setShowIntro] = useState(false)
   const [nameError, setNameError] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
@@ -307,7 +309,8 @@ export default function NovoJogoPage() {
     setTheme("team")
     initializeNewGame(selectedTeam.curto, managerName)
     window.sessionStorage.setItem("ultrafoot:session-active", "true")
-    hardNavigate("/")
+    // Toca a cutscene de inicio de carreira antes de entrar no escritorio.
+    setShowIntro(true)
   }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme])
 
   const isNameValid = managerName.trim().length > 0
@@ -405,6 +408,9 @@ export default function NovoJogoPage() {
 
   return (
     <main className="h-screen w-screen overflow-hidden relative">
+      {/* Cutscene de inicio de carreira (toca ao "Iniciar Carreira", vai para o escritorio ao terminar/pular) */}
+      {showIntro && <Cutscene src="/cutscenes/intro.mp4" onComplete={() => hardNavigate("/")} />}
+
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image src={STADIUM_BG} alt="Stadium Background" fill className="object-cover" priority unoptimized />

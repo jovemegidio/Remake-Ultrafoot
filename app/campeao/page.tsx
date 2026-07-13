@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Trophy, Star, Sparkles, Home, ArrowRight, Crown, Medal } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
+import { Cutscene } from "@/components/cutscene"
 import { Button } from "@/components/ui/button"
 import { useUserTeam } from "@/lib/save-system"
 import { useRequireTeam } from "@/lib/use-require-team"
@@ -83,6 +84,7 @@ export default function CampeaoPage() {
   const { currentSeason } = useGameManager()
   const router = useRouter()
   const [hover, setHover] = useState(false)
+  const [cutsceneDone, setCutsceneDone] = useState(false)
 
   // Lê dados do campeonato ganho do localStorage e limpa após leitura
   const [champion, setChampion] = useState<PendingChampion | null>(null)
@@ -123,6 +125,11 @@ export default function CampeaoPage() {
         Carregando...
       </div>
     )
+  }
+
+  // Cutscene de titulo antes da tela de campeao
+  if (!cutsceneDone) {
+    return <Cutscene src="/cutscenes/champion.mp4" onComplete={() => setCutsceneDone(true)} />
   }
 
   return (

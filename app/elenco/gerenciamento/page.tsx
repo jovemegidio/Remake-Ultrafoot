@@ -870,7 +870,9 @@ export default function ElencoPage() {
 
   // Gerenciamento view (main view)
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
+    // pl-16 removido: reservava 64px para uma sidebar que nao existe nesta view,
+    // deixando uma faixa vazia a esquerda. Agora o conteudo ocupa a largura toda.
+    <div className="h-screen overflow-hidden bg-[#050508]">
       <GameHeader team={userTeam} />
       
       {/* Match notification toast - only shows during actual match simulations */}
@@ -1423,7 +1425,7 @@ export default function ElencoPage() {
       </main>
       
       {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-0 md:left-16 right-0 h-12 md:h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-2 md:px-6">
+      <div className="fixed bottom-0 left-0 right-0 h-12 md:h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-2 md:px-6">
         <div className="flex items-center gap-1 md:gap-4">
           <Button 
             variant="ghost" 
