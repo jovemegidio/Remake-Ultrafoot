@@ -1,6 +1,39 @@
 use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::sync::Mutex;
 
+/// Decodifica percent-encoding (%20, %EF%BC%82...) do caminho da URI.
+///
+/// request.uri().path() devolve o caminho AINDA CODIFICADO. Sem decodificar, um arquivo
+/// como "Ainda Bem - Marisa Monte.webm" era procurado no disco como
+/// "%EF%BC%82Ainda%20Bem..." e nunca existia -> 404. Era por isso que a musica nunca
+/// tocava: o player carregava a faixa, mas o audio dava 404 silencioso.
+fn percent_decode(s: &str) -> String {
+    fn hex_val(b: u8) -> Option<u8> {
+        match b {
+            b'0'..=b'9' => Some(b - b'0'),
+            b'a'..=b'f' => Some(b - b'a' + 10),
+            b'A'..=b'F' => Some(b - b'A' + 10),
+            _ => None,
+        }
+    }
+
+    let bytes = s.as_bytes();
+    let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            if let (Some(h), Some(l)) = (hex_val(bytes[i + 1]), hex_val(bytes[i + 2])) {
+                out.push(h * 16 + l);
+                i += 3;
+                continue;
+            }
+        }
+        out.push(bytes[i]);
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
 fn parse_byte_range(range: &str, total: usize) -> Option<(usize, usize)> {
     let range = range.strip_prefix("bytes=")?;
     let mut iter = range.split('-');
@@ -188,7 +221,9 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .register_uri_scheme_protocol("game-asset", |_app, request| {
-            let path = request.uri().path().trim_start_matches('/');
+            // Decodifica o percent-encoding: nomes de musica tem espacos e acentos.
+            let path = percent_decode(request.uri().path().trim_start_matches('/'));
+            let path = path.as_str();
             // Use exe directory — assets are bundled alongside ultrafoot.exe
             let exe_path = std::env::current_exe().expect("failed to get exe path");
             let exe_dir = exe_path.parent().expect("failed to get exe dir");

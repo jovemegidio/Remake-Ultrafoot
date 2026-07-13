@@ -139,11 +139,12 @@ function ensureInit() {
         typeof window !== "undefined" &&
         "__TAURI_INTERNALS__" in window &&
         process.env.NODE_ENV === "production"
+      // track.src ja vem percent-encoded do tracks.json ("/music/%20Ainda%20Bem...").
+      // Antes fazia decodeURIComponent e montava a URL com o nome CRU (espacos, aspas):
+      // URL invalida -> o webview re-encodava -> o Rust nao decodificava -> 404 silencioso.
+      // Mantendo codificado, a URL e valida e o handler (que agora decodifica) acha o arquivo.
       const resolved = isTauriProd
-        ? data.map((track) => {
-            const fileName = decodeURIComponent(track.src.replace(/^\/music\//, ""))
-            return { ...track, src: `game-asset://localhost/music/${fileName}` }
-          })
+        ? data.map((track) => ({ ...track, src: `game-asset://localhost${track.src}` }))
         : data
       const shuffled = [...resolved].sort(() => Math.random() - 0.5)
 

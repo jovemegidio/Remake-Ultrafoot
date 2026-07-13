@@ -28,6 +28,8 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
+import { getGameDate } from "@/lib/game-date"
+import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-cooldown"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useUserTeam } from "@/lib/save-system"
@@ -168,6 +170,12 @@ export default function MercadoPage() {
       .slice(-8)
       .reverse()
   }, [gameEngine.transferOffers])
+
+  // Data ATUAL do jogo — a carencia de recusa conta em dias de jogo, nao reais.
+  const gameDate = useMemo(
+    () => getGameDate(gameEngine.currentSeason, gameEngine.currentWeek),
+    [gameEngine.currentSeason, gameEngine.currentWeek],
+  )
 
   // Vitrine dinâmica: alvos do banco real, estáveis dentro da temporada
   const transferTargets = useMemo(
@@ -316,10 +324,20 @@ export default function MercadoPage() {
   }
 
   const handleNegotiate = (type: "buy" | "loan" = "buy") => {
-    if (selectedPlayer) {
-      setNegotiationType(type)
-      setNegotiationOpen(true)
+    if (!selectedPlayer) return
+
+    // Jogador que recusou fica 30 dias sem ouvir o clube. Antes dava para reabrir o
+    // modal e propor de novo no mesmo dia ate a sorte virar — recusa sem custo nenhum.
+    const daysLeft = getRejectionCooldownDays(selectedPlayer.id, gameDate)
+    if (daysLeft > 0) {
+      setMarketNotice(
+        `${selectedPlayer.name} recusou sua proposta. Ele so voltara a negociar em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}.`
+      )
+      return
     }
+
+    setNegotiationType(type)
+    setNegotiationOpen(true)
   }
 
   const handleSearch = () => {
@@ -364,13 +382,21 @@ export default function MercadoPage() {
     type,
     offer,
     accepted,
+    rejectedBy,
   }: {
-    player: { name: string; position: string; overall: number; team?: { nome?: string } }
+    player: { id?: number; name: string; position: string; overall: number; team?: { nome?: string } }
     type: "buy" | "sell" | "loan"
     offer: number
     accepted: boolean
+    rejectedBy?: "club" | "player" | null
   }) => {
     if (type === "sell") return
+
+    // Recusa DO JOGADOR abre 30 dias de carencia. Recusa do clube nao: ali e so
+    // dinheiro, e faz sentido voltar com uma oferta maior.
+    if (!accepted && rejectedBy === "player" && player.id != null) {
+      markPlayerRejection(player.id, gameDate)
+    }
 
     const proposalStatus: SentProposalStatus = accepted ? "aceita" : "rejeitada"
 

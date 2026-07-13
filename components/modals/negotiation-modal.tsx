@@ -41,6 +41,8 @@ interface NegotiationModalProps {
     type: "buy" | "sell" | "loan"
     offer: number
     accepted: boolean
+    /** Quem barrou: o clube (dinheiro) ou o proprio jogador (projeto). */
+    rejectedBy?: "club" | "player" | null
   }) => void
 }
 
@@ -125,7 +127,7 @@ export function NegotiationModal({
         setRejectedBy("club")
         setPlayerReason("")
         setAccepted(false)
-        onNegotiationResult?.({ player, type, offer, accepted: false })
+        onNegotiationResult?.({ player, type, offer, accepted: false, rejectedBy: "club" })
         setStep("result")
         return
       }
@@ -153,7 +155,11 @@ export function NegotiationModal({
       setAccepted(decision.accepted)
       setRejectedBy(decision.accepted ? null : "player")
       setPlayerReason(decision.reason)
-      onNegotiationResult?.({ player, type, offer, accepted: decision.accepted })
+      onNegotiationResult?.({
+        player, type, offer,
+        accepted: decision.accepted,
+        rejectedBy: decision.accepted ? null : "player",
+      })
       setStep("result")
     }, 1800)
   }
