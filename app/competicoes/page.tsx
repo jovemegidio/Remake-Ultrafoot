@@ -25,7 +25,8 @@ import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, getTeamsByDivision, serieBTeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameManager, getLeagueName, getStateChampRounds } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
+import { getCompetitionLogo } from "@/lib/competition-logo"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
@@ -661,12 +662,23 @@ export default function CompeticoesPage() {
                 )}
               >
                 <div className="flex items-start justify-between">
-                  <div className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-lg",
-                    comp.bgColor
-                  )}>
-                    <Icon className={cn("h-5 w-5", comp.color)} />
-                  </div>
+                  {/* Logo real da competicao quando existir; senao, o icone generico. */}
+                  {getCompetitionLogo(comp.name) ? (
+                    <div className="flex h-10 w-10 items-center justify-center">
+                      <img
+                        src={getCompetitionLogo(comp.name)!}
+                        alt={comp.name}
+                        className="h-10 w-10 object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-lg",
+                      comp.bgColor
+                    )}>
+                      <Icon className={cn("h-5 w-5", comp.color)} />
+                    </div>
+                  )}
                   {comp.userPosition && (
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00ffc8]/20 text-sm font-bold text-[#00ffc8]">
                       {comp.userPosition}

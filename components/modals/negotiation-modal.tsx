@@ -14,6 +14,7 @@ import { Slider } from "@/components/ui/slider"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { formatCurrency, type Team } from "@/lib/teams-data"
+import { evaluatePlayerDecision } from "@/lib/negotiation-engine"
 import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +25,8 @@ interface Player {
   overall: number
   value: number
   team?: Team
+  age?: number
+  potential?: number
 }
 
 interface NegotiationModalProps {
@@ -46,6 +49,7 @@ export function NegotiationModal({
   onOpenChange,
   player,
   type,
+  team,
   onConfirm,
   onNegotiationResult,
 }: NegotiationModalProps) {
@@ -53,6 +57,9 @@ export function NegotiationModal({
   const [step, setStep] = useState<"offer" | "response" | "result">("offer")
   const [accepted, setAccepted] = useState(false)
   const [responseProgress, setResponseProgress] = useState(0)
+  // Quem barrou a negociacao e por que. O clube pode aceitar e o JOGADOR recusar.
+  const [rejectedBy, setRejectedBy] = useState<"club" | "player" | null>(null)
+  const [playerReason, setPlayerReason] = useState<string>("")
 
   // Reset state when modal opens
   useEffect(() => {
@@ -61,6 +68,8 @@ export function NegotiationModal({
       setStep("offer")
       setAccepted(false)
       setResponseProgress(0)
+      setRejectedBy(null)
+      setPlayerReason("")
     }
   }, [open, player])
 
@@ -109,10 +118,42 @@ export function NegotiationModal({
     
     // Show result after animation
     setTimeout(() => {
-      const random = Math.random() * 100
-      const acceptedResult = random <= status.chance
-      setAccepted(acceptedResult)
-      onNegotiationResult?.({ player, type, offer, accepted: acceptedResult })
+      // ETAPA 1 — o CLUBE avalia o dinheiro.
+      const clubAccepts = Math.random() * 100 <= status.chance
+
+      if (!clubAccepts) {
+        setRejectedBy("club")
+        setPlayerReason("")
+        setAccepted(false)
+        onNegotiationResult?.({ player, type, offer, accepted: false })
+        setStep("result")
+        return
+      }
+
+      // ETAPA 2 — o JOGADOR avalia o PROJETO. Dinheiro nao compra tudo:
+      // ele pode recusar mesmo com o clube tendo aceitado uma oferta enorme.
+      // Emprestimo pesa menos no lado do jogador (e temporario).
+      const buyingPrestige = team?.prestigio ?? 60
+      const currentPrestige = player.team?.prestigio ?? 60
+      // Salario oferecido cresce junto com a proposta: pagar acima do valor de
+      // mercado sinaliza salario maior. wageRatio ~ proporcional a oferta/valor.
+      const wageRatio = fairValue > 0 ? offer / fairValue : 1
+
+      const decision = evaluatePlayerDecision({
+        playerOverall: player.overall,
+        playerAge: player.age ?? 26,
+        playerPotential: player.potential ?? player.overall,
+        currentClubPrestige: currentPrestige,
+        buyingClubPrestige: buyingPrestige,
+        wageRatio,
+        // Proxy da forca do 11 titular do comprador.
+        buyingClubSquadStrength: isLoan ? 0 : buyingPrestige,
+      })
+
+      setAccepted(decision.accepted)
+      setRejectedBy(decision.accepted ? null : "player")
+      setPlayerReason(decision.reason)
+      onNegotiationResult?.({ player, type, offer, accepted: decision.accepted })
       setStep("result")
     }, 1800)
   }
@@ -315,17 +356,31 @@ export function NegotiationModal({
               "text-2xl font-bold mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300",
               accepted ? "text-[#00ffc8]" : "text-red-500"
             )} style={{ animationDelay: "200ms" }}>
-              {accepted ? "Proposta Aceita!" : "Proposta Recusada"}
+              {accepted
+                ? "Proposta Aceita!"
+                : rejectedBy === "player"
+                  ? "O Jogador Recusou"
+                  : "O Clube Recusou"}
             </div>
-            
+
+            {/* Quando o CLUBE aceita mas o JOGADOR recusa, deixamos isso explicito:
+                dinheiro resolveu a parte do clube, mas nao convenceu o atleta. */}
+            {rejectedBy === "player" && (
+              <div className="mx-4 mt-4 rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/5 px-3 py-2 text-xs text-[#00ffc8]/80">
+                O {player.team?.nome ?? "clube"} <strong>aceitou</strong> os {formatCurrency(offer)} — mas o acordo pessoal falhou.
+              </div>
+            )}
+
             <div className="text-sm text-white/50 mt-3 max-w-xs mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: "300ms" }}>
-              {accepted 
+              {accepted
                 ? isLoan
                   ? `O emprestimo de ${player.name} foi acordado por ${formatCurrency(offer)} (12 meses)`
                   : `A transferencia de ${player.name} foi concluida por ${formatCurrency(offer)}`
-                : isLoan
-                  ? "O clube recusou o emprestimo. Tente um valor maior ou duracao diferente."
-                  : "O clube recusou sua oferta. Tente novamente com um valor maior."
+                : rejectedBy === "player"
+                  ? playerReason
+                  : isLoan
+                    ? "O clube recusou o emprestimo. Tente um valor maior ou duracao diferente."
+                    : "O clube recusou sua oferta. Tente novamente com um valor maior."
               }
             </div>
 

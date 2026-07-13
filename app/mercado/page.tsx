@@ -1394,7 +1394,7 @@ export default function MercadoPage() {
         onOpenChange={setNegotiationOpen}
         player={selectedPlayer}
         type={negotiationType}
-        team={selectedPlayer?.team}
+        team={userTeam}
         onConfirm={(fee) => {
           if (!selectedPlayer) return
           const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer)
