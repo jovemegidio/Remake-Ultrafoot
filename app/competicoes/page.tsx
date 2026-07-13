@@ -28,6 +28,7 @@ import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto } from "@/lib/cup-engine"
+import { getCountryCompetitions } from "@/lib/country-competitions"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
@@ -560,9 +561,14 @@ export default function CompeticoesPage() {
 
   const serieBStandings = useMemo(() => generateStandings(serieBTeams, userTeam.curto), [userTeam.curto])
 
-  // No Brasil, a liga nacional so comeca apos o campeonato estadual. Antes disso
-  // a tabela da Serie A esta zerada e o status deve refletir "a comecar".
-  const stateChampRounds = getStateChampRounds(userTeam.curto)
+  // Competicoes do PAIS do clube. A tela era hardcoded em Brasil: quem jogava com o
+  // Barcelona via "Copa do Brasil", "Paulistao" e "Libertadores".
+  const countryComps = getCountryCompetitions(userTeam.divisao)
+  const isBrazilian = countryComps.hasStateChampionship
+
+  // So no Brasil a liga nacional comeca depois do estadual. Fora do Brasil nao existe
+  // estadual, entao a liga esta em andamento desde a 1a rodada.
+  const stateChampRounds = isBrazilian ? getStateChampRounds(userTeam.curto) : 0
   const leagueStarted = currentWeek > stateChampRounds
 
   // Abre por padrao na competicao em andamento: estadual antes da liga comecar.
@@ -587,7 +593,8 @@ export default function CompeticoesPage() {
     },
     {
       id: "copa-do-brasil",
-      name: t.competitions.copaDoBrasil,
+      // Copa nacional do PAIS do clube (Copa del Rey, FA Cup, Copa do Brasil...).
+      name: countryComps.domesticCup,
       type: "Copa",
       teams: 16,
       status: compState.copaBrasil.champion
@@ -623,7 +630,8 @@ export default function CompeticoesPage() {
     },
     {
       id: "libertadores",
-      name: t.competitions.libertadores,
+      // Continental do continente do clube (Champions League para europeus).
+      name: countryComps.continental,
       type: "Continental",
       teams: 32,
       status: compState.libertadores.qualified
@@ -647,7 +655,8 @@ export default function CompeticoesPage() {
         ? compState.libertadores.eliminated ? "border-red-400/30" : "border-amber-400/30"
         : "border-white/10"
     },
-  ]
+  // Estadual so existe no Brasil — um clube espanhol nao disputa "Paulistao".
+  ].filter(c => c.id !== "estadual" || isBrazilian)
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">

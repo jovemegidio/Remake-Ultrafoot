@@ -872,7 +872,9 @@ export default function ElencoPage() {
   return (
     // pl-16 removido: reservava 64px para uma sidebar que nao existe nesta view,
     // deixando uma faixa vazia a esquerda. Agora o conteudo ocupa a largura toda.
-    <div className="h-screen overflow-hidden bg-[#050508]">
+    // flex flex-col: sem isso o flex-1 do conteudo nao tinha efeito (o pai nao era flex),
+    // o campo parava na altura natural e sobrava uma faixa preta ate o rodape.
+    <div className="flex h-screen flex-col overflow-hidden bg-[#050508]">
       <GameHeader team={userTeam} />
       
       {/* Match notification toast - only shows during actual match simulations */}

@@ -26,7 +26,9 @@ function formatTime(seconds: number): string {
 const SPOTIFY_GREEN = "#1db954"
 const SPOTIFY_GREEN_HOVER = "#1ed760"
 
-export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, offsetLeft = 72 }: MusicPlayerProps) {
+// offsetLeft era 72 por causa da GameSidebar, que nao existe mais — o offset virou uma
+// faixa preta morta a esquerda da barra. Default 0; quem precisar desloca explicitamente.
+export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, offsetLeft = 0 }: MusicPlayerProps) {
   // Estado de reproducao compartilhado (singleton) — sobrevive a troca de paginas
   const snap = useSyncExternalStore(
     musicStore.subscribe,
