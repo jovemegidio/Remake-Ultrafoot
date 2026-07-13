@@ -666,10 +666,10 @@ function NewsContentCard({ news }: { news: NewsItem }) {
 
   const imageCategory = NEWS_TYPE_TO_IMAGE_CATEGORY[news.type] ?? "match"
   const seed = seedFromString(news.id)
-  const aiImageUrl = getNewsImageUrl(imageCategory, seed, 800, 450)
+  // Capa local de futebol (estadio/tunel/gramado) escolhida pela categoria da noticia.
+  const aiImageUrl = getNewsImageUrl(imageCategory, seed)
 
-  // Em modo Tauri offline, aiImageUrl é null — mostra fallback imediatamente
-  const [imgError, setImgError] = useState(!aiImageUrl)
+  const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
 
   const typeColors: Record<string, string> = {
