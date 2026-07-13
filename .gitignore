@@ -107,3 +107,9 @@ assets-missing.md
 /*.png
 /*.jpg
 /*.jpeg
+
+# Assets pesados: distribuidos via instalador/Drive, nunca no git
+public/music/
+public/jogadores/
+public/selecoes/
+public/trofeus/
