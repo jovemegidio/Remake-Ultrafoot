@@ -606,8 +606,11 @@ export default function PartidaAoVivoPage() {
   // Som por evento (gol, falta, cartão, etc.)
   useEffect(() => {
     if (state.events.length === 0) return
-    const last = state.events[state.events.length - 1]
-    const id = `snd-${last.type}-${last.minute}-${last.side}`
+    // O motor PREPENDE os eventos ([novo, ...events]), entao o mais recente e o
+    // indice 0. Antes lia events[length-1] = o mais ANTIGO (o kickoff), e por isso
+    // nenhum som de gol/cartao/penalti tocava depois do primeiro evento.
+    const last = state.events[0]
+    const id = `snd-${last.id}`
     if (lastSoundEventId.current === id) return
     lastSoundEventId.current = id
     switch (last.type) {
@@ -658,9 +661,12 @@ export default function PartidaAoVivoPage() {
   useEffect(() => {
     if (state.events.length === 0) return
     
-    const lastEvent = state.events[state.events.length - 1]
-    const eventId = `${lastEvent.type}-${lastEvent.minute}-${lastEvent.side}`
-    
+    // Mesmo bug do handler de som: o motor prepende, entao o evento novo e o [0].
+    // Lendo [length-1] o efeito ficava preso no kickoff e NUNCA disparava as
+    // animacoes de gol/cartao/falta nem o modal de batedor de penalti.
+    const lastEvent = state.events[0]
+    const eventId = lastEvent.id
+
     // Evita processar o mesmo evento duas vezes
     if (lastProcessedEventId.current === eventId) return
     lastProcessedEventId.current = eventId

@@ -97,7 +97,7 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   china_league_one:{ startMonth: 1, monthsInSeason: 10, rounds: 30 },
 }
 
-const ESTADO_CAMPEONATO: Record<string, string> = {
+export const ESTADO_CAMPEONATO: Record<string, string> = {
   SP: "Campeonato Paulista",
   RJ: "Campeonato Carioca",
   RS: "Campeonato Gaucho",
@@ -142,7 +142,7 @@ const STATE_MAX_TEAMS = 20
 
 // Retorna TODOS os times do estado que disputam o estadual (minimo 4).
 // Antes havia um cap fixo de 8 -> SP (13 times) ficava com 5 clubes de fora.
-function getStateChampionshipTeams(userTeamShort: string): Team[] {
+export function getStateChampionshipTeams(userTeamShort: string): Team[] {
   const userTeam = getTeamByShort(userTeamShort)
   if (!userTeam || !isBrazilianDivision(userTeam.divisao)) return []
   const estado = userTeam.estado

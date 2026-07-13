@@ -342,35 +342,29 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
   
   // Sortear Estadual
   const drawEstadual = () => {
-    // Detectar estadual do usuario
-    let estadualName = "Paulistao"
-    let estadualTeams = ESTADUAL_TEAMS["Paulistao"]
-    
-    if (["FLA", "FLU", "VAS", "BOT"].includes(userTeamShort)) {
-      estadualName = "Carioca"
-      estadualTeams = ESTADUAL_TEAMS["Carioca"]
-    } else if (["GRE", "INT", "JUV"].includes(userTeamShort)) {
-      estadualName = "Gaucho"
-      estadualTeams = ESTADUAL_TEAMS["Gaucho"]
-    } else if (["CAM", "CRU", "AME"].includes(userTeamShort)) {
-      estadualName = "Mineiro"
-      estadualTeams = ESTADUAL_TEAMS["Mineiro"]
-    }
-    
+    // Estadual REAL do time do usuario (pelo estado dele), nao mais uma lista
+    // hardcoded de 4 estaduais que jogava todo mundo no Paulistao.
+    const userTeamData = getTeamByShort(userTeamShort)
+    const estadualName = ESTADO_CAMPEONATO[userTeamData?.estado ?? ""] ?? "Campeonato Estadual"
+    let estadualTeams = getStateChampionshipTeams(userTeamShort).map(t => t.curto)
+
     // Garantir que o time do usuario esta no estadual
     if (!estadualTeams.includes(userTeamShort)) {
-      estadualTeams = [userTeamShort, ...estadualTeams.slice(0, 15)]
+      estadualTeams = [userTeamShort, ...estadualTeams]
     }
-    
+
     const shuffled = [...estadualTeams].sort(() => Math.random() - 0.5)
-    
-    // Criar 4 grupos de 4 times
-    const groups = [
-      { name: "Grupo A", teams: shuffled.slice(0, 4).map(t => ({ short: t, points: 0, played: 0 })) },
-      { name: "Grupo B", teams: shuffled.slice(4, 8).map(t => ({ short: t, points: 0, played: 0 })) },
-      { name: "Grupo C", teams: shuffled.slice(8, 12).map(t => ({ short: t, points: 0, played: 0 })) },
-      { name: "Grupo D", teams: shuffled.slice(12, 16).map(t => ({ short: t, points: 0, played: 0 })) },
-    ]
+
+    // Distribui os times em 4 grupos em serpentina. Antes fatiava fixo de 4 em 4
+    // assumindo 16 times — estaduais menores (Mineiro, Carioca...) ficavam com grupos vazios.
+    const groupNames = ["Grupo A", "Grupo B", "Grupo C", "Grupo D"]
+    const groups = groupNames.map(name => ({
+      name,
+      teams: [] as { short: string; points: number; played: number }[],
+    }))
+    shuffled.forEach((t, i) => {
+      groups[i % 4].teams.push({ short: t, points: 0, played: 0 })
+    })
     
     setState(s => ({
       ...s,
