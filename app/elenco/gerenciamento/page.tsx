@@ -961,7 +961,7 @@ export default function ElencoPage() {
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
-              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] max-h-[500px]" 
+              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px]"
               style={{
                 background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
               }}

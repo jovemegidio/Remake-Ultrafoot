@@ -262,6 +262,17 @@ export const musicStore = {
   },
   requestAutoplay() {
     if (hasAutoplayed) return
+
+    // onInteract fica anexado ate a musica REALMENTE tocar (nao usa {once}), pois:
+    //  - o webview costuma bloquear autoplay sem gesto do usuario;
+    //  - as faixas podem carregar depois do primeiro gesto (attempt sai cedo se
+    //    tracks.length===0). Com listener persistente, o proximo gesto ja toca.
+    const onInteract = () => attempt()
+    const detach = () => {
+      document.removeEventListener("pointerdown", onInteract)
+      document.removeEventListener("keydown", onInteract)
+      document.removeEventListener("touchstart", onInteract)
+    }
     const attempt = () => {
       if (hasAutoplayed || !audio || state.tracks.length === 0) return
       audio
@@ -269,20 +280,21 @@ export const musicStore = {
         .then(() => {
           hasAutoplayed = true
           setState({ playing: true })
+          detach()
         })
         .catch(() => {})
     }
-    const timer = setTimeout(attempt, 500)
+
+    // Tenta de imediato (alguns webviews permitem) e novamente conforme as faixas carregam.
+    attempt()
+    const timers = [setTimeout(attempt, 400), setTimeout(attempt, 1200), setTimeout(attempt, 3000)]
+
     if (!autoplayAttached) {
       autoplayAttached = true
-      const onInteract = () => {
-        attempt()
-        document.removeEventListener("click", onInteract)
-        document.removeEventListener("keydown", onInteract)
-      }
-      document.addEventListener("click", onInteract, { once: true })
-      document.addEventListener("keydown", onInteract, { once: true })
+      document.addEventListener("pointerdown", onInteract)
+      document.addEventListener("keydown", onInteract)
+      document.addEventListener("touchstart", onInteract)
     }
-    return () => clearTimeout(timer)
+    return () => timers.forEach(clearTimeout)
   },
 }

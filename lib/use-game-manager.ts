@@ -569,7 +569,10 @@ function generateRoundMatchups(teams: Team[], round: number): [Team, Team][] {
 }
 
 // Simula resultado de uma partida entre dois times
-function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, season: number): MatchResult {
+// competition: nome REAL da competicao do fixture (estadual/liga/copa/continental).
+// Antes caia sempre em getLeagueName(mandante), o que rotulava jogos de estadual/copa
+// como se fossem da liga e quebrava o agrupamento por competicao.
+function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, season: number, competition?: string): MatchResult {
   // Fator de forca baseado em prestigio
   const homeStrength = homeTeam.prestigio + 5 // Bonus de mando
   const awayStrength = awayTeam.prestigio
@@ -617,7 +620,7 @@ function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, seaso
   return {
     week,
     season,
-    competition: getLeagueName(homeTeam.curto),
+    competition: competition ?? getLeagueName(homeTeam.curto),
     homeTeam: homeTeam.curto,
     awayTeam: awayTeam.curto,
     homeScore,
@@ -980,7 +983,8 @@ export function useGameManager() {
         fixture.homeTeam,
         fixture.awayTeam,
         newWeek,
-        currentState.season
+        currentState.season,
+        fixture.competition
       )
       // Apenas atualiza standings da liga principal (nao do estadual)
       if (fixture.competitionType === "league") {

@@ -764,9 +764,9 @@ export default function MercadoPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-180px)]">
               {/* Player List */}
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin">
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
                     <div key={group} className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
@@ -790,18 +790,20 @@ export default function MercadoPage() {
               </div>
 
               {/* Player Details Panel */}
-              {selectedPlayer ? (
-                <PlayerDetailsPanel 
-                  player={selectedPlayer}
-                  onNegotiate={handleNegotiate}
-                />
-              ) : (
-                <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 flex flex-col items-center justify-center text-center">
-                  <User className="h-20 w-20 text-white/10 mb-4" />
-                  <h3 className="text-white/40 text-lg">{t.market.selectPlayer}</h3>
-                  <p className="text-white/30 text-sm mt-2">{t.market.clickForDetails}</p>
-                </div>
-              )}
+              <div className="overflow-y-auto pr-1 scrollbar-thin">
+                {selectedPlayer ? (
+                  <PlayerDetailsPanel
+                    player={selectedPlayer}
+                    onNegotiate={handleNegotiate}
+                  />
+                ) : (
+                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 h-full flex flex-col items-center justify-center text-center">
+                    <User className="h-20 w-20 text-white/10 mb-4" />
+                    <h3 className="text-white/40 text-lg">{t.market.selectPlayer}</h3>
+                    <p className="text-white/30 text-sm mt-2">{t.market.clickForDetails}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </TabsContent>
 

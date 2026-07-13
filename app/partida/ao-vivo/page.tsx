@@ -49,6 +49,7 @@ import {
 import { LivePitch } from "@/components/match/live-pitch"
 import { SubstitutionModal, type MatchPlayer } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
+import { RoundResultsModal } from "@/components/match/round-results-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
@@ -464,6 +465,22 @@ export default function PartidaAoVivoPage() {
   const userTeamId = _userTeamHook.curto
   const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
   const { squadPlayers: enginePlayers } = useGameEngine()
+  const engineMatchResults = useGameEngine(s => s.matchResults)
+  const engineWeek = useGameEngine(s => s.currentWeek)
+  const engineSeason = useGameEngine(s => s.currentSeason)
+  // Resultados de todas as competicoes que rodaram nesta rodada (para a tela pos-jogo)
+  const roundResults = useMemo(
+    () => engineMatchResults
+      .filter(r => r.season === engineSeason && r.week === engineWeek)
+      .map(r => ({
+        competition: r.competition,
+        homeTeam: r.homeTeam,
+        awayTeam: r.awayTeam,
+        homeScore: r.homeScore,
+        awayScore: r.awayScore,
+      })),
+    [engineMatchResults, engineSeason, engineWeek]
+  )
   const resultRegistered = useRef(false)
   const t = useTranslation()
 
@@ -617,7 +634,7 @@ export default function PartidaAoVivoPage() {
   const [subsRemaining, setSubsRemaining] = useState(5)
 
   // Tab ativa
-  const [activeTab, setActiveTab] = useState<"pitch" | "fitness" | "ratings" | "stats" | "gameplan">("stats")
+  const [activeTab, setActiveTab] = useState<"pitch" | "fitness" | "ratings" | "stats" | "gameplan" | "narration">("narration")
 
   // Estado para animacoes de eventos
   const [currentAnimation, setCurrentAnimation] = useState<{
@@ -753,6 +770,7 @@ export default function PartidaAoVivoPage() {
 
   // Modal de fim
   const [showResult, setShowResult] = useState(false)
+  const [showRoundResults, setShowRoundResults] = useState(false)
   const [showPressConference, setShowPressConference] = useState(false)
   const [isLeagueChampion, setIsLeagueChampion] = useState(false)
   // Congela os times do confronto no apito final, ANTES de advanceWeek mudar o
@@ -1015,6 +1033,46 @@ export default function PartidaAoVivoPage() {
                   </div>
                 )}
 
+                {activeTab === "narration" && (
+                  <div className="space-y-3">
+                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">Narração ao vivo</h3>
+                    {state.events.length === 0 ? (
+                      <p className="text-white/30 text-sm py-8 text-center">O jogo vai começar...</p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {state.events.map((e) => {
+                          const color =
+                            e.type === "goal" ? "text-emerald-400 font-semibold"
+                            : e.type === "red_card" ? "text-red-400 font-semibold"
+                            : e.type === "yellow_card" ? "text-yellow-400"
+                            : e.type === "penalty" ? "text-orange-400 font-semibold"
+                            : e.type === "save" || e.type === "post" ? "text-cyan-300"
+                            : e.type === "fulltime" || e.type === "halftime" || e.type === "kickoff" ? "text-white/80 font-semibold"
+                            : "text-white/55"
+                          const icon =
+                            e.type === "goal" ? "⚽"
+                            : e.type === "red_card" ? "🟥"
+                            : e.type === "yellow_card" ? "🟨"
+                            : e.type === "penalty" ? "🎯"
+                            : e.type === "corner" ? "🚩"
+                            : e.type === "injury" ? "➕"
+                            : e.type === "save" ? "🧤"
+                            : e.type === "sub" ? "🔁"
+                            : "•"
+                          const min = e.addedTime ? `${e.minute}+${e.addedTime}'` : `${e.minute}'`
+                          return (
+                            <li key={e.id} className="flex items-start gap-2 text-sm leading-snug">
+                              <span className="shrink-0 tabular-nums text-white/40 w-10 text-right">{min}</span>
+                              <span className="shrink-0">{icon}</span>
+                              <span className={color}>{e.text}</span>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {activeTab === "pitch" && (
                   <div className="flex flex-1 min-h-0 flex-col gap-3">
                     <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider shrink-0">{t.match.live.sectionPitch}</h3>
@@ -1207,6 +1265,7 @@ export default function PartidaAoVivoPage() {
               <div className="border-t border-white/[0.06] bg-[#0d1a1a]/50">
                 <div className="flex items-center justify-center gap-1 px-4 py-2">
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 mr-2">L1</span>
+                  <TabButton label="Narração" active={activeTab === "narration"} onClick={() => setActiveTab("narration")} />
                   <TabButton label={t.match.live.tabPitch} active={activeTab === "pitch"} onClick={() => setActiveTab("pitch")} />
                   <TabButton label={t.match.live.tabFitness} active={activeTab === "fitness"} onClick={() => setActiveTab("fitness")} />
                   <TabButton label={t.match.live.tabRatings} active={activeTab === "ratings"} onClick={() => setActiveTab("ratings")} />
@@ -1326,10 +1385,24 @@ export default function PartidaAoVivoPage() {
           isChampion={isLeagueChampion}
           onClose={() => {
             setShowResult(false)
-            setShowPressConference(true)
+            setShowRoundResults(true)
           }}
         />
       )}
+
+  {/* Resultados de toda a rodada (todas as competicoes) antes da coletiva */}
+  {showRoundResults && (
+    <RoundResultsModal
+      open={showRoundResults}
+      results={roundResults}
+      userHome={(finalMatch?.home ?? homeTeam).curto}
+      userAway={(finalMatch?.away ?? awayTeam).curto}
+      onContinue={() => {
+        setShowRoundResults(false)
+        setShowPressConference(true)
+      }}
+    />
+  )}
 
   {/* Coletiva pos-jogo */}
   {showPressConference && (
