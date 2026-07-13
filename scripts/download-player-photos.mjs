@@ -28,7 +28,9 @@ import { existsSync } from "node:fs"
 import path from "node:path"
 
 const ROOT = process.cwd()
-const SEEDS = path.join(ROOT, "data", "seeds", "bf2026-teams.json")
+// Fonte REAL dos elencos usados pelo jogo (lib/players-data.ts importa este arquivo).
+// Estrutura: { teams: [ { fileKey, nome, players: [{ id, nome, posicao, ... }] } ] }
+const SEEDS = path.join(ROOT, "data", "seeds", "imported-bf2026.json")
 const OVERRIDES = path.join(ROOT, "data", "seeds", "player_photo_overrides.json")
 const PHOTOS_DIR = path.join(ROOT, "public", "jogadores")
 
@@ -67,8 +69,15 @@ const args = process.argv.slice(2)
 const onlyClub = args.includes("--club") ? args[args.indexOf("--club") + 1] : null
 const dryRun = args.includes("--dry")
 
-const teams = JSON.parse(await readFile(SEEDS, "utf8"))
-const teamList = Array.isArray(teams) ? teams : Object.values(teams)
+const seed = JSON.parse(await readFile(SEEDS, "utf8"))
+// A lista do elenco vem na chave "jogadores": [{ id, nome, posicao, overall, ... }]
+const teamList = (seed.teams ?? []).map(t => ({
+  fileKey: t.fileKey,
+  nome: t.nome,
+  players: (t.jogadores ?? t.players ?? [])
+    .map(p => (typeof p === "string" ? p : p?.nome))
+    .filter(Boolean),
+}))
 
 const overrides = existsSync(OVERRIDES)
   ? JSON.parse(await readFile(OVERRIDES, "utf8"))
