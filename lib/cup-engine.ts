@@ -27,6 +27,31 @@ export function cupRoundLabel(r: number, competition = "Copa do Brasil"): string
   return CUP_ROUND_NAME[r] ?? `Rodada ${r}`
 }
 
+/** Todas as fases sao ida e volta; a FINAL e jogo unico. */
+function isTwoLeggedRound(round: number): boolean {
+  return round < CUP_TOTAL_ROUNDS
+}
+
+/**
+ * Disputa de penaltis. O time mais forte leva uma vantagem SUTIL (frieza/goleiro),
+ * nao decisiva — penalti continua sendo loteria, que e o que o torna dramatico.
+ */
+function shootout(prestigeA: number, prestigeB: number): [number, number] {
+  const edge = (prestigeA - prestigeB) * 0.002
+  let a = 0
+  let b = 0
+  for (let i = 0; i < 5; i++) {
+    if (Math.random() < 0.75 + edge) a++
+    if (Math.random() < 0.75 - edge) b++
+  }
+  // Morte subita ate desempatar
+  while (a === b) {
+    if (Math.random() < 0.75 + edge) a++
+    if (Math.random() < 0.75 - edge) b++
+  }
+  return [a, b]
+}
+
 /** Embaralha um array preservando ordem reprodutível via seed. */
 function shuffleSeeded<T>(arr: T[], seed: number): T[] {
   const a = [...arr]
@@ -109,35 +134,64 @@ export function simulateCupRound(
     const away = teamMap.get(m.awayCurto)
     if (!home || !away) continue
 
-    const sim = simulateFullMatch({
-      homeTeam: home,
-      awayTeam: away,
-      homeRating: home.prestigio,
-      awayRating: away.prestigio,
-      durationMinutes: 90,
-    })
+    const playLeg = (h: Team, a: Team) => {
+      const sim = simulateFullMatch({
+        homeTeam: h, awayTeam: a,
+        homeRating: h.prestigio, awayRating: a.prestigio,
+        durationMinutes: 90,
+      })
+      return { homeGoals: sim.home.goals, awayGoals: sim.away.goals }
+    }
 
-    let homeGoals = sim.home.goals
-    let awayGoals = sim.away.goals
-    // Sem empate em mata-mata: cara ou coroa para escolher um vencedor
-    if (homeGoals === awayGoals) {
-      if (Math.random() < 0.5) homeGoals += 1
-      else awayGoals += 1
+    // IDA na casa do mandante do confronto.
+    const leg1 = playLeg(home, away)
+
+    // VOLTA na casa do visitante — so nas fases de ida e volta (a FINAL e jogo unico).
+    const twoLegged = isTwoLeggedRound(round)
+    const leg2 = twoLegged ? playLeg(away, home) : null
+
+    // Agregado na perspectiva [mandante do confronto, visitante do confronto].
+    const aggHome = leg1.homeGoals + (leg2 ? leg2.awayGoals : 0)
+    const aggAway = leg1.awayGoals + (leg2 ? leg2.homeGoals : 0)
+
+    // Empate no agregado -> PENALTIS. Sem gol qualificado fora de casa (regra abolida).
+    // Antes o desempate era cara-ou-coroa somando um gol fantasma no placar.
+    let penaltiesHome: number | undefined
+    let penaltiesAway: number | undefined
+    let winnerCurto: string
+
+    if (aggHome > aggAway) {
+      winnerCurto = m.homeCurto
+    } else if (aggAway > aggHome) {
+      winnerCurto = m.awayCurto
+    } else {
+      const [ph, pa] = shootout(home.prestigio, away.prestigio)
+      penaltiesHome = ph
+      penaltiesAway = pa
+      winnerCurto = ph > pa ? m.homeCurto : m.awayCurto
     }
 
     const idx = updated.findIndex(x => x.id === m.id)
     if (idx >= 0) {
-      updated[idx] = { ...updated[idx], played: true, homeGoals, awayGoals }
+      updated[idx] = {
+        ...updated[idx],
+        played: true,
+        homeGoals: leg1.homeGoals,
+        awayGoals: leg1.awayGoals,
+        leg2HomeGoals: leg2?.homeGoals,
+        leg2AwayGoals: leg2?.awayGoals,
+        twoLegged,
+        aggHome,
+        aggAway,
+        penaltiesHome,
+        penaltiesAway,
+        winnerCurto,
+      }
     }
 
-    // Se usuário foi eliminado nesta rodada
-    if (m.isUserMatch) {
-      const userIsHome = m.homeCurto === userTeamCurto
-      const userGoals = userIsHome ? homeGoals : awayGoals
-      const oppGoals = userIsHome ? awayGoals : homeGoals
-      if (userGoals < oppGoals && userEliminatedAtRound === undefined) {
-        userEliminatedAtRound = round
-      }
+    // Usuario eliminado nesta fase?
+    if (m.isUserMatch && winnerCurto !== userTeamCurto && userEliminatedAtRound === undefined) {
+      userEliminatedAtRound = round
     }
   }
 
@@ -149,7 +203,10 @@ export function simulateCupRound(
     const playedThisRound = updated.filter(m => m.cupRound === round && m.played)
       .sort((a, b) => a.bracketSlot - b.bracketSlot)
     for (const m of playedThisRound) {
-      const homeWon = (m.homeGoals ?? 0) > (m.awayGoals ?? 0)
+      // Classificado vem do AGREGADO (ou dos penaltis) — nao do placar da ida.
+      const homeWon = m.winnerCurto
+        ? m.winnerCurto === m.homeCurto
+        : (m.homeGoals ?? 0) > (m.awayGoals ?? 0)
       winnersOfRound.push(homeWon
         ? { curto: m.homeCurto, nome: m.homeNome }
         : { curto: m.awayCurto, nome: m.awayNome })
@@ -175,7 +232,9 @@ export function simulateCupRound(
     // Final encerrada: define campeão
     const finalMatch = updated.find(m => m.cupRound === CUP_TOTAL_ROUNDS && m.played)
     if (finalMatch) {
-      const homeWon = (finalMatch.homeGoals ?? 0) > (finalMatch.awayGoals ?? 0)
+      const homeWon = finalMatch.winnerCurto
+        ? finalMatch.winnerCurto === finalMatch.homeCurto
+        : (finalMatch.homeGoals ?? 0) > (finalMatch.awayGoals ?? 0)
       champion = homeWon ? finalMatch.homeNome : finalMatch.awayNome
     }
   }
@@ -186,6 +245,69 @@ export function simulateCupRound(
     currentCupRound: nextRound > CUP_TOTAL_ROUNDS ? CUP_TOTAL_ROUNDS : nextRound,
     champion,
     userEliminatedAtRound,
+  }
+}
+
+/**
+ * Resolve UM confronto de mata-mata a partir dos "curto" dos times.
+ * Exposto para a tela de Competicoes, que mantem seu proprio formato de chaveamento
+ * mas precisa do resultado REAL (forca dos clubes + ida/volta + agregado + penaltis)
+ * em vez do mock que usava simulateMatch(50, 50) e cara-ou-coroa.
+ */
+export interface TieOutcome {
+  leg1Home: number
+  leg1Away: number
+  leg2Home: number | null   // gols do visitante do confronto jogando em casa
+  leg2Away: number | null
+  aggHome: number
+  aggAway: number
+  penalties: [number, number] | null
+  winnerCurto: string
+}
+
+export function resolveTieByCurto(
+  homeCurto: string,
+  awayCurto: string,
+  teams: Team[],
+  twoLegged: boolean,
+): TieOutcome | null {
+  const home = teams.find(t => t.curto === homeCurto)
+  const away = teams.find(t => t.curto === awayCurto)
+  if (!home || !away) return null
+
+  const playLeg = (h: Team, a: Team) => {
+    const sim = simulateFullMatch({
+      homeTeam: h, awayTeam: a,
+      homeRating: h.prestigio, awayRating: a.prestigio,
+      durationMinutes: 90,
+    })
+    return { homeGoals: sim.home.goals, awayGoals: sim.away.goals }
+  }
+
+  const leg1 = playLeg(home, away)
+  const leg2 = twoLegged ? playLeg(away, home) : null
+
+  const aggHome = leg1.homeGoals + (leg2 ? leg2.awayGoals : 0)
+  const aggAway = leg1.awayGoals + (leg2 ? leg2.homeGoals : 0)
+
+  let penalties: [number, number] | null = null
+  let winnerCurto: string
+  if (aggHome > aggAway) winnerCurto = homeCurto
+  else if (aggAway > aggHome) winnerCurto = awayCurto
+  else {
+    penalties = shootout(home.prestigio, away.prestigio)
+    winnerCurto = penalties[0] > penalties[1] ? homeCurto : awayCurto
+  }
+
+  return {
+    leg1Home: leg1.homeGoals,
+    leg1Away: leg1.awayGoals,
+    leg2Home: leg2?.homeGoals ?? null,
+    leg2Away: leg2?.awayGoals ?? null,
+    aggHome,
+    aggAway,
+    penalties,
+    winnerCurto,
   }
 }
 
@@ -271,31 +393,53 @@ export function simulateLiberRound(
     const away = teamMap.get(m.awayCurto)
     if (!home || !away) continue
 
-    const sim = simulateFullMatch({
-      homeTeam: home,
-      awayTeam: away,
-      homeRating: home.prestigio,
-      awayRating: away.prestigio,
-      durationMinutes: 90,
-    })
-
-    let homeGoals = sim.home.goals
-    let awayGoals = sim.away.goals
-    if (homeGoals === awayGoals) {
-      if (Math.random() < 0.5) homeGoals += 1
-      else awayGoals += 1
+    const playLeg = (h: Team, a: Team) => {
+      const sim = simulateFullMatch({
+        homeTeam: h, awayTeam: a,
+        homeRating: h.prestigio, awayRating: a.prestigio,
+        durationMinutes: 90,
+      })
+      return { homeGoals: sim.home.goals, awayGoals: sim.away.goals }
     }
 
-    const idx = updated.findIndex(x => x.id === m.id)
-    if (idx >= 0) updated[idx] = { ...updated[idx], played: true, homeGoals, awayGoals }
+    // Libertadores: quartas e semis em ida e volta; FINAL em jogo unico (como na real).
+    const twoLegged = round < LIBER_TOTAL_ROUNDS
+    const leg1 = playLeg(home, away)
+    const leg2 = twoLegged ? playLeg(away, home) : null
 
-    if (m.isUserMatch) {
-      const userIsHome = m.homeCurto === userTeamCurto
-      const userGoals = userIsHome ? homeGoals : awayGoals
-      const oppGoals = userIsHome ? awayGoals : homeGoals
-      if (userGoals < oppGoals && userEliminatedAtRound === undefined) {
-        userEliminatedAtRound = round
-      }
+    const aggHome = leg1.homeGoals + (leg2 ? leg2.awayGoals : 0)
+    const aggAway = leg1.awayGoals + (leg2 ? leg2.homeGoals : 0)
+
+    let penaltiesHome: number | undefined
+    let penaltiesAway: number | undefined
+    let winnerCurto: string
+    if (aggHome > aggAway) winnerCurto = m.homeCurto
+    else if (aggAway > aggHome) winnerCurto = m.awayCurto
+    else {
+      const [ph, pa] = shootout(home.prestigio, away.prestigio)
+      penaltiesHome = ph
+      penaltiesAway = pa
+      winnerCurto = ph > pa ? m.homeCurto : m.awayCurto
+    }
+
+    const homeGoals = leg1.homeGoals
+    const awayGoals = leg1.awayGoals
+
+    const idx = updated.findIndex(x => x.id === m.id)
+    if (idx >= 0) updated[idx] = {
+      ...updated[idx],
+      played: true,
+      homeGoals, awayGoals,
+      leg2HomeGoals: leg2?.homeGoals,
+      leg2AwayGoals: leg2?.awayGoals,
+      twoLegged, aggHome, aggAway,
+      penaltiesHome, penaltiesAway, winnerCurto,
+    }
+
+    // Eliminado = nao foi o classificado. Comparar so o agregado deixava passar a
+    // derrota nos PENALTIS (agregado empatado nao e "menor").
+    if (m.isUserMatch && winnerCurto !== userTeamCurto && userEliminatedAtRound === undefined) {
+      userEliminatedAtRound = round
     }
   }
 
@@ -306,7 +450,9 @@ export function simulateLiberRound(
     const playedThisRound = updated.filter(m => m.cupRound === round && m.played)
       .sort((a, b) => a.bracketSlot - b.bracketSlot)
     for (const m of playedThisRound) {
-      const homeWon = (m.homeGoals ?? 0) > (m.awayGoals ?? 0)
+      const homeWon = m.winnerCurto
+        ? m.winnerCurto === m.homeCurto
+        : (m.homeGoals ?? 0) > (m.awayGoals ?? 0)
       winners.push(homeWon
         ? { curto: m.homeCurto, nome: m.homeNome }
         : { curto: m.awayCurto, nome: m.awayNome })
@@ -330,7 +476,9 @@ export function simulateLiberRound(
   } else {
     const finalMatch = updated.find(m => m.cupRound === LIBER_TOTAL_ROUNDS && m.played)
     if (finalMatch) {
-      const homeWon = (finalMatch.homeGoals ?? 0) > (finalMatch.awayGoals ?? 0)
+      const homeWon = finalMatch.winnerCurto
+        ? finalMatch.winnerCurto === finalMatch.homeCurto
+        : (finalMatch.homeGoals ?? 0) > (finalMatch.awayGoals ?? 0)
       champion = homeWon ? finalMatch.homeNome : finalMatch.awayNome
     }
   }

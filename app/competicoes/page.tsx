@@ -27,6 +27,7 @@ import { getTeamByShort, getTeamsByDivision, serieBTeams, type Team } from "@/li
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
 import { getCompetitionLogo } from "@/lib/competition-logo"
+import { resolveTieByCurto } from "@/lib/cup-engine"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
@@ -80,6 +81,12 @@ interface CompetitionState {
     eliminated: boolean
   }
 }
+
+// Participantes da Copa do Brasil (o time do usuario entra no lugar de um deles).
+const COPA_BRASIL_POOL = [
+  "FLA", "COR", "PAL", "SAO", "GRE", "INT", "BOT", "CAM",
+  "FLU", "FOR", "CRU", "BAH", "VAS", "CAP", "SAN", "GOI",
+]
 
 // Times para estaduais
 const ESTADUAL_TEAMS: Record<string, string[]> = {
@@ -217,9 +224,23 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
   }, [state])
   
   // Sortear Copa do Brasil
+  // Pool de times que o motor de mata-mata usa para resolver os confrontos pela
+  // forca REAL de cada clube (prestigio). Cobre liga do usuario + estadual + copa.
+  const allCupTeams = useMemo(() => {
+    const map = new Map<string, Team>()
+    const add = (t?: Team) => { if (t) map.set(t.curto, t) }
+    const user = getTeamByShort(userTeamShort)
+    if (user) getTeamsByDivision(user.divisao).forEach(add)
+    getStateChampionshipTeams(userTeamShort).forEach(add)
+    COPA_BRASIL_POOL.forEach(c => add(getTeamByShort(c)))
+    add(user)
+    return Array.from(map.values())
+  }, [userTeamShort])
+
   const drawCopaBrasil = () => {
-    const teams = ["FLA", "COR", "PAL", "SAO", "GRE", "INT", "BOT", "CAM", 
-                   userTeamShort, "FLU", "FOR", "CRU", "BAH", "VAS", "CAP", "SAN"]
+    // Garante o usuario no sorteio SEM duplicar (se ele ja e um dos 16, nao entra 2x).
+    const base = COPA_BRASIL_POOL.filter(c => c !== userTeamShort)
+    const teams = [userTeamShort, ...base].slice(0, 16)
     const shuffled = [...teams].sort(() => Math.random() - 0.5)
     
     const oitavas: BracketMatch[] = []
@@ -279,28 +300,30 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
         nextRound = null
       }
 
-      // Simular todas as partidas da rodada atual
+      // Simular todas as partidas da rodada atual.
+      // Antes: simulateMatch(50, 50) — forca fixa, o time nao importava; jogo unico;
+      // e empate resolvido por cara-ou-coroa. Agora usa o motor real: forca dos clubes,
+      // IDA E VOLTA (final em jogo unico), agregado e penaltis.
+      const isFinalRound = copa.currentRound === "final"
       const simulatedMatches = currentMatches.map(match => {
         if (match.played) return match
+        if (!match.team1 || !match.team2) return match
 
-        const [score1, score2] = simulateMatch(50, 50)
-        let winner = score1 > score2 ? match.team1 : score1 < score2 ? match.team2 : null
-
-        // Empate? Penaltis (aleatorio)
-        if (!winner) {
-          winner = Math.random() > 0.5 ? match.team1 : match.team2
-        }
+        const outcome = resolveTieByCurto(match.team1, match.team2, allCupTeams, !isFinalRound)
+        if (!outcome) return match
 
         return {
           ...match,
-          score1,
-          score2,
+          score1: outcome.leg1Home,
+          score2: outcome.leg1Away,
+          score1Leg2: outcome.leg2Away,   // gols do mandante do confronto NA VOLTA (fora)
+          score2Leg2: outcome.leg2Home,   // gols do visitante do confronto NA VOLTA (em casa)
           played: true,
-          winner,
+          winner: outcome.winnerCurto,
         }
       })
 
-      // Verificar se usuario foi eliminado
+      // Verificar se usuario foi eliminado (pelo classificado, nao pelo placar da ida)
       const userMatch = simulatedMatches.find(m => m.team1 === userTeamShort || m.team2 === userTeamShort)
       const userEliminated = userMatch && userMatch.winner !== userTeamShort
 

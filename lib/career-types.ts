@@ -145,8 +145,21 @@ export interface CupMatch {
   homeNome: string
   awayNome: string
   played: boolean
+  /** Jogo de IDA (na casa de homeCurto). */
   homeGoals?: number
   awayGoals?: number
+  /** Jogo de VOLTA — o mandante e o awayCurto. Ausente em jogo unico (final). */
+  leg2HomeGoals?: number   // gols do awayCurto jogando em casa
+  leg2AwayGoals?: number   // gols do homeCurto jogando fora
+  twoLegged?: boolean
+  /** Agregado [homeCurto, awayCurto] apos os dois jogos. */
+  aggHome?: number
+  aggAway?: number
+  /** Penaltis — so quando o agregado empata (sem gol qualificado fora de casa). */
+  penaltiesHome?: number
+  penaltiesAway?: number
+  /** Curto do classificado. */
+  winnerCurto?: string
   isUserMatch: boolean
 }
 
