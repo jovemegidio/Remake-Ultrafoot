@@ -32,6 +32,8 @@ import {
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
+import { musicStore } from "@/lib/music-store"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
@@ -105,7 +107,9 @@ export default function ConfiguracoesPage() {
     window.addEventListener('gamepad:button', handler)
     return () => window.removeEventListener('gamepad:button', handler)
   }, [currentView, selectedCardIndex, router])
+  // Inicia com o volume REAL do player (antes era fixo em 70 e desconectado).
   const [musicVolume, setMusicVolume] = useState([70])
+  useEffect(() => { setMusicVolume([musicStore.getSnapshot().volume]) }, [])
   const [sfxVolume, setSfxVolume] = useState([80])
   const [autoSave, setAutoSave] = useState(true)
   const [notifications, setNotifications] = useState(true)
@@ -378,7 +382,7 @@ export default function ConfiguracoesPage() {
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
                   <div className="text-xs text-white/40">{t.settings.weekLabel}</div>
-                  <div className="text-lg font-bold text-white">{state.week}/38</div>
+                  <div className="text-lg font-bold text-white">{state.week}/52</div>
                 </div>
               </div>
             </div>
@@ -461,7 +465,11 @@ export default function ConfiguracoesPage() {
                     <span className="text-sm text-white/60">{t.settings.musicLabel}</span>
                     <span className="text-sm text-white">{musicVolume[0]}%</span>
                   </div>
-                  <Slider value={musicVolume} onValueChange={setMusicVolume} max={100} />
+                  <Slider
+                    value={musicVolume}
+                    onValueChange={(v) => { setMusicVolume(v); musicStore.setVolume(v[0]) }}
+                    max={100}
+                  />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -527,7 +535,11 @@ export default function ConfiguracoesPage() {
               <p className="text-sm text-white/50">{t.settings.savedLineupsDesc}</p>
               <div className="grid gap-3">
                 {[t.settings.mainLineup, t.settings.rotation, t.settings.youth].map((name, i) => (
-                  <div key={name} className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                  <div
+                    key={name}
+                    onClick={() => hardNavigate("/elenco/escalacoes")}
+                    className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
                         <span className="text-sm font-bold text-primary">{i + 1}</span>
@@ -541,7 +553,12 @@ export default function ConfiguracoesPage() {
                   </div>
                 ))}
               </div>
-              <Button variant="outline" size="sm" className="w-full border-dashed border-white/20 text-white/60 hover:text-white hover:bg-white/5">
+              <Button
+                onClick={() => hardNavigate("/elenco/escalacoes")}
+                variant="outline"
+                size="sm"
+                className="w-full border-dashed border-white/20 text-white/60 hover:text-white hover:bg-white/5"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 {t.settings.newLineup}
               </Button>
@@ -670,10 +687,10 @@ export default function ConfiguracoesPage() {
               </h3>
               <div className="space-y-2">
                 {[
-                  { role: "Diretor Criativo", name: "Ultrafoot Studio" },
-                  { role: "Desenvolvimento", name: "Ultrafoot Dev Team" },
-                  { role: "Design de Interface", name: "Ultrafoot Design" },
-                  { role: "Dados e Estatisticas", name: "Ultrafoot Data" },
+                  { role: "Diretor Criativo", name: "Antonio Egidio · @egidiocode" },
+                  { role: "Desenvolvimento", name: "Gustavo Ventura e Isaac Moura" },
+                  { role: "Design de Interface", name: "Antonio Egidio · @egidiocode" },
+                  { role: "Dados e Estatisticas", name: "Gustavo Ventura e Isaac Moura" },
                 ].map((member) => (
                   <div key={member.role} className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-white/5">
                     <span className="text-xs text-white/40">{member.role}</span>

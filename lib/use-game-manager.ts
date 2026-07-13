@@ -881,24 +881,24 @@ export function useGameManager() {
       }
     }
 
-    // Marca partidas ja jogadas
+    // Marca partidas ja jogadas. IMPORTANTE: casa por par DIRECIONAL (mandante x
+    // visitante) + temporada, SEM exigir que a semana do resultado seja igual a do
+    // fixture. Antes exigia r.week === f.week; qualquer deriva de semana (ex.: uma
+    // rodada em que o usuario nao joga, ou o resultado gravado em week+1) fazia o
+    // fixture NUNCA ser marcado como jogado -> nextUserMatch travava na mesma
+    // partida ("termino e continua a mesma"). Cada par home/away e unico no ida-volta,
+    // entao casar so pela direcao + temporada e seguro.
+    const seasonNow = saveState.season
     allFixtures.forEach(f => {
-      if (f.week <= currentWeek) {
-        const result = gameEngine.matchResults.find(
-          r => r.week === f.week &&
-               ((r.homeTeam === f.homeTeam.curto && r.awayTeam === f.awayTeam.curto) ||
-                (r.homeTeam === f.awayTeam.curto && r.awayTeam === f.homeTeam.curto))
-        )
-        if (result) {
-          f.played = true
-          if (result.homeTeam === f.homeTeam.curto) {
-            f.homeScore = result.homeScore
-            f.awayScore = result.awayScore
-          } else {
-            f.homeScore = result.awayScore
-            f.awayScore = result.homeScore
-          }
-        }
+      const result = gameEngine.matchResults.find(
+        r => r.season === seasonNow &&
+             r.homeTeam === f.homeTeam.curto && r.awayTeam === f.awayTeam.curto &&
+             r.competition === f.competition
+      )
+      if (result) {
+        f.played = true
+        f.homeScore = result.homeScore
+        f.awayScore = result.awayScore
       }
     })
 
