@@ -86,16 +86,25 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
   return (
     <header className={cn(
-      "sticky top-0 z-30 flex h-14 items-center justify-between bg-[#050508]/95 backdrop-blur-xl border-b border-white/[0.04] px-5",
+      "sticky top-0 z-30 flex h-14 items-center justify-between bg-[#050508]/95 backdrop-blur-xl border-b border-white/[0.04] px-3 md:px-5",
       className
     )}>
       {/* Left - Controller indicators + Navigation */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-5 min-w-0">
         <HeaderControls controller={controllerType} className="hidden sm:flex" />
         
         <div className="w-px h-6 bg-white/[0.06] hidden sm:block" />
-        
-        <div className="flex items-center gap-0.5">
+
+        {/* Indicador compacto de rodada (mobile) */}
+        <div className="flex items-center gap-2 md:hidden">
+          <TeamCrest team={userTeam} size="xs" />
+          <div className="flex flex-col leading-none">
+            <span className="text-[11px] font-semibold text-white">{userTeam.curto}</span>
+            <span className="text-[9px] text-white/40">Rod {currentWeek}/38</span>
+          </div>
+        </div>
+
+        <div className="hidden md:flex items-center gap-0.5">
           {showNav && navItems.map((item, index) => {
             const isActive = item.href === "/" 
               ? pathname === "/" 
@@ -124,7 +133,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       </div>
 
       {/* Right - Season Info & Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Season/Week Info */}
         <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
           <Calendar className="h-3.5 w-3.5 text-[#00ffc8]" />
@@ -163,7 +172,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           onClick={handleAdvance}
           disabled={advancing}
           className={cn(
-            "eafc-btn flex items-center gap-2.5 px-6 py-2.5 text-xs font-bold tracking-wider uppercase",
+            "eafc-btn flex items-center gap-2.5 px-3.5 py-2 md:px-6 md:py-2.5 text-xs font-bold tracking-wider uppercase",
             advancing && "opacity-50 cursor-wait"
           )}
         >
@@ -175,11 +184,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           <span>Avancar</span>
         </button>
 
-        <div className="w-px h-6 bg-white/[0.06] mx-1" />
+        <div className="w-px h-6 bg-white/[0.06] mx-1 hidden sm:block" />
 
         <NotificationBell onClick={() => setShowNotifications(true)} />
 
-        <Link href="/configuracoes" className="p-2 text-white/40 hover:text-white/70 transition-colors rounded-lg hover:bg-white/5">
+        <Link href="/configuracoes" className="hidden sm:block p-2 text-white/40 hover:text-white/70 transition-colors rounded-lg hover:bg-white/5">
           <Settings className="h-4 w-4" />
         </Link>
 
