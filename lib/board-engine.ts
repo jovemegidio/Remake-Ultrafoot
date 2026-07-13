@@ -254,3 +254,130 @@ export function generateRivalryMessage(
     season,
   }
 }
+
+// ─── Ciclo de pressao: CONFIANCA -> DEMISSAO -> PROPOSTAS ─────────────────────
+//
+// As metas (calcSeasonObjective) ja existiam, mas nada as cobrava: evaluatePerformance
+// era um stub que dava throw e shouldFireCoach lia um pressureToFire que ninguem
+// calculava. Ou seja: nao havia risco de ser demitido, e sem risco a campanha ruim
+// nao custa nada. E o que separa "simulador de tabela" de "carreira".
+
+export type CareerStatus = "safe" | "warning" | "critical"
+
+export interface ConfidenceInput {
+  /** Posicao atual na liga (1 = lider). */
+  currentPosition: number
+  objective: SeasonObjective
+  /** Ultimos resultados do usuario, MAIS RECENTE PRIMEIRO. */
+  recentForm: ("V" | "E" | "D")[]
+  /** Fracao da temporada ja disputada (0..1). No inicio a diretoria e paciente. */
+  seasonProgress: number
+}
+
+/** Confianca da diretoria, 0-100. Abaixo de 25 o cargo esta em risco real. */
+export function computeBoardConfidence(input: ConfidenceInput): number {
+  const { currentPosition, objective, recentForm, seasonProgress } = input
+
+  let confidence = 70
+
+  // Distancia da meta — pesa mais conforme a temporada avanca: na 3a rodada da
+  // para recuperar; na 35a, nao.
+  const gap = currentPosition - objective.targetPosition
+  if (gap > 0) {
+    confidence -= gap * 2.6 * (0.35 + seasonProgress)
+    // Abaixo do minimo aceitavel a diretoria endurece de vez.
+    if (currentPosition > objective.minPosition) {
+      confidence -= (currentPosition - objective.minPosition) * 3.5 * (0.4 + seasonProgress)
+    }
+  } else {
+    confidence += Math.min(25, -gap * 2.5)
+  }
+
+  // Forma recente: sequencia ruim derruba ate quem esta bem colocado — e a
+  // demissao "injusta" que existe no futebol de verdade.
+  for (const r of recentForm.slice(0, 5)) {
+    if (r === "V") confidence += 4
+    else if (r === "E") confidence -= 1
+    else confidence -= 5
+  }
+
+  const firstNonLoss = recentForm.findIndex(r => r !== "D")
+  const losingStreak = firstNonLoss === -1 ? recentForm.length : firstNonLoss
+  if (losingStreak >= 3) confidence -= (losingStreak - 2) * 6
+
+  return Math.max(0, Math.min(100, Math.round(confidence)))
+}
+
+export function getCareerStatus(confidence: number): CareerStatus {
+  if (confidence >= 50) return "safe"
+  if (confidence >= 25) return "warning"
+  return "critical"
+}
+
+/**
+ * A diretoria decide demitir. So demite em estado CRITICO — e ainda assim por
+ * chance, nao determinismo (dirigente hesita, da "voto de confianca").
+ */
+export function shouldFireManager(confidence: number, seasonProgress: number): boolean {
+  if (confidence >= 25) return false
+  const risk = (25 - confidence) / 25          // 0..1
+  const timing = 0.4 + seasonProgress * 0.6    // mais paciencia no comeco
+  return Math.random() < risk * timing * 0.55
+}
+
+export interface JobOffer {
+  clubShort: string
+  clubName: string
+  clubPrestige: number
+  /** "club" = outro clube; "national" = selecao. */
+  kind: "club" | "national"
+  reason: string
+}
+
+/**
+ * Clubes maiores (e a selecao) so aparecem quando voce entrega resultado.
+ * E a recompensa que fecha o ciclo: performar -> ser cortejado -> subir de patamar.
+ */
+export function generateJobOffers(
+  confidence: number,
+  currentPosition: number,
+  userPrestige: number,
+  candidates: { curto: string; nome: string; prestigio: number }[],
+  opts: { allowNationalTeam?: boolean } = {}
+): JobOffer[] {
+  // Sem desempenho, ninguem liga.
+  if (confidence < 70 || currentPosition > 6) return []
+
+  const offers: JobOffer[] = []
+
+  const bigger = candidates
+    .filter(c => c.prestigio > userPrestige + 4)
+    .sort((a, b) => b.prestigio - a.prestigio)
+
+  for (const c of bigger.slice(0, 3)) {
+    // Quanto maior o clube, mais dificil ele te procurar.
+    const chance = Math.max(0.04, 0.35 - (c.prestigio - userPrestige) * 0.012)
+    if (Math.random() < chance) {
+      offers.push({
+        clubShort: c.curto,
+        clubName: c.nome,
+        clubPrestige: c.prestigio,
+        kind: "club",
+        reason: `O ${c.nome} acompanhou sua campanha e quer voce no comando.`,
+      })
+    }
+  }
+
+  // Selecao: so para campanhas de elite.
+  if (opts.allowNationalTeam && confidence >= 85 && currentPosition <= 2 && Math.random() < 0.18) {
+    offers.push({
+      clubShort: "BRA",
+      clubName: "Selecao Brasileira",
+      clubPrestige: 95,
+      kind: "national",
+      reason: "A CBF quer conversar sobre o comando da Selecao.",
+    })
+  }
+
+  return offers
+}

@@ -36,6 +36,7 @@ import { useGameEngine } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useTranslation } from "@/lib/i18n"
 import { useNationalTeam } from "@/lib/use-national-team"
+import { calcSeasonObjective, computeBoardConfidence, getCareerStatus } from "@/lib/board-engine"
 import { Flag } from "lucide-react"
 
 const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -142,6 +143,32 @@ export default function DashboardPage() {
   const recentResults = seasonCalendar.fixtures
     .filter(f => f.isUserMatch && f.played)
     .slice(-3)
+
+  // ── Pressao da diretoria: meta -> confianca -> risco de demissao ──────────
+  // Sem isso a campanha ruim nao custa nada; e o risco que transforma tabela em carreira.
+  const playedUserFixtures = seasonCalendar.fixtures.filter(f => f.isUserMatch && f.played)
+  const totalUserFixtures = seasonCalendar.fixtures.filter(f => f.isUserMatch).length
+  const seasonProgress = totalUserFixtures > 0 ? playedUserFixtures.length / totalUserFixtures : 0
+
+  // Forma: mais recente primeiro
+  const recentForm: ("V" | "E" | "D")[] = [...playedUserFixtures]
+    .reverse()
+    .slice(0, 5)
+    .map(f => {
+      const userIsHome = f.homeTeam.curto === userTeam.curto
+      const gf = userIsHome ? (f.homeScore ?? 0) : (f.awayScore ?? 0)
+      const ga = userIsHome ? (f.awayScore ?? 0) : (f.homeScore ?? 0)
+      return gf > ga ? "V" : gf === ga ? "E" : "D"
+    })
+
+  const seasonObjective = calcSeasonObjective(userTeam as unknown as Parameters<typeof calcSeasonObjective>[0])
+  const boardConfidence = computeBoardConfidence({
+    currentPosition: userPosition > 0 ? userPosition : seasonObjective.targetPosition,
+    objective: seasonObjective,
+    recentForm,
+    seasonProgress,
+  })
+  const careerStatus = getCareerStatus(boardConfidence)
 
   const weeklyIncome = gameEngine.weeklyIncome ?? 0
   const weeklyExpenses = gameEngine.weeklyExpenses ?? 0
@@ -383,6 +410,67 @@ export default function DashboardPage() {
                 </div>
               </section>
             )}
+
+            {/* Diretoria: meta da temporada + confianca (risco de demissao) */}
+            <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Flag className="h-4 w-4 text-[#00ffc8]" />
+                  <span>Diretoria</span>
+                </div>
+                <span className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                  careerStatus === "safe" && "bg-[#00ffc8]/15 text-[#00ffc8]",
+                  careerStatus === "warning" && "bg-yellow-500/15 text-yellow-400",
+                  careerStatus === "critical" && "bg-red-500/15 text-red-400",
+                )}>
+                  {careerStatus === "safe" ? "Prestigiado" : careerStatus === "warning" ? "Sob pressao" : "Cargo em risco"}
+                </span>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <p className="text-xs leading-relaxed text-white/50">{seasonObjective.description}</p>
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-[11px]">
+                    <span className="text-white/40">Confianca da diretoria</span>
+                    <span className={cn(
+                      "font-bold tabular-nums",
+                      careerStatus === "safe" && "text-[#00ffc8]",
+                      careerStatus === "warning" && "text-yellow-400",
+                      careerStatus === "critical" && "text-red-400",
+                    )}>{boardConfidence}%</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        careerStatus === "safe" && "bg-[#00ffc8]",
+                        careerStatus === "warning" && "bg-yellow-400",
+                        careerStatus === "critical" && "bg-red-500",
+                      )}
+                      style={{ width: `${boardConfidence}%` }}
+                    />
+                  </div>
+                </div>
+                {recentForm.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-white/40 mr-1">Forma</span>
+                    {recentForm.map((r, i) => (
+                      <span
+                        key={i}
+                        className={cn(
+                          "flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold",
+                          r === "V" && "bg-[#00ffc8]/20 text-[#00ffc8]",
+                          r === "E" && "bg-white/10 text-white/50",
+                          r === "D" && "bg-red-500/20 text-red-400",
+                        )}
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
 
             {/* Classificacao */}
             <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">

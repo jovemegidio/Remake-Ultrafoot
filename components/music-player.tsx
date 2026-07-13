@@ -105,62 +105,89 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
 
   // Mini player - Spotify style floating pill
   if (size === "mini") {
-    return (
-      <div className={cn(
-        "fixed bottom-20 md:bottom-[60px] right-4 z-50 flex items-center gap-3 rounded-lg bg-[#181818] p-2 shadow-2xl border border-[#282828]",
-        className
-      )}>
-        {/* Album cover */}
-        <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md shadow-lg">
-          <Image src={track.cover} alt="Album" fill className="object-cover" unoptimized />
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-              <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
-        
-        {/* Track info */}
-        <div className="min-w-0 w-[180px] max-w-[42vw] md:w-[220px]">
-          <div className="truncate text-sm font-medium text-white">{track.title}</div>
-          <div className="truncate text-xs text-[#a7a7a7]">{track.artist}</div>
-        </div>
+    const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0
 
-        {/* Like button */}
-        <button 
-          onClick={() => toggleLike(currentTrack)}
-          className={cn(
-            "p-2 transition-colors",
-            liked.has(currentTrack) ? "text-[#1db954]" : "text-[#a7a7a7] hover:text-white"
-          )}
-        >
-          <Heart className={cn("h-4 w-4", liked.has(currentTrack) && "fill-current")} />
-        </button>
-        
-        {/* Play button */}
-        <button
-          onClick={togglePlay}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black transition hover:scale-105"
-          aria-label={playing ? "Pausar" : "Tocar"}
-        >
-          {playing ? <Pause className="h-4 w-4 fill-current" /> : <Play className="h-4 w-4 fill-current translate-x-0.5" />}
-        </button>
-        
-        {/* Expand and close */}
-        <button
-          onClick={() => setSize("compact")}
-          className="p-1.5 text-[#a7a7a7] hover:text-white transition-colors"
-          aria-label="Expandir"
-        >
-          <ChevronUp className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => setSize("hidden")}
-          className="p-1.5 text-[#a7a7a7] hover:text-white transition-colors"
-          aria-label="Fechar"
-        >
-          <X className="h-4 w-4" />
-        </button>
+    // Visual Apple Music: cartao de vidro fosco, glow ambiente vindo da propria capa,
+    // acento vermelho (#fa233b) e uma linha fina de progresso na base.
+    return (
+      <div className={cn("fixed bottom-20 md:bottom-[60px] right-4 z-50", className)}>
+        {/* Glow ambiente: a capa borrada vazando por tras do cartao */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-6 -z-10 opacity-40 blur-2xl saturate-150"
+          style={{
+            backgroundImage: `url(${track.cover})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+
+        <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-white/[0.07] shadow-2xl shadow-black/50 backdrop-blur-2xl backdrop-saturate-150">
+          <div className="flex items-center gap-3 p-2.5">
+            {/* Capa */}
+            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg shadow-lg shadow-black/40 ring-1 ring-white/10">
+              <Image src={track.cover} alt="Album" fill className="object-cover" unoptimized />
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                </div>
+              )}
+            </div>
+
+            {/* Faixa */}
+            <div className="min-w-0 w-[170px] max-w-[42vw] md:w-[210px]">
+              <div className="truncate text-[13px] font-semibold leading-tight tracking-[-0.01em] text-white">
+                {track.title}
+              </div>
+              <div className="truncate text-[11px] leading-tight text-white/55">{track.artist}</div>
+            </div>
+
+            {/* Controles */}
+            <button
+              onClick={() => toggleLike(currentTrack)}
+              className={cn(
+                "p-1.5 transition-colors",
+                liked.has(currentTrack) ? "text-[#fa233b]" : "text-white/45 hover:text-white"
+              )}
+              aria-label="Curtir"
+            >
+              <Heart className={cn("h-4 w-4", liked.has(currentTrack) && "fill-current")} />
+            </button>
+
+            <button
+              onClick={togglePlay}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white transition-transform hover:scale-110 active:scale-95"
+              aria-label={playing ? "Pausar" : "Tocar"}
+            >
+              {playing
+                ? <Pause className="h-5 w-5 fill-current" />
+                : <Play className="h-5 w-5 translate-x-0.5 fill-current" />}
+            </button>
+
+            <button
+              onClick={() => setSize("compact")}
+              className="p-1 text-white/40 transition-colors hover:text-white"
+              aria-label="Expandir"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setSize("hidden")}
+              className="p-1 text-white/40 transition-colors hover:text-white"
+              aria-label="Fechar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Linha de progresso */}
+          <div className="h-[2px] w-full bg-white/10">
+            <div
+              className="h-full bg-white/70 transition-[width] duration-300 ease-linear"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
       </div>
     )
   }
