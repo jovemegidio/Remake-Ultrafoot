@@ -37,7 +37,14 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       if (blocked) e.preventDefault()
     }
 
-    const disableDrag = (e: DragEvent) => e.preventDefault()
+    // Bloqueia o arrasto NATIVO de imagem/link/texto (é o que denuncia "isto é uma
+    // pagina web"), mas nao o drag-and-drop do proprio jogo: cancelar todo dragstart
+    // matava a escalacao, onde os jogadores sao [draggable].
+    const disableDrag = (e: DragEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target?.closest?.("[draggable='true']")) return
+      e.preventDefault()
+    }
 
     const forceStaticAnchorNavigation = (e: MouseEvent) => {
       if (
