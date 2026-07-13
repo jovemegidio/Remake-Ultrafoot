@@ -10,7 +10,7 @@ interface TeamCrestProps {
   team?: Team
   teamShort?: string
   fileKey?: string
-  size?: "xs" | "table" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl"
+  size?: "xs" | "table" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl"
   className?: string
   showFallback?: boolean
 }
@@ -24,6 +24,7 @@ const sizeMap = {
   xl: { container: "h-20 w-20", text: "text-sm", inner: "text-xs" },
   "2xl": { container: "h-28 w-28", text: "text-lg", inner: "text-sm" },
   "3xl": { container: "h-36 w-36", text: "text-xl", inner: "text-base" },
+  "4xl": { container: "h-44 w-44", text: "text-2xl", inner: "text-lg" },
 }
 
 const sizePixels = {
@@ -35,6 +36,7 @@ const sizePixels = {
   xl: 80,
   "2xl": 112,
   "3xl": 144,
+  "4xl": 176,
 }
 
 /**

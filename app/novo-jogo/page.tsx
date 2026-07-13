@@ -462,10 +462,10 @@ export default function NovoJogoPage() {
                   <ChevronLeft className="w-7 h-7" />
                 </button>
                 <div
-                  className="w-40 h-40 sm:w-44 sm:h-44 flex items-center justify-center rounded-full"
+                  className="w-48 h-48 sm:w-52 sm:h-52 flex items-center justify-center rounded-full"
                   style={{ background: `radial-gradient(circle, ${cor1}26 0%, transparent 68%)` }}
                 >
-                  <TeamCrest team={selectedTeam} size="2xl" className="w-36 h-36 sm:w-40 sm:h-40" />
+                  <TeamCrest team={selectedTeam} size="4xl" className="w-44 h-44 sm:w-48 sm:h-48" />
                 </div>
                 <button
                   onClick={nextTeam}

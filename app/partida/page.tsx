@@ -201,13 +201,14 @@ function TeamPanel({
       {/* Card de LIGA */}
       <div className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[#0e1116]/85 px-5 py-3.5 backdrop-blur-sm">
         {leagueLogo ? (
+          // Sem mixBlendMode: o "screen" tornava as partes escuras da logo
+          // transparentes, deixando so um contorno fantasma no lugar do emblema.
           <Image
-            src={leagueLogo || "/placeholder.svg"}
+            src={leagueLogo}
             alt={leagueName}
-            width={160}
-            height={40}
-            className="h-8 w-auto max-w-[180px] object-contain"
-            style={{ mixBlendMode: "screen" }}
+            width={200}
+            height={56}
+            className="h-11 w-auto max-w-[190px] object-contain"
             unoptimized
           />
         ) : (

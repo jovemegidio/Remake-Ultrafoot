@@ -532,21 +532,36 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
 
 function SourceLogo({ source, size = "md" }: { source: keyof typeof NEWS_SOURCES; size?: "sm" | "md" }) {
   const sourceData = NEWS_SOURCES[source]
+  const [failed, setFailed] = useState(false)
   const sizeClass = size === "sm" ? "w-8 h-8" : "w-10 h-10"
   const textSize = size === "sm" ? "text-[9px]" : "text-[10px]"
   const initials = sourceData.name.split(" ").map(w => w[0]).join("").slice(0, 3)
 
+  // As iniciais so aparecem se a logo falhar. Antes o span ficava SEMPRE renderizado
+  // por cima da imagem (ambos absolute), sujando a logo do canal; e o padding + cor de
+  // fundo deixavam a logo pequena com uma borda colorida em volta.
+  if (failed) {
+    return (
+      <div
+        className={cn(sizeClass, "rounded-full flex items-center justify-center shrink-0")}
+        style={{ backgroundColor: sourceData.color }}
+      >
+        <span className={cn(textSize, "font-bold text-white leading-none select-none")}>{initials}</span>
+      </div>
+    )
+  }
+
   return (
-    <div className={cn(sizeClass, "rounded-full overflow-hidden relative flex items-center justify-center")} style={{ backgroundColor: sourceData.color }}>
+    <div className={cn(sizeClass, "rounded-full overflow-hidden relative shrink-0 bg-white")}>
       <Image
         src={sourceData.logo}
         alt={sourceData.name}
         fill
-        className="object-contain p-1"
+        className="object-cover"
         sizes={size === "sm" ? "32px" : "40px"}
-        onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+        onError={() => setFailed(true)}
+        unoptimized
       />
-      <span className={cn(textSize, "font-bold text-white absolute inset-0 flex items-center justify-center leading-none select-none")}>{initials}</span>
     </div>
   )
 }
