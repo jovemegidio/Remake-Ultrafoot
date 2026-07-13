@@ -8,6 +8,8 @@ import {
   Loader2,
   Trophy,
   Star,
+  FastForward,
+  Play,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -16,6 +18,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { cn } from "@/lib/utils"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
@@ -102,6 +105,21 @@ export default function CalendarioPage() {
       return fixtureDay === selectedDay && f.isUserMatch
     }) || nextUserMatch
   }, [selectedDay, monthFixtures, nextUserMatch])
+
+  // Simula todas as semanas ate a partida escolhida e leva direto para o jogo.
+  // advanceWeek usa refs internamente ("prevents stale closures in callbacks called
+  // in loops"), entao pode ser chamado em sequencia com seguranca.
+  const simulateUntilMatch = useCallback(
+    (target: Fixture) => {
+      if (isSimulating) return
+      setIsSimulating(true)
+      const steps = Math.max(0, target.week - currentWeek - 1)
+      for (let i = 0; i < steps; i++) advanceWeek()
+      // Navegacao hard: recarrega a tela de partida ja com o estado avancado.
+      hardNavigate("/partida")
+    },
+    [advanceWeek, currentWeek, isSimulating],
+  )
 
   // Dias do calendario
   const calendarDays = useMemo(() => {
@@ -369,11 +387,41 @@ export default function CalendarioPage() {
               
               {/* Team Name */}
               <div className="text-white text-xl font-black">
-                {selectedFixture.homeTeam.curto === userTeam.curto 
-                  ? selectedFixture.awayTeam.nome 
+                {selectedFixture.homeTeam.curto === userTeam.curto
+                  ? selectedFixture.awayTeam.nome
                   : selectedFixture.homeTeam.nome}
               </div>
             </div>
+          )}
+
+          {/* Simular ate a partida selecionada e ir para o jogo */}
+          {selectedFixture && !selectedFixture.played && selectedFixture.week > currentWeek && (
+            <button
+              onClick={() => simulateUntilMatch(selectedFixture)}
+              disabled={isSimulating}
+              className={cn(
+                "mb-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all",
+                "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:brightness-110",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+              )}
+            >
+              {isSimulating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Simulando...
+                </>
+              ) : selectedFixture.week === currentWeek + 1 ? (
+                <>
+                  <Play className="h-4 w-4" />
+                  Ir para o jogo
+                </>
+              ) : (
+                <>
+                  <FastForward className="h-4 w-4" />
+                  Simular ate esta partida
+                </>
+              )}
+            </button>
           )}
 
           {/* Spacer */}

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { NotificationBell, NotificationCenter } from "@/components/notifications-system"
@@ -115,19 +115,60 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const coachData = {
-    nome: "Voce",
-    cargo: "Tecnico Principal",
-    partidasTotal: 24,
-    vitorias: 16,
-    empates: 5,
-    derrotas: 3,
-    aproveitamento: Math.round(((16 * 3 + 5) / (24 * 3)) * 100),
-    titulosTemporada: 0,
-    sequencia: "+5V",
-  }
+  // Estatisticas REAIS da temporada, derivadas das partidas ja jogadas do usuario
+  // no calendario (antes eram valores fixos: 24 jogos / 16V / 5E / 3D / +5V).
+  const { coachData, form } = useMemo(() => {
+    const userCurto = userTeam.curto
+    const jogadas = (seasonCalendar?.fixtures ?? []).filter(
+      f => f.isUserMatch && f.played && f.homeScore !== undefined && f.awayScore !== undefined,
+    )
 
-  const form: ("V" | "E" | "D")[] = ["V", "V", "E", "V", "D"]
+    const resultados: ("V" | "E" | "D")[] = jogadas.map(f => {
+      const isHome = f.homeTeam.curto === userCurto
+      const pro = (isHome ? f.homeScore : f.awayScore) as number
+      const contra = (isHome ? f.awayScore : f.homeScore) as number
+      return pro > contra ? "V" : pro === contra ? "E" : "D"
+    })
+
+    const vitorias = resultados.filter(r => r === "V").length
+    const empates = resultados.filter(r => r === "E").length
+    const derrotas = resultados.filter(r => r === "D").length
+    const partidasTotal = resultados.length
+    const aproveitamento =
+      partidasTotal > 0 ? Math.round(((vitorias * 3 + empates) / (partidasTotal * 3)) * 100) : 0
+
+    // Sequencia atual: quantos resultados iguais seguidos a partir do ultimo jogo.
+    let sequencia = "-"
+    if (resultados.length > 0) {
+      const invertido = [...resultados].reverse()
+      const tipo = invertido[0]
+      let n = 0
+      for (const r of invertido) {
+        if (r !== tipo) break
+        n++
+      }
+      sequencia = tipo === "V" ? `+${n}V` : tipo === "D" ? `-${n}D` : `${n}E`
+    }
+
+    const titulosTemporada = (state.seasonHistory ?? []).filter(
+      s => s.season === currentSeason && s.champion === userTeam.nome,
+    ).length
+
+    return {
+      coachData: {
+        nome: state.managerName || "Voce",
+        cargo: "Tecnico Principal",
+        partidasTotal,
+        vitorias,
+        empates,
+        derrotas,
+        aproveitamento,
+        titulosTemporada,
+        sequencia,
+      },
+      form: resultados.slice(-5),
+    }
+  }, [seasonCalendar, userTeam.curto, userTeam.nome, state.managerName, state.seasonHistory, currentSeason])
 
   // O jogo e organizado por temporada (comecando 01/01) e nao por "rodada" isolada —
   // mostra a data corrente do calendario em vez de um contador de rodadas.

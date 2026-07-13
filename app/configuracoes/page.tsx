@@ -187,7 +187,8 @@ export default function ConfiguracoesPage() {
         <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
           <GameHeader team={userTeam} />
           
-          <main className="flex-1 p-4 overflow-y-auto">
+          {/* pb-24: espaco para a barra de acoes/player nao cobrir a ultima linha */}
+          <main className="flex-1 p-4 pb-24 overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-xl md:text-2xl font-semibold text-white/70">{t.settings.customize}</h1>
@@ -211,7 +212,9 @@ export default function ConfiguracoesPage() {
                     onClick={() => setCurrentView(card.id)}
                     onMouseEnter={() => setSelectedCardIndex(index)}
                     className={cn(
-                      "relative flex flex-col justify-between p-4 md:p-5 rounded-lg text-left overflow-hidden transition-all aspect-square",
+                      // Antes era aspect-square: com 3 colunas os cards ficavam ~285px de
+                      // altura e as 3 linhas estouravam a viewport (ultima linha cortada).
+                      "relative flex flex-col justify-between p-4 md:p-5 rounded-lg text-left overflow-hidden transition-all min-h-[130px] md:min-h-[150px]",
                       "bg-gradient-to-br from-[#0d2a35] via-[#0a2028] to-[#061318]",
                       isSelected 
                         ? "shadow-lg shadow-[#00d4ff]/30" 

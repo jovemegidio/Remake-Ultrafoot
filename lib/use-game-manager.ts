@@ -135,7 +135,13 @@ function getRoundMonth(round: number, startMonth: number, monthsInSeason: number
   return (startMonth + monthOffset) % 12
 }
 
-// Retorna os times do campeonato estadual do usuario (minimo 4, maximo 8)
+// Acima deste numero de times o estadual roda em TURNO UNICO, para nao virar um
+// campeonato de 24+ rodadas (o Paulista real tem ~12 rodadas de fase de grupos).
+const STATE_SINGLE_ROUND_THRESHOLD = 8
+const STATE_MAX_TEAMS = 20
+
+// Retorna TODOS os times do estado que disputam o estadual (minimo 4).
+// Antes havia um cap fixo de 8 -> SP (13 times) ficava com 5 clubes de fora.
 function getStateChampionshipTeams(userTeamShort: string): Team[] {
   const userTeam = getTeamByShort(userTeamShort)
   if (!userTeam || !isBrazilianDivision(userTeam.divisao)) return []
@@ -143,18 +149,23 @@ function getStateChampionshipTeams(userTeamShort: string): Team[] {
   if (!ESTADO_CAMPEONATO[estado]) return []
   const stateTeams = allBrazilianTeams.filter(t => t.estado === estado)
   if (stateTeams.length < 4) return []
-  // Cap em 8 para um campeonato de 14 rodadas
-  const capped = stateTeams.slice(0, 8)
-  const hasUser = capped.some(t => t.curto === userTeamShort)
-  if (!hasUser) capped[0] = userTeam
-  return capped
+
+  const teams = stateTeams.slice(0, STATE_MAX_TEAMS)
+  if (!teams.some(t => t.curto === userTeamShort)) teams[0] = userTeam
+  return teams
+}
+
+/** Campos grandes rodam em turno unico; campos pequenos em ida e volta. */
+function stateChampIsDoubleRound(teamCount: number): boolean {
+  return teamCount <= STATE_SINGLE_ROUND_THRESHOLD
 }
 
 // Retorna o numero de rodadas do campeonato estadual
 export function getStateChampRounds(userTeamShort: string): number {
   const teams = getStateChampionshipTeams(userTeamShort)
   if (teams.length < 4) return 0
-  return (teams.length - 1) * 2
+  const half = teams.length - 1
+  return stateChampIsDoubleRound(teams.length) ? half * 2 : half
 }
 
 // Retorna o total de rodadas da liga principal
@@ -382,7 +393,8 @@ function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: st
   const fixtures: Fixture[] = []
   let fixtureId = 10000
   const halfSeason = stateTeams.length - 1
-  const totalRounds = halfSeason * 2
+  const isDouble = stateChampIsDoubleRound(stateTeams.length)
+  const totalRounds = isDouble ? halfSeason * 2 : halfSeason
 
   for (let round = 1; round <= halfSeason; round++) {
     const matchups = generateRoundMatchups(stateTeams, round)
@@ -402,23 +414,27 @@ function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: st
     })
   }
 
-  for (let round = halfSeason + 1; round <= totalRounds; round++) {
-    const turnoRound = round - halfSeason
-    const turnoFixtures = fixtures.filter(f => f.round === turnoRound)
-    turnoFixtures.forEach(f => {
-      fixtures.push({
-        id: fixtureId++,
-        round,
-        week: round,
-        homeTeam: f.awayTeam,
-        awayTeam: f.homeTeam,
-        competition,
-        played: false,
-        isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort,
-        month: getRoundMonth(round, 0, 3, totalRounds),
-        competitionType: "state",
+  // Returno so existe em campos pequenos (ida e volta). Campos grandes (ex: SP com
+  // 13 clubes) rodam turno unico para o estadual nao virar 24+ rodadas.
+  if (isDouble) {
+    for (let round = halfSeason + 1; round <= totalRounds; round++) {
+      const turnoRound = round - halfSeason
+      const turnoFixtures = fixtures.filter(f => f.round === turnoRound)
+      turnoFixtures.forEach(f => {
+        fixtures.push({
+          id: fixtureId++,
+          round,
+          week: round,
+          homeTeam: f.awayTeam,
+          awayTeam: f.homeTeam,
+          competition,
+          played: false,
+          isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort,
+          month: getRoundMonth(round, 0, 3, totalRounds),
+          competitionType: "state",
+        })
       })
-    })
+    }
   }
 
   return fixtures
@@ -623,6 +639,48 @@ function initializeStandings(teams: Team[]): StandingsEntry[] {
     points: 0,
     form: []
   }))
+}
+
+/**
+ * Calcula a classificacao de UMA competicao a partir dos fixtures dela (estadual,
+ * liga, etc.). Inclui todos os times que a disputam, mesmo sem jogos, e ordena por
+ * pontos > saldo > gols pro. Necessario porque o engine so mantem a tabela da liga
+ * (serieAStandings) — durante o estadual o dashboard mostrava a tabela errada.
+ */
+export function computeStandingsFromFixtures(fixtures: Fixture[], competition: string): StandingsEntry[] {
+  const rows = new Map<string, StandingsEntry>()
+  const ensure = (curto: string): StandingsEntry => {
+    let r = rows.get(curto)
+    if (!r) {
+      r = { teamShort: curto, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0, form: [] }
+      rows.set(curto, r)
+    }
+    return r
+  }
+
+  for (const f of fixtures) {
+    if (f.competition !== competition) continue
+    const home = ensure(f.homeTeam.curto)
+    const away = ensure(f.awayTeam.curto)
+    if (!f.played || f.homeScore === undefined || f.awayScore === undefined) continue
+
+    const hg = f.homeScore
+    const ag = f.awayScore
+    home.played++; away.played++
+    home.goalsFor += hg; home.goalsAgainst += ag
+    away.goalsFor += ag; away.goalsAgainst += hg
+
+    if (hg > ag) { home.won++; home.points += 3; away.lost++ }
+    else if (hg < ag) { away.won++; away.points += 3; home.lost++ }
+    else { home.drawn++; away.drawn++; home.points++; away.points++ }
+  }
+
+  return [...rows.values()].sort((a, b) =>
+    b.points - a.points ||
+    (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst) ||
+    b.goalsFor - a.goalsFor ||
+    a.teamShort.localeCompare(b.teamShort),
+  )
 }
 
 export function useGameManager() {
@@ -1088,12 +1146,29 @@ export function useGameManager() {
     })
   }, [gameEngine.serieAStandings])
   
-  // Posicao do usuario na tabela
+  // Competicao que esta sendo disputada agora (ex: "Campeonato Paulista").
+  const currentCompetition = useMemo(
+    () => seasonCalendar.nextUserMatch?.competition ?? null,
+    [seasonCalendar.nextUserMatch],
+  )
+  const currentCompetitionType = useMemo(
+    () => seasonCalendar.nextUserMatch?.competitionType ?? "league",
+    [seasonCalendar.nextUserMatch],
+  )
+
+  // Tabela do campeonato EM DISPUTA. O engine so mantem a tabela da liga, entao
+  // para estadual/copa a tabela e derivada dos fixtures da propria competicao.
+  const currentStandings = useMemo(() => {
+    if (!currentCompetition || currentCompetitionType === "league") return standings
+    return computeStandingsFromFixtures(seasonCalendar.fixtures, currentCompetition)
+  }, [currentCompetition, currentCompetitionType, seasonCalendar.fixtures, standings])
+
+  // Posicao do usuario na tabela do campeonato em disputa
   const userPosition = useMemo(() => {
     if (!saveState.selectedTeamShort) return 0
-    const index = standings.findIndex(s => s.teamShort === saveState.selectedTeamShort)
+    const index = currentStandings.findIndex(s => s.teamShort === saveState.selectedTeamShort)
     return index + 1
-  }, [standings, saveState.selectedTeamShort])
+  }, [currentStandings, saveState.selectedTeamShort])
   
   // Time do usuario
   const userTeam = useMemo(() => {
@@ -1173,6 +1248,10 @@ export function useGameManager() {
     userTeam,
     userPosition,
     standings,
+    // Tabela + nome do campeonato que esta sendo disputado (estadual, liga, copa...)
+    currentStandings,
+    currentCompetition,
+    currentCompetitionType,
     seasonCalendar,
     currentWeek: saveState.week,
     currentSeason: saveState.season,

@@ -975,3 +975,26 @@
     animation: glow-pulse 2s ease-in-out infinite;
   }
 }
+
+/* ── Fundo do escritorio: dois fundos alternando com crossfade suave ───────── */
+@keyframes officeBgFadeA {
+  0%, 42%  { opacity: 1; }
+  50%, 92% { opacity: 0; }
+  100%     { opacity: 1; }
+}
+@keyframes officeBgFadeB {
+  0%, 42%  { opacity: 0; }
+  50%, 92% { opacity: 1; }
+  100%     { opacity: 0; }
+}
+.office-bg-a {
+  animation: officeBgFadeA 28s ease-in-out infinite;
+}
+.office-bg-b {
+  opacity: 0;
+  animation: officeBgFadeB 28s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .office-bg-a, .office-bg-b { animation: none; }
+  .office-bg-b { opacity: 0; }
+}

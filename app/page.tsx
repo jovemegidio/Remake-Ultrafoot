@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import {
   Calendar,
   ChevronRight,
@@ -74,7 +75,9 @@ function fixtureDateHeadline(round: number, month?: number): string {
 }
 
 export default function DashboardPage() {
-  const { hydrated, userTeam, seasonCalendar, standings, userPosition, currentSeason, saveState } = useGameManager()
+  const { hydrated, userTeam, seasonCalendar, currentStandings, currentCompetition, userPosition, currentSeason, saveState } = useGameManager()
+  // Tabela do campeonato EM DISPUTA (antes mostrava sempre a Serie A, mesmo no estadual)
+  const standings = currentStandings
   const { offers: nationalOffers, hasNationalTeam } = useNationalTeam()
   const gameEngine = useGameEngine()
   const t = useTranslation()
@@ -151,8 +154,30 @@ export default function DashboardPage() {
   const salaryCritical = wagePercentage >= 100
 
   return (
-    <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
-      <GameHeader team={userTeam} />
+    <div className="relative h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+      {/* Fundo do escritorio: dois fundos alternando com crossfade suave */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <Image
+          src="/images/office-bg-1.png"
+          alt=""
+          fill
+          priority
+          unoptimized
+          className="office-bg-a object-cover"
+        />
+        <Image
+          src="/images/office-bg-2.png"
+          alt=""
+          fill
+          unoptimized
+          className="office-bg-b object-cover"
+        />
+        {/* Escurecimento para manter a leitura do conteudo */}
+        <div className="absolute inset-0 bg-[#050508]/82" />
+      </div>
+
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+        <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Proposta de selecao nacional */}
@@ -362,11 +387,16 @@ export default function DashboardPage() {
             {/* Classificacao */}
             <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
-                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Trophy className="h-4 w-4 text-[#ffd700]" />
-                  {t.dashboard.standings}
+                <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-white/60">
+                  <Trophy className="h-4 w-4 shrink-0 text-[#ffd700]" />
+                  <span className="shrink-0">{t.dashboard.standings}</span>
+                  {currentCompetition && (
+                    <span className="truncate text-[10px] uppercase tracking-wider text-[#00ffc8]/80">
+                      · {currentCompetition}
+                    </span>
+                  )}
                 </div>
-                <span className="text-[10px] text-white/40">TOP 8 DE {standings.length || 20}</span>
+                <span className="shrink-0 text-[10px] text-white/40">TOP 8 DE {standings.length || 20}</span>
               </div>
               <div className="divide-y divide-white/5">
                 <div className="grid grid-cols-[32px_1fr_40px_32px_32px_32px] gap-1 px-4 py-2 text-[10px] text-white/40 uppercase tracking-wider">
@@ -434,7 +464,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-
+      </div>
     </div>
   )
 }

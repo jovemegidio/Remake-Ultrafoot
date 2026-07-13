@@ -1,5 +1,7 @@
 "use client"
 
+import { gameAssetUrl } from "@/lib/game-asset"
+
 export type PlayerRepeat = "off" | "all" | "one"
 
 export interface Track {
@@ -73,7 +75,10 @@ function loadTrack(index: number, autoplay: boolean) {
   const i = ((index % total) + total) % total
   const src = state.tracks[i].src
   setState({ currentTrack: i, currentTime: 0 })
-  audio.src = src
+  // No desktop os audios NAO ficam no bundle do frontend (o prune-export-music os
+  // remove de out/) — eles vao como resource bundlado ao lado do exe e so sao
+  // acessiveis via game-asset://. Usar o caminho cru dava 404 e o player nao tocava.
+  audio.src = gameAssetUrl(src)
   audio.load()
   persist("ultrafoot:music-current-src", src)
   persist("ultrafoot:music-current-time", "0")
