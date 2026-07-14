@@ -226,7 +226,7 @@ function TeamPanel({
 export default function PartidaPage() {
   const router = useRouter()
   const userTeam = useUserTeam()
-  const { currentMatch, standings, league, currentRound, registerUserMatchResult, advanceWeek } = useGameManager()
+  const { currentMatch, seasonCalendar, standings, league, currentRound, registerUserMatchResult, advanceWeek } = useGameManager()
 
   const { connected: gamepadConnected } = useGamepadDetection()
   const [hydrated, setHydrated] = useState(false)
@@ -249,16 +249,31 @@ export default function PartidaPage() {
     setHydrated(true)
   }, [])
 
-  // Resolve teams
+  // Resolve teams.
+  //
+  // Antes, sem currentMatch, isto caia em FLA x MIR HARDCODED — por isso a tela
+  // mostrava Flamengo x Mirassol mesmo com outro time selecionado, divergindo do
+  // calendario/escritorio. O `userTeam` desta pagina nem chegava a ser usado.
+  // Agora usa a PROXIMA partida real do calendario e, se nem isso houver, o time do
+  // usuario. Sem clube inventado.
+  const nextFixture = seasonCalendar?.nextUserMatch ?? null
+  const userTeamData = useMemo(
+    () => getTeamByShort(userTeam.team?.curto ?? ""),
+    [userTeam.team?.curto],
+  )
+
   const homeTeam = useMemo(() => {
-    if (!currentMatch) return getTeamByShort("FLA") || serieATeams[0]
-    return currentMatch.homeTeam
-  }, [currentMatch])
+    if (currentMatch) return currentMatch.homeTeam
+    if (nextFixture) return nextFixture.homeTeam
+    return userTeamData ?? serieATeams[0]
+  }, [currentMatch, nextFixture, userTeamData])
 
   const awayTeam = useMemo(() => {
-    if (!currentMatch) return getTeamByShort("MIR") || serieATeams[1]
-    return currentMatch.awayTeam
-  }, [currentMatch])
+    if (currentMatch) return currentMatch.awayTeam
+    if (nextFixture) return nextFixture.awayTeam
+    // Sem calendario: qualquer adversario, menos o proprio time.
+    return serieATeams.find(t => t.curto !== (userTeamData?.curto ?? "")) ?? serieATeams[1]
+  }, [currentMatch, nextFixture, userTeamData])
 
   const matchInfo = useMemo(() => {
     // league é a chave de divisao (ex: "serie_a") — usar diretamente para o logo

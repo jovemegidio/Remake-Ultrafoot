@@ -91,6 +91,15 @@ export interface MatchState {
   momentum: number  // -50 a +50 (positivo = mandante dominando)
   homeReds: number  // quantos vermelhos o mandante tem
   awayReds: number
+  /**
+   * Penalti do USUARIO aguardando a escolha do batedor.
+   *
+   * Antes o motor cobrava o penalti no MESMO tick em que o marcava: quando a UI ia
+   * reagir, o gol ja estava no placar. O modal de batedor nunca abria (o evento de
+   * penalti ficava soterrado sob o de gol) e, se abrisse, a escolha seria decorativa.
+   * Agora o motor PARA aqui e espera resolvePenalty() com o batedor escolhido.
+   */
+  pendingPenalty: { side: Side; minute: number } | null
 }
 
 // Jogador do elenco — nome+pos obrigatórios, atributos opcionais (retrocompat)
@@ -125,6 +134,11 @@ export interface MatchConfig {
   awayAttack?: number
   awayDefense?: number
   awayMidfield?: number
+  /**
+   * Lado controlado pelo USUARIO. Quando o penalti sai para este lado, o motor para e
+   * espera a escolha do batedor (resolvePendingPenalty). Sem isto, ele cobra sozinho.
+   */
+  userSide?: Side
 }
 
 export interface MatchModifiers {
@@ -173,6 +187,7 @@ export function createInitialState(): MatchState {
     momentum: 0,
     homeReds: 0,
     awayReds: 0,
+    pendingPenalty: null,
   }
 }
 
@@ -673,36 +688,90 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
       important: true,
     }, ...state.events]
 
-    // Taxa de conversão influenciada pelo shooting do batedor
-    const takerData = pickPlayerFull(side, config, ["ATA", "MEI"])
-    const takerShooting = takerData?.shooting ?? (isHome ? probs.homeAttStr : probs.awayAttStr)
-    const takerName = takerData?.nome ?? pickPlayer(side, config, ["ATA"])
-    const gkData = pickPlayerFull(gkSide, config, ["GOL"])
-    const gkName = gkData?.nome ?? pickPlayer(gkSide, config, ["GOL"])
-
-    const convRate = Math.min(0.88, 0.72 + (takerShooting - 70) * 0.003)
-    if (rnd() < convRate) {
-      teamStats.goals += 1
-      teamStats.shots += 1
-      teamStats.shotsOnTarget += 1
-      teamStats.xG += 0.78
-      state.events = [{
-        id: nameId(), minute, type: "goal", side,
-        text: `GOOOL! ${takerName} converte o pênalti`,
-        player: takerName, important: true,
-      }, ...state.events]
-      state.flash = { side, type: "goal" }
-      state.momentum = isHome ? 18 : -18
-    } else {
-      state.events = [{
-        id: nameId(), minute, type: "save", side,
-        text: `${gkName} defende o pênalti de ${takerName}!`,
-        important: true,
-      }, ...state.events]
-      state.flash = { side, type: "chance" }
-      state.momentum += isHome ? -20 : 20
+    // Penalti do USUARIO: o motor PARA aqui. Antes ele cobrava no mesmo tick — o gol
+    // ja estava no placar quando a UI ia reagir, o evento de penalti ficava soterrado
+    // sob o de gol (o modal nunca abria) e a escolha do batedor seria decorativa.
+    if (config.userSide === side) {
+      state.pendingPenalty = { side, minute }
+      return
     }
+
+    // Penalti da IA: cobra na hora, com um batedor escolhido pelo proprio motor.
+    resolvePenaltyKick(state, config, side, null, probs)
   }
+}
+
+/**
+ * Executa a cobranca de penalti. `taker` = batedor escolhido pelo usuario; quando null,
+ * o motor escolhe (usado para os penaltis da IA).
+ */
+function resolvePenaltyKick(
+  state: MatchState,
+  config: MatchConfig,
+  side: Side,
+  taker: SquadPlayer | null,
+  probs: DynamicProbs,
+): void {
+  const isHome = side === "home"
+  const gkSide: Side = isHome ? "away" : "home"
+  const teamStats = isHome ? state.home : state.away
+  const minute = state.minute
+
+  const takerData = taker ?? pickPlayerFull(side, config, ["ATA", "MEI"])
+  const takerShooting = takerData?.shooting ?? (isHome ? probs.homeAttStr : probs.awayAttStr)
+  const takerName = takerData?.nome ?? pickPlayer(side, config, ["ATA"])
+  const gkData = pickPlayerFull(gkSide, config, ["GOL"])
+  const gkName = gkData?.nome ?? pickPlayer(gkSide, config, ["GOL"])
+
+  // A escolha do batedor IMPORTA: a conversao sai do shooting dele.
+  const convRate = Math.min(0.88, 0.72 + (takerShooting - 70) * 0.003)
+  if (rnd() < convRate) {
+    teamStats.goals += 1
+    teamStats.shots += 1
+    teamStats.shotsOnTarget += 1
+    teamStats.xG += 0.78
+    state.events = [{
+      id: nameId(), minute, type: "goal", side,
+      text: `GOOOL! ${takerName} converte o pênalti`,
+      player: takerName, important: true,
+    }, ...state.events]
+    state.flash = { side, type: "goal" }
+    state.momentum = isHome ? 18 : -18
+  } else {
+    state.events = [{
+      id: nameId(), minute, type: "save", side,
+      text: `${gkName} defende o pênalti de ${takerName}!`,
+      important: true,
+    }, ...state.events]
+    state.flash = { side, type: "chance" }
+    state.momentum += isHome ? -20 : 20
+  }
+}
+
+/**
+ * Cobra o penalti pendente com o batedor escolhido pelo usuario e libera a partida.
+ * Chamado pela UI depois que o jogador escolhe no modal.
+ */
+export function resolvePendingPenalty(
+  state: MatchState,
+  config: MatchConfig,
+  taker: SquadPlayer | null,
+): MatchState {
+  if (!state.pendingPenalty) return state
+
+  const next: MatchState = {
+    ...state,
+    home: { ...state.home },
+    away: { ...state.away },
+    events: state.events.slice(),
+    flash: null,
+  }
+
+  const probs = calcDynamicProbs(config, next)
+  resolvePenaltyKick(next, config, next.pendingPenalty!.side, taker, probs)
+  next.pendingPenalty = null
+  next.momentum = Math.max(-50, Math.min(50, next.momentum))
+  return next
 }
 
 // ──────���──────────────────────────────────────────────────────────────────────
@@ -832,6 +901,8 @@ function stampStoppage(next: MatchState, eventsBefore: number, config: MatchConf
 
 export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
   if (state.phase === "fulltime" || state.phase === "pre") return state
+  // Penalti do usuario pendente: o relogio NAO anda ate ele escolher o batedor.
+  if (state.pendingPenalty) return state
 
   // O intervalo acaba aqui: devolve o relogio para 45' antes de seguir.
   if (state.phase === "halftime") return resumeSecondHalf(state, config)

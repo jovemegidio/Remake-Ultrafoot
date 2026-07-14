@@ -6,11 +6,13 @@ import {
   startMatch,
   tickMinute,
   getFootballClock,
+  resolvePendingPenalty,
   SPEED_TICKS_PER_SEC,
   type MatchConfig,
   type MatchEvent,
   type MatchState,
   type MatchSpeed,
+  type SquadPlayer,
 } from "@/lib/match-engine"
 
 export interface UseMatchSimulation {
@@ -28,6 +30,12 @@ export interface UseMatchSimulation {
   addEvent: (ev: Omit<MatchEvent, "id" | "minute" | "addedTime">) => void
   // Simular até o fim instantaneamente
   fastForward: () => void
+  /**
+   * Cobra o penalti pendente com o batedor escolhido pelo usuario.
+   * Enquanto houver penalti pendente o relogio fica parado, entao isto e o que
+   * destrava a partida.
+   */
+  takePenalty: (taker: SquadPlayer | null) => void
 }
 
 export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulation {
@@ -184,6 +192,12 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     return () => stopTimer()
   }, [stopTimer])
 
+  const takePenalty = useCallback((taker: SquadPlayer | null) => {
+    const cfg = configRef.current
+    if (!cfg) return
+    setState(prev => resolvePendingPenalty(prev, cfg, taker))
+  }, [])
+
   return {
     state,
     speed,
@@ -196,5 +210,6 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     forceGoal,
     addEvent,
     fastForward,
+    takePenalty,
   }
 }

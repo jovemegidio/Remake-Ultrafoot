@@ -580,10 +580,22 @@ export default function PartidaAoVivoPage() {
     homeSquad: homeSquad.map(toSquadPlayer),
     awaySquad: awaySquad.map(toSquadPlayer),
     durationMinutes: matchCtx.duration,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration])
+    // Diz ao motor qual lado e o do usuario: no penalti dele, o motor PARA e espera
+    // a escolha do batedor em vez de cobrar sozinho.
+    userSide,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide])
 
   const sim = useMatchSimulation(config)
-  const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent } = sim
+  const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty } = sim
+
+  // Penalti a favor do usuario: o motor parou e esta esperando o batedor.
+  // Isto substitui a deteccao pelo evento (que nunca funcionava — o gol ja vinha por cima).
+  useEffect(() => {
+    if (state.pendingPenalty) {
+      pause()
+      setShowPenaltyModal(true)
+    }
+  }, [state.pendingPenalty, pause])
 
   // Discord Rich Presence
   useDiscordRPC(state, homeTeam, awayTeam)
@@ -676,11 +688,11 @@ export default function PartidaAoVivoPage() {
     if (animatableTypes.includes(lastEvent.type as AnimatableEvent)) {
       const eventTeam = lastEvent.side === "home" ? homeTeam : awayTeam
       
-      // Se for penalti a favor do usuario, mostra modal de selecao
+      // Penalti do usuario NAO e tratado aqui: o motor agora para e sinaliza via
+      // state.pendingPenalty (efeito abaixo). Antes isto dependia do evento "penalty"
+      // estar no topo da lista — mas o motor ja tinha empilhado o gol por cima dele.
       if (lastEvent.type === "penalty" && lastEvent.side === userSide) {
-        pause()
-        setShowPenaltyModal(true)
-        setPendingPenalty({ side: lastEvent.side, minute: lastEvent.minute })
+        // no-op: o modal abre pelo pendingPenalty
       } else {
         // Mostra animacao normal
         pause()
@@ -694,19 +706,22 @@ export default function PartidaAoVivoPage() {
     }
   }, [state.events, homeTeam, awayTeam, userSide, pause])
 
-  // Handler para quando o usuario seleciona batedor de penalti
+  // Handler para quando o usuario seleciona batedor de penalti.
+  // A escolha IMPORTA: o motor usa o shooting deste jogador na taxa de conversao.
   const handlePenaltyTaker = (player: MatchPlayer) => {
     setShowPenaltyModal(false)
-    
-    // Mostra animacao do penalti
+
     setCurrentAnimation({
       type: "penalty",
       team: userSide === "home" ? homeTeam : awayTeam,
       player: player.name,
-      minute: pendingPenalty?.minute
+      minute: state.pendingPenalty?.minute,
     })
-    
+
+    // Cobra de fato — isto tambem destrava o relogio, que estava parado.
+    takePenalty(toSquadPlayer(player))
     setPendingPenalty(null)
+    resume()
   }
 
   // Handler para fechar animacao
@@ -1452,7 +1467,10 @@ export default function PartidaAoVivoPage() {
     players={userSide === "home" ? homeSquad : awaySquad}
     onSelectPlayer={(p) => handlePenaltyTaker(p as unknown as MatchPlayer)}
     onClose={() => {
+      // Fechar sem escolher NAO pode congelar a partida: o relogio so anda quando o
+      // penalti pendente e resolvido. Passando null, o motor escolhe o batedor.
       setShowPenaltyModal(false)
+      takePenalty(null)
       setPendingPenalty(null)
       resume()
     }}
