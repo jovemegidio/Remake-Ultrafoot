@@ -313,6 +313,12 @@ export interface GameState {
   youthPlayers?: SquadPlayer[]
   // Temporada em que a base foi semeada — evita re-gerar prospectos toda visita.
   youthSeededSeason?: number
+  // Divisao ATUAL do clube do usuario quando ela difere da estatica (teams-data), por
+  // causa de acesso/rebaixamento. A resolucao da liga prefere isto. undefined = usa a
+  // divisao original do time.
+  divisionOverride?: string
+  // Aviso a mostrar no office apos subir/cair (limpo depois de exibido).
+  divisionMovement?: { movement: "promoted" | "relegated"; message: string; season: number }
   balance?: number
   selectedTeam?: SavedTeam
   currentRound?: number

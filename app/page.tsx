@@ -11,6 +11,7 @@ import {
   Star,
   Target,
   TrendingUp,
+  TrendingDown,
   Trophy,
   Users,
   Play,
@@ -269,6 +270,35 @@ export default function DashboardPage() {
             </div>
             <ChevronRight className="h-5 w-5 shrink-0 text-[#00ffc8] transition-transform group-hover:translate-x-1" />
           </Link>
+        )}
+
+        {/* ACESSO / REBAIXAMENTO — aviso da mudanca de divisao na virada de temporada. */}
+        {saveState.divisionMovement && (
+          <div className={cn(
+            "flex items-center gap-4 rounded-xl border p-4",
+            saveState.divisionMovement.movement === "promoted"
+              ? "border-[#00ffc8]/30 bg-[#00ffc8]/[0.06]"
+              : "border-red-500/30 bg-red-500/[0.06]"
+          )}>
+            <div className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
+              saveState.divisionMovement.movement === "promoted" ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-red-500/15 text-red-300"
+            )}>
+              {saveState.divisionMovement.movement === "promoted" ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-white">
+                {saveState.divisionMovement.movement === "promoted" ? "Acesso conquistado!" : "Rebaixamento"}
+              </p>
+              <p className="truncate text-sm text-white/60">{saveState.divisionMovement.message}</p>
+            </div>
+            <button
+              onClick={() => setState({ divisionMovement: undefined })}
+              className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
+            >
+              Entendi
+            </button>
+          </div>
         )}
 
         {/* PROPOSTAS DE OUTROS CLUBES.

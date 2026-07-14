@@ -48,10 +48,28 @@ const srv = createServer(async (q, s) => {
 await new Promise((r) => srv.listen(0, "127.0.0.1", r))
 const base = `http://127.0.0.1:${srv.address().port}`
 
-// Elenco REAL de cada clube, direto do seed — a fonte da verdade.
+// Fonte da verdade do elenco:
+//  - clubes das ligas importadas (La Liga, Premier, Italia, Franca, Serie B/C) usam o
+//    ELENCO REAL do CSV (data/seeds/real-positions.json). Ex.: Barcelona mostra o Barca
+//    de verdade, que difere do seed antigo — o seed nao e mais a verdade para eles.
+//  - os demais seguem o seed (imported-bf2026.json).
 const seed = JSON.parse(readFileSync("data/seeds/imported-bf2026.json", "utf8"))
 const seedTeams = seed.teams ?? []
+const realPositions = JSON.parse(readFileSync("data/seeds/real-positions.json", "utf8"))
+
+// Mesma normalizacao de clube do jogo (tira "FC"/"AC" etc): "Barcelona" -> "barcelona".
+function clubKey(s) {
+  return (s || "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]/g, "")
+    .replace(/^(fc|cf|ac|as|rc|sc|ss|afc|rcd|ud|cd|sv|ogc|losc|stade)/, "")
+    .replace(/(fc|cf|cfc|ac|sc|afc|club)$/, "")
+    .replace(/^olympiquede/, "olympique")
+}
+
 function realSquad(nome) {
+  const real = realPositions[clubKey(nome)]
+  if (real?.length) return real.map((p) => p.nome).filter(Boolean)
   const t = seedTeams.find((x) => (x.nome || "").toLowerCase() === nome.toLowerCase())
   return (t?.jogadores ?? []).map((p) => p.nome).filter(Boolean)
 }

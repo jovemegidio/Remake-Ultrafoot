@@ -13,6 +13,8 @@ import { competitionsByLeague, type Competition } from "@/lib/international-comp
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective } from "@/lib/board-engine"
 import { addJobOffers } from "@/lib/career-moves"
+// Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
+import { resolveDivisionChange } from "@/lib/promotion-relegation"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -443,11 +445,16 @@ function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: st
   return fixtures
 }
 
-function getUserLeagueTeams(teamShort: string): Team[] {
+// divisionOverride: divisao ATUAL do usuario apos acesso/rebaixamento (do save). Quando
+// presente, os adversarios da liga vem dela — e nao da divisao estatica do time.
+function getUserLeagueTeams(teamShort: string, divisionOverride?: string): Team[] {
   const userTeam = getTeamByShort(teamShort)
   if (!userTeam) return []
-  const divisionTeams = getTeamsByDivision(userTeam.divisao)
-  // Garante que o time do usuario esta na lista
+  const division = divisionOverride ?? userTeam.divisao
+  const divisionTeams = getTeamsByDivision(division)
+  // Guarda: divisao sem times (nunca deveria) -> cai na estatica para nao quebrar a liga.
+  if (divisionTeams.length < 4) return getTeamsByDivision(userTeam.divisao)
+  // Garante que o time do usuario esta na lista (ele sobe/cai levando o proprio clube).
   const hasUser = divisionTeams.some(t => t.curto === teamShort)
   if (!hasUser) return [userTeam, ...divisionTeams.slice(0, 19)]
   return divisionTeams
@@ -715,7 +722,7 @@ export function useGameManager() {
     // Reinit se standings ou squad estiverem vazios (initialPlayers tem 1 jogador default)
     if (gameEngine.squadPlayers.length > 1 && gameEngine.serieAStandings.length > 0) return
     const teamShort = saveState.selectedTeamShort
-    const leagueTeams = getUserLeagueTeams(teamShort)
+    const leagueTeams = getUserLeagueTeams(teamShort, saveState.divisionOverride)
     gameEngine.initializeGame(teamShort)
     useGameEngine.setState({
       serieAStandings: initializeStandings(leagueTeams),
@@ -791,7 +798,8 @@ export function useGameManager() {
     const userTeamShort = saveState.selectedTeamShort
     const currentWeek = saveState.week
     const userTeam = getTeamByShort(userTeamShort)
-    const division = userTeam?.divisao ?? "serie_a"
+    // Divisao ATUAL (override de acesso/rebaixamento) — define o campeonato desta temporada.
+    const division = saveState.divisionOverride ?? userTeam?.divisao ?? "serie_a"
 
     // Para times brasileiros: gera campeonato estadual (Jan-Mar) + liga nacional (Abr+)
     let allFixtures: Fixture[] = []
@@ -807,8 +815,8 @@ export function useGameManager() {
       }
     }
 
-    const leagueTeams = getUserLeagueTeams(userTeamShort)
-    const competition = getLeagueName(userTeamShort)
+    const leagueTeams = getUserLeagueTeams(userTeamShort, saveState.divisionOverride)
+    const competition = LEAGUE_NAMES[division] ?? getLeagueName(userTeamShort)
     // Gera a liga com round=1..L (semana sera reatribuida ao intercalar as copas)
     const leagueFixtures = generateBrasileirao(leagueTeams, userTeamShort, competition, division, stateChampRoundsCount)
 
@@ -929,7 +937,9 @@ export function useGameManager() {
     const result = { fixtures: allFixtures, currentRound, nextUserMatch, previousUserMatch }
     seasonCalendarRef.current = result
     return result
-  }, [saveState.selectedTeamShort, saveState.week, gameEngine.matchResults])
+    // divisionOverride nas deps: ao subir/cair, o calendario e os adversarios da liga
+    // precisam ser recalculados para a divisao nova.
+  }, [saveState.selectedTeamShort, saveState.week, saveState.divisionOverride, gameEngine.matchResults])
   
   // Avanca uma semana/rodada
   // Uses refs so sequential calls within a loop always read the latest week (fixes stale closure bug)
@@ -940,7 +950,8 @@ export function useGameManager() {
 
     // Verifica fim de temporada — total inclui estadual + liga + copas/continentais
     const userShort = currentState.selectedTeamShort ?? ""
-    const leagueTeamsForEnd = getUserLeagueTeams(userShort)
+    const divOverride = currentState.divisionOverride
+    const leagueTeamsForEnd = getUserLeagueTeams(userShort, divOverride)
     const stateRoundsForEnd = getStateChampRounds(userShort)
     const leagueRoundsForEnd = (leagueTeamsForEnd.length - 1) * 2
     const cupMatchesForEnd = getUserCupMatchCount(userShort)
@@ -960,14 +971,44 @@ export function useGameManager() {
       })
       const champion = sortedForChampion[0]?.teamShort ?? null
 
-      const teamsForReset = getUserLeagueTeams(userShort)
+      // ── ACESSO / REBAIXAMENTO ────────────────────────────────────────────
+      // A auditoria mostrou que isto era CALCULADO mas nunca aplicado. Agora a
+      // posicao final decide a divisao do clube na proxima temporada, e os adversarios
+      // do reset ja vem da divisao nova.
+      const userTeamStatic = getTeamByShort(userShort)
+      const currentDivision = divOverride ?? userTeamStatic?.divisao ?? "serie_a"
+      const userFinalPos = sortedForChampion.findIndex(s => s.teamShort === userShort) + 1
+
+      let nextDivisionOverride = divOverride
+      let divisionMovement = currentState.divisionMovement
+      if (userFinalPos > 0) {
+        const outcome = resolveDivisionChange(
+          currentDivision, userFinalPos, userTeamStatic?.nome ?? "Seu clube",
+        )
+        if (outcome.movement !== "stay") {
+          // undefined quando volta a divisao estatica original (limpa o override).
+          nextDivisionOverride =
+            outcome.nextDivision === userTeamStatic?.divisao ? undefined : outcome.nextDivision
+          divisionMovement = {
+            movement: outcome.movement, message: outcome.message, season: nextSeason,
+          }
+        }
+      }
+
+      // Adversarios da PROXIMA temporada: da divisao ja atualizada.
+      const teamsForReset = getUserLeagueTeams(userShort, nextDivisionOverride)
       const newStandings = initializeStandings(teamsForReset)
 
       // Processa fim de temporada: envelhece jogadores, aposentadorias, jovens da base, reseta standings
       gameEngine.processSeasonEnd(nextSeason, newStandings, currentStandings)
 
-      saveStateRef.current = { ...currentState, week: 0, season: nextSeason }
-      setSaveState({ week: 0, season: nextSeason })
+      const patch = {
+        week: 0, season: nextSeason,
+        divisionOverride: nextDivisionOverride,
+        divisionMovement,
+      }
+      saveStateRef.current = { ...currentState, ...patch }
+      setSaveState(patch)
 
       return { newSeason: true, champion }
     }
@@ -1232,12 +1273,16 @@ export function useGameManager() {
     return index + 1
   }, [currentStandings, saveState.selectedTeamShort])
   
-  // Time do usuario
+  // Time do usuario — com a divisao ATUAL (override de acesso/rebaixamento) aplicada, para
+  // que TUDO que deriva de userTeam.divisao (copas, competicoes, nome da liga) acompanhe.
   const userTeam = useMemo(() => {
-    return saveState.selectedTeamShort 
-      ? getTeamByShort(saveState.selectedTeamShort) 
-      : null
-  }, [saveState.selectedTeamShort])
+    if (!saveState.selectedTeamShort) return null
+    const base = getTeamByShort(saveState.selectedTeamShort)
+    if (!base) return null
+    return saveState.divisionOverride && saveState.divisionOverride !== base.divisao
+      ? { ...base, divisao: saveState.divisionOverride }
+      : base
+  }, [saveState.selectedTeamShort, saveState.divisionOverride])
   
   // Desbloqueia habilidade do treinador manualmente (crise resolvida, titulo, etc)
   const unlockCoachSkill = useCallback((skillId: CoachSkillId) => {
