@@ -34,6 +34,13 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { useGameEngine } from "@/lib/game-engine"
+import {
+  listSavedLineups,
+  saveLineup,
+  deleteLineup,
+  type SavedLineup,
+} from "@/lib/saved-lineups"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
@@ -121,6 +128,33 @@ export default function ConfiguracoesPage() {
   const [autoSave, setAutoSave] = useState(true)
   const [notifications, setNotifications] = useState(true)
   const [matchSpeed, setMatchSpeed] = useState("normal")
+
+  // Escalacoes salvas de VERDADE. Antes esta tela mostrava 3 cartoes chumbados
+  // ("Escalacao Principal / Rotacao / Jovens", todos "4-3-3 - 11 jogadores" escritos no
+  // HTML): nao havia escalacao salva nenhuma — nada era gravado nem carregado.
+  const [savedLineups, setSavedLineups] = useState<SavedLineup[]>([])
+  const [lineupMsg, setLineupMsg] = useState<string | null>(null)
+  useEffect(() => { setSavedLineups(listSavedLineups()) }, [])
+
+  /** Grava o 11 titular ATUAL do engine como uma escalacao reutilizavel. */
+  const handleSaveCurrentLineup = () => {
+    const engine = useGameEngine.getState()
+    const starters = (engine.squadPlayers ?? []).filter((p) => p.isStarter)
+    if (starters.length === 0) {
+      setLineupMsg("Escale o time primeiro — não há titulares definidos.")
+      setTimeout(() => setLineupMsg(null), 3000)
+      return
+    }
+    saveLineup({
+      name: `Escalação ${listSavedLineups().length + 1}`,
+      formation: engine.formation ?? "4-3-3",
+      starters: starters.map((p) => p.id),
+      starterNames: starters.map((p) => p.name),
+    })
+    setSavedLineups(listSavedLineups())
+    setLineupMsg(`Escalação salva com ${starters.length} jogadores.`)
+    setTimeout(() => setLineupMsg(null), 3000)
+  }
   const [selectedUniform, setSelectedUniform] = useState<"home" | "away" | "third">(state.selectedUniform || "home")
   const [language, setLanguage] = useState(state.language || "pt-BR")
   const [saving, setSaving] = useState(false)
@@ -610,35 +644,64 @@ export default function ConfiguracoesPage() {
                 {t.settings.savedLineups}
               </h3>
               <p className="text-sm text-white/50">{t.settings.savedLineupsDesc}</p>
-              <div className="grid gap-3">
-                {[t.settings.mainLineup, t.settings.rotation, t.settings.youth].map((name, i) => (
-                  <div
-                    key={name}
-                    onClick={() => hardNavigate("/elenco/escalacoes")}
-                    className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">{i + 1}</span>
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-white">{name}</div>
-                        <div className="text-xs text-white/40">4-3-3 • 11 jogadores</div>
-                      </div>
+              {/* Escalacoes REAIS (persistent-store). Antes eram 3 cartoes chumbados
+                  ("Escalacao Principal / Rotacao / Jovens", todos "4-3-3 - 11 jogadores"
+                  escritos no HTML): nao havia escalacao salva nenhuma. */}
+              {savedLineups.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+                  <p className="text-sm text-white/50">Nenhuma escalação salva ainda.</p>
+                  <p className="mt-1 text-xs text-white/30">
+                    Salve a escalação atual do seu time para reutilizá-la depois.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {savedLineups.map((lineup, i) => (
+                    <div
+                      key={lineup.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <button
+                        onClick={() => hardNavigate("/elenco/escalacoes")}
+                        className="flex flex-1 items-center gap-3 text-left"
+                      >
+                        <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                          <span className="text-sm font-bold text-primary">{i + 1}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-white">{lineup.name}</div>
+                          <div className="text-xs text-white/40">
+                            {lineup.formation} • {lineup.starters.length} jogadores
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          deleteLineup(lineup.id)
+                          setSavedLineups(listSavedLineups())
+                        }}
+                        aria-label={`Excluir ${lineup.name}`}
+                        className="rounded-lg p-2 text-white/30 transition-colors hover:bg-red-500/15 hover:text-red-300"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-white/30" />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
+
               <Button
-                onClick={() => hardNavigate("/elenco/escalacoes")}
+                onClick={handleSaveCurrentLineup}
                 variant="outline"
                 size="sm"
                 className="w-full border-dashed border-white/20 text-white/60 hover:text-white hover:bg-white/5"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {t.settings.newLineup}
+                Salvar escalação atual
               </Button>
+              {lineupMsg && (
+                <p className="text-center text-xs text-[#00ffc8]">{lineupMsg}</p>
+              )}
             </div>
           </div>
         )
