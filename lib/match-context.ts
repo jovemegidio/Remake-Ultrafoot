@@ -26,9 +26,15 @@ export interface MatchContext {
   }
 }
 
+// ATENCAO: homeShort/awayShort vazios de PROPOSITO.
+//
+// Antes o default era BOT x PAL. Como esse contexto e o fallback quando a partida nao
+// tem contexto salvo, o Botafogo virava o unico escudo/camisa que SEMPRE aparecia — foi
+// exatamente o que o testador relatou ("so o Botafogo aparece"). Um dado inventado que
+// mascara a ausencia do dado real e pior que um vazio: o vazio a gente ve e conserta.
 export const DEFAULT_MATCH_CONTEXT: MatchContext = {
-  homeShort: "BOT",
-  awayShort: "PAL",
+  homeShort: "",
+  awayShort: "",
   homeKit: "home",
   awayKit: "away",
   competition: "Brasileirão Série A",

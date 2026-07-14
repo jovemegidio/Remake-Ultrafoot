@@ -1008,9 +1008,13 @@
   --a11y-font-scale: 1;
 }
 
-/* Escala de fonte: multiplica o root, entao todo rem do jogo acompanha. */
+/* Escala de fonte = RESOLUCAO x preferencia do jogador.
+   O jogo era fixo em 16px: num 1366x768 o texto sufoca a tela, e num 1440p/4K fica
+   minusculo. A base agora acompanha a largura da janela e o ajuste de acessibilidade
+   multiplica por cima.
+     1280px -> 14px | 1920px -> 16px | 2560px -> 18px | 3840px -> 20px (teto) */
 html {
-  font-size: calc(16px * var(--a11y-font-scale));
+  font-size: calc(clamp(14px, 0.3125vw + 10px, 20px) * var(--a11y-font-scale));
 }
 
 /* Alto contraste: reforca texto e bordas, que sao o ponto fraco do tema escuro
