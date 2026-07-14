@@ -33,36 +33,16 @@ import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
-import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
+import { useUserRoster } from "@/lib/use-user-roster"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
 
 // FORMATIONS agora vive em lib/formations.ts (compartilhado com a Central de Transferencias).
 
 // Mock players data
-const playersData = [
-  { id: 1, name: "Cleiton", position: "GOL", age: 28, overall: 78, potential: 80, energy: 80, rhythm: 75, moral: "Feliz", foot: "Direita", acceleration: "Controlado", function: "Introvertido", focus: "Ataque", height: 186, pace: 45, shooting: 20, passing: 55, dribbling: 35, defending: 25, physical: 70, fintas: 4 },
-  { id: 2, name: "Nathan Mendes", position: "LD", age: 24, overall: 75, potential: 82, energy: 85, rhythm: 78, moral: "Motivado", foot: "Direita", acceleration: "Explosivo", function: "Equilibrado", focus: "Equilibrado", height: 178, pace: 82, shooting: 55, passing: 70, dribbling: 72, defending: 74, physical: 70, fintas: 3 },
-  { id: 3, name: "Pedro Henrique", position: "ZAG", age: 27, overall: 77, potential: 78, energy: 75, rhythm: 72, moral: "Normal", foot: "Direita", acceleration: "Controlado", function: "Defensivo", focus: "Defesa", height: 188, pace: 68, shooting: 45, passing: 60, dribbling: 55, defending: 80, physical: 82, fintas: 2 },
-  { id: 4, name: "Eduardo Santos", position: "ZAG", age: 25, overall: 76, potential: 80, energy: 78, rhythm: 74, moral: "Feliz", foot: "Esquerda", acceleration: "Controlado", function: "Construtor", focus: "Defesa", height: 185, pace: 70, shooting: 42, passing: 58, dribbling: 52, defending: 78, physical: 80, fintas: 2 },
-  { id: 5, name: "Luan Candido", position: "LE", age: 23, overall: 74, potential: 83, energy: 90, rhythm: 80, moral: "Motivado", foot: "Esquerda", acceleration: "Explosivo", function: "Ofensivo", focus: "Ataque", height: 175, pace: 85, shooting: 58, passing: 72, dribbling: 75, defending: 70, physical: 68, fintas: 3 },
-  { id: 6, name: "Jadsom Silva", position: "VOL", age: 22, overall: 73, potential: 84, energy: 82, rhythm: 76, moral: "Normal", foot: "Direita", acceleration: "Equilibrado", function: "Box-to-box", focus: "Equilibrado", height: 180, pace: 72, shooting: 60, passing: 75, dribbling: 72, defending: 76, physical: 75, fintas: 2 },
-  { id: 7, name: "Eric Ramires", position: "MEI", age: 26, overall: 79, potential: 81, energy: 76, rhythm: 79, moral: "Feliz", foot: "Direita", acceleration: "Controlado", function: "Meia Armador", focus: "Ataque", height: 176, pace: 75, shooting: 72, passing: 82, dribbling: 80, defending: 55, physical: 70, fintas: 4 },
-  { id: 8, name: "Lincoln", position: "MEI", age: 24, overall: 78, potential: 85, energy: 84, rhythm: 80, moral: "Motivado", foot: "Direita", acceleration: "Explosivo", function: "Meia Atacante", focus: "Ataque", height: 174, pace: 80, shooting: 75, passing: 80, dribbling: 82, defending: 55, physical: 68, fintas: 4 },
-  { id: 9, name: "Vitinho", position: "PD", age: 25, overall: 76, potential: 80, energy: 78, rhythm: 77, moral: "Normal", foot: "Esquerda", acceleration: "Explosivo", function: "Ponta Invertido", focus: "Ataque", height: 172, pace: 88, shooting: 72, passing: 70, dribbling: 80, defending: 35, physical: 65, fintas: 4 },
-  { id: 10, name: "Eduardo Sasha", position: "ATA", age: 30, overall: 81, potential: 81, energy: 72, rhythm: 75, moral: "Feliz", foot: "Direita", acceleration: "Controlado", function: "Finalizador", focus: "Ataque", height: 182, pace: 78, shooting: 85, passing: 68, dribbling: 75, defending: 38, physical: 76, fintas: 3 },
-  { id: 11, name: "Helinho", position: "PE", age: 22, overall: 75, potential: 84, energy: 88, rhythm: 82, moral: "Motivado", foot: "Direita", acceleration: "Explosivo", function: "Ponta Invertido", focus: "Ataque", height: 170, pace: 90, shooting: 70, passing: 72, dribbling: 82, defending: 32, physical: 62, fintas: 5 },
-]
-
-const benchData = [
-  { id: 12, name: "Santos", position: "GOL", age: 32, overall: 80, potential: 80, energy: 70, rhythm: 72, moral: "Normal", foot: "Direita", acceleration: "Controlado", function: "Goleiro", focus: "Defesa", height: 190, pace: 40, shooting: 18, passing: 52, dribbling: 30, defending: 22, physical: 72, fintas: 1 },
-  { id: 13, name: "Estevao", position: "MD", age: 20, overall: 79, potential: 90, energy: 92, rhythm: 85, moral: "Motivado", foot: "Esquerda", acceleration: "Explosivo", function: "Meia Atacante", focus: "Ataque", height: 168, pace: 85, shooting: 75, passing: 78, dribbling: 88, defending: 40, physical: 55, fintas: 5 },
-  { id: 14, name: "Lavis", position: "VOL", age: 24, overall: 78, potential: 82, energy: 80, rhythm: 76, moral: "Normal", foot: "Direita", acceleration: "Equilibrado", function: "Volante", focus: "Defesa", height: 182, pace: 70, shooting: 58, passing: 75, dribbling: 70, defending: 78, physical: 78, fintas: 2 },
-  { id: 15, name: "Garnacho", position: "ME", age: 20, overall: 78, potential: 88, energy: 90, rhythm: 84, moral: "Feliz", foot: "Direita", acceleration: "Explosivo", function: "Ponta", focus: "Ataque", height: 180, pace: 88, shooting: 74, passing: 68, dribbling: 84, defending: 35, physical: 68, fintas: 4 },
-  { id: 16, name: "Hato", position: "LE", age: 19, overall: 78, potential: 87, energy: 88, rhythm: 80, moral: "Motivado", foot: "Esquerda", acceleration: "Explosivo", function: "Lateral Ofensivo", focus: "Equilibrado", height: 185, pace: 82, shooting: 55, passing: 72, dribbling: 74, defending: 75, physical: 75, fintas: 3 },
-  { id: 17, name: "Jorgensen", position: "GL", age: 26, overall: 78, potential: 80, energy: 75, rhythm: 74, moral: "Normal", foot: "Direita", acceleration: "Controlado", function: "Goleiro", focus: "Defesa", height: 192, pace: 38, shooting: 15, passing: 55, dribbling: 28, defending: 20, physical: 75, fintas: 1 },
-  { id: 18, name: "Guto", position: "ATA", age: 23, overall: 77, potential: 83, energy: 82, rhythm: 78, moral: "Feliz", foot: "Direita", acceleration: "Explosivo", function: "Centroavante", focus: "Ataque", height: 184, pace: 82, shooting: 78, passing: 62, dribbling: 72, defending: 32, physical: 75, fintas: 3 },
-]
+// Os elencos MOCK (playersData/benchData) foram REMOVIDOS: eram o elenco do RB
+// Bragantino que vazava para todos os clubes quando o save ainda nao havia hidratado.
+// Sem time nao se monta elenco nenhum — a tela mostra "carregando".
 
 const positionColors: Record<string, { bg: string; text: string; border: string }> = {
   GOL: { bg: "bg-amber-500/30", text: "text-amber-400", border: "border-amber-500/50" },
@@ -118,59 +98,7 @@ function getStarRating(fintas: number) {
   ))
 }
 
-function hashString(input: string): number {
-  let hash = 0
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash * 31 + input.charCodeAt(i)) >>> 0
-  }
-  return hash
-}
-
-function seededInt(seed: string, salt: string, min: number, max: number): number {
-  const range = max - min + 1
-  return min + (hashString(`${seed}:${salt}`) % range)
-}
-
-function seededPick<T>(items: readonly T[], seed: string, salt: string): T {
-  return items[seededInt(seed, salt, 0, items.length - 1)]
-}
-
-// Converte jogadores do seed para o formato da tela de elenco
-function buildElencoPlayers(teamObj: ReturnType<typeof getTeamByShort>) {
-  if (!teamObj) return { players: playersData, bench: benchData }
-  const rawPlayers = getPlayersForTeam(teamObj)
-  if (rawPlayers.length < 11) return { players: playersData, bench: benchData }
-  const sorted = sortByPosition(rawPlayers)
-  const moralOptions = ["Feliz", "Motivado", "Normal"] as const
-  const footOptions = ["Direita", "Esquerda"] as const
-  const convert = (p: ReturnType<typeof sortByPosition>[number], idx: number) => ({
-    id: idx + 1,
-    name: p.nome,
-    position: p.pos,
-    age: p.idade,
-    overall: p.base,
-    potential: Math.min(99, p.base + seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "potential", 0, 7)),
-    energy: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "energy", 70, 94),
-    rhythm: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "rhythm", 70, 94),
-    moral: seededPick(moralOptions, `${teamObj.curto}-${p.nome}-${idx}`, "moral"),
-    foot: seededPick(footOptions, `${teamObj.curto}-${p.nome}-${idx}`, "foot"),
-    acceleration: seededPick(["Explosivo", "Controlado", "Equilibrado"] as const, `${teamObj.curto}-${p.nome}-${idx}`, "acceleration"),
-    function: p.pos === "GOL" ? "Goleiro" : p.pos === "ZAG" || p.pos === "LD" || p.pos === "LE" ? "Defensivo" : p.pos === "VOL" ? "Box-to-box" : p.pos === "MEI" ? "Meia Armador" : "Finalizador",
-    focus: p.pos === "GOL" || p.pos === "ZAG" ? "Defesa" : p.pos === "ATA" || p.pos === "PE" || p.pos === "PD" ? "Ataque" : "Equilibrado",
-    height: p.pos === "GOL" || p.pos === "ZAG" ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 185, 194) : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 170, 184),
-    pace: p.pos === "GOL" ? 45 : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "pace", 65, 89),
-    shooting: p.pos === "GOL" ? 18 : p.pos === "ZAG" || p.pos === "LD" || p.pos === "LE" ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "shooting", 40, 59) : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "shooting", 60, 84),
-    passing: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "passing", 55, 84),
-    dribbling: p.pos === "GOL" ? 30 : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "dribbling", 50, 79),
-    defending: p.pos === "ATA" || p.pos === "PE" || p.pos === "PD" ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "defending", 25, 44) : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "defending", 60, 84),
-    physical: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "physical", 60, 84),
-    fintas: p.pos === "PE" || p.pos === "PD" || p.pos === "MEI" ? 4 : p.pos === "ATA" ? 3 : 2,
-  })
-  return {
-    players: sorted.slice(0, 11).map((p, i) => convert(p, i)),
-    bench: sorted.slice(11, 18).map((p, i) => convert(p, 11 + i)),
-  }
-}
+// buildElencoPlayers agora vive em lib/use-user-roster.ts (compartilhado com a Escalacao).
 
 type ViewType = "menu" | "visao_tatica" | "gerenciamento" | "escalacoes"
 
@@ -189,49 +117,20 @@ export default function ElencoPage() {
   // primeiro render usava o RB Bragantino e montava o elenco DELE — que o useState logo
   // abaixo congelava. Resultado: o cabecalho mostrava "Barcelona" (recalculado a cada
   // render) enquanto o elenco continuava sendo o do Bragantino, para sempre.
-  const resolvedTeam = state.selectedTeamShort ? getTeamByShort(state.selectedTeamShort) : undefined
-  const userTeam = resolvedTeam ?? serieATeams[0]
-  /** Ainda carregando o save: nao ha time real, entao nao montamos elenco nenhum. */
-  const teamReady = Boolean(resolvedTeam)
+  // Elenco vem do hook compartilhado (lib/use-user-roster), o mesmo usado pela Escalacao.
+  // O hook ja lida com a hidratacao assincrona do save: teamReady=false enquanto nao ha
+  // time, e o roster e recarregado quando o clube resolve.
+  const { userTeam, teamReady, players, setPlayers, bench, setBench } =
+    useUserRoster(state.selectedTeamShort)
 
   const t = useTranslation()
   useDiscordActivity("Gerenciando o elenco", userTeam.nome)
-
-  // Sem time resolvido, o roster inicial fica VAZIO — o useEffect abaixo o preenche
-  // assim que o save hidrata. Montar com um time default e o que criava o bug.
-  const initialRoster = teamReady
-    ? buildElencoPlayers(userTeam)
-    : { players: [] as ReturnType<typeof buildElencoPlayers>["players"], bench: [] as ReturnType<typeof buildElencoPlayers>["bench"] }
 
   const [currentView, setCurrentView] = useState<ViewType>("gerenciamento")
   const [activeTab, setActiveTab] = useState<"elenco" | "taticas" | "atribuicoes">("elenco")
   const formation = engineFormation ?? "4-3-3"
   const setFormation = engineSetFormation
-  const [players, setPlayers] = useState(initialRoster.players)
-  const [bench, setBench] = useState(initialRoster.bench)
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number>(initialRoster.players[0]?.id ?? 1)
-
-  /**
-   * Recarrega o elenco quando o SAVE hidrata (ou o time muda).
-   *
-   * useState so roda o inicializador no PRIMEIRO render — e nesse instante o save ainda
-   * nao hidratou: state.selectedTeamShort vem vazio, o codigo cai no default "BGT", que
-   * nao tem 11 jogadores no seed, e buildElencoPlayers devolve o elenco MOCK
-   * (playersData/benchData). O useState entao CONGELA esse elenco falso e nunca mais
-   * atualiza quando o time real chega.
-   *
-   * Era por isso que Juventus e Palmeiras mostravam exatamente os mesmos jogadores
-   * (Nascimento, Sant'Anna, Vanderlan...): nao era o elenco de nenhum dos dois.
-   */
-  useEffect(() => {
-    if (!teamReady) return  // save ainda nao hidratou: nao ha time
-    const roster = buildElencoPlayers(userTeam)
-    setPlayers(roster.players)
-    setBench(roster.bench)
-    setSelectedPlayerId(roster.players[0]?.id ?? 1)
-    setPlayerPositions({})  // as posicoes no campo eram do elenco anterior
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamReady, userTeam.curto])
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number>(1)
   const [draggingPlayer, setDraggingPlayer] = useState<number | null>(null)
   const [dragOverTarget, setDragOverTarget] = useState<number | null>(null)
   const [playerPositions, setPlayerPositions] = useState<Record<number, { x: number; y: number }>>({})
