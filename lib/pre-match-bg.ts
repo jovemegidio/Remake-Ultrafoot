@@ -23,10 +23,12 @@ const BY_COMPETITION: Record<string, string> = {
 }
 
 // Por divisao/liga (o que `league` traz, ex.: "serie_a", "la_liga").
-// So o Brasileirao tem fundo proprio; as ligas europeias ainda nao (faltam as artes de
-// Premier, La Liga, Bundesliga e Serie A) — caem no estadio generico.
 const BY_LEAGUE: Record<string, string> = {
   serie_a: "/images/pre-jogo/brasileirao.png",
+  premier_league: "/images/pre-jogo/premier-league.png",
+  la_liga: "/images/pre-jogo/la-liga.png",
+  bundesliga: "/images/pre-jogo/bundesliga.png",
+  serie_a_ita: "/images/pre-jogo/serie-a-ita.png",
 }
 
 /**

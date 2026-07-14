@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
+import { useGameEngine, type TeamMentality } from "@/lib/game-engine"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 const TACTICAL_PRESETS = [
   {
@@ -83,12 +85,30 @@ export default function TaticasPage() {
   const router = useRouter()
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  const setTeamTactics = useGameEngine((st) => st.setTeamTactics)
   const [selectedPreset, setSelectedPreset] = useState("balanced")
   const [hoveredPreset, setHoveredPreset] = useState<string | null>(null)
 
+  // Mapeia cada preset para a mentalidade do motor de partida.
+  const PRESET_TO_MENTALITY: Record<string, TeamMentality> = {
+    balanced: "equilibrado",
+    defensive: "defensivo",
+    attacking: "ofensivo",
+    possession: "equilibrado",
+    counter: "defensivo",
+    pressing: "ofensivo",
+  }
+
+  const [applied, setApplied] = useState(false)
+
   const handleApply = () => {
-    // Aqui salvaria a tatica selecionada
-    router.push("/elenco")
+    // BUG: antes isto so tinha um comentario "// Aqui salvaria a tatica" e um
+    // router.push — nunca salvava nada, e no Tauri o router client-side nem navegava.
+    // Dai "nao consigo aplicar tatica". Agora persiste a escolha no motor e volta via
+    // hardNavigate (funciona no export estatico).
+    setTeamTactics({ mentality: PRESET_TO_MENTALITY[selectedPreset] ?? "equilibrado" })
+    setApplied(true)
+    setTimeout(() => hardNavigate("/elenco"), 350)  // deixa o feedback aparecer
   }
 
   return (
@@ -193,16 +213,17 @@ export default function TaticasPage() {
           <div className="flex items-center justify-end gap-3">
             <Button
               variant="outline"
-              onClick={() => router.push("/elenco")}
+              onClick={() => hardNavigate("/elenco")}
               className="bg-white/5 border-white/10 text-white hover:bg-white/10"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleApply}
+              disabled={applied}
               className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white"
             >
-              Aplicar Tatica
+              {applied ? "Tatica Aplicada!" : "Aplicar Tatica"}
             </Button>
           </div>
         </main>

@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
+import { capGoalkeepers } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
 import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
@@ -104,7 +105,9 @@ function playerHash(name: string, seed: number): number {
 }
 
 function playersToMatchSquad(players: Player[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
-  const sorted = sortByPosition(players)
+  // capGoalkeepers: rebaixa goleiros excedentes para o banco. Sem isso, um elenco com 3
+  // goleiros (comum) escalava OS TRES, porque GOL vem primeiro no sortByPosition.
+  const sorted = capGoalkeepers(sortByPosition(players), (p) => p.pos)
   const starters: MatchPlayer[] = sorted.slice(0, 11).map((p, i) => {
     const h = (seed: number) => playerHash(p.nome, seed)
     const isGK = p.pos === "GOL"
@@ -137,14 +140,17 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
 
 // Converte jogadores do game-engine para MatchPlayer
 function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
-  const available = players
-    .filter(p => !p.injury && !p.calledUp)
-    .sort((a, b) => {
-      const aStarter = a.isStarter === true ? 0 : a.isStarter === false ? 2 : 1
-      const bStarter = b.isStarter === true ? 0 : b.isStarter === false ? 2 : 1
-      if (aStarter !== bStarter) return aStarter - bStarter
-      return (POSITION_ORDER[a.position] ?? 9) - (POSITION_ORDER[b.position] ?? 9)
-    })
+  const available = capGoalkeepers(
+    players
+      .filter(p => !p.injury && !p.calledUp)
+      .sort((a, b) => {
+        const aStarter = a.isStarter === true ? 0 : a.isStarter === false ? 2 : 1
+        const bStarter = b.isStarter === true ? 0 : b.isStarter === false ? 2 : 1
+        if (aStarter !== bStarter) return aStarter - bStarter
+        return (POSITION_ORDER[a.position] ?? 9) - (POSITION_ORDER[b.position] ?? 9)
+      }),
+    (p) => p.position,
+  )
 
   const starters: MatchPlayer[] = available.slice(0, 11).map((p, i) => ({
     id: idOffset + i + 1,

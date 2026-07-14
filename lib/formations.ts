@@ -164,3 +164,26 @@ export function assignPlayersToFormation<T extends { id: number; position: strin
   }
   return out
 }
+
+/**
+ * Garante NO MAXIMO 1 goleiro no XI titular.
+ *
+ * As telas de partida montavam o time com sortByPosition(...).slice(0, 11). Como GOL e a
+ * primeira posicao na ordenacao, um elenco com 3 goleiros (comum e correto — os clubes
+ * carregam 3) colocava OS TRES como titulares. Este helper preserva a ordem recebida
+ * (isStarter/posicao) e apenas move os goleiros excedentes para o fim (banco), de modo que
+ * slice(0, 11) passe a ter 1 goleiro + 10 de linha.
+ */
+export function capGoalkeepers<T>(ordered: T[], getPos: (p: T) => string): T[] {
+  const kept: T[] = []
+  const surplusGks: T[] = []
+  let gkSeen = 0
+  for (const p of ordered) {
+    if (getPos(p) === "GOL") {
+      gkSeen++
+      if (gkSeen > 1) { surplusGks.push(p); continue }
+    }
+    kept.push(p)
+  }
+  return [...kept, ...surplusGks]
+}
