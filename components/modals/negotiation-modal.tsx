@@ -25,7 +25,8 @@ import {
   type AgentResponse,
   type PersonalTerms,
 } from "@/lib/negotiation-engine"
-import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles } from "lucide-react"
+import { getClubRelationship, getRelationshipEffect } from "@/lib/club-relationships"
+import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles, Users, Swords, Link2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Player {
@@ -128,6 +129,20 @@ export function NegotiationModal({
 
   const status = getOfferStatus()
 
+  // Relacionamento entre o SEU clube e o clube VENDEDOR. Rival dificulta e encarece;
+  // mesmo grupo / clube parceiro facilita. Afeta a chance do CLUBE (nao a do jogador).
+  const relationship = getClubRelationship(team?.nome ?? "", player.team?.nome ?? "")
+  const relEffect = getRelationshipEffect(team?.nome ?? "", player.team?.nome ?? "", type)
+  // Chance efetiva do clube aceitar, ja com o relacionamento. Rival com oferta abaixo de
+  // 130% do valor: praticamente barrado (so cede por muito dinheiro).
+  const clubChance = Math.max(
+    1,
+    Math.min(99, Math.round(
+      status.chance * relEffect.chanceMult -
+      (relEffect.hardBlock && offerPercentage < 130 ? 55 : 0),
+    )),
+  )
+
   const handleSubmitOffer = () => {
     setStep("response")
     setResponseProgress(0)
@@ -145,8 +160,8 @@ export function NegotiationModal({
     
     // Show result after animation
     setTimeout(() => {
-      // ETAPA 1 — o CLUBE avalia o dinheiro.
-      const clubAccepts = Math.random() * 100 <= status.chance
+      // ETAPA 1 — o CLUBE avalia o dinheiro E o RELACIONAMENTO (rival dificulta a venda).
+      const clubAccepts = Math.random() * 100 <= clubChance
 
       if (!clubAccepts) {
         setRejectedBy("club")
@@ -371,12 +386,36 @@ export function NegotiationModal({
               </div>
               <div className="flex-1">
                 <div className={cn("text-sm font-semibold", status.color)}>Proposta {status.label}</div>
-                <div className="text-xs text-white/50">{status.chance}% de chance de aceitacao</div>
+                <div className="text-xs text-white/50">{clubChance}% de chance do clube aceitar</div>
               </div>
               <div className="text-right">
-                <div className={cn("text-2xl font-bold", status.color)}>{status.chance}%</div>
+                <div className={cn("text-2xl font-bold", status.color)}>{clubChance}%</div>
               </div>
             </div>
+
+            {/* Relacionamento entre clubes: rival dificulta, grupo/parceiro facilita. */}
+            {relationship.kind !== "neutral" && relEffect.note && (
+              <div className={cn(
+                "flex items-start gap-3 p-3 rounded-xl border text-xs",
+                relationship.kind === "rival"
+                  ? "bg-red-500/10 border-red-500/30 text-red-300"
+                  : "bg-[#00ffc8]/10 border-[#00ffc8]/30 text-[#00ffc8]",
+              )}>
+                <div className="mt-0.5 shrink-0">
+                  {relationship.kind === "rival"
+                    ? <Swords className="h-4 w-4" />
+                    : relationship.kind === "group"
+                      ? <Users className="h-4 w-4" />
+                      : <Link2 className="h-4 w-4" />}
+                </div>
+                <div>
+                  <div className="font-semibold">
+                    {relationship.label}{relationship.detail ? ` — ${relationship.detail}` : ""}
+                  </div>
+                  <div className="opacity-80">{relEffect.note}</div>
+                </div>
+              </div>
+            )}
 
             {/* Papel no elenco — pesa mais que dinheiro para um craque.
                 Prometer banco a um jogador de 80+ derruba a negociacao sozinho. */}

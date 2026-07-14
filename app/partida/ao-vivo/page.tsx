@@ -41,7 +41,7 @@ import { useGamepad, type GamepadButtonName } from "@/hooks/use-gamepad"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useDiscordRPC } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
-import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
+import { useGameEngine, shootingForPosition, type Player as EnginePlayer } from "@/lib/game-engine"
 import {
   type MatchSpeed,
   type MatchEvent,
@@ -120,7 +120,7 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
       rating: p.base,
       stamina: 100,
       pace:      isGK ? 50 : 65 + (h(1) % 25),
-      shooting:  isGK ? 20 : 50 + (h(2) % 35),
+      shooting:  shootingForPosition(p.base, p.pos),
       passing:   55 + (h(3) % 30),
       dribbling: isGK ? 30 : 50 + (h(4) % 35),
       defending: isAtt ? 30 + (h(5) % 20) : 60 + (h(6) % 25),

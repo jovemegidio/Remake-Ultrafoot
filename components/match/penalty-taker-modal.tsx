@@ -55,8 +55,15 @@ export function PenaltyTakerModal({
   const [narrationStep, setNarrationStep] = useState(0)
   const [outcome, setOutcome] = useState<PenaltyOutcome | null>(null)
 
-  // Ordena jogadores por habilidade de finalizacao (shooting)
-  const sortedPlayers = [...players].sort((a, b) => (b.shooting || 70) - (a.shooting || 70))
+  // Ordena por HABILIDADE DE PENALTI: finalizacao + um peso por posicao. Sem o peso,
+  // um zagueiro com finalizacao inflada liderava a lista; batedores de verdade sao
+  // atacantes e meias, entao eles sobem e o "Recomendado" cai sobre quem faz sentido.
+  const POS_PENALTY_BIAS: Record<string, number> = {
+    ATA: 14, CA: 14, SA: 12, PE: 10, PD: 10, MEI: 9, MC: 8, MO: 9,
+    ME: 6, MD: 6, VOL: 3, LD: -4, LE: -4, ALD: -3, ALE: -3, ZAG: -8, GOL: -40,
+  }
+  const penaltyScore = (p: Player) => (p.shooting || 70) + (POS_PENALTY_BIAS[p.position] ?? 0)
+  const sortedPlayers = [...players].sort((a, b) => penaltyScore(b) - penaltyScore(a))
 
   const handleConfirm = () => {
     if (!selectedPlayer) return

@@ -518,6 +518,24 @@ function randAttr(base: number): number {
   return Math.min(99, Math.max(30, base + Math.floor((Math.random() - 0.5) * 28)))
 }
 
+// Finalizacao COERENTE com a posicao. Antes shooting era ~f(overall) ignorando a
+// posicao, entao um zagueiro de elenco forte (base ~90) saia com FIN 94/95 e liderava
+// a lista de batedores de penalti. Aqui goleiros/zagueiros/laterais tem finalizacao
+// baixa e atacantes/meias alta — como manda a posicao.
+export function shootingForPosition(base: number, position: string): number {
+  const r = (spread: number) => Math.floor(Math.random() * spread)
+  const clamp = (v: number) => Math.max(18, Math.min(99, v))
+  switch (position) {
+    case "GOL": return clamp(15 + r(10))
+    case "ZAG": case "LD": case "LE": case "ALD": case "ALE": case "LAT":
+      return clamp(base - 34 + r(14))
+    case "VOL": return clamp(base - 18 + r(12))
+    case "MEI": case "MD": case "ME": case "MC": return clamp(base - 8 + r(10))
+    case "PD": case "PE": return clamp(base - 4 + r(8))
+    default: return clamp(base + r(4)) // ATA / CA / SA
+  }
+}
+
 export function generateScoutedLead(region: string, scoutSkill: number, week: number): ScoutedLead {
   const key = region.toLowerCase().replace(/[^a-z]/g, "")
   const regionData = SCOUT_NAMES_BY_REGION[key] ?? SCOUT_NAMES_BY_REGION.brasil
@@ -541,7 +559,7 @@ export function generateScoutedLead(region: string, scoutSkill: number, week: nu
     scoutedRegion: region,
     discoveredWeek: week,
     pace: randAttr(overall),
-    shooting: randAttr(overall),
+    shooting: shootingForPosition(overall, position),
     passing: randAttr(overall),
     dribbling: randAttr(overall),
     defending: randAttr(overall),
@@ -3090,7 +3108,7 @@ export const useGameEngine = create<GameEngineState>()(
               potential: Math.min(99, base + Math.floor(Math.random() * 8)),
               nationality: "Brasil",
               pace: Math.min(99, base - 5 + Math.floor(Math.random() * 15)),
-              shooting: Math.min(99, base - 10 + Math.floor(Math.random() * 20)),
+              shooting: shootingForPosition(base, position),
               passing: Math.min(99, base - 5 + Math.floor(Math.random() * 15)),
               dribbling: Math.min(99, base - 8 + Math.floor(Math.random() * 18)),
               defending: Math.min(99, base - 10 + Math.floor(Math.random() * 20)),
@@ -4276,7 +4294,7 @@ export const useGameEngine = create<GameEngineState>()(
               potential,
               nationality,
               pace: Math.min(99, base + Math.floor(Math.random() * 15) + region.physBonus),
-              shooting: Math.min(99, base - 10 + Math.floor(Math.random() * 20) + region.techBonus),
+              shooting: Math.min(99, shootingForPosition(base, pos) + region.techBonus),
               passing: Math.min(99, base - 5 + Math.floor(Math.random() * 15) + region.techBonus),
               dribbling: Math.min(99, base - 8 + Math.floor(Math.random() * 18) + region.techBonus),
               defending: Math.min(99, base - 10 + Math.floor(Math.random() * 20) + region.physBonus),

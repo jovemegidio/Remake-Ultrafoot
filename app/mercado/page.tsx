@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import Image from "next/image"
 import {
   Search,
@@ -65,6 +65,15 @@ interface SentTransferProposal {
 }
 
 const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "enviadas", "recebidas"]
+
+// Rótulo amigável para a divisão/liga crua do banco (ex.: "serie_a" -> "Série A").
+function divisaoLabel(d?: string): string {
+  if (!d) return "Outra"
+  const map: Record<string, string> = {
+    serie_a: "Série A", serie_b: "Série B", serie_c: "Série C", serie_d: "Série D",
+  }
+  return map[d] ?? d.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
 
 const scoutingRegions = [
   { id: "Brasil", name: "Brasil", weeksToComplete: 2, searchCost: 50000 },
@@ -147,6 +156,21 @@ export default function MercadoPage() {
     setSelectedPosition(POSICOES[(i + 1) % POSICOES.length])
   }
 
+  // Filtros antes decorativos (Nacionalidade/Pais/Liga/Time/Status): agora com estado
+  // real e alimentando filteredPlayers. "Qualquer" = sem filtro.
+  const [filterNationality, setFilterNationality] = useState("Qualquer")
+  const [filterCountry, setFilterCountry] = useState("Qualquer")
+  const [filterLeague, setFilterLeague] = useState("Qualquer")
+  const [filterTeam, setFilterTeam] = useState("Qualquer")
+  const [filterStatus, setFilterStatus] = useState("Qualquer")
+  const STATUS_OPTIONS = ["Qualquer", "Com multa rescisória", "Sem multa"]
+  const clearAllFilters = () => {
+    setNameFilter(""); setSearchQuery(""); setSelectedPosition("Tudo")
+    setMinAge(16); setMaxAge(35)
+    setFilterNationality("Qualquer"); setFilterCountry("Qualquer")
+    setFilterLeague("Qualquer"); setFilterTeam("Qualquer"); setFilterStatus("Qualquer")
+  }
+
   // Search input state for real-time filtering
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -220,6 +244,18 @@ export default function MercadoPage() {
     [userTeam?.curto, gameEngine.currentSeason],
   )
 
+  // Opções reais para os dropdowns dos filtros (derivadas da vitrine atual).
+  const filterOptions = useMemo(() => {
+    const uniq = (arr: string[]) =>
+      ["Qualquer", ...Array.from(new Set(arr.filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR"))]
+    return {
+      nacionalidade: uniq(transferTargets.map((p) => p.nationality)),
+      pais: uniq(transferTargets.map((p) => p.team.pais ?? "")),
+      liga: uniq(transferTargets.map((p) => divisaoLabel(p.team.divisao))),
+      time: uniq(transferTargets.map((p) => p.team.nome)),
+    }
+  }, [transferTargets])
+
   // Filter players by all criteria
   const filteredPlayers = useMemo(() => {
     return transferTargets.filter(p => {
@@ -240,9 +276,18 @@ export default function MercadoPage() {
       if (positionFilter !== "Tudo" && p.position !== positionFilter && !p.secondaryPositions?.includes(positionFilter)) {
         return false
       }
+      // Nacionalidade / Pais / Liga / Time
+      if (filterNationality !== "Qualquer" && p.nationality !== filterNationality) return false
+      if (filterCountry !== "Qualquer" && (p.team.pais ?? "") !== filterCountry) return false
+      if (filterLeague !== "Qualquer" && divisaoLabel(p.team.divisao) !== filterLeague) return false
+      if (filterTeam !== "Qualquer" && p.team.nome !== filterTeam) return false
+      // Status de transferencia: derivado da multa rescisoria
+      if (filterStatus === "Com multa rescisória" && p.releaseClause == null) return false
+      if (filterStatus === "Sem multa" && p.releaseClause != null) return false
       return true
     })
-  }, [transferTargets, nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter])
+  }, [transferTargets, nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter,
+      filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
   
   // Auto-select first player when filtered results change
   useEffect(() => {
@@ -326,6 +371,16 @@ export default function MercadoPage() {
           setNegotiationOpen(false)
           return
         }
+        // Na aba Buscar, Esc primeiro LIMPA os filtros ativos (o rodape anuncia isso);
+        // sem filtros ativos, volta.
+        if (activeTab === "buscar") {
+          const algumAtivo =
+            searchQuery !== "" || nameFilter !== "" || selectedPosition !== "Tudo" ||
+            minAge > 16 || maxAge < 35 || filterNationality !== "Qualquer" ||
+            filterCountry !== "Qualquer" || filterLeague !== "Qualquer" ||
+            filterTeam !== "Qualquer" || filterStatus !== "Qualquer"
+          if (algumAtivo) { clearAllFilters(); return }
+        }
         window.history.back()
         return
       }
@@ -353,7 +408,9 @@ export default function MercadoPage() {
 
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [activeTab, negotiationOpen])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, negotiationOpen, searchQuery, nameFilter, selectedPosition, minAge, maxAge,
+      filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
 
   // Group players by position type
   const groupedPlayers = useMemo(() => {
@@ -632,7 +689,9 @@ export default function MercadoPage() {
             {/* Preview de resultados: aparece com busca por nome OU com qualquer filtro
                 ativo (posicao/idade). Antes so surgia com 2+ letras, entao filtrar por
                 posicao sozinho nao mostrava nada — parecia que o filtro nao funcionava. */}
-            {(searchQuery.length >= 2 || selectedPosition !== "Tudo" || minAge > 16 || maxAge < 35) && filteredPlayers.length > 0 && (
+            {(searchQuery.length >= 2 || selectedPosition !== "Tudo" || minAge > 16 || maxAge < 35 ||
+              filterNationality !== "Qualquer" || filterCountry !== "Qualquer" || filterLeague !== "Qualquer" ||
+              filterTeam !== "Qualquer" || filterStatus !== "Qualquer") && filteredPlayers.length > 0 && (
               <div className="mb-6 p-4 rounded-xl bg-[#1a1a1a] border border-white/10">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-white/60">{t.market.playersFound(filteredPlayers.length)}</span>
@@ -702,34 +761,19 @@ export default function MercadoPage() {
                   </div>
                 }
               />
-              <FilterCardComponent 
-                card={filterCards[2]} 
-                selected={selectedFilter === "nacionalidade"}
-                onClick={() => setSelectedFilter("nacionalidade")}
-                customContent={
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="flex gap-2 mb-3">
-                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
-                        <Flag className="h-4 w-4 text-white/40" />
-                      </div>
-                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
-                        <Flag className="h-4 w-4 text-white/40" />
-                      </div>
-                    </div>
-                    <span className="text-white/50 text-sm">Qualquer</span>
-                  </div>
-                }
+              <FilterDropdownCard
+                label={t.market.nationality}
+                icon={<Flag className="h-10 w-10 text-white/30" strokeWidth={1.5} />}
+                value={filterNationality}
+                options={filterOptions.nacionalidade}
+                onSelect={setFilterNationality}
               />
-              <FilterCardComponent 
-                card={filterCards[3]} 
-                selected={selectedFilter === "status"}
-                onClick={() => setSelectedFilter("status")}
-                customContent={
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <ArrowLeftRight className="h-12 w-12 text-white/30 mb-3" strokeWidth={1.5} />
-                    <span className="text-white/50 text-sm">Qualquer</span>
-                  </div>
-                }
+              <FilterDropdownCard
+                label={t.market.transferStatus}
+                icon={<ArrowLeftRight className="h-10 w-10 text-white/30" strokeWidth={1.5} />}
+                value={filterStatus}
+                options={STATUS_OPTIONS}
+                onSelect={setFilterStatus}
               />
 
               {/* Second Row */}
@@ -763,50 +807,26 @@ export default function MercadoPage() {
                   </div>
                 }
               />
-              <FilterCardComponent 
-                card={filterCards[5]} 
-                selected={selectedFilter === "pais"}
-                onClick={() => setSelectedFilter("pais")}
-                customContent={
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="flex gap-2 mb-3">
-                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
-                        <Globe className="h-4 w-4 text-white/40" />
-                      </div>
-                      <div className="w-10 h-7 bg-gradient-to-br from-white/15 to-white/5 rounded flex items-center justify-center border border-white/10">
-                        <Globe className="h-4 w-4 text-white/40" />
-                      </div>
-                    </div>
-                    <span className="text-white/50 text-sm">Qualquer</span>
-                  </div>
-                }
+              <FilterDropdownCard
+                label={t.market.countryRegion}
+                icon={<Globe className="h-10 w-10 text-white/30" strokeWidth={1.5} />}
+                value={filterCountry}
+                options={filterOptions.pais}
+                onSelect={setFilterCountry}
               />
-              <FilterCardComponent 
-                card={filterCards[6]} 
-                selected={selectedFilter === "liga"}
-                onClick={() => setSelectedFilter("liga")}
-                customContent={
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="w-14 h-14 rounded-lg bg-gradient-to-b from-white/10 to-white/5 flex items-center justify-center mb-3 border border-white/10">
-                      <Trophy className="h-8 w-8 text-white/30" strokeWidth={1.5} />
-                    </div>
-                    <span className="text-white/50 text-sm">Qualquer</span>
-                  </div>
-                }
+              <FilterDropdownCard
+                label={t.market.league}
+                icon={<Trophy className="h-10 w-10 text-white/30" strokeWidth={1.5} />}
+                value={filterLeague}
+                options={filterOptions.liga}
+                onSelect={setFilterLeague}
               />
-              <FilterCardComponent 
-                card={filterCards[7]} 
-                selected={selectedFilter === "time"}
-                onClick={() => setSelectedFilter("time")}
-                customContent={
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="w-16 h-16 rounded-lg bg-gradient-to-b from-white/8 to-transparent flex items-center justify-center mb-3">
-                      <Shield className="h-12 w-12 text-white/15" strokeWidth={1} />
-                    </div>
-                    <span className="text-white/40 text-sm">Qualquer</span>
-                  </div>
-                }
-                highlight
+              <FilterDropdownCard
+                label={t.market.team}
+                icon={<Shield className="h-10 w-10 text-white/20" strokeWidth={1} />}
+                value={filterTeam}
+                options={filterOptions.time}
+                onSelect={setFilterTeam}
               />
             </div>
 
@@ -1654,9 +1674,75 @@ function FilterCardComponent({
   )
 }
 
+// Card de filtro com DROPDOWN de valores reais (Nacionalidade/Pais/Liga/Time/Status).
+// Substitui os cards antes decorativos: clicar abre a lista; escolher aplica o filtro.
+function FilterDropdownCard({
+  label,
+  icon,
+  value,
+  options,
+  onSelect,
+}: {
+  label: string
+  icon: React.ReactNode
+  value: string
+  options: string[]
+  onSelect: (v: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", h)
+    return () => document.removeEventListener("mousedown", h)
+  }, [])
+  const active = value !== "Qualquer" && value !== "Tudo"
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          "relative w-full rounded-xl p-4 h-44 text-left transition-all overflow-hidden",
+          "bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618]",
+          active || open
+            ? "ring-2 ring-primary shadow-lg shadow-primary/30"
+            : "border border-white/[0.04] hover:border-primary/30",
+        )}
+      >
+        <h3 className="text-sm font-semibold text-white relative z-10">{label}</h3>
+        <div className="relative z-10 flex h-[calc(100%-2rem)] flex-col items-center justify-center gap-3">
+          {icon}
+          <span className={cn("text-sm font-medium text-center px-2 truncate max-w-full", active ? "text-[#00ffc8]" : "text-white/50")}>
+            {value}
+          </span>
+        </div>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0c0c12] shadow-2xl scrollbar-thin">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => { onSelect(opt); setOpen(false) }}
+              className={cn(
+                "block w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
+                opt === value ? "bg-primary/15 text-[#00ffc8] font-semibold" : "text-white/70",
+              )}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Player List Card Component
-function PlayerListCard({ 
-  player, 
+function PlayerListCard({
+  player,
   selected, 
   onClick 
 }: { 
