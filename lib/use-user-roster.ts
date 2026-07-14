@@ -20,6 +20,7 @@
 import { useEffect, useState } from "react"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
+import { capGoalkeepers } from "@/lib/formations"
 
 function hashString(input: string): number {
   let hash = 0
@@ -44,7 +45,13 @@ export function buildElencoPlayers(teamObj: ReturnType<typeof getTeamByShort>) {
   if (!teamObj) return { players: [], bench: [] }
   const rawPlayers = getPlayersForTeam(teamObj)
   if (rawPlayers.length < 11) return { players: [], bench: [] }
-  const sorted = sortByPosition(rawPlayers)
+  // capGoalkeepers: rebaixa goleiros EXCEDENTES para o fim da lista (=> banco).
+  //
+  // Sem isso, sortByPosition poe GOL primeiro e o slice(0,11) escalava OS TRES goleiros
+  // de um elenco com 3 — era o bug "o time esta com 3 goleiros" que o usuario reportou.
+  // Ja estava corrigido no elenco da PARTIDA, mas nao aqui (que alimenta Gerenciamento,
+  // Escalacao e Atribuicoes) — por isso a tela continuava mostrando 3 GOL.
+  const sorted = capGoalkeepers(sortByPosition(rawPlayers), (p) => p.pos)
   const moralOptions = ["Feliz", "Motivado", "Normal"] as const
   const footOptions = ["Direita", "Esquerda"] as const
   const convert = (p: ReturnType<typeof sortByPosition>[number], idx: number) => ({

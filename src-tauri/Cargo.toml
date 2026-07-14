@@ -31,6 +31,10 @@ windows = { version = "0.61.3", features = [
   "Devices_Enumeration",
   "Foundation",
   "Win32_UI_Input_XboxController",
+  # SMTC: ler/controlar o player de midia do SISTEMA (Spotify, YouTube, etc).
+  # Substitui a trilha embutida de 1,6 GB — o jogo vira controle remoto do que
+  # o jogador ja esta ouvindo. Sem login, sem API key, sem Premium.
+  "Media_Control",
 ] }
 windows-collections = "0.2.0"
 

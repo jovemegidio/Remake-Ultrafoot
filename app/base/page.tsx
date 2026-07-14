@@ -3,7 +3,7 @@
 import { Sprout, Star, ArrowUp, AlertTriangle } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
+import { SystemMediaPlayer } from "@/components/system-media-player"
 import { Button } from "@/components/ui/button"
 import { useUserTeam, useGameState, type SquadPlayer } from "@/lib/save-system"
 import { formatCurrency } from "@/lib/teams-data"
@@ -155,7 +155,7 @@ export default function BasePage() {
           </div>
         </div>
       </main>
-      <MusicPlayer />
+      <SystemMediaPlayer />
     </div>
   )
 }

@@ -32,8 +32,6 @@ import {
   Keyboard,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
-import { MusicPlayer } from "@/components/music-player"
-import { musicStore } from "@/lib/music-store"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { Button } from "@/components/ui/button"
@@ -110,8 +108,8 @@ export default function ConfiguracoesPage() {
     return () => window.removeEventListener('gamepad:button', handler)
   }, [currentView, selectedCardIndex, router])
   // Inicia com o volume REAL do player (antes era fixo em 70 e desconectado).
-  const [musicVolume, setMusicVolume] = useState([70])
-  useEffect(() => { setMusicVolume([musicStore.getSnapshot().volume]) }, [])
+  // musicVolume saiu: a trilha embutida foi removida e o volume da musica agora e do
+  // proprio Spotify/player do sistema. Aqui so restam os efeitos sonoros (sfxVolume).
   const [sfxVolume, setSfxVolume] = useState([80])
   // Preferencias de acessibilidade (store singleton: sobrevive a navegacao).
   const a11y = useSyncExternalStore(
@@ -160,7 +158,6 @@ export default function ConfiguracoesPage() {
   }
 
   const handleRestoreDefaults = () => {
-    setMusicVolume([70])
     setSfxVolume([80])
     setAutoSave(true)
     setNotifications(true)
@@ -469,7 +466,11 @@ export default function ConfiguracoesPage() {
                 {languageOptions.map((lang) => (
                   <button
                     key={lang.id}
-                    onClick={() => setLanguage(lang.id)}
+                    // Aplica o idioma NA HORA. Antes so o "check" mudava no clique e a
+                    // traducao so entrava depois de clicar em Salvar — dava a impressao
+                    // de que trocar o idioma nao fazia nada. setState grava no store, que
+                    // dispara "ultrafoot:store:changed" e o useTranslation reage.
+                    onClick={() => { setLanguage(lang.id); setState({ language: lang.id }) }}
                     className={cn(
                       "flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
                       language === lang.id ? "border-primary bg-primary/10" : "border-white/10 bg-white/5 hover:border-white/20"
@@ -535,17 +536,6 @@ export default function ConfiguracoesPage() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/60">{t.settings.musicLabel}</span>
-                    <span className="text-sm text-white">{musicVolume[0]}%</span>
-                  </div>
-                  <Slider
-                    value={musicVolume}
-                    onValueChange={(v) => { setMusicVolume(v); musicStore.setVolume(v[0]) }}
-                    max={100}
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-white/60">{t.settings.soundEffects}</span>
                     <span className="text-sm text-white">{sfxVolume[0]}%</span>
                   </div>
@@ -553,11 +543,25 @@ export default function ConfiguracoesPage() {
                 </div>
               </div>
             </div>
-            
+
+            {/* O jogo nao embute mais trilha propria (eram 1,6 GB no instalador, e
+                musica de terceiros). Agora ele CONTROLA o player que voce ja usa —
+                por isso o volume da musica se ajusta no proprio Spotify, nao aqui. */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
-              <h3 className="text-sm font-medium text-white mb-4">{t.settings.musicPlayer}</h3>
-              <p className="text-xs text-white/50 mb-4">{t.settings.musicPlayerDesc}</p>
-              <MusicPlayer defaultSize="compact" autoPlay={false} offsetLeft={0} />
+              <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+                <Volume2 className="h-4 w-4 text-[#1db954]" />
+                Musica
+              </h3>
+              <p className="text-xs leading-relaxed text-white/50">
+                O Ultrafoot nao tem mais trilha propria: ele controla o player que voce ja
+                tem aberto — <strong className="text-white/70">Spotify</strong>, YouTube Music,
+                Deezer, o que for. Abra sua musica e o controle (tocar, pausar, avancar)
+                aparece no canto da tela, dentro do jogo.
+              </p>
+              <p className="mt-3 text-xs text-white/35">
+                O volume da musica se ajusta no proprio player. Aqui voce controla so os
+                efeitos sonoros do jogo.
+              </p>
             </div>
           </div>
         )

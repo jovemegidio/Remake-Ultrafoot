@@ -146,6 +146,42 @@ export default function ElencoPage() {
   const TABS: Array<"elenco" | "taticas" | "atribuicoes"> = ["elenco", "taticas", "atribuicoes"]
   const allPlayers = useMemo(() => [...players, ...bench], [players, bench])
 
+  // ── TATICAS: antes os botoes eram DECORATIVOS (o "selecionado" era um `i === 1`
+  // chumbado no JSX). Agora tem estado de verdade e o clique muda a instrucao.
+  const [linhaDefensiva, setLinhaDefensiva] = useState(1)   // 0 Baixa | 1 Media | 2 Alta
+  const [marcacao, setMarcacao] = useState(1)               // 0 Pressao | 1 Equilibrada | 2 Recuada
+  const [construcao, setConstrucao] = useState(1)           // 0 Curto | 1 Misto | 2 Direto
+  const [velocidadeAtaque, setVelocidadeAtaque] = useState(1) // 0 Lento | 1 Normal | 2 Rapido
+  const [mentalidade, setMentalidade] = useState(2)         // 0..4 UltraDef -> UltraOfe
+
+  // ── ATRIBUICOES: cobradores/capitao vinham CHUMBADOS ("Eric Ramires", "Lincoln",
+  // "Eduardo Sasha", "Pedro Henrique" — elenco do RB Bragantino) e apareciam mesmo
+  // jogando com o Corinthians. Agora saem do elenco REAL, por atributo + posicao.
+  const setPieceDefaults = useMemo(() => {
+    const outfield = allPlayers.filter((p) => p.position !== "GOL")
+    if (outfield.length === 0) return { corner: "", freeKick: "", penalty: "", captain: "" }
+    // Peso por posicao: quem realmente bate bola parada.
+    const KICK_BIAS: Record<string, number> = {
+      ATA: 8, PE: 10, PD: 10, MEI: 12, VOL: 4, LD: 2, LE: 2, ZAG: -6, ALD: 2, ALE: 2,
+    }
+    const bias = (p: (typeof outfield)[number]) => KICK_BIAS[p.position] ?? 0
+    const top = (score: (p: (typeof outfield)[number]) => number) =>
+      [...outfield].sort((a, b) => score(b) - score(a))[0]?.name ?? ""
+    return {
+      corner: top((p) => p.passing + bias(p)),
+      freeKick: top((p) => p.shooting * 0.6 + p.passing * 0.4 + bias(p)),
+      penalty: top((p) => p.shooting + bias(p)),
+      // Capitao: mistura qualidade e experiencia (idade), nao so overall.
+      captain: [...allPlayers].sort((a, b) => (b.overall + b.age * 0.6) - (a.overall + a.age * 0.6))[0]?.name ?? "",
+    }
+  }, [allPlayers])
+
+  const [setPieces, setSetPieces] = useState(setPieceDefaults)
+  useEffect(() => { setSetPieces(setPieceDefaults) }, [setPieceDefaults])
+
+  // Funcao individual por jogador (o <select> antes nao tinha estado nem onChange).
+  const [playerRoles, setPlayerRoles] = useState<Record<number, string>>({})
+
   // Match notifications should only show during actual matches (simulations)
   // This would be triggered by the match simulation system
   // For now, we check a hypothetical state flag
@@ -291,42 +327,82 @@ export default function ElencoPage() {
         const closestDist = closest ? Math.hypot(closest.x - clampedX, closest.y - clampedY) : Infinity
         return dist < closestDist ? p : closest
       }, null as typeof positionedPlayers[0] | null)
-      
+
       if (fieldPlayer) {
-        // Swap players
         setPlayers(prev => prev.map(p => p.id === fieldPlayer.id ? benchPlayer : p))
         setBench(prev => prev.map(p => p.id === benchPlayer.id ? fieldPlayer : p))
+        // Mesmo motivo do handleDropOnPlayer: sem fixar os slots, o encaixe por posicao
+        // recalcula e "rotaciona" varios jogadores de uma vez.
+        pinSlotsAndSwap(benchPlayer.id, fieldPlayer.id)
       }
     } else {
-      // Update position for field player
-      setPlayerPositions(prev => ({
-        ...prev,
-        [playerId]: { x: clampedX, y: clampedY }
-      }))
+      // Jogador de campo largado num ponto livre: so ele se move.
+      setPlayerPositions(prev => {
+        const pinned = { ...prev }
+        for (const p of positionedPlayers) {
+          if (pinned[p.id] === undefined) pinned[p.id] = { x: p.x, y: p.y }
+        }
+        pinned[playerId] = { x: clampedX, y: clampedY }
+        return pinned
+      })
     }
-    
+
     setDraggingPlayer(null)
     setDragOverTarget(null)
-  }, [bench, positionedPlayers])
+  }, [bench, positionedPlayers, pinSlotsAndSwap])
   
+  /**
+   * Congela o slot de TODOS os 11 em campo e troca so as coordenadas de A e B.
+   *
+   * BUG que isto corrige ("ao substituir um jogador, o sistema rotaciona o time"):
+   * positionedPlayers reencaixa o elenco por POSICAO a cada mudanca em `players`. Trocar
+   * um unico jogador mudava o conjunto de posicoes e o encaixe recalculava para todos —
+   * varios jogadores pulavam de slot de uma vez. Pior: os handlers ainda APAGAVAM a
+   * posicao fixada dos envolvidos, forcando o reencaixe.
+   *
+   * Fixando os 11 slots atuais, o encaixe automatico nao tem mais o que "decidir": so
+   * os dois jogadores da troca mudam de lugar.
+   */
+  const pinSlotsAndSwap = useCallback((aId: number, bId: number) => {
+    setPlayerPositions(() => {
+      const pinned: Record<number, { x: number; y: number }> = {}
+      for (const p of positionedPlayers) pinned[p.id] = { x: p.x, y: p.y }
+
+      const slotA = pinned[aId]
+      const slotB = pinned[bId]
+      // Um deles pode vir do banco (sem slot): quem entra herda o slot de quem sai.
+      if (slotA && slotB) {
+        pinned[aId] = slotB
+        pinned[bId] = slotA
+      } else if (slotB) {
+        pinned[aId] = slotB   // A veio do banco, assume o slot de B
+        delete pinned[bId]
+      } else if (slotA) {
+        pinned[bId] = slotA   // B veio do banco, assume o slot de A
+        delete pinned[aId]
+      }
+      return pinned
+    })
+  }, [positionedPlayers])
+
   const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     const draggedId = parseInt(e.dataTransfer.getData("playerId"))
     if (!draggedId || draggedId === targetId) {
       setDraggingPlayer(null)
       setDragOverTarget(null)
       return
     }
-    
+
     const draggedFromField = players.find(p => p.id === draggedId)
     const draggedFromBench = bench.find(p => p.id === draggedId)
     const targetFromField = players.find(p => p.id === targetId)
     const targetFromBench = bench.find(p => p.id === targetId)
-    
+
     if (draggedFromField && targetFromField) {
-      // Swap positions on field
+      // Troca em campo: os dois apenas trocam de slot, o resto fica parado.
       const draggedIdx = players.findIndex(p => p.id === draggedId)
       const targetIdx = players.findIndex(p => p.id === targetId)
       setPlayers(prev => {
@@ -334,33 +410,19 @@ export default function ElencoPage() {
         ;[newPlayers[draggedIdx], newPlayers[targetIdx]] = [newPlayers[targetIdx], newPlayers[draggedIdx]]
         return newPlayers
       })
-      // Clear custom positions for swapped players
-      setPlayerPositions(prev => {
-        const newPos = { ...prev }
-        delete newPos[draggedId]
-        delete newPos[targetId]
-        return newPos
-      })
+      pinSlotsAndSwap(draggedId, targetId)
     } else if (draggedFromBench && targetFromField) {
-      // Swap bench player with field player
+      // Reserva ENTRA no lugar exato do titular que sai.
       setPlayers(prev => prev.map(p => p.id === targetId ? draggedFromBench : p))
       setBench(prev => prev.map(p => p.id === draggedId ? targetFromField : p))
-      setPlayerPositions(prev => {
-        const newPos = { ...prev }
-        delete newPos[targetId]
-        return newPos
-      })
+      pinSlotsAndSwap(draggedId, targetId)
     } else if (draggedFromField && targetFromBench) {
-      // Swap field player with bench player
+      // Titular vai para o banco; o reserva assume o slot dele.
       setPlayers(prev => prev.map(p => p.id === draggedId ? targetFromBench : p))
       setBench(prev => prev.map(p => p.id === targetId ? draggedFromField : p))
-      setPlayerPositions(prev => {
-        const newPos = { ...prev }
-        delete newPos[draggedId]
-        return newPos
-      })
+      pinSlotsAndSwap(targetId, draggedId)
     } else if (draggedFromBench && targetFromBench) {
-      // Swap on bench
+      // Troca dentro do banco: ninguem em campo se mexe.
       const draggedIdx = bench.findIndex(p => p.id === draggedId)
       const targetIdx = bench.findIndex(p => p.id === targetId)
       setBench(prev => {
@@ -369,10 +431,10 @@ export default function ElencoPage() {
         return newBench
       })
     }
-    
+
     setDraggingPlayer(null)
     setDragOverTarget(null)
-  }, [players, bench])
+  }, [players, bench, pinSlotsAndSwap])
   
   const handleDragEnd = useCallback(() => {
     setDraggingPlayer(null)
@@ -1038,9 +1100,9 @@ export default function ElencoPage() {
                         <label className="text-xs text-white/60 block mb-2">{t.squad.defensiveLine}</label>
                         <div className="flex gap-2">
                           {[t.squad.low, t.squad.medium, t.squad.high].map((opt, i) => (
-                            <button key={opt} className={cn(
+                            <button key={opt} onClick={() => setLinhaDefensiva(i)} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              linhaDefensiva === i ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1049,9 +1111,9 @@ export default function ElencoPage() {
                         <label className="text-xs text-white/60 block mb-2">{t.squad.marking}</label>
                         <div className="flex gap-2">
                           {[t.squad.pressure, t.squad.balanced, t.squad.withdrawn].map((opt, i) => (
-                            <button key={opt} className={cn(
+                            <button key={opt} onClick={() => setMarcacao(i)} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              marcacao === i ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1070,9 +1132,9 @@ export default function ElencoPage() {
                         <label className="text-xs text-white/60 block mb-2">{t.squad.buildStyle}</label>
                         <div className="flex gap-2">
                           {[t.squad.short, t.squad.mixed, t.squad.direct].map((opt, i) => (
-                            <button key={opt} className={cn(
+                            <button key={opt} onClick={() => setConstrucao(i)} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              construcao === i ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1081,9 +1143,9 @@ export default function ElencoPage() {
                         <label className="text-xs text-white/60 block mb-2">{t.squad.attackSpeed}</label>
                         <div className="flex gap-2">
                           {[t.squad.slow, t.squad.normal, t.squad.fast].map((opt, i) => (
-                            <button key={opt} className={cn(
+                            <button key={opt} onClick={() => setVelocidadeAtaque(i)} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              velocidadeAtaque === i ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1099,9 +1161,9 @@ export default function ElencoPage() {
                     </h3>
                     <div className="flex gap-2">
                       {[t.squad.ultraDefensive, t.squad.defensive, t.squad.balanced2, t.squad.offensive, t.squad.ultraOffensive].map((opt, i) => (
-                        <button key={opt} className={cn(
+                        <button key={opt} onClick={() => setMentalidade(i)} className={cn(
                           "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                          i === 2 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          mentalidade === i ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -1119,45 +1181,53 @@ export default function ElencoPage() {
                     <p className="text-sm text-white/50">{t.squad.playerRolesDesc}</p>
                   </div>
 
-                  {/* Set Pieces */}
+                  {/* Bolas paradas — cobradores REAIS do elenco, escolhiveis. */}
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <h3 className="text-sm font-semibold text-white mb-4">{t.squad.setPieces}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">{t.squad.cornerKicker}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Eric Ramires</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">{t.squad.freeKickKicker}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Lincoln</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">{t.squad.penaltyKicker}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Eduardo Sasha</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                        <span className="text-xs text-white/70">{t.squad.captain}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Pedro Henrique</span>
-                      </div>
+                      {([
+                        { key: "corner", label: t.squad.cornerKicker, pool: allPlayers.filter(p => p.position !== "GOL") },
+                        { key: "freeKick", label: t.squad.freeKickKicker, pool: allPlayers.filter(p => p.position !== "GOL") },
+                        { key: "penalty", label: t.squad.penaltyKicker, pool: allPlayers.filter(p => p.position !== "GOL") },
+                        { key: "captain", label: t.squad.captain, pool: allPlayers },
+                      ] as const).map(({ key, label, pool }) => (
+                        <div key={key} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/5">
+                          <span className="text-xs text-white/70 shrink-0">{label}</span>
+                          <select
+                            value={setPieces[key]}
+                            onChange={(e) => setSetPieces(s => ({ ...s, [key]: e.target.value }))}
+                            className="min-w-0 flex-1 max-w-[60%] truncate rounded-lg border border-white/10 bg-white/10 px-2 py-1 text-xs font-medium text-[#00ffc8] focus:border-[#00ffc8] focus:outline-none"
+                          >
+                            {pool.map(p => (
+                              <option key={p.id} value={p.name} className="bg-[#111111] text-white">
+                                {p.name} ({p.position})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Player Roles */}
+                  {/* Funcoes individuais — agora com estado (o select nao fazia nada). */}
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <h3 className="text-sm font-semibold text-white mb-4">{t.squad.individualRoles}</h3>
                     <div className="space-y-3">
-                      {players.slice(0, 6).map(player => (
+                      {players.map(player => (
                         <div key={player.id} className="flex items-center gap-4 p-3 rounded-lg bg-white/5">
                           <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-white">{player.name}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="truncate text-sm font-medium text-white">{player.name}</div>
                             <div className="text-[10px] text-white/40">{player.position}</div>
                           </div>
-                          <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ffc8]">
-                            <option>{player.function}</option>
-                            <option>Equilibrado</option>
-                            <option>Ofensivo</option>
-                            <option>Defensivo</option>
+                          <select
+                            value={playerRoles[player.id] ?? player.function}
+                            onChange={(e) => setPlayerRoles(r => ({ ...r, [player.id]: e.target.value }))}
+                            className="shrink-0 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-white focus:border-[#00ffc8] focus:outline-none"
+                          >
+                            {Array.from(new Set([player.function, "Equilibrado", "Ofensivo", "Defensivo"])).map(opt => (
+                              <option key={opt} value={opt} className="bg-[#111111]">{opt}</option>
+                            ))}
                           </select>
                         </div>
                       ))}

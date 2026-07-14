@@ -198,6 +198,143 @@ fn get_bluetooth_gamepad_battery(controller_name: String) -> Result<Option<f32>,
     }
 }
 
+// ─── Player de midia do SISTEMA (Spotify, YouTube Music, etc) ────────────────
+//
+// O jogo NAO embute mais trilha (eram 1,6 GB e musica de terceiros). Em vez disso ele
+// vira um "controle remoto" do que o jogador ja esta ouvindo, via SMTC do Windows
+// (System Media Transport Controls). Funciona com qualquer player que registre uma
+// sessao de midia — Spotify inclusive — sem login, sem API key e sem Premium.
+
+#[derive(serde::Serialize, Clone, Default)]
+struct NowPlaying {
+    /// false quando nao ha NENHUM player tocando (a UI esconde o widget).
+    available: bool,
+    title: String,
+    artist: String,
+    album: String,
+    /// Id do app da sessao (ex.: "Spotify.exe") — so para a UI dizer a fonte.
+    source: String,
+    is_playing: bool,
+}
+
+#[cfg(target_os = "windows")]
+mod media {
+    use super::NowPlaying;
+    use windows::Media::Control::{
+        GlobalSystemMediaTransportControlsSession as Session,
+        GlobalSystemMediaTransportControlsSessionManager as Manager,
+        GlobalSystemMediaTransportControlsSessionPlaybackStatus as Status,
+    };
+
+    /// Sessao de midia ATUAL do sistema (a que o Windows considera em foco).
+    fn current() -> Option<Session> {
+        let manager = Manager::RequestAsync().ok()?.get().ok()?;
+        manager.GetCurrentSession().ok()
+    }
+
+    pub fn now_playing() -> NowPlaying {
+        let Some(session) = current() else {
+            return NowPlaying::default();
+        };
+
+        let mut np = NowPlaying {
+            available: true,
+            ..Default::default()
+        };
+
+        if let Ok(props) = session
+            .TryGetMediaPropertiesAsync()
+            .and_then(|op| op.get())
+        {
+            np.title = props.Title().map(|s| s.to_string()).unwrap_or_default();
+            np.artist = props.Artist().map(|s| s.to_string()).unwrap_or_default();
+            np.album = props.AlbumTitle().map(|s| s.to_string()).unwrap_or_default();
+        }
+
+        np.source = session
+            .SourceAppUserModelId()
+            .map(|s| s.to_string())
+            .unwrap_or_default();
+
+        if let Ok(info) = session.GetPlaybackInfo() {
+            np.is_playing = matches!(info.PlaybackStatus(), Ok(Status::Playing));
+        }
+
+        np
+    }
+
+    pub fn play_pause() -> bool {
+        current()
+            .and_then(|s| s.TryTogglePlayPauseAsync().ok())
+            .and_then(|op| op.get().ok())
+            .unwrap_or(false)
+    }
+
+    pub fn next() -> bool {
+        current()
+            .and_then(|s| s.TrySkipNextAsync().ok())
+            .and_then(|op| op.get().ok())
+            .unwrap_or(false)
+    }
+
+    pub fn previous() -> bool {
+        current()
+            .and_then(|s| s.TrySkipPreviousAsync().ok())
+            .and_then(|op| op.get().ok())
+            .unwrap_or(false)
+    }
+}
+
+#[tauri::command]
+fn media_now_playing() -> NowPlaying {
+    #[cfg(target_os = "windows")]
+    {
+        media::now_playing()
+    }
+    // Linux (MPRIS) e macOS (MediaRemote) entram aqui depois; por ora o widget
+    // simplesmente nao aparece nessas plataformas.
+    #[cfg(not(target_os = "windows"))]
+    {
+        NowPlaying::default()
+    }
+}
+
+#[tauri::command]
+fn media_play_pause() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        media::play_pause()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
+}
+
+#[tauri::command]
+fn media_next() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        media::next()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
+}
+
+#[tauri::command]
+fn media_previous() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        media::previous()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
+}
+
 // ─── App entry point ─────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -212,7 +349,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             discord_update,
             discord_clear,
-            get_bluetooth_gamepad_battery
+            get_bluetooth_gamepad_battery,
+            media_now_playing,
+            media_play_pause,
+            media_next,
+            media_previous
         ])
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
