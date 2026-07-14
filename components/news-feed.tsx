@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Sparkles, Zap, Star, AlertCircle } from "lucide-react"
 import { getNewsImageUrl, seedFromString } from "@/lib/news-image"
+import { getCountryCompetitions } from "@/lib/country-competitions"
 import { motion, AnimatePresence } from "framer-motion"
 import { TeamCrest } from "@/components/team-crest"
 import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
@@ -184,9 +185,13 @@ export function generateDynamicNews(
     if (pos >= 0) {
       const entry = standings[pos]
       const position = pos + 1
+      // As zonas seguem a CONTINENTAL do clube. Antes diziam sempre
+      // "zona de Libertadores"/"Sul-Americana" — errado para um clube europeu,
+      // que briga por Champions / Europa League.
+      const comps = getCountryCompetitions(userTeam.divisao)
       const zoneLabel =
-        position <= 4 ? "zona de Libertadores" :
-        position <= 6 ? "zona de Sul-Americana" :
+        position <= 4 ? `zona de ${comps.continental}` :
+        position <= 6 && comps.continentalSecondary ? `zona de ${comps.continentalSecondary}` :
         position >= standings.length - 3 ? "zona de rebaixamento" :
         "parte do meio da tabela"
 

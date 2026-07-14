@@ -80,6 +80,43 @@ export function hasStateChampionship(divisao: string | undefined): boolean {
   return getCountryCompetitions(divisao).hasStateChampionship
 }
 
+// ─── Confederacao ────────────────────────────────────────────────────────────
+//
+// Nao basta acertar o NOME da competicao continental: os ADVERSARIOS tambem precisam
+// vir do continente certo. A tela sorteava a continental a partir de uma lista fixa de
+// clubes sul-americanos (Boca, River, Penarol...), entao a Juventus caia num chaveamento
+// contra o Boca Juniors. Aqui derivamos a confederacao a partir da liga do clube e, com
+// ela, quais ligas fornecem os participantes.
+
+export type Confederation = "CONMEBOL" | "UEFA" | "AFC" | "CONCACAF"
+
+const CONFEDERATION_DIVISIONS: Record<Confederation, string[]> = {
+  CONMEBOL: [
+    "serie_a", "serie_b", "serie_c", "serie_d",
+    "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury",
+  ],
+  UEFA: [
+    "premier_league", "la_liga", "serie_a_ita", "bundesliga", "ligue_1",
+    "primeira_liga", "eredivisie", "scottish_prem", "super_lig",
+    "pro_league_bel", "russian_prem",
+  ],
+  AFC: ["saudi_pro", "j_league", "k_league_1", "chinese_super"],
+  CONCACAF: ["mls", "liga_mx"],
+}
+
+export function getConfederation(divisao: string | undefined): Confederation {
+  if (!divisao) return "CONMEBOL"
+  for (const [conf, divs] of Object.entries(CONFEDERATION_DIVISIONS)) {
+    if (divs.includes(divisao)) return conf as Confederation
+  }
+  return "CONMEBOL"
+}
+
+/** Ligas que fornecem os participantes da continental do clube. */
+export function getContinentalDivisions(divisao: string | undefined): string[] {
+  return CONFEDERATION_DIVISIONS[getConfederation(divisao)]
+}
+
 // ─── Qual continental o clube disputa ────────────────────────────────────────
 //
 // Nao basta saber o continente: o clube nao "joga a Champions" por ser europeu — ele

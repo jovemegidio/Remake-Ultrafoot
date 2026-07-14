@@ -28,7 +28,7 @@ import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto } from "@/lib/cup-engine"
-import { getCountryCompetitions, getContinentalSpot } from "@/lib/country-competitions"
+import { getCountryCompetitions, getContinentalSpot, getContinentalDivisions } from "@/lib/country-competitions"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
@@ -236,6 +236,25 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
     COPA_BRASIL_POOL.forEach(c => add(getTeamByShort(c)))
     add(user)
     return Array.from(map.values())
+  }, [userTeamShort])
+
+  // Participantes da CONTINENTAL: vem das ligas da confederacao do clube.
+  // Um clube da UEFA enfrenta europeus; um da CONMEBOL, sul-americanos.
+  const continentalTeams = useMemo(() => {
+    const user = getTeamByShort(userTeamShort)
+    const pool: Team[] = []
+    for (const div of getContinentalDivisions(user?.divisao)) {
+      pool.push(...getTeamsByDivision(div))
+    }
+    return pool
+      .filter(t => t.curto !== userTeamShort)
+      .sort((a, b) => b.prestigio - a.prestigio)
+      .slice(0, 31)   // os 31 melhores do continente + o usuario = 32
+  }, [userTeamShort])
+
+  const userCountry = useMemo(() => {
+    const user = getTeamByShort(userTeamShort)
+    return user?.pais || user?.estado || ""
   }, [userTeamShort])
 
   const drawCopaBrasil = () => {
@@ -458,22 +477,28 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
     })
   }
   
-  // Sortear Libertadores
+  // Sortear a continental (Libertadores, Champions, AFC...).
   const drawLibertadores = () => {
     if (!state.libertadores.qualified) return
-    
-    // Criar grupo com o time do usuario
-    const availableTeams = LIBERTADORES_TEAMS.filter(t => t.short !== userTeamShort)
-    const shuffled = availableTeams.sort(() => Math.random() - 0.5).slice(0, 3)
-    
+
+    // Adversarios do CONTINENTE do clube. Antes vinham de uma lista fixa de
+    // sul-americanos (Boca, River, Penarol...), entao a Juventus caia num grupo
+    // contra o Boca Juniors. E o proprio usuario era rotulado como "Brasil".
+    const shuffled = [...continentalTeams].sort(() => Math.random() - 0.5).slice(0, 3)
+
     const group = {
       name: "Grupo " + String.fromCharCode(65 + Math.floor(Math.random() * 8)),
       teams: [
-        { short: userTeamShort, country: "Brasil", points: 0, played: 0 },
-        ...shuffled.map(t => ({ ...t, points: 0, played: 0 })),
-      ]
+        { short: userTeamShort, country: userCountry, points: 0, played: 0 },
+        ...shuffled.map(t => ({
+          short: t.curto,
+          country: t.pais || t.estado || "",
+          points: 0,
+          played: 0,
+        })),
+      ],
     }
-    
+
     setState(s => ({
       ...s,
       libertadores: {
@@ -744,30 +769,37 @@ export default function CompeticoesPage() {
         {/* Standings Table */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-[#1a1a1a] border border-white/10 p-1 h-auto">
-            <TabsTrigger 
-              value="brasileirao" 
+            {/* Rotulos vinham fixos em "Serie A / Serie B / Copa do Brasil / Estadual":
+                com a Juventus, o jogador via abas brasileiras. Agora seguem o pais do clube. */}
+            <TabsTrigger
+              value="brasileirao"
               className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
             >
-              Serie A
+              {getLeagueName(userTeam.curto)}
             </TabsTrigger>
-            <TabsTrigger 
-              value="serie-b" 
+            {/* Serie B e Estadual so existem no Brasil. */}
+            {isBrazilian && (
+              <TabsTrigger
+                value="serie-b"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
+              >
+                Serie B
+              </TabsTrigger>
+            )}
+            <TabsTrigger
+              value="copa-do-brasil"
               className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
             >
-              Serie B
+              {countryComps.domesticCup}
             </TabsTrigger>
-            <TabsTrigger 
-              value="copa-do-brasil" 
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              Copa do Brasil
-            </TabsTrigger>
-            <TabsTrigger 
-              value="estadual" 
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              Estadual
-            </TabsTrigger>
+            {isBrazilian && (
+              <TabsTrigger
+                value="estadual"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
+              >
+                Estadual
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="libertadores"
               className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
