@@ -263,12 +263,26 @@ export default function ElencoPage() {
   const engineSetFormation = useGameEngine(s => s.setFormation)
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
   const engineSetStarter = useGameEngine(s => s.setStarter)
-  const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  // ATENCAO: NAO colocar um time default aqui.
+  //
+  // Antes era getTeamByShort(state.selectedTeamShort || "BGT"): enquanto o save nao
+  // hidratava (no Tauri o persistent-store carrega do disco de forma ASSINCRONA), o
+  // primeiro render usava o RB Bragantino e montava o elenco DELE — que o useState logo
+  // abaixo congelava. Resultado: o cabecalho mostrava "Barcelona" (recalculado a cada
+  // render) enquanto o elenco continuava sendo o do Bragantino, para sempre.
+  const resolvedTeam = state.selectedTeamShort ? getTeamByShort(state.selectedTeamShort) : undefined
+  const userTeam = resolvedTeam ?? serieATeams[0]
+  /** Ainda carregando o save: nao ha time real, entao nao montamos elenco nenhum. */
+  const teamReady = Boolean(resolvedTeam)
 
   const t = useTranslation()
   useDiscordActivity("Gerenciando o elenco", userTeam.nome)
 
-  const initialRoster = buildElencoPlayers(userTeam)
+  // Sem time resolvido, o roster inicial fica VAZIO — o useEffect abaixo o preenche
+  // assim que o save hidrata. Montar com um time default e o que criava o bug.
+  const initialRoster = teamReady
+    ? buildElencoPlayers(userTeam)
+    : { players: [] as ReturnType<typeof buildElencoPlayers>["players"], bench: [] as ReturnType<typeof buildElencoPlayers>["bench"] }
 
   const [currentView, setCurrentView] = useState<ViewType>("gerenciamento")
   const [activeTab, setActiveTab] = useState<"elenco" | "taticas" | "atribuicoes">("elenco")
@@ -291,14 +305,14 @@ export default function ElencoPage() {
    * (Nascimento, Sant'Anna, Vanderlan...): nao era o elenco de nenhum dos dois.
    */
   useEffect(() => {
-    if (!state.selectedTeamShort) return  // save ainda nao hidratou
+    if (!teamReady) return  // save ainda nao hidratou: nao ha time
     const roster = buildElencoPlayers(userTeam)
     setPlayers(roster.players)
     setBench(roster.bench)
     setSelectedPlayerId(roster.players[0]?.id ?? 1)
     setPlayerPositions({})  // as posicoes no campo eram do elenco anterior
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.selectedTeamShort])
+  }, [teamReady, userTeam.curto])
   const [draggingPlayer, setDraggingPlayer] = useState<number | null>(null)
   const [dragOverTarget, setDragOverTarget] = useState<number | null>(null)
   const [playerPositions, setPlayerPositions] = useState<Record<number, { x: number; y: number }>>({})
@@ -552,6 +566,22 @@ export default function ElencoPage() {
     setDraggingPlayer(null)
     setDragOverTarget(null)
   }, [])
+
+  /**
+   * Save ainda hidratando: nao ha time nem elenco.
+   *
+   * Antes a pagina "resolvia" isso com um time default (RB Bragantino) e montava o
+   * elenco dele — que o useState congelava. Melhor mostrar carregando por um instante
+   * do que exibir, para sempre, o elenco de um clube que nao e o seu.
+   * (Todos os hooks ja rodaram acima; este early-return nao quebra a ordem deles.)
+   */
+  if (!teamReady || players.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#050508] text-sm text-white/40">
+        Carregando elenco...
+      </div>
+    )
+  }
 
   // Menu view with cards
   if (currentView === "menu") {

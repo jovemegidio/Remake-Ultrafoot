@@ -64,55 +64,81 @@ const CLUBS = [
   { short: "FLA", nome: "Flamengo" },
 ]
 
+// A tela mostra SOBRENOME ("Vlahovic"); o seed guarda o nome completo ("Dusan Vlahovic").
+const surname = (n) => n.trim().split(/\s+/).pop().toLowerCase()
+
+// O elenco do RB Bragantino e o default do bug: a pagina cai em getTeamByShort("BGT")
+// quando o save ainda nao hidratou. Se estes nomes aparecem para OUTRO clube, o
+// useState congelou o elenco errado.
+const BGT_MARKERS = ["nascimento", "sant’anna", "sant'anna", "vanderlan"]
+
 const browser = await chromium.launch({ headless: true })
 let failures = 0
+const squads = new Map()
 
 for (const club of CLUBS) {
-  const real = realSquad(club.nome)
+  const real = realSquad(club.nome).map(surname)
   const page = await browser.newPage()
+
   await page.addInitScript((short) => {
-    localStorage.setItem("ultrafoot-save", JSON.stringify({
+    const save = {
       version: 4, selectedTeamShort: short, managerName: "QA", season: 2026, week: 0,
       language: "pt-BR", selectedUniform: "home", createdAt: Date.now(), updatedAt: Date.now(),
       multiplayerEnabled: false, managers: [], activeManagerId: null,
       controllerType: "playstation", controllerBindings: {},
-    }))
+    }
+    // NOTA: aqui o localStorage e SINCRONO, entao o save ja esta disponivel no primeiro
+    // render. Isto testa o caminho normal: cada clube deve receber o SEU elenco.
+    //
+    // O bug original so aparecia com hidratacao ASSINCRONA (o persistent-store do Tauri
+    // le do disco). Tentei simular atrasando o getItem, mas isso envenena o cache interno
+    // do store e a pagina fica presa em "carregando" — a simulacao media o proprio erro
+    // dela. O bug foi entao morto na origem: a pagina nao tem mais time default ("BGT"),
+    // logo nao existe caminho que monte elenco de um clube errado, sincrono ou nao.
+    localStorage.setItem("ultrafoot:save", JSON.stringify(save))
     sessionStorage.setItem("ultrafoot:session-active", "true")
   }, club.short)
 
   await page.goto(`${base}/elenco/gerenciamento/`, { waitUntil: "networkidle", timeout: 30000 })
-  await page.waitForTimeout(1200)
+  await page.waitForTimeout(1800)
 
-  // Nomes visiveis na secao de RESERVAS (nomes completos, nao truncados como no campo).
-  const rendered = await page.evaluate(() => {
-    const out = []
-    document.querySelectorAll("*").forEach(() => {})
-    // Os cards de reserva trazem o nome em um <span>/<div> curto; pegamos o texto todo
-    // e deixamos a comparacao por inclusao resolver.
-    return document.body.innerText
-  })
+  const text = await page.evaluate(() => document.body.innerText.toLowerCase())
+  squads.set(club.short, text.slice(0, 900))
 
-  const found = real.filter((n) => rendered.includes(n))
+  const found = real.filter((s) => text.includes(s))
   const pct = real.length ? Math.round((found.length / real.length) * 100) : 0
-
   const label = `${club.nome} (${club.short})`.padEnd(22)
-  if (real.length === 0) {
-    console.log(`?? ${label} sem elenco no seed — nada a comparar`)
-  } else if (found.length === 0) {
-    console.log(`XX ${label} NENHUM dos ${real.length} jogadores reais aparece na tela -> ELENCO MOCK`)
+
+  // 1) O elenco do Bragantino nao pode vazar para outro clube.
+  const leaked = club.short !== "BGT" && BGT_MARKERS.filter((m) => text.includes(m)).length >= 2
+  if (leaked) {
+    console.log(`XX ${label} mostra o elenco do RB BRAGANTINO (default "BGT" congelado pelo useState)`)
     failures++
-  } else if (pct < 30) {
-    console.log(`XX ${label} so ${found.length}/${real.length} (${pct}%) dos jogadores reais aparecem`)
+  } else if (real.length === 0) {
+    console.log(`?? ${label} sem elenco no seed — nada a comparar`)
+  } else if (pct < 40) {
+    console.log(`XX ${label} so ${found.length}/${real.length} (${pct}%) dos jogadores do clube aparecem`)
     failures++
   } else {
-    console.log(`OK ${label} ${found.length}/${real.length} (${pct}%) jogadores reais na tela`)
+    console.log(`OK ${label} ${found.length}/${real.length} (${pct}%) jogadores do clube na tela`)
   }
 
   await page.close()
 }
 
+// 2) Dois clubes diferentes NAO podem renderizar o mesmo elenco.
+const shorts = [...squads.keys()]
+for (let i = 0; i < shorts.length; i++) {
+  for (let j = i + 1; j < shorts.length; j++) {
+    if (squads.get(shorts[i]) === squads.get(shorts[j])) {
+      console.log(`XX ${shorts[i]} e ${shorts[j]} renderizam o MESMO elenco`)
+      failures++
+    }
+  }
+}
+
 await browser.close()
 srv.close()
 
-console.log(failures ? `\nRESULTADO: ${failures} clube(s) com elenco MOCK` : "\nRESULTADO: OK — todos com elenco real")
+console.log(failures ? `\nRESULTADO: ${failures} problema(s)` : "\nRESULTADO: OK — cada clube com o seu elenco")
 process.exitCode = failures ? 1 : 0
