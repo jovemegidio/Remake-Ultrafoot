@@ -135,9 +135,17 @@ export default function MercadoPage() {
 
   // Filter states
   const [nameFilter, setNameFilter] = useState("")
-  const [selectedPosition] = useState("Tudo")
-  const [minAge] = useState(16)
-  const [maxAge] = useState(35)
+  // Antes eram read-only (useState sem setter): os cards de filtro so marcavam qual
+  // estava "ativo", mas nunca mudavam o valor — a busca so funcionava por nome. Agora
+  // Posicao e Idade sao editaveis pelos proprios cards e alimentam filteredPlayers.
+  const [selectedPosition, setSelectedPosition] = useState("Tudo")
+  const [minAge, setMinAge] = useState(16)
+  const [maxAge, setMaxAge] = useState(35)
+  const POSICOES = ["Tudo", "GOL", "ZAG", "LD", "LE", "VOL", "MEI", "PD", "PE", "ATA"]
+  const cyclePosition = () => {
+    const i = POSICOES.indexOf(selectedPosition)
+    setSelectedPosition(POSICOES[(i + 1) % POSICOES.length])
+  }
 
   // Search input state for real-time filtering
   const [searchQuery, setSearchQuery] = useState("")
@@ -621,8 +629,10 @@ export default function MercadoPage() {
               </button>
             </div>
             
-            {/* Quick search results preview */}
-            {searchQuery.length >= 2 && filteredPlayers.length > 0 && (
+            {/* Preview de resultados: aparece com busca por nome OU com qualquer filtro
+                ativo (posicao/idade). Antes so surgia com 2+ letras, entao filtrar por
+                posicao sozinho nao mostrava nada — parecia que o filtro nao funcionava. */}
+            {(searchQuery.length >= 2 || selectedPosition !== "Tudo" || minAge > 16 || maxAge < 35) && filteredPlayers.length > 0 && (
               <div className="mb-6 p-4 rounded-xl bg-[#1a1a1a] border border-white/10">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-white/60">{t.market.playersFound(filteredPlayers.length)}</span>
@@ -675,15 +685,20 @@ export default function MercadoPage() {
                   </div>
                 }
               />
-              <FilterCardComponent 
-                card={filterCards[1]} 
+              <FilterCardComponent
+                card={filterCards[1]}
                 selected={selectedFilter === "posicao"}
-                onClick={() => setSelectedFilter("posicao")}
+                onClick={() => { setSelectedFilter("posicao"); cyclePosition() }}
                 customContent={
                   <div className="flex flex-col items-center justify-center h-full gap-1">
-                    <span className="text-white/50 text-sm">{t.market.any}</span>
                     <div className="font-semibold text-white text-base">{t.market.role}</div>
-                    <span className="text-white/50 text-sm">{t.market.any}</span>
+                    <div className={cn(
+                      "text-2xl font-black",
+                      selectedPosition === "Tudo" ? "text-white/40" : "text-[#00ffc8]"
+                    )}>
+                      {selectedPosition === "Tudo" ? t.market.any : selectedPosition}
+                    </div>
+                    <span className="text-[10px] text-white/30">clique para alternar</span>
                   </div>
                 }
               />
@@ -723,15 +738,28 @@ export default function MercadoPage() {
                 selected={selectedFilter === "idade"}
                 onClick={() => setSelectedFilter("idade")}
                 customContent={
-                  <div className="flex flex-col items-start justify-center h-full px-6 gap-4">
-                    <div className="flex justify-between w-full text-sm">
-                      <span className="text-white/50 font-medium">MIN.</span>
-                      <span className="text-white font-medium">16</span>
-                    </div>
-                    <div className="flex justify-between w-full text-sm">
-                      <span className="text-white/50 font-medium">MAX.</span>
-                      <span className="text-white font-medium">35</span>
-                    </div>
+                  <div className="flex flex-col items-stretch justify-center h-full px-6 gap-3">
+                    {[
+                      { label: "MIN.", val: minAge, dec: () => setMinAge(a => Math.max(15, a - 1)), inc: () => setMinAge(a => Math.min(maxAge, a + 1)) },
+                      { label: "MAX.", val: maxAge, dec: () => setMaxAge(a => Math.max(minAge, a - 1)), inc: () => setMaxAge(a => Math.min(45, a + 1)) },
+                    ].map((row) => (
+                      <div key={row.label} className="flex items-center justify-between w-full text-sm">
+                        <span className="text-white/50 font-medium">{row.label}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); row.dec() }}
+                            className="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-white/70 hover:bg-white/20"
+                          >−</button>
+                          <span className="w-6 text-center text-white font-bold tabular-nums">{row.val}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); row.inc() }}
+                            className="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-white/70 hover:bg-white/20"
+                          >+</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 }
               />

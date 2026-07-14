@@ -173,12 +173,9 @@ const COUNTRIES: CountryTab[] = [
       { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams },
     ],
   },
-  {
-    name: "Argentina", code: "ARG", region: "americas",
-    leagues: [
-      { key: "liga_argentina", label: "Liga Argentina", short: "Liga Argentina", teams: ligaArgentinaTeams },
-    ],
-  },
+  // Argentina REMOVIDA da selecao de carreira a pedido do usuario: nao da mais para
+  // COMECAR uma carreira com um time argentino. Os clubes continuam no jogo (em
+  // ligaArgentinaTeams/teams-data) — aparecem como adversarios e na Libertadores.
   {
     name: "Colombia", code: "COL", region: "americas",
     leagues: [

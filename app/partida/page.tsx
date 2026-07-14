@@ -42,6 +42,7 @@ import { teamRating } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { getCompetitionLogo } from "@/lib/competition-logo"
+import { getPreMatchBackground } from "@/lib/pre-match-bg"
 
 type KitVariant = "home" | "away" | "third"
 
@@ -199,21 +200,21 @@ function TeamPanel({
         </div>
       </div>
 
-      {/* Card de LIGA */}
-      <div className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[#0e1116]/85 px-5 py-3.5 backdrop-blur-sm">
+      {/* Card de LIGA — logo AMPLIADA (era h-11/44px; ficava minuscula no card). */}
+      <div className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[#0e1116]/85 px-5 py-5 backdrop-blur-sm">
         {leagueLogo ? (
           // Sem mixBlendMode: o "screen" tornava as partes escuras da logo
           // transparentes, deixando so um contorno fantasma no lugar do emblema.
           <Image
             src={leagueLogo}
             alt={leagueName}
-            width={200}
-            height={56}
-            className="h-11 w-auto max-w-[190px] object-contain"
+            width={320}
+            height={96}
+            className="h-20 w-auto max-w-[280px] object-contain"
             unoptimized
           />
         ) : (
-          <Trophy className="h-7 w-7 text-white/60" />
+          <Trophy className="h-12 w-12 text-white/60" />
         )}
       </div>
     </div>
@@ -315,6 +316,12 @@ export default function PartidaPage() {
   const matchCompetitionLogo = useMemo(
     () => getCompetitionLogo(matchInfo.competition) ?? getLeagueLogo(homeTeam.divisao),
     [matchInfo.competition, homeTeam.divisao],
+  )
+
+  // Fundo da tela conforme a competicao da partida.
+  const preMatchBg = useMemo(
+    () => getPreMatchBackground(matchInfo.competition, league),
+    [matchInfo.competition, league],
   )
 
   // Quick sim handler
@@ -434,10 +441,11 @@ export default function PartidaPage() {
 
       {/* Main Content */}
       <main className="relative flex-1 overflow-hidden">
-        {/* Background - estadio noturno */}
+        {/* Background conforme a COMPETICAO disputada (Paulistao, Libertadores, Champions...).
+            Antes era sempre o estadio noturno. Cai no generico quando nao ha arte. */}
         <div className="absolute inset-0">
           <Image
-            src="/images/stadium-night.png"
+            src={preMatchBg}
             alt=""
             fill
             priority
