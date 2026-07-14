@@ -1,12 +1,50 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { normalizeAppHref } from "@/lib/hard-navigation"
 import { initPersistentStore } from "@/lib/persistent-store"
 import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
 import { accessibilityStore } from "@/lib/accessibility-store"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
+  // Confirmacao antes de fechar o app (Alt+F4, botao X, barra de tarefas).
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false)
+
+  // Intercepta o fechamento da janela no Tauri: pede confirmacao em vez de sair
+  // direto. onCloseRequested cobre Alt+F4, o X e o fechar pela barra de tarefas.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!("__TAURI_INTERNALS__" in window)) return
+
+    let unlisten: (() => void) | undefined
+    let cancelled = false
+    void import("@tauri-apps/api/window").then(({ getCurrentWindow }) => {
+      if (cancelled) return
+      getCurrentWindow()
+        .onCloseRequested((event) => {
+          // Impede o fechamento imediato e mostra o aviso.
+          event.preventDefault()
+          setShowQuitConfirm(true)
+        })
+        .then((fn) => {
+          if (cancelled) fn()
+          else unlisten = fn
+        })
+    })
+
+    return () => {
+      cancelled = true
+      unlisten?.()
+    }
+  }, [])
+
+  const confirmQuit = () => {
+    void import("@tauri-apps/api/window").then(({ getCurrentWindow }) => {
+      // destroy() fecha de fato — close() re-dispararia o onCloseRequested.
+      void getCurrentWindow().destroy()
+    })
+  }
+
   useEffect(() => {
     void initPersistentStore()
     // Acessibilidade primeiro: reaplica fonte/contraste ANTES da UI pintar, senao o
@@ -98,5 +136,59 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      {showQuitConfirm && (
+        <QuitConfirmDialog
+          onCancel={() => setShowQuitConfirm(false)}
+          onConfirm={confirmQuit}
+        />
+      )}
+    </>
+  )
+}
+
+// Aviso de saida. O jogo salva sozinho, mas o usuario pediu a confirmacao para nao
+// fechar sem querer. Esc/B cancela, Enter/A confirma (teclado + controle).
+function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); onCancel() }
+      else if (e.key === "Enter") { e.preventDefault(); onConfirm() }
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [onCancel, onConfirm])
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onCancel}
+    >
+      <div
+        className="w-[380px] max-w-[90vw] rounded-2xl border border-white/10 bg-[#0c0c14] p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-bold text-white">Sair do Ultrafoot 26?</h2>
+        <p className="mt-2 text-sm text-white/60">
+          Seu progresso é salvo automaticamente. Deseja fechar o jogo?
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:bg-white/10"
+          >
+            Cancelar <span className="text-white/30">(Esc)</span>
+          </button>
+          <button
+            onClick={onConfirm}
+            className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-400"
+          >
+            Sair <span className="text-white/50">(Enter)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
