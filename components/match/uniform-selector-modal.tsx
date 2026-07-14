@@ -76,9 +76,30 @@ export function UniformSelectorModal({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" || e.key.toLowerCase() === "q") { e.preventDefault(); onClose() }
     }
+    // CONTROLE: LB/RB trocam o kit da casa, LT/RT o do visitante, A/B fecham.
+    // (O modal foi criado depois do sistema de gamepad e nao respondia ao controle.)
+    const cycle = (cur: KitVariant, dir: 1 | -1): KitVariant => {
+      const i = VARIANTS.indexOf(cur)
+      return VARIANTS[(i + dir + VARIANTS.length) % VARIANTS.length]
+    }
+    const onPad = (e: Event) => {
+      const { button } = (e as CustomEvent<{ button: string }>).detail
+      switch (button) {
+        case "LB": onHomeKit(cycle(homeKit, -1)); break
+        case "RB": onHomeKit(cycle(homeKit, 1)); break
+        case "LT": onAwayKit(cycle(awayKit, -1)); break
+        case "RT": onAwayKit(cycle(awayKit, 1)); break
+        case "A":
+        case "B": onClose(); break
+      }
+    }
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [open, onClose])
+    window.addEventListener("gamepad:button", onPad)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("gamepad:button", onPad)
+    }
+  }, [open, onClose, homeKit, awayKit, onHomeKit, onAwayKit])
 
   if (!open) return null
 
@@ -104,13 +125,16 @@ export function UniformSelectorModal({
           <TeamKits team={awayTeam} selected={awayKit} onSelect={onAwayKit} />
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-col items-center gap-3">
           <button
             onClick={onClose}
             className="rounded-lg bg-[#00ffc8] px-8 py-2.5 text-sm font-bold text-black transition-opacity hover:opacity-90"
           >
             Confirmar
           </button>
+          <p className="text-[10px] text-white/25">
+            Controle: LB/RB trocam o uniforme da casa · LT/RT o do visitante · A confirma
+          </p>
         </div>
       </div>
     </div>

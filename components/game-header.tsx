@@ -106,6 +106,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showCoachDropdown, setShowCoachDropdown] = useState(false)
   const [showNavMenu, setShowNavMenu] = useState(false)
+  // Item destacado no menu de navegacao — so existe para o CONTROLE (no mouse o hover
+  // ja resolve). Sem isto, o menu que criei nao era utilizavel no gamepad.
+  const [navMenuIndex, setNavMenuIndex] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Atalho "W": abre o MENU de navegacao (o keycap [W] sempre existiu, mas a tecla nao
@@ -130,6 +133,47 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [showNav])
+
+  // CONTROLE no menu de navegacao: D-pad move, A confirma, B/Y fecha.
+  // (O menu foi criado depois do sistema de gamepad, entao nao respondia ao controle.)
+  useEffect(() => {
+    if (!showNavMenu) return
+    const onPad = (e: Event) => {
+      const { button } = (e as CustomEvent<{ button: string }>).detail
+      const last = NAV_MENU_ITEMS.length - 1
+      // O menu e uma grade de 3 colunas (sm:grid-cols-3).
+      const COLS = 3
+      switch (button) {
+        case "DPAD_LEFT":
+          setNavMenuIndex((i) => (i <= 0 ? last : i - 1)); break
+        case "DPAD_RIGHT":
+          setNavMenuIndex((i) => (i >= last ? 0 : i + 1)); break
+        case "DPAD_UP":
+          setNavMenuIndex((i) => Math.max(0, i - COLS)); break
+        case "DPAD_DOWN":
+          setNavMenuIndex((i) => Math.min(last, i + COLS)); break
+        case "A": {
+          const item = NAV_MENU_ITEMS[navMenuIndex]
+          if (item) { setShowNavMenu(false); hardNavigate(item.href) }
+          break
+        }
+        case "B":
+        case "Y":
+          setShowNavMenu(false); break
+      }
+    }
+    window.addEventListener("gamepad:button", onPad)
+    return () => window.removeEventListener("gamepad:button", onPad)
+  }, [showNavMenu, navMenuIndex])
+
+  // Ao abrir o menu, comeca no item da secao atual (nao sempre no primeiro).
+  useEffect(() => {
+    if (!showNavMenu) return
+    const current = NAV_MENU_ITEMS.findIndex(
+      (item) => item.href !== "/" && pathname.startsWith(item.href),
+    )
+    setNavMenuIndex(current >= 0 ? current : 0)
+  }, [showNavMenu, pathname])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -453,24 +497,31 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-bold text-white">Ir para</span>
-              <span className="text-[11px] text-white/30">W ou Esc para fechar</span>
+              <span className="text-[11px] text-white/30">
+                W/Esc fecha · no controle: D-pad move, A confirma, B fecha
+              </span>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {NAV_MENU_ITEMS.map((item) => {
+              {NAV_MENU_ITEMS.map((item, i) => {
                 const Icon = item.icon
                 const active = pathname.startsWith(item.href) && item.href !== "/"
+                // Item sob o cursor do CONTROLE (no mouse, o hover ja indica).
+                const focused = i === navMenuIndex
                 return (
                   <button
                     key={item.href}
                     onClick={() => { setShowNavMenu(false); hardNavigate(item.href) }}
+                    onMouseEnter={() => setNavMenuIndex(i)}
                     className={cn(
                       "flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all",
-                      active
-                        ? "border-[#00ffc8]/40 bg-[#00ffc8]/10"
-                        : "border-white/[0.06] bg-white/[0.02] hover:border-white/20 hover:bg-white/5",
+                      focused
+                        ? "border-[#00ffc8] bg-[#00ffc8]/15 ring-1 ring-[#00ffc8]/40"
+                        : active
+                          ? "border-[#00ffc8]/40 bg-[#00ffc8]/10"
+                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/20 hover:bg-white/5",
                     )}
                   >
-                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#00ffc8]" : "text-white/50")} />
+                    <Icon className={cn("h-4 w-4 shrink-0", focused || active ? "text-[#00ffc8]" : "text-white/50")} />
                     <span className="text-sm font-medium text-white/90">{item.label}</span>
                   </button>
                 )

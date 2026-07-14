@@ -171,9 +171,22 @@ export default function TreinamentoPage() {
 
   useEffect(() => () => { if (feedbackTimer.current) clearTimeout(feedbackTimer.current) }, [])
 
-  // Verifica se jogador pode treinar
+  // Verifica se jogador pode treinar.
+  //
+  // BUG que o `?? 100` corrige: quando `energy` vinha undefined (nem todo jogador do
+  // engine traz o campo), `undefined >= 30` e FALSE — entao canTrain dava false para
+  // TODO MUNDO, os botoes ficavam `disabled` e clicar num jogador nao fazia nada. O
+  // painel "Jogador Selecionado" nunca preenchia e o treino era impossivel de usar.
   const canTrain = (player: Player) => {
-    return !player.injury && player.energy >= 30
+    return !player.injury && (player.energy ?? 100) >= 30
+  }
+
+  /** Por que este jogador nao pode treinar — antes o clique so era ignorado em silencio. */
+  const blockedReason = (player: Player): string | null => {
+    if (player.injury) return "Lesionado"
+    if ((player.energy ?? 100) < 30) return "Energia baixa"
+    if (player.training.currentFocus) return "Ja em treino"
+    return null
   }
 
   return (
@@ -269,12 +282,21 @@ export default function TreinamentoPage() {
                 const isTraining = !!player.training.currentFocus
                 const canPlayerTrain = canTrain(player)
                 const recommended = getRecommendedTraining(player.position)
-                
+                const reason = blockedReason(player)
+
                 return (
                   <button
                     key={player.id}
-                    onClick={() => canPlayerTrain && !isTraining && setSelectedPlayer(player)}
-                    disabled={!canPlayerTrain || isTraining}
+                    // Clicar num jogador bloqueado agora DIZ o porque, em vez de nao
+                    // fazer nada — era isso que dava a impressao de tela quebrada.
+                    onClick={() => {
+                      if (canPlayerTrain && !isTraining) { setSelectedPlayer(player); return }
+                      if (reason) {
+                        setFeedback(`${player.name}: ${reason}.`)
+                        setTimeout(() => setFeedback(null), 2500)
+                      }
+                    }}
+                    title={reason ?? undefined}
                     className={cn(
                       "w-full flex items-center gap-4 px-5 py-4 text-left transition-colors",
                       isSelected && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]",

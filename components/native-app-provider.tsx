@@ -184,8 +184,18 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
         e.preventDefault(); e.stopImmediatePropagation(); onConfirm()
       }
     }
+    // Controle: A confirma, B cancela — mesma gramatica do resto do jogo.
+    const onPad = (e: Event) => {
+      const { button } = (e as CustomEvent<{ button: string }>).detail
+      if (button === "A") onConfirm()
+      else if (button === "B") onCancel()
+    }
     document.addEventListener("keydown", onKey, true)
-    return () => document.removeEventListener("keydown", onKey, true)
+    window.addEventListener("gamepad:button", onPad)
+    return () => {
+      document.removeEventListener("keydown", onKey, true)
+      window.removeEventListener("gamepad:button", onPad)
+    }
   }, [onCancel, onConfirm])
 
   return (
