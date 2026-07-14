@@ -590,10 +590,11 @@ export default function MercadoPage() {
                     setSearchQuery(e.target.value)
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setNameFilter(searchQuery)
-                      handleSearch()
-                    }
+                    // Enter apenas fixa o filtro; NAO pula de aba. Antes, apertar Enter
+                    // (ou "Buscar") jogava o usuario para a "Rede Mundial" no mesmo instante,
+                    // dando a impressao de que a busca "nao fez nada" — o resultado aparecia
+                    // noutra tela, sem aviso. Agora os resultados surgem aqui mesmo, abaixo.
+                    if (e.key === "Enter") setNameFilter(searchQuery)
                   }}
                   className="w-full pl-12 pr-12 py-3 rounded-xl bg-[#1a1a1a] border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 />
@@ -612,7 +613,7 @@ export default function MercadoPage() {
                 )}
               </div>
               <button
-                onClick={handleSearch}
+                onClick={() => setNameFilter(searchQuery)}
                 className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
               >
                 <Search className="h-4 w-4" />
@@ -632,13 +633,14 @@ export default function MercadoPage() {
                     {t.market.viewInNetwork}
                   </button>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {filteredPlayers.slice(0, 4).map((player) => (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {filteredPlayers.slice(0, 8).map((player) => (
                     <button
                       key={player.id}
                       onClick={() => {
+                        // Clicar num resultado JA abre a negociacao daquele jogador.
                         setSelectedPlayer(player)
-                        setActiveTab("rede")
+                        handleNegotiate("buy")
                       }}
                       className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-left group"
                     >
