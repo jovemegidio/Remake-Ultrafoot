@@ -765,7 +765,9 @@ export default function ElencoPage() {
         )}
       </AnimatePresence>
 
-      <main className="h-[calc(100vh-48px-56px)] flex flex-col">
+      {/* flex-1 min-h-0 em vez de h-[calc(100vh-48px-56px)]: a altura fixa reservava ~56px
+          a mais que o header realmente ocupa, deixando uma faixa preta vazia no rodape. */}
+      <main className="flex-1 min-h-0 flex flex-col">
         {/* Sub-header with tabs */}
         <div className="flex flex-col md:flex-row md:items-center justify-between px-3 md:px-6 py-2 md:py-3 border-b border-white/10 bg-[#0d0d0d] gap-2 md:gap-0">
           <div className="flex items-center gap-3 md:gap-6">

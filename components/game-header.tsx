@@ -105,32 +105,31 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [advanceDate, setAdvanceDate] = useState<Date | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showCoachDropdown, setShowCoachDropdown] = useState(false)
+  const [showNavMenu, setShowNavMenu] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Atalho "W": volta para a secao pai (o keycap [W] no header sempre existiu, mas o
-  // atalho NUNCA foi implementado — a tecla nao fazia nada). Vai para o mesmo destino do
-  // clique, via hardNavigate (funciona no export estatico dentro do Tauri, onde o router
-  // client-side do Next as vezes nao navega).
+  // Atalho "W": abre o MENU de navegacao (o keycap [W] sempre existiu, mas a tecla nao
+  // fazia nada). Antes W ia direto para a secao pai; o usuario pediu um menu com as
+  // opcoes de todas as paginas.
   useEffect(() => {
     if (!showNav) return
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setShowNavMenu(false); return }
       if (e.key.toLowerCase() !== "w" || e.ctrlKey || e.altKey || e.metaKey) return
       const el = document.activeElement as HTMLElement | null
-      // Nao rouba a tecla de quem esta digitando ou de um widget de teclado.
       if (
         el && (
           el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" ||
           el.isContentEditable || el.getAttribute("role") === "slider"
         )
       ) return
-      // Nem com um modal aberto.
       if (document.querySelector('[role="dialog"][data-state="open"]')) return
       e.preventDefault()
-      hardNavigate(routeMeta.parentHref)
+      setShowNavMenu((v) => !v)
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [showNav, routeMeta.parentHref])
+  }, [showNav])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -262,17 +261,17 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         {/* Trilha de navegacao */}
         {showNav && (
           <nav className="flex items-end gap-4 min-w-0 overflow-x-auto scrollbar-none">
-            {/* Secao pai (dimmed) com keycap [w] */}
-            <Link
-              href={routeMeta.parentHref}
-              onClick={(e) => { e.preventDefault(); hardNavigate(routeMeta.parentHref) }}
+            {/* [W] abre o MENU de navegacao (paginas do jogo). */}
+            <button
+              type="button"
+              onClick={() => setShowNavMenu((v) => !v)}
               className="group relative flex shrink-0 flex-col items-center gap-1"
             >
               <KeyCap label="W" className="opacity-70" />
               <span className="whitespace-nowrap text-[15px] font-semibold tracking-wide text-white/40 transition-colors group-hover:text-white/70">
                 {routeMeta.parent}
               </span>
-            </Link>
+            </button>
 
             {/* Pagina atual (bold/branco) */}
             <span className="shrink-0 whitespace-nowrap pb-[2px] text-[17px] font-extrabold tracking-tight text-white">
@@ -441,6 +440,60 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           )}
         </div>
       </div>
+
+      {/* Menu de navegacao (tecla W ou clique na secao pai). */}
+      {showNavMenu && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowNavMenu(false)}
+        >
+          <div
+            className="absolute left-1/2 top-20 w-[min(680px,92vw)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0c0c14] p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-bold text-white">Ir para</span>
+              <span className="text-[11px] text-white/30">W ou Esc para fechar</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {NAV_MENU_ITEMS.map((item) => {
+                const Icon = item.icon
+                const active = pathname.startsWith(item.href) && item.href !== "/"
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => { setShowNavMenu(false); hardNavigate(item.href) }}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all",
+                      active
+                        ? "border-[#00ffc8]/40 bg-[#00ffc8]/10"
+                        : "border-white/[0.06] bg-white/[0.02] hover:border-white/20 hover:bg-white/5",
+                    )}
+                  >
+                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#00ffc8]" : "text-white/50")} />
+                    <span className="text-sm font-medium text-white/90">{item.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   )
 }
+
+// Paginas do menu de navegacao rapida (tecla W).
+const NAV_MENU_ITEMS: { label: string; href: string; icon: typeof Save }[] = [
+  { label: "Escritorio", href: "/", icon: Trophy },
+  { label: "Elenco", href: "/elenco", icon: User },
+  { label: "Taticas", href: "/elenco/taticas", icon: Settings },
+  { label: "Mercado", href: "/mercado", icon: TrendingUp },
+  { label: "Calendario", href: "/calendario", icon: Calendar },
+  { label: "Competicoes", href: "/competicoes", icon: Trophy },
+  { label: "Classificacao", href: "/competicoes", icon: TrendingUp },
+  { label: "Financas", href: "/financas", icon: TrendingUp },
+  { label: "Treinamento", href: "/treinamento", icon: User },
+  { label: "Infraestrutura", href: "/infraestrutura", icon: Settings },
+  { label: "Configuracoes", href: "/configuracoes", icon: Settings },
+]

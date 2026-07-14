@@ -196,6 +196,9 @@ function buildSlots(squad: RadarPlayer[], isHome: boolean, color: string): Radar
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
+// Number of ghost segments in the ball's comet trail
+const TRAIL_LEN = 6
+
 // Minimum and maximum field depth each group can reach
 const GROUP_MIN_DEPTH: Record<string, number> = { GK: 0.03, DEF: 0.10, MID: 0.28, ATT: 0.48 }
 const GROUP_MAX_DEPTH: Record<string, number> = { GK: 0.16, DEF: 0.56, MID: 0.76, ATT: 0.97 }
@@ -302,11 +305,18 @@ export function MatchRadar({
   ], [homeSquad, awaySquad, homeColor, awayColor])
 
   const dotRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
+  const ringRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
   const ballRef = useRef<HTMLDivElement | null>(null)
+  const ballShadowRef = useRef<HTMLDivElement | null>(null)
+  const trailRefs = useRef<Array<HTMLDivElement | null>>([])
   const slotsRef = useRef<RadarSlot[]>(slots)
   const posRef = useRef<Map<string, { x: number; y: number }>>(new Map())
   const ballTargetRef = useRef<{ x: number; y: number; side: "home" | "away" }>({ x: 0.5, y: 0.5, side: "home" })
   const ballPosRef = useRef<{ x: number; y: number }>({ x: 0.5, y: 0.5 })
+  const trailRef = useRef<Array<{ x: number; y: number }>>(
+    Array.from({ length: TRAIL_LEN }, () => ({ x: 0.5, y: 0.5 })),
+  )
+  const carrierRef = useRef<string>("")
 
   useEffect(() => { slotsRef.current = slots }, [slots])
 
@@ -330,10 +340,16 @@ export function MatchRadar({
       const time = performance.now() / 1000
       const target = ballTargetRef.current
 
-      // Smooth ball toward target
+      // Smooth ball toward target — keep previous frame to derive speed
       const bp = ballPosRef.current
+      const prevBx = bp.x
+      const prevBy = bp.y
       bp.x = lerp(bp.x, target.x, 0.10)
       bp.y = lerp(bp.y, target.y, 0.10)
+
+      // Ball speed (per frame, normalised units) drives trail + lift + squash
+      const speed = Math.hypot(bp.x - prevBx, bp.y - prevBy)
+      const speedNorm = clamp(speed / 0.012, 0, 1)
 
       // Find ball carrier: closest field player on the team in possession
       const currentSlots = slotsRef.current
@@ -347,6 +363,7 @@ export function MatchRadar({
         const d = (px - bp.x) ** 2 + (py - bp.y) ** 2
         if (d < bestDist) { bestDist = d; carrierKey = s.key }
       }
+      carrierRef.current = carrierKey
 
       for (const s of currentSlots) {
         const { x: tx, y: ty } = targetFor(s, bp.x, bp.y, time)
@@ -370,12 +387,54 @@ export function MatchRadar({
         if (el) {
           el.style.left = `${nx * 100}%`
           el.style.top = `${ny * 100}%`
+          // Players near the ball stack above the rest, so the action is never occluded
+          const dist = Math.hypot(nx - bp.x, ny - bp.y)
+          const near = clamp(1 - dist / 0.22, 0, 1)
+          el.style.zIndex = s.key === carrierKey ? "9" : String(2 + Math.round(near * 3))
+        }
+
+        // Possession ring only around the carrier
+        const ring = ringRefs.current.get(s.key)
+        if (ring) {
+          const on = s.key === carrierKey
+          ring.style.opacity = on ? "1" : "0"
+          ring.style.transform = on
+            ? `scale(${(1.15 + Math.sin(time * 5.2) * 0.14).toFixed(3)})`
+            : "scale(0.9)"
+        }
+      }
+
+      // Comet trail: each segment chases the one in front of it
+      const trail = trailRef.current
+      for (let i = 0; i < trail.length; i++) {
+        const lead = i === 0 ? bp : trail[i - 1]
+        trail[i].x = lerp(trail[i].x, lead.x, 0.42)
+        trail[i].y = lerp(trail[i].y, lead.y, 0.42)
+        const el = trailRefs.current[i]
+        if (el) {
+          el.style.left = `${trail[i].x * 100}%`
+          el.style.top = `${trail[i].y * 100}%`
+          const fade = (1 - i / trail.length) ** 2
+          el.style.opacity = (fade * 0.55 * speedNorm).toFixed(3)
+          el.style.width = `${(7 - i * 0.9).toFixed(1)}px`
+          el.style.height = `${(7 - i * 0.9).toFixed(1)}px`
         }
       }
 
       if (ballRef.current) {
         ballRef.current.style.left = `${bp.x * 100}%`
         ballRef.current.style.top = `${bp.y * 100}%`
+        // Fast ball rides slightly higher off the turf and stretches along its path
+        const lift = speedNorm * 2.6
+        const stretch = 1 + speedNorm * 0.35
+        const angle = (Math.atan2(bp.y - prevBy, bp.x - prevBx) * 180) / Math.PI
+        ballRef.current.style.transform =
+          `translate(-50%, calc(-50% - ${lift.toFixed(2)}px)) rotate(${angle.toFixed(1)}deg) scale(${stretch.toFixed(3)}, ${(1 / stretch).toFixed(3)})`
+      }
+      if (ballShadowRef.current) {
+        ballShadowRef.current.style.left = `${bp.x * 100}%`
+        ballShadowRef.current.style.top = `${bp.y * 100}%`
+        ballShadowRef.current.style.opacity = (0.5 - speedNorm * 0.22).toFixed(2)
       }
 
       raf = requestAnimationFrame(animate)
@@ -401,49 +460,86 @@ export function MatchRadar({
       {/* Pitch */}
       <div
         className="relative w-full flex-1 overflow-hidden rounded-xl border border-white/10"
-        style={{ background: "#0e2218" }}
+        style={{
+          background:
+            "radial-gradient(120% 90% at 50% -10%, #1c5238 0%, #164632 42%, #0f3324 78%, #0a2419 100%)",
+          boxShadow: "inset 0 0 60px rgba(0,0,0,0.55)",
+        }}
         role="img"
         aria-label="Posicionamento tático em tempo real"
       >
+        {/* Mowed turf stripes */}
+        <div className="pointer-events-none absolute inset-0">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute top-0 h-full"
+              style={{
+                left: `${(i * 100) / 12}%`,
+                width: `${100 / 12}%`,
+                background: i % 2 === 0 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.05)",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Floodlight pools — four stadium corners */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 15% 12%, rgba(255,255,235,0.10), transparent 70%)," +
+              "radial-gradient(60% 55% at 85% 12%, rgba(255,255,235,0.10), transparent 70%)," +
+              "radial-gradient(60% 55% at 15% 88%, rgba(255,255,235,0.08), transparent 70%)," +
+              "radial-gradient(60% 55% at 85% 88%, rgba(255,255,235,0.08), transparent 70%)",
+          }}
+        />
+
         {/* Field markings */}
         <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 133 100" preserveAspectRatio="none">
-          <g fill="none" stroke="#1e4430" strokeWidth="0.65">
+          <defs>
+            <pattern id="radar-net" width="1.6" height="1.6" patternUnits="userSpaceOnUse">
+              <path d="M 1.6 0 L 0 0 0 1.6" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="0.18" />
+            </pattern>
+          </defs>
+
+          <g fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="0.55" strokeLinecap="round">
             {/* Outer border */}
             <rect x="3" y="3" width="127" height="94" />
             {/* Halfway line */}
             <line x1="66.5" y1="3" x2="66.5" y2="97" />
             {/* Centre circle */}
             <circle cx="66.5" cy="50" r="11" />
-            <circle cx="66.5" cy="50" r="0.8" fill="#1e4430" />
             {/* Home penalty area */}
             <rect x="3" y="26" width="24" height="48" />
             <rect x="3" y="38" width="8" height="24" />
             {/* Away penalty area */}
             <rect x="106" y="26" width="24" height="48" />
             <rect x="122" y="38" width="8" height="24" />
-            {/* Goals */}
-            <rect x="0.5" y="44" width="2.5" height="12" fill="#1e4430" fillOpacity="0.5" />
-            <rect x="130" y="44" width="2.5" height="12" fill="#1e4430" fillOpacity="0.5" />
-            {/* Penalty spots */}
-            <circle cx="14" cy="50" r="0.8" fill="#1e4430" />
-            <circle cx="119" cy="50" r="0.8" fill="#1e4430" />
+            {/* Penalty arcs */}
+            <path d="M 27 41.5 A 11 11 0 0 0 27 58.5" />
+            <path d="M 106 41.5 A 11 11 0 0 1 106 58.5" />
             {/* Corner arcs */}
-            <path d="M 3 3 A 3 3 0 0 1 6 3" />
-            <path d="M 130 3 A 3 3 0 0 0 127 3" />
-            <path d="M 3 97 A 3 3 0 0 0 6 97" />
-            <path d="M 130 97 A 3 3 0 0 1 127 97" />
+            <path d="M 3 6 A 3 3 0 0 0 6 3" />
+            <path d="M 127 3 A 3 3 0 0 0 130 6" />
+            <path d="M 6 97 A 3 3 0 0 0 3 94" />
+            <path d="M 130 94 A 3 3 0 0 0 127 97" />
           </g>
-          {/* Subtle pitch stripe shading */}
-          {[0, 1, 2, 3, 4, 5].map(i => (
-            <rect
-              key={i}
-              x={3 + i * 21.1}
-              y="3"
-              width="10.55"
-              height="94"
-              fill={i % 2 === 0 ? "rgba(255,255,255,0.012)" : "transparent"}
-            />
-          ))}
+
+          {/* Centre + penalty spots */}
+          <g fill="rgba(255,255,255,0.5)">
+            <circle cx="66.5" cy="50" r="0.7" />
+            <circle cx="14" cy="50" r="0.7" />
+            <circle cx="119" cy="50" r="0.7" />
+          </g>
+
+          {/* Goals with nets */}
+          <g>
+            <rect x="0.4" y="43" width="2.6" height="14" fill="url(#radar-net)" />
+            <rect x="0.4" y="43" width="2.6" height="14" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.4" />
+            <rect x="130" y="43" width="2.6" height="14" fill="url(#radar-net)" />
+            <rect x="130" y="43" width="2.6" height="14" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.4" />
+          </g>
         </svg>
 
         {/* Players */}
@@ -451,47 +547,108 @@ export function MatchRadar({
           const init = posRef.current.get(s.key)
           const left = init ? init.x : (s.isHome ? s.fDepth * 0.94 + 0.03 : (1 - s.fDepth) * 0.94 + 0.03)
           const top = init ? init.y : s.fWidth
+          const size = s.isGK ? 24 : 22
           return (
             <div
               key={s.key}
               ref={(el) => { dotRefs.current.set(s.key, el) }}
-              className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 will-change-[left,top]"
+              className="absolute z-[2] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 will-change-[left,top]"
               style={{ left: `${left * 100}%`, top: `${top * 100}%` }}
             >
-              <div
-                className="relative flex items-center justify-center rounded-full font-bold shadow-md"
-                style={{
-                  width: s.isGK ? 24 : 22,
-                  height: s.isGK ? 24 : 22,
-                  background: s.color,
-                  color: s.textColor,
-                  fontSize: 10,
-                  outline: s.isGK ? `2px solid rgba(255,255,255,0.9)` : `1.5px solid rgba(255,255,255,0.55)`,
-                  boxShadow: `0 2px 6px rgba(0,0,0,0.55)`,
-                }}
-              >
-                {s.number}
+              <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+                {/* Ground shadow — sells the "above the turf" depth */}
+                <span
+                  className="pointer-events-none absolute rounded-[50%]"
+                  style={{
+                    width: size * 0.92,
+                    height: size * 0.32,
+                    bottom: -3,
+                    background: "rgba(0,0,0,0.42)",
+                    filter: "blur(2px)",
+                  }}
+                />
+                {/* Possession ring — driven per-frame for the ball carrier */}
+                <span
+                  ref={(el) => { ringRefs.current.set(s.key, el) }}
+                  className="pointer-events-none absolute inset-[-5px] rounded-full opacity-0 transition-opacity duration-200"
+                  style={{
+                    border: `2px solid ${s.color}`,
+                    boxShadow: `0 0 10px ${s.color}, inset 0 0 6px ${s.color}`,
+                  }}
+                />
+                <span
+                  className="relative flex h-full w-full items-center justify-center rounded-full font-bold"
+                  style={{
+                    background: `radial-gradient(circle at 35% 28%, ${lighten(s.color, 0.28)}, ${s.color} 70%)`,
+                    color: s.textColor,
+                    fontSize: 10,
+                    outline: s.isGK ? "2px solid rgba(255,255,255,0.92)" : "1.5px solid rgba(255,255,255,0.6)",
+                    boxShadow: "0 3px 7px rgba(0,0,0,0.6), inset 0 -2px 4px rgba(0,0,0,0.28)",
+                  }}
+                >
+                  {s.number}
+                </span>
               </div>
-              <span className="max-w-[56px] truncate text-[7.5px] leading-none text-white/70 drop-shadow">
+              <span
+                className="max-w-[58px] truncate rounded px-1 text-[7.5px] leading-[1.35] text-white/85"
+                style={{ background: "rgba(0,0,0,0.42)" }}
+              >
                 {s.name.split(" ").slice(-1)[0]}
               </span>
             </div>
           )
         })}
 
+        {/* Ball trail */}
+        {Array.from({ length: TRAIL_LEN }).map((_, i) => (
+          <div
+            key={i}
+            ref={(el) => { trailRefs.current[i] = el }}
+            className="pointer-events-none absolute z-[8] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white opacity-0 will-change-[left,top,opacity]"
+            style={{ left: "50%", top: "50%", width: 7, height: 7, filter: "blur(1.5px)" }}
+          />
+        ))}
+
+        {/* Ball ground shadow */}
+        <div
+          ref={ballShadowRef}
+          className="pointer-events-none absolute z-[9] rounded-[50%] will-change-[left,top]"
+          style={{
+            left: "50%",
+            top: "50%",
+            width: 10,
+            height: 4,
+            transform: "translate(-50%, 130%)",
+            background: "rgba(0,0,0,0.55)",
+            filter: "blur(2px)",
+          }}
+        />
+
         {/* Ball */}
         <div
           ref={ballRef}
-          className="absolute z-10 -translate-x-1/2 -translate-y-1/2 will-change-[left,top]"
-          style={{ left: "50%", top: "50%" }}
+          className="pointer-events-none absolute z-10 will-change-[left,top,transform]"
+          style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
         >
-          <div className="h-3 w-3 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.95),0_0_4px_rgba(255,255,255,1)]" />
+          <div className="h-[11px] w-[11px] rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.95),0_0_5px_rgba(255,255,255,1)]" />
         </div>
       </div>
 
-      <p className="shrink-0 text-center text-[10px] text-white/35">
-        Posicionamento tático • movimentações em tempo real
-      </p>
+      {/* Possession bar */}
+      <div className="w-full shrink-0 space-y-1">
+        <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full transition-[width] duration-700 ease-out"
+            style={{ width: `${clamp(homePossession, 0, 100)}%`, background: homeColor }}
+          />
+          <div className="h-full flex-1" style={{ background: awayColor }} />
+        </div>
+        <div className="flex items-center justify-between text-[9px] text-white/45">
+          <span>{Math.round(homePossession)}% posse</span>
+          <span>Posicionamento tático em tempo real</span>
+          <span>{100 - Math.round(homePossession)}%</span>
+        </div>
+      </div>
     </div>
   )
 }
@@ -512,6 +669,14 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
     g: parseInt(c.slice(2, 4), 16),
     b: parseInt(c.slice(4, 6), 16),
   }
+}
+
+// Blends a hex color toward white (t = 0..1) for the dot's top-light highlight
+function lighten(hex: string, t: number): string {
+  const p = hexToRgb(hex)
+  if (!p) return hex
+  const mix = (c: number) => Math.round(c + (255 - c) * t)
+  return `rgb(${mix(p.r)}, ${mix(p.g)}, ${mix(p.b)})`
 }
 
 function getTextColor(hex: string): string {

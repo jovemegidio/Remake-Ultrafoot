@@ -1,9 +1,10 @@
-// Verifica a navegacao do header: clicar em "Escritorio" (secao pai) e a tecla W.
+// Verifica a navegacao do header: a tecla "W" (e o clique na secao pai) devem ABRIR
+// um MENU de navegacao com as paginas do jogo; escolher um item navega; Esc fecha.
 //
-// Bug relatado: nao conseguia sair para o Escritorio, nem clicando nem pela tecla "W".
-// A tecla W nunca foi implementada (o keycap era so decorativo); e o clique usava <Link>
-// do Next, que no export estatico dentro do Tauri as vezes nao navega. Ambos passam a
-// usar hardNavigate.
+// Historico: o bug original era "nao conseguia sair para o Escritorio, nem clicando
+// nem pela tecla W" (W era so um keycap decorativo). Primeiro W passou a navegar direto
+// para a secao pai; depois o usuario pediu explicitamente que W abrisse um MENU com as
+// opcoes de todas as paginas. Este teste cobre esse contrato novo.
 import { chromium } from "@playwright/test"
 import { createServer } from "node:http"
 import { readFile, stat } from "node:fs/promises"
@@ -22,19 +23,32 @@ let failures=0
 const ok=m=>console.log("OK "+m), fail=m=>{console.log("XX "+m);failures++}
 async function newPage(){const p=await browser.newPage();await p.addInitScript(()=>{localStorage.setItem("ultrafoot:save",JSON.stringify({version:4,selectedTeamShort:"FLA",managerName:"QA",season:2026,week:0,language:"pt-BR",selectedUniform:"home",createdAt:Date.now(),updatedAt:Date.now(),multiplayerEnabled:false,managers:[],activeManagerId:null,controllerType:"playstation",controllerBindings:{}}));sessionStorage.setItem("ultrafoot:session-active","true")});return p}
 const P=x=>new URL(x).pathname
+const menu=p=>p.getByText("Ir para",{exact:true})
 
-{const p=await newPage();await p.goto(`${base}/competicoes/`,{waitUntil:"networkidle",timeout:30000});await p.waitForTimeout(1500)
- await p.getByRole("link",{name:/escritorio/i}).first().click().catch(()=>{});await p.waitForTimeout(1500)
- P(p.url())==="/financas/"?ok('clique "Escritorio" -> /financas'):fail(`clique "Escritorio" foi para ${P(p.url())} (esperado /financas)`);await p.close()}
+// 1) Tecla W abre o menu de navegacao
+{const p=await newPage();await p.goto(`${base}/competicoes/`,{waitUntil:"networkidle",timeout:30000});await p.waitForTimeout(1200)
+ await p.locator("body").click({position:{x:500,y:400}});await p.keyboard.press("w");await p.waitForTimeout(600)
+ ;(await menu(p).isVisible().catch(()=>false))?ok("tecla W abre o menu de navegacao"):fail("tecla W nao abriu o menu");await p.close()}
 
-{const p=await newPage();await p.goto(`${base}/competicoes/`,{waitUntil:"networkidle",timeout:30000});await p.waitForTimeout(1500)
- await p.locator("body").click({position:{x:500,y:400}});await p.keyboard.press("w");await p.waitForTimeout(1500)
- P(p.url())==="/financas/"?ok("tecla W -> /financas"):fail(`tecla W ficou em ${P(p.url())} (esperado /financas)`);await p.close()}
+// 2) Escolher um item do menu navega para a pagina
+{const p=await newPage();await p.goto(`${base}/competicoes/`,{waitUntil:"networkidle",timeout:30000});await p.waitForTimeout(1200)
+ await p.locator("body").click({position:{x:500,y:400}});await p.keyboard.press("w");await p.waitForTimeout(600)
+ await p.getByRole("button",{name:/^Financas$/i}).click().catch(()=>{});await p.waitForTimeout(1500)
+ P(p.url())==="/financas/"?ok('menu -> "Financas" navega para /financas'):fail(`menu -> Financas foi para ${P(p.url())}`);await p.close()}
 
-{const p=await newPage();await p.goto(`${base}/mercado/`,{waitUntil:"networkidle",timeout:30000});await p.waitForTimeout(1500)
- await p.locator("body").click({position:{x:500,y:400}});await p.keyboard.press("w");await p.waitForTimeout(1500)
- P(p.url())==="/transferencias/"?ok("tecla W -> /transferencias"):fail(`tecla W ficou em ${P(p.url())}`);await p.close()}
+// 3) Esc fecha o menu
+{const p=await newPage();await p.goto(`${base}/mercado/`,{waitUntil:"networkidle",timeout:30000});await p.waitForTimeout(1200)
+ await p.locator("body").click({position:{x:500,y:400}});await p.keyboard.press("w");await p.waitForTimeout(500)
+ const opened=await menu(p).isVisible().catch(()=>false)
+ await p.keyboard.press("Escape");await p.waitForTimeout(500)
+ const closed=!(await menu(p).isVisible().catch(()=>false))
+ ;(opened&&closed)?ok("Esc fecha o menu de navegacao"):fail(`Esc nao fechou o menu (aberto=${opened} fechado=${closed})`);await p.close()}
+
+// 4) Clique na secao pai (breadcrumb) tambem abre o menu
+{const p=await newPage();await p.goto(`${base}/competicoes/`,{waitUntil:"networkidle",timeout:30000});await p.waitForTimeout(1200)
+ await p.getByRole("button",{name:/escritorio/i}).first().click().catch(()=>{});await p.waitForTimeout(600)
+ ;(await menu(p).isVisible().catch(()=>false))?ok("clique na secao pai abre o menu"):fail("clique na secao pai nao abriu o menu");await p.close()}
 
 await browser.close();srv.close()
-console.log(failures?`\nRESULTADO: ${failures} problema(s) de navegacao`:"\nRESULTADO: OK — navegacao do header funcionando")
+console.log(failures?`\nRESULTADO: ${failures} problema(s) de navegacao`:"\nRESULTADO: OK — menu de navegacao (W) funcionando")
 process.exitCode=failures?1:0

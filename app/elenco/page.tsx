@@ -18,6 +18,7 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
@@ -84,7 +85,11 @@ function LineupsIcon({ className }: { className?: string }) {
 export default function ElencoHubPage() {
   const router = useRouter()
   const { state } = useGameState()
-  const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
+  // Sem time default "BGT": no Tauri o save hidrata assincrono e o primeiro render vinha
+  // sem time, mostrando o elenco do RB Bragantino (34 jog, 79 OVR) para qualquer clube.
+  const resolvedTeam = state.selectedTeamShort ? getTeamByShort(state.selectedTeamShort) : undefined
+  const userTeam = resolvedTeam ?? serieATeams[0]
+  const teamReady = Boolean(resolvedTeam)
   const [selectedCard, setSelectedCard] = useState<number | null>(null)
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
 
@@ -150,8 +155,18 @@ export default function ElencoHubPage() {
   const handleCardClick = (card: typeof cards[0]) => {
     setSelectedCard(card.id)
     setTimeout(() => {
-      router.push(card.route)
+      hardNavigate(card.route)
     }, 150)
+  }
+
+  // Save ainda hidratando: nao ha time. Melhor um loading rapido do que mostrar o
+  // elenco do Bragantino para o clube de outra pessoa.
+  if (!teamReady) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#050508] text-sm text-white/40">
+        Carregando elenco...
+      </div>
+    )
   }
 
   return (

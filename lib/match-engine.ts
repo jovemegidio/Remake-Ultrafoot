@@ -197,6 +197,42 @@ export function createInitialState(): MatchState {
 
 function rnd(): number { return Math.random() }
 function nameId(): string { return Math.random().toString(36).slice(2, 9) }
+function pick<T>(arr: readonly T[]): T { return arr[Math.floor(rnd() * arr.length)] }
+
+// Variedade de narracao — os textos eram fixos ("X finaliza, Y defende") e soavam
+// artificiais na repeticao. Cada evento agora sorteia entre varias frases.
+function goalLine(scorer: string, team: string, assist?: string): string {
+  if (assist) {
+    return pick([
+      `GOOOL! ${scorer} completa o passe de ${assist} e marca para o ${team}!`,
+      `É DO ${team.toUpperCase()}! ${assist} serviu, ${scorer} nao desperdicou!`,
+      `GOOOOL! Que jogada! ${assist} de calcanhar e ${scorer} empurrou pra rede!`,
+      `GOOOL! ${scorer} apareceu na hora certa apos assistencia de ${assist}!`,
+    ])
+  }
+  return pick([
+    `GOOOL! ${scorer} marca para o ${team}!`,
+    `É DELE! ${scorer} balanca as redes do ${team}!`,
+    `GOOOOL! ${scorer} nao perdoou e fez pro ${team}!`,
+    `PEGOU DE PRIMEIRA! ${scorer} marca um golaco pro ${team}!`,
+  ])
+}
+function saveLine(shooter: string, gk: string): string {
+  return pick([
+    `${shooter} finaliza, mas ${gk} defende!`,
+    `Que defensa de ${gk}! Negou o gol de ${shooter}!`,
+    `${shooter} chutou firme e ${gk} espalmou!`,
+    `${gk} se estica todo e evita o gol de ${shooter}!`,
+  ])
+}
+function missLine(shooter: string): string {
+  return pick([
+    `${shooter} finaliza pra fora!`,
+    `Isolou! ${shooter} mandou por cima do gol.`,
+    `${shooter} tentou de longe, mas a bola foi longe do alvo.`,
+    `Passou raspando! ${shooter} quase abre o placar.`,
+  ])
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Seleção de jogadores
@@ -477,9 +513,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       }
       state.events = [{
         id: nameId(), minute, type: "goal", side,
-        text: assistName
-          ? `GOOOOL! ${shooterName} marca para o ${team.curto} após passe de ${assistName}!`
-          : `GOOOOL! ${shooterName} marca para o ${team.curto}!`,
+        text: goalLine(shooterName, team.curto, assistName),
         player: shooterName, assist: assistName, important: true,
       }, ...state.events]
       state.flash = { side, type: "goal" }
@@ -492,7 +526,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
     // Defesa do goleiro
     state.events = [{
       id: nameId(), minute, type: "save", side,
-      text: `${shooterName} finaliza, ${gkName} defende`,
+      text: saveLine(shooterName, gkName),
       player: shooterName,
     }, ...state.events]
     state.flash = { side, type: "chance" }
@@ -555,6 +589,13 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
           }
         }
       }
+    } else if (rnd() < 0.5) {
+      // Finalizacao pra fora, sem escanteio nem trave — narra as vezes (nao spamar).
+      state.events = [{
+        id: nameId(), minute, type: "miss", side,
+        text: missLine(shooterName),
+        player: shooterName,
+      }, ...state.events]
     }
   }
 }

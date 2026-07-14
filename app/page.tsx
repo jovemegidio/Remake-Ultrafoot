@@ -199,8 +199,8 @@ export default function DashboardPage() {
           unoptimized
           className="office-bg-b object-cover"
         />
-        {/* Escurecimento para manter a leitura do conteudo */}
-        <div className="absolute inset-0 bg-[#050508]/82" />
+        {/* Escurecimento para leitura — reduzido (era /82) para o escritorio aparecer mais. */}
+        <div className="absolute inset-0 bg-[#050508]/68" />
       </div>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
