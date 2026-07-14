@@ -28,7 +28,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FORMATIONS } from "@/lib/formations"
+import { FORMATIONS, assignPlayersToFormation } from "@/lib/formations"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
@@ -157,17 +157,11 @@ export default function ElencoPage() {
   const formationKeys = Object.keys(FORMATIONS)
   const currentFormationIndex = formationKeys.indexOf(formation)
   
-  const positionedPlayers = useMemo(() => {
-    const formationData = FORMATIONS[formation]
-    return players.map((player, index) => {
-      const customPos = playerPositions[player.id]
-      return {
-        ...player,
-        x: customPos?.x ?? formationData.positions[index]?.x ?? 50,
-        y: customPos?.y ?? formationData.positions[index]?.y ?? 50,
-      }
-    })
-  }, [players, formation, playerPositions])
+  // Encaixe por POSICAO (nao por indice do array) — ver lib/formations.ts.
+  const positionedPlayers = useMemo(
+    () => assignPlayersToFormation(players, formation, playerPositions),
+    [players, formation, playerPositions],
+  )
   
   const nextFormation = () => {
     const nextIndex = (currentFormationIndex + 1) % formationKeys.length

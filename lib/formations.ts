@@ -94,3 +94,73 @@ export const FORMATIONS: Record<string, { name: string; positions: FormationSlot
 export function getFormationSlots(formation: string | undefined): FormationSlot[] {
   return (FORMATIONS[formation ?? ""] ?? FORMATIONS["4-3-3"]).positions
 }
+
+/**
+ * Quem pode cobrir cada slot quando nao ha ninguem da posicao exata.
+ *
+ * Um elenco raramente tem o jogador certo para TODO slot de TODA formacao (um 3-5-2 pede
+ * 3 zagueiros; um 4-3-3 pede 2). Sem isto, o encaixe caia no "pega o proximo da fila" e
+ * um lateral acabava no miolo de zaga — ou, pior, um meia no gol.
+ * A ordem importa: a primeira opcao e a mais natural.
+ */
+export const COMPATIBLE_POSITIONS: Record<string, string[]> = {
+  GOL: [],                          // goleiro nao se improvisa
+  ZAG: ["LD", "LE", "VOL"],         // lateral ou volante fecham a zaga
+  LD: ["LE", "ZAG", "PD", "MEI"],
+  LE: ["LD", "ZAG", "PE", "MEI"],
+  VOL: ["MEI", "ZAG"],
+  MEI: ["VOL", "PD", "PE", "ATA"],
+  PD: ["PE", "MEI", "ATA", "LD"],
+  PE: ["PD", "MEI", "ATA", "LE"],
+  ATA: ["PD", "PE", "MEI"],
+
+  // Slots que so existem em algumas formacoes. Sem eles no mapa, o encaixe caia no
+  // "pega quem sobrou" — foi o teste (scripts/qa-formation.ts) que apontou: no 3-5-2 um
+  // LATERAL-ESQUERDO ia parar na ALA DIREITA; no 4-4-2, um VOLANTE virava MEIA-DIREITA.
+  MD: ["PD", "MEI", "LD", "PE"],    // meia-direita (4-4-2)
+  ME: ["PE", "MEI", "LE", "PD"],    // meia-esquerda (4-4-2)
+  ALD: ["LD", "PD", "MEI", "LE"],   // ala-direita (3-5-2 / 5-3-2)
+  ALE: ["LE", "PE", "MEI", "LD"],   // ala-esquerda (3-5-2 / 5-3-2)
+}
+
+/**
+ * Encaixa o elenco nos slots da formacao pela POSICAO de cada jogador.
+ *
+ * Antes cada tela fazia isto por INDICE do array:
+ *   players.map((player, index) => ({ x: formationData.positions[index]?.x }))
+ *
+ * O elenco vem ordenado por posicao (GOL, ZAG, ZAG, LD, LE, VOL, MEI...) mas os slots do
+ * 4-3-3 sao (GOL, LD, ZAG, ZAG, LE, ...). No indice 1 o jogador e ZAGUEIRO e o slot e
+ * LATERAL-DIREITO; no indice 3 e o inverso. Cada um caia no buraco errado — dai "zagueiro
+ * marcado como goleiro, meio-campista como zagueiro". Em 3-5-2/5-3-2, cuja ordem de slots
+ * e outra, piorava.
+ *
+ * @param customPositions posicoes movidas a mao pelo usuario (arrastar no campo), por id.
+ */
+export function assignPlayersToFormation<T extends { id: number; position: string }>(
+  players: T[],
+  formation: string | undefined,
+  customPositions: Record<number, { x: number; y: number }> = {},
+): (T & { x: number; y: number; slotPos: string })[] {
+  const slots = getFormationSlots(formation)
+  const pool = [...players]
+  const out: (T & { x: number; y: number; slotPos: string })[] = []
+
+  for (const slot of slots) {
+    // 1) alguem que joga EXATAMENTE nessa posicao
+    let idx = pool.findIndex((p) => p.position === slot.pos)
+    // 2) senao, alguem de posicao compativel
+    if (idx === -1) {
+      idx = pool.findIndex((p) => COMPATIBLE_POSITIONS[slot.pos]?.includes(p.position))
+    }
+    // 3) por ultimo, quem sobrou (elenco incompleto para essa formacao)
+    if (idx === -1) idx = 0
+
+    const player = pool.splice(idx, 1)[0]
+    if (!player) continue
+
+    const custom = customPositions[player.id]
+    out.push({ ...player, x: custom?.x ?? slot.x, y: custom?.y ?? slot.y, slotPos: slot.pos })
+  }
+  return out
+}
