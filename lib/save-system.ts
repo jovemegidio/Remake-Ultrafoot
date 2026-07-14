@@ -311,6 +311,8 @@ export interface GameState {
   // Convive com o useGameEngine; estas telas (base/mercado/calendario/partida) leem daqui.
   squadPlayers?: SquadPlayer[]
   youthPlayers?: SquadPlayer[]
+  // Temporada em que a base foi semeada — evita re-gerar prospectos toda visita.
+  youthSeededSeason?: number
   balance?: number
   selectedTeam?: SavedTeam
   currentRound?: number

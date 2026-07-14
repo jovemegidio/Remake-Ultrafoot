@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { Sprout, Star, ArrowUp, AlertTriangle } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -7,6 +8,7 @@ import { SystemMediaPlayer } from "@/components/system-media-player"
 import { Button } from "@/components/ui/button"
 import { useUserTeam, useGameState, type SquadPlayer } from "@/lib/save-system"
 import { formatCurrency } from "@/lib/teams-data"
+import { generateYouthProspects } from "@/lib/youth-academy"
 import { cn } from "@/lib/utils"
 
 const PROMOTION_FEE = 200_000
@@ -16,6 +18,27 @@ export default function BasePage() {
   const { state, setState } = useGameState()
   const youth = state.youthPlayers ?? []
   const balance = state.balance && state.balance > 0 ? state.balance : team.saldo
+
+  // SEMEIA a base quando vazia.
+  //
+  // BUG que isto corrige ("os juniores nao funcionam"): a pagina le state.youthPlayers,
+  // mas ninguem populava esse campo — o motor jogava os jovens gerados direto no elenco
+  // profissional. A base ficava SEMPRE VAZIA. Aqui geramos os prospectos de forma
+  // deterministica (clube + temporada) na primeira visita de cada temporada; promover e
+  // dispensar seguem persistindo por cima.
+  useEffect(() => {
+    if (!team?.curto) return
+    // Semeia na primeira visita da temporada. Usar `youthSeededSeason !== season` (e nao
+    // "youthPlayers === undefined") cobre os dois casos: a primeira vez de todas, E o
+    // inicio de uma temporada nova — quando youthPlayers pode ter ficado [] da anterior.
+    if (state.youthSeededSeason !== state.season) {
+      setState({
+        youthPlayers: generateYouthProspects(team.curto, state.season, team.prestigio ?? 60),
+        youthSeededSeason: state.season,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [team?.curto, state.season])
 
   const promote = (player: SquadPlayer) => {
     if (balance < PROMOTION_FEE) {
