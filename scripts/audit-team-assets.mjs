@@ -59,12 +59,10 @@ const sample = (arr, n = 15) =>
   arr.slice(0, n).map((t) => `  - ${t.nome} (${t.fileKey})`).join("\n")
 
 if (missingEscudo.length) {
-  console.log(`\nSEM ESCUDO (${missingEscudo.length}):`)
-  console.log(sample(missingEscudo))
-  if (missingEscudo.length > 15) console.log(`  ... e mais ${missingEscudo.length - 15}`)
+  console.log(`\nSEM ESCUDO (${missingEscudo.length}) — LISTA COMPLETA:`)
+  for (const t of missingEscudo) console.log(`  - ${t.nome} (${t.fileKey}.png)`)
 }
 if (missingCamisa.length) {
-  console.log(`\nSEM CAMISA (${missingCamisa.length}):`)
-  console.log(sample(missingCamisa))
-  if (missingCamisa.length > 15) console.log(`  ... e mais ${missingCamisa.length - 15}`)
+  console.log(`\nSEM CAMISA (${missingCamisa.length}) — LISTA COMPLETA:`)
+  for (const t of missingCamisa) console.log(`  - ${t.nome} (${t.fileKey}.png)`)
 }
