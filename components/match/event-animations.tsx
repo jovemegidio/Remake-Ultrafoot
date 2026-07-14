@@ -1,10 +1,37 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import type { Team } from "@/lib/teams-data"
+
+/**
+ * Fecha a animacao sozinha depois de `ms` — e o que devolve a partida ao relogio.
+ *
+ * BUG GRAVE que isto corrige ("a tela da partida nao sai ate acabar o tempo"):
+ * todas as animacoes faziam
+ *
+ *     useEffect(() => {
+ *       const t = setTimeout(() => onComplete?.(), 4000)
+ *       return () => clearTimeout(t)
+ *     }, [onComplete])          // <- onComplete recriado a cada render do pai
+ *
+ * A tela da partida re-renderiza o tempo todo (relogio, eventos, radar), entao o pai
+ * recriava `onComplete` a cada render, o efeito refazia o cleanup e REINICIAVA o
+ * setTimeout. O timer nunca chegava ao fim: onComplete() NUNCA era chamado. Qualquer
+ * gol/cartao congelava a partida — e como ela nunca concluia, nao gerava resultado, o
+ * fixture nao era marcado como jogado e o mesmo adversario voltava ("6 jogos contra o
+ * City"). Guardando onComplete num ref, o timer passa a depender so da duracao.
+ */
+function useAutoDismiss(onComplete: (() => void) | undefined, ms: number) {
+  const ref = useRef(onComplete)
+  useEffect(() => { ref.current = onComplete }, [onComplete])
+  useEffect(() => {
+    const timer = setTimeout(() => ref.current?.(), ms)
+    return () => clearTimeout(timer)
+  }, [ms])
+}
 
 // Tipos de eventos suportados
 export type AnimatableEvent = "goal" | "penalty" | "yellow_card" | "red_card" | "foul" | "var"
@@ -20,12 +47,7 @@ interface EventAnimationProps {
 
 // Animacao de GOL - Estilo EA FC
 function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimationProps, "event">) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onComplete) onComplete()
-    }, 4000)
-    return () => clearTimeout(timer)
-  }, [onComplete])
+  useAutoDismiss(onComplete, 4000)
 
   return (
     <motion.div
@@ -130,12 +152,7 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
 
 // Animacao de PENALTI
 function PenaltyAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "event">) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onComplete) onComplete()
-    }, 3000)
-    return () => clearTimeout(timer)
-  }, [onComplete])
+  useAutoDismiss(onComplete, 3000)
 
   return (
     <motion.div
@@ -203,12 +220,7 @@ function PenaltyAnimation({ team, minute, onComplete }: Omit<EventAnimationProps
 
 // Animacao de CARTAO AMARELO
 function YellowCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimationProps, "event">) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onComplete) onComplete()
-    }, 2500)
-    return () => clearTimeout(timer)
-  }, [onComplete])
+  useAutoDismiss(onComplete, 2500)
 
   return (
     <motion.div
@@ -253,12 +265,7 @@ function YellowCardAnimation({ team, player, minute, onComplete }: Omit<EventAni
 
 // Animacao de CARTAO VERMELHO
 function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimationProps, "event">) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onComplete) onComplete()
-    }, 3500)
-    return () => clearTimeout(timer)
-  }, [onComplete])
+  useAutoDismiss(onComplete, 3500)
 
   return (
     <motion.div
@@ -325,12 +332,7 @@ function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimat
 
 // Animacao de FALTA
 function FoulAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "event">) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onComplete) onComplete()
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [onComplete])
+  useAutoDismiss(onComplete, 2000)
 
   return (
     <motion.div
@@ -367,12 +369,7 @@ function FoulAnimation({ team, minute, onComplete }: Omit<EventAnimationProps, "
 
 // Animacao de VAR
 function VarAnimation({ onComplete }: Omit<EventAnimationProps, "event">) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onComplete) onComplete()
-    }, 3000)
-    return () => clearTimeout(timer)
-  }, [onComplete])
+  useAutoDismiss(onComplete, 3000)
   
   return (
     <motion.div

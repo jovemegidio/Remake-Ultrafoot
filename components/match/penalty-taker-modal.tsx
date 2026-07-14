@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
@@ -93,6 +93,18 @@ export function PenaltyTakerModal({
     setNarrationStep(0)
   }
 
+  // onFinish num REF — sem isto o modal TRAVA a partida inteira.
+  //
+  // BUG que isto corrige ("quando abre essa tela nao sai ate acabar o 1o/2o tempo"):
+  // o efeito abaixo dependia de `onFinish`, que o pai (a tela da partida) recria a cada
+  // render. Como a tela re-renderiza o tempo todo, o efeito refazia o cleanup e
+  // REINICIAVA o setTimeout de 1600ms a cada render — o timer nunca chegava ao fim e o
+  // onFinish() NUNCA era chamado. A narracao terminava ("GOOOOOL!") e o modal ficava
+  // preso para sempre. Como a partida nao concluia, nao gerava resultado, o fixture nao
+  // era marcado como jogado e o MESMO jogo se repetia ("6 partidas contra o City").
+  const onFinishRef = useRef(onFinish)
+  useEffect(() => { onFinishRef.current = onFinish }, [onFinish])
+
   // Revela uma fala por vez; a ultima (o desfecho) demora mais.
   useEffect(() => {
     if (!narration) return
@@ -101,14 +113,15 @@ export function PenaltyTakerModal({
         setNarration(null)
         setOutcome(null)
         setSelectedPlayer(null)
-        onFinish()
+        onFinishRef.current()
       }, 1600)
       return () => clearTimeout(t)
     }
     const isFinale = narrationStep === narration.length - 1
     const t = setTimeout(() => setNarrationStep((s) => s + 1), isFinale ? 1200 : 1100)
     return () => clearTimeout(t)
-  }, [narration, narrationStep, onFinish])
+    // onFinish NAO entra nas deps de proposito — ver o ref acima.
+  }, [narration, narrationStep])
 
   // Calcula a probabilidade de gol baseado nos atributos
   const getScoreChance = (player: Player) => {
