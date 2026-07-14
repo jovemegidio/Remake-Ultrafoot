@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Sparkles, Zap, Star, AlertCircle } from "lucide-react"
 import { getNewsImageUrl, seedFromString } from "@/lib/news-image"
 import { getCountryCompetitions } from "@/lib/country-competitions"
+import { getLeagueName } from "@/lib/use-game-manager"
 import { motion, AnimatePresence } from "framer-motion"
 import { TeamCrest } from "@/components/team-crest"
 import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
@@ -82,6 +83,10 @@ export function generateDynamicNews(
 
   const news: NewsItem[] = []
   const userTeam = userTeamShort ? getTeamByShort(userTeamShort) : null
+  // Nome da liga do clube: um time europeu nao pode ver noticia do "Brasileirao".
+  // Travessao no lugar de "do/da" evita problema de genero entre ligas
+  // ("Premier League" vs "Serie A").
+  const leagueName = userTeamShort ? getLeagueName(userTeamShort) : "a liga"
 
   // === NOTÍCIA 1: Resultado recente do time do usuário ===
   const userResults = matchResults
@@ -171,7 +176,7 @@ export function generateDynamicNews(
       source: "brasileirao",
       date: "Agora",
       type: "ranking",
-      title: "Artilharia do Brasileirao atualizada",
+      title: `Artilharia atualizada — ${leagueName}`,
       description: `${randomPlayer()} assume lideranca com ${Math.floor(Math.random() * 10 + 5)} gols`,
       icon: <TrendingUp className="h-5 w-5 text-purple-400" />,
       likes: Math.floor(Math.random() * 40000 + 20000),
@@ -227,7 +232,7 @@ export function generateDynamicNews(
     date: "Agora",
     type: "match_preview",
     title: "PROXIMOS JOGOS",
-    description: `Rodada ${week + 1} do Brasileirao ${season}`,
+    description: `Rodada ${week + 1} — ${leagueName} ${season}`,
     matches: nextMatches,
     likes: Math.floor(Math.random() * 50000 + 30000),
     comments: Math.floor(Math.random() * 5000 + 2000),
