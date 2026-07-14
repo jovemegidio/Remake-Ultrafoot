@@ -701,6 +701,15 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
   }
 }
 
+/** Desfecho da cobranca — alimenta a narracao do modal. */
+export interface PenaltyOutcome {
+  scored: boolean
+  /** "gol" | "defendeu" | "fora" — o "fora" so existe quando erra o alvo. */
+  kind: "gol" | "defesa" | "fora"
+  takerName: string
+  gkName: string
+}
+
 /**
  * Executa a cobranca de penalti. `taker` = batedor escolhido pelo usuario; quando null,
  * o motor escolhe (usado para os penaltis da IA).
@@ -711,7 +720,7 @@ function resolvePenaltyKick(
   side: Side,
   taker: SquadPlayer | null,
   probs: DynamicProbs,
-): void {
+): PenaltyOutcome {
   const isHome = side === "home"
   const gkSide: Side = isHome ? "away" : "home"
   const teamStats = isHome ? state.home : state.away
@@ -725,9 +734,10 @@ function resolvePenaltyKick(
 
   // A escolha do batedor IMPORTA: a conversao sai do shooting dele.
   const convRate = Math.min(0.88, 0.72 + (takerShooting - 70) * 0.003)
+  teamStats.shots += 1
+
   if (rnd() < convRate) {
     teamStats.goals += 1
-    teamStats.shots += 1
     teamStats.shotsOnTarget += 1
     teamStats.xG += 0.78
     state.events = [{
@@ -737,15 +747,30 @@ function resolvePenaltyKick(
     }, ...state.events]
     state.flash = { side, type: "goal" }
     state.momentum = isHome ? 18 : -18
-  } else {
+    return { scored: true, kind: "gol", takerName, gkName }
+  }
+
+  // Errou: ~30% das perdidas vao para FORA; o resto o goleiro pega.
+  if (rnd() < 0.3) {
     state.events = [{
-      id: nameId(), minute, type: "save", side,
-      text: `${gkName} defende o pênalti de ${takerName}!`,
-      important: true,
+      id: nameId(), minute, type: "miss", side,
+      text: `${takerName} isola o pênalti! Perdeu uma chance de ouro.`,
+      player: takerName, important: true,
     }, ...state.events]
     state.flash = { side, type: "chance" }
     state.momentum += isHome ? -20 : 20
+    return { scored: false, kind: "fora", takerName, gkName }
   }
+
+  teamStats.shotsOnTarget += 1
+  state.events = [{
+    id: nameId(), minute, type: "save", side,
+    text: `${gkName} defende o pênalti de ${takerName}!`,
+    important: true,
+  }, ...state.events]
+  state.flash = { side, type: "chance" }
+  state.momentum += isHome ? -20 : 20
+  return { scored: false, kind: "defesa", takerName, gkName }
 }
 
 /**
@@ -756,8 +781,8 @@ export function resolvePendingPenalty(
   state: MatchState,
   config: MatchConfig,
   taker: SquadPlayer | null,
-): MatchState {
-  if (!state.pendingPenalty) return state
+): { state: MatchState; outcome: PenaltyOutcome | null } {
+  if (!state.pendingPenalty) return { state, outcome: null }
 
   const next: MatchState = {
     ...state,
@@ -768,10 +793,10 @@ export function resolvePendingPenalty(
   }
 
   const probs = calcDynamicProbs(config, next)
-  resolvePenaltyKick(next, config, next.pendingPenalty!.side, taker, probs)
+  const outcome = resolvePenaltyKick(next, config, next.pendingPenalty!.side, taker, probs)
   next.pendingPenalty = null
   next.momentum = Math.max(-50, Math.min(50, next.momentum))
-  return next
+  return { state: next, outcome }
 }
 
 // ──────���──────────────────────────────────────────────────────────────────────

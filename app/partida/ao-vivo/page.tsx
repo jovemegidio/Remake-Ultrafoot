@@ -706,20 +706,16 @@ export default function PartidaAoVivoPage() {
     }
   }, [state.events, homeTeam, awayTeam, userSide, pause])
 
-  // Handler para quando o usuario seleciona batedor de penalti.
+  // Cobra o penalti com o batedor escolhido e DEVOLVE o desfecho, para o modal narrar
+  // ("La vai Fulano... foi na paradinha... chutou... eeeee... GOOOL!").
   // A escolha IMPORTA: o motor usa o shooting deste jogador na taxa de conversao.
   const handlePenaltyTaker = (player: MatchPlayer) => {
+    return takePenalty(toSquadPlayer(player))
+  }
+
+  // Narracao terminou: fecha o modal e devolve a partida ao relogio.
+  const handlePenaltyFinish = () => {
     setShowPenaltyModal(false)
-
-    setCurrentAnimation({
-      type: "penalty",
-      team: userSide === "home" ? homeTeam : awayTeam,
-      player: player.name,
-      minute: state.pendingPenalty?.minute,
-    })
-
-    // Cobra de fato — isto tambem destrava o relogio, que estava parado.
-    takePenalty(toSquadPlayer(player))
     setPendingPenalty(null)
     resume()
   }
@@ -1466,13 +1462,12 @@ export default function PartidaAoVivoPage() {
     team={userSide === "home" ? homeTeam : awayTeam}
     players={userSide === "home" ? homeSquad : awaySquad}
     onSelectPlayer={(p) => handlePenaltyTaker(p as unknown as MatchPlayer)}
+    onFinish={handlePenaltyFinish}
     onClose={() => {
       // Fechar sem escolher NAO pode congelar a partida: o relogio so anda quando o
       // penalti pendente e resolvido. Passando null, o motor escolhe o batedor.
-      setShowPenaltyModal(false)
       takePenalty(null)
-      setPendingPenalty(null)
-      resume()
+      handlePenaltyFinish()
     }}
   />
   </div>

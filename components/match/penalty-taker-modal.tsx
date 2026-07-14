@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import type { Team } from "@/lib/teams-data"
+import type { PenaltyOutcome } from "@/lib/match-engine"
 import { Button } from "@/components/ui/button"
 import { Target, Zap, Star } from "lucide-react"
 
@@ -22,29 +23,85 @@ interface PenaltyTakerModalProps {
   isOpen: boolean
   team: Team
   players: Player[]
-  onSelectPlayer: (player: Player) => void
+  /** Cobra o penalti e DEVOLVE o desfecho, para a narracao saber o que dizer. */
+  onSelectPlayer: (player: Player) => PenaltyOutcome | null
+  /** Chamado quando a narracao termina e a partida pode seguir. */
+  onFinish: () => void
   onClose: () => void
 }
 
-export function PenaltyTakerModal({ 
-  isOpen, 
-  team, 
-  players, 
-  onSelectPlayer, 
-  onClose 
+// Preparacoes possiveis — sorteadas para a cobranca nunca soar igual.
+const BUILDUPS = [
+  "Ajeita a bola no ponto. Respira fundo.",
+  "Foi na paradinha...",
+  "Toma distancia. O estadio silencia.",
+  "Encara o goleiro. Nao pisca.",
+  "Limpa a chuteira na meia. Frieza total.",
+]
+
+export function PenaltyTakerModal({
+  isOpen,
+  team,
+  players,
+  onSelectPlayer,
+  onFinish,
+  onClose,
 }: PenaltyTakerModalProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [hoveredPlayer, setHoveredPlayer] = useState<Player | null>(null)
+
+  // Narracao da cobranca, no espirito do Brasfoot: as falas entram uma a uma.
+  const [narration, setNarration] = useState<string[] | null>(null)
+  const [narrationStep, setNarrationStep] = useState(0)
+  const [outcome, setOutcome] = useState<PenaltyOutcome | null>(null)
 
   // Ordena jogadores por habilidade de finalizacao (shooting)
   const sortedPlayers = [...players].sort((a, b) => (b.shooting || 70) - (a.shooting || 70))
 
   const handleConfirm = () => {
-    if (selectedPlayer) {
-      onSelectPlayer(selectedPlayer)
-      setSelectedPlayer(null)
+    if (!selectedPlayer) return
+
+    // Cobra AGORA: o desfecho ja existe, a narracao apenas o revela aos poucos.
+    const res = onSelectPlayer(selectedPlayer)
+    if (!res) {
+      onFinish()
+      return
     }
+
+    const buildup = BUILDUPS[Math.floor(Math.random() * BUILDUPS.length)]
+    const finale =
+      res.kind === "gol"
+        ? `GOOOOOL! ${res.takerName} nao perdoa!`
+        : res.kind === "defesa"
+          ? `DEFENDEU! ${res.gkName} voou e espalmou!`
+          : `PRA FORA! ${res.takerName} isolou a cobranca!`
+
+    setOutcome(res)
+    setNarration([
+      `La vai ${res.takerName}...`,
+      buildup,
+      "Chutou... eeeeeee...",
+      finale,
+    ])
+    setNarrationStep(0)
   }
+
+  // Revela uma fala por vez; a ultima (o desfecho) demora mais.
+  useEffect(() => {
+    if (!narration) return
+    if (narrationStep >= narration.length) {
+      const t = setTimeout(() => {
+        setNarration(null)
+        setOutcome(null)
+        setSelectedPlayer(null)
+        onFinish()
+      }, 1600)
+      return () => clearTimeout(t)
+    }
+    const isFinale = narrationStep === narration.length - 1
+    const t = setTimeout(() => setNarrationStep((s) => s + 1), isFinale ? 1200 : 1100)
+    return () => clearTimeout(t)
+  }, [narration, narrationStep, onFinish])
 
   // Calcula a probabilidade de gol baseado nos atributos
   const getScoreChance = (player: Player) => {
@@ -114,6 +171,36 @@ export function PenaltyTakerModal({
             </div>
           </div>
 
+          {/* NARRACAO DA COBRANCA — substitui a lista assim que o batedor e confirmado.
+              O desfecho ja foi decidido pelo motor; aqui ele e revelado fala a fala. */}
+          {narration ? (
+            <div className="bg-[#0d1a1a]/95 backdrop-blur-sm border border-white/10 border-t-0 rounded-b-2xl p-8 min-h-[240px] flex flex-col items-center justify-center gap-4">
+              {narration.slice(0, narrationStep + 1).map((line, i) => {
+                const isFinale = i === narration.length - 1
+                return (
+                  <motion.p
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn(
+                      "text-center",
+                      isFinale
+                        ? cn(
+                            "text-3xl font-black tracking-tight",
+                            outcome?.kind === "gol" && "text-emerald-400",
+                            outcome?.kind === "defesa" && "text-amber-400",
+                            outcome?.kind === "fora" && "text-red-400",
+                          )
+                        : "text-lg text-white/70",
+                    )}
+                  >
+                    {line}
+                  </motion.p>
+                )
+              })}
+            </div>
+          ) : (
+          <>
           {/* Lista de jogadores */}
           <div className="bg-[#0d1a1a]/95 backdrop-blur-sm border border-white/10 border-t-0 max-h-[50vh] overflow-y-auto">
             <div className="p-2">
@@ -235,6 +322,8 @@ export function PenaltyTakerModal({
               </div>
             </div>
           </div>
+          </>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

@@ -13,6 +13,7 @@ import {
   type MatchState,
   type MatchSpeed,
   type SquadPlayer,
+  type PenaltyOutcome,
 } from "@/lib/match-engine"
 
 export interface UseMatchSimulation {
@@ -35,7 +36,7 @@ export interface UseMatchSimulation {
    * Enquanto houver penalti pendente o relogio fica parado, entao isto e o que
    * destrava a partida.
    */
-  takePenalty: (taker: SquadPlayer | null) => void
+  takePenalty: (taker: SquadPlayer | null) => PenaltyOutcome | null
 }
 
 export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulation {
@@ -180,6 +181,12 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     if (cur.phase === "pre") cur = startMatch(cur)
     let safety = 200
     while (cur.phase !== "fulltime" && safety-- > 0) {
+      // tickMinute nao avanca enquanto houver penalti pendente — sem resolver aqui,
+      // o "avancar" ficaria girando em falso ate estourar o safety. O motor bate.
+      if (cur.pendingPenalty) {
+        cur = resolvePendingPenalty(cur, cfg, null).state
+        continue
+      }
       cur = tickMinute(cur, cfg)
     }
     stateRef.current = cur
@@ -192,10 +199,14 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     return () => stopTimer()
   }, [stopTimer])
 
-  const takePenalty = useCallback((taker: SquadPlayer | null) => {
+  // Devolve o desfecho para a UI narrar ("chutou... eeee... GOOOL!").
+  const takePenalty = useCallback((taker: SquadPlayer | null): PenaltyOutcome | null => {
     const cfg = configRef.current
-    if (!cfg) return
-    setState(prev => resolvePendingPenalty(prev, cfg, taker))
+    if (!cfg) return null
+    const { state: next, outcome } = resolvePendingPenalty(stateRef.current, cfg, taker)
+    stateRef.current = next
+    setState(next)
+    return outcome
   }, [])
 
   return {

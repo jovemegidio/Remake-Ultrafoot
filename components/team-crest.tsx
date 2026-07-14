@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
@@ -68,6 +68,7 @@ export function TeamCrest({
   className,
   showFallback = true,
 }: TeamCrestProps) {
+  const imgRef = useRef<HTMLImageElement>(null)
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -119,6 +120,22 @@ export function TeamCrest({
     setImageLoaded(false)
     setRetryCount(0)
   }, [escudoUrl, customLogo])
+
+  /**
+   * Imagem JA em cache nao dispara onLoad.
+   *
+   * O <img> so fica visivel quando imageLoaded vira true (opacity-0 -> opacity-100).
+   * Quando a imagem ja esta no cache do webview, o evento `load` acontece ANTES do React
+   * anexar o handler: onLoad nunca e chamado, imageLoaded fica false para sempre e o
+   * escudo some — sem erro, entao nem o fallback aparecia. Era exatamente o caso do
+   * escudo do TIME DO USUARIO, que aparece em toda tela e por isso e o mais cacheado.
+   *
+   * Aqui perguntamos ao proprio elemento se ele ja terminou de carregar.
+   */
+  useEffect(() => {
+    const img = imgRef.current
+    if (img?.complete && img.naturalWidth > 0) setImageLoaded(true)
+  }, [escudoUrl, customLogo, retryCount])
 
   // O protocolo game-asset:// (Tauri) por vezes falha numa primeira tentativa logo apos
   // a janela abrir. Antes de cair pro escudo generico, tenta de novo algumas vezes.
@@ -240,6 +257,7 @@ export function TeamCrest({
       )}
 
       <Image
+        ref={imgRef}
         key={`${escudoKey ?? ""}-${retryCount}-${customLogo ? "custom" : "default"}`}
         src={activeUrl}
         alt={`Escudo ${resolvedTeam?.nome || 'Time'}`}

@@ -41,6 +41,7 @@ import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
 import { getLeagueLogo } from "@/lib/league-logos"
+import { getCompetitionLogo } from "@/lib/competition-logo"
 
 type KitVariant = "home" | "away" | "third"
 
@@ -278,10 +279,15 @@ export default function PartidaPage() {
   const matchInfo = useMemo(() => {
     // league é a chave de divisao (ex: "serie_a") — usar diretamente para o logo
     const leagueName = getLeagueName(homeTeam.curto)
-    // Jogos de liga usam a divisao; estaduais/copas/continentais usam o nome real da competicao.
-    const compType = currentMatch?.competitionType
+
+    // A competicao sai da partida REAL (currentMatch ou a proxima do calendario).
+    // Antes so olhava currentMatch: sem ele caia sempre na liga, e um jogo do
+    // Paulistao aparecia com a marca do Brasileirao.
+    const fixture = currentMatch ?? nextFixture
+    const compType = fixture?.competitionType
     const isLeagueMatch = !compType || compType === "league"
-    const competition = currentMatch?.competition ?? leagueName
+    const competition = fixture?.competition ?? leagueName
+
     return {
       competition,
       // O logo central segue a competicao real da partida
@@ -292,12 +298,24 @@ export default function PartidaPage() {
       time: "16:00",
       stadium: homeTeam.estadio_nome,
     }
-  }, [league, currentRound, homeTeam, currentMatch])
+  }, [league, currentRound, homeTeam, currentMatch, nextFixture])
 
   const competitionTheme = useMemo(() => {
     const competitionId = (league ?? "serie_a").replace(/_/g, "-") as CompetitionId
     return getCompetitionTheme(competitionId)
   }, [league])
+
+  /**
+   * Marca da COMPETICAO da partida (Paulistao, Copa do Brasil, Libertadores...).
+   *
+   * Antes cada card usava getLeagueLogo(time.divisao) — a liga do CLUBE, nao a
+   * competicao do JOGO. Resultado: Mirassol x Palmeiras pelo Paulistao aparecia com a
+   * marca do Brasileirao. Sem arte para a competicao, cai na liga (nao inventa outra).
+   */
+  const matchCompetitionLogo = useMemo(
+    () => getCompetitionLogo(matchInfo.competition) ?? getLeagueLogo(homeTeam.divisao),
+    [matchInfo.competition, homeTeam.divisao],
+  )
 
   // Quick sim handler
   const handleQuickSim = useCallback(() => {
@@ -450,7 +468,7 @@ export default function PartidaPage() {
             team={homeTeam}
             selected={focusedSide === "home"}
             leagueName={homeLeague}
-            leagueLogo={getLeagueLogo(homeTeam.divisao)}
+            leagueLogo={matchCompetitionLogo}
             onSelect={() => setFocusedSide("home")}
           />
 
@@ -495,7 +513,7 @@ export default function PartidaPage() {
             team={awayTeam}
             selected={focusedSide === "away"}
             leagueName={awayLeague}
-            leagueLogo={getLeagueLogo(awayTeam.divisao)}
+            leagueLogo={matchCompetitionLogo}
             onSelect={() => setFocusedSide("away")}
           />
         </div>
