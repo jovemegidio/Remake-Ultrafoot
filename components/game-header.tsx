@@ -107,6 +107,31 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [showCoachDropdown, setShowCoachDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  // Atalho "W": volta para a secao pai (o keycap [W] no header sempre existiu, mas o
+  // atalho NUNCA foi implementado — a tecla nao fazia nada). Vai para o mesmo destino do
+  // clique, via hardNavigate (funciona no export estatico dentro do Tauri, onde o router
+  // client-side do Next as vezes nao navega).
+  useEffect(() => {
+    if (!showNav) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== "w" || e.ctrlKey || e.altKey || e.metaKey) return
+      const el = document.activeElement as HTMLElement | null
+      // Nao rouba a tecla de quem esta digitando ou de um widget de teclado.
+      if (
+        el && (
+          el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" ||
+          el.isContentEditable || el.getAttribute("role") === "slider"
+        )
+      ) return
+      // Nem com um modal aberto.
+      if (document.querySelector('[role="dialog"][data-state="open"]')) return
+      e.preventDefault()
+      hardNavigate(routeMeta.parentHref)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [showNav, routeMeta.parentHref])
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -221,6 +246,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         <Link
           href="/"
           aria-label="Inicio"
+          onClick={(e) => { e.preventDefault(); hardNavigate("/") }}
           className="flex h-11 shrink-0 items-center justify-center rounded-lg px-1 transition-opacity hover:opacity-80"
         >
           <Image
@@ -239,6 +265,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             {/* Secao pai (dimmed) com keycap [w] */}
             <Link
               href={routeMeta.parentHref}
+              onClick={(e) => { e.preventDefault(); hardNavigate(routeMeta.parentHref) }}
               className="group relative flex shrink-0 flex-col items-center gap-1"
             >
               <KeyCap label="W" className="opacity-70" />
@@ -297,6 +324,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         <Link
           href="/configuracoes"
           aria-label="Configuracoes"
+          onClick={(e) => { e.preventDefault(); hardNavigate("/configuracoes") }}
           className="flex h-8 w-8 items-center justify-center rounded-md text-white/45 hover:text-white/80 hover:bg-white/5 transition-colors"
         >
           <Settings className="h-4 w-4" />
@@ -390,7 +418,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
               <div className="p-4 border-t border-white/[0.04] bg-white/[0.01]">
                 <Link
                   href="/configuracoes"
-                  onClick={() => setShowCoachDropdown(false)}
+                  onClick={(e) => { e.preventDefault(); setShowCoachDropdown(false); hardNavigate("/configuracoes") }}
                   className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-[#00ffc8] hover:text-[#00ffdc] transition-colors rounded-lg hover:bg-[#00ffc8]/10"
                 >
                   Ver perfil completo
