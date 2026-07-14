@@ -84,7 +84,9 @@ export type ElencoPlayer = ReturnType<typeof buildElencoPlayers>["players"][numb
  * `teamReady` fica false enquanto o save nao chega — a tela deve mostrar "carregando"
  * em vez de inventar um time. Quando o time resolve (ou muda), o roster e RECARREGADO.
  */
-export function useUserRoster(selectedTeamShort: string | undefined) {
+// Aceita null (nao so undefined) porque e esse o tipo de save.selectedTeamShort:
+// "nenhum time" chega como null, e o hook so faz um teste de verdade com ele.
+export function useUserRoster(selectedTeamShort: string | null | undefined) {
   const resolvedTeam: Team | undefined = selectedTeamShort
     ? getTeamByShort(selectedTeamShort)
     : undefined
