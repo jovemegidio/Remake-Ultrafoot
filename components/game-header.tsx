@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star } from "lucide-react"
+import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { NotificationBell, NotificationCenter } from "@/components/notifications-system"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
@@ -415,7 +415,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 </div>
               </div>
 
-              <div className="p-4 border-t border-white/[0.04] bg-white/[0.01]">
+              <div className="p-4 border-t border-white/[0.04] bg-white/[0.01] space-y-1">
                 <Link
                   href="/configuracoes"
                   onClick={(e) => { e.preventDefault(); setShowCoachDropdown(false); hardNavigate("/configuracoes") }}
@@ -424,6 +424,18 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                   Ver perfil completo
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
+
+                {/* Sair para a selecao de saves. Antes, do escritorio, o jogador ficava
+                    "preso" — nao havia como trocar de save de proposito. O progresso ja e
+                    salvo automaticamente (persistent-store), entao sair e seguro. */}
+                <button
+                  type="button"
+                  onClick={() => { setShowCoachDropdown(false); hardNavigate("/splash?menu=1") }}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sair para o Menu
+                </button>
               </div>
             </div>
           )}

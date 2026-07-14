@@ -394,7 +394,10 @@ export default function PartidaPage() {
           router.push("/partida/ao-vivo")
           break
         case "B":
-          hardNavigate("/splash?menu=1")
+          // "Voltar" devolve ao ESCRITORIO (de onde a pre-partida foi aberta), nao ao
+          // menu de saves. Antes ia para /splash?menu=1, jogando o usuario para a tela de
+          // selecao de save no meio da carreira.
+          hardNavigate("/")
           break
         case "X":
           handleQuickSim()
@@ -529,7 +532,7 @@ export default function PartidaPage() {
                 </span>
                 <span className="text-sm font-semibold">Selecionar</span>
               </Link>
-              <button onClick={() => hardNavigate("/splash?menu=1")} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
+              <button onClick={() => hardNavigate("/")} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
                 <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
                   Esc
                 </span>
