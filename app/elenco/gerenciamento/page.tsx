@@ -277,6 +277,28 @@ export default function ElencoPage() {
   const [players, setPlayers] = useState(initialRoster.players)
   const [bench, setBench] = useState(initialRoster.bench)
   const [selectedPlayerId, setSelectedPlayerId] = useState<number>(initialRoster.players[0]?.id ?? 1)
+
+  /**
+   * Recarrega o elenco quando o SAVE hidrata (ou o time muda).
+   *
+   * useState so roda o inicializador no PRIMEIRO render — e nesse instante o save ainda
+   * nao hidratou: state.selectedTeamShort vem vazio, o codigo cai no default "BGT", que
+   * nao tem 11 jogadores no seed, e buildElencoPlayers devolve o elenco MOCK
+   * (playersData/benchData). O useState entao CONGELA esse elenco falso e nunca mais
+   * atualiza quando o time real chega.
+   *
+   * Era por isso que Juventus e Palmeiras mostravam exatamente os mesmos jogadores
+   * (Nascimento, Sant'Anna, Vanderlan...): nao era o elenco de nenhum dos dois.
+   */
+  useEffect(() => {
+    if (!state.selectedTeamShort) return  // save ainda nao hidratou
+    const roster = buildElencoPlayers(userTeam)
+    setPlayers(roster.players)
+    setBench(roster.bench)
+    setSelectedPlayerId(roster.players[0]?.id ?? 1)
+    setPlayerPositions({})  // as posicoes no campo eram do elenco anterior
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.selectedTeamShort])
   const [draggingPlayer, setDraggingPlayer] = useState<number | null>(null)
   const [dragOverTarget, setDragOverTarget] = useState<number | null>(null)
   const [playerPositions, setPlayerPositions] = useState<Record<number, { x: number; y: number }>>({})
