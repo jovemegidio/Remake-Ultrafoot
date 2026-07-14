@@ -50,6 +50,11 @@ let hasAutoplayed = false
 let autoplayAttached = false
 let lastSavedSecond = -1
 
+// Faixas quebradas nao podem travar o player. Pulamos ate encontrar uma boa, mas sem
+// varrer a playlist inteira em loop se TUDO estiver falhando.
+let consecutiveErrors = 0
+const MAX_CONSECUTIVE_ERRORS = 8
+
 const listeners = new Set<() => void>()
 
 function emit() {
@@ -128,8 +133,40 @@ function ensureInit() {
       next()
     }
   })
-  audio.addEventListener("canplay", () => setState({ isLoading: false }))
+  // ── Fim do spinner eterno ────────────────────────────────────────────────
+  //
+  // Antes so existiam "waiting" (liga o spinner) e "canplay" (desliga). Faltava o mais
+  // importante: "error". Se a faixa falhava — e 5 arquivos com acento no nome nao existem
+  // em disco, e a playlist e EMBARALHADA, entao uma faixa quebrada cai no comeco com
+  // frequencia — o spinner ficava ligado PARA SEMPRE e o player nunca saia do "carregando".
+  //
+  // Agora: qualquer sinal de que o audio esta pronto ou tocando desliga o spinner, e um
+  // erro PULA a faixa em vez de travar o player.
+  const clearLoading = () => setState({ isLoading: false })
+  audio.addEventListener("canplay", clearLoading)
+  audio.addEventListener("canplaythrough", clearLoading)
+  audio.addEventListener("loadeddata", clearLoading)
+  audio.addEventListener("playing", clearLoading)
+  audio.addEventListener("pause", clearLoading)
   audio.addEventListener("waiting", () => setState({ isLoading: true }))
+
+  audio.addEventListener("error", () => {
+    const failed = state.tracks[state.currentTrack]
+    console.warn("[music] faixa falhou, pulando:", failed?.src)
+    setState({ isLoading: false })
+
+    // Nao insiste numa playlist inteira quebrada: apos varias falhas seguidas, para.
+    consecutiveErrors++
+    if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS || state.tracks.length === 0) {
+      console.warn("[music] muitas faixas seguidas falharam — parando o player.")
+      setState({ playing: false })
+      return
+    }
+    next()
+  })
+
+  // Uma faixa que toca zera o contador de falhas.
+  audio.addEventListener("playing", () => { consecutiveErrors = 0 })
 
   // Carrega faixas (embaralha apenas uma vez)
   fetch("/music/tracks.json")
