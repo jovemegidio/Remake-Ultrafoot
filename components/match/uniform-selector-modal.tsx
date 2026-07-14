@@ -1,19 +1,19 @@
 "use client"
 
-import Image from "next/image"
 import { useEffect } from "react"
-import { getCamisaUrl, type Team } from "@/lib/teams-data"
+import { type Team } from "@/lib/teams-data"
+import { KitImage, type KitVariant } from "@/components/match/kit-image"
 import { cn } from "@/lib/utils"
 
-type KitVariant = "home" | "away" | "third"
 const VARIANTS: KitVariant[] = ["home", "away", "third"]
 const LABEL: Record<KitVariant, string> = { home: "Casa", away: "Visitante", third: "Terceiro" }
 
 // Modal de selecao de uniformes: escolhe o kit (casa/visitante/terceiro) do time da casa
 // e do adversario. Abre com a tecla Q na pre-partida, no lugar de "Opcoes de vantagem".
 //
-// Nota: mostra as camisas em 2D (a arte que o jogo ja tem). Uma visualizacao 3D
-// rotacionavel exigiria um modelo 3D por clube — nao ha esse asset; fica como evolucao.
+// As camisas usam KitImage: quando o clube nao tem arte (25 clubes nao tem), ela desenha
+// a camisa com as cores do time em vez de mostrar o texto alternativo — que era o que
+// deixava o modal com cara de quebrado.
 function TeamKits({
   team, selected, onSelect,
 }: {
@@ -26,7 +26,6 @@ function TeamKits({
       <h3 className="text-lg font-bold text-white">{team.nome}</h3>
       <div className="flex gap-3">
         {VARIANTS.map((v) => {
-          const url = getCamisaUrl(team.file_key, v)
           const isSel = selected === v
           return (
             <button
@@ -40,14 +39,7 @@ function TeamKits({
               )}
             >
               <div className="relative h-24 w-24">
-                <Image
-                  src={url}
-                  alt={`${team.nome} ${LABEL[v]}`}
-                  fill
-                  sizes="96px"
-                  className="object-contain"
-                  unoptimized
-                />
+                <KitImage team={team} variant={v} />
               </div>
               <span className={cn("text-xs font-semibold", isSel ? "text-[#00ffc8]" : "text-white/50")}>
                 {LABEL[v]}

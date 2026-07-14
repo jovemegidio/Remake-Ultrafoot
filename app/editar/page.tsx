@@ -35,6 +35,7 @@ import {
   getTeamOverride,
   setTeamOverride,
   clearTeamOverride,
+  listLocalTeamOverrides,
   type TeamOverride,
   type KitPattern,
 } from "@/lib/team-overrides"
@@ -193,6 +194,8 @@ export default function EditarPage() {
   // Edit draft state
   const [editDraft, setEditDraft] = useState<TeamOverride>({})
   const [editSaved, setEditSaved] = useState(false)
+  // Aviso do exportador (quantos clubes sairam / nada a exportar).
+  const [exportMsg, setExportMsg] = useState<string | null>(null)
 
   const initDraft = (team: Team) => {
     const override = getTeamOverride(team.file_key) ?? {}
@@ -225,6 +228,50 @@ export default function EditarPage() {
     if (!selectedTeam) return
     clearTeamOverride(selectedTeam.file_key)
     initDraft(selectedTeam)
+  }
+
+  /**
+   * Exporta TODAS as edicoes de clube para um arquivo.
+   *
+   * Por que isto existe: o editor grava no persistent-store, que e o save LOCAL. As
+   * edicoes ficavam so na maquina de quem editou e NUNCA chegavam aos outros jogadores.
+   * Exportando, da para fundir no seed que viaja com o build:
+   *
+   *   node scripts/merge-team-overrides.mjs <arquivo-exportado.json>
+   *
+   * A partir do proximo build, todo jogador que instalar recebe estes escudos/uniformes.
+   */
+  const handleExportOverrides = async () => {
+    const all = listLocalTeamOverrides()
+    const count = Object.keys(all).length
+    if (count === 0) {
+      setExportMsg("Nenhuma edicao para exportar.")
+      setTimeout(() => setExportMsg(null), 3000)
+      return
+    }
+    const json = JSON.stringify(all, null, 2)
+
+    if (isTauri()) {
+      const { save } = await import("@tauri-apps/plugin-dialog")
+      const { writeTextFile } = await import("@tauri-apps/plugin-fs")
+      const filePath = await save({
+        title: "Exportar edicoes de clubes",
+        defaultPath: "team-overrides-export.json",
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      })
+      if (!filePath) return
+      await writeTextFile(filePath as string, json)
+      setExportMsg(`${count} clube(s) exportado(s).`)
+    } else {
+      const blob = new Blob([json], { type: "application/json" })
+      const a = document.createElement("a")
+      a.href = URL.createObjectURL(blob)
+      a.download = "team-overrides-export.json"
+      a.click()
+      URL.revokeObjectURL(a.href)
+      setExportMsg(`${count} clube(s) exportado(s).`)
+    }
+    setTimeout(() => setExportMsg(null), 4000)
   }
 
   const handleKitImageUpload = async (variant: "home" | "away" | "third") => {
@@ -1090,18 +1137,33 @@ export default function EditarPage() {
                     >
                       Restaurar padrão
                     </button>
-                    <button
-                      onClick={handleSaveOverride}
-                      className={cn(
-                        "flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all border",
-                        editSaved
-                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                          : "text-black border-transparent shadow-lg"
+
+                    <div className="flex items-center gap-2">
+                      {exportMsg && (
+                        <span className="text-[11px] text-[#00ffc8]">{exportMsg}</span>
                       )}
-                      style={!editSaved ? { background: `linear-gradient(135deg, ${teamColor}, ${selectedTeam.cor2 ?? teamColor})` } : {}}
-                    >
-                      {editSaved ? "Salvo!" : "Salvar alterações"}
-                    </button>
+                      {/* As edicoes ficam no save LOCAL — nao chegam aos outros jogadores.
+                          Exportar + merge-team-overrides.mjs embute no build. */}
+                      <button
+                        onClick={handleExportOverrides}
+                        title="Exporta suas edições para embutir no jogo (todos os jogadores recebem)"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white/80 rounded-lg transition-all border border-white/[0.06]"
+                      >
+                        Exportar edições
+                      </button>
+                      <button
+                        onClick={handleSaveOverride}
+                        className={cn(
+                          "flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all border",
+                          editSaved
+                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                            : "text-black border-transparent shadow-lg"
+                        )}
+                        style={!editSaved ? { background: `linear-gradient(135deg, ${teamColor}, ${selectedTeam.cor2 ?? teamColor})` } : {}}
+                      >
+                        {editSaved ? "Salvo!" : "Salvar alterações"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
