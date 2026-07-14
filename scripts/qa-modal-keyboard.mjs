@@ -18,6 +18,10 @@ import { createServer } from "node:http"
 import { readFile, stat } from "node:fs/promises"
 import { existsSync } from "node:fs"
 import path from "node:path"
+import { assertFreshBuild } from "./qa-lib.mjs"
+
+// Recusa rodar contra bundle velho (ver qa-lib.mjs).
+assertFreshBuild()
 
 const outDir = path.resolve("out")
 const mime = new Map([

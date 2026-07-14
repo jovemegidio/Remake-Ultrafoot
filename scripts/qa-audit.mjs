@@ -6,6 +6,9 @@ import { createServer } from "node:http"
 import { readFile, stat } from "node:fs/promises"
 import { existsSync } from "node:fs"
 import path from "node:path"
+import { assertFreshBuild } from "./qa-lib.mjs"
+
+assertFreshBuild()
 
 const outDir = path.resolve("out")
 const mime = new Map([[".html","text/html; charset=utf-8"],[".js","text/javascript"],[".css","text/css"],[".json","application/json"],[".png","image/png"],[".jpg","image/jpeg"],[".jpeg","image/jpeg"],[".svg","image/svg+xml"],[".ico","image/x-icon"],[".webm","audio/webm"],[".mp3","audio/mpeg"],[".woff2","font/woff2"]])
