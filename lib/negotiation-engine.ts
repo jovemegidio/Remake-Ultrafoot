@@ -128,3 +128,214 @@ export function evaluatePlayerDecision(input: PlayerDecisionInput): DecisionResu
     reason: `O jogador ${main}.`,
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ETAPA 3 — O AGENTE e os TERMOS PESSOAIS
+//
+// Fechar com o clube nao fecha a contratacao. Quem senta na mesa depois e o AGENTE,
+// e o trabalho dele e espremer: salario, luvas, tempo de contrato e — o que mais
+// pesa — o PAPEL que o jogador vai ter no elenco. Prometer banco a um craque nao se
+// compra com dinheiro; prometer titularidade a um reserva barateia o salario.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Papel prometido ao jogador no elenco. */
+export type SquadRole = "primordial" | "reforco" | "banco"
+
+export const ROLE_LABEL: Record<SquadRole, string> = {
+  primordial: "Jogador Primordial",
+  reforco: "Reforco de Rotacao",
+  banco: "Opcao de Banco",
+}
+
+export const ROLE_DESCRIPTION: Record<SquadRole, string> = {
+  primordial: "Titular absoluto, peca central do time.",
+  reforco: "Entra no rodizio, disputa a titularidade.",
+  banco: "Opcao para o segundo tempo e desfalques.",
+}
+
+/** Peso do papel: quanto ele "vale" para o jogador (e quanto custa ao clube). */
+const ROLE_WEIGHT: Record<SquadRole, number> = {
+  primordial: 1.0,
+  reforco: 0.6,
+  banco: 0.25,
+}
+
+export interface PersonalTerms {
+  /** Salario MENSAL oferecido. */
+  salary: number
+  /** Duracao do contrato, em anos (1-5). */
+  contractYears: number
+  /** Luvas (bonus de assinatura), pagas uma vez. */
+  signingBonus: number
+  role: SquadRole
+}
+
+export interface AgentDemands {
+  salary: number
+  signingBonus: number
+  contractYears: number
+  /** Papel MINIMO aceitavel. Abaixo disso o agente nem discute. */
+  minRole: SquadRole
+  /** 0-100: o quanto o agente e duro na queda. */
+  toughness: number
+}
+
+const ROLE_RANK: Record<SquadRole, number> = { banco: 0, reforco: 1, primordial: 2 }
+
+/**
+ * O que o agente PEDE. Sai do patamar do jogador (overall, idade, clube atual) e do
+ * porte de quem esta comprando: clube grande paga mais, e o agente sabe disso.
+ */
+export function computeAgentDemands(input: {
+  playerOverall: number
+  playerAge: number
+  playerPotential?: number
+  marketValue: number
+  currentClubPrestige: number
+  buyingClubPrestige: number
+}): AgentDemands {
+  const {
+    playerOverall, playerAge, playerPotential = playerOverall,
+    marketValue, currentClubPrestige, buyingClubPrestige,
+  } = input
+
+  // Salario-base ancorado no valor de mercado (~0,45% do valor por mes) e puxado
+  // para cima pelo overall: craque nao ganha proporcional, ganha desproporcional.
+  const overallMultiplier = 1 + Math.max(0, playerOverall - 70) * 0.06
+  let salary = marketValue * 0.0045 * overallMultiplier
+
+  // Clube rico? O agente pede mais — e sem constrangimento.
+  if (buyingClubPrestige > currentClubPrestige) {
+    salary *= 1 + (buyingClubPrestige - currentClubPrestige) * 0.008
+  }
+
+  // Luvas: ~4 meses de salario; sobem para quem sai de um clube grande (ele "abre mao").
+  let signingBonus = salary * 4
+  if (currentClubPrestige >= 78) signingBonus *= 1.5
+
+  // Tempo de contrato: jovem quer longo (seguranca + valorizacao); veterano quer curto.
+  let contractYears = 4
+  if (playerAge >= 32) contractYears = 2
+  else if (playerAge >= 29) contractYears = 3
+  else if (playerAge <= 22 && playerPotential > playerOverall + 8) contractYears = 5
+
+  // Papel minimo: craque nao vai para o banco, nem por dinheiro.
+  let minRole: SquadRole = "banco"
+  if (playerOverall >= 80) minRole = "primordial"
+  else if (playerOverall >= 72) minRole = "reforco"
+
+  // Dureza: craque de clube grande com agente faminto.
+  const toughness = Math.min(95, Math.max(20,
+    (playerOverall - 60) * 2.2 + currentClubPrestige * 0.25
+  ))
+
+  return {
+    salary: Math.round(salary),
+    signingBonus: Math.round(signingBonus),
+    contractYears,
+    minRole,
+    toughness: Math.round(toughness),
+  }
+}
+
+export type AgentVerdict = "accepted" | "counter" | "rejected"
+
+export interface AgentResponse {
+  verdict: AgentVerdict
+  /** Fala do agente, em PT-BR. */
+  message: string
+  /** Presente quando verdict === "counter": o que ele exige para fechar. */
+  counter?: PersonalTerms
+  /** 0-100 — o quanto a proposta agradou. */
+  satisfaction: number
+}
+
+/**
+ * O agente avalia os termos. Ele pode:
+ *  - aceitar,
+ *  - CONTRA-PROPOR (o caso mais comum — e o que "dificulta" de verdade),
+ *  - ou romper, quando a oferta e insultuosa ou o papel e abaixo do minimo dele.
+ */
+export function evaluateAgentOffer(
+  terms: PersonalTerms,
+  demands: AgentDemands,
+  playerName: string,
+): AgentResponse {
+  // ── Papel abaixo do minimo: nao ha dinheiro que resolva ───────────────────
+  if (ROLE_RANK[terms.role] < ROLE_RANK[demands.minRole]) {
+    return {
+      verdict: "rejected",
+      satisfaction: 0,
+      message: `${playerName} nao veio aqui para ser ${ROLE_LABEL[terms.role].toLowerCase()}. ` +
+        `Sem pelo menos "${ROLE_LABEL[demands.minRole]}", nao ha conversa.`,
+    }
+  }
+
+  // ── Quanto os termos atendem ao pedido ────────────────────────────────────
+  const salaryRatio = demands.salary > 0 ? terms.salary / demands.salary : 1
+  const bonusRatio = demands.signingBonus > 0 ? terms.signingBonus / demands.signingBonus : 1
+  const yearsGap = Math.abs(terms.contractYears - demands.contractYears)
+
+  // Papel ACIMA do minimo compensa dinheiro: promover a titular vale salario.
+  const roleBonus = (ROLE_WEIGHT[terms.role] - ROLE_WEIGHT[demands.minRole]) * 30
+
+  // Salario domina; luvas pesam menos; anos de contrato so incomodam se muito fora.
+  let satisfaction =
+    50 +
+    (salaryRatio - 1) * 55 +
+    (bonusRatio - 1) * 18 +
+    roleBonus -
+    yearsGap * 6
+
+  // Agente duro exige mais para o mesmo nivel de satisfacao.
+  satisfaction -= (demands.toughness - 50) * 0.28
+
+  satisfaction = Math.max(0, Math.min(100, satisfaction))
+
+  // ── Oferta insultuosa: rompe ──────────────────────────────────────────────
+  if (salaryRatio < 0.55) {
+    return {
+      verdict: "rejected",
+      satisfaction: Math.round(satisfaction),
+      message: `Isso e menos da metade do que ${playerName} ganha no patamar dele. ` +
+        `Nao vou nem levar essa proposta a ele.`,
+    }
+  }
+
+  // ── Aceita ────────────────────────────────────────────────────────────────
+  if (satisfaction >= 62) {
+    return {
+      verdict: "accepted",
+      satisfaction: Math.round(satisfaction),
+      message: `Temos acordo. ${playerName} esta animado com o projeto — pode preparar a assinatura.`,
+    }
+  }
+
+  // ── Contra-proposta: o agente aperta ──────────────────────────────────────
+  // Pede o que falta, com uma margem de gordura proporcional a dureza dele.
+  const greed = 1 + demands.toughness / 320   // 1.06 a 1.30
+  const counter: PersonalTerms = {
+    salary: Math.round(Math.max(terms.salary, demands.salary * greed)),
+    signingBonus: Math.round(Math.max(terms.signingBonus, demands.signingBonus * greed)),
+    contractYears: demands.contractYears,
+    // Se o papel esta no minimo e a satisfacao esta baixa, ele tenta subir o papel.
+    role: satisfaction < 40 && ROLE_RANK[terms.role] < 2
+      ? (ROLE_RANK[terms.role] === 0 ? "reforco" : "primordial")
+      : terms.role,
+  }
+
+  const gaps: string[] = []
+  if (counter.salary > terms.salary) gaps.push("o salario esta abaixo do mercado dele")
+  if (counter.signingBonus > terms.signingBonus) gaps.push("as luvas nao compensam a mudanca")
+  if (counter.contractYears !== terms.contractYears) gaps.push("o tempo de contrato nao serve")
+  if (counter.role !== terms.role) gaps.push("ele quer um papel maior no elenco")
+
+  return {
+    verdict: "counter",
+    satisfaction: Math.round(satisfaction),
+    counter,
+    message: gaps.length
+      ? `Assim nao fecha: ${gaps.join(", ")}. Ajuste e voltamos a conversar.`
+      : `Estamos perto, mas ainda nao e o suficiente. Melhore e fechamos.`,
+  }
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useSyncExternalStore } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
@@ -18,6 +18,7 @@ import {
   Volume2,
   Gamepad2,
   Bell,
+  Eye,
   Save,
   RotateCcw,
   Palette,
@@ -33,6 +34,7 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { MusicPlayer } from "@/components/music-player"
 import { musicStore } from "@/lib/music-store"
+import { accessibilityStore } from "@/lib/accessibility-store"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -111,6 +113,13 @@ export default function ConfiguracoesPage() {
   const [musicVolume, setMusicVolume] = useState([70])
   useEffect(() => { setMusicVolume([musicStore.getSnapshot().volume]) }, [])
   const [sfxVolume, setSfxVolume] = useState([80])
+  // Preferencias de acessibilidade (store singleton: sobrevive a navegacao).
+  const a11y = useSyncExternalStore(
+    accessibilityStore.subscribe,
+    accessibilityStore.getSnapshot,
+    accessibilityStore.getServerSnapshot,
+  )
+
   const [autoSave, setAutoSave] = useState(true)
   const [notifications, setNotifications] = useState(true)
   const [matchSpeed, setMatchSpeed] = useState("normal")
@@ -333,6 +342,70 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             
+            {/* ── Acessibilidade ──────────────────────────────────────────
+                O tema escuro do jogo usa muito texto em white/40-50, que e
+                ilegivel para baixa visao. Aqui o jogador ajusta e vale no jogo
+                inteiro (o store escreve no <html>, o CSS reage). */}
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
+              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <Eye className="h-4 w-4 text-primary" />
+                Acessibilidade
+              </h3>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-white">Tamanho da fonte</div>
+                    <div className="text-xs text-white/40">Aumenta o texto de todas as telas</div>
+                  </div>
+                  <span className="text-sm font-bold text-primary tabular-nums">{a11y.fontScale}%</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {([100, 110, 125, 150] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => accessibilityStore.set("fontScale", s)}
+                      className={cn(
+                        "rounded-lg border py-2 text-xs font-bold transition-all",
+                        a11y.fontScale === s
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-white/10 bg-white/[0.03] text-white/60 hover:border-white/25"
+                      )}
+                    >
+                      {s}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {([
+                  { key: "highContrast", label: "Alto contraste", desc: "Reforca texto e bordas apagadas" },
+                  { key: "reduceMotion", label: "Reduzir movimento", desc: "Desliga animacoes e transicoes" },
+                  { key: "focusHighlight", label: "Realce de foco", desc: "Contorno forte no item selecionado (teclado/controle)" },
+                  { key: "underlineLinks", label: "Sublinhar acoes", desc: "Sublinha links e botoes clicaveis" },
+                ] as const).map((opt) => (
+                  <div key={opt.key} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                    <div>
+                      <div className="text-sm text-white">{opt.label}</div>
+                      <div className="text-xs text-white/40">{opt.desc}</div>
+                    </div>
+                    <Switch
+                      checked={a11y[opt.key]}
+                      onCheckedChange={(v) => accessibilityStore.set(opt.key, v)}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => accessibilityStore.reset()}
+                className="w-full rounded-lg border border-white/10 py-2 text-xs text-white/50 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                Restaurar padroes
+              </button>
+            </div>
+
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />

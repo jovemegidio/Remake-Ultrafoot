@@ -28,7 +28,7 @@ import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto } from "@/lib/cup-engine"
-import { getCountryCompetitions, getContinentalSpot } from "@/lib/country-competitions"
+import { getCountryCompetitions } from "@/lib/country-competitions"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
 import { cn } from "@/lib/utils"
@@ -565,10 +565,6 @@ export default function CompeticoesPage() {
   // Barcelona via "Copa do Brasil", "Paulistao" e "Libertadores".
   const countryComps = getCountryCompetitions(userTeam.divisao)
   const isBrazilian = countryComps.hasStateChampionship
-  // Champions ou Europa League? Depende da posicao do clube na liga.
-  const continentalSpot = getContinentalSpot(userTeam.divisao, userPosition)
-  // Rotulo unico da continental: usado no card, na aba e nos headers de dentro dela.
-  const continentalName = continentalSpot.competition ?? countryComps.continental
 
   // So no Brasil a liga nacional comeca depois do estadual. Fora do Brasil nao existe
   // estadual, entao a liga esta em andamento desde a 1a rodada.
@@ -634,10 +630,9 @@ export default function CompeticoesPage() {
     },
     {
       id: "libertadores",
-      // A continental depende de ONDE o clube terminou, nao so do continente:
-      // G4 -> Champions/Libertadores; 5o-6o -> Europa League/Sul-Americana.
-      name: continentalSpot.competition ?? countryComps.continental,
-      type: continentalSpot.isSecondary ? "Continental (2a)" : "Continental",
+      // Continental do continente do clube (Champions League para europeus).
+      name: countryComps.continental,
+      type: "Continental",
       teams: 32,
       status: compState.libertadores.qualified
         ? compState.libertadores.champion
@@ -768,11 +763,11 @@ export default function CompeticoesPage() {
             >
               Estadual
             </TabsTrigger>
-            <TabsTrigger
-              value="libertadores"
+            <TabsTrigger 
+              value="libertadores" 
               className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
             >
-              {continentalName}
+              Libertadores
             </TabsTrigger>
           </TabsList>
 
@@ -810,7 +805,6 @@ export default function CompeticoesPage() {
               userTeam={userTeam}
               state={compState.libertadores}
               onDraw={drawLibertadores}
-              competitionName={continentalName}
             />
           </TabsContent>
         </Tabs>
@@ -1093,18 +1087,15 @@ function EstadualView({
   )
 }
 
-// Continental View (Libertadores, Champions, Europa League, Sul-Americana...)
+// Libertadores View
 function LibertadoresView({
   userTeam,
   state,
   onDraw,
-  competitionName,
 }: {
   userTeam: Team
   state: CompetitionState["libertadores"]
   onDraw: () => void
-  /** Competicao que o clube realmente disputa — nao e sempre a Libertadores. */
-  competitionName: string
 }) {
   const t = useTranslation()
 
@@ -1114,7 +1105,7 @@ function LibertadoresView({
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5 mx-auto mb-6">
           <Globe className="h-10 w-10 text-white/30" />
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">{competitionName} 2026</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.libertadores} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
           {t.competitions.toQualifyTop4}
         </p>
@@ -1131,7 +1122,7 @@ function LibertadoresView({
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-400/10 mx-auto mb-6">
           <Globe className="h-10 w-10 text-amber-400" />
         </div>
-        <h3 className="text-xl font-semibold text-white mb-2">{competitionName} 2026</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.libertadores} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
           {t.competitions.youQualified}
         </p>
@@ -1150,7 +1141,7 @@ function LibertadoresView({
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
       <div className="flex items-center gap-2 mb-6">
         <Globe className="h-5 w-5 text-amber-400" />
-        <h3 className="text-lg font-semibold text-white">{competitionName} 2026 - {state.group.name}</h3>
+        <h3 className="text-lg font-semibold text-white">{t.competitions.libertadores} 2026 - {state.group.name}</h3>
       </div>
 
       <div className="max-w-md">

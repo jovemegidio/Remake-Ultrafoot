@@ -998,3 +998,72 @@
   .office-bg-a, .office-bg-b { animation: none; }
   .office-bg-b { opacity: 0; }
 }
+
+/* ─── Acessibilidade ────────────────────────────────────────────────────────
+   Controlado por lib/accessibility-store.ts, que escreve data-attributes e a
+   variavel --a11y-font-scale no <html>. Fica tudo aqui para valer no jogo inteiro
+   sem precisar tocar tela por tela. */
+
+:root {
+  --a11y-font-scale: 1;
+}
+
+/* Escala de fonte: multiplica o root, entao todo rem do jogo acompanha. */
+html {
+  font-size: calc(16px * var(--a11y-font-scale));
+}
+
+/* Alto contraste: reforca texto e bordas, que sao o ponto fraco do tema escuro
+   (muito texto em white/40-white/50 fica ilegivel para baixa visao). */
+html[data-a11y-contrast] body {
+  background: #000;
+}
+
+html[data-a11y-contrast] {
+  --border: rgba(255, 255, 255, 0.45);
+}
+
+/* Sobe o alpha de todo texto apagado. Os utilitarios do Tailwind viram !important
+   aqui de proposito: e o unico jeito de alcancar as centenas de text-white/40 do jogo. */
+html[data-a11y-contrast] .text-white\/30,
+html[data-a11y-contrast] .text-white\/35,
+html[data-a11y-contrast] .text-white\/40,
+html[data-a11y-contrast] .text-white\/45,
+html[data-a11y-contrast] .text-white\/50,
+html[data-a11y-contrast] .text-white\/55,
+html[data-a11y-contrast] .text-white\/60,
+html[data-a11y-contrast] .text-white\/70 {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+html[data-a11y-contrast] .border-white\/\[0\.04\],
+html[data-a11y-contrast] .border-white\/\[0\.06\],
+html[data-a11y-contrast] .border-white\/\[0\.08\],
+html[data-a11y-contrast] .border-white\/10,
+html[data-a11y-contrast] .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Reducao de movimento: mata animacoes e transicoes (enjoo/vestibular). */
+html[data-a11y-reduce-motion] *,
+html[data-a11y-reduce-motion] *::before,
+html[data-a11y-reduce-motion] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Foco visivel: essencial para teclado e controle. */
+html[data-a11y-focus] *:focus-visible {
+  outline: 3px solid #00ffc8 !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+/* Sublinhar acoes clicaveis. */
+html[data-a11y-underline] a,
+html[data-a11y-underline] button {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

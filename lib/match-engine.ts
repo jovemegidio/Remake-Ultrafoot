@@ -771,72 +771,13 @@ function moveBall(state: MatchState): void {
 // Tick: avança 1 minuto de partida
 // ─────────────────────────────────────────────────────────────────────────────
 
-function getDurationMinutes(config?: MatchConfig): number {
-  const d = config?.durationMinutes
-  return Number.isFinite(d) && (d ?? 0) > 0 ? d! : 90
-}
-
-function getHalfDuration(config?: MatchConfig): number {
-  return Math.floor(getDurationMinutes(config) / 2)
-}
-
-/**
- * Reinicio do 2o tempo. O relogio VOLTA para o fim do 1o tempo (45'): o motor conta
- * ticks, entao o acrescimo do 1o tempo ficava grudado no contador e empurrava o resto
- * da partida — o 2o tempo comecava aos 48'/51' e o jogo terminava aos 95'/97'.
- *
- * Estava duplicada em quatro lugares (tickMinute, simulateFullMatch e duas vezes no hook
- * da partida ao vivo) e nenhum resetava o minuto; por isso agora mora so aqui.
- */
-export function resumeSecondHalf(state: MatchState, config?: MatchConfig): MatchState {
-  if (state.phase !== "halftime") return state
-  return {
-    ...state,
-    phase: "second",
-    minute: getHalfDuration(config),
-    momentum: 0,  // o intervalo reseta o momentum
-    addedTime: 0, // zera para o acrescimo do 2o tempo
-    flash: null,  // nenhum lance do 1o tempo pode piscar no reinicio
-  }
-}
-
-/**
- * Minuto de FUTEBOL para carimbar um evento. O motor conta ticks; no acrescimo o
- * ponteiro trava em 45'/90' e o excedente vira "+N" — senao um gol no tick 94 aparece
- * como "94'" em vez de "90+4'". Tambem serve para eventos criados pela UI
- * (substituicao), para que o relogio seja o mesmo em todo lugar.
- */
-export function getFootballClock(
-  state: MatchState,
-  config?: MatchConfig,
-): { minute: number; addedTime?: number } {
-  if (state.phase !== "first" && state.phase !== "second") {
-    return { minute: state.minute }
-  }
-  const base = state.phase === "first" ? getHalfDuration(config) : getDurationMinutes(config)
-  const over = state.minute - base
-  return over > 0 ? { minute: base, addedTime: over } : { minute: state.minute }
-}
-
-function stampStoppage(next: MatchState, eventsBefore: number, config: MatchConfig): void {
-  const { addedTime: over } = getFootballClock(next, config)
-  if (!over) return
-  const base = next.minute - over
-
-  // generateMinuteEvents insere os novos eventos no INICIO do array.
-  const created = next.events.length - eventsBefore
-  for (let i = 0; i < created; i++) {
-    next.events[i] = { ...next.events[i], minute: base, addedTime: over }
-  }
-}
-
 export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
   if (state.phase === "fulltime" || state.phase === "pre") return state
 
-  // O intervalo acaba aqui: devolve o relogio para 45' antes de seguir.
-  if (state.phase === "halftime") return resumeSecondHalf(state, config)
-
-  const durationMinutes = getDurationMinutes(config)
+  const durationMinutes =
+    Number.isFinite(config.durationMinutes) && (config.durationMinutes ?? 0) > 0
+      ? config.durationMinutes!
+      : 90
 
   const next: MatchState = {
     ...state,
@@ -879,6 +820,12 @@ export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
     return next
   }
 
+  if (state.phase === "halftime") {
+    next.phase = "second"
+    next.momentum = 0   // intervalo reseta o momentum
+    next.addedTime = 0  // zera para o acréscimo do 2º tempo
+  }
+
   // Ao atingir o minuto 90: rola o acréscimo (2-5 min) em vez de encerrar
   if (next.minute === durationMinutes && state.phase === "second") {
     next.addedTime = 2 + Math.floor(rnd() * 5)
@@ -914,9 +861,7 @@ export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
     }, ...next.events]
   }
 
-  const eventsBefore = next.events.length
   generateMinuteEvents(next, config)
-  stampStoppage(next, eventsBefore, config)
   updatePossession(next, config)
   moveBall(next)
 
@@ -942,6 +887,9 @@ export function startMatch(state: MatchState): MatchState {
 export function simulateFullMatch(config: MatchConfig): MatchState {
   let state = startMatch(createInitialState())
   while (state.phase !== "fulltime") {
+    if (state.phase === "halftime") {
+      state = { ...state, phase: "second", momentum: 0, addedTime: 0 }
+    }
     state = tickMinute(state, config)
   }
   return state

@@ -583,7 +583,7 @@ export default function PartidaAoVivoPage() {
   }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration])
 
   const sim = useMatchSimulation(config)
-  const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent } = sim
+  const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward } = sim
 
   // Discord Rich Presence
   useDiscordRPC(state, homeTeam, awayTeam)
@@ -842,14 +842,6 @@ export default function PartidaAoVivoPage() {
     setStarters(prev => prev.map(p => p.id === out.id ? { ...inPlayer } : p))
     setBenchSet(prev => prev.filter(p => p.id !== inPlayer.id))
     setSubsRemaining(s => s - 1)
-    // A troca so muda a forca do time (via config); sem isto ela nao aparece na timeline.
-    addEvent({
-      type: "sub",
-      side: userSide,
-      text: `Substituição: ${inPlayer.name} entra no lugar de ${out.name}`,
-      player: inPlayer.name,
-      important: true,
-    })
     setShowSubModal(false)
   }
 

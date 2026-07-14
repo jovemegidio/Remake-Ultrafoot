@@ -4,10 +4,14 @@ import { useEffect } from "react"
 import { normalizeAppHref } from "@/lib/hard-navigation"
 import { initPersistentStore } from "@/lib/persistent-store"
 import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
+import { accessibilityStore } from "@/lib/accessibility-store"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void initPersistentStore()
+    // Acessibilidade primeiro: reaplica fonte/contraste ANTES da UI pintar, senao o
+    // usuario que aumentou a fonte veria a tela "pular" a cada boot.
+    accessibilityStore.init()
     // Reaplica a tela cheia salva assim que o store carrega.
     void applySavedFullscreen()
   }, [])

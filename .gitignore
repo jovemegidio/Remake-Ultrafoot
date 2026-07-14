@@ -111,6 +111,6 @@ assets-missing.md
 # Assets pesados: distribuidos via instalador/Drive, nunca no git
 public/music/
 public/jogadores/
-public/selecoes/
-public/trofeus/
+# selecoes (3 MB) e trofeus (1 MB) NAO sao pesados e a main sempre os rastreou:
+# deixa-los de fora sumiria com eles do repo ao alinhar a main.
 data/seeds/*.bak

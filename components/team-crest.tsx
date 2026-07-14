@@ -76,19 +76,7 @@ export function TeamCrest({
 
   // Resolve team data
   const resolvedTeam = team || (teamShort ? getTeamByShort(teamShort) : undefined)
-
-  // O time do USUARIO vem do save (SavedTeam), que nomeia a chave como `fileKey`
-  // (camelCase) — enquanto Team (teams-data) usa `file_key` (snake_case). Lendo so
-  // `file_key`, a chave do proprio time do jogador saia undefined: sem URL, sem <img>,
-  // e como o onError nunca disparava nem o fallback aparecia. Resultado: escudo do SEU
-  // time em branco (e so o dele). Aceita as duas formas e, em ultimo caso, resolve
-  // pelo curto no teams-data.
-  const escudoKey =
-    fileKey ||
-    resolvedTeam?.file_key ||
-    (resolvedTeam as unknown as { fileKey?: string })?.fileKey ||
-    (resolvedTeam?.curto ? getTeamByShort(resolvedTeam.curto)?.file_key : undefined)
-
+  const escudoKey = fileKey || resolvedTeam?.file_key
   const escudoUrl = escudoKey ? getEscudoUrl(escudoKey) : null
 
   // Check for custom imported logo

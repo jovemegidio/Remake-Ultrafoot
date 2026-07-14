@@ -14,7 +14,17 @@ import { Slider } from "@/components/ui/slider"
 import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { formatCurrency, type Team } from "@/lib/teams-data"
-import { evaluatePlayerDecision } from "@/lib/negotiation-engine"
+import {
+  evaluatePlayerDecision,
+  computeAgentDemands,
+  evaluateAgentOffer,
+  ROLE_LABEL,
+  ROLE_DESCRIPTION,
+  type SquadRole,
+  type AgentDemands,
+  type AgentResponse,
+  type PersonalTerms,
+} from "@/lib/negotiation-engine"
 import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -56,7 +66,18 @@ export function NegotiationModal({
   onNegotiationResult,
 }: NegotiationModalProps) {
   const [offer, setOffer] = useState(player?.value || 0)
-  const [step, setStep] = useState<"offer" | "response" | "result">("offer")
+  // "terms" = mesa com o AGENTE. Fechar com o clube nao fecha a contratacao.
+  const [step, setStep] = useState<"offer" | "response" | "terms" | "result">("offer")
+
+  // Papel prometido no elenco — pesa mais que dinheiro para um craque.
+  const [role, setRole] = useState<SquadRole>("reforco")
+  // Termos pessoais em negociacao com o agente.
+  const [salary, setSalary] = useState(0)
+  const [contractYears, setContractYears] = useState(4)
+  const [signingBonus, setSigningBonus] = useState(0)
+  const [agentDemands, setAgentDemands] = useState<AgentDemands | null>(null)
+  const [agentResponse, setAgentResponse] = useState<AgentResponse | null>(null)
+  const [agentRounds, setAgentRounds] = useState(0)
   const [accepted, setAccepted] = useState(false)
   const [responseProgress, setResponseProgress] = useState(0)
   // Quem barrou a negociacao e por que. O clube pode aceitar e o JOGADOR recusar.
@@ -72,6 +93,10 @@ export function NegotiationModal({
       setResponseProgress(0)
       setRejectedBy(null)
       setPlayerReason("")
+      setRole("reforco")
+      setAgentDemands(null)
+      setAgentResponse(null)
+      setAgentRounds(0)
     }
   }, [open, player])
 
@@ -152,16 +177,78 @@ export function NegotiationModal({
         buyingClubSquadStrength: isLoan ? 0 : buyingPrestige,
       })
 
-      setAccepted(decision.accepted)
-      setRejectedBy(decision.accepted ? null : "player")
-      setPlayerReason(decision.reason)
-      onNegotiationResult?.({
-        player, type, offer,
-        accepted: decision.accepted,
-        rejectedBy: decision.accepted ? null : "player",
+      // O jogador nem quis ouvir a proposta: acaba aqui (e gera a carencia de 30 dias).
+      if (!decision.accepted) {
+        setAccepted(false)
+        setRejectedBy("player")
+        setPlayerReason(decision.reason)
+        onNegotiationResult?.({ player, type, offer, accepted: false, rejectedBy: "player" })
+        setStep("result")
+        return
+      }
+
+      // Emprestimo nao tem mesa de termos pessoais — fecha direto.
+      if (isLoan) {
+        setAccepted(true)
+        setRejectedBy(null)
+        setPlayerReason(decision.reason)
+        onNegotiationResult?.({ player, type, offer, accepted: true, rejectedBy: null })
+        setStep("result")
+        return
+      }
+
+      // ETAPA 3 — o jogador topou o PROJETO. Agora senta o AGENTE, e ele vem espremer.
+      const demands = computeAgentDemands({
+        playerOverall: player.overall,
+        playerAge: player.age ?? 26,
+        playerPotential: player.potential ?? player.overall,
+        marketValue: player.value,
+        currentClubPrestige: currentPrestige,
+        buyingClubPrestige: buyingPrestige,
       })
-      setStep("result")
+      setAgentDemands(demands)
+      // Abre a mesa com uma proposta conservadora: ~85% do pedido. O usuario ajusta.
+      setSalary(Math.round(demands.salary * 0.85))
+      setSigningBonus(Math.round(demands.signingBonus * 0.85))
+      setContractYears(demands.contractYears)
+      setAgentResponse(null)
+      setAgentRounds(0)
+      setPlayerReason(decision.reason)
+      setStep("terms")
     }, 1800)
+  }
+
+  // Mesa com o agente: ele aceita, contrapropoe (o caso comum) ou rompe.
+  const handleSubmitTerms = () => {
+    if (!agentDemands || !player) return
+    const terms: PersonalTerms = { salary, contractYears, signingBonus, role }
+    const res = evaluateAgentOffer(terms, agentDemands, player.name)
+    setAgentResponse(res)
+    setAgentRounds(r => r + 1)
+
+    if (res.verdict === "accepted") {
+      setAccepted(true)
+      setRejectedBy(null)
+      onNegotiationResult?.({ player, type, offer, accepted: true, rejectedBy: null })
+      setStep("result")
+    } else if (res.verdict === "rejected") {
+      setAccepted(false)
+      setRejectedBy("player")
+      setPlayerReason(res.message)
+      onNegotiationResult?.({ player, type, offer, accepted: false, rejectedBy: "player" })
+      setStep("result")
+    }
+    // "counter": segue na mesa; o usuario ajusta ou aceita a contraproposta.
+  }
+
+  /** Aceita exatamente o que o agente exigiu. */
+  const acceptCounter = () => {
+    const c = agentResponse?.counter
+    if (!c) return
+    setSalary(c.salary)
+    setSigningBonus(c.signingBonus)
+    setContractYears(c.contractYears)
+    setRole(c.role)
   }
 
   const handleClose = () => {
@@ -290,6 +377,175 @@ export function NegotiationModal({
                 <div className={cn("text-2xl font-bold", status.color)}>{status.chance}%</div>
               </div>
             </div>
+
+            {/* Papel no elenco — pesa mais que dinheiro para um craque.
+                Prometer banco a um jogador de 80+ derruba a negociacao sozinho. */}
+            {!isLoan && (
+              <div>
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">
+                  Papel prometido no elenco
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["primordial", "reforco", "banco"] as SquadRole[]).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={cn(
+                        "rounded-xl border p-3 text-left transition-all",
+                        role === r
+                          ? "border-[#00ffc8] bg-[#00ffc8]/10"
+                          : "border-white/10 bg-white/[0.03] hover:border-white/25"
+                      )}
+                    >
+                      <div className={cn(
+                        "text-xs font-bold",
+                        role === r ? "text-[#00ffc8]" : "text-white/80"
+                      )}>
+                        {ROLE_LABEL[r]}
+                      </div>
+                      <div className="mt-1 text-[10px] leading-snug text-white/40">
+                        {ROLE_DESCRIPTION[r]}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── MESA COM O AGENTE ─────────────────────────────────────────────
+            O clube aceitou e o jogador topou o projeto. Falta o mais dificil:
+            convencer o agente. Ele contrapropoe e endurece. */}
+        {step === "terms" && agentDemands && (
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00ffc8]/15">
+                <Handshake className="h-5 w-5 text-[#00ffc8]" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-white">Agente de {player.name}</div>
+                <div className="text-xs text-white/45">
+                  {agentResponse?.message ??
+                    `O ${player.team?.nome ?? "clube"} aceitou. Agora acerte os termos pessoais.`}
+                </div>
+              </div>
+            </div>
+
+            {/* Contraproposta do agente */}
+            {agentResponse?.verdict === "counter" && agentResponse.counter && (
+              <div className="rounded-xl border border-[#ffd700]/30 bg-[#ffd700]/10 p-3">
+                <div className="mb-2 text-xs font-bold uppercase tracking-wider text-[#ffd700]">
+                  Ele exige
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-white/80">
+                  <div>Salario: <b>{formatCurrency(agentResponse.counter.salary)}</b>/mes</div>
+                  <div>Luvas: <b>{formatCurrency(agentResponse.counter.signingBonus)}</b></div>
+                  <div>Contrato: <b>{agentResponse.counter.contractYears} anos</b></div>
+                  <div>Papel: <b>{ROLE_LABEL[agentResponse.counter.role]}</b></div>
+                </div>
+                <button
+                  type="button"
+                  onClick={acceptCounter}
+                  className="mt-3 w-full rounded-lg bg-[#ffd700] px-3 py-2 text-xs font-bold text-black transition-opacity hover:opacity-90"
+                >
+                  Aceitar as exigencias
+                </button>
+              </div>
+            )}
+
+            {/* Salario mensal */}
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-white/50">Salario mensal</span>
+                <span className="font-bold text-white">{formatCurrency(salary)}</span>
+              </div>
+              <Slider
+                value={[salary]}
+                min={Math.round(agentDemands.salary * 0.4)}
+                max={Math.round(agentDemands.salary * 2)}
+                step={Math.max(1000, Math.round(agentDemands.salary * 0.02))}
+                onValueChange={(v) => setSalary(v[0])}
+              />
+              <div className="mt-1 text-[10px] text-white/35">
+                Ele pede {formatCurrency(agentDemands.salary)}/mes
+              </div>
+            </div>
+
+            {/* Luvas */}
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-white/50">Luvas (bonus de assinatura)</span>
+                <span className="font-bold text-white">{formatCurrency(signingBonus)}</span>
+              </div>
+              <Slider
+                value={[signingBonus]}
+                min={0}
+                max={Math.round(agentDemands.signingBonus * 2)}
+                step={Math.max(1000, Math.round(agentDemands.signingBonus * 0.02))}
+                onValueChange={(v) => setSigningBonus(v[0])}
+              />
+              <div className="mt-1 text-[10px] text-white/35">
+                Ele pede {formatCurrency(agentDemands.signingBonus)}
+              </div>
+            </div>
+
+            {/* Tempo de contrato */}
+            <div>
+              <div className="mb-2 text-xs text-white/50">Tempo de contrato</div>
+              <div className="grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5].map((y) => (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => setContractYears(y)}
+                    className={cn(
+                      "rounded-lg border py-2 text-xs font-bold transition-all",
+                      contractYears === y
+                        ? "border-[#00ffc8] bg-[#00ffc8]/10 text-[#00ffc8]"
+                        : "border-white/10 bg-white/[0.03] text-white/60 hover:border-white/25"
+                    )}
+                  >
+                    {y} ano{y > 1 ? "s" : ""}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-1 text-[10px] text-white/35">
+                Ele quer {agentDemands.contractYears} anos
+              </div>
+            </div>
+
+            {/* Papel */}
+            <div>
+              <div className="mb-2 text-xs text-white/50">Papel no elenco</div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["primordial", "reforco", "banco"] as SquadRole[]).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className={cn(
+                      "rounded-lg border px-2 py-2 text-[11px] font-bold transition-all",
+                      role === r
+                        ? "border-[#00ffc8] bg-[#00ffc8]/10 text-[#00ffc8]"
+                        : "border-white/10 bg-white/[0.03] text-white/60 hover:border-white/25"
+                    )}
+                  >
+                    {ROLE_LABEL[r]}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-1 text-[10px] text-white/35">
+                Papel minimo aceito: {ROLE_LABEL[agentDemands.minRole]}
+              </div>
+            </div>
+
+            {agentRounds > 0 && (
+              <div className="text-center text-[10px] text-white/30">
+                Rodada de negociacao {agentRounds + 1} — cada recusa desgasta a relacao
+              </div>
+            )}
           </div>
         )}
 
@@ -424,9 +680,20 @@ export function NegotiationModal({
               </Button>
             </>
           )}
+          {step === "terms" && (
+            <>
+              <Button variant="outline" onClick={handleClose} className="border-white/10 text-white/70 hover:bg-white/5">
+                Desistir
+              </Button>
+              <Button onClick={handleSubmitTerms} className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-semibold gap-2">
+                <Handshake className="h-4 w-4" />
+                {agentResponse?.verdict === "counter" ? "Reapresentar termos" : "Propor ao agente"}
+              </Button>
+            </>
+          )}
           {step === "result" && (
-            <Button 
-              onClick={accepted ? handleConfirm : handleClose} 
+            <Button
+              onClick={accepted ? handleConfirm : handleClose}
               className={cn(
                 "w-full font-semibold",
                 accepted 
