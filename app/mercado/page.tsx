@@ -29,6 +29,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { getGameDate } from "@/lib/game-date"
+import { getFormationSlots } from "@/lib/formations"
 import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-cooldown"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
@@ -176,6 +177,34 @@ export default function MercadoPage() {
     () => getGameDate(gameEngine.currentSeason, gameEngine.currentWeek),
     [gameEngine.currentSeason, gameEngine.currentWeek],
   )
+
+  // Formacao REAL do usuario (o engine e a fonte; a tela mostrava "4-3-3" fixo).
+  const centralFormation = gameEngine.formation ?? "4-3-3"
+
+  /**
+   * 11 titular REAL, posicionado pela formacao REAL — para o campo da Central de
+   * Transferencias, que ate aqui era um 4-3-3 desenhado a mao com overalls inventados.
+   *
+   * Preferimos quem o usuario marcou como titular; se o engine ainda nao tem escalacao,
+   * caimos nos 11 melhores do elenco (dado real, so nao escolhido por ele).
+   */
+  const centralStartingXI = useMemo(() => {
+    const slots = getFormationSlots(centralFormation)
+    const squad = gameEngine.squadPlayers ?? []
+
+    const starters = squad.filter((p) => p.isStarter)
+    const chosen = (starters.length >= 11 ? starters : [...squad].sort((a, b) => b.overall - a.overall))
+      .slice(0, 11)
+
+    // Encaixa cada titular no slot da mesma posicao; o que sobrar preenche na ordem.
+    const pool = [...chosen]
+    return slots.map((slot) => {
+      const exact = pool.findIndex((p) => p.position === slot.pos)
+      const idx = exact !== -1 ? exact : 0
+      const player = pool.splice(idx, 1)[0]
+      return { ...slot, player }
+    })
+  }, [centralFormation, gameEngine.squadPlayers])
 
   // Vitrine dinâmica: alvos do banco real, estáveis dentro da temporada
   const transferTargets = useMemo(
@@ -1100,7 +1129,7 @@ export default function MercadoPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-white font-semibold truncate">Padrao {userTeam?.curto || "TIME"}...</h3>
-                      <span className="text-white/60 text-sm">4-3-3</span>
+                      <span className="text-white/60 text-sm">{centralFormation}</span>
                       <span className="text-[#00ffc8] text-sm ml-2">ABERTO</span>
                     </div>
                     <span className="p-1 rounded transition-colors group-hover:bg-white/10">
@@ -1116,18 +1145,18 @@ export default function MercadoPage() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-12 h-12 border border-white/20 rounded-full" />
                     </div>
-                    {/* Mini players dots */}
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute top-6 left-1/4 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute top-6 right-1/4 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute top-6 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute top-12 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute top-12 right-1/3 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute top-12 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute bottom-6 left-1/4 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute bottom-6 right-1/4 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-400" />
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-yellow-400" />
+                    {/* Bolinhas na formacao REAL (antes eram 11 posicoes fixas no HTML). */}
+                    {centralStartingXI.map((slot, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
+                          slot.pos === "GOL" ? "bg-yellow-400" : "bg-blue-400",
+                        )}
+                        style={{ left: `${slot.x}%`, top: `${(slot.y / 133) * 100}%` }}
+                        title={slot.player?.name ?? slot.pos}
+                      />
+                    ))}
                   </div>
                   <div className="flex items-center gap-2 mt-3 text-[#00ffc8] text-xs">
                     <Check className="w-4 h-4" />
@@ -1141,7 +1170,7 @@ export default function MercadoPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-white text-2xl font-bold">Padrao {userTeam?.nome?.toUpperCase() || "TIME"}</h2>
-                    <span className="text-white/60">4-3-3</span>
+                    <span className="text-white/60">{centralFormation}</span>
                     <span className="text-[#00ffc8] ml-2">ABERTO</span>
                   </div>
                   <TeamCrest team={userTeam} size="lg" />
@@ -1157,55 +1186,29 @@ export default function MercadoPage() {
                   <div className="absolute top-4 left-1/2 -translate-x-1/2 w-40 h-16 border-2 border-white/30 border-t-0" />
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-40 h-16 border-2 border-white/30 border-b-0" />
 
-                  {/* Players in 4-3-3 formation */}
-                  {/* Goalkeeper */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-t-full flex items-center justify-center text-black font-bold text-xs">81</div>
-                    <span className="text-white text-[10px] mt-1">Goleiro</span>
-                  </div>
-                  {/* Defenders */}
-                  <div className="absolute bottom-20 left-[15%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">78</div>
-                    <span className="text-white text-[10px] mt-1">LE</span>
-                  </div>
-                  <div className="absolute bottom-20 left-[35%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">80</div>
-                    <span className="text-white text-[10px] mt-1">ZAG</span>
-                  </div>
-                  <div className="absolute bottom-20 right-[35%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">79</div>
-                    <span className="text-white text-[10px] mt-1">ZAG</span>
-                  </div>
-                  <div className="absolute bottom-20 right-[15%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">84</div>
-                    <span className="text-white text-[10px] mt-1">LD</span>
-                  </div>
-                  {/* Midfielders */}
-                  <div className="absolute top-[45%] left-[25%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">85</div>
-                    <span className="text-white text-[10px] mt-1">MC</span>
-                  </div>
-                  <div className="absolute top-[45%] left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">88</div>
-                    <span className="text-white text-[10px] mt-1">MC</span>
-                  </div>
-                  <div className="absolute top-[45%] right-[25%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">82</div>
-                    <span className="text-white text-[10px] mt-1">MC</span>
-                  </div>
-                  {/* Forwards */}
-                  <div className="absolute top-16 left-[20%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">79</div>
-                    <span className="text-white text-[10px] mt-1">PE</span>
-                  </div>
-                  <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">81</div>
-                    <span className="text-white text-[10px] mt-1">ATA</span>
-                  </div>
-                  <div className="absolute top-16 right-[20%] flex flex-col items-center">
-                    <div className="w-10 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-full flex items-center justify-center text-white font-bold text-xs">79</div>
-                    <span className="text-white text-[10px] mt-1">PD</span>
-                  </div>
+                  {/* 11 TITULAR REAL.
+                      Antes eram 11 <div> chumbados no HTML (overalls 81/78/80/84...,
+                      rotulos "ZAG"/"MC"), um 4-3-3 fixo que nao tinha relacao nenhuma com
+                      o elenco nem com a formacao do usuario. Agora vem do engine. */}
+                  {centralStartingXI.map((slot, i) => (
+                    <div
+                      key={i}
+                      className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+                      style={{ left: `${slot.x}%`, top: `${(slot.y / 133) * 100}%` }}
+                    >
+                      <div className={cn(
+                        "flex h-12 w-10 items-center justify-center rounded-t-full text-xs font-bold",
+                        slot.pos === "GOL"
+                          ? "bg-gradient-to-b from-yellow-400 to-yellow-600 text-black"
+                          : "bg-gradient-to-b from-blue-400 to-blue-600 text-white",
+                      )}>
+                        {slot.player?.overall ?? "-"}
+                      </div>
+                      <span className="mt-1 max-w-[72px] truncate text-[10px] text-white">
+                        {slot.player?.name ?? slot.pos}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

@@ -38,7 +38,9 @@ desktop.ini
 *.log
 
 # Large binary / asset folders (not versioned)
-music/
+# "music/" sem barra inicial casava em QUALQUER nivel — inclusive public/music —,
+# vencendo a excecao do tracks.json la embaixo. Ancorado na raiz.
+/music/
 BF2026-27/
 Remake VIII/
 Remake X/
@@ -109,7 +111,14 @@ assets-missing.md
 /*.jpeg
 
 # Assets pesados: distribuidos via instalador/Drive, nunca no git
-public/music/
+# Os 1,6 GB de audio ficam FORA do git — mas o tracks.json (84 KB) e o MANIFESTO da
+# playlist: e codigo/dado, nao asset. Ele ja carregou um bug (nomes em NFD que nao batiam
+# com o disco e travavam o player) que passou despercebido justamente por nao ser versionado.
+#
+# Nota: negar um arquivo dentro de um DIRETORIO ignorado nao funciona no git — por isso
+# ignoramos o CONTEUDO (public/music/*), nao o diretorio.
+public/music/*
+!public/music/tracks.json
 public/jogadores/
 # selecoes (3 MB) e trofeus (1 MB) NAO sao pesados e a main sempre os rastreou:
 # deixa-los de fora sumiria com eles do repo ao alinhar a main.
