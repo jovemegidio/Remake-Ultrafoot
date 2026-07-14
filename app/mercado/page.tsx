@@ -1208,7 +1208,10 @@ export default function MercadoPage() {
                     </span>
                   </div>
                   {/* Mini field preview */}
-                  <div className="mt-3 h-24 bg-[#1a3d2e] rounded-lg relative overflow-hidden">
+                  <div
+                    className="mt-3 h-24 rounded-lg relative overflow-hidden"
+                    style={{ background: "radial-gradient(120% 120% at 50% 0%, #1c5a3a, #0f3722 80%)" }}
+                  >
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-12 h-12 border border-white/20 rounded-full" />
                     </div>
@@ -1244,7 +1247,24 @@ export default function MercadoPage() {
                 </div>
 
                 {/* Big Field */}
-                <div className="relative w-full h-[calc(100%-80px)] bg-gradient-to-b from-[#2d5a3d] to-[#1a3d2e] rounded-xl overflow-hidden">
+                <div
+                  className="relative w-full h-[calc(100%-80px)] rounded-xl overflow-hidden"
+                  style={{
+                    // Mesma turfa rica do Gerenciamento (direcao visual aprovada).
+                    background:
+                      "radial-gradient(120% 90% at 50% -6%, #1c5a3a 0%, #164a31 44%, #0f3722 78%, #0a2718 100%)",
+                    boxShadow: "inset 0 0 50px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  {/* Refletores nos cantos */}
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(60% 55% at 15% 8%, rgba(255,255,235,0.09), transparent 70%)," +
+                        "radial-gradient(60% 55% at 85% 8%, rgba(255,255,235,0.09), transparent 70%)",
+                    }}
+                  />
                   {/* Field lines */}
                   <div className="absolute inset-4 border-2 border-white/30 rounded-lg" />
                   <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white/30" />
