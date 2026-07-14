@@ -27,22 +27,56 @@ function norm(s) {
 }
 
 /**
+ * Chave do CLUBE — tira os prefixos/sufixos societarios antes de comparar.
+ *
+ * Sem isto o import falha EM SILENCIO: a planilha diz "FC Barcelona" e o jogo diz
+ * "Barcelona"; normalizados viram "fcbarcelona" != "barcelona", nao casam, e o clube
+ * simplesmente nao recebe o elenco real — sem nenhum erro aparecer.
+ * Mesmo caso de "Olympique de Marseille" x "Olympique Marseille", "AC Milan" x "Milan",
+ * "Villarreal CF" x "Villarreal", "AFC Bournemouth" x "Bournemouth".
+ *
+ * IMPORTANTE: precisa ser identico ao clubKey() de lib/players-data.ts.
+ */
+function clubKey(s) {
+  return norm(s)
+    // Prefixos societarios ("FC Barcelona" -> "barcelona", "AC Milan" -> "milan").
+    .replace(/^(fc|cf|ac|as|rc|sc|ss|afc|rcd|ud|cd|sv|ogc|losc|stade)/, "")
+    // Sufixos ("Villarreal CF" -> "villarreal", "Genoa CFC" -> "genoa").
+    .replace(/(fc|cf|cfc|ac|sc|afc|club)$/, "")
+    // "Olympique DE Marseille" -> "olympiquemarseille" (o jogo escreve sem o "de").
+    .replace(/^olympiquede/, "olympique")
+}
+
+/**
  * Posicao em PT-BR -> codigo do jogo.
  * Compostas ("Zagueiro / lateral direito") usam a PRIMEIRA, que e a principal.
  */
 const POSITION_MAP = [
-  [/goleiro|goalkeeper/, "GOL"],
-  [/lateral\s*direit/, "LD"],
-  [/lateral\s*esquerd/, "LE"],
-  [/zagueiro|defensor\s*central|zaga/, "ZAG"],
-  [/volante|primeiro\s*volante|meio-?campo\s*defensivo/, "VOL"],
-  [/ponta\s*direita|extremo\s*direit/, "PD"],
-  [/ponta\s*esquerda|extremo\s*esquerd/, "PE"],
-  [/centroavante|atacante|centro-?avante/, "ATA"],
-  [/meia-?atacante|meio-?campo\s*ofensivo/, "MEI"],
-  [/meia|meio-?campo|meio-?campista/, "MEI"],
+  // ── Goleiro ──────────────────────────────────────────────────────────────
+  [/goleiro|goalkeeper|keeper/, "GOL"],
+
+  // ── Laterais (antes dos zagueiros: "Right-Back" tem "back", nao "centre") ──
+  [/lateral\s*direit|right.?back|right\s*wing.?back/, "LD"],
+  [/lateral\s*esquerd|left.?back|left\s*wing.?back/, "LE"],
+
+  // ── Zaga ─────────────────────────────────────────────────────────────────
+  [/zagueiro|zaga|centre.?back|center.?back|sweeper/, "ZAG"],
+
+  // ── Volante (antes do meio generico: "Defensive Midfield" tem "midfield") ──
+  [/volante|defensive\s*midfield|meio-?campo\s*defensivo/, "VOL"],
+
+  // ── Pontas (antes do ataque: "Right Winger" nao pode virar ATA) ───────────
+  [/ponta\s*direita|extremo\s*direit|right\s*winger/, "PD"],
+  [/ponta\s*esquerda|extremo\s*esquerd|left\s*winger/, "PE"],
+
+  // ── Ataque ───────────────────────────────────────────────────────────────
+  [/centroavante|centro-?avante|centre.?forward|center.?forward|second\s*striker|striker|atacante/, "ATA"],
+
+  // ── Meio-campo (por ultimo: e o balde mais generico) ─────────────────────
+  [/meia|meio-?campo|meio-?campista|midfield/, "MEI"],
+
   // "Defensor" generico (Serie B/C) — sem lado definido, vira zagueiro.
-  [/defensor/, "ZAG"],
+  [/defensor|defender/, "ZAG"],
 ]
 
 function toPos(raw) {
@@ -104,6 +138,8 @@ async function main() {
   let totalRows = 0
   let mapped = 0
   const unmappedPositions = new Map()
+  // Buracos na FONTE (linhas que a planilha marcou como pendentes de coleta).
+  const pendingByFile = new Map()
 
   for (const file of files) {
     const text = await readFile(path.join(SRC_DIR, file), "utf8")
@@ -117,8 +153,12 @@ async function main() {
     const idxClub = header.findIndex(h => h === "clube")
     const idxName = header.findIndex(h => h === "jogador" || h === "nomejogador")
     const idxPos = header.findIndex(h => h === "posicao" || h === "posicaogrupo")
-    // "Titular provavel" / "Titular" vs reserva — vira a ordem do elenco.
-    const idxGroup = header.findIndex(h => h === "grupo" || h === "grupoelenco")
+    // Titular vs reserva — vira a ordem do elenco. Cada planilha chama a coluna de um
+    // jeito: "grupo", "grupo_elenco", "status", "status_estimado". E o valor tanto pode
+    // ser "Titular provavel" quanto "titular_provavel".
+    const idxGroup = header.findIndex(h =>
+      h === "grupo" || h === "grupoelenco" || h === "status" || h === "statusestimado",
+    )
 
     if (idxClub < 0 || idxName < 0 || idxPos < 0) {
       console.log(`  ! ${file}: colunas nao reconhecidas (clube/jogador/posicao) — pulado`)
@@ -126,23 +166,38 @@ async function main() {
     }
 
     let fileMapped = 0
+    let filePending = 0   // linhas de placeholder (coleta nao concluida)
+    let fileNoPos = 0     // tem jogador, mas ficou sem posicao
+
     for (const r of rows.slice(1)) {
       const club = (r[idxClub] ?? "").trim()
       const name = (r[idxName] ?? "").trim()
       const rawPos = (r[idxPos] ?? "").trim()
       if (!club || !name) continue
+
+      // Linhas que a planilha marcou como pendentes NAO sao jogadores — sao espaco
+      // reservado. Contamos separado para o buraco na fonte ficar VISIVEL, em vez de
+      // sumir em silencio e dar a impressao de que o clube tem elenco completo.
+      if (/^pendente/i.test(name) || /^pendente/i.test(rawPos)) {
+        filePending++
+        continue
+      }
+
       totalRows++
 
       const pos = toPos(rawPos)
       if (!pos) {
         if (rawPos) unmappedPositions.set(rawPos, (unmappedPositions.get(rawPos) ?? 0) + 1)
+        else fileNoPos++
         continue
       }
 
       const grupo = idxGroup >= 0 ? (r[idxGroup] ?? "") : ""
       const titular = /titular/i.test(grupo)
 
-      const ck = norm(club)
+      // clubKey (nao norm): "FC Barcelona" e "Barcelona" precisam cair na MESMA chave,
+      // senao o jogo nao acha o elenco e o import falha em silencio.
+      const ck = clubKey(club)
       if (!byClub[ck]) { byClub[ck] = []; clubLabel[ck] = club }
       // Evita duplicata do mesmo jogador.
       if (byClub[ck].some(p => norm(p.nome) === norm(name))) continue
@@ -150,7 +205,14 @@ async function main() {
       mapped++
       fileMapped++
     }
-    console.log(`  ${file}: ${fileMapped} jogadores`)
+    const gaps = []
+    if (filePending) gaps.push(`${filePending} PENDENTE_COLETA`)
+    if (fileNoPos) gaps.push(`${fileNoPos} sem posicao`)
+    console.log(
+      `  ${file}: ${fileMapped} jogadores` +
+      (gaps.length ? `  [BURACO NA FONTE: ${gaps.join(", ")}]` : ""),
+    )
+    if (filePending) pendingByFile.set(file, filePending)
   }
 
   // Titulares primeiro, mantendo a ordem original dentro de cada grupo.
@@ -171,6 +233,16 @@ async function main() {
     for (const [p, n] of [...unmappedPositions].sort((a, b) => b[1] - a[1]).slice(0, 10)) {
       console.log(`  ${n}x  "${p}"`)
     }
+  }
+
+  // O buraco esta na FONTE, nao no importador — precisa ficar gritante, senao alguem
+  // acha que a liga foi importada inteira quando na verdade veio pela metade.
+  if (pendingByFile.size) {
+    const totalPending = [...pendingByFile.values()].reduce((a, b) => a + b, 0)
+    console.log(`\n!! ${totalPending} linhas marcadas PENDENTE_COLETA na planilha:`)
+    for (const [file, n] of pendingByFile) console.log(`   ${n.toString().padStart(4)}  ${file}`)
+    console.log(`   Esses jogadores NAO existem na fonte — o clube entra no jogo com o`)
+    console.log(`   elenco incompleto. Complete a coleta e rode este script de novo.`)
   }
 
   // Sanidade: todo clube precisa de ao menos 1 goleiro e 10 de linha.

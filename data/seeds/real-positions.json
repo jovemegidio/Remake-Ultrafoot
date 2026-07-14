@@ -1410,7 +1410,7 @@
       "titular": false
     }
   ],
-  "athleticclub": [
+  "athletic": [
     {
       "nome": "Luan Polli",
       "pos": "GOL",
@@ -5789,7 +5789,7 @@
       "titular": false
     }
   ],
-  "barrafc": [
+  "barr": [
     {
       "nome": "Fabian Volpi",
       "pos": "GOL",
@@ -6026,7 +6026,7 @@
       "titular": false
     }
   ],
-  "maranhaoac": [
+  "maranhao": [
     {
       "nome": "Jean",
       "pos": "GOL",
@@ -6228,7 +6228,7 @@
       "titular": false
     }
   ],
-  "maringafc": [
+  "maring": [
     {
       "nome": "Tony",
       "pos": "GOL",
@@ -6602,7 +6602,7 @@
       "titular": false
     }
   ],
-  "ypirangafc": [
+  "ypirang": [
     {
       "nome": "Lucas Anselmo Maticoli",
       "pos": "GOL",
@@ -8812,7 +8812,7 @@
       "titular": false
     }
   ],
-  "afcbournemouth": [
+  "bournemouth": [
     {
       "nome": "Djordje Petrovic",
       "pos": "GOL",
@@ -9148,7 +9148,7 @@
       "titular": false
     }
   ],
-  "astonvilla": [
+  "tonvilla": [
     {
       "nome": "Emiliano Martínez",
       "pos": "GOL",
@@ -10035,6 +10035,1838 @@
     },
     {
       "nome": "Mason Burstow",
+      "pos": "ATA",
+      "titular": false
+    }
+  ],
+  "realmadrid": [
+    {
+      "nome": "Thibaut Courtois",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Andriy Lunin",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Fran González",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Dean Huijsen",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Ibrahima Konaté",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Éder Militão",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Raúl Asencio",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Antonio Rüdiger",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Marc Cucurella",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Álvaro Carreras",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Ferland Mendy",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Trent Alexander-Arnold",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Denzel Dumfries",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "David Jiménez",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Aurélien Tchouaméni",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Federico Valverde",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Eduardo Camavinga",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Thiago Pitarch",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Manuel Ángel",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Jude Bellingham",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Arda Güler",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Bernardo Silva",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "César Palacios",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Vinicius Junior",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Rodrygo",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Franco Mastantuono",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Brahim Díaz",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Kylian Mbappé",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Endrick",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Gonzalo García",
+      "pos": "ATA",
+      "titular": false
+    }
+  ],
+  "barcelona": [
+    {
+      "nome": "Joan García",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Marc-André ter Stegen",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Áron Yaakobishvili",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Wojciech Szczesny",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Pau Cubarsí",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Eric García",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Gerard Martín",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Ronald Araujo",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Andreas Christensen",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Álvaro Cortés",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Alejandro Balde",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Jules Koundé",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Héctor Fort",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Xavi Espart",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Marc Bernal",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Marc Casadó",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Tommy Marqués",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Pedri",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Frenkie de Jong",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Gavi",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Fermín López",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Dani Olmo",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Toni Fernández",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Raphinha",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Anthony Gordon",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Lamine Yamal",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Roony Bardghji",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Ferran Torres",
+      "pos": "ATA",
+      "titular": false
+    }
+  ],
+  "atleticodemadrid": [
+    {
+      "nome": "Jan Oblak",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Juan Musso",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Dávid Hancko",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Marc Pubill",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Robin Le Normand",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "José María Giménez",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Matteo Ruggeri",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Alejandro Grimaldo",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Marcos Llorente",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Nahuel Molina",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Morten Hjulmand",
+      "pos": "VOL",
+      "titular": true
+    },
+    {
+      "nome": "Pablo Barrios",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Rodrigo Mendoza",
+      "pos": "MEI",
+      "titular": false
+    }
+  ],
+  "villarreal": [
+    {
+      "nome": "Luiz Júnior",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Arnau Tenas",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Diego Conde",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Renato Veiga",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Logan Costa",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Pau Navarro",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Juan Foyth",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Willy Kambwala",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Carlos Romero",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Sergi Cardona",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Santiago Mouriño",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Alex Freeman",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Pape Gueye",
+      "pos": "MEI",
+      "titular": false
+    }
+  ],
+  "realsociedad": [
+    {
+      "nome": "Álex Remiro",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Unai Marrero",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Jon Martín",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Igor Zubeldia",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Jon Pacheco",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Kazunari Kita",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Sergio Gómez",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Javi López",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Aihen Muñoz",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Jon Aramburu",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Álvaro Odriozola",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Iñaki Rupérez",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Jon Gorrotxategi",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Beñat Turrientes",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Luka Sucic",
+      "pos": "MEI",
+      "titular": false
+    }
+  ],
+  "parissaintgermain": [
+    {
+      "nome": "Matvey Safonov",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Lucas Chevalier",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Alessandro Longoni",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Willian Pacho",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Ilya Zabarnyi",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Marquinhos",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Lucas Beraldo",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Nuno Mendes",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Lucas Hernández",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Achraf Hakimi",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Yoram Zague",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Naoufel El Hannach",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Vitinha",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "João Neves",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Warren Zaïre-Emery",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Senny Mayulu",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Fabián Ruiz",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Renato Sanches",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Kang-in Lee",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Dro Fernández",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Khvicha Kvaratskhelia",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Bradley Barcola",
+      "pos": "PE",
+      "titular": false
+    }
+  ],
+  "monaco": [
+    {
+      "nome": "Philipp Köhn",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Radoslaw Majecki",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Lukas Hradecky",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Yann Lienard",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Christian Mawissa",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Thilo Kehrer",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Mohammed Salisu",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Sadibou Sané",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Eric Dier",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Nazinho",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Vanderson",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Jordan Teze",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Denis Zakaria",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Aladji Bamba",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Lamine Camara",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Mamadou Coulibaly",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Edan Diop",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Paul Pogba",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Aleksandr Golovin",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Stanis Idumbo",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Mathys Detourbet",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Ansu Fati",
+      "pos": "PE",
+      "titular": false
+    }
+  ],
+  "strasbourgalsace": [
+    {
+      "nome": "Miłosz Piekutowski",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Ismaël Doukouré",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Lucas Høgsberg",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Andrew Omobamidele",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Soumaïla Coulibaly",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Saïdou Sow",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Abakar Sylla",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Yoni Gomis",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Ben Chilwell",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Mateo Del Blanco",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Guéla Doué",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Abdoul Ouattara",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Diogo Sousa",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Junior Mwanga",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Maxi Oyedele",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Pape Diong",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Rabby Nzingoula",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Valentín Barco",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Samir El Mourabet",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Pape Demba Diop",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Mathis Amougou",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Diego Moreira",
+      "pos": "MEI",
+      "titular": false
+    }
+  ],
+  "lille": [
+    {
+      "nome": "Berke Özer",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Arnaud Bodart",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Lisandru Olmeta",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Nathan Ngoy",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Alexsandro",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Isaac Cossier",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Ousmane Touré",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Romain Perraud",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Calvin Verdonk",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Tiago Santos",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Loun Srdanovic",
+      "pos": "LD",
+      "titular": true
+    },
+    {
+      "nome": "Ngal'ayel Mukau",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Benjamin André",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Ugo Raghouber",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Ayyoub Bouaddi",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Vincent Burlet",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Hákon Arnar Haraldsson",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Félix Correia",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Osame Sahraoui",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Başar Önal",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Soriba Diaoune",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Tiago Morais",
+      "pos": "PE",
+      "titular": false
+    }
+  ],
+  "rennais": [
+    {
+      "nome": "Brice Samba",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Nicolas Lemaître",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Kilian Belazzoug",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Lilian Brassier",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Anthony Rouault",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Abdelhamid Ait Boudlal",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Alidu Seidu",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Mikayil Faye",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Gonçalo Oliveira",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Jonathan Do Marcolino",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Quentin Merlin",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Mahamadou Nagida",
+      "pos": "LE",
+      "titular": false
+    },
+    {
+      "nome": "Przemyslaw Frankowski",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Bryan Reynolds",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Rayan Bamba",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Jordan James",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Mahdi Camara",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Djaoui Cissé",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Seko Fofana",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Valentin Rongier",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Adrien Thomasson",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Glen Kamara",
+      "pos": "MEI",
+      "titular": false
+    }
+  ],
+  "olympiquemarseille": [
+    {
+      "nome": "Gerónimo Rulli",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Jeffrey de Lange",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Jelle Van Neck",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Leonardo Balerdi",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Facundo Medina",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Nayef Aguerd",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "CJ Egan-Riley",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Bamo Meïté",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Derek Cornelius",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Emerson",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Ulisses Garcia",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Pierre-Emile Højbjerg",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Tochukwu Nnadi",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Geoffrey Kondogbia",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Quinten Timber",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Timothy Weah",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Angel Gomes",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Himad Abdelli",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Igor Paixão",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Hamed Traoré",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Amine Harit",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Amine Gouiri",
+      "pos": "ATA",
+      "titular": false
+    }
+  ],
+  "olympiquelyonnais": [
+    {
+      "nome": "Dominik Greif",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Rémy Descamps",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Justin Bengui",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Lassine Diarra",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Moussa Niakhaté",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Ruben Kluivert",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Noham Kamara",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Duje Caleta-Car",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Clinton Mata",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Abner",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Nicolás Tagliafico",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Mohamed Ouédraogo",
+      "pos": "LE",
+      "titular": false
+    },
+    {
+      "nome": "Achraf Laâziri",
+      "pos": "LE",
+      "titular": false
+    },
+    {
+      "nome": "Ainsley Maitland-Niles",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Steeve Kango",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Tyler Morton",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Tanner Tessmann",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Orel Mangala",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Mathys de Carvalho",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Paul Akouokou",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Khalis Merah",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Mads Bidstrup",
+      "pos": "MEI",
+      "titular": false
+    }
+  ],
+  "lens": [
+    {
+      "nome": "Robin Risser",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Hervé Koffi",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Mattia Fortin",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Ilan Jourdren",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Samson Baidoo",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Ismaëlo Ganiou",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Nidal Celik",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Kyllian Antonio",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Jonathan Gradit",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Souleymane Sagnan",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Matthieu Udol",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Jhoanner Chávez",
+      "pos": "LE",
+      "titular": false
+    },
+    {
+      "nome": "Saud Abdulhamid",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Ruben Aguilar",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Mamadou Sangaré",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Andrija Bulatovic",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Amadou Haidara",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Michaël Cuisance",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Angelo Fulgini",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Thorgan Hazard",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Alpha Diallo",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Abdallah Sima",
+      "pos": "PE",
+      "titular": false
+    }
+  ],
+  "intermilan": [
+    {
+      "nome": "Josep Martínez",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Ivan Provedel",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Raffaele Di Gennaro",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Alessandro Bastoni",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Yann Bisseck",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Manuel Akanji",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Benjamin Pavard",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Federico Dimarco",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Carlos Augusto",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Aleksandar Stanković",
+      "pos": "VOL",
+      "titular": true
+    },
+    {
+      "nome": "Hakan Çalhanoğlu",
+      "pos": "VOL",
+      "titular": true
+    },
+    {
+      "nome": "Kristjan Asllani",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Nicolò Barella",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Petar Sučić",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Davide Frattesi",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Andy Diouf",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Piotr Zielinski",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Ebenezer Akinsanmiro",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Henrikh Mkhitaryan",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Luis Henrique",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Yanis Massolin",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Lautaro Martínez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Marcus Thuram",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Pio Esposito",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ange-Yoan Bonny",
+      "pos": "ATA",
+      "titular": false
+    }
+  ],
+  "milan": [
+    {
+      "nome": "Mike Maignan",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Pietro Terracciano",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Lorenzo Torriani",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Strahinja Pavlović",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Mario Gila",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Koni De Winter",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Fikayo Tomori",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Matteo Gabbia",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "David Odogu",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Filippo Terracciano",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Davide Bartesaghi",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Pervis Estupiñán",
+      "pos": "LE",
+      "titular": false
+    },
+    {
+      "nome": "Zachary Athekame",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Ardon Jashari",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Youssouf Fofana",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Samuele Ricci",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Ismaël Bennacer",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Adrien Rabiot",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Yunus Musah",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Ruben Loftus-Cheek",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Warren Bondo",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Christian Comotto",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Alexis Saelemaekers",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Alphadjo Cissè",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Rafael Leão",
+      "pos": "PE",
+      "titular": false
+    },
+    {
+      "nome": "Christian Pulisic",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Samuel Chukwueze",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Gonçalo Ramos",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Christopher Nkunku",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Santiago Gimenez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Francesco Camarda",
+      "pos": "ATA",
+      "titular": false
+    }
+  ],
+  "genoa": [
+    {
+      "nome": "Justin Bijlow",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Franz Stolz",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Ernestas Lysionok",
+      "pos": "GOL",
+      "titular": true
+    },
+    {
+      "nome": "Alessandro Marcandalli",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Leo Østigård",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Johan Vásquez",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Alan Matturro",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Alessandro Vogliacco",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Sebastian Otoa",
+      "pos": "ZAG",
+      "titular": true
+    },
+    {
+      "nome": "Aarón Martín",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "David Puczka",
+      "pos": "LE",
+      "titular": true
+    },
+    {
+      "nome": "Latif Ouedraogo",
+      "pos": "LE",
+      "titular": false
+    },
+    {
+      "nome": "Marcelo Vaz",
+      "pos": "LE",
+      "titular": false
+    },
+    {
+      "nome": "Brooke Norton-Cuffy",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Stefano Sabelli",
+      "pos": "LD",
+      "titular": false
+    },
+    {
+      "nome": "Morten Frendrup",
+      "pos": "VOL",
+      "titular": false
+    },
+    {
+      "nome": "Amorim",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Mikael Egill Ellertsson",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Franz-Ethan Meichtry",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Patrizio Masini",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Samuel Wiafe",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Tommaso Baldanzi",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Hugo Cuenca",
+      "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Lorenzo Venturino",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Junior Messias",
+      "pos": "PD",
+      "titular": false
+    },
+    {
+      "nome": "Lorenzo Colombo",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Vitinha",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Elias Havel",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Alessandro Debenedetti",
       "pos": "ATA",
       "titular": false
     }

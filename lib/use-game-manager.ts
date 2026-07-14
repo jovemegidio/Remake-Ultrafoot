@@ -10,6 +10,9 @@ import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent }
 import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getPlayersByTeam } from "@/lib/players-data"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
+// Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
+import { generateJobOffers, computeBoardConfidence, calcSeasonObjective } from "@/lib/board-engine"
+import { addJobOffers } from "@/lib/career-moves"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -1038,6 +1041,61 @@ export function useGameManager() {
           },
         }
       }
+    }
+
+    // ── PROPOSTAS DE OUTROS CLUBES ──────────────────────────────────────────
+    //
+    // BUG que isto corrige: `generateJobOffers()` (lib/board-engine.ts) existia completa
+    // e NUNCA era chamada. Codigo morto — nenhum clube jamais procurava o tecnico, por
+    // melhor que fosse a campanha, e o ciclo "performar -> ser cortejado -> subir de
+    // patamar" nunca fechava.
+    //
+    // Agora ele roda a cada semana. O proprio motor ja e conservador (so procura quem
+    // tem confianca >= 70 e esta no top 6), entao nao vira spam.
+    try {
+      const st = saveStateRef.current
+      const shortNow = st.selectedTeamShort ?? ""
+      const teamNow = getTeamByShort(shortNow)
+      if (teamNow) {
+        const tabela = [...useGameEngine.getState().serieAStandings].sort(
+          (a, b) => b.points - a.points,
+        )
+        const posNow = tabela.findIndex((s) => s.teamShort === shortNow) + 1 || 20
+
+        // Forma recente do usuario (mais recente primeiro), a partir dos resultados dele.
+        const recentForm = [...useGameEngine.getState().matchResults]
+          .filter((r) => r.homeTeam === shortNow || r.awayTeam === shortNow)
+          .slice(-5)
+          .reverse()
+          .map((r) => {
+            const isHome = r.homeTeam === shortNow
+            const pro = isHome ? r.homeScore : r.awayScore
+            const contra = isHome ? r.awayScore : r.homeScore
+            return pro > contra ? "V" : pro === contra ? "E" : "D"
+          }) as ("V" | "E" | "D")[]
+
+        const confianca = computeBoardConfidence({
+          currentPosition: posNow,
+          objective: calcSeasonObjective(teamNow),
+          recentForm,
+          seasonProgress: Math.min(1, newWeek / Math.max(1, seasonEndWeek)),
+        })
+
+        const candidatos = allTeams
+          .filter((t) => t.curto !== shortNow)
+          .map((t) => ({ curto: t.curto, nome: t.nome, prestigio: t.prestigio ?? 60 }))
+
+        const ofertas = generateJobOffers(
+          confianca,
+          posNow,
+          teamNow.prestigio ?? 60,
+          candidatos,
+          { allowNationalTeam: true },
+        )
+        if (ofertas.length) addJobOffers(ofertas, st.season, newWeek)
+      }
+    } catch {
+      // Propostas sao um extra: se algo falhar aqui, o avanco de semana NAO pode quebrar.
     }
 
     return {

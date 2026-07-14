@@ -56,6 +56,20 @@ if (!newcastle) {
   }
 }
 
+// ── Ligas novas: o clube tem que CASAR mesmo com prefixo societario ─────────
+// A planilha diz "FC Barcelona" / "AC Milan" / "Olympique de Marseille" e o jogo diz
+// "Barcelona" / "Milan" / "Olympique Marseille". Sem o clubKey(), nao casavam e o
+// elenco real NAO era aplicado — em silencio, sem erro nenhum.
+for (const frag of ["Barcelona", "Real Madrid", "Milan", "Inter", "Marseille", "Paris"]) {
+  const t = findTeam(frag)
+  if (!t) continue
+  const squad = getPlayersForTeam(t)
+  if (squad.length === 0) { bad(`${t.nome}: elenco vazio`); continue }
+  const gks = squad.filter(p => p.pos === "GOL").length
+  if (gks >= 1) ok(`${t.nome}: ${squad.length} jogadores, ${gks} GOL (elenco real aplicado)`)
+  else bad(`${t.nome}: NENHUM goleiro — elenco real nao foi aplicado`)
+}
+
 // ── Nenhum clube pode ficar sem goleiro ou so com goleiro ────────────────────
 const sample = ["Manchester City", "Liverpool", "Arsenal", "Chelsea", "Fortaleza"]
 for (const frag of sample) {

@@ -475,18 +475,37 @@ export default function PartidaAoVivoPage() {
   const engineWeek = useGameEngine(s => s.currentWeek)
   const engineSeason = useGameEngine(s => s.currentSeason)
   // Resultados de todas as competicoes que rodaram nesta rodada (para a tela pos-jogo)
-  const roundResults = useMemo(
-    () => engineMatchResults
-      .filter(r => r.season === engineSeason && r.week === engineWeek)
+  /**
+   * Resultados da rodada que ACABOU de ser jogada.
+   *
+   * BUG que isto corrige ("a tela de resultados da rodada nao funciona"): o filtro era
+   *
+   *     r.season === engineSeason && r.week === engineWeek
+   *
+   * mas o jogo tem DOIS contadores de semana diferentes — `saveState.week` (save) e
+   * `gameEngine.currentWeek` (engine) — e o resultado e GRAVADO com `saveState.week + 1`
+   * (ver registerUserMatchResult). Filtrar pelo contador do engine quase nunca casava com
+   * a semana em que o resultado foi salvo, entao roundResults vinha VAZIO: o modal abria
+   * em branco, o que na pratica e o mesmo que nao funcionar.
+   *
+   * Em vez de tentar sincronizar os dois contadores (fragil), derivamos a rodada dos
+   * PROPRIOS resultados: a que acabou de ser jogada e a de maior semana registrada.
+   */
+  const roundResults = useMemo(() => {
+    const daTemporada = engineMatchResults.filter(r => r.season === engineSeason)
+    if (daTemporada.length === 0) return []
+
+    const ultimaSemana = Math.max(...daTemporada.map(r => r.week))
+    return daTemporada
+      .filter(r => r.week === ultimaSemana)
       .map(r => ({
         competition: r.competition,
         homeTeam: r.homeTeam,
         awayTeam: r.awayTeam,
         homeScore: r.homeScore,
         awayScore: r.awayScore,
-      })),
-    [engineMatchResults, engineSeason, engineWeek]
-  )
+      }))
+  }, [engineMatchResults, engineSeason])
   const resultRegistered = useRef(false)
   const t = useTranslation()
 
@@ -1416,7 +1435,11 @@ export default function PartidaAoVivoPage() {
           isChampion={isLeagueChampion}
           onClose={() => {
             setShowResult(false)
-            setShowRoundResults(true)
+            // Se por algum motivo nao houver resultados da rodada, NAO abre um modal
+            // vazio: segue direto para a coletiva. Melhor pular uma tela do que mostrar
+            // uma em branco (que e como o bug se manifestava).
+            if (roundResults.length > 0) setShowRoundResults(true)
+            else setShowPressConference(true)
           }}
         />
       )}

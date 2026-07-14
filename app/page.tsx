@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -34,10 +34,19 @@ import { cn } from "@/lib/utils"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { useGameEngine } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
+// Ciclo de carreira: propostas de clubes (motor existia, nunca era chamado) e demissao
+// voluntaria (nao existia — so o TIPO no hall da fama).
+import {
+  listJobOffers,
+  removeJobOffer,
+  clearJobOffers,
+  type PendingJobOffer,
+} from "@/lib/career-moves"
 import { useTranslation } from "@/lib/i18n"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { calcSeasonObjective, computeBoardConfidence, getCareerStatus } from "@/lib/board-engine"
-import { Flag } from "lucide-react"
+import { Flag, Briefcase } from "lucide-react"
+import { useGameState } from "@/lib/save-system"
 
 const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const HOME_WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
@@ -77,6 +86,8 @@ function fixtureDateHeadline(round: number, month?: number): string {
 
 export default function DashboardPage() {
   const { hydrated, userTeam, seasonCalendar, currentStandings, currentCompetition, userPosition, currentSeason, saveState } = useGameManager()
+  // setState: usado para assumir o novo clube ao aceitar uma proposta de emprego.
+  const { setState } = useGameState()
   // Tabela do campeonato EM DISPUTA (antes mostrava sempre a Serie A, mesmo no estadual)
   const standings = currentStandings
   const { offers: nationalOffers, hasNationalTeam } = useNationalTeam()
@@ -170,6 +181,36 @@ export default function DashboardPage() {
   })
   const careerStatus = getCareerStatus(boardConfidence)
 
+  // ── Propostas de outros clubes + pedir demissao ───────────────────────────
+  const [jobOffers, setJobOffers] = useState<PendingJobOffer[]>([])
+  const [showResign, setShowResign] = useState(false)
+
+  const refreshJobOffers = useCallback(() => {
+    setJobOffers(listJobOffers(currentSeason, saveState.week ?? 0))
+  }, [currentSeason, saveState.week])
+
+  useEffect(() => {
+    refreshJobOffers()
+    window.addEventListener("ultrafoot:job-offers:changed", refreshJobOffers)
+    return () => window.removeEventListener("ultrafoot:job-offers:changed", refreshJobOffers)
+  }, [refreshJobOffers])
+
+  /** Aceitar proposta: assume o novo clube e limpa as propostas pendentes. */
+  const handleAcceptJobOffer = (offer: PendingJobOffer) => {
+    clearJobOffers()
+    setState({ selectedTeamShort: offer.clubShort })
+    hardNavigate("/")
+  }
+
+  /**
+   * Pedir demissao — a feature nao existia (so o TIPO `endReason: "resigned"` no hall da
+   * fama). O tecnico ficava preso no clube, sem saida voluntaria.
+   */
+  const handleResign = () => {
+    clearJobOffers()
+    hardNavigate("/splash?menu=1")
+  }
+
   const weeklyIncome = gameEngine.weeklyIncome ?? 0
   const weeklyExpenses = gameEngine.weeklyExpenses ?? 0
   const balance = gameEngine.balance ?? userTeam.saldo
@@ -228,6 +269,61 @@ export default function DashboardPage() {
             </div>
             <ChevronRight className="h-5 w-5 shrink-0 text-[#00ffc8] transition-transform group-hover:translate-x-1" />
           </Link>
+        )}
+
+        {/* PROPOSTAS DE OUTROS CLUBES.
+            generateJobOffers() existia completa em board-engine.ts e NUNCA era chamada:
+            nenhum clube jamais procurava o tecnico, por melhor que fosse a campanha. Agora
+            roda no avanco de semana e as propostas aparecem aqui. */}
+        {jobOffers.length > 0 && (
+          <div className="rounded-xl border border-[#ffd700]/30 bg-[#ffd700]/[0.06] p-4">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#ffd700]/15">
+                <Briefcase className="h-5 w-5 text-[#ffd700]" />
+              </div>
+              <div>
+                <p className="font-semibold text-white">
+                  {jobOffers.length === 1
+                    ? "Um clube quer você no comando"
+                    : `${jobOffers.length} clubes querem você no comando`}
+                </p>
+                <p className="text-sm text-white/50">
+                  Sua campanha chamou atenção. Aceitar encerra seu ciclo no clube atual.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {jobOffers.map((offer) => (
+                <div
+                  key={offer.id}
+                  className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      {offer.clubName}
+                      <span className="ml-2 text-[10px] font-normal text-white/35">
+                        prestígio {offer.clubPrestige}
+                      </span>
+                    </p>
+                    <p className="truncate text-xs text-white/45">{offer.reason}</p>
+                  </div>
+                  <button
+                    onClick={() => handleAcceptJobOffer(offer)}
+                    className="shrink-0 rounded-lg bg-[#ffd700] px-3 py-1.5 text-xs font-bold text-black transition-opacity hover:opacity-90"
+                  >
+                    Aceitar
+                  </button>
+                  <button
+                    onClick={() => { removeJobOffer(offer.id); refreshJobOffers() }}
+                    className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
+                  >
+                    Recusar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Central hub estilo EA FC */}
@@ -393,6 +489,22 @@ export default function DashboardPage() {
                 <GoalCard title={t.dashboard.mainGoal} description="Permanecer na Serie A" progress={userPosition ? Math.max(10, 100 - userPosition * 5) : 50} status={t.common.inProgress} tone="primary" />
                 <GoalCard title={t.dashboard.minGoal} description="Nao rebaixar (Top 16)" progress={userPosition && userPosition <= 16 ? 75 : 30} status={t.common.onTrack} tone="success" />
               </div>
+
+              {/* PEDIR DEMISSAO — a feature nao existia. So havia o TIPO
+                  (`endReason: "resigned"` no hall da fama); a acao nunca foi
+                  implementada, entao o tecnico ficava preso no clube sem saida. */}
+              <div className="flex items-center justify-between gap-3 border-t border-white/[0.04] px-5 py-3">
+                <p className="text-[11px] leading-snug text-white/35">
+                  Sair por conta própria encerra seu ciclo no {userTeam.nome} e registra a
+                  passagem no seu histórico.
+                </p>
+                <button
+                  onClick={() => setShowResign(true)}
+                  className="shrink-0 rounded-lg border border-red-500/25 px-3 py-1.5 text-xs font-semibold text-red-300/80 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                >
+                  Pedir demissão
+                </button>
+              </div>
             </section>
           </div>
 
@@ -553,6 +665,42 @@ export default function DashboardPage() {
         </div>
       </main>
       </div>
+
+      {/* Confirmacao da demissao: e irreversivel, nao pode sair por clique acidental. */}
+      {showResign && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={() => setShowResign(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0c0c14] p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold text-white">Pedir demissão do {userTeam.nome}?</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/60">
+              Sua passagem pelo clube será encerrada e registrada no seu histórico de
+              carreira. Você voltará ao menu para escolher um novo desafio.
+            </p>
+            <p className="mt-3 text-xs text-white/35">
+              Esta ação não pode ser desfeita.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowResign(false)}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:bg-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleResign}
+                className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-400"
+              >
+                Confirmar demissão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

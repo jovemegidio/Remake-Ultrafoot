@@ -413,13 +413,31 @@ function getImportedPlayersForTeam(team: Team): Player[] {
 
 interface RealSquadPlayer { nome: string; pos: string; titular: boolean }
 
+/**
+ * Chave do CLUBE — tira prefixos/sufixos societarios antes de comparar.
+ *
+ * Sem isto o import falha EM SILENCIO: a planilha diz "FC Barcelona" e o jogo diz
+ * "Barcelona"; normalizados viram "fcbarcelona" != "barcelona", nao casam, e o clube
+ * simplesmente nao recebe o elenco real — sem nenhum erro aparecer. Mesmo caso de
+ * "Olympique de Marseille" x "Olympique Marseille" e "AC Milan" x "Milan".
+ *
+ * IMPORTANTE: precisa ser identico ao clubKey() de scripts/import-real-positions.mjs.
+ */
+function clubKey(s: string): string {
+  return normalizeTeamName(s)
+    .replace(/^(fc|cf|ac|as|rc|sc|ss|afc|rcd|ud|cd|sv|ogc|losc|stade)/, "")
+    .replace(/(fc|cf|cfc|ac|sc|afc|club)$/, "")
+    .replace(/^olympiquede/, "olympique")
+}
+
 /** Elenco real do clube (dos CSVs), se houver. */
 function findRealSquad(
   team: { nome: string; curto?: string },
   aliases: string[],
 ): RealSquadPlayer[] | undefined {
   for (const c of [team.nome, team.curto ?? "", ...aliases]) {
-    const hit = REAL_SQUADS[normalizeTeamName(c)]
+    if (!c) continue
+    const hit = REAL_SQUADS[clubKey(c)]
     if (hit?.length) return hit
   }
   return undefined
