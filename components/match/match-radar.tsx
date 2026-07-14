@@ -336,7 +336,25 @@ export function MatchRadar({
 
   useEffect(() => {
     let raf = 0
+    let paused = false
+    // PERFORMANCE: nao gastar CPU/GPU animando quando a janela esta oculta ou minimizada
+    // (comum em PC fraco deixar o jogo de fundo). Ao voltar, retoma o loop.
+    const onVisibility = () => {
+      const hidden = document.hidden
+      if (hidden && !paused) { paused = true; cancelAnimationFrame(raf) }
+      else if (!hidden && paused) { paused = false; raf = requestAnimationFrame(animate) }
+    }
+    // Respeita "reduzir movimento" do SO: em maquinas fracas/aversao a animacao, o radar
+    // atualiza a ~30fps em vez de 60, cortando o custo pela metade sem parecer travado.
+    const reduceMotion = typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    let lastFrame = 0
     const animate = () => {
+      if (reduceMotion) {
+        const now = performance.now()
+        if (now - lastFrame < 33) { raf = requestAnimationFrame(animate); return }
+        lastFrame = now
+      }
       const time = performance.now() / 1000
       const target = ballTargetRef.current
 
@@ -440,7 +458,11 @@ export function MatchRadar({
       raf = requestAnimationFrame(animate)
     }
     raf = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(raf)
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => {
+      cancelAnimationFrame(raf)
+      document.removeEventListener("visibilitychange", onVisibility)
+    }
   }, [])
 
   return (

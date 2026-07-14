@@ -153,12 +153,19 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
 // fechar sem querer. Esc/B cancela, Enter/A confirma (teclado + controle).
 function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
   useEffect(() => {
+    // FASE DE CAPTURA + stopImmediatePropagation: enquanto o aviso de saida esta aberto,
+    // Esc/Enter pertencem SO a ele. Sem isso, a tela de fundo (ex.: menu da splash, que
+    // tambem escuta Enter/Esc no document) reagia a mesma tecla — o usuario apertava
+    // Enter e, em vez de sair, disparava a acao do menu atras do modal.
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.preventDefault(); onCancel() }
-      else if (e.key === "Enter") { e.preventDefault(); onConfirm() }
+      if (e.key === "Escape") {
+        e.preventDefault(); e.stopImmediatePropagation(); onCancel()
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault(); e.stopImmediatePropagation(); onConfirm()
+      }
     }
-    document.addEventListener("keydown", onKey)
-    return () => document.removeEventListener("keydown", onKey)
+    document.addEventListener("keydown", onKey, true)
+    return () => document.removeEventListener("keydown", onKey, true)
   }, [onCancel, onConfirm])
 
   return (

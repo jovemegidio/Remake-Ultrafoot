@@ -393,8 +393,8 @@ export function NegotiationModal({
               </div>
             </div>
 
-            {/* Relacionamento entre clubes: rival dificulta, grupo/parceiro facilita. */}
-            {relationship.kind !== "neutral" && relEffect.note && (
+            {/* Relacionamento entre clubes: rival dificulta, grupo/parceiro/afinidade facilita. */}
+            {relEffect.note && (
               <div className={cn(
                 "flex items-start gap-3 p-3 rounded-xl border text-xs",
                 relationship.kind === "rival"
@@ -409,9 +409,11 @@ export function NegotiationModal({
                       : <Link2 className="h-4 w-4" />}
                 </div>
                 <div>
-                  <div className="font-semibold">
-                    {relationship.label}{relationship.detail ? ` — ${relationship.detail}` : ""}
-                  </div>
+                  {relationship.kind !== "neutral" && (
+                    <div className="font-semibold">
+                      {relationship.label}{relationship.detail ? ` — ${relationship.detail}` : ""}
+                    </div>
+                  )}
                   <div className="opacity-80">{relEffect.note}</div>
                 </div>
               </div>

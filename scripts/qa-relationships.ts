@@ -50,5 +50,16 @@ const neutral = getRelationshipEffect("Palmeiras", "Bahia", "buy")
 if (neutral.chanceMult === 1 && neutral.priceMult === 1) ok("neutro: sem modificador")
 else bad(`neutro effect inesperado: ${JSON.stringify(neutral)}`)
 
+// Afinidade de mercado (dados historicos do Sao Paulo): Santos e rival, mas com
+// circulacao altissima -> bloqueio suavizado (nao e hardBlock puro).
+const spSantos = getRelationshipEffect("São Paulo", "Santos", "buy")
+if (!spSantos.hardBlock && spSantos.chanceMult > 0.4) ok("SP x Santos: rival com circulacao -> bloqueio suavizado")
+else bad(`SP x Santos inesperado: ${JSON.stringify(spSantos)}`)
+
+// Parceiro frequente sem rivalidade (SP x Fluminense) -> leve facilitacao.
+const spFlu = getRelationshipEffect("São Paulo", "Fluminense", "buy")
+if (spFlu.chanceMult > 1) ok("SP x Fluminense: afinidade facilita")
+else bad(`SP x Fluminense inesperado: ${JSON.stringify(spFlu)}`)
+
 console.log(fail ? `\nRESULTADO: ${fail} falha(s)` : "\nRESULTADO: OK — relacionamento entre clubes funcionando")
 process.exitCode = fail ? 1 : 0

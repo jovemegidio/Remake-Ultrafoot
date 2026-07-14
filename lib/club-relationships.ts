@@ -121,6 +121,52 @@ export function getClubRelationship(teamAName: string, teamBName: string): ClubR
   return { kind: "neutral", score: 0, label: "Neutro" }
 }
 
+// ── Afinidade de mercado (circulacao historica de jogadores) ─────────────────
+// Baseado no levantamento de transferencias 1930–2026: clubes que historicamente
+// negociam MUITO entre si fecham negocio mais facil, mesmo sem serem do mesmo grupo.
+// Seed com os parceiros do Sao Paulo (o exemplo do usuario); extensivel por clube.
+// peso 0-1 ~ frequencia relativa das movimentacoes (entradas + saidas).
+interface TradeAffinity { club: string[]; partners: { keys: string[]; weight: number }[] }
+const TRADE_AFFINITY: TradeAffinity[] = [
+  {
+    club: ["sao paulo"],
+    partners: [
+      { keys: ["santos"], weight: 1.0 },          // disparado o maior (rival + circulacao)
+      { keys: ["fluminense"], weight: 0.9 },
+      { keys: ["sport recife", "sport"], weight: 0.8 },
+      { keys: ["botafogo"], weight: 0.8 },
+      { keys: ["gremio"], weight: 0.8 },
+      { keys: ["athletico", "atletico paranaense"], weight: 0.75 },
+      { keys: ["cruzeiro"], weight: 0.75 },
+      { keys: ["flamengo"], weight: 0.7 },
+      { keys: ["atletico mineiro", "atletico mg"], weight: 0.65 },
+      { keys: ["coritiba"], weight: 0.55 },
+      { keys: ["guarani"], weight: 0.55 },
+      { keys: ["ponte preta"], weight: 0.5 },
+      { keys: ["internacional"], weight: 0.5 },
+      { keys: ["palmeiras"], weight: 0.5 },       // rival, mas circula
+      { keys: ["porto"], weight: 0.5 },
+      { keys: ["corinthians"], weight: 0.4 },      // rival, circulacao menor
+      { keys: ["vasco"], weight: 0.4 },
+      { keys: ["goias"], weight: 0.4 },
+    ],
+  },
+]
+
+/** Afinidade de mercado 0-1 entre dois clubes (0 = sem historico conhecido). */
+export function getTradeAffinity(teamAName: string, teamBName: string): number {
+  for (const t of TRADE_AFFINITY) {
+    const aIsClub = hasAny(teamAName, t.club)
+    const bIsClub = hasAny(teamBName, t.club)
+    if (!aIsClub && !bIsClub) continue
+    const other = aIsClub ? teamBName : teamAName
+    for (const p of t.partners) {
+      if (hasAny(other, p.keys)) return p.weight
+    }
+  }
+  return 0
+}
+
 export interface RelationshipEffect {
   /** Multiplica a CHANCE do clube vendedor aceitar (ex.: 0.55 rival, 1.25 grupo). */
   chanceMult: number
@@ -142,6 +188,7 @@ export function getRelationshipEffect(
   type: "buy" | "loan" = "buy",
 ): RelationshipEffect {
   const rel = getClubRelationship(buyerName, sellerName)
+  const affinity = getTradeAffinity(buyerName, sellerName) // 0-1
 
   switch (rel.kind) {
     case "group":
@@ -158,14 +205,29 @@ export function getRelationshipEffect(
         hardBlock: false,
         note: `${rel.detail}: relacao de confianca, a conversa flui.`,
       }
-    case "rival":
+    case "rival": {
+      // Rival com ALTA circulacao historica (ex.: Santos<->Sao Paulo) e menos travado
+      // que um rival sem trato: o bloqueio duro so vale para afinidade baixa.
+      const softens = affinity >= 0.6
       return {
-        chanceMult: 0.4,
-        priceMult: 1.6,
-        hardBlock: true,
-        note: `${rel.detail}: rival dificulta a venda — so libera por muito acima do valor.`,
+        chanceMult: 0.4 + affinity * 0.35,
+        priceMult: 1.6 - affinity * 0.25,
+        hardBlock: !softens,
+        note: softens
+          ? `${rel.detail}: rival, mas ha circulacao historica de jogadores — negocio dificil, porem possivel.`
+          : `${rel.detail}: rival dificulta a venda — so libera por muito acima do valor.`,
       }
+    }
     default:
+      // Sem relacao especial, mas com historico de negocios: leve facilitacao.
+      if (affinity > 0) {
+        return {
+          chanceMult: 1 + affinity * 0.18,
+          priceMult: 1 - affinity * 0.06,
+          hardBlock: false,
+          note: `Clubes com histórico de negociações: a conversa tende a fluir melhor.`,
+        }
+      }
       return { chanceMult: 1, priceMult: 1, hardBlock: false, note: "" }
   }
 }
