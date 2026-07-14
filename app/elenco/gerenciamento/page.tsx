@@ -889,15 +889,30 @@ export default function ElencoPage() {
             {activeTab === "elenco" && (
             <>
             {/* Pitch area */}
-            <div 
+            <div
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
               className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px]"
               style={{
-                background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
+                // Turfa em gradiente radial (mais viva ao alto) + sombra interna — a
+                // direcao visual aprovada, evolucao do gradiente chapado anterior.
+                background:
+                  "radial-gradient(120% 90% at 50% -6%, #1c5a3a 0%, #164a31 44%, #0f3722 78%, #0a2718 100%)",
+                boxShadow: "inset 0 0 60px rgba(0,0,0,0.5)",
               }}
             >
+              {/* Refletores nos quatro cantos (clima de estadio a noite). */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(60% 55% at 15% 8%, rgba(255,255,235,0.10), transparent 70%)," +
+                    "radial-gradient(60% 55% at 85% 8%, rgba(255,255,235,0.10), transparent 70%)," +
+                    "radial-gradient(60% 55% at 15% 92%, rgba(255,255,235,0.07), transparent 70%)," +
+                    "radial-gradient(60% 55% at 85% 92%, rgba(255,255,235,0.07), transparent 70%)",
+                }}
+              />
               {/* Pitch stripes */}
               <div
                 className="absolute inset-0 opacity-15"
@@ -976,14 +991,19 @@ export default function ElencoPage() {
                   
                   {/* Player avatar */}
                   <div className="relative">
+                    {/* Sombra de chao: da a profundidade "acima da grama" da direcao aprovada. */}
+                    <span
+                      className="pointer-events-none absolute left-1/2 -bottom-1 h-2 w-8 -translate-x-1/2 rounded-[50%]"
+                      style={{ background: "rgba(0,0,0,0.45)", filter: "blur(3px)" }}
+                    />
                     <PlayerAvatarCircle
                       name={player.name}
                       teamColor={userTeam.cor1}
                       size="sm"
                       className={cn(
-                        "border-2 transition-all",
+                        "relative border-2 shadow-[0_3px_8px_rgba(0,0,0,0.55)] transition-all",
                         selectedPlayerId === player.id
-                          ? "border-[#00ffc8] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
+                          ? "border-[#00ffc8] shadow-[0_0_12px_rgba(0,255,200,0.5)]"
                           : "border-white/30 group-hover:border-white/60"
                       )}
                     />
