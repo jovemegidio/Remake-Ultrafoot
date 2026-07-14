@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
+import { hardNavigate } from "@/lib/hard-navigation"
 import Image from "next/image"
 import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -26,7 +26,6 @@ function formatLongDate(ts: number) {
 type Tab = "principais" | "controle"
 
 export default function SalvarPage() {
-  const router = useRouter()
   const { state, hydrated } = useGameState()
   const { seasonCalendar } = useGameManager()
 
@@ -60,7 +59,7 @@ export default function SalvarPage() {
         ]
       : [
           { keyLabel: "enter", label: "Selecionar" },
-          { keyLabel: "Esc", label: "Voltar", onClick: () => router.push("/configuracoes") },
+          { keyLabel: "Esc", label: "Voltar", onClick: () => hardNavigate("/configuracoes") },
           { keyLabel: "q", label: "Liberar espacos" },
         ],
   )
@@ -69,7 +68,7 @@ export default function SalvarPage() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (naming) setNaming(false)
-        else router.push("/configuracoes")
+        else hardNavigate("/configuracoes")
       } else if (e.key === "Enter" && naming) {
         setSavedName(saveName)
         setNaming(false)
@@ -77,7 +76,7 @@ export default function SalvarPage() {
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [naming, saveName, router])
+  }, [naming, saveName])
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-[#05080a]">
@@ -91,7 +90,7 @@ export default function SalvarPage() {
       {/* Cabecalho: emblema mc + trilha Personalizar > Salvar + sub-abas */}
       <header className="relative z-10 flex h-20 shrink-0 items-center gap-5 px-10">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => hardNavigate("/")}
           aria-label="Inicio"
           className="flex h-11 shrink-0 items-center justify-center rounded-lg px-1 transition-opacity hover:opacity-80"
         >
@@ -107,7 +106,7 @@ export default function SalvarPage() {
 
         {/* Secao pai */}
         <button
-          onClick={() => router.push("/configuracoes")}
+          onClick={() => hardNavigate("/configuracoes")}
           className="group flex shrink-0 flex-col items-center gap-1"
         >
           <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded-[4px] border border-white/20 bg-white/[0.06] px-1 font-mono text-[9px] font-semibold text-white/70">
