@@ -3,7 +3,15 @@
 
 import playersBR from "@/data/seeds/players_br.json"
 import importedBF2026 from "@/data/seeds/imported-bf2026.json"
+// Elencos REAIS por clube (gerado por scripts/import-real-positions.mjs a partir dos
+// CSVs). Corrige as posicoes que o seed atribui por indice E o elenco desatualizado.
+import realSquadsJson from "@/data/seeds/real-positions.json"
 import { allTeams, type Team } from "@/lib/teams-data"
+
+const REAL_SQUADS = realSquadsJson as unknown as Record<
+  string,
+  Array<{ nome: string; pos: string; titular: boolean }>
+>
 
 export type Posicao = "GOL" | "ZAG" | "LD" | "LE" | "VOL" | "MEI" | "ATA" | string
 
@@ -351,6 +359,47 @@ function getImportedPlayersForTeam(team: Team): Player[] {
 
   if (!importedTeam?.jogadores?.length) return []
 
+  // ── ELENCO REAL (CSV) tem prioridade sobre o seed ────────────────────────
+  //
+  // O seed `imported-bf2026.json` tem dois defeitos:
+  //   1) atribui posicao por INDICE do array (o 1o vira GOL, os seguintes DEF...), por
+  //      isso Nick Pope e Ramsdale — goleiros — saiam como ZAGUEIROS;
+  //   2) esta DESATUALIZADO (ainda lista jogadores que ja deixaram o clube).
+  //
+  // Quando o clube esta nos CSVs de elenco, usamos o elenco de LA: nomes e posicoes
+  // reais, titulares primeiro. O overall/idade vem do seed quando o jogador existe la;
+  // para quem e novo, estimamos a partir do proprio elenco do clube (e so isso — nao
+  // inventamos posicao nem nome).
+  const realSquad = findRealSquad(team, aliases)
+
+  const seedByName = new Map(
+    importedTeam.jogadores.map((p) => [normalizeTeamName(p.nome), p]),
+  )
+
+  if (realSquad?.length) {
+    // Base para estimar o overall de quem nao esta no seed: mediana do clube.
+    const seedOveralls = importedTeam.jogadores
+      .map((p) => Math.min(p.overall, MAX_IMPORTED_OVERALL))
+      .sort((a, b) => a - b)
+    const median = seedOveralls.length
+      ? seedOveralls[Math.floor(seedOveralls.length / 2)]
+      : 70
+
+    return realSquad.map((p, i) => {
+      const seed = seedByName.get(normalizeTeamName(p.nome))
+      // Titular tende a ser melhor que reserva — degrada levemente pela ordem.
+      const estimated = Math.max(55, median - Math.floor(i / 6))
+      return {
+        nome: p.nome,
+        pos: p.pos as Posicao,
+        idade: seed?.idade ?? 25,
+        base: seed ? Math.min(seed.overall, MAX_IMPORTED_OVERALL) : estimated,
+        time: team.nome,
+      }
+    })
+  }
+
+  // Sem CSV para este clube: segue o seed como antes.
   return importedTeam.jogadores
     .filter((player) => player.posicao?.toUpperCase() !== "BAN")
     .map((player) => ({
@@ -360,6 +409,20 @@ function getImportedPlayersForTeam(team: Team): Player[] {
       base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
       time: team.nome,
     }))
+}
+
+interface RealSquadPlayer { nome: string; pos: string; titular: boolean }
+
+/** Elenco real do clube (dos CSVs), se houver. */
+function findRealSquad(
+  team: { nome: string; curto?: string },
+  aliases: string[],
+): RealSquadPlayer[] | undefined {
+  for (const c of [team.nome, team.curto ?? "", ...aliases]) {
+    const hit = REAL_SQUADS[normalizeTeamName(c)]
+    if (hit?.length) return hit
+  }
+  return undefined
 }
 
 const importedPlayersByTeam: Record<string, Player[]> = Object.fromEntries(
