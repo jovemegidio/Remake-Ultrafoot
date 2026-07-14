@@ -43,6 +43,7 @@ import { TacticalEditor } from "@/components/tactical-editor"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { getPreMatchBackground } from "@/lib/pre-match-bg"
+import { UniformSelectorModal } from "@/components/match/uniform-selector-modal"
 
 type KitVariant = "home" | "away" | "third"
 
@@ -236,6 +237,7 @@ export default function PartidaPage() {
   const [awayKit, setAwayKit] = useState<KitVariant>("away")
   const [livePhase, setLivePhase] = useState(true)
   const [advantageOptions, setAdvantageOptions] = useState(false)
+  const [showUniformModal, setShowUniformModal] = useState(false)
   const [focusedSide, setFocusedSide] = useState<"home" | "away">("home")
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickSim, setShowQuickSim] = useState(false)
@@ -425,6 +427,22 @@ export default function PartidaPage() {
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
   }, [showQuickSim, router, handleQuickSim])
 
+  // Tecla Q: abre a selecao de uniformes (o keycap [q] sempre existiu na tela, mas a
+  // tecla nunca fez nada — so o clique no botao). Ignora se o modal ja esta aberto (ele
+  // trata o proprio Q para fechar) ou se ha texto em foco.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== "q" || e.ctrlKey || e.altKey || e.metaKey) return
+      if (showUniformModal) return
+      const el = document.activeElement as HTMLElement | null
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return
+      e.preventDefault()
+      setShowUniformModal(true)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [showUniformModal])
+
   if (!hydrated) {
     return (
       <div className="h-screen bg-[#050508] flex items-center justify-center text-white/40 text-sm">
@@ -485,17 +503,19 @@ export default function PartidaPage() {
 
           {/* Coluna central de opcoes */}
           <div className="flex shrink-0 flex-col items-center justify-center gap-10 px-2">
+            {/* Q agora abre a selecao de UNIFORMES (era "Opcoes de vantagem", que so
+                alternava um Sim/Nao sem efeito). */}
             <button
-              onClick={() => setAdvantageOptions((v) => !v)}
+              onClick={() => setShowUniformModal(true)}
               className="flex flex-col items-center gap-1.5 text-center"
             >
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 text-xs font-bold text-white/70">
                   q
                 </span>
-                <span className="text-base font-semibold text-white">{advantageOptions ? "Sim" : "Não"}</span>
+                <span className="text-base font-semibold text-white">Uniformes</span>
               </div>
-              <span className="max-w-24 text-sm leading-tight text-white/55 text-balance">Opções de vantagem</span>
+              <span className="max-w-24 text-sm leading-tight text-white/55 text-balance">Casa e visitante</span>
             </button>
 
             <button
@@ -598,6 +618,17 @@ export default function PartidaPage() {
           { button: "LB", label: "Kit Casa" },
           { button: "RB", label: "Kit Fora" },
         ]}
+      />
+
+      <UniformSelectorModal
+        open={showUniformModal}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+        homeKit={homeKit}
+        awayKit={awayKit}
+        onHomeKit={setHomeKit}
+        onAwayKit={setAwayKit}
+        onClose={() => setShowUniformModal(false)}
       />
     </div>
   )

@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -300,18 +301,18 @@ export default function PreOfficePage() {
   return (
     <div className="relative flex h-screen md:pl-0 pl-0 pb-20 md:pb-0 overflow-hidden">
       {/* Background base escura */}
-      <div className="absolute inset-0 bg-[#050b07]" />
-      {/* Textura de futebol em baixa opacidade */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
-        style={{ backgroundImage: "url('/images/pre-office-pattern.png')" }}
-      />
+      <div className="absolute inset-0 bg-[#050508]" />
+      {/* Mesmos fundos do escritorio (/), com o crossfade suave — a pedido do usuario. */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
+        <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
+      </div>
       {/* Brilho verde radial para profundidade */}
       <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.15) 0%, transparent 60%)"
+        background: "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.12) 0%, transparent 60%)"
       }} />
       {/* Camadas de escurecimento para legibilidade do conteudo */}
-      <div className="absolute inset-0 bg-[#050b07]/55" />
+      <div className="absolute inset-0 bg-[#050508]/78" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#050b07] via-[#050b07]/70 to-[#050b07]/40" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050b07] via-transparent to-[#050b07]/60" />
       <div className="absolute inset-0" style={{
