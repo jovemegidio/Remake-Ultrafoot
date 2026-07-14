@@ -99,11 +99,17 @@ for (const club of CLUBS) {
     sessionStorage.setItem("ultrafoot:session-active", "true")
   }, club.short)
 
-  await page.goto(`${base}/elenco/gerenciamento/`, { waitUntil: "networkidle", timeout: 30000 })
-  await page.waitForTimeout(1800)
-
-  const text = await page.evaluate(() => document.body.innerText.toLowerCase())
-  squads.set(club.short, text.slice(0, 900))
+  // As DUAS telas que montam elenco. A escalacao tinha uma copia byte a byte do
+  // gerenciamento — e o mesmo bug. Se uma divergir da outra, o teste pega.
+  const ROTAS = ["/elenco/gerenciamento/", "/partida/escalacao/"]
+  let text = ""
+  for (const rota of ROTAS) {
+    await page.goto(`${base}${rota}`, { waitUntil: "networkidle", timeout: 30000 })
+    await page.waitForTimeout(1500)
+    const t = await page.evaluate(() => document.body.innerText.toLowerCase())
+    text += " " + t
+    squads.set(`${club.short}${rota}`, t.slice(0, 900))
+  }
 
   const found = real.filter((s) => text.includes(s))
   const pct = real.length ? Math.round((found.length / real.length) * 100) : 0
@@ -126,15 +132,56 @@ for (const club of CLUBS) {
   await page.close()
 }
 
-// 2) Dois clubes diferentes NAO podem renderizar o mesmo elenco.
-const shorts = [...squads.keys()]
-for (let i = 0; i < shorts.length; i++) {
-  for (let j = i + 1; j < shorts.length; j++) {
-    if (squads.get(shorts[i]) === squads.get(shorts[j])) {
-      console.log(`XX ${shorts[i]} e ${shorts[j]} renderizam o MESMO elenco`)
+// 2) Dois clubes DIFERENTES nao podem renderizar o mesmo elenco — era o sintoma
+//    (todo clube exibindo os jogadores do Bragantino).
+//    So comparamos a MESMA tela entre clubes distintos: o mesmo clube em telas
+//    diferentes DEVE ter o mesmo elenco (e o ponto do fix), entao nao e falha.
+const keys = [...squads.keys()]
+for (let i = 0; i < keys.length; i++) {
+  for (let j = i + 1; j < keys.length; j++) {
+    const [aShort, aRota] = [keys[i].slice(0, 3), keys[i].slice(3)]
+    const [bShort, bRota] = [keys[j].slice(0, 3), keys[j].slice(3)]
+    if (aShort === bShort) continue      // mesmo clube: elenco igual e o esperado
+    if (aRota !== bRota) continue        // compara tela contra a mesma tela
+    if (squads.get(keys[i]) === squads.get(keys[j])) {
+      console.log(`XX ${aShort} e ${bShort} renderizam o MESMO elenco em ${aRota}`)
       failures++
     }
   }
+}
+
+// 3) SEM SAVE (o estado do primeiro render, antes da hidratacao no Tauri).
+//
+//    Este e o cheque que prova o fix. O bug era um time DEFAULT: sem save, a pagina caia
+//    em getTeamByShort("BGT") e montava o elenco do RB Bragantino — que o useState entao
+//    congelava para sempre, mesmo depois do clube real chegar.
+//    Nao da para simular a hidratacao assincrona do Tauri neste harness (o localStorage
+//    do navegador e sincrono), mas da para testar o ESTADO EQUIVALENTE: sem time, a tela
+//    NAO pode inventar um elenco. Deve dizer que esta carregando.
+{
+  const page = await browser.newPage()
+  await page.addInitScript(() => {
+    localStorage.removeItem("ultrafoot:save")          // sem save = sem time
+    sessionStorage.setItem("ultrafoot:session-active", "true")
+  })
+
+  for (const rota of ["/elenco/gerenciamento/", "/partida/escalacao/"]) {
+    await page.goto(`${base}${rota}`, { waitUntil: "networkidle", timeout: 30000 })
+    await page.waitForTimeout(1200)
+    const text = (await page.evaluate(() => document.body.innerText)).toLowerCase()
+
+    const leaked = BGT_MARKERS.filter((m) => text.includes(m)).length >= 2
+    if (leaked) {
+      console.log(`XX sem save, ${rota} monta o elenco do RB BRAGANTINO (time default)`)
+      failures++
+    } else if (!text.includes("carregando")) {
+      console.log(`XX sem save, ${rota} nao mostra "carregando" — o que ela esta exibindo?`)
+      failures++
+    } else {
+      console.log(`OK sem save, ${rota} aguarda o time (nao inventa elenco)`)
+    }
+  }
+  await page.close()
 }
 
 await browser.close()
