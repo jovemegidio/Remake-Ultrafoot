@@ -225,6 +225,10 @@ export default function MercadoPage() {
         return
       }
 
+      // Mesmo problema do teclado, no controle: com o modal aberto, LB/RB trocava a aba
+      // e o D-Pad movia a selecao ATRAS do dialog. So o "B" (fechar) passa daqui.
+      if (document.querySelector('[role="dialog"][data-state="open"]')) return
+
       if (button === "LB" || button === "RB") {
         const idx = MARKET_TABS.indexOf(activeTab)
         const fallbackIdx = idx === -1 ? 0 : idx
@@ -256,11 +260,27 @@ export default function MercadoPage() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
+
+      // Com um MODAL aberto, a tela de fundo nao pode reagir ao teclado.
+      //
+      // Este listener esta no window. O slider do Radix e um <span role="slider">, nao
+      // um <input> — entao escapava do guarda isTyping abaixo: apertar a seta no slider
+      // da proposta movia o slider E, ao borbulhar ate aqui, trocava a aba do mercado
+      // atras do modal. Vale para qualquer dialog, nao so o de negociacao.
+      const modalOpen = document.querySelector('[role="dialog"][data-state="open"]')
+      if (modalOpen) {
+        // Esc continua fechando (o proprio Radix ja trata; aqui so evitamos o history.back).
+        return
+      }
+
       const isTyping =
         target?.tagName === "INPUT" ||
         target?.tagName === "TEXTAREA" ||
         target?.tagName === "SELECT" ||
-        target?.isContentEditable
+        target?.isContentEditable ||
+        // Widgets de teclado (slider, spinbutton) consomem as setas por conta propria.
+        target?.getAttribute("role") === "slider" ||
+        target?.getAttribute("role") === "spinbutton"
 
       if (isTyping) return
 
