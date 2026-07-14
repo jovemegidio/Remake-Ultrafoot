@@ -304,6 +304,42 @@ export default function ElencoPage() {
     setDragOverTarget(null)
   }, [])
   
+  /**
+   * Congela o slot de TODOS os 11 em campo e troca so as coordenadas de A e B.
+   *
+   * BUG que isto corrige ("ao substituir um jogador, o sistema rotaciona o time"):
+   * positionedPlayers reencaixa o elenco por POSICAO a cada mudanca em `players`. Trocar
+   * um unico jogador mudava o conjunto de posicoes e o encaixe recalculava para TODOS —
+   * varios jogadores pulavam de slot de uma vez. Pior: os handlers ainda APAGAVAM a
+   * posicao fixada dos envolvidos, forcando o reencaixe.
+   *
+   * Fixando os 11 slots atuais, o encaixe automatico nao tem mais o que "decidir": so
+   * os dois jogadores da troca mudam de lugar.
+   *
+   * Precisa vir ANTES de handleDropOnPitch — que o referencia nas deps.
+   */
+  const pinSlotsAndSwap = useCallback((aId: number, bId: number) => {
+    setPlayerPositions(() => {
+      const pinned: Record<number, { x: number; y: number }> = {}
+      for (const p of positionedPlayers) pinned[p.id] = { x: p.x, y: p.y }
+
+      const slotA = pinned[aId]
+      const slotB = pinned[bId]
+      // Um deles pode vir do banco (sem slot): quem entra herda o slot de quem sai.
+      if (slotA && slotB) {
+        pinned[aId] = slotB
+        pinned[bId] = slotA
+      } else if (slotB) {
+        pinned[aId] = slotB   // A veio do banco, assume o slot de B
+        delete pinned[bId]
+      } else if (slotA) {
+        pinned[bId] = slotA   // B veio do banco, assume o slot de A
+        delete pinned[aId]
+      }
+      return pinned
+    })
+  }, [positionedPlayers])
+
   const handleDropOnPitch = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     const playerId = parseInt(e.dataTransfer.getData("playerId"))
@@ -351,40 +387,6 @@ export default function ElencoPage() {
     setDragOverTarget(null)
   }, [bench, positionedPlayers, pinSlotsAndSwap])
   
-  /**
-   * Congela o slot de TODOS os 11 em campo e troca so as coordenadas de A e B.
-   *
-   * BUG que isto corrige ("ao substituir um jogador, o sistema rotaciona o time"):
-   * positionedPlayers reencaixa o elenco por POSICAO a cada mudanca em `players`. Trocar
-   * um unico jogador mudava o conjunto de posicoes e o encaixe recalculava para todos —
-   * varios jogadores pulavam de slot de uma vez. Pior: os handlers ainda APAGAVAM a
-   * posicao fixada dos envolvidos, forcando o reencaixe.
-   *
-   * Fixando os 11 slots atuais, o encaixe automatico nao tem mais o que "decidir": so
-   * os dois jogadores da troca mudam de lugar.
-   */
-  const pinSlotsAndSwap = useCallback((aId: number, bId: number) => {
-    setPlayerPositions(() => {
-      const pinned: Record<number, { x: number; y: number }> = {}
-      for (const p of positionedPlayers) pinned[p.id] = { x: p.x, y: p.y }
-
-      const slotA = pinned[aId]
-      const slotB = pinned[bId]
-      // Um deles pode vir do banco (sem slot): quem entra herda o slot de quem sai.
-      if (slotA && slotB) {
-        pinned[aId] = slotB
-        pinned[bId] = slotA
-      } else if (slotB) {
-        pinned[aId] = slotB   // A veio do banco, assume o slot de B
-        delete pinned[bId]
-      } else if (slotA) {
-        pinned[bId] = slotA   // B veio do banco, assume o slot de A
-        delete pinned[aId]
-      }
-      return pinned
-    })
-  }, [positionedPlayers])
-
   const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
     e.preventDefault()
     e.stopPropagation()

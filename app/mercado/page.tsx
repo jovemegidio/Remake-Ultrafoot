@@ -163,7 +163,15 @@ export default function MercadoPage() {
   const [filterLeague, setFilterLeague] = useState("Qualquer")
   const [filterTeam, setFilterTeam] = useState("Qualquer")
   const [filterStatus, setFilterStatus] = useState("Qualquer")
-  const STATUS_OPTIONS = ["Qualquer", "Com multa rescisória", "Sem multa"]
+  // Status de transferencia: alem da multa, cobre quem esta disponivel p/ emprestimo
+  // e quem esta sem clube (agente livre).
+  const STATUS_OPTIONS = [
+    "Qualquer",
+    "Com multa rescisória",
+    "Sem multa",
+    "Disponível para empréstimo",
+    "Sem clube",
+  ]
   const clearAllFilters = () => {
     setNameFilter(""); setSearchQuery(""); setSelectedPosition("Tudo")
     setMinAge(16); setMaxAge(35)
@@ -281,9 +289,18 @@ export default function MercadoPage() {
       if (filterCountry !== "Qualquer" && (p.team.pais ?? "") !== filterCountry) return false
       if (filterLeague !== "Qualquer" && divisaoLabel(p.team.divisao) !== filterLeague) return false
       if (filterTeam !== "Qualquer" && p.team.nome !== filterTeam) return false
-      // Status de transferencia: derivado da multa rescisoria
+      // Status de transferencia
       if (filterStatus === "Com multa rescisória" && p.releaseClause == null) return false
       if (filterStatus === "Sem multa" && p.releaseClause != null) return false
+      // Sem clube: agente livre (o banco marca o clube como vazio).
+      if (filterStatus === "Sem clube" && (p.team?.nome ?? "").trim() !== "") return false
+      // Emprestavel: clube grande + jogador jovem/reserva costuma liberar emprestimo.
+      // Sem um flag real no banco, usamos esse criterio (e o rotulo diz "disponivel").
+      if (filterStatus === "Disponível para empréstimo") {
+        const jovem = p.age <= 23
+        const naoEssencial = p.overall < (p.team?.prestigio ?? 70)
+        if (!(jovem || naoEssencial)) return false
+      }
       return true
     })
   }, [transferTargets, nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter,

@@ -38,11 +38,31 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const confirmQuit = () => {
-    void import("@tauri-apps/api/window").then(({ getCurrentWindow }) => {
-      // destroy() fecha de fato — close() re-dispararia o onCloseRequested.
-      void getCurrentWindow().destroy()
-    })
+  // Fechar o jogo NUNCA pode falhar.
+  //
+  // BUG que isto corrige ("nao consigo fechar o jogo nem no alt f4"): o onCloseRequested
+  // faz preventDefault() e mostra este aviso; o "Sair" chamava destroy(). Só que
+  // `core:window:default` do Tauri v2 NAO inclui `allow-destroy` — a chamada era negada
+  // em silencio. Resultado: o fechamento estava bloqueado e nada o desbloqueava. O jogo
+  // ficava impossivel de fechar.
+  //
+  // Alem de conceder a permissao (capabilities/default.json), aqui vai o cinto de
+  // seguranca: se destroy() falhar, encerra o PROCESSO pelo plugin process.
+  const confirmQuit = async () => {
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window")
+      await getCurrentWindow().destroy()
+      return
+    } catch {
+      // cai no fallback abaixo
+    }
+    try {
+      const { exit } = await import("@tauri-apps/plugin-process")
+      await exit(0)
+    } catch {
+      // Ultimo recurso: libera o fechamento nativo removendo o bloqueio.
+      window.close()
+    }
   }
 
   useEffect(() => {

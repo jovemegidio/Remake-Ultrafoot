@@ -276,6 +276,27 @@ export function evaluateAgentOffer(
   const bonusRatio = demands.signingBonus > 0 ? terms.signingBonus / demands.signingBonus : 1
   const yearsGap = Math.abs(terms.contractYears - demands.contractYears)
 
+  // ── ATENDEU O QUE ELE PEDIU: fecha. ───────────────────────────────────────
+  //
+  // BUG que isto corrige: a aceitacao dependia so de `satisfaction >= 62`. Um agente
+  // duro (toughness ~95) derruba a satisfacao em (95-50)*0.28 = 12,6 pontos, entao mesmo
+  // ACEITANDO A CONTRAPROPOSTA dele a conta dava ~59 — abaixo de 62. Ele contrapropunha
+  // de novo, para sempre: era impossivel fechar a contratacao ("mesmo colocando o que o
+  // jogador pede, ele ainda aumenta as exigencias").
+  //
+  // Agora a regra e explicita e honesta: se o salario, as luvas e o papel atendem (ou
+  // superam) o que ele exigiu, o agente ASSINA — independente da conta de satisfacao.
+  const meetsSalary = terms.salary >= demands.salary
+  const meetsBonus = terms.signingBonus >= demands.signingBonus
+  const meetsRole = ROLE_RANK[terms.role] >= ROLE_RANK[demands.minRole]
+  if (meetsSalary && meetsBonus && meetsRole) {
+    return {
+      verdict: "accepted",
+      satisfaction: 100,
+      message: `Fechado. ${playerName} assina — voce atendeu o que pedimos.`,
+    }
+  }
+
   // Papel ACIMA do minimo compensa dinheiro: promover a titular vale salario.
   const roleBonus = (ROLE_WEIGHT[terms.role] - ROLE_WEIGHT[demands.minRole]) * 30
 
