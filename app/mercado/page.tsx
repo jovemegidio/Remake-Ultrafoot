@@ -246,6 +246,15 @@ export default function MercadoPage() {
     })
   }, [centralFormation, gameEngine.squadPlayers])
 
+  // Resumo do elenco para os chips do cabecalho da Central (dado real).
+  const centralStats = useMemo(() => {
+    const squad = gameEngine.squadPlayers ?? []
+    const xi = centralStartingXI.map((s) => s.player).filter(Boolean) as EnginePlayer[]
+    const avg = xi.length ? Math.round(xi.reduce((s, p) => s + p.overall, 0) / xi.length) : 0
+    const value = squad.reduce((s, p) => s + (p.marketValue || 0), 0)
+    return { avg, count: squad.length, value }
+  }, [gameEngine.squadPlayers, centralStartingXI])
+
   // Vitrine dinâmica: alvos do banco real, estáveis dentro da temporada
   const transferTargets = useMemo(
     () => generateDetailedMarketTargets(userTeam?.curto ?? "", 60, gameEngine.currentSeason),
@@ -1142,13 +1151,33 @@ export default function MercadoPage() {
 
           {/* Central de Transferencias Tab */}
           <TabsContent value="central" className="mt-0">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-xs border border-white/20 rounded px-1.5 py-0.5 text-white/50">z</span>
-                <span className="text-white font-semibold">Transferencia</span>
+            {/* Cabecalho da Central — titulo claro + chips com o resumo REAL do elenco. */}
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
+                  <ArrowLeftRight className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold leading-tight text-white">Central de Transferências</h2>
+                  <p className="text-sm text-white/50">Sua base de operações no mercado</p>
+                </div>
               </div>
-              <span className="text-white/20">|</span>
-              <span className="text-white/40">Qualidades</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { icon: <Shield className="h-3.5 w-3.5" />, label: "Formação", value: centralFormation },
+                  { icon: <Star className="h-3.5 w-3.5" />, label: "Média XI", value: String(centralStats.avg) },
+                  { icon: <User className="h-3.5 w-3.5" />, label: "Elenco", value: String(centralStats.count) },
+                  { icon: <Trophy className="h-3.5 w-3.5" />, label: "Valor", value: formatCurrency(centralStats.value) },
+                ].map((c) => (
+                  <div key={c.label} className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5">
+                    <span className="text-primary/80">{c.icon}</span>
+                    <div className="leading-none">
+                      <div className="text-[10px] uppercase tracking-wide text-white/40">{c.label}</div>
+                      <div className="text-sm font-bold text-white">{c.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
@@ -1156,34 +1185,36 @@ export default function MercadoPage() {
               <div className="space-y-4">
                 {/* Action Cards Row */}
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Nova Escalacao Card */}
-                  <button 
+                  {/* Buscar atletas */}
+                  <button
+                    type="button"
                     onClick={() => setActiveTab("buscar")}
-                    className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] hover:border-primary/30 group"
+                    className="group relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
                   >
-                    <h3 className="text-white font-semibold text-lg mb-1">Nova escalacao</h3>
-                    <div className="flex items-center justify-center h-[calc(100%-3rem)]">
-                      <div className="w-20 h-20 rounded-full border-4 border-white/40 flex items-center justify-center group-hover:border-primary transition-colors">
-                        <svg className="w-10 h-10 text-white/60 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/25 transition-colors group-hover:bg-primary/25">
+                      <Search className="h-6 w-6 text-primary" />
                     </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Buscar atletas</h3>
+                      <p className="text-sm text-white/45">Explore o mercado mundial</p>
+                    </div>
+                    <ChevronRight className="absolute right-4 top-5 h-5 w-5 text-white/20 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                   </button>
 
-                  {/* Importar Escalacao Card */}
+                  {/* Meus olheiros */}
                   <button
                     type="button"
                     onClick={() => setActiveTab("olheiros")}
-                    className="relative rounded-xl p-6 h-48 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] hover:border-primary/30 group"
+                    className="group relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
                   >
-                    <h3 className="text-white font-semibold text-lg mb-1">Importar relatorios</h3>
-                    <div className="flex items-center justify-center h-[calc(100%-3rem)]">
-                      <svg className="w-16 h-16 text-white/40 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5l7 7-7 7" />
-                      </svg>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-400/15 ring-1 ring-amber-400/25 transition-colors group-hover:bg-amber-400/25">
+                      <Eye className="h-6 w-6 text-amber-400" />
                     </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Meus olheiros</h3>
+                      <p className="text-sm text-white/45">Relatórios e alvos</p>
+                    </div>
+                    <ChevronRight className="absolute right-4 top-5 h-5 w-5 text-white/20 transition-transform group-hover:translate-x-1 group-hover:text-amber-400" />
                   </button>
                 </div>
 

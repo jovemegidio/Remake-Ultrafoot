@@ -33,6 +33,10 @@ export interface TeamOverride {
   estadio_nome?: string
   estadio_cap?: number
   patrocinador?: string
+  // Escudo custom (data URL). O escudo e guardado separado no save (ultrafoot:logo:*),
+  // mas viaja no seed embutido POR AQUI para chegar aos outros jogadores. getCustomLogoUrl
+  // (team-crest) usa este campo como fallback quando o jogador nao tem escudo proprio.
+  logoUrl?: string
   kits?: {
     home?: KitData
     away?: KitData

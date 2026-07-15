@@ -29,8 +29,9 @@ import {
   type Team
 } from "@/lib/teams-data"
 import { allInternationalTeams } from "@/lib/international-teams"
-import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl } from "@/components/team-crest"
+import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
 import { isTauri } from "@/lib/game-asset"
+import { compressImageDataUrl } from "@/lib/image-utils"
 import {
   getTeamOverride,
   setTeamOverride,
@@ -243,6 +244,11 @@ export default function EditarPage() {
    */
   const handleExportOverrides = async () => {
     const all = listLocalTeamOverrides()
+    // Junta os escudos custom (guardados separado em ultrafoot:logo:*) em cada clube, para
+    // eles TAMBEM viajarem no build. Inclui clubes que so tem escudo, sem outra edicao.
+    for (const [fileKey, logoUrl] of Object.entries(listLocalCustomLogos())) {
+      all[fileKey] = { ...(all[fileKey] ?? {}), logoUrl }
+    }
     const count = Object.keys(all).length
     if (count === 0) {
       setExportMsg("Nenhuma edicao para exportar.")
@@ -275,7 +281,10 @@ export default function EditarPage() {
   }
 
   const handleKitImageUpload = async (variant: "home" | "away" | "third") => {
-    const processFile = (dataUrl: string) => {
+    const processFile = async (rawDataUrl: string) => {
+      // Comprime ANTES de guardar: sem isto o uniforme importado ia pro save em tamanho
+      // original e inchava o ultrafoot-clubs.json ate o jogo travar/dar erro ao carregar.
+      const dataUrl = await compressImageDataUrl(rawDataUrl, 400)
       setEditDraft(prev => ({
         ...prev,
         kits: {
@@ -314,7 +323,7 @@ export default function EditarPage() {
       const ext = (filePath as string).split(".").pop()?.toLowerCase() ?? "png"
       const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "webp" ? "image/webp" : "image/png"
       const base64 = btoa(Array.from(bytes).map(b => String.fromCharCode(b)).join(""))
-      processFile(`data:${mime};base64,${base64}`)
+      await processFile(`data:${mime};base64,${base64}`)
     } else {
       const input = document.createElement("input")
       input.type = "file"
@@ -323,7 +332,7 @@ export default function EditarPage() {
         const file = input.files?.[0]
         if (!file) return
         const reader = new FileReader()
-        reader.onload = e => { if (e.target?.result) processFile(e.target.result as string) }
+        reader.onload = e => { if (e.target?.result) void processFile(e.target.result as string) }
         reader.readAsDataURL(file)
       }
       input.click()
@@ -360,7 +369,9 @@ export default function EditarPage() {
         ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
         ext === "webp" ? "image/webp" : "image/png"
       const base64 = btoa(Array.from(bytes).map(b => String.fromCharCode(b)).join(""))
-      setCustomLogoUrl(fileKey, `data:${mime};base64,${base64}`)
+      // Comprime o escudo antes de gravar (evita inchar o save e travar o jogo).
+      const compressed = await compressImageDataUrl(`data:${mime};base64,${base64}`, 256)
+      setCustomLogoUrl(fileKey, compressed)
       setHasCustomLogo(true)
     } else {
       // Fallback para navegador
@@ -371,10 +382,10 @@ export default function EditarPage() {
         const file = input.files?.[0]
         if (!file) return
         const reader = new FileReader()
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           const dataUrl = e.target?.result as string
           if (dataUrl) {
-            setCustomLogoUrl(fileKey, dataUrl)
+            setCustomLogoUrl(fileKey, await compressImageDataUrl(dataUrl, 256))
             setHasCustomLogo(true)
           }
         }

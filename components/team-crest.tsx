@@ -5,6 +5,11 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
+// Escudos EMBUTIDOS no build (viajam no mesmo seed dos overrides, campo logoUrl). E por
+// eles que um escudo importado no editor chega aos OUTROS jogadores, nao so ao save local.
+import bundledOverrides from "@/data/seeds/team-overrides.json"
+
+const BUNDLED_LOGOS = bundledOverrides as Record<string, { logoUrl?: string }>
 
 interface TeamCrestProps {
   team?: Team
@@ -46,8 +51,23 @@ const sizePixels = {
 const CUSTOM_LOGO_KEY = (key: string) => `ultrafoot:logo:${key}`
 
 export function getCustomLogoUrl(fileKey: string): string | null {
-  if (typeof window === "undefined") return null
-  return storeGet(CUSTOM_LOGO_KEY(fileKey))
+  // Save LOCAL vence (personalizacao propria); o escudo EMBUTIDO no build e o fallback,
+  // e por ele que o escudo que voce importou aparece para todo mundo.
+  const local = typeof window === "undefined" ? null : storeGet(CUSTOM_LOGO_KEY(fileKey))
+  return local ?? BUNDLED_LOGOS[fileKey]?.logoUrl ?? null
+}
+
+/** Escudos custom no save local (ultrafoot:logo:*), por fileKey — usado pelo editor ao exportar. */
+export function listLocalCustomLogos(): Record<string, string> {
+  const out: Record<string, string> = {}
+  if (typeof window === "undefined") return out
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i)
+    if (!k?.startsWith("ultrafoot:logo:")) continue
+    const val = storeGet(k)
+    if (val) out[k.replace("ultrafoot:logo:", "")] = val
+  }
+  return out
 }
 
 export function setCustomLogoUrl(fileKey: string, dataUrl: string): void {
