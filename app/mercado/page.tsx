@@ -1847,12 +1847,15 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
 
   return (
     <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-white/[0.04]">
+      {/* Header — gradiente com a cor do time, no tratamento visual aprovado. */}
+      <div
+        className="p-4 border-b border-white/[0.04]"
+        style={{ background: `linear-gradient(135deg, ${player.team.cor1}22, transparent 62%)` }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {isNew && <AlertCircle className="h-4 w-4 text-[#ffd700]" />}
-            <span className="text-white/60 text-sm font-medium">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-white/55">
               {isNew ? "NOVO" : isNotScouted ? "NAO OBSERVADO" : "OBSERVADO"}
             </span>
           </div>
