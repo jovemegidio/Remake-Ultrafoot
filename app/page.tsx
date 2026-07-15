@@ -97,6 +97,25 @@ export default function DashboardPage() {
   const [sessionChecked, setSessionChecked] = useState(false)
   const [sessionActive, setSessionActive] = useState(false)
 
+  // ── Propostas de outros clubes + pedir demissao ───────────────────────────
+  // ATENCAO: estes hooks TEM que ficar ANTES do early-return de carregamento (mais
+  // abaixo). Estavam depois dele — no render de "carregando" nao rodavam, no render
+  // carregado rodavam: numero de hooks diferente entre renders = React error #310, que
+  // no build estatico aparece como "This page couldn't load" no office. NAO mover para
+  // depois de nenhum return condicional.
+  const [jobOffers, setJobOffers] = useState<PendingJobOffer[]>([])
+  const [showResign, setShowResign] = useState(false)
+
+  const refreshJobOffers = useCallback(() => {
+    setJobOffers(listJobOffers(currentSeason, saveState.week ?? 0))
+  }, [currentSeason, saveState.week])
+
+  useEffect(() => {
+    refreshJobOffers()
+    window.addEventListener("ultrafoot:job-offers:changed", refreshJobOffers)
+    return () => window.removeEventListener("ultrafoot:job-offers:changed", refreshJobOffers)
+  }, [refreshJobOffers])
+
   useEffect(() => {
     setSessionActive(window.sessionStorage.getItem("ultrafoot:session-active") === "true")
     setSessionChecked(true)
@@ -181,20 +200,6 @@ export default function DashboardPage() {
     seasonProgress,
   })
   const careerStatus = getCareerStatus(boardConfidence)
-
-  // ── Propostas de outros clubes + pedir demissao ───────────────────────────
-  const [jobOffers, setJobOffers] = useState<PendingJobOffer[]>([])
-  const [showResign, setShowResign] = useState(false)
-
-  const refreshJobOffers = useCallback(() => {
-    setJobOffers(listJobOffers(currentSeason, saveState.week ?? 0))
-  }, [currentSeason, saveState.week])
-
-  useEffect(() => {
-    refreshJobOffers()
-    window.addEventListener("ultrafoot:job-offers:changed", refreshJobOffers)
-    return () => window.removeEventListener("ultrafoot:job-offers:changed", refreshJobOffers)
-  }, [refreshJobOffers])
 
   /** Aceitar proposta: assume o novo clube e limpa as propostas pendentes. */
   const handleAcceptJobOffer = (offer: PendingJobOffer) => {
