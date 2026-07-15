@@ -87,13 +87,6 @@ const AVAILABLE_SCOUTS: Omit<Scout, "id" | "isSearching" | "searchProgress" | "f
   { name: "Ahmed Hassan", region: "Asia", skill: 4, salary: 30000, weeksToComplete: 0, searchCost: 0 },
 ]
 
-// Jogadores descobertos simulados
-const MOCK_DISCOVERED_PLAYERS = [
-  { id: 1001, name: "Lucas Ribeiro", position: "VOL", age: 19, overall: 72, potential: 85, nationality: "Brasil", marketValue: 3500000, revealedAttributes: false },
-  { id: 1002, name: "Gabriel Santos", position: "ATA", age: 18, overall: 68, potential: 87, nationality: "Brasil", marketValue: 2800000, revealedAttributes: true },
-  { id: 1003, name: "Thiago Almeida", position: "MEI", age: 20, overall: 74, potential: 83, nationality: "Brasil", marketValue: 4200000, revealedAttributes: false },
-]
-
 export default function OlheirosPage() {
   const router = useRouter()
 
@@ -112,22 +105,19 @@ export default function OlheirosPage() {
   const [showHireModal, setShowHireModal] = useState(false)
   const [selectedScoutToHire, setSelectedScoutToHire] = useState<typeof AVAILABLE_SCOUTS[0] | null>(null)
 
-  // Estado simulado de olheiros (em producao viria do gameEngine)
-  const [myScouts, setMyScouts] = useState<Scout[]>([
-    { id: 1, name: "Roberto Silva", region: "Brasil", skill: 3, salary: 20000, isSearching: true, searchProgress: 65, foundPlayers: [1001], weeksToComplete: 1, searchCost: 50000 },
-  ])
-
-  const [discoveredPlayers] = useState(MOCK_DISCOVERED_PLAYERS)
+  // Olheiros contratados e talentos descobertos vem do game-engine (persistidos no save),
+  // nao mais de uma lista fixa. Comecam vazios: voce contrata olheiros e os envia buscar.
+  const myScouts = gameEngine.scouts
+  const discoveredPlayers = gameEngine.scoutedLeads
 
   const handleHireScout = (scout: typeof AVAILABLE_SCOUTS[0]) => {
-    const newScout: Scout = {
-      id: myScouts.length + 1,
+    gameEngine.hireScout({
+      id: Date.now(),
       ...scout,
       isSearching: false,
       searchProgress: 0,
       foundPlayers: [],
-    }
-    setMyScouts([...myScouts, newScout])
+    })
     setShowHireModal(false)
     setSelectedScoutToHire(null)
   }
@@ -135,21 +125,12 @@ export default function OlheirosPage() {
   const handleStartSearch = (scoutId: number, regionId: string) => {
     const region = SCOUTING_REGIONS.find(r => r.id === regionId)
     if (!region) return
-
-    setMyScouts(myScouts.map(s => 
-      s.id === scoutId 
-        ? { ...s, isSearching: true, searchProgress: 0, region: regionId, weeksToComplete: region.weeksToComplete, searchCost: region.searchCost }
-        : s
-    ))
+    gameEngine.startScoutSearch(scoutId, region.name, region.weeksToComplete, region.searchCost)
     setSelectedRegion(null)
   }
 
   const handleStopSearch = (scoutId: number) => {
-    setMyScouts(myScouts.map(s => 
-      s.id === scoutId 
-        ? { ...s, isSearching: false, searchProgress: 0 }
-        : s
-    ))
+    gameEngine.stopScoutSearch(scoutId)
   }
 
   const tabs = [
@@ -544,6 +525,7 @@ export default function OlheirosPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  onClick={() => gameEngine.revealScoutedLead(player.id)}
                                   className="border-white/10 text-white/70 hover:text-white text-xs"
                                 >
                                   <Eye className="h-3.5 w-3.5 mr-1" />
@@ -564,12 +546,12 @@ export default function OlheirosPage() {
                         {player.revealedAttributes && (
                           <div className="mt-4 pt-4 border-t border-white/[0.04] grid grid-cols-6 gap-2">
                             {[
-                              { label: "RIT", value: 78 },
-                              { label: "FIN", value: 82 },
-                              { label: "PAS", value: 71 },
-                              { label: "DRI", value: 76 },
-                              { label: "DEF", value: 45 },
-                              { label: "FIS", value: 69 },
+                              { label: "RIT", value: player.pace },
+                              { label: "FIN", value: player.shooting },
+                              { label: "PAS", value: player.passing },
+                              { label: "DRI", value: player.dribbling },
+                              { label: "DEF", value: player.defending },
+                              { label: "FIS", value: player.physical },
                             ].map((attr) => (
                               <div key={attr.label} className="text-center">
                                 <p className="text-[10px] text-white/40">{attr.label}</p>

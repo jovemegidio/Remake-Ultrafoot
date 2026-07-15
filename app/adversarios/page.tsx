@@ -30,10 +30,15 @@ import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { useGameEngine, type OpponentAnalysis } from "@/lib/game-engine"
+import { useGameEngine, type OpponentAnalysis, type MatchResult } from "@/lib/game-engine"
+import { getPlayersForTeam } from "@/lib/players-data"
 
 // Dados detalhados de adversarios
-const OPPONENT_DATA: Record<string, {
+// Dossie do adversario montado a partir de dados REAIS (elenco, resultados e perfil de
+// atributos do time). Antes era uma tabela fixa que so cobria 4 clubes (FLA/PAL/COR/BOT)
+// com jogadores chumbados (Gabigol/Endrick...) e deixava os outros 16 sem NADA. Um olheiro
+// de verdade forma essas leituras a partir do que o time TEM.
+interface Dossier {
   formation: string
   mentality: string
   keyPlayers: { name: string; position: string; overall: number; threat: number }[]
@@ -47,82 +52,91 @@ const OPPONENT_DATA: Record<string, {
   avgGoalsConceded: number
   dangerZones: string[]
   setpieces: string
-}> = {
-  FLA: {
+}
+
+const THREAT_BY_POS: Record<string, number> = {
+  ATA: 12, CA: 12, SA: 10, PE: 9, PD: 9, MO: 7, MEI: 6, MC: 5, ME: 4, MD: 4, VOL: 2,
+}
+
+function buildOpponentDossier(
+  teamShort: string,
+  teamInfo: Team | null,
+  matchResults: MatchResult[],
+): Dossier | null {
+  if (!teamInfo) return null
+  const squad = getPlayersForTeam(teamInfo)
+  const byRating = [...squad].sort((a, b) => b.base - a.base)
+
+  const keyPlayers = byRating.slice(0, 4).map((p) => ({
+    name: p.nome,
+    position: p.pos,
+    overall: p.base,
+    threat: Math.min(99, p.base + (THREAT_BY_POS[p.pos] ?? 0)),
+  }))
+
+  const avgOf = (positions: string[]) => {
+    const line = squad.filter((p) => positions.includes(p.pos))
+    return line.length ? line.reduce((s, p) => s + p.base, 0) / line.length : 68
+  }
+  const atk = avgOf(["ATA", "CA", "SA", "PE", "PD"])
+  const mid = avgOf(["VOL", "MEI", "MO", "MC", "ME", "MD"])
+  const def = avgOf(["ZAG", "LD", "LE", "ALD", "ALE"])
+
+  const mentality = atk - def >= 3 ? "Ofensivo" : def - atk >= 3 ? "Defensivo" : "Equilibrado"
+
+  const strengths: string[] = []
+  if (atk >= 78) strengths.push("Ataque forte e finalizacao")
+  if (mid >= 78) strengths.push("Dominio de meio-campo")
+  if (def >= 78) strengths.push("Defesa solida")
+  if (!strengths.length) strengths.push("Equipe equilibrada, sem ponto fraco obvio")
+
+  const weaknesses: string[] = []
+  if (def < 72) weaknesses.push("Defesa vulneravel a velocidade")
+  if (mid < 72) weaknesses.push("Meio-campo pouco criativo")
+  if (atk < 72) weaknesses.push("Pouco poder de fogo no ataque")
+  if (!weaknesses.length) weaknesses.push("Sem vulnerabilidade evidente")
+
+  const style =
+    mentality === "Ofensivo"
+      ? ["Pressao alta", "Posse de bola", "Ataque pelas pontas"]
+      : mentality === "Defensivo"
+        ? ["Bloco baixo", "Solidez defensiva", "Contra-ataque"]
+        : ["Transicoes equilibradas", "Controle de meio-campo"]
+
+  // Retrospecto REAL do time nesta temporada, a partir dos resultados ja disputados.
+  const games = matchResults.filter((m) => m.homeTeam === teamShort || m.awayTeam === teamShort)
+  const home = { w: 0, d: 0, l: 0 }
+  const away = { w: 0, d: 0, l: 0 }
+  const form: ("W" | "D" | "L")[] = []
+  let gs = 0
+  let gc = 0
+  for (const m of games) {
+    const isHome = m.homeTeam === teamShort
+    const scored = isHome ? m.homeScore : m.awayScore
+    const conceded = isHome ? m.awayScore : m.homeScore
+    gs += scored
+    gc += conceded
+    const rec = isHome ? home : away
+    if (scored > conceded) { rec.w++; form.push("W") }
+    else if (scored < conceded) { rec.l++; form.push("L") }
+    else { rec.d++; form.push("D") }
+  }
+  const n = games.length || 1
+
+  return {
     formation: "4-3-3",
-    mentality: "Ofensivo",
-    keyPlayers: [
-      { name: "Gabigol", position: "ATA", overall: 84, threat: 95 },
-      { name: "De Arrascaeta", position: "MEI", overall: 85, threat: 90 },
-      { name: "Gerson", position: "VOL", overall: 83, threat: 70 },
-    ],
-    style: ["Posse de bola", "Pressao alta", "Jogo pelas laterais"],
-    weaknesses: ["Laterais sobem muito", "Vulneravel em contra-ataques rapidos", "Bola aerea defensiva"],
-    strengths: ["Meio-campo criativo", "Finalizacao precisa", "Banco de qualidade"],
-    recentForm: ["W", "W", "D", "W", "L"],
-    homeRecord: { w: 8, d: 2, l: 1 },
-    awayRecord: { w: 5, d: 3, l: 3 },
-    avgGoalsScored: 2.1,
-    avgGoalsConceded: 0.9,
-    dangerZones: ["Dentro da area", "Jogadas pela esquerda"],
-    setpieces: "Perigoso em escanteios - Gabigol marca muito de cabeca"
-  },
-  PAL: {
-    formation: "4-4-2",
-    mentality: "Equilibrado",
-    keyPlayers: [
-      { name: "Endrick", position: "ATA", overall: 82, threat: 92 },
-      { name: "Raphael Veiga", position: "MEI", overall: 83, threat: 85 },
-      { name: "Gustavo Gomez", position: "ZAG", overall: 84, threat: 50 },
-    ],
-    style: ["Transicao rapida", "Solidez defensiva", "Jogo direto"],
-    weaknesses: ["Saida de bola lenta", "Pouca criatividade pelo centro"],
-    strengths: ["Defesa organizada", "Eficiencia em finalizacoes", "Forca fisica"],
-    recentForm: ["W", "W", "W", "D", "W"],
-    homeRecord: { w: 9, d: 1, l: 1 },
-    awayRecord: { w: 6, d: 2, l: 3 },
-    avgGoalsScored: 1.8,
-    avgGoalsConceded: 0.7,
-    dangerZones: ["Contra-ataques rapidos", "Segundas bolas"],
-    setpieces: "Forte em faltas - Veiga e cobrador oficial"
-  },
-  COR: {
-    formation: "4-2-3-1",
-    mentality: "Equilibrado",
-    keyPlayers: [
-      { name: "Yuri Alberto", position: "ATA", overall: 80, threat: 85 },
-      { name: "Renato Augusto", position: "MEI", overall: 81, threat: 80 },
-      { name: "Fagner", position: "LD", overall: 79, threat: 55 },
-    ],
-    style: ["Jogo aereo", "Cruzamentos", "Pressao moderada"],
-    weaknesses: ["Falta velocidade na defesa", "Dependente de jogadas aereas"],
-    strengths: ["Experiencia", "Entrosamento", "Jogo aereo ofensivo"],
-    recentForm: ["D", "W", "L", "W", "D"],
-    homeRecord: { w: 6, d: 3, l: 2 },
-    awayRecord: { w: 4, d: 4, l: 3 },
-    avgGoalsScored: 1.4,
-    avgGoalsConceded: 1.1,
-    dangerZones: ["Area em cruzamentos", "Bola parada"],
-    setpieces: "Muito perigoso em escanteios"
-  },
-  BOT: {
-    formation: "4-3-3",
-    mentality: "Muito Ofensivo",
-    keyPlayers: [
-      { name: "Luiz Henrique", position: "PD", overall: 82, threat: 90 },
-      { name: "Savarino", position: "PE", overall: 81, threat: 85 },
-      { name: "Junior Santos", position: "ATA", overall: 80, threat: 88 },
-    ],
-    style: ["Pressao alta intensa", "Jogo rapido", "Muita movimentacao"],
-    weaknesses: ["Espacos na defesa", "Desgaste fisico", "Goleiro questionavel"],
-    strengths: ["Velocidade no ataque", "Transicao ofensiva", "Intensidade"],
-    recentForm: ["W", "W", "W", "W", "D"],
-    homeRecord: { w: 10, d: 0, l: 1 },
-    awayRecord: { w: 7, d: 2, l: 2 },
-    avgGoalsScored: 2.4,
-    avgGoalsConceded: 1.0,
-    dangerZones: ["Contra-ataques", "1v1 pelas pontas"],
-    setpieces: "Moderado - nao depende muito"
+    mentality,
+    keyPlayers,
+    style,
+    weaknesses,
+    strengths,
+    recentForm: form.slice(-5),
+    homeRecord: home,
+    awayRecord: away,
+    avgGoalsScored: gs / n,
+    avgGoalsConceded: gc / n,
+    dangerZones: atk >= def ? ["Jogadas pelo meio", "Infiltracao dos atacantes"] : ["Cruzamentos pelas laterais"],
+    setpieces: def >= 76 ? "Forte na defesa de bolas paradas" : "Vulneravel em escanteios e faltas",
   }
 }
 
@@ -182,9 +196,12 @@ export default function AdversariosPage() {
     }, 300)
   }
 
-  const selectedTeamData = selectedTeam ? OPPONENT_DATA[selectedTeam] : null
   const selectedTeamInfo = selectedTeam ? getTeamByShort(selectedTeam) : null
-  const selectedAnalysis = selectedTeam ? getAnalysis(selectedTeam) : null
+  // Dossie do adversario a partir de dado REAL (elenco + resultados), para TODOS os times.
+  const selectedTeamData = useMemo(
+    () => buildOpponentDossier(selectedTeam ?? "", selectedTeamInfo ?? null, gameEngine.matchResults),
+    [selectedTeam, selectedTeamInfo, gameEngine.matchResults],
+  )
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
