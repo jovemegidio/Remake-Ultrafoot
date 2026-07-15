@@ -1,5 +1,5 @@
 {
-  "bayernmunchen": [
+  "bayernmunich": [
     {
       "nome": "M. Neuer",
       "pos": "GOL",
@@ -1007,7 +1007,7 @@
       "titular": false
     }
   ],
-  "hamburgosv": [
+  "hamburgersv": [
     {
       "nome": "D. Heuer Fernandes",
       "pos": "GOL",
@@ -1119,7 +1119,7 @@
       "titular": false
     }
   ],
-  "hoffenheim": [
+  "tsghoffenheim": [
     {
       "nome": "O. Baumann",
       "pos": "GOL",
@@ -1343,7 +1343,7 @@
       "titular": false
     }
   ],
-  "paderborn07": [
+  "paderborn": [
     {
       "nome": "M. Schubert",
       "pos": "GOL",
@@ -2127,7 +2127,7 @@
       "titular": false
     }
   ],
-  "bochum": [
+  "vflbochum": [
     {
       "nome": "T. Horn",
       "pos": "GOL",
@@ -2799,7 +2799,7 @@
       "titular": false
     }
   ],
-  "heidenheim": [
+  "1fcheidenheim": [
     {
       "nome": "P. Tschernuth",
       "pos": "GOL",
@@ -2911,7 +2911,7 @@
       "titular": false
     }
   ],
-  "kaiserslautern": [
+  "1fckaiserslautern": [
     {
       "nome": "J. Krahl",
       "pos": "GOL",
@@ -3247,7 +3247,7 @@
       "titular": false
     }
   ],
-  "herthaberlin": [
+  "herthab": [
     {
       "nome": "T. Ernst",
       "pos": "GOL",
@@ -3471,7 +3471,7 @@
       "titular": false
     }
   ],
-  "magdeburg": [
+  "1fcmagdeburg": [
     {
       "nome": "D. Reimann",
       "pos": "GOL",
@@ -3583,7 +3583,7 @@
       "titular": false
     }
   ],
-  "nurnberg": [
+  "1fcnurnberg": [
     {
       "nome": "Christian Mathenia",
       "pos": "GOL",
@@ -3695,7 +3695,7 @@
       "titular": false
     }
   ],
-  "osnabruck": [
+  "vflosnabruck": [
     {
       "nome": "Jonas Krumrey",
       "pos": "GOL",
@@ -3919,7 +3919,7 @@
       "titular": false
     }
   ],
-  "wolfsburg": [
+  "vflwolfsburg": [
     {
       "nome": "Kamil Grabara",
       "pos": "GOL",

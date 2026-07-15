@@ -671,7 +671,7 @@ export const serieATeams: Team[] = [
     divisao: "serie_a"
   },
   {
-    nome: "Ceara",
+    nome: "Ceará",
     curto: "CEA",
     cidade: "Fortaleza",
     estado: "CE",
@@ -709,7 +709,7 @@ export const serieBTeams: Team[] = [
     divisao: "serie_b"
   },
   {
-    nome: "Goias",
+    nome: "Goiás",
     curto: "GOI",
     cidade: "Goiania",
     estado: "GO",
@@ -760,7 +760,7 @@ export const serieBTeams: Team[] = [
     divisao: "serie_b"
   },
   {
-    nome: "Avai",
+    nome: "Avaí",
     curto: "AVA",
     cidade: "Florianopolis",
     estado: "SC",
@@ -828,7 +828,7 @@ export const serieBTeams: Team[] = [
     divisao: "serie_b"
   },
   {
-    nome: "Amazonas FC",
+    nome: "Amazonas",
     curto: "AMA",
     cidade: "Manaus",
     estado: "AM",
@@ -845,7 +845,7 @@ export const serieBTeams: Team[] = [
     divisao: "serie_b"
   },
   {
-    nome: "Operario-PR",
+    nome: "Operário-PR",
     curto: "OPE",
     cidade: "Ponta Grossa",
     estado: "PR",
@@ -913,7 +913,7 @@ export const serieBTeams: Team[] = [
     divisao: "serie_b"
   },
   {
-    nome: "São Bernardo FC",
+    nome: "São Bernardo",
     curto: "SBC",
     cidade: "Sao Bernardo do Campo",
     estado: "SP",
@@ -964,7 +964,7 @@ export const serieBTeams: Team[] = [
     divisao: "serie_b"
   },
   {
-    nome: "Criciuma",
+    nome: "Criciúma",
     curto: "CRI",
     cidade: "Criciuma",
     estado: "SC",
@@ -981,7 +981,7 @@ export const serieBTeams: Team[] = [
     divisao: "serie_b"
   },
   {
-    nome: "Cuiaba",
+    nome: "Cuiabá",
     curto: "CUI",
     cidade: "Cuiaba",
     estado: "MT",
@@ -1037,7 +1037,7 @@ export const serieBTeams: Team[] = [
 export const serieCTeams: Team[] = [
   { nome: "Remo", curto: "REM", cidade: "Belem", estado: "PA", cor1: "#003399", cor2: "#ffffff", prestigio: 45, torcida: 920000, estadio_cap: 14932, saldo: 12000000, file_key: "remo_pa", estadio_nome: "Baenao", patrocinador: "Dafabet", escudo_url: getEscudoUrl("remo_pa"), divisao: "serie_c" },
   { nome: "ABC", curto: "ABC", cidade: "Natal", estado: "RN", cor1: "#ffffff", cor2: "#000000", prestigio: 35, torcida: 280000, estadio_cap: 31076, saldo: 5600000, file_key: "abc_rn", estadio_nome: "Frasqueirao", patrocinador: "Betano", escudo_url: getEscudoUrl("abc_rn"), divisao: "serie_c" },
-  { nome: "Nautico", curto: "NAU", cidade: "Recife", estado: "PE", cor1: "#dd0000", cor2: "#ffffff", prestigio: 48, torcida: 750000, estadio_cap: 16500, saldo: 11000000, file_key: "nautico_pe", estadio_nome: "Aflitos", patrocinador: "Pixbet", escudo_url: getEscudoUrl("nautico_pe"), divisao: "serie_c" },
+  { nome: "Náutico", curto: "NAU", cidade: "Recife", estado: "PE", cor1: "#dd0000", cor2: "#ffffff", prestigio: 48, torcida: 750000, estadio_cap: 16500, saldo: 11000000, file_key: "nautico_pe", estadio_nome: "Aflitos", patrocinador: "Pixbet", escudo_url: getEscudoUrl("nautico_pe"), divisao: "serie_c" },
   { nome: "Santa Cruz", curto: "STC", cidade: "Recife", estado: "PE", cor1: "#dd0000", cor2: "#000000", prestigio: 42, torcida: 640000, estadio_cap: 60044, saldo: 8500000, file_key: "santacruz_pe", estadio_nome: "Arruda", patrocinador: "Betnacional", escudo_url: getEscudoUrl("santacruz_pe"), divisao: "serie_c" },
   { nome: "CSA", curto: "CSA", cidade: "Maceio", estado: "AL", cor1: "#003399", cor2: "#ffffff", prestigio: 38, torcida: 420000, estadio_cap: 19385, saldo: 6800000, file_key: "csa_al", estadio_nome: "Rei Pele", patrocinador: "Dafabet", escudo_url: getEscudoUrl("csa_al"), divisao: "serie_c" },
   { nome: "Sampaio Correa", curto: "SAM", cidade: "Sao Luis", estado: "MA", cor1: "#ffcc00", cor2: "#000000", prestigio: 32, torcida: 180000, estadio_cap: 11000, saldo: 4200000, file_key: "sampaio_ma", estadio_nome: "Castelao", patrocinador: "Betano", escudo_url: getEscudoUrl("sampaio_ma"), divisao: "serie_c" },
@@ -1047,7 +1047,7 @@ export const serieCTeams: Team[] = [
   { nome: "Botafogo-PB", curto: "BPB", cidade: "Joao Pessoa", estado: "PB", cor1: "#000000", cor2: "#ffffff", prestigio: 30, torcida: 150000, estadio_cap: 20300, saldo: 3500000, file_key: "botafogo_pb", estadio_nome: "Almeidao", patrocinador: "Dafabet", escudo_url: getEscudoUrl("botafogo_pb"), divisao: "serie_c" },
   { nome: "Aparecidense", curto: "APA", cidade: "Aparecida de Goiania", estado: "GO", cor1: "#003399", cor2: "#ffffff", prestigio: 20, torcida: 25000, estadio_cap: 4500, saldo: 1500000, file_key: "aparecidense_go", estadio_nome: "Annibal", patrocinador: "Pixbet", escudo_url: getEscudoUrl("aparecidense_go"), divisao: "serie_c" },
   { nome: "Ferroviario", curto: "FRV", cidade: "Fortaleza", estado: "CE", cor1: "#dd0000", cor2: "#ffffff", prestigio: 28, torcida: 95000, estadio_cap: 5508, saldo: 2800000, file_key: "ferroviario_ce", estadio_nome: "Elzir Cabral", patrocinador: "Betano", escudo_url: getEscudoUrl("ferroviario_ce"), divisao: "serie_c" },
-  { nome: "Confianca", curto: "CON", cidade: "Aracaju", estado: "SE", cor1: "#003399", cor2: "#ffffff", prestigio: 26, torcida: 85000, estadio_cap: 3680, saldo: 2400000, file_key: "confianca_se", estadio_nome: "Batistao", patrocinador: "Dafabet", escudo_url: getEscudoUrl("confianca_se"), divisao: "serie_c" },
+  { nome: "Confiança", curto: "CON", cidade: "Aracaju", estado: "SE", cor1: "#003399", cor2: "#ffffff", prestigio: 26, torcida: 85000, estadio_cap: 3680, saldo: 2400000, file_key: "confianca_se", estadio_nome: "Batistao", patrocinador: "Dafabet", escudo_url: getEscudoUrl("confianca_se"), divisao: "serie_c" },
   { nome: "Volta Redonda", curto: "VRD", cidade: "Volta Redonda", estado: "RJ", cor1: "#ffcc00", cor2: "#000000", prestigio: 22, torcida: 35000, estadio_cap: 6000, saldo: 1800000, file_key: "voltaredonda_rj", estadio_nome: "Raulino de Oliveira", patrocinador: "Pixbet", escudo_url: getEscudoUrl("voltaredonda_rj"), divisao: "serie_c" },
   { nome: "Altos", curto: "ALT", cidade: "Altos", estado: "PI", cor1: "#dd0000", cor2: "#ffffff", prestigio: 18, torcida: 18000, estadio_cap: 4000, saldo: 1200000, file_key: "altos_pi", estadio_nome: "Feliciano Caceira", patrocinador: "Betano", escudo_url: getEscudoUrl("altos_pi"), divisao: "serie_c" },
   { nome: "Floresta", curto: "FLO", cidade: "Fortaleza", estado: "CE", cor1: "#006633", cor2: "#ffffff", prestigio: 16, torcida: 12000, estadio_cap: 5000, saldo: 900000, file_key: "floresta_ce", estadio_nome: "Ronaldao", patrocinador: "Dafabet", escudo_url: getEscudoUrl("floresta_ce"), divisao: "serie_c" },

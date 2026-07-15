@@ -259,7 +259,7 @@ export const premierLeagueTeams: Team[] = [
     pais: "Inglaterra"
   },
   {
-    nome: "Bournemouth",
+    nome: "AFC Bournemouth",
     curto: "BOU",
     cidade: "Bournemouth",
     estado: "Inglaterra",
@@ -417,7 +417,7 @@ export const laLigaTeams: Team[] = [
     pais: "Espanha"
   },
   {
-    nome: "Barcelona",
+    nome: "FC Barcelona",
     curto: "BAR",
     cidade: "Barcelona",
     estado: "Espanha",
@@ -493,7 +493,7 @@ export const laLigaTeams: Team[] = [
     pais: "Espanha"
   },
   {
-    nome: "Villarreal",
+    nome: "Villarreal CF",
     curto: "VLR",
     cidade: "Villarreal",
     estado: "Espanha",
@@ -550,7 +550,7 @@ export const laLigaTeams: Team[] = [
     pais: "Espanha"
   },
   {
-    nome: "Valencia",
+    nome: "Valencia CF",
     curto: "VAL",
     cidade: "Valencia",
     estado: "Espanha",
@@ -588,7 +588,7 @@ export const laLigaTeams: Team[] = [
     pais: "Espanha"
   },
   {
-    nome: "Getafe",
+    nome: "Getafe CF",
     curto: "GET",
     cidade: "Getafe",
     estado: "Espanha",
@@ -683,7 +683,7 @@ export const laLigaTeams: Team[] = [
     pais: "Espanha"
   },
   {
-    nome: "Las Palmas",
+    nome: "UD Las Palmas",
     curto: "LPA",
     cidade: "Las Palmas",
     estado: "Espanha",
@@ -721,7 +721,7 @@ export const laLigaTeams: Team[] = [
     pais: "Espanha"
   },
   {
-    nome: "Leganes",
+    nome: "CD Leganés",
     curto: "LEG",
     cidade: "Leganes",
     estado: "Espanha",
@@ -993,7 +993,7 @@ export const serieAItaTeams: Team[] = [
     pais: "Italia"
   },
   {
-    nome: "Genoa",
+    nome: "Genoa CFC",
     curto: "GEN",
     cidade: "Genova",
     estado: "Italia",
@@ -1265,7 +1265,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "Wolfsburg",
+    nome: "VfL Wolfsburg",
     curto: "WOB",
     cidade: "Wolfsburg",
     estado: "Alemanha",
@@ -1284,7 +1284,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "Borussia Monchengladbach",
+    nome: "Borussia Mönchengladbach",
     curto: "BMG",
     cidade: "Monchengladbach",
     estado: "Alemanha",
@@ -1303,7 +1303,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "Freiburg",
+    nome: "SC Freiburg",
     curto: "SCF",
     cidade: "Freiburg",
     estado: "Alemanha",
@@ -1360,7 +1360,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "Hoffenheim",
+    nome: "TSG Hoffenheim",
     curto: "TSG",
     cidade: "Sinsheim",
     estado: "Alemanha",
@@ -1417,7 +1417,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "Augsburg",
+    nome: "FC Augsburg",
     curto: "FCA",
     cidade: "Augsburg",
     estado: "Alemanha",
@@ -1436,7 +1436,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "Bochum",
+    nome: "VfL Bochum",
     curto: "BOC",
     cidade: "Bochum",
     estado: "Alemanha",
@@ -1455,7 +1455,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "Heidenheim",
+    nome: "1. FC Heidenheim",
     curto: "HDH",
     cidade: "Heidenheim",
     estado: "Alemanha",
@@ -1474,7 +1474,7 @@ export const bundesligaTeams: Team[] = [
     pais: "Alemanha"
   },
   {
-    nome: "St. Pauli",
+    nome: "FC St. Pauli",
     curto: "STP",
     cidade: "Hamburgo",
     estado: "Alemanha",
@@ -1537,7 +1537,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Monaco",
+    nome: "AS Monaco",
     curto: "MON",
     cidade: "Monaco",
     estado: "Monaco",
@@ -1575,7 +1575,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Lille",
+    nome: "LOSC Lille",
     curto: "LIL",
     cidade: "Lille",
     estado: "Franca",
@@ -1613,7 +1613,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Nice",
+    nome: "OGC Nice",
     curto: "OGC",
     cidade: "Nice",
     estado: "Franca",
@@ -1632,7 +1632,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Lens",
+    nome: "RC Lens",
     curto: "RCL",
     cidade: "Lens",
     estado: "Franca",
@@ -1708,7 +1708,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Nantes",
+    nome: "FC Nantes",
     curto: "FCN",
     cidade: "Nantes",
     estado: "Franca",
@@ -1727,7 +1727,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Reims",
+    nome: "Stade Reims",
     curto: "SDR",
     cidade: "Reims",
     estado: "Franca",
@@ -1746,7 +1746,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Toulouse",
+    nome: "FC Toulouse",
     curto: "TFC",
     cidade: "Toulouse",
     estado: "Franca",
@@ -1784,7 +1784,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Le Havre",
+    nome: "Le Havre AC",
     curto: "HAC",
     cidade: "Le Havre",
     estado: "Franca",
@@ -1841,7 +1841,7 @@ export const ligue1Teams: Team[] = [
     pais: "Franca"
   },
   {
-    nome: "Saint-Etienne",
+    nome: "AS Saint-Étienne",
     curto: "ASSE",
     cidade: "Saint-Etienne",
     estado: "Franca",
@@ -3683,7 +3683,7 @@ export const ligaArgentinaTeams: Team[] = [
   { nome: "Independiente", curto: "IND", cidade: "Avellaneda", estado: "Argentina", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 82, torcida: 180000000, estadio_cap: 52722, saldo: 110000000, file_key: "independiente_arg", estadio_nome: "Estadio Libertadores de America", patrocinador: "Independiente", escudo_url: getIntlEscudo("independiente_arg"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
   { nome: "San Lorenzo", curto: "SLO", cidade: "Buenos Aires", estado: "Argentina", cor1: "#CC0000", cor2: "#003DA5", prestigio: 81, torcida: 160000000, estadio_cap: 42500, saldo: 100000000, file_key: "san_lorenzo", estadio_nome: "Estadio Pedro Bidegain", patrocinador: "San Lorenzo", escudo_url: getIntlEscudo("san_lorenzo"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
   { nome: "Estudiantes LP", curto: "ESL", cidade: "La Plata", estado: "Argentina", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 80, torcida: 150000000, estadio_cap: 23200, saldo: 95000000, file_key: "estudiantes_lp", estadio_nome: "Estadio Ciudad de La Plata", patrocinador: "Estudiantes", escudo_url: getIntlEscudo("estudiantes_lp"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
-  { nome: "Velez Sarsfield", curto: "VEL", cidade: "Buenos Aires", estado: "Argentina", cor1: "#006633", cor2: "#FFFFFF", prestigio: 79, torcida: 140000000, estadio_cap: 49540, saldo: 90000000, file_key: "velez_sarsfield", estadio_nome: "Estadio Jose Amalfitani", patrocinador: "Velez", escudo_url: getIntlEscudo("velez_sarsfield"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
+  { nome: "Vélez Sarsfield", curto: "VEL", cidade: "Buenos Aires", estado: "Argentina", cor1: "#006633", cor2: "#FFFFFF", prestigio: 79, torcida: 140000000, estadio_cap: 49540, saldo: 90000000, file_key: "velez_sarsfield", estadio_nome: "Estadio Jose Amalfitani", patrocinador: "Velez", escudo_url: getIntlEscudo("velez_sarsfield"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
   { nome: "Talleres Cordoba", curto: "TAL", cidade: "Cordoba", estado: "Argentina", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 76, torcida: 120000000, estadio_cap: 57000, saldo: 70000000, file_key: "talleres_cordoba", estadio_nome: "Estadio Mario Alberto Kempes", patrocinador: "Talleres", escudo_url: getIntlEscudo("talleres_cordoba"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
   { nome: "Rosario Central", curto: "RSC", cidade: "Rosario", estado: "Argentina", cor1: "#FFFF00", cor2: "#003DA5", prestigio: 78, torcida: 130000000, estadio_cap: 41654, saldo: 80000000, file_key: "rosario_central", estadio_nome: "Estadio Gigante de Arroyito", patrocinador: "Rosario Central", escudo_url: getIntlEscudo("rosario_central"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
   { nome: "Newells Old Boys", curto: "NOB", cidade: "Rosario", estado: "Argentina", cor1: "#CC0000", cor2: "#000000", prestigio: 77, torcida: 120000000, estadio_cap: 42000, saldo: 75000000, file_key: "newells_old_boys", estadio_nome: "Estadio Marcelo Bielsa", patrocinador: "Newells", escudo_url: getIntlEscudo("newells_old_boys"), divisao: "liga_argentina", regiao: "americas", pais: "Argentina" },
@@ -3891,14 +3891,14 @@ export const bundesliga2Teams: Team[] = [
   { nome: "SV Darmstadt 98", curto: "D9", cidade: "Darmstadt", estado: "Alemanha", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 56, torcida: 14248000, estadio_cap: 17810, saldo: 7280000, file_key: "darmstadt_98", estadio_nome: "Merck-Stadion am Bollenfalltor", patrocinador: "Darmstadt", escudo_url: getIntlEscudo("darmstadt_98"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "1. FC Kaiserslautern", curto: "FK", cidade: "Kaiserslautern", estado: "Alemanha", cor1: "#C8102E", cor2: "#FFFFFF", prestigio: 60, torcida: 39461600, estadio_cap: 49327, saldo: 7800000, file_key: "fc_kaiserslautern", estadio_nome: "Fritz-Walter-Stadion", patrocinador: "Kaiserslautern", escudo_url: getIntlEscudo("fc_kaiserslautern"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "Hertha BSC", curto: "HB", cidade: "Berlim", estado: "Alemanha", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 64, torcida: 59580000, estadio_cap: 74475, saldo: 8320000, file_key: "hertha_bsc", estadio_nome: "Olympiastadion Berlin", patrocinador: "Berlim", escudo_url: getIntlEscudo("hertha_bsc"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
-  { nome: "1. FC Nurnberg", curto: "FN", cidade: "Nuremberg", estado: "Alemanha", cor1: "#C8102E", cor2: "#FFFFFF", prestigio: 58, torcida: 40000000, estadio_cap: 50000, saldo: 7540000, file_key: "fc_nurnberg", estadio_nome: "Max-Morlock-Stadion", patrocinador: "Nuremberg", escudo_url: getIntlEscudo("fc_nurnberg"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
+  { nome: "1. FC Nürnberg", curto: "FN", cidade: "Nuremberg", estado: "Alemanha", cor1: "#C8102E", cor2: "#FFFFFF", prestigio: 58, torcida: 40000000, estadio_cap: 50000, saldo: 7540000, file_key: "fc_nurnberg", estadio_nome: "Max-Morlock-Stadion", patrocinador: "Nuremberg", escudo_url: getIntlEscudo("fc_nurnberg"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "Karlsruher SC", curto: "KS", cidade: "Karlsruhe", estado: "Alemanha", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 56, torcida: 27441600, estadio_cap: 34302, saldo: 7280000, file_key: "karlsruher_sc", estadio_nome: "BBBank Wildpark", patrocinador: "Karlsruhe", escudo_url: getIntlEscudo("karlsruher_sc"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "Dynamo Dresden", curto: "DD", cidade: "Dresden", estado: "Alemanha", cor1: "#FFD500", cor2: "#000000", prestigio: 55, torcida: 25652800, estadio_cap: 32066, saldo: 7150000, file_key: "dynamo_dresden", estadio_nome: "Rudolf-Harbig-Stadion", patrocinador: "Dresden", escudo_url: getIntlEscudo("dynamo_dresden"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "Arminia Bielefeld", curto: "AB", cidade: "Bielefeld", estado: "Alemanha", cor1: "#000000", cor2: "#003DA5", prestigio: 55, torcida: 21865600, estadio_cap: 27332, saldo: 7150000, file_key: "arminia_bielefeld", estadio_nome: "SchuecoArena", patrocinador: "Bielefeld", escudo_url: getIntlEscudo("arminia_bielefeld"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "1. FC Magdeburg", curto: "FM", cidade: "Magdeburg", estado: "Alemanha", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 55, torcida: 24078400, estadio_cap: 30098, saldo: 7150000, file_key: "fc_magdeburg", estadio_nome: "MDCC-Arena", patrocinador: "Magdeburg", escudo_url: getIntlEscudo("fc_magdeburg"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "Eintracht Braunschweig", curto: "EB", cidade: "Braunschweig", estado: "Alemanha", cor1: "#FFD500", cor2: "#003DA5", prestigio: 54, torcida: 19524800, estadio_cap: 24406, saldo: 7020000, file_key: "eintracht_braunschweig", estadio_nome: "Eintracht-Stadion", patrocinador: "Braunschweig", escudo_url: getIntlEscudo("eintracht_braunschweig"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "SpVgg Greuther Furth", curto: "SGF", cidade: "Furth", estado: "Alemanha", cor1: "#00843D", cor2: "#FFFFFF", prestigio: 54, torcida: 13300800, estadio_cap: 16626, saldo: 7020000, file_key: "spvgg_greuther_furth", estadio_nome: "Sportpark Ronhof Thomas Sommer", patrocinador: "Furth", escudo_url: getIntlEscudo("spvgg_greuther_furth"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
-  { nome: "VfL Osnabruck", curto: "OSN", cidade: "Osnabruck", estado: "Alemanha", cor1: "#7B2D8E", cor2: "#FFFFFF", prestigio: 53, torcida: 12878400, estadio_cap: 16098, saldo: 6890000, file_key: "osnabruck", estadio_nome: "Stadion an der Bremer Brucke", patrocinador: "Osnabruck", escudo_url: getIntlEscudo("osnabruck"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
+  { nome: "VfL Osnabrück", curto: "OSN", cidade: "Osnabruck", estado: "Alemanha", cor1: "#7B2D8E", cor2: "#FFFFFF", prestigio: 53, torcida: 12878400, estadio_cap: 16098, saldo: 6890000, file_key: "osnabruck", estadio_nome: "Stadion an der Bremer Brucke", patrocinador: "Osnabruck", escudo_url: getIntlEscudo("osnabruck"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
   { nome: "Energie Cottbus", curto: "EC", cidade: "Cottbus", estado: "Alemanha", cor1: "#C8102E", cor2: "#FFFFFF", prestigio: 52, torcida: 18022400, estadio_cap: 22528, saldo: 6760000, file_key: "energie_cottbus", estadio_nome: "Stadion der Freundschaft", patrocinador: "Cottbus", escudo_url: getIntlEscudo("energie_cottbus"), divisao: "bundesliga_2", regiao: "europa", pais: "Alemanha" },
 ]
 
@@ -3919,22 +3919,22 @@ export const ligue2Teams: Team[] = [
   { nome: "Pau FC", curto: "PF", cidade: "Pau", estado: "Franca", cor1: "#FFD500", cor2: "#003DA5", prestigio: 51, torcida: 3087200, estadio_cap: 3859, saldo: 6630000, file_key: "pau_fc", estadio_nome: "Nouste Camp", patrocinador: "Pau", escudo_url: getIntlEscudo("pau_fc"), divisao: "ligue_2", regiao: "europa", pais: "Franca" },
   { nome: "Red Star FC", curto: "RSF", cidade: "Saint-Ouen", estado: "Franca", cor1: "#00843D", cor2: "#FFFFFF", prestigio: 52, torcida: 8000000, estadio_cap: 10000, saldo: 6760000, file_key: "red_star_fc", estadio_nome: "Stade Bauer", patrocinador: "Saint-Ouen", escudo_url: getIntlEscudo("red_star_fc"), divisao: "ligue_2", regiao: "europa", pais: "Franca" },
   { nome: "Rodez AF", curto: "RA", cidade: "Rodez", estado: "Franca", cor1: "#FFD500", cor2: "#C8102E", prestigio: 51, torcida: 5408800, estadio_cap: 6761, saldo: 6630000, file_key: "rodez_af", estadio_nome: "Stade Paul-Lignon", patrocinador: "Rodez", escudo_url: getIntlEscudo("rodez_af"), divisao: "ligue_2", regiao: "europa", pais: "Franca" },
-  { nome: "FC Sochaux-Montbeliard", curto: "SOC", cidade: "Montbeliard", estado: "Franca", cor1: "#FFD500", cor2: "#003DA5", prestigio: 55, torcida: 16020000, estadio_cap: 20025, saldo: 7150000, file_key: "sochaux_montbeliard", estadio_nome: "Stade Auguste-Bonal", patrocinador: "Montbeliard", escudo_url: getIntlEscudo("sochaux_montbeliard"), divisao: "ligue_2", regiao: "europa", pais: "Franca" },
+  { nome: "FC Sochaux-Montbéliard", curto: "SOC", cidade: "Montbeliard", estado: "Franca", cor1: "#FFD500", cor2: "#003DA5", prestigio: 55, torcida: 16020000, estadio_cap: 20025, saldo: 7150000, file_key: "sochaux_montbeliard", estadio_nome: "Stade Auguste-Bonal", patrocinador: "Montbeliard", escudo_url: getIntlEscudo("sochaux_montbeliard"), divisao: "ligue_2", regiao: "europa", pais: "Franca" },
 ]
 
 // =============================================
 // LA LIGA 2 / SEGUNDA DIVISION - ESPANHA (2ª DIVISÃO)
 // =============================================
 export const laLiga2Teams: Team[] = [
-  { nome: "Albacete Balompie", curto: "AB", cidade: "Albacete", estado: "Espanha", cor1: "#FFFFFF", cor2: "#000000", prestigio: 52, torcida: 13600000, estadio_cap: 17000, saldo: 6760000, file_key: "albacete_balompie", estadio_nome: "Carlos Belmonte", patrocinador: "Albacete", escudo_url: getIntlEscudo("albacete_balompie"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
-  { nome: "UD Almeria", curto: "UA", cidade: "Almeria", estado: "Espanha", cor1: "#C8102E", cor2: "#FFFFFF", prestigio: 57, torcida: 12000000, estadio_cap: 15000, saldo: 7410000, file_key: "ud_almeria", estadio_nome: "UD Almeria Stadium", patrocinador: "Almeria", escudo_url: getIntlEscudo("ud_almeria"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
+  { nome: "Albacete Balompié", curto: "AB", cidade: "Albacete", estado: "Espanha", cor1: "#FFFFFF", cor2: "#000000", prestigio: 52, torcida: 13600000, estadio_cap: 17000, saldo: 6760000, file_key: "albacete_balompie", estadio_nome: "Carlos Belmonte", patrocinador: "Albacete", escudo_url: getIntlEscudo("albacete_balompie"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
+  { nome: "UD Almería", curto: "UA", cidade: "Almeria", estado: "Espanha", cor1: "#C8102E", cor2: "#FFFFFF", prestigio: 57, torcida: 12000000, estadio_cap: 15000, saldo: 7410000, file_key: "ud_almeria", estadio_nome: "UD Almeria Stadium", patrocinador: "Almeria", escudo_url: getIntlEscudo("ud_almeria"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
   { nome: "FC Andorra", curto: "AND", cidade: "Andorra la Vella", estado: "Espanha", cor1: "#003DA5", cor2: "#FFD500", prestigio: 51, torcida: 4080000, estadio_cap: 5100, saldo: 6630000, file_key: "andorra", estadio_nome: "Estadi Nacional", patrocinador: "Andorra la Vella", escudo_url: getIntlEscudo("andorra"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
   { nome: "Burgos CF", curto: "BC", cidade: "Burgos", estado: "Espanha", cor1: "#FFFFFF", cor2: "#000000", prestigio: 51, torcida: 9760000, estadio_cap: 12200, saldo: 6630000, file_key: "burgos_cf", estadio_nome: "El Plantio", patrocinador: "Burgos", escudo_url: getIntlEscudo("burgos_cf"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
-  { nome: "Cadiz CF", curto: "CC", cidade: "Cadiz", estado: "Espanha", cor1: "#FFD500", cor2: "#003DA5", prestigio: 57, torcida: 16560000, estadio_cap: 20700, saldo: 7410000, file_key: "cadiz_cf", estadio_nome: "Nuevo Mirandilla", patrocinador: "Cadiz", escudo_url: getIntlEscudo("cadiz_cf"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
-  { nome: "CD Castellon", curto: "CC", cidade: "Castellon de la Plana", estado: "Espanha", cor1: "#FFFFFF", cor2: "#000000", prestigio: 52, torcida: 12400000, estadio_cap: 15500, saldo: 6760000, file_key: "cd_castellon", estadio_nome: "Estadio Castalia", patrocinador: "Castellon de la Plana", escudo_url: getIntlEscudo("cd_castellon"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
+  { nome: "Cádiz CF", curto: "CC", cidade: "Cadiz", estado: "Espanha", cor1: "#FFD500", cor2: "#003DA5", prestigio: 57, torcida: 16560000, estadio_cap: 20700, saldo: 7410000, file_key: "cadiz_cf", estadio_nome: "Nuevo Mirandilla", patrocinador: "Cadiz", escudo_url: getIntlEscudo("cadiz_cf"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
+  { nome: "CD Castellón", curto: "CC", cidade: "Castellon de la Plana", estado: "Espanha", cor1: "#FFFFFF", cor2: "#000000", prestigio: 52, torcida: 12400000, estadio_cap: 15500, saldo: 6760000, file_key: "cd_castellon", estadio_nome: "Estadio Castalia", patrocinador: "Castellon de la Plana", escudo_url: getIntlEscudo("cd_castellon"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
   { nome: "RC Celta Fortuna", curto: "CF", cidade: "Vigo", estado: "Espanha", cor1: "#87CEEB", cor2: "#FFFFFF", prestigio: 50, torcida: 3600000, estadio_cap: 4500, saldo: 6500000, file_key: "celta_fortuna", estadio_nome: "Estadio Municipal de Barreiro", patrocinador: "Vigo", escudo_url: getIntlEscudo("celta_fortuna"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
   { nome: "AD Ceuta FC", curto: "ACF", cidade: "Ceuta", estado: "Espanha", cor1: "#FFFFFF", cor2: "#000000", prestigio: 50, torcida: 5200000, estadio_cap: 6500, saldo: 6500000, file_key: "ad_ceuta_fc", estadio_nome: "Alfonso Murube", patrocinador: "Ceuta", escudo_url: getIntlEscudo("ad_ceuta_fc"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
-  { nome: "Cordoba CF", curto: "CC", cidade: "Cordoba", estado: "Espanha", cor1: "#FFFFFF", cor2: "#00843D", prestigio: 53, torcida: 16800000, estadio_cap: 21000, saldo: 6890000, file_key: "cordoba_cf", estadio_nome: "Nuevo Arcangel", patrocinador: "Cordoba", escudo_url: getIntlEscudo("cordoba_cf"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
+  { nome: "Córdoba CF", curto: "CC", cidade: "Cordoba", estado: "Espanha", cor1: "#FFFFFF", cor2: "#00843D", prestigio: 53, torcida: 16800000, estadio_cap: 21000, saldo: 6890000, file_key: "cordoba_cf", estadio_nome: "Nuevo Arcangel", patrocinador: "Cordoba", escudo_url: getIntlEscudo("cordoba_cf"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
   { nome: "SD Eibar", curto: "SE", cidade: "Eibar", estado: "Espanha", cor1: "#003DA5", cor2: "#7B0828", prestigio: 54, torcida: 6440000, estadio_cap: 8050, saldo: 7020000, file_key: "sd_eibar", estadio_nome: "Ipurua", patrocinador: "Eibar", escudo_url: getIntlEscudo("sd_eibar"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
   { nome: "CD Eldense", curto: "CE", cidade: "Elda", estado: "Espanha", cor1: "#003DA5", cor2: "#7B0828", prestigio: 50, torcida: 4620800, estadio_cap: 5776, saldo: 6500000, file_key: "cd_eldense", estadio_nome: "Nuevo Pepico Amat", patrocinador: "Elda", escudo_url: getIntlEscudo("cd_eldense"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },
   { nome: "Granada CF", curto: "GC", cidade: "Granada", estado: "Espanha", cor1: "#C8102E", cor2: "#FFFFFF", prestigio: 57, torcida: 15360000, estadio_cap: 19200, saldo: 7410000, file_key: "granada_cf", estadio_nome: "Nuevo Los Carmenes", patrocinador: "Granada", escudo_url: getIntlEscudo("granada_cf"), divisao: "la_liga_2", regiao: "europa", pais: "Espanha" },

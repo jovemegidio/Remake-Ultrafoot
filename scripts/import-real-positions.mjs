@@ -40,26 +40,12 @@ function norm(s) {
 /**
  * Aliases de clube: nome NA PLANILHA -> nome COMO ESTA NO JOGO.
  *
- * A planilha e o jogo escrevem alguns clubes diferente (idioma ou prefixo societario que o
- * clubKey nao remove): "Bayern Munich" x "Bayern München", "VfL Bochum" x "Bochum",
- * "1. FC Nürnberg" x "FC Nürnberg". Sem casar, o clube NAO recebe o elenco (falha silenciosa).
- * Chave = norm(nome da planilha); valor = nome do jogo (passa pelo clubKey normal depois).
+ * Usado quando a planilha e o jogo escrevem o clube diferente e o clubKey nao reconcilia.
+ * VAZIO para a Alemanha: os clubes alemaes foram RENOMEADOS no jogo para o nome exato do CSV
+ * (scripts/apply-club-names.ts), entao clubKey(csv) == clubKey(nomeDoJogo) direto — sem alias.
+ * (Antes havia aliases apontando pros nomes do POOL, que nao casavam com os times CURADOS.)
  */
-const CLUB_NAME_ALIAS = {
-  // Alemanha (Bundesliga 1 e 2)
-  bayernmunich: "Bayern München",
-  hamburgersv: "Hamburgo SV",
-  scpaderborn: "Paderborn 07",
-  tsghoffenheim: "Hoffenheim",
-  "1fcheidenheim": "Heidenheim",
-  "1fckaiserslautern": "Kaiserslautern",
-  "1fcmagdeburg": "Magdeburg",
-  "1fcnurnberg": "FC Nürnberg",
-  herthabsc: "Hertha Berlin",
-  vflbochum: "Bochum",
-  vflosnabruck: "Osnabrück",
-  vflwolfsburg: "Wolfsburg",
-}
+const CLUB_NAME_ALIAS = {}
 
 function clubKey(s) {
   const alias = CLUB_NAME_ALIAS[norm(s)]

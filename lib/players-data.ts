@@ -107,6 +107,12 @@ const teamAliasOverrides: Record<string, string[]> = {
   bayern_munich: ["bayern_ale", "Bayern Munchen", "Bayern München"],
   augsburg: ["augsburg_ale", "FC Augsburg"],
   stuttgart: ["sttutgart_ale", "VfB Stuttgart"],
+  // 2.Bundesliga cujo nome curado difere do pool imported-bf2026 (senao caem em elenco
+  // generico "Reserva" e o overlay real nem e alcancado).
+  fc_kaiserslautern: ["Kaiserslautern"],
+  hertha_bsc: ["Hertha Berlin"],
+  fc_magdeburg: ["Magdeburg"],
+  spvgg_greuther_furth: ["Greuther Fürth", "Greuther Furth"],
   marseille: ["olympiquemarseile_fra", "Olympique Marseille"],
   lille: ["lille_fra"],
   lens: ["lens_fr"],
