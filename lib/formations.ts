@@ -166,6 +166,33 @@ export function assignPlayersToFormation<T extends { id: number; position: strin
 }
 
 /**
+ * Seleciona os 11 titulares ENCAIXANDO o elenco numa formacao (por posicao), com o resto
+ * no banco.
+ *
+ * BUG que isto corrige: as telas de partida montavam o XI com
+ * `sortByPosition(players).slice(0, 11)`. Como a ordenacao vai GOL -> defesa -> meio ->
+ * ATAQUE, num elenco de 18+ com muitos defensores os 11 primeiros eram goleiro + zaga +
+ * meio, e os ATACANTES sobravam de fora. Resultado: time escalado sem centroavante e, na
+ * tela de penalti, so zagueiros/laterais na lista de batedores. Usando a formacao, cada
+ * linha (defesa/meio/ataque) recebe a cota certa e o melhor jogador de cada posicao.
+ */
+export function pickStartingXI<T>(
+  players: T[],
+  getPos: (p: T) => string,
+  getRating: (p: T) => number,
+  formation = "4-3-3",
+): { starters: T[]; bench: T[] } {
+  const byRating = [...players].sort((a, b) => getRating(b) - getRating(a))
+  const tagged = byRating.map((p, i) => ({ id: i, position: getPos(p), ref: p }))
+  const assigned = assignPlayersToFormation(tagged, formation)
+  const chosen = new Set(assigned.map((a) => a.id))
+  return {
+    starters: assigned.map((a) => a.ref),
+    bench: tagged.filter((t) => !chosen.has(t.id)).map((t) => t.ref),
+  }
+}
+
+/**
  * Garante NO MAXIMO 1 goleiro no XI titular.
  *
  * As telas de partida montavam o time com sortByPosition(...).slice(0, 11). Como GOL e a

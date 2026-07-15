@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
@@ -34,18 +34,14 @@ import { RandomEvents } from "@/components/random-events"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameEngine } from "@/lib/game-engine"
 
 type TabType = "vestiario" | "reunioes" | "mensagens" | "contratos" | "eventos" | "disciplina"
 
-// Mock data
-const playerMorale = [
-  { name: "Eduardo Sasha", position: "ATA", morale: 92, trend: "up" },
-  { name: "Lincoln", position: "MEI", morale: 88, trend: "up" },
-  { name: "Eric Ramires", position: "MEI", morale: 85, trend: "stable" },
-  { name: "Helinho", position: "PE", morale: 78, trend: "down" },
-  { name: "Cleiton", position: "GOL", morale: 82, trend: "stable" },
-  { name: "Pedro Henrique", position: "ZAG", morale: 80, trend: "up" },
-]
+// Converte a moral (enum do engine) para 0-100, usado nas barras e nas cores da tela.
+const MORALE_SCORE: Record<string, number> = {
+  Feliz: 92, Motivado: 82, Normal: 66, Insatisfeito: 48, Infeliz: 28,
+}
 
 const meetings = [
   { type: "individual", player: "Lincoln", topic: "Renovacao de contrato", status: "pendente" },
@@ -94,7 +90,22 @@ export default function CentralPage() {
   }, [router])
   const { state } = useGameState()
   const { team: userTeam } = useUserTeam()
+  const { squadPlayers } = useGameEngine()
   const [activeTab, setActiveTab] = useState<TabType>("vestiario")
+
+  // Moral REAL do elenco (vem do seu save, nao mais uma lista fixa). A tendencia sai da
+  // forma do jogador: em alta joga bem e sobe a moral; em baixa, cai.
+  const playerMorale = useMemo(
+    () =>
+      (squadPlayers ?? []).map((p) => ({
+        name: p.name,
+        position: p.position,
+        morale: MORALE_SCORE[p.morale] ?? 66,
+        trend: p.form >= 70 ? "up" : p.form <= 45 ? "down" : "stable",
+        label: p.morale,
+      })),
+    [squadPlayers],
+  )
 
   const tabs = [
     { id: "vestiario" as TabType, label: "Vestiario", icon: Heart, count: null },
@@ -117,7 +128,9 @@ export default function CentralPage() {
     return "text-red-400"
   }
 
-  const averageMorale = Math.round(playerMorale.reduce((acc, p) => acc + p.morale, 0) / playerMorale.length)
+  const averageMorale = playerMorale.length
+    ? Math.round(playerMorale.reduce((acc, p) => acc + p.morale, 0) / playerMorale.length)
+    : 0
 
   return (
     <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
@@ -210,6 +223,9 @@ export default function CentralPage() {
               <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <h3 className="text-sm font-semibold text-white mb-4">Moral Individual</h3>
                 <div className="space-y-2">
+                  {playerMorale.length === 0 && (
+                    <p className="text-xs text-white/40 py-6 text-center">Carregando elenco...</p>
+                  )}
                   {playerMorale.map((player, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
                       <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="sm" />
@@ -229,8 +245,8 @@ export default function CentralPage() {
                             style={{ width: `${player.morale}%` }}
                           />
                         </div>
-                        <span className={cn("text-xs font-bold w-8 text-right", getMoraleColor(player.morale))}>
-                          {player.morale}
+                        <span className={cn("text-xs font-bold text-right whitespace-nowrap", getMoraleColor(player.morale))}>
+                          {player.label}
                         </span>
                       </div>
                     </div>

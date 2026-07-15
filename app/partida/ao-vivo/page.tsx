@@ -32,8 +32,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
-import { capGoalkeepers } from "@/lib/formations"
+import { getPlayersForTeam, type Player } from "@/lib/players-data"
+import { pickStartingXI } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
 import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
@@ -93,10 +93,6 @@ const POSITION_NUMBER_MAP: Record<string, number> = {
   GOL: 1, ZAG: 3, LD: 2, LE: 6, VOL: 5, MEI: 8, ATA: 9, PE: 7, PD: 11,
 }
 
-const POSITION_ORDER: Record<string, number> = {
-  GOL: 0, LD: 1, ZAG: 2, LE: 3, VOL: 4, MEI: 5, PD: 6, PE: 7, ATA: 8,
-}
-
 // Hash determinístico por nome de jogador — elimina Math.random() nos atributos
 function playerHash(name: string, seed: number): number {
   let h = seed
@@ -104,18 +100,32 @@ function playerHash(name: string, seed: number): number {
   return Math.abs(h)
 }
 
+// Aloca números de camisa ÚNICOS por time: tenta o número real do jogador, senão o típico
+// da posição, senão o próximo livre. Sem isto todo LD virava 2, todo ZAG 3, LE 6 — vários
+// jogadores com o mesmo número na tela (foi o bug reportado na tela de pênalti).
+function makeNumberAllocator() {
+  const used = new Set<number>()
+  return (prefer: number | undefined, pos: string): number => {
+    for (const c of [prefer, POSITION_NUMBER_MAP[pos]]) {
+      if (typeof c === "number" && c > 0 && !used.has(c)) { used.add(c); return c }
+    }
+    for (let n = 1; n <= 99; n++) { if (!used.has(n)) { used.add(n); return n } }
+    return 0
+  }
+}
+
 function playersToMatchSquad(players: Player[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
-  // capGoalkeepers: rebaixa goleiros excedentes para o banco. Sem isso, um elenco com 3
-  // goleiros (comum) escalava OS TRES, porque GOL vem primeiro no sortByPosition.
-  const sorted = capGoalkeepers(sortByPosition(players), (p) => p.pos)
-  const starters: MatchPlayer[] = sorted.slice(0, 11).map((p, i) => {
+  // XI encaixado na formacao (garante defesa/meio/ATAQUE completos, nao corta o centroavante).
+  const { starters: xi, bench: benchPool } = pickStartingXI(players, (p) => p.pos, (p) => p.base)
+  const num = makeNumberAllocator()
+  const starters: MatchPlayer[] = xi.map((p, i) => {
     const h = (seed: number) => playerHash(p.nome, seed)
     const isGK = p.pos === "GOL"
-    const isAtt = ["ATA", "PE", "PD"].includes(p.pos)
+    const isAtt = ["ATA", "PE", "PD", "SA", "CA"].includes(p.pos)
     return {
       id: idOffset + i + 1,
       name: p.nome,
-      number: POSITION_NUMBER_MAP[p.pos] ?? i + 1,
+      number: num(undefined, p.pos),
       position: p.pos,
       rating: p.base,
       stamina: 100,
@@ -127,10 +137,10 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
       physical:  60 + (h(7) % 25),
     }
   })
-  const bench: MatchPlayer[] = sorted.slice(11, 18).map((p, i) => ({
+  const bench: MatchPlayer[] = benchPool.slice(0, 7).map((p, i) => ({
     id: idOffset + 100 + i + 1,
     name: p.nome,
-    number: 12 + i,
+    number: num(undefined, p.pos),
     position: p.pos,
     rating: p.base,
     stamina: 100,
@@ -140,22 +150,28 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
 
 // Converte jogadores do game-engine para MatchPlayer
 function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
-  const available = capGoalkeepers(
-    players
-      .filter(p => !p.injury && !p.calledUp)
-      .sort((a, b) => {
-        const aStarter = a.isStarter === true ? 0 : a.isStarter === false ? 2 : 1
-        const bStarter = b.isStarter === true ? 0 : b.isStarter === false ? 2 : 1
-        if (aStarter !== bStarter) return aStarter - bStarter
-        return (POSITION_ORDER[a.position] ?? 9) - (POSITION_ORDER[b.position] ?? 9)
-      }),
-    (p) => p.position,
-  )
+  const available = players.filter(p => !p.injury && !p.calledUp)
 
-  const starters: MatchPlayer[] = available.slice(0, 11).map((p, i) => ({
+  // Se o usuario montou a escalacao (isStarter), RESPEITA o XI dele. Senao, encaixa na
+  // formacao (defesa/meio/ataque completos) em vez de "os 11 primeiros por posicao".
+  const manual = available.filter(p => p.isStarter === true)
+  let xi: EnginePlayer[]
+  let benchPool: EnginePlayer[]
+  if (manual.length >= 11) {
+    xi = [...manual].sort((a, b) => b.overall - a.overall).slice(0, 11)
+    const xiSet = new Set(xi)
+    benchPool = available.filter(p => !xiSet.has(p))
+  } else {
+    const picked = pickStartingXI(available, (p) => p.position, (p) => p.overall)
+    xi = picked.starters
+    benchPool = picked.bench
+  }
+
+  const num = makeNumberAllocator()
+  const starters: MatchPlayer[] = xi.map((p, i) => ({
     id: idOffset + i + 1,
     name: p.name,
-    number: p.shirtNumber ?? POSITION_NUMBER_MAP[p.position] ?? i + 1,
+    number: num(p.shirtNumber, p.position),
     position: p.position,
     rating: p.overall,
     stamina: p.energy,
@@ -167,10 +183,10 @@ function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { sta
     physical: p.physical,
   }))
 
-  const bench: MatchPlayer[] = available.slice(11, 18).map((p, i) => ({
+  const bench: MatchPlayer[] = benchPool.slice(0, 7).map((p, i) => ({
     id: idOffset + 100 + i + 1,
     name: p.name,
-    number: p.shirtNumber ?? 12 + i,
+    number: num(p.shirtNumber, p.position),
     position: p.position,
     rating: p.overall,
     stamina: p.energy,

@@ -25,90 +25,6 @@ import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 
-// Mock data para artilharia
-const topScorers = [
-  { pos: 1, name: "Gabriel Barbosa", team: "FLA", goals: 12, assists: 4, matches: 15 },
-  { pos: 2, name: "Endrick", team: "PAL", goals: 10, assists: 2, matches: 14 },
-  { pos: 3, name: "Eduardo Sasha", team: "BGT", goals: 9, assists: 3, matches: 15, isUser: true },
-  { pos: 4, name: "Luciano", team: "SAO", goals: 8, assists: 5, matches: 15 },
-  { pos: 5, name: "Yuri Alberto", team: "COR", goals: 8, assists: 2, matches: 14 },
-  { pos: 6, name: "Hulk", team: "CAM", goals: 7, assists: 6, matches: 15 },
-  { pos: 7, name: "German Cano", team: "FLU", goals: 7, assists: 1, matches: 13 },
-  { pos: 8, name: "Pedro", team: "FLA", goals: 6, assists: 4, matches: 12 },
-  { pos: 9, name: "Vegetti", team: "VAS", goals: 6, assists: 2, matches: 15 },
-  { pos: 10, name: "Juan Dinenno", team: "CRU", goals: 5, assists: 3, matches: 14 },
-]
-
-const topAssisters = [
-  { pos: 1, name: "Hulk", team: "CAM", goals: 7, assists: 8, matches: 15 },
-  { pos: 2, name: "Arrascaeta", team: "FLA", goals: 3, assists: 7, matches: 14 },
-  { pos: 3, name: "Raphael Veiga", team: "PAL", goals: 4, assists: 6, matches: 15 },
-  { pos: 4, name: "Lincoln", team: "BGT", goals: 5, assists: 6, matches: 15, isUser: true },
-  { pos: 5, name: "Luciano", team: "SAO", goals: 8, assists: 5, matches: 15 },
-  { pos: 6, name: "Everton Ribeiro", team: "BAH", goals: 2, assists: 5, matches: 14 },
-  { pos: 7, name: "Gabriel Barbosa", team: "FLA", goals: 12, assists: 4, matches: 15 },
-  { pos: 8, name: "Gerson", team: "FLA", goals: 3, assists: 4, matches: 15 },
-  { pos: 9, name: "Pedro", team: "FLA", goals: 6, assists: 4, matches: 12 },
-  { pos: 10, name: "Vitinho", team: "BGT", goals: 4, assists: 4, matches: 14, isUser: true },
-]
-
-const topYellowCards = [
-  { pos: 1, name: "Felipe", team: "FOR", yellows: 8, reds: 1, matches: 15 },
-  { pos: 2, name: "Thiago Santos", team: "PAL", yellows: 7, reds: 0, matches: 14 },
-  { pos: 3, name: "Fabricio Bruno", team: "FLA", yellows: 6, reds: 0, matches: 15 },
-  { pos: 4, name: "Ze Rafael", team: "PAL", yellows: 6, reds: 1, matches: 13 },
-  { pos: 5, name: "Jadsom Silva", team: "BGT", yellows: 5, reds: 0, matches: 15, isUser: true },
-]
-
-// Mock data para estatisticas do time do usuario
-const userTeamStats = {
-  goalsScored: 28,
-  goalsConceded: 22,
-  cleanSheets: 4,
-  wins: 8,
-  draws: 4,
-  losses: 3,
-  possession: 52,
-  passAccuracy: 78,
-  shotsPerGame: 12.4,
-  tackles: 186,
-  fouls: 142,
-  corners: 89,
-}
-
-// Mock data para jogadores do time
-const userSquadStats = [
-  { id: 1, name: "Cleiton", position: "GOL", matches: 15, goals: 0, assists: 0, yellows: 1, reds: 0, rating: 7.2, cleanSheets: 4 },
-  { id: 2, name: "Nathan Mendes", position: "LD", matches: 14, goals: 1, assists: 3, yellows: 3, reds: 0, rating: 7.0 },
-  { id: 3, name: "Pedro Henrique", position: "ZAG", matches: 15, goals: 2, assists: 0, yellows: 4, reds: 0, rating: 7.1 },
-  { id: 4, name: "Eduardo Santos", position: "ZAG", matches: 13, goals: 1, assists: 0, yellows: 2, reds: 0, rating: 6.9 },
-  { id: 5, name: "Luan Candido", position: "LE", matches: 15, goals: 0, assists: 4, yellows: 2, reds: 0, rating: 7.3 },
-  { id: 6, name: "Jadsom Silva", position: "VOL", matches: 15, goals: 1, assists: 2, yellows: 5, reds: 0, rating: 7.0 },
-  { id: 7, name: "Eric Ramires", position: "MEI", matches: 14, goals: 3, assists: 5, yellows: 1, reds: 0, rating: 7.4 },
-  { id: 8, name: "Lincoln", position: "MEI", matches: 15, goals: 5, assists: 6, yellows: 0, reds: 0, rating: 7.8 },
-  { id: 9, name: "Vitinho", position: "PD", matches: 14, goals: 4, assists: 4, yellows: 2, reds: 0, rating: 7.2 },
-  { id: 10, name: "Eduardo Sasha", position: "ATA", matches: 15, goals: 9, assists: 3, yellows: 1, reds: 0, rating: 7.6 },
-  { id: 11, name: "Helinho", position: "PE", matches: 12, goals: 3, assists: 2, yellows: 1, reds: 0, rating: 7.1 },
-]
-
-// Lideres de jogos sem sofrer gols (goleiros)
-const topCleanSheets = [
-  { pos: 1, name: "Cleiton Silva", team: "FLA", clean: 6, matches: 15, isUser: true, nat: "br" },
-  { pos: 2, name: "Weverton", team: "PAL", clean: 5, matches: 15, nat: "br" },
-  { pos: 3, name: "Cassio", team: "COR", clean: 4, matches: 14, nat: "br" },
-  { pos: 4, name: "Rafael", team: "SAO", clean: 4, matches: 15, nat: "br" },
-  { pos: 5, name: "Marcelo Lomba", team: "BAH", clean: 3, matches: 13, nat: "br" },
-]
-
-// Notas medias
-const topRatings = [
-  { pos: 1, name: "Arrascaeta", team: "FLA", rating: 8.4, matches: 15, nat: "uy" },
-  { pos: 2, name: "Hulk", team: "CAM", rating: 8.1, matches: 15, nat: "br" },
-  { pos: 3, name: "Lincoln", team: "BGT", rating: 7.9, matches: 15, isUser: true, nat: "br" },
-  { pos: 4, name: "Raphael Veiga", team: "PAL", rating: 7.8, matches: 15, nat: "br" },
-  { pos: 5, name: "Gabriel Barbosa", team: "FLA", rating: 7.7, matches: 15, nat: "br" },
-]
-
 // Nacionalidade padrao por jogador conhecido (ISO-2). Default: br
 const PLAYER_NATIONALITY: Record<string, string> = {
   Endrick: "br", Arrascaeta: "uy", "German Cano": "ar", "Juan Dinenno": "ar",
@@ -207,13 +123,31 @@ export default function EstatisticasPage() {
     nat?: string
     valueStr: string
   }
+  // Tabelas construidas a partir do elenco REAL do usuario (seasonStats do game-engine).
+  // A artilharia da liga inteira exigiria rastrear goleadores da CPU, que o motor ainda nao
+  // guarda (calcTopScorers retorna []); entao mostramos os numeros REAIS do seu time em vez
+  // da lista fixa de "Gabigol/Endrick" que aparecia antes.
+  const userCurto = userTeam.curto
+  const mkRows = (pick: (p: (typeof userSquadStatsLive)[number]) => number): StatRow[] =>
+    userSquadStatsLive
+      .filter((p) => pick(p) > 0)
+      .sort((a, b) => pick(b) - pick(a))
+      .slice(0, 20)
+      .map((p, i) => ({ pos: i + 1, name: p.name, team: userCurto, matches: p.matches, isUser: true, valueStr: String(pick(p)) }))
   const cats: { id: string; label: string; statLabel: string; rows: StatRow[] }[] = [
-    { id: "artilheiros", label: "Artilheiros", statLabel: "Gols", rows: topScorers.map((r) => ({ ...r, valueStr: String(r.goals) })) },
-    { id: "assistencias", label: "Assistências", statLabel: "Assistências", rows: topAssisters.map((r) => ({ ...r, valueStr: String(r.assists) })) },
-    { id: "clean", label: "S/ Gols Sofr.", statLabel: "S/ Gols Sofr.", rows: topCleanSheets.map((r) => ({ ...r, valueStr: String(r.clean) })) },
-    { id: "amarelos", label: "Cartões Amarelos", statLabel: "Cartões Amarelos", rows: topYellowCards.map((r) => ({ ...r, valueStr: String(r.yellows) })) },
-    { id: "vermelhos", label: "Cartões Vermelhos", statLabel: "Cartões Vermelhos", rows: [] },
-    { id: "notas", label: "Notas Médias", statLabel: "Nota média", rows: topRatings.map((r) => ({ ...r, valueStr: r.rating.toFixed(2).replace(".", ",") })) },
+    { id: "artilheiros", label: "Artilheiros", statLabel: "Gols", rows: mkRows((p) => p.goals) },
+    { id: "assistencias", label: "Assistências", statLabel: "Assistências", rows: mkRows((p) => p.assists) },
+    { id: "clean", label: "S/ Gols Sofr.", statLabel: "S/ Gols Sofr.", rows: mkRows((p) => p.cleanSheets) },
+    { id: "amarelos", label: "Cartões Amarelos", statLabel: "Cartões Amarelos", rows: mkRows((p) => p.yellows) },
+    { id: "vermelhos", label: "Cartões Vermelhos", statLabel: "Cartões Vermelhos", rows: mkRows((p) => p.reds) },
+    {
+      id: "notas", label: "Notas Médias", statLabel: "Nota média",
+      rows: userSquadStatsLive
+        .filter((p) => p.matches > 0)
+        .sort((a, b) => b.rating - a.rating)
+        .slice(0, 20)
+        .map((p, i) => ({ pos: i + 1, name: p.name, team: userCurto, matches: p.matches, isUser: true, valueStr: p.rating.toFixed(2).replace(".", ",") })),
+    },
   ]
   const activeCat = cats.find((c) => c.id === activeTab) || cats[0]
 
