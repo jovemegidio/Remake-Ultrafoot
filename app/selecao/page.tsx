@@ -7,6 +7,7 @@ import {
   Shield,
   Check,
   X,
+  Plus,
   Play,
   Crown,
   Globe,
@@ -17,7 +18,7 @@ import {
   Users,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam, useGameState } from "@/lib/save-system"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { useNationalTeam } from "@/lib/use-national-team"
@@ -25,6 +26,8 @@ import {
   getNationalSquad,
   getNationalStrength,
   getNationalTeamById,
+  getNationalPlayerPool,
+  nationalPlayerKey,
   CONFEDERATION_LABEL,
   type NationalTeam,
 } from "@/lib/national-teams"
@@ -285,6 +288,7 @@ function CompetitionPanel() {
 
 export default function SelecaoPage() {
   const { team: userTeam, hydrated: teamHydrated } = useUserTeam()
+  const { state, setState } = useGameState()
   const t = useTranslation()
   const {
     hydrated,
@@ -305,9 +309,43 @@ export default function SelecaoPage() {
   } = useNationalTeam()
 
   const [confirmLeave, setConfirmLeave] = useState(false)
+  const [showPool, setShowPool] = useState(false)
 
-  const squad = useMemo(() => (nationalTeam ? getNationalSquad(nationalTeam) : []), [nationalTeam])
+  // Convocacao manual: cortes e convocacoes a dedo vem do save.
+  const cuts = state.nationalCuts ?? []
+  const calls = state.nationalCalls ?? []
+
+  const squad = useMemo(
+    () => (nationalTeam ? getNationalSquad(nationalTeam, { cuts, calls }) : []),
+    [nationalTeam, cuts, calls],
+  )
   const strength = useMemo(() => (nationalTeam ? getNationalStrength(nationalTeam) : 0), [nationalTeam])
+
+  // Elegiveis fora da convocacao atual — para o tecnico convocar a dedo.
+  const availablePool = useMemo(() => {
+    if (!nationalTeam) return []
+    const inSquad = new Set(squad.map(nationalPlayerKey))
+    return getNationalPlayerPool(nationalTeam)
+      .filter((p) => !inSquad.has(nationalPlayerKey(p)))
+      .sort((a, b) => b.base - a.base)
+      .slice(0, 40)
+  }, [nationalTeam, squad])
+
+  const cutPlayer = (p: { nome: string; time?: string }) => {
+    const key = nationalPlayerKey(p)
+    setState({
+      nationalCuts: [...cuts.filter((k) => k !== key), key],
+      nationalCalls: calls.filter((k) => k !== key),
+    })
+  }
+  const callPlayer = (p: { nome: string; time?: string }) => {
+    const key = nationalPlayerKey(p)
+    setState({
+      nationalCalls: [...calls.filter((k) => k !== key), key],
+      nationalCuts: cuts.filter((k) => k !== key),
+    })
+  }
+  const resetCallups = () => setState({ nationalCuts: [], nationalCalls: [] })
 
   if (!hydrated || !teamHydrated) {
     return (
@@ -529,22 +567,82 @@ export default function SelecaoPage() {
               </div>
             )}
 
-            {/* Convocacao */}
+            {/* Convocacao — agora com corte manual e convocacao a dedo. */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Users className="h-4 w-4 text-[#00ffc8]" />
                 <h2 className="text-sm font-semibold text-white uppercase tracking-wide">Convocacao ({squad.length})</h2>
-                <span className="text-[11px] text-white/30 ml-1">jogadores que atuam em clubes do pais</span>
+                <div className="ml-auto flex items-center gap-2">
+                  {(cuts.length > 0 || calls.length > 0) && (
+                    <button
+                      onClick={resetCallups}
+                      className="rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white/45 transition-colors hover:bg-white/5 hover:text-white/70"
+                    >
+                      Convocação automática
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowPool((v) => !v)}
+                    className="rounded-lg bg-[#00ffc8]/10 px-3 py-1 text-[11px] font-semibold text-[#00ffc8] transition-colors hover:bg-[#00ffc8]/20"
+                  >
+                    {showPool ? "Fechar lista" : "Convocar jogador"}
+                  </button>
+                </div>
               </div>
+
               <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                {squad.map((p, i) => (
-                  <div key={`${p.nome}-${i}`} className="flex items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-2">
-                    <span className="text-[10px] font-medium text-[#00ffc8] w-8 shrink-0">{p.pos}</span>
-                    <span className="text-sm text-white/80 truncate flex-1">{p.nome}</span>
-                    <span className="text-xs text-white/40 tabular-nums">{p.base}</span>
-                  </div>
-                ))}
+                {squad.map((p, i) => {
+                  const forced = calls.includes(nationalPlayerKey(p))
+                  return (
+                    <div key={`${p.nome}-${i}`} className="group flex items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-2">
+                      <span className="text-[10px] font-medium text-[#00ffc8] w-8 shrink-0">{p.pos}</span>
+                      <span className="text-sm text-white/80 truncate flex-1">
+                        {p.nome}
+                        {forced && <span className="ml-1.5 text-[9px] uppercase text-[#00ffc8]/70">convocado</span>}
+                      </span>
+                      <span className="text-xs text-white/40 tabular-nums">{p.base}</span>
+                      <button
+                        onClick={() => cutPlayer(p)}
+                        title="Cortar da convocação"
+                        className="shrink-0 rounded p-1 text-white/25 transition-colors hover:bg-red-500/15 hover:text-red-300"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
+
+              {/* Lista de elegiveis para convocar a dedo. */}
+              {showPool && (
+                <div className="mt-4 border-t border-white/[0.06] pt-4">
+                  <div className="mb-2 text-[11px] uppercase tracking-wider text-white/40">
+                    Elegíveis fora da convocação
+                  </div>
+                  <div className="grid max-h-64 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 scrollbar-thin">
+                    {availablePool.map((p, i) => {
+                      const wasCut = cuts.includes(nationalPlayerKey(p))
+                      return (
+                        <div key={`${p.nome}-pool-${i}`} className="flex items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-2">
+                          <span className="text-[10px] font-medium text-white/40 w-8 shrink-0">{p.pos}</span>
+                          <span className="flex-1 truncate text-sm text-white/70">
+                            {p.nome}
+                            {wasCut && <span className="ml-1.5 text-[9px] uppercase text-red-300/60">cortado</span>}
+                          </span>
+                          <span className="text-xs text-white/30 tabular-nums">{p.base}</span>
+                          <button
+                            onClick={() => callPlayer(p)}
+                            title="Convocar"
+                            className="shrink-0 rounded p-1 text-[#00ffc8]/60 transition-colors hover:bg-[#00ffc8]/15 hover:text-[#00ffc8]"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

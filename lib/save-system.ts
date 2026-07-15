@@ -319,6 +319,10 @@ export interface GameState {
   divisionOverride?: string
   // Aviso a mostrar no office apos subir/cair (limpo depois de exibido).
   divisionMovement?: { movement: "promoted" | "relegated"; message: string; season: number }
+  // Convocacao manual da selecao: jogadores CORTADOS e CONVOCADOS a dedo pelo tecnico
+  // (chaves nome__clube). Vazio = convocacao 100% automatica.
+  nationalCuts?: string[]
+  nationalCalls?: string[]
   balance?: number
   selectedTeam?: SavedTeam
   currentRound?: number

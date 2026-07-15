@@ -82,16 +82,48 @@ function sectorOf(pos: string): "GOL" | "DEF" | "MEI" | "ATA" {
 }
 
 // Monta uma convocacao equilibrada (~23 jogadores) com os melhores de cada setor.
-export function getNationalSquad(nt: NationalTeam): Player[] {
-  const pool = [...getNationalPlayerPool(nt)].sort((a, b) => b.base - a.base)
+/** Chave estavel de um jogador (nome + clube) — usada por cortes/convocacoes manuais. */
+export function nationalPlayerKey(p: { nome: string; time?: string }): string {
+  return `${p.nome}__${p.time ?? ""}`
+}
+
+/**
+ * Convocacao da selecao.
+ *
+ * Antes era 100% automatica (23 melhores por cota). Agora o tecnico pode intervir:
+ *   - `cuts`: jogadores CORTADOS — saem e o proximo melhor entra no lugar;
+ *   - `calls`: jogadores CONVOCADOS a dedo — entram primeiro, mesmo fora do top por cota.
+ * Sem cuts/calls, o comportamento e identico ao automatico de antes.
+ */
+export function getNationalSquad(
+  nt: NationalTeam,
+  opts: { cuts?: string[]; calls?: string[] } = {},
+): Player[] {
+  const cuts = new Set(opts.cuts ?? [])
+  const calls = new Set(opts.calls ?? [])
+  const pool = [...getNationalPlayerPool(nt)]
+    .filter((p) => !cuts.has(nationalPlayerKey(p)))
+    .sort((a, b) => b.base - a.base)
 
   const quotas: Record<"GOL" | "DEF" | "MEI" | "ATA", number> = { GOL: 3, DEF: 8, MEI: 7, ATA: 5 }
   const picked: Player[] = []
   const counters = { GOL: 0, DEF: 0, MEI: 0, ATA: 0 }
   const seen = new Set<string>()
 
+  // 1) Convocados a dedo entram primeiro (respeitando o limite de 23).
   for (const p of pool) {
-    const key = `${p.nome}__${p.time}`
+    if (!calls.has(nationalPlayerKey(p))) continue
+    const key = nationalPlayerKey(p)
+    if (seen.has(key)) continue
+    picked.push(p)
+    counters[sectorOf(p.pos)]++
+    seen.add(key)
+    if (picked.length >= 23) break
+  }
+
+  // 2) Preenche por cota com os melhores restantes.
+  for (const p of pool) {
+    const key = nationalPlayerKey(p)
     if (seen.has(key)) continue
     const sector = sectorOf(p.pos)
     if (counters[sector] >= quotas[sector]) continue
@@ -101,10 +133,10 @@ export function getNationalSquad(nt: NationalTeam): Player[] {
     if (picked.length >= 23) break
   }
 
-  // Completa com os melhores restantes caso falte gente em algum setor
+  // 3) Completa com os melhores restantes caso falte gente em algum setor
   if (picked.length < 23) {
     for (const p of pool) {
-      const key = `${p.nome}__${p.time}`
+      const key = nationalPlayerKey(p)
       if (seen.has(key)) continue
       picked.push(p)
       seen.add(key)
