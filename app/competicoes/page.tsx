@@ -23,7 +23,7 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { getTeamByShort, getTeamsByDivision, serieBTeams, type Team } from "@/lib/teams-data"
+import { getTeamByShort, getTeamsByDivision, serieBTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
 import { getCompetitionLogo } from "@/lib/competition-logo"
@@ -83,47 +83,10 @@ interface CompetitionState {
   }
 }
 
-// Participantes da Copa do Brasil (o time do usuario entra no lugar de um deles).
-const COPA_BRASIL_POOL = [
-  "FLA", "COR", "PAL", "SAO", "GRE", "INT", "BOT", "CAM",
-  "FLU", "FOR", "CRU", "BAH", "VAS", "CAP", "SAN", "GOI",
-]
-
-// Times para estaduais
-const ESTADUAL_TEAMS: Record<string, string[]> = {
-  "Paulistao": ["COR", "PAL", "SAO", "SAN", "BGT", "GUA", "NOV", "MIR", "POR", "OSA", "ITA", "AGU", "FER", "BOT-SP", "PTE", "INT-LM"],
-  "Carioca": ["FLA", "FLU", "VAS", "BOT", "FLG", "BAN", "MAC", "NOV-IG", "RES", "POR-RJ", "AUD", "MAD"],
-  "Gaucho": ["GRE", "INT", "JUV", "CAX", "BRA-RS", "PEL", "PAS", "SAJ", "AIR", "GUA-RS", "NOV-HZ", "SAO-JO"],
-  "Mineiro": ["CAM", "CRU", "AME", "COE", "UBE", "CAL", "DEM", "TOM", "PAT", "IPA", "POC", "AYM"],
-}
-
-// Times da Libertadores
-const LIBERTADORES_TEAMS = [
-  { short: "FLA", country: "Brasil" },
-  { short: "PAL", country: "Brasil" },
-  { short: "BOT", country: "Brasil" },
-  { short: "FLU", country: "Brasil" },
-  { short: "BOC", country: "Argentina" },
-  { short: "RIV", country: "Argentina" },
-  { short: "RAC", country: "Argentina" },
-  { short: "SLO", country: "Argentina" },
-  { short: "PEN", country: "Uruguai" },
-  { short: "NAC", country: "Uruguai" },
-  { short: "UCH", country: "Chile" },
-  { short: "COL", country: "Chile" },
-  { short: "ACI", country: "Bolivia" },
-  { short: "BOL", country: "Bolivia" },
-  { short: "CER", country: "Paraguai" },
-  { short: "OLI", country: "Paraguai" },
-  { short: "ALI", country: "Peru" },
-  { short: "UNI", country: "Peru" },
-  { short: "LDQ", country: "Equador" },
-  { short: "BSC", country: "Equador" },
-  { short: "MIL", country: "Colombia" },
-  { short: "NAL", country: "Colombia" },
-  { short: "DEP", country: "Venezuela" },
-  { short: "CAR", country: "Venezuela" },
-]
+// A Copa do Brasil, o estadual e a Libertadores NAO usam mais listas fixas: os
+// participantes sao sorteados dos times REAIS (allBrazilianTeams / getTeamsByDivision /
+// getStateChampionshipTeams / getContinentalDivisions), por prestigio. Ver copaBrasilPool
+// e continentalTeams dentro do componente.
 
 // Generate standings with random stats (fallback for Serie B)
 const generateStandings = (teams: Team[], userTeamShort: string) => {
@@ -224,6 +187,18 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
     localStorage.setItem("ultrafoot-competitions", JSON.stringify(state))
   }, [state])
   
+  // Pool REAL da Copa do Brasil: os melhores clubes do Brasil por prestigio (Serie A a D),
+  // sorteados a cada temporada. Substitui a lista fixa dos mesmos 16 grandes.
+  const copaBrasilPool = useMemo(
+    () =>
+      allBrazilianTeams
+        .filter(t => t.curto !== userTeamShort)
+        .sort((a, b) => b.prestigio - a.prestigio)
+        .slice(0, 31)
+        .map(t => t.curto),
+    [userTeamShort],
+  )
+
   // Sortear Copa do Brasil
   // Pool de times que o motor de mata-mata usa para resolver os confrontos pela
   // forca REAL de cada clube (prestigio). Cobre liga do usuario + estadual + copa.
@@ -233,10 +208,10 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
     const user = getTeamByShort(userTeamShort)
     if (user) getTeamsByDivision(user.divisao).forEach(add)
     getStateChampionshipTeams(userTeamShort).forEach(add)
-    COPA_BRASIL_POOL.forEach(c => add(getTeamByShort(c)))
+    copaBrasilPool.forEach(c => add(getTeamByShort(c)))
     add(user)
     return Array.from(map.values())
-  }, [userTeamShort])
+  }, [userTeamShort, copaBrasilPool])
 
   // Participantes da CONTINENTAL: vem das ligas da confederacao do clube.
   // Um clube da UEFA enfrenta europeus; um da CONMEBOL, sul-americanos.
@@ -258,8 +233,8 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
   }, [userTeamShort])
 
   const drawCopaBrasil = () => {
-    // Garante o usuario no sorteio SEM duplicar (se ele ja e um dos 16, nao entra 2x).
-    const base = COPA_BRASIL_POOL.filter(c => c !== userTeamShort)
+    // Garante o usuario no sorteio SEM duplicar (se ele ja esta no pool, nao entra 2x).
+    const base = copaBrasilPool.filter(c => c !== userTeamShort)
     const teams = [userTeamShort, ...base].slice(0, 16)
     const shuffled = [...teams].sort(() => Math.random() - 0.5)
     
