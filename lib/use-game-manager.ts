@@ -1117,7 +1117,8 @@ export function useGameManager() {
 
         const confianca = computeBoardConfidence({
           currentPosition: posNow,
-          objective: calcSeasonObjective(teamNow),
+          // calcSeasonObjective so le prestigio/nome/divisao, presentes em Team; cast e seguro.
+          objective: calcSeasonObjective(teamNow as unknown as Parameters<typeof calcSeasonObjective>[0]),
           recentForm,
           seasonProgress: Math.min(1, newWeek / Math.max(1, seasonEndWeek)),
         })

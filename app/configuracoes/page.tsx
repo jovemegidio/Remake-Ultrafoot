@@ -30,6 +30,7 @@ import {
   ExternalLink,
   HelpCircle,
   Keyboard,
+  X,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { accessibilityStore } from "@/lib/accessibility-store"

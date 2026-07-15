@@ -185,7 +185,8 @@ export interface RelationshipEffect {
 export function getRelationshipEffect(
   buyerName: string,
   sellerName: string,
-  type: "buy" | "loan" = "buy",
+  // "sell" segue a mesma regra de "buy" (so "loan" muda os multiplicadores).
+  type: "buy" | "sell" | "loan" = "buy",
 ): RelationshipEffect {
   const rel = getClubRelationship(buyerName, sellerName)
   const affinity = getTradeAffinity(buyerName, sellerName) // 0-1

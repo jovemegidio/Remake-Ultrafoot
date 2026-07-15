@@ -38,6 +38,9 @@
   "exclude": [
     "node_modules",
     "backup",
+    "Backup Jogo",
+    "dev",
+    "dist",
     "Remake VIII",
     "Remake X",
     "electron",

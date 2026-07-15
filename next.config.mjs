@@ -19,8 +19,15 @@ const nextConfig = {
         trailingSlash: true,
       }
     : {}),
+  // Type-check volta a bloquear o build: um erro de tipo (ex.: icone nao importado,
+  // que crashava a tela em runtime com "This page couldn't load") agora falha o build
+  // ANTES de gerar o instalador, em vez de vazar para o jogador.
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
+  },
+  // ESLint fica como QA manual (`npm run lint`), sem travar o instalador por avisos de estilo.
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   images: {
     unoptimized: true,

@@ -305,7 +305,7 @@ export function MatchRadar({
   ], [homeSquad, awaySquad, homeColor, awayColor])
 
   const dotRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
-  const ringRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
+  const ringRefs = useRef<Map<string, HTMLSpanElement | null>>(new Map())
   const ballRef = useRef<HTMLDivElement | null>(null)
   const ballShadowRef = useRef<HTMLDivElement | null>(null)
   const trailRefs = useRef<Array<HTMLDivElement | null>>([])
