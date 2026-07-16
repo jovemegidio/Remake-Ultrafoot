@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   Timer,
   Users,
+  Eye,
+  X,
+  Award,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -23,6 +26,7 @@ import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine, type Player } from "@/lib/game-engine"
+import { formatCurrency } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
 // Tipos de treinamento disponiveis
@@ -98,9 +102,14 @@ function getRecommendedTraining(position: string): string[] {
 
 export default function TreinamentoPage() {
   const { team: userTeam } = useUserTeam()
-  const { squadPlayers, trainPlayer, currentWeek } = useGameEngine()
+  const { squadPlayers, trainPlayer, currentWeek, clubInfrastructure } = useGameEngine()
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
+  const [inspectPlayer, setInspectPlayer] = useState<Player | null>(null)
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
+
+  // % de melhora do treino, espelhando o motor (Centro de Treinamento nivel 1-5).
+  const trainingLvl = clubInfrastructure?.training ?? 2
+  const trainChancePct = Math.round(Math.min(0.9, 0.6 + trainingLvl * 0.05) * 100)
   const [filter, setFilter] = useState<"all" | "available" | "training">("all")
   const [sortBy, setSortBy] = useState<"overall" | "potential" | "idade" | "nome">("overall")
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -134,6 +143,7 @@ export default function TreinamentoPage() {
       const btn = (e as CustomEvent).detail?.button
       if (!btn) return
       if (btn === "B") {
+        if (inspectPlayer) { setInspectPlayer(null); return }
         if (selectedPlayer) { setSelectedPlayer(null); return }
         router.back(); return
       }
@@ -157,7 +167,7 @@ export default function TreinamentoPage() {
     }
     window.addEventListener("gamepad:button", handler)
     return () => window.removeEventListener("gamepad:button", handler)
-  }, [router, selectedPlayer, filteredPlayers])
+  }, [router, selectedPlayer, inspectPlayer, filteredPlayers])
 
   // Contagem de jogadores em treinamento
   const playersInTraining = squadPlayers.filter(p => p.training.currentFocus).length
@@ -369,6 +379,18 @@ export default function TreinamentoPage() {
                       })}
                     </div>
 
+                    {/* Inspecionar (perfil completo) — nao dispara a selecao de treino */}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); setInspectPlayer(player) }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setInspectPlayer(player) } }}
+                      title="Inspecionar jogador"
+                      className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-white/40 hover:text-[#00ffc8] hover:bg-white/5 transition-colors"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </span>
+
                     {/* Status */}
                     <div className="min-w-[120px] text-right">
                       {isTraining ? (
@@ -525,7 +547,8 @@ export default function TreinamentoPage() {
                 <Brain className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-xs text-white/60">
                   <p className="font-medium text-white/80 mb-1">Como funciona</p>
-                  <p>O treinamento dura 4 semanas. Ao final, o jogador tem 70% de chance de melhorar +1 no atributo escolhido, limitado ao seu potencial maximo.</p>
+                  <p>O treinamento dura 4 semanas. Ao final, o jogador tem <span className="text-[#00ffc8] font-semibold">{trainChancePct}%</span> de chance de melhorar +1 no atributo escolhido, limitado ao seu potencial maximo.</p>
+                  <p className="mt-1 text-white/40">Centro de Treinamento nivel {trainingLvl}/5 — melhore a estrutura para aumentar a chance (ate 90%).</p>
                 </div>
               </div>
             </div>
@@ -533,6 +556,118 @@ export default function TreinamentoPage() {
         </div>
       </main>
 
+      {inspectPlayer && (
+        <PlayerInspectModal player={inspectPlayer} currentWeek={currentWeek} onClose={() => setInspectPlayer(null)} />
+      )}
+    </div>
+  )
+}
+
+// Perfil completo do jogador ("inspecionar"): atributos, status, contrato e estatisticas.
+function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; currentWeek: number; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); onClose() } }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  const attrs: { id: keyof Player; label: string; color: string }[] = [
+    { id: "pace", label: "Velocidade", color: "bg-yellow-400" },
+    { id: "shooting", label: "Finalizacao", color: "bg-red-400" },
+    { id: "passing", label: "Passe", color: "bg-blue-400" },
+    { id: "dribbling", label: "Dribles", color: "bg-purple-400" },
+    { id: "defending", label: "Defesa", color: "bg-green-400" },
+    { id: "physical", label: "Fisico", color: "bg-orange-400" },
+  ]
+  const weeksLeft = player.contract ? Math.max(0, Math.round((player.contract.endDate - currentWeek) / 1)) : null
+  const st = player.seasonStats
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+      <div
+        className="w-[520px] max-w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0c0c14] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Cabecalho */}
+        <div className="flex items-start justify-between gap-4 p-5 border-b border-white/[0.06]">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center text-2xl font-bold text-[#00ffc8]">
+              {player.overall}
+            </div>
+            <div>
+              <div className="text-lg font-bold text-white">{player.name}</div>
+              <div className="text-sm text-white/50">
+                {player.position}
+                {player.secondaryPositions?.length ? ` · ${player.secondaryPositions.join(", ")}` : ""} · {player.age} anos
+              </div>
+              <div className="text-xs text-white/40 mt-0.5 flex items-center gap-1">
+                <Award className="h-3 w-3 text-[#ffd700]" /> Potencial {player.potential} · {player.nationality}
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="h-8 w-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Atributos */}
+        <div className="p-5 space-y-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-white/40 mb-1">Atributos</div>
+          {attrs.map((a) => {
+            const v = (player[a.id] as number) ?? 0
+            return (
+              <div key={a.id as string} className="flex items-center gap-3">
+                <span className="w-24 text-xs text-white/60">{a.label}</span>
+                <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className={cn("h-full rounded-full", a.color)} style={{ width: `${Math.min(100, v)}%` }} />
+                </div>
+                <span className="w-7 text-right text-sm font-semibold text-white tabular-nums">{v}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Status + contrato */}
+        <div className="px-5 pb-5 grid grid-cols-2 gap-3">
+          <InfoTile label="Energia" value={`${player.energy}%`} />
+          <InfoTile label="Moral" value={player.morale} />
+          <InfoTile label="Forma" value={`${player.form}%`} />
+          <InfoTile label="Valor de mercado" value={formatCurrency(player.marketValue)} />
+          {player.contract && <InfoTile label="Salario (sem.)" value={formatCurrency(player.contract.salary)} />}
+          {weeksLeft !== null && <InfoTile label="Contrato" value={weeksLeft > 0 ? `${weeksLeft} sem restantes` : "Expira"} />}
+          {player.injury && <InfoTile label="Lesao" value={`${player.injury.weeksRemaining} sem`} accent="text-red-400" />}
+          {player.training.currentFocus && <InfoTile label="Em treino" value={`${player.training.currentFocus} (${player.training.weeksTrained}/4)`} accent="text-[#ffd700]" />}
+        </div>
+
+        {/* Estatisticas da temporada */}
+        <div className="px-5 pb-6">
+          <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Temporada</div>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <StatTile label="Jogos" value={st.matchesPlayed} />
+            <StatTile label="Gols" value={st.goals} />
+            <StatTile label="Assist." value={st.assists} />
+            <StatTile label="Melhor" value={st.manOfTheMatch} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function InfoTile({ label, value, accent }: { label: string; value: string; accent?: string }) {
+  return (
+    <div className="rounded-lg bg-white/[0.03] border border-white/[0.05] px-3 py-2">
+      <div className="text-[10px] text-white/40">{label}</div>
+      <div className={cn("text-sm font-medium text-white truncate", accent)}>{value}</div>
+    </div>
+  )
+}
+
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg bg-white/[0.03] border border-white/[0.05] py-2">
+      <div className="text-lg font-bold text-white tabular-nums">{value}</div>
+      <div className="text-[10px] text-white/40">{label}</div>
     </div>
   )
 }

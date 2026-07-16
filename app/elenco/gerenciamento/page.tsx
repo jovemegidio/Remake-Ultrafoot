@@ -914,9 +914,17 @@ export default function ElencoPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 min-w-[80px] md:min-w-[100px] text-center rounded-lg bg-[#00ffc8]/20 border border-[#00ffc8]/30">
-              <span className="text-base md:text-lg font-black text-white">{formation}</span>
-            </div>
+            {/* Dropdown: escolher a formacao direto (o relatorio pediu — antes so setas). */}
+            <select
+              value={formation}
+              onChange={(e) => { setFormation(e.target.value); setPlayerPositions({}) }}
+              title="Escolher formacao"
+              className="px-3 md:px-4 py-1.5 md:py-2 min-w-[80px] md:min-w-[110px] text-center rounded-lg bg-[#00ffc8]/20 border border-[#00ffc8]/30 text-base md:text-lg font-black text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00ffc8]/50 appearance-none"
+            >
+              {formationKeys.map((f) => (
+                <option key={f} value={f} className="bg-[#0c0c14] text-white font-bold">{f}</option>
+              ))}
+            </select>
             <button 
               onClick={nextFormation}
               className="p-1.5 md:p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition"
@@ -1633,7 +1641,7 @@ export default function ElencoPage() {
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
                   <h3 className="text-sm font-medium text-white mb-1">Trocar formacao</h3>
-                  <p className="text-xs text-white/50">Use as setas ao lado da formacao para alterar entre diferentes esquemas taticos.</p>
+                  <p className="text-xs text-white/50">Escolha a formacao no menu suspenso (ou use as setas ao lado) para alterar entre os esquemas taticos.</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/5">
                   <h3 className="text-sm font-medium text-white mb-1">Ver detalhes</h3>

@@ -30,6 +30,7 @@ import {
   ExternalLink,
   HelpCircle,
   Keyboard,
+  DollarSign,
   X,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
@@ -45,6 +46,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { isFullscreenEnabled, setFullscreen } from "@/lib/fullscreen"
+import { CURRENCIES, setCurrency, getCurrencyCode } from "@/lib/currency"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { useTheme, themePresets, type ThemeColor } from "@/components/theme-provider"
@@ -161,6 +163,9 @@ export default function ConfiguracoesPage() {
   }
   const [selectedUniform, setSelectedUniform] = useState<"home" | "away" | "third">(state.selectedUniform || "home")
   const [language, setLanguage] = useState(state.language || "pt-BR")
+  // Comeca em "BRL" (igual ao build) e le a preferencia real so apos montar, p/ nao arriscar
+  // hidratacao no botao ativo.
+  const [currencyCode, setCurrencyCode] = useState("BRL")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [tutorialTab, setTutorialTab] = useState<"xbox" | "playstation" | "keyboard">("xbox")
@@ -179,6 +184,8 @@ export default function ConfiguracoesPage() {
     if (state.managers) setManagers(state.managers)
     if (state.controllerType) setControllerType(state.controllerType)
   }, [state])
+
+  useEffect(() => { setCurrencyCode(getCurrencyCode()) }, [])
 
   useEffect(() => {
     if (theme === "team" && !teamColors) {
@@ -537,9 +544,35 @@ export default function ConfiguracoesPage() {
                 ))}
               </div>
             </div>
+
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
+              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-primary" />
+                Moeda
+              </h3>
+              <p className="text-xs text-white/40 -mt-2">
+                Muda o simbolo e a conversao dos valores exibidos (base R$).
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {CURRENCIES.map((c) => (
+                  <button
+                    key={c.code}
+                    onClick={() => { setCurrencyCode(c.code); setCurrency(c.code) }}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
+                      currencyCode === c.code ? "border-primary bg-primary/10" : "border-white/10 bg-white/5 hover:border-white/20"
+                    )}
+                  >
+                    <span className="w-8 text-center text-base font-bold text-white/90">{c.symbol}</span>
+                    <span className="text-sm text-white">{c.code}</span>
+                    {currencyCode === c.code && <Check className="h-4 w-4 text-primary ml-auto" />}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )
-        
+
       case "tempo":
         return (
           <div className="space-y-6">

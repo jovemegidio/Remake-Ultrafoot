@@ -2280,6 +2280,13 @@ export const useGameEngine = create<GameEngineState>()(
         const newWeek = state.currentWeek + 1
         
         set((s) => {
+          // Chance de o treino render +1 no atributo. Antes era 0.7 fixo; agora o Centro de
+          // Treinamento (clubInfrastructure.training, nivel 1-5) mexe na %: nivel 2 (padrao)
+          // mantem 0.70, cada nivel = +5%, ate 0.90. Assim investir na estrutura acelera o
+          // desenvolvimento — o "treinador/estrutura na %" que o jogador pediu.
+          const trainingLvl = s.clubInfrastructure?.training ?? 2
+          const trainImproveChance = Math.min(0.9, 0.6 + trainingLvl * 0.05)
+
           // Processar recuperacao de lesoes
           const updatedPlayers = s.squadPlayers.map(player => {
             if (player.injury) {
@@ -2305,7 +2312,7 @@ export const useGameEngine = create<GameEngineState>()(
                 const maxValue = player.potential
 
                 if (currentValue < maxValue) {
-                  const improvement = Math.random() < 0.7 ? 1 : 0
+                  const improvement = Math.random() < trainImproveChance ? 1 : 0
                   return {
                     ...player,
                     [attribute]: Math.min(99, currentValue + improvement),

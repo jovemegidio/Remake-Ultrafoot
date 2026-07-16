@@ -1,14 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { normalizeAppHref } from "@/lib/hard-navigation"
 import { initPersistentStore } from "@/lib/persistent-store"
 import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
 import { accessibilityStore } from "@/lib/accessibility-store"
+import { syncCurrencyFromStore, getCurrencyCode } from "@/lib/currency"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   // Confirmacao antes de fechar o app (Alt+F4, botao X, barra de tarefas).
   const [showQuitConfirm, setShowQuitConfirm] = useState(false)
+
+  // Moeda de exibicao. O 1o render usa SEMPRE o padrao BRL (igual ao HTML do build) para
+  // nao quebrar a hidratacao (#418). Apos montar, aplicamos a preferencia salva; so quem
+  // escolheu moeda != BRL sofre um remount (via key) — usuarios BRL nao mudam nada.
+  const [currencyKey, setCurrencyKey] = useState(0)
+  useEffect(() => {
+    syncCurrencyFromStore()
+    if (getCurrencyCode() !== "BRL") setCurrencyKey((k) => k + 1)
+    const onChange = () => {
+      syncCurrencyFromStore()
+      setCurrencyKey((k) => k + 1)
+    }
+    window.addEventListener("ultrafoot:currency:changed", onChange)
+    return () => window.removeEventListener("ultrafoot:currency:changed", onChange)
+  }, [])
 
   // Intercepta o fechamento da janela no Tauri: pede confirmacao em vez de sair
   // direto. onCloseRequested cobre Alt+F4, o X e o fechar pela barra de tarefas.
@@ -158,7 +174,7 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {children}
+      <Fragment key={currencyKey}>{children}</Fragment>
       {showQuitConfirm && (
         <QuitConfirmDialog
           onCancel={() => setShowQuitConfirm(false)}

@@ -3,6 +3,7 @@
 
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 import { getTeamOverride } from "@/lib/team-overrides"
+import { getCurrency } from "@/lib/currency"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -1165,7 +1166,10 @@ function compactBR(value: number, prefix: string): string {
 }
 
 export function formatCurrency(value: number): string {
-  return compactBR(value, "R$ ")
+  // getCurrency() comeca em BRL (rate 1, "R$") no build/1o render -> identico ao anterior,
+  // sem risco de hidratacao. So muda apos o provider sincronizar a preferencia pos-mount.
+  const c = getCurrency()
+  return compactBR(value * c.rate, `${c.symbol} `)
 }
 
 // Formatar número com sufixo (milhões, mil)
