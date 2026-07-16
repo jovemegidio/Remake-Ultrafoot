@@ -114,7 +114,7 @@ export const CONTROL_MAPPINGS: Record<GameContext, Partial<Record<GamepadButtonN
   match_live: {
     A: "fast_forward",      // Acelerar simulacao
     B: "slow_motion",       // Desacelerar simulacao
-    X: "show_stats",        // Ver estatisticas ao vivo
+    X: "skip_to_result",    // Avancar diretamente ao resultado
     Y: "substitute",        // Abrir substituicoes
     LB: "tab_left",         // Evento anterior
     RB: "tab_right",        // Proximo evento

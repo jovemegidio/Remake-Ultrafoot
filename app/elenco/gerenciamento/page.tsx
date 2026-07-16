@@ -110,6 +110,10 @@ export default function ElencoPage() {
   const engineSetFormation = useGameEngine(s => s.setFormation)
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
   const engineSetStarter = useGameEngine(s => s.setStarter)
+  const teamTactics = useGameEngine(s => s.teamTactics)
+  const setTeamTactics = useGameEngine(s => s.setTeamTactics)
+  const tacticalAssignments = useGameEngine(s => s.tacticalAssignments)
+  const setTacticalAssignments = useGameEngine(s => s.setTacticalAssignments)
   // ATENCAO: NAO colocar um time default aqui.
   //
   // Antes era getTeamByShort(state.selectedTeamShort || "BGT"): enquanto o save nao
@@ -148,11 +152,21 @@ export default function ElencoPage() {
 
   // ── TATICAS: antes os botoes eram DECORATIVOS (o "selecionado" era um `i === 1`
   // chumbado no JSX). Agora tem estado de verdade e o clique muda a instrucao.
-  const [linhaDefensiva, setLinhaDefensiva] = useState(1)   // 0 Baixa | 1 Media | 2 Alta
-  const [marcacao, setMarcacao] = useState(1)               // 0 Pressao | 1 Equilibrada | 2 Recuada
-  const [construcao, setConstrucao] = useState(1)           // 0 Curto | 1 Misto | 2 Direto
-  const [velocidadeAtaque, setVelocidadeAtaque] = useState(1) // 0 Lento | 1 Normal | 2 Rapido
-  const [mentalidade, setMentalidade] = useState(2)         // 0..4 UltraDef -> UltraOfe
+  const [linhaDefensiva, setLinhaDefensiva] = useState(() => ["baixa", "media", "alta"].indexOf(teamTactics.defensiveLine))
+  const [marcacao, setMarcacao] = useState(() => teamTactics.pressingIntensity === "alta" || teamTactics.pressingIntensity === "muito_alta" ? 0 : teamTactics.pressingIntensity === "baixa" ? 2 : 1)
+  const [construcao, setConstrucao] = useState(() => ["curto", "misto", "longo"].indexOf(teamTactics.buildUp))
+  const [velocidadeAtaque, setVelocidadeAtaque] = useState(() => ["lento", "normal", "rapido"].indexOf(teamTactics.tempo))
+  const [mentalidade, setMentalidade] = useState(() => ["muito_defensivo", "defensivo", "equilibrado", "ofensivo", "muito_ofensivo"].indexOf(teamTactics.mentality))
+
+  useEffect(() => {
+    setTeamTactics({
+      defensiveLine: (["baixa", "media", "alta"] as const)[linhaDefensiva] ?? "media",
+      pressingIntensity: (["alta", "media", "baixa"] as const)[marcacao] ?? "media",
+      buildUp: (["curto", "misto", "longo"] as const)[construcao] ?? "misto",
+      tempo: (["lento", "normal", "rapido"] as const)[velocidadeAtaque] ?? "normal",
+      mentality: (["muito_defensivo", "defensivo", "equilibrado", "ofensivo", "muito_ofensivo"] as const)[mentalidade] ?? "equilibrado",
+    })
+  }, [construcao, linhaDefensiva, marcacao, mentalidade, setTeamTactics, velocidadeAtaque])
 
   // ── ATRIBUICOES: cobradores/capitao vinham CHUMBADOS ("Eric Ramires", "Lincoln",
   // "Eduardo Sasha", "Pedro Henrique" — elenco do RB Bragantino) e apareciam mesmo
@@ -177,10 +191,33 @@ export default function ElencoPage() {
   }, [allPlayers])
 
   const [setPieces, setSetPieces] = useState(setPieceDefaults)
-  useEffect(() => { setSetPieces(setPieceDefaults) }, [setPieceDefaults])
+  useEffect(() => {
+    setSetPieces({
+      corner: tacticalAssignments.corner || setPieceDefaults.corner,
+      freeKick: tacticalAssignments.freeKick || setPieceDefaults.freeKick,
+      penalty: tacticalAssignments.penalty || setPieceDefaults.penalty,
+      captain: tacticalAssignments.captain || setPieceDefaults.captain,
+    })
+  }, [setPieceDefaults, tacticalAssignments.captain, tacticalAssignments.corner, tacticalAssignments.freeKick, tacticalAssignments.penalty])
+
+  const updateSetPiece = (key: keyof typeof setPieces, value: string) => {
+    setSetPieces(current => ({ ...current, [key]: value }))
+    setTacticalAssignments({ [key]: value })
+  }
 
   // Funcao individual por jogador (o <select> antes nao tinha estado nem onChange).
   const [playerRoles, setPlayerRoles] = useState<Record<number, string>>({})
+  useEffect(() => {
+    const restored = Object.fromEntries(allPlayers.map(player => [player.id, tacticalAssignments.playerRoles[player.name] ?? player.function]))
+    setPlayerRoles(restored)
+  }, [allPlayers, tacticalAssignments.playerRoles])
+
+  const updatePlayerRole = (playerId: number, role: string) => {
+    const player = allPlayers.find(item => item.id === playerId)
+    if (!player) return
+    setPlayerRoles(current => ({ ...current, [playerId]: role }))
+    setTacticalAssignments({ playerRoles: { [player.name]: role } })
+  }
 
   // Match notifications should only show during actual matches (simulations)
   // This would be triggered by the match simulation system
@@ -1217,7 +1254,7 @@ export default function ElencoPage() {
                           <span className="text-xs text-white/70 shrink-0">{label}</span>
                           <select
                             value={setPieces[key]}
-                            onChange={(e) => setSetPieces(s => ({ ...s, [key]: e.target.value }))}
+                            onChange={(e) => updateSetPiece(key, e.target.value)}
                             className="min-w-0 flex-1 max-w-[60%] truncate rounded-lg border border-white/10 bg-white/10 px-2 py-1 text-xs font-medium text-[#00ffc8] focus:border-[#00ffc8] focus:outline-none"
                           >
                             {pool.map(p => (
@@ -1244,7 +1281,7 @@ export default function ElencoPage() {
                           </div>
                           <select
                             value={playerRoles[player.id] ?? player.function}
-                            onChange={(e) => setPlayerRoles(r => ({ ...r, [player.id]: e.target.value }))}
+                            onChange={(e) => updatePlayerRole(player.id, e.target.value)}
                             className="shrink-0 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-white focus:border-[#00ffc8] focus:outline-none"
                           >
                             {Array.from(new Set([player.function, "Equilibrado", "Ofensivo", "Defensivo"])).map(opt => (

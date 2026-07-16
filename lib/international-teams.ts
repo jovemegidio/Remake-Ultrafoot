@@ -2524,7 +2524,7 @@ export const mlsTeams: Team[] = [
 // =============================================
 export const ligaMXTeams: Team[] = [
   {
-    nome: "Club America",
+    nome: "Club América",
     curto: "AMX",
     cidade: "Cidade do Mexico",
     estado: "Mexico",
@@ -2676,7 +2676,7 @@ export const ligaMXTeams: Team[] = [
     pais: "Mexico"
   },
   {
-    nome: "Leon",
+    nome: "León",
     curto: "LEO",
     cidade: "Leon",
     estado: "Mexico",
@@ -2771,7 +2771,7 @@ export const ligaMXTeams: Team[] = [
     pais: "Mexico"
   },
   {
-    nome: "FC Juarez",
+    nome: "FC Juárez",
     curto: "JUA",
     cidade: "Ciudad Juarez",
     estado: "Mexico",
@@ -2790,7 +2790,7 @@ export const ligaMXTeams: Team[] = [
     pais: "Mexico"
   },
   {
-    nome: "Queretaro FC",
+    nome: "Querétaro",
     curto: "QRO",
     cidade: "Santiago de Queretaro",
     estado: "Mexico",
@@ -2809,7 +2809,7 @@ export const ligaMXTeams: Team[] = [
     pais: "Mexico"
   },
   {
-    nome: "Mazatlan FC",
+    nome: "Mazatlán FC",
     curto: "MZT",
     cidade: "Mazatlan",
     estado: "Mexico",
@@ -2828,7 +2828,7 @@ export const ligaMXTeams: Team[] = [
     pais: "Mexico"
   },
   {
-    nome: "Atletico San Luis",
+    nome: "Atlético San Luis",
     curto: "ASL",
     cidade: "San Luis Potosi",
     estado: "Mexico",
@@ -2891,7 +2891,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Porto",
+    nome: "FC Porto",
     curto: "POR",
     cidade: "Porto",
     estado: "Portugal",
@@ -2929,7 +2929,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Braga",
+    nome: "SC Braga",
     curto: "BRA",
     cidade: "Braga",
     estado: "Portugal",
@@ -2967,7 +2967,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Santa Clara",
+    nome: "CD Santa Clara",
     curto: "SCL",
     cidade: "Ponta Delgada",
     estado: "Portugal",
@@ -2986,7 +2986,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Rio Ave",
+    nome: "Rio Ave FC",
     curto: "RAF",
     cidade: "Vila do Conde",
     estado: "Portugal",
@@ -3005,7 +3005,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Famalicao",
+    nome: "FC Famalicão",
     curto: "FAM",
     cidade: "Vila Nova de Famalicao",
     estado: "Portugal",
@@ -3043,7 +3043,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Casa Pia",
+    nome: "Casa Pia AC",
     curto: "CPT",
     cidade: "Lisboa",
     estado: "Portugal",
@@ -3062,7 +3062,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Moreirense",
+    nome: "Moreirense FC",
     curto: "MOR",
     cidade: "Moreira de Conegos",
     estado: "Portugal",
@@ -3100,7 +3100,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Gil Vicente",
+    nome: "Gil Vicente FC",
     curto: "GIV",
     cidade: "Barcelos",
     estado: "Portugal",
@@ -3119,7 +3119,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Farense",
+    nome: "SC Farense",
     curto: "FAR",
     cidade: "Faro",
     estado: "Portugal",
@@ -3157,7 +3157,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Estrela Amadora",
+    nome: "CF Estrela Amadora",
     curto: "EAM",
     cidade: "Amadora",
     estado: "Portugal",
@@ -3195,7 +3195,7 @@ export const primeiraLigaTeams: Team[] = [
     pais: "Portugal"
   },
   {
-    nome: "Arouca",
+    nome: "FC Arouca",
     curto: "ARC",
     cidade: "Arouca",
     estado: "Portugal",
@@ -3567,7 +3567,7 @@ export const jLeagueTeams: Team[] = [
 // EREDIVISIE - HOLANDA
 // =============================================
 export const eredivisieTeams: Team[] = [
-  { nome: "Ajax", curto: "AJX", cidade: "Amsterdam", estado: "Holanda", cor1: "#D2122E", cor2: "#FFFFFF", prestigio: 92, torcida: 350000000, estadio_cap: 54990, saldo: 300000000, file_key: "ajax", estadio_nome: "Johan Cruyff Arena", patrocinador: "Adidas", escudo_url: getIntlEscudo("ajax"), divisao: "eredivisie", regiao: "europa", pais: "Holanda" },
+  { nome: "AFC Ajax", curto: "AJX", cidade: "Amsterdam", estado: "Holanda", cor1: "#D2122E", cor2: "#FFFFFF", prestigio: 92, torcida: 350000000, estadio_cap: 54990, saldo: 300000000, file_key: "ajax", estadio_nome: "Johan Cruyff Arena", patrocinador: "Adidas", escudo_url: getIntlEscudo("ajax"), divisao: "eredivisie", regiao: "europa", pais: "Holanda" },
   { nome: "PSV Eindhoven", curto: "PSV", cidade: "Eindhoven", estado: "Holanda", cor1: "#E30613", cor2: "#FFFFFF", prestigio: 90, torcida: 320000000, estadio_cap: 35000, saldo: 250000000, file_key: "psv", estadio_nome: "Philips Stadion", patrocinador: "ASML", escudo_url: getIntlEscudo("psv"), divisao: "eredivisie", regiao: "europa", pais: "Holanda" },
   { nome: "Feyenoord", curto: "FEY", cidade: "Rotterdam", estado: "Holanda", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 89, torcida: 300000000, estadio_cap: 51117, saldo: 220000000, file_key: "feyenoord", estadio_nome: "De Kuip", patrocinador: "Ternair", escudo_url: getIntlEscudo("feyenoord"), divisao: "eredivisie", regiao: "europa", pais: "Holanda" },
   { nome: "AZ Alkmaar", curto: "AZA", cidade: "Alkmaar", estado: "Holanda", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 82, torcida: 120000000, estadio_cap: 17023, saldo: 90000000, file_key: "az_alkmaar", estadio_nome: "AFAS Stadion", patrocinador: "AZ", escudo_url: getIntlEscudo("az_alkmaar"), divisao: "eredivisie", regiao: "europa", pais: "Holanda" },
@@ -3592,16 +3592,16 @@ export const eredivisieTeams: Team[] = [
 // =============================================
 export const scottishPremTeams: Team[] = [
   { nome: "Celtic", curto: "CLT", cidade: "Glasgow", estado: "Escocia", cor1: "#00A650", cor2: "#FFFFFF", prestigio: 90, torcida: 250000000, estadio_cap: 60411, saldo: 200000000, file_key: "celtic", estadio_nome: "Celtic Park", patrocinador: "Adidas", escudo_url: getIntlEscudo("celtic"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "Rangers", curto: "RNG", cidade: "Glasgow", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 88, torcida: 240000000, estadio_cap: 50817, saldo: 180000000, file_key: "rangers", estadio_nome: "Ibrox Stadium", patrocinador: "Castore", escudo_url: getIntlEscudo("rangers"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "Rangers FC", curto: "RNG", cidade: "Glasgow", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 88, torcida: 240000000, estadio_cap: 50817, saldo: 180000000, file_key: "rangers", estadio_nome: "Ibrox Stadium", patrocinador: "Castore", escudo_url: getIntlEscudo("rangers"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
   { nome: "Hearts", curto: "HEA", cidade: "Edinburgh", estado: "Escocia", cor1: "#A50000", cor2: "#FFFFFF", prestigio: 78, torcida: 80000000, estadio_cap: 17529, saldo: 60000000, file_key: "hearts", estadio_nome: "Tynecastle Park", patrocinador: "Hearts", escudo_url: getIntlEscudo("hearts"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "Hibernian", curto: "HIB", cidade: "Edinburgh", estado: "Escocia", cor1: "#006600", cor2: "#FFFFFF", prestigio: 75, torcida: 75000000, estadio_cap: 20421, saldo: 55000000, file_key: "hibernian", estadio_nome: "Easter Road", patrocinador: "Hibernian", escudo_url: getIntlEscudo("hibernian"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "Aberdeen", curto: "ABE", cidade: "Aberdeen", estado: "Escocia", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 74, torcida: 70000000, estadio_cap: 20866, saldo: 50000000, file_key: "aberdeen", estadio_nome: "Pittodrie Stadium", patrocinador: "Aberdeen", escudo_url: getIntlEscudo("aberdeen"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "Kilmarnock", curto: "KIL", cidade: "Kilmarnock", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 66, torcida: 40000000, estadio_cap: 17899, saldo: 30000000, file_key: "kilmarnock", estadio_nome: "Rugby Park", patrocinador: "Kilmarnock", escudo_url: getIntlEscudo("kilmarnock"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "St. Mirren", curto: "STM", cidade: "Paisley", estado: "Escocia", cor1: "#000000", cor2: "#FFFFFF", prestigio: 67, torcida: 38000000, estadio_cap: 8023, saldo: 28000000, file_key: "st_mirren", estadio_nome: "The SMiSA Stadium", patrocinador: "St. Mirren", escudo_url: getIntlEscudo("st_mirren"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "Motherwell", curto: "MOW", cidade: "Motherwell", estado: "Escocia", cor1: "#CC0000", cor2: "#FFFF00", prestigio: 68, torcida: 42000000, estadio_cap: 13742, saldo: 32000000, file_key: "motherwell", estadio_nome: "Fir Park", patrocinador: "Motherwell", escudo_url: getIntlEscudo("motherwell"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "St. Johnstone", curto: "STJ", cidade: "Perth", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 65, torcida: 35000000, estadio_cap: 10696, saldo: 25000000, file_key: "st_johnstone", estadio_nome: "McDiarmid Park", patrocinador: "St. Johnstone", escudo_url: getIntlEscudo("st_johnstone"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "Hibernian FC", curto: "HIB", cidade: "Edinburgh", estado: "Escocia", cor1: "#006600", cor2: "#FFFFFF", prestigio: 75, torcida: 75000000, estadio_cap: 20421, saldo: 55000000, file_key: "hibernian", estadio_nome: "Easter Road", patrocinador: "Hibernian", escudo_url: getIntlEscudo("hibernian"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "Aberdeen FC", curto: "ABE", cidade: "Aberdeen", estado: "Escocia", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 74, torcida: 70000000, estadio_cap: 20866, saldo: 50000000, file_key: "aberdeen", estadio_nome: "Pittodrie Stadium", patrocinador: "Aberdeen", escudo_url: getIntlEscudo("aberdeen"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "Kilmarnock FC", curto: "KIL", cidade: "Kilmarnock", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 66, torcida: 40000000, estadio_cap: 17899, saldo: 30000000, file_key: "kilmarnock", estadio_nome: "Rugby Park", patrocinador: "Kilmarnock", escudo_url: getIntlEscudo("kilmarnock"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "St Mirren FC", curto: "STM", cidade: "Paisley", estado: "Escocia", cor1: "#000000", cor2: "#FFFFFF", prestigio: 67, torcida: 38000000, estadio_cap: 8023, saldo: 28000000, file_key: "st_mirren", estadio_nome: "The SMiSA Stadium", patrocinador: "St. Mirren", escudo_url: getIntlEscudo("st_mirren"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "Motherwell FC", curto: "MOW", cidade: "Motherwell", estado: "Escocia", cor1: "#CC0000", cor2: "#FFFF00", prestigio: 68, torcida: 42000000, estadio_cap: 13742, saldo: 32000000, file_key: "motherwell", estadio_nome: "Fir Park", patrocinador: "Motherwell", escudo_url: getIntlEscudo("motherwell"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "St Johnstone FC", curto: "STJ", cidade: "Perth", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 65, torcida: 35000000, estadio_cap: 10696, saldo: 25000000, file_key: "st_johnstone", estadio_nome: "McDiarmid Park", patrocinador: "St. Johnstone", escudo_url: getIntlEscudo("st_johnstone"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
   { nome: "Ross County", curto: "ROC", cidade: "Dingwall", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 62, torcida: 25000000, estadio_cap: 6700, saldo: 18000000, file_key: "ross_county", estadio_nome: "Global Energy Stadium", patrocinador: "Ross County", escudo_url: getIntlEscudo("ross_county"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
-  { nome: "Livingston", curto: "LVS", cidade: "Livingston", estado: "Escocia", cor1: "#FFCC00", cor2: "#000000", prestigio: 63, torcida: 28000000, estadio_cap: 9856, saldo: 20000000, file_key: "livingston", estadio_nome: "Tony Macaroni Arena", patrocinador: "Livingston", escudo_url: getIntlEscudo("livingston"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
+  { nome: "Livingston FC", curto: "LVS", cidade: "Livingston", estado: "Escocia", cor1: "#FFCC00", cor2: "#000000", prestigio: 63, torcida: 28000000, estadio_cap: 9856, saldo: 20000000, file_key: "livingston", estadio_nome: "Tony Macaroni Arena", patrocinador: "Livingston", escudo_url: getIntlEscudo("livingston"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
   { nome: "Dundee FC", curto: "DUN", cidade: "Dundee", estado: "Escocia", cor1: "#003DA5", cor2: "#FFFFFF", prestigio: 64, torcida: 32000000, estadio_cap: 11506, saldo: 22000000, file_key: "dundee_fc", estadio_nome: "Dens Park", patrocinador: "Dundee", escudo_url: getIntlEscudo("dundee_fc"), divisao: "scottish_prem", regiao: "europa", pais: "Escocia" },
 ]
 
@@ -3729,7 +3729,7 @@ export const primeiraAColTeams: Team[] = [
 // PRIMERA DIVISION - CHILE
 // =============================================
 export const primeraDivChileTeams: Team[] = [
-  { nome: "Colo-Colo", curto: "CCO", cidade: "Santiago", estado: "Chile", cor1: "#FFFFFF", cor2: "#000000", prestigio: 88, torcida: 250000000, estadio_cap: 47000, saldo: 150000000, file_key: "colo_colo", estadio_nome: "Estadio Monumental David Arellano", patrocinador: "Adidas", escudo_url: getIntlEscudo("colo_colo"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
+  { nome: "Colo Colo", curto: "CCO", cidade: "Santiago", estado: "Chile", cor1: "#FFFFFF", cor2: "#000000", prestigio: 88, torcida: 250000000, estadio_cap: 47000, saldo: 150000000, file_key: "colo_colo", estadio_nome: "Estadio Monumental David Arellano", patrocinador: "Adidas", escudo_url: getIntlEscudo("colo_colo"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
   { nome: "Universidad Catolica", curto: "UCA", cidade: "Santiago", estado: "Chile", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 86, torcida: 220000000, estadio_cap: 20550, saldo: 130000000, file_key: "u_catolica_chi", estadio_nome: "Estadio San Carlos de Apoquindo", patrocinador: "Cruzados", escudo_url: getIntlEscudo("u_catolica_chi"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
   { nome: "Universidad de Chile", curto: "UCH", cidade: "Santiago", estado: "Chile", cor1: "#003DA5", cor2: "#CC0000", prestigio: 84, torcida: 200000000, estadio_cap: 47000, saldo: 120000000, file_key: "u_de_chile", estadio_nome: "Estadio Monumental David Arellano", patrocinador: "U de Chile", escudo_url: getIntlEscudo("u_de_chile"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
   { nome: "Huachipato", curto: "HUA", cidade: "Talcahuano", estado: "Chile", cor1: "#003DA5", cor2: "#FFCC00", prestigio: 73, torcida: 80000000, estadio_cap: 20000, saldo: 55000000, file_key: "huachipato", estadio_nome: "Estadio CAP", patrocinador: "Huachipato", escudo_url: getIntlEscudo("huachipato"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },

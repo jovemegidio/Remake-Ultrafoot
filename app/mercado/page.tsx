@@ -463,19 +463,20 @@ export default function MercadoPage() {
     setSelectedPlayer(player)
   }
 
-  const handleNegotiate = (type: "buy" | "loan" = "buy") => {
-    if (!selectedPlayer) return
+  const handleNegotiate = (type: "buy" | "loan" = "buy", player = selectedPlayer) => {
+    if (!player) return
 
     // Jogador que recusou fica 30 dias sem ouvir o clube. Antes dava para reabrir o
     // modal e propor de novo no mesmo dia ate a sorte virar — recusa sem custo nenhum.
-    const daysLeft = getRejectionCooldownDays(selectedPlayer.id, gameDate)
+    const daysLeft = getRejectionCooldownDays(player.id, gameDate)
     if (daysLeft > 0) {
       setMarketNotice(
-        `${selectedPlayer.name} recusou sua proposta. Ele so voltara a negociar em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}.`
+        `${player.name} recusou sua proposta. Ele so voltara a negociar em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}.`
       )
       return
     }
 
+    setSelectedPlayer(player)
     setNegotiationType(type)
     setNegotiationOpen(true)
   }
@@ -732,11 +733,7 @@ export default function MercadoPage() {
                   {filteredPlayers.slice(0, 8).map((player) => (
                     <button
                       key={player.id}
-                      onClick={() => {
-                        // Clicar num resultado JA abre a negociacao daquele jogador.
-                        setSelectedPlayer(player)
-                        handleNegotiate("buy")
-                      }}
+                      onClick={() => handlePlayerSelect(player)}
                       className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-left group"
                     >
                       <PlayerAvatar name={player.name} teamColor={player.team.cor1} size="sm" />

@@ -1143,6 +1143,14 @@ export interface TeamTactics {
   penaltyTaker: number | null
 }
 
+export interface TacticalAssignments {
+  corner: string
+  freeKick: string
+  penalty: string
+  captain: string
+  playerRoles: Record<string, string>
+}
+
 export type PlayerRole = 
   // Goleiros (4 funcoes)
   | "goleiro_defensor" | "goleiro_libero" | "goleiro_sweeper" | "goleiro_distribuidor"
@@ -1684,6 +1692,7 @@ interface GameEngineState {
   // Taticas
   teamTactics: TeamTactics
   playerInstructions: Record<number, PlayerInstructions>
+  tacticalAssignments: TacticalAssignments
   opponentAnalyses: OpponentAnalysis[]
   
   // Moral e vestiario
@@ -1752,6 +1761,7 @@ interface GameEngineState {
   setFormation: (formation: string) => void
   setTeamTactics: (tactics: Partial<TeamTactics>) => void
   setPlayerInstructions: (playerId: number, instructions: Partial<PlayerInstructions>) => void
+  setTacticalAssignments: (assignments: Partial<TacticalAssignments>) => void
   analyzeOpponent: (teamShort: string) => void
   updateOpponentAnalysis: () => void
   
@@ -2228,6 +2238,7 @@ export const useGameEngine = create<GameEngineState>()(
         penaltyTaker: 10, // Sasha
       },
       playerInstructions: {},
+      tacticalAssignments: { corner: "", freeKick: "", penalty: "", captain: "", playerRoles: {} },
       opponentAnalyses: [],
       
       // Moral
@@ -3329,6 +3340,18 @@ export const useGameEngine = create<GameEngineState>()(
             }
           }
         })
+      },
+
+      setTacticalAssignments: (assignments: Partial<TacticalAssignments>) => {
+        set((state) => ({
+          tacticalAssignments: {
+            ...state.tacticalAssignments,
+            ...assignments,
+            playerRoles: assignments.playerRoles
+              ? { ...state.tacticalAssignments.playerRoles, ...assignments.playerRoles }
+              : state.tacticalAssignments.playerRoles,
+          },
+        }))
       },
       
       analyzeOpponent: (teamShort: string) => {

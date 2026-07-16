@@ -14,7 +14,10 @@ import { allTeams } from "../lib/teams-data"
 const APPLY = process.argv.includes("--apply")
 // Colisoes de clubKey entre ligas: NAO renomear (o CSV de um pais casou com um clube de
 // outro). Ex.: "Guarani" (Campinas/BR) x "Guaraní" (Paraguai) normalizam para a mesma chave.
-const SKIP_FILE_KEYS = new Set(["guaranisp_bra"])
+const SKIP_FILE_KEYS = new Set([
+  "guaranisp_bra", // Guarani (Campinas/BR) x Guaraní (Paraguai)
+  "vitoria",       // Vitoria (Salvador/BA/BR) x Vitória SC (Portugal)
+])
 const SRC_DIR = path.resolve("Nova pasta/Elencos")
 const FILES = [path.resolve("lib/international-teams.ts"), path.resolve("lib/teams-data.ts")]
 

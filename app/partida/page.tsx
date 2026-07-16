@@ -332,7 +332,12 @@ export default function PartidaPage() {
     quickSimRegistered.current = false
     setShowQuickSim(true)
     setQuickSimResult(null)
-    const result = simulateFullMatch({ homeTeam, awayTeam, homeRating: homeTeam.prestigio, awayRating: awayTeam.prestigio })
+    const result = simulateFullMatch({
+      homeTeam,
+      awayTeam,
+      homeRating: teamRating(homeTeam.curto) || teamRating(homeTeam.nome) || 75,
+      awayRating: teamRating(awayTeam.curto) || teamRating(awayTeam.nome) || 75,
+    })
     setTimeout(() => {
       setQuickSimResult({
         homeGoals: result.home.goals,
@@ -426,6 +431,27 @@ export default function PartidaPage() {
     window.addEventListener("gamepad:button", handleGamepadButton)
     return () => window.removeEventListener("gamepad:button", handleGamepadButton)
   }, [showQuickSim, router, handleQuickSim])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return
+      if (showQuickSim) return
+
+      if (event.key === "Enter") {
+        event.preventDefault()
+        hardNavigate("/partida/ao-vivo")
+      } else if (event.key.toLowerCase() === "x") {
+        event.preventDefault()
+        handleQuickSim()
+      } else if (event.key === "Escape") {
+        event.preventDefault()
+        hardNavigate("/")
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [handleQuickSim, showQuickSim])
 
   // Tecla Q: abre a selecao de uniformes (o keycap [q] sempre existiu na tela, mas a
   // tecla nunca fez nada — so o clique no botao). Ignora se o modal ja esta aberto (ele

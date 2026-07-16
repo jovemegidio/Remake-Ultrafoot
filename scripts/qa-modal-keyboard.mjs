@@ -73,7 +73,7 @@ const SAVE = {
 const browser = await chromium.launch({ headless: true })
 const page = await browser.newPage()
 await page.addInitScript((save) => {
-  localStorage.setItem("ultrafoot-save", JSON.stringify(save))
+  localStorage.setItem("ultrafoot:save", JSON.stringify(save))
   sessionStorage.setItem("ultrafoot:session-active", "true")
 }, SAVE)
 

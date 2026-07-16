@@ -774,7 +774,13 @@ export default function PartidaAoVivoPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault()
         if (state.phase === "pre") { start(); return }
+      }
+      if (e.key.toLowerCase() === "x" && state.phase !== "fulltime") {
+        e.preventDefault()
+        fastForward()
+        return
       }
       if (e.key === "Escape") {
         if (state.phase !== "pre" && state.phase !== "fulltime") {
@@ -785,7 +791,7 @@ export default function PartidaAoVivoPage() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isRunning, pause, resume, start, state.phase])
+  }, [fastForward, isRunning, pause, resume, start, state.phase])
 
   // Handler de gamepad
   useEffect(() => {
