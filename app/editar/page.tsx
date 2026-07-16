@@ -130,8 +130,12 @@ const countryCodeOf = (team: Team): string => {
 // Segundo nível de agrupamento: por estado (Brasil) ou por liga (internacional).
 const subGroupOf = (team: Team): { key: string; label: string } => {
   const code = countryCodeOf(team)
-  // Clubes do pool: um subgrupo "Outros clubes" por pais (nao temos a liga no Team).
-  if (isPoolTeam(team)) return { key: `${code}|pool`, label: "Outros clubes" }
+  // Clubes BR do pool COM estado agrupam por estado (junto dos curados). Sem estado ou
+  // fora do Brasil, caem num "Outros clubes" por pais (nao temos a liga no Team).
+  if (isPoolTeam(team)) {
+    if (code === "BRA" && team.estado) return { key: `BRA|${team.estado}`, label: ESTADO_LABEL[team.estado] ?? team.estado }
+    return { key: `${code}|pool`, label: "Outros clubes" }
+  }
   return code === "BRA"
     ? { key: `BRA|${team.estado}`, label: ESTADO_LABEL[team.estado] ?? team.estado }
     : { key: `${code}|${team.divisao}`, label: formatDivisao(team.divisao) }

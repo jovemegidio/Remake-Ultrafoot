@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useGameState, type CoachSkillId } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allTeams, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getPlayersByTeam } from "@/lib/players-data"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
@@ -152,7 +152,18 @@ export function getStateChampionshipTeams(userTeamShort: string): Team[] {
   if (!userTeam || !isBrazilianDivision(userTeam.divisao)) return []
   const estado = userTeam.estado
   if (!ESTADO_CAMPEONATO[estado]) return []
-  const stateTeams = allBrazilianTeams.filter(t => t.estado === estado)
+  // Curados + clubes do POOL do mesmo estado (o pool ganhou `estado` via
+  // assign-pool-br-states.mjs), para estaduais de BA/RS/CE/PR/etc. deixarem de ficar vazios.
+  // Dedup por file_key/curto; ordena por prestigio (mais forte primeiro).
+  const seen = new Set<string>()
+  const stateTeams = [...allBrazilianTeams, ...allPoolTeams]
+    .filter(t => t.estado === estado)
+    .filter(t => {
+      const k = (t.file_key || t.curto || t.nome).toLowerCase()
+      if (seen.has(k)) return false
+      seen.add(k); return true
+    })
+    .sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome))
   if (stateTeams.length < 4) return []
 
   const teams = stateTeams.slice(0, STATE_MAX_TEAMS)

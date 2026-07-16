@@ -1109,7 +1109,7 @@ for (const t of allTeams) { _curatedKeys.add(_normKey(t.file_key)); _curatedKeys
 interface PoolTeamRaw {
   nome?: string; curto?: string; cor1?: string; cor2?: string; prestigio?: number
   saldo?: number; fileKey?: string; estadio?: string; escudo?: string
-  escudoDisponivel?: boolean; pais?: string
+  escudoDisponivel?: boolean; pais?: string; estado?: string
 }
 
 export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
@@ -1122,7 +1122,7 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
     nome: String(t.nome ?? ""),
     curto: String(t.curto ?? String(t.nome ?? "").slice(0, 3).toUpperCase()),
     cidade: "",
-    estado: "",
+    estado: String(t.estado ?? ""),
     cor1: String(t.cor1 ?? "#666666"),
     cor2: String(t.cor2 ?? "#ffffff"),
     prestigio: Number(t.prestigio ?? 45),

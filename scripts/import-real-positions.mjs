@@ -65,32 +65,33 @@ function clubKey(s) {
  */
 const POSITION_MAP = [
   // ── Goleiro ──────────────────────────────────────────────────────────────
-  [/goleiro|goalkeeper|keeper/, "GOL"],
+  [/goleiro|goalkeeper|keeper|^gk$|^g$/, "GOL"],
 
   // ── Laterais (antes dos zagueiros: "Right-Back" tem "back", nao "centre") ──
-  [/lateral\s*direit|right.?back|right\s*wing.?back/, "LD"],
-  [/lateral\s*esquerd|left.?back|left\s*wing.?back/, "LE"],
+  [/lateral\s*direit|right.?back|right\s*wing.?back|^rb$|^rwb$/, "LD"],
+  [/lateral\s*esquerd|left.?back|left\s*wing.?back|^lb$|^lwb$/, "LE"],
 
   // ── Zaga ─────────────────────────────────────────────────────────────────
-  [/zagueiro|zaga|centre.?back|center.?back|sweeper/, "ZAG"],
+  [/zagueiro|zaga|centre.?back|center.?back|sweeper|^cb$/, "ZAG"],
 
   // ── Volante (antes do meio generico: "Defensive Midfield" tem "midfield") ──
-  [/volante|defensive\s*midfield|meio-?campo\s*defensivo/, "VOL"],
+  [/volante|defensive\s*midfield|meio-?campo\s*defensivo|^dm$|^cdm$/, "VOL"],
 
   // ── Pontas (antes do ataque: "Right Winger" nao pode virar ATA) ───────────
-  [/ponta\s*direita|extremo\s*direit|right\s*winger/, "PD"],
-  [/ponta\s*esquerda|extremo\s*esquerd|left\s*winger/, "PE"],
+  [/ponta\s*direita|extremo\s*direit|right\s*winger|^rw$|^rm$/, "PD"],
+  [/ponta\s*esquerda|extremo\s*esquerd|left\s*winger|^lw$|^lm$/, "PE"],
 
   // ── Ataque ───────────────────────────────────────────────────────────────
   // Inclui "Forward"/"Winger"/"Attacker" (CSVs em ingles com grupos grossos: os atacantes
   // vinham como "Forward" e NAO casavam -> eram descartados e o time ficava sem ataque).
-  [/centroavante|centro-?avante|centre.?forward|center.?forward|second\s*striker|striker|atacante|forward|winger|attacker/, "ATA"],
+  [/centroavante|centro-?avante|centre.?forward|center.?forward|second\s*striker|striker|atacante|forward|winger|attacker|^fw$|^st$|^cf$|^ss$/, "ATA"],
 
   // ── Meio-campo (por ultimo: e o balde mais generico) ─────────────────────
-  [/meia|meio-?campo|meio-?campista|midfield/, "MEI"],
+  [/meia|meio-?campo|meio-?campista|midfield|^mf$|^cm$|^am$|^cam$/, "MEI"],
 
-  // "Defensor" generico (Serie B/C) — sem lado definido, vira zagueiro.
-  [/defensor|defender/, "ZAG"],
+  // Codigos/rotulos genericos por ultimo — sem lado definido caem no balde do grupo.
+  // "DF" (ingles) e "Defensor" (Serie B/C) viram zagueiro.
+  [/^df$|defensor|defender/, "ZAG"],
 ]
 
 function toPos(raw) {
