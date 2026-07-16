@@ -25,6 +25,7 @@ import {
   serieBTeams,
   serieCTeams,
   serieDTeams,
+  allPoolTeams,
   getCamisaUrl,
   type Team
 } from "@/lib/teams-data"
@@ -102,13 +103,39 @@ const ESTADO_LABEL: Record<string, string> = {
 const formatDivisao = (div: string) =>
   DIV_LABEL[div] ?? div.replace(/_/g, " ").toUpperCase()
 
-const countryCodeOf = (team: Team) => DIV_COUNTRY[team.divisao] ?? "INT"
+// Nome do pais (PT-BR, como vem do pool) -> codigo, para os clubes do pool caírem no
+// MESMO grupo dos curados. Paises fora do mapa usam o proprio nome como codigo.
+const PAIS_CODE: Record<string, string> = {
+  "Brasil": "BRA", "Inglaterra": "ENG", "Espanha": "ESP", "Itália": "ITA", "Italia": "ITA",
+  "Alemanha": "GER", "França": "FRA", "Franca": "FRA", "Portugal": "POR",
+  "Holanda": "NED", "Países Baixos": "NED", "Paises Baixos": "NED",
+  "Escócia": "SCO", "Escocia": "SCO", "Turquia": "TUR", "Bélgica": "BEL", "Belgica": "BEL",
+  "Rússia": "RUS", "Russia": "RUS", "Estados Unidos": "USA", "México": "MEX", "Mexico": "MEX",
+  "Argentina": "ARG", "Colômbia": "COL", "Colombia": "COL", "Chile": "CHI",
+  "Uruguai": "URU", "Arábia Saudita": "KSA", "Arabia Saudita": "KSA",
+  "Japão": "JPN", "Japao": "JPN", "Coreia do Sul": "KOR", "China": "CHN",
+}
+
+// Clube do pool? (divisao no formato "pool:<pais>")
+const isPoolTeam = (team: Team) => typeof team.divisao === "string" && team.divisao.startsWith("pool:")
+
+const countryCodeOf = (team: Team): string => {
+  if (isPoolTeam(team)) {
+    const pais = team.pais ?? (team.divisao as string).slice(5)
+    return PAIS_CODE[pais] ?? pais ?? "INT"
+  }
+  return DIV_COUNTRY[team.divisao] ?? "INT"
+}
 
 // Segundo nível de agrupamento: por estado (Brasil) ou por liga (internacional).
-const subGroupOf = (team: Team): { key: string; label: string } =>
-  countryCodeOf(team) === "BRA"
+const subGroupOf = (team: Team): { key: string; label: string } => {
+  const code = countryCodeOf(team)
+  // Clubes do pool: um subgrupo "Outros clubes" por pais (nao temos a liga no Team).
+  if (isPoolTeam(team)) return { key: `${code}|pool`, label: "Outros clubes" }
+  return code === "BRA"
     ? { key: `BRA|${team.estado}`, label: ESTADO_LABEL[team.estado] ?? team.estado }
-    : { key: `${countryCodeOf(team)}|${team.divisao}`, label: formatDivisao(team.divisao) }
+    : { key: `${code}|${team.divisao}`, label: formatDivisao(team.divisao) }
+}
 
 // Mock players data generator based on team - completamente deterministico (sem Math.random)
 // Monta a lista de jogadores REAL do time (antes era uma lista fixa/fake, IGUAL para todos
@@ -158,8 +185,9 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
   })
 }
 
-// All teams combined (brasileiros + internacionais)
-const allTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams, ...allInternationalTeams]
+// All teams combined (brasileiros + internacionais + POOL BF2026 ~2947 clubes).
+// O pool traz todos os clubes reais que nao estao curados, para o editor listar TODOS.
+const allTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams, ...allInternationalTeams, ...allPoolTeams]
 
 const POS_STYLE: Record<string, { text: string; bg: string }> = {
   GOL: { text: "text-amber-300",  bg: "bg-amber-400/10 border-amber-400/25" },

@@ -612,8 +612,8 @@ export function MatchRadar({
                 </span>
               </div>
               <span
-                className="max-w-[58px] truncate rounded px-1 text-[7.5px] leading-[1.35] text-white/85"
-                style={{ background: "rgba(0,0,0,0.42)" }}
+                className="pointer-events-none max-w-[52px] truncate whitespace-nowrap rounded px-1 text-[8px] font-medium leading-[1.3] text-white"
+                style={{ background: "rgba(0,0,0,0.66)", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}
               >
                 {s.name.split(" ").slice(-1)[0]}
               </span>

@@ -4,6 +4,7 @@
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 import { getTeamOverride } from "@/lib/team-overrides"
 import { getCurrency } from "@/lib/currency"
+import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -1093,6 +1094,49 @@ export const allBrazilianTeams = [...serieATeams, ...serieBTeams, ...serieCTeams
 
 // Todos os times (incluindo internacionais)
 export const allTeams = [...allBrazilianTeams, ...allInternationalTeams]
+
+// ── POOL BF2026 (~2947 clubes reais) como Team ────────────────────────────────
+// O jogo carrega ~2947 clubes no pool (imported-bf2026.json), mas so os CURADOS
+// apareciam no editor — dai a impressao de "faltam times / o editor nao mostra os
+// 2000+". Aqui convertemos o pool em Team e excluimos os que ja existem curados
+// (por file_key ou nome), para o editor listar TODOS agrupados por pais.
+const _normKey = (s: string) =>
+  (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "")
+
+const _curatedKeys = new Set<string>()
+for (const t of allTeams) { _curatedKeys.add(_normKey(t.file_key)); _curatedKeys.add(_normKey(t.nome)) }
+
+interface PoolTeamRaw {
+  nome?: string; curto?: string; cor1?: string; cor2?: string; prestigio?: number
+  saldo?: number; fileKey?: string; estadio?: string; escudo?: string
+  escudoDisponivel?: boolean; pais?: string
+}
+
+export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
+  .filter((t) => {
+    const fk = _normKey(String(t.fileKey ?? ""))
+    const nm = _normKey(String(t.nome ?? ""))
+    return fk && !_curatedKeys.has(fk) && !_curatedKeys.has(nm)
+  })
+  .map((t): Team => ({
+    nome: String(t.nome ?? ""),
+    curto: String(t.curto ?? String(t.nome ?? "").slice(0, 3).toUpperCase()),
+    cidade: "",
+    estado: "",
+    cor1: String(t.cor1 ?? "#666666"),
+    cor2: String(t.cor2 ?? "#ffffff"),
+    prestigio: Number(t.prestigio ?? 45),
+    torcida: 0,
+    estadio_cap: 0,
+    saldo: Number(t.saldo ?? 0),
+    file_key: String(t.fileKey ?? ""),
+    estadio_nome: String(t.estadio ?? ""),
+    patrocinador: "",
+    // So aponta escudo quando o arquivo existe (senao cai no fallback do editor).
+    escudo_url: t.escudoDisponivel ? String(t.escudo ?? "") : "",
+    divisao: `pool:${String(t.pais ?? "INT")}`,
+    pais: String(t.pais ?? "") || undefined,
+  }))
 
 // Times por divisao
 export function getTeamsByDivision(divisao: string): Team[] {

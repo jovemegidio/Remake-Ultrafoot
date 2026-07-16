@@ -897,19 +897,78 @@ function updatePossession(state: MatchState, config: MatchConfig): void {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function moveBall(state: MatchState): void {
-  const homePossProb = Math.max(0.25, Math.min(0.80,
-    0.5 + state.momentum * 0.004 + state.awayReds * 0.08 - state.homeReds * 0.08
-  ))
-  const homePossess = rnd() < homePossProb
-  const side: Side = homePossess ? "home" : "away"
+  const clamp01 = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
-  const targetX = side === "home" ? 72 + rnd() * 22 : 6 + rnd() * 22
-  const targetY = 18 + rnd() * 64
-  const newX = state.ball.x * 0.68 + targetX * 0.32
-  const newY = state.ball.y * 0.68 + targetY * 0.32
+  // ── Bola guiada pelo EVENTO do minuto ────────────────────────────────────────
+  // moveBall roda DEPOIS de generateMinuteEvents, entao events[0] e o lance deste
+  // minuto. Antes a bola so mirava o terco de ataque e, com o lado sorteado ~50/50,
+  // a suavizacao a puxava pro meio (o "so fica no meio do campo"). Agora cada tipo
+  // de lance leva a bola pro lugar certo: gol -> meio (recomeco), chute/defesa ->
+  // area, escanteio -> quina, falta/cartao -> ponto da falta, e a posse manda no
+  // lado quando nao ha lance.
+  const ev = state.events[0]
+  const evThis = ev && ev.minute === state.minute
+  // adv = quanto o time avancou rumo ao gol adversario (0 = gol proprio, 1 = gol adv).
+  // Converte para x do campo conforme o lado ataca.
+  const toX = (side: Side, adv: number) => (side === "home" ? adv * 100 : (1 - adv) * 100)
+
+  if (evThis && ev) {
+    const s = ev.side
+    if (ev.type === "goal" || ev.type === "kickoff") {
+      state.ball = { x: 50, y: 50, side: ev.type === "goal" ? (s === "home" ? "away" : "home") : s }
+      return
+    }
+    let adv = 0.6
+    let ty = 20 + rnd() * 60
+    switch (ev.type) {
+      case "penalty":
+        adv = 0.88; ty = 50; break
+      case "shot": case "shot_on_target": case "save": case "miss": case "post":
+        adv = 0.80 + rnd() * 0.12; ty = 34 + rnd() * 32; break
+      case "corner":
+        adv = 0.97; ty = rnd() < 0.5 ? 6 : 94; break
+      case "foul": case "yellow_card": case "red_card":
+        // Falta: jogo parado num ponto qualquer, mais provavel no meio/ataque.
+        adv = 0.35 + rnd() * 0.45; ty = 10 + rnd() * 80; break
+      case "injury":
+        adv = 0.30 + rnd() * 0.40; ty = 10 + rnd() * 80; break
+      default:
+        adv = 0.55 + rnd() * 0.25; ty = 25 + rnd() * 50
+    }
+    const tx = toX(s, adv)
+    // Lance definido: a bola pula quase direto pro local (pouca inercia).
+    state.ball = {
+      x: clamp01(state.ball.x * 0.25 + tx * 0.75, 2, 98),
+      y: clamp01(state.ball.y * 0.25 + ty * 0.75, 4, 96),
+      side: s,
+    }
+    return
+  }
+
+  // ── Jogo aberto (sem lance): posse decide o lado; zonas dao variedade ─────────
+  // Antes o lado saia so do momentum -> ~50/50 -> media no meio. Agora parte da
+  // posse REAL.
+  const homePoss = isNaN(state.home.possession) ? 50 : state.home.possession
+  const homeProb = clamp01(
+    homePoss / 100 + state.momentum * 0.002 + state.awayReds * 0.06 - state.homeReds * 0.06,
+    0.18, 0.86,
+  )
+  const side: Side = rnd() < homeProb ? "home" : "away"
+
+  // Zonas de campo: construcao, progressao, terco final, ou recuo/lateral.
+  const r = rnd()
+  let adv: number
+  let ty: number
+  if (r < 0.30) { adv = 0.32 + rnd() * 0.18; ty = 25 + rnd() * 50 }        // construcao (meio-campo)
+  else if (r < 0.62) { adv = 0.50 + rnd() * 0.22; ty = 15 + rnd() * 70 }   // progressao
+  else if (r < 0.86) { adv = 0.72 + rnd() * 0.20; ty = 20 + rnd() * 60 }   // terco final
+  else { adv = 0.40 + rnd() * 0.25; ty = rnd() < 0.5 ? 6 + rnd() * 10 : 84 + rnd() * 10 } // lateral/lance de linha
+
+  const tx = toX(side, adv)
+  // Jogo aberto: menos inercia que antes (0.68 -> 0.52) pra bola de fato viajar.
   state.ball = {
-    x: Math.max(2, Math.min(98, newX)),
-    y: Math.max(5, Math.min(95, newY)),
+    x: clamp01(state.ball.x * 0.52 + tx * 0.48, 2, 98),
+    y: clamp01(state.ball.y * 0.55 + ty * 0.45, 4, 96),
     side,
   }
 }
