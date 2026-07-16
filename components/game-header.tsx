@@ -10,6 +10,7 @@ import { NotificationBell, NotificationCenter } from "@/components/notifications
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useGameManager } from "@/lib/use-game-manager"
+import { clearJobOffers } from "@/lib/career-moves"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
@@ -106,6 +107,14 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showCoachDropdown, setShowCoachDropdown] = useState(false)
   const [showNavMenu, setShowNavMenu] = useState(false)
+  const [showResignConfirm, setShowResignConfirm] = useState(false)
+
+  // Pedir demissao: sai do clube e volta ao menu (o progresso ja e salvo sozinho).
+  // Mesma acao do card do escritorio, agora acessivel de qualquer tela pelo menu [W].
+  const handleResign = () => {
+    clearJobOffers()
+    hardNavigate("/splash?menu=1")
+  }
   // Item destacado no menu de navegacao — so existe para o CONTROLE (no mouse o hover
   // ja resolve). Sem isto, o menu que criei nao era utilizavel no gamepad.
   const [navMenuIndex, setNavMenuIndex] = useState(0)
@@ -527,10 +536,81 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 )
               })}
             </div>
+
+            {/* Pedir demissao — acao destrutiva, separada da grade de navegacao. */}
+            <div className="mt-3 border-t border-white/[0.06] pt-3">
+              <button
+                type="button"
+                onClick={() => { setShowNavMenu(false); setShowResignConfirm(true) }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/25 bg-red-500/5 px-3 py-2.5 text-sm font-semibold text-red-300/90 transition-colors hover:bg-red-500/10 hover:text-red-200"
+              >
+                <LogOut className="h-4 w-4" />
+                Pedir demissao
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Confirmacao da demissao: irreversivel, exige confirmar (teclado Enter/Esc, controle A/B). */}
+      {showResignConfirm && (
+        <ResignConfirmDialog
+          teamName={userTeam.nome}
+          onCancel={() => setShowResignConfirm(false)}
+          onConfirm={handleResign}
+        />
+      )}
     </header>
+  )
+}
+
+// Aviso de demissao. Esc/B cancela, Enter/A confirma (teclado + controle).
+function ResignConfirmDialog({ teamName, onCancel, onConfirm }: { teamName: string; onCancel: () => void; onConfirm: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); onCancel() }
+      else if (e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); onConfirm() }
+    }
+    const onPad = (e: Event) => {
+      const { button } = (e as CustomEvent<{ button: string }>).detail
+      if (button === "A") onConfirm()
+      else if (button === "B") onCancel()
+    }
+    document.addEventListener("keydown", onKey, true)
+    window.addEventListener("gamepad:button", onPad)
+    return () => {
+      document.removeEventListener("keydown", onKey, true)
+      window.removeEventListener("gamepad:button", onPad)
+    }
+  }, [onCancel, onConfirm])
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onCancel}>
+      <div
+        className="w-[400px] max-w-[90vw] rounded-2xl border border-white/10 bg-[#0c0c14] p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-bold text-white">Pedir demissao do {teamName}?</h2>
+        <p className="mt-2 text-sm text-white/60">
+          Voce encerra seu ciclo no clube e volta ao menu principal. O progresso e salvo
+          automaticamente. Esta acao nao pode ser desfeita.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:bg-white/10"
+          >
+            Cancelar <span className="text-white/30">(Esc)</span>
+          </button>
+          <button
+            onClick={onConfirm}
+            className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-400"
+          >
+            Confirmar demissao <span className="text-white/50">(Enter)</span>
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

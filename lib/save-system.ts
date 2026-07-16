@@ -291,8 +291,9 @@ export interface GameState {
   multiplayerEnabled: boolean
   managers: ManagerProfile[]
   activeManagerId: string | null
-  // Configuracoes de controle
-  controllerType: "xbox" | "playstation"
+  // Configuracoes de controle. "auto" = detecta pelo controle conectado; xbox/playstation
+  // forcam os prompts de botao (glifos) no jogo inteiro.
+  controllerType: "auto" | "xbox" | "playstation"
   controllerBindings: Record<string, Record<string, string>> // context -> button -> action
   // Arvore de habilidades do treinador (Just-in-Time)
   coachSkills: CoachSkill[]
@@ -361,7 +362,7 @@ export const DEFAULT_STATE: GameState = {
   managers: [],
   activeManagerId: null,
   // Controles
-  controllerType: "playstation",
+  controllerType: "auto",
   controllerBindings: {},
   // Treinador
   coachSkills: COACH_SKILL_CATALOG.map(s => ({ ...s })),

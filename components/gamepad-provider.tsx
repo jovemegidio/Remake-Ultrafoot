@@ -4,6 +4,7 @@ import { createContext, useContext, useCallback, useEffect, useRef, useState, ty
 import { useGamepadNavigation, type GamepadState, type GamepadButtonName } from "@/hooks/use-gamepad"
 import { useRouter, usePathname } from "next/navigation"
 import { ControllerTypeContext } from "@/components/controller-buttons"
+import { useGameState } from "@/lib/save-system"
 
 interface GamepadContextType {
   gamepad: GamepadState
@@ -222,10 +223,17 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
     setFocusedElementId(null)
   }, [pathname])
 
-  const detectedControllerType = gamepad.connected ? gamepad.controllerType : "xbox"
+  // Tipo de controle EFETIVO para os glifos de botao em todo o jogo:
+  // - preferencia do usuario (Configuracoes) manda quando e xbox/playstation;
+  // - "auto" (padrao) usa o controle detectado; sem controle, cai em xbox.
+  const { state: gameState } = useGameState()
+  const pref = gameState.controllerType
+  const detected = gamepad.connected && gamepad.controllerType !== "generic" ? gamepad.controllerType : "xbox"
+  const effectiveControllerType: "xbox" | "playstation" =
+    pref === "xbox" || pref === "playstation" ? pref : detected
 
   return (
-    <ControllerTypeContext.Provider value={detectedControllerType === "generic" ? "xbox" : detectedControllerType}>
+    <ControllerTypeContext.Provider value={effectiveControllerType}>
       <GamepadContext.Provider value={{
         gamepad,
         registerFocusableElement,

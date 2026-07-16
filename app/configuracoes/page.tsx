@@ -175,7 +175,7 @@ export default function ConfiguracoesPage() {
   const [managers, setManagers] = useState<ManagerProfile[]>(state.managers || [])
   
   // Controller state
-  const [controllerType, setControllerType] = useState<"xbox" | "playstation">(state.controllerType || "playstation")
+  const [controllerType, setControllerType] = useState<"auto" | "xbox" | "playstation">(state.controllerType || "auto")
   
   useEffect(() => {
     if (state.selectedUniform) setSelectedUniform(state.selectedUniform)
@@ -212,7 +212,7 @@ export default function ConfiguracoesPage() {
     setTheme("green")
     setMultiplayerEnabled(false)
     setManagers([])
-    setControllerType("playstation")
+    setControllerType("auto")
   }
 
   // Keyboard navigation for menu
@@ -238,7 +238,7 @@ export default function ConfiguracoesPage() {
   // Menu view with cards
   if (currentView === "menu") {
     return (
-      <ControllerTypeContext.Provider value={controllerType}>
+      <ControllerTypeContext.Provider value={controllerType === "playstation" ? "playstation" : "xbox"}>
         <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
           <GameHeader team={userTeam} />
           
@@ -1071,6 +1071,38 @@ export default function ConfiguracoesPage() {
 
         return (
           <div className="space-y-4">
+            {/* Tipo de controle: escolhe quais prompts de botao (glifos) aparecem no jogo
+                inteiro. Aplica na hora (grava no store, que o gamepad-provider le). */}
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Gamepad2 className="h-4 w-4 text-primary" />
+                Tipo de controle
+              </h3>
+              <p className="text-xs text-white/40 -mt-2">
+                Define os simbolos dos botoes exibidos no jogo. "Automatico" detecta pelo controle conectado.
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: "auto" as const, label: "Automatico", desc: "Detecta" },
+                  { id: "xbox" as const, label: "Xbox", desc: "A B X Y" },
+                  { id: "playstation" as const, label: "PlayStation", desc: "✕ ◯ □ △" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => { setControllerType(opt.id); setState({ controllerType: opt.id }) }}
+                    className={cn(
+                      "flex flex-col items-center gap-1 p-3 rounded-lg border transition-all",
+                      controllerType === opt.id ? "border-primary bg-primary/10" : "border-white/10 bg-white/5 hover:border-white/20"
+                    )}
+                  >
+                    <Gamepad2 className={cn("h-5 w-5", controllerType === opt.id ? "text-primary" : "text-white/50")} />
+                    <span className="text-sm text-white">{opt.label}</span>
+                    <span className="text-[10px] text-white/40">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Guia de Primeiros Passos */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5 space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -1250,7 +1282,7 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <ControllerTypeContext.Provider value={controllerType}>
+    <ControllerTypeContext.Provider value={controllerType === "playstation" ? "playstation" : "xbox"}>
       <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
         <GameHeader team={userTeam} />
 
