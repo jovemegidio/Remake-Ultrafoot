@@ -102,6 +102,7 @@ export default function TreinamentoPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
   const [filter, setFilter] = useState<"all" | "available" | "training">("all")
+  const [sortBy, setSortBy] = useState<"overall" | "potential" | "idade" | "nome">("overall")
   const [feedback, setFeedback] = useState<string | null>(null)
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -115,9 +116,15 @@ export default function TreinamentoPage() {
       players = players.filter(p => p.training.currentFocus)
     }
     
-    // Ordena por overall
-    return players.sort((a, b) => b.overall - a.overall)
-  }, [squadPlayers, filter])
+    // Ordenacao escolhida pelo usuario (antes era fixo por overall).
+    const cmp: Record<typeof sortBy, (a: typeof players[number], b: typeof players[number]) => number> = {
+      overall: (a, b) => b.overall - a.overall,
+      potential: (a, b) => b.potential - a.potential,
+      idade: (a, b) => a.age - b.age,
+      nome: (a, b) => a.name.localeCompare(b.name),
+    }
+    return players.sort(cmp[sortBy])
+  }, [squadPlayers, filter, sortBy])
 
   const router = useRouter()
   const [gpPlayerIdx, setGpPlayerIdx] = useState(0)
@@ -220,9 +227,22 @@ export default function TreinamentoPage() {
           <div className="lg:col-span-2 rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
             {/* Filtros */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
-              <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                <Users className="h-4 w-4 text-[#00ffc8]" />
-                ELENCO
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                  <Users className="h-4 w-4 text-[#00ffc8]" />
+                  ELENCO
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="rounded bg-white/[0.04] border border-white/10 px-2 py-1 text-xs text-white/70 focus:outline-none"
+                  title="Ordenar por"
+                >
+                  <option value="overall">Overall</option>
+                  <option value="potential">Potencial</option>
+                  <option value="idade">Idade</option>
+                  <option value="nome">Nome</option>
+                </select>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -276,7 +296,7 @@ export default function TreinamentoPage() {
             </div>
 
             {/* Lista */}
-            <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+            <div className="divide-y divide-white/5 max-h-[72vh] overflow-y-auto">
               {filteredPlayers.map(player => {
                 const isSelected = selectedPlayer?.id === player.id
                 const isTraining = !!player.training.currentFocus
