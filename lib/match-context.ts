@@ -14,6 +14,9 @@ export interface MatchContext {
   awayKit: "home" | "away" | "third"
   competition: string
   round: string
+  // AMISTOSO: quando true, a partida usa os times DESTE contexto (ignora o jogo da rodada)
+  // e NAO conta para a temporada (sem tabela, sem avancar semana).
+  friendly?: boolean
   duration: number // minutos (45, 90)
   weather: "sunny" | "cloudy" | "rain"
   matchMode: "normal" | "highlights" | "commentary"

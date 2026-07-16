@@ -18,6 +18,7 @@ import {
   Search,
   Building2,
   Flag,
+  Swords,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGamepadFocusable } from "@/components/gamepad-provider"
@@ -95,6 +96,7 @@ function GameSidebarLegacy() {
     { icon: Users, label: t.sidebar.squad, href: "/elenco" },
     { icon: Dumbbell, label: t.sidebar.training, href: "/treinamento" },
     { icon: CalendarDays, label: t.sidebar.calendar, href: "/calendario" },
+    { icon: Swords, label: "Amistosos", href: "/amistosos" },
     { icon: Trophy, label: t.sidebar.competitions, href: "/competicoes" },
     { icon: Flag, label: t.sidebar.nationalTeam, href: "/selecao", badge: pendingOffers },
     { icon: Search, label: t.sidebar.scouts, href: "/olheiros" },

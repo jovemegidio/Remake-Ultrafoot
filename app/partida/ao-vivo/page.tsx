@@ -532,20 +532,23 @@ export default function PartidaAoVivoPage() {
   // Carrega contexto da partida salva ou usa valores padrao
   const matchCtx = useMemo(() => loadMatchContext(), [])
 
-  // Determina times a partir do contexto salvo
+  // Determina times a partir do contexto salvo. AMISTOSO tem prioridade sobre o jogo da
+  // rodada (currentMatch), senao o amistoso acabaria jogando contra o adversario do fixture.
   const homeTeam = useMemo(() => {
+    if (matchCtx.friendly && matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     if (currentMatch) return currentMatch.homeTeam
     if (matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
-  }, [currentMatch, matchCtx.homeShort, userTeamId])
+  }, [currentMatch, matchCtx.friendly, matchCtx.homeShort, userTeamId])
 
   const awayTeam = useMemo(() => {
+    if (matchCtx.friendly && matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     if (currentMatch) return currentMatch.awayTeam
     if (matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
-  }, [currentMatch, matchCtx.awayShort, homeTeam.curto])
+  }, [currentMatch, matchCtx.friendly, matchCtx.awayShort, homeTeam.curto])
 
-  const displayCompetition = currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A"
+  const displayCompetition = matchCtx.friendly ? "Amistoso" : (currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A")
   const displayRound = currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1")
 
   // Determina qual lado e o do usuario
@@ -854,34 +857,40 @@ export default function PartidaAoVivoPage() {
         resultRegistered.current = true
         // Snapshot dos times ANTES de avancar a semana (que troca o currentMatch)
         setFinalMatch({ home: homeTeam, away: awayTeam, userSide })
-        const events = state.events
-          .filter(e => e.type === "goal")
-          .map(e => ({
-            minute: e.minute,
-            type: "goal" as const,
-            playerId: 0,
-            playerName: e.player || (e.side === "home" ? homeTeam.curto : awayTeam.curto),
-          }))
-        registerUserMatchResult(
-          homeTeam.curto,
-          awayTeam.curto,
-          state.home.goals,
-          state.away.goals,
-          events
-        )
-        clearMatchContext()
-        advanceWeek().then(result => {
-          if (result && "leagueChampion" in result && result.leagueChampion) {
-            const champ = result.leagueChampion
-            localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
-              competition: champ.competition,
-              season: champ.season,
-              type: "league",
-              stats: champ.stats,
+        // AMISTOSO: e so treino — NAO registra resultado, NAO mexe na tabela nem avanca a
+        // semana. So mostra o placar. (Sem isto, um amistoso contaria como jogo oficial.)
+        if (matchCtx.friendly) {
+          clearMatchContext()
+        } else {
+          const events = state.events
+            .filter(e => e.type === "goal")
+            .map(e => ({
+              minute: e.minute,
+              type: "goal" as const,
+              playerId: 0,
+              playerName: e.player || (e.side === "home" ? homeTeam.curto : awayTeam.curto),
             }))
-            setIsLeagueChampion(true)
-          }
-        }).catch(() => {})
+          registerUserMatchResult(
+            homeTeam.curto,
+            awayTeam.curto,
+            state.home.goals,
+            state.away.goals,
+            events
+          )
+          clearMatchContext()
+          advanceWeek().then(result => {
+            if (result && "leagueChampion" in result && result.leagueChampion) {
+              const champ = result.leagueChampion
+              localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
+                competition: champ.competition,
+                season: champ.season,
+                type: "league",
+                stats: champ.stats,
+              }))
+              setIsLeagueChampion(true)
+            }
+          }).catch(() => {})
+        }
       }
       const t = setTimeout(() => setShowResult(true), 1200)
       return () => clearTimeout(t)
