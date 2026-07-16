@@ -612,6 +612,10 @@ export default function PartidaAoVivoPage() {
     dribbling: p.dribbling,
   })
 
+  // Mentalidade do time do USUARIO, mudavel DURANTE a partida (o motor le config ao vivo,
+  // entao vale ja no proximo lance / no 2o tempo). Ofensivo = mais ataque, menos solidez.
+  const [userMentality, setUserMentality] = useState<"defensivo" | "equilibrado" | "ofensivo">("equilibrado")
+
   // Config da simulacao
   const config = useMemo(() => ({
     homeTeam,
@@ -624,7 +628,10 @@ export default function PartidaAoVivoPage() {
     // Diz ao motor qual lado e o do usuario: no penalti dele, o motor PARA e espera
     // a escolha do batedor em vez de cobrar sozinho.
     userSide,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide])
+    // Mentalidade aplicada ao lado do usuario (afeta a simulacao ao vivo).
+    homeMentality: userSide === "home" ? userMentality : undefined,
+    awayMentality: userSide === "away" ? userMentality : undefined,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty } = sim
@@ -1282,7 +1289,36 @@ export default function PartidaAoVivoPage() {
                 {activeTab === "gameplan" && (
                   <div className="space-y-4">
                     <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">{t.match.live.sectionGameplan}</h3>
-                    
+
+                    {/* Mentalidade AO VIVO do time do usuario — muda a simulacao na hora. */}
+                    <div className="mb-4 rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/[0.04] p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">Sua mentalidade</span>
+                        <span className="text-white/30 text-[10px]">muda em tempo real</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          ["defensivo", "Defensivo", "+ solidez"],
+                          ["equilibrado", "Equilibrado", "neutro"],
+                          ["ofensivo", "Ofensivo", "+ ataque"],
+                        ] as const).map(([val, label, hint]) => (
+                          <button
+                            key={val}
+                            onClick={() => setUserMentality(val)}
+                            className={cn(
+                              "rounded-lg border px-2 py-2 text-center transition-all",
+                              userMentality === val
+                                ? "border-[#00ffc8] bg-[#00ffc8]/15 text-[#00ffc8]"
+                                : "border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/[0.06]",
+                            )}
+                          >
+                            <div className="text-xs font-bold">{label}</div>
+                            <div className="text-[9px] opacity-70">{hint}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       {/* Formacao Casa */}
                       <div className="bg-white/5 rounded-lg p-3">

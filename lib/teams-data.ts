@@ -1141,19 +1141,34 @@ export function getTeamUniforms(team: Team): TeamUniforms {
 }
 
 // Formatar valor monetário brasileiro
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    notation: value >= 1000000 ? 'compact' : 'standard',
-    maximumFractionDigits: 1
-  }).format(value)
+// Formatacao DETERMINISTICA (sem Intl 'compact').
+//
+// Intl.NumberFormat com notation:'compact' — e ate o 'standard' quando o Node do build tem
+// small-icu (so en-US) — produz saida DIFERENTE no servidor (build estatico) e no navegador,
+// quebrando a hidratacao do React (erro #418, visto no /mercado). Aqui formatamos no padrao
+// BR na mao (ponto pra milhar, virgula decimal), igual nos dois lados.
+function groupBR(n: number): string {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+}
+function compactBR(value: number, prefix: string): string {
+  const neg = value < 0 ? "-" : ""
+  const v = Math.abs(value)
+  if (v >= 1_000_000) {
+    const n = (v / 1_000_000).toFixed(1).replace(/.0$/, "").replace(".", ",")
+    return `${neg}${prefix}${n} mi`
+  }
+  if (v >= 1_000 && prefix === "") {
+    const n = (v / 1_000).toFixed(1).replace(/.0$/, "").replace(".", ",")
+    return `${neg}${n} mil`
+  }
+  return `${neg}${prefix}${groupBR(v)}`
 }
 
-// Formatar número com sufixo (milhões, etc)
+export function formatCurrency(value: number): string {
+  return compactBR(value, "R$ ")
+}
+
+// Formatar número com sufixo (milhões, mil)
 export function formatNumber(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    notation: 'compact',
-    maximumFractionDigits: 1
-  }).format(value)
+  return compactBR(value, "")
 }

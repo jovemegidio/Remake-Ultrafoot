@@ -134,6 +134,10 @@ export interface MatchConfig {
   awayAttack?: number
   awayDefense?: number
   awayMidfield?: number
+  // Mentalidade escolhida pela UI (pode mudar no intervalo). Ofensivo troca solidez por
+  // poder de ataque; defensivo o contrario. O motor le config ao vivo, entao vale no 2o tempo.
+  homeMentality?: "defensivo" | "equilibrado" | "ofensivo"
+  awayMentality?: "defensivo" | "equilibrado" | "ofensivo"
   /**
    * Lado controlado pelo USUARIO. Quando o penalti sai para este lado, o motor para e
    * espera a escolha do batedor (resolvePendingPenalty). Sem isto, ele cobra sozinho.
@@ -330,6 +334,14 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   if (config.awayAttack != null) awaySt.attack = config.awayAttack
   if (config.awayDefense != null) awaySt.defense = config.awayDefense
   if (config.awayMidfield != null) awaySt.midfield = config.awayMidfield
+  // Mentalidade: desloca ataque<->defesa. Ofensivo cria mais mas concede mais; defensivo
+  // o inverso. Aplicado sobre a forca ja derivada (mesma escala de overall).
+  const applyMentality = (st: SquadStrengths, m?: "defensivo" | "equilibrado" | "ofensivo") => {
+    if (m === "ofensivo") { st.attack += 6; st.defense -= 5 }
+    else if (m === "defensivo") { st.attack -= 5; st.defense += 6 }
+  }
+  applyMentality(homeSt, config.homeMentality)
+  applyMentality(awaySt, config.awayMentality)
   const mods = config.modifiers
   const total = config.homeRating + config.awayRating
   const minute = state.minute
