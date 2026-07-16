@@ -30,7 +30,7 @@ import {
 } from "@/lib/teams-data"
 import { allInternationalTeams } from "@/lib/international-teams"
 import { getPlayersForTeam } from "@/lib/players-data"
-import { getPlayerOverride, setPlayerOverride } from "@/lib/player-overrides"
+import { getPlayerOverride, setPlayerOverride, defaultPlayerAttributes } from "@/lib/player-overrides"
 import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
 import { isTauri } from "@/lib/game-asset"
 import { compressImageDataUrl } from "@/lib/image-utils"
@@ -124,21 +124,36 @@ interface EditorPlayer {
   overall: number
   caracteristica: string
   lado: string
+  pace: number
+  shooting: number
+  passing: number
+  dribbling: number
+  defending: number
+  physical: number
 }
 function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
   if (!team) return []
   return getPlayersForTeam(team, { raw: true }).map((p, i) => {
     const ov = getPlayerOverride(team.file_key, p.nome)
+    const base = ov?.base ?? p.base
+    const pos = ov?.pos ?? p.pos
+    const def = defaultPlayerAttributes(base, pos)
     return {
       id: i + 1,
       originalName: p.nome,
       nome: ov?.nome ?? p.nome,
-      posicao: ov?.pos ?? p.pos,
+      posicao: pos,
       pais: "-",
-      idade: p.idade,
-      overall: ov?.base ?? p.base,
+      idade: ov?.idade ?? p.idade,
+      overall: base,
       caracteristica: "-",
       lado: "-",
+      pace: ov?.pace ?? def.pace,
+      shooting: ov?.shooting ?? def.shooting,
+      passing: ov?.passing ?? def.passing,
+      dribbling: ov?.dribbling ?? def.dribbling,
+      defending: ov?.defending ?? def.defending,
+      physical: ov?.physical ?? def.physical,
     }
   })
 }
@@ -170,7 +185,11 @@ export default function EditarPage() {
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)
   // Edicao de jogador (nome/posicao/overall) — persiste via player-overrides.
   const [editingPlayer, setEditingPlayer] = useState<EditorPlayer | null>(null)
-  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0 })
+  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
+  const openPlayerEdit = (p: EditorPlayer) => {
+    setEditingPlayer(p)
+    setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
+  }
   const [activeTab, setActiveTab] = useState<"principal" | "juniores" | "dados">("principal")
   const [kitErrors, setKitErrors] = useState<Record<string, boolean>>({})
   const [sortColumn, setSortColumn] = useState<string | null>(null)
@@ -832,7 +851,7 @@ export default function EditarPage() {
                         return (
                           <button
                             key={player.id}
-                            onClick={() => setSelectedPlayerIndex(index)}
+                            onClick={() => { setSelectedPlayerIndex(index); openPlayerEdit(player) }}
                             className={cn(
                               "w-full grid grid-cols-[1fr_64px_52px_48px_52px_100px_44px] text-xs border-b border-white/[0.04] transition-all",
                               isSelected
@@ -886,8 +905,7 @@ export default function EditarPage() {
                         onClick={() => {
                           const p = sortedPlayers[selectedPlayerIndex]
                           if (!p) return
-                          setEditingPlayer(p)
-                          setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall })
+                          openPlayerEdit(p)
                         }}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]"
                       >
@@ -1216,6 +1234,32 @@ export default function EditarPage() {
                   />
                 </div>
               </div>
+
+              {/* Atributos individuais (valem na partida) */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-[10px] uppercase tracking-wide text-white/40">Atributos</label>
+                  <span className="text-[10px] text-white/25">afetam a partida</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    ["pace", "RIT"], ["shooting", "FIN"], ["passing", "PAS"],
+                    ["dribbling", "DRI"], ["defending", "DEF"], ["physical", "FIS"],
+                  ] as const).map(([key, label]) => (
+                    <div key={key} className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-2">
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-[9px] font-bold text-white/40">{label}</span>
+                        <span className="text-xs font-bold text-[#00ffc8]">{pDraft[key]}</span>
+                      </div>
+                      <input
+                        type="range" min={40} max={99} value={pDraft[key]}
+                        onChange={(e) => setPDraft((d) => ({ ...d, [key]: parseInt(e.target.value) || 0 }))}
+                        className="w-full accent-[#00ffc8]"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="mt-6 flex items-center justify-end gap-2">
               <button onClick={() => setEditingPlayer(null)} className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/60 hover:bg-white/10">Cancelar</button>
@@ -1227,6 +1271,13 @@ export default function EditarPage() {
                       nome: pDraft.nome.trim() || undefined,
                       pos: pDraft.posicao || undefined,
                       base: ovr || undefined,
+                      idade: pDraft.idade || undefined,
+                      pace: pDraft.pace,
+                      shooting: pDraft.shooting,
+                      passing: pDraft.passing,
+                      dribbling: pDraft.dribbling,
+                      defending: pDraft.defending,
+                      physical: pDraft.physical,
                     })
                     setPlayers(generatePlayersForTeam(selectedTeam))
                   }

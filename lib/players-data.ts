@@ -22,6 +22,14 @@ export interface Player {
   idade: number
   base: number
   time: string
+  // Atributos individuais (so presentes quando o jogador foi editado no editor). A partida
+  // usa estes valores quando existem; senao deriva do overall+posicao.
+  pace?: number
+  shooting?: number
+  passing?: number
+  dribbling?: number
+  defending?: number
+  physical?: number
 }
 
 const RAW = playersBR as Record<string, Array<{ nome: string; pos: string; idade: number; base: number }>>
@@ -507,6 +515,13 @@ function applyPlayerOverrides(fileKey: string, players: Player[]): Player[] {
       ...(ov.nome ? { nome: ov.nome } : {}),
       ...(ov.pos ? { pos: ov.pos } : {}),
       ...(ov.base != null ? { base: ov.base } : {}),
+      ...(ov.idade != null ? { idade: ov.idade } : {}),
+      ...(ov.pace != null ? { pace: ov.pace } : {}),
+      ...(ov.shooting != null ? { shooting: ov.shooting } : {}),
+      ...(ov.passing != null ? { passing: ov.passing } : {}),
+      ...(ov.dribbling != null ? { dribbling: ov.dribbling } : {}),
+      ...(ov.defending != null ? { defending: ov.defending } : {}),
+      ...(ov.physical != null ? { physical: ov.physical } : {}),
     }
   })
 }

@@ -16,6 +16,34 @@ export interface PlayerOverride {
   nome?: string
   pos?: string
   base?: number
+  idade?: number
+  // Atributos individuais editados no editor (0-99). Aplicados na montagem do time da
+  // partida (players-data). Quando ausentes, o jogo usa os valores padrao derivados do
+  // overall+posicao.
+  pace?: number
+  shooting?: number
+  passing?: number
+  dribbling?: number
+  defending?: number
+  physical?: number
+}
+
+/** Atributos padrao derivados do overall + posicao (mesma logica do motor de partida). */
+export function defaultPlayerAttributes(base: number, pos: string): {
+  pace: number; shooting: number; passing: number; dribbling: number; defending: number; physical: number
+} {
+  const isGK = pos === "GOL"
+  const isAtt = ["ATA", "PE", "PD", "SA", "CA"].includes(pos)
+  const isDef = ["ZAG", "LD", "LE", "ALD", "ALE"].includes(pos)
+  const clamp = (n: number) => Math.max(40, Math.min(99, Math.round(n)))
+  return {
+    pace: clamp(isGK ? 45 : isDef ? base - 4 : isAtt ? base + 2 : base),
+    shooting: clamp(isGK ? 20 : isAtt ? base + 3 : isDef ? base - 18 : base - 6),
+    passing: clamp(isGK ? base - 12 : isDef ? base - 6 : base),
+    dribbling: clamp(isGK ? 25 : isAtt ? base + 1 : isDef ? base - 12 : base - 2),
+    defending: clamp(isGK ? base - 5 : isDef ? base + 2 : isAtt ? base - 22 : base - 8),
+    physical: clamp(isGK ? base : base - 2),
+  }
 }
 
 const BUNDLED = bundled as Record<string, PlayerOverride>

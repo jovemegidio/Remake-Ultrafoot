@@ -28,7 +28,8 @@ import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
-import { useGameManager } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
+import { getCountryCompetitions } from "@/lib/country-competitions"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -94,6 +95,10 @@ export default function FinancasPage() {
   }, [router])
   const { team: userTeam } = useUserTeam()
   useDiscordActivity("Gerenciando finanças", userTeam.nome)
+  // Competicoes por PAIS do clube (antes eram Brasileirao/Copa do Brasil/Libertadores fixos,
+  // mesmo para um time portugues). Os premios sao tiers genericos; so os NOMES mudam.
+  const countryComps = getCountryCompetitions(userTeam.divisao)
+  const leagueName = getLeagueName(userTeam.divisao)
   const gameEngine = useGameEngine()
   const { currentWeek, currentSeason, userPosition, standings, hydrated } = useGameManager()
   const t = useTranslation()
@@ -418,7 +423,7 @@ export default function FinancasPage() {
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-[#00ffc8]" />
-                <span className="text-sm font-medium text-white">{t.competitions.brasileirao}</span>
+                <span className="text-sm font-medium text-white">{leagueName}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
@@ -442,7 +447,7 @@ export default function FinancasPage() {
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-yellow-400" />
-                <span className="text-sm font-medium text-white">{t.competitions.copaDoBrasil}</span>
+                <span className="text-sm font-medium text-white">{countryComps.domesticCup}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
@@ -464,7 +469,7 @@ export default function FinancasPage() {
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center gap-2 mb-3">
                 <Trophy className="h-5 w-5 text-amber-400" />
-                <span className="text-sm font-medium text-white">{t.competitions.libertadores}</span>
+                <span className="text-sm font-medium text-white">{countryComps.continental}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">

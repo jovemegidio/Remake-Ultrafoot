@@ -129,12 +129,13 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
       position: p.pos,
       rating: p.base,
       stamina: 100,
-      pace:      isGK ? 50 : 65 + (h(1) % 25),
-      shooting:  shootingForPosition(p.base, p.pos),
-      passing:   55 + (h(3) % 30),
-      dribbling: isGK ? 30 : 50 + (h(4) % 35),
-      defending: isAtt ? 30 + (h(5) % 20) : 60 + (h(6) % 25),
-      physical:  60 + (h(7) % 25),
+      // Atributos EDITADOS (editor de jogador) tem prioridade; senao sintetiza do overall.
+      pace:      p.pace      ?? (isGK ? 50 : 65 + (h(1) % 25)),
+      shooting:  p.shooting  ?? shootingForPosition(p.base, p.pos),
+      passing:   p.passing   ?? (55 + (h(3) % 30)),
+      dribbling: p.dribbling ?? (isGK ? 30 : 50 + (h(4) % 35)),
+      defending: p.defending ?? (isAtt ? 30 + (h(5) % 20) : 60 + (h(6) % 25)),
+      physical:  p.physical  ?? (60 + (h(7) % 25)),
     }
   })
   const bench: MatchPlayer[] = benchPool.slice(0, 7).map((p, i) => ({
