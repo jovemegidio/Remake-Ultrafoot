@@ -173,7 +173,7 @@ export default function ElencoPage() {
   // jogando com o Corinthians. Agora saem do elenco REAL, por atributo + posicao.
   const setPieceDefaults = useMemo(() => {
     const outfield = allPlayers.filter((p) => p.position !== "GOL")
-    if (outfield.length === 0) return { corner: "", freeKick: "", penalty: "", captain: "" }
+    if (outfield.length === 0) return { corner: "", freeKick: "", freeKickLeft: "", freeKickRight: "", penalty: "", captain: "" }
     // Peso por posicao: quem realmente bate bola parada.
     const KICK_BIAS: Record<string, number> = {
       ATA: 8, PE: 10, PD: 10, MEI: 12, VOL: 4, LD: 2, LE: 2, ZAG: -6, ALD: 2, ALE: 2,
@@ -181,9 +181,14 @@ export default function ElencoPage() {
     const bias = (p: (typeof outfield)[number]) => KICK_BIAS[p.position] ?? 0
     const top = (score: (p: (typeof outfield)[number]) => number) =>
       [...outfield].sort((a, b) => score(b) - score(a))[0]?.name ?? ""
+    const fk = top((p) => p.shooting * 0.6 + p.passing * 0.4 + bias(p))
     return {
       corner: top((p) => p.passing + bias(p)),
-      freeKick: top((p) => p.shooting * 0.6 + p.passing * 0.4 + bias(p)),
+      freeKick: fk,
+      // Batedor de falta por lado (relatado). Sem dado de pe dominante, ambos caem no melhor
+      // batedor por padrao; o usuario ajusta cada lado a mao.
+      freeKickLeft: fk,
+      freeKickRight: fk,
       penalty: top((p) => p.shooting + bias(p)),
       // Capitao: mistura qualidade e experiencia (idade), nao so overall.
       captain: [...allPlayers].sort((a, b) => (b.overall + b.age * 0.6) - (a.overall + a.age * 0.6))[0]?.name ?? "",
@@ -195,10 +200,12 @@ export default function ElencoPage() {
     setSetPieces({
       corner: tacticalAssignments.corner || setPieceDefaults.corner,
       freeKick: tacticalAssignments.freeKick || setPieceDefaults.freeKick,
+      freeKickLeft: tacticalAssignments.freeKickLeft || setPieceDefaults.freeKickLeft,
+      freeKickRight: tacticalAssignments.freeKickRight || setPieceDefaults.freeKickRight,
       penalty: tacticalAssignments.penalty || setPieceDefaults.penalty,
       captain: tacticalAssignments.captain || setPieceDefaults.captain,
     })
-  }, [setPieceDefaults, tacticalAssignments.captain, tacticalAssignments.corner, tacticalAssignments.freeKick, tacticalAssignments.penalty])
+  }, [setPieceDefaults, tacticalAssignments.captain, tacticalAssignments.corner, tacticalAssignments.freeKick, tacticalAssignments.freeKickLeft, tacticalAssignments.freeKickRight, tacticalAssignments.penalty])
 
   const updateSetPiece = (key: keyof typeof setPieces, value: string) => {
     setSetPieces(current => ({ ...current, [key]: value }))
@@ -1251,7 +1258,8 @@ export default function ElencoPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {([
                         { key: "corner", label: t.squad.cornerKicker, pool: allPlayers.filter(p => p.position !== "GOL") },
-                        { key: "freeKick", label: t.squad.freeKickKicker, pool: allPlayers.filter(p => p.position !== "GOL") },
+                        { key: "freeKickLeft", label: "Falta (esquerda)", pool: allPlayers.filter(p => p.position !== "GOL") },
+                        { key: "freeKickRight", label: "Falta (direita)", pool: allPlayers.filter(p => p.position !== "GOL") },
                         { key: "penalty", label: t.squad.penaltyKicker, pool: allPlayers.filter(p => p.position !== "GOL") },
                         { key: "captain", label: t.squad.captain, pool: allPlayers },
                       ] as const).map(({ key, label, pool }) => (

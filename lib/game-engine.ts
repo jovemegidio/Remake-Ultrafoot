@@ -1146,6 +1146,8 @@ export interface TeamTactics {
 export interface TacticalAssignments {
   corner: string
   freeKick: string
+  freeKickLeft: string
+  freeKickRight: string
   penalty: string
   captain: string
   playerRoles: Record<string, string>
@@ -2238,7 +2240,7 @@ export const useGameEngine = create<GameEngineState>()(
         penaltyTaker: 10, // Sasha
       },
       playerInstructions: {},
-      tacticalAssignments: { corner: "", freeKick: "", penalty: "", captain: "", playerRoles: {} },
+      tacticalAssignments: { corner: "", freeKick: "", freeKickLeft: "", freeKickRight: "", penalty: "", captain: "", playerRoles: {} },
       opponentAnalyses: [],
       
       // Moral

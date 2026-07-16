@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight } from "lucide-react"
-import { loadGameState, hasSave, clearAllGameData } from "@/lib/save-system"
+import { loadGameState, hasSave, clearAllGameData, useGameState } from "@/lib/save-system"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useTranslation } from "@/lib/i18n"
 import { isTauri } from "@/lib/game-asset"
@@ -32,6 +32,7 @@ type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
 export default function SplashPage() {
   const t = useTranslation()
+  const { state: gameState, setState: setGameState } = useGameState()
   const [phase, setPhase] = useState<SplashPhase>("black")
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -334,6 +335,22 @@ export default function SplashPage() {
         background: "linear-gradient(180deg, #1f1f1f 0%, #171717 50%, #1a1a1a 100%)"
       }}
     >
+      {/* Seletor de idioma tambem no MENU DE ENTRADA (nao so em Configuracoes) — relatado. */}
+      <div className="absolute right-4 top-4 z-[60] flex items-center gap-1.5">
+        {([["pt-BR", "PT"], ["en-US", "EN"], ["es-ES", "ES"]] as const).map(([id, code]) => (
+          <button
+            key={id}
+            onClick={() => setGameState({ language: id })}
+            className={cn(
+              "rounded-md px-2 py-1 text-[11px] font-bold transition-all",
+              (gameState.language ?? "pt-BR") === id ? "bg-white/20 text-white" : "bg-white/[0.06] text-white/50 hover:text-white/80",
+            )}
+          >
+            {code}
+          </button>
+        ))}
+      </div>
+
       {/* Phase: Black screen */}
       <div className={cn(
         "absolute inset-0 bg-black transition-opacity duration-1000",
