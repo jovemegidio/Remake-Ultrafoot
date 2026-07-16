@@ -44,6 +44,7 @@ import {
 } from "@/lib/saved-lineups"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { isFullscreenEnabled, setFullscreen } from "@/lib/fullscreen"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { useTheme, themePresets, type ThemeColor } from "@/components/theme-provider"
@@ -128,6 +129,8 @@ export default function ConfiguracoesPage() {
 
   const [autoSave, setAutoSave] = useState(true)
   const [notifications, setNotifications] = useState(true)
+  const [fullscreen, setFullscreenState] = useState(false)
+  useEffect(() => { setFullscreenState(isFullscreenEnabled()) }, [])
   const [matchSpeed, setMatchSpeed] = useState("normal")
 
   // Escalacoes salvas de VERDADE. Antes esta tela mostrava 3 cartoes chumbados
@@ -458,11 +461,18 @@ export default function ConfiguracoesPage() {
                   </div>
                   <Switch checked={notifications} onCheckedChange={setNotifications} />
                 </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div>
+                    <div className="text-sm text-white">Tela cheia</div>
+                    <div className="text-xs text-white/40">Alternar entre janela e tela cheia (tecla F11).</div>
+                  </div>
+                  <Switch checked={fullscreen} onCheckedChange={(v) => { setFullscreenState(v); void setFullscreen(v) }} />
+                </div>
               </div>
             </div>
           </div>
         )
-        
+
       case "perfil":
         return (
           <div className="space-y-6">

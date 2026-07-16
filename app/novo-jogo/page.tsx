@@ -339,6 +339,10 @@ export default function NovoJogoPage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // NAO sequestrar teclas quando o jogador esta digitando (ex.: nome). Antes, apagar
+      // (Backspace) durante a digitacao do nome VOLTAVA ao menu, e as setas trocavam de time.
+      const el = e.target as HTMLElement | null
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return
       switch (e.key) {
         case "ArrowLeft": prevTeam(); break
         case "ArrowRight": nextTeam(); break

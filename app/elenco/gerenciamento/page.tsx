@@ -930,7 +930,7 @@ export default function ElencoPage() {
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
-              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px]"
+              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] w-full max-w-[560px] mx-auto"
               style={{
                 // Turfa em gradiente radial (mais viva ao alto) + sombra interna — a
                 // direcao visual aprovada, evolucao do gradiente chapado anterior.
@@ -1146,6 +1146,11 @@ export default function ElencoPage() {
                   <div>
                     <h2 className="text-lg font-bold text-white mb-2">{t.squad.tacticalInstructions}</h2>
                     <p className="text-sm text-white/50">{t.squad.tacticalInstructionsDesc}</p>
+                    {/* A tatica é salva automaticamente a cada mudança — nao ha botao "gravar"
+                        (foi relatado como confuso). Este selo deixa isso claro. */}
+                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#00ffc8]/10 px-3 py-1 text-[11px] font-medium text-[#00ffc8]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#00ffc8]" /> Alterações salvas automaticamente
+                    </div>
                   </div>
 
                   {/* Defensive Style */}
