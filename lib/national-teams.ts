@@ -69,7 +69,7 @@ function getClubsForNationalTeam(nt: NationalTeam): Team[] {
 
 // Pool completo de jogadores disponiveis para a selecao
 export function getNationalPlayerPool(nt: NationalTeam): Player[] {
-  return getClubsForNationalTeam(nt).flatMap(getPlayersForTeam)
+  return getClubsForNationalTeam(nt).flatMap((c) => getPlayersForTeam(c))
 }
 
 // Normaliza posicoes para os 4 setores

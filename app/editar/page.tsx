@@ -29,6 +29,8 @@ import {
   type Team
 } from "@/lib/teams-data"
 import { allInternationalTeams } from "@/lib/international-teams"
+import { getPlayersForTeam } from "@/lib/players-data"
+import { getPlayerOverride, setPlayerOverride } from "@/lib/player-overrides"
 import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
 import { isTauri } from "@/lib/game-asset"
 import { compressImageDataUrl } from "@/lib/image-utils"
@@ -109,54 +111,36 @@ const subGroupOf = (team: Team): { key: string; label: string } =>
     : { key: `${countryCodeOf(team)}|${team.divisao}`, label: formatDivisao(team.divisao) }
 
 // Mock players data generator based on team - completamente deterministico (sem Math.random)
-const generatePlayersForTeam = () => {
-  const playerData = [
-    { pos: "GOL", pais: "BRA", idade: 31, ovr: 75, carac: "Reflexos", lado: "D" },
-    { pos: "GOL", pais: "BRA", idade: 21, ovr: 60, carac: "Reflexos", lado: "E" },
-    { pos: "GOL", pais: "BRA", idade: 19, ovr: 88, carac: "Reflexos", lado: "A" },
-    { pos: "GOL", pais: "ARG", idade: 20, ovr: 65, carac: "Reflexos", lado: "D" },
-    { pos: "LAT", pais: "BRA", idade: 28, ovr: 85, carac: "Velocidade", lado: "D" },
-    { pos: "LAT", pais: "BRA", idade: 27, ovr: 70, carac: "Velocidade", lado: "E" },
-    { pos: "LAT", pais: "URU", idade: 23, ovr: 55, carac: "Marcacao", lado: "D" },
-    { pos: "LAT", pais: "BRA", idade: 35, ovr: 57, carac: "Passe", lado: "E" },
-    { pos: "ZAG", pais: "BRA", idade: 27, ovr: 75, carac: "Marcacao", lado: "D" },
-    { pos: "ZAG", pais: "BRA", idade: 31, ovr: 62, carac: "Cabecada", lado: "E" },
-    { pos: "ZAG", pais: "ARG", idade: 30, ovr: 80, carac: "Marcacao", lado: "A" },
-    { pos: "ZAG", pais: "COL", idade: 31, ovr: 75, carac: "Cabecada", lado: "D" },
-    { pos: "VOL", pais: "BRA", idade: 33, ovr: 60, carac: "Marcacao", lado: "E" },
-    { pos: "VOL", pais: "BRA", idade: 19, ovr: 83, carac: "Passe", lado: "A" },
-    { pos: "VOL", pais: "CHI", idade: 27, ovr: 80, carac: "Marcacao", lado: "D" },
-    { pos: "VOL", pais: "PAR", idade: 23, ovr: 65, carac: "Passe", lado: "E" },
-    { pos: "MEI", pais: "BRA", idade: 26, ovr: 70, carac: "Drible", lado: "A" },
-    { pos: "MEI", pais: "BRA", idade: 35, ovr: 55, carac: "Passe", lado: "D" },
-    { pos: "MEI", pais: "ARG", idade: 29, ovr: 57, carac: "Finalizacao", lado: "E" },
-    { pos: "MEI", pais: "BRA", idade: 27, ovr: 75, carac: "Drible", lado: "A" },
-    { pos: "ATA", pais: "BRA", idade: 22, ovr: 60, carac: "Finalizacao", lado: "D" },
-    { pos: "ATA", pais: "COL", idade: 30, ovr: 59, carac: "Velocidade", lado: "E" },
-  ]
-
-  const names = [
-    "Silva", "Santos", "Oliveira", "Souza", "Lima", "Pereira", "Costa", "Ferreira",
-    "Rodrigues", "Almeida", "Nascimento", "Carvalho", "Araujo", "Ribeiro", "Martins",
-    "Gomes", "Barbosa", "Moreira", "Fernandez", "Gonzalez", "Rodriguez", "Martinez"
-  ]
-
-  const firstNames = [
-    "Lucas", "Gabriel", "Rafael", "Bruno", "Matheus", "Felipe", "Gustavo", "Pedro",
-    "Thiago", "Marcos", "Andre", "Carlos", "Diego", "Eduardo", "Fernando", "Henrique",
-    "Paulo", "Ricardo", "Sergio", "Victor", "William", "Yago"
-  ]
-
-  return playerData.map((data, i) => ({
-    id: i + 1,
-    nome: `${firstNames[i]} ${names[i]}`,
-    posicao: data.pos,
-    pais: data.pais,
-    idade: data.idade,
-    overall: data.ovr,
-    caracteristica: data.carac,
-    lado: data.lado
-  }))
+// Monta a lista de jogadores REAL do time (antes era uma lista fixa/fake, IGUAL para todos
+// os clubes). Usa getPlayersForTeam com raw=true para ter o nome ORIGINAL (chave da edicao),
+// e mostra o valor ja editado quando existe override.
+interface EditorPlayer {
+  id: number
+  originalName: string
+  nome: string
+  posicao: string
+  pais: string
+  idade: number
+  overall: number
+  caracteristica: string
+  lado: string
+}
+function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
+  if (!team) return []
+  return getPlayersForTeam(team, { raw: true }).map((p, i) => {
+    const ov = getPlayerOverride(team.file_key, p.nome)
+    return {
+      id: i + 1,
+      originalName: p.nome,
+      nome: ov?.nome ?? p.nome,
+      posicao: ov?.pos ?? p.pos,
+      pais: "-",
+      idade: p.idade,
+      overall: ov?.base ?? p.base,
+      caracteristica: "-",
+      lado: "-",
+    }
+  })
 }
 
 // All teams combined (brasileiros + internacionais)
@@ -184,11 +168,14 @@ export default function EditarPage() {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(allTeams[0])
   const [searchTeam, setSearchTeam] = useState("")
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)
+  // Edicao de jogador (nome/posicao/overall) — persiste via player-overrides.
+  const [editingPlayer, setEditingPlayer] = useState<EditorPlayer | null>(null)
+  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0 })
   const [activeTab, setActiveTab] = useState<"principal" | "juniores" | "dados">("principal")
   const [kitErrors, setKitErrors] = useState<Record<string, boolean>>({})
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [players, setPlayers] = useState(() => generatePlayersForTeam())
+  const [players, setPlayers] = useState(() => generatePlayersForTeam(allTeams[0]))
   const [hasCustomLogo, setHasCustomLogo] = useState(false)
   const [storeReady, setStoreReady] = useState(false)
 
@@ -403,7 +390,7 @@ export default function EditarPage() {
 
   useEffect(() => {
     if (selectedTeam) {
-      setPlayers(generatePlayersForTeam())
+      setPlayers(generatePlayersForTeam(selectedTeam))
       setSelectedPlayerIndex(0)
       setKitErrors({})
       initDraft(selectedTeam)
@@ -895,7 +882,15 @@ export default function EditarPage() {
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline">Adicionar</span>
                       </button>
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]">
+                      <button
+                        onClick={() => {
+                          const p = sortedPlayers[selectedPlayerIndex]
+                          if (!p) return
+                          setEditingPlayer(p)
+                          setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall })
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]"
+                      >
                         <Pencil className="h-3 w-3" />
                         <span className="hidden sm:inline">Editar</span>
                       </button>
@@ -1182,6 +1177,69 @@ export default function EditarPage() {
           )}
         </main>
       </div>
+
+      {/* Modal de edicao de JOGADOR (nome / posicao / overall) — persiste e viaja no build. */}
+      {editingPlayer && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setEditingPlayer(null)}>
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f1e22] p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-1 text-lg font-bold text-white">Editar jogador</h3>
+            <p className="mb-4 text-xs text-white/40">Original: {editingPlayer.originalName}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Nome</label>
+                <input
+                  value={pDraft.nome}
+                  onChange={(e) => setPDraft((d) => ({ ...d, nome: e.target.value }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:border-[#00ffc8]/50 focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Posição</label>
+                  <select
+                    value={pDraft.posicao}
+                    onChange={(e) => setPDraft((d) => ({ ...d, posicao: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:outline-none"
+                  >
+                    {["GOL", "LD", "ZAG", "LE", "VOL", "MEI", "PD", "PE", "ATA"].map((pos) => (
+                      <option key={pos} value={pos}>{pos}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Overall</label>
+                  <input
+                    type="number" min={40} max={99}
+                    value={pDraft.overall}
+                    onChange={(e) => setPDraft((d) => ({ ...d, overall: parseInt(e.target.value) || 0 }))}
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button onClick={() => setEditingPlayer(null)} className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/60 hover:bg-white/10">Cancelar</button>
+              <button
+                onClick={() => {
+                  if (editingPlayer && selectedTeam) {
+                    const ovr = Math.max(40, Math.min(99, Math.round(pDraft.overall) || 0))
+                    setPlayerOverride(selectedTeam.file_key, editingPlayer.originalName, {
+                      nome: pDraft.nome.trim() || undefined,
+                      pos: pDraft.posicao || undefined,
+                      base: ovr || undefined,
+                    })
+                    setPlayers(generatePlayersForTeam(selectedTeam))
+                  }
+                  setEditingPlayer(null)
+                }}
+                className="rounded-lg bg-[#00ffc8] px-5 py-2 text-sm font-bold text-[#05231b] hover:bg-[#00e6b5]"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

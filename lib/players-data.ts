@@ -7,6 +7,7 @@ import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 // CSVs). Corrige as posicoes que o seed atribui por indice E o elenco desatualizado.
 import realSquadsJson from "@/data/seeds/real-positions.json"
 import { allTeams, type Team } from "@/lib/teams-data"
+import { getPlayerOverride } from "@/lib/player-overrides"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
   string,
@@ -486,11 +487,28 @@ const DIVISION_RATING_CAP: Record<string, number> = {
   serie_d: 67,
 }
 
-export function getPlayersForTeam(team: Team): Player[] {
+export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[] {
   const players = ensurePlayableSquad(team, getPlayersByTeam(team.nome))
   const cap = DIVISION_RATING_CAP[team.divisao as string] ?? 92
-  if (cap >= 92) return players
-  return players.map(p => p.base > cap ? { ...p, base: cap } : p)
+  const capped = cap >= 92 ? players : players.map(p => p.base > cap ? { ...p, base: cap } : p)
+  // raw = sem overrides (o editor precisa dos NOMES ORIGINAIS para chavear as edicoes).
+  return opts?.raw ? capped : applyPlayerOverrides(team.file_key, capped)
+}
+
+// Aplica as edicoes de jogador (nome/posicao/overall) feitas no editor. A chave usa o nome
+// ORIGINAL, entao a edicao sobrevive mesmo depois de renomear.
+function applyPlayerOverrides(fileKey: string, players: Player[]): Player[] {
+  if (!fileKey) return players
+  return players.map((p) => {
+    const ov = getPlayerOverride(fileKey, p.nome)
+    if (!ov) return p
+    return {
+      ...p,
+      ...(ov.nome ? { nome: ov.nome } : {}),
+      ...(ov.pos ? { pos: ov.pos } : {}),
+      ...(ov.base != null ? { base: ov.base } : {}),
+    }
+  })
 }
 
 const POSITION_ORDER: Record<string, number> = {

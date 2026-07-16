@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 
 import { GameHeader } from "@/components/game-header"
+import { OnboardingOverlay } from "@/components/onboarding-overlay"
 import { CtaPill } from "@/components/cta-pill"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
@@ -229,6 +230,8 @@ export default function DashboardPage() {
 
   return (
     <div className="relative h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
+      {/* Tutorial de primeira vez (aparece so uma vez). */}
+      <OnboardingOverlay teamName={userTeam?.nome} />
       {/* Fundo do escritorio: dois fundos alternando com crossfade suave */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <Image
