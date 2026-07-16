@@ -60,7 +60,12 @@ function walk(dir) {
 }
 
 if (!existsSync(outDir)) {
-  throw new Error("out directory not found. Run next build first.")
+  const isTauriBuild = Boolean(process.env.TAURI_ENV_PLATFORM) || process.env.TAURI_BUILD === "1"
+  if (isTauriBuild) {
+    throw new Error("out directory not found. Run the Tauri static export first.")
+  }
+  console.log("Next export RSC aliases skipped (non-Tauri build).")
+  process.exit(0)
 }
 
 walk(outDir)

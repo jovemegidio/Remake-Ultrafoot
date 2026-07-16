@@ -94,6 +94,21 @@
       "nome": "Bastián Patricio Alejandro Silva Acevedo",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Maximiliano Romero",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Marcelo Correa",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Lautaro Pastrán",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "univcatolica": [
@@ -201,6 +216,11 @@
       "nome": "Agustín Farías",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Justo Giani",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "universidaddechile": [
@@ -303,6 +323,16 @@
       "nome": "Marcelo Díaz",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Maximiliano Guerrero",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ignacio Vásquez",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "coquimbounido": [
@@ -394,6 +424,26 @@
     {
       "nome": "Nicolas Molina",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Benjamin Chandia",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Cristian Zavala",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Nicolas Johansen",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Alejandro Azocar",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -491,6 +541,21 @@
     {
       "nome": "Sebastian Gallegos",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Nelson Da Silva",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Gonzalo Tapia",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Martin Araya",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -599,6 +664,11 @@
       "nome": "Benjamín Ampuero",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Mario Briceño",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "evertoncd": [
@@ -706,6 +776,11 @@
       "nome": "Matias Castro",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Alan Medina",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "nublense": [
@@ -798,6 +873,26 @@
       "nome": "Daniel Saavedra",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Ignacio Jeraldino",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Fernando Ovelar",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Franco Rami",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Giovanny Andrés Ávalos Ovelar",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "deporteslimache": [
@@ -874,6 +969,41 @@
     {
       "nome": "Facundo Marin",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Jean Meneses",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Daniel Castro",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Vicente Álvarez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Joaquín Montecinos",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Luis Felipe Hernández",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Marcos Arturia",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Gonzalo Sosa",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -976,6 +1106,16 @@
     {
       "nome": "Cristobal Castillo",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Francisco González",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Thiago Vecino",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -1084,6 +1224,11 @@
       "nome": "Francisco Herrera",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Agustin Urzi",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "deporteslaserena": [
@@ -1175,6 +1320,26 @@
     {
       "nome": "Joan Orellana",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Jeisson Vargas",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Diego Rubio",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ángelo Henríquez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Nicolás Stefanelli",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -1272,6 +1437,21 @@
     {
       "nome": "Vicente Zenteno",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Michael Fuentes",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Diego Coelho",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Giovani Chiaverano Meroi",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -1380,6 +1560,11 @@
       "nome": "Ariel Caceres",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Ignacio Mesías",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "cobresal": [
@@ -1471,6 +1656,26 @@
     {
       "nome": "Matías Contreras",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Julián Brea",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Cesar Yanis",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Stefan Pino",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Franco Frias",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -1568,6 +1773,21 @@
     {
       "nome": "Benjamín Argandoña Caffaratti",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Kevin Méndez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ignacio Mesías",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Bayron Oyarzo",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -10071,6 +10291,16 @@
     {
       "nome": "Adrián Butzke",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Jesús Ramírez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Arvin Appiah",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -22922,6 +23152,21 @@
       "nome": "Diego Valdés",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Henry Martín",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Raúl Zúñiga",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Víctor Dávila",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "monterrey": [
@@ -23018,6 +23263,21 @@
     {
       "nome": "Omar Govea",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Germán Berterame",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Brandon Vázquez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Jesús Corona",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -23116,6 +23376,21 @@
       "nome": "Alan Franco",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "André-Pierre Gignac",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Nicolás Ibáñez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ángel Correa",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "guadalajara": [
@@ -23212,6 +23487,21 @@
     {
       "nome": "Jonathan Padilla",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Javier Hernández",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ángel Sepúlveda",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Armando González",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -23310,6 +23600,21 @@
       "nome": "Amaury Morales",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Ángel Sepúlveda",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Gabriel Fernández",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Giorgos Giakoumakis",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "toluca": [
@@ -23406,6 +23711,21 @@
     {
       "nome": "Isaias Violante",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Paulinho",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Edgar López",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Helinho",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -23504,6 +23824,21 @@
       "nome": "Miguel Rodríguez",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Salomón Rondón",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Roberto de la Rosa",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Sergio Hernández",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "pumasunam": [
@@ -23600,6 +23935,21 @@
     {
       "nome": "Jesús Molina",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Guillermo Martínez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Rogelio Funes Mori",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "César Huerta",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -23698,6 +24048,21 @@
       "nome": "Alan Medina",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Federico Viñas",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Nicolás López",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Jhonder Cádiz",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "atlas": [
@@ -23794,6 +24159,21 @@
     {
       "nome": "Brayan Trejo",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Julio Furch",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Mauro Manotas",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Jordy Caicedo",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -23892,6 +24272,21 @@
       "nome": "Jair González",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Harold Preciado",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Anthony Lozano",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Eduardo Aguirre",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "juarez": [
@@ -23988,6 +24383,21 @@
     {
       "nome": "Michael Santos",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Ángel Zaldívar",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Amaury Escoto",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Mauro Lainez",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -24086,6 +24496,16 @@
       "nome": "Alejandro Gómez",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "José Zúñiga",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Raúl Zúñiga",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "atleticosanluis": [
@@ -24182,6 +24602,16 @@
     {
       "nome": "Benjamín Galdames",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Franck Boli",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Yan Phillipe",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -24280,6 +24710,21 @@
       "nome": "Jair Cortés",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Diber Cambindo",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Édgar Méndez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Facundo Batista",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "mazatlan": [
@@ -24377,6 +24822,16 @@
       "nome": "Salvador Rodríguez",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Aké Loba",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Luis Amarilla",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "puebla": [
@@ -24468,6 +24923,21 @@
     {
       "nome": "Emiliano García",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Lucas Cavallini",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Guillermo Martínez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Martín Barragán",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -24566,6 +25036,21 @@
       "nome": "Erick Vera",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Camilo Sanvezzo",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Facundo Batista",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ettson Ayón",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "sportingcp": [
@@ -24657,6 +25142,26 @@
     {
       "nome": "Mateus Fernandes",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Viktor Gyökeres",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Francisco Trincão",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Geny Catamo",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Conrad Harder",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -24750,6 +25255,26 @@
       "nome": "Romário Baró",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Samu Aghehowa",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Pepê",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Galeno",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Danny Namaso",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "slbenfica": [
@@ -24841,6 +25366,26 @@
     {
       "nome": "João Rego",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Vangelis Pavlidis",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Kerem Aktürkoğlu",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ángel Di María",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Arthur Cabral",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -24934,6 +25479,26 @@
       "nome": "Gorby",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Simon Banza",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ricardo Horta",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Roger Fernandes",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Roberto Fernández",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "famalicao": [
@@ -25025,6 +25590,26 @@
     {
       "nome": "Otso Liimatta",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Jhonder Cádiz",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Óscar Aranda",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Chiquinho",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Mario González",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -25118,6 +25703,26 @@
       "nome": "Mor Ndiaye",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Alejandro Marqués",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Cassiano",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Rodrigo Gomes",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Hélder Costa",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "vitoria": [
@@ -25209,6 +25814,21 @@
     {
       "nome": "Samu",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Jota Silva",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "André Silva",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Kaio César",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -25302,6 +25922,26 @@
       "nome": "Joca",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Emmanuel Boateng",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Aziz",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Hernâni",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Zé Manuel",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "gilvicente": [
@@ -25393,6 +26033,26 @@
     {
       "nome": "Murilo",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Félix Correia",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ali Alipour",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Jorge Aguirre",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Depú",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -25486,6 +26146,16 @@
       "nome": "Costinha",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Safira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Allano",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "arouca": [
@@ -25577,6 +26247,21 @@
     {
       "nome": "Pedro Moreira",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Rafa Mújica",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Cristo González",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Bukia",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -25670,6 +26355,26 @@
       "nome": "Diogo Salomão",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Anthony Carter",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Breno",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ronaldo Tavares",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ricardo Dias",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "moreirense": [
@@ -25762,6 +26467,26 @@
       "nome": "Camacho",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "André Luís",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Kodisang",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Alanzinho",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Asué",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "estrelaamadora": [
@@ -25843,6 +26568,16 @@
     {
       "nome": "Rodrigo Pinho",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Ronaldo Tavares",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "André Luiz",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -25930,6 +26665,26 @@
     {
       "nome": "Rafael Brito",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Clayton",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Nuno Moreira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Cassiano",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Max Svensson",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -26023,6 +26778,16 @@
       "nome": "André Clóvis",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Samba Koné",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Gautier Ott",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "csmaritimo": [
@@ -26109,6 +26874,26 @@
     {
       "nome": "Euller",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Rodrigo Borges",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Platiny",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Joel Tagueu",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Edgar Costa",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -26202,6 +26987,26 @@
       "nome": "Paulo Bernardo",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "José Melro",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Gerson Sousa",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Henrique Pereira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ivan Lima",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "portob": [
@@ -26288,6 +27093,26 @@
     {
       "nome": "Ussumane Djaló",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Wendel Silva",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Abraham Marcus",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Anhá Candé",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Nilton Varela",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -26381,6 +27206,21 @@
       "nome": "Diogo Abreu",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Chermiti",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Tiago Ferreira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Joelson Fernandes",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "uniaotorreense": [
@@ -26472,6 +27312,26 @@
     {
       "nome": "Lucas Fernandes",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Picas",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Paulinho",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Patrick Fernandes",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "João Lameira",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -26565,6 +27425,26 @@
       "nome": "Tomás Morais",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Hélder Tavares",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Daniel dos Anjos",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Jorge Aguirre",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Hugo Félix",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "vizela": [
@@ -26656,6 +27536,21 @@
     {
       "nome": "Claudemir",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Samuel Essende",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Dylan Saint-Louis",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Kiko Bondoso",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -26749,6 +27644,26 @@
       "nome": "Facundo Cáseres",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Marco Matias",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Bruno Duarte",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Rui Costa",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Zé Luís",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "leiria": [
@@ -26835,6 +27750,21 @@
     {
       "nome": "Kikas",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Bryan Róchez",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Paul Ayongo",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Mateus Oliveira",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -26923,6 +27853,21 @@
       "nome": "Wendel",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Avto",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "João Oliveira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Duarte Valente",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "felgueiras1932": [
@@ -27009,6 +27954,26 @@
     {
       "nome": "Bento",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Landinho",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "João Santos",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Duarte Duarte",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Fábio Fortes",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -27102,6 +28067,16 @@
       "nome": "Nuno Rodrigues",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "John Mercado",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Sangaré",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "gdchaves": [
@@ -27193,6 +28168,26 @@
     {
       "nome": "Juninho",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Héctor Hernández",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Batxi",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Jô",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Paulo Victor",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -27286,6 +28281,26 @@
       "nome": "Vitó",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "João Amorim",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Madi Queta",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Anthony Carter",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Kiki",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "portimonensesad": [
@@ -27362,6 +28377,26 @@
     {
       "nome": "Ewerton",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Rildo",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Wellington Júnior",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Hildeberto Pereira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Zinho",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -27444,6 +28479,26 @@
     {
       "nome": "Gabriel Barbosa",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Feliz Vaz",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ronaldo Tavares",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Pedro Vieira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Hélder Suker",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -27537,6 +28592,21 @@
       "nome": "Nile John",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Henrique Jocu",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "João Paredes",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Steven Petkov",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "ademicadecoimbra": [
@@ -27629,6 +28699,16 @@
       "nome": "Hugo Almeida",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "João Carlos",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Benny",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "amarante": [
@@ -27720,6 +28800,26 @@
     {
       "nome": "Tiago Borges",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Kikas",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "João Oliveira",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Vitinha",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Rui Pedro",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -27935,6 +29035,16 @@
       "nome": "Grigoriy Lovtsov",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Jhon Cordoba",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Joao Batxi",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "lokomotivmoscow": [
@@ -28042,6 +29152,11 @@
       "nome": "Mikhail Shchetinin",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Aleksandr Silyanov",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "spartakmoscow": [
@@ -28133,6 +29248,26 @@
     {
       "nome": "Danil Prutsev",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Manfred Ugalde",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Pablo Solari",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Esequiel Barco",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Theo Bongonda",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -28236,6 +29371,16 @@
       "nome": "Andrey Savinov",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Kirill Glebov",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Luciano Gondou",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "baltikakaliningrad": [
@@ -28333,6 +29478,21 @@
       "nome": "Ilya Stefanovich",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Brayan Gil",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Tenton Yenne",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Chinonso Offor",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "dynamomoscow": [
@@ -28429,6 +29589,21 @@
     {
       "nome": "Vyacheslav Grulev",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Ulvi Babaev",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Ivan Sergeev",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Yaroslav Gladyshev",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -28634,6 +29809,21 @@
       "nome": "Evgeniy Kharin",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Maksim Samorodov",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Mohamed Konaté",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Brian Mansilla",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "fkrostov": [
@@ -28730,6 +29920,21 @@
     {
       "nome": "Igor Kirienko",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Ronaldo",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Timur Suleymanov",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Mohammad Mohebbi",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -28945,6 +30150,16 @@
       "nome": "Semen Stolbov",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Dmitry Vorobyev",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Jimmy Marin",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "akrontogliatti": [
@@ -29052,6 +30267,11 @@
       "nome": "Denis Popenkov",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Dmitriy Pestryakov",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "dynamomakhachkala": [
@@ -29149,6 +30369,21 @@
       "nome": "Ivan Oleyinikov",
       "pos": "MEI",
       "titular": false
+    },
+    {
+      "nome": "Gamid Agalarov",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Abakar Gadzhiev",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Serder Serderov",
+      "pos": "ATA",
+      "titular": false
     }
   ],
   "rodinamoscow": [
@@ -29245,6 +30480,21 @@
     {
       "nome": "Nikita Krivtsov",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Wanderson",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Amur Kalmykov",
+      "pos": "ATA",
+      "titular": false
+    },
+    {
+      "nome": "Maksim Turishchev",
+      "pos": "ATA",
       "titular": false
     }
   ],
@@ -29352,6 +30602,11 @@
     {
       "nome": "Nuri Abdokov",
       "pos": "MEI",
+      "titular": false
+    },
+    {
+      "nome": "Belajdi Pusi",
+      "pos": "ATA",
       "titular": false
     }
   ]

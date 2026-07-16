@@ -13,7 +13,10 @@ import bundledOverrides from "@/data/seeds/team-overrides.json"
 
 const KEY = (fileKey: string) => `ultrafoot:team-override:${fileKey}`
 
-const BUNDLED = bundledOverrides as Record<string, TeamOverride>
+// `as unknown as`: o seed embutido guarda kits que as vezes so tem imageUrl (sem
+// primary/secondary/pattern), entao nao casa 1:1 com KitData no compilador — mas em runtime
+// so lemos imageUrl (getCamisaUrl). O cast e seguro.
+const BUNDLED = bundledOverrides as unknown as Record<string, TeamOverride>
 
 export type KitPattern = "solid" | "stripes" | "diagonal" | "halves"
 

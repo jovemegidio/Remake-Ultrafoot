@@ -4,13 +4,16 @@ import { injectTeamState, SAVE_KEY } from "./helpers"
 test.describe("Critical flow — team selection → quick sim → standings update", () => {
   test("novo-jogo: selecting a team persists it to localStorage", async ({ page }) => {
     await page.goto("/novo-jogo")
-    // Pick the first visible team button
-    const btn = page.locator("button[data-team-card]").first()
-    await btn.waitFor({ timeout: 10000 })
-    await btn.click()
+    // The current team picker is a carousel with a team already selected.
+    // Move once so the test still proves that a user selection is persisted.
+    const nextTeam = page.getByRole("button", { name: "Proximo time" })
+    await nextTeam.waitFor({ timeout: 10000 })
+    await nextTeam.click()
+
+    await page.getByPlaceholder("Nome do técnico...").fill("Técnico Teste")
 
     // Click "Comecar carreira" to persist selection to localStorage
-    const startBtn = page.locator("button").filter({ hasText: /come.*carreira|start.*career/i }).first()
+    const startBtn = page.getByRole("button", { name: /iniciar carreira|come.*carreira|start.*career/i })
     await startBtn.waitFor({ timeout: 5000 })
     await startBtn.click()
 

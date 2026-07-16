@@ -82,7 +82,9 @@ const POSITION_MAP = [
   [/ponta\s*esquerda|extremo\s*esquerd|left\s*winger/, "PE"],
 
   // ── Ataque ───────────────────────────────────────────────────────────────
-  [/centroavante|centro-?avante|centre.?forward|center.?forward|second\s*striker|striker|atacante/, "ATA"],
+  // Inclui "Forward"/"Winger"/"Attacker" (CSVs em ingles com grupos grossos: os atacantes
+  // vinham como "Forward" e NAO casavam -> eram descartados e o time ficava sem ataque).
+  [/centroavante|centro-?avante|centre.?forward|center.?forward|second\s*striker|striker|atacante|forward|winger|attacker/, "ATA"],
 
   // ── Meio-campo (por ultimo: e o balde mais generico) ─────────────────────
   [/meia|meio-?campo|meio-?campista|midfield/, "MEI"],

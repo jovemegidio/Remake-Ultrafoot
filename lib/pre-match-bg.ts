@@ -20,6 +20,17 @@ const BY_COMPETITION: Record<string, string> = {
   "champions league": "/images/pre-jogo/champions.png",
   "uefa europa league": "/images/pre-jogo/europa-league.png",
   "europa league": "/images/pre-jogo/europa-league.png",
+  // Estaduais brasileiros (arte nova).
+  "campeonato mineiro": "/images/pre-jogo/mineiro.png",
+  "mineiro": "/images/pre-jogo/mineiro.png",
+  "campeonato baiano": "/images/pre-jogo/baiano.png",
+  "baiano": "/images/pre-jogo/baiano.png",
+  "campeonato carioca": "/images/pre-jogo/carioca.png",
+  "carioca": "/images/pre-jogo/carioca.png",
+  // Portugal (Liga Portugal / Liga NOS).
+  "liga portugal": "/images/pre-jogo/liga-portugal.png",
+  "primeira liga": "/images/pre-jogo/liga-portugal.png",
+  "liga nos": "/images/pre-jogo/liga-portugal.png",
 }
 
 // Por divisao/liga (o que `league` traz, ex.: "serie_a", "la_liga").
@@ -29,6 +40,8 @@ const BY_LEAGUE: Record<string, string> = {
   la_liga: "/images/pre-jogo/la-liga.png",
   bundesliga: "/images/pre-jogo/bundesliga.png",
   serie_a_ita: "/images/pre-jogo/serie-a-ita.png",
+  serie_b_ita: "/images/pre-jogo/serie-a-ita.png",
+  primeira_liga: "/images/pre-jogo/liga-portugal.png",
 }
 
 /**

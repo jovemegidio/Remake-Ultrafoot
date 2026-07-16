@@ -18,8 +18,8 @@ test.describe("Smoke — pages load without crash", () => {
   test("dashboard loads with injected save", async ({ page }) => {
     await injectTeamState(page)
     await page.goto("/")
-    // Dashboard renders GameSidebar (<aside>) when session + save are valid
-    await expect(page.locator("aside").first()).toBeVisible({ timeout: 12000 })
+    // Navigation moved from the legacy sidebar to the top game header.
+    await expect(page.locator("header").first()).toBeVisible({ timeout: 12000 })
   })
 
   test("calendario page loads", async ({ page }) => {
@@ -35,7 +35,7 @@ test.describe("Smoke — pages load without crash", () => {
   test("mercado page loads", async ({ page }) => {
     await injectTeamState(page)
     await page.goto("/mercado")
-    await expect(page.locator("text=Buscar Atletas")).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole("tab", { name: "Buscar Atletas" })).toBeVisible({ timeout: 10000 })
   })
 
   test("elenco page loads", async ({ page }) => {
