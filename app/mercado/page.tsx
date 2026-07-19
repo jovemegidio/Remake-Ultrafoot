@@ -615,7 +615,7 @@ export default function MercadoPage() {
                     {t.market.viewInNetwork}
                   </button>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {filteredPlayers.slice(0, 4).map((player) => (
                     <button
                       key={player.id}
@@ -639,7 +639,7 @@ export default function MercadoPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {/* First Row */}
               <FilterCardComponent 
                 card={filterCards[0]} 
