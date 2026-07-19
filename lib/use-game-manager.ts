@@ -19,6 +19,7 @@ import { resolveDivisionChange } from "@/lib/promotion-relegation"
 import { processDebtMonth } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
+import { calcSeasonAwards } from "@/lib/awards-engine"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -1378,6 +1379,28 @@ export function useGameManager() {
       const teamsForReset = getUserLeagueTeams(userShort, nextDivisionOverride)
       const newStandings = initializeStandings(teamsForReset)
 
+      // Prêmios individuais — apurados ANTES do processSeasonEnd, que zera as
+      // estatísticas da temporada e faz aposentadorias.
+      const squadForAwards = useGameEngine.getState().squadPlayers
+      const seasonAwards = champion ? calcSeasonAwards(
+        currentState.season,
+        getLeagueName(userShort, divOverride),
+        champion,
+        currentState.managerName || "Técnico",
+        squadForAwards.map(player => ({
+          playerId: player.id,
+          playerName: player.name,
+          teamShort: userShort,
+          position: player.position,
+          age: player.age,
+          overall: player.overall,
+          goals: player.seasonStats?.goals ?? 0,
+          assists: player.seasonStats?.assists ?? 0,
+          matches: player.seasonStats?.matchesPlayed ?? 0,
+          cleanSheets: player.seasonStats?.cleanSheets ?? 0,
+        })),
+      ) : null
+
       // Processa fim de temporada: envelhece jogadores, aposentadorias, jovens da base, reseta standings
       gameEngine.processSeasonEnd(nextSeason, newStandings, currentStandings)
 
@@ -1386,6 +1409,9 @@ export function useGameManager() {
         divisionOverride: nextDivisionOverride,
         divisionMovement,
         completedFixtureKeys: [],
+        seasonAwards: seasonAwards
+          ? [...(currentState.seasonAwards ?? []), seasonAwards]
+          : currentState.seasonAwards,
       }
       saveStateRef.current = { ...currentState, ...patch }
       setSaveState(patch)

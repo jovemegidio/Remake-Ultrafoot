@@ -34,7 +34,7 @@ import { FORMATIONS, assignPlayersToFormation, normalizePosition } from "@/lib/f
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
-import { saveTacticalSetup, useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
+import { defaultRoleForPosition, PLAYER_ROLE_INFO, saveTacticalSetup, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
 import { useUserRoster } from "@/lib/use-user-roster"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
@@ -113,6 +113,7 @@ export default function ElencoPage() {
   const engineSetFormation = useGameEngine(s => s.setFormation)
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
   const engineSetStarter = useGameEngine(s => s.setStarter)
+  const enginePlayerInstructions = useGameEngine(s => s.playerInstructions)
   const engineSetPlayerShirtNumber = useGameEngine(s => s.setPlayerShirtNumber)
   const teamTactics = useGameEngine(s => s.teamTactics)
   const setTeamTactics = useGameEngine(s => s.setTeamTactics)
@@ -276,6 +277,22 @@ export default function ElencoPage() {
     [players, formation, playerPositions],
   )
   
+  // Rótulos do card de função no campo. A instrução salva manda; sem ela, cai no
+  // papel padrão da posição (antes todo mundo virava "meia central").
+  const roleLabelFor = useCallback((player: { id: number; position: string }) => {
+    const role: PlayerRole = enginePlayerInstructions?.[player.id]?.role ?? defaultRoleForPosition(normalizePosition(player.position))
+    return PLAYER_ROLE_INFO[role]?.name ?? "Equilibrado"
+  }, [enginePlayerInstructions])
+
+  const focusLabelFor = useCallback((player: { id: number }) => {
+    const instructions = enginePlayerInstructions?.[player.id]
+    if (!instructions) return "Equilibrado"
+    if (instructions.getForward) return "Ataque"
+    if (instructions.holdPosition) return "Defesa"
+    if (instructions.roaming === "liberdade_total") return "Livre"
+    return "Equilibrado"
+  }, [enginePlayerInstructions])
+
   // Força por setor da Visão Tática. Os quatro campos eram rótulos fixos com "ND"
   // chumbado — nenhum dado do elenco chegava ali.
   const sectorRatings = useMemo(() => {
@@ -1054,11 +1071,12 @@ export default function ElencoPage() {
               onDrop={handleDropOnPitch}
               className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] w-full max-w-[560px] mx-auto"
               style={{
-                // Turfa em gradiente radial (mais viva ao alto) + sombra interna — a
-                // direcao visual aprovada, evolucao do gradiente chapado anterior.
+                // Prancheta tática em azul-marinho, como a referência do dossiê:
+                // os cards de função ficam legíveis por cima, o que o verde vivo
+                // anterior não permitia.
                 background:
-                  "radial-gradient(120% 90% at 50% -6%, #1c5a3a 0%, #164a31 44%, #0f3722 78%, #0a2718 100%)",
-                boxShadow: "inset 0 0 60px rgba(0,0,0,0.5)",
+                  "radial-gradient(120% 90% at 50% -6%, #16304d 0%, #122741 44%, #0d1c30 78%, #091320 100%)",
+                boxShadow: "inset 0 0 60px rgba(0,0,0,0.55)",
               }}
             >
               {/* Refletores nos quatro cantos (clima de estadio a noite). */}
@@ -1138,48 +1156,44 @@ export default function ElencoPage() {
                     dragOverTarget === player.id && "ring-2 ring-[#00ffc8] ring-offset-2 ring-offset-transparent rounded-full"
                   )}
                 >
-                  {/* Player name tag */}
-                  <div className={cn(
-                    "px-1.5 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
-                    selectedPlayerId === player.id
-                      ? "bg-[#00ffc8] text-black"
-                      : "bg-black/60 text-white/90 group-hover:bg-black/80"
-                  )}>
-                    {player.name.split(" ").pop()}
-                  </div>
-                  
-                  {/* Player avatar */}
-                  <div className="relative">
-                    {/* Sombra de chao: da a profundidade "acima da grama" da direcao aprovada. */}
-                    <span
-                      className="pointer-events-none absolute left-1/2 -bottom-1 h-2 w-8 -translate-x-1/2 rounded-[50%]"
-                      style={{ background: "rgba(0,0,0,0.45)", filter: "blur(3px)" }}
-                    />
-                    <PlayerAvatarCircle
-                      name={player.name}
-                      teamColor={userTeam.cor1}
-                      size="sm"
-                      className={cn(
-                        "relative border-2 shadow-[0_3px_8px_rgba(0,0,0,0.55)] transition-all",
-                        selectedPlayerId === player.id
-                          ? "border-[#00ffc8] shadow-[0_0_12px_rgba(0,255,200,0.5)]"
-                          : "border-white/30 group-hover:border-white/60"
-                      )}
-                    />
-                    
-                    {/* Overall badge */}
-                    <div className={cn(
-                      "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
-                      "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
-                      selectedPlayerId === player.id ? "border-[#00ffc8]" : "border-white/30"
-                    )}>
-                      <span className={getOverallColor(player.overall)}>{player.overall}</span>
+                  {/* Card de função (nome / função / foco / posição), no lugar do
+                      antigo círculo de avatar — layout da referência do dossiê. */}
+                  <div
+                    className={cn(
+                      "relative w-[76px] md:w-[92px] overflow-hidden rounded-md text-center shadow-[0_4px_10px_rgba(0,0,0,0.55)] transition-all",
+                      selectedPlayerId === player.id
+                        ? "ring-2 ring-[#00ffc8]"
+                        : "ring-1 ring-white/15 group-hover:ring-white/40",
+                    )}
+                  >
+                    <div className="bg-gradient-to-b from-[#2b3446]/95 to-[#1b2130]/95 px-1 pb-1 pt-1.5 backdrop-blur-[2px]">
+                      <div className="truncate text-[9px] font-bold leading-tight text-white md:text-[10px]">
+                        {player.name.split(" ").pop()}
+                      </div>
+                      <div className="truncate text-[8px] leading-tight text-[#00ffc8] md:text-[9px]">
+                        {roleLabelFor(player)}
+                      </div>
+                      <div className="truncate text-[8px] leading-tight text-white/45 md:text-[9px]">
+                        {focusLabelFor(player)}
+                      </div>
                     </div>
-                    
+                    {/* Faixa da posição, com o overall à direita */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-between px-1.5 py-0.5 text-[8px] font-bold md:text-[9px]",
+                        selectedPlayerId === player.id ? "bg-[#00ffc8] text-black" : "bg-[#0d1220]/95 text-white/75",
+                      )}
+                    >
+                      <span>{normalizePosition(player.position)}</span>
+                      <span className={selectedPlayerId === player.id ? "text-black" : getOverallColor(player.overall)}>
+                        {player.overall}
+                      </span>
+                    </div>
+
                     {/* Potential indicator */}
                     {player.potential > player.overall + 3 && (
-                      <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[#00ffc8] flex items-center justify-center">
-                        <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
+                      <div className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full bg-[#00ffc8] flex items-center justify-center">
+                        <TrendingUp className="h-2 w-2 text-black" />
                       </div>
                     )}
                   </div>

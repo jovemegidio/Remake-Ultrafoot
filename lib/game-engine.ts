@@ -1261,6 +1261,28 @@ export const PLAYER_ROLE_INFO: Record<PlayerRole, { name: string; description: s
   atacante_pivot: { name: "Atacante Pivot", description: "Segura e distribui no ataque", positions: ["ATA"] },
 }
 
+/**
+ * Função padrão por posição. Sem isto, todo jogador sem instrução salva caía em
+ * "meia_central" — um zagueiro aparecia como meia na tela de tática.
+ */
+const DEFAULT_ROLE_BY_POSITION: Record<string, PlayerRole> = {
+  GOL: "goleiro_defensor",
+  ZAG: "zagueiro_central",
+  LD: "lateral_equilibrado",
+  LE: "lateral_equilibrado",
+  VOL: "volante_box_to_box",
+  MEI: "meia_central",
+  MD: "ponta",
+  ME: "ponta",
+  PD: "ponta",
+  PE: "ponta",
+  ATA: "centroavante",
+}
+
+export function defaultRoleForPosition(position: string | undefined): PlayerRole {
+  return DEFAULT_ROLE_BY_POSITION[(position ?? "").toUpperCase()] ?? "meia_central"
+}
+
 export interface PlayerInstructions {
   role: PlayerRole
   

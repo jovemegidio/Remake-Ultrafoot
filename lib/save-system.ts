@@ -10,6 +10,7 @@ import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceE
 import type { ClubDebtState } from "@/lib/debt-engine"
 import type { ScoutingDepartmentState } from "@/lib/scout-engine"
 import type { StadiumPitch } from "@/lib/infrastructure-engine"
+import type { SeasonAwards } from "@/lib/awards-engine"
 import type { Sponsor, SponsorOffer } from "@/lib/sponsor-engine"
 import type { ChallengeProgress } from "@/lib/challenge-engine"
 
@@ -416,6 +417,8 @@ export interface GameState {
   stadiumPitch?: StadiumPitch
   /** Torcida do clube já movimentada pela carreira (undefined = valor estático do time). */
   fanBase?: number
+  /** Prêmios individuais apurados ao fim de cada temporada. */
+  seasonAwards?: SeasonAwards[]
   sponsorOffers?: SponsorOffer[]
   activeSponsors?: Sponsor[]
   // Divisao ATUAL do clube do usuario quando ela difere da estatica (teams-data), por

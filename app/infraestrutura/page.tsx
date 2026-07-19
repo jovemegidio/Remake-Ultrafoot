@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { GameHeader } from "@/components/game-header"
@@ -10,6 +11,7 @@ import { useGameState } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { configurePitch, createStadiumPitch, pitchInjuryDurationMultiplier, pitchInjuryFrequencyMultiplier, pitchUpgradeCost, type PitchQuality, type PitchSurface } from "@/lib/infrastructure-engine"
 import { calcMatchdayRevenue, capacityGainForNextLevel, countCareerTitles, infrastructureUpgradeWeeks, stadiumCapacity, TICKET_TIERS, TICKET_TIER_ORDER } from "@/lib/stadium-economy"
+import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
 import { cn } from "@/lib/utils"
 import { useNotifications } from "@/components/notifications-system"
 import {
@@ -198,6 +200,7 @@ export default function InfraestruturaPage() {
   const capacity = stadiumCapacity(userTeam?.estadio_cap ?? 30000, stadiumLevel)
   const nextCapacityGain = capacityGainForNextLevel(userTeam?.estadio_cap ?? 30000, stadiumLevel)
   const ticketTier = gameEngine.ticketTier ?? "normal"
+  const stadiumPhoto = getTeamStadiumBackground(userTeam?.nome)
   const matchdayProjection = calcMatchdayRevenue({
     capacity,
     prestige: userTeam?.prestigio ?? 50,
@@ -264,6 +267,33 @@ export default function InfraestruturaPage() {
             </div>
           </div>
         </div>
+        {/* Foto do estádio do clube. O acervo importado (public/stadiums) já é
+            indexado por nome de time — a tela só não estava usando. Sem arte para
+            o clube, some em vez de mostrar um estádio de outro time. */}
+        {stadiumPhoto && (
+          <section className="relative mx-4 mt-4 h-40 overflow-hidden rounded-xl border border-white/[0.06] md:h-52">
+            <Image
+              src={stadiumPhoto}
+              alt={userTeam?.estadio_nome ?? "Estádio do clube"}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/35 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-[#00ffc8]">Estádio do clube</p>
+                <h2 className="text-xl font-black text-white drop-shadow">{userTeam?.estadio_nome || "Estádio"}</h2>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] uppercase text-white/60">Capacidade</p>
+                <p className="text-lg font-bold text-white drop-shadow">{capacity.toLocaleString("pt-BR")}</p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Bilheteria — preço do ingresso e projeção de renda por jogo em casa. */}
         <section className="mx-4 mt-4 rounded-xl border border-[#00ffc8]/20 bg-[#00ffc8]/5 p-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
