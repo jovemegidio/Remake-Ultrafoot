@@ -9,6 +9,7 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { useGameState } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { configurePitch, createStadiumPitch, pitchInjuryDurationMultiplier, pitchInjuryFrequencyMultiplier, pitchUpgradeCost, type PitchQuality, type PitchSurface } from "@/lib/infrastructure-engine"
+import { calcMatchdayRevenue, capacityGainForNextLevel, countCareerTitles, infrastructureUpgradeWeeks, stadiumCapacity, TICKET_TIERS, TICKET_TIER_ORDER } from "@/lib/stadium-economy"
 import { cn } from "@/lib/utils"
 import { useNotifications } from "@/components/notifications-system"
 import {
@@ -190,6 +191,21 @@ export default function InfraestruturaPage() {
   }, [upgradesInProgress, gameEngine.clubInfrastructure, addNotification])
 
   const balance = gameEngine.balance
+
+  // Bilheteria: a capacidade sai das obras concluídas (não mais do estadio_cap
+  // estático) e a projeção usa exatamente o mesmo cálculo que a partida credita.
+  const stadiumLevel = infrastructure.stadium ?? 2
+  const capacity = stadiumCapacity(userTeam?.estadio_cap ?? 30000, stadiumLevel)
+  const nextCapacityGain = capacityGainForNextLevel(userTeam?.estadio_cap ?? 30000, stadiumLevel)
+  const ticketTier = gameEngine.ticketTier ?? "normal"
+  const matchdayProjection = calcMatchdayRevenue({
+    capacity,
+    prestige: userTeam?.prestigio ?? 50,
+    fanBase: saveState.fanBase ?? userTeam?.torcida ?? 50000,
+    ticketTier,
+    titles: countCareerTitles(saveState.seasonHistory, userTeam?.curto),
+  })
+
   const applyPitch=()=>{const cost=pitchUpgradeCost(pitch,pitchSurface,pitchQuality);if(!gameEngine.spendClubFunds(cost))return;setSaveState({stadiumPitch:configurePitch(pitchSurface,pitchQuality,saveState.season)})}
 
   const handleUpgrade = (areaId: string) => {
@@ -248,6 +264,47 @@ export default function InfraestruturaPage() {
             </div>
           </div>
         </div>
+        {/* Bilheteria — preço do ingresso e projeção de renda por jogo em casa. */}
+        <section className="mx-4 mt-4 rounded-xl border border-[#00ffc8]/20 bg-[#00ffc8]/5 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="font-bold text-white flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#00ffc8]" />
+                Bilheteria
+              </h2>
+              <p className="mt-1 text-xs text-white/45">
+                Preço alto rende mais por torcedor, mas esvazia o estádio e desgasta a torcida. Cada jogo em casa credita a renda direto no caixa do clube.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
+              <div className="rounded bg-black/25 p-2 text-white/55">Capacidade <b className="block text-white">{capacity.toLocaleString("pt-BR")}</b></div>
+              <div className="rounded bg-black/25 p-2 text-white/55">Público médio <b className="block text-white">{matchdayProjection.attendance.toLocaleString("pt-BR")}</b></div>
+              <div className="rounded bg-black/25 p-2 text-white/55">Ingresso <b className="block text-white">R$ {matchdayProjection.ticketPrice.toLocaleString("pt-BR")}</b></div>
+              <div className="rounded bg-black/25 p-2 text-white/55">Renda por jogo <b className="block text-[#00ffc8]">R$ {matchdayProjection.revenue.toLocaleString("pt-BR")}</b></div>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-3">
+            {TICKET_TIER_ORDER.map(tier => {
+              const info = TICKET_TIERS[tier]
+              return (
+                <button
+                  key={tier}
+                  onClick={() => gameEngine.setTicketTier(tier)}
+                  className={cn(
+                    "rounded-lg border p-3 text-left transition-all",
+                    ticketTier === tier
+                      ? "border-[#00ffc8]/60 bg-[#00ffc8]/10"
+                      : "border-white/[0.06] bg-black/25 hover:border-white/20",
+                  )}
+                >
+                  <span className={cn("text-sm font-semibold", ticketTier === tier ? "text-[#00ffc8]" : "text-white")}>{info.label}</span>
+                  <span className="mt-1 block text-[11px] leading-4 text-white/45">{info.description}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
         <section className="mx-4 mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4"><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-bold text-white">Superfície do estádio</h2><p className="mt-1 text-xs text-white/45">Qualidade controla a frequência de lesões. O sintético custa menos, mas aumenta em 35% a recuperação quando ocorre uma contusão.</p></div><div className="flex flex-wrap items-end gap-2"><label className="text-[10px] uppercase text-white/45">Superfície<select value={pitchSurface} onChange={e=>setPitchSurface(e.target.value as PitchSurface)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="natural">Natural</option><option value="synthetic">Sintético</option></select></label><label className="text-[10px] uppercase text-white/45">Qualidade<select value={pitchQuality} onChange={e=>setPitchQuality(e.target.value as PitchQuality)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="poor">Ruim</option><option value="medium">Médio</option><option value="good">Bom</option></select></label><Button onClick={applyPitch} disabled={balance<pitchUpgradeCost(pitch,pitchSurface,pitchQuality)}>Aplicar · R$ {pitchUpgradeCost(pitch,pitchSurface,pitchQuality).toLocaleString("pt-BR")}</Button></div></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div className="rounded bg-black/25 p-2 text-white/55">Manutenção mensal <b className="block text-white">R$ {pitch.monthlyMaintenance.toLocaleString("pt-BR")}</b></div><div className="rounded bg-black/25 p-2 text-white/55">Frequência de lesões <b className="block text-white">{pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</b></div><div className="rounded bg-black/25 p-2 text-white/55">Duração da lesão <b className="block text-white">{pitchInjuryDurationMultiplier(pitch).toFixed(2)}x</b></div></div></section>
 
         {/* Content */}
@@ -260,8 +317,11 @@ export default function InfraestruturaPage() {
                 Capacidade
               </div>
               <div className="text-2xl font-bold text-white">
-                {INFRASTRUCTURE_AREAS[0].levels[infrastructure.stadium - 1]?.capacity?.toLocaleString("pt-BR") || "15.000"}
+                {capacity.toLocaleString("pt-BR")}
               </div>
+              {nextCapacityGain > 0 && (
+                <div className="mt-0.5 text-[10px] text-[#00ffc8]">+{nextCapacityGain.toLocaleString("pt-BR")} na próxima obra</div>
+              )}
             </div>
             <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
               <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
@@ -447,9 +507,15 @@ export default function InfraestruturaPage() {
                       </div>
                     ))}
                   </div>
+                  {selectedArea === "stadium" && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-[#00ffc8]">
+                      <Users className="h-3 w-3" />
+                      +{capacityGainForNextLevel(userTeam?.estadio_cap ?? 30000, infrastructure.stadium ?? 2).toLocaleString("pt-BR")} lugares — mais renda de bilheteria por jogo
+                    </div>
+                  )}
                   <div className="mt-3 flex items-center gap-2 text-xs text-white/40">
                     <Clock className="h-3 w-3" />
-                    Tempo de construcao: 4 semanas
+                    Tempo de construcao: {infrastructureUpgradeWeeks(selectedArea, infrastructure[selectedArea] + 1)} semanas
                   </div>
                 </div>
               )}

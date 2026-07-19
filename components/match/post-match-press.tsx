@@ -346,16 +346,18 @@ export function PostMatchPress({
                     {/* Jornalista */}
                     <div className="flex items-center gap-4 mb-8">
                       <div 
-                        className="w-20 h-16 rounded-xl flex items-center justify-center overflow-hidden p-1"
+                        className="w-20 h-16 rounded-xl flex items-center justify-center overflow-hidden"
                         style={{ backgroundColor: currentMedia.bgColor }}
                       >
                         {currentMedia.logo ? (
+                          // A logo do veículo preenche todo o card: com padding +
+                          // object-contain sobrava moldura vazia em volta dela.
                           <Image
                             src={currentMedia.logo}
                             alt={currentMedia.name}
-                            width={72}
-                            height={56}
-                            className="h-full w-full object-contain"
+                            width={80}
+                            height={64}
+                            className="h-full w-full object-cover"
                           />
                         ) : (
                           <span className="text-white font-bold text-sm">{currentMedia.name.slice(0, 3)}</span>

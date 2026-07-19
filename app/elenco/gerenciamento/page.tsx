@@ -30,7 +30,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FORMATIONS, assignPlayersToFormation } from "@/lib/formations"
+import { FORMATIONS, assignPlayersToFormation, normalizePosition } from "@/lib/formations"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
@@ -276,6 +276,28 @@ export default function ElencoPage() {
     [players, formation, playerPositions],
   )
   
+  // Força por setor da Visão Tática. Os quatro campos eram rótulos fixos com "ND"
+  // chumbado — nenhum dado do elenco chegava ali.
+  const sectorRatings = useMemo(() => {
+    const byGroup: Record<string, number[]> = { Gol: [], Defesa: [], "Meio-campo": [], Ataque: [] }
+    for (const player of players) {
+      const pos = normalizePosition(player.position)
+      const group = pos === "GOL" ? "Gol"
+        : ["ZAG", "LD", "LE"].includes(pos) ? "Defesa"
+        : ["ATA", "PD", "PE"].includes(pos) ? "Ataque"
+        : "Meio-campo"
+      byGroup[group].push(player.overall)
+    }
+    return (["Ataque", "Meio-campo", "Defesa", "Gol"] as const).map(label => {
+      const values = byGroup[label]
+      return {
+        label,
+        value: values.length ? Math.round(values.reduce((sum, v) => sum + v, 0) / values.length) : null,
+        count: values.length,
+      }
+    })
+  }, [players])
+
   const nextFormation = () => {
     const nextIndex = (currentFormationIndex + 1) % formationKeys.length
     setFormation(formationKeys[nextIndex])
@@ -743,15 +765,28 @@ export default function ElencoPage() {
                 
                 {/* Tactical categories */}
                 <div className="space-y-3">
-                  {["Ataque", "Meio-campo", "Defesa", "Gol"].map((cat) => (
-                    <div key={cat} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                      <span className="text-white">{cat}</span>
-                      <span className="text-white/40 text-sm">ND</span>
+                  {sectorRatings.map((sector) => (
+                    <div key={sector.label} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                      <span className="text-white">{sector.label}</span>
+                      {sector.value === null ? (
+                        <span className="text-white/40 text-sm">ND</span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <span className="text-[10px] text-white/35">{sector.count} jog.</span>
+                          <span className={cn("text-sm font-bold", getOverallColor(sector.value))}>{sector.value}</span>
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
-                
-                <Button variant="outline" className="w-full mt-4 border-white/20 text-white">
+
+                {/* O botão era decorativo. Agora leva ao Centro Tático, onde a
+                    mentalidade e as instruções são de fato alteradas. */}
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/taticas")}
+                  className="w-full mt-4 border-white/20 text-white"
+                >
                   <Gamepad2 className="h-4 w-4 mr-2" />
                   {t.squad.changeTactic}
                 </Button>
@@ -765,8 +800,13 @@ export default function ElencoPage() {
                 <span className="text-sm text-white/60">{t.squad.playerImpact}</span>
               </div>
               
-              <div 
-                className="relative rounded-2xl overflow-hidden"
+              {/* O campo só tinha aspect-ratio 3/4 governado pela LARGURA: em tela
+                  wide ele ficava mais alto que a viewport e era cortado no meio —
+                  7 dos 11 titulares ficavam fora da área visível, e a tela parecia
+                  quebrada. Limitando a altura ao espaço disponível, o campo inteiro
+                  (e o XI completo) cabe sempre. */}
+              <div
+                className="relative mx-auto w-full max-w-[min(100%,calc((100vh-260px)*0.75))] rounded-2xl overflow-hidden"
                 style={{
                   background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
                   aspectRatio: "3 / 4",

@@ -29,7 +29,14 @@ import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { getGameDate } from "@/lib/game-date"
-import { getFormationSlots } from "@/lib/formations"
+import { getFormationSlots, normalizePosition } from "@/lib/formations"
+
+/** Setores da aba "Rede Mundial" — cada botão cobre todas as posições do setor. */
+const REDE_SECTOR_POSITIONS: Record<string, string[]> = {
+  Ata: ["ATA", "PD", "PE"],
+  Mei: ["MEI", "VOL", "MD", "ME"],
+  Def: ["ZAG", "LD", "LE", "GOL"],
+}
 import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-cooldown"
 import { formatCurrency } from "@/lib/teams-data"
@@ -189,6 +196,7 @@ export default function MercadoPage() {
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [negotiationType, setNegotiationType] = useState<"buy" | "loan">("buy")
   const [positionFilter, setPositionFilter] = useState<string>("Tudo")
+  const [redeDetailed, setRedeDetailed] = useState(false)
   const [marketPage, setMarketPage] = useState(0)
   const [expandedScoutId, setExpandedScoutId] = useState<number | null>(null)
   const [marketNotice, setMarketNotice] = useState<string | null>(null)
@@ -366,9 +374,15 @@ export default function MercadoPage() {
       if (p.age < minAge || p.age > maxAge) {
         return false
       }
-      // Position filter for "rede" tab
-      if (positionFilter !== "Tudo" && p.position !== positionFilter && !p.secondaryPositions?.includes(positionFilter)) {
-        return false
+      // Filtro por SETOR da aba "rede". Antes comparava com uma única sigla
+      // ("ATA"/"MEI"/"ZAG"), então "Ata" escondia pontas, "Mei" escondia volantes
+      // e "Def" escondia os laterais — a maior parte do catálogo sumia.
+      if (positionFilter !== "Tudo") {
+        const sector = REDE_SECTOR_POSITIONS[positionFilter]
+        if (sector) {
+          const positions = [p.position, ...(p.secondaryPositions ?? [])].map(normalizePosition)
+          if (!positions.some(pos => sector.includes(pos))) return false
+        }
       }
       // Nacionalidade / Pais / Liga / Time
       if (filterNationality !== "Qualquer" && p.nationality !== filterNationality) return false
@@ -989,18 +1003,21 @@ export default function MercadoPage() {
                 <span className="border border-white/20 rounded px-1 py-0.5">x</span>
                 <span className="border border-white/20 rounded px-1 py-0.5 ml-1">c</span>
               </div>
-              {["Tudo", "Detalhes", "Ata", "Mei", "Def"].map((filter) => (
+              {/* "Detalhes" não é posição: era passado como filtro e derrubava a
+                  lista para zero atletas. Agora alterna a densidade das linhas. */}
+              <button
+                onClick={() => setRedeDetailed(value => !value)}
+                className={cn("text-sm transition-colors", redeDetailed ? "text-white" : "text-white/40 hover:text-white/60")}
+              >
+                Detalhes
+              </button>
+              {["Tudo", "Ata", "Mei", "Def"].map((filter) => (
                 <button
                   key={filter}
-                  onClick={() => setPositionFilter(filter === "Ata" ? "ATA" : filter === "Mei" ? "MEI" : filter === "Def" ? "ZAG" : filter)}
+                  onClick={() => setPositionFilter(filter)}
                   className={cn(
                     "text-sm transition-colors",
-                    positionFilter === filter || 
-                    (filter === "Ata" && positionFilter === "ATA") ||
-                    (filter === "Mei" && positionFilter === "MEI") ||
-                    (filter === "Def" && positionFilter === "ZAG")
-                      ? "text-white"
-                      : "text-white/40 hover:text-white/60"
+                    positionFilter === filter ? "text-white" : "text-white/40 hover:text-white/60",
                   )}
                 >
                   {filter}
@@ -1048,6 +1065,7 @@ export default function MercadoPage() {
                             key={player.id}
                             player={player}
                             selected={selectedPlayer?.id === player.id}
+                            detailed={redeDetailed}
                             onClick={() => handlePlayerSelect(player)}
                           />
                         ))}
@@ -2030,12 +2048,15 @@ function FilterDropdownCard({
 // Player List Card Component
 function PlayerListCard({
   player,
-  selected, 
-  onClick 
-}: { 
+  selected,
+  onClick,
+  detailed = false,
+}: {
   player: Player
   selected: boolean
   onClick: () => void
+  /** Modo "Detalhes": mostra overall, valor e clube direto na linha. */
+  detailed?: boolean
 }) {
   const isNew = player.scoutProgress && player.scoutProgress < 100
 
@@ -2074,10 +2095,18 @@ function PlayerListCard({
           <span>|</span>
           <span>{player.position}</span>
         </div>
+        {detailed && (
+          <div className="mt-1 flex items-center gap-2 text-[10px] text-white/45">
+            <span className="truncate">{player.team.nome}</span>
+            <span>|</span>
+            <span className="whitespace-nowrap">{formatCurrency(player.value)}</span>
+          </div>
+        )}
       </div>
 
       {/* Team Crest */}
       <div className="flex flex-col items-end gap-1">
+        {detailed && <span className="text-sm font-black text-white">{player.overall}</span>}
         <TeamCrest team={player.team} size="xs" />
         {selected && (
           <div className="flex items-center justify-center w-5 h-5 rounded border border-white/20 text-[10px] text-white/50">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useEffect } from "react"
+import { useMemo, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Wallet,
@@ -31,6 +31,7 @@ import { debtTransferLimit, renegotiateDebt } from "@/lib/debt-engine"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { getCountryCompetitions } from "@/lib/country-competitions"
+import { calcMatchdayRevenue, countCareerTitles, stadiumCapacity } from "@/lib/stadium-economy"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -82,8 +83,24 @@ const LIBERTADORES_PRIZE = {
   champion: 23000000 * 5.85,
 }
 
+type FinancesTab = "geral" | "transacoes" | "orcamento"
+
+interface LedgerEntry {
+  id: string
+  icon: React.ElementType
+  label: string
+  /** Positivo = receita, negativo = despesa. */
+  value: number
+  detail: { label: string; value: string }[]
+  /** 0..1 — alimenta o anel de proporção do painel de detalhe. */
+  share?: number
+  shareLabel?: string
+}
+
 export default function FinancasPage() {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<FinancesTab>("geral")
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
 
   // Gamepad support
   useEffect(() => {
@@ -114,11 +131,17 @@ export default function FinancasPage() {
     const contractedSponsorship=(saveState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0)
     const sponsorship = contractedSponsorship || Math.round(userTeam.prestigio * 15000 + 800000)
     
-    // Bilheteria baseada em jogos em casa jogados
+    // Bilheteria: mesmo cálculo que a partida credita no caixa (capacidade vinda
+    // das obras + política de preço escolhida), para os números baterem entre as telas.
     const homeMatches = gameEngine.matchResults.filter(m => m.homeTeam === userTeam.curto).length
-    const avgAttendance = Math.round((userTeam.estadio_cap || 30000) * 0.7)
-    const ticketPrice = 50 + (userTeam.prestigio * 0.5)
-    const ticketRevenue = homeMatches * avgAttendance * ticketPrice
+    const matchday = calcMatchdayRevenue({
+      capacity: stadiumCapacity(userTeam.estadio_cap || 30000, gameEngine.clubInfrastructure?.stadium ?? 2),
+      prestige: userTeam.prestigio,
+      fanBase: saveState.fanBase ?? userTeam.torcida,
+      ticketTier: gameEngine.ticketTier ?? "normal",
+      titles: countCareerTitles(saveState.seasonHistory, userTeam.curto),
+    })
+    const ticketRevenue = homeMatches * matchday.revenue
 
     // Premiacoes estimadas baseadas na posicao atual
     const prizeKeys = Object.keys(PRIZE_MONEY) as (keyof typeof PRIZE_MONEY)[]
@@ -164,9 +187,13 @@ export default function FinancasPage() {
       netIncome: monthlyIncome - monthlyExpenses,
       wageUsed: totalWages + scoutWages,
       homeMatches,
-      avgAttendance,
+      avgAttendance: matchday.attendance,
+      matchdayRevenue: matchday.revenue,
+      ticketPrice: matchday.ticketPrice,
+      capacity: matchday.attendance > 0 ? Math.round(matchday.attendance / matchday.occupancy) : 0,
+      occupancy: matchday.occupancy,
     }
-  }, [userTeam, gameEngine.balance, gameEngine.squadPlayers, gameEngine.scouts, gameEngine.matchResults, gameEngine.weeklyIncome, gameEngine.weeklyExpenses, gameEngine.transferBudget, gameEngine.wageBudget, userPosition, saveState.activeSponsors])
+  }, [userTeam, gameEngine.balance, gameEngine.squadPlayers, gameEngine.scouts, gameEngine.matchResults, gameEngine.weeklyIncome, gameEngine.weeklyExpenses, gameEngine.transferBudget, gameEngine.wageBudget, gameEngine.clubInfrastructure, gameEngine.ticketTier, userPosition, saveState.activeSponsors, saveState.fanBase, saveState.seasonHistory])
 
   // Transacoes recentes baseadas nos resultados
   const recentTransactions = useMemo(() => {
@@ -178,7 +205,7 @@ export default function FinancasPage() {
       if (match.homeTeam === userTeam?.curto || match.awayTeam === userTeam?.curto) {
         const isHome = match.homeTeam === userTeam?.curto
         if (isHome) {
-          const ticketRev = Math.round((userTeam?.estadio_cap || 30000) * 0.7 * 55)
+          const ticketRev = dynamicFinances?.matchdayRevenue ?? 0
           transactions.push({
             type: "income",
             description: `${t.finances.ticketing} vs ${match.awayTeam}`,
@@ -213,6 +240,108 @@ export default function FinancasPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameEngine.matchResults, userTeam, currentWeek, dynamicFinances, t])
 
+  // Razão de transações da aba "Transações": cada linha vira um card de detalhe
+  // à direita, no mesmo padrão da referência (rótulo, valor assinado, contexto).
+  const ledger = useMemo(() => {
+    if (!userTeam || !dynamicFinances) return []
+    const fanBase = saveState.fanBase ?? userTeam.torcida ?? 50000
+    const socios = Math.round(fanBase * 0.42)
+    const entries: LedgerEntry[] = [
+      {
+        id: "socio",
+        icon: Users,
+        label: "Sócio torcedor",
+        value: socios * 50,
+        detail: [
+          { label: "Sócios torcedores", value: socios.toLocaleString("pt-BR") },
+          { label: "Mensalidade média", value: formatCurrency(50) },
+        ],
+        share: Math.min(1, socios / Math.max(1, fanBase)),
+        shareLabel: "da torcida associada",
+      },
+      {
+        id: "bilheteria",
+        icon: Ticket,
+        label: "Bilheteria",
+        value: dynamicFinances.matchdayRevenue,
+        detail: [
+          { label: "Público médio", value: dynamicFinances.avgAttendance.toLocaleString("pt-BR") },
+          { label: "Capacidade do estádio", value: dynamicFinances.capacity.toLocaleString("pt-BR") },
+          { label: "Preço do ingresso", value: formatCurrency(dynamicFinances.ticketPrice) },
+        ],
+        share: dynamicFinances.occupancy,
+        shareLabel: "de ocupação",
+      },
+      {
+        id: "tv",
+        icon: Tv,
+        label: "Direitos de TV",
+        value: dynamicFinances.income.tvRights,
+        detail: [{ label: "Competição", value: leagueName }],
+      },
+      {
+        id: "patrocinio",
+        icon: Building2,
+        label: "Patrocínio",
+        value: dynamicFinances.income.sponsorship,
+        detail: [{ label: "Contratos ativos", value: String((saveState.activeSponsors ?? []).length) }],
+      },
+      {
+        id: "premiacao",
+        icon: Trophy,
+        label: "Premiação",
+        value: dynamicFinances.income.estimatedPrize,
+        detail: [{ label: "Posição atual", value: `${userPosition}º` }],
+      },
+      {
+        id: "salarios",
+        icon: Users,
+        label: "Salários de atletas",
+        value: -dynamicFinances.expenses.wages,
+        detail: [{ label: "Atletas no elenco", value: String(gameEngine.squadPlayers.length) }],
+      },
+      {
+        id: "olheiros",
+        icon: Target,
+        label: "Salários de olheiros",
+        value: -dynamicFinances.expenses.scoutWages,
+        detail: [{ label: "Olheiros contratados", value: String(gameEngine.scouts.length) }],
+      },
+      {
+        id: "infra",
+        icon: Building2,
+        label: "Manutenção de instalações",
+        value: -dynamicFinances.expenses.infrastructure,
+        detail: [{ label: "Nível do estádio", value: String(gameEngine.clubInfrastructure?.stadium ?? 2) }],
+      },
+      {
+        id: "staff",
+        icon: Shirt,
+        label: "Comissão técnica",
+        value: -dynamicFinances.expenses.staff,
+        detail: [],
+      },
+    ]
+    return entries
+  }, [userTeam, dynamicFinances, saveState.fanBase, saveState.activeSponsors, leagueName, userPosition, gameEngine.squadPlayers.length, gameEngine.scouts.length, gameEngine.clubInfrastructure])
+
+  // Orçamento: receitas e despesas do ano, com a curva mensal acumulada.
+  const budget = useMemo(() => {
+    if (!dynamicFinances) return null
+    const income = ledger.filter(entry => entry.value > 0)
+    const expenses = ledger.filter(entry => entry.value < 0)
+    const monthIndex = Math.min(11, Math.floor(currentWeek / 4))
+    const months = Array.from({ length: 12 }, (_, index) => ({
+      label: ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"][index],
+      value: index <= monthIndex ? dynamicFinances.balance - dynamicFinances.netIncome * (monthIndex - index) : 0,
+    }))
+    const peak = Math.max(1, ...months.map(month => Math.abs(month.value)))
+    const variation = dynamicFinances.balance > 0
+      ? (dynamicFinances.netIncome / dynamicFinances.balance) * 100
+      : 0
+    return { income, expenses, months, peak, variation, weekly: Math.round(dynamicFinances.income.total / 4) }
+  }, [ledger, dynamicFinances, currentWeek])
+
   if (!hydrated || !userTeam || !dynamicFinances) {
     return (
       <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex items-center justify-center">
@@ -228,16 +357,41 @@ export default function FinancasPage() {
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-white/50">{t.common.season} {currentSeason}</p>
+        {/* Header + abas, no padrão da referência: título forte à esquerda, abas
+            em texto (ativa em branco), contexto da temporada à direita. */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-6">
+            <h1 className="text-xl font-bold text-white">{t.sidebar.finances ?? "Finanças"}</h1>
+            <div className="h-5 w-px bg-white/10" />
+            <nav className="flex items-center gap-5">
+              {([
+                { id: "geral", label: "Visão Geral" },
+                { id: "transacoes", label: "Transações" },
+                { id: "orcamento", label: "Orçamento" },
+              ] as const).map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "text-sm transition-colors",
+                    activeTab === tab.id ? "font-semibold text-white" : "text-white/40 hover:text-white/70",
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
           </div>
-          <div className="flex items-center gap-2 text-xs text-white/50">
-            <Calendar className="h-4 w-4" />
-            {t.common.week} {currentWeek}/38
+          <div className="flex items-center gap-4 text-xs text-white/50">
+            <span>{t.common.season} {currentSeason}</span>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              {t.common.week} {currentWeek}/38
+            </div>
           </div>
         </div>
+
+        {activeTab === "geral" && (<>
 
         {saveState.debt?.enabled && <section className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -572,8 +726,196 @@ export default function FinancasPage() {
             </div>
           </div>
         </div>
+        </>)}
+
+        {activeTab === "transacoes" && (
+          <TransactionsTab
+            entries={ledger}
+            team={userTeam}
+            selectedId={selectedEntryId ?? ledger[0]?.id ?? null}
+            onSelect={setSelectedEntryId}
+          />
+        )}
+
+        {activeTab === "orcamento" && budget && (
+          <BudgetTab budget={budget} balance={dynamicFinances.balance} />
+        )}
       </main>
 
+    </div>
+  )
+}
+
+/**
+ * Aba "Transações" — lista rolável à esquerda, detalhe da linha selecionada à
+ * direita com número grande, escudo e anel de proporção, como na referência.
+ */
+function TransactionsTab({
+  entries,
+  team,
+  selectedId,
+  onSelect,
+}: {
+  entries: LedgerEntry[]
+  team: Parameters<typeof TeamCrest>[0]["team"]
+  selectedId: string | null
+  onSelect: (id: string) => void
+}) {
+  const selected = entries.find(entry => entry.id === selectedId) ?? entries[0]
+  if (!selected) return null
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+      {/* Lista */}
+      <div className="max-h-[calc(100vh-220px)] space-y-1.5 overflow-y-auto pr-1 scrollbar-thin">
+        {entries.map(entry => {
+          const isSelected = entry.id === selected.id
+          return (
+            <button
+              key={entry.id}
+              onClick={() => onSelect(entry.id)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all",
+                isSelected
+                  ? "border-[#00ffc8]/60 bg-[#00ffc8]/[0.07]"
+                  : "border-white/[0.05] bg-[#0c0c10] hover:border-white/15",
+              )}
+            >
+              <entry.icon className={cn("h-5 w-5 shrink-0", isSelected ? "text-[#00ffc8]" : "text-white/45")} />
+              <span className="flex-1 truncate text-sm uppercase tracking-wide text-white/80">{entry.label}</span>
+              <span className={cn("shrink-0 text-sm font-bold", entry.value >= 0 ? "text-[#00ff87]" : "text-red-400")}>
+                {entry.value >= 0 ? "+" : "-"}{formatCurrency(Math.abs(entry.value))}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Detalhe */}
+      <div className="rounded-2xl border border-white/[0.06] bg-[#0c0c10] p-6">
+        <h2 className="text-2xl font-black uppercase tracking-wide text-white">{selected.label}</h2>
+
+        <div className="mt-8 grid items-center gap-6 md:grid-cols-[1fr_auto_1fr]">
+          <div className="text-center md:text-left">
+            <p className="text-sm uppercase tracking-wide text-white/45">
+              {selected.value >= 0 ? "Receita" : "Despesa"} mensal
+            </p>
+            <p className={cn("mt-2 text-4xl font-black", selected.value >= 0 ? "text-[#00ff87]" : "text-red-400")}>
+              {selected.value >= 0 ? "+" : "-"}{formatCurrency(Math.abs(selected.value))}
+            </p>
+          </div>
+
+          <div className="flex justify-center">
+            <TeamCrest team={team} size="lg" />
+          </div>
+
+          <div className="space-y-3 text-center md:text-right">
+            {selected.detail.length > 0 ? selected.detail.map(item => (
+              <div key={item.label}>
+                <p className="text-xs uppercase tracking-wide text-white/45">{item.label}</p>
+                <p className="text-2xl font-bold text-[#4db8ff]">{item.value}</p>
+              </div>
+            )) : (
+              <p className="text-sm text-white/30">Sem detalhamento adicional</p>
+            )}
+          </div>
+        </div>
+
+        {selected.share !== undefined && (
+          <div className="mt-8 flex items-center justify-center gap-6 border-t border-white/[0.06] pt-6">
+            <ShareRing value={selected.share} />
+            <p className="text-sm text-white/50">{selected.shareLabel}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Anel de proporção do painel de detalhe (o "39%" da referência). */
+function ShareRing({ value }: { value: number }) {
+  const percent = Math.round(Math.max(0, Math.min(1, value)) * 100)
+  const radius = 34
+  const circumference = 2 * Math.PI * radius
+  return (
+    <div className="relative h-24 w-24">
+      <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
+        <circle cx="40" cy="40" r={radius} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="11" />
+        <circle
+          cx="40" cy="40" r={radius} fill="none" stroke="#00ff87" strokeWidth="11" strokeLinecap="butt"
+          strokeDasharray={`${(percent / 100) * circumference} ${circumference}`}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">{percent}%</span>
+    </div>
+  )
+}
+
+/**
+ * Aba "Orçamento" — linhas de receita/despesa à esquerda e a curva mensal do
+ * caixa à direita, com variação e verba semanal no rodapé.
+ */
+function BudgetTab({
+  budget,
+  balance,
+}: {
+  budget: { income: LedgerEntry[]; expenses: LedgerEntry[]; months: { label: string; value: number }[]; peak: number; variation: number; weekly: number }
+  balance: number
+}) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      {/* Linhas do orçamento */}
+      <div className="max-h-[calc(100vh-220px)] overflow-y-auto rounded-2xl border border-white/[0.06] bg-[#0c0c10] p-3 scrollbar-thin">
+        <p className="px-2 py-2 text-sm font-semibold text-[#4db8ff]">Receita</p>
+        {budget.income.map(entry => (
+          <div key={entry.id} className="flex items-center gap-3 border-l-2 border-[#00ff87] px-3 py-2.5">
+            <span className="flex-1 truncate text-sm text-white/85">{entry.label}</span>
+            <span className="text-sm font-semibold text-white">{formatCurrency(entry.value)}</span>
+          </div>
+        ))}
+        <p className="mt-3 px-2 py-2 text-sm font-semibold text-[#4db8ff]">Despesas</p>
+        {budget.expenses.map(entry => (
+          <div key={entry.id} className="flex items-center gap-3 border-l-2 border-red-400 px-3 py-2.5">
+            <span className="flex-1 truncate text-sm text-white/85">{entry.label}</span>
+            <span className="text-sm font-semibold text-white">{formatCurrency(Math.abs(entry.value))}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Curva mensal */}
+      <div className="flex flex-col rounded-2xl border border-white/[0.06] bg-[#0c0c10] p-6">
+        <div className="flex flex-wrap items-baseline gap-4">
+          <h2 className="text-2xl font-bold text-white">Orçamento atual</h2>
+          <span className="text-3xl font-black text-white">{formatCurrency(balance)}</span>
+        </div>
+
+        <div className="mt-8 flex flex-1 items-end gap-px border-b border-white/10 pb-0" style={{ minHeight: "260px" }}>
+          {budget.months.map(month => (
+            <div key={month.label} className="flex flex-1 flex-col items-center justify-end self-stretch border-r border-white/[0.06] last:border-r-0">
+              <div
+                className="w-1/3 rounded-t-sm bg-[#00ff87]"
+                style={{ height: `${Math.max(0, (Math.abs(month.value) / budget.peak) * 100)}%` }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-px">
+          {budget.months.map(month => (
+            <span key={month.label} className="flex-1 pt-2 text-center text-[10px] tracking-wide text-white/45">
+              {month.label}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] pt-4 text-sm">
+          <span className="text-white/50">
+            Variação <b className={cn("ml-2", budget.variation >= 0 ? "text-[#00ff87]" : "text-red-400")}>{budget.variation >= 0 ? "+" : ""}{budget.variation.toFixed(0)}%</b>
+          </span>
+          <span className="text-white/50">
+            Verba semanal <b className="ml-2 text-white">{formatCurrency(budget.weekly)}</b>
+          </span>
+        </div>
+      </div>
     </div>
   )
 }

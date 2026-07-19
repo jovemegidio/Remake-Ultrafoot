@@ -327,11 +327,19 @@ export default function EscalacoesPage() {
               </div>
 
               {/* Large Tactical Field */}
-              <div 
-                className="flex-1 rounded-2xl overflow-hidden relative"
+              {/* O container era `flex-1`, ou seja, largo como a tela toda, mas o SVG
+                  das linhas usa viewBox 100x133 com `meet` — as marcações ficavam
+                  encaixotadas numa faixa estreita no centro enquanto os jogadores
+                  eram posicionados em % da largura CHEIA. Os dois espaços de
+                  coordenadas não batiam e o time aparecia espalhado fora do campo
+                  desenhado. Fixando o container na mesma proporção 100:133, as duas
+                  camadas passam a compartilhar a mesma caixa. */}
+              <div
+                className="relative mx-auto w-full max-w-[min(100%,calc((100vh-260px)*0.7519))] overflow-hidden rounded-2xl"
                 style={{
-                  background: `linear-gradient(180deg, 
-                    oklch(0.50 0.08 200) 0%, 
+                  aspectRatio: "100 / 133",
+                  background: `linear-gradient(180deg,
+                    oklch(0.50 0.08 200) 0%,
                     oklch(0.45 0.06 195) 100%)`
                 }}
               >

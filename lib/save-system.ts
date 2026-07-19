@@ -414,6 +414,8 @@ export interface GameState {
   debt?: ClubDebtState
   scoutingDepartment?: ScoutingDepartmentState
   stadiumPitch?: StadiumPitch
+  /** Torcida do clube já movimentada pela carreira (undefined = valor estático do time). */
+  fanBase?: number
   sponsorOffers?: SponsorOffer[]
   activeSponsors?: Sponsor[]
   // Divisao ATUAL do clube do usuario quando ela difere da estatica (teams-data), por

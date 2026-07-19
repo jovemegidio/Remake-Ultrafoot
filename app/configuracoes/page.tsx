@@ -312,19 +312,9 @@ export default function ConfiguracoesPage() {
               })}
             </div>
             
-            {/* Bottom controls */}
-            <div className="fixed bottom-0 left-0 md:left-16 right-0 h-14 bg-[#0d0d0d] border-t border-white/10 flex items-center justify-between px-4 md:px-6">
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs">
-                  <Gamepad2 className="h-4 w-4 mr-2" />
-                  {t.settings.selectBtn}
-                </Button>
-                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white text-xs" onClick={() => window.history.back()}>
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  {t.common.back}
-                </Button>
-              </div>
-            </div>
+            {/* Rodapé removido: a barra global (EaActionBar, com FC HUB /
+                Selecionar / Voltar) já cobre esta tela — a faixa sólida local
+                ficava empilhada sobre ela. */}
           </main>
           
         </div>

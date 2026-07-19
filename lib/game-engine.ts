@@ -10,6 +10,7 @@ import { allTeams, getTeamByShort } from "@/lib/teams-data"
 import { getCanonicalSeedPosition, getPlayersForTeam } from "@/lib/players-data"
 import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
 import { pickStartingXI } from "@/lib/formations"
+import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -1863,6 +1864,10 @@ interface GameEngineState {
   infraUpgradesInProgress: Record<string, { weeksLeft: number; targetLevel: number }>
   startInfrastructureUpgrade: (areaId: string, cost: number) => void
 
+  /** Política de preço do ingresso — controla público e renda de bilheteria. */
+  ticketTier: TicketTier
+  setTicketTier: (tier: TicketTier) => void
+
   // Processar fim de temporada (envelhecimento, aposentadoria, jovens da base)
   processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => void
 }
@@ -2259,6 +2264,7 @@ export const useGameEngine = create<GameEngineState>()(
       // Infraestrutura do clube
       clubInfrastructure: { stadium: 2, acoustics: 1, pitch: 2, training: 2, youth: 1, medical: 2, security: 1, data: 1 },
       infraUpgradesInProgress: {},
+      ticketTier: "normal",
 
       // Taticas padrao
       teamTactics: {
@@ -2852,14 +2858,19 @@ export const useGameEngine = create<GameEngineState>()(
         const currentLevel = s.clubInfrastructure[areaId] ?? 1
         if (currentLevel >= 5 || s.infraUpgradesInProgress[areaId]) return
         if (s.balance < cost) return
+        // Obra de arquibancada não sai em 4 semanas como trocar um gramado: o
+        // estádio escala com o degrau construído, as demais áreas seguem rápidas.
+        const weeksLeft = infrastructureUpgradeWeeks(areaId, currentLevel + 1)
         set(cur => ({
           balance: cur.balance - cost,
           infraUpgradesInProgress: {
             ...cur.infraUpgradesInProgress,
-            [areaId]: { weeksLeft: 4, targetLevel: currentLevel + 1 }
+            [areaId]: { weeksLeft, targetLevel: currentLevel + 1 }
           }
         }))
       },
+
+      setTicketTier: (tier) => set({ ticketTier: tier }),
 
       simulateOtherMatches: () => {
         const poissonGoals = (lambda: number): number => {

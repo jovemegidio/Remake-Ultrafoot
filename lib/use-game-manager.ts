@@ -18,6 +18,7 @@ import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
 import { resolveDivisionChange } from "@/lib/promotion-relegation"
 import { processDebtMonth } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
+import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -1616,6 +1617,30 @@ export function useGameManager() {
     const won = userScore > oppScore
     const lost = userScore < oppScore
 
+    // === Bilheteria ===
+    // Antes a renda de jogo em casa era só uma estimativa exibida em /financas:
+    // nada entrava no caixa e as obras do estádio não mudavam nada. Agora cada
+    // mando de campo credita a renda real e move a torcida.
+    let fanBase = currentState.fanBase ?? userTeamForComp?.torcida ?? 50000
+    if (userIsHome && userTeamForComp) {
+      const engineState = useGameEngine.getState()
+      const capacity = stadiumCapacity(
+        userTeamForComp.estadio_cap ?? 30000,
+        engineState.clubInfrastructure?.stadium ?? 2,
+      )
+      const matchday = calcMatchdayRevenue({
+        capacity,
+        prestige: userTeamForComp.prestigio,
+        fanBase,
+        ticketTier: engineState.ticketTier ?? "normal",
+        titles: countCareerTitles(currentState.seasonHistory, userTeamForComp.curto),
+        result: won ? "win" : lost ? "loss" : "draw",
+        competitionWeight: isLeagueMatch ? 1 : 1.12,
+      })
+      gameEngine.addClubRevenue(matchday.revenue)
+      fanBase = fanBaseGrowth(fanBase, matchday, won ? "win" : lost ? "loss" : "draw", engineState.ticketTier ?? "normal")
+    }
+
     // XP: +10 por jogo, +15 por vitoria, +5 por empate
     const xpGain = 10 + (won ? 15 : userScore === oppScore ? 5 : 0)
     const newXP = currentState.coachXP + xpGain
@@ -1643,6 +1668,7 @@ export function useGameManager() {
       coachWinStreak: newStreak,
       coachSkills: updatedSkills,
       completedFixtureKeys,
+      fanBase,
     }
     saveStateRef.current = { ...currentState, ...patch }
     lastCompletedFixtureWeekRef.current = targetWeek
