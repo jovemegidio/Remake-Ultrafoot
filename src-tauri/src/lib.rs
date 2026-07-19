@@ -1,5 +1,8 @@
 use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::sync::Mutex;
+use tauri::Manager;
+
+mod online_server;
 
 /// Decodifica percent-encoding (%20, %EF%BC%82...) do caminho da URI.
 ///
@@ -159,20 +162,135 @@ const DISCORD_APP_ID: &str = "1481784878197637160";
 
 struct DiscordRpc(Mutex<Option<DiscordIpcClient>>);
 
+#[cfg(target_os = "windows")]
+mod discord_social {
+    use std::ffi::c_char;
+
+    extern "C" {
+        fn uf_discord_social_init() -> bool;
+        fn uf_discord_social_shutdown();
+        fn uf_discord_social_login() -> bool;
+        fn uf_discord_social_disconnect();
+        fn uf_discord_social_snapshot(output: *mut c_char, capacity: usize) -> usize;
+    }
+
+    pub fn init() -> bool {
+        unsafe { uf_discord_social_init() }
+    }
+
+    pub fn login() -> bool {
+        unsafe { uf_discord_social_login() }
+    }
+
+    pub fn disconnect() {
+        unsafe { uf_discord_social_disconnect() }
+    }
+
+    pub fn snapshot() -> Result<serde_json::Value, String> {
+        let needed = unsafe { uf_discord_social_snapshot(std::ptr::null_mut(), 0) };
+        if needed == 0 {
+            return Err("Discord Social SDK não retornou estado".into());
+        }
+        let mut buffer = vec![0u8; needed];
+        unsafe {
+            uf_discord_social_snapshot(buffer.as_mut_ptr().cast(), buffer.len());
+        }
+        if matches!(buffer.last(), Some(0)) {
+            buffer.pop();
+        }
+        serde_json::from_slice(&buffer).map_err(|error| error.to_string())
+    }
+
+    pub struct ShutdownGuard;
+    impl Drop for ShutdownGuard {
+        fn drop(&mut self) {
+            unsafe { uf_discord_social_shutdown() }
+        }
+    }
+}
+
 #[tauri::command]
-fn discord_update(rpc: tauri::State<DiscordRpc>, details: String, state: String) {
+fn discord_social_snapshot() -> Result<serde_json::Value, String> {
+    #[cfg(target_os = "windows")]
+    {
+        return discord_social::snapshot();
+    }
+    #[cfg(not(target_os = "windows"))]
+    Ok(serde_json::json!({
+        "available": false,
+        "phase": "unsupported",
+        "error": "Discord Social SDK ainda não está empacotado nesta plataforma",
+        "detectedName": "",
+        "authenticated": false,
+        "user": null,
+        "friends": []
+    }))
+}
+
+#[tauri::command]
+fn discord_social_login() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        return if discord_social::login() {
+            Ok(())
+        } else {
+            Err("Não foi possível iniciar a autenticação do Discord".into())
+        };
+    }
+    #[cfg(not(target_os = "windows"))]
+    Err("Discord Social SDK indisponível nesta plataforma".into())
+}
+
+#[tauri::command]
+fn discord_social_disconnect() {
+    #[cfg(target_os = "windows")]
+    discord_social::disconnect();
+}
+
+#[tauri::command]
+fn discord_update(
+    rpc: tauri::State<DiscordRpc>,
+    details: String,
+    state: String,
+    start_timestamp: i64,
+    large_text: Option<String>,
+    small_image: Option<String>,
+    small_text: Option<String>,
+) {
     let mut guard = rpc.0.lock().unwrap();
+
+    // O Discord pode ser aberto depois do Ultrafoot. A conexão inicial falhar não
+    // deve deixar o Rich Presence desativado durante toda a sessão.
+    if guard.is_none() {
+        *guard = DiscordIpcClient::new(DISCORD_APP_ID)
+            .ok()
+            .and_then(|mut client| client.connect().ok().map(|_| client));
+    }
+
     if let Some(client) = guard.as_mut() {
-        let _ = client.set_activity(
-            activity::Activity::new()
-                .details(&details)
-                .state(&state)
-                .assets(
-                    activity::Assets::new()
-                        .large_image("ultrafoot_logo")
-                        .large_text("Ultrafoot 26"),
-                ),
-        );
+        let mut assets = activity::Assets::new()
+            .large_image("ultrafoot_logo")
+            .large_text(large_text.as_deref().unwrap_or("Ultrafoot 26"));
+        if let Some(image) = small_image.as_deref() {
+            assets = assets.small_image(image);
+        }
+        if let Some(text) = small_text.as_deref() {
+            assets = assets.small_text(text);
+        }
+
+        let mut presence = activity::Activity::new()
+            .activity_type(activity::ActivityType::Playing)
+            .details(&details)
+            .state(&state)
+            .assets(assets)
+            .buttons(vec![activity::Button::new(
+                "Conhecer Ultrafoot 26",
+                "https://github.com/jovemegidio/Ultrafoot26/releases/latest",
+            )]);
+        if start_timestamp > 0 {
+            presence = presence.timestamps(activity::Timestamps::new().start(start_timestamp));
+        }
+        let _ = client.set_activity(presence);
     }
 }
 
@@ -344,31 +462,56 @@ pub fn run() {
         .ok()
         .and_then(|mut c| c.connect().ok().map(|_| c));
 
-    tauri::Builder::default()
+    #[cfg(target_os = "windows")]
+    let discord_social_guard = {
+        let _ = discord_social::init();
+        discord_social::ShutdownGuard
+    };
+
+    let builder = tauri::Builder::default()
         .manage(DiscordRpc(Mutex::new(discord_client)))
+        .manage(online_server::OnlineServerManager::default())
         .invoke_handler(tauri::generate_handler![
             discord_update,
             discord_clear,
+            discord_social_snapshot,
+            discord_social_login,
+            discord_social_disconnect,
             get_bluetooth_gamepad_battery,
             media_now_playing,
             media_play_pause,
             media_next,
             media_previous
+            ,online_server::online_start_server
+            ,online_server::online_stop_server
+            ,online_server::online_server_status
+            ,online_server::online_join_server
+            ,online_server::online_room_snapshot
+            ,online_server::online_set_ready
+            ,online_server::online_submit_action
         ])
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
-        .register_uri_scheme_protocol("game-asset", |_app, request| {
+        .plugin(tauri_plugin_process::init());
+
+    #[cfg(target_os = "windows")]
+    let builder = builder.manage(discord_social_guard);
+
+    builder
+        .register_uri_scheme_protocol("game-asset", |webview, request| {
             // Decodifica o percent-encoding: nomes de musica tem espacos e acentos.
             let path = percent_decode(request.uri().path().trim_start_matches('/'));
             let path = path.as_str();
-            // Use exe directory — assets are bundled alongside ultrafoot.exe
+            // Resolve pelo diretório de recursos da plataforma. No Windows ele costuma
+            // ficar ao lado do executável; no macOS fica em Contents/Resources e em
+            // pacotes Linux a localização depende do formato (AppImage/deb).
             let exe_path = std::env::current_exe().expect("failed to get exe path");
             let exe_dir = exe_path.parent().expect("failed to get exe dir");
-            let file_path = exe_dir.join(path);
+            let resource_dir = webview.app_handle().path().resource_dir().ok();
+            let file_path = resource_dir.as_deref().unwrap_or(exe_dir).join(path);
             let mime = if path.ends_with(".png") {
                 "image/png"
             } else if path.ends_with(".jpg") || path.ends_with(".jpeg") {

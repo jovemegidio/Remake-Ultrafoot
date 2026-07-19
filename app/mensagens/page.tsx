@@ -26,10 +26,10 @@ import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameEngine } from "@/lib/game-engine"
+import { acceptOffer, counterSponsorOffer, generateOffers } from "@/lib/sponsor-engine"
 import { cn } from "@/lib/utils"
-
-const userTeam = getTeamByShort("BGT") || serieATeams[0]
 
 // Message type
 interface Message {
@@ -123,6 +123,16 @@ const initialMessages: Message[] = [
 
 export default function MensagensPage() {
   const router = useRouter()
+  const {team:userTeam}=useUserTeam()
+  const {state:saveState,setState:setSaveState}=useGameState()
+  const gameEngine=useGameEngine()
+  const sponsorOffers=saveState.sponsorOffers??[]
+  const [counteringSponsor,setCounteringSponsor]=useState<string|null>(null)
+  const [counterMonthly,setCounterMonthly]=useState(0)
+  const [counterDuration,setCounterDuration]=useState(2)
+  useEffect(()=>{if(saveState.selectedTeamShort&&saveState.sponsorOffers===undefined)setSaveState({sponsorOffers:generateOffers(userTeam.prestigio,1),activeSponsors:saveState.activeSponsors??[]})},[saveState.selectedTeamShort,saveState.sponsorOffers,saveState.activeSponsors,setSaveState,userTeam.prestigio])
+  const acceptSponsor=(id:string)=>{const offer=sponsorOffers.find(item=>item.sponsor.id===id);if(!offer)return;setSaveState({activeSponsors:acceptOffer(offer,saveState.activeSponsors??[]),sponsorOffers:sponsorOffers.filter(item=>item.sponsor.id!==id)});gameEngine.addClubRevenue(offer.sponsor.monthlyValue)}
+  const counterSponsor=(id:string)=>{const offer=sponsorOffers.find(item=>item.sponsor.id===id);if(!offer)return;const result=counterSponsorOffer(offer,counterMonthly,counterDuration);setSaveState({sponsorOffers:sponsorOffers.map(item=>item.sponsor.id===id?result.offer:item)});setCounteringSponsor(null)}
 
   // Gamepad support
   useEffect(() => {
@@ -244,6 +254,7 @@ export default function MensagensPage() {
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto">
+        {sponsorOffers.filter(offer=>offer.status!=="rejected").length>0&&<section className="mb-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4"><h2 className="font-bold text-amber-200">Propostas comerciais recebidas</h2><p className="mt-1 text-xs text-white/45">Os contratos aceitos entram na receita mensal do clube.</p><div className="mt-3 grid gap-3 lg:grid-cols-3">{sponsorOffers.filter(offer=>offer.status!=="rejected").map(offer=><div key={offer.sponsor.id} className="rounded-lg bg-black/30 p-3"><div className="flex justify-between gap-2"><b>{offer.sponsor.name}</b><span className="text-[#00ffc8]">R$ {offer.sponsor.monthlyValue.toLocaleString("pt-BR")}/mês</span></div><p className="mt-1 text-[11px] text-white/45">{offer.durationSeasons} temporada(s) · bônus por título R$ {(offer.sponsor.bonuses.titleBonus??0).toLocaleString("pt-BR")}</p>{offer.message&&<p className="mt-2 text-xs text-amber-200">{offer.message}</p>}{counteringSponsor===offer.sponsor.id&&<div className="mt-2 grid grid-cols-2 gap-2"><input type="number" value={counterMonthly} onChange={e=>setCounterMonthly(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/><input type="number" min={1} max={5} value={counterDuration} onChange={e=>setCounterDuration(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/></div>}<div className="mt-3 flex gap-2"><button onClick={()=>acceptSponsor(offer.sponsor.id)} className="flex-1 rounded bg-[#00ffc8] px-2 py-1.5 text-xs font-bold text-black">Aceitar</button><button onClick={()=>{if(counteringSponsor===offer.sponsor.id)counterSponsor(offer.sponsor.id);else{setCounteringSponsor(offer.sponsor.id);setCounterMonthly(Math.round(offer.sponsor.monthlyValue*1.1));setCounterDuration(offer.durationSeasons)}}} className="flex-1 rounded bg-amber-400/15 px-2 py-1.5 text-xs text-amber-200">{counteringSponsor===offer.sponsor.id?"Enviar":"Contraproposta"}</button></div></div>)}</div></section>}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Message List */}
           <section className="lg:col-span-1 space-y-4">

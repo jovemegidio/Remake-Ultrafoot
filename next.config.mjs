@@ -25,10 +25,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // ESLint fica como QA manual (`npm run lint`), sem travar o instalador por avisos de estilo.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     unoptimized: true,
     remotePatterns: [

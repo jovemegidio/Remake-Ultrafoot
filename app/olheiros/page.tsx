@@ -34,6 +34,8 @@ import {
   Compass
 } from "lucide-react"
 import type { Scout } from "@/lib/game-engine"
+import { useGameState } from "@/lib/save-system"
+import { createScoutingDepartment, createScoutMission, departmentReputationLabel, generatePerformanceAnalysis, hireDepartmentScout, type ScoutMissionType, type ScoutTier } from "@/lib/scout-engine"
 
 // Regioes disponiveis para scouting
 const SCOUTING_REGIONS = [
@@ -100,6 +102,8 @@ export default function OlheirosPage() {
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
   const { gameEngine, userTeam } = useGameManager()
+  const { state: saveState, setState: setSaveState } = useGameState()
+  const department = saveState.scoutingDepartment ?? createScoutingDepartment()
   const [activeTab, setActiveTab] = useState<"meus_olheiros" | "contratar" | "descobertos">("meus_olheiros")
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
   const [showHireModal, setShowHireModal] = useState(false)
@@ -132,6 +136,17 @@ export default function OlheirosPage() {
   const handleStopSearch = (scoutId: number) => {
     gameEngine.stopScoutSearch(scoutId)
   }
+
+  const hireStrategicScout = (tier:ScoutTier) => {
+    const level={regional:58,national:70,continental:82,elite_global:94}[tier]
+    const scout={id:`dept-${Date.now()}`,name:tier==="elite_global"?"Diretor de Scouting Global":"Analista de Mercado",tier,monthlySalary:Math.round(level*1800),attributes:{currentAbility:level,potentialAbility:Math.min(99,level+3),youthDiscovery:Math.min(99,level+5),marketKnowledge:level,negotiation:Math.max(45,level-4)}}
+    setSaveState({scoutingDepartment:hireDepartmentScout(department,scout)})
+  }
+  const assignStrategicMission = (type:ScoutMissionType) => {
+    const scout=department.scouts.find(item=>!item.missionId);if(!scout)return
+    setSaveState({scoutingDepartment:createScoutMission(department,{id:`mission-${Date.now()}`,scoutId:scout.id,type,region:scout.tier==="regional"?"Brasil":"Mundo",ageMin:type==="young"?15:undefined,ageMax:type==="young"?20:undefined,startedWeek:gameEngine.currentWeek,durationWeeks:Math.max(2,7-department.observationCentreLevel),progressWeeks:0,status:"active"})})
+  }
+  const analyzePerformance = () => setSaveState({scoutingDepartment:{...department,lastAnalysis:generatePerformanceAnalysis(gameEngine.currentWeek,department.dataCentreLevel)}})
 
   const tabs = [
     { id: "meus_olheiros", label: "Meus Olheiros", icon: Users },
@@ -170,6 +185,10 @@ export default function OlheirosPage() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
+          <section className="mb-4 rounded-xl border border-[#00ffc8]/15 bg-[#00ffc8]/[0.04] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="text-xs font-black uppercase tracking-wider text-[#00ffc8]">Departamento estratégico · {departmentReputationLabel(department.reputation)}</div><p className="mt-1 text-xs text-white/45">Centro de Observação Nv. {department.observationCentreLevel} · Centro de Dados Nv. {department.dataCentreLevel} · custo mensal R$ {department.monthlyCost.toLocaleString("pt-BR")}</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>hireStrategicScout(department.scouts.length<1?"regional":department.scouts.length<3?"national":"continental")} className="rounded-lg bg-[#00ffc8] px-3 py-2 text-[10px] font-bold text-black">Contratar scout por nível</button><button onClick={()=>assignStrategicMission("young")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Missão: jovens 15–20</button><button onClick={()=>assignStrategicMission("expiring")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Fim de contrato</button><button onClick={analyzePerformance} className="rounded-lg border border-violet-400/30 px-3 py-2 text-[10px] text-violet-300">Analisar elenco/adversário</button></div></div>
+            {department.lastAnalysis&&<div className="mt-3 grid gap-2 md:grid-cols-3 text-[11px]"><div className="rounded-lg bg-black/30 p-3"><b className="text-amber-300">Alertas do elenco</b><p className="mt-1 text-white/55">{department.lastAnalysis.squadAlerts.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-red-300">Adversário</b><p className="mt-1 text-white/55">{department.lastAnalysis.opponentStrengths.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-[#00ffc8]">Recomendação</b><p className="mt-1 text-white/55">{department.lastAnalysis.tacticalRecommendations.join(" · ")}</p></div></div>}
+          </section>
           <AnimatePresence mode="wait">
             {/* Meus Olheiros */}
             {activeTab === "meus_olheiros" && (

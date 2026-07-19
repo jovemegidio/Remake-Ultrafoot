@@ -38,14 +38,22 @@ export interface ClubTenure {
 }
 
 /** Constrói stats da carreira a partir do save. */
-export function buildCareerStats(_history: SeasonRecord[]): ManagerCareerStats {
-  throw new Error("hall-of-fame-engine.buildCareerStats: not implemented")
+export function buildCareerStats(history: SeasonRecord[]): ManagerCareerStats {
+  const matches=history.reduce((n,s)=>n+s.won+s.drawn+s.lost,0), wins=history.reduce((n,s)=>n+s.won,0), draws=history.reduce((n,s)=>n+s.drawn,0), losses=history.reduce((n,s)=>n+s.lost,0)
+  const trophies=history.filter(s=>s.champion === s.teamCurto || s.position === 1).map(s=>({competition:s.competition,season:s.season,clubCurto:s.teamCurto,clubNome:s.teamNome}))
+  const clubs = new Map<string,ClubTenure>()
+  for(const s of history){ const c=clubs.get(s.teamCurto)??{clubCurto:s.teamCurto,clubNome:s.teamNome,fromSeason:s.season,toSeason:s.season,matches:0,wins:0,trophies:0,endReason:"contract_ended" as const}; c.fromSeason=Math.min(c.fromSeason,s.season);c.toSeason=Math.max(c.toSeason,s.season);c.matches+=s.won+s.drawn+s.lost;c.wins+=s.won;c.trophies+=s.position===1?1:0;clubs.set(s.teamCurto,c) }
+  const reputation=Math.min(100,Math.round(trophies.length*12+(matches? wins/matches*35:0)+history.filter(s=>s.promoted).length*5))
+  return {managerName:history.at(-1)?.managerName??"Técnico",startedAt:history[0]?.season??new Date().getFullYear(),totalSeasons:new Set(history.map(s=>s.season)).size,totalMatches:matches,totalWins:wins,totalDraws:draws,totalLosses:losses,winRate:matches?Math.round(wins/matches*1000)/10:0,totalPoints:wins*3+draws,trophies,clubs:[...clubs.values()],reputation,rankingPosition:rankInHistory({reputation,totalSeasons:history.length,totalMatches:matches,totalWins:wins,totalDraws:draws,totalLosses:losses,winRate:matches?wins/matches*100:0,totalPoints:wins*3+draws,trophies,clubs:[...clubs.values()],managerName:history.at(-1)?.managerName??"Técnico",startedAt:history[0]?.season??2026,rankingPosition:0}).position}
 }
 
 /** Compara técnico com ranking global (lendas da história). */
-export function rankInHistory(_stats: ManagerCareerStats): {
+export function rankInHistory(stats: ManagerCareerStats): {
   position: number
   similarTo: string[]              // técnicos lendários comparáveis
 } {
-  throw new Error("hall-of-fame-engine.rankInHistory: not implemented")
+  const score=stats.reputation+stats.trophies.length*10+stats.winRate/4
+  const position=score>=180?1:score>=145?10:score>=110?50:score>=75?150:500
+  const similarTo=score>=180?["Alex Ferguson","Pep Guardiola"]:score>=145?["Carlo Ancelotti","José Mourinho"]:score>=110?["Telê Santana","Marcelo Gallardo"]:["Técnicos em ascensão"]
+  return {position,similarTo}
 }

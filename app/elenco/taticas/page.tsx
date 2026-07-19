@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { 
@@ -21,8 +21,9 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
-import { useGameEngine, type TeamMentality } from "@/lib/game-engine"
+import { useGameEngine, persistGameEngineNow, type TeamMentality, type TeamTactics } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { announceOnlineAction } from "@/lib/online-multiplayer"
 
 const TACTICAL_PRESETS = [
   {
@@ -86,8 +87,23 @@ export default function TaticasPage() {
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   const setTeamTactics = useGameEngine((st) => st.setTeamTactics)
-  const [selectedPreset, setSelectedPreset] = useState("balanced")
+  const teamTactics = useGameEngine((st) => st.teamTactics)
+
+  const savedPreset = useMemo(() => {
+    if (teamTactics.playingStyle === "posse_bola") return "possession"
+    if (teamTactics.playingStyle === "contra_ataque") return "counter"
+    if (teamTactics.playingStyle === "pressao_alta") return "pressing"
+    if (teamTactics.mentality === "defensivo" || teamTactics.mentality === "muito_defensivo") return "defensive"
+    if (teamTactics.mentality === "ofensivo" || teamTactics.mentality === "muito_ofensivo") return "attacking"
+    return "balanced"
+  }, [teamTactics])
+  const [selectedPreset, setSelectedPreset] = useState(savedPreset)
   const [hoveredPreset, setHoveredPreset] = useState<string | null>(null)
+
+  // O motor hidrata os dados persistidos depois do primeiro render no aplicativo
+  // desktop. Sem esta sincronizacao a tela podia mostrar "Equilibrado" enquanto o
+  // save ja continha "Posse de Bola".
+  useEffect(() => setSelectedPreset(savedPreset), [savedPreset])
 
   // Mapeia cada preset para a mentalidade do motor de partida.
   const PRESET_TO_MENTALITY: Record<string, TeamMentality> = {
@@ -101,12 +117,24 @@ export default function TaticasPage() {
 
   const [applied, setApplied] = useState(false)
 
+  const PRESET_TACTICS: Record<string, Partial<TeamTactics>> = {
+    balanced: { mentality: "equilibrado", playingStyle: "jogo_posicional", passingStyle: "misto", tempo: "normal", buildUp: "misto", chanceCreation: "misto", defensiveLine: "media", pressingIntensity: "media", counterPress: true, counterAttack: true },
+    defensive: { mentality: "defensivo", playingStyle: "jogo_direto", passingStyle: "direto", tempo: "lento", buildUp: "misto", chanceCreation: "largura", defensiveLine: "baixa", pressingIntensity: "baixa", counterPress: false, counterAttack: true },
+    attacking: { mentality: "ofensivo", playingStyle: "jogo_posicional", passingStyle: "curto", tempo: "rapido", buildUp: "curto", chanceCreation: "centro", defensiveLine: "alta", pressingIntensity: "alta", counterPress: true, counterAttack: false },
+    possession: { mentality: "equilibrado", playingStyle: "posse_bola", passingStyle: "curto", tempo: "lento", buildUp: "curto", chanceCreation: "misto", defensiveLine: "media", pressingIntensity: "media", counterPress: true, counterAttack: false },
+    counter: { mentality: "defensivo", playingStyle: "contra_ataque", passingStyle: "direto", tempo: "rapido", buildUp: "longo", chanceCreation: "centro", defensiveLine: "baixa", pressingIntensity: "media", counterPress: false, counterAttack: true },
+    pressing: { mentality: "ofensivo", playingStyle: "pressao_alta", passingStyle: "curto", tempo: "rapido", buildUp: "curto", chanceCreation: "misto", defensiveLine: "alta", pressingIntensity: "muito_alta", counterPress: true, counterAttack: true },
+  }
+
   const handleApply = () => {
     // BUG: antes isto so tinha um comentario "// Aqui salvaria a tatica" e um
     // router.push — nunca salvava nada, e no Tauri o router client-side nem navegava.
     // Dai "nao consigo aplicar tatica". Agora persiste a escolha no motor e volta via
     // hardNavigate (funciona no export estatico).
-    setTeamTactics({ mentality: PRESET_TO_MENTALITY[selectedPreset] ?? "equilibrado" })
+    const next = PRESET_TACTICS[selectedPreset] ?? PRESET_TACTICS.balanced
+    setTeamTactics(next)
+    persistGameEngineNow()
+    announceOnlineAction("tactic_update", { preset: selectedPreset, ...next })
     setApplied(true)
     setTimeout(() => hardNavigate("/elenco"), 350)  // deixa o feedback aparecer
   }

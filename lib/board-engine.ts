@@ -30,13 +30,24 @@ export interface BoardConfig {
 }
 
 /** Gera objetivos da temporada baseado no perfil. */
-export function generateObjectives(_config: BoardConfig, _season: number): BoardObjective[] {
-  throw new Error("board-engine.generateObjectives: not implemented")
+export function generateObjectives(config: BoardConfig, season: number): BoardObjective[] {
+  const primary: BoardObjective = config.profile === "titulos" || config.profile === "exigente"
+    ? {id:"league",metric:"league_position",target:4,weight:"primary",deadlineSeason:season,status:"pending"}
+    : config.profile === "lucro" || config.profile === "economica"
+      ? {id:"profit",metric:"profit",target:0,weight:"primary",deadlineSeason:season,status:"pending"}
+      : config.profile === "base"
+        ? {id:"youth",metric:"youth_promoted",target:2,weight:"primary",deadlineSeason:season,status:"pending"}
+        : {id:"survival",metric:"stay_above",target:16,weight:"primary",deadlineSeason:season,status:"pending"}
+  return [primary,{id:"continental",metric:"qualify_continental",target:1,weight:"secondary",deadlineSeason:season,status:"pending"},{id:"clasico",metric:"win_clasico",target:1,weight:"bonus",deadlineSeason:season,status:"pending"}]
 }
 
 /** Avalia performance do técnico vs objetivos — atualiza pressureToFire. */
-export function evaluatePerformance(_config: BoardConfig, _objectives: BoardObjective[]): BoardConfig {
-  throw new Error("board-engine.evaluatePerformance: not implemented")
+export function evaluatePerformance(config: BoardConfig, objectives: BoardObjective[]): BoardConfig {
+  const weight={primary:20,secondary:10,bonus:5}, next={...config}
+  const delta=objectives.reduce((n,o)=>n+(o.status==="completed"?-weight[o.weight]:o.status==="failed"?weight[o.weight]:0),0)
+  next.pressureToFire=Math.max(0,Math.min(100,next.pressureToFire+delta-(next.patience-50)*.05))
+  next.trustInCoach=Math.max(0,Math.min(100,next.trustInCoach-delta*.6))
+  return next
 }
 
 /** Diretoria considera demitir técnico? */
@@ -48,6 +59,7 @@ export function shouldFireCoach(_config: BoardConfig): boolean {
 
 import type { CareerMessage } from "@/lib/career-types"
 import type { SavedTeam } from "@/lib/save-system"
+import { getCountryCompetitions } from "@/lib/country-competitions"
 
 export interface SeasonObjective {
   /** Posição mínima exigida pela diretoria (1 = título). */
@@ -61,32 +73,47 @@ export interface SeasonObjective {
 /** Define objetivo com base no prestígio do time. */
 export function calcSeasonObjective(team: SavedTeam): SeasonObjective {
   const p = team.prestigio
+  const competitions = getCountryCompetitions(team.divisao)
+  const division = team.divisao.toLowerCase()
+  const lowerDivision = /(serie_b|serie_c|serie_d|segunda|terceira|quarta|championship|2\.|_2)/.test(division)
+  if (lowerDivision) {
+    if (p >= 72) return {
+      minPosition: 6,
+      targetPosition: 2,
+      description: `Disputar o acesso e terminar entre os primeiros colocados. A diretoria do ${team.nome} espera uma campanha de promoção, sem abandonar a disputa da ${competitions.domesticCup}.`,
+    }
+    return {
+      minPosition: 12,
+      targetPosition: 6,
+      description: `Construir uma campanha competitiva na divisão atual, mirando a parte de cima da tabela e evolução sustentável do elenco.`,
+    }
+  }
   if (p >= 88) {
     return {
       minPosition: 4,
       targetPosition: 1,
-      description: `Conquistar o titulo do Brasileirao. A diretoria considera o ${team.nome} um dos favoritos absolutos. Ficar fora do G4 sera considerado fracasso.`,
+      description: `Conquistar o título nacional e disputar a ${competitions.continental}. A diretoria considera o ${team.nome} um dos favoritos; ficar fora das primeiras posições será considerado fracasso.`,
     }
   }
   if (p >= 78) {
     return {
       minPosition: 8,
       targetPosition: 4,
-      description: `Garantir vaga na Libertadores (G4). A diretoria espera briga consistente pelo titulo. Cair fora do G8 e inaceitavel.`,
+      description: `Garantir classificação para a ${competitions.continental}. A diretoria espera presença constante entre os primeiros colocados e uma boa campanha na ${competitions.domesticCup}.`,
     }
   }
   if (p >= 68) {
     return {
       minPosition: 12,
       targetPosition: 8,
-      description: `Brigar pelo G8 (Sul-Americana). Ficar abaixo da metade da tabela sera questionado pela diretoria.`,
+      description: `Brigar por vaga continental${competitions.continentalSecondary ? ` na ${competitions.continentalSecondary}` : ""}. Ficar abaixo da metade da tabela será questionado pela diretoria.`,
     }
   }
   if (p >= 58) {
     return {
       minPosition: 16,
       targetPosition: 12,
-      description: `Permanencia tranquila na Serie A. O foco e nao se envolver com a parte de baixo da tabela.`,
+      description: `Garantir permanência tranquila na primeira divisão e não se envolver com a zona de rebaixamento.`,
     }
   }
   return {
@@ -342,34 +369,49 @@ export function generateJobOffers(
   confidence: number,
   currentPosition: number,
   userPrestige: number,
-  candidates: { curto: string; nome: string; prestigio: number }[],
-  opts: { allowNationalTeam?: boolean } = {}
+  candidates: { curto: string; nome: string; prestigio: number; divisao?: string }[],
+  opts: { allowNationalTeam?: boolean; experienceSeasons?: number; careerTitles?: number; currentWeek?: number; currentDivision?: string } = {}
 ): JobOffer[] {
-  // Sem desempenho, ninguem liga.
-  if (confidence < 70 || currentPosition > 6) return []
+  // Sem desempenho sustentado, ninguem liga. Avaliamos apenas a cada trimestre:
+  // isso elimina a loteria semanal que gerava propostas aleatorias e repetitivas.
+  const weeks = Math.max(0, opts.currentWeek ?? 0)
+  if (weeks < 13 || weeks % 13 !== 0 || confidence < 72 || currentPosition > 6) return []
 
   const offers: JobOffer[] = []
 
-  const bigger = candidates
-    .filter(c => c.prestigio > userPrestige + 4)
-    .sort((a, b) => b.prestigio - a.prestigio)
+  const experience = Math.max(0, opts.experienceSeasons ?? 0)
+  const titles = Math.max(0, opts.careerTitles ?? 0)
+  // Reputacao cresce aos poucos. Uma boa campanha na Serie D abre Serie C/B, nao o
+  // Barcelona. Gigantes exigem anos, titulos e desempenho sustentado.
+  const performanceBonus = confidence >= 90 && currentPosition <= 2 ? 3 : confidence >= 80 ? 1 : 0
+  const earlyCareerPenalty = experience === 0 && weeks < 26 ? 2 : 0
+  const prestigeCeiling = userPrestige + Math.max(2, 5 + experience * 2 + titles * 3 + performanceBonus - earlyCareerPenalty)
 
-  for (const c of bigger.slice(0, 3)) {
-    // Quanto maior o clube, mais dificil ele te procurar.
-    const chance = Math.max(0.04, 0.35 - (c.prestigio - userPrestige) * 0.012)
-    if (Math.random() < chance) {
-      offers.push({
-        clubShort: c.curto,
-        clubName: c.nome,
-        clubPrestige: c.prestigio,
-        kind: "club",
-        reason: `O ${c.nome} acompanhou sua campanha e quer voce no comando.`,
-      })
-    }
+  const divisionTier = (division = "") => {
+    const d = division.toLowerCase()
+    if (/(serie_d|quarta|fourth|regional)/.test(d)) return 1
+    if (/(serie_c|terceira|third|3\.liga|league_one)/.test(d)) return 2
+    if (/(serie_b|segunda|second|championship|2\.bundesliga|la_liga_2|ligue_2)/.test(d)) return 3
+    return 4
   }
+  const currentTier = divisionTier(opts.currentDivision)
+  const allowedTierJump = titles >= 2 || experience >= 4 ? 2 : 1
+  const eligible = candidates
+    .filter(c => c.prestigio > userPrestige + 1 && c.prestigio <= prestigeCeiling)
+    .filter(c => divisionTier(c.divisao) <= currentTier + allowedTierJump)
+    .sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome))
+
+  const c = eligible[0]
+  if (c) offers.push({
+    clubShort: c.curto,
+    clubName: c.nome,
+    clubPrestige: c.prestigio,
+    kind: "club",
+    reason: `O ${c.nome} acompanhou seu trabalho: ${currentPosition}º lugar, confiança da diretoria em ${Math.round(confidence)}% e ${experience} temporada${experience === 1 ? "" : "s"} de experiência.`,
+  })
 
   // Selecao: so para campanhas de elite.
-  if (opts.allowNationalTeam && confidence >= 85 && currentPosition <= 2 && Math.random() < 0.18) {
+  if (opts.allowNationalTeam && weeks % 26 === 0 && experience >= 3 && (titles >= 1 || experience >= 5) && confidence >= 85 && currentPosition <= 2) {
     offers.push({
       clubShort: "BRA",
       clubName: "Selecao Brasileira",

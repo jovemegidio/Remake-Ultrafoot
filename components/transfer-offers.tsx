@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import {
   DollarSign,
   Check,
@@ -66,6 +66,7 @@ export function TransferOffers() {
                 offer={offer} 
                 onAccept={() => handleResponse(offer.id, true)}
                 onReject={() => handleResponse(offer.id, false)}
+                onCounter={(amount,coverage,weeks) => gameEngine.counterTransferOffer(offer.id,amount,coverage,weeks)}
               />
             ))}
           </div>
@@ -94,13 +95,19 @@ function OfferCard({
   offer, 
   onAccept, 
   onReject 
+  ,onCounter
 }: { 
   offer: TransferOffer
   onAccept: () => void
   onReject: () => void 
+  onCounter: (amount:number,coverage?:number,weeks?:number)=>"accepted"|"revised"|"rejected"
 }) {
   const gameEngine = useGameEngine()
   const player = gameEngine.squadPlayers.find(p => p.id === offer.playerId)
+  const [counterOpen,setCounterOpen]=useState(false)
+  const [counterAmount,setCounterAmount]=useState(offer.offerAmount)
+  const [coverage,setCoverage]=useState(offer.wageCoverage??100)
+  const [weeks,setWeeks]=useState(offer.loanWeeks??26)
   
   return (
     <div className="rounded-xl bg-[#1a1a1a] border border-white/10 overflow-hidden">
@@ -190,7 +197,9 @@ function OfferCard({
         )}
         
         {/* Actions */}
-        <div className="flex items-center gap-3">
+        {offer.counterMessage&&<div className="mb-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">{offer.counterMessage}</div>}
+        {counterOpen&&<div className="mb-3 grid gap-2 rounded-lg bg-black/30 p-3 sm:grid-cols-3"><label className="text-[10px] uppercase text-white/45">Valor solicitado<input type="number" min={0} step={100000} value={counterAmount} onChange={e=>setCounterAmount(Number(e.target.value))} className="mt-1 w-full rounded bg-white/10 p-2 text-sm text-white"/></label>{offer.offerType==="emprestimo"&&<><label className="text-[10px] uppercase text-white/45">Salário coberto %<input type="number" min={0} max={100} value={coverage} onChange={e=>setCoverage(Number(e.target.value))} className="mt-1 w-full rounded bg-white/10 p-2 text-sm text-white"/></label><label className="text-[10px] uppercase text-white/45">Semanas<input type="number" min={4} value={weeks} onChange={e=>setWeeks(Number(e.target.value))} className="mt-1 w-full rounded bg-white/10 p-2 text-sm text-white"/></label></>}</div>}
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={onReject}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-red-500/10 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-colors"
@@ -198,6 +207,7 @@ function OfferCard({
             <X className="h-4 w-4" />
             Recusar
           </button>
+          <button onClick={()=>{if(!counterOpen){setCounterAmount(Math.max(offer.offerAmount,player?.marketValue??offer.offerAmount));setCounterOpen(true)}else{onCounter(counterAmount,coverage,weeks);setCounterOpen(false)}}} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-amber-400/10 text-amber-300 text-sm font-medium hover:bg-amber-400/20">{counterOpen?"Enviar contraproposta":"Contraproposta"}</button>
           <button
             onClick={onAccept}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#00ffc8] text-black text-sm font-semibold hover:bg-[#00c8ff] transition-colors"

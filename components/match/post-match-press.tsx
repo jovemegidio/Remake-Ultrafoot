@@ -22,33 +22,34 @@ import { cn } from "@/lib/utils"
 import { type Team } from "@/lib/teams-data"
 import { TeamCrest } from "@/components/team-crest"
 
-// Logos oficiais da midia brasileira
+// Identidade visual por veículo. Os arquivos são empacotados para o modo offline;
+// nenhum modal depende de baixar imagens durante a coletiva.
 const MEDIA_OUTLETS = [
   {
     id: "globo",
     name: "TV Globo",
-    logo: null,
+    logo: "/logos/globo.jpg",
     bgColor: "#1e40af",
     type: "TV"
   },
   {
     id: "cbn",
     name: "CBN",
-    logo: null,
+    logo: "/logos/cbn.svg",
     bgColor: "#dc2626",
     type: "Radio"
   },
   {
     id: "folha",
     name: "Folha de S.Paulo",
-    logo: null,
+    logo: "/logos/folha.svg",
     bgColor: "#0ea5e9",
     type: "Jornal"
   },
   {
     id: "espn",
     name: "ESPN Brasil",
-    logo: null, // Usará texto
+    logo: "/logos/espn.png",
     bgColor: "#ef4444",
     type: "TV"
   },
@@ -345,16 +346,16 @@ export function PostMatchPress({
                     {/* Jornalista */}
                     <div className="flex items-center gap-4 mb-8">
                       <div 
-                        className="w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden"
+                        className="w-20 h-16 rounded-xl flex items-center justify-center overflow-hidden p-1"
                         style={{ backgroundColor: currentMedia.bgColor }}
                       >
                         {currentMedia.logo ? (
                           <Image
                             src={currentMedia.logo}
                             alt={currentMedia.name}
-                            width={40}
-                            height={40}
-                            className="object-contain"
+                            width={72}
+                            height={56}
+                            className="h-full w-full object-contain"
                           />
                         ) : (
                           <span className="text-white font-bold text-sm">{currentMedia.name.slice(0, 3)}</span>

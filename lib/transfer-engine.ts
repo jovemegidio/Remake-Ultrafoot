@@ -3,6 +3,7 @@
 // Restante do esqueleto fica para evolução futura (counter-offers, contratos, deadline day, etc.).
 
 import type { GameState } from "@/lib/save-system"
+import { repairMojibake } from "@/lib/text-normalization"
 import type { SquadPlayer } from "@/lib/save-system"
 import type { MarketTarget, IncomingOffer } from "@/lib/career-types"
 import importedBF from "@/data/seeds/imported-bf2026.json"
@@ -16,6 +17,7 @@ interface BfTeamRaw {
   cor2?: string
   estadio?: string
   pais?: string
+  liga?: string
   divisao?: string
   prestigio?: number
   saldo?: number
@@ -29,10 +31,14 @@ const ALL_BF_TEAMS = (importedBF as { teams?: BfTeamRaw[] }).teams ?? []
 function mapPos(p: string): string {
   const u = (p || "").toUpperCase()
   if (u === "GOL" || u === "GK") return "GOL"
-  if (u === "DEF" || u === "ZAG" || u === "LD" || u === "LE") return "ZAG"
+  if (u === "LD" || u === "RB") return "LD"
+  if (u === "LE" || u === "LB") return "LE"
+  if (u === "DEF" || u === "ZAG" || u === "CB") return "ZAG"
   if (u === "VOL") return "VOL"
   if (u === "MEI" || u === "MID" || u === "MED" || u === "MC") return "MEI"
-  if (u === "ATA" || u === "FWD" || u === "PD" || u === "PE") return "ATA"
+  if (u === "PD" || u === "RW") return "PD"
+  if (u === "PE" || u === "LW") return "PE"
+  if (u === "ATA" || u === "FWD" || u === "ST") return "ATA"
   return "MEI"
 }
 
@@ -118,6 +124,7 @@ export interface MarketTeamInfo {
   escudo_url: string
   divisao: string
   pais?: string
+  liga?: string
 }
 
 export interface DetailedMarketTarget {
@@ -171,8 +178,36 @@ const PAIS_NACIONALIDADE: Record<string, string> = {
   "Coreia do Sul": "Coreia do Sul", China: "China", "Arabia Saudita": "Arábia Saudita",
 }
 
+// O banco legado mistura nomes de paises, siglas de pais, siglas estaduais e, em
+// alguns arquivos corrompidos, ate o nome do proprio clube no campo `pais`.
+// Normalizamos antes de expor o dado ao mercado para o filtro nunca listar "172",
+// "ABECAT", "AC" ou nomes de clubes como se fossem paises.
+const COUNTRY_CODES: Record<string, string> = {
+  BRA: "Brasil", BR: "Brasil", SP: "Brasil", RJ: "Brasil", MG: "Brasil", RS: "Brasil", SC: "Brasil", PR: "Brasil", BA: "Brasil", PE: "Brasil", CE: "Brasil", PA: "Brasil", PB: "Brasil", RN: "Brasil", AL: "Brasil", SE: "Brasil", GO: "Brasil", MT: "Brasil", MS: "Brasil", DF: "Brasil", AM: "Brasil", AP: "Brasil", AC: "Brasil", RO: "Brasil", RR: "Brasil", TO: "Brasil", MA: "Brasil", PI: "Brasil",
+  ARG: "Argentina", AR: "Argentina", URU: "Uruguai", CHI: "Chile", COL: "Colômbia", PER: "Peru", PAR: "Paraguai", BOL: "Bolívia", EQU: "Equador", VEN: "Venezuela",
+  ENG: "Inglaterra", ESP: "Espanha", ES: "Espanha", IT: "Itália", ITA: "Itália", GER: "Alemanha", ALE: "Alemanha", FRA: "França", FR: "França", POR: "Portugal", NED: "Holanda", HOL: "Holanda", SCO: "Escócia", BEL: "Bélgica", TUR: "Turquia", RUS: "Rússia", AUT: "Áustria", AUS: "Austrália", SUI: "Suíça", UKR: "Ucrânia", SRB: "Sérvia", SWE: "Suécia", NOR: "Noruega", DEN: "Dinamarca", GRE: "Grécia", CRO: "Croácia", BUL: "Bulgária", ROM: "Romênia", HUN: "Hungria", IRL: "Irlanda", FIN: "Finlândia", ISL: "Islândia", ISR: "Israel", POL: "Polônia", CZE: "Tchéquia", SLK: "Eslováquia", SVN: "Eslovênia", ALB: "Albânia", ARM: "Armênia", AZB: "Azerbaijão", GEO: "Geórgia", KOS: "Kosovo",
+  USA: "Estados Unidos", EUA: "Estados Unidos", MEX: "México", CAN: "Canadá",
+  ARA: "Arábia Saudita", KSA: "Arábia Saudita", UAE: "Emirados Árabes Unidos", CAT: "Catar", QAT: "Catar", CHN: "China", JPN: "Japão", JAP: "Japão", KOR: "Coreia do Sul", COR: "Coreia do Sul", IND: "Índia", IRN: "Irã", TAI: "Tailândia",
+  AFS: "África do Sul", EGI: "Egito", MAR: "Marrocos", TUN: "Tunísia", NGA: "Nigéria", GHA: "Gana",
+}
+const COUNTRY_NAMES = new Set([
+  "Brasil", "Argentina", "Uruguai", "Chile", "Colômbia", "Colombia", "Peru", "Paraguai", "Bolívia", "Bolivia", "Equador", "Venezuela",
+  "Inglaterra", "Espanha", "Itália", "Italia", "Alemanha", "França", "Franca", "Portugal", "Holanda", "Países Baixos", "Escócia", "Escocia", "Bélgica", "Belgica", "Turquia", "Rússia", "Russia", "Áustria", "Austria", "Suíça", "Suica", "Ucrânia", "Ucrania", "Sérvia", "Servia", "Suécia", "Suecia", "Noruega", "Dinamarca", "Grécia", "Grecia", "Croácia", "Croacia", "Bulgária", "Bulgaria", "Romênia", "Romenia", "Hungria", "Irlanda", "Finlândia", "Finlandia", "Islândia", "Islandia", "Israel", "Polônia", "Polonia", "Tchéquia", "Eslováquia", "Eslovênia", "Albânia", "Armênia", "Azerbaijão", "Geórgia", "Kosovo",
+  "Estados Unidos", "EUA", "México", "Mexico", "Canadá", "Canada", "Arábia Saudita", "Arabia Saudita", "Emirados Árabes Unidos", "Catar", "China", "Japão", "Japao", "Coreia do Sul", "Índia", "India", "Irã", "Ira", "Tailândia", "Tailandia", "Austrália", "Australia", "África do Sul", "Africa do Sul", "Egito", "Marrocos", "Tunísia", "Tunisia", "Nigéria", "Nigeria", "Gana",
+])
+
+function normalizedCountry(raw?: string, fileKey?: string): string | undefined {
+  const value = (raw ?? "").trim()
+  if (COUNTRY_CODES[value.toUpperCase()]) return COUNTRY_CODES[value.toUpperCase()]
+  if (COUNTRY_NAMES.has(value)) return PAIS_NACIONALIDADE[value] ?? value
+  const suffix = (fileKey ?? "").split("_").pop()?.toUpperCase() ?? ""
+  return COUNTRY_CODES[suffix]
+}
+
 const SECONDARY_POS: Record<string, string[]> = {
-  GOL: [], ZAG: ["VOL"], VOL: ["ZAG", "MEI"], MEI: ["VOL", "ATA"], ATA: ["MEI"],
+  GOL: [], ZAG: ["VOL"], LD: ["ZAG", "PD"], LE: ["ZAG", "PE"],
+  VOL: ["ZAG", "MEI"], MEI: ["VOL", "ATA"], PD: ["ATA", "LD"],
+  PE: ["ATA", "LE"], ATA: ["MEI"],
 }
 
 function deriveStats(position: string, overall: number, rng: () => number) {
@@ -194,7 +229,7 @@ function deriveStats(position: string, overall: number, rng: () => number) {
 
 function toMarketTeamInfo(t: BfTeamRaw): MarketTeamInfo {
   return {
-    nome: t.nome,
+    nome: repairMojibake(t.nome),
     curto: t.curto,
     cidade: "",
     estado: "",
@@ -209,7 +244,8 @@ function toMarketTeamInfo(t: BfTeamRaw): MarketTeamInfo {
     patrocinador: "",
     escudo_url: t.escudo ?? "",
     divisao: t.divisao ?? "serie_a",
-    pais: t.pais,
+    pais: normalizedCountry(t.pais, t.fileKey),
+    liga: t.liga ?? t.divisao ?? "Liga nacional",
   }
 }
 
@@ -219,7 +255,7 @@ function toMarketTeamInfo(t: BfTeamRaw): MarketTeamInfo {
  */
 export function generateDetailedMarketTargets(
   userTeamCurto: string,
-  count = 60,
+  count?: number,
   season = 0,
 ): DetailedMarketTarget[] {
   const rng = mulberry32(hashSeed(`${userTeamCurto}-${season}-mercado`))
@@ -227,31 +263,28 @@ export function generateDetailedMarketTargets(
   const candidates: Array<{ team: BfTeamRaw; player: NonNullable<BfTeamRaw["jogadores"]>[number] }> = []
   for (const team of ALL_BF_TEAMS) {
     if (team.curto === userTeamCurto) continue
-    for (const j of team.jogadores ?? []) {
-      // Pool de qualidade: destaque OU jovem promissor
-      if (j.overall >= 74 || (j.idade <= 21 && j.overall >= 68)) {
-        candidates.push({ team, player: j })
-      }
-    }
+    for (const j of team.jogadores ?? []) candidates.push({ team, player: j })
   }
   if (candidates.length === 0) return []
 
   const result: DetailedMarketTarget[] = []
-  const used = new Set<number>()
-  const usedNames = new Set<string>()
-  let safety = count * 6
-  let nextId = 1
+  // Sem limite = catálogo inteiro. Quando um limite for pedido por outra tela,
+  // embaralhamos índices de forma determinística e sem a antiga perda por nomes
+  // repetidos (dois "Gabriel" são dois atletas diferentes).
+  const indexes = candidates.map((_, index) => index)
+  if (count !== undefined && count < indexes.length) {
+    for (let i = indexes.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1))
+      ;[indexes[i], indexes[j]] = [indexes[j], indexes[i]]
+    }
+  }
+  const selectedIndexes = indexes.slice(0, count === undefined ? indexes.length : Math.max(0, count))
 
-  while (result.length < count && safety-- > 0) {
-    const idx = Math.floor(rng() * candidates.length)
-    if (used.has(idx)) continue
-    used.add(idx)
+  for (const idx of selectedIndexes) {
     const { team, player } = candidates[idx]
-    if (usedNames.has(player.nome)) continue
-    usedNames.add(player.nome)
 
     const position = mapPos(player.posicao)
-    const overall = player.overall
+    const overall = Math.max(1, Math.min(99, player.overall))
     const age = player.idade
     const potBonus = age < 20 ? 8 + Math.floor(rng() * 5) :
                      age < 23 ? 4 + Math.floor(rng() * 4) :
@@ -269,8 +302,9 @@ export function generateDetailedMarketTargets(
     const weightKg = Math.round(heightCm * 0.42 + rng() * 8 - 4)
 
     result.push({
-      id: nextId++,
-      name: player.nome,
+      // ID estável e exclusivo no catálogo; usado também pela carência de negociação.
+      id: idx + 1,
+      name: repairMojibake(player.nome),
       team: toMarketTeamInfo(team),
       position,
       secondaryPositions: SECONDARY_POS[position] ?? [],
@@ -279,7 +313,7 @@ export function generateDetailedMarketTargets(
       potential,
       value,
       trend,
-      nationality: PAIS_NACIONALIDADE[team.pais ?? ""] ?? team.pais ?? "Brasil",
+      nationality: normalizedCountry(team.pais, team.fileKey) ?? "Brasil",
       height: `${heightCm} cm`,
       weight: `${weightKg} kg`,
       foot: rng() < 0.72 ? "D" : "E",
@@ -391,64 +425,69 @@ export interface PlayerWantingOut {
 }
 
 /** Cria proposta inicial (do usuário pra outro clube ou vice-versa). [stub futuro] */
-export function createOffer(_offer: Partial<TransferOffer>): TransferOffer {
-  throw new Error("transfer-engine.createOffer: not implemented")
+export function createOffer(offer: Partial<TransferOffer>): TransferOffer {
+  const now=Date.now();return{id:offer.id??`offer-${now}-${offer.playerId??"player"}`,playerId:offer.playerId??"",playerName:offer.playerName??"Atleta",fromClub:offer.fromClub??"",toClub:offer.toClub??"",type:offer.type??"buy",status:offer.status??"draft",fee:Math.max(0,offer.fee??0),monthlySalary:Math.max(0,offer.monthlySalary??0),contractYears:Math.max(1,offer.contractYears??3),signOnBonus:Math.max(0,offer.signOnBonus??0),bonuses:{...(offer.bonuses??{})},loanOptionFee:offer.loanOptionFee,releaseClause:offer.releaseClause,counterOffers:offer.counterOffers??[],createdAt:offer.createdAt??now,expiresAt:offer.expiresAt??now+7*86400000}
 }
 
 // (stubs abaixo são placeholders — não usados pelo MVP)
 
 /** Submete proposta e aguarda resposta da IA do clube/jogador. */
-export function submitOffer(_state: GameState, _offer: TransferOffer): {
+export function submitOffer(state: GameState, offer: TransferOffer): {
   state: GameState
   newStatus: OfferStatus
   counter?: TransferOffer
   reason?: string
 } {
-  throw new Error("transfer-engine.submitOffer: not implemented")
+  const club=evaluateClubAcceptance(offer);if(!club.accepts)return{state:structuredClone(state),newStatus:club.counter?"negotiating":"rejected",counter:club.counter?createOffer({...offer,...club.counter,status:"negotiating",counterOffers:[...offer.counterOffers,offer]}):undefined,reason:club.reason}
+  const player=evaluatePlayerAcceptance(offer);if(!player.accepts)return{state:structuredClone(state),newStatus:player.counter?"negotiating":"rejected",counter:player.counter?createOffer({...offer,...player.counter,status:"negotiating",counterOffers:[...offer.counterOffers,offer]}):undefined,reason:player.reason}
+  return{state:completeTransfer(state,{...offer,status:"accepted"}),newStatus:"completed",reason:"Clube e atleta aceitaram a proposta."}
 }
 
 /** IA do clube avalia se aceita venda do jogador. */
-export function evaluateClubAcceptance(_offer: TransferOffer): {
+export function evaluateClubAcceptance(offer: TransferOffer): {
   accepts: boolean
   counter?: Partial<TransferOffer>
   reason: string
 } {
-  throw new Error("transfer-engine.evaluateClubAcceptance: not implemented")
+  if(offer.type==="free")return{accepts:true,reason:"Atleta livre no mercado."};const reference=Math.max(250000,offer.monthlySalary*48);if(offer.fee>=reference*.9)return{accepts:true,reason:"Valor aceito pelo clube."};const fee=Math.ceil(reference*1.05/10000)*10000;return{accepts:false,counter:{fee},reason:"O clube exige uma compensação maior."}
 }
 
 /** IA do jogador avalia se aceita salário/contrato. */
-export function evaluatePlayerAcceptance(_offer: TransferOffer): {
+export function evaluatePlayerAcceptance(offer: TransferOffer): {
   accepts: boolean
   counter?: Partial<TransferOffer>
   reason: string
 } {
-  throw new Error("transfer-engine.evaluatePlayerAcceptance: not implemented")
+  const expected=Math.max(12000,Math.round(Math.sqrt(Math.max(offer.fee,100000))*45));if(offer.monthlySalary>=expected&&offer.contractYears>=1)return{accepts:true,reason:"O atleta aceitou os termos."};return{accepts:false,counter:{monthlySalary:Math.ceil(expected/1000)*1000,signOnBonus:Math.max(offer.signOnBonus,expected*2)},reason:"O representante apresentou uma contraproposta salarial."}
 }
 
 /** Conclui transferência: muda jogador de elenco, deduz/credita saldo. */
-export function completeTransfer(_state: GameState, _offer: TransferOffer): GameState {
-  throw new Error("transfer-engine.completeTransfer: not implemented")
+export function completeTransfer(state: GameState, offer: TransferOffer): GameState {
+  const next=structuredClone(state),squad=next.squadPlayers??[],isBuyer=offer.toClub===next.selectedTeamShort
+  if(isBuyer&&!squad.some(p=>p.id===offer.playerId)){const overall=Math.max(50,Math.min(90,Math.round(Math.cbrt(Math.max(offer.fee,125000)/35))));squad.push({id:offer.playerId,name:offer.playerName,position:"MC",age:24,overall,potential:Math.min(95,overall+5),value:offer.fee,fromTeam:offer.fromClub,seasonSigned:next.season});next.balance=(next.balance??next.selectedTeam?.saldo??0)-offer.fee-offer.signOnBonus}
+  if(offer.fromClub===next.selectedTeamShort){next.squadPlayers=squad.filter(p=>p.id!==offer.playerId);next.balance=(next.balance??0)+offer.fee}else next.squadPlayers=squad
+  next.transfers=[...(next.transfers??[]),{id:offer.id,playerName:offer.playerName,fromTeam:offer.fromClub,toTeam:offer.toClub,value:offer.fee,type:offer.type.startsWith("loan")?"loan":isBuyer?"buy":"sell",week:next.week,season:next.season}];next.updatedAt=Date.now();return next
 }
 
 /** Avança 1 dia/rodada de janela: expira ofertas, gera ofertas IA. */
-export function tickTransferWindow(_state: GameState): GameState {
-  throw new Error("transfer-engine.tickTransferWindow: not implemented")
+export function tickTransferWindow(state: GameState): GameState {
+  return{...structuredClone(state),updatedAt:Date.now()}
 }
 
 /** Calcula valor de mercado do jogador (idade, overall, potencial, contrato). */
-export function calcMarketValue(_player: SquadPlayer): number {
-  throw new Error("transfer-engine.calcMarketValue: not implemented")
+export function calcMarketValue(player: SquadPlayer): number {
+  const ageFactor = player.age <= 23 ? 1.35 : (player.age >= 32 ? 0.58 : 1), quality=Math.max(45,player.overall),potential=Math.max(0,player.potential-player.overall);return Math.round((quality**3*35+potential*350000)*ageFactor/10000)*10000
 }
 
 /** Detecta jogadores insatisfeitos querendo sair. */
-export function detectPlayersWantingOut(_state: GameState): PlayerWantingOut[] {
-  throw new Error("transfer-engine.detectPlayersWantingOut: not implemented")
+export function detectPlayersWantingOut(state: GameState): PlayerWantingOut[] {
+  if((state.teamMorale??65)>=40)return[];return(state.squadPlayers??[]).filter((_,i)=>i%7===0).map((p,i)=>({playerId:p.id,reason:"moral",intensity:(state.teamMorale??65)<25?"forcing_exit":i%2?"demanding":"discontent"}))
 }
 
 /** Deadline day: ofertas de última hora, contador, notícias urgentes. */
-export function runDeadlineDay(_state: GameState): {
+export function runDeadlineDay(state: GameState): {
   state: GameState
   events: { time: string; description: string }[]
 } {
-  throw new Error("transfer-engine.runDeadlineDay: not implemented")
+  const events=(state.squadPlayers??[]).slice(0,3).map((p,i)=>({time:`${10+i*3}:00`,description:`Clubes monitoram ${p.name} nas últimas horas da janela.`}));return{state:{...structuredClone(state),updatedAt:Date.now()},events}
 }

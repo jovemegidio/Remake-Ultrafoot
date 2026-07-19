@@ -16,6 +16,7 @@ import {
   FORMATIONS,
   COMPATIBLE_POSITIONS,
   assignPlayersToFormation,
+  normalizePosition,
 } from "../lib/formations"
 
 // Elenco tipico, na ordem em que sortByPosition entrega (GOL, ZAG, LD, LE, VOL, MEI, ...).
@@ -26,10 +27,10 @@ const SQUAD = [
   { id: 4, position: "LD", name: "Lateral Dir" },
   { id: 5, position: "LE", name: "Lateral Esq" },
   { id: 6, position: "VOL", name: "Volante" },
-  { id: 7, position: "MEI", name: "Meia A" },
+  { id: 7, position: "MC", name: "Meia A" },
   { id: 8, position: "MEI", name: "Meia B" },
   { id: 9, position: "PD", name: "Ponta Dir" },
-  { id: 10, position: "ATA", name: "Centroavante" },
+  { id: 10, position: "CA", name: "Centroavante" },
   { id: 11, position: "PE", name: "Ponta Esq" },
 ]
 
@@ -51,14 +52,14 @@ for (const key of Object.keys(FORMATIONS)) {
 
   // 2) O GOL e inegociavel: so goleiro no gol.
   const gk = assigned.find((p) => p.slotPos === "GOL")
-  if (gk && gk.position !== "GOL") {
+  if (gk && normalizePosition(gk.position) !== "GOL") {
     console.log(`XX ${key}: ${gk.name} (${gk.position}) escalado NO GOL`)
     failures++
   }
 
   // 3) Cada jogador precisa estar num slot igual ou compativel com a posicao dele.
   const wrong = assigned.filter(
-    (p) => p.position !== p.slotPos && !COMPATIBLE_POSITIONS[p.slotPos]?.includes(p.position),
+    (p) => normalizePosition(p.position) !== p.slotPos && !COMPATIBLE_POSITIONS[p.slotPos]?.includes(normalizePosition(p.position)),
   )
   if (wrong.length) {
     for (const p of wrong) {

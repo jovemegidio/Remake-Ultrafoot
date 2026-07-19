@@ -25,6 +25,10 @@ export interface MatchPlayer {
   assists?: number
   yellow?: boolean
   red?: boolean
+  // Slot tático ocupado no início da partida. Mantê-lo na substituição impede
+  // que o radar redesenhe todos os jogadores em posições diferentes.
+  tacticalSlot?: number
+  formationPosition?: string
 }
 
 interface SubstitutionModalProps {
@@ -34,8 +38,10 @@ interface SubstitutionModalProps {
   starters: MatchPlayer[]
   bench: MatchPlayer[]
   subsRemaining: number
-  onConfirm: (out: MatchPlayer, inPlayer: MatchPlayer) => void
+  onConfirm: (changes: SubstitutionChange[]) => void
 }
+
+export interface SubstitutionChange { out: MatchPlayer; inPlayer: MatchPlayer }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Player Card (estilo FUT/EA FC 26)
@@ -248,16 +254,27 @@ export function SubstitutionModal({
 }: SubstitutionModalProps) {
   const [out, setOut] = useState<MatchPlayer | null>(null)
   const [inPlayer, setIn] = useState<MatchPlayer | null>(null)
+  const [pending, setPending] = useState<SubstitutionChange[]>([])
 
   if (!open) return null
 
-  const canConfirm = out && inPlayer && subsRemaining > 0
+  const canAdd = !!out && !!inPlayer && pending.length < subsRemaining
+  const canConfirm = pending.length > 0
+
+  const handleAdd = () => {
+    if (!canAdd || !out || !inPlayer) return
+    setPending(current => [...current, { out, inPlayer }])
+    setOut(null)
+    setIn(null)
+  }
 
   const handleConfirm = () => {
     if (!canConfirm) return
-    onConfirm(out!, inPlayer!)
+    onConfirm(pending)
+    setPending([])
     setOut(null)
     setIn(null)
+    setPending([])
   }
 
   const handleClose = () => {
@@ -267,7 +284,9 @@ export function SubstitutionModal({
   }
 
   // Sugestão automática: jogador com menor stamina
-  const suggestedOut = [...starters].sort((a, b) => a.stamina - b.stamina)[0]
+  const usedOut = new Set(pending.map(change => change.out.id))
+  const usedIn = new Set(pending.map(change => change.inPlayer.id))
+  const suggestedOut = starters.filter(player => !usedOut.has(player.id)).sort((a, b) => a.stamina - b.stamina)[0]
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
@@ -345,6 +364,7 @@ export function SubstitutionModal({
                   player={p}
                   team={team}
                   selected={out?.id === p.id}
+                  disabled={usedOut.has(p.id)}
                   variant="out"
                   onClick={() => setOut(out?.id === p.id ? null : p)}
                 />
@@ -370,6 +390,7 @@ export function SubstitutionModal({
                   player={p}
                   team={team}
                   selected={inPlayer?.id === p.id}
+                  disabled={usedIn.has(p.id)}
                   variant="in"
                   onClick={() => setIn(inPlayer?.id === p.id ? null : p)}
                 />
@@ -385,6 +406,9 @@ export function SubstitutionModal({
 
         {/* Footer com preview da substituição */}
         <div className="border-t border-white/[0.04] bg-black/40 px-6 py-4">
+          {pending.length > 0 && <div className="mb-3 flex flex-wrap gap-2">
+            {pending.map((change, index) => <button key={`${change.out.id}-${change.inPlayer.id}`} onClick={() => setPending(current => current.filter((_, i) => i !== index))} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[10px] text-white/70 hover:border-red-400/50" title="Remover troca">{change.out.name} → <span className="text-[#00ffc8]">{change.inPlayer.name}</span> ×</button>)}
+          </div>}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {out ? (
@@ -427,12 +451,20 @@ export function SubstitutionModal({
                 Cancelar
               </Button>
               <Button
+                onClick={handleAdd}
+                disabled={!canAdd}
+                variant="outline"
+                className="text-xs border-[#00ffc8]/30 bg-transparent text-[#00ffc8] disabled:opacity-30"
+              >
+                ADICIONAR TROCA
+              </Button>
+              <Button
                 onClick={handleConfirm}
                 disabled={!canConfirm}
                 className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-30 font-bold tracking-wide"
               >
                 <Check className="mr-2 h-3.5 w-3.5" />
-                CONFIRMAR
+                CONFIRMAR {pending.length} {pending.length === 1 ? "TROCA" : "TROCAS"}
               </Button>
             </div>
           </div>

@@ -118,7 +118,7 @@ export default function PartidaEscalacaoPage() {
   // quando o save ainda nao havia hidratado. Por isso a ESCALACAO mostrava nomes de
   // outro clube enquanto a PARTIDA, que le o elenco na hora, mostrava os corretos.
   const { userTeam, teamReady, players, setPlayers, bench, setBench } =
-    useUserRoster(state.selectedTeamShort)
+    useUserRoster(state.selectedTeamShort, engineSquadPlayers)
 
   const t = useTranslation()
   useDiscordActivity("Ajustando escalacao para partida", userTeam.nome)

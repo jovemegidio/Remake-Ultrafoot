@@ -23,7 +23,8 @@ import path from "node:path"
 const exec = promisify(execFile)
 
 const REPO = "jovemegidio/Ultrafoot26"
-const BUILD_DIR = "C:/ultrafoot-build/src-tauri/target/release/bundle/nsis"
+const BUILD_DIR = process.env.ULTRAFOOT_BUILD_DIR
+  ?? "C:/ultrafoot-native/src-tauri/target/release/bundle/nsis"
 const PUBLISH = process.argv.includes("--publish")
 
 const exists = async (p) => { try { await access(p); return true } catch { return false } }

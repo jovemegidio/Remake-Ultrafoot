@@ -51,7 +51,7 @@ export function Cutscene({
         src={src}
         autoPlay
         playsInline
-        className="h-full w-full object-contain"
+          className="h-full w-full object-cover object-center"
         onEnded={finish}
         onError={finish}
       />

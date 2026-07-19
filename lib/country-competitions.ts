@@ -1,3 +1,5 @@
+import { competitionsByLeague } from "./international-competitions"
+
 // Competicoes por PAIS/LIGA.
 //
 // A tela de Competicoes era hardcoded em Brasil: quem jogava com o Barcelona via
@@ -12,6 +14,8 @@ export interface CountryCompetitions {
   continental: string
   /** Segunda competicao continental (null quando nao houver). */
   continentalSecondary: string | null
+  /** Terceira competicao continental, quando houver. */
+  continentalTertiary?: string | null
   /** So o Brasil disputa campeonato estadual. */
   hasStateChampionship: boolean
 }
@@ -19,6 +23,7 @@ export interface CountryCompetitions {
 const UEFA = {
   continental: "UEFA Champions League",
   continentalSecondary: "UEFA Europa League",
+  continentalTertiary: "UEFA Conference League",
   hasStateChampionship: false,
 }
 
@@ -54,12 +59,12 @@ export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
   primera_div_ury: { country: "Uruguai", domesticCup: "Copa Uruguay", ...CONMEBOL, hasStateChampionship: false },
 
   // Demais
-  saudi_pro: { country: "Arabia Saudita", domesticCup: "King's Cup", continental: "AFC Champions League", continentalSecondary: null, hasStateChampionship: false },
-  j_league: { country: "Japao", domesticCup: "Copa do Imperador", continental: "AFC Champions League", continentalSecondary: null, hasStateChampionship: false },
-  k_league_1: { country: "Coreia do Sul", domesticCup: "Korean FA Cup", continental: "AFC Champions League", continentalSecondary: null, hasStateChampionship: false },
-  chinese_super: { country: "China", domesticCup: "Chinese FA Cup", continental: "AFC Champions League", continentalSecondary: null, hasStateChampionship: false },
+  saudi_pro: { country: "Arabia Saudita", domesticCup: "King's Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+  j_league: { country: "Japao", domesticCup: "Copa do Imperador", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+  k_league_1: { country: "Coreia do Sul", domesticCup: "Korean FA Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+  chinese_super: { country: "China", domesticCup: "Chinese FA Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
   mls: { country: "Estados Unidos", domesticCup: "US Open Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
-  liga_mx: { country: "Mexico", domesticCup: "Copa MX", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
+  liga_mx: { country: "Mexico", domesticCup: "Leagues Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
 }
 
 const FALLBACK: CountryCompetitions = {
@@ -123,11 +128,6 @@ export function getContinentalDivisions(divisao: string | undefined): string[] {
 // joga a Champions OU a Europa League conforme ONDE TERMINOU. Antes a tela fixava a
 // competicao principal, entao um 6o colocado aparecia na Champions.
 
-/** Ate esta posicao o clube vai para a competicao continental PRINCIPAL. */
-const PRIMARY_SPOTS = 4
-/** Ate esta posicao vai para a SECUNDARIA (Europa League / Sul-Americana). */
-const SECONDARY_SPOTS = 6
-
 export interface ContinentalSpot {
   /** Nome da competicao que ele disputa; null se nao se classificou. */
   competition: string | null
@@ -144,17 +144,28 @@ export function getContinentalSpot(
   position: number | undefined,
 ): ContinentalSpot {
   const comps = getCountryCompetitions(divisao)
+  const league = divisao
+    ? competitionsByLeague[divisao as keyof typeof competitionsByLeague]?.find(competition => competition.type === "league")
+    : undefined
+  const allocations = league?.continentalSpots ?? []
+  const primarySpots = allocations[0]?.spots ?? 0
+  const secondarySpots = allocations[1]?.spots ?? 0
+  const tertiarySpots = allocations[2]?.spots ?? 0
 
   if (!position || position <= 0) {
     return { competition: comps.continental, qualified: false, isSecondary: false }
   }
 
-  if (position <= PRIMARY_SPOTS) {
+  if (position <= primarySpots) {
     return { competition: comps.continental, qualified: true, isSecondary: false }
   }
 
-  if (position <= SECONDARY_SPOTS && comps.continentalSecondary) {
+  if (position <= primarySpots + secondarySpots && comps.continentalSecondary) {
     return { competition: comps.continentalSecondary, qualified: true, isSecondary: true }
+  }
+
+  if (position <= primarySpots + secondarySpots + tertiarySpots && comps.continentalTertiary) {
+    return { competition: comps.continentalTertiary, qualified: true, isSecondary: true }
   }
 
   // Fora das vagas: mostra a principal como alvo, mas nao classificado.

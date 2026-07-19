@@ -70,3 +70,17 @@ if (!existsSync(outDir)) {
 
 walk(outDir)
 console.log("Next export RSC aliases checked.")
+
+// Guarda de boot: a janela do Tauri abre em `splash/` (tauri.conf.json -> app.windows.url).
+// Se o export nao gerar `out/splash/index.html` (ou o `out/index.html` raiz), o WebView
+// mostra "Arquivo nao encontrado / ERR_FILE_NOT_FOUND" ja na abertura — foi o bug da 1.0.85.
+// Falhar o build AQUI impede que um bundle sem a tela inicial chegue aos jogadores.
+const requiredBootFiles = ["index.html", path.join("splash", "index.html")]
+const missingBootFiles = requiredBootFiles.filter(rel => !existsSync(path.join(outDir, rel)))
+if (missingBootFiles.length > 0) {
+  throw new Error(
+    `Export incompleto: faltam arquivos de boot no out/ (${missingBootFiles.join(", ")}). ` +
+    `A janela abre em 'splash/'; sem eles o jogo abre com ERR_FILE_NOT_FOUND. Build abortado.`,
+  )
+}
+console.log("Boot files OK (index.html + splash/index.html).")

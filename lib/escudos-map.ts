@@ -2,6 +2,7 @@
 // Este arquivo nao deve importar de teams-data.ts ou international-teams.ts para evitar dependencias circulares
 
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
+import generatedEscudoMap from "@/data/seeds/escudos-generated-map.json"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -34,6 +35,7 @@ const escudoMap: Record<string, string> = {
 
 // Mapeamento de file_keys para escudos locais
 const localEscudoMap: Record<string, string> = {
+  ...(generatedEscudoMap as Record<string, string>),
   // Serie A - arquivos raiz nomeados por file_key (confiáveis)
   "botafogorj_bra": "/escudos/botafogorj_bra.png",
   "palmeiras": "/escudos/palmeiras.png",
@@ -314,6 +316,11 @@ export function getEscudoUrl(fileKey: string): string {
     return gameAssetUrl(raw)
   }
   return `${ULTRAFOOT_RAW_URL}/teams/escudos/${fileKey}.png`
+}
+
+/** Caminho empacotado, independente do ambiente; usado pelo preflight de release. */
+export function getLocalEscudoPath(fileKey: string): string {
+  return localEscudoMap[fileKey] ?? `/escudos/${fileKey}.png`
 }
 
 export function getRemoteEscudoUrl(fileKey: string): string {

@@ -10,7 +10,10 @@ dispositivos, para fins de entretenimento pessoal e não comercial.
 2. RESTRIÇÕES
 Você não pode: (a) revender, alugar ou redistribuir o Software; (b) realizar
 engenharia reversa, descompilar ou desmontar o Software, exceto quando
-expressamente permitido por lei; (c) remover avisos de direitos autorais.
+expressamente permitido por lei; (c) remover avisos de direitos autorais;
+(d) utilizar bots, crawlers, scripts ou automação para coletar conteúdo em
+massa, enumerar salas, sobrecarregar os serviços online ou contornar limites
+de acesso e licenças.
 
 3. CONTEÚDO DE TERCEIROS
 Escudos, nomes de clubes, jogadores e demais elementos podem ser marcas de
@@ -18,15 +21,21 @@ seus respectivos titulares e são usados apenas para fins de identificação
 dentro de um produto de simulação. O Ultrafoot 26 não é afiliado, patrocinado
 ou endossado por nenhuma entidade esportiva oficial.
 
-4. ATUALIZAÇÕES
+4. PRIVACIDADE E RECURSOS ONLINE
+Saves e preferências ficam armazenados localmente. Ao usar recursos online,
+o jogo pode processar o nome do técnico, clube escolhido, versão do jogo,
+dados da sala e identificadores técnicos mínimos necessários à conexão. A
+Política de Privacidade completa está disponível dentro do jogo.
+
+5. ATUALIZAÇÕES
 O Software pode verificar e instalar atualizações automaticamente para
 melhorar a experiência, corrigir falhas e adicionar conteúdo.
 
-5. ISENÇÃO DE GARANTIA
+6. ISENÇÃO DE GARANTIA
 O Software é fornecido "no estado em que se encontra", sem garantias de
 qualquer tipo. O uso é por sua conta e risco.
 
-6. LIMITAÇÃO DE RESPONSABILIDADE
+7. LIMITAÇÃO DE RESPONSABILIDADE
 Em nenhuma hipótese o Ultrafoot Studio será responsável por danos diretos ou
 indiretos decorrentes do uso ou da impossibilidade de uso do Software.
 

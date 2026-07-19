@@ -5,10 +5,18 @@
 import { useEffect, useState } from "react"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
-import { storeGet, storeSet, storeRemove, initPersistentStore } from "@/lib/persistent-store"
+import { storeGet, storeSet, storeRemove, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
 import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceEntry, SeasonRecord, InjuryRecord, FatigueMap } from "@/lib/career-types"
+import type { ClubDebtState } from "@/lib/debt-engine"
+import type { ScoutingDepartmentState } from "@/lib/scout-engine"
+import type { StadiumPitch } from "@/lib/infrastructure-engine"
+import type { Sponsor, SponsorOffer } from "@/lib/sponsor-engine"
+import type { ChallengeProgress } from "@/lib/challenge-engine"
 
-const STORAGE_KEY = "ultrafoot:save"
+const LEGACY_STORAGE_KEY = "ultrafoot:save"
+const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
+const CAREER_INDEX_KEY = "ultrafoot:career-index"
+const CAREER_SAVE_PREFIX = "ultrafoot:save:"
 
 /**
  * Jogador do elenco/base persistido no save. Forma gerada por
@@ -33,7 +41,58 @@ export interface SquadPlayer {
   trend?: "up" | "down" | "stable"
   seasonSigned?: number
 }
-const VERSION = 4
+
+export interface YouthAlumniRecord {
+  playerId: string
+  playerName: string
+  position: string
+  potential: number
+  trainedFromSeason: number
+  trainedToSeason: number
+  currentClub: string
+  currentLevel: "base" | "professional" | "elite"
+  careerTitles: string[]
+  nationalTeamCaps: number
+  worldCupTitles: number
+  relationship: number
+}
+
+export interface YouthCareerState {
+  active: boolean
+  category: "sub20"
+  clubCurto: string
+  clubNome: string
+  startedSeason: number
+  currentSeason: number
+  round: number
+  matches: number
+  wins: number
+  draws: number
+  losses: number
+  goalsFor: number
+  goalsAgainst: number
+  points: number
+  coachReputation: number
+  coachXP: number
+  titles: string[]
+  promotedPlayerIds: string[]
+  alumni: YouthAlumniRecord[]
+  professionalOffers: { id: string; clubCurto: string; clubNome: string; role: "assistant" | "head_coach"; reputationRequired: number; monthlySalary: number; contractMonths: number; objectives: string[] }[]
+  seasonFinished: boolean
+  formation?: string
+  startingPlayerIds?: string[]
+  currentCompetition?: string
+  /** Progresso independente das competicoes de base (campos opcionais para saves antigos). */
+  competitionIndex?: number
+  competitionStageIndex?: number
+  competitionMatchInStage?: number
+  competitionPoints?: number
+  competitionAggregateFor?: number
+  competitionAggregateAgainst?: number
+  competitionStage?: string
+  seasonPlacements?: Record<string, string>
+}
+const VERSION = 7
 
 // ============================================
 // ARVORE DE HABILIDADES DO TREINADOR
@@ -200,6 +259,23 @@ export interface NationalOffer {
   confederation: string
   strength: number
   createdSeason: number
+  createdWeek: number
+  monthlySalary: number
+  contractMonths: number
+  objectives: string[]
+  obligations: string[]
+  negotiationRound?: number
+  status?: "open" | "countered"
+}
+
+export interface NationalCoachContract {
+  nationalTeamId: string
+  monthlySalary: number
+  contractMonths: number
+  startSeason: number
+  startWeek: number
+  objectives: string[]
+  obligations: string[]
 }
 
 export interface NationalTitle {
@@ -237,6 +313,9 @@ export interface NationalCareer {
   completedWindows: string[]
   /** Janela FIFA em andamento (null fora de uma janela). */
   activeWindow: NationalWindow | null
+  contract: NationalCoachContract | null
+  totalSalaryEarned: number
+  lastSalaryPaidWeek: number | null
 }
 
 export const DEFAULT_NATIONAL_CAREER: NationalCareer = {
@@ -253,6 +332,9 @@ export const DEFAULT_NATIONAL_CAREER: NationalCareer = {
   completedThisSeason: [],
   completedWindows: [],
   activeWindow: null,
+  contract: null,
+  totalSalaryEarned: 0,
+  lastSalaryPaidWeek: null,
 }
 
 /** Dados do time escolhido pelo usuário, persistidos no save. */
@@ -279,6 +361,9 @@ export interface SavedTeam {
 
 export interface GameState {
   version: number
+  /** Identidade imutavel da campanha. Impede duas carreiras de compartilharem save/motor. */
+  careerId: string | null
+  saveName: string
   selectedTeamShort: string | null
   managerName: string
   season: number
@@ -295,6 +380,12 @@ export interface GameState {
   // forcam os prompts de botao (glifos) no jogo inteiro.
   controllerType: "auto" | "xbox" | "playstation"
   controllerBindings: Record<string, Record<string, string>> // context -> button -> action
+  commentaryEnabled: boolean
+  commentaryVoice: string
+  commentaryVolume: number
+  /** 0 desativa; os demais valores salvam apos essa quantidade de partidas. */
+  autoSaveInterval: 0 | 1 | 3 | 5
+  lastAutoSaveMatchCount: number
   // Arvore de habilidades do treinador (Just-in-Time)
   coachSkills: CoachSkill[]
   coachXP: number
@@ -314,6 +405,17 @@ export interface GameState {
   youthPlayers?: SquadPlayer[]
   // Temporada em que a base foi semeada — evita re-gerar prospectos toda visita.
   youthSeededSeason?: number
+  // Marco da carreira da base para a promoção automática após três temporadas.
+  // Opcional para manter compatibilidade com saves anteriores.
+  youthCareerStartSeason?: number
+  youthAutoPromotedSeason?: number
+  /** Carreira opcional iniciada nas categorias de base. */
+  youthCareer?: YouthCareerState
+  debt?: ClubDebtState
+  scoutingDepartment?: ScoutingDepartmentState
+  stadiumPitch?: StadiumPitch
+  sponsorOffers?: SponsorOffer[]
+  activeSponsors?: Sponsor[]
   // Divisao ATUAL do clube do usuario quando ela difere da estatica (teams-data), por
   // causa de acesso/rebaixamento. A resolucao da liga prefere isto. undefined = usa a
   // divisao original do time.
@@ -329,6 +431,9 @@ export interface GameState {
   currentRound?: number
   transfers?: TransferRecord[]
   fixtures?: MatchFixture[]
+  /** Fixtures oficiais já encerradas nesta carreira/temporada. Mantido no save
+   * para a próxima partida não depender apenas da hidratação do motor Zustand. */
+  completedFixtureKeys?: string[]
   standings?: StandingEntry[]
   results?: MatchResult[]
   finances?: FinanceEntry[]
@@ -336,6 +441,7 @@ export interface GameState {
   injuries?: InjuryRecord[]
   playerFatigue?: FatigueMap
   teamMorale?: number
+  activeChallenge?: ChallengeProgress
 }
 
 export const DEFAULT_COACH_LEGACY: CoachLegacy = {
@@ -349,6 +455,8 @@ export const DEFAULT_COACH_LEGACY: CoachLegacy = {
 
 export const DEFAULT_STATE: GameState = {
   version: VERSION,
+  careerId: null,
+  saveName: "Carreira principal",
   selectedTeamShort: null,
   managerName: "Tecnico",
   season: 2026,
@@ -364,6 +472,11 @@ export const DEFAULT_STATE: GameState = {
   // Controles
   controllerType: "auto",
   controllerBindings: {},
+  commentaryEnabled: true,
+  commentaryVoice: "padrao",
+  commentaryVolume: 80,
+  autoSaveInterval: 1,
+  lastAutoSaveMatchCount: 0,
   // Treinador
   coachSkills: COACH_SKILL_CATALOG.map(s => ({ ...s })),
   coachXP: 0,
@@ -377,6 +490,100 @@ export const DEFAULT_STATE: GameState = {
   pendingNationalOffers: [],
   declinedNationalTeamIds: [],
   lastNationalOfferSeason: null,
+  completedFixtureKeys: [],
+}
+
+/** Cria uma campanha limpa sem carregar campos opcionais do save anterior. */
+export function createFreshCareerState(previous: GameState, campaign: Partial<GameState>): GameState {
+  const now = Date.now()
+  return {
+    ...DEFAULT_STATE,
+    // Preferencias globais sobrevivem; progresso esportivo nao.
+    language: previous.language,
+    controllerType: previous.controllerType,
+    controllerBindings: previous.controllerBindings,
+    commentaryEnabled: previous.commentaryEnabled,
+    commentaryVoice: previous.commentaryVoice,
+    commentaryVolume: previous.commentaryVolume,
+    autoSaveInterval: previous.autoSaveInterval,
+    createdAt: now,
+    updatedAt: now,
+    ...campaign,
+  }
+}
+
+export interface CareerSaveSummary {
+  id: string
+  name: string
+  teamShort: string
+  managerName: string
+  season: number
+  week: number
+  updatedAt: number
+}
+
+function makeCareerId(): string {
+  return `career-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+export function createCareerId(): string {
+  return makeCareerId()
+}
+
+export function getActiveCareerId(): string | null {
+  return storeGet(ACTIVE_CAREER_KEY)
+}
+
+export function setActiveCareerId(careerId: string): void {
+  storeSet(ACTIVE_CAREER_KEY, careerId)
+}
+
+export function getCareerScopedKey(base: string, careerId = getActiveCareerId()): string {
+  return careerId ? `${base}:${careerId}` : base
+}
+
+function saveKey(careerId: string): string {
+  return `${CAREER_SAVE_PREFIX}${careerId}`
+}
+
+function backupKey(careerId: string): string {
+  return `${saveKey(careerId)}:backup`
+}
+
+function readCareerIndex(): CareerSaveSummary[] {
+  try {
+    const parsed = JSON.parse(storeGet(CAREER_INDEX_KEY) ?? "[]")
+    return Array.isArray(parsed) ? parsed as CareerSaveSummary[] : []
+  } catch {
+    return []
+  }
+}
+
+function updateCareerIndex(state: GameState): void {
+  if (!state.careerId || !state.selectedTeamShort) return
+  const summary: CareerSaveSummary = {
+    id: state.careerId,
+    name: state.saveName || `Carreira de ${state.managerName}`,
+    teamShort: state.selectedTeamShort,
+    managerName: state.managerName,
+    season: state.season,
+    week: state.week,
+    updatedAt: state.updatedAt,
+  }
+  const next = [summary, ...readCareerIndex().filter(item => item.id !== summary.id)]
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+  storeSet(CAREER_INDEX_KEY, JSON.stringify(next))
+}
+
+export function listCareerSaves(): CareerSaveSummary[] {
+  return readCareerIndex().filter(item => storeGet(saveKey(item.id)) !== null || storeGet(backupKey(item.id)) !== null)
+}
+
+export function activateCareerSave(careerId: string): boolean {
+  const raw = storeGet(saveKey(careerId)) ?? storeGet(backupKey(careerId))
+  if (!safeParse(raw)) return false
+  setActiveCareerId(careerId)
+  return true
 }
 
 function safeParse(raw: string | null): GameState | null {
@@ -413,6 +620,17 @@ function safeParse(raw: string | null): GameState | null {
         lastNationalOfferSeason: null,
       }
     }
+    // v4 -> v7: adiciona os sistemas opcionais sem alterar campanhas existentes.
+    // dados profissionais permanecem intactos.
+    if (parsed.version === 4) {
+      return { ...DEFAULT_STATE, ...parsed, version: VERSION, youthCareer: undefined }
+    }
+    if (parsed.version === 5) {
+      return { ...DEFAULT_STATE, ...parsed, version: VERSION, debt: undefined, scoutingDepartment: undefined }
+    }
+    if (parsed.version === 6) {
+      return { ...DEFAULT_STATE, ...parsed, version: VERSION, careerId: parsed.careerId ?? null, saveName: parsed.saveName ?? "Carreira principal" }
+    }
     if (parsed.version !== VERSION) return null
     return { ...DEFAULT_STATE, ...parsed }
   } catch {
@@ -426,30 +644,72 @@ function safeParse(raw: string | null): GameState | null {
 // storeGet/storeSet leem/escrevem no cache sincrono; a persistencia em disco e async.
 export function loadGameState(): GameState {
   if (typeof window === "undefined") return DEFAULT_STATE
-  return safeParse(storeGet(STORAGE_KEY)) ?? DEFAULT_STATE
+  const activeId = getActiveCareerId()
+  if (activeId) {
+    const current = safeParse(storeGet(saveKey(activeId)))
+    if (current) return { ...current, careerId: activeId }
+    const backup = safeParse(storeGet(backupKey(activeId)))
+    if (backup) return { ...backup, careerId: activeId }
+  }
+
+  // Migracao unica do save global usado ate a 1.0.81.
+  const legacy = safeParse(storeGet(LEGACY_STORAGE_KEY))
+  if (!legacy) return DEFAULT_STATE
+  if (!legacy.selectedTeamShort) return legacy
+  const careerId = legacy.careerId || `career-legacy-${legacy.createdAt || Date.now()}`
+  const migrated = { ...legacy, careerId, saveName: legacy.saveName || "Carreira principal", version: VERSION }
+  setActiveCareerId(careerId)
+  storeSet(saveKey(careerId), JSON.stringify(migrated))
+  updateCareerIndex(migrated)
+  return migrated
 }
 
 export function saveGameState(state: GameState): void {
   if (typeof window === "undefined") return
-  const next = { ...state, version: VERSION, updatedAt: Date.now() }
-  // storeSet ja dispara "ultrafoot:store:changed" para sincronizar as telas.
-  storeSet(STORAGE_KEY, JSON.stringify(next))
+  const careerId = state.careerId || getActiveCareerId()
+  // Preferencias antes de uma carreira continuam no legado, sem criar slot vazio.
+  if (!careerId && !state.selectedTeamShort) {
+    storeSet(LEGACY_STORAGE_KEY, JSON.stringify({ ...state, version: VERSION, updatedAt: Date.now() }))
+    return
+  }
+  const resolvedId = careerId || makeCareerId()
+  const next = { ...state, careerId: resolvedId, version: VERSION, updatedAt: Date.now() }
+  const key = saveKey(resolvedId)
+  const previous = storeGet(key)
+  // Snapshot anterior permite recuperar fechamento/queda de energia durante a gravacao.
+  if (previous) storeSet(backupKey(resolvedId), previous)
+  setActiveCareerId(resolvedId)
+  storeSet(key, JSON.stringify(next))
+  updateCareerIndex(next)
+}
+
+export async function saveGameStateAndFlush(state: GameState): Promise<void> {
+  saveGameState(state)
+  await flushPersistentStore()
 }
 
 export function clearGameState(): void {
   if (typeof window === "undefined") return
-  storeRemove(STORAGE_KEY)
+  const careerId = getActiveCareerId()
+  if (careerId) {
+    storeRemove(saveKey(careerId))
+    storeRemove(backupKey(careerId))
+    storeSet(CAREER_INDEX_KEY, JSON.stringify(readCareerIndex().filter(item => item.id !== careerId)))
+    storeRemove(`ultrafoot-game-engine:${careerId}`)
+  } else {
+    storeRemove(LEGACY_STORAGE_KEY)
+  }
+  storeRemove(ACTIVE_CAREER_KEY)
 }
 
 export function clearAllGameData(): void {
   if (typeof window === "undefined") return
-  storeRemove(STORAGE_KEY)
-  storeRemove("ultrafoot-game-engine")
+  clearGameState()
 }
 
 export function hasSave(): boolean {
   if (typeof window === "undefined") return false
-  return storeGet(STORAGE_KEY) !== null
+  return listCareerSaves().length > 0 || Boolean(safeParse(storeGet(LEGACY_STORAGE_KEY))?.selectedTeamShort)
 }
 
 /**
@@ -460,6 +720,7 @@ export function useGameState(): {
   state: GameState
   hydrated: boolean
   setState: (next: Partial<GameState>) => void
+  replaceState: (next: GameState) => void
   reset: () => void
 } {
   const [state, setStateInternal] = useState<GameState>(DEFAULT_STATE)
@@ -467,27 +728,44 @@ export function useGameState(): {
 
   useEffect(() => {
     let mounted = true
+    let hydrationFinished = false
     const refresh = () => { if (mounted) setStateInternal(loadGameState()) }
     // Leitura imediata (o cache pode ja estar populado por outra tela)
     refresh()
     // O persistent-store carrega do disco de forma async; so entao hidratamos de
     // verdade. Sem isso, o save (que sobrevive a reinstalacao) chegaria depois do
     // primeiro render e as telas ficariam em mock/vazio.
+    // Um store grande/corrompido não pode prender o jogo para sempre na tela de
+    // carregamento. Após 4 s liberamos a UI com o cache disponível; quando o disco
+    // terminar, o save real ainda é reaplicado pelo refresh/evento store:ready.
+    const hydrationTimeout = window.setTimeout(() => {
+      if (!mounted || hydrationFinished) return
+      setHydrated(true)
+    }, 4000)
     initPersistentStore().then(() => {
       if (!mounted) return
+      hydrationFinished = true
+      window.clearTimeout(hydrationTimeout)
+      refresh()
+      setHydrated(true)
+    }).catch(() => {
+      if (!mounted) return
+      hydrationFinished = true
+      window.clearTimeout(hydrationTimeout)
       refresh()
       setHydrated(true)
     })
     // Sincroniza quando o save muda em qualquer tela e quando o store fica pronto.
     const onChange = (e: Event) => {
       const key = (e as CustomEvent).detail?.key
-      if (key && key !== STORAGE_KEY) return
+      if (key && !key.startsWith(CAREER_SAVE_PREFIX) && key !== ACTIVE_CAREER_KEY && key !== LEGACY_STORAGE_KEY) return
       setTimeout(refresh, 0)
     }
     window.addEventListener("ultrafoot:store:changed", onChange)
     window.addEventListener("ultrafoot:store:ready", refresh)
     return () => {
       mounted = false
+      window.clearTimeout(hydrationTimeout)
       window.removeEventListener("ultrafoot:store:changed", onChange)
       window.removeEventListener("ultrafoot:store:ready", refresh)
     }
@@ -502,12 +780,20 @@ export function useGameState(): {
     })
   }
 
+  /** Substitui o save inteiro. Necessario ao iniciar outra carreira: um merge preservava
+   * elenco, fixtures e clube da campanha anterior nos campos opcionais. */
+  const replaceState = (next: GameState) => {
+    const clean = { ...next, updatedAt: Date.now() }
+    setStateInternal(clean)
+    queueMicrotask(() => saveGameState(clean))
+  }
+
   const reset = () => {
     clearGameState()
     setStateInternal(DEFAULT_STATE)
   }
 
-  return { state, hydrated, setState, reset }
+  return { state, hydrated, setState, replaceState, reset }
 }
 
 /**

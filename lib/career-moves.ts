@@ -13,9 +13,10 @@
 // Este modulo liga as duas pontas e persiste as propostas no save.
 
 import { storeGet, storeSet } from "@/lib/persistent-store"
+import { getCareerScopedKey } from "@/lib/save-system"
 import type { JobOffer } from "@/lib/board-engine"
 
-const KEY = "ultrafoot:job-offers"
+const key = () => getCareerScopedKey("ultrafoot:job-offers")
 
 export interface PendingJobOffer extends JobOffer {
   id: string
@@ -28,7 +29,7 @@ export interface PendingJobOffer extends JobOffer {
 const EXPIRA_EM_SEMANAS = 4
 
 function readAll(): PendingJobOffer[] {
-  const raw = storeGet(KEY)
+  const raw = storeGet(key())
   if (!raw) return []
   try {
     const p = JSON.parse(raw)
@@ -39,7 +40,7 @@ function readAll(): PendingJobOffer[] {
 }
 
 function writeAll(list: PendingJobOffer[]): void {
-  storeSet(KEY, JSON.stringify(list))
+  storeSet(key(), JSON.stringify(list))
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("ultrafoot:job-offers:changed"))
   }

@@ -46,23 +46,73 @@ export interface YouthMonthlyReport {
 }
 
 /** Roda peneira: gera novos jovens conforme infra/categoria. */
-export function runTryout(_state: GameState, _category: YouthCategory): YouthIntake {
-  throw new Error("youth-engine.runTryout: not implemented")
+export function runTryout(state: GameState, category: YouthCategory): YouthIntake {
+  const prestige = state.selectedTeam?.prestigio ?? 60
+  const qualityRoll = Math.max(1, Math.min(100, Math.round(prestige * 0.7 + Math.random() * 30)))
+  const count = category === "sub17" ? 5 : 4
+  const players = generateYouthBatch(state.season, count, prestige).map((player, index): YouthPlayer => ({
+    ...player,
+    id: `youth_${category}_${state.season}_${Date.now()}_${index}`,
+    age: category === "sub17" ? 15 + Math.floor(Math.random() * 3) : 17 + Math.floor(Math.random() * 4),
+    category,
+    personality: PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)],
+    potentialMin: Math.max(player.overall, player.potential - 8),
+    potentialMax: player.potential,
+    hiddenAttributes: true,
+    monthsInAcademy: 0,
+    promoted: false,
+  }))
+  return {
+    season: state.season,
+    qualityRoll,
+    players,
+    rareGem: players.find(player => player.potentialMax >= 88),
+  }
 }
 
 /** Promove jovem ao elenco principal. */
-export function promoteYouth(_state: GameState, _playerId: string): GameState {
-  throw new Error("youth-engine.promoteYouth: not implemented")
+export function promoteYouth(state: GameState, playerId: string): GameState {
+  const player = (state.youthPlayers ?? []).find(item => item.id === playerId)
+  if (!player) return state
+  return {
+    ...state,
+    updatedAt: Date.now(),
+    youthPlayers: (state.youthPlayers ?? []).filter(item => item.id !== playerId),
+    squadPlayers: [...(state.squadPlayers ?? []), { ...player, fromTeam: "Categoria de Base", seasonSigned: state.season }],
+  }
 }
 
 /** Empresta jovem para outro clube (ganho de minutos). */
-export function loanYouth(_state: GameState, _playerId: string, _toClub: string): GameState {
-  throw new Error("youth-engine.loanYouth: not implemented")
+export function loanYouth(state: GameState, playerId: string, toClub: string): GameState {
+  return {
+    ...state,
+    updatedAt: Date.now(),
+    youthPlayers: (state.youthPlayers ?? []).map(player => player.id === playerId
+      ? { ...player, fromTeam: `Emprestado ao ${toClub}` }
+      : player),
+  }
 }
 
 /** Avança 1 mês de evolução: experiência, atributos, lesões da base. */
-export function advanceYouthMonth(_state: GameState): { state: GameState; report: YouthMonthlyReport } {
-  throw new Error("youth-engine.advanceYouthMonth: not implemented")
+export function advanceYouthMonth(state: GameState): { state: GameState; report: YouthMonthlyReport } {
+  const highlights: YouthMonthlyReport["highlights"] = []
+  const youthPlayers = (state.youthPlayers ?? []).map(player => {
+    if (player.overall >= player.potential || Math.random() > 0.35) return player
+    highlights.push({ playerId: player.id, reason: "Evoluiu após um bom mês de treinamento na base." })
+    return { ...player, overall: Math.min(player.potential, player.overall + 1), trend: "up" as const }
+  })
+  const nextState = { ...state, youthPlayers, updatedAt: Date.now() }
+  return {
+    state: nextState,
+    report: {
+      season: state.season,
+      month: Math.floor((state.week ?? 0) / 4) + 1,
+      totalPlayers: youthPlayers.length,
+      promotions: 0,
+      releases: 0,
+      highlights,
+    },
+  }
 }
 
 // ─── MVP funcional: prospectos da base ─────────────────────────────────────────
@@ -79,6 +129,7 @@ const YOUTH_LAST_NAMES = [
   "Ribeiro","Carvalho","Gomes","Martins","Araujo","Barbosa","Cardoso","Rocha","Dias","Mendes",
 ]
 const YOUTH_POSITIONS: Array<"GOL" | "ZAG" | "VOL" | "MEI" | "ATA"> = ["GOL","ZAG","ZAG","VOL","MEI","MEI","ATA","ATA"]
+const PERSONALITIES: Personality[] = ["lider", "ambicioso", "calmo", "profissional", "leal", "estrela", "polemico", "preguicoso", "mercenario"]
 
 function randomYouthName(): string {
   const f = YOUTH_FIRST_NAMES[Math.floor(Math.random() * YOUTH_FIRST_NAMES.length)]

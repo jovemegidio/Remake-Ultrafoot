@@ -27,15 +27,20 @@ export interface DynamicEvent {
 }
 
 /** Decide se evento será disparado nessa semana (probabilidade baseada em estado). */
-export function rollEvents(_state: GameState, _week: number): DynamicEvent[] {
-  throw new Error("events-engine.rollEvents: not implemented")
+export function rollEvents(state: GameState, week: number): DynamicEvent[] {
+  const result:DynamicEvent[]=[]
+  if (week>0 && week%13===0 && (state.balance??0)<0) result.push({id:`${state.season}-${week}-salary`,type:"salary_delay",triggeredAt:week,season:state.season,context:{balance:state.balance},resolved:false,options:[{id:"inject",text:"Cobrir os salários",outcome:{balanceDelta:-500000,moraleDelta:4}},{id:"explain",text:"Conversar com o elenco",outcome:{moraleDelta:-3}}]})
+  if (week>0 && week%17===0) result.push({id:`${state.season}-${week}-rain`,type:"heavy_rain",triggeredAt:week,season:state.season,context:{},resolved:false,options:[{id:"adapt",text:"Adaptar o treino",outcome:{moraleDelta:1}},{id:"maintain",text:"Manter programação",outcome:{moraleDelta:-1}}]})
+  return result
 }
 
 /** Aplica resolução escolhida pelo usuário. */
 export function resolveEvent(
-  _state: GameState,
-  _eventId: string,
-  _optionId: string,
+  state: GameState,
+  eventId: string,
+  optionId: string,
 ): GameState {
-  throw new Error("events-engine.resolveEvent: not implemented")
+  const next=structuredClone(state)
+  const morale=optionId==="inject"?4:optionId==="explain"?-3:optionId==="adapt"?1:-1
+  next.teamMorale=Math.max(0,Math.min(100,(next.teamMorale??65)+morale)); if(optionId==="inject")next.balance=(next.balance??0)-500000;next.updatedAt=Date.now();void eventId;return next
 }

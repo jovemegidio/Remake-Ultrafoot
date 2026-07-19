@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { 
   Scale, 
+  Target,
   Users, 
   LayoutList,
   Zap,
   Heart,
   TrendingUp,
   ChevronRight,
+  ArrowRight,
+  SlidersHorizontal,
   Plus,
   Folder
 } from "lucide-react"
@@ -22,6 +25,15 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
+import { useGameEngine } from "@/lib/game-engine"
+
+const TACTICAL_STYLE_DETAILS = {
+  posse_bola: { label: "Posse de Bola", impact: "Passe curto e controle do ritmo", icon: Target },
+  contra_ataque: { label: "Contra-Ataque", impact: "Transições rápidas ao recuperar", icon: Zap },
+  pressao_alta: { label: "Pressão Alta", impact: "Recuperação no campo adversário", icon: TrendingUp },
+  jogo_direto: { label: "Jogo Direto", impact: "Bolas verticais e ataque rápido", icon: ArrowRight },
+  jogo_posicional: { label: "Jogo Posicional", impact: "Estrutura e ocupação de espaços", icon: Scale },
+} as const
 
 // Icone de formacao tatica (campo com jogadores)
 function FormationIcon({ className }: { className?: string }) {
@@ -85,6 +97,7 @@ function LineupsIcon({ className }: { className?: string }) {
 export default function ElencoHubPage() {
   const router = useRouter()
   const { state } = useGameState()
+  const playingStyle = useGameEngine((game) => game.teamTactics.playingStyle)
   // Sem time default "BGT": no Tauri o save hidrata assincrono e o primeiro render vinha
   // sem time, mostrando o elenco do RB Bragantino (34 jog, 79 OVR) para qualquer clube.
   const resolvedTeam = state.selectedTeamShort ? getTeamByShort(state.selectedTeamShort) : undefined
@@ -108,6 +121,8 @@ export default function ElencoHubPage() {
 
   // Discord RPC
   useDiscordActivity("Elenco", `Gerenciando ${userTeam.nome}`)
+  const tacticalStyle = TACTICAL_STYLE_DETAILS[playingStyle] ?? TACTICAL_STYLE_DETAILS.jogo_posicional
+  const TacticalStyleIcon = tacticalStyle.icon
 
   const cards = [
     {
@@ -115,8 +130,8 @@ export default function ElencoHubPage() {
       title: "Visao Tatica",
       subtitle: "Visao tatica atual",
       icon: Scale,
-      description: "Padrao",
-      bottomText: "Impacto em atleta",
+      description: tacticalStyle.label,
+      bottomText: tacticalStyle.impact,
       route: "/elenco/taticas",
       color: "from-cyan-500/20 to-teal-500/10",
       borderColor: "border-cyan-500/30",
@@ -174,7 +189,7 @@ export default function ElencoHubPage() {
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <GameHeader />
         
-        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative pb-12">
           {/* Background com gradiente e pattern */}
           <div 
             className="absolute inset-0 opacity-30"
@@ -199,7 +214,7 @@ export default function ElencoHubPage() {
             }}
           />
 
-          <div className="relative h-full flex flex-col p-6 lg:p-8">
+          <div className="relative min-h-full flex flex-col p-6 lg:p-8">
             {/* Header com info do time */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
@@ -271,7 +286,7 @@ export default function ElencoHubPage() {
                         <div className="flex-1 flex items-center justify-center">
                           {card.id === 1 && (
                             <div className="flex flex-col items-center">
-                              <Scale className="h-24 w-24 text-white/80 mb-4" strokeWidth={1.5} />
+                              <TacticalStyleIcon className="h-24 w-24 text-white/80 mb-4" strokeWidth={1.5} />
                               <span className="text-lg font-semibold text-white/90">{card.description}</span>
                             </div>
                           )}
@@ -308,22 +323,12 @@ export default function ElencoHubPage() {
                         {card.id === 1 && (
                           <div className="flex items-center justify-between pt-4 border-t border-white/10">
                             <div className="flex items-center gap-2">
-                              <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
-                                <span className="text-[10px] text-white/60">X</span>
-                              </div>
+                              <SlidersHorizontal className="h-4 w-4 text-cyan-300" />
                               <span className="text-xs text-white/50">{card.bottomText}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              {[1, 2, 3, 4].map((dot) => (
-                                <div 
-                                  key={dot} 
-                                  className={cn(
-                                    "w-1.5 h-1.5 rounded-full",
-                                    dot === 1 ? "bg-white/60" : "bg-white/20"
-                                  )} 
-                                />
-                              ))}
-                            </div>
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-300">
+                              Editar <ArrowRight className="h-3.5 w-3.5" />
+                            </span>
                           </div>
                         )}
                       </div>

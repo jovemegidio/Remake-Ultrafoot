@@ -30,6 +30,9 @@ export interface Player {
   dribbling?: number
   defending?: number
   physical?: number
+  preferredFoot?: "Direita" | "Esquerda" | "Ambidestro"
+  reputation?: "normal" | "estrela" | "top_mundial"
+  traits?: string[]
 }
 
 const RAW = playersBR as Record<string, Array<{ nome: string; pos: string; idade: number; base: number }>>
@@ -61,8 +64,30 @@ function toPlayerPosition(posicao: string): Posicao {
   if (normalized === "LE") return "LE"
   if (normalized === "VOL") return "VOL"
   if (normalized === "MEI") return "MEI"
+  // CA significa centroavante no banco de dados importado, nao "meia central".
+  // Manter esta conversao aqui impede que atletas como Carlos Vinícius aparecam
+  // no meio-campo no elenco, escalação, radar e seleções.
+  if (normalized === "CA") return "ATA"
   if (normalized === "ATA") return "ATA"
   return normalized
+}
+
+// Índice leve usado também na migração de saves: quando uma versão antiga do
+// motor transformou CA (centroavante) em MEI, recuperamos a posição oficial sem
+// reprocessar o banco inteiro a cada carregamento.
+const canonicalSeedPositions = new Map<string, Posicao | null>()
+for (const squad of Object.values(RAW)) {
+  for (const player of squad) {
+    const key = normalizeTeamName(player.nome)
+    const position = toPlayerPosition(player.pos)
+    const previous = canonicalSeedPositions.get(key)
+    canonicalSeedPositions.set(key, previous === undefined || previous === position ? position : null)
+  }
+}
+
+export function getCanonicalSeedPosition(playerName: string): Posicao | undefined {
+  const position = canonicalSeedPositions.get(normalizeTeamName(playerName))
+  return position ?? undefined
 }
 
 const MAX_IMPORTED_OVERALL = 92
@@ -70,7 +95,7 @@ const MAX_IMPORTED_OVERALL = 92
 export const playersByTeam: Record<string, Player[]> = Object.fromEntries(
   Object.entries(RAW).map(([time, list]) => [
     time,
-    list.map(p => ({ ...p, time })),
+    list.map(p => ({ ...p, pos: toPlayerPosition(p.pos), time })),
   ])
 )
 
@@ -96,6 +121,25 @@ for (const team of importedTeams) {
       importedTeamMap.set(normalized, team)
     }
   }
+}
+
+// Indice global evita perder idade/overall quando o CSV atualizado move o atleta para
+// outro clube, mas o seed antigo ainda o guarda no time anterior. So usamos nomes com
+// uma unica combinacao de idade para nao confundir homonimos.
+const globalImportedPlayers = new Map<string, Array<{ idade: number; overall: number }>>()
+for (const importedTeam of importedTeams) {
+  for (const player of importedTeam.jogadores ?? []) {
+    const key = normalizeTeamName(player.nome)
+    const list = globalImportedPlayers.get(key) ?? []
+    list.push({ idade: player.idade, overall: player.overall })
+    globalImportedPlayers.set(key, list)
+  }
+}
+
+function findUniqueImportedPlayer(name: string): { idade: number; overall: number } | undefined {
+  const candidates = globalImportedPlayers.get(normalizeTeamName(name)) ?? []
+  const unique = new Map(candidates.map(p => [`${p.idade}:${p.overall}`, p]))
+  return unique.size === 1 ? [...unique.values()][0] : undefined
 }
 
 const teamAliasOverrides: Record<string, string[]> = {
@@ -343,21 +387,53 @@ const FILLER_POSITION_ORDER: Posicao[] = [
 ]
 
 function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
-  if (players.length >= MIN_PLAYABLE_SQUAD_SIZE) return players
-
+  const seenNames = new Set<string>()
+  players = players.filter(player => {
+    const key = normalizeTeamName(player.nome)
+    if (!key || seenNames.has(key)) return false
+    seenNames.add(key)
+    return true
+  })
+  // Elenco numeroso tambem pode estar incompleto por posicao. Alguns CSVs da Holanda
+  // continham apenas jogadores de linha; o retorno antecipado deixava seis clubes sem
+  // goleiro. A garantia de jogabilidade precisa validar composicao, nao so quantidade.
+  const withGoalkeeper = players.some((player) => player.pos === "GOL")
+    ? players
+    : [{ nome: `Goleiro ${team.curto}`, pos: "GOL" as Posicao, idade: 23, base: Math.max(50, Math.min(72, Math.round(team.prestigio * 0.72))), time: team.nome }, ...players]
+  // Além do goleiro, garante cobertura mínima de linhas. Isso protege clubes de bases
+  // incompletas sem reclassificar atletas reais: só cria uma peça de reposição quando a
+  // linha inteira não existe.
+  const covered = [...withGoalkeeper]
   const baseRating = Math.max(48, Math.min(68, Math.round(team.prestigio * 0.7)))
-  const fillers = Array.from({ length: MIN_PLAYABLE_SQUAD_SIZE - players.length }, (_, index) => {
-    const squadNumber = players.length + index + 1
+  const addMissing = (label: string, pos: Posicao, exists: (p: Player) => boolean) => {
+    if (!covered.some(exists)) covered.push({ nome: `${label} ${team.curto}`, pos, idade: 22, base: baseRating, time: team.nome })
+  }
+  addMissing("Zagueiro", "ZAG", p => ["ZAG", "LD", "LE"].includes(p.pos))
+  addMissing("Meio-campista", "VOL", p => ["VOL", "MC", "MEI", "ME", "MD"].includes(p.pos))
+  addMissing("Atacante", "ATA", p => ["ATA", "CA", "PE", "PD"].includes(p.pos))
+  const ensureCount = (label: string, positions: string[], fallback: Posicao, minimum: number) => {
+    while (covered.filter(p => positions.includes(p.pos)).length < minimum) {
+      const n = covered.filter(p => p.nome.startsWith(`${label} ${team.curto}`)).length + 1
+      covered.push({ nome: `${label} ${team.curto} ${n}`, pos: fallback, idade: 21 + n, base: Math.max(45, baseRating - n), time: team.nome })
+    }
+  }
+  ensureCount("Defensor", ["ZAG", "LD", "LE"], "ZAG", 4)
+  ensureCount("Meia", ["VOL", "MC", "MEI", "ME", "MD"], "VOL", 3)
+  ensureCount("Atacante", ["ATA", "CA", "PE", "PD"], "ATA", 3)
+  if (covered.length >= MIN_PLAYABLE_SQUAD_SIZE) return covered
+
+  const fillers = Array.from({ length: MIN_PLAYABLE_SQUAD_SIZE - covered.length }, (_, index) => {
+    const squadNumber = covered.length + index + 1
     return {
       nome: `Reserva ${team.curto} ${squadNumber}`,
-      pos: FILLER_POSITION_ORDER[(players.length + index) % FILLER_POSITION_ORDER.length],
+      pos: FILLER_POSITION_ORDER[(covered.length + index) % FILLER_POSITION_ORDER.length],
       idade: 19 + ((team.prestigio + index) % 13),
       base: Math.max(45, baseRating - (index % 6)),
       time: team.nome,
     }
   })
 
-  return [...players, ...fillers]
+  return [...covered, ...fillers]
 }
 
 function getImportedPlayersForTeam(team: Team): Player[] {
@@ -400,26 +476,44 @@ function getImportedPlayersForTeam(team: Team): Player[] {
       ? seedOveralls[Math.floor(seedOveralls.length / 2)]
       : 70
 
-    return realSquad.map((p, i) => {
+    const converted = realSquad.map((p, i) => {
       const seed = seedByName.get(normalizeTeamName(p.nome))
+      const globalSeed = seed ?? findUniqueImportedPlayer(p.nome)
       // Titular tende a ser melhor que reserva — degrada levemente pela ordem.
       const estimated = Math.max(55, median - Math.floor(i / 6))
       return {
         nome: p.nome,
-        pos: p.pos as Posicao,
-        idade: seed?.idade ?? 25,
-        base: seed ? Math.min(seed.overall, MAX_IMPORTED_OVERALL) : estimated,
+        pos: toPlayerPosition(p.pos),
+        idade: globalSeed?.idade ?? 25,
+        base: globalSeed ? Math.min(globalSeed.overall, MAX_IMPORTED_OVERALL) : estimated,
         time: team.nome,
       }
     })
+    if (converted.some((player) => player.pos === "GOL")) return converted
+
+    // O CSV pode omitir goleiros; recupera os nomes reais do seed do próprio clube.
+    const seedGoalkeepers = importedTeam.jogadores
+      .filter((player) => toPlayerPosition(player.posicao) === "GOL")
+      .map((player) => ({
+        nome: player.nome,
+        pos: "GOL" as Posicao,
+        idade: player.idade ?? 25,
+        base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
+        time: team.nome,
+      }))
+    return [...seedGoalkeepers, ...converted]
   }
 
   // Sem CSV para este clube: segue o seed como antes.
   return importedTeam.jogadores
-    .filter((player) => player.posicao?.toUpperCase() !== "BAN")
-    .map((player) => ({
+    .map((player, index) => ({
       nome: player.nome,
-      pos: toPlayerPosition(player.posicao),
+      // "BAN" significa apenas banco no arquivo de origem, não uma posição. Antes esses
+      // atletas eram descartados e substituídos por reservas fictícios. Preservamos os
+      // nomes licenciados e distribuímos apenas os sem posição pelos setores do banco.
+      pos: player.posicao?.toUpperCase() === "BAN"
+        ? FILLER_POSITION_ORDER[(index - 11 + FILLER_POSITION_ORDER.length) % FILLER_POSITION_ORDER.length]
+        : toPlayerPosition(player.posicao),
       idade: player.idade ?? 25,
       base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
       time: team.nome,
@@ -495,8 +589,51 @@ const DIVISION_RATING_CAP: Record<string, number> = {
   serie_d: 67,
 }
 
+// Escala comum para todo o banco. O seed legado misturava escalas (alguns clubes
+// tinham atletas 100–102 e outros ficavam todos em 55). A força da liga define o
+// centro, o prestígio ajusta o clube e a ordem relativa preserva quem é destaque.
+const DIVISION_RATING_BASE: Record<string, number> = {
+  premier_league: 76, la_liga: 75, serie_a_ita: 74, bundesliga: 74, ligue_1: 73,
+  primeira_liga: 71, eredivisie: 71, pro_league_bel: 69, scottish_prem: 68,
+  serie_a: 70, liga_argentina: 69, primera_a_col: 67, primera_div_chi: 66,
+  primera_div_ury: 66, serie_b: 63, serie_c: 57, serie_d: 52,
+  saudi_pro: 70, mls: 68, liga_mx: 68, j_league: 67, k_league_1: 66,
+}
+
+// Correspondências publicadas na base oficial FC 26. São aplicadas somente por nome
+// exato normalizado; os demais recebem a calibração de liga/clube acima.
+const OFFICIAL_RATING_OVERRIDES: Record<string, number> = {
+  virgilvandijk: 90, judebellingham: 90, erlinghaaland: 90, raphinha: 89,
+  alisson: 89, vinijr: 89, florianwirtz: 89, harrykane: 89, federicovalverde: 89,
+  kevindebruyne: 87, frenkiedejong: 87, declanrice: 87, martinodegaard: 87,
+  brunofernandes: 87, brunoguimaraes: 86, rubendias: 86,
+}
+
+function calibrateSquadRatings(team: Team, players: Player[]): Player[] {
+  if (players.length === 0) return players
+  const leagueBase = DIVISION_RATING_BASE[String(team.divisao)] ?? Math.max(52, Math.min(72, 55 + Math.round(team.prestigio * 0.2)))
+  const clubAdjustment = Math.max(-4, Math.min(4, Math.round((team.prestigio - 70) * 0.16)))
+  const ordered = [...players].sort((a, b) => b.base - a.base || a.nome.localeCompare(b.nome))
+  const rank = new Map(ordered.map((player, index) => [player, index]))
+  const middle = [...players].map(player => player.base).sort((a, b) => a - b)[Math.floor(players.length / 2)] ?? leagueBase
+
+  return players.map(player => {
+    const official = OFFICIAL_RATING_OVERRIDES[normalizeTeamName(player.nome)]
+    if (official != null) return { ...player, base: official }
+    const percentile = players.length <= 1 ? 0.5 : (rank.get(player) ?? 0) / (players.length - 1)
+    const rankAdjustment = Math.round(7 - percentile * 13)
+    const sourceSignal = Math.max(-2, Math.min(2, Math.round((player.base - middle) * 0.15)))
+    return { ...player, base: Math.max(40, Math.min(91, leagueBase + clubAdjustment + rankAdjustment + sourceSignal)) }
+  })
+}
+
 export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[] {
-  const players = ensurePlayableSquad(team, getPlayersByTeam(team.nome))
+  const indexed = getPlayersByTeam(team.nome)
+  // Clubes do pool completo não fazem parte de `allTeams` e, portanto, não entram no
+  // índice curado criado no boot. Consultar a importação diretamente evita que os quase
+  // 3 mil clubes recebam um elenco inteiramente genérico.
+  const source = indexed.length ? indexed : getImportedPlayersForTeam(team)
+  const players = calibrateSquadRatings(team, ensurePlayableSquad(team, source))
   const cap = DIVISION_RATING_CAP[team.divisao as string] ?? 92
   const capped = cap >= 92 ? players : players.map(p => p.base > cap ? { ...p, base: cap } : p)
   // raw = sem overrides (o editor precisa dos NOMES ORIGINAIS para chavear as edicoes).
@@ -522,6 +659,9 @@ function applyPlayerOverrides(fileKey: string, players: Player[]): Player[] {
       ...(ov.dribbling != null ? { dribbling: ov.dribbling } : {}),
       ...(ov.defending != null ? { defending: ov.defending } : {}),
       ...(ov.physical != null ? { physical: ov.physical } : {}),
+      ...(ov.preferredFoot ? { preferredFoot: ov.preferredFoot } : {}),
+      ...(ov.reputation ? { reputation: ov.reputation } : {}),
+      ...(ov.traits ? { traits: ov.traits } : {}),
     }
   })
 }
@@ -536,7 +676,7 @@ const POSITION_ORDER: Record<string, number> = {
   MEI: 5,
   ME: 5,
   MD: 5,
-  CA: 5,
+  CA: 6,
   ATA: 6,
   PE: 7,
   PD: 7,

@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight } from "lucide-react"
-import { loadGameState, hasSave, clearAllGameData, useGameState } from "@/lib/save-system"
+import { activateCareerSave, listCareerSaves, loadGameState, hasSave, clearAllGameData, useGameState } from "@/lib/save-system"
+import { useGameEngine } from "@/lib/game-engine"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useTranslation } from "@/lib/i18n"
 import { isTauri } from "@/lib/game-asset"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { LegalConsent } from "@/components/legal-consent"
 import { downloadSave, getSavedCloudCode } from "@/lib/cloud-save"
 import {
   Dialog,
@@ -30,10 +32,22 @@ type SplashPhase =
 
 type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
+const LANGUAGE_COUNTRIES = [
+  { id: "pt-BR", language: "Português", country: "Brasil", flag: "br", code: "BR" },
+  { id: "pt-PT", language: "Português", country: "Portugal", flag: "pt", code: "PT" },
+  { id: "en-US", language: "English", country: "United States", flag: "us", code: "US" },
+  { id: "en-GB", language: "English", country: "United Kingdom", flag: "gb-eng", code: "UK" },
+  { id: "es-ES", language: "Español", country: "España", flag: "es", code: "ES" },
+  { id: "es-MX", language: "Español", country: "México", flag: "mx", code: "MX" },
+] as const
+
 export default function SplashPage() {
   const t = useTranslation()
   const { state: gameState, setState: setGameState } = useGameState()
   const [phase, setPhase] = useState<SplashPhase>("black")
+  // Idioma é a primeira decisão da sessão, antes de qualquer opção de carreira.
+  const [languageSelected, setLanguageSelected] = useState(false)
+  const [languageIndex, setLanguageIndex] = useState(0)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isExiting, setIsExiting] = useState(false)
@@ -51,6 +65,15 @@ export default function SplashPage() {
   const [cloudSuccess, setCloudSuccess] = useState("")
   const [cloudSaveReady, setCloudSaveReady] = useState(false)
 
+  const moveLanguage = useCallback((direction: 1 | -1) => {
+    setLanguageIndex(current => (current + direction + LANGUAGE_COUNTRIES.length) % LANGUAGE_COUNTRIES.length)
+  }, [])
+  const selectLanguage = useCallback((index?: number) => {
+    const chosen = LANGUAGE_COUNTRIES[index ?? languageIndex]
+    setGameState({ language: chosen.id })
+    setLanguageSelected(true)
+  }, [languageIndex, setGameState])
+
   // Carrega estado de registro e código de nuvem do localStorage ao montar
   useEffect(() => {
     setIsRegistered(window.localStorage.getItem("ultrafoot:registered") === "1")
@@ -61,9 +84,9 @@ export default function SplashPage() {
   // Save real (persistent-store). Como o store carrega do disco de forma async,
   // lemos em estado e re-lemos quando ele fica pronto / muda — senao o menu
   // "Carregar" apareceria vazio no primeiro render mesmo havendo save.
-  const [saveInfo, setSaveInfo] = useState<{ realSave: ReturnType<typeof loadGameState> | null; hasSaveGame: boolean }>({ realSave: null, hasSaveGame: false })
+  const [saveInfo, setSaveInfo] = useState<{ realSave: ReturnType<typeof loadGameState> | null; hasSaveGame: boolean; careers: ReturnType<typeof listCareerSaves> }>({ realSave: null, hasSaveGame: false, careers: [] })
   useEffect(() => {
-    const refresh = () => setSaveInfo({ realSave: loadGameState(), hasSaveGame: hasSave() })
+    const refresh = () => setSaveInfo({ realSave: loadGameState(), hasSaveGame: hasSave(), careers: listCareerSaves() })
     refresh()
     window.addEventListener("ultrafoot:store:ready", refresh)
     window.addEventListener("ultrafoot:store:changed", refresh)
@@ -72,19 +95,19 @@ export default function SplashPage() {
       window.removeEventListener("ultrafoot:store:changed", refresh)
     }
   }, [])
-  const realSave = saveInfo.realSave
   const hasSaveGame = saveInfo.hasSaveGame
-  const savedTeam = realSave?.selectedTeamShort ? getTeamByShort(realSave.selectedTeamShort) : null
-  const savedGames = hasSaveGame && realSave?.selectedTeamShort
-    ? [{
-        id: 1,
-        teamName: savedTeam?.nome || realSave.selectedTeamShort,
-        season: `${realSave.season}/${realSave.season + 1}`,
-        date: realSave.updatedAt ? new Date(realSave.updatedAt).toLocaleDateString("pt-BR") : "-",
-        position: `Semana ${realSave.week}`,
+  const savedGames = saveInfo.careers.map(career => {
+    const team = getTeamByShort(career.teamShort)
+    return {
+        id: career.id,
+        name: career.name,
+        teamName: team?.nome || career.teamShort,
+        season: `${career.season}/${career.season + 1}`,
+        date: career.updatedAt ? new Date(career.updatedAt).toLocaleDateString("pt-BR") : "-",
+        position: `Semana ${career.week}`,
         competition: "Serie A",
-      }]
-    : []
+      }
+  })
 
   const mainMenuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href?: string }[] = [
     { id: "novo-jogo", label: t.splash.newGame, icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
@@ -96,6 +119,7 @@ export default function SplashPage() {
 
   // Sequencia de fases da splash
   useEffect(() => {
+    if (!languageSelected) return
     const sequence = async () => {
       // Se vier com ?menu=1 (ex: ao pressionar Voltar de outra tela), pula direto pro menu
       if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("menu") === "1") {
@@ -103,34 +127,38 @@ export default function SplashPage() {
         return
       }
 
+      const nav = navigator as Navigator & { deviceMemory?: number }
+      const lightweight = (nav.hardwareConcurrency ?? 8) <= 4 || (nav.deviceMemory ?? 8) <= 4
+      const wait = (ms: number) => delay(lightweight ? Math.min(ms, 350) : ms)
+
       // Fase 1: Tela preta inicial
-      await delay(800)
+      await wait(800)
       setPhase("studio-logo")
       
       // Fase 2: Logo do estudio
-      await delay(2000)
+      await wait(2000)
       setPhase("ea-warning")
       
       // Fase 3: Aviso legal
-      await delay(2000)
+      await wait(2000)
       setPhase("leagues")
       
       // Fase 4: Logos das ligas e competicoes
-      await delay(2500)
+      await wait(2500)
       setPhase("loading")
       
       // Fase 5: Tela de carregamento
       for (let i = 0; i <= 100; i += 4) {
-        await delay(30)
+        await delay(lightweight ? 8 : 30)
         setLoadingProgress(i)
       }
       
-      await delay(400)
+      await wait(400)
       setPhase("main-menu")
     }
     
     sequence()
-  }, [hasSaveGame])
+  }, [hasSaveGame, languageSelected])
 
   // Handler para navegacao no menu
   const handleMenuSelect = useCallback((index: number) => {
@@ -175,7 +203,14 @@ export default function SplashPage() {
   }, [isExiting, mainMenuOptions, isRegistered])
 
   // Handler para carregar save
-  const handleLoadSave = useCallback((saveId: number) => {
+  const handleLoadSave = useCallback(async (saveId: string) => {
+    if (!activateCareerSave(saveId)) {
+      setCloudError("Este save esta danificado e nao possui copia de recuperacao valida.")
+      return
+    }
+    // O app permanece em uma unica WebView. Rehidrata explicitamente o motor do
+    // slot escolhido antes de abrir o escritorio, sem reaproveitar elenco/tatica.
+    await useGameEngine.persist.rehydrate()
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("ultrafoot:session-active", "true")
     }
@@ -257,6 +292,13 @@ export default function SplashPage() {
         return
       }
 
+      if (!languageSelected) {
+        if (e.key === "ArrowLeft") { e.preventDefault(); moveLanguage(-1) }
+        else if (e.key === "ArrowRight") { e.preventDefault(); moveLanguage(1) }
+        else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectLanguage() }
+        return
+      }
+
       if (phase !== "main-menu") return
 
       if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
@@ -303,6 +345,13 @@ export default function SplashPage() {
         return
       }
 
+      if (!languageSelected) {
+        if (button === "DPAD_LEFT" || button === "LB") moveLanguage(-1)
+        else if (button === "DPAD_RIGHT" || button === "RB") moveLanguage(1)
+        else if (button === "A") selectLanguage()
+        return
+      }
+
       if (phase !== "main-menu") return
 
       if (button === "DPAD_UP" || button === "DPAD_LEFT" || button === "LB") {
@@ -322,7 +371,7 @@ export default function SplashPage() {
       window.removeEventListener("keydown", handleKeyDown)
       window.removeEventListener("gamepad:button", handleGamepadButton)
     }
-  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, showLoadModal, isRegistered, selectedSaveIndex, savedGames, handleLoadSave])
+  }, [phase, selectedIndex, handleMenuSelect, mainMenuOptions, showRegisterModal, showLoadModal, isRegistered, selectedSaveIndex, savedGames, handleLoadSave, languageSelected, moveLanguage, selectLanguage])
 
   return (
     <div
@@ -335,21 +384,30 @@ export default function SplashPage() {
         background: "linear-gradient(180deg, #1f1f1f 0%, #171717 50%, #1a1a1a 100%)"
       }}
     >
-      {/* Seletor de idioma tambem no MENU DE ENTRADA (nao so em Configuracoes) — relatado. */}
-      <div className="absolute right-4 top-4 z-[60] flex items-center gap-1.5">
-        {([["pt-BR", "PT"], ["en-US", "EN"], ["es-ES", "ES"]] as const).map(([id, code]) => (
-          <button
-            key={id}
-            onClick={() => setGameState({ language: id })}
-            className={cn(
-              "rounded-md px-2 py-1 text-[11px] font-bold transition-all",
-              (gameState.language ?? "pt-BR") === id ? "bg-white/20 text-white" : "bg-white/[0.06] text-white/50 hover:text-white/80",
-            )}
-          >
-            {code}
-          </button>
-        ))}
-      </div>
+      <LegalConsent onAccepted={() => undefined} />
+      {!languageSelected && (() => {
+        const current = LANGUAGE_COUNTRIES[languageIndex]
+        const previous = LANGUAGE_COUNTRIES[(languageIndex - 1 + LANGUAGE_COUNTRIES.length) % LANGUAGE_COUNTRIES.length]
+        const next = LANGUAGE_COUNTRIES[(languageIndex + 1) % LANGUAGE_COUNTRIES.length]
+        return <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#050508] px-5">
+          <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-gradient-to-br from-[#102925] to-[#0b0c10] p-7 text-center shadow-2xl">
+            <Globe className="mx-auto h-11 w-11 text-[#00ffc8]" />
+            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#00ffc8]">Ultrafoot 26</p>
+            <h1 className="mt-2 text-2xl font-black text-white">Escolha o idioma</h1>
+            <p className="mt-2 text-sm text-white/50">Você poderá alterá-lo depois nas configurações.</p>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button onClick={() => moveLanguage(-1)} aria-label="País anterior" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[#00ffc8] hover:text-[#00ffc8]">‹</button>
+              <button onClick={() => moveLanguage(-1)} className="hidden w-24 rounded-xl border border-white/10 bg-white/[0.03] p-2 opacity-45 transition hover:opacity-80 sm:block"><Image src={`/flags/${previous.flag}.png`} alt={previous.country} width={48} height={32} className="mx-auto h-8 w-12 object-cover" /><span className="mt-2 block truncate text-[10px] text-white">{previous.code}</span></button>
+              <button onClick={() => selectLanguage()} className="w-44 rounded-2xl border-2 border-[#00ffc8] bg-[#00ffc8]/10 px-4 py-4 shadow-[0_0_26px_rgba(0,255,200,.16)] transition hover:bg-[#00ffc8]/20"><Image src={`/flags/${current.flag}.png`} alt={`Bandeira de ${current.country}`} width={96} height={64} className="mx-auto h-14 w-24 rounded object-cover shadow" /><span className="mt-3 block text-lg font-black text-white">{current.language}</span><span className="mt-1 block text-xs text-[#00ffc8]">{current.country}</span></button>
+              <button onClick={() => moveLanguage(1)} className="hidden w-24 rounded-xl border border-white/10 bg-white/[0.03] p-2 opacity-45 transition hover:opacity-80 sm:block"><Image src={`/flags/${next.flag}.png`} alt={next.country} width={48} height={32} className="mx-auto h-8 w-12 object-cover" /><span className="mt-2 block truncate text-[10px] text-white">{next.code}</span></button>
+              <button onClick={() => moveLanguage(1)} aria-label="Próximo país" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[#00ffc8] hover:text-[#00ffc8]">›</button>
+            </div>
+            <p className="mt-5 text-[11px] text-white/40">← / → ou direcional para trocar país · Enter / A para confirmar</p>
+          </div>
+        </div>
+      })()}
+      {/* Depois da escolha inicial, o idioma fica fixo durante a sessão. A troca
+          continua disponível somente em Configurações, como no fluxo solicitado. */}
 
       {/* Phase: Black screen */}
       <div className={cn(
@@ -1056,7 +1114,11 @@ export default function SplashPage() {
               />
               {cloudSaveReady ? (
                 <button
-                  onClick={() => handleLoadSave(1)}
+                  onClick={() => {
+                    const downloaded = loadGameState()
+                    if (downloaded.careerId) void handleLoadSave(downloaded.careerId)
+                    else setCloudError("O save baixado nao possui uma carreira valida.")
+                  }}
                   className="px-4 py-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-semibold text-sm flex items-center gap-2 hover:bg-emerald-500/30 transition-colors"
                 >
                   <CheckCircle2 className="h-4 w-4" />

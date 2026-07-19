@@ -2113,25 +2113,6 @@ export const saudiProTeams: Team[] = [
     pais: "Arabia Saudita"
   },
   {
-    nome: "Abha Club",
-    curto: "ABH",
-    cidade: "Abha",
-    estado: "Arabia Saudita",
-    cor1: "#E30613",
-    cor2: "#0F9D58",
-    prestigio: 55,
-    torcida: 8000000,
-    estadio_cap: 25000,
-    saldo: 40000000,
-    file_key: "abha_club",
-    estadio_nome: "Prince Sultan bin Abdulaziz Stadium",
-    patrocinador: "Aramco",
-    escudo_url: getIntlEscudo("abha_club"),
-    divisao: "saudi_pro",
-    regiao: "asia",
-    pais: "Arabia Saudita"
-  },
-  {
     nome: "Damac FC",
     curto: "DAM",
     cidade: "Unaizah",

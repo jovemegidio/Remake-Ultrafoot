@@ -7704,7 +7704,7 @@
   "roberto-firmino": "/jogadores/roberto-firmino.jpg",
   "ryan-carvalho": "/jogadores/ryan-carvalho.jpg",
   "saad-al-sheeb": "/jogadores/saad-al-sheeb.jpg",
-  "vini": "/jogadores/vini.jpg",
+  "vini": "/jogadores/vini.webp",
   "wallison": "/jogadores/wallison.jpg",
   "youcef-atal": "/jogadores/youcef-atal.jpg",
   "younes-el-hannach": "/jogadores/younes-el-hannach.jpg",
@@ -12632,5 +12632,9 @@
   "dimitrios-garas": "/jogadores/dimitrios-garas.jpg",
   "aleksi-jussila": "/jogadores/aleksi-jussila.jpg",
   "samuel-kulha": "/jogadores/samuel-kulha.jpg",
-  "david-carson": "/jogadores/david-carson.jpg"
+  "david-carson": "/jogadores/david-carson.jpg",
+  "mba": "/jogadores/mba.webp",
+  "haaland": "/jogadores/haaland.webp",
+  "bell": "/jogadores/bell.webp",
+  "yamal": "/jogadores/yamal.webp"
 }

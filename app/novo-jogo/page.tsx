@@ -46,11 +46,17 @@ import {
 } from "@/lib/international-teams"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { useGameManager } from "@/lib/use-game-manager"
+import { createYouthCareer } from "@/lib/youth-career-engine"
+import { createClubDebt, type DebtPreset } from "@/lib/debt-engine"
+import { createScoutingDepartment } from "@/lib/scout-engine"
+import { createStadiumPitch } from "@/lib/infrastructure-engine"
+import { generateOffers } from "@/lib/sponsor-engine"
 import { TeamCrest } from "@/components/team-crest"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { Cutscene } from "@/components/cutscene"
+import { flushPersistentStore } from "@/lib/persistent-store"
 
 const FLAG_MAP: Record<string, string> = {
   BRA: "br", ENG: "gb-eng", ESP: "es", ITA: "it",
@@ -173,9 +179,12 @@ const COUNTRIES: CountryTab[] = [
       { key: "liga_mx", label: "Liga MX", short: "Liga MX", teams: ligaMXTeams },
     ],
   },
-  // Argentina REMOVIDA da selecao de carreira a pedido do usuario: nao da mais para
-  // COMECAR uma carreira com um time argentino. Os clubes continuam no jogo (em
-  // ligaArgentinaTeams/teams-data) — aparecem como adversarios e na Libertadores.
+  {
+    name: "Argentina", code: "ARG", region: "americas",
+    leagues: [
+      { key: "liga_argentina", label: "Liga Profesional", short: "Liga Argentina", teams: ligaArgentinaTeams },
+    ],
+  },
   {
     name: "Colombia", code: "COL", region: "americas",
     leagues: [
@@ -234,6 +243,8 @@ export default function NovoJogoPage() {
   const [kitError, setKitError] = useState(false)
   const [kitRetryCount, setKitRetryCount] = useState(0)
   const [managerName, setManagerName] = useState("")
+  const [careerStart, setCareerStart] = useState<"professional" | "sub20">("professional")
+  const [debtPreset, setDebtPreset] = useState<DebtPreset>("none")
   const [showIntro, setShowIntro] = useState(false)
   const [nameError, setNameError] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -302,13 +313,39 @@ export default function NovoJogoPage() {
       nameInputRef.current?.focus()
       return
     }
+    // Marcador pequeno e sincrono para recuperar a navegacao no WebView caso o
+    // sessionStorage seja descartado durante o reload do protocolo Tauri.
+    window.localStorage.setItem("ultrafoot:career-bootstrap", JSON.stringify({
+      teamShort: selectedTeam.curto,
+      managerName: managerName.trim(),
+      createdAt: Date.now(),
+    }))
     setTeamColors({ primary: selectedTeam.cor1, secondary: selectedTeam.cor2 })
     setTheme("team")
-    initializeNewGame(selectedTeam.curto, managerName)
+    initializeNewGame(selectedTeam.curto, managerName, {
+      youthCareer: undefined,
+      debt: createClubDebt(debtPreset, profile?.clubValue ?? 100_000_000),
+      scoutingDepartment: createScoutingDepartment(),
+      stadiumPitch: createStadiumPitch(selectedTeam.prestigio, 2026),
+      sponsorOffers: generateOffers(selectedTeam.prestigio, 1),
+      activeSponsors: [],
+    })
     window.sessionStorage.setItem("ultrafoot:session-active", "true")
     // Toca a cutscene de inicio de carreira antes de entrar no escritorio.
     setShowIntro(true)
-  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme])
+  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, careerStart, debtPreset, profile])
+
+  const finishIntro = useCallback(async () => {
+    // hardNavigate recarrega a WebView. Sem aguardar o plugin-store, pular a cutscene
+    // podia destruir o cache antes de o novo clube chegar ao disco e a home carregava
+    // para sempre. O limite evita prender a UI se o sistema de arquivos falhar.
+    await Promise.race([
+      flushPersistentStore(),
+      new Promise<void>(resolve => window.setTimeout(resolve, 5000)),
+    ])
+    window.sessionStorage.setItem("ultrafoot:session-active", "true")
+    hardNavigate("/?career=1")
+  }, [])
 
   const isNameValid = managerName.trim().length > 0
 
@@ -410,7 +447,7 @@ export default function NovoJogoPage() {
   return (
     <main className="h-screen w-screen overflow-hidden relative">
       {/* Cutscene de inicio de carreira (toca ao "Iniciar Carreira", vai para o escritorio ao terminar/pular) */}
-      {showIntro && <Cutscene src="/cutscenes/intro.mp4" onComplete={() => hardNavigate("/")} />}
+      {showIntro && <Cutscene src="/cutscenes/intro.mp4" onComplete={() => void finishIntro()} />}
 
       {/* Background */}
       <div className="absolute inset-0 z-0">
@@ -547,7 +584,7 @@ export default function NovoJogoPage() {
                   {selectedTeam && !kitError ? (
                     <Image
                       key={`${selectedTeam.file_key}-${activeVariant}-${kitRetryCount}`}
-                      src={getCamisaUrl(selectedTeam.file_key, activeVariant)}
+                      src={getCamisaUrl(selectedTeam.file_key, activeVariant, selectedTeam.nome)}
                       alt={`Uniforme ${uniformIndex + 1} do ${selectedTeam.nome}`}
                       width={150}
                       height={188}
@@ -678,6 +715,12 @@ export default function NovoJogoPage() {
 
             {/* Nome do tecnico + iniciar */}
             <div className="flex items-center gap-3">
+              <div className="flex h-11 rounded-xl border border-white/15 bg-black/55 p-1">
+                <button type="button" onClick={() => setCareerStart("professional")} className={cn("px-3 rounded-lg text-[10px] font-black uppercase tracking-wide transition", careerStart === "professional" ? "bg-white text-black" : "text-white/55")}>Profissional</button>
+              </div>
+              <select value={debtPreset} onChange={event => setDebtPreset(event.target.value as DebtPreset)} aria-label="Dívida inicial do clube" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
+                <option value="none">Sem dívida</option><option value="light">Dívida leve</option><option value="realistic">Dívida realista</option><option value="high">Dívida alta</option>
+              </select>
               <div className="relative">
                 {nameError && (
                   <p className="absolute -top-7 right-0 whitespace-nowrap text-[11px] font-medium text-red-400">

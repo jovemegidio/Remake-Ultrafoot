@@ -26,7 +26,6 @@ import {
   serieCTeams,
   serieDTeams,
   allPoolTeams,
-  getCamisaUrl,
   type Team
 } from "@/lib/teams-data"
 import { allInternationalTeams } from "@/lib/international-teams"
@@ -39,11 +38,16 @@ import {
   getTeamOverride,
   setTeamOverride,
   clearTeamOverride,
+  applyTeamOverride,
   listLocalTeamOverrides,
   type TeamOverride,
   type KitPattern,
 } from "@/lib/team-overrides"
-import { initPersistentStore } from "@/lib/persistent-store"
+import { flushPersistentStore, initPersistentStore } from "@/lib/persistent-store"
+import { generateYouthRoster, getYouthRoster, saveYouthRoster, type YouthEditorPlayer } from "@/lib/youth-editor"
+import { PlayerAvatar } from "@/components/player-avatar"
+import { setPlayerPhotoOverride } from "@/lib/player-photos"
+import { KitImage } from "@/components/match/kit-image"
 
 const DIV_LABEL: Record<string, string> = {
   serie_a: "Série A", serie_b: "Série B", serie_c: "Série C", serie_d: "Série D",
@@ -217,18 +221,25 @@ export default function EditarPage() {
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)
   // Edicao de jogador (nome/posicao/overall) — persiste via player-overrides.
   const [editingPlayer, setEditingPlayer] = useState<EditorPlayer | null>(null)
-  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
+  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, preferredFoot: "Direita" as "Direita" | "Esquerda" | "Ambidestro", reputation: "normal" as "normal" | "estrela" | "top_mundial", traits: [] as string[], faceDataUrl: "", pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
   const openPlayerEdit = (p: EditorPlayer) => {
     setEditingPlayer(p)
-    setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
+    const ov = selectedTeam ? getPlayerOverride(selectedTeam.file_key, p.originalName) : null
+    setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, preferredFoot: ov?.preferredFoot ?? "Direita", reputation: ov?.reputation ?? "normal", traits: ov?.traits ?? [], faceDataUrl: ov?.faceDataUrl ?? "", pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
   }
   const [activeTab, setActiveTab] = useState<"principal" | "juniores" | "dados">("principal")
-  const [kitErrors, setKitErrors] = useState<Record<string, boolean>>({})
+  useEffect(() => setSelectedPlayerIndex(0), [activeTab])
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [players, setPlayers] = useState(() => generatePlayersForTeam(allTeams[0]))
+  const [youthPlayers, setYouthPlayers] = useState<YouthEditorPlayer[]>(() => getYouthRoster(allTeams[0].file_key))
   const [hasCustomLogo, setHasCustomLogo] = useState(false)
   const [storeReady, setStoreReady] = useState(false)
+  const [teamsRevision, setTeamsRevision] = useState(0)
+  const resolvedTeams = useMemo(
+    () => allTeams.map(team => applyTeamOverride(team)),
+    [storeReady, teamsRevision],
+  )
 
   // Edit draft state
   const [editDraft, setEditDraft] = useState<TeamOverride>({})
@@ -256,9 +267,20 @@ export default function EditarPage() {
     setEditSaved(false)
   }
 
-  const handleSaveOverride = () => {
+  const handleSaveOverride = async () => {
     if (!selectedTeam) return
-    setTeamOverride(selectedTeam.file_key, editDraft)
+    await initPersistentStore()
+    const normalized: TeamOverride = {
+      ...editDraft,
+      nome: editDraft.nome?.trim() || selectedTeam.nome,
+      curto: editDraft.curto?.trim().toUpperCase() || selectedTeam.curto,
+    }
+    setTeamOverride(selectedTeam.file_key, normalized)
+    await flushPersistentStore()
+    // Reflete imediatamente no cabeçalho e na lista; antes só aparecia após reabrir.
+    setSelectedTeam({ ...selectedTeam, ...normalized })
+    setEditDraft(normalized)
+    setTeamsRevision(value => value + 1)
     setEditSaved(true)
     setTimeout(() => setEditSaved(false), 2000)
   }
@@ -266,7 +288,11 @@ export default function EditarPage() {
   const handleResetOverride = () => {
     if (!selectedTeam) return
     clearTeamOverride(selectedTeam.file_key)
-    initDraft(selectedTeam)
+    const base = allTeams.find(team => team.file_key === selectedTeam.file_key) ?? selectedTeam
+    const resolved = applyTeamOverride(base)
+    setSelectedTeam({ ...resolved })
+    initDraft(resolved)
+    setTeamsRevision(value => value + 1)
   }
 
   /**
@@ -344,11 +370,7 @@ export default function EditarPage() {
         })
         // Limpa eventual erro do thumbnail (o kit padrao pode ter dado 404 antes),
         // senao o cabecalho continuaria mostrando o SVG generico no lugar do import.
-        setKitErrors(prev => {
-          const next = { ...prev }
-          delete next[`${selectedTeam.file_key}-${variant}`]
-          return next
-        })
+        setTeamsRevision(value => value + 1)
       }
     }
 
@@ -379,7 +401,10 @@ export default function EditarPage() {
 
   // Initialize the persistent store (loads data from disk into memory cache)
   useEffect(() => {
-    initPersistentStore().then(() => setStoreReady(true))
+    initPersistentStore().then(() => {
+      setStoreReady(true)
+      setSelectedTeam(current => current ? { ...applyTeamOverride(current) } : current)
+    })
   }, [])
 
   useEffect(() => {
@@ -442,20 +467,20 @@ export default function EditarPage() {
   useEffect(() => {
     if (selectedTeam) {
       setPlayers(generatePlayersForTeam(selectedTeam))
+      setYouthPlayers(getYouthRoster(selectedTeam.file_key))
       setSelectedPlayerIndex(0)
-      setKitErrors({})
       initDraft(selectedTeam)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTeam, storeReady])
 
   const filteredTeams = useMemo(() => {
-    if (!searchTeam) return allTeams
-    return allTeams.filter(team =>
+    if (!searchTeam) return resolvedTeams
+    return resolvedTeams.filter(team =>
       team.nome.toLowerCase().includes(searchTeam.toLowerCase()) ||
       team.curto.toLowerCase().includes(searchTeam.toLowerCase())
     )
-  }, [searchTeam])
+  }, [searchTeam, resolvedTeams])
 
   // Agrupa os times por País > (estados no Brasil / ligas no exterior).
   // Países e subgrupos são ordenados por prestígio (o mais forte primeiro),
@@ -528,9 +553,10 @@ export default function EditarPage() {
       return next
     })
 
+  const displayedPlayers = activeTab === "juniores" ? youthPlayers : players
   const sortedPlayers = useMemo(() => {
-    if (!sortColumn) return players
-    return [...players].sort((a, b) => {
+    if (!sortColumn) return displayedPlayers
+    return [...displayedPlayers].sort((a, b) => {
       const aVal = a[sortColumn as keyof typeof a]
       const bVal = b[sortColumn as keyof typeof b]
       if (typeof aVal === "number" && typeof bVal === "number") {
@@ -540,7 +566,7 @@ export default function EditarPage() {
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal))
     })
-  }, [players, sortColumn, sortDirection])
+  }, [displayedPlayers, sortColumn, sortDirection])
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -664,10 +690,10 @@ export default function EditarPage() {
                         </button>
 
                         {subOpen && sub.teams.map((team) => {
-                          const isSelected = selectedTeam?.curto === team.curto && selectedTeam?.divisao === team.divisao
+                          const isSelected = selectedTeam?.file_key === team.file_key
                           return (
                             <button
-                              key={`${team.curto}-${team.divisao}`}
+                              key={team.file_key}
                               onClick={() => setSelectedTeam(team)}
                               className={cn(
                                 "w-full grid grid-cols-[1fr_44px] text-xs border-b border-white/[0.03] transition-all",
@@ -784,41 +810,15 @@ export default function EditarPage() {
 
                   {/* Kits */}
                   <div className="hidden lg:flex items-center gap-1.5">
-                    {(["home", "away", "third"] as const).map((variant, vi) => {
-                      const kitKey = `${selectedTeam.file_key}-${variant}`
-                      const hasError = kitErrors[kitKey]
-                      const kitColors = [
-                        { bg: selectedTeam.cor1, stripe: selectedTeam.cor2 },
-                        { bg: selectedTeam.cor2, stripe: selectedTeam.cor1 },
-                        { bg: "#1a1a2e", stripe: selectedTeam.cor1 },
-                      ]
-                      const { bg, stripe } = kitColors[vi]
-                      return (
+                    {(["home", "away", "third"] as const).map((variant) => (
                         <div
                           key={variant}
                           className="w-10 h-12 bg-white/[0.04] rounded-lg flex items-center justify-center p-1 hover:bg-white/[0.08] transition-all cursor-pointer border border-white/[0.06]"
                           title={variant === "home" ? "Principal" : variant === "away" ? "Alternativo" : "Terceiro"}
                         >
-                          {!hasError ? (
-                            <Image
-                              src={getCamisaUrl(selectedTeam.file_key, variant)}
-                              alt={`${selectedTeam.nome} ${variant}`}
-                              width={36}
-                              height={44}
-                              className="object-contain h-full w-auto"
-                              unoptimized
-                              onError={() => setKitErrors(prev => ({ ...prev, [kitKey]: true }))}
-                            />
-                          ) : (
-                            <svg viewBox="0 0 40 50" className="h-full w-auto">
-                              <path d="M14 2 L8 8 L2 6 L2 22 L8 22 L8 46 L32 46 L32 22 L38 22 L38 6 L32 8 Z"
-                                fill={bg} stroke={stripe} strokeWidth="1.5" />
-                              <path d="M14 2 L20 5 L26 2 L32 8 L20 12 L8 8 Z" fill={stripe} opacity="0.7" />
-                            </svg>
-                          )}
+                          <KitImage team={selectedTeam} variant={variant} />
                         </div>
-                      )
-                    })}
+                    ))}
                   </div>
 
                   {/* OVR */}
@@ -923,13 +923,30 @@ export default function EditarPage() {
                   </div>
 
                   {/* Bottom Actions */}
-                  <div className="flex-shrink-0 h-12 flex items-center justify-between bg-black/60 backdrop-blur-sm border-t border-white/[0.06] px-5">
+                  <div className="sticky bottom-0 z-20 flex min-h-16 flex-shrink-0 flex-wrap items-center justify-between gap-2 bg-black/95 px-5 py-2 border-t border-white/[0.10] shadow-[0_-8px_30px_rgba(0,0,0,.45)]">
                     <div className="flex items-center gap-1.5 text-xs">
-                      <span className="font-bold text-white">{players.length}</span>
+                      <span className="font-bold text-white">{displayedPlayers.length}</span>
                       <span className="text-white/30">/55 jogadores</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#00ffc8]/10 hover:bg-[#00ffc8]/20 text-[#00ffc8] rounded-lg transition-all border border-[#00ffc8]/20">
+                      <button
+                        onClick={() => {
+                          if (activeTab !== "juniores" || !selectedTeam) return
+                          const attrs = defaultPlayerAttributes(50, "MEI")
+                          const created: YouthEditorPlayer = {
+                            id: Math.max(10000, ...youthPlayers.map(player => player.id + 1)),
+                            originalName: `novo_juvenil_${Date.now()}`,
+                            nome: "Novo juvenil", posicao: "MEI", pais: "-", idade: 16,
+                            overall: 50, caracteristica: "Em formação", lado: "D", ...attrs,
+                          }
+                          const next = [...youthPlayers, created]
+                          setYouthPlayers(next)
+                          saveYouthRoster(selectedTeam.file_key, next)
+                          openPlayerEdit(created)
+                        }}
+                        disabled={activeTab !== "juniores"}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#00ffc8]/10 hover:bg-[#00ffc8]/20 text-[#00ffc8] rounded-lg transition-all border border-[#00ffc8]/20 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline">Adicionar</span>
                       </button>
@@ -944,11 +961,33 @@ export default function EditarPage() {
                         <Pencil className="h-3 w-3" />
                         <span className="hidden sm:inline">Editar</span>
                       </button>
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]">
+                      <button
+                        onClick={() => {
+                          if (activeTab !== "juniores" || !selectedTeam) return
+                          const next = generateYouthRoster(selectedTeam.file_key, Date.now() % 100000)
+                          setYouthPlayers(next)
+                          saveYouthRoster(selectedTeam.file_key, next)
+                          setSelectedPlayerIndex(0)
+                        }}
+                        disabled={activeTab !== "juniores"}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
+                      >
                         <Shuffle className="h-3 w-3" />
                         <span className="hidden sm:inline">Aleatorio</span>
                       </button>
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-lg transition-all border border-rose-500/20">
+                      <button
+                        onClick={() => {
+                          if (activeTab !== "juniores" || !selectedTeam) return
+                          const selected = sortedPlayers[selectedPlayerIndex]
+                          if (!selected) return
+                          const next = youthPlayers.filter(player => player.id !== selected.id)
+                          setYouthPlayers(next)
+                          saveYouthRoster(selectedTeam.file_key, next)
+                          setSelectedPlayerIndex(index => Math.max(0, Math.min(index, next.length - 1)))
+                        }}
+                        disabled={activeTab !== "juniores"}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-lg transition-all border border-rose-500/20 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
                         <Trash2 className="h-3 w-3" />
                         <span className="hidden sm:inline">Remover</span>
                       </button>
@@ -1101,24 +1140,12 @@ export default function EditarPage() {
                                     </button>
                                   </div>
                                 ) : (
-                                  <svg viewBox="0 0 40 50" className="h-14 w-auto">
-                                    <path d="M14 2 L8 8 L2 6 L2 22 L8 22 L8 46 L32 46 L32 22 L38 22 L38 6 L32 8 Z"
-                                      fill={kit.primary} stroke={kit.secondary} strokeWidth="1.5" />
-                                    {kit.pattern === "stripes" && (
-                                      <>
-                                        <line x1="15" y1="8" x2="15" y2="46" stroke={kit.secondary} strokeWidth="3" opacity="0.5" />
-                                        <line x1="22" y1="8" x2="22" y2="46" stroke={kit.secondary} strokeWidth="3" opacity="0.5" />
-                                        <line x1="29" y1="8" x2="29" y2="46" stroke={kit.secondary} strokeWidth="3" opacity="0.5" />
-                                      </>
-                                    )}
-                                    {kit.pattern === "diagonal" && (
-                                      <line x1="2" y1="46" x2="38" y2="6" stroke={kit.secondary} strokeWidth="6" opacity="0.45" />
-                                    )}
-                                    {kit.pattern === "halves" && (
-                                      <rect x="20" y="6" width="18" height="40" fill={kit.secondary} opacity="0.55" />
-                                    )}
-                                    <path d="M14 2 L20 5 L26 2 L32 8 L20 12 L8 8 Z" fill={kit.secondary} opacity="0.7" />
-                                  </svg>
+                                  <div className="h-16 w-16">
+                                    <KitImage
+                                      team={{ ...selectedTeam, cor1: kit.primary, cor2: kit.secondary }}
+                                      variant={variant}
+                                    />
+                                  </div>
                                 )}
                               </div>
 
@@ -1231,10 +1258,25 @@ export default function EditarPage() {
       {/* Modal de edicao de JOGADOR (nome / posicao / overall) — persiste e viaja no build. */}
       {editingPlayer && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setEditingPlayer(null)}>
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f1e22] p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1e22] p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-1 text-lg font-bold text-white">Editar jogador</h3>
             <p className="mb-4 text-xs text-white/40">Original: {editingPlayer.originalName}</p>
             <div className="space-y-3">
+              <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <PlayerAvatar name={pDraft.nome || editingPlayer.nome} photoUrl={pDraft.faceDataUrl || undefined} position={pDraft.posicao} size="xl" />
+                <div>
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15">
+                    <Upload className="h-4 w-4" /> Importar foto
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={async (event) => {
+                      const file = event.target.files?.[0]
+                      if (!file) return
+                      const raw = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file) })
+                      setPDraft(d => ({ ...d, faceDataUrl: raw }))
+                    }} />
+                  </label>
+                  <p className="mt-2 text-[10px] leading-4 text-white/35">PNG, JPEG ou WebP. A imagem é compactada ao salvar.</p>
+                </div>
+              </div>
               <div>
                 <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Nome</label>
                 <input
@@ -1264,6 +1306,38 @@ export default function EditarPage() {
                     onChange={(e) => setPDraft((d) => ({ ...d, overall: parseInt(e.target.value) || 0 }))}
                     className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:outline-none"
                   />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Idade</label>
+                  <input type="number" min={14} max={50} value={pDraft.idade} onChange={e => setPDraft(d => ({ ...d, idade: Number(e.target.value) }))} className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Pé preferido</label>
+                  <select value={pDraft.preferredFoot} onChange={e => setPDraft(d => ({ ...d, preferredFoot: e.target.value as typeof d.preferredFoot }))} className="w-full rounded-lg border border-white/10 bg-[#14252a] px-3 py-2 text-sm text-white">
+                    <option>Direita</option><option>Esquerda</option><option>Ambidestro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Reputação</label>
+                  <select value={pDraft.reputation} onChange={e => setPDraft(d => ({ ...d, reputation: e.target.value as typeof d.reputation }))} className="w-full rounded-lg border border-white/10 bg-[#14252a] px-3 py-2 text-sm text-white">
+                    <option value="normal">Normal</option><option value="estrela">Estrela</option><option value="top_mundial">Top mundial</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[10px] uppercase tracking-wide text-white/40">Características especiais</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(pDraft.posicao === "GOL"
+                    ? [["defende_penaltis", "Defende pênaltis"], ["sai_do_gol", "Sai bem do gol"], ["reposicao", "Ótima reposição"], ["reflexos", "Reflexos rápidos"]]
+                    : [["finalizador", "Finalizador"], ["driblador", "Driblador"], ["passe_vertical", "Passe vertical"], ["lider", "Liderança"]]
+                  ).map(([id, label]) => (
+                    <button key={id} type="button" onClick={() => setPDraft(d => ({ ...d, traits: d.traits.includes(id) ? d.traits.filter(t => t !== id) : [...d.traits, id] }))} className={cn("rounded-lg border px-3 py-2 text-left text-xs", pDraft.traits.includes(id) ? "border-[#00ffc8]/60 bg-[#00ffc8]/10 text-[#00ffc8]" : "border-white/10 text-white/55")}>
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1296,22 +1370,42 @@ export default function EditarPage() {
             <div className="mt-6 flex items-center justify-end gap-2">
               <button onClick={() => setEditingPlayer(null)} className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/60 hover:bg-white/10">Cancelar</button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (editingPlayer && selectedTeam) {
                     const ovr = Math.max(40, Math.min(99, Math.round(pDraft.overall) || 0))
-                    setPlayerOverride(selectedTeam.file_key, editingPlayer.originalName, {
-                      nome: pDraft.nome.trim() || undefined,
-                      pos: pDraft.posicao || undefined,
-                      base: ovr || undefined,
-                      idade: pDraft.idade || undefined,
-                      pace: pDraft.pace,
-                      shooting: pDraft.shooting,
-                      passing: pDraft.passing,
-                      dribbling: pDraft.dribbling,
-                      defending: pDraft.defending,
-                      physical: pDraft.physical,
-                    })
-                    setPlayers(generatePlayersForTeam(selectedTeam))
+                    if (activeTab === "juniores") {
+                      const next = youthPlayers.map(player => player.id === editingPlayer.id ? {
+                        ...player,
+                        nome: pDraft.nome.trim() || player.nome,
+                        posicao: pDraft.posicao || player.posicao,
+                        overall: ovr,
+                        idade: Math.max(14, Math.min(23, pDraft.idade || player.idade)),
+                        pace: pDraft.pace, shooting: pDraft.shooting, passing: pDraft.passing,
+                        dribbling: pDraft.dribbling, defending: pDraft.defending, physical: pDraft.physical,
+                      } : player)
+                      setYouthPlayers(next)
+                      saveYouthRoster(selectedTeam.file_key, next)
+                    } else {
+                      const faceDataUrl = pDraft.faceDataUrl ? await compressImageDataUrl(pDraft.faceDataUrl, 320) : undefined
+                      setPlayerOverride(selectedTeam.file_key, editingPlayer.originalName, {
+                        nome: pDraft.nome.trim() || undefined,
+                        pos: pDraft.posicao || undefined,
+                        base: ovr || undefined,
+                        idade: pDraft.idade || undefined,
+                        pace: pDraft.pace,
+                        shooting: pDraft.shooting,
+                        passing: pDraft.passing,
+                        dribbling: pDraft.dribbling,
+                        defending: pDraft.defending,
+                        physical: pDraft.physical,
+                        preferredFoot: pDraft.preferredFoot,
+                        reputation: pDraft.reputation,
+                        traits: pDraft.traits,
+                        faceDataUrl,
+                      })
+                      if (faceDataUrl) setPlayerPhotoOverride(pDraft.nome.trim() || editingPlayer.nome, faceDataUrl)
+                      setPlayers(generatePlayersForTeam(selectedTeam))
+                    }
                   }
                   setEditingPlayer(null)
                 }}

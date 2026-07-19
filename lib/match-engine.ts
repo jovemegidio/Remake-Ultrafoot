@@ -91,6 +91,9 @@ export interface MatchState {
   momentum: number  // -50 a +50 (positivo = mandante dominando)
   homeReds: number  // quantos vermelhos o mandante tem
   awayReds: number
+  /** Amarelos por atleta na partida; o segundo sempre gera expulsão. */
+  playerYellowCards: Record<string, number>
+  playerRedCards: Record<string, boolean>
   /**
    * Penalti do USUARIO aguardando a escolha do batedor.
    *
@@ -191,6 +194,8 @@ export function createInitialState(): MatchState {
     momentum: 0,
     homeReds: 0,
     awayReds: 0,
+    playerYellowCards: {},
+    playerRedCards: {},
     pendingPenalty: null,
   }
 }
@@ -342,6 +347,26 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   }
   applyMentality(homeSt, config.homeMentality)
   applyMentality(awaySt, config.awayMentality)
+
+  // ── Dificuldade da CPU (relatorio #4) ──────────────────────────────────────
+  // Quando o USUARIO joga (userSide definido), o adversario controlado pela maquina
+  // recebe um reforco MODERADO em ataque/defesa/meio/goleiro. Deixa as partidas mais
+  // disputadas e imersivas sem virar impossivel. Jogos IA vs IA (sem userSide) ficam
+  // neutros. Como os atributos vivem na escala ~40-99, +6 equivale a um "degrau" de
+  // qualidade — perceptivel, porem justo.
+  const CPU_DIFFICULTY = 6
+  if (config.userSide === "home") {
+    awaySt.attack += CPU_DIFFICULTY
+    awaySt.defense += CPU_DIFFICULTY
+    awaySt.midfield += CPU_DIFFICULTY
+    awaySt.gkRating += CPU_DIFFICULTY * 0.7
+  } else if (config.userSide === "away") {
+    homeSt.attack += CPU_DIFFICULTY
+    homeSt.defense += CPU_DIFFICULTY
+    homeSt.midfield += CPU_DIFFICULTY
+    homeSt.gkRating += CPU_DIFFICULTY * 0.7
+  }
+
   const mods = config.modifiers
   const total = config.homeRating + config.awayRating
   const minute = state.minute
@@ -411,10 +436,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const wf = config.weatherFactor != null ? Math.max(0.75, Math.min(1, config.weatherFactor)) : 1
 
   const homeShotChance = Math.max(0.04, Math.min(0.22,
-    (baseShot + homeAttDiff + homeMomBonus - homeRedShotPen + homeLateBonus) * wf
+    (baseShot + homeAttDiff + homeMomBonus - homeRedShotPen + homeLateBonus) * wf * (0.96 + homeAdvantage * 0.44)
   ))
   const awayShotChance = Math.max(0.04, Math.min(0.22,
-    (baseShot + awayAttDiff + awayMomBonus - awayRedShotPen + awayLateBonus) * wf
+    (baseShot + awayAttDiff + awayMomBonus - awayRedShotPen + awayLateBonus) * wf * (1.06 - homeAdvantage * 0.38)
   ))
 
   // ── Faltas e cartões ──────────────────────────────────────────────────────
@@ -428,9 +453,9 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const homeFatigue = Math.max(0, (80 - homeSt.avgStamina) * 0.0011)
   const awayFatigue = Math.max(0, (80 - awaySt.avgStamina) * 0.0011)
 
-  let cardChance = 0.038
-  if (mods?.isDerby) cardChance = 0.072
-  if (mods?.matchImportance === "final") cardChance = 0.055
+  let cardChance = 0.13
+  if (mods?.isDerby) cardChance = 0.20
+  if (mods?.matchImportance === "final") cardChance = 0.17
   if (state.phase === "second") cardChance *= 1.25
   if (minute >= 80) cardChance *= 1.3
 
@@ -457,7 +482,7 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
     homeAdvantage,
     homeFoulChance: Math.min(0.22, baseFoul + homeFatigue),
     awayFoulChance: Math.min(0.22, baseFoul + awayFatigue),
-    cardChance: Math.min(0.15, cardChance),
+    cardChance: Math.min(0.32, cardChance),
     staminaDrain,
     technicalPenalty,
     homeAttStr: homeAttEff,
@@ -475,10 +500,10 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
 
 function computeXG(shooterShooting: number, gkDefending: number, minute: number): number {
   // Calibrado para xG/chute medio ~0.11 (realista). Total ~2.6-2.9 por jogo.
-  const base = 0.04 + rnd() * 0.145
-  const shooterBonus = (shooterShooting - 70) * 0.002   // bom chutador aumenta
-  const gkPenalty = (gkDefending - 70) * 0.0018         // bom goleiro reduz
-  const lateBonus = minute >= 85 ? 0.03 : minute >= 78 ? 0.015 : 0
+  const base = 0.03 + rnd() * 0.11
+  const shooterBonus = (shooterShooting - 70) * 0.0015   // bom chutador aumenta
+  const gkPenalty = (gkDefending - 70) * 0.0013          // bom goleiro reduz
+  const lateBonus = minute >= 85 ? 0.022 : minute >= 78 ? 0.012 : 0
   return Math.max(0.02, Math.min(0.55, base + shooterBonus - gkPenalty + lateBonus))
 }
 
@@ -519,9 +544,10 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       const team = isHome ? config.homeTeam : config.awayTeam
       // ~72% dos gols em jogo aberto têm assistência (taxa realista)
       let assistName: string | undefined
-      if (rnd() < 0.72) {
+      if (rnd() < 0.88) {
         const assistData = pickPlayerFull(side, config, ["MEI", "VOL", "PD", "PE", "LD", "LE"])
-        if (assistData && assistData.nome !== shooterName) assistName = assistData.nome
+        const candidate = assistData?.nome ?? pickPlayer(side, config, ["MEI", "VOL", "PD", "PE", "LD", "LE"])
+        if (candidate !== shooterName) assistName = candidate
       }
       state.events = [{
         id: nameId(), minute, type: "goal", side,
@@ -554,7 +580,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
       }, ...state.events]
       state.flash = { side, type: "chance" }
       state.momentum += isHome ? 14 : -14
-    } else if (rnd() < 0.28) {
+    } else if (rnd() < 0.80) {
       // Escanteio
       teamStats.corners += 1
       const team = isHome ? config.homeTeam : config.awayTeam
@@ -576,10 +602,11 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
         // 42% de cabeçadas no alvo (taxa real em escanteios); 30% das no alvo = gol
         if (rnd() < 0.42) {
           teamStats.shotsOnTarget += 1
-          if (rnd() < 0.30) {
+          if (rnd() < 0.18) {
             teamStats.goals += 1
             const takerData = pickPlayerFull(side, config, ["MEI", "PD", "PE"])
-            const cornerTaker = takerData?.nome !== hdrName ? takerData?.nome : undefined
+            const cornerCandidate = takerData?.nome ?? pickPlayer(side, config, ["MEI", "PD", "PE"])
+            const cornerTaker = cornerCandidate !== hdrName ? cornerCandidate : undefined
             state.events = [{
               id: nameId(), minute, type: "goal", side,
               text: cornerTaker
@@ -622,19 +649,32 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
   const minute = state.minute
   teamStats.fouls += 1
 
-  if (rnd() < probs.cardChance * 1.4) {
-    // Time com muitos amarelos tem chance maior de ver segundo amarelo = vermelho
-    const doubleYellowChance = teamStats.yellows >= 2 ? 0.12 : 0.05
-    const isRed = rnd() < doubleYellowChance
-    const player = pickPlayer(side, config, ["ZAG", "VOL", "LD", "LE"])
+  // Calibrado para cerca de 0,08-0,18 expulsao por partida em amostra longa.
+  // O multiplicador anterior criava reincidencia de amarelos em quase todo jogo.
+  if (rnd() < probs.cardChance * 0.4) {
+    const squad = side === "home" ? config.homeSquad : config.awaySquad
+    const eligible = (squad ?? []).filter(candidate => !state.playerRedCards[`${side}:${candidate.nome.toLocaleLowerCase("pt-BR")}`])
+    const player = eligible.length > 0
+      ? (eligible.filter(candidate => ["ZAG", "VOL", "LD", "LE"].includes(candidate.pos)).sort(() => rnd() - .5)[0] ?? eligible[Math.floor(rnd() * eligible.length)]).nome
+      : pickPlayer(side, config, ["ZAG", "VOL", "LD", "LE"])
+    const cardKey = `${side}:${player.toLocaleLowerCase("pt-BR")}`
+    const previousYellows = state.playerYellowCards[cardKey] ?? 0
+    const isSecondYellow = previousYellows >= 1
+    const isStraightRed = !isSecondYellow && rnd() < 0.003
+    const isRed = isSecondYellow || isStraightRed
 
     if (isRed) {
+      if (isSecondYellow) {
+        teamStats.yellows += 1
+        state.playerYellowCards[cardKey] = previousYellows + 1
+      }
       teamStats.reds += 1
+      state.playerRedCards[cardKey] = true
       if (isHome) state.homeReds += 1
       else state.awayReds += 1
       state.events = [{
         id: nameId(), minute, type: "red_card", side,
-        text: `Cartão VERMELHO para ${player}`,
+        text: isSecondYellow ? `Segundo amarelo para ${player}. EXPULSO!` : `Cartão VERMELHO para ${player}`,
         player, important: true,
       }, ...state.events]
       state.flash = { side, type: "card", cardColor: "red" }
@@ -642,6 +682,7 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
       state.momentum += isHome ? -25 : 25
     } else {
       teamStats.yellows += 1
+      state.playerYellowCards[cardKey] = previousYellows + 1
       state.events = [{
         id: nameId(), minute, type: "yellow_card", side,
         text: `Cartão amarelo para ${player}`,

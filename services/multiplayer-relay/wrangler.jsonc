@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ultrafoot-multiplayer-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-18",
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOMS", "class_name": "MultiplayerRoom" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["MultiplayerRoom"] }
+  ],
+  "observability": { "enabled": true },
+  "vars": {
+    "ALLOWED_GAME_VERSION": "1.0.98",
+    "ALLOWED_ORIGINS": "tauri://localhost,http://tauri.localhost,https://tauri.localhost"
+  }
+}

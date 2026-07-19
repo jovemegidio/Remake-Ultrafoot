@@ -7,6 +7,27 @@
 // time DE VERDADE.
 
 export interface FormationSlot { pos: string; x: number; y: number }
+
+/**
+ * A base de dados usa algumas abreviações diferentes para a mesma função.
+ * O motor tático trabalha com um vocabulário único; sem essa normalização um
+ * CA/MC não encontrava o seu slot e caía no "primeiro que sobrou".
+ */
+export function normalizePosition(position: string | undefined): string {
+  const value = (position ?? "").trim().toUpperCase()
+  const aliases: Record<string, string> = {
+    GK: "GOL", GOLEIRO: "GOL",
+    CB: "ZAG", DEF: "ZAG", ZC: "ZAG",
+    RB: "LD", LB: "LE", LAT: "ZAG",
+    DM: "VOL", MCD: "VOL", CDM: "VOL",
+    MC: "MEI", CM: "MEI", CAM: "MEI", MO: "MEI", MAT: "MEI",
+    RM: "MD", LM: "ME",
+    RW: "PD", AD: "PD", MAD: "PD",
+    LW: "PE", AE: "PE", MAE: "PE",
+    CA: "ATA", ST: "ATA", CF: "ATA", SA: "ATA", CENTROAVANTE: "ATA",
+  }
+  return aliases[value] ?? value
+}
 export const FORMATIONS: Record<string, { name: string; positions: FormationSlot[] }> = {
   "4-3-3": {
     name: "4-3-3",
@@ -148,10 +169,16 @@ export function assignPlayersToFormation<T extends { id: number; position: strin
 
   for (const slot of slots) {
     // 1) alguem que joga EXATAMENTE nessa posicao
-    let idx = pool.findIndex((p) => p.position === slot.pos)
+    let idx = pool.findIndex((p) => normalizePosition(p.position) === slot.pos)
     // 2) senao, alguem de posicao compativel
     if (idx === -1) {
-      idx = pool.findIndex((p) => COMPATIBLE_POSITIONS[slot.pos]?.includes(p.position))
+      // Respeita a ORDEM de compatibilidade. `findIndex(includes)` escolhia o primeiro
+      // atleta por overall; um MEI forte era lateral antes de um ZAG, embora ZAG viesse
+      // antes na lista de alternativas.
+      for (const compatible of COMPATIBLE_POSITIONS[slot.pos] ?? []) {
+        idx = pool.findIndex((p) => normalizePosition(p.position) === compatible)
+        if (idx !== -1) break
+      }
     }
     // 3) por ultimo, quem sobrou (elenco incompleto para essa formacao)
     if (idx === -1) idx = 0
@@ -183,8 +210,14 @@ export function pickStartingXI<T>(
   formation = "4-3-3",
 ): { starters: T[]; bench: T[] } {
   const byRating = [...players].sort((a, b) => getRating(b) - getRating(a))
-  const tagged = byRating.map((p, i) => ({ id: i, position: getPos(p), ref: p }))
-  const assigned = assignPlayersToFormation(tagged, formation)
+  const tagged = byRating.map((p, i) => ({ id: i, position: normalizePosition(getPos(p)), ref: p }))
+  // Somente o melhor goleiro participa da alocação do XI. Se faltasse um jogador de
+  // linha compatível, o fallback do alocador podia puxar o segundo/terceiro goleiro.
+  const bestGoalkeeper = tagged.find(t => t.position === "GOL")
+  const eligible = tagged.filter(t =>
+    t.position !== "GOL" || t.id === bestGoalkeeper?.id,
+  )
+  const assigned = assignPlayersToFormation(eligible, formation)
   const chosen = new Set(assigned.map((a) => a.id))
   return {
     starters: assigned.map((a) => a.ref),
@@ -206,7 +239,7 @@ export function capGoalkeepers<T>(ordered: T[], getPos: (p: T) => string): T[] {
   const surplusGks: T[] = []
   let gkSeen = 0
   for (const p of ordered) {
-    if (getPos(p) === "GOL") {
+    if (normalizePosition(getPos(p)) === "GOL") {
       gkSeen++
       if (gkSeen > 1) { surplusGks.push(p); continue }
     }

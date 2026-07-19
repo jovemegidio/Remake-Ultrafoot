@@ -66,13 +66,23 @@ function OfferCard({
   offer,
   onAccept,
   onDecline,
+  onCounter,
 }: {
   offer: NationalOffer
   onAccept: () => void
   onDecline: () => void
+  onCounter: (salary: number, months: number) => boolean
 }) {
   const nt = getNationalTeamById(offer.nationalTeamId)
   const comps = nt ? getCompetitionsForConfederation(nt.confederation) : []
+  const baseSalary = offer.monthlySalary ?? Math.round((45_000 + offer.strength * 3_500) / 5_000) * 5_000
+  const baseMonths = offer.contractMonths ?? 18
+  const objectives = offer.objectives ?? ["Cumprir a meta da principal competição"]
+  const obligations = offer.obligations ?? ["Participar das janelas internacionais", "Convocar atletas por mérito"]
+  const [negotiating, setNegotiating] = useState(false)
+  const [salary, setSalary] = useState(baseSalary)
+  const [months, setMonths] = useState(baseMonths)
+  const [feedback, setFeedback] = useState("")
   return (
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-5 flex flex-col gap-4">
       <div className="flex items-center gap-4">
@@ -98,6 +108,36 @@ function OfferCard({
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg bg-white/[0.03] p-3">
+          <p className="text-white/40">Salário mensal</p>
+          <p className="mt-1 font-semibold text-white">R$ {baseSalary.toLocaleString("pt-BR")}</p>
+        </div>
+        <div className="rounded-lg bg-white/[0.03] p-3">
+          <p className="text-white/40">Duração</p>
+          <p className="mt-1 font-semibold text-white">{baseMonths} meses</p>
+        </div>
+      </div>
+      <div className="text-xs space-y-2">
+        <div><p className="text-white/40 mb-1">Metas</p>{objectives.map(item => <p key={item} className="text-white/70">• {item}</p>)}</div>
+        <div><p className="text-white/40 mb-1">Deveres e obrigações</p>{obligations.map(item => <p key={item} className="text-white/70">• {item}</p>)}</div>
+      </div>
+
+      {negotiating && (
+        <div className="rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/[0.03] p-3 space-y-3">
+          <label className="block text-xs text-white/60">Salário pretendido
+            <input type="number" step={5000} min={baseSalary} value={salary} onChange={e => setSalary(Number(e.target.value))} className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white" />
+          </label>
+          <label className="block text-xs text-white/60">Contrato (meses)
+            <select value={months} onChange={e => setMonths(Number(e.target.value))} className="mt-1 w-full rounded-md border border-white/10 bg-[#101015] px-3 py-2 text-white">
+              {[12, 18, 24, 36, 48].map(value => <option key={value} value={value}>{value} meses</option>)}
+            </select>
+          </label>
+          {feedback && <p className="text-xs text-yellow-300">{feedback}</p>}
+          <button onClick={() => { const ok = onCounter(salary, months); setFeedback(ok ? "Contraproposta aceita. O novo contrato está pronto para assinatura." : "A federação fez uma oferta intermediária.") }} className="w-full rounded-md bg-white/10 py-2 text-xs font-semibold text-white hover:bg-white/15">Enviar contraproposta</button>
+        </div>
+      )}
+
       <div className="flex gap-2 mt-1">
         <button
           onClick={onAccept}
@@ -105,6 +145,7 @@ function OfferCard({
         >
           <Check className="h-4 w-4" /> Aceitar
         </button>
+        <button onClick={() => setNegotiating(value => !value)} className="rounded-lg bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white/70 hover:bg-white/[0.08]">Contrapropor</button>
         <button
           onClick={onDecline}
           className="flex items-center justify-center gap-2 rounded-lg bg-white/[0.04] text-white/70 font-medium text-sm py-2.5 px-4 hover:bg-white/[0.08] transition-colors"
@@ -302,6 +343,7 @@ export default function SelecaoPage() {
     availableCompetitions,
     currentCompetition,
     acceptOffer,
+    counterOffer,
     declineOffer,
     declineAll,
     leaveNationalTeam,
@@ -397,6 +439,7 @@ export default function SelecaoPage() {
                       offer={offer}
                       onAccept={() => acceptOffer(offer)}
                       onDecline={() => declineOffer(offer.nationalTeamId)}
+                      onCounter={(salary, months) => counterOffer(offer, salary, months)}
                     />
                   ))}
                 </div>

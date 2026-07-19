@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { usePathname, useRouter } from "next/navigation"
 import { BarChart3, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useGameState } from "@/lib/save-system"
 
 /**
  * Barra de acoes inferior estilo EA FC Manager.
@@ -46,6 +47,14 @@ const ESC_BACK_BLOCKED_PREFIXES = [
 function isEscBackBlocked(pathname: string): boolean {
   if (pathname === "/" || pathname === "") return true
   return ESC_BACK_BLOCKED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))
+}
+
+function safeBackTarget(pathname: string): string {
+  if (pathname.startsWith("/elenco/")) return "/elenco/"
+  if (pathname.startsWith("/transferencias/") || pathname.startsWith("/mercado/")) return "/transferencias/"
+  if (pathname.startsWith("/configuracoes/") || pathname.startsWith("/salvar/")) return "/configuracoes/"
+  if (pathname.startsWith("/base/")) return "/base/"
+  return "/"
 }
 
 interface ActionBarContextValue {
@@ -92,7 +101,10 @@ export function EaActionBarProvider({ children }: { children: React.ReactNode })
         // tambem o duplo "voltar"). Nas demais telas de feature, volta um nivel —
         // e, como o hub e no-op, nunca cruza de volta para a splash.
         if (isEscBackBlocked(window.location.pathname)) return
-        router.back()
+        // Nunca usa o historico do WebView: ele pode conter a splash ou a carreira
+        // carregada anteriormente. O destino e derivado da secao atual e permanece
+        // dentro do mesmo save ativo.
+        router.push(safeBackTarget(window.location.pathname))
       } else if (e.key === "Enter") {
         const action = actionsRef.current.find((a) => a.keyLabel.toLowerCase() === "enter")
         // Tambem dispara o canal gamepad:button (A) para telas como /partida e /pre-office,
@@ -153,20 +165,25 @@ function EaMark() {
 // Telas que controlam seus proprios rodapes fixos (nenhuma usa useActionBar) e
 // por isso nao devem receber a barra global, que ficaria sobreposta e bloquearia
 // cliques nos botoes dessas telas (ex: "Iniciar Partida" em /partida).
-const HIDDEN_PATHS = ["/splash", "/novo-jogo", "/partida"]
+const HIDDEN_PATHS = ["/splash", "/novo-jogo", "/pre-office", "/partida", "/editar", "/editor", "/elenco/gerenciamento"]
 
 export function EaActionBar() {
   const ctx = useContext(ActionBarContext)
   const pathname = usePathname()
+  const { state } = useGameState()
   const actions = ctx?.actions ?? DEFAULT_ACTIONS
 
-  if (HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null
+  // A barra pertence ao escritorio da carreira. Na splash, editor e fluxos antes
+  // da escolha do clube ela nao deve aparecer, conforme a referencia do dossie.
+  if (!state.selectedTeamShort || HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null
 
   return (
     <div
       className={cn(
         "fixed bottom-0 left-0 right-0 z-30 hidden md:flex h-11 items-center justify-between px-5",
-        "bg-[#070708]/95 backdrop-blur-md border-t border-white/[0.05]",
+        // Barra transparente estilo EA FC: so um gradiente sutil pra legibilidade, sem
+        // faixa solida no rodape (pedido do relatorio: "deve ser transparente").
+        "bg-gradient-to-t from-black/35 via-black/10 to-transparent border-t border-white/[0.03]",
       )}
     >
       {/* Acoes contextuais */}
@@ -202,8 +219,7 @@ export function EaActionBar() {
         <span className="flex h-4 w-4 items-center justify-center rounded-[3px] border border-white/20 text-[8px] font-bold text-white/55">
           f
         </span>
-        <span className="text-[11px] font-semibold tracking-wide text-white/55">FC HUB</span>
-        <KeyCap label="Tab" />
+        <button onClick={() => window.dispatchEvent(new Event("ultrafoot:fc-hub"))} className="flex items-center gap-2 hover:text-white"><span className="text-[11px] font-semibold tracking-wide text-white/55">FC HUB</span><KeyCap label="Tab" /></button>
         <div className="mx-1 h-4 w-px bg-white/10" />
         <div className="flex items-center gap-1">
           <Users className="h-3.5 w-3.5" />

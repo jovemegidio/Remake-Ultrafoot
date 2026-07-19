@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
 import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { NotificationBell, NotificationCenter } from "@/components/notifications-system"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { useGameState } from "@/lib/save-system"
+import { saveGameStateAndFlush, useGameState } from "@/lib/save-system"
+import { persistGameEngineNow } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { clearJobOffers } from "@/lib/career-moves"
 import { cn } from "@/lib/utils"
@@ -94,6 +95,7 @@ function FormBars({ results }: { results: ("V" | "E" | "D")[] }) {
 
 export function GameHeader({ team, showNav = true, className }: GameHeaderProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { state, setState } = useGameState()
   const { advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar } = useGameManager()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
@@ -113,12 +115,25 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   // Mesma acao do card do escritorio, agora acessivel de qualquer tela pelo menu [W].
   const handleResign = () => {
     clearJobOffers()
-    hardNavigate("/splash?menu=1")
+    setState({ selectedTeamShort: null })
+    hardNavigate("/sem-clube")
   }
   // Item destacado no menu de navegacao — so existe para o CONTROLE (no mouse o hover
   // ja resolve). Sem isto, o menu que criei nao era utilizavel no gamepad.
   const [navMenuIndex, setNavMenuIndex] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // No export estático as páginas são baixadas na primeira visita. Aquecemos as
+  // rotas mais usadas depois que o cabeçalho já desenhou, sem bloquear a tela nem
+  // desperdiçar memória com todas as páginas do jogo.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      for (const href of ["/", "/elenco", "/mercado", "/calendario", "/competicoes"]) {
+        router.prefetch(href)
+      }
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [router])
 
   // Atalho "W": abre o MENU de navegacao (o keycap [W] sempre existiu, mas a tecla nao
   // fazia nada). Antes W ia direto para a secao pai; o usuario pediu um menu com as
@@ -257,8 +272,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
   const handleSave = async () => {
     setSaving(true)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    setState({ updatedAt: Date.now() })
+    persistGameEngineNow()
+    await saveGameStateAndFlush({ ...state, updatedAt: Date.now() })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -497,20 +512,14 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       {/* Menu de navegacao (tecla W ou clique na secao pai). */}
       {showNavMenu && (
         <div
-          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] bg-black/55 backdrop-blur-[7px]"
           onClick={() => setShowNavMenu(false)}
         >
           <div
-            className="absolute left-1/2 top-20 w-[min(680px,92vw)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0c0c14] p-5 shadow-2xl"
+          className="absolute left-5 top-16 flex max-h-[calc(100vh-4rem)] w-[min(292px,88vw)] flex-col overflow-hidden border-l border-white/10 bg-gradient-to-r from-[#07090d]/98 via-[#090c11]/94 to-[#090c11]/75 shadow-[28px_0_70px_rgba(0,0,0,.48)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-bold text-white">Ir para</span>
-              <span className="text-[11px] text-white/30">
-                W/Esc fecha · no controle: D-pad move, A confirma, B fecha
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
               {NAV_MENU_ITEMS.map((item, i) => {
                 const Icon = item.icon
                 const active = pathname.startsWith(item.href) && item.href !== "/"
@@ -522,27 +531,27 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                     onClick={() => { setShowNavMenu(false); hardNavigate(item.href) }}
                     onMouseEnter={() => setNavMenuIndex(i)}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all",
+                      "relative flex w-full items-center gap-3 border-l-2 px-3 py-2.5 text-left transition-all",
                       focused
-                        ? "border-[#00ffc8] bg-[#00ffc8]/15 ring-1 ring-[#00ffc8]/40"
+                        ? "border-l-[#00ffc8] bg-gradient-to-r from-[#00ffc8]/16 to-transparent"
                         : active
-                          ? "border-[#00ffc8]/40 bg-[#00ffc8]/10"
-                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/20 hover:bg-white/5",
+                          ? "border-l-[#00ffc8]/60 bg-white/[0.05]"
+                          : "border-l-transparent hover:border-l-white/25 hover:bg-white/[0.035]",
                     )}
                   >
                     <Icon className={cn("h-4 w-4 shrink-0", focused || active ? "text-[#00ffc8]" : "text-white/50")} />
-                    <span className="text-sm font-medium text-white/90">{item.label}</span>
+                    <span className={cn("text-sm font-semibold", focused || active ? "text-white" : "text-white/55")}>{item.label}</span>
                   </button>
                 )
               })}
             </div>
 
             {/* Pedir demissao — acao destrutiva, separada da grade de navegacao. */}
-            <div className="mt-3 border-t border-white/[0.06] pt-3">
+            <div className="border-t border-white/[0.06] p-3">
               <button
                 type="button"
                 onClick={() => { setShowNavMenu(false); setShowResignConfirm(true) }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/25 bg-red-500/5 px-3 py-2.5 text-sm font-semibold text-red-300/90 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                className="flex w-full items-center gap-3 border-l-2 border-l-red-400/60 bg-red-500/5 px-3 py-2.5 text-sm font-semibold text-red-300/90 transition-colors hover:bg-red-500/10 hover:text-red-200"
               >
                 <LogOut className="h-4 w-4" />
                 Pedir demissao

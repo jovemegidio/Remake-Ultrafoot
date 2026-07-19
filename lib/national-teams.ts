@@ -6,7 +6,7 @@
 import { allTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
 
-export type Confederation = "CONMEBOL" | "UEFA" | "CONCACAF" | "AFC"
+export type Confederation = "CONMEBOL" | "UEFA" | "CONCACAF" | "AFC" | "CAF" | "OFC"
 
 export interface NationalTeam {
   id: string
@@ -17,6 +17,8 @@ export interface NationalTeam {
   cor2: string
   // Nome do pais usado no campo `pais` dos clubes (vazio = clubes brasileiros)
   countryKey: string
+  /** Forca-base editorial para selecoes cujo elenco ainda nao existe nos clubes locais. */
+  baselineStrength?: number
 }
 
 // Catalogo de selecoes suportadas. countryKey casa com o campo `pais` dos clubes.
@@ -48,6 +50,36 @@ export const NATIONAL_TEAMS: NationalTeam[] = [
   { id: "coreia_do_sul", name: "Coreia do Sul", code: "KOR", confederation: "AFC", cor1: "#c60c30", cor2: "#003478", countryKey: "Coreia do Sul" },
   { id: "arabia_saudita", name: "Arabia Saudita", code: "KSA", confederation: "AFC", cor1: "#006c35", cor2: "#ffffff", countryKey: "Arabia Saudita" },
   { id: "china", name: "China", code: "CHN", confederation: "AFC", cor1: "#de2910", cor2: "#ffde00", countryKey: "China" },
+  // Demais selecoes masculinas classificadas para a Copa do Mundo FIFA 2026.
+  { id: "argelia", name: "Argelia", code: "ALG", confederation: "CAF", cor1: "#006233", cor2: "#ffffff", countryKey: "Argelia", baselineStrength: 80 },
+  { id: "australia", name: "Australia", code: "AUS", confederation: "AFC", cor1: "#ffcd00", cor2: "#00843d", countryKey: "Australia", baselineStrength: 80 },
+  { id: "austria", name: "Austria", code: "AUT", confederation: "UEFA", cor1: "#ed2939", cor2: "#ffffff", countryKey: "Austria", baselineStrength: 84 },
+  { id: "bosnia", name: "Bosnia e Herzegovina", code: "BIH", confederation: "UEFA", cor1: "#002395", cor2: "#feca00", countryKey: "Bosnia e Herzegovina", baselineStrength: 78 },
+  { id: "cabo_verde", name: "Cabo Verde", code: "CPV", confederation: "CAF", cor1: "#003893", cor2: "#cf2027", countryKey: "Cabo Verde", baselineStrength: 75 },
+  { id: "congo_dr", name: "RD Congo", code: "COD", confederation: "CAF", cor1: "#007fff", cor2: "#ce1021", countryKey: "RD Congo", baselineStrength: 77 },
+  { id: "costa_do_marfim", name: "Costa do Marfim", code: "CIV", confederation: "CAF", cor1: "#f77f00", cor2: "#009e60", countryKey: "Costa do Marfim", baselineStrength: 82 },
+  { id: "croacia", name: "Croacia", code: "CRO", confederation: "UEFA", cor1: "#ff0000", cor2: "#ffffff", countryKey: "Croacia", baselineStrength: 86 },
+  { id: "curacao", name: "Curacao", code: "CUW", confederation: "CONCACAF", cor1: "#002b7f", cor2: "#f9e814", countryKey: "Curacao", baselineStrength: 73 },
+  { id: "tchequia", name: "Tchequia", code: "CZE", confederation: "UEFA", cor1: "#d7141a", cor2: "#11457e", countryKey: "Tchequia", baselineStrength: 81 },
+  { id: "equador", name: "Equador", code: "ECU", confederation: "CONMEBOL", cor1: "#ffdd00", cor2: "#034ea2", countryKey: "Equador", baselineStrength: 84 },
+  { id: "egito", name: "Egito", code: "EGY", confederation: "CAF", cor1: "#ce1126", cor2: "#ffffff", countryKey: "Egito", baselineStrength: 82 },
+  { id: "gana", name: "Gana", code: "GHA", confederation: "CAF", cor1: "#ce1126", cor2: "#fcd116", countryKey: "Gana", baselineStrength: 80 },
+  { id: "haiti", name: "Haiti", code: "HAI", confederation: "CONCACAF", cor1: "#00209f", cor2: "#d21034", countryKey: "Haiti", baselineStrength: 72 },
+  { id: "ira", name: "Ira", code: "IRN", confederation: "AFC", cor1: "#239f40", cor2: "#da0000", countryKey: "Ira", baselineStrength: 80 },
+  { id: "iraque", name: "Iraque", code: "IRQ", confederation: "AFC", cor1: "#ce1126", cor2: "#000000", countryKey: "Iraque", baselineStrength: 75 },
+  { id: "jordania", name: "Jordania", code: "JOR", confederation: "AFC", cor1: "#007a3d", cor2: "#ce1126", countryKey: "Jordania", baselineStrength: 75 },
+  { id: "marrocos", name: "Marrocos", code: "MAR", confederation: "CAF", cor1: "#c1272d", cor2: "#006233", countryKey: "Marrocos", baselineStrength: 86 },
+  { id: "nova_zelandia", name: "Nova Zelandia", code: "NZL", confederation: "OFC", cor1: "#101820", cor2: "#ffffff", countryKey: "Nova Zelandia", baselineStrength: 74 },
+  { id: "noruega", name: "Noruega", code: "NOR", confederation: "UEFA", cor1: "#ba0c2f", cor2: "#00205b", countryKey: "Noruega", baselineStrength: 86 },
+  { id: "panama", name: "Panama", code: "PAN", confederation: "CONCACAF", cor1: "#d21034", cor2: "#ffffff", countryKey: "Panama", baselineStrength: 77 },
+  { id: "paraguai", name: "Paraguai", code: "PAR", confederation: "CONMEBOL", cor1: "#d52b1e", cor2: "#0038a8", countryKey: "Paraguai", baselineStrength: 80 },
+  { id: "qatar", name: "Catar", code: "QAT", confederation: "AFC", cor1: "#8a1538", cor2: "#ffffff", countryKey: "Catar", baselineStrength: 76 },
+  { id: "africa_do_sul", name: "Africa do Sul", code: "RSA", confederation: "CAF", cor1: "#007749", cor2: "#ffb81c", countryKey: "Africa do Sul", baselineStrength: 76 },
+  { id: "senegal", name: "Senegal", code: "SEN", confederation: "CAF", cor1: "#00853f", cor2: "#fdef42", countryKey: "Senegal", baselineStrength: 84 },
+  { id: "suecia", name: "Suecia", code: "SWE", confederation: "UEFA", cor1: "#006aa7", cor2: "#fecc02", countryKey: "Suecia", baselineStrength: 81 },
+  { id: "suica", name: "Suica", code: "SUI", confederation: "UEFA", cor1: "#d52b1e", cor2: "#ffffff", countryKey: "Suica", baselineStrength: 84 },
+  { id: "tunisia", name: "Tunisia", code: "TUN", confederation: "CAF", cor1: "#e70013", cor2: "#ffffff", countryKey: "Tunisia", baselineStrength: 78 },
+  { id: "uzbequistao", name: "Uzbequistao", code: "UZB", confederation: "AFC", cor1: "#1eb53a", cor2: "#0099b5", countryKey: "Uzbequistao", baselineStrength: 76 },
 ]
 
 const NT_BY_ID = new Map(NATIONAL_TEAMS.map(nt => [nt.id, nt]))
@@ -77,7 +109,7 @@ function sectorOf(pos: string): "GOL" | "DEF" | "MEI" | "ATA" {
   const p = pos.toUpperCase()
   if (p === "GOL") return "GOL"
   if (["ZAG", "LD", "LE", "LAT", "DEF"].includes(p)) return "DEF"
-  if (["VOL", "MEI", "MC", "ME", "MD", "CA"].includes(p)) return "MEI"
+  if (["VOL", "MEI", "MC", "ME", "MD"].includes(p)) return "MEI"
   return "ATA"
 }
 
@@ -148,10 +180,10 @@ export function getNationalSquad(
 }
 
 // Forca da selecao = media dos 11 melhores (0-100)
-export function getNationalStrength(nt: NationalTeam): number {
-  const pool = [...getNationalPlayerPool(nt)].sort((a, b) => b.base - a.base)
+export function getNationalStrength(nt: NationalTeam, squad?: Player[]): number {
+  const pool = [...(squad ?? getNationalPlayerPool(nt))].sort((a, b) => b.base - a.base)
   const top = pool.slice(0, 11)
-  if (!top.length) return 55
+  if (!top.length) return nt.baselineStrength ?? 55
   return Math.round(top.reduce((s, p) => s + p.base, 0) / top.length)
 }
 
@@ -168,4 +200,6 @@ export const CONFEDERATION_LABEL: Record<Confederation, string> = {
   UEFA: "UEFA (Europa)",
   CONCACAF: "CONCACAF (America do Norte/Central)",
   AFC: "AFC (Asia)",
+  CAF: "CAF (Africa)",
+  OFC: "OFC (Oceania)",
 }

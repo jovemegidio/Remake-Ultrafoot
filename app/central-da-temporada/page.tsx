@@ -1,7 +1,3 @@
-// PHASE 2 — Central da Temporada (HUB principal)
-// Status: skeleton — esqueleto da página. Substituirá o dashboard como hub principal
-// quando implementado. Conteúdo deve consumir season-engine + news-engine + transfer-engine.
-
 "use client"
 
 import { Calendar, Target, TrendingUp, AlertCircle, Newspaper, ShoppingCart, Star, Zap } from "lucide-react"
@@ -13,15 +9,18 @@ export default function CentralDaTemporadaPage() {
   const { team } = useUserTeam()
   const { state } = useGameState()
 
+  const nextFixture = state.fixtures?.find(fixture => !fixture.played)
+  const standingIndex = state.standings?.findIndex(entry => entry.curto === (state.selectedTeamShort ?? team.curto)) ?? -1
+  const standing = standingIndex >= 0 ? state.standings?.[standingIndex] : undefined
   const cards = [
-    { icon: Calendar, label: "Próximo jogo", desc: "season-engine + calendar-engine" },
-    { icon: Target, label: "Objetivo da diretoria", desc: "board-engine.generateObjectives" },
-    { icon: TrendingUp, label: "Situação na tabela", desc: "table-engine + careerEngine.sortStandings" },
-    { icon: Star, label: "Melhor / pior fase", desc: "morale-engine.calcSquadMorale" },
-    { icon: AlertCircle, label: "Risco de lesão", desc: "injury-engine.rollInjuryRisk" },
-    { icon: Newspaper, label: "Notícias", desc: "news-engine.listForWeek" },
-    { icon: Zap, label: "Eventos pendentes", desc: "events-engine + dressing-room-engine" },
-    { icon: ShoppingCart, label: "Janela de transferências", desc: "transfer-engine.tickTransferWindow" },
+    { icon: Calendar, label: "Próximo jogo", desc: nextFixture ? `${nextFixture.homeNome} × ${nextFixture.awayNome}` : "Calendário aguardando próxima rodada" },
+    { icon: Target, label: "Objetivo da diretoria", desc: standing && standingIndex < 6 ? "Manter classificação continental" : "Melhorar a posição no campeonato" },
+    { icon: TrendingUp, label: "Situação na tabela", desc: standing ? `${standingIndex + 1}º lugar · ${standing.points} pontos` : "Classificação ainda não iniciada" },
+    { icon: Star, label: "Moral do elenco", desc: `${Math.round(state.teamMorale ?? 70)} / 100` },
+    { icon: AlertCircle, label: "Departamento médico", desc: `${state.injuries?.length ?? 0} atleta(s) indisponível(is)` },
+    { icon: Newspaper, label: "Temporada", desc: `${state.results?.length ?? 0} partidas registradas` },
+    { icon: Zap, label: "Categoria de base", desc: `${state.youthPlayers?.length ?? 0} jovens em desenvolvimento` },
+    { icon: ShoppingCart, label: "Transferências", desc: `${state.transfers?.filter(transfer => transfer.season === state.season).length ?? 0} negócio(s) na temporada` },
   ]
 
   return (
@@ -33,10 +32,6 @@ export default function CentralDaTemporadaPage() {
           <h1 className="text-3xl font-bold text-white tracking-tight">CENTRAL DA TEMPORADA</h1>
           <p className="text-white/50 mt-1">Hub principal · Temporada {state.season} · Rodada {state.currentRound || 0}</p>
         </header>
-
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-amber-200/80 text-sm">
-          Skeleton (Fase 2). Esta página é o futuro hub. Os engines necessários estão definidos mas não implementados.
-        </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {cards.map(c => (

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-19T20:57:08.884Z",
+  "sourcePattern": "face_ID.png",
+  "configFile": "sortitoutsi/sortitoutsi_cutout_megapack_2026.07/config.xml",
+  "configMappings": 0,
+  "sourceImages": 68153,
+  "confirmedMapEntries": 5,
+  "confirmedAvailable": 0,
+  "pendingMapEntries": [
+    "19302146",
+    "29179241",
+    "29232937",
+    "85139014",
+    "2000256231"
+  ]
+}

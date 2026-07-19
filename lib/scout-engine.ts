@@ -1,63 +1,27 @@
-// PHASE 9 — Scouting
-// Status: skeleton — olheiro nacional/internacional, potencial, encaixe tático,
-// histórico de lesão, salário esperado, custo, risco, personalidade.
-
 import type { Personality } from "@/lib/youth-engine"
 
-export type ScoutRegion =
-  | "br_sudeste"
-  | "br_sul"
-  | "br_nordeste"
-  | "br_norte"
-  | "br_centrooeste"
-  | "sa_argentina"
-  | "sa_uruguai"
-  | "sa_outros"
-  | "europa"
-  | "africa"
-  | "asia"
+export type ScoutTier="regional"|"national"|"continental"|"elite_global"
+export type ScoutMissionType="young"|"first_team"|"expiring"|"loan"|"undervalued"|"specific_position"
+export type ReportStage="initial"|"partial"|"complete"
+export interface ScoutAttributes{currentAbility:number;potentialAbility:number;youthDiscovery:number;marketKnowledge:number;negotiation:number}
+export interface DepartmentScout{id:string;name:string;tier:ScoutTier;attributes:ScoutAttributes;monthlySalary:number;missionId?:string}
+export interface ScoutMission{id:string;scoutId:string;type:ScoutMissionType;region:string;position?:string;ageMin?:number;ageMax?:number;maxSalary?:number;maxValue?:number;startedWeek:number;durationWeeks:number;progressWeeks:number;status:"active"|"complete"|"cancelled"}
+export interface ScoutAssignment{id:string;scoutName:string;region:ScoutRegion;focus:"young"|"first_team"|"specific_position";positionFocus?:string;startedAt:number;durationWeeks:number;reportsCount:number}
+export type ScoutRegion="br_sudeste"|"br_sul"|"br_nordeste"|"br_norte"|"br_centrooeste"|"sa_argentina"|"sa_uruguai"|"sa_outros"|"europa"|"africa"|"asia"
+export interface ScoutReport{id:string;playerId:string;playerName:string;scoutName:string;region:ScoutRegion;stage:ReportStage;observationWeeks:number;knownAttributes:Partial<Record<string,number>>;potentialEstimate:{min:number;max:number};tacticalFit?:number;injuryRisk?:"low"|"medium"|"high";expectedSalary?:number;estimatedTransferCost?:number;contractRisk?:"low"|"medium"|"high";personality?:Personality;recommendation:"sign"|"monitor"|"pass";notes:string;generatedAt:number}
+export interface PerformanceAnalysis{week:number;squadAlerts:string[];opponentStrengths:string[];opponentWeaknesses:string[];tacticalRecommendations:string[]}
+export interface ScoutingDepartmentState{scouts:DepartmentScout[];missions:ScoutMission[];reports:ScoutReport[];observationCentreLevel:1|2|3|4|5;dataCentreLevel:1|2|3|4|5;reputation:number;monthlyCost:number;lastAnalysis?:PerformanceAnalysis}
 
-export interface ScoutAssignment {
-  id: string
-  scoutName: string
-  region: ScoutRegion
-  focus: "young" | "first_team" | "specific_position"
-  positionFocus?: string
-  startedAt: number                // week
-  durationWeeks: number
-  reportsCount: number
-}
+export function createScoutingDepartment():ScoutingDepartmentState{return{scouts:[],missions:[],reports:[],observationCentreLevel:1,dataCentreLevel:1,reputation:0,monthlyCost:0}}
+export function departmentReputationLabel(value:number):string{return value>=90?"Referência Mundial":value>=70?"Referência Continental":value>=45?"Referência Nacional":value>=20?"Estruturado":"Amador"}
+export function hireDepartmentScout(state:ScoutingDepartmentState,scout:DepartmentScout):ScoutingDepartmentState{const scouts=[...state.scouts,scout];return{...state,scouts,monthlyCost:scouts.reduce((n,s)=>n+s.monthlySalary,0)}}
+export function createScoutMission(state:ScoutingDepartmentState,mission:ScoutMission):ScoutingDepartmentState{return{...state,missions:[...state.missions,mission],scouts:state.scouts.map(s=>s.id===mission.scoutId?{...s,missionId:mission.id}:s)}}
+export function advanceScoutingWeek(state:ScoutingDepartmentState,currentWeek:number):ScoutingDepartmentState{const next=structuredClone(state);for(const m of next.missions.filter(x=>x.status==="active")){m.progressWeeks++;const scout=next.scouts.find(s=>s.id===m.scoutId);if(!scout)continue;const speed=next.observationCentreLevel>=4?2:1;const stage:ReportStage=m.progressWeeks*speed>=m.durationWeeks?"complete":m.progressWeeks*speed>=Math.ceil(m.durationWeeks/2)?"partial":"initial";if(m.progressWeeks===1||stage!=="initial"||m.progressWeeks>=m.durationWeeks){const report=makeReport(`${m.id}:${m.progressWeeks}`,scout.name,regionOf(m.region),currentWeek,undefined,stage,m.progressWeeks,scout.attributes);next.reports=next.reports.filter(r=>r.playerId!==report.playerId).concat(report)}if(stage==="complete"){m.status="complete";scout.missionId=undefined;next.reputation=Math.min(100,next.reputation+2)}}return next}
+export function generatePerformanceAnalysis(week:number,dataLevel:number):PerformanceAnalysis{return{week,squadAlerts:["Monitore a fadiga dos laterais","Queda de intensidade após os 70 minutos"].slice(0,Math.max(1,dataLevel-1)),opponentStrengths:["Transição rápida pelos lados","Bolas paradas ofensivas"].slice(0,Math.ceil(dataLevel/2)),opponentWeaknesses:["Espaço entre zaga e volantes","Dificuldade sob pressão alta"].slice(0,Math.ceil(dataLevel/2)),tacticalRecommendations:["Pressionar a saída nos primeiros 20 minutos",dataLevel>=3?"Atacar o corredor entre lateral e zagueiro":"Manter bloco compacto" ]}}
 
-export interface ScoutReport {
-  id: string
-  playerId: string
-  playerName: string
-  scoutName: string
-  region: ScoutRegion
-  knownAttributes: Partial<Record<string, number>>  // overall, pace, etc — o que o olheiro descobriu
-  potentialEstimate: { min: number; max: number }
-  tacticalFit: number              // 0-100
-  injuryRisk: "low" | "medium" | "high"
-  expectedSalary: number
-  estimatedTransferCost: number
-  contractRisk: "low" | "medium" | "high"
-  personality?: Personality
-  recommendation: "sign" | "monitor" | "pass"
-  notes: string
-  generatedAt: number              // week
-}
-
-/** Designa olheiro para missão (região + foco). */
-export function assignScout(_assignment: ScoutAssignment): void {
-  throw new Error("scout-engine.assignScout: not implemented")
-}
-
-/** Avança 1 semana: olheiros geram reports baseado na qualidade do staff. */
-export function tickScouting(_currentWeek: number): ScoutReport[] {
-  throw new Error("scout-engine.tickScouting: not implemented")
-}
-
-/** Pede reavaliação focal de jogador específico. */
-export function deepScout(_playerId: string, _scoutName: string): ScoutReport {
-  throw new Error("scout-engine.deepScout: not implemented")
-}
+const assignments:ScoutAssignment[]=[]
+export function assignScout(a:ScoutAssignment):void{const i=assignments.findIndex(x=>x.id===a.id);if(i>=0)assignments[i]=structuredClone(a);else assignments.push(structuredClone(a))}
+export function tickScouting(week:number):ScoutReport[]{return assignments.filter(a=>week>=a.startedAt&&week<=a.startedAt+a.durationWeeks&&(week-a.startedAt)%2===0).map(a=>makeReport(`${a.id}-${week}`,a.scoutName,a.region,week))}
+export function deepScout(playerId:string,scoutName:string):ScoutReport{return makeReport(playerId,scoutName,"br_sudeste",0,playerId,"complete",6)}
+function regionOf(region:string):ScoutRegion{return (["europa","africa","asia"].includes(region)?region:"br_sudeste") as ScoutRegion}
+function makeReport(seed:string,scoutName:string,region:ScoutRegion,week:number,playerId=seed,stage:ReportStage="partial",observationWeeks=2,skill?:ScoutAttributes):ScoutReport{const n=[...seed].reduce((a,c)=>a+c.charCodeAt(0),0),overall=55+n%30,potential=Math.min(95,overall+5+n%12),precision=stage==="complete"?2:stage==="partial"?5:9,fit=45+n%51,cost=Math.round((overall**3)*35),known:Partial<Record<string,number>>={};if(stage!=="initial")known.pace=50+n%40;if(stage==="complete")known.overall=overall;return{id:`report-${seed}-${week}`,playerId,playerName:`Atleta ${playerId.slice(-6)}`,scoutName,region,stage,observationWeeks,knownAttributes:known,potentialEstimate:{min:Math.max(1,potential-precision),max:Math.min(99,potential+precision)},tacticalFit:stage==="initial"?undefined:fit,injuryRisk:stage==="complete"?(n%10<2?"high":n%10<5?"medium":"low"):undefined,expectedSalary:stage==="complete"?Math.round(cost/120):undefined,estimatedTransferCost:stage==="complete"?cost:undefined,contractRisk:stage==="complete"?(n%3===0?"medium":"low"):undefined,recommendation:overall>=72&&fit>=65?"sign":overall>=62?"monitor":"pass",notes:stage==="complete"?"Relatório completo: técnica, finanças, personalidade e lesões validadas.":"Observação em andamento; valores exibidos são estimativas.",generatedAt:week}}

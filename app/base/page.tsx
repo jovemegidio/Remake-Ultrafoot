@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { Sprout, Star, ArrowUp, AlertTriangle } from "lucide-react"
+import { Sprout, Star, ArrowUp, AlertTriangle, RefreshCw, Send } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { SystemMediaPlayer } from "@/components/system-media-player"
@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button"
 import { useUserTeam, useGameState, type SquadPlayer } from "@/lib/save-system"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateYouthProspects } from "@/lib/youth-academy"
+import { advanceYouthMonth, generateYouthBatch, loanYouth, runTryout } from "@/lib/youth-engine"
 import { cn } from "@/lib/utils"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 const PROMOTION_FEE = 200_000
 
@@ -40,6 +42,32 @@ export default function BasePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [team?.curto, state.season])
 
+  // Ao concluir a terceira temporada, a turma remanescente sobe em bloco. O marco
+  // 2026 cobre saves antigos (anteriores ao campo youthCareerStartSeason); novas
+  // carreiras podem gravar esse marco quando o motor de base for criado. Executa uma
+  // unica vez e persiste o marcador, evitando repetir ao reabrir a tela.
+  useEffect(() => {
+    const youthStartSeason = state.youthCareerStartSeason ?? 2026
+    if (state.season < youthStartSeason + 3 || state.youthAutoPromotedSeason === state.season || youth.length === 0) return
+    const promoted = youth.map((player, index) => ({
+      ...player,
+      id: `pro_auto_${state.season}_${index}_${player.id}`,
+      fromTeam: "Categoria de Base",
+      seasonSigned: state.season,
+    }))
+    setState({
+      squadPlayers: [...(state.squadPlayers ?? []), ...promoted],
+      youthPlayers: [],
+      youthAutoPromotedSeason: state.season,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.season, state.youthAutoPromotedSeason, youth.length])
+
+  const replacementFor = (player: SquadPlayer): SquadPlayer => {
+    const generated = generateYouthBatch(state.season, 1, team.prestigio ?? 60)[0]
+    return { ...generated, id: `replacement_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, position: player.position, fromTeam: "Nova geração da base" }
+  }
+
   const promote = (player: SquadPlayer) => {
     if (balance < PROMOTION_FEE) {
       if (typeof window !== "undefined") window.alert("Saldo insuficiente para promover (R$ 200.000).")
@@ -56,7 +84,7 @@ export default function BasePage() {
     }
     setState({
       squadPlayers: [...(state.squadPlayers ?? []), promoted],
-      youthPlayers: youth.filter(p => p.id !== player.id),
+      youthPlayers: [...youth.filter(p => p.id !== player.id), replacementFor(player)],
       balance: balance - PROMOTION_FEE,
       transfers: [...(state.transfers ?? []), {
         id: `youth_promo_${Date.now()}`,
@@ -73,7 +101,27 @@ export default function BasePage() {
 
   const releaseYouth = (player: SquadPlayer) => {
     if (typeof window !== "undefined" && !window.confirm(`Dispensar ${player.name} da categoria de base?`)) return
-    setState({ youthPlayers: youth.filter(p => p.id !== player.id) })
+    setState({ youthPlayers: [...youth.filter(p => p.id !== player.id), replacementFor(player)] })
+  }
+
+  const holdTryout = () => {
+    const fee = 100_000
+    if (balance < fee) return window.alert("Saldo insuficiente para realizar a peneira.")
+    const intake = runTryout(state, "sub17")
+    setState({ youthPlayers: [...youth, ...intake.players], balance: balance - fee })
+  }
+
+  const developMonth = () => {
+    const result = advanceYouthMonth(state)
+    setState({ youthPlayers: result.state.youthPlayers, updatedAt: result.state.updatedAt })
+    window.alert(`${result.report.highlights.length} jovem(ns) evoluíram neste mês.`)
+  }
+
+  const sendOnLoan = (player: SquadPlayer) => {
+    const club = window.prompt("Clube de destino do empréstimo:")?.trim()
+    if (!club) return
+    const result = loanYouth(state, player.id, club)
+    setState({ youthPlayers: [...(result.youthPlayers ?? []), replacementFor(player)], updatedAt: result.updatedAt })
   }
 
   return (
@@ -81,11 +129,19 @@ export default function BasePage() {
       <GameSidebar />
       <GameHeader team={team} />
       <main className="p-6 space-y-6">
-        <header className="flex items-center gap-3">
+        <header className="flex flex-wrap items-center gap-3">
           <Sprout className="h-7 w-7 text-[#1db954]" />
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">CATEGORIA DE BASE</h1>
             <p className="text-white/50 mt-1">{youth.length} prospecto{youth.length !== 1 ? "s" : ""} disponível{youth.length !== 1 ? "is" : ""} • Taxa de promoção: R$ {(PROMOTION_FEE / 1000).toFixed(0)}k</p>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" onClick={developMonth} className="border-white/15 text-white">
+              <RefreshCw className="mr-2 h-4 w-4" /> Evoluir um mês
+            </Button>
+            <Button onClick={holdTryout} className="bg-[#1db954] text-black hover:bg-[#1ed760]">
+              <Sprout className="mr-2 h-4 w-4" /> Peneira Sub-17 · R$ 100 mil
+            </Button>
           </div>
         </header>
 
@@ -155,6 +211,14 @@ export default function BasePage() {
                     >
                       <ArrowUp className="mr-1 h-3.5 w-3.5" />
                       PROMOVER
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => sendOnLoan(p)}
+                      className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 text-xs"
+                    >
+                      <Send className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       size="sm"

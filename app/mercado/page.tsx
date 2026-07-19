@@ -30,16 +30,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { getGameDate } from "@/lib/game-date"
 import { getFormationSlots } from "@/lib/formations"
+import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-cooldown"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
-import { useUserTeam } from "@/lib/save-system"
+import { useGameState, useUserTeam } from "@/lib/save-system"
 import {
   AVAILABLE_SCOUTS,
   useGameEngine,
   type Player as EnginePlayer,
   type Scout,
   type TransferOffer,
+  nextTransferWindowWeek,
 } from "@/lib/game-engine"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { PlayerAvatar } from "@/components/player-avatar"
@@ -51,6 +53,54 @@ import { cn } from "@/lib/utils"
 type Player = DetailedMarketTarget
 type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "enviadas" | "recebidas"
 type SentProposalStatus = "aceita" | "rejeitada"
+
+function scoutedLeadToMarketPlayer(lead: import("@/lib/game-engine").ScoutedLead): Player {
+  return {
+    id: lead.id,
+    name: lead.name,
+    position: lead.position,
+    secondaryPositions: [],
+    age: lead.age,
+    overall: lead.overall,
+    potential: lead.potential,
+    value: lead.marketValue,
+    trend: "up",
+    nationality: lead.nationality,
+    height: "—",
+    weight: "—",
+    foot: "—",
+    stats: {
+      pace: lead.pace,
+      shooting: lead.shooting,
+      passing: lead.passing,
+      dribbling: lead.dribbling,
+      defense: lead.defending,
+      physical: lead.physical,
+    },
+    releaseClause: null,
+    scoutedBy: "Departamento de olheiros",
+    scoutProgress: 100,
+    team: {
+      nome: "Mercado observado",
+      curto: "OBS",
+      cidade: lead.scoutedRegion,
+      estado: lead.scoutedRegion,
+      cor1: "#00ffc8",
+      cor2: "#102226",
+      prestigio: 50,
+      torcida: 0,
+      estadio_cap: 0,
+      saldo: 0,
+      file_key: "mercado_observado",
+      estadio_nome: "",
+      patrocinador: "",
+      escudo_url: "",
+      divisao: "mercado",
+      pais: lead.nationality,
+      liga: "Agentes e observados",
+    },
+  }
+}
 
 interface SentTransferProposal {
   id: number
@@ -127,6 +177,7 @@ function marketPlayerToEnginePlayer(p: Player): EnginePlayer {
 
 export default function MercadoPage() {
   const { team: userTeam } = useUserTeam()
+  const { state: careerState, setState: setCareerState } = useGameState()
   const t = useTranslation()
   const gameEngine = useGameEngine()
 
@@ -138,9 +189,12 @@ export default function MercadoPage() {
   const [negotiationOpen, setNegotiationOpen] = useState(false)
   const [negotiationType, setNegotiationType] = useState<"buy" | "loan">("buy")
   const [positionFilter, setPositionFilter] = useState<string>("Tudo")
+  const [marketPage, setMarketPage] = useState(0)
   const [expandedScoutId, setExpandedScoutId] = useState<number | null>(null)
   const [marketNotice, setMarketNotice] = useState<string | null>(null)
   const [sentProposals, setSentProposals] = useState<SentTransferProposal[]>([])
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   // Filter states
   const [nameFilter, setNameFilter] = useState("")
@@ -255,23 +309,46 @@ export default function MercadoPage() {
     return { avg, count: squad.length, value }
   }, [gameEngine.squadPlayers, centralStartingXI])
 
-  // Vitrine dinâmica: alvos do banco real, estáveis dentro da temporada
+  // Catálogo completo: todos os atletas de todos os clubes importados, estáveis
+  // dentro da temporada. A versão anterior passava `60` e, por isso, filtros de
+  // país/liga/time pesquisavam somente uma vitrine aleatória — não o mercado real.
   const transferTargets = useMemo(
-    () => generateDetailedMarketTargets(userTeam?.curto ?? "", 60, gameEngine.currentSeason),
+    () => generateDetailedMarketTargets(userTeam?.curto ?? "", undefined, gameEngine.currentSeason),
     [userTeam?.curto, gameEngine.currentSeason],
   )
 
-  // Opções reais para os dropdowns dos filtros (derivadas da vitrine atual).
+  // Opções reais e encadeadas: país -> liga -> time. Nacionalidade e País/Região
+  // exibem somente nomes de países (nunca siglas de estado/arquivo).
   const filterOptions = useMemo(() => {
     const uniq = (arr: string[]) =>
       ["Qualquer", ...Array.from(new Set(arr.filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR"))]
-    return {
-      nacionalidade: uniq(transferTargets.map((p) => p.nationality)),
-      pais: uniq(transferTargets.map((p) => p.team.pais ?? "")),
-      liga: uniq(transferTargets.map((p) => divisaoLabel(p.team.divisao))),
-      time: uniq(transferTargets.map((p) => p.team.nome)),
+    const byCountry = filterCountry === "Qualquer"
+      ? transferTargets
+      : transferTargets.filter((p) => p.team.pais === filterCountry)
+    const byLeague = filterLeague === "Qualquer"
+      ? byCountry
+      : byCountry.filter((p) => p.team.liga === filterLeague)
+    const countries = transferTargets.map((p) => p.team.pais ?? p.nationality)
+    const groupedTeams = new Map<string, Set<string>>()
+    for (const player of byLeague) {
+      const country = player.team.pais ?? "Outros países"
+      const names = groupedTeams.get(country) ?? new Set<string>()
+      names.add(player.team.nome)
+      groupedTeams.set(country, names)
     }
-  }, [transferTargets])
+    return {
+      nacionalidade: uniq(countries),
+      pais: uniq(countries),
+      liga: uniq(byCountry.map((p) => p.team.liga ?? divisaoLabel(p.team.divisao))),
+      time: uniq(byLeague.map((p) => p.team.nome)),
+      timeGroups: Array.from(groupedTeams.entries())
+        .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
+        .map(([label, names]) => ({
+          label,
+          options: Array.from(names).sort((a, b) => a.localeCompare(b, "pt-BR")),
+        })),
+    }
+  }, [transferTargets, filterCountry, filterLeague])
 
   // Filter players by all criteria
   const filteredPlayers = useMemo(() => {
@@ -296,7 +373,7 @@ export default function MercadoPage() {
       // Nacionalidade / Pais / Liga / Time
       if (filterNationality !== "Qualquer" && p.nationality !== filterNationality) return false
       if (filterCountry !== "Qualquer" && (p.team.pais ?? "") !== filterCountry) return false
-      if (filterLeague !== "Qualquer" && divisaoLabel(p.team.divisao) !== filterLeague) return false
+      if (filterLeague !== "Qualquer" && (p.team.liga ?? divisaoLabel(p.team.divisao)) !== filterLeague) return false
       if (filterTeam !== "Qualquer" && p.team.nome !== filterTeam) return false
       // Status de transferencia
       if (filterStatus === "Com multa rescisória" && p.releaseClause == null) return false
@@ -438,6 +515,20 @@ export default function MercadoPage() {
   }, [activeTab, negotiationOpen, searchQuery, nameFilter, selectedPosition, minAge, maxAge,
       filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
 
+  // Renderizar 53 mil cards de uma vez bloqueava a WebView ao abrir a Rede Mundial.
+  // O catálogo continua completo para busca/filtros, mas a lista é paginada.
+  const MARKET_PAGE_SIZE = 100
+  const marketPageCount = Math.max(1, Math.ceil(filteredPlayers.length / MARKET_PAGE_SIZE))
+  const visibleMarketPlayers = useMemo(
+    () => filteredPlayers.slice(marketPage * MARKET_PAGE_SIZE, (marketPage + 1) * MARKET_PAGE_SIZE),
+    [filteredPlayers, marketPage],
+  )
+  useEffect(() => setMarketPage(0), [searchQuery, nameFilter, selectedPosition, minAge, maxAge,
+    positionFilter, filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
+  useEffect(() => {
+    if (marketPage >= marketPageCount) setMarketPage(marketPageCount - 1)
+  }, [marketPage, marketPageCount])
+
   // Group players by position type
   const groupedPlayers = useMemo(() => {
     const groups: Record<string, Player[]> = {
@@ -446,7 +537,7 @@ export default function MercadoPage() {
       "Defesa": []
     }
     
-    filteredPlayers.forEach(player => {
+    visibleMarketPlayers.forEach(player => {
       if (["ATA", "PE", "PD"].includes(player.position)) {
         groups["Ataque"].push(player)
       } else if (["MEI", "ME", "MD", "VOL"].includes(player.position)) {
@@ -457,7 +548,7 @@ export default function MercadoPage() {
     })
     
     return groups
-  }, [filteredPlayers])
+  }, [visibleMarketPlayers])
 
   const handlePlayerSelect = (player: Player) => {
     setSelectedPlayer(player)
@@ -540,6 +631,7 @@ export default function MercadoPage() {
     }
 
     const proposalStatus: SentProposalStatus = accepted ? "aceita" : "rejeitada"
+    announceOnlineAction("transfer_decision", { player: player.name, type, offer, accepted, rejectedBy: rejectedBy ?? null })
 
     setSentProposals((current) => [
       {
@@ -568,23 +660,30 @@ export default function MercadoPage() {
     )
   }
 
+  // O mercado depende de save/localStorage. Renderizar os dados persistidos no primeiro
+  // frame do cliente, enquanto o HTML estatico foi gerado sem save, causava hydration
+  // mismatch (React #418) apenas na build de producao.
+  if (!mounted) {
+    return <div className="h-screen bg-[#050508]" aria-label="Carregando mercado" />
+  }
+
   return (
     <div className="relative h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
       {/* Background stadium image */}
       <div className="absolute inset-0 md:ml-16 pointer-events-none">
         <Image
-          src="/images/stadium-bg.png"
-          alt="Stadium Background"
+          src="/images/market-transfer-background.png"
+          alt=""
           fill
           className="object-cover object-center"
           priority
         />
         {/* Base dark overlay */}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/40" />
         {/* Top gradient to darken header area */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-black/70" />
         {/* Subtle dark blue tint for game atmosphere */}
-        <div className="absolute inset-0 bg-[#050508]/40" />
+        <div className="absolute inset-0 bg-[#050508]/20" />
       </div>
 
       <GameHeader team={userTeam} />
@@ -835,20 +934,28 @@ export default function MercadoPage() {
                 icon={<Globe className="h-10 w-10 text-white/30" strokeWidth={1.5} />}
                 value={filterCountry}
                 options={filterOptions.pais}
-                onSelect={setFilterCountry}
+                onSelect={(country) => {
+                  setFilterCountry(country)
+                  setFilterLeague("Qualquer")
+                  setFilterTeam("Qualquer")
+                }}
               />
               <FilterDropdownCard
                 label={t.market.league}
                 icon={<Trophy className="h-10 w-10 text-white/30" strokeWidth={1.5} />}
                 value={filterLeague}
                 options={filterOptions.liga}
-                onSelect={setFilterLeague}
+                onSelect={(league) => {
+                  setFilterLeague(league)
+                  setFilterTeam("Qualquer")
+                }}
               />
               <FilterDropdownCard
                 label={t.market.team}
                 icon={<Shield className="h-10 w-10 text-white/20" strokeWidth={1} />}
                 value={filterTeam}
                 options={filterOptions.time}
+                groups={filterOptions.timeGroups}
                 onSelect={setFilterTeam}
               />
             </div>
@@ -915,6 +1022,19 @@ export default function MercadoPage() {
             <div className="grid grid-cols-2 gap-6 h-[calc(100vh-180px)]">
               {/* Player List */}
               <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin">
+                <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#0c0c10]/95 px-3 py-2 backdrop-blur-sm">
+                  <span className="text-xs text-white/45">
+                    {filteredPlayers.length.toLocaleString("pt-BR")} atletas · página {marketPage + 1} de {marketPageCount}
+                  </span>
+                  <div className="flex gap-2">
+                    <button type="button" disabled={marketPage === 0} onClick={() => setMarketPage(page => Math.max(0, page - 1))} className="rounded bg-white/10 p-1.5 text-white disabled:opacity-25" aria-label="Página anterior">
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button type="button" disabled={marketPage + 1 >= marketPageCount} onClick={() => setMarketPage(page => Math.min(marketPageCount - 1, page + 1))} className="rounded bg-white/10 p-1.5 text-white disabled:opacity-25" aria-label="Próxima página">
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
                     <div key={group} className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
@@ -1135,6 +1255,21 @@ export default function MercadoPage() {
                               >
                                 Dispensar
                               </button>
+                              {lead.revealedAttributes && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const player = scoutedLeadToMarketPlayer(lead)
+                                    setSelectedPlayer(player)
+                                    setNegotiationType("buy")
+                                    setNegotiationOpen(true)
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded bg-primary px-2 py-1 text-[10px] font-semibold text-primary-foreground hover:bg-primary/90"
+                                >
+                                  <ArrowLeftRight className="h-3 w-3" />
+                                  Negociar
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1147,9 +1282,9 @@ export default function MercadoPage() {
           </TabsContent>
 
           {/* Central de Transferencias Tab */}
-          <TabsContent value="central" className="mt-0">
+          <TabsContent value="central" className="mt-0 h-[calc(100vh-116px)] overflow-hidden">
             {/* Cabecalho da Central — titulo claro + chips com o resumo REAL do elenco. */}
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
                   <ArrowLeftRight className="h-5 w-5 text-primary" />
@@ -1177,16 +1312,16 @@ export default function MercadoPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
+            <div className="grid h-[calc(100%-76px)] grid-cols-[minmax(320px,0.8fr)_minmax(460px,1.2fr)] gap-4 pb-12">
               {/* Left Column - Actions and Saved Lists */}
-              <div className="space-y-4">
+              <div className="grid min-h-0 grid-rows-[auto_1fr] gap-4">
                 {/* Action Cards Row */}
                 <div className="grid grid-cols-2 gap-4">
                   {/* Buscar atletas */}
                   <button
                     type="button"
                     onClick={() => setActiveTab("buscar")}
-                    className="group relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
+                    className="group relative flex h-36 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/25 transition-colors group-hover:bg-primary/25">
                       <Search className="h-6 w-6 text-primary" />
@@ -1202,7 +1337,7 @@ export default function MercadoPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("olheiros")}
-                    className="group relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
+                    className="group relative flex h-36 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-400/15 ring-1 ring-amber-400/25 transition-colors group-hover:bg-amber-400/25">
                       <Eye className="h-6 w-6 text-amber-400" />
@@ -1219,7 +1354,7 @@ export default function MercadoPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("rede")}
-                  className="relative w-full rounded-xl p-4 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-primary hover:border-primary group"
+                  className="relative h-full min-h-0 w-full rounded-xl p-4 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-primary hover:border-primary group"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -1237,7 +1372,7 @@ export default function MercadoPage() {
                   </div>
                   {/* Mini field preview */}
                   <div
-                    className="mt-3 h-24 rounded-lg relative overflow-hidden"
+                    className="mt-3 h-[calc(100%-112px)] min-h-24 rounded-lg relative overflow-hidden"
                     style={{ background: "radial-gradient(120% 120% at 50% 0%, #1c5a3a, #0f3722 80%)" }}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -1264,7 +1399,7 @@ export default function MercadoPage() {
               </div>
 
               {/* Right Column - Big Field Preview */}
-              <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
+              <div className="min-h-0 rounded-xl p-5 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-white text-2xl font-bold">Padrao {userTeam?.nome?.toUpperCase() || "TIME"}</h2>
@@ -1519,6 +1654,7 @@ export default function MercadoPage() {
                             player={gameEngine.squadPlayers.find((item) => item.id === offer.playerId)}
                             onAccept={() => gameEngine.respondToOffer(offer.id, true)}
                             onReject={() => gameEngine.respondToOffer(offer.id, false)}
+                            onCounter={(amount,coverage,weeks)=>gameEngine.counterTransferOffer(offer.id,amount,coverage,weeks)}
                           />
                         ))}
                       </div>
@@ -1563,16 +1699,49 @@ export default function MercadoPage() {
           if (!selectedPlayer) return
           const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer)
           if (negotiationType === "loan") {
-            gameEngine.loanPlayer(enginePlayer, 26, Math.round(fee / 26))
-            setMarketNotice(`${selectedPlayer.name} chegou por emprestimo.`)
+            const result = gameEngine.loanPlayer(enginePlayer, 26, Math.round(fee / 26))
+            setMarketNotice(result === "pending"
+              ? `${selectedPlayer.name} assinou e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
+              : result === "joined" ? `${selectedPlayer.name} chegou por emprestimo.` : "Não foi possível concluir o empréstimo.")
           } else {
             if (gameEngine.balance < fee) {
               setMarketNotice("Saldo insuficiente para concluir esta transferencia.")
               setActiveTab("enviadas")
               return
             }
-            gameEngine.buyPlayer(enginePlayer, fee)
-            setMarketNotice(`${selectedPlayer.name} foi contratado por ${formatCurrency(fee)}.`)
+            const isFreeAgent = !selectedPlayer.team
+            const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent)
+            if (transferResult === "failed") {
+              setMarketNotice("A contratação não foi concluída ou o atleta já pertence ao plantel.")
+              setActiveTab("enviadas")
+              return
+            }
+            // Mantem tambem o save da carreira sincronizado. Base/transferencias ainda
+            // consultam este resumo, enquanto elenco/radar usam o game-engine completo.
+            if (transferResult === "joined" && !(careerState.squadPlayers ?? []).some(player => player.name.toLocaleLowerCase("pt-BR") === selectedPlayer.name.toLocaleLowerCase("pt-BR"))) {
+              setCareerState({
+                squadPlayers: [...(careerState.squadPlayers ?? []), {
+                  id: `transfer_${enginePlayer.id}_${Date.now()}`,
+                  name: selectedPlayer.name,
+                  position: selectedPlayer.position,
+                  age: selectedPlayer.age,
+                  overall: selectedPlayer.overall,
+                  potential: selectedPlayer.potential,
+                  value: selectedPlayer.value,
+                  pace: enginePlayer.pace,
+                  shooting: enginePlayer.shooting,
+                  passing: enginePlayer.passing,
+                  dribbling: enginePlayer.dribbling,
+                  defending: enginePlayer.defending,
+                  physical: enginePlayer.physical,
+                  fromTeam: selectedPlayer.team?.nome,
+                  seasonSigned: careerState.season,
+                }],
+              })
+            }
+            setMarketNotice(transferResult === "pending"
+              ? `${selectedPlayer.name} foi contratado por ${formatCurrency(fee)} e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
+              : `${selectedPlayer.name} foi contratado por ${formatCurrency(fee)} e já está no elenco.`)
           }
           setActiveTab("enviadas")
         }}
@@ -1588,15 +1757,21 @@ function ReceivedOfferCard({
   player,
   onAccept,
   onReject,
+  onCounter,
 }: {
   offer: TransferOffer
   currentWeek: number
   player?: EnginePlayer
   onAccept: () => void
   onReject: () => void
+  onCounter:(amount:number,coverage?:number,weeks?:number)=>"accepted"|"revised"|"rejected"
 }) {
   const expiresIn = Math.max(0, offer.expiresWeek - currentWeek)
   const belowMarket = player && offer.offerType === "compra" && offer.offerAmount < player.marketValue
+  const [counterOpen,setCounterOpen]=useState(false)
+  const [counterAmount,setCounterAmount]=useState(offer.offerAmount)
+  const [coverage,setCoverage]=useState(offer.wageCoverage??100)
+  const [loanWeeks,setLoanWeeks]=useState(offer.loanWeeks??26)
 
   return (
     <div className="rounded-xl bg-[#0c0c10]/85 border border-white/[0.06] overflow-hidden">
@@ -1649,7 +1824,9 @@ function ReceivedOfferCard({
           </div>
         )}
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        {offer.counterMessage&&<div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">{offer.counterMessage}</div>}
+        {counterOpen&&<div className="mt-3 grid gap-2 rounded-lg bg-black/30 p-3 sm:grid-cols-3"><label className="text-[10px] uppercase text-white/45">Valor solicitado<input type="number" min={0} step={100000} value={counterAmount} onChange={e=>setCounterAmount(Number(e.target.value))} className="mt-1 w-full rounded bg-white/10 p-2 text-sm text-white"/></label>{offer.offerType==="emprestimo"&&<><label className="text-[10px] uppercase text-white/45">Salário coberto %<input type="number" min={0} max={100} value={coverage} onChange={e=>setCoverage(Number(e.target.value))} className="mt-1 w-full rounded bg-white/10 p-2 text-sm text-white"/></label><label className="text-[10px] uppercase text-white/45">Semanas<input type="number" min={4} value={loanWeeks} onChange={e=>setLoanWeeks(Number(e.target.value))} className="mt-1 w-full rounded bg-white/10 p-2 text-sm text-white"/></label></>}</div>}
+        <div className="mt-4 grid grid-cols-3 gap-3">
           <button
             type="button"
             onClick={onReject}
@@ -1658,6 +1835,7 @@ function ReceivedOfferCard({
             <X className="h-4 w-4" />
             Recusar
           </button>
+          <button type="button" onClick={()=>{if(!counterOpen){setCounterAmount(Math.max(offer.offerAmount,player?.marketValue??offer.offerAmount));setCounterOpen(true)}else{onCounter(counterAmount,coverage,loanWeeks);setCounterOpen(false)}}} className="inline-flex items-center justify-center rounded-lg bg-amber-400/10 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-400/20">{counterOpen?"Enviar":"Contraproposta"}</button>
           <button
             type="button"
             onClick={onAccept}
@@ -1711,8 +1889,16 @@ function FilterCardComponent({
   highlight?: boolean
 }) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onClick()
+        }
+      }}
       className={cn(
         "relative rounded-xl p-4 h-44 text-left transition-all overflow-hidden",
         "bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618]",
@@ -1735,7 +1921,7 @@ function FilterCardComponent({
       <div className="relative z-10 h-[calc(100%-2rem)]">
         {customContent}
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -1746,12 +1932,14 @@ function FilterDropdownCard({
   icon,
   value,
   options,
+  groups,
   onSelect,
 }: {
   label: string
   icon: React.ReactNode
   value: string
   options: string[]
+  groups?: Array<{ label: string; options: string[] }>
   onSelect: (v: string) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -1787,7 +1975,7 @@ function FilterDropdownCard({
 
       {open && (
         <div className="absolute left-0 right-0 z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0c0c12] shadow-2xl scrollbar-thin">
-          {options.map((opt) => (
+          {!groups && options.map((opt) => (
             <button
               key={opt}
               onClick={() => { onSelect(opt); setOpen(false) }}
@@ -1799,6 +1987,40 @@ function FilterDropdownCard({
               {opt}
             </button>
           ))}
+          {groups && (
+            <>
+              <button
+                type="button"
+                onClick={() => { onSelect("Qualquer"); setOpen(false) }}
+                className={cn(
+                  "block w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
+                  value === "Qualquer" ? "bg-primary/15 text-[#00ffc8] font-semibold" : "text-white/70",
+                )}
+              >
+                Qualquer
+              </button>
+              {groups.map((group) => (
+                <div key={group.label} className="border-t border-white/[0.06] py-1">
+                  <p className="sticky top-0 bg-[#0c0c12] px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#00ffc8]/80">
+                    {group.label}
+                  </p>
+                  {group.options.map((opt) => (
+                    <button
+                      key={`${group.label}:${opt}`}
+                      type="button"
+                      onClick={() => { onSelect(opt); setOpen(false) }}
+                      className={cn(
+                        "block w-full px-5 py-2 text-left text-sm transition-colors hover:bg-white/10",
+                        opt === value ? "bg-primary/15 text-[#00ffc8] font-semibold" : "text-white/70",
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>

@@ -26,7 +26,8 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { useGameState, useUserTeam } from "@/lib/save-system"
+import { debtTransferLimit, renegotiateDebt } from "@/lib/debt-engine"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { getCountryCompetitions } from "@/lib/country-competitions"
@@ -100,6 +101,7 @@ export default function FinancasPage() {
   const countryComps = getCountryCompetitions(userTeam.divisao)
   const leagueName = getLeagueName(userTeam.divisao)
   const gameEngine = useGameEngine()
+  const { state: saveState, setState: setSaveState } = useGameState()
   const { currentWeek, currentSeason, userPosition, standings, hydrated } = useGameManager()
   const t = useTranslation()
 
@@ -109,7 +111,8 @@ export default function FinancasPage() {
 
     // Base de receitas
     const tvRights = Math.round(userTeam.prestigio * 25000 + 1500000) // Baseado no prestigio
-    const sponsorship = Math.round(userTeam.prestigio * 15000 + 800000)
+    const contractedSponsorship=(saveState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0)
+    const sponsorship = contractedSponsorship || Math.round(userTeam.prestigio * 15000 + 800000)
     
     // Bilheteria baseada em jogos em casa jogados
     const homeMatches = gameEngine.matchResults.filter(m => m.homeTeam === userTeam.curto).length
@@ -163,7 +166,7 @@ export default function FinancasPage() {
       homeMatches,
       avgAttendance,
     }
-  }, [userTeam, gameEngine.balance, gameEngine.squadPlayers, gameEngine.scouts, gameEngine.matchResults, gameEngine.weeklyIncome, gameEngine.weeklyExpenses, gameEngine.transferBudget, gameEngine.wageBudget, userPosition])
+  }, [userTeam, gameEngine.balance, gameEngine.squadPlayers, gameEngine.scouts, gameEngine.matchResults, gameEngine.weeklyIncome, gameEngine.weeklyExpenses, gameEngine.transferBudget, gameEngine.wageBudget, userPosition, saveState.activeSponsors])
 
   // Transacoes recentes baseadas nos resultados
   const recentTransactions = useMemo(() => {
@@ -235,6 +238,13 @@ export default function FinancasPage() {
             {t.common.week} {currentWeek}/38
           </div>
         </div>
+
+        {saveState.debt?.enabled && <section className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><div className="text-xs font-bold uppercase tracking-wider text-amber-300">Dívida do clube</div><div className="mt-1 text-xl font-black text-white">{formatCurrency(saveState.debt.principal)}</div><p className="text-xs text-white/45">Parcela mensal {formatCurrency(saveState.debt.monthlyPayment)} · juros {(saveState.debt.annualInterestRate*100).toFixed(1)}% a.a.</p></div>
+            <div className="text-right"><div className="text-xs text-white/45">Limite atual para transferências</div><div className="font-bold text-amber-300">{formatCurrency(debtTransferLimit(saveState.debt, gameEngine.balance))}</div><button onClick={() => setSaveState({debt:renegotiateDebt(saveState.debt!)})} disabled={saveState.debt.renegotiations>=2} className="mt-2 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs text-amber-200 disabled:opacity-30">Renegociar empréstimo</button></div>
+          </div>
+        </section>}
 
         {wagePercentage >= 100 && (
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">

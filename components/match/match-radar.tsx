@@ -10,6 +10,8 @@ interface RadarPlayer {
   position: string
   rating?: number
   stamina?: number
+  tacticalSlot?: number
+  formationPosition?: string
 }
 
 interface BallState {
@@ -27,6 +29,11 @@ interface MatchRadarProps {
   homePossession?: number
   minute?: number
   phase?: string
+  homeFormation?: string
+  awayFormation?: string
+  /** Cores efetivamente escolhidas no pré-jogo. Sem isto o radar usava apenas cor1. */
+  homeColor?: string
+  awayColor?: string
 }
 
 // ─── Formation Templates ──────────────────────────────────────────────────────
@@ -163,13 +170,40 @@ interface RadarSlot {
   sprintPhaseOffset: number  // unique phase offset for sprint animation
 }
 
-function buildSlots(squad: RadarPlayer[], isHome: boolean, color: string): RadarSlot[] {
-  const starters = [...squad.slice(0, 11)].sort(
-    (a, b) => (POSITION_RANK[a.position] ?? 5) - (POSITION_RANK[b.position] ?? 5),
-  )
-  const formation = detectFormation(squad)
+function buildSlots(squad: RadarPlayer[], isHome: boolean, color: string, requestedFormation?: string): RadarSlot[] {
+  const formation = requestedFormation && FORMATION_TEMPLATES[requestedFormation]
+    ? requestedFormation
+    : detectFormation(squad)
   const template = FORMATION_TEMPLATES[formation] ?? FORMATION_TEMPLATES["4-3-3"]
   const textColor = getTextColor(color)
+
+  // A ordem simples GOL->DEF->MEI->ATA nao corresponde aos slots do desenho (no
+  // 4-3-3, por exemplo, PE/ATA/PD acabavam trocados). Encaixa cada atleta no slot
+  // tatico esperado e usa o grupo apenas como fallback para elencos incompletos.
+  const expected: Record<string, string[][]> = {
+    "4-3-3": [["GOL","GK"],["LD"],["ZAG"],["ZAG"],["LE"],["VOL"],["MEI","MC"],["MEI","MC"],["PE"],["ATA","CA"],["PD"]],
+    "4-4-2": [["GOL","GK"],["LD"],["ZAG"],["ZAG"],["LE"],["MD","PD"],["MEI","MC"],["MEI","MC","VOL"],["ME","PE"],["ATA","CA","SA"],["ATA","CA","SA"]],
+    "4-2-3-1": [["GOL","GK"],["LD"],["ZAG"],["ZAG"],["LE"],["VOL"],["VOL","MEI"],["PE","ME"],["MEI","MO"],["PD","MD"],["ATA","CA"]],
+    "3-5-2": [["GOL","GK"],["ZAG"],["ZAG"],["ZAG"],["LD","MD"],["MEI","MC"],["VOL","MEI"],["MEI","MC"],["LE","ME"],["ATA","CA","SA"],["ATA","CA","SA"]],
+    "5-3-2": [["GOL","GK"],["LD","MD"],["ZAG"],["ZAG"],["ZAG"],["LE","ME"],["MEI","MC"],["VOL","MEI"],["MEI","MC"],["ATA","CA","SA"],["ATA","CA","SA"]],
+    "4-1-4-1": [["GOL","GK"],["LD"],["ZAG"],["ZAG"],["LE"],["VOL"],["MD","PD"],["MEI","MC"],["MEI","MC"],["ME","PE"],["ATA","CA"]],
+  }
+  const pool = [...squad.slice(0, 11)]
+  const expectedSlots = expected[formation] ?? expected["4-3-3"]
+  const hasExplicitSlots = pool.length === 11 && pool.every(player => Number.isInteger(player.tacticalSlot))
+  const starters = hasExplicitSlots
+    // A escalação do usuário já foi organizada no motor. Não tentar encaixá-la
+    // novamente por posição evita que jogadores se movam após uma substituição.
+    ? [...pool].sort((a, b) => (a.tacticalSlot ?? 99) - (b.tacticalSlot ?? 99))
+    : expectedSlots.map((wanted, slotIndex) => {
+    let index = pool.findIndex((player) => wanted.includes(player.position))
+    if (index < 0) {
+      const wantedGroup = posGroup(wanted[0])
+      index = pool.findIndex((player) => posGroup(player.position) === wantedGroup)
+    }
+    if (index < 0) index = 0
+    return pool.splice(index, 1)[0] ?? squad[slotIndex]
+    }).filter(Boolean)
 
   return starters.map((p, i) => {
     const slot = template[i] ?? { depth: 0.5, x: 0.5 }
@@ -286,23 +320,27 @@ export function MatchRadar({
   homePossession = 50,
   minute = 0,
   phase = "first",
+  homeFormation,
+  awayFormation,
+  homeColor: selectedHomeColor,
+  awayColor: selectedAwayColor,
 }: MatchRadarProps) {
-  const homeColor = homeTeam.cor1 || "#00ffc8"
+  const homeColor = selectedHomeColor || homeTeam.cor1 || "#00ffc8"
 
   const awayColor = useMemo(() => {
-    const base = awayTeam.cor1 || "#ef4444"
+    const base = selectedAwayColor || awayTeam.cor1 || "#ef4444"
     if (colorDist(base, homeColor) >= 90) return base
     const alt = awayTeam.cor2 || ""
     if (alt && colorDist(alt, homeColor) >= 90) return alt
     const red = "#ef4444"
     const amber = "#f5c400"
     return colorDist(red, homeColor) >= colorDist(amber, homeColor) ? red : amber
-  }, [awayTeam.cor1, awayTeam.cor2, homeColor])
+  }, [selectedAwayColor, awayTeam.cor1, awayTeam.cor2, homeColor])
 
   const slots = useMemo(() => [
-    ...buildSlots(homeSquad, true, homeColor),
-    ...buildSlots(awaySquad, false, awayColor),
-  ], [homeSquad, awaySquad, homeColor, awayColor])
+    ...buildSlots(homeSquad, true, homeColor, homeFormation),
+    ...buildSlots(awaySquad, false, awayColor, awayFormation),
+  ], [homeSquad, awaySquad, homeColor, awayColor, homeFormation, awayFormation])
 
   const dotRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
   const ringRefs = useRef<Map<string, HTMLSpanElement | null>>(new Map())

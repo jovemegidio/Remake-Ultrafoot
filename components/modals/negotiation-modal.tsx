@@ -491,7 +491,7 @@ export function NegotiationModal({
                   onClick={acceptCounter}
                   className="mt-3 w-full rounded-lg bg-[#ffd700] px-3 py-2 text-xs font-bold text-black transition-opacity hover:opacity-90"
                 >
-                  Aceitar as exigencias
+                  Usar a contraproposta do agente
                 </button>
               </div>
             )}
@@ -583,8 +583,9 @@ export function NegotiationModal({
             </div>
 
             {agentRounds > 0 && (
-              <div className="text-center text-[10px] text-white/30">
-                Rodada de negociacao {agentRounds + 1} — cada recusa desgasta a relacao
+              <div className="rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/5 px-3 py-2 text-center text-[11px] text-[#00ffc8]/80">
+                Sua contraproposta · rodada {agentRounds + 1}. Ajuste salário, luvas,
+                duração ou papel e envie novamente ao agente.
               </div>
             )}
           </div>
@@ -728,7 +729,7 @@ export function NegotiationModal({
               </Button>
               <Button onClick={handleSubmitTerms} className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-semibold gap-2">
                 <Handshake className="h-4 w-4" />
-                {agentResponse?.verdict === "counter" ? "Reapresentar termos" : "Propor ao agente"}
+                {agentResponse?.verdict === "counter" ? "Enviar contraproposta" : "Propor ao agente"}
               </Button>
             </>
           )}

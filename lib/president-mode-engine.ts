@@ -24,20 +24,20 @@ export interface CoachCandidate {
 }
 
 /** Inicia carreira no modo presidente. */
-export function startPresidentMode(_state: GameState): GameState {
-  throw new Error("president-mode-engine.startPresidentMode: not implemented")
+export function startPresidentMode(state: GameState): GameState {
+  return{...structuredClone(state),managerName:`Presidente ${state.managerName}`,updatedAt:Date.now()}
 }
 
 /** Lista candidatos a técnico. */
-export function listCoachCandidates(_clubPrestigio: number): CoachCandidate[] {
-  throw new Error("president-mode-engine.listCoachCandidates: not implemented")
+export function listCoachCandidates(clubPrestigio: number): CoachCandidate[] {
+  return["Marcelo Reis","André Costa","Paulo Menezes","Ricardo Alves"].map((name,i)=>{const reputation=Math.max(35,Math.min(95,clubPrestigio+8-i*7));return{name,reputation,identity:["posse","pressao_alta","contra_ataque","equilibrado"][i],monthlyWage:Math.round((30000+reputation*3500)/1000)*1000,contractMonths:24,achievements:reputation>=80?["Campeão nacional"]:reputation>=65?["Acesso de divisão"]:[]}})
 }
 
 /** Aplica ação presidencial. */
 export function applyAction(
-  _state: GameState,
-  _action: PresidentialAction,
-  _payload: Record<string, unknown>,
+  state: GameState,
+  action: PresidentialAction,
+  payload: Record<string, unknown>,
 ): GameState {
-  throw new Error("president-mode-engine.applyAction: not implemented")
+  const next=structuredClone(state);if(action==="hire_coach")next.managerName=String(payload.name??next.managerName);if(action==="fire_coach")next.managerName="Cargo vago";if(action==="set_budget")next.balance=Math.max(0,Number(payload.value??next.balance??0));if(action==="approve_signing")next.balance=(next.balance??0)-Math.max(0,Number(payload.value??0));if(action==="negotiate_sponsor")next.balance=(next.balance??0)+Math.max(0,Number(payload.advance??0));next.updatedAt=Date.now();return next
 }

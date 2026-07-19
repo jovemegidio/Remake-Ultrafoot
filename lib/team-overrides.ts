@@ -3,7 +3,7 @@
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
 // Edicoes de clube EMBUTIDAS no jogo (escudos, uniformes, cores, nomes).
 //
-// Sem isto, o que voce edita no editor de clubes fica so no SEU save (persistent-store)
+// Sem isto, o que voce edita no editor de clubes fica so no armazenamento global da instalação
 // e NUNCA chega aos outros jogadores. Este seed viaja dentro do build: e o canal para
 // as suas edicoes valerem para todo mundo que instalar o jogo.
 //
@@ -36,7 +36,7 @@ export interface TeamOverride {
   estadio_nome?: string
   estadio_cap?: number
   patrocinador?: string
-  // Escudo custom (data URL). O escudo e guardado separado no save (ultrafoot:logo:*),
+  // Escudo custom (data URL). O escudo é guardado no armazenamento global (ultrafoot:logo:*),
   // mas viaja no seed embutido POR AQUI para chegar aos outros jogadores. getCustomLogoUrl
   // (team-crest) usa este campo como fallback quando o jogador nao tem escudo proprio.
   logoUrl?: string
@@ -48,7 +48,7 @@ export interface TeamOverride {
 }
 
 /**
- * Edicao do clube. O save LOCAL vence (o jogador pode personalizar o proprio jogo),
+ * Edicao do clube. A personalização LOCAL vence (o jogador pode personalizar a instalação),
  * e o seed EMBUTIDO e o fallback — e por ele que as suas edicoes chegam a todo mundo.
  */
 export function getTeamOverride(fileKey: string): TeamOverride | null {

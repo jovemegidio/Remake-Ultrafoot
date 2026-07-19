@@ -7,7 +7,8 @@ import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import { useActionBar } from "@/components/ea-action-bar"
-import { useGameState } from "@/lib/save-system"
+import { saveGameStateAndFlush, useGameState } from "@/lib/save-system"
+import { persistGameEngineNow } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 
@@ -33,6 +34,24 @@ export default function SalvarPage() {
   const [naming, setNaming] = useState(false)
   const [saveName, setSaveName] = useState("Carreira de Manager - progresso 1")
   const [savedName, setSavedName] = useState("Carreira de Manager - progresso 1")
+  const [saveFeedback, setSaveFeedback] = useState("")
+
+  useEffect(() => {
+    if (!hydrated) return
+    const stored = state.saveName || "Carreira principal"
+    setSavedName(stored)
+    setSaveName(stored)
+  }, [hydrated, state.saveName])
+
+  const commitSave = async () => {
+    const name = saveName.trim() || "Carreira principal"
+    persistGameEngineNow()
+    await saveGameStateAndFlush({ ...state, saveName: name, updatedAt: Date.now() })
+    setSavedName(name)
+    setNaming(false)
+    setSaveFeedback("Jogo salvo com sucesso.")
+    setTimeout(() => setSaveFeedback(""), 2500)
+  }
 
   const userTeam = useMemo(
     () => getTeamByShort(state.selectedTeamShort || "") || serieATeams[0],
@@ -69,14 +88,11 @@ export default function SalvarPage() {
       if (e.key === "Escape") {
         if (naming) setNaming(false)
         else hardNavigate("/configuracoes")
-      } else if (e.key === "Enter" && naming) {
-        setSavedName(saveName)
-        setNaming(false)
-      }
+      } else if (e.key === "Enter" && naming) void commitSave()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [naming, saveName])
+  }, [naming, saveName, state])
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-[#05080a]">
@@ -164,6 +180,7 @@ export default function SalvarPage() {
 
       {/* Conteudo */}
       <main className="relative z-10 flex-1 overflow-y-auto px-10 pb-24">
+        {saveFeedback && <div className="mx-auto mb-4 max-w-md rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-3 text-center text-sm font-bold text-emerald-300">{saveFeedback}</div>}
         {/* Linha de instrucao + espacos livres */}
         <div className="mb-8 mt-2 flex items-start justify-between gap-6">
           <p className="max-w-3xl text-[15px] leading-relaxed text-white/55">
@@ -270,6 +287,7 @@ export default function SalvarPage() {
                 className="w-full bg-transparent text-center text-[26px] font-medium tracking-tight text-white outline-none placeholder:text-white/30"
                 placeholder="Nome do arquivo"
               />
+              <button onClick={commitSave} className="mx-auto mt-4 block rounded-full bg-[#00ffc8] px-7 py-2 text-sm font-black text-black">Salvar jogo</button>
             </div>
           </div>
         </div>

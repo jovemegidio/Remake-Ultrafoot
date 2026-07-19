@@ -10,8 +10,11 @@ const STORAGE_KEY = "ultrafoot:save"
 
 const map: Record<string, Translations> = {
   "pt-BR": ptBR,
+  "pt-PT": ptBR,
   "en-US": enUS,
+  "en-GB": enUS,
   "es-ES": esES,
+  "es-MX": esES,
 }
 
 // O idioma vive dentro do save (GameState.language), que agora fica no

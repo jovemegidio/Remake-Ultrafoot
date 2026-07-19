@@ -54,6 +54,22 @@ export function normalizeAppHref(href: string): string {
 }
 
 /**
+ * O export estático grava diretórios com barra final, mas o App Router do Next 16
+ * precisa receber a rota sem essa barra. Entregar `/elenco/` ao `router.push` deixa
+ * o WebView na página atual; `/elenco` carrega `elenco/index.txt` corretamente.
+ */
+export function toClientRoute(href: string): string {
+  const normalized = normalizeAppHref(href)
+  if (!normalized.startsWith("/")) return normalized
+
+  const suffixIndex = normalized.search(/[?#]/)
+  const pathname = suffixIndex >= 0 ? normalized.slice(0, suffixIndex) : normalized
+  const suffix = suffixIndex >= 0 ? normalized.slice(suffixIndex) : ""
+  const clientPath = pathname === "/" ? "/" : pathname.replace(/\/+$/, "")
+  return `${clientPath}${suffix}`
+}
+
+/**
  * Perform a full-page navigation (no client-side routing).
  * @param href   Destination href.
  * @param replace When true, replaces the current history entry instead of pushing.
@@ -62,10 +78,38 @@ export function hardNavigate(href: string, replace = false): void {
   if (typeof window === "undefined") return
 
   const target = normalizeAppHref(href)
+  // No aplicativo instalado, uma rota interna NAO e um arquivo do Windows.
+  // Recarregar `/elenco/` via location.assign fazia o WebView procurar um caminho
+  // fisico e exibir ERR_FILE_NOT_FOUND. O provider global encaminha este evento ao
+  // roteador do Next, preservando tambem a instancia da carreira ativa.
+  const bridge = window as Window & {
+    __ULTRAFOOT_NAVIGATION_READY__?: boolean
+    __ULTRAFOOT_PENDING_NAVIGATION__?: { href: string; replace: boolean }
+  }
+  if (target.startsWith("/")) {
+    const detail = { href: toClientRoute(target), replace }
+    if (bridge.__ULTRAFOOT_NAVIGATION_READY__) {
+      window.dispatchEvent(new CustomEvent("ultrafoot:navigate", { detail }))
+    } else {
+      // Nunca transforme uma rota do Next em caminho físico do Windows. Se o provider
+      // ainda estiver hidratando, ele consome esta navegação assim que ficar pronto.
+      bridge.__ULTRAFOOT_PENDING_NAVIGATION__ = detail
+    }
+    return
+  }
+  // WebView, export estatico e servidor de QA nao concordam sempre sobre URLs
+  // relativas. Resolver contra a pagina atual evita "Failed to construct URL" sem
+  // alterar protocolos especiais usados pelo Tauri.
+  let destination = target
+  try {
+    destination = new URL(target, window.location.href).href
+  } catch {
+    // Mantem o alvo normalizado como fallback para protocolos do aplicativo.
+  }
 
   if (replace) {
-    window.location.replace(target)
+    window.location.replace(destination)
   } else {
-    window.location.assign(target)
+    window.location.assign(destination)
   }
 }

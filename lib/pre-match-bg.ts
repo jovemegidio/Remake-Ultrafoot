@@ -1,10 +1,53 @@
-// Fundo da tela de pre-jogo conforme a COMPETICAO disputada.
+// Fundo da tela de pre-jogo conforme o CLUBE MANDANTE ou a competicao disputada.
 //
 // A tela usava sempre stadium-night.png. Agora cada competicao tem o seu fundo
 // (public/images/pre-jogo/*), com fallback para o estadio generico quando nao houver
 // arte — sem inventar.
 
-const DEFAULT_BG = "/images/stadium-night.png"
+// Três fundos empacotados para não repetir o mesmo estádio em toda a carreira.
+// A seleção é estável por competição/ligas: não há piscada ao voltar para a tela.
+const DEFAULT_BACKGROUNDS = [
+  "/images/pre-jogo/in-game-1.png",
+  "/images/pre-jogo/in-game-4.png",
+  "/images/pre-jogo/in-game-5.png",
+]
+
+import stadiumManifest from "@/public/stadiums/manifest.json"
+
+const STADIUMS = stadiumManifest as Record<string, string>
+
+/** Mesma normalizacao usada pelo importador de fotos em scripts/import-stadiums.mjs. */
+export function stadiumTeamKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("en-US")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+}
+
+/** Retorna a foto empacotada do estadio do clube, quando o acervo possui o time. */
+export function getTeamStadiumBackground(teamName: string | undefined | null): string | null {
+  if (!teamName) return null
+  const key = stadiumTeamKey(teamName)
+  // Alguns bancos usam "FC Barcelona" e o acervo usa "Barcelona" (ou vice-versa).
+  // Aceita apenas prefixos/sufixos institucionais, sem busca aproximada que poderia
+  // associar dois clubes diferentes da mesma cidade.
+  const candidates = [
+    key,
+    key.replace(/^(fc|ac|afc|sc|ca|cd) /, ""),
+    key.replace(/ (fc|afc|sc|cf|ac|fk)$/, ""),
+  ]
+  for (const candidate of candidates) {
+    if (STADIUMS[candidate]) return STADIUMS[candidate]
+  }
+  return null
+}
+
+function defaultBackground(seed: string): string {
+  const value = [...seed].reduce((total, char) => total + char.charCodeAt(0), 0)
+  return DEFAULT_BACKGROUNDS[value % DEFAULT_BACKGROUNDS.length]
+}
 
 // Por nome de competicao (o que matchInfo.competition traz).
 const BY_COMPETITION: Record<string, string> = {
@@ -51,7 +94,10 @@ const BY_LEAGUE: Record<string, string> = {
 export function getPreMatchBackground(
   competition: string | undefined | null,
   league: string | undefined | null,
+  homeTeamName?: string | undefined | null,
 ): string {
+  const stadium = getTeamStadiumBackground(homeTeamName)
+  if (stadium) return stadium
   if (competition) {
     const hit = BY_COMPETITION[competition.trim().toLowerCase()]
     if (hit) return hit
@@ -60,5 +106,5 @@ export function getPreMatchBackground(
     const hit = BY_LEAGUE[league]
     if (hit) return hit
   }
-  return DEFAULT_BG
+  return defaultBackground(`${competition ?? ""}:${league ?? ""}`)
 }

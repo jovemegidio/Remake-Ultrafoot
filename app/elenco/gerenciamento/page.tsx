@@ -21,7 +21,9 @@ import {
   Scale,
   Clock,
   X,
-  Gamepad2
+  Gamepad2,
+  Save,
+  Check,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -32,10 +34,11 @@ import { FORMATIONS, assignPlayersToFormation } from "@/lib/formations"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
-import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
+import { saveTacticalSetup, useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
 import { useUserRoster } from "@/lib/use-user-roster"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
+import { announceOnlineAction } from "@/lib/online-multiplayer"
 
 // FORMATIONS agora vive em lib/formations.ts (compartilhado com a Central de Transferencias).
 
@@ -105,15 +108,18 @@ type ViewType = "menu" | "visao_tatica" | "gerenciamento" | "escalacoes"
 export default function ElencoPage() {
   const router = useRouter()
   const { state } = useGameState()
-  useNotifications()
+  const { addNotification } = useNotifications()
   const engineFormation = useGameEngine(s => s.formation)
   const engineSetFormation = useGameEngine(s => s.setFormation)
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
   const engineSetStarter = useGameEngine(s => s.setStarter)
+  const engineSetPlayerShirtNumber = useGameEngine(s => s.setPlayerShirtNumber)
   const teamTactics = useGameEngine(s => s.teamTactics)
   const setTeamTactics = useGameEngine(s => s.setTeamTactics)
   const tacticalAssignments = useGameEngine(s => s.tacticalAssignments)
   const setTacticalAssignments = useGameEngine(s => s.setTacticalAssignments)
+  const tacticalPlayerPositions = useGameEngine(s => s.tacticalPlayerPositions ?? {})
+  const setTacticalPlayerPositions = useGameEngine(s => s.setTacticalPlayerPositions)
   // ATENCAO: NAO colocar um time default aqui.
   //
   // Antes era getTeamByShort(state.selectedTeamShort || "BGT"): enquanto o save nao
@@ -125,7 +131,7 @@ export default function ElencoPage() {
   // O hook ja lida com a hidratacao assincrona do save: teamReady=false enquanto nao ha
   // time, e o roster e recarregado quando o clube resolve.
   const { userTeam, teamReady, players, setPlayers, bench, setBench } =
-    useUserRoster(state.selectedTeamShort)
+    useUserRoster(state.selectedTeamShort, engineSquadPlayers)
 
   const t = useTranslation()
   useDiscordActivity("Gerenciando o elenco", userTeam.nome)
@@ -144,11 +150,38 @@ export default function ElencoPage() {
   const [showPlayerProfile, setShowPlayerProfile] = useState(false)
   const [showTutorials, setShowTutorials] = useState(false)
   const [showSuggestedSubs, setShowSuggestedSubs] = useState(false)
+  const [tacticalSaved, setTacticalSaved] = useState(false)
   const [ballInstruction, setBallInstruction] = useState<"sem_bola" | "com_bola">("sem_bola")
   const pitchRef = useRef<HTMLDivElement>(null)
+  const positionsHydratedForTeam = useRef("")
 
   const TABS: Array<"elenco" | "taticas" | "atribuicoes"> = ["elenco", "taticas", "atribuicoes"]
   const allPlayers = useMemo(() => [...players, ...bench], [players, bench])
+
+  // Restaura e salva automaticamente os ajustes manuais do campo. Usamos o nome
+  // como chave porque atletas importados/contratados podem receber outro ID interno.
+  useEffect(() => {
+    if (!teamReady || allPlayers.length === 0 || positionsHydratedForTeam.current === userTeam.curto) return
+    const byName = new Map(allPlayers.map(player => [player.name, player.id]))
+    const restored: Record<number, { x: number; y: number }> = {}
+    for (const [name, position] of Object.entries(tacticalPlayerPositions)) {
+      const id = byName.get(name)
+      if (id !== undefined) restored[id] = position
+    }
+    positionsHydratedForTeam.current = userTeam.curto
+    setPlayerPositions(restored)
+  }, [allPlayers, tacticalPlayerPositions, teamReady, userTeam.curto])
+
+  useEffect(() => {
+    if (!teamReady || positionsHydratedForTeam.current !== userTeam.curto) return
+    const byId = new Map(allPlayers.map(player => [player.id, player.name]))
+    const saved: Record<string, { x: number; y: number }> = {}
+    for (const [rawId, position] of Object.entries(playerPositions)) {
+      const name = byId.get(Number(rawId))
+      if (name) saved[name] = position
+    }
+    setTacticalPlayerPositions(saved)
+  }, [allPlayers, playerPositions, setTacticalPlayerPositions, teamReady, userTeam.curto])
 
   // ── TATICAS: antes os botoes eram DECORATIVOS (o "selecionado" era um `i === 1`
   // chumbado no JSX). Agora tem estado de verdade e o clique muda a instrucao.
@@ -253,6 +286,27 @@ export default function ElencoPage() {
     const prevIndex = (currentFormationIndex - 1 + formationKeys.length) % formationKeys.length
     setFormation(formationKeys[prevIndex])
     setPlayerPositions({})
+  }
+
+  const handleSaveTacticalSetup = () => {
+    if (players.length !== 11) {
+      addNotification({ type: "system", title: "Escalação incompleta", message: "Selecione exatamente 11 titulares antes de salvar.", priority: "high" })
+      return
+    }
+    // Faz um snapshot das posições junto com XI e formação. Não depende do efeito
+    // assíncrono de arrastar/salvar, que podia deixar a partida seguinte com o layout
+    // anterior quando o usuário iniciava o jogo logo após clicar em Salvar.
+    const nameById = new Map(allPlayers.map(player => [player.id, player.name]))
+    const savedPositions: Record<string, { x: number; y: number }> = {}
+    for (const [id, position] of Object.entries(playerPositions)) {
+      const name = nameById.get(Number(id))
+      if (name) savedPositions[name] = position
+    }
+    saveTacticalSetup(players.map(player => player.name), formation, savedPositions)
+    announceOnlineAction("lineup_update", { formation, starters: players.map(player => player.name) })
+    setTacticalSaved(true)
+    addNotification({ type: "system", title: "Tática salva", message: `${formation} e os 11 titulares serão usados na partida e no radar ao vivo.`, priority: "medium" })
+    window.setTimeout(() => setTacticalSaved(false), 2200)
   }
 
   // Sincroniza titulares com o game-engine sempre que players mudar
@@ -908,7 +962,20 @@ export default function ElencoPage() {
           
           {/* Formation controls */}
           <div className="flex items-center gap-2 justify-center md:justify-end">
-            <button 
+            <button
+              onClick={handleSaveTacticalSetup}
+              title="Salvar tática e escalação"
+              className={cn(
+                "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition-all",
+                tacticalSaved
+                  ? "border-[#00ffc8] bg-[#00ffc8]/20 text-[#00ffc8]"
+                  : "border-white/10 bg-white/5 text-white hover:border-[#00ffc8]/50 hover:text-[#00ffc8]",
+              )}
+            >
+              {tacticalSaved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+              <span className="hidden xl:inline">{tacticalSaved ? "Salvo" : "Salvar"}</span>
+            </button>
+            <button
               onClick={prevFormation}
               className="p-1.5 md:p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition"
             >
@@ -1368,6 +1435,24 @@ export default function ElencoPage() {
                 <h3 className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-3">
                   Informacoes do Atleta
                 </h3>
+
+                <label className="mb-3 flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] p-2 text-[10px] text-white/55">
+                  Número da camisa
+                  <select
+                    value={engineSquadPlayers.find(player => player.id === selectedPlayer.id)?.shirtNumber ?? ""}
+                    onChange={(event) => {
+                      const number = Number(event.target.value)
+                      if (number && !engineSetPlayerShirtNumber(selectedPlayer.id, number)) {
+                        addNotification({ type: "system", title: "Número indisponível", message: `A camisa ${number} já está em uso no elenco.`, priority: "high" })
+                      }
+                    }}
+                    className="rounded border border-white/10 bg-black/50 px-2 py-1 text-xs font-bold text-[#00ffc8]"
+                    aria-label={`Número da camisa de ${selectedPlayer.name}`}
+                  >
+                    <option value="">Automático</option>
+                    {Array.from({ length: 99 }, (_, index) => index + 1).map(number => <option key={number} value={number}>{number}</option>)}
+                  </select>
+                </label>
                 
                 <div className="grid grid-cols-2 gap-2">
                   {[

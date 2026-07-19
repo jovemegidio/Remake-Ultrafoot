@@ -11,7 +11,6 @@ import {
   Clock,
   Users,
   Grid2X2,
-  UserPlus,
   Music,
   ChevronLeft,
   ChevronRight,
@@ -48,15 +47,15 @@ import { Switch } from "@/components/ui/switch"
 import { isFullscreenEnabled, setFullscreen } from "@/lib/fullscreen"
 import { CURRENCIES, setCurrency, getCurrencyCode } from "@/lib/currency"
 import { Slider } from "@/components/ui/slider"
-import { Input } from "@/components/ui/input"
 import { useTheme, themePresets, type ThemeColor } from "@/components/theme-provider"
 import { useGameState, useUserTeam, type ManagerProfile } from "@/lib/save-system"
 import { cn } from "@/lib/utils"
 import { ControllerTypeContext, ControllerButton } from "@/components/controller-buttons"
 import { CONTROL_MAPPINGS, ACTION_LABELS, type GameContext, type GameAction } from "@/lib/gamepad-controls"
 import { useTranslation } from "@/lib/i18n"
+import { applyPerformanceProfile, PERFORMANCE_STORAGE_KEY, type PerformanceProfile } from "@/components/performance-profile"
 
-type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "tempo" | "escalacoes" | "criar_atleta" | "musica" | "creditos" | "tutorial"
+type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "tempo" | "escalacoes" | "musica" | "creditos" | "tutorial"
 
 const menuCards = [
   { id: "configuracoes" as ViewType, title: "Configuracoes", icon: Settings, row: 0 },
@@ -64,7 +63,6 @@ const menuCards = [
   { id: "online" as ViewType, title: "Configuracoes\nonline", icon: Globe, row: 0 },
   { id: "tempo" as ViewType, title: "Tempo de jogo", icon: Clock, row: 0 },
   { id: "escalacoes" as ViewType, title: "Escalacoes", icon: Grid2X2, row: 1 },
-  { id: "criar_atleta" as ViewType, title: "Criar\natleta", icon: UserPlus, row: 1 },
   { id: "musica" as ViewType, title: "Musica", icon: Music, row: 1 },
   { id: "creditos" as ViewType, title: "Creditos", icon: Award, row: 1 },
   { id: "tutorial" as ViewType, title: "Tutorial\ne Controles", icon: HelpCircle, row: 2 },
@@ -72,9 +70,18 @@ const menuCards = [
 
 const languageOptions = [
   { id: "pt-BR", label: "Portugues (Brasil)", flag: "BR" },
-  { id: "en-US", label: "English (US)", flag: "US" },
+  { id: "pt-PT", label: "Português (Portugal)", flag: "PT" },
+  { id: "en-US", label: "English (United States)", flag: "US" },
+  { id: "en-GB", label: "English (United Kingdom)", flag: "GB" },
   { id: "es-ES", label: "Espanol", flag: "ES" },
+  { id: "es-MX", label: "Español (México)", flag: "MX" },
 ]
+
+const commentaryVoices = [
+  ["padrao", "Padrão"], ["andre-hening", "André Hening"], ["cleber-machado", "Cléber Machado"],
+  ["gustavo-villani", "Gustavo Villani"], ["jorge-igor", "Jorge Igor"], ["luis-roberto", "Luis Roberto"],
+  ["luiz-felipe-freitas", "Luiz Felipe Freitas"], ["nivaldo-prieto", "Nivaldo Prieto"], ["rogerio-vaughan", "Rogério Vaughan"],
+] as const
 
 
 export default function ConfiguracoesPage() {
@@ -89,7 +96,6 @@ export default function ConfiguracoesPage() {
     online: t.settings.cards.online,
     tempo: t.settings.cards.gameTime,
     escalacoes: t.settings.cards.lineups,
-    criar_atleta: t.settings.cards.createPlayer,
     musica: t.settings.cards.music,
     creditos: t.settings.cards.credits,
     tutorial: t.settings.cards.tutorial,
@@ -122,6 +128,9 @@ export default function ConfiguracoesPage() {
   // musicVolume saiu: a trilha embutida foi removida e o volume da musica agora e do
   // proprio Spotify/player do sistema. Aqui so restam os efeitos sonoros (sfxVolume).
   const [sfxVolume, setSfxVolume] = useState([80])
+  const [commentaryEnabled, setCommentaryEnabled] = useState(state.commentaryEnabled ?? true)
+  const [commentaryVoice, setCommentaryVoice] = useState(state.commentaryVoice ?? "padrao")
+  const [commentaryVolume, setCommentaryVolume] = useState([state.commentaryVolume ?? 80])
   // Preferencias de acessibilidade (store singleton: sobrevive a navegacao).
   const a11y = useSyncExternalStore(
     accessibilityStore.subscribe,
@@ -129,11 +138,16 @@ export default function ConfiguracoesPage() {
     accessibilityStore.getServerSnapshot,
   )
 
-  const [autoSave, setAutoSave] = useState(true)
+  const [autoSaveInterval, setAutoSaveInterval] = useState<0 | 1 | 3 | 5>(state.autoSaveInterval ?? 1)
   const [notifications, setNotifications] = useState(true)
   const [fullscreen, setFullscreenState] = useState(false)
   useEffect(() => { setFullscreenState(isFullscreenEnabled()) }, [])
   const [matchSpeed, setMatchSpeed] = useState("normal")
+  const [performanceProfile, setPerformanceProfile] = useState<PerformanceProfile>("balanced")
+  useEffect(() => {
+    const stored = localStorage.getItem(PERFORMANCE_STORAGE_KEY)
+    if (stored === "economy" || stored === "quality" || stored === "balanced") setPerformanceProfile(stored)
+  }, [])
 
   // Escalacoes salvas de VERDADE. Antes esta tela mostrava 3 cartoes chumbados
   // ("Escalacao Principal / Rotacao / Jovens", todos "4-3-3 - 11 jogadores" escritos no
@@ -183,6 +197,7 @@ export default function ConfiguracoesPage() {
     if (state.multiplayerEnabled !== undefined) setMultiplayerEnabled(state.multiplayerEnabled)
     if (state.managers) setManagers(state.managers)
     if (state.controllerType) setControllerType(state.controllerType)
+    if (state.autoSaveInterval !== undefined) setAutoSaveInterval(state.autoSaveInterval)
   }, [state])
 
   useEffect(() => { setCurrencyCode(getCurrencyCode()) }, [])
@@ -196,7 +211,7 @@ export default function ConfiguracoesPage() {
   const handleSaveSettings = async () => {
     setSaving(true)
     await new Promise(resolve => setTimeout(resolve, 500))
-    setState({ selectedUniform, language, multiplayerEnabled, managers, controllerType })
+    setState({ selectedUniform, language, multiplayerEnabled, managers, controllerType, commentaryEnabled, commentaryVoice, commentaryVolume: commentaryVolume[0], autoSaveInterval })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -204,7 +219,7 @@ export default function ConfiguracoesPage() {
 
   const handleRestoreDefaults = () => {
     setSfxVolume([80])
-    setAutoSave(true)
+    setAutoSaveInterval(1)
     setNotifications(true)
     setMatchSpeed("normal")
     setSelectedUniform("home")
@@ -213,6 +228,9 @@ export default function ConfiguracoesPage() {
     setMultiplayerEnabled(false)
     setManagers([])
     setControllerType("auto")
+    setCommentaryEnabled(true)
+    setCommentaryVoice("padrao")
+    setCommentaryVolume([80])
   }
 
   // Keyboard navigation for menu
@@ -449,17 +467,50 @@ export default function ConfiguracoesPage() {
             </div>
 
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
+              <h3 className="text-sm font-medium text-white">Desempenho gráfico</h3>
+              <p className="text-xs text-white/40">O modo econômico reduz animações, transparências e efeitos do radar para computadores com 4 GB de RAM e vídeo integrado.</p>
+              <select
+                value={performanceProfile}
+                onChange={event => {
+                  const profile = event.target.value as PerformanceProfile
+                  setPerformanceProfile(profile)
+                  applyPerformanceProfile(profile)
+                }}
+                className="w-full rounded-lg border border-white/10 bg-[#101015] px-3 py-2 text-sm text-white"
+                aria-label="Perfil de desempenho gráfico"
+              >
+                <option value="economy">Econômico — hardware antigo</option>
+                <option value="balanced">Equilibrado</option>
+                <option value="quality">Qualidade</option>
+              </select>
+            </div>
+
+            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-4">
               <h3 className="text-sm font-medium text-white flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
                 {t.settings.notificationsSystem}
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
                   <div>
                     <div className="text-sm text-white">{t.settings.autoSave}</div>
-                    <div className="text-xs text-white/40">{t.settings.autoSaveDesc}</div>
+                    <div className="text-xs text-white/40">Salva elenco, escalação, calendário e carreira conforme as partidas disputadas.</div>
                   </div>
-                  <Switch checked={autoSave} onCheckedChange={setAutoSave} />
+                  <select
+                    value={autoSaveInterval}
+                    onChange={event => {
+                      const value = Number(event.target.value) as 0 | 1 | 3 | 5
+                      setAutoSaveInterval(value)
+                      setState({ autoSaveInterval: value })
+                    }}
+                    className="min-w-[150px] rounded-lg border border-white/10 bg-[#101015] px-3 py-2 text-sm text-white"
+                    aria-label="Frequência do salvamento automático"
+                  >
+                    <option value={0}>Desativado</option>
+                    <option value={1}>A cada jogo</option>
+                    <option value={3}>A cada 3 jogos</option>
+                    <option value={5}>A cada 5 jogos</option>
+                  </select>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                   <div>
@@ -530,7 +581,7 @@ export default function ConfiguracoesPage() {
                   >
                     <span className="w-7 h-5 rounded overflow-hidden shadow-sm flex-shrink-0 ring-1 ring-white/10">
                       <Image
-                        src={`/flags/${lang.flag === "BR" ? "br" : lang.flag === "US" ? "us" : "es"}.png`}
+                        src={`/flags/${({ BR: "br", PT: "pt", US: "us", GB: "gb-eng", ES: "es", MX: "mx" } as Record<string, string>)[lang.flag]}.png`}
                         alt={lang.label}
                         width={28}
                         height={20}
@@ -619,6 +670,14 @@ export default function ConfiguracoesPage() {
                   </div>
                   <Slider value={sfxVolume} onValueChange={setSfxVolume} max={100} />
                 </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 p-3">
+                  <div><div className="text-sm text-white">Narração durante as partidas</div><div className="text-xs text-white/40">Ativa ou desativa as vozes do jogo</div></div>
+                  <Switch checked={commentaryEnabled} onCheckedChange={setCommentaryEnabled} />
+                </div>
+                {commentaryEnabled && <>
+                  <div><label className="mb-2 block text-sm text-white/60">Narrador</label><select value={commentaryVoice} onChange={e => setCommentaryVoice(e.target.value)} className="w-full rounded-lg border border-white/10 bg-[#101015] p-3 text-sm text-white">{commentaryVoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div>
+                  <div><div className="mb-2 flex justify-between"><span className="text-sm text-white/60">Volume da narração</span><span className="text-sm text-white">{commentaryVolume[0]}%</span></div><Slider value={commentaryVolume} onValueChange={setCommentaryVolume} max={100} /></div>
+                </>}
               </div>
             </div>
 
@@ -746,49 +805,6 @@ export default function ConfiguracoesPage() {
               {lineupMsg && (
                 <p className="text-center text-xs text-[#00ffc8]">{lineupMsg}</p>
               )}
-            </div>
-          </div>
-        )
-        
-      case "criar_atleta":
-        return (
-          <div className="space-y-6">
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 space-y-5">
-              <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-primary" />
-                {t.settings.createNewPlayer}
-              </h3>
-              <p className="text-sm text-white/50">{t.settings.createNewPlayerDesc}</p>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-white/60 mb-1 block">{t.settings.playerName}</label>
-                  <Input placeholder={t.settings.playerNamePlaceholder} className="bg-white/5 border-white/10 text-white" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-white/60 mb-1 block">{t.settings.positionLabel}</label>
-                    <select className="w-full h-9 rounded-md bg-white/5 border border-white/10 text-white text-sm px-3">
-                      <option value="ATA">Atacante</option>
-                      <option value="MEI">Meia</option>
-                      <option value="ZAG">Zagueiro</option>
-                      <option value="LAT">Lateral</option>
-                      <option value="GOL">Goleiro</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-white/60 mb-1 block">{t.settings.ageLabel}</label>
-                    <Input type="number" placeholder="18" min={16} max={45} className="bg-white/5 border-white/10 text-white" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-white/60 mb-1 block">{t.settings.overallLabel}</label>
-                  <Slider defaultValue={[70]} max={99} min={40} />
-                </div>
-              </div>
-              <Button className="w-full bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                {t.settings.createPlayerBtn}
-              </Button>
             </div>
           </div>
         )
@@ -1320,4 +1336,3 @@ export default function ConfiguracoesPage() {
     </ControllerTypeContext.Provider>
   )
 }
-

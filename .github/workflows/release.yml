@@ -14,6 +14,10 @@ name: Release
 # Segredos necessários (Settings -> Secrets and variables -> Actions):
 #   TAURI_SIGNING_PRIVATE_KEY           conteúdo de ~/.ultrafoot-keys/ultrafoot-updater.key
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  (vazio — a chave foi gerada sem senha)
+#   WINDOWS_CERTIFICATE                 PFX Authenticode codificado em Base64
+#   WINDOWS_CERTIFICATE_PASSWORD        senha do PFX
+# Variável necessária:
+#   NEXT_PUBLIC_ULTRAFOOT_RELAY_URL      URL HTTPS do relay público implantado
 
 on:
   push:
@@ -53,13 +57,43 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Release preflight
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          RELAY_URL: ${{ vars.NEXT_PUBLIC_ULTRAFOOT_RELAY_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE)) { throw "WINDOWS_CERTIFICATE Authenticode ausente" }
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)) { throw "WINDOWS_CERTIFICATE_PASSWORD ausente" }
+          if ([string]::IsNullOrWhiteSpace($env:RELAY_URL)) { throw "NEXT_PUBLIC_ULTRAFOOT_RELAY_URL ausente" }
+          $health = Invoke-RestMethod -Uri "$($env:RELAY_URL.TrimEnd('/'))/health"
+          $version = (Get-Content "src-tauri/tauri.conf.json" -Raw | ConvertFrom-Json).version
+          if (-not $health.ok -or $health.gameVersion -ne $version) { throw "Relay indisponível ou incompatível com a build $version" }
+
+      - name: Import Authenticode certificate
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "ultrafoot-authenticode.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $password = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $certificate = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
+          if (-not $certificate.HasPrivateKey) { throw "O certificado importado não possui chave privada" }
+          @{ bundle = @{ windows = @{ certificateThumbprint = $certificate.Thumbprint; digestAlgorithm = "sha256"; timestampUrl = "http://timestamp.digicert.com" } } } |
+            ConvertTo-Json -Depth 5 | Set-Content "src-tauri/tauri.windows.signing.conf.json" -Encoding utf8
+
       - name: Build, sign & publish release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          NEXT_PUBLIC_ULTRAFOOT_RELAY_URL: ${{ vars.NEXT_PUBLIC_ULTRAFOOT_RELAY_URL }}
         with:
+          args: --config src-tauri/tauri.windows.conf.json --config src-tauri/tauri.windows.signing.conf.json
           tagName: ${{ github.ref_name }}
           releaseName: "Ultrafoot 26 ${{ github.ref_name }}"
           releaseBody: "Atualização automática do Ultrafoot 26. O jogo baixa e instala sozinho na próxima abertura."

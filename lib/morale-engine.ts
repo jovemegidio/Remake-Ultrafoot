@@ -43,17 +43,22 @@ export interface SquadMorale {
 
 /** Aplica evento de moral em jogador. */
 export function applyEvent(_morale: PlayerMorale, _event: MoraleEvent): PlayerMorale {
-  throw new Error("morale-engine.applyEvent: not implemented")
+  const level = Math.max(0, Math.min(100, Math.round(_morale.level + _event.delta)))
+  return { ..._morale, level, trend: _event.delta > 0 ? "rising" : _event.delta < 0 ? "falling" : "stable", recentEvents: [..._morale.recentEvents, _event].slice(-12) }
 }
 
 /** Calcula moral média do elenco. */
 export function calcSquadMorale(_player: PlayerMorale[]): SquadMorale {
-  throw new Error("morale-engine.calcSquadMorale: not implemented")
+  const average = _player.length ? Math.round(_player.reduce((sum, item) => sum + item.level, 0) / _player.length) : DEFAULT_TEAM_MORALE
+  const base = { lider: average, ambicioso: average, calmo: average, polemico: average, profissional: average, preguicoso: average, leal: average, mercenario: average, estrela: average }
+  return { average, byPersonality: base, cliques: [] }
 }
 
 /** Personalidades reagem diferente a mesmo evento. */
 export function adjustForPersonality(_event: MoraleEvent, _personality: Personality): MoraleEvent {
-  throw new Error("morale-engine.adjustForPersonality: not implemented")
+  const positive = _event.delta >= 0
+  const multipliers: Record<Personality, number> = { lider: 1.05, ambicioso: positive ? 1.2 : 1.1, calmo: .7, polemico: positive ? .8 : 1.3, profissional: .8, preguicoso: positive ? .7 : 1.15, leal: positive ? 1.15 : .85, mercenario: _event.type === "renewal_offer" ? 1.4 : 1, estrela: _event.type === "benched" ? 1.5 : 1.1 }
+  return { ..._event, delta: Math.max(-20, Math.min(20, Math.round(_event.delta * multipliers[_personality]))) }
 }
 
 // ─── MVP: moral coletivo do time ───────────────────────────────────────────────

@@ -1,12 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
 import { useGameManager } from "@/lib/use-game-manager"
+import { useGameState } from "@/lib/save-system"
+import { useGameEngine } from "@/lib/game-engine"
+import { configurePitch, createStadiumPitch, pitchInjuryDurationMultiplier, pitchInjuryFrequencyMultiplier, pitchUpgradeCost, type PitchQuality, type PitchSurface } from "@/lib/infrastructure-engine"
 import { cn } from "@/lib/utils"
+import { useNotifications } from "@/components/notifications-system"
 import {
   Building2,
   Home,
@@ -159,24 +163,34 @@ export default function InfraestruturaPage() {
     return () => window.removeEventListener('gamepad:button', handler)
   }, [router])
   const { userTeam } = useGameManager()
+  const {state:saveState,setState:setSaveState}=useGameState()
+  const gameEngine=useGameEngine()
+  const { addNotification } = useNotifications()
+  const pitch=saveState.stadiumPitch??createStadiumPitch(userTeam?.prestigio??40,saveState.season)
+  const [pitchSurface,setPitchSurface]=useState<PitchSurface>(pitch.surface)
+  const [pitchQuality,setPitchQuality]=useState<PitchQuality>(pitch.quality)
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
-  // Estado simulado de infraestrutura (em producao viria do gameEngine)
-  const [infrastructure, setInfrastructure] = useState<Record<string, number>>({
-    stadium: 2,
-    acoustics: 1,
-    pitch: 2,
-    training: 2,
-    youth: 1,
-    medical: 2,
-    security: 1,
-    data: 1,
-  })
+  // Estes dois mapas pertencem ao save da carreira. A tela anterior criava um
+  // estado local e a obra desaparecia ao sair dela.
+  const infrastructure = gameEngine.clubInfrastructure
+  const upgradesInProgress = gameEngine.infraUpgradesInProgress
+  const knownUpgrades = useRef(upgradesInProgress)
 
-  const [upgradesInProgress, setUpgradesInProgress] = useState<Record<string, { weeksLeft: number; targetLevel: number }>>({})
+  useEffect(() => {
+    const before = knownUpgrades.current
+    Object.keys(before).forEach((areaId) => {
+      if (!upgradesInProgress[areaId]) {
+        const area = INFRASTRUCTURE_AREAS.find(item => item.id === areaId)
+        if (area) addNotification({ type: "news", title: "Obra concluída", message: `${area.name} chegou ao nível ${gameEngine.clubInfrastructure[areaId] ?? before[areaId].targetLevel}. A melhoria já está ativa no clube.`, priority: "medium" })
+      }
+    })
+    knownUpgrades.current = upgradesInProgress
+  }, [upgradesInProgress, gameEngine.clubInfrastructure, addNotification])
 
-  const balance = 15000000 // Simulado - viria do gameEngine
+  const balance = gameEngine.balance
+  const applyPitch=()=>{const cost=pitchUpgradeCost(pitch,pitchSurface,pitchQuality);if(!gameEngine.spendClubFunds(cost))return;setSaveState({stadiumPitch:configurePitch(pitchSurface,pitchQuality,saveState.season)})}
 
   const handleUpgrade = (areaId: string) => {
     const area = INFRASTRUCTURE_AREAS.find(a => a.id === areaId)
@@ -186,11 +200,8 @@ export default function InfraestruturaPage() {
     const nextLevel = area.levels[currentLevel]
     if (!nextLevel) return
 
-    // Simular upgrade
-    setUpgradesInProgress({
-      ...upgradesInProgress,
-      [areaId]: { weeksLeft: 4, targetLevel: currentLevel + 1 }
-    })
+    if (gameEngine.balance < nextLevel.cost || upgradesInProgress[areaId]) return
+    gameEngine.startInfrastructureUpgrade(areaId, nextLevel.cost)
 
     setShowUpgradeModal(false)
     setSelectedArea(null)
@@ -237,6 +248,7 @@ export default function InfraestruturaPage() {
             </div>
           </div>
         </div>
+        <section className="mx-4 mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4"><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-bold text-white">Superfície do estádio</h2><p className="mt-1 text-xs text-white/45">Qualidade controla a frequência de lesões. O sintético custa menos, mas aumenta em 35% a recuperação quando ocorre uma contusão.</p></div><div className="flex flex-wrap items-end gap-2"><label className="text-[10px] uppercase text-white/45">Superfície<select value={pitchSurface} onChange={e=>setPitchSurface(e.target.value as PitchSurface)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="natural">Natural</option><option value="synthetic">Sintético</option></select></label><label className="text-[10px] uppercase text-white/45">Qualidade<select value={pitchQuality} onChange={e=>setPitchQuality(e.target.value as PitchQuality)} className="mt-1 block rounded bg-black/50 p-2 text-xs text-white"><option value="poor">Ruim</option><option value="medium">Médio</option><option value="good">Bom</option></select></label><Button onClick={applyPitch} disabled={balance<pitchUpgradeCost(pitch,pitchSurface,pitchQuality)}>Aplicar · R$ {pitchUpgradeCost(pitch,pitchSurface,pitchQuality).toLocaleString("pt-BR")}</Button></div></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div className="rounded bg-black/25 p-2 text-white/55">Manutenção mensal <b className="block text-white">R$ {pitch.monthlyMaintenance.toLocaleString("pt-BR")}</b></div><div className="rounded bg-black/25 p-2 text-white/55">Frequência de lesões <b className="block text-white">{pitchInjuryFrequencyMultiplier(pitch).toFixed(2)}x</b></div><div className="rounded bg-black/25 p-2 text-white/55">Duração da lesão <b className="block text-white">{pitchInjuryDurationMultiplier(pitch).toFixed(2)}x</b></div></div></section>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">

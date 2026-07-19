@@ -36,7 +36,7 @@ import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { clearMatchContext, saveMatchContext } from "@/lib/match-context"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { simulateFullMatch, type MatchEvent as SimEvent } from "@/lib/match-engine"
+import { simulateFullMatch, type MatchEvent as SimEvent, type MatchState } from "@/lib/match-engine"
 import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
@@ -44,6 +44,9 @@ import { getLeagueLogo } from "@/lib/league-logos"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { getPreMatchBackground } from "@/lib/pre-match-bg"
 import { UniformSelectorModal } from "@/components/match/uniform-selector-modal"
+import { MatchResultModal } from "@/components/match/match-result-modal"
+import { RoundResultsModal } from "@/components/match/round-results-modal"
+import { PostMatchPress } from "@/components/match/post-match-press"
 
 type KitVariant = "home" | "away" | "third"
 
@@ -241,10 +244,13 @@ export default function PartidaPage() {
   const [focusedSide, setFocusedSide] = useState<"home" | "away">("home")
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickSim, setShowQuickSim] = useState(false)
+  const [showQuickRoundResults, setShowQuickRoundResults] = useState(false)
+  const [showQuickPress, setShowQuickPress] = useState(false)
   const [quickSimResult, setQuickSimResult] = useState<{
     homeGoals: number
     awayGoals: number
     events: (SimEvent | EngineEvent)[]
+    state: MatchState
   } | null>(null)
   const quickSimRegistered = useRef(false)
 
@@ -322,8 +328,8 @@ export default function PartidaPage() {
 
   // Fundo da tela conforme a competicao da partida.
   const preMatchBg = useMemo(
-    () => getPreMatchBackground(matchInfo.competition, league),
-    [matchInfo.competition, league],
+    () => getPreMatchBackground(matchInfo.competition, league, homeTeam.nome),
+    [matchInfo.competition, league, homeTeam.nome],
   )
 
   // Quick sim handler
@@ -343,6 +349,7 @@ export default function PartidaPage() {
         homeGoals: result.home.goals,
         awayGoals: result.away.goals,
         events: result.events,
+        state: result,
       })
 
       if (!quickSimRegistered.current) {
@@ -602,39 +609,66 @@ export default function PartidaPage() {
 
       {/* Quick Sim Modal */}
       {showQuickSim && (
+        quickSimResult ? (
+          <MatchResultModal
+            open
+            homeTeam={homeTeam}
+            awayTeam={awayTeam}
+            state={quickSimResult.state}
+            userSide={homeTeam.curto === userTeam.team.curto ? "home" : "away"}
+            onClose={() => {
+              setShowQuickSim(false)
+              setShowQuickRoundResults(true)
+            }}
+          />
+        ) : (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="bg-[#0c0c10] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold text-white text-center mb-6">Simulação Rápida</h3>
-            
-            {quickSimResult ? (
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-8 mb-6">
-                  <div className="flex flex-col items-center gap-2">
-                    <TeamCrest team={homeTeam} size="lg" />
-                    <span className="text-4xl font-black text-white">{quickSimResult.homeGoals}</span>
-                  </div>
-                  <span className="text-2xl text-white/30">x</span>
-                  <div className="flex flex-col items-center gap-2">
-                    <TeamCrest team={awayTeam} size="lg" />
-                    <span className="text-4xl font-black text-white">{quickSimResult.awayGoals}</span>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => { setShowQuickSim(false); setQuickSimResult(null) }}
-                  className="w-full"
-                >
-                  Continuar
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-white/60">Simulando partida...</span>
-              </div>
-            )}
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-white/60">Simulando partida...</span>
+            </div>
           </div>
         </div>
-  )}
+        )
+      )}
+
+      {showQuickRoundResults && quickSimResult && (
+        <RoundResultsModal
+          open
+          results={[{
+            competition: matchInfo.competition,
+            homeTeam: homeTeam.curto,
+            awayTeam: awayTeam.curto,
+            homeScore: quickSimResult.homeGoals,
+            awayScore: quickSimResult.awayGoals,
+          }]}
+          userHome={homeTeam.curto}
+          userAway={awayTeam.curto}
+          onContinue={() => {
+            setShowQuickRoundResults(false)
+            setShowQuickPress(true)
+          }}
+        />
+      )}
+
+      {showQuickPress && quickSimResult && (
+        <PostMatchPress
+          isOpen
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          homeGoals={quickSimResult.homeGoals}
+          awayGoals={quickSimResult.awayGoals}
+          userSide={homeTeam.curto === userTeam.team.curto ? "home" : "away"}
+          onClose={() => setShowQuickPress(false)}
+          onComplete={() => {
+            setShowQuickPress(false)
+            setQuickSimResult(null)
+            hardNavigate("/")
+          }}
+        />
+      )}
   
   <GamepadControlsBar
         customActions={[

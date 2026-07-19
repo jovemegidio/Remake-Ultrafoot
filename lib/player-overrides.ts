@@ -26,6 +26,10 @@ export interface PlayerOverride {
   dribbling?: number
   defending?: number
   physical?: number
+  preferredFoot?: "Direita" | "Esquerda" | "Ambidestro"
+  reputation?: "normal" | "estrela" | "top_mundial"
+  traits?: string[]
+  faceDataUrl?: string
 }
 
 /** Atributos padrao derivados do overall + posicao (mesma logica do motor de partida). */

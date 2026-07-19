@@ -12,12 +12,14 @@
 /** Escada das divisoes brasileiras, de cima para baixo. */
 const BR_LADDER = ["serie_a", "serie_b", "serie_c", "serie_d"] as const
 
-/** Quantos SOBEM e quantos CAEM em cada divisao (padrao do futebol brasileiro). */
+/** Movimentos oficiais usados na temporada 2026. Série C cai com dois clubes e a
+ * nova Série D (96 participantes) promove seis. Esses números ficam no motor,
+ * não apenas no texto do regulamento. */
 const BR_RULES: Record<string, { up: number; down: number; size: number }> = {
   serie_a: { up: 0, down: 4, size: 20 }, // topo: ninguem sobe, 4 caem
   serie_b: { up: 4, down: 4, size: 20 },
-  serie_c: { up: 4, down: 4, size: 20 },
-  serie_d: { up: 4, down: 0, size: 20 }, // base: 4 sobem, ninguem cai
+  serie_c: { up: 4, down: 2, size: 20 },
+  serie_d: { up: 6, down: 0, size: 96 },
 }
 
 export interface DivisionOutcome {

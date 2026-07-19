@@ -60,6 +60,24 @@ interface PlanInput {
 // Numero alto usado como "sem limite" (Infinity nao sobrevive ao JSON do save).
 const NO_CAP = 999
 
+const QUALIFIER_BY_CONFEDERATION: Record<Confederation, string> = {
+  CONMEBOL: "eliminatorias_conmebol",
+  UEFA: "eliminatorias_uefa",
+  CONCACAF: "eliminatorias_concacaf",
+  AFC: "eliminatorias_afc",
+  CAF: "eliminatorias_caf",
+  OFC: "eliminatorias_ofc",
+}
+
+const CONTINENTAL_BY_CONFEDERATION: Record<Confederation, string> = {
+  CONMEBOL: "copa_america",
+  UEFA: "eurocopa",
+  CONCACAF: "copa_ouro",
+  AFC: "copa_asia",
+  CAF: "copa_africana",
+  OFC: "copa_oceania",
+}
+
 /**
  * Decide o que se joga numa janela FIFA, aproximando o calendario real:
  * - Junho: Copa do Mundo (ano de Copa), Copa America/Euro (ano continental) ou amistosos.
@@ -68,29 +86,24 @@ const NO_CAP = 999
 export function planWindowCompetition({ season, month, confederation }: PlanInput): WindowPlan {
   const isJune = month === 5
   const phase = cyclePhase(season)
-  const hasContinental = confederation === "UEFA" || confederation === "CONMEBOL"
   const hasNations = confederation === "UEFA" || confederation === "CONCACAF"
 
   if (isJune) {
     if (phase === "wc") {
       return { competitionId: "copa_mundo", gamesTarget: NO_CAP, isFinalTournament: true }
     }
-    if (phase === "continental" && hasContinental) {
-      return {
-        competitionId: confederation === "UEFA" ? "eurocopa" : "copa_america",
-        gamesTarget: NO_CAP,
-        isFinalTournament: true,
-      }
+    if (phase === "continental" || (phase === "off" && !["UEFA", "CONMEBOL"].includes(confederation))) {
+      return { competitionId: CONTINENTAL_BY_CONFEDERATION[confederation], gamesTarget: NO_CAP, isFinalTournament: true }
     }
     return { competitionId: "amistosos", gamesTarget: 3, isFinalTournament: false }
   }
 
   // Janelas de Marco/Setembro/Outubro/Novembro
   if (phase === "qual_early" || phase === "continental") {
-    return { competitionId: "eliminatorias", gamesTarget: 2, isFinalTournament: false }
+    return { competitionId: QUALIFIER_BY_CONFEDERATION[confederation], gamesTarget: 2, isFinalTournament: false }
   }
   if (hasNations) {
-    return { competitionId: "nations_league", gamesTarget: 2, isFinalTournament: false }
+    return { competitionId: confederation === "UEFA" ? "nations_league_uefa" : "nations_league_concacaf", gamesTarget: 2, isFinalTournament: false }
   }
   return { competitionId: "amistosos", gamesTarget: 2, isFinalTournament: false }
 }

@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import type { LucideIcon } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
@@ -28,9 +29,11 @@ interface HubScreenProps {
   cards: HubCard[]
   primaryActionLabel: string
   primaryActionRoute: string
+  /** Fundo editorial opcional para hubs tematicos. */
+  backgroundImage?: string
 }
 
-export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRoute }: HubScreenProps) {
+export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRoute, backgroundImage }: HubScreenProps) {
   const router = useRouter()
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
@@ -39,7 +42,7 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
 
   const handleCardClick = (card: HubCard) => {
     setSelectedCard(card.id)
-    setTimeout(() => router.push(card.route), 150)
+    router.push(card.route)
   }
 
   return (
@@ -48,6 +51,11 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
         <GameHeader />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
+          {backgroundImage && <>
+            <Image src={backgroundImage} alt="" fill priority className="pointer-events-none object-cover object-center" />
+            <div className="pointer-events-none absolute inset-0 bg-black/35" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" />
+          </>}
           {/* Background com gradiente */}
           <div
             className="absolute inset-0 opacity-30"

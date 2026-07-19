@@ -34,15 +34,28 @@ export interface InternalIncident {
 
 /** Aplica cartão (atualiza acumulação e dispara suspensão se necessário). */
 export function applyCard(_record: DisciplinaryRecord, _card: "yellow" | "red", _competition: string): DisciplinaryRecord {
-  throw new Error("discipline-engine.applyCard: not implemented")
+  const next = { ..._record, suspensions: [..._record.suspensions], fines: [..._record.fines], internalIncidents: [..._record.internalIncidents] }
+  if (_card === "yellow") {
+    next.yellowCards++
+    if (next.yellowCards % 3 === 0) next.suspensions.push({ id: `susp_y_${next.playerId}_${next.yellowCards}_${_competition}`, reason: "yellow_card_threshold", matchesRemaining: 1, competition: _competition })
+  } else {
+    next.redCards++
+    next.suspensions.push({ id: `susp_r_${next.playerId}_${next.redCards}_${_competition}`, reason: "red_card", matchesRemaining: 1, competition: _competition })
+  }
+  return next
 }
 
 /** Resolve suspensão (decrementa partidas restantes). */
 export function tickSuspensions(_record: DisciplinaryRecord, _matchesPlayed: number, _competition: string): DisciplinaryRecord {
-  throw new Error("discipline-engine.tickSuspensions: not implemented")
+  return { ..._record, suspensions: _record.suspensions.map(s => s.competition === _competition ? { ...s, matchesRemaining: Math.max(0, s.matchesRemaining - Math.max(0, _matchesPlayed)) } : s).filter(s => s.matchesRemaining > 0) }
 }
 
 /** Detecta incidentes internos via roll baseado em personalidade. */
 export function detectInternalIncidents(_playerIds: string[], _personalities: Record<string, string>): InternalIncident[] {
-  throw new Error("discipline-engine.detectInternalIncidents: not implemented")
+  return _playerIds.flatMap((playerId, index) => {
+    const personality = (_personalities[playerId] ?? "profissional").toLowerCase()
+    if (!/polemico|preguicoso|agressivo/.test(personality) || (playerId.length + index) % 7 !== 0) return []
+    const type: InternalIncident["type"] = personality.includes("preguicoso") ? "missed_training" : "training_fight"
+    return [{ id: `incident_${playerId}_${index}`, type, severity: "minor", fineSuggested: 5000, resolved: false }]
+  })
 }

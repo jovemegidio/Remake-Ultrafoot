@@ -20,7 +20,8 @@
 import { useEffect, useState } from "react"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
-import { capGoalkeepers } from "@/lib/formations"
+import { capGoalkeepers, pickStartingXI } from "@/lib/formations"
+import type { Player as EnginePlayer } from "@/lib/game-engine"
 
 function hashString(input: string): number {
   let hash = 0
@@ -79,7 +80,10 @@ export function buildElencoPlayers(teamObj: ReturnType<typeof getTeamByShort>) {
   })
   return {
     players: sorted.slice(0, 11).map((p, i) => convert(p, i)),
-    bench: sorted.slice(11, 18).map((p, i) => convert(p, 11 + i)),
+    // O banco era cortado em sete atletas (slice 11..18), embora os elencos
+    // licenciados tragam até 25/33 jogadores. Mantemos todo o restante disponível;
+    // a própria tela já possui rolagem para acomodá-los.
+    bench: sorted.slice(11).map((p, i) => convert(p, 11 + i)),
   }
 }
 
@@ -93,25 +97,80 @@ export type ElencoPlayer = ReturnType<typeof buildElencoPlayers>["players"][numb
  */
 // Aceita null (nao so undefined) porque e esse o tipo de save.selectedTeamShort:
 // "nenhum time" chega como null, e o hook so faz um teste de verdade com ele.
-export function useUserRoster(selectedTeamShort: string | null | undefined) {
+function enginePlayerToElenco(p: EnginePlayer) {
+  return {
+    id: p.id,
+    name: p.name,
+    position: p.position,
+    age: p.age,
+    overall: p.overall,
+    potential: p.potential,
+    energy: p.energy,
+    rhythm: p.form,
+    moral: p.morale === "Feliz" ? "Feliz" as const
+      : p.morale === "Motivado" ? "Motivado" as const : "Normal" as const,
+    foot: "Direita" as const,
+    acceleration: "Equilibrado" as const,
+    function: p.position === "GOL" ? "Goleiro" : p.position === "ZAG" || p.position === "LD" || p.position === "LE" ? "Defensivo" : p.position === "VOL" ? "Box-to-box" : p.position === "MEI" ? "Meia Armador" : "Finalizador",
+    focus: p.position === "GOL" || p.position === "ZAG" ? "Defesa" : p.position === "ATA" || p.position === "PE" || p.position === "PD" ? "Ataque" : "Equilibrado",
+    height: p.position === "GOL" || p.position === "ZAG" ? 190 : 179,
+    pace: p.pace,
+    shooting: p.shooting,
+    passing: p.passing,
+    dribbling: p.dribbling,
+    defending: p.defending,
+    physical: p.physical,
+    shirtNumber: p.shirtNumber,
+    fintas: p.position === "PE" || p.position === "PD" || p.position === "MEI" ? 4 : p.position === "ATA" ? 3 : 2,
+  }
+}
+
+export function useUserRoster(
+  selectedTeamShort: string | null | undefined,
+  engineSquad: EnginePlayer[] = [],
+) {
   const resolvedTeam: Team | undefined = selectedTeamShort
     ? getTeamByShort(selectedTeamShort)
     : undefined
   const userTeam = resolvedTeam ?? serieATeams[0]
   const teamReady = Boolean(resolvedTeam)
 
-  const initial = teamReady ? buildElencoPlayers(userTeam) : { players: [], bench: [] }
+  const rosterFromSource = () => {
+    if (!teamReady) return { players: [], bench: [] }
+    if (engineSquad.length >= 11) {
+      const available = engineSquad.filter(p => !p.loanedOut)
+      const declared = available.filter(p => p.isStarter)
+      const declaredIsValid = declared.length === 11 && declared.filter(p => p.position === "GOL").length === 1
+      const starters = declaredIsValid
+        ? declared
+        : pickStartingXI(available, p => p.position, p => p.overall).starters
+      const starterIds = new Set(starters.map(p => p.id))
+      return {
+        players: starters.map(enginePlayerToElenco),
+        bench: available.filter(p => !starterIds.has(p.id)).map(enginePlayerToElenco),
+      }
+    }
+    return buildElencoPlayers(userTeam)
+  }
+
+  const initial = rosterFromSource()
 
   const [players, setPlayers] = useState(initial.players)
   const [bench, setBench] = useState(initial.bench)
 
+  // Inclui nome/status, nao apenas ID. Assim uma contratacao, venda, emprestimo ou
+  // troca de titular atualiza a tela mesmo se um fornecedor externo reutilizar um ID.
+  const squadIdentity = engineSquad
+    .map(p => `${p.id}:${p.name}:${p.isStarter ? 1 : 0}:${p.loanedOut ? 1 : 0}`)
+    .sort()
+    .join("|")
   useEffect(() => {
     if (!teamReady) return
-    const roster = buildElencoPlayers(userTeam)
+    const roster = rosterFromSource()
     setPlayers(roster.players)
     setBench(roster.bench)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamReady, userTeam.curto])
+  }, [teamReady, userTeam.curto, squadIdentity])
 
   return { userTeam, teamReady, players, setPlayers, bench, setBench }
 }

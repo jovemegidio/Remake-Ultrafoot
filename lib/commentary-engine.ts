@@ -44,8 +44,10 @@ export interface CommentaryPack {
 }
 
 /** Renderiza um evento de partida em linha de comentário. */
-export function renderEvent(_event: MatchEvent, _pack: CommentaryPack): CommentaryLine {
-  throw new Error("commentary-engine.renderEvent: not implemented")
+export function renderEvent(event: MatchEvent, pack: CommentaryPack): CommentaryLine {
+  const type=(event.type==="shot"||event.type==="miss"?"shot_off_target":event.type==="sub"?"substitution":event.type) as CommentaryEventType
+  const templates=pack.templates[type]??[event.text||"A partida continua."];const text=templates[Math.abs(event.minute)%templates.length].replaceAll("{player}",event.player??"o jogador").replaceAll("{team}",event.side==="home"?"mandante":"visitante")
+  const explosive=type==="goal"||type==="red_card"||type==="penalty";return{id:`comment-${event.id}`,text:`${event.minute}' ${text}`,intensity:explosive?"explosive":event.important?"excited":"calm",audioKey:`${pack.variant}/${type}`,durationMs:Math.max(1800,text.length*55)}
 }
 
 /** Pack default em pt-BR. */
@@ -54,10 +56,11 @@ export const DEFAULT_PACK: CommentaryPack = {
   name: "Narração padrão",
   language: "pt-br",
   variant: "default",
-  templates: {} as Record<CommentaryEventType, string[]>,
+  templates: {kickoff:["Bola rolando!"],goal:["GOOOL! {player} balança a rede!"],shot_on_target:["Finalização perigosa de {player}."],shot_off_target:["{player} manda para fora."],save:["Grande defesa do goleiro!"],yellow_card:["Cartão amarelo para {player}."],red_card:["Expulso! Vermelho para {player}."],substitution:["Mudança no {team}."],corner:["Escanteio para o {team}."],foul:["Falta marcada pelo árbitro."],free_kick:["Boa chance em cobrança de falta."],penalty:["Pênalti marcado!","O árbitro aponta para a marca da cal!","Infração dentro da área: é pênalti!","A torcida prende a respiração: penalidade máxima!","Decisão confirmada, o {team} terá a cobrança!"],offside:["Impedimento assinalado."],pressure:["O {team} aumenta a pressão."],counter_attack:["Contra-ataque veloz!"],halftime:["Fim do primeiro tempo."],fulltime:["Fim de jogo."],derby_intro:["Clássico de grande rivalidade hoje!"]},
 }
 
 /** Carrega pack de narração (custom ou default). */
-export function loadPack(_packId: string): CommentaryPack {
-  throw new Error("commentary-engine.loadPack: not implemented")
+export function loadPack(packId: string): CommentaryPack {
+  if(packId===DEFAULT_PACK.id||packId==="default")return structuredClone(DEFAULT_PACK)
+  return {...structuredClone(DEFAULT_PACK),id:packId,name:`Narração ${packId}`,variant:packId}
 }

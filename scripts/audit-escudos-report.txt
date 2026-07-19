@@ -1,31 +1,222 @@
 ================================================================================
 RELATORIO DE AUDITORIA DE ESCUDOS
 ================================================================================
-Times totais analisados : 199
-Entradas em localEscudoMap : 257
-Arquivos PNG em /public/escudos : 3310
+Times totais analisados : 542
+Entradas em localEscudoMap : 253
+Arquivos PNG em /public/escudos : 3404
 
---- [1] FILE_KEYS SEM MAPEAMENTO LOCAL (caem em fallback remoto, podem nao carregar offline): 0
+--- [1] FILE_KEYS SEM MAPEAMENTO LOCAL (caem em fallback remoto, podem nao carregar offline): 316
+  - bangu                               | Bangu (serie_d) [teams-data.ts]
+  - madureira_bra                       | Madureira (serie_d) [teams-data.ts]
+  - portuguesarj_bra                    | Portuguesa-RJ (serie_d) [teams-data.ts]
+  - boavista_bra                        | Boavista (serie_d) [teams-data.ts]
+  - marica_rj                           | Marica (serie_d) [teams-data.ts]
+  - sampaiocorrea_rj                    | Sampaio Correa-RJ (serie_d) [teams-data.ts]
+  - portuguesa_bra                      | Portuguesa (serie_d) [teams-data.ts]
+  - veloclube_sp                        | Velo Clube (serie_d) [teams-data.ts]
+  - noroeste_sp                         | Noroeste (serie_d) [teams-data.ts]
+  - al_qadsiah                          | Al-Qadsiah (saudi_pro) [international-teams.ts]
+  - al_kholood                          | Al-Kholood (saudi_pro) [international-teams.ts]
+  - damac_fc                            | Damac FC (saudi_pro) [international-teams.ts]
+  - chicago_fire                        | Chicago Fire (mls) [international-teams.ts]
+  - ne_revolution                       | New England Revolution (mls) [international-teams.ts]
+  - vancouver_whitecaps                 | Vancouver Whitecaps (mls) [international-teams.ts]
+  - mazatlan_fc                         | Mazatlán FC (liga_mx) [international-teams.ts]
+  - atletico_san_luis                   | Atlético San Luis (liga_mx) [international-teams.ts]
+  - chaves                              | Chaves (primeira_liga) [international-teams.ts]
+  - nacional_portugal                   | Nacional (primeira_liga) [international-teams.ts]
+  - portimonense                        | Portimonense (primeira_liga) [international-teams.ts]
+  - vissel_kobe                         | Vissel Kobe (j_league) [international-teams.ts]
+  - yokohama_marinos                    | Yokohama F. Marinos (j_league) [international-teams.ts]
+  - urawa_reds                          | Urawa Red Diamonds (j_league) [international-teams.ts]
+  - kashima_antlers                     | Kashima Antlers (j_league) [international-teams.ts]
+  - gamba_osaka                         | Gamba Osaka (j_league) [international-teams.ts]
+  - kawasaki_frontale                   | Kawasaki Frontale (j_league) [international-teams.ts]
+  - fc_tokyo                            | FC Tokyo (j_league) [international-teams.ts]
+  - nagoya_grampus                      | Nagoya Grampus (j_league) [international-teams.ts]
+  - sanfrecce_hiroshima                 | Sanfrecce Hiroshima (j_league) [international-teams.ts]
+  - cerezo_osaka                        | Cerezo Osaka (j_league) [international-teams.ts]
+  - kashiwa_reysol                      | Kashiwa Reysol (j_league) [international-teams.ts]
+  - avispa_fukuoka                      | Avispa Fukuoka (j_league) [international-teams.ts]
+  - shonan_bellmare                     | Shonan Bellmare (j_league) [international-teams.ts]
+  - sagan_tosu                          | Sagan Tosu (j_league) [international-teams.ts]
+  - jubilo_iwata                        | Jubilo Iwata (j_league) [international-teams.ts]
+  - albirex_niigata                     | Albirex Niigata (j_league) [international-teams.ts]
+  - tokyo_verdy                         | Tokyo Verdy (j_league) [international-teams.ts]
+  - machida_zelvia                      | Machida Zelvia (j_league) [international-teams.ts]
+  - ajax                                | AFC Ajax (eredivisie) [international-teams.ts]
+  - psv                                 | PSV Eindhoven (eredivisie) [international-teams.ts]
+  - feyenoord                           | Feyenoord (eredivisie) [international-teams.ts]
+  - az_alkmaar                          | AZ Alkmaar (eredivisie) [international-teams.ts]
+  - twente                              | FC Twente (eredivisie) [international-teams.ts]
+  - fc_utrecht                          | FC Utrecht (eredivisie) [international-teams.ts]
+  - heerenveen                          | SC Heerenveen (eredivisie) [international-teams.ts]
+  - groningen                           | FC Groningen (eredivisie) [international-teams.ts]
+  - vitesse                             | Vitesse (eredivisie) [international-teams.ts]
+  - sparta_rotterdam                    | Sparta Rotterdam (eredivisie) [international-teams.ts]
+  - nec_nijmegen                        | NEC Nijmegen (eredivisie) [international-teams.ts]
+  - go_ahead                            | Go Ahead Eagles (eredivisie) [international-teams.ts]
+  - rkc_waalwijk                        | RKC Waalwijk (eredivisie) [international-teams.ts]
+  - pec_zwolle                          | PEC Zwolle (eredivisie) [international-teams.ts]
+  - heracles                            | Heracles Almelo (eredivisie) [international-teams.ts]
+  - almere_city                         | Almere City (eredivisie) [international-teams.ts]
+  - cambuur                             | Cambuur Leeuwarden (eredivisie) [international-teams.ts]
+  - fortuna_sittard                     | Fortuna Sittard (eredivisie) [international-teams.ts]
+  - celtic                              | Celtic (scottish_prem) [international-teams.ts]
+  - rangers                             | Rangers FC (scottish_prem) [international-teams.ts]
+  - hearts                              | Hearts (scottish_prem) [international-teams.ts]
+  - hibernian                           | Hibernian FC (scottish_prem) [international-teams.ts]
+  - aberdeen                            | Aberdeen FC (scottish_prem) [international-teams.ts]
+  - kilmarnock                          | Kilmarnock FC (scottish_prem) [international-teams.ts]
+  - st_mirren                           | St Mirren FC (scottish_prem) [international-teams.ts]
+  - motherwell                          | Motherwell FC (scottish_prem) [international-teams.ts]
+  - st_johnstone                        | St Johnstone FC (scottish_prem) [international-teams.ts]
+  - ross_county                         | Ross County (scottish_prem) [international-teams.ts]
+  - livingston                          | Livingston FC (scottish_prem) [international-teams.ts]
+  - dundee_fc                           | Dundee FC (scottish_prem) [international-teams.ts]
+  - galatasaray                         | Galatasaray (super_lig) [international-teams.ts]
+  - fenerbahce                          | Fenerbahce (super_lig) [international-teams.ts]
+  - besiktas                            | Besiktas (super_lig) [international-teams.ts]
+  - trabzonspor                         | Trabzonspor (super_lig) [international-teams.ts]
+  - basaksehir                          | Basaksehir (super_lig) [international-teams.ts]
+  - sivasspor                           | Sivasspor (super_lig) [international-teams.ts]
+  - adana_demirspor                     | Adana Demirspor (super_lig) [international-teams.ts]
+  - konyaspor                           | Konyaspor (super_lig) [international-teams.ts]
+  - alanyaspor                          | Alanyaspor (super_lig) [international-teams.ts]
+  - kayserispor                         | Kayserispor (super_lig) [international-teams.ts]
+  - antalyaspor                         | Antalyaspor (super_lig) [international-teams.ts]
+  - gaziantep                           | Gaziantep FK (super_lig) [international-teams.ts]
+  - kasimpasa                           | Kasimpasa (super_lig) [international-teams.ts]
+  - samsunspor                          | Samsunspor (super_lig) [international-teams.ts]
+  - fatih_karagumruk                    | Fatih Karagumruk (super_lig) [international-teams.ts]
+  - rizespor                            | Rizespor (super_lig) [international-teams.ts]
+  - pendikspor                          | Pendikspor (super_lig) [international-teams.ts]
+  - hatayspor                           | Hatayspor (super_lig) [international-teams.ts]
+  - club_brugge                         | Club Brugge (pro_league_bel) [international-teams.ts]
+  - anderlecht                          | Anderlecht (pro_league_bel) [international-teams.ts]
+  - union_sg                            | Union Saint-Gilloise (pro_league_bel) [international-teams.ts]
+  - kaa_gent                            | KAA Gent (pro_league_bel) [international-teams.ts]
+  - royal_antwerp                       | Royal Antwerp (pro_league_bel) [international-teams.ts]
+  - standard_liege                      | Standard Liege (pro_league_bel) [international-teams.ts]
+  - genk                                | Genk (pro_league_bel) [international-teams.ts]
+  - cercle_brugge                       | Cercle Brugge (pro_league_bel) [international-teams.ts]
+  - mechelen                            | Mechelen (pro_league_bel) [international-teams.ts]
+  - westerlo                            | Westerlo (pro_league_bel) [international-teams.ts]
+  - ohl_leuven                          | OHL Leuven (pro_league_bel) [international-teams.ts]
+  - kortrijk                            | Kortrijk (pro_league_bel) [international-teams.ts]
+  - sint_truiden                        | Sint-Truiden (pro_league_bel) [international-teams.ts]
+  - charleroi                           | Charleroi (pro_league_bel) [international-teams.ts]
+  - zulte_waregem                       | Zulte Waregem (pro_league_bel) [international-teams.ts]
+  - eupen                               | Eupen (pro_league_bel) [international-teams.ts]
+  - zenit                               | Zenit (russian_prem) [international-teams.ts]
+  - cska_moscow                         | CSKA Moscow (russian_prem) [international-teams.ts]
+  - spartak_moscow                      | Spartak Moscow (russian_prem) [international-teams.ts]
+  - dynamo_moscow                       | Dynamo Moscow (russian_prem) [international-teams.ts]
+  - lokomotiv_moscow                    | Lokomotiv Moscow (russian_prem) [international-teams.ts]
+  - krasnodar                           | Krasnodar (russian_prem) [international-teams.ts]
+  - rostov                              | Rostov (russian_prem) [international-teams.ts]
+  - rubin_kazan                         | Rubin Kazan (russian_prem) [international-teams.ts]
+  - akhmat_grozny                       | Akhmat Grozny (russian_prem) [international-teams.ts]
+  - sochi                               | Sochi (russian_prem) [international-teams.ts]
+  - krylya_sovetov                      | Krylya Sovetov (russian_prem) [international-teams.ts]
+  - torpedo_moscow                      | Torpedo Moscow (russian_prem) [international-teams.ts]
+  - nizhny_novgorod                     | Nizhny Novgorod (russian_prem) [international-teams.ts]
+  - urals_yekaterinburg                 | Urals Yekaterinburg (russian_prem) [international-teams.ts]
+  - fakel_voronezh                      | Fakel Voronezh (russian_prem) [international-teams.ts]
+  - orenburg                            | Orenburg (russian_prem) [international-teams.ts]
+  - river_plate                         | River Plate (liga_argentina) [international-teams.ts]
+  - boca_juniors                        | Boca Juniors (liga_argentina) [international-teams.ts]
+  - racing_arg                          | Racing Club (liga_argentina) [international-teams.ts]
+  - independiente_arg                   | Independiente (liga_argentina) [international-teams.ts]
+  - san_lorenzo                         | San Lorenzo (liga_argentina) [international-teams.ts]
+  - estudiantes_lp                      | Estudiantes LP (liga_argentina) [international-teams.ts]
+  - velez_sarsfield                     | Vélez Sarsfield (liga_argentina) [international-teams.ts]
+  - talleres_cordoba                    | Talleres Cordoba (liga_argentina) [international-teams.ts]
+  - rosario_central                     | Rosario Central (liga_argentina) [international-teams.ts]
+  - newells_old_boys                    | Newells Old Boys (liga_argentina) [international-teams.ts]
+  - huracan_arg                         | Huracan (liga_argentina) [international-teams.ts]
+  - lanus_arg                           | Lanus (liga_argentina) [international-teams.ts]
+  - godoy_cruz                          | Godoy Cruz (liga_argentina) [international-teams.ts]
+  - atletico_tucuman                    | Atletico Tucuman (liga_argentina) [international-teams.ts]
+  - belgrano_cordoba                    | Belgrano Cordoba (liga_argentina) [international-teams.ts]
+  - banfield_arg                        | Banfield (liga_argentina) [international-teams.ts]
+  - gimnasia_la_plata                   | Gimnasia La Plata (liga_argentina) [international-teams.ts]
+  - tigre_arg                           | Tigre (liga_argentina) [international-teams.ts]
+  - colon_sf                            | Colon Santa Fe (liga_argentina) [international-teams.ts]
+  - san_martin_sj                       | San Martin San Juan (liga_argentina) [international-teams.ts]
+  - atletico_nacional                   | Atletico Nacional (primera_a_col) [international-teams.ts]
+  - millonarios                         | Millonarios (primera_a_col) [international-teams.ts]
+  - junior_baq                          | Junior Barranquilla (primera_a_col) [international-teams.ts]
+  - america_cali                        | America de Cali (primera_a_col) [international-teams.ts]
+  - deportivo_cali                      | Deportivo Cali (primera_a_col) [international-teams.ts]
+  - deportes_tolima                     | Deportes Tolima (primera_a_col) [international-teams.ts]
+  - ind_medellin                        | Independiente Medellin (primera_a_col) [international-teams.ts]
+  - santa_fe_col                        | Santa Fe (primera_a_col) [international-teams.ts]
+  - bucaramanga                         | Atletico Bucaramanga (primera_a_col) [international-teams.ts]
+  - once_caldas                         | Once Caldas (primera_a_col) [international-teams.ts]
+  - dep_pereira                         | Deportivo Pereira (primera_a_col) [international-teams.ts]
+  - envigado_fc                         | Envigado FC (primera_a_col) [international-teams.ts]
+  - la_equidad                          | La Equidad (primera_a_col) [international-teams.ts]
+  - jaguares_cordoba                    | Jaguares de Cordoba (primera_a_col) [international-teams.ts]
+  - boyaca_chico                        | Boyaca Chico (primera_a_col) [international-teams.ts]
+  - cucuta_dep                          | Cucuta Deportivo (primera_a_col) [international-teams.ts]
+  - aguilas_doradas                     | Aguilas Doradas (primera_a_col) [international-teams.ts]
+  - dep_pasto                           | Deportivo Pasto (primera_a_col) [international-teams.ts]
+  - alianza_fc_col                      | Alianza FC (primera_a_col) [international-teams.ts]
+  - fortaleza_ceif                      | Fortaleza CEIF (primera_a_col) [international-teams.ts]
+  - colo_colo                           | Colo Colo (primera_div_chi) [international-teams.ts]
+  - u_catolica_chi                      | Universidad Catolica (primera_div_chi) [international-teams.ts]
+  - u_de_chile                          | Universidad de Chile (primera_div_chi) [international-teams.ts]
+  - huachipato                          | Huachipato (primera_div_chi) [international-teams.ts]
+  - palestino                           | Palestino (primera_div_chi) [international-teams.ts]
+  - nublense                            | Nublense (primera_div_chi) [international-teams.ts]
+  - ohiggins                            | O'Higgins (primera_div_chi) [international-teams.ts]
+  - audax_italiano                      | Audax Italiano (primera_div_chi) [international-teams.ts]
+  - magallanes_chi                      | Magallanes (primera_div_chi) [international-teams.ts]
+  - everton_vina                        | Everton Vina (primera_div_chi) [international-teams.ts]
+  - cobresal                            | Cobresal (primera_div_chi) [international-teams.ts]
+  - cobreloa                            | Cobreloa (primera_div_chi) [international-teams.ts]
+  - dep_iquique                         | Deportes Iquique (primera_div_chi) [international-teams.ts]
+  - dep_antofagasta                     | Deportes Antofagasta (primera_div_chi) [international-teams.ts]
+  - dep_la_serena                       | Deportes La Serena (primera_div_chi) [international-teams.ts]
+  - rangers_talca                       | Rangers de Talca (primera_div_chi) [international-teams.ts]
+  - penarol                             | Penarol (primera_div_ury) [international-teams.ts]
+  - nacional_ury                        | Nacional Montevideo (primera_div_ury) [international-teams.ts]
+  - defensor_sporting                   | Defensor Sporting (primera_div_ury) [international-teams.ts]
+  - danubio_ury                         | Danubio (primera_div_ury) [international-teams.ts]
+  - city_torque                         | City Torque (primera_div_ury) [international-teams.ts]
+  - river_plate_ury                     | River Plate Uruguai (primera_div_ury) [international-teams.ts]
+  - liverpool_ury                       | Liverpool FC Uruguai (primera_div_ury) [international-teams.ts]
+  - wanderers_ury                       | Wanderers Uruguai (primera_div_ury) [international-teams.ts]
+  - fenix_ury                           | Fenix Uruguai (primera_div_ury) [international-teams.ts]
+  - cerro_largo                         | Cerro Largo (primera_div_ury) [international-teams.ts]
+  - racing_ury                          | Racing Club Uruguai (primera_div_ury) [international-teams.ts]
+  - progreso_ury                        | Progreso (primera_div_ury) [international-teams.ts]
+  - sud_america_ury                     | Sud America (primera_div_ury) [international-teams.ts]
+  - cerro_ury                           | Cerro Montevideo (primera_div_ury) [international-teams.ts]
+  - boston_river                        | Boston River (primera_div_ury) [international-teams.ts]
+  - plaza_colonia                       | Plaza Colonia (primera_div_ury) [international-teams.ts]
+  - jeonbuk_hyundai                     | Jeonbuk Hyundai (k_league_1) [international-teams.ts]
+  - ulsan_hd                            | Ulsan HD (k_league_1) [international-teams.ts]
+  - pohang_steelers                     | Pohang Steelers (k_league_1) [international-teams.ts]
+  - fc_seoul                            | FC Seoul (k_league_1) [international-teams.ts]
+  - suwon_samsung                       | Suwon Samsung Bluewings (k_league_1) [international-teams.ts]
+  - daegu_fc                            | Daegu FC (k_league_1) [international-teams.ts]
+  - jeju_united                         | Jeju United (k_league_1) [international-teams.ts]
+  - incheon_united                      | Incheon United (k_league_1) [international-teams.ts]
+  - seongnam_fc                         | Seongnam FC (k_league_1) [international-teams.ts]
+  - daejeon_citizen                     | Daejeon Citizen (k_league_1) [international-teams.ts]
+  ... +116 mais
 
 --- [2] FILE_KEYS QUE APONTAM PRA ARQUIVO INEXISTENTE (CRITICO - escudo nao renderiza): 0
 
---- [3] NOMES DE ARQUIVO SUSPEITOS (file batendo mal com nome do time - pode ser escudo trocado): 2
+--- [3] NOMES DE ARQUIVO SUSPEITOS (file batendo mal com nome do time - pode ser escudo trocado): 3
   - inter_sp                            | Inter de Limeira (ILM) -> /escudos/interlimeira.png
+  - borussia_mgladbach                  | Borussia Mönchengladbach (BMG) -> /escudos/bundesliga/borussia_monchengladbach.png
   - nycfc                               | NYCFC (NYC) -> /escudos/mls/new_york_city.png
 
---- [4] ENTRADAS EM localEscudoMap NAO USADAS POR NENHUM TIME: 58
-  - criciuma_bra -> /escudos/criciuma_bra.png
-  - cuiaba_bra -> /escudos/cuiaba_bra.png
-  - nautico -> /escudos/nautico.png
-  - pontepreta_bra -> /escudos/pontepreta_bra.png
-  - guaranisp_bra -> /escudos/guaranisp_bra.png
+--- [4] ENTRADAS EM localEscudoMap NAO USADAS POR NENHUM TIME: 27
   - ituano_sp -> /escudos/ituano_sp.png
-  - csa_bra -> /escudos/csa_bra.png
-  - figueirense -> /escudos/figueirense.png
-  - joinville -> /escudos/joinville.png
-  - abcrn_bra -> /escudos/abcrn_bra.png
-  - brasiliense_bra -> /escudos/brasiliense_bra.png
-  - manaus_bra -> /escudos/manaus_bra.png
   - inter -> /escudos/serie_a_ita/inter.png
   - verona -> /escudos/serie_a_ita/verona.png
   - sassuolo -> /escudos/serie_a_ita/sassuolo.png
@@ -36,39 +227,19 @@ Arquivos PNG em /public/escudos : 3310
   - al_ahli -> /escudos/saudi_pro/al_ahli.png
   - damac -> /escudos/saudi_pro/damac.png
   - al_riyadh -> /escudos/saudi_pro/al_riyadh.png
-  - al_khaleej -> /escudos/saudi_pro/al_khaleej.png
   - al_hazm -> /escudos/saudi_pro/al_hazm.png
-  - al_orobah -> /escudos/saudi_pro/al_orobah.png
   - al_akhdoud -> /escudos/saudi_pro/al_akhdoud.png
-  - al_wehda -> /escudos/saudi_pro/al_wehda.png
-  - al_qadisiyah -> /escudos/saudi_pro/al_qadisiyah.png
   - new_york_city -> /escudos/mls/new_york_city.png
   - new_york_red_bulls -> /escudos/mls/new_york_red_bulls.png
-  - toronto_fc -> /escudos/mls/toronto_fc.png
   - cf_montreal -> /escudos/mls/cf_montreal.png
   - austin_fc -> /escudos/mls/austin_fc.png
   - nashville_sc -> /escudos/mls/nashville_sc.png
   - orlando_city -> /escudos/mls/orlando_city.png
-  - portland_timbers -> /escudos/mls/portland_timbers.png
-  - minnesota_united -> /escudos/mls/minnesota_united.png
   - charlotte_fc -> /escudos/mls/charlotte_fc.png
-  - dc_united -> /escudos/mls/dc_united.png
-  - houston_dynamo -> /escudos/mls/houston_dynamo.png
-  - atlas -> /escudos/liga_mx/atlas.png
-  - necaxa -> /escudos/liga_mx/necaxa.png
-  - queretaro -> /escudos/liga_mx/queretaro.png
-  - tijuana -> /escudos/liga_mx/tijuana.png
-  - puebla -> /escudos/liga_mx/puebla.png
   - mazatlan -> /escudos/liga_mx/mazatlan.png
   - san_luis -> /escudos/liga_mx/san_luis.png
-  - fc_juarez -> /escudos/liga_mx/fc_juarez.png
   - boavista -> /escudos/primeira_liga/boavista.png
-  - moreirense -> /escudos/primeira_liga/moreirense.png
-  - gil_vicente -> /escudos/primeira_liga/gil_vicente.png
-  - arouca -> /escudos/primeira_liga/arouca.png
   - nacional -> /escudos/primeira_liga/nacional.png
-  - estrela_amadora -> /escudos/primeira_liga/estrela_amadora.png
-  - farense -> /escudos/primeira_liga/farense.png
   - avs -> /escudos/primeira_liga/avs.png
   - lorient -> /escudos/ligue_1/lorient.png
   - clermont -> /escudos/ligue_1/clermont.png

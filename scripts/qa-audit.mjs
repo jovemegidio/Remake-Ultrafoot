@@ -43,16 +43,18 @@ const SAVE = {
   multiplayerEnabled: false, managers: [], activeManagerId: null,
   controllerType: "playstation", controllerBindings: {},
 }
+const YOUTH_SAVE = { ...SAVE, youthPlayers: [], youthCareer: { active: true, category: "sub20", clubCurto: "FLA", clubNome: "Flamengo Sub-20", startedSeason: 2026, currentSeason: 2026, round: 0, matches: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, coachReputation: 8, coachXP: 0, titles: [], promotedPlayerIds: [], alumni: [], professionalOffers: [], seasonFinished: false } }
 
 const ROUTES = [
-  "/", "/elenco", "/elenco/gerenciamento", "/elenco/taticas", "/elenco/escalacoes",
-  "/mercado", "/transferencias", "/contratos", "/olheiros", "/base", "/treinamento",
+  "/", "/sem-clube", "/elenco", "/elenco/gerenciamento", "/elenco/taticas", "/elenco/escalacoes",
+  "/mercado", "/transferencias", "/contratos", "/olheiros", "/base", "/base/carreira", "/treinamento",
   "/partida", "/partida/escalacao", "/partida/ao-vivo", "/calendario", "/competicoes",
   "/clube", "/financas", "/infraestrutura", "/taticas", "/estatisticas", "/historico",
   "/mensagens", "/notificacoes", "/central", "/central-da-temporada", "/dashboard",
   "/reunioes", "/imprensa", "/vestiario", "/desafios", "/relatorios", "/adversarios",
   "/analise-partida", "/selecao", "/salvar", "/configuracoes", "/editar",
 ]
+const INTENTIONAL_REDIRECTS = new Set(["/dashboard"])
 
 // Padroes suspeitos de dado mock/placeholder no texto renderizado.
 const MOCK_PATTERNS = [/lorem ipsum/i, /placeholder/i, /\bmock\b/i, /jogador teste/i, /time teste/i, /\bTODO\b/, /undefined/i, /NaN/, /\[object Object\]/]
@@ -70,13 +72,15 @@ await ctx.addInitScript(s => {
 const results = []
 for (const route of ROUTES) {
   const page = await ctx.newPage()
+  if (route === "/base/carreira") await page.addInitScript(s => window.localStorage.setItem("ultrafoot:save", JSON.stringify(s)), YOUTH_SAVE)
   const errors = []
-  page.on("pageerror", e => errors.push("JS: " + e.message))
+  page.on("pageerror", e => errors.push("JS: " + (e.stack || e.message)))
   page.on("console", m => { if (m.type() === "error") errors.push("console: " + m.text()) })
   page.on("response", r => { const s = r.status(); const u = r.url(); if (s >= 400 && !u.includes("favicon") && !/\.(png|jpg|jpeg|webm|mp3|svg)(\?|$)/i.test(u)) errors.push(`${s} ${u.replace(base,"")}`) })
   let bodyText = "", mockHits = []
   try {
-    await page.goto(`${base}${route}/`, { waitUntil: "networkidle", timeout: 20000 })
+    const routeUrl = route === "/" ? `${base}/` : `${base}${route}/`
+    await page.goto(routeUrl, { waitUntil: "networkidle", timeout: 20000 })
     await page.waitForTimeout(600)
     bodyText = (await page.locator("body").innerText().catch(() => "")) || ""
     mockHits = MOCK_PATTERNS.filter(p => p.test(bodyText)).map(p => p.source)
@@ -95,7 +99,7 @@ let problems = 0
 for (const r of results) {
   const flags = []
   if (r.errCount > 0) flags.push(`${r.errCount} erro(s)`)
-  if (r.textLen < 120) flags.push(`TELA VAZIA? (${r.textLen} chars)`)
+  if (r.textLen < 120 && !INTENTIONAL_REDIRECTS.has(r.route)) flags.push(`TELA VAZIA? (${r.textLen} chars)`)
   if (r.mock.length) flags.push(`MOCK: ${r.mock.join(", ")}`)
   const status = flags.length ? "⚠ " + flags.join(" | ") : "OK"
   if (flags.length) problems++

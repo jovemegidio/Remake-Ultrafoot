@@ -8,9 +8,9 @@ import { getCountryCompetitions } from "@/lib/country-competitions"
 import { getLeagueName } from "@/lib/use-game-manager"
 import { motion, AnimatePresence } from "framer-motion"
 import { TeamCrest } from "@/components/team-crest"
-import { serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
+import { allTeams, serieATeams, getTeamByShort, formatCurrency, type Team } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
-import { useGameEngine, type MatchResult, type StandingsEntry, type TopScorer } from "@/lib/game-engine"
+import { useGameEngine, isTransferWindowOpen, type MatchResult, type StandingsEntry, type TopScorer } from "@/lib/game-engine"
 import { cn } from "@/lib/utils"
 
 export const NEWS_SOURCES = {
@@ -31,6 +31,12 @@ export const NEWS_SOURCES = {
     logo: "/logos/brasileirao.png",
     color: "#BFFF00",
     bgColor: "bg-[#BFFF00]",
+  },
+  league: {
+    name: "Liga",
+    logo: "/brand/uf26-logo.png",
+    color: "#00ffc8",
+    bgColor: "bg-[#00ffc8]",
   },
   cazeTv: {
     name: "CazeTV",
@@ -69,7 +75,13 @@ export function generateDynamicNews(
   standings: StandingsEntry[],
   topScorers: TopScorer[]
 ): NewsItem[] {
-  const teams = serieATeams
+  const userTeam = userTeamShort ? getTeamByShort(userTeamShort) : null
+  const leaguePool = userTeam
+    ? allTeams.filter(team => team.divisao === userTeam.divisao && team.pais === userTeam.pais)
+    : []
+  const teams = leaguePool.length >= 8 ? leaguePool : userTeam
+    ? allTeams.filter(team => team.pais === userTeam.pais)
+    : serieATeams
   const randomTeam = () => teams[Math.floor(Math.random() * teams.length)]
   const randomPlayer = () => {
     const names = [
@@ -82,11 +94,11 @@ export function generateDynamicNews(
   }
 
   const news: NewsItem[] = []
-  const userTeam = userTeamShort ? getTeamByShort(userTeamShort) : null
   // Nome da liga do clube: um time europeu nao pode ver noticia do "Brasileirao".
   // Travessao no lugar de "do/da" evita problema de genero entre ligas
   // ("Premier League" vs "Serie A").
   const leagueName = userTeamShort ? getLeagueName(userTeamShort) : "a liga"
+  const leagueHasStarted = standings.some(entry => (entry.played ?? 0) > 0)
 
   // === NOTÍCIA 1: Resultado recente do time do usuário ===
   const userResults = matchResults
@@ -155,12 +167,12 @@ export function generateDynamicNews(
   }
 
   // === NOTÍCIA 3: Artilharia atualizada ===
-  if (topScorers.length > 0) {
+  if (leagueHasStarted && topScorers.length > 0) {
     const leader = topScorers[0]
     const leaderTeam = getTeamByShort(leader.teamShort)
     news.push({
       id: `artilharia-${season}-${week}`,
-      source: "brasileirao",
+      source: "league",
       date: "Agora",
       type: "ranking",
       title: `${leader.playerName} lidera artilharia com ${leader.goals} gols`,
@@ -170,22 +182,10 @@ export function generateDynamicNews(
       likes: Math.floor(Math.random() * 45000 + 20000),
       comments: Math.floor(Math.random() * 5000 + 1500),
     })
-  } else {
-    news.push({
-      id: `artilharia-${season}-${week}`,
-      source: "brasileirao",
-      date: "Agora",
-      type: "ranking",
-      title: `Artilharia atualizada — ${leagueName}`,
-      description: `${randomPlayer()} assume lideranca com ${Math.floor(Math.random() * 10 + 5)} gols`,
-      icon: <TrendingUp className="h-5 w-5 text-purple-400" />,
-      likes: Math.floor(Math.random() * 40000 + 20000),
-      comments: Math.floor(Math.random() * 4000 + 1500),
-    })
   }
 
   // === NOTÍCIA 4: Posição na tabela do time do usuário ===
-  if (standings.length > 0 && userTeamShort && userTeam) {
+  if (leagueHasStarted && standings.length > 0 && userTeamShort && userTeam) {
     const pos = standings.findIndex(s => s.teamShort === userTeamShort)
     if (pos >= 0) {
       const entry = standings[pos]
@@ -226,9 +226,9 @@ export function generateDynamicNews(
   for (let i = 0; i < Math.min(4, shuffled.length - 1); i += 2) {
     nextMatches.push({ home: shuffled[i], away: shuffled[i + 1] })
   }
-  news.push({
+  if (leagueHasStarted) news.push({
     id: `matches-${season}-${week}`,
-    source: "brasileirao",
+    source: "league",
     date: "Agora",
     type: "match_preview",
     title: "PROXIMOS JOGOS",
@@ -245,7 +245,7 @@ export function generateDynamicNews(
       `${userTeam.nome}: Comissao tecnica projeta temporada forte`,
       `${userTeam.nome} aquece para rodada decisiva`,
       `Torcida do ${userTeam.nome} lota treino aberto`,
-      `Diretoria do ${userTeam.nome} confirma reforco surpresa`,
+      `Treino do ${userTeam.nome} ganha intensidade antes do proximo compromisso`,
     ]
     news.push({
       id: `user-highlight-${season}-${week}`,
@@ -267,7 +267,7 @@ export function generateDynamicNews(
     () => `Proposta milionaria: ${randomTeam().nome} mira jogador europeu`,
   ]
   const headline = transferHeadlines[Math.floor(Math.random() * transferHeadlines.length)]
-  news.push({
+  if (isTransferWindowOpen(week)) news.push({
     id: `transfer-${season}-${week}-${Math.floor(Math.random() * 1000)}`,
     source: "ge",
     date: "2h",
@@ -279,20 +279,7 @@ export function generateDynamicNews(
     comments: Math.floor(Math.random() * 3000 + 500),
   })
 
-  // === NOTÍCIA 8: Lesão ou suspensão ===
-  const injuryTeam = randomTeam()
-  const injuryWeeks = Math.floor(Math.random() * 6 + 2)
-  news.push({
-    id: `injury-${season}-${week}-${Math.floor(Math.random() * 1000)}`,
-    source: "tntSports",
-    date: "8h",
-    type: "injury",
-    title: `${randomPlayer()} sofre lesao e desfalca ${injuryTeam.nome}`,
-    description: `Jogador deve ficar de fora por ${injuryWeeks} semanas; torcida preocupada`,
-    icon: <Users className="h-5 w-5 text-red-400" />,
-    likes: Math.floor(Math.random() * 15000 + 5000),
-    comments: Math.floor(Math.random() * 2000 + 300),
-  })
+  // Lesoes nao sao inventadas: o feed de campanha recebe eventos reais do motor.
 
   // === NOTÍCIA 9: Mercado agitado (CazeTV) ===
   const cazeTvHeadlines = [
@@ -300,7 +287,7 @@ export function generateDynamicNews(
     `Semana de decisoes: ${Math.floor(Math.random() * 4 + 2)} transferencias confirmadas`,
     "Agente revela bastidores de negociacao bilionaria",
   ]
-  news.push({
+  if (isTransferWindowOpen(week)) news.push({
     id: `market-${season}-${week}`,
     source: "cazeTv",
     date: "12h",
@@ -664,7 +651,7 @@ const NEWS_TYPE_TO_IMAGE_CATEGORY: Record<string, string> = {
   transfer: "transfer",
   injury: "injury",
   highlight: "highlight",
-  ranking: "ranking",
+  ranking: "highlight",
   announcement: "announcement",
   match_preview: "match",
   match_result: "match",

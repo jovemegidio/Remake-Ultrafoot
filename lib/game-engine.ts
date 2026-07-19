@@ -4,10 +4,12 @@
 
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { createTauriZustandStorage } from "@/lib/persistent-store"
+import { createTauriZustandStorage, storeSet } from "@/lib/persistent-store"
+import { getCareerScopedKey } from "@/lib/save-system"
 import { allTeams, getTeamByShort } from "@/lib/teams-data"
-import { getPlayersForTeam } from "@/lib/players-data"
+import { getCanonicalSeedPosition, getPlayersForTeam } from "@/lib/players-data"
 import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
+import { pickStartingXI } from "@/lib/formations"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -1033,6 +1035,10 @@ export function calculateFanRevenue(fanBase: FanBase, results: number, hasStarSi
 }
 
 export interface MatchResult {
+  /** Identidade estável da partida no calendário. Impede que um placar seja
+   * reaproveitado por outro confronto entre os mesmos clubes. */
+  fixtureKey?: string
+  fixtureId?: number
   week: number
   season: number
   competition: string
@@ -1629,6 +1635,33 @@ export interface TransferOffer {
   status: "pendente" | "aceita" | "rejeitada" | "expirada"
   createdWeek: number
   expiresWeek: number
+  negotiationRound?: number
+  counterStatus?: "sent" | "accepted" | "revised" | "rejected"
+  counterMessage?: string
+}
+
+export interface PendingIncomingTransfer {
+  id: string
+  player: Player
+  kind: "compra" | "emprestimo"
+  fee: number
+  agreedWeek: number
+  agreedSeason: number
+  loanWeeks?: number
+  salary?: number
+}
+
+/** Janelas brasileiras simplificadas no calendario semanal: jan-mar e jul-set. */
+export function isTransferWindowOpen(week: number): boolean {
+  const seasonWeek = ((Math.max(1, week) - 1) % 52) + 1
+  return seasonWeek <= 12 || (seasonWeek >= 27 && seasonWeek <= 36)
+}
+
+export function nextTransferWindowWeek(week: number): number {
+  const seasonWeek = ((Math.max(1, week) - 1) % 52) + 1
+  if (seasonWeek < 27 && seasonWeek > 12) return week + (27 - seasonWeek)
+  if (seasonWeek > 36) return week + (53 - seasonWeek)
+  return week
 }
 
 // Times que podem fazer ofertas
@@ -1690,11 +1723,14 @@ interface GameEngineState {
   
   // Ofertas de transferencia
   transferOffers: TransferOffer[]
+  pendingIncomingTransfers: PendingIncomingTransfer[]
   
   // Taticas
   teamTactics: TeamTactics
   playerInstructions: Record<number, PlayerInstructions>
   tacticalAssignments: TacticalAssignments
+  /** Coordenadas personalizadas do campo, por nome do atleta (IDs podem mudar ao importar). */
+  tacticalPlayerPositions: Record<string, { x: number; y: number }>
   opponentAnalyses: OpponentAnalysis[]
   
   // Moral e vestiario
@@ -1734,12 +1770,16 @@ interface GameEngineState {
   advanceWeek: () => void
   generateAIOffers: () => void
   respondToOffer: (offerId: number, accept: boolean) => void
+  counterTransferOffer: (offerId: number, amount: number, wageCoverage?: number, loanWeeks?: number) => "accepted" | "revised" | "rejected"
   trainPlayer: (playerId: number, attribute: string) => void
   setStarter: (playerId: number, isStarter: boolean) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   sellPlayer: (playerId: number) => void
-  buyPlayer: (player: Player, fee: number) => void
-  loanPlayer: (player: Player, weeks: number, salary: number) => void
+  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean) => "joined" | "pending" | "failed"
+  payClubDebt: (amount: number) => number
+  spendClubFunds: (amount: number) => boolean
+  addClubRevenue: (amount: number) => void
+  loanPlayer: (player: Player, weeks: number, salary: number) => "joined" | "pending" | "failed"
   hireScout: (scout: Scout) => void
   startScoutSearch: (scoutId: number, region: string, weeksToComplete?: number, searchCost?: number) => void
   stopScoutSearch: (scoutId: number) => void
@@ -1752,6 +1792,7 @@ interface GameEngineState {
   returnFromNationalTeam: (playerId: number) => void
   getPlayerById: (playerId: number) => Player | undefined
   updatePlayerStats: (playerId: number, stats: Partial<PlayerStats>) => void
+  setPlayerShirtNumber: (playerId: number, shirtNumber: number) => boolean
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
   healPlayer: (playerId: number) => void
   initializeGame: (teamShort: string) => void
@@ -1764,6 +1805,7 @@ interface GameEngineState {
   setTeamTactics: (tactics: Partial<TeamTactics>) => void
   setPlayerInstructions: (playerId: number, instructions: Partial<PlayerInstructions>) => void
   setTacticalAssignments: (assignments: Partial<TacticalAssignments>) => void
+  setTacticalPlayerPositions: (positions: Record<string, { x: number; y: number }>) => void
   analyzeOpponent: (teamShort: string) => void
   updateOpponentAnalysis: () => void
   
@@ -2196,6 +2238,7 @@ export const useGameEngine = create<GameEngineState>()(
       topScorers: [],
       
       transferOffers: [],
+      pendingIncomingTransfers: [],
 
       // Panelinhas
       affinityGroups: [],
@@ -2241,6 +2284,7 @@ export const useGameEngine = create<GameEngineState>()(
       },
       playerInstructions: {},
       tacticalAssignments: { corner: "", freeKick: "", freeKickLeft: "", freeKickRight: "", penalty: "", captain: "", playerRoles: {} },
+      tacticalPlayerPositions: {},
       opponentAnalyses: [],
       
       // Moral
@@ -2357,6 +2401,28 @@ export const useGameEngine = create<GameEngineState>()(
             }
             return offer
           })
+
+          // Contratos fechados fora da janela ficam registrados e chegam automaticamente
+          // na primeira semana habilitada. Livres nao passam por esta fila.
+          const canRegisterTransfers = isTransferWindowOpen(newWeek)
+          const arrivals = canRegisterTransfers ? s.pendingIncomingTransfers : []
+          const existingNames = new Set(updatedPlayers.map(p => p.name.trim().toLocaleLowerCase("pt-BR")))
+          const arrivedPlayers = arrivals
+            .filter(item => !existingNames.has(item.player.name.trim().toLocaleLowerCase("pt-BR")))
+            .map((item, index) => ({
+              ...item.player,
+              id: Math.max(Date.now() + index, ...updatedPlayers.map(p => p.id + index + 1)),
+              joinedClubWeek: newWeek,
+              joinedClubSeason: s.currentSeason,
+              isLoanedIn: item.kind === "emprestimo",
+              loanEndWeek: item.kind === "emprestimo" ? newWeek + (item.loanWeeks ?? 26) : undefined,
+              contract: item.kind === "emprestimo"
+                ? { salary: item.salary ?? 0, endDate: newWeek + (item.loanWeeks ?? 26), releaseClause: null, signedWeek: item.agreedWeek, signedSeason: item.agreedSeason }
+                : item.player.contract ? { ...item.player.contract, signedWeek: item.agreedWeek, signedSeason: item.agreedSeason } : null,
+              isStarter: false,
+              seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
+            }))
+          if (arrivedPlayers.length) updatedPlayers.push(...arrivedPlayers)
 
           // ---- STATUS EFFECTS: processar duracao e curas por tempo ----
           const playersAfterEffects = seasonPlayers.map(player => {
@@ -2505,6 +2571,7 @@ export const useGameEngine = create<GameEngineState>()(
             squadPlayers: playersAfterNT,
             nationalTeamCalls: updatedCalls,
             transferOffers: updatedOffers,
+            pendingIncomingTransfers: canRegisterTransfers ? [] : s.pendingIncomingTransfers,
             marketingContracts: updatedMarketing,
             pendingFundOffers: fundOffers,
             balance: s.balance + weeklyBalance + marketingBonus - penaltyTotal,
@@ -2624,29 +2691,59 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
-      buyPlayer: (player, fee) => {
+      buyPlayer: (player, fee, isFreeAgent = false) => {
         const state = get()
-        if (state.balance < fee) return
+        if (state.balance < fee) return "failed"
+        // Uma confirmacao repetida do modal nao pode cobrar duas vezes nem criar clones.
+        const normalizedName = player.name.trim().toLocaleLowerCase("pt-BR")
+        if (state.squadPlayers.some(p => p.name.trim().toLocaleLowerCase("pt-BR") === normalizedName) || state.pendingIncomingTransfers.some(p => p.player.name.trim().toLocaleLowerCase("pt-BR") === normalizedName)) return "failed"
+        const nextId = Math.max(Date.now(), ...state.squadPlayers.map(p => p.id + 1))
         
         const newPlayer: Player = {
           ...player,
-          id: Date.now(),
+          id: nextId,
           joinedClubWeek: state.currentWeek,
           joinedClubSeason: state.currentSeason,
           isLoanedIn: false,
+          isStarter: false,
+          contract: player.contract ? {
+            ...player.contract,
+            signedWeek: state.currentWeek,
+            signedSeason: state.currentSeason,
+          } : null,
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
         }
         
+        const joinsNow = isFreeAgent || isTransferWindowOpen(state.currentWeek)
         set((s) => ({
-          squadPlayers: [...s.squadPlayers, newPlayer],
+          squadPlayers: joinsNow ? [...s.squadPlayers, newPlayer] : s.squadPlayers,
+          pendingIncomingTransfers: joinsNow ? s.pendingIncomingTransfers : [...s.pendingIncomingTransfers, {
+            id: `incoming-${state.currentSeason}-${state.currentWeek}-${nextId}`,
+            player: newPlayer,
+            kind: "compra" as const,
+            fee,
+            agreedWeek: state.currentWeek,
+            agreedSeason: state.currentSeason,
+          }],
           balance: s.balance - fee,
           transferBudget: Math.max(0, s.transferBudget - fee),
           weeklyExpenses: s.weeklyExpenses + (player.contract?.salary || 50000)
         }))
+        return joinsNow ? "joined" : "pending"
       },
+
+      payClubDebt: (amount) => {
+        const available=Math.max(0,get().balance),paid=Math.min(Math.max(0,amount),available)
+        if(paid>0)set(state=>({balance:state.balance-paid,weeklyExpenses:state.weeklyExpenses+paid}))
+        return paid
+      },
+      spendClubFunds:(amount)=>{const value=Math.max(0,amount);if(get().balance<value)return false;set(state=>({balance:state.balance-value,weeklyExpenses:state.weeklyExpenses+value}));return true},
+      addClubRevenue:(amount)=>{const value=Math.max(0,amount);if(value>0)set(state=>({balance:state.balance+value,weeklyIncome:state.weeklyIncome+value}))},
       
       loanPlayer: (player, weeks, salary) => {
         const state = get()
+        const normalizedName = player.name.trim().toLocaleLowerCase("pt-BR")
+        if (state.squadPlayers.some(p => p.name.trim().toLocaleLowerCase("pt-BR") === normalizedName) || state.pendingIncomingTransfers.some(p => p.player.name.trim().toLocaleLowerCase("pt-BR") === normalizedName)) return "failed"
         
         const loanedPlayer: Player = {
           ...player,
@@ -2659,10 +2756,22 @@ export const useGameEngine = create<GameEngineState>()(
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
         }
         
+        const joinsNow = isTransferWindowOpen(state.currentWeek)
         set((s) => ({
-          squadPlayers: [...s.squadPlayers, loanedPlayer],
+          squadPlayers: joinsNow ? [...s.squadPlayers, loanedPlayer] : s.squadPlayers,
+          pendingIncomingTransfers: joinsNow ? s.pendingIncomingTransfers : [...s.pendingIncomingTransfers, {
+            id: `incoming-loan-${state.currentSeason}-${state.currentWeek}-${loanedPlayer.id}`,
+            player: loanedPlayer,
+            kind: "emprestimo" as const,
+            fee: 0,
+            agreedWeek: state.currentWeek,
+            agreedSeason: state.currentSeason,
+            loanWeeks: weeks,
+            salary,
+          }],
           weeklyExpenses: s.weeklyExpenses + salary
         }))
+        return joinsNow ? "joined" : "pending"
       },
       
       hireScout: (scout) => {
@@ -2955,6 +3064,20 @@ export const useGameEngine = create<GameEngineState>()(
           }))
         }
       },
+
+      counterTransferOffer: (offerId, amount, wageCoverage, loanWeeks) => {
+        const state=get(),offer=state.transferOffers.find(item=>item.id===offerId)
+        if(!offer||offer.status!=="pendente")return "rejected"
+        const player=state.squadPlayers.find(item=>item.id===offer.playerId)
+        if(!player)return "rejected"
+        const team=AI_TEAMS.find(item=>item.name===offer.fromTeam||item.short===offer.fromTeam)
+        const round=(offer.negotiationRound??0)+1,requested=Math.max(0,Math.round(amount/100_000)*100_000)
+        const ceiling=offer.offerType==="compra"?Math.min(team?.budget??player.marketValue*1.2,player.marketValue*(1.08+round*.04)):Math.max(player.marketValue*.08,offer.offerAmount*1.35)
+        if(round>3||requested>ceiling*1.18){set(s=>({transferOffers:s.transferOffers.map(item=>item.id===offerId?{...item,negotiationRound:round,counterStatus:"rejected",counterMessage:"O clube encerrou a negociação.",status:"rejeitada" as const}:item)}));return "rejected"}
+        if(requested<=ceiling){set(s=>({transferOffers:s.transferOffers.map(item=>item.id===offerId?{...item,offerAmount:requested,wageCoverage:offer.offerType==="emprestimo"?Math.max(0,Math.min(100,wageCoverage??item.wageCoverage??100)):item.wageCoverage,loanWeeks:offer.offerType==="emprestimo"?Math.max(4,loanWeeks??item.loanWeeks??26):item.loanWeeks,negotiationRound:round,counterStatus:"accepted",counterMessage:"Contraproposta aceita. Confirme para concluir.",expiresWeek:state.currentWeek+1}:item)}));return "accepted"}
+        const revised=Math.round(((offer.offerAmount+ceiling)/2)/100_000)*100_000
+        set(s=>({transferOffers:s.transferOffers.map(item=>item.id===offerId?{...item,offerAmount:revised,negotiationRound:round,counterStatus:"revised",counterMessage:`O clube aceita chegar a ${revised.toLocaleString("pt-BR")}.`,expiresWeek:state.currentWeek+1}:item)}));return "revised"
+      },
       
       drawCopaBracket: () => {
         set((s) => {
@@ -3067,6 +3190,14 @@ export const useGameEngine = create<GameEngineState>()(
           )
         }))
       },
+
+      setPlayerShirtNumber: (playerId, shirtNumber) => {
+        const normalized = Math.max(1, Math.min(99, Math.floor(shirtNumber)))
+        const player = get().squadPlayers.find(item => item.id === playerId)
+        if (!player || get().squadPlayers.some(item => item.id !== playerId && item.shirtNumber === normalized)) return false
+        set((s) => ({ squadPlayers: s.squadPlayers.map(item => item.id === playerId ? { ...item, shirtNumber: normalized } : item) }))
+        return true
+      },
       
       injurePlayer: (playerId, injury) => {
         set((s) => ({
@@ -3089,10 +3220,7 @@ export const useGameEngine = create<GameEngineState>()(
       },
       
       initializeGame: (teamShort) => {
-        const serieATeams = [
-          "BOT", "PAL", "FLA", "FOR", "INT", "SAO", "COR", "BAH", "CRU", "CAM",
-          "FLU", "VAS", "GRE", "VIT", "CAP", "JUV", "SAN", "MIR", "SPT", "CEA"
-        ]
+        const serieATeams = allTeams.filter(team => team.divisao === "serie_a").map(team => team.curto)
 
         const serieAStandings: StandingsEntry[] = serieATeams.map(team => ({
           teamShort: team,
@@ -3114,7 +3242,7 @@ export const useGameEngine = create<GameEngineState>()(
           const seedList = getPlayersForTeam(chosenTeam)
           seedPlayers = seedList.map((sp, idx) => {
             const posMap: Record<string, string> = {
-              MC: "VOL", ME: "MEI", MD: "MEI", CA: "MEI"
+              MC: "VOL", ME: "MEI", MD: "MEI", CA: "ATA"
             }
             const position = posMap[sp.pos] || sp.pos
             const base = sp.base
@@ -3156,10 +3284,11 @@ export const useGameEngine = create<GameEngineState>()(
             }
           })
 
-          // Marca os 11 melhores (por posição) como titulares padrão
-          const posOrder: Record<string, number> = { GOL: 0, LD: 1, ZAG: 2, LE: 3, VOL: 4, MEI: 5, PD: 6, PE: 7, ATA: 8 }
-          const sorted = [...seedPlayers].sort((a, b) => (posOrder[a.position] ?? 9) - (posOrder[b.position] ?? 9))
-          const starterIds = new Set(sorted.slice(0, 11).map(p => p.id))
+          // Monta um XI por SLOTS da formacao. A ordenacao simples por posicao colocava
+          // ate tres goleiros e defensores demais entre os 11.
+          const starterIds = new Set(
+            pickStartingXI(seedPlayers, p => p.position, p => p.overall, "4-3-3").starters.map(p => p.id),
+          )
           seedPlayers = seedPlayers.map(p => ({ ...p, isStarter: starterIds.has(p.id) }))
         }
 
@@ -3167,10 +3296,14 @@ export const useGameEngine = create<GameEngineState>()(
         const initialWeeklyExpenses = (seedPlayers.length > 0 ? seedPlayers : initialPlayers)
           .reduce((sum, p) => sum + (p.contract?.salary ?? 0), 0)
         const prestige = chosenTeam?.prestigio ?? 70
-        const initialWeeklyIncome = prestige >= 85 ? 4500000
+        const prestigeWeeklyIncome = prestige >= 85 ? 4500000
           : prestige >= 75 ? 2500000
           : prestige >= 60 ? 1400000
           : 800000
+        // TV, bilheteria, sócios, marketing e patrocínios precisam ao menos sustentar
+        // a operação inicial. Sem este piso, clubes importados com folhas reais
+        // acumulavam centenas de milhões em dívida mesmo sem nenhuma contratação.
+        const initialWeeklyIncome = Math.max(prestigeWeeklyIncome, Math.round(initialWeeklyExpenses * 1.08))
 
         set({
           currentWeek: 0,
@@ -3361,6 +3494,10 @@ export const useGameEngine = create<GameEngineState>()(
               : state.tacticalAssignments.playerRoles,
           },
         }))
+      },
+
+      setTacticalPlayerPositions: (positions) => {
+        set({ tacticalPlayerPositions: positions })
       },
       
       analyzeOpponent: (teamShort: string) => {
@@ -4367,8 +4504,23 @@ export const useGameEngine = create<GameEngineState>()(
     }),
     {
       name: 'ultrafoot-game-engine',
-      version: 2,
-      migrate: () => undefined,
+      version: 3,
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<GameEngineState>
+        if (version >= 3 || !Array.isArray(state.squadPlayers)) return state as GameEngineState
+        // v2 convertia CA (centroavante) em MEI ao criar o elenco. Repara somente
+        // esse sentido inequívoco da conversão, preservando edições manuais de
+        // posição feitas pelo usuário em qualquer outro jogador.
+        return {
+          ...state,
+          squadPlayers: state.squadPlayers.map((player: Player) => {
+            const canonical = getCanonicalSeedPosition(player.name)
+            return player.position === "MEI" && canonical === "ATA"
+              ? { ...player, position: "ATA" }
+              : player
+          }),
+        } as GameEngineState
+      },
       // Persistido no persistent-store (arquivo, sobrevive a reinstalacao) em vez do
       // localStorage da webview, que era limpo nos updates e fazia o elenco/tabela
       // "sumir". O adaptador migra automaticamente qualquer save legado do localStorage.
@@ -4376,6 +4528,35 @@ export const useGameEngine = create<GameEngineState>()(
     }
   )
 )
+
+/**
+ * Forca um snapshot imediato do motor principal. O middleware ja persiste cada mudanca,
+ * mas esta funcao permite que botoes de salvar e o autosave deem uma garantia explicita
+ * antes de navegar ou fechar o jogo.
+ */
+export function persistGameEngineNow(): void {
+  if (typeof window === "undefined") return
+  const state = useGameEngine.getState()
+  storeSet(getCareerScopedKey("ultrafoot-game-engine"), JSON.stringify({ state, version: 3 }))
+}
+
+/** Salva titulares e formacao de uma vez, evitando um radar ler um estado intermediario. */
+export function saveTacticalSetup(
+  starterNames: string[],
+  formation: string,
+  tacticalPlayerPositions?: Record<string, { x: number; y: number }>,
+): void {
+  const names = new Set(starterNames)
+  useGameEngine.setState(state => ({
+    formation,
+    tacticalPlayerPositions: tacticalPlayerPositions ?? state.tacticalPlayerPositions,
+    squadPlayers: state.squadPlayers.map(player => ({
+      ...player,
+      isStarter: names.has(player.name),
+    })),
+  }))
+  persistGameEngineNow()
+}
 
 // ============================================
 // HELPERS

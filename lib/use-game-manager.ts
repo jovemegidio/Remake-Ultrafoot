@@ -4,17 +4,20 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useGameState, type CoachSkillId } from "@/lib/save-system"
+import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
 import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
-import { getPlayersByTeam } from "@/lib/players-data"
+import { getPlayersForTeam } from "@/lib/players-data"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
+import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective } from "@/lib/board-engine"
-import { addJobOffers } from "@/lib/career-moves"
+import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
 import { resolveDivisionChange } from "@/lib/promotion-relegation"
+import { processDebtMonth } from "@/lib/debt-engine"
+import { advanceScoutingWeek } from "@/lib/scout-engine"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -145,6 +148,25 @@ function getRoundMonth(round: number, startMonth: number, monthsInSeason: number
 const STATE_SINGLE_ROUND_THRESHOLD = 8
 const STATE_MAX_TEAMS = 20
 
+const normalizeCompetitionClub = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "")
+const STATE_RULE_IDS: Record<string, readonly string[]> = {
+  SP: ["paulistao_a1", "paulistao_a2", "paulistao_a3"],
+  RJ: ["carioca_a1"],
+  MG: ["mineiro_modulo_i"],
+  RS: ["gaucho_a1"],
+}
+
+export function getStateCompetitionRule(userTeamShort: string): CompetitionRegulation2026 | undefined {
+  const userTeam = getTeamByShort(userTeamShort)
+  if (!userTeam) return undefined
+  const normalized = normalizeCompetitionClub(userTeam.nome)
+  const candidates = (STATE_RULE_IDS[userTeam.estado] ?? []).map(id => COMPETITION_REGULATIONS_2026[id]).filter(Boolean)
+  return candidates.find(rule => rule.clubs?.some(name => {
+    const club = normalizeCompetitionClub(name)
+    return club === normalized || club.includes(normalized) || normalized.includes(club)
+  })) ?? candidates[0]
+}
+
 // Retorna TODOS os times do estado que disputam o estadual (minimo 4).
 // Antes havia um cap fixo de 8 -> SP (13 times) ficava com 5 clubes de fora.
 export function getStateChampionshipTeams(userTeamShort: string): Team[] {
@@ -166,6 +188,44 @@ export function getStateChampionshipTeams(userTeamShort: string): Team[] {
     .sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome))
   if (stateTeams.length < 4) return []
 
+  const regulation = getStateCompetitionRule(userTeamShort)
+  if (regulation?.clubs?.length) {
+    // Alguns clubes importados chegam sem `estado` (ou com a UF no campo `pais`).
+    // Procurar somente em `stateTeams` deixava regulamentos oficiais incompletos:
+    // a A2 paulista, por exemplo, podia ficar com 5 equipes e ainda tentar disputar
+    // 15 rodadas, reiniciando o algoritmo e repetindo os mesmos confrontos.
+    const globalCandidates = [...allBrazilianTeams, ...allPoolTeams]
+    const selected = regulation.clubs.map(name => {
+      const expected = normalizeCompetitionClub(name)
+      const exact = [...stateTeams, ...globalCandidates].find(team =>
+        normalizeCompetitionClub(team.nome) === expected,
+      )
+      if (exact) return exact
+      return stateTeams.find(team => {
+        const actual = normalizeCompetitionClub(team.nome)
+        return actual.includes(expected) || expected.includes(actual)
+      })
+    }).filter((team): team is Team => Boolean(team))
+
+    const completed: Team[] = []
+    const completedKeys = new Set<string>()
+    const addUnique = (team: Team) => {
+      const key = (team.file_key || team.curto || team.nome).toLowerCase()
+      if (completedKeys.has(key)) return
+      completedKeys.add(key)
+      completed.push(team)
+    }
+    selected.forEach(addUnique)
+    if (!completed.some(team => team.curto === userTeamShort)) addUnique(userTeam)
+    // Se algum participante oficial ainda não existe na base, completa a quantidade
+    // com clubes reais da mesma UF. O calendário nunca recebe menos equipes do que o
+    // formato exige quando há alternativas locais disponíveis.
+    stateTeams.forEach(team => {
+      if (completed.length < regulation.participants) addUnique(team)
+    })
+    if (completed.length >= 4) return completed.slice(0, regulation.participants)
+  }
+
   const teams = stateTeams.slice(0, STATE_MAX_TEAMS)
   if (!teams.some(t => t.curto === userTeamShort)) teams[0] = userTeam
   return teams
@@ -176,16 +236,30 @@ function stateChampIsDoubleRound(teamCount: number): boolean {
   return teamCount <= STATE_SINGLE_ROUND_THRESHOLD
 }
 
+/** Um turno com quantidade ímpar precisa de N rodadas (uma folga por clube). */
+function getRoundRobinHalfRounds(teamCount: number): number {
+  return teamCount % 2 === 0 ? teamCount - 1 : teamCount
+}
+
 // Retorna o numero de rodadas do campeonato estadual
 export function getStateChampRounds(userTeamShort: string): number {
   const teams = getStateChampionshipTeams(userTeamShort)
   if (teams.length < 4) return 0
-  const half = teams.length - 1
-  return stateChampIsDoubleRound(teams.length) ? half * 2 : half
+  const regulation = getStateCompetitionRule(userTeamShort)
+  const officialRounds = regulation?.firstPhaseRounds
+  const half = getRoundRobinHalfRounds(teams.length)
+  const firstPhase = officialRounds
+    ? Math.min(officialRounds, half)
+    : stateChampIsDoubleRound(teams.length) ? half * 2 : half
+  const finalPhases = regulation
+    ? (regulation.knockout ?? []).reduce((total, stage) =>
+        total + (regulation.stageRounds?.[stage] ?? regulation.knockoutLegs?.[stage] ?? (stage === "final" ? regulation.finalLegs : 1) ?? 1), 0)
+    : 0
+  return firstPhase + finalPhases
 }
 
 // Retorna o total de rodadas da liga principal
-function getLeagueRounds(division: string): number {
+export function getLeagueRounds(division: string): number {
   return LEAGUE_CALENDAR[division]?.rounds ?? 38
 }
 
@@ -276,7 +350,7 @@ const NATIONAL_CUP_FALLBACK: Record<string, string> = {
   chinese_super: "Copa da China",
 }
 
-interface CupCompetitionPlan {
+export interface CupCompetitionPlan {
   competition: Competition
   competitionType: "cup" | "continental"
   matchCount: number
@@ -293,7 +367,7 @@ const TOP_FLIGHT_DIVISIONS = new Set([
 
 // Determina quais copas/continentais o time do usuario disputa e quantos jogos.
 // Usa os dados de competitionsByLeague e, quando faltam, deriva por confederacao.
-function getUserCupPlan(userTeam: Team): CupCompetitionPlan[] {
+export function getUserCupPlan(userTeam: Team): CupCompetitionPlan[] {
   const division = String(userTeam.divisao)
   const comps = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
   const plans: CupCompetitionPlan[] = []
@@ -342,15 +416,27 @@ function getUserCupMatchCount(userTeamShort: string): number {
 }
 
 // Monta o pool de adversarios para uma competicao
-function getOpponentPool(userTeam: Team, plan: CupCompetitionPlan): Team[] {
+export function getOpponentPool(userTeam: Team, plan: CupCompetitionPlan): Team[] {
   const userShort = userTeam.curto
   if (plan.competitionType === "cup") {
-    // Copa nacional: times do mesmo pais/divisao
-    if (isBrazilianDivision(userTeam.divisao)) {
-      return allBrazilianTeams.filter(t => t.curto !== userShort)
-    }
-    const sameLeague = getTeamsByDivision(userTeam.divisao).filter(t => t.curto !== userShort)
-    return sameLeague.length >= 4 ? sameLeague : allTeams.filter(t => t.curto !== userShort)
+    // Copa nacional: todas as divisoes do MESMO pais. O código antigo usava somente
+    // a liga atual; como os 19 rivais já estavam marcados como usados, o sorteio
+    // liberava esses clubes novamente e criava um 3º/4º confronto na temporada.
+    const country = normalizeCompetitionClub(userTeam.pais ?? "")
+    const nationalPool = allPoolTeams.filter(t =>
+      t.curto !== userShort && country.length > 0 && normalizeCompetitionClub(t.pais ?? "") === country,
+    )
+    const fallback = isBrazilianDivision(userTeam.divisao)
+      ? allBrazilianTeams.filter(t => t.curto !== userShort)
+      : getTeamsByDivision(userTeam.divisao).filter(t => t.curto !== userShort)
+    const source = nationalPool.length >= 4 ? nationalPool : fallback
+    const seen = new Set<string>()
+    return source.filter(team => {
+      const key = team.curto.trim().toLocaleLowerCase()
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
   }
   // Continental: times da mesma confederacao
   const region = plan.competition.region
@@ -372,25 +458,25 @@ interface CupMatchDescriptor {
   awayTeam: Team
 }
 
-function generateUserCupMatches(userTeam: Team, plan: CupCompetitionPlan, season: number): CupMatchDescriptor[] {
+export function generateUserCupMatches(userTeam: Team, plan: CupCompetitionPlan, season: number, usedOpponents = new Set<string>()): CupMatchDescriptor[] {
   const rng = seededRandom(`${userTeam.curto}:${plan.competition.id}:${season}`)
   const pool = getOpponentPool(userTeam, plan)
   if (pool.length === 0) return []
 
   const matches: CupMatchDescriptor[] = []
-  const used = new Set<string>()
+  const used = usedOpponents
+  let previousOpponent = ""
   for (let i = 0; i < plan.matchCount; i++) {
-    // Escolhe adversario evitando repeticao imediata quando possivel
-    let opponent: Team | null = null
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const cand = pool[Math.floor(rng() * pool.length)]
-      if (!used.has(cand.curto) || used.size >= pool.length) {
-        opponent = cand
-        break
-      }
-    }
-    if (!opponent) opponent = pool[Math.floor(rng() * pool.length)]
+    // O tamanho de `used` inclui rivais de OUTRAS competições; comparar used.size
+    // com pool.length liberava repetições prematuramente. Filtramos o pool de fato.
+    const unused = pool.filter(candidate => !used.has(candidate.curto))
+    const withoutImmediateRepeat = pool.filter(candidate => candidate.curto !== previousOpponent)
+    const candidates = unused.length > 0
+      ? unused
+      : (withoutImmediateRepeat.length > 0 ? withoutImmediateRepeat : pool)
+    const opponent = candidates[Math.floor(rng() * candidates.length)]
     used.add(opponent.curto)
+    previousOpponent = opponent.curto
 
     // Mando alterna por jogo (ida/volta)
     const userIsHome = i % 2 === 0
@@ -405,15 +491,64 @@ function generateUserCupMatches(userTeam: Team, plan: CupCompetitionPlan, season
 }
 
 // Gera fixtures do campeonato estadual (Jan-Mar)
-function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: string, competition: string): Fixture[] {
+function generateCrossGroupRounds(teams: Team[], groupCount: number, roundCount: number): Array<Array<[Team, Team]>> {
+  if (groupCount < 2 || teams.length % groupCount !== 0) return []
+  // Distribuição determinística em potes: evita que a composição mude ao recarregar.
+  const groups = Array.from({ length: groupCount }, () => [] as Team[])
+  teams.forEach((team, index) => groups[index % groupCount].push(team))
+  const groupOf = new Map(groups.flatMap((group, groupIndex) => group.map(team => [team.curto, groupIndex] as const)))
+  let remaining = teams.flatMap((home, i) => teams.slice(i + 1)
+    .filter(away => groupOf.get(home.curto) !== groupOf.get(away.curto))
+    .map(away => [home, away] as [Team, Team]))
+  const rounds: Array<Array<[Team, Team]>> = []
+
+  const findPerfectRound = (available: Array<[Team, Team]>): Array<[Team, Team]> | null => {
+    const search = (unmatched: Team[], chosen: Array<[Team, Team]>): Array<[Team, Team]> | null => {
+      if (!unmatched.length) return chosen
+      const home = unmatched[0]
+      const opponents = available.filter(([a, b]) => (a.curto === home.curto && unmatched.some(t => t.curto === b.curto)) || (b.curto === home.curto && unmatched.some(t => t.curto === a.curto)))
+      for (const edge of opponents) {
+        const away = edge[0].curto === home.curto ? edge[1] : edge[0]
+        const result = search(unmatched.filter(team => team.curto !== home.curto && team.curto !== away.curto), [...chosen, [home, away]])
+        if (result) return result
+      }
+      return null
+    }
+    return search(teams, [])
+  }
+
+  for (let round = 0; round < roundCount; round++) {
+    const matches = findPerfectRound(remaining)
+    if (!matches) return []
+    rounds.push(matches.map(([home, away], index) => (round + index) % 2 ? [away, home] : [home, away]))
+    const used = new Set(matches.map(([a, b]) => [a.curto, b.curto].sort().join(":")))
+    remaining = remaining.filter(([a, b]) => !used.has([a.curto, b.curto].sort().join(":")))
+  }
+  return rounds
+}
+
+export function generateStateChampionshipFixtures(
+  stateTeams: Team[],
+  userTeamShort: string,
+  competition: string,
+  knownResults: MatchResult[] = [],
+  season = 2026,
+): Fixture[] {
   const fixtures: Fixture[] = []
   let fixtureId = 10000
-  const halfSeason = stateTeams.length - 1
-  const isDouble = stateChampIsDoubleRound(stateTeams.length)
+  const officialRounds = getStateCompetitionRule(userTeamShort)?.firstPhaseRounds
+  // Nunca solicita mais rodadas do que um ciclo round-robin comporta. Quando a
+  // base antiga tem menos participantes do que o regulamento, repetir o array de
+  // confrontos seria pior do que encerrar a fase disponível sem duplicatas.
+  const roundRobinRounds = getRoundRobinHalfRounds(stateTeams.length)
+  const halfSeason = officialRounds ? Math.min(officialRounds, roundRobinRounds) : roundRobinRounds
+  const isDouble = officialRounds ? false : stateChampIsDoubleRound(stateTeams.length)
   const totalRounds = isDouble ? halfSeason * 2 : halfSeason
 
+  const regulation = getStateCompetitionRule(userTeamShort)
+  const crossGroupRounds = regulation?.groups ? generateCrossGroupRounds(stateTeams, regulation.groups, halfSeason) : []
   for (let round = 1; round <= halfSeason; round++) {
-    const matchups = generateRoundMatchups(stateTeams, round)
+    const matchups = crossGroupRounds[round - 1] ?? generateRoundMatchups(stateTeams, round)
     matchups.forEach(([home, away]) => {
       fixtures.push({
         id: fixtureId++,
@@ -426,6 +561,7 @@ function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: st
         isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort,
         month: getRoundMonth(round, 0, 3, totalRounds),
         competitionType: "state",
+        stage: "fase_classificatoria",
       })
     })
   }
@@ -448,9 +584,138 @@ function generateStateChampionshipFixtures(stateTeams: Team[], userTeamShort: st
           isUserMatch: f.awayTeam.curto === userTeamShort || f.homeTeam.curto === userTeamShort,
           month: getRoundMonth(round, 0, 3, totalRounds),
           competitionType: "state",
+          stage: "fase_classificatoria",
         })
       })
     }
+  }
+
+  // As versões anteriores terminavam o estadual na fase classificatória. A liga
+  // nacional era liberada sem quartas/semifinais/final e, portanto, nunca existia
+  // campeão estadual no calendário oficial da carreira. A partir daqui as fases
+  // finais são parte do mesmo calendário e usam os resultados já persistidos para
+  // recalcular classificados e vencedores sem um segundo estado paralelo.
+  const rule = getStateCompetitionRule(userTeamShort)
+  if (!rule?.knockout?.length) return fixtures
+
+  const teamByShort = new Map(stateTeams.map(team => [team.curto, team]))
+  const prestige = (short: string) => teamByShort.get(short)?.prestigio ?? 0
+  const hydratedRegular = reconcilePlayedFixtures(fixtures, knownResults, season)
+  const rowByShort = new Map(computeStandingsFromFixtures(hydratedRegular, competition).map(row => [row.teamShort, row]))
+  const compareShort = (a: string, b: string) => {
+    const x = rowByShort.get(a)
+    const y = rowByShort.get(b)
+    if (x && y) {
+      const diff = y.points - x.points ||
+        (y.goalsFor - y.goalsAgainst) - (x.goalsFor - x.goalsAgainst) ||
+        y.goalsFor - x.goalsFor
+      if (diff) return diff
+    }
+    return prestige(b) - prestige(a) || a.localeCompare(b)
+  }
+
+  const groupIndex = new Map(stateTeams.map((team, index) => [team.curto, rule.groups ? index % rule.groups : 0]))
+  const qualify = (count: number): string[] => {
+    if (!rule.groups) return stateTeams.map(team => team.curto).sort(compareShort).slice(0, count)
+    const groups = Array.from({ length: rule.groups }, (_, index) =>
+      stateTeams.filter(team => groupIndex.get(team.curto) === index).map(team => team.curto).sort(compareShort),
+    )
+    if (rule.groups === 3 && count === 4) {
+      const leaders = groups.map(group => group[0]).filter(Boolean)
+      const bestRunnerUp = groups.flatMap(group => group.slice(1)).sort(compareShort)[0]
+      return [...leaders, ...(bestRunnerUp ? [bestRunnerUp] : [])].sort(compareShort)
+    }
+    const perGroup = Math.max(1, Math.floor(count / rule.groups))
+    return groups.flatMap(group => group.slice(0, perGroup)).sort(compareShort).slice(0, count)
+  }
+
+  let nextWeek = totalRounds + 1
+  const addPairStage = (stage: string, entrants: string[], legs: number): Fixture[] => {
+    const created: Fixture[] = []
+    const pairs: Array<[string, string]> = []
+    for (let i = 0; i < entrants.length / 2; i++) pairs.push([entrants[i], entrants[entrants.length - 1 - i]])
+    for (let leg = 0; leg < legs; leg++) {
+      for (const [seededHome, seededAway] of pairs) {
+        const first = teamByShort.get(leg % 2 === 0 ? seededHome : seededAway)
+        const second = teamByShort.get(leg % 2 === 0 ? seededAway : seededHome)
+        if (!first || !second) continue
+        created.push({
+          id: fixtureId++, round: nextWeek, week: nextWeek,
+          homeTeam: first, awayTeam: second, competition,
+          played: false,
+          isUserMatch: first.curto === userTeamShort || second.curto === userTeamShort,
+          month: Math.min(4, Math.floor((nextWeek - 1) / 4)),
+          competitionType: "state", stage,
+        })
+      }
+      nextWeek++
+    }
+    fixtures.push(...created)
+    return created
+  }
+
+  const winners = (entrants: string[], stageFixtures: Fixture[]): string[] => {
+    const hydrated = reconcilePlayedFixtures(stageFixtures, knownResults, season)
+    const output: string[] = []
+    for (let i = 0; i < entrants.length / 2; i++) {
+      const a = entrants[i]
+      const b = entrants[entrants.length - 1 - i]
+      let goalsA = 0
+      let goalsB = 0
+      let complete = false
+      for (const match of hydrated.filter(item =>
+        (item.homeTeam.curto === a && item.awayTeam.curto === b) ||
+        (item.homeTeam.curto === b && item.awayTeam.curto === a),
+      )) {
+        if (!match.played || match.homeScore === undefined || match.awayScore === undefined) continue
+        complete = true
+        if (match.homeTeam.curto === a) { goalsA += match.homeScore; goalsB += match.awayScore }
+        else { goalsA += match.awayScore; goalsB += match.homeScore }
+      }
+      output.push(complete && goalsA !== goalsB ? (goalsA > goalsB ? a : b) : [a, b].sort(compareShort)[0])
+    }
+    return output.sort(compareShort)
+  }
+
+  let entrants: string[] = []
+  for (const stage of rule.knockout) {
+    if (stage === "segunda_fase") {
+      entrants = qualify(8)
+      const groups = [
+        [entrants[0], entrants[2], entrants[5], entrants[7]],
+        [entrants[1], entrants[3], entrants[4], entrants[6]],
+      ].map(group => group.filter(Boolean))
+      const secondPhaseFixtures: Fixture[] = []
+      for (let round = 1; round <= 6; round++) {
+        for (const group of groups) {
+          const teams = group.map(short => teamByShort.get(short)).filter((team): team is Team => Boolean(team))
+          for (const [home, away] of generateRoundMatchups(teams, round)) {
+            secondPhaseFixtures.push({
+              id: fixtureId++, round: nextWeek, week: nextWeek, homeTeam: home, awayTeam: away,
+              competition, played: false,
+              isUserMatch: home.curto === userTeamShort || away.curto === userTeamShort,
+              month: Math.min(4, Math.floor((nextWeek - 1) / 4)), competitionType: "state", stage,
+            })
+          }
+        }
+        nextWeek++
+      }
+      fixtures.push(...secondPhaseFixtures)
+      const hydrated = reconcilePlayedFixtures(secondPhaseFixtures, knownResults, season)
+      entrants = groups.flatMap(group => {
+        const mini = computeStandingsFromFixtures(hydrated, competition)
+          .filter(row => group.includes(row.teamShort))
+          .sort((a, b) => b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst) || compareShort(a.teamShort, b.teamShort))
+        return (mini.length ? mini.map(row => row.teamShort) : group.sort(compareShort)).slice(0, 2)
+      }).sort(compareShort)
+      continue
+    }
+
+    const required = stage === "quartas" ? 8 : stage === "semifinal" ? 4 : 2
+    if (!entrants.length || entrants.length !== required) entrants = qualify(required)
+    const legs = rule.stageRounds?.[stage] ?? rule.knockoutLegs?.[stage] ?? (stage === "final" ? rule.finalLegs : 1) ?? 1
+    const stageFixtures = addPairStage(stage, entrants, legs)
+    entrants = winners(entrants, stageFixtures)
   }
 
   return fixtures
@@ -467,14 +732,14 @@ function getUserLeagueTeams(teamShort: string, divisionOverride?: string): Team[
   if (divisionTeams.length < 4) return getTeamsByDivision(userTeam.divisao)
   // Garante que o time do usuario esta na lista (ele sobe/cai levando o proprio clube).
   const hasUser = divisionTeams.some(t => t.curto === teamShort)
-  if (!hasUser) return [userTeam, ...divisionTeams.slice(0, 19)]
+  if (!hasUser) return [userTeam, ...divisionTeams.slice(0, Math.max(3, Math.ceil(getLeagueRounds(division) / 2)) - 1)]
   return divisionTeams
 }
 
-export function getLeagueName(teamShort: string): string {
+export function getLeagueName(teamShort: string, divisionOverride?: string): string {
   const userTeam = getTeamByShort(teamShort)
   if (!userTeam) return "Liga"
-  return LEAGUE_NAMES[userTeam.divisao] ?? "Liga"
+  return LEAGUE_NAMES[divisionOverride ?? userTeam.divisao] ?? "Liga"
 }
 
 export function getDivisionLeagueTeams(teamShort: string): Team[] {
@@ -494,6 +759,7 @@ export interface Fixture {
   isUserMatch: boolean
   month: number
   competitionType: "state" | "league" | "cup" | "continental"
+  stage?: string
 }
 
 export interface SeasonCalendar {
@@ -503,9 +769,67 @@ export interface SeasonCalendar {
   previousUserMatch: Fixture | null
 }
 
+/** Chave persistente e determinística de uma partida. O ID sozinho não basta,
+ * pois estadual, liga e copa usam faixas próprias que podem mudar em saves antigos. */
+export function getCalendarFixtureKey(fixture: Fixture, season: number): string {
+  return [
+    season,
+    fixture.competitionType,
+    fixture.competition,
+    fixture.week,
+    fixture.id,
+    fixture.homeTeam.curto,
+    fixture.awayTeam.curto,
+  ].join("::")
+}
+
+/** Aplica resultados ao calendário em relação 1:1. O `find` antigo reutilizava o
+ * mesmo placar em toda fixture com os mesmos clubes/competição. */
+export function reconcilePlayedFixtures(
+  fixtures: Fixture[],
+  results: MatchResult[],
+  season: number,
+  completedFixtureKeys: readonly string[] = [],
+): Fixture[] {
+  const completed = new Set(completedFixtureKeys)
+  const seasonResults = results.filter(result => result.season === season)
+  const consumedResults = new Set<number>()
+
+  return fixtures.map(fixture => {
+    const key = getCalendarFixtureKey(fixture, season)
+    let resultIndex = seasonResults.findIndex((result, index) =>
+      !consumedResults.has(index) && result.fixtureKey === key,
+    )
+
+    // Compatibilidade com saves antigos e também com calendários regenerados por
+    // uma correção de regulamento. Nesses casos o resultado pode ter fixtureKey,
+    // porém a chave contém semana/ID do calendário anterior. O pareamento continua
+    // seguro porque é direcional, inclui competição e consome cada resultado uma vez.
+    if (resultIndex < 0) {
+      const compatible = (result: MatchResult, index: number) =>
+        !consumedResults.has(index) &&
+        result.homeTeam === fixture.homeTeam.curto &&
+        result.awayTeam === fixture.awayTeam.curto &&
+        result.competition === fixture.competition
+      resultIndex = seasonResults.findIndex((result, index) => compatible(result, index) && result.week === fixture.week)
+      if (resultIndex < 0) resultIndex = seasonResults.findIndex(compatible)
+    }
+
+    if (resultIndex >= 0) consumedResults.add(resultIndex)
+    const result = resultIndex >= 0 ? seasonResults[resultIndex] : undefined
+    if (!completed.has(key) && !result) return fixture
+    return {
+      ...fixture,
+      played: true,
+      homeScore: result?.homeScore ?? fixture.homeScore,
+      awayScore: result?.awayScore ?? fixture.awayScore,
+    }
+  })
+}
+
 // Gera confrontos da liga (todos contra todos, turno e returno) — dinamico por qtd de times
 // weekOffset: deslocamento de semanas para colocar a liga apos o estadual (para times brasileiros)
-function generateBrasileirao(teams: Team[], userTeamShort: string, competition: string, division: string, weekOffset = 0): Fixture[] {
+export function generateBrasileirao(teams: Team[], userTeamShort: string, competition: string, division: string, weekOffset = 0): Fixture[] {
   const fixtures: Fixture[] = []
   let fixtureId = 1
   const halfSeason = teams.length - 1
@@ -610,8 +934,8 @@ function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, seaso
   const awayScore = Math.floor(Math.random() * 4 * (awayExpectedGoals / 2))
   
   // Gera eventos basicos com nomes reais dos jogadores
-  const homePlayers = getPlayersByTeam(homeTeam.nome)
-  const awayPlayers = getPlayersByTeam(awayTeam.nome)
+  const homePlayers = getPlayersForTeam(homeTeam)
+  const awayPlayers = getPlayersForTeam(awayTeam)
   const attackers = (players: typeof homePlayers) =>
     players.filter(p => ["ATA", "MEI", "PE", "PD"].includes(p.pos))
   const homeAttackers = attackers(homePlayers)
@@ -708,7 +1032,7 @@ export function computeStandingsFromFixtures(fixtures: Fixture[], competition: s
 }
 
 export function useGameManager() {
-  const { state: saveState, setState: setSaveState, hydrated } = useGameState()
+  const { state: saveState, setState: setSaveState, replaceState: replaceSaveState, hydrated } = useGameState()
   const gameEngine = useGameEngine()
   const [engineHydrated, setEngineHydrated] = useState(() => useGameEngine.persist.hasHydrated())
 
@@ -716,6 +1040,7 @@ export function useGameManager() {
   const saveStateRef = useRef(saveState)
   saveStateRef.current = saveState
   const seasonCalendarRef = useRef<SeasonCalendar>({ fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null })
+  const lastCompletedFixtureWeekRef = useRef<number | null>(null)
 
   useEffect(() => {
     setEngineHydrated(useGameEngine.persist.hasHydrated())
@@ -743,7 +1068,11 @@ export function useGameManager() {
   }, [hydrated, engineHydrated, saveState.selectedTeamShort, saveState.week, saveState.season, gameEngine.squadPlayers.length, gameEngine.serieAStandings.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inicializa o jogo quando o usuario seleciona um time
-  const initializeNewGame = useCallback((teamShort: string, managerName?: string) => {
+  const initializeNewGame = useCallback((teamShort: string, managerName?: string, initialCareerState: Partial<GameState> = {}) => {
+    // Define a identidade ANTES de inicializar o Zustand. Assim o elenco/tatica
+    // nasce no arquivo da nova carreira, nunca no slot que estava ativo antes.
+    const careerId = createCareerId()
+    setActiveCareerId(careerId)
     const leagueTeams = getUserLeagueTeams(teamShort)
     const standings = initializeStandings(leagueTeams)
     const userTeam = getTeamByShort(teamShort)
@@ -782,8 +1111,17 @@ export function useGameManager() {
       initialStandings = initStandings(cLeagueTeams)
     }
 
-    // Atualiza save state (reseta progresso, preserva nome do tecnico)
-    setSaveState({
+    // Nova carreira e uma SUBSTITUICAO, nao merge. O merge antigo mantinha squadPlayers,
+    // selectedTeam e outros campos opcionais do primeiro save.
+    clearJobOffers()
+    if (typeof window !== "undefined") {
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith("ultrafoot-competitions:")) localStorage.removeItem(key)
+      }
+    }
+    replaceSaveState(createFreshCareerState(saveState, {
+      careerId,
+      saveName: `Carreira de ${(managerName?.trim() || "Tecnico")} - ${userTeam?.nome || teamShort}`,
       selectedTeamShort: teamShort,
       week: 0,
       season: 2026,
@@ -797,8 +1135,11 @@ export function useGameManager() {
       injuries: [],
       playerFatigue: {},
       teamMorale: 70,
-    })
-  }, [gameEngine, setSaveState])
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      ...initialCareerState,
+    }))
+  }, [gameEngine, replaceSaveState, saveState.language, saveState.controllerType, saveState.controllerBindings, saveState.commentaryEnabled, saveState.commentaryVoice, saveState.commentaryVolume, saveState.autoSaveInterval])
   
   // Calendario da temporada — ref is updated after useMemo so advanceWeek loop calls see latest fixtures
   const seasonCalendar = useMemo((): SeasonCalendar => {
@@ -820,8 +1161,14 @@ export function useGameManager() {
       const stateTeams = getStateChampionshipTeams(userTeamShort)
       if (stateTeams.length >= 4) {
         const stateName = ESTADO_CAMPEONATO[userTeam?.estado ?? ""] ?? "Campeonato Estadual"
-        const stateFixtures = generateStateChampionshipFixtures(stateTeams, userTeamShort, stateName)
-        stateChampRoundsCount = (stateTeams.length - 1) * 2
+        const stateFixtures = generateStateChampionshipFixtures(
+          stateTeams,
+          userTeamShort,
+          stateName,
+          gameEngine.matchResults.filter(result => result.season === saveState.season),
+          saveState.season,
+        )
+        stateChampRoundsCount = Math.max(0, ...stateFixtures.map(fixture => fixture.week))
         allFixtures.push(...stateFixtures)
       }
     }
@@ -837,8 +1184,11 @@ export function useGameManager() {
     const leagueRoundCount = (leagueTeams.length - 1) * 2
     const cupMatches: CupMatchDescriptor[] = []
     if (userTeam) {
+      // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
+      // nas copas para nao criar o relato confuso de tres jogos contra o mesmo clube.
+      const cupOpponents = new Set(leagueTeams.filter(t => t.curto !== userTeam.curto).map(t => t.curto))
       for (const plan of getUserCupPlan(userTeam)) {
-        cupMatches.push(...generateUserCupMatches(userTeam, plan, saveState.season))
+        cupMatches.push(...generateUserCupMatches(userTeam, plan, saveState.season, cupOpponents))
       }
     }
 
@@ -914,18 +1264,12 @@ export function useGameManager() {
     // partida ("termino e continua a mesma"). Cada par home/away e unico no ida-volta,
     // entao casar so pela direcao + temporada e seguro.
     const seasonNow = saveState.season
-    allFixtures.forEach(f => {
-      const result = gameEngine.matchResults.find(
-        r => r.season === seasonNow &&
-             r.homeTeam === f.homeTeam.curto && r.awayTeam === f.awayTeam.curto &&
-             r.competition === f.competition
-      )
-      if (result) {
-        f.played = true
-        f.homeScore = result.homeScore
-        f.awayScore = result.awayScore
-      }
-    })
+    allFixtures = reconcilePlayedFixtures(
+      allFixtures,
+      gameEngine.matchResults,
+      seasonNow,
+      saveState.completedFixtureKeys ?? [],
+    )
 
     // Encontra rodada atual — total inclui estadual + liga + copas/continentais
     const cupMatchCount = getUserCupMatchCount(userTeamShort)
@@ -950,25 +1294,48 @@ export function useGameManager() {
     return result
     // divisionOverride nas deps: ao subir/cair, o calendario e os adversarios da liga
     // precisam ser recalculados para a divisao nova.
-  }, [saveState.selectedTeamShort, saveState.week, saveState.divisionOverride, gameEngine.matchResults])
+  }, [saveState.selectedTeamShort, saveState.week, saveState.season, saveState.divisionOverride, saveState.completedFixtureKeys, gameEngine.matchResults])
   
   // Avanca uma semana/rodada
   // Uses refs so sequential calls within a loop always read the latest week (fixes stale closure bug)
   const advanceWeek = useCallback(async () => {
     const currentState = saveStateRef.current
     const currentWeek = currentState.week
-    const newWeek = currentWeek + 1
+    // Se a partida estava numa semana futura (transição estadual -> liga ou copa),
+    // avança até a semana REAL dela. Incrementar apenas +1 deixava o calendário e o
+    // resultado em linhas de tempo diferentes e podia reapresentar o confronto.
+    const newWeek = Math.max(currentWeek + 1, lastCompletedFixtureWeekRef.current ?? currentWeek + 1)
+    lastCompletedFixtureWeekRef.current = null
 
     // Verifica fim de temporada — total inclui estadual + liga + copas/continentais
     const userShort = currentState.selectedTeamShort ?? ""
     const divOverride = currentState.divisionOverride
     const leagueTeamsForEnd = getUserLeagueTeams(userShort, divOverride)
     const stateRoundsForEnd = getStateChampRounds(userShort)
-    const leagueRoundsForEnd = (leagueTeamsForEnd.length - 1) * 2
+    // A temporada de liga jamais pode acabar por ter menos confrontos do que o
+    // regulamento cadastrado. Em saves antigos havia bancos parciais e o cálculo
+    // por `times.length` podia encerrar uma campanha antes do returno completo.
+    const leagueRoundsForEnd = Math.max(
+      getLeagueRounds(divOverride ?? getTeamByShort(userShort)?.divisao ?? "serie_a"),
+      (leagueTeamsForEnd.length - 1) * 2,
+    )
     const cupMatchesForEnd = getUserCupMatchCount(userShort)
-    const seasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd + cupMatchesForEnd
+    const computedSeasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd + cupMatchesForEnd
+    const seasonEndWeek = Math.max(
+      computedSeasonEndWeek,
+      ...seasonCalendarRef.current.fixtures.map(fixture => fixture.week),
+    )
 
-    if (newWeek > seasonEndWeek) {
+    const leagueUserFixtures = seasonCalendarRef.current.fixtures.filter(
+      fixture => fixture.isUserMatch && fixture.competitionType === "league",
+    )
+    const leagueFixturesComplete = leagueUserFixtures.length >= leagueRoundsForEnd &&
+      leagueUserFixtures.every(fixture => fixture.played)
+
+    // Mesmo que uma semana tenha sido avançada rapidamente, não permite que o
+    // save processe acesso/rebaixamento enquanto a liga do usuário estiver
+    // incompleta. Isto impede o caso reportado de rebaixamento após 15 jogos.
+    if (newWeek > seasonEndWeek && leagueFixturesComplete) {
       const currentStandings = useGameEngine.getState().serieAStandings
       const nextSeason = currentState.season + 1
 
@@ -1017,6 +1384,7 @@ export function useGameManager() {
         week: 0, season: nextSeason,
         divisionOverride: nextDivisionOverride,
         divisionMovement,
+        completedFixtureKeys: [],
       }
       saveStateRef.current = { ...currentState, ...patch }
       setSaveState(patch)
@@ -1026,7 +1394,7 @@ export function useGameManager() {
 
     // Simula partidas de outros times desta rodada
     const roundFixtures = seasonCalendarRef.current.fixtures.filter(
-      f => f.week === newWeek && !f.isUserMatch
+      f => f.week > currentWeek && f.week <= newWeek && !f.isUserMatch && !f.played
     )
 
     // Atualiza fixtures no gameState para rastreamento de fim de temporada
@@ -1034,13 +1402,19 @@ export function useGameManager() {
     let updatedStateFixtures = [...prevFixtures]
 
     for (const fixture of roundFixtures) {
-      const result = simulateMatchResult(
+      const simulated = simulateMatchResult(
         fixture.homeTeam,
         fixture.awayTeam,
         newWeek,
         currentState.season,
         fixture.competition
       )
+      const result: MatchResult = {
+        ...simulated,
+        fixtureKey: getCalendarFixtureKey(fixture, currentState.season),
+        fixtureId: fixture.id,
+        week: fixture.week,
+      }
       // Apenas atualiza standings da liga principal (nao do estadual)
       if (fixture.competitionType === "league") {
         gameEngine.updateStandings(result)
@@ -1066,8 +1440,12 @@ export function useGameManager() {
     gameEngine.advanceWeek()
 
     // Update ref immediately so the next loop iteration sees the incremented week
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures } as Partial<typeof currentState> & { fixtures: unknown })
+    let debt=currentState.debt
+    if(debt?.enabled&&newWeek>=debt.nextPaymentWeek){const payment=processDebtMonth(debt,useGameEngine.getState().balance);gameEngine.payClubDebt(payment.paid);debt=payment.debt}
+    if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)}
+    const scoutingDepartment=currentState.scoutingDepartment?advanceScoutingWeek(currentState.scoutingDepartment,newWeek):undefined
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment } as Partial<typeof currentState> & { fixtures: unknown })
 
     // Detecta campeao da liga apenas ao final da ultima rodada
     let leagueChampion: { competition: string; season: string; stats: { won: number; drawn: number; lost: number; goalsFor: number } } | null = null
@@ -1136,14 +1514,20 @@ export function useGameManager() {
 
         const candidatos = allTeams
           .filter((t) => t.curto !== shortNow)
-          .map((t) => ({ curto: t.curto, nome: t.nome, prestigio: t.prestigio ?? 60 }))
+          .map((t) => ({ curto: t.curto, nome: t.nome, prestigio: t.prestigio ?? 60, divisao: String(t.divisao) }))
 
         const ofertas = generateJobOffers(
           confianca,
           posNow,
           teamNow.prestigio ?? 60,
           candidatos,
-          { allowNationalTeam: true },
+          {
+            allowNationalTeam: true,
+            experienceSeasons: Math.max(st.coachLegacy.totalSeasons, Math.max(0, st.season - 2026)),
+            careerTitles: st.coachTotalTitles + st.coachLegacy.totalTitles,
+            currentWeek: newWeek,
+            currentDivision: String(st.divisionOverride ?? teamNow.divisao ?? ""),
+          },
         )
         if (ofertas.length) addJobOffers(ofertas, st.season, newWeek)
       }
@@ -1169,27 +1553,32 @@ export function useGameManager() {
     events: MatchEvent[]
   ) => {
     const currentState = saveStateRef.current
-    const targetWeek = currentState.week + 1
+    const orderedPending = seasonCalendarRef.current.fixtures
+      .filter(fixture => fixture.isUserMatch && !fixture.played)
+      .sort((a, b) => a.week - b.week || a.id - b.id)
+    const fixtureForWeek = orderedPending.find(fixture =>
+      fixture.homeTeam.curto === homeTeam && fixture.awayTeam.curto === awayTeam,
+    ) ?? seasonCalendarRef.current.nextUserMatch
+    const targetWeek = fixtureForWeek?.week ?? currentState.week + 1
+    const fixtureKey = fixtureForWeek
+      ? getCalendarFixtureKey(fixtureForWeek, currentState.season)
+      : `${currentState.season}::legacy::${targetWeek}::${homeTeam}::${awayTeam}`
 
-    // Guard: evita duplo registro da mesma rodada (ex: quick-sim + ao-vivo)
+    // Guard idempotente por fixture. Semana + clubes não diferencia liga/copa e
+    // causava tanto duplo registro quanto bloqueio de uma partida válida.
     const alreadyRegistered = useGameEngine.getState().matchResults.some(
-      r => r.week === targetWeek && r.season === currentState.season &&
-           ((r.homeTeam === homeTeam && r.awayTeam === awayTeam) ||
-            (r.homeTeam === awayTeam && r.awayTeam === homeTeam))
-    )
+      r => r.fixtureKey === fixtureKey || (
+        !r.fixtureKey && r.week === targetWeek && r.season === currentState.season &&
+        r.homeTeam === homeTeam && r.awayTeam === awayTeam
+      ),
+    ) || (currentState.completedFixtureKeys ?? []).includes(fixtureKey)
     if (alreadyRegistered) return
 
-    const leagueName = getLeagueName(currentState.selectedTeamShort ?? "")
+    const leagueName = getLeagueName(currentState.selectedTeamShort ?? "", currentState.divisionOverride)
     const stateRounds = getStateChampRounds(currentState.selectedTeamShort ?? "")
     const userTeamForComp = getTeamByShort(currentState.selectedTeamShort ?? "")
 
-    // Busca o fixture real desta semana para saber a competicao exata (liga,
-    // estadual, copa ou continental). Copas/continentais NAO alteram a classificacao.
-    const fixtureForWeek = seasonCalendarRef.current.fixtures.find(
-      f => f.week === targetWeek && f.isUserMatch &&
-           ((f.homeTeam.curto === homeTeam && f.awayTeam.curto === awayTeam) ||
-            (f.homeTeam.curto === awayTeam && f.awayTeam.curto === homeTeam))
-    )
+    // Usa a fixture corrente (não week+1) para saber a competição exata.
     const competitionType = fixtureForWeek?.competitionType
       ?? (targetWeek > stateRounds ? "league" : "state")
     const isLeagueMatch = competitionType === "league"
@@ -1200,6 +1589,8 @@ export function useGameManager() {
     const competitionName = fixtureForWeek?.competition ?? fallbackName
 
     const result: MatchResult = {
+      fixtureKey,
+      fixtureId: fixtureForWeek?.id,
       week: targetWeek,
       season: currentState.season,
       competition: competitionName,
@@ -1243,15 +1634,43 @@ export function useGameManager() {
       return skill
     })
 
-    setSaveState({
+    const completedFixtureKeys = Array.from(new Set([
+      ...(currentState.completedFixtureKeys ?? []),
+      fixtureKey,
+    ]))
+    const patch = {
       coachXP: newXP,
       coachWinStreak: newStreak,
       coachSkills: updatedSkills,
-    })
+      completedFixtureKeys,
+    }
+    saveStateRef.current = { ...currentState, ...patch }
+    lastCompletedFixtureWeekRef.current = targetWeek
+    setSaveState(patch)
+
+    // Atualiza o calendário em memória no mesmo tick. Assim advanceWeek e um clique
+    // rápido em Continuar já enxergam a próxima partida, sem esperar o React renderizar.
+    const updatedFixtures = seasonCalendarRef.current.fixtures.map(fixture =>
+      getCalendarFixtureKey(fixture, currentState.season) === fixtureKey
+        ? { ...fixture, played: true, homeScore, awayScore }
+        : fixture,
+    )
+    const pending = updatedFixtures
+      .filter(fixture => fixture.isUserMatch && !fixture.played)
+      .sort((a, b) => a.week - b.week || a.id - b.id)
+    const played = updatedFixtures
+      .filter(fixture => fixture.isUserMatch && fixture.played)
+      .sort((a, b) => a.week - b.week || a.id - b.id)
+    seasonCalendarRef.current = {
+      ...seasonCalendarRef.current,
+      fixtures: updatedFixtures,
+      nextUserMatch: pending[0] ?? null,
+      previousUserMatch: played.at(-1) ?? fixtureForWeek ?? null,
+    }
   }, [gameEngine, setSaveState])
   
   // Classificacao atual ordenada
-  const standings = useMemo(() => {
+  const engineStandings = useMemo(() => {
     return [...gameEngine.serieAStandings].sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points
       const sgA = a.goalsFor - a.goalsAgainst
@@ -1260,22 +1679,35 @@ export function useGameManager() {
       return b.goalsFor - a.goalsFor
     })
   }, [gameEngine.serieAStandings])
+
+  // A tabela exibida é sempre reconstituída dos placares persistidos no calendário.
+  // `serieAStandings` continua sendo mantida pelo motor por compatibilidade, mas não é
+  // mais a fonte visual: isso elimina divergências após carregar save, migrar calendário
+  // ou concluir uma partida enquanto o Zustand ainda estava propagando a atualização.
+  const leagueCompetition = saveState.selectedTeamShort ? getLeagueName(saveState.selectedTeamShort, saveState.divisionOverride) : ""
+  const standings = useMemo(() => {
+    const derived = leagueCompetition
+      ? computeStandingsFromFixtures(seasonCalendar.fixtures, leagueCompetition)
+      : []
+    return derived.length ? derived : engineStandings
+  }, [engineStandings, leagueCompetition, seasonCalendar.fixtures])
   
   // Competicao que esta sendo disputada agora (ex: "Campeonato Paulista").
   const currentCompetition = useMemo(
-    () => seasonCalendar.nextUserMatch?.competition ?? null,
-    [seasonCalendar.nextUserMatch],
+    () => seasonCalendar.nextUserMatch?.competition ?? seasonCalendar.previousUserMatch?.competition ?? null,
+    [seasonCalendar.nextUserMatch, seasonCalendar.previousUserMatch],
   )
   const currentCompetitionType = useMemo(
-    () => seasonCalendar.nextUserMatch?.competitionType ?? "league",
-    [seasonCalendar.nextUserMatch],
+    () => seasonCalendar.nextUserMatch?.competitionType ?? seasonCalendar.previousUserMatch?.competitionType ?? "league",
+    [seasonCalendar.nextUserMatch, seasonCalendar.previousUserMatch],
   )
 
   // Tabela do campeonato EM DISPUTA. O engine so mantem a tabela da liga, entao
   // para estadual/copa a tabela e derivada dos fixtures da propria competicao.
   const currentStandings = useMemo(() => {
-    if (!currentCompetition || currentCompetitionType === "league") return standings
-    return computeStandingsFromFixtures(seasonCalendar.fixtures, currentCompetition)
+    if (!currentCompetition) return standings
+    const derived = computeStandingsFromFixtures(seasonCalendar.fixtures, currentCompetition)
+    return derived.length ? derived : standings
   }, [currentCompetition, currentCompetitionType, seasonCalendar.fixtures, standings])
 
   // Posicao do usuario na tabela do campeonato em disputa

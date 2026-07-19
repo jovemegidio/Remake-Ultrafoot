@@ -2,9 +2,10 @@
 // https://github.com/jovemegidio/Ultrafoot
 
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
-import { getTeamOverride } from "@/lib/team-overrides"
+import { applyTeamOverride, getTeamOverride } from "@/lib/team-overrides"
 import { getCurrency } from "@/lib/currency"
 import importedBF2026 from "@/data/seeds/imported-bf2026.json"
+import { repairMojibake } from "@/lib/text-normalization"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -311,26 +312,96 @@ const localCamisaMap: Record<string, string> = {
 
 // Importar funcoes de escudo do arquivo separado (evita dependencia circular)
 import { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl } from "./escudos-map"
+import importedKits from "@/data/seeds/kits-manifest.json"
 export { getEscudoUrl, getEscudoMiniUrl, getRemoteEscudoUrl }
 
-export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
+const importedKitMap = importedKits as Record<string, { home?: string; away?: string; third?: string; club?: string; needsReview?: boolean }>
+const importedKitKeys = Object.keys(importedKitMap)
+const normalizeKitKey = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "").toLowerCase()
+
+// O mapeamento recebido usa nomes editoriais ("Athletic_Club_Bilbao"), enquanto o
+// banco interno usa chaves curtas ("athletic_bilbao"). Comparar apenas prefixo/sufixo
+// fazia o arquivo existir no instalador, mas nunca ser selecionado pela interface.
+const KIT_STOP_WORDS = new Set([
+  "club", "clube", "fc", "cf", "ac", "afc", "sc", "ec", "fk", "cd", "ud",
+  "ca", "gd", "us", "as", "ss", "aa", "cs", "kv", "kvc", "vfb", "vfl", "vsc",
+  "de", "da", "do", "dos", "das", "the", "football", "futbol", "calcio",
+  "bra", "esp", "eng", "ita", "ger", "fra", "por", "ned", "bel", "tur",
+])
+const canonicalKitKey = (value: string) => normalizeKitKey(value)
+  .split("_")
+  .filter(token => token && !KIT_STOP_WORDS.has(token))
+  .join("_")
+const importedKitCanonical = new Map<string, (typeof importedKitMap)[string] | null>()
+for (const key of importedKitKeys) {
+  const canonical = canonicalKitKey(key)
+  if (!canonical) continue
+  // Chaves ambiguas nao sao escolhidas automaticamente.
+  importedKitCanonical.set(canonical, importedKitCanonical.has(canonical) ? null : importedKitMap[key])
+}
+const approvedImportedKits = importedKitKeys
+  .filter(key => !importedKitMap[key].needsReview)
+  .map(key => ({ key, canonical: canonicalKitKey(key), kit: importedKitMap[key] }))
+
+function findConservativeFuzzyKit(candidates: string[]): (typeof importedKitMap)[string] | undefined {
+  let best: { score: number; kit: (typeof importedKitMap)[string] } | null = null
+  let second = 0
+  for (const candidate of candidates) {
+    const a = new Set(canonicalKitKey(candidate).split("_").filter(Boolean))
+    if (a.size < 2) continue // nome curto demais gera homonimos perigosos
+    for (const entry of approvedImportedKits) {
+      const b = new Set(entry.canonical.split("_").filter(Boolean))
+      const intersection = [...a].filter(token => b.has(token)).length
+      if (intersection === 0) continue
+      const union = new Set([...a, ...b]).size
+      const score = intersection / Math.max(1, union)
+      if (!best || score > best.score) { second = best?.score ?? second; best = { score, kit: entry.kit } }
+      else if (score > second) second = score
+    }
+  }
+  // So aceita equivalencia forte e sem outro candidato proximo.
+  return best && best.score >= 0.72 && best.score - second >= 0.12 ? best.kit : undefined
+}
+
+/** Caminho do pacote legado instalado, separado para auditoria e testes offline. */
+export function getLocalCamisaPath(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
+  // O pacote recebido do Manchester United possui somente a arte principal.
+  const legacyVariant = fileKey === "manchester_united" && variant !== "home" ? "home" : variant
+  const folder = legacyVariant === "home" ? "camisas" : legacyVariant === "away" ? "camisas2" : "camisas3"
+  const key = localCamisaMap[fileKey] ?? (escudoMap[fileKey] || fileKey)
+  return `/${folder}/${key}.png`
+}
+
+export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home", teamName = ""): string {
   // Uniforme importado pelo usuario no editor de clubes tem prioridade — igual ao
   // escudo customizado. Leitura sincrona do cache do persistent-store; se o clube
   // tiver um kit importado, ele e usado no jogo inteiro no lugar do padrao.
   const custom = getTeamOverride(fileKey)?.kits?.[variant]?.imageUrl
   if (custom) return custom
 
-  const folder = variant === "home" ? "camisas" : variant === "away" ? "camisas2" : "camisas3"
+  const candidates = [normalizeKitKey(fileKey), normalizeKitKey(teamName), normalizeKitKey(localCamisaMap[fileKey] ?? ""), normalizeKitKey(escudoMap[fileKey] ?? "")].filter(Boolean)
+  let imported = candidates.map(key => importedKitMap[key]).find(Boolean)
+  if (!imported) {
+    imported = candidates
+      .map(key => importedKitCanonical.get(canonicalKitKey(key)))
+      .find((value): value is (typeof importedKitMap)[string] => Boolean(value))
+  }
+  if (!imported) {
+    const suffix = candidates[0]
+    const key = importedKitKeys.find(name => name.endsWith(`_${suffix}`) || suffix.endsWith(`_${name}`))
+    if (key) imported = importedKitMap[key]
+  }
+  if (!imported) imported = findConservativeFuzzyKit(candidates)
+  const importedFile = imported?.[variant]
+  if (importedFile) return gameAssetUrl(`/kits-imported/${importedFile}`)
+
   // No app desktop (Tauri) as camisas sao empacotadas localmente.
   // Na web nao existe pasta public/camisas, entao usamos o repositorio remoto
   // (padrao /teams/camisas/{file_key}.png), igual aos escudos, evitando 404.
-  if (isTauri()) {
-    const localKey = localCamisaMap[fileKey]
-    const key = localKey ?? (escudoMap[fileKey] || fileKey)
-    return gameAssetUrl(`/${folder}/${key}.png`)
-  }
-  const key = escudoMap[fileKey] || fileKey
-  return `${ULTRAFOOT_RAW_URL}/teams/${folder}/${key}.png`
+  const localPath = getLocalCamisaPath(fileKey, variant)
+  if (isTauri()) return gameAssetUrl(localPath)
+  const [folder, filename] = localPath.replace(/^\//, "").split("/")
+  return `${ULTRAFOOT_RAW_URL}/teams/${folder}/${filename}`
 }
 
 export function getRemoteCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
@@ -1095,6 +1166,60 @@ export const allBrazilianTeams = [...serieATeams, ...serieBTeams, ...serieCTeams
 // Todos os times (incluindo internacionais)
 export const allTeams = [...allBrazilianTeams, ...allInternationalTeams]
 
+// `curto` funciona como chave esportiva em tabela, calendário e resultados. A base
+// possuía siglas repetidas (Birmingham/Bristol = BC, Stoke/Swansea = SC e três CC na
+// La Liga 2), fazendo o round-robin montar "um clube contra ele mesmo" e reapresentar
+// partidas. Mantemos a primeira sigla e geramos uma chave estável pelo file_key para
+// cada colisão seguinte, sem alterar nome, escudo, uniforme ou elenco.
+const _usedCurto = new Set<string>()
+for (const team of allTeams) {
+  const original = team.curto.trim().toLocaleUpperCase()
+  if (!_usedCurto.has(original)) {
+    team.curto = original
+    _usedCurto.add(original)
+    continue
+  }
+  const stableBase = (team.file_key || team.nome)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/gi, "")
+    .toLocaleUpperCase()
+    .slice(0, 8) || "CLUBE"
+  let candidate = stableBase
+  let suffix = 2
+  while (_usedCurto.has(candidate)) {
+    candidate = `${stableBase.slice(0, Math.max(1, 8 - String(suffix).length))}${suffix}`
+    suffix++
+  }
+  team.curto = candidate
+  _usedCurto.add(candidate)
+}
+
+// Pirâmide nacional vigente em 2026. Os objetos continuam os mesmos (escudos e dados
+// licenciados não são tocados), apenas a divisão esportiva é corrigida após os acessos e
+// rebaixamentos de 2025. Centralizar aqui faz calendário, mercado e competições enxergarem
+// a mesma liga.
+const BRAZIL_SERIE_A_2026 = new Set([
+  "Botafogo", "Palmeiras", "Flamengo", "Internacional", "Sao Paulo", "São Paulo",
+  "Corinthians", "Bahia", "Cruzeiro", "Atletico-MG", "Atlético-MG", "Fluminense",
+  "Vasco da Gama", "Gremio", "Grêmio", "Vitoria", "Vitória", "Athletico-PR",
+  "Santos", "Mirassol", "RB Bragantino", "Coritiba", "Chapecoense", "Remo",
+])
+const BRAZIL_SERIE_B_2026 = new Set([
+  "Ceará", "Fortaleza", "Juventude", "Sport", "Ponte Preta", "Criciúma", "Vila Nova",
+  "Botafogo-SP", "Operário-PR", "Gremio Novorizontino", "Grêmio Novorizontino",
+  "São Bernardo", "Avaí", "Náutico", "CRB", "Goiás", "Londrina", "America-MG",
+  "América-MG", "Athletic Club", "Cuiabá", "Atletico-GO", "Atlético-GO",
+])
+for (const team of allBrazilianTeams) {
+  if (BRAZIL_SERIE_A_2026.has(team.nome)) team.divisao = "serie_a"
+  else if (BRAZIL_SERIE_B_2026.has(team.nome)) team.divisao = "serie_b"
+}
+serieATeams.splice(0, serieATeams.length, ...allBrazilianTeams.filter(t => t.divisao === "serie_a"))
+serieBTeams.splice(0, serieBTeams.length, ...allBrazilianTeams.filter(t => t.divisao === "serie_b"))
+serieCTeams.splice(0, serieCTeams.length, ...allBrazilianTeams.filter(t => t.divisao === "serie_c"))
+serieDTeams.splice(0, serieDTeams.length, ...allBrazilianTeams.filter(t => t.divisao === "serie_d"))
+
 // ── POOL BF2026 (~2947 clubes reais) como Team ────────────────────────────────
 // O jogo carrega ~2947 clubes no pool (imported-bf2026.json), mas so os CURADOS
 // apareciam no editor — dai a impressao de "faltam times / o editor nao mostra os
@@ -1112,14 +1237,18 @@ interface PoolTeamRaw {
   escudoDisponivel?: boolean; pais?: string; estado?: string
 }
 
+const _seenPoolTeams = new Set<string>()
 export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
   .filter((t) => {
     const fk = _normKey(String(t.fileKey ?? ""))
-    const nm = _normKey(String(t.nome ?? ""))
-    return fk && !_curatedKeys.has(fk) && !_curatedKeys.has(nm)
+    const nm = _normKey(repairMojibake(String(t.nome ?? "")))
+    const unique = `${nm}:${String(t.pais ?? "")}`
+    if (!fk || _curatedKeys.has(fk) || _curatedKeys.has(nm) || _seenPoolTeams.has(unique)) return false
+    _seenPoolTeams.add(unique)
+    return true
   })
   .map((t): Team => ({
-    nome: String(t.nome ?? ""),
+    nome: repairMojibake(String(t.nome ?? "")),
     curto: String(t.curto ?? String(t.nome ?? "").slice(0, 3).toUpperCase()),
     cidade: "",
     estado: String(t.estado ?? ""),
@@ -1140,25 +1269,25 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
 
 // Times por divisao
 export function getTeamsByDivision(divisao: string): Team[] {
-  return allTeams.filter(t => t.divisao === divisao)
+  return allTeams.filter(t => t.divisao === divisao).map(applyTeamOverride)
 }
 
 // Função para buscar time por curto (busca tambem por divisao para evitar duplicatas)
 export function getTeamByShort(curto: string, divisao?: string): Team | undefined {
-  if (divisao) {
-    return allTeams.find(t => t.curto === curto && t.divisao === divisao)
-  }
-  return allTeams.find(t => t.curto === curto)
+  const resolved = allTeams.map(applyTeamOverride)
+  if (divisao) return resolved.find(t => t.curto === curto && t.divisao === divisao)
+  return resolved.find(t => t.curto === curto)
 }
 
 // Função para buscar time por file_key
 export function getTeamByFileKey(fileKey: string): Team | undefined {
-  return allTeams.find(t => t.file_key === fileKey)
+  const team = allTeams.find(t => t.file_key === fileKey)
+  return team ? applyTeamOverride(team) : undefined
 }
 
 // Função para buscar time por nome
 export function getTeamByName(nome: string): Team | undefined {
-  return allTeams.find(t => t.nome.toLowerCase() === nome.toLowerCase())
+  return allTeams.map(applyTeamOverride).find(t => t.nome.toLowerCase() === nome.toLowerCase())
 }
 
 // Uniformes dos times (baseado nas cores reais)

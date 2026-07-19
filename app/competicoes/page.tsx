@@ -25,7 +25,8 @@ import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, getTeamsByDivision, serieBTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams } from "@/lib/use-game-manager"
+import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams, computeStandingsFromFixtures, type Fixture } from "@/lib/use-game-manager"
+import type { StandingsEntry } from "@/lib/game-engine"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto } from "@/lib/cup-engine"
 import { getCountryCompetitions, getContinentalSpot, getContinentalDivisions } from "@/lib/country-competitions"
@@ -131,61 +132,63 @@ const simulateMatch = (team1Strength: number, team2Strength: number): [number, n
   return [goals1, goals2]
 }
 
-// Hook para gerenciar estado das competicoes
-function useCompetitions(userTeamShort: string, userPosition: number) {
+function initialCompetitionState(userPosition: number): CompetitionState {
+  return {
+    copaBrasil: { currentRound: "oitavas", oitavas: [], quartas: [], semis: [], final: [], drawn: false, eliminated: false, champion: null },
+    estadual: { name: "Estadual", phase: "grupos", groups: [], semis: [], final: [], drawn: false, eliminated: false, champion: null },
+    libertadores: { qualified: userPosition <= 4, currentRound: "grupos", group: null, bracket: [], eliminated: false, champion: null },
+    sulamericana: { qualified: userPosition > 4 && userPosition <= 6, currentRound: "grupos", group: null, eliminated: false },
+  }
+}
+
+function sanitizeCompetitionState(value: CompetitionState, userPosition: number): CompetitionState {
+  const fallback = initialCompetitionState(userPosition)
+  if (!value?.copaBrasil || !value?.estadual || !value?.libertadores || !value?.sulamericana) return fallback
+  // Nunca declarar eliminacao antes de existir uma partida disputada.
+  const copaPlayed = [...value.copaBrasil.oitavas, ...value.copaBrasil.quartas, ...value.copaBrasil.semis, ...value.copaBrasil.final].some(m => m.played)
+  const estadualPlayed = value.estadual.groups.some(g => g.teams.some(t => t.played > 0)) || [...value.estadual.semis, ...value.estadual.final].some(m => m.played)
+  const continentalPlayed = (value.libertadores.group?.teams.some(t => t.played > 0) ?? false) || value.libertadores.bracket.some(m => m.played)
+  return {
+    ...value,
+    copaBrasil: { ...value.copaBrasil, eliminated: copaPlayed ? value.copaBrasil.eliminated : false },
+    estadual: { ...value.estadual, eliminated: estadualPlayed ? value.estadual.eliminated : false },
+    libertadores: { ...value.libertadores, eliminated: continentalPlayed ? value.libertadores.eliminated : false },
+  }
+}
+
+// Hook para gerenciar estado das competicoes. O estado e por clube E temporada;
+// o antigo slot global vazava eliminacoes ao trocar de emprego ou iniciar novo ano.
+function useCompetitions(userTeamShort: string, userPosition: number, season: number) {
+  const storageKey = `ultrafoot-competitions:${season}:${userTeamShort}`
+  const skipSave = useRef(false)
   const [state, setState] = useState<CompetitionState>(() => {
     // Tenta carregar do localStorage
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("ultrafoot-competitions")
+      const saved = localStorage.getItem(storageKey)
       if (saved) {
         try {
-          return JSON.parse(saved)
+          return sanitizeCompetitionState(JSON.parse(saved), userPosition)
         } catch {}
       }
     }
-    
-    return {
-      copaBrasil: {
-        currentRound: "oitavas",
-        oitavas: [],
-        quartas: [],
-        semis: [],
-        final: [],
-        drawn: false,
-        eliminated: false,
-        champion: null,
-      },
-      estadual: {
-        name: "Estadual",
-        phase: "grupos",
-        groups: [],
-        semis: [],
-        final: [],
-        drawn: false,
-        eliminated: false,
-        champion: null,
-      },
-      libertadores: {
-        qualified: userPosition <= 4,
-        currentRound: "grupos",
-        group: null,
-        bracket: [],
-        eliminated: false,
-        champion: null,
-      },
-      sulamericana: {
-        qualified: userPosition > 4 && userPosition <= 6,
-        currentRound: "grupos",
-        group: null,
-        eliminated: false,
-      },
-    }
+    return initialCompetitionState(userPosition)
   })
+
+  useEffect(() => {
+    skipSave.current = true
+    try {
+      const saved = localStorage.getItem(storageKey)
+      setState(saved ? sanitizeCompetitionState(JSON.parse(saved), userPosition) : initialCompetitionState(userPosition))
+    } catch {
+      setState(initialCompetitionState(userPosition))
+    }
+  }, [storageKey])
   
   // Salvar no localStorage
   useEffect(() => {
-    localStorage.setItem("ultrafoot-competitions", JSON.stringify(state))
-  }, [state])
+    if (skipSave.current) { skipSave.current = false; return }
+    localStorage.setItem(storageKey, JSON.stringify(state))
+  }, [state, storageKey])
   
   // Pool REAL da Copa do Brasil: os melhores clubes do Brasil por prestigio (Serie A a D),
   // sorteados a cada temporada. Substitui a lista fixa dos mesmos 16 grandes.
@@ -495,7 +498,7 @@ function useCompetitions(userTeamShort: string, userPosition: number) {
 
 export default function CompeticoesPage() {
   const { team: userTeam } = useUserTeam()
-  const { standings: gameStandings, currentWeek, currentSeason, userPosition } = useGameManager()
+  const { standings: gameStandings, currentWeek, currentSeason, userPosition, seasonCalendar } = useGameManager()
   const t = useTranslation()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("brasileirao")
@@ -521,7 +524,7 @@ export default function CompeticoesPage() {
     drawEstadual,
     simulateEstadualGroups,
     drawLibertadores,
-  } = useCompetitions(userTeam.curto, userPosition)
+  } = useCompetitions(userTeam.curto, userPosition, currentSeason)
 
   // Navega para a tela de campeao se o usuario ganhar uma copa
   const handleSimulateCopa = (competitionName: string, season: string) => {
@@ -575,6 +578,25 @@ export default function CompeticoesPage() {
   const stateChampRounds = isBrazilian ? getStateChampRounds(userTeam.curto) : 0
   const leagueStarted = currentWeek > stateChampRounds
 
+  const officialStateName = ESTADO_CAMPEONATO[userTeam.estado ?? ""] ?? "Campeonato Estadual"
+  const officialStateFixtures = seasonCalendar.fixtures.filter(fixture =>
+    fixture.competitionType === "state" && fixture.competition === officialStateName,
+  )
+  const officialStateStandings = useMemo(
+    () => computeStandingsFromFixtures(officialStateFixtures, officialStateName),
+    [officialStateFixtures, officialStateName],
+  )
+  const stateChampion = useMemo(() => {
+    const finals = officialStateFixtures.filter(fixture => fixture.stage === "final")
+    if (!finals.length || finals.some(fixture => !fixture.played || fixture.homeScore === undefined || fixture.awayScore === undefined)) return null
+    const totals = new Map<string, number>()
+    for (const fixture of finals) {
+      totals.set(fixture.homeTeam.curto, (totals.get(fixture.homeTeam.curto) ?? 0) + (fixture.homeScore ?? 0))
+      totals.set(fixture.awayTeam.curto, (totals.get(fixture.awayTeam.curto) ?? 0) + (fixture.awayScore ?? 0))
+    }
+    return [...totals.entries()].sort((a, b) => b[1] - a[1] || (getTeamByShort(b[0])?.prestigio ?? 0) - (getTeamByShort(a[0])?.prestigio ?? 0))[0]?.[0] ?? null
+  }, [officialStateFixtures])
+
   // Abre por padrao na competicao em andamento: estadual antes da liga comecar.
   useEffect(() => {
     if (didInitTab.current) return
@@ -616,11 +638,11 @@ export default function CompeticoesPage() {
     },
     {
       id: "estadual",
-      name: compState.estadual.name !== "Estadual" ? compState.estadual.name : t.competitions.estaduais,
+      name: officialStateName,
       type: "Estadual",
       teams: 16,
-      status: compState.estadual.champion
-        ? `${t.finances.champion}: ${compState.estadual.champion}`
+      status: stateChampion
+        ? `${t.finances.champion}: ${getTeamByShort(stateChampion)?.nome ?? stateChampion}`
         : compState.estadual.eliminated
           ? t.competitions.eliminated
           : compState.estadual.drawn
@@ -806,9 +828,10 @@ export default function CompeticoesPage() {
           <TabsContent value="estadual" className="mt-4">
             <EstadualView
               userTeam={userTeam}
-              state={compState.estadual}
-              onDraw={drawEstadual}
-              onSimulateGroups={simulateEstadualGroups}
+              name={officialStateName}
+              fixtures={officialStateFixtures}
+              standings={officialStateStandings}
+              champion={stateChampion}
             />
           </TabsContent>
 
@@ -991,111 +1014,49 @@ function CopaBracket({
 // Estadual View
 function EstadualView({
   userTeam,
-  state,
-  onDraw,
-  onSimulateGroups,
+  name,
+  fixtures,
+  standings,
+  champion,
 }: {
   userTeam: Team
-  state: CompetitionState["estadual"]
-  onDraw: () => void
-  onSimulateGroups: () => void
+  name: string
+  fixtures: Fixture[]
+  standings: StandingsEntry[]
+  champion: string | null
 }) {
-  const t = useTranslation()
-
-  if (!state.drawn) {
-    return (
-      <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-orange-400/10 mx-auto mb-6">
-          <MapPin className="h-10 w-10 text-orange-400" />
-        </div>
-        <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.estaduais} 2026</h3>
-        <p className="text-sm text-white/50 mb-6">
-          {t.competitions.draw}
-        </p>
-        <button
-          onClick={onDraw}
-          className="px-6 py-3 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors inline-flex items-center gap-2"
-        >
-          <Shuffle className="h-4 w-4" />
-          {t.competitions.drawGroups}
-        </button>
-      </div>
-    )
-  }
+  const stageOrder = ["fase_classificatoria", "segunda_fase", "quartas", "semifinal", "final"]
+  const stageLabels: Record<string, string> = { fase_classificatoria: "Fase classificatória", segunda_fase: "Segunda fase", quartas: "Quartas de final", semifinal: "Semifinal", final: "Final" }
+  const activeStage = stageOrder.find(stage => fixtures.some(fixture => fixture.stage === stage && !fixture.played)) ?? "final"
+  const stageFixtures = fixtures.filter(fixture => fixture.stage === activeStage)
 
   return (
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-orange-400" />
-          <h3 className="text-lg font-semibold text-white">{t.competitions.estaduais} 2026</h3>
+          <div><h3 className="text-lg font-semibold text-white">{name} 2026</h3><p className="text-xs text-white/40">{stageLabels[activeStage] ?? activeStage}</p></div>
         </div>
-
-        {state.phase === "grupos" && !state.groups[0].teams[0].played && (
-          <button
-            onClick={onSimulateGroups}
-            className="px-4 py-2 rounded-lg bg-orange-500 text-white font-medium text-sm hover:bg-orange-600 transition-colors inline-flex items-center gap-2"
-          >
-            <Play className="h-4 w-4" />
-            {t.competitions.simulateGroupStage}
-          </button>
-        )}
+        {champion && <div className="flex items-center gap-2 rounded-lg border border-[#ffd700]/30 bg-[#ffd700]/10 px-4 py-2 text-sm font-bold text-[#ffd700]"><Crown className="h-4 w-4" />Campeão: {getTeamByShort(champion)?.nome ?? champion}</div>}
       </div>
 
-      {/* Grupos */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {state.groups.map((group) => {
-          const userInGroup = group.teams.some(t => t.short === userTeam.curto)
-          
-          return (
-            <div 
-              key={group.name}
-              className={cn(
-                "rounded-lg border p-4",
-                userInGroup ? "bg-orange-500/10 border-orange-500/30" : "bg-white/5 border-white/10"
-              )}
-            >
-              <h4 className="text-sm font-semibold text-white mb-3">{group.name}</h4>
-              <div className="space-y-2">
-                {group.teams.map((team, idx) => {
-                  const teamData = getTeamByShort(team.short)
-                  const isUser = team.short === userTeam.curto
-                  const qualified = idx === 0 && team.played > 0
-                  
-                  return (
-                    <div 
-                      key={team.short}
-                      className={cn(
-                        "flex items-center gap-2 p-2 rounded",
-                        isUser && "bg-orange-500/20",
-                        qualified && !isUser && "bg-[#00ffc8]/10"
-                      )}
-                    >
-                      <span className="text-xs text-white/50 w-4">{idx + 1}.</span>
-                      {teamData && <TeamCrest team={teamData} size="xs" />}
-                      <span className={cn(
-                        "text-xs flex-1",
-                        isUser && "font-bold text-white"
-                      )}>
-                        {team.short}
-                      </span>
-                      <span className="text-xs text-white/50">{team.played}J</span>
-                      <span className="text-xs font-bold text-white">{team.points}pts</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {state.eliminated && (
-        <div className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-center">
-          <X className="h-6 w-6 text-red-500 mx-auto mb-2" />
-          <p className="text-sm text-red-400">{t.competitions.eliminatedFromEstadual}</p>
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+        <div className="overflow-hidden rounded-xl border border-white/10">
+          <div className="grid grid-cols-[36px_1fr_42px_42px_42px] bg-white/[0.04] px-3 py-2 text-[10px] font-bold uppercase text-white/35"><span>#</span><span>Clube</span><span>J</span><span>SG</span><span>PTS</span></div>
+          {standings.map((row, index) => {
+            const team = getTeamByShort(row.teamShort)
+            const mine = row.teamShort === userTeam.curto
+            return <div key={row.teamShort} className={cn("grid grid-cols-[36px_1fr_42px_42px_42px] items-center border-t border-white/[0.05] px-3 py-2.5 text-xs", mine && "border-l-2 border-l-orange-400 bg-orange-400/10")}><span className="text-white/45">{index + 1}</span><span className="flex min-w-0 items-center gap-2 font-semibold text-white">{team && <TeamCrest team={team} size="xs" />}<span className="truncate">{team?.nome ?? row.teamShort}</span>{mine && <span className="rounded bg-orange-400 px-1.5 py-0.5 text-[8px] font-black text-black">VOCÊ</span>}</span><span className="text-white/55">{row.played}</span><span className="text-white/55">{row.goalsFor - row.goalsAgainst}</span><span className="font-black text-white">{row.points}</span></div>
+          })}
         </div>
-      )}
+        <div className="space-y-2">
+          <h4 className="mb-3 text-xs font-black uppercase tracking-wider text-orange-300">Partidas da fase</h4>
+          {stageFixtures.slice(-12).map(fixture => {
+            const mine = fixture.isUserMatch
+            return <div key={fixture.id} className={cn("flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3 text-xs", mine && "border-orange-400/35 bg-orange-400/10")}><span className="min-w-0 flex-1 truncate text-right text-white/70">{fixture.homeTeam.nome}</span><span className="rounded bg-black/35 px-2 py-1 font-black text-white">{fixture.played ? `${fixture.homeScore} - ${fixture.awayScore}` : "x"}</span><span className="min-w-0 flex-1 truncate text-white/70">{fixture.awayTeam.nome}</span></div>
+          })}
+        </div>
+      </div>
     </div>
   )
 }

@@ -269,7 +269,7 @@ export default function CalendarioPage() {
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
 
   return (
-  <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 relative">
+  <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 relative bg-[#050508]">
 
   {/* Overlay de simulacao DIA A DIA (imersao: a data corre dia por dia ate a partida) */}
   {isSimulating && simDate && (
@@ -299,7 +299,7 @@ export default function CalendarioPage() {
   {/* Background Image - Futuristic Grid */}
   <div className="absolute inset-0 md:ml-16">
   <Image
-  src="/images/calendario-bg.png"
+  src="/images/pre-jogo/in-game-6.png"
   alt="Calendar Background"
   fill
   className="object-cover"

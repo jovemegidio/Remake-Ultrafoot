@@ -32,13 +32,16 @@ export interface NewsItem {
 }
 
 /** Detecta gatilhos no GameState e gera notícias. */
-export function generateNews(_state: GameState, _week: number): NewsItem[] {
-  throw new Error("news-engine.generateNews: not implemented")
+export function generateNews(state: GameState, week: number): NewsItem[] {
+  const club=state.selectedTeamShort??"CLUBE",items:NewsItem[]=[]
+  for(const t of (state.transfers??[]).filter(t=>t.week===week&&t.season===state.season))items.push({id:`news-${t.id}`,category:"transfer",headline:`${t.playerName} muda de clube`,body:`${t.fromTeam} e ${t.toTeam} fecharam a negociação por ${t.value.toLocaleString("pt-BR")}.`,publishedAt:week,season:state.season,involvedClubs:[t.fromTeam,t.toTeam],involvedPlayers:[t.playerName],importance:t.value>=50000000?"breaking":"medium"})
+  if((state.teamMorale??65)<35)items.push({id:`news-${state.season}-${week}-crisis`,category:"crisis",headline:`Crise no vestiário do ${club}`,body:"A sequência recente aumentou a pressão sobre o elenco e a comissão.",publishedAt:week,season:state.season,involvedClubs:[club],involvedPlayers:[],importance:"high"})
+  return items
 }
 
 /** Converte NewsItem em CareerMessage pra caixa de entrada. */
-export function toCareerMessage(_news: NewsItem): CareerMessage {
-  throw new Error("news-engine.toCareerMessage: not implemented")
+export function toCareerMessage(news: NewsItem): CareerMessage {
+  return{id:`message-${news.id}`,from:"Central de Notícias",subject:news.headline,preview:news.body.slice(0,120),fullContent:news.body,date:`Temporada ${news.season}, semana ${news.publishedAt}`,read:false,starred:news.importance==="breaking",archived:false,deleted:false,category:news.category==="transfer"?"mercado":news.category==="title"?"competicao":"staff",week:news.publishedAt,season:news.season}
 }
 
 /** Lista notícias da semana ordenadas por importância. */

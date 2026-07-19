@@ -76,7 +76,16 @@ export default function GlobalError({
             </button>
             <button
               onClick={() => {
-                if (typeof window !== "undefined") window.location.assign("/splash/?menu=1")
+                if (typeof window === "undefined") return
+                // O fallback de erro não tem o provider/roteador do Next. Navega para
+                // o arquivo exportado real, em vez de pedir `/splash/` ao Windows.
+                const script = document.querySelector("script[src*='/_next/']") as HTMLScriptElement | null
+                const scriptUrl = script?.src ?? ""
+                const nextIndex = scriptUrl.indexOf("/_next/")
+                const appRoot = nextIndex >= 0
+                  ? scriptUrl.slice(0, nextIndex)
+                  : window.location.origin
+                window.location.replace(`${appRoot}/splash/index.html?menu=1`)
               }}
               style={{
                 borderRadius: 10,

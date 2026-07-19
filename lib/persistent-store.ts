@@ -15,6 +15,8 @@ type TauriStore = {
 }
 
 const cache = new Map<string, string>()
+const pendingOperations = new Set<Promise<void>>()
+let writeQueue: Promise<void> = Promise.resolve()
 let _initialized = false
 let _initPromise: Promise<void> | null = null
 let _tauriStore: TauriStore | null = null
@@ -65,7 +67,15 @@ async function _init(): Promise<void> {
       }
       const entries = await store.entries<string>()
       for (const [k, v] of entries) {
-        if (typeof v === "string") cache.set(k, v)
+        if (typeof v === "string") {
+          cache.set(k, v)
+          // Mantem um espelho local para as rotinas sincronas de listagem/exportacao.
+          // Antes o editor gravava corretamente no plugin-store, mas
+          // listLocalTeamOverrides() varria o localStorage e concluia que nao havia
+          // nenhuma edicao. O espelho tambem serve como recuperacao se o arquivo do
+          // plugin ficar temporariamente indisponivel.
+          try { localStorage.setItem(k, v) } catch { /* quota/privacidade: cache segue valido */ }
+        }
       }
     } catch (e) {
       console.warn("[persistent-store] Tauri store failed, using localStorage:", e)
@@ -114,14 +124,38 @@ export function storeGet(key: string): string | null {
 
 export function storeSet(key: string, value: string): void {
   cache.set(key, value)
+  // Espelha imediatamente: a UI e os exportadores enxergam a mesma versao antes
+  // mesmo do commit assincrono do plugin-store terminar.
+  if (typeof window !== "undefined") {
+    try { localStorage.setItem(key, value) } catch { /* plugin-store continua sendo a fonte */ }
+  }
   _dispatch(key)
-  void _writeAsync(key, value)
+  // O plugin-store usa um unico arquivo. Gravacoes paralelas de save, motor e
+  // autosave podiam chamar store.save() ao mesmo tempo e deixar o arquivo com um
+  // snapshot antigo. Serializar todas as mutacoes torna o commit deterministico.
+  const operation = writeQueue.then(() => _writeAsync(key, value))
+  writeQueue = operation.catch(() => undefined)
+  pendingOperations.add(operation)
+  void operation.finally(() => pendingOperations.delete(operation))
 }
 
 export function storeRemove(key: string): void {
   cache.delete(key)
+  if (typeof window !== "undefined") {
+    try { localStorage.removeItem(key) } catch { /* ignora */ }
+  }
   _dispatch(key)
-  void _deleteAsync(key)
+  const operation = writeQueue.then(() => _deleteAsync(key))
+  writeQueue = operation.catch(() => undefined)
+  pendingOperations.add(operation)
+  void operation.finally(() => pendingOperations.delete(operation))
+}
+
+/** Aguarda todas as gravacoes iniciadas antes de uma navegacao com reload completo. */
+export async function flushPersistentStore(): Promise<void> {
+  while (pendingOperations.size > 0) {
+    await Promise.allSettled([...pendingOperations])
+  }
 }
 
 async function _writeAsync(key: string, value: string): Promise<void> {
@@ -144,23 +178,38 @@ async function _writeAsync(key: string, value: string): Promise<void> {
 // zustand aguarda a carga do disco antes de hidratar, evitando que a store inicie
 // vazia (elenco/tabela em branco) logo apos abrir o app.
 export function createTauriZustandStorage() {
+  const resolveName = (name: string): string => {
+    if (name !== "ultrafoot-game-engine") return name
+    const careerId = storeGet("ultrafoot:active-career")
+    return careerId ? `${name}:${careerId}` : name
+  }
   return {
     getItem: async (name: string): Promise<string | null> => {
       await initPersistentStore()
-      let value = storeGet(name)
+      const resolvedName = resolveName(name)
+      let value = storeGet(resolvedName)
+      // Migra o motor unico das builds antigas para a carreira ativa. A copia e
+      // feita uma vez e o legado permanece como recuperacao de emergencia.
+      if (value == null && resolvedName !== name) {
+        const legacy = storeGet(name)
+        if (legacy != null) {
+          storeSet(resolvedName, legacy)
+          value = legacy
+        }
+      }
       // Migra dado legado que so exista no localStorage da webview (saves de versoes
       // que nao sobreviviam a reinstalacao). Uma unica vez: passa a viver no store.
       if (value == null && typeof window !== "undefined" && window.localStorage) {
-        const legacy = window.localStorage.getItem(name)
+        const legacy = window.localStorage.getItem(resolvedName) ?? window.localStorage.getItem(name)
         if (legacy != null) {
-          storeSet(name, legacy)
+          storeSet(resolvedName, legacy)
           value = legacy
         }
       }
       return value
     },
-    setItem: (name: string, value: string): void => storeSet(name, value),
-    removeItem: (name: string): void => storeRemove(name),
+    setItem: (name: string, value: string): void => storeSet(resolveName(name), value),
+    removeItem: (name: string): void => storeRemove(resolveName(name)),
   }
 }
 

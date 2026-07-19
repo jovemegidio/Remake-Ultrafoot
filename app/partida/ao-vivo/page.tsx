@@ -26,14 +26,18 @@ import {
   Triangle,
   ChevronDown,
   ChevronUp,
+  Square,
+  Hand,
+  Stethoscope,
+  Circle,
 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { loadGameState, saveGameStateAndFlush, useGameState, useUserTeam } from "@/lib/save-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
-import { pickStartingXI } from "@/lib/formations"
+import { assignPlayersToFormation, pickStartingXI } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
 import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
@@ -41,21 +45,26 @@ import { useGamepad, type GamepadButtonName } from "@/hooks/use-gamepad"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useDiscordRPC } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
-import { useGameEngine, shootingForPosition, type Player as EnginePlayer } from "@/lib/game-engine"
+import { persistGameEngineNow, useGameEngine, shootingForPosition, type Player as EnginePlayer } from "@/lib/game-engine"
+import { flushPersistentStore } from "@/lib/persistent-store"
+import { hardNavigate } from "@/lib/hard-navigation"
 import {
   type MatchSpeed,
   type MatchEvent,
   type MatchState,
 } from "@/lib/match-engine"
 import { LivePitch } from "@/components/match/live-pitch"
-import { SubstitutionModal, type MatchPlayer } from "@/components/match/substitution-modal"
+import { SubstitutionModal, type MatchPlayer, type SubstitutionChange } from "@/components/match/substitution-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
 import { RoundResultsModal } from "@/components/match/round-results-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
 import { MatchRadar } from "@/components/match/match-radar"
+import { getKitColors } from "@/components/match/kit-image"
 import { useMatchSounds } from "@/hooks/use-match-sounds"
+import { clearQueue as clearCommentary, enqueueEvent, initAudio } from "@/lib/audio-commentary"
+import { applyPlayedYouthMatch } from "@/lib/youth-career-engine"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock players - usados como elenco padrao quando nao houver squad real
@@ -138,7 +147,7 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
       physical:  p.physical  ?? (60 + (h(7) % 25)),
     }
   })
-  const bench: MatchPlayer[] = benchPool.slice(0, 7).map((p, i) => ({
+  const bench: MatchPlayer[] = benchPool.map((p, i) => ({
     id: idOffset + 100 + i + 1,
     name: p.nome,
     number: num(undefined, p.pos),
@@ -150,7 +159,7 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
 }
 
 // Converte jogadores do game-engine para MatchPlayer
-function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
+function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0, formation = "4-3-3"): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
   const available = players.filter(p => !p.injury && !p.calledUp)
 
   // Se o usuario montou a escalacao (isStarter), RESPEITA o XI dele. Senao, encaixa na
@@ -159,17 +168,22 @@ function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { sta
   let xi: EnginePlayer[]
   let benchPool: EnginePlayer[]
   if (manual.length >= 11) {
-    xi = [...manual].sort((a, b) => b.overall - a.overall).slice(0, 11)
-    const xiSet = new Set(xi)
-    benchPool = available.filter(p => !xiSet.has(p))
+    // A escalação manual é uma decisão do treinador, não um ranking de overall.
+    // Ordenamos os MESMOS 11 pelos slots da formação, preservando o titular e a
+    // posição que ele deve ocupar no campo/radar.
+    const declared = manual.slice(0, 11)
+    xi = assignPlayersToFormation(declared, formation).map(player => player as EnginePlayer)
+    const xiIds = new Set(xi.map(player => player.id))
+    benchPool = available.filter(player => !xiIds.has(player.id))
   } else {
-    const picked = pickStartingXI(available, (p) => p.position, (p) => p.overall)
+    const picked = pickStartingXI(available, (p) => p.position, (p) => p.overall, formation)
     xi = picked.starters
     benchPool = picked.bench
   }
 
   const num = makeNumberAllocator()
-  const starters: MatchPlayer[] = xi.map((p, i) => ({
+  const slotted = assignPlayersToFormation(xi, formation)
+  const starters: MatchPlayer[] = slotted.map((p, i) => ({
     id: idOffset + i + 1,
     name: p.name,
     number: num(p.shirtNumber, p.position),
@@ -182,9 +196,11 @@ function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0): { sta
     dribbling: p.dribbling,
     defending: p.defending,
     physical: p.physical,
+    tacticalSlot: i,
+    formationPosition: p.slotPos,
   }))
 
-  const bench: MatchPlayer[] = benchPool.slice(0, 7).map((p, i) => ({
+  const bench: MatchPlayer[] = benchPool.map((p, i) => ({
     id: idOffset + 100 + i + 1,
     name: p.name,
     number: num(p.shirtNumber, p.position),
@@ -484,13 +500,16 @@ function TabButton({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PartidaAoVivoPage() {
+  const { state: savedGame, setState: setSavedGame } = useGameState()
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
   const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
-  const { squadPlayers: enginePlayers } = useGameEngine()
+  const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics } = useGameEngine()
   const engineMatchResults = useGameEngine(s => s.matchResults)
-  const engineWeek = useGameEngine(s => s.currentWeek)
   const engineSeason = useGameEngine(s => s.currentSeason)
+  // Mantém a identidade da partida encerrada mesmo depois de advanceWeek trocar o
+  // próximo confronto; o modal da rodada precisa dessa chave estável.
+  const [finalMatch, setFinalMatch] = useState<{ home: Team; away: Team; userSide: "home" | "away" } | null>(null)
   // Resultados de todas as competicoes que rodaram nesta rodada (para a tela pos-jogo)
   /**
    * Resultados da rodada que ACABOU de ser jogada.
@@ -509,12 +528,16 @@ export default function PartidaAoVivoPage() {
    * PROPRIOS resultados: a que acabou de ser jogada e a de maior semana registrada.
    */
   const roundResults = useMemo(() => {
+    const targetHome = finalMatch?.home.curto ?? currentMatch?.homeTeam.curto
+    const targetAway = finalMatch?.away.curto ?? currentMatch?.awayTeam.curto
+    if (!targetHome || !targetAway) return []
     const daTemporada = engineMatchResults.filter(r => r.season === engineSeason)
-    if (daTemporada.length === 0) return []
-
-    const ultimaSemana = Math.max(...daTemporada.map(r => r.week))
+    const userResult = [...daTemporada].reverse().find(result =>
+      result.homeTeam === targetHome && result.awayTeam === targetAway,
+    )
+    if (!userResult) return []
     return daTemporada
-      .filter(r => r.week === ultimaSemana)
+      .filter(r => r.week === userResult.week && r.competition === userResult.competition)
       .map(r => ({
         competition: r.competition,
         homeTeam: r.homeTeam,
@@ -522,7 +545,8 @@ export default function PartidaAoVivoPage() {
         homeScore: r.homeScore,
         awayScore: r.awayScore,
       }))
-  }, [engineMatchResults, engineSeason])
+  }, [engineMatchResults, engineSeason, finalMatch, currentMatch])
+
   const resultRegistered = useRef(false)
   const t = useTranslation()
 
@@ -536,21 +560,23 @@ export default function PartidaAoVivoPage() {
   // Determina times a partir do contexto salvo. AMISTOSO tem prioridade sobre o jogo da
   // rodada (currentMatch), senao o amistoso acabaria jogando contra o adversario do fixture.
   const homeTeam = useMemo(() => {
-    if (matchCtx.friendly && matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
+    if ((matchCtx.friendly || matchCtx.youth) && matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     if (currentMatch) return currentMatch.homeTeam
     if (matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
-  }, [currentMatch, matchCtx.friendly, matchCtx.homeShort, userTeamId])
+  }, [currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.homeShort, userTeamId])
 
   const awayTeam = useMemo(() => {
-    if (matchCtx.friendly && matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
+    if ((matchCtx.friendly || matchCtx.youth) && matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     if (currentMatch) return currentMatch.awayTeam
     if (matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
-  }, [currentMatch, matchCtx.friendly, matchCtx.awayShort, homeTeam.curto])
+  }, [currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.awayShort, homeTeam.curto])
 
-  const displayCompetition = matchCtx.friendly ? "Amistoso" : (currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A")
-  const displayRound = currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1")
+  const displayCompetition = matchCtx.friendly ? "Amistoso" : (matchCtx.youth ? matchCtx.competition : (currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A"))
+  const displayRound = matchCtx.youth ? matchCtx.round : (currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1"))
+  const homeKitColors = useMemo(() => getKitColors(homeTeam, matchCtx.homeKit ?? "home"), [homeTeam, matchCtx.homeKit])
+  const awayKitColors = useMemo(() => getKitColors(awayTeam, matchCtx.awayKit ?? "away"), [awayTeam, matchCtx.awayKit])
 
   // Determina qual lado e o do usuario
   const userTeam = useMemo(() => {
@@ -577,8 +603,16 @@ export default function PartidaAoVivoPage() {
     // O game-engine so fornece o elenco do time do usuario. O adversario sempre
     // vem dos dados reais, garantindo que AMBOS os lados sejam preenchidos
     // (radar, condicao fisica e notas dependem disso).
-    if (enginePlayers && enginePlayers.length > 0) {
-      const userSquad = enginePlayersToMatchSquad(enginePlayers, isHome ? 0 : 200)
+    if (matchCtx.youth && savedGame.youthPlayers?.length) {
+      const selectedIds = new Set(savedGame.youthCareer?.startingPlayerIds ?? savedGame.youthPlayers.slice(0, 11).map(player => player.id))
+      const ordered = [...savedGame.youthPlayers.filter(player => selectedIds.has(player.id)), ...savedGame.youthPlayers.filter(player => !selectedIds.has(player.id))]
+      const converted = ordered.map((player, index) => ({ id: index + 1, name: player.name, position: player.position, overall: player.overall, energy: 100, pace: player.pace ?? player.overall, shooting: player.shooting ?? shootingForPosition(player.overall, player.position), passing: player.passing ?? player.overall, dribbling: player.dribbling ?? player.overall, defending: player.defending ?? player.overall, physical: player.physical ?? player.overall, isStarter: selectedIds.has(player.id), shirtNumber: index + 1, injury: null, calledUp: false } as unknown as EnginePlayer))
+      const youthSquad = enginePlayersToMatchSquad(converted, isHome ? 0 : 200, savedFormation ?? "4-3-3")
+      const opponent = buildSideFromData(isHome ? awayTeam : homeTeam, isHome ? 200 : 0, "SUB20_")
+      if (isHome) { setHomeSquad(youthSquad.starters); setHomeBench(youthSquad.bench); setAwaySquad(opponent.starters); setAwayBench(opponent.bench) }
+      else { setAwaySquad(youthSquad.starters); setAwayBench(youthSquad.bench); setHomeSquad(opponent.starters); setHomeBench(opponent.bench) }
+    } else if (enginePlayers && enginePlayers.length > 0) {
+      const userSquad = enginePlayersToMatchSquad(enginePlayers, isHome ? 0 : 200, savedFormation ?? "4-3-3")
       if (isHome) {
         const opp = buildSideFromData(awayTeam, 200, "A_")
         setHomeSquad(userSquad.starters)
@@ -601,7 +635,7 @@ export default function PartidaAoVivoPage() {
       setAwaySquad(away.starters)
       setAwayBench(away.bench)
     }
-  }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome])
+  }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome, matchCtx.youth, savedGame.youthPlayers, savedGame.youthCareer?.startingPlayerIds, savedFormation])
 
   const toSquadPlayer = (p: MatchPlayer) => ({
     nome: p.name,
@@ -618,14 +652,36 @@ export default function PartidaAoVivoPage() {
 
   // Mentalidade do time do USUARIO, mudavel DURANTE a partida (o motor le config ao vivo,
   // entao vale ja no proximo lance / no 2o tempo). Ofensivo = mais ataque, menos solidez.
-  const [userMentality, setUserMentality] = useState<"defensivo" | "equilibrado" | "ofensivo">("equilibrado")
+  const initialMentality = teamTactics.mentality === "muito_defensivo" ? "defensivo" : teamTactics.mentality === "muito_ofensivo" ? "ofensivo" : teamTactics.mentality
+  const [userMentality, setUserMentality] = useState<"defensivo" | "equilibrado" | "ofensivo">(initialMentality)
+  // A formação pode ser alterada durante a partida sem alterar a escalação salva
+  // para a próxima rodada. O radar e o plano de jogo leem este estado ao vivo.
+  const [liveFormation, setLiveFormation] = useState(savedFormation ?? "4-3-3")
+  const [liveTacticNotice, setLiveTacticNotice] = useState<string | null>(null)
+
+  const applyLiveFormation = (formation: string) => {
+    setLiveFormation(formation)
+    setLiveTacticNotice(`${formation} aplicado em campo`)
+    window.setTimeout(() => setLiveTacticNotice(null), 2600)
+  }
+
+  const tacticalForces = useMemo(() => {
+    const base = { attack: 0, defense: 0, midfield: 0 }
+    if (teamTactics.playingStyle === "posse_bola") return { ...base, midfield: 5, attack: 1 }
+    if (teamTactics.playingStyle === "contra_ataque") return { ...base, attack: 4, defense: 3, midfield: -2 }
+    if (teamTactics.playingStyle === "pressao_alta") return { ...base, attack: 3, midfield: 3, defense: -1 }
+    if (teamTactics.playingStyle === "jogo_direto") return { ...base, attack: 2, midfield: -1 }
+    return { ...base, attack: 1, midfield: 2 }
+  }, [teamTactics.playingStyle])
 
   // Config da simulacao
   const config = useMemo(() => ({
     homeTeam,
     awayTeam,
-    homeRating: homeTeam.prestigio,
-    awayRating: awayTeam.prestigio,
+    // A IA recebe apenas um pequeno ganho de preparo; a diferença principal continua
+    // vindo do elenco. Isso aumenta a dificuldade sem manipular placares.
+    homeRating: homeTeam.prestigio + (userSide === "away" ? 2 : 0),
+    awayRating: awayTeam.prestigio + (userSide === "home" ? 2 : 0),
     homeSquad: homeSquad.map(toSquadPlayer),
     awaySquad: awaySquad.map(toSquadPlayer),
     durationMinutes: matchCtx.duration,
@@ -635,10 +691,34 @@ export default function PartidaAoVivoPage() {
     // Mentalidade aplicada ao lado do usuario (afeta a simulacao ao vivo).
     homeMentality: userSide === "home" ? userMentality : undefined,
     awayMentality: userSide === "away" ? userMentality : undefined,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality])
+    homeAttack: userSide === "home" ? homeTeam.prestigio + tacticalForces.attack : undefined,
+    homeDefense: userSide === "home" ? homeTeam.prestigio + tacticalForces.defense : undefined,
+    homeMidfield: userSide === "home" ? homeTeam.prestigio + tacticalForces.midfield : undefined,
+    awayAttack: userSide === "away" ? awayTeam.prestigio + tacticalForces.attack : undefined,
+    awayDefense: userSide === "away" ? awayTeam.prestigio + tacticalForces.defense : undefined,
+    awayMidfield: userSide === "away" ? awayTeam.prestigio + tacticalForces.midfield : undefined,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty } = sim
+
+  useEffect(() => {
+    // Antes do apito inicial a formação deve sempre refletir a última tática salva.
+    if (state.phase === "pre") setLiveFormation(savedFormation ?? "4-3-3")
+  }, [savedFormation, state.phase])
+
+  useEffect(() => {
+    initAudio({
+      enabled: savedGame.commentaryEnabled ?? true,
+      volume: (savedGame.commentaryVolume ?? 80) / 100,
+      mute: !(savedGame.commentaryEnabled ?? true),
+      preload: true,
+      fallbackToText: true,
+      pack: savedGame.commentaryVoice ?? "padrao",
+      language: "pt-br",
+    })
+    return clearCommentary
+  }, [savedGame.commentaryEnabled, savedGame.commentaryVolume, savedGame.commentaryVoice])
 
   // Penalti a favor do usuario: o motor parou e esta esperando o batedor.
   // Isto substitui a deteccao pelo evento (que nunca funcionava — o gol ja vinha por cima).
@@ -655,6 +735,9 @@ export default function PartidaAoVivoPage() {
   // Sons da partida
   const { play: playSound } = useMatchSounds()
   const lastSoundEventId = useRef<string | null>(null)
+  const lastDismissalEventId = useRef<string | null>(null)
+  const lastSideFoulEventId = useRef<string | null>(null)
+  const sideFoulTimer = useRef<number | null>(null)
   const lastPhase = useRef<string | null>(null)
 
   // Som por mudança de fase (apito de início/intervalo/fim)
@@ -663,8 +746,8 @@ export default function PartidaAoVivoPage() {
     if (lastPhase.current === state.phase) return
     lastPhase.current = state.phase
     if (state.phase === "first") playSound("apito_inicio")
-    else if (state.phase === "halftime") playSound("apito_intervalo")
-    else if (state.phase === "fulltime") playSound("apito_fim")
+    else if (state.phase === "halftime") { playSound("apito_intervalo"); enqueueEvent("intervalo") }
+    else if (state.phase === "fulltime") { playSound("apito_fim"); enqueueEvent("fimjogo") }
   }, [state.phase, hydrated, playSound])
 
   // Som por evento (gol, falta, cartão, etc.)
@@ -678,14 +761,25 @@ export default function PartidaAoVivoPage() {
     if (lastSoundEventId.current === id) return
     lastSoundEventId.current = id
     switch (last.type) {
-      case "goal":    playSound("gol"); break
+      case "goal":    playSound("gol"); enqueueEvent("gol1"); break
       case "foul":    playSound("apito_falta"); break
       case "yellow_card": playSound("cartao_amarelo"); break
-      case "red_card":    playSound("cartao_vermelho"); break
-      case "penalty":     playSound("penalti"); break
+      case "red_card":    playSound("cartao_vermelho"); enqueueEvent("expulsao"); break
+      case "penalty":     playSound("penalti"); enqueueEvent("penalty"); break
       case "sub":         playSound("substituicao"); break
     }
   }, [state.events, playSound])
+
+  // Vermelho precisa retirar o atleta do radar/campo, não apenas reduzir a força do time.
+  useEffect(() => {
+    const dismissal = state.events.find(event => event.type === "red_card")
+    if (!dismissal?.player || dismissal.id === lastDismissalEventId.current) return
+    lastDismissalEventId.current = dismissal.id
+    const normalized = dismissal.player.trim().toLocaleLowerCase("pt-BR")
+    const remove = (players: MatchPlayer[]) => players.filter(player => player.name.trim().toLocaleLowerCase("pt-BR") !== normalized)
+    if (dismissal.side === "home") setHomeSquad(remove)
+    else setAwaySquad(remove)
+  }, [state.events])
 
   // Contexto atual
   const gameContext: GameContext = state.phase === "pre" 
@@ -710,6 +804,7 @@ export default function PartidaAoVivoPage() {
     player?: string
     minute?: number
   } | null>(null)
+  const [sideFoul, setSideFoul] = useState<MatchEvent | null>(null)
 
   // Estado para modal de penalti
   const [showPenaltyModal, setShowPenaltyModal] = useState(false)
@@ -735,7 +830,7 @@ export default function PartidaAoVivoPage() {
     if (lastProcessedEventId.current === eventId) return
     lastProcessedEventId.current = eventId
 
-    const animatableTypes: AnimatableEvent[] = ["goal", "penalty", "yellow_card", "red_card", "foul", "var"]
+    const animatableTypes: AnimatableEvent[] = ["goal", "penalty", "yellow_card", "red_card", "var"]
     
     if (animatableTypes.includes(lastEvent.type as AnimatableEvent)) {
       const eventTeam = lastEvent.side === "home" ? homeTeam : awayTeam
@@ -757,6 +852,21 @@ export default function PartidaAoVivoPage() {
       }
     }
   }, [state.events, homeTeam, awayTeam, userSide, pause])
+
+  // Faltas são avisos contextuais e não devem pausar/cobrir o placar. Exibe o lance
+  // por alguns segundos na coluna lateral direita, reservada a informações ao vivo.
+  useEffect(() => {
+    const foul = state.events.find(event => event.type === "foul")
+    if (!foul || foul.id === lastSideFoulEventId.current) return
+    lastSideFoulEventId.current = foul.id
+    setSideFoul(foul)
+    if (sideFoulTimer.current !== null) window.clearTimeout(sideFoulTimer.current)
+    sideFoulTimer.current = window.setTimeout(() => setSideFoul(current => current?.id === foul.id ? null : current), 6500)
+  }, [state.events])
+
+  useEffect(() => () => {
+    if (sideFoulTimer.current !== null) window.clearTimeout(sideFoulTimer.current)
+  }, [])
 
   // Cobra o penalti com o batedor escolhido e DEVOLVE o desfecho, para o modal narrar
   // ("La vai Fulano... foi na paradinha... chutou... eeeee... GOOOL!").
@@ -793,6 +903,15 @@ export default function PartidaAoVivoPage() {
         fastForward()
         return
       }
+      // Atalho exibido nas configuracoes e no rodape da partida.
+      if (e.key.toLowerCase() === "t" && state.phase !== "pre" && state.phase !== "fulltime") {
+        e.preventDefault()
+        if (subsRemaining > 0) {
+          pause()
+          setShowSubModal(true)
+        }
+        return
+      }
       if (e.key === "Escape") {
         if (state.phase !== "pre" && state.phase !== "fulltime") {
           if (isRunning) pause()
@@ -802,7 +921,7 @@ export default function PartidaAoVivoPage() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [fastForward, isRunning, pause, resume, start, state.phase])
+  }, [fastForward, isRunning, pause, resume, start, state.phase, subsRemaining])
 
   // Handler de gamepad
   useEffect(() => {
@@ -848,9 +967,23 @@ export default function PartidaAoVivoPage() {
   const [showRoundResults, setShowRoundResults] = useState(false)
   const [showPressConference, setShowPressConference] = useState(false)
   const [isLeagueChampion, setIsLeagueChampion] = useState(false)
+  const postMatchAdvance = useRef<Promise<unknown> | null>(null)
   // Congela os times do confronto no apito final, ANTES de advanceWeek mudar o
   // currentMatch para a proxima partida (senao o modal mostra o adversario errado).
-  const [finalMatch, setFinalMatch] = useState<{ home: Team; away: Team; userSide: "home" | "away" } | null>(null)
+
+  // A partida do usuario precisa aparecer mesmo enquanto o Zustand ainda propaga o
+  // resultado recém-registrado. Sem este fallback a tela intermediaria podia ficar vazia.
+  const postMatchRoundResults = useMemo(() => {
+    if (roundResults.length > 0) return roundResults
+    if (state.phase !== "fulltime") return []
+    return [{
+      competition: matchCtx.competition || "Partida",
+      homeTeam: (finalMatch?.home ?? homeTeam).curto,
+      awayTeam: (finalMatch?.away ?? awayTeam).curto,
+      homeScore: state.home.goals,
+      awayScore: state.away.goals,
+    }]
+  }, [roundResults, state.phase, state.home.goals, state.away.goals, matchCtx.competition, finalMatch, homeTeam, awayTeam])
 
   useEffect(() => {
     if (state.phase === "fulltime" && !showResult) {
@@ -861,6 +994,11 @@ export default function PartidaAoVivoPage() {
         // AMISTOSO: e so treino — NAO registra resultado, NAO mexe na tabela nem avanca a
         // semana. So mostra o placar. (Sem isto, um amistoso contaria como jogo oficial.)
         if (matchCtx.friendly) {
+          clearMatchContext()
+        } else if (matchCtx.youth) {
+          const userGoals = userSide === "home" ? state.home.goals : state.away.goals
+          const opponentGoals = userSide === "home" ? state.away.goals : state.home.goals
+          setSavedGame(applyPlayedYouthMatch(savedGame, userGoals, opponentGoals))
           clearMatchContext()
         } else {
           const events = state.events
@@ -879,7 +1017,7 @@ export default function PartidaAoVivoPage() {
             events
           )
           clearMatchContext()
-          advanceWeek().then(result => {
+          postMatchAdvance.current = advanceWeek().then(result => {
             if (result && "leagueChampion" in result && result.leagueChampion) {
               const champ = result.leagueChampion
               localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
@@ -890,13 +1028,13 @@ export default function PartidaAoVivoPage() {
               }))
               setIsLeagueChampion(true)
             }
-          }).catch(() => {})
+          }).catch(() => undefined)
         }
       }
       const t = setTimeout(() => setShowResult(true), 1200)
       return () => clearTimeout(t)
     }
-  }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek])
+  }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek, matchCtx.friendly, matchCtx.youth, savedGame, setSavedGame, userSide])
 
   // Stamina drena por minuto
   useEffect(() => {
@@ -905,26 +1043,47 @@ export default function PartidaAoVivoPage() {
     setAwaySquad(prev => prev.map(p => ({ ...p, stamina: Math.max(0, p.stamina - 1.1) })))
   }, [state.minute, state.phase])
 
+  // Mantém FC Hub e Discord Rich Presence sincronizados com o jogo ao vivo.
+  // É um evento local e leve; não envia dados para servidor próprio.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("ultrafoot:live-presence", { detail: {
+      home: homeTeam.nome,
+      away: awayTeam.nome,
+      homeGoals: state.home.goals,
+      awayGoals: state.away.goals,
+      minute: state.minute,
+      phase: state.phase,
+      competition: displayCompetition,
+    } }))
+  }, [homeTeam.nome, awayTeam.nome, state.home.goals, state.away.goals, state.minute, state.phase, displayCompetition])
+
   // Substituição
   const userStarters = userSide === "home" ? homeSquad : awaySquad
   const userBench = userSide === "home" ? homeBench : awayBench
   const userTeamForSub = userSide === "home" ? homeTeam : awayTeam
 
-  const handleSub = (out: MatchPlayer, inPlayer: MatchPlayer) => {
-    if (subsRemaining <= 0) return
+  const handleSub = (requestedChanges: SubstitutionChange[]) => {
+    const changes = requestedChanges.slice(0, subsRemaining)
+    if (changes.length === 0) return
     const setStarters = userSide === "home" ? setHomeSquad : setAwaySquad
     const setBenchSet = userSide === "home" ? setHomeBench : setAwayBench
-    setStarters(prev => prev.map(p => p.id === out.id ? { ...inPlayer } : p))
-    setBenchSet(prev => prev.filter(p => p.id !== inPlayer.id))
-    setSubsRemaining(s => s - 1)
-    // A troca so muda a forca do time (via config); sem isto ela nao aparece na timeline.
-    addEvent({
+    // Quem entra herda o slot de quem sai. Assim uma substituição não rearranja
+    // Pulgar, Arrascaeta e os demais titulares no radar.
+    const replacements = new Map(changes.map(change => [
+      change.out.id,
+      { ...change.inPlayer, tacticalSlot: change.out.tacticalSlot, formationPosition: change.out.formationPosition },
+    ]))
+    const incoming = new Set(changes.map(change => change.inPlayer.id))
+    setStarters(prev => prev.map(player => replacements.get(player.id) ?? player))
+    setBenchSet(prev => prev.filter(player => !incoming.has(player.id)))
+    setSubsRemaining(current => Math.max(0, current - changes.length))
+    changes.forEach(change => addEvent({
       type: "sub",
       side: userSide,
-      text: `Substituição: ${inPlayer.name} entra no lugar de ${out.name}`,
-      player: inPlayer.name,
+      text: `Substituição: ${change.inPlayer.name} entra no lugar de ${change.out.name}`,
+      player: change.inPlayer.name,
       important: true,
-    })
+    }))
     setShowSubModal(false)
   }
 
@@ -963,7 +1122,7 @@ export default function PartidaAoVivoPage() {
 
   return (
     <div className={cn(
-      "min-h-screen flex flex-col",
+      "h-[100dvh] overflow-hidden flex flex-col",
       "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]"
     )} data-match-end={state.phase === "fulltime" ? "true" : undefined}>
 
@@ -1028,6 +1187,7 @@ export default function PartidaAoVivoPage() {
                 <Play className="h-5 w-5 fill-current" />
                 INICIAR PARTIDA
               </button>
+
               <p className="text-white/30 text-xs">
                 Pressione <kbd className="bg-white/10 px-2 py-0.5 rounded text-white/50">Enter</kbd> ou o botão A do controle
               </p>
@@ -1037,7 +1197,7 @@ export default function PartidaAoVivoPage() {
       )}
 
       {/* Conteudo Principal - Estilo EA FC */}
-      <div className="flex-1 flex flex-col relative overflow-y-auto">
+      <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
 
         {/* Liga Badge - Topo Central */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
@@ -1047,7 +1207,7 @@ export default function PartidaAoVivoPage() {
         </div>
 
         {/* Header do Placar */}
-        <header className="relative z-10 pt-16 pb-4 px-4 sm:px-8">
+        <header className="relative z-10 shrink-0 pt-16 pb-4 px-4 sm:px-8">
           <div className="flex items-center justify-center gap-4 sm:gap-8">
             {/* Time Casa */}
             <div className="flex items-center gap-3 sm:gap-4">
@@ -1085,7 +1245,7 @@ export default function PartidaAoVivoPage() {
         </header>
 
         {/* Area Principal - 3 Colunas */}
-        <div className="flex-1 flex px-4 sm:px-8 pb-4 gap-4 sm:gap-8 min-h-0">
+        <div className="flex-1 min-h-0 flex px-4 sm:px-8 pb-4 gap-4 sm:gap-8">
           
   {/* Coluna Esquerda - Stats Casa */}
   <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
@@ -1138,21 +1298,29 @@ export default function PartidaAoVivoPage() {
                             : e.type === "save" || e.type === "post" ? "text-cyan-300"
                             : e.type === "fulltime" || e.type === "halftime" || e.type === "kickoff" ? "text-white/80 font-semibold"
                             : "text-white/55"
-                          const icon =
-                            e.type === "goal" ? "⚽"
-                            : e.type === "red_card" ? "🟥"
-                            : e.type === "yellow_card" ? "🟨"
-                            : e.type === "penalty" ? "🎯"
-                            : e.type === "corner" ? "🚩"
-                            : e.type === "injury" ? "➕"
-                            : e.type === "save" ? "🧤"
-                            : e.type === "sub" ? "🔁"
-                            : "•"
+                          const EventIcon =
+                            e.type === "goal" ? Goal
+                            : e.type === "red_card" || e.type === "yellow_card" ? Square
+                            : e.type === "penalty" ? TargetIcon
+                            : e.type === "corner" ? Flag
+                            : e.type === "injury" ? Stethoscope
+                            : e.type === "save" ? Hand
+                            : e.type === "sub" ? ArrowLeftRight
+                            : Circle
+                          const iconClass =
+                            e.type === "red_card" ? "fill-red-500 text-red-500"
+                            : e.type === "yellow_card" ? "fill-yellow-400 text-yellow-400"
+                            : e.type === "goal" ? "text-emerald-400"
+                            : e.type === "penalty" ? "text-orange-400"
+                            : e.type === "corner" ? "text-rose-300"
+                            : e.type === "injury" ? "text-red-300"
+                            : e.type === "save" ? "text-cyan-300"
+                            : "text-white/40"
                           const min = e.addedTime ? `${e.minute}+${e.addedTime}'` : `${e.minute}'`
                           return (
                             <li key={e.id} className="flex items-start gap-2 text-sm leading-snug">
                               <span className="shrink-0 tabular-nums text-white/40 w-10 text-right">{min}</span>
-                              <span className="shrink-0">{icon}</span>
+                              <EventIcon className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", iconClass)} aria-hidden="true" />
                               <span className={color}>{e.text}</span>
                             </li>
                           )
@@ -1174,6 +1342,10 @@ export default function PartidaAoVivoPage() {
                       homePossession={state.home?.possession ?? 50}
                       minute={state.minute}
                       phase={state.phase}
+                      homeFormation={userSide === "home" ? liveFormation : undefined}
+                      awayFormation={userSide === "away" ? liveFormation : undefined}
+                      homeColor={homeKitColors.body}
+                      awayColor={awayKitColors.body}
                     />
                   </div>
                 )}
@@ -1300,6 +1472,51 @@ export default function PartidaAoVivoPage() {
                   <div className="space-y-4">
                     <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">{t.match.live.sectionGameplan}</h3>
 
+                    {/* Campo tático e mudança real de formação durante a partida. */}
+                    <div className="rounded-xl border border-[#00ffc8]/20 bg-[#071817]/75 p-3">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-white">Escalação em campo</p>
+                          <p className="mt-0.5 text-[11px] text-white/45">A formação é aplicada imediatamente ao radar e à partida.</p>
+                        </div>
+                        <span className="rounded-md bg-[#00ffc8]/15 px-2 py-1 text-sm font-black text-[#00ffc8]">{liveFormation}</span>
+                      </div>
+                      <div className="mb-3 grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                        {["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2"].map(formation => (
+                          <button
+                            key={formation}
+                            type="button"
+                            onClick={() => applyLiveFormation(formation)}
+                            className={cn(
+                              "rounded-md border px-1.5 py-2 text-[11px] font-bold transition-colors",
+                              liveFormation === formation
+                                ? "border-[#00ffc8] bg-[#00ffc8]/15 text-[#00ffc8]"
+                                : "border-white/10 bg-black/20 text-white/60 hover:border-white/30 hover:text-white",
+                            )}
+                          >
+                            {formation}
+                          </button>
+                        ))}
+                      </div>
+                      {liveTacticNotice && <p className="mb-2 text-[11px] font-semibold text-[#00ffc8]" role="status">{liveTacticNotice}</p>}
+                      <div className="h-44 overflow-hidden rounded-lg border border-white/10 bg-black/20 sm:h-52">
+                        <MatchRadar
+                          homeTeam={homeTeam}
+                          awayTeam={awayTeam}
+                          homeSquad={homeSquad}
+                          awaySquad={awaySquad}
+                          ball={state.ball}
+                          homePossession={state.home?.possession ?? 50}
+                          minute={state.minute}
+                          phase={state.phase}
+                          homeFormation={userSide === "home" ? liveFormation : undefined}
+                          awayFormation={userSide === "away" ? liveFormation : undefined}
+                          homeColor={homeKitColors.body}
+                          awayColor={awayKitColors.body}
+                        />
+                      </div>
+                    </div>
+
                     {/* Mentalidade AO VIVO do time do usuario — muda a simulacao na hora. */}
                     <div className="mb-4 rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/[0.04] p-3">
                       <div className="mb-2 flex items-center justify-between">
@@ -1336,7 +1553,7 @@ export default function PartidaAoVivoPage() {
                           <TeamCrest team={homeTeam} size="xs" />
                           <span className="text-white text-sm font-medium">{homeTeam.curto}</span>
                         </div>
-                        <div className="text-[#00ffc8] text-lg font-bold">4-3-3</div>
+                        <div className="text-[#00ffc8] text-lg font-bold">{userSide === "home" ? liveFormation : "4-4-2"}</div>
                         <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
                         <div className="text-white/40 text-xs">Mentalidade: Normal</div>
                       </div>
@@ -1347,7 +1564,7 @@ export default function PartidaAoVivoPage() {
                           <TeamCrest team={awayTeam} size="xs" />
                           <span className="text-white text-sm font-medium">{awayTeam.curto}</span>
                         </div>
-                        <div className="text-[#00ffc8] text-lg font-bold">4-4-2</div>
+                        <div className="text-[#00ffc8] text-lg font-bold">{userSide === "away" ? liveFormation : "4-4-2"}</div>
                         <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
                         <div className="text-white/40 text-xs">Mentalidade: Normal</div>
                       </div>
@@ -1381,7 +1598,7 @@ export default function PartidaAoVivoPage() {
 
               {/* Tabs no rodape do card */}
               <div className="border-t border-white/[0.06] bg-[#0d1a1a]/50">
-                <div className="flex items-center justify-center gap-1 px-4 py-2">
+                <div className="flex items-center justify-start overflow-x-auto px-4 py-2 scrollbar-thin scrollbar-thumb-white/15">
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 mr-2">L1</span>
                   <TabButton label="Narração" active={activeTab === "narration"} onClick={() => setActiveTab("narration")} />
                   <TabButton label={t.match.live.tabPitch} active={activeTab === "pitch"} onClick={() => setActiveTab("pitch")} />
@@ -1397,7 +1614,16 @@ export default function PartidaAoVivoPage() {
           </div>
 
   {/* Coluna Direita - Stats Fora */}
-  <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
+  <div className="hidden lg:flex flex-col justify-center gap-6 w-48">
+  {sideFoul && (
+    <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-3 shadow-[0_12px_35px_rgba(0,0,0,.25)]" role="status" aria-live="polite">
+      <div className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-300">
+        <AlertTriangle className="h-3.5 w-3.5" /> Falta marcada
+      </div>
+      <p className="text-xs leading-snug text-white/80">{sideFoul.text}</p>
+      <p className="mt-1 text-[10px] font-bold tabular-nums text-white/40">{sideFoul.minute}&apos;</p>
+    </div>
+  )}
   <BigStat label="Posse" value={state.away?.possession ?? 50} side="right" />
   <BigStat label="Chutes" value={state.away?.shots ?? 0} side="right" />
   <BigStat label="No alvo" value={state.away?.shotsOnTarget ?? 0} side="right" />
@@ -1405,7 +1631,7 @@ export default function PartidaAoVivoPage() {
         </div>
 
         {/* Barra de Acoes - Rodape */}
-        <div className="border-t border-white/[0.06] bg-[#0a1515]/80 backdrop-blur-sm px-4 sm:px-8 py-3">
+        <div className="shrink-0 border-t border-white/[0.06] bg-[#0a1515]/80 backdrop-blur-sm px-4 sm:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 sm:gap-6">
               {/* Controles da partida */}
@@ -1445,6 +1671,20 @@ export default function PartidaAoVivoPage() {
                 <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/50 font-bold">X</span>
                 <span className="text-white/60 text-sm">Avancar</span>
               </button>
+
+              {/* Substituicao sempre visivel durante o jogo (teclado T / Y-Triangulo). */}
+              {isMatchInProgress && (
+                <button
+                  type="button"
+                  onClick={() => { pause(); setShowSubModal(true) }}
+                  disabled={subsRemaining <= 0}
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-35"
+                >
+                  <span className="rounded bg-[#00ffc8]/15 px-2 py-1 text-[10px] font-black text-[#00ffc8]">T</span>
+                  <ArrowDownUp className="h-3.5 w-3.5 text-[#00ffc8]" />
+                  <span className="text-sm">Substituir ({subsRemaining})</span>
+                </button>
+              )}
 
               {/* Post-Match Interview */}
               {state.phase === "fulltime" && (
@@ -1503,11 +1743,9 @@ export default function PartidaAoVivoPage() {
           isChampion={isLeagueChampion}
           onClose={() => {
             setShowResult(false)
-            // Se por algum motivo nao houver resultados da rodada, NAO abre um modal
-            // vazio: segue direto para a coletiva. Melhor pular uma tela do que mostrar
-            // uma em branco (que e como o bug se manifestava).
-            if (roundResults.length > 0) setShowRoundResults(true)
-            else setShowPressConference(true)
+            // Ordem obrigatoria: placar/estatisticas -> resultados da rodada -> imprensa.
+            // A base tambem passa pela tela para manter a experiencia igual ao profissional.
+            setShowRoundResults(true)
           }}
         />
       )}
@@ -1516,7 +1754,7 @@ export default function PartidaAoVivoPage() {
   {showRoundResults && (
     <RoundResultsModal
       open={showRoundResults}
-      results={roundResults}
+      results={postMatchRoundResults}
       userHome={(finalMatch?.home ?? homeTeam).curto}
       userAway={(finalMatch?.away ?? awayTeam).curto}
       onContinue={() => {
@@ -1536,10 +1774,16 @@ export default function PartidaAoVivoPage() {
       awayGoals={state.away.goals}
       userSide={finalMatch?.userSide ?? userSide}
       onClose={() => setShowPressConference(false)}
-      onComplete={(moraleImpact) => {
+      onComplete={async (moraleImpact) => {
         setShowPressConference(false)
-        // Navegar para a pagina de pre-jogo (dashboard/escritorio)
-        window.location.href = "/"
+        // O save so pode liberar a tela depois que resultado, rodada e motor foram
+        // confirmados no disco. O href direto quebrava no build Tauri (ERR_FILE_NOT_FOUND)
+        // e podia matar o autosave ainda pendente.
+        if (postMatchAdvance.current) await postMatchAdvance.current
+        persistGameEngineNow()
+        await flushPersistentStore()
+        await saveGameStateAndFlush(loadGameState())
+        hardNavigate(matchCtx.youth ? "/base/carreira" : "/")
       }}
     />
   )}

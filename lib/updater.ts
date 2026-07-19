@@ -1,5 +1,11 @@
 import { isTauri } from "@/lib/game-asset"
 
+export interface InGameUpdateOffer {
+  version: string
+  notes: string
+  install: (onProgress: (percent: number) => void) => Promise<void>
+}
+
 /**
  * Verifica se há uma nova versão publicada (via tauri-plugin-updater),
  * pergunta ao usuário e, se confirmado, baixa + instala + reinicia o jogo.
@@ -9,8 +15,10 @@ import { isTauri } from "@/lib/game-asset"
  *
  * No navegador (fora do Tauri) é no-op.
  */
-export async function checkForUpdates(opts: { silent?: boolean } = {}): Promise<void> {
-  if (typeof window === "undefined" || !isTauri()) return
+export type UpdateCheckResult = "current" | "available" | "unavailable"
+
+export async function checkForUpdates(opts: { silent?: boolean } = {}): Promise<UpdateCheckResult> {
+  if (typeof window === "undefined" || !isTauri()) return "unavailable"
 
   try {
     const { check } = await import("@tauri-apps/plugin-updater")
@@ -24,49 +32,32 @@ export async function checkForUpdates(opts: { silent?: boolean } = {}): Promise<
           kind: "info",
         })
       }
-      return
+      return "current"
     }
 
-    const { ask, message } = await import("@tauri-apps/plugin-dialog")
-    const notes = update.body ? `\n\nNovidades:\n${update.body}` : ""
-    const wantsUpdate = await ask(
-      `Uma nova versão do Ultrafoot 26 está disponível: v${update.version}.${notes}\n\nDeseja baixar e instalar agora?`,
-      {
-        title: "Atualização disponível",
-        kind: "info",
-        okLabel: "Atualizar agora",
-        cancelLabel: "Mais tarde",
+    const offer: InGameUpdateOffer = {
+      version: update.version,
+      notes: update.body ?? "Correções, melhorias de estabilidade e dados atualizados.",
+      install: async (onProgress) => {
+        let downloaded = 0
+        let contentLength = 0
+        await update.downloadAndInstall((event) => {
+          if (event.event === "Started") contentLength = event.data.contentLength ?? 0
+          if (event.event === "Progress") {
+            downloaded += event.data.chunkLength
+            onProgress(contentLength > 0 ? Math.min(99, Math.round(downloaded / contentLength * 100)) : 1)
+          }
+          if (event.event === "Finished") onProgress(100)
+        })
+        const { relaunch } = await import("@tauri-apps/plugin-process")
+        await relaunch()
       },
-    )
+    }
 
-    if (!wantsUpdate) return
-
-    // Baixa e instala. O instalador NSIS roda em modo "passive" (config),
-    // mostrando uma barra de progresso mínima.
-    let downloaded = 0
-    let contentLength = 0
-    await update.downloadAndInstall((event) => {
-      switch (event.event) {
-        case "Started":
-          contentLength = event.data.contentLength ?? 0
-          break
-        case "Progress":
-          downloaded += event.data.chunkLength
-          break
-        case "Finished":
-          break
-      }
-    })
-    void downloaded
-    void contentLength
-
-    await message("Atualização instalada com sucesso. O jogo será reiniciado agora.", {
-      title: "Pronto!",
-      kind: "info",
-    })
-
-    const { relaunch } = await import("@tauri-apps/plugin-process")
-    await relaunch()
+    // A confirmação pertence à UI do jogo. Isso elimina o MessageBox do Windows que
+    // parecia uma ferramenta externa e quebrava a imersão.
+    window.dispatchEvent(new CustomEvent<InGameUpdateOffer>("ultrafoot:update-available", { detail: offer }))
+    return "available"
   } catch (err) {
     // Falha de rede / endpoint indisponível não deve quebrar o jogo.
     if (!opts.silent) {
@@ -81,5 +72,6 @@ export async function checkForUpdates(opts: { silent?: boolean } = {}): Promise<
       }
     }
     console.error("[updater] falha ao verificar/instalar atualização:", err)
+    return "unavailable"
   }
 }

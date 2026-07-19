@@ -1058,6 +1058,25 @@ html[data-a11y-reduce-motion] *::after {
   scroll-behavior: auto !important;
 }
 
+/* Perfil para PCs fracos/modestos: evita composição cara na GPU, sombras gigantes,
+   filtros de fundo e animações contínuas. Mantém layout e funcionalidade. */
+html[data-performance-mode] .backdrop-blur-sm,
+html[data-performance-mode] .backdrop-blur-md,
+html[data-performance-mode] .backdrop-blur-lg,
+html[data-performance-mode] .backdrop-blur-xl,
+html[data-performance-mode] .backdrop-blur-2xl,
+html[data-performance-mode] .backdrop-blur-3xl {
+  backdrop-filter: none !important;
+}
+html[data-performance-mode] [class*="shadow-["],
+html[data-performance-mode] .shadow-2xl,
+html[data-performance-mode] .shadow-xl {
+  box-shadow: none !important;
+}
+html[data-performance-mode] .office-bg-b { display: none !important; }
+html[data-performance-mode] .office-bg-a { animation: none !important; opacity: 1 !important; }
+html[data-performance-mode] video { display: none !important; }
+
 /* Foco visivel: essencial para teclado e controle. */
 html[data-a11y-focus] *:focus-visible {
   outline: 3px solid #00ffc8 !important;
@@ -1070,4 +1089,20 @@ html[data-a11y-underline] a,
 html[data-a11y-underline] button {
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+html[data-performance="economy"] *,
+html[data-performance="economy"] *::before,
+html[data-performance="economy"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-performance="economy"] .backdrop-blur-sm,
+html[data-performance="economy"] .backdrop-blur,
+html[data-performance="economy"] .backdrop-blur-md,
+html[data-performance="economy"] .backdrop-blur-lg,
+html[data-performance="economy"] .backdrop-blur-xl {
+  backdrop-filter: none !important;
 }

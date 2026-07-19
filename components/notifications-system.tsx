@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react"
+import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Trophy, Goal, Zap, TrendingUp, AlertTriangle, Bell, Star, Users, DollarSign, Clock, ChevronRight, Info } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
+import { getCareerScopedKey } from "@/lib/save-system"
 
 // Types
 interface Notification {
@@ -46,6 +48,43 @@ export function useNotifications() {
 // Provider
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [storageReady, setStorageReady] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    const loadNotifications = () => {
+      if (!mounted) return
+      try {
+        const parsed = JSON.parse(storeGet(getCareerScopedKey("ultrafoot:notifications")) ?? "[]") as Array<Omit<Notification, "timestamp" | "action"> & { timestamp: string }>
+        setNotifications(Array.isArray(parsed) ? parsed.map(item => ({ ...item, timestamp: new Date(item.timestamp) })) : [])
+      } catch {
+        setNotifications([])
+      }
+      setStorageReady(true)
+    }
+    void initPersistentStore().then(loadNotifications)
+    const onStoreChange = (event: Event) => {
+      if ((event as CustomEvent<{ key?: string }>).detail?.key === "ultrafoot:active-career") {
+        setStorageReady(false)
+        loadNotifications()
+      }
+    }
+    window.addEventListener("ultrafoot:store:changed", onStoreChange)
+    window.addEventListener("ultrafoot:store:ready", loadNotifications)
+    return () => {
+      mounted = false
+      window.removeEventListener("ultrafoot:store:changed", onStoreChange)
+      window.removeEventListener("ultrafoot:store:ready", loadNotifications)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!storageReady) return
+    // Acoes sao callbacks de UI e nao pertencem ao save. O historico textual fica
+    // isolado por carreira e sobrevive ao fechamento/atualizacao do jogo.
+    const serializable = notifications.map(({ action, ...notification }) => notification)
+    storeSet(getCareerScopedKey("ultrafoot:notifications"), JSON.stringify(serializable))
+  }, [notifications, storageReady])
   
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -222,18 +261,23 @@ export function NotificationToast({ notification, onClose }: { notification: Not
 export function NotificationToastContainer() {
   const [toasts, setToasts] = useState<Notification[]>([])
   const { notifications } = useNotifications()
+  // Fechar um toast nao deve apagar a notificacao da central, mas tambem nao pode
+  // deixa-lo reaparecer em cada render. Antes o X removia da lista visual e este
+  // efeito o inseria novamente imediatamente porque ainda era a ultima notificacao.
+  const dismissedToastIds = useRef(new Set<string>())
   
   // Watch for new notifications
   useEffect(() => {
     if (notifications.length > 0) {
       const latest = notifications[0]
-      if (latest && !toasts.find(t => t.id === latest.id)) {
+      if (latest && !dismissedToastIds.current.has(latest.id) && !toasts.find(t => t.id === latest.id)) {
         setToasts(prev => [latest, ...prev].slice(0, 3))
       }
     }
   }, [notifications, toasts])
 
   const removeToast = useCallback((id: string) => {
+    dismissedToastIds.current.add(id)
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
@@ -255,6 +299,11 @@ export function NotificationToastContainer() {
 // Notification Center Panel
 export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotifications()
+  const [selected, setSelected] = useState<Notification | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) setSelected(null)
+  }, [isOpen])
 
   const formatTime = (date: Date) => {
     const now = new Date()
@@ -319,9 +368,23 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
               </div>
             </div>
 
-            {/* Notifications List */}
+            {/* Detalhe da notificação: o clique abre o conteúdo, em vez de marcar
+                como lida e deixar a área principal sem contexto. */}
             <div className="flex-1 overflow-y-auto">
-              {notifications.length === 0 ? (
+              {selected ? (
+                <div className="p-5">
+                  <button onClick={() => setSelected(null)} className="mb-5 text-xs font-semibold text-[#00ffc8] hover:text-white">← Todas as notificações</button>
+                  <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-5">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="rounded-xl bg-[#00ffc8]/15 p-3"><NotificationIcon type={selected.type} priority={selected.priority} /></div>
+                      <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#00ffc8]">Central do clube</p><p className="text-xs text-white/40">{formatTime(selected.timestamp)}</p></div>
+                    </div>
+                    <h3 className="text-lg font-bold text-white">{selected.title}</h3>
+                    <p className="mt-3 whitespace-pre-line text-sm leading-6 text-white/70">{selected.message}</p>
+                    {selected.action && <button onClick={selected.action.onClick} className="mt-5 rounded-lg bg-[#00ffc8] px-4 py-2 text-xs font-bold text-black">{selected.action.label}</button>}
+                  </div>
+                </div>
+              ) : notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-white/40">
                   <Bell className="h-12 w-12" />
                   <p className="text-sm">Nenhuma notificacao</p>
@@ -335,7 +398,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -100 }}
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => { markAsRead(notification.id); setSelected(notification) }}
                       className={cn(
                         "flex items-start gap-3 p-4 cursor-pointer transition-colors hover:bg-white/5",
                         !notification.read && "bg-white/5"

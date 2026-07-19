@@ -22,11 +22,21 @@ export interface NationalCompetitionDef {
   format: "group_knockout" | "league"
   kind: "title" | "qualifier" | "friendly"
   prestige: number
+  participants?: number
+  groups?: number
   groupSize?: number
   qualifyFromGroup?: number
+  bestThirdPlaces?: number
   knockoutStages?: string[]
   leagueTeams?: number
   leagueQualify?: number
+  /** Fase de grupos em turno e returno. */
+  doubleRoundRobin?: boolean
+  /** Posicoes seguintes que disputam uma repescagem. */
+  playoffFrom?: number
+  playoffTo?: number
+  /** Nao oferece a definicao legada em novas carreiras. */
+  legacy?: boolean
   /** Imagem de tema da competicao (fundo) */
   theme: string
   /** Logo oficial da competicao (exibida no emblema) */
@@ -44,6 +54,8 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     format: "group_knockout",
     kind: "title",
     prestige: 90,
+    participants: 16,
+    groups: 4,
     groupSize: 4,
     qualifyFromGroup: 2,
     knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
@@ -59,49 +71,130 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     format: "group_knockout",
     kind: "title",
     prestige: 94,
+    participants: 24,
+    groups: 6,
     groupSize: 4,
     qualifyFromGroup: 2,
+    bestThirdPlaces: 4,
     knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
     theme: "/competitions/8.jpg",
     accent: "#1d4ed8",
   },
   {
-    id: "nations_league",
-    name: "Liga das Nacoes",
-    shortName: "Nations League",
-    confederations: ["UEFA", "CONCACAF"],
-    format: "league",
+    id: "nations_league_uefa",
+    name: "Liga das Nacoes da UEFA",
+    shortName: "UEFA Nations League",
+    confederations: ["UEFA"],
+    format: "group_knockout",
     kind: "title",
     prestige: 78,
-    leagueTeams: 4,
-    leagueQualify: 1,
+    participants: 16,
+    groups: 4,
+    groupSize: 4,
+    qualifyFromGroup: 2,
+    doubleRoundRobin: true,
+    knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
     theme: "/competitions/8.jpg",
     accent: "#0d9488",
   },
   {
+    id: "nations_league_concacaf",
+    name: "Liga das Nacoes da Concacaf",
+    shortName: "Concacaf Nations League",
+    confederations: ["CONCACAF"],
+    format: "group_knockout",
+    kind: "title",
+    prestige: 76,
+    participants: 12,
+    groups: 2,
+    groupSize: 6,
+    qualifyFromGroup: 4,
+    knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
+    theme: "/competitions/8.jpg",
+    accent: "#0f766e",
+  },
+  {
+    id: "eliminatorias_conmebol",
+    name: "Eliminatorias Sul-Americanas",
+    shortName: "Eliminatorias CONMEBOL",
+    confederations: ["CONMEBOL"], format: "league", kind: "qualifier", prestige: 74,
+    leagueTeams: 10, leagueQualify: 6, playoffFrom: 7, playoffTo: 7, doubleRoundRobin: true,
+    knockoutStages: ["Repescagem intercontinental"],
+    theme: "/competitions/9.jpg", accent: "#ca8a04",
+  },
+  {
+    id: "eliminatorias_uefa",
+    name: "Eliminatorias Europeias",
+    shortName: "Eliminatorias UEFA",
+    confederations: ["UEFA"], format: "league", kind: "qualifier", prestige: 74,
+    leagueTeams: 5, leagueQualify: 1, playoffFrom: 2, playoffTo: 2, doubleRoundRobin: true,
+    knockoutStages: ["Semifinal dos playoffs", "Final dos playoffs"],
+    theme: "/competitions/9.jpg", accent: "#1d4ed8",
+  },
+  {
+    id: "eliminatorias_afc",
+    name: "Eliminatorias Asiaticas",
+    shortName: "Eliminatorias AFC",
+    confederations: ["AFC"], format: "league", kind: "qualifier", prestige: 70,
+    leagueTeams: 6, leagueQualify: 2, playoffFrom: 3, playoffTo: 4, doubleRoundRobin: true,
+    knockoutStages: ["4a fase da AFC", "Playoff asiatico", "Repescagem intercontinental"],
+    theme: "/competitions/9.jpg", accent: "#2563eb",
+  },
+  {
+    id: "eliminatorias_caf",
+    name: "Eliminatorias Africanas",
+    shortName: "Eliminatorias CAF",
+    confederations: ["CAF"], format: "league", kind: "qualifier", prestige: 70,
+    leagueTeams: 6, leagueQualify: 1, playoffFrom: 2, playoffTo: 2, doubleRoundRobin: true,
+    knockoutStages: ["Playoff africano", "Repescagem intercontinental"],
+    theme: "/competitions/9.jpg", accent: "#16a34a",
+  },
+  {
+    id: "eliminatorias_concacaf",
+    name: "Eliminatorias da Concacaf",
+    shortName: "Eliminatorias Concacaf",
+    confederations: ["CONCACAF"], format: "league", kind: "qualifier", prestige: 68,
+    leagueTeams: 4, leagueQualify: 1, playoffFrom: 2, playoffTo: 2, doubleRoundRobin: true,
+    knockoutStages: ["Repescagem intercontinental"],
+    theme: "/competitions/9.jpg", accent: "#eab308",
+  },
+  {
+    id: "eliminatorias_ofc",
+    name: "Eliminatorias da Oceania",
+    shortName: "Eliminatorias OFC",
+    confederations: ["OFC"], format: "group_knockout", kind: "qualifier", prestige: 64,
+    participants: 8, groups: 2, groupSize: 4, qualifyFromGroup: 2,
+    knockoutStages: ["Semifinal", "Final"],
+    theme: "/competitions/9.jpg", accent: "#0891b2",
+  },
+  {
     id: "eliminatorias",
-    name: "Eliminatorias da Copa",
-    shortName: "Eliminatorias",
-    confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC"],
-    format: "league",
-    kind: "qualifier",
-    prestige: 70,
-    leagueTeams: 6,
-    leagueQualify: 4,
-    theme: "/competitions/9.jpg",
-    accent: "#ca8a04",
+    name: "Eliminatorias da Copa (save antigo)", shortName: "Eliminatorias",
+    confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC", "CAF", "OFC"],
+    format: "league", kind: "qualifier", prestige: 70, leagueTeams: 6, leagueQualify: 4,
+    legacy: true, theme: "/competitions/9.jpg", accent: "#ca8a04",
+  },
+  {
+    id: "nations_league",
+    name: "Liga das Nacoes (save antigo)", shortName: "Nations League",
+    confederations: ["UEFA", "CONCACAF"], format: "league", kind: "title", prestige: 78,
+    leagueTeams: 4, leagueQualify: 1, legacy: true,
+    theme: "/competitions/8.jpg", accent: "#0d9488",
   },
   {
     id: "copa_mundo",
     name: "Copa do Mundo",
     shortName: "Copa do Mundo",
-    confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC"],
+    confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC", "CAF", "OFC"],
     format: "group_knockout",
     kind: "title",
     prestige: 100,
+    participants: 48,
+    groups: 12,
     groupSize: 4,
     qualifyFromGroup: 2,
-    knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
+    bestThirdPlaces: 8,
+    knockoutStages: ["Fase de 32", "Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
     theme: "/competitions/9.jpg",
     logo: "/competicoes/copa-do-mundo-2026.png",
     accent: "#1e3a8a",
@@ -110,7 +203,7 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     id: "amistosos",
     name: "Amistosos Internacionais",
     shortName: "Amistosos",
-    confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC"],
+    confederations: ["CONMEBOL", "UEFA", "CONCACAF", "AFC", "CAF", "OFC"],
     format: "league",
     kind: "friendly",
     prestige: 45,
@@ -118,6 +211,72 @@ export const NATIONAL_COMPETITIONS: NationalCompetitionDef[] = [
     leagueQualify: 0,
     theme: "/competitions/8.jpg",
     accent: "#64748b",
+  },
+  {
+    id: "copa_africana",
+    name: "Copa Africana de Nacoes",
+    shortName: "CAN",
+    confederations: ["CAF"],
+    format: "group_knockout",
+    kind: "title",
+    prestige: 88,
+    participants: 24,
+    groups: 6,
+    groupSize: 4,
+    qualifyFromGroup: 2,
+    bestThirdPlaces: 4,
+    knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
+    theme: "/competitions/8.jpg",
+    accent: "#16a34a",
+  },
+  {
+    id: "copa_asia",
+    name: "Copa da Asia",
+    shortName: "Copa da Asia",
+    confederations: ["AFC"],
+    format: "group_knockout",
+    kind: "title",
+    prestige: 84,
+    participants: 24,
+    groups: 6,
+    groupSize: 4,
+    qualifyFromGroup: 2,
+    bestThirdPlaces: 4,
+    knockoutStages: ["Oitavas de Final", "Quartas de Final", "Semifinal", "Final"],
+    theme: "/competitions/8.jpg",
+    accent: "#2563eb",
+  },
+  {
+    id: "copa_ouro",
+    name: "Copa Ouro",
+    shortName: "Copa Ouro",
+    confederations: ["CONCACAF"],
+    format: "group_knockout",
+    kind: "title",
+    prestige: 80,
+    participants: 16,
+    groups: 4,
+    groupSize: 4,
+    qualifyFromGroup: 2,
+    knockoutStages: ["Quartas de Final", "Semifinal", "Final"],
+    theme: "/competitions/8.jpg",
+    accent: "#eab308",
+  },
+  {
+    id: "copa_oceania",
+    name: "Copa das Nacoes da OFC",
+    shortName: "OFC Nations Cup",
+    confederations: ["OFC"],
+    format: "group_knockout",
+    kind: "title",
+    prestige: 70,
+    participants: 8,
+    groups: 2,
+    groupSize: 4,
+    qualifyFromGroup: 2,
+    knockoutStages: ["Semifinal", "Final"],
+    theme: "/competitions/8.jpg",
+    accent: "#0891b2",
   },
 ]
 
@@ -128,7 +287,7 @@ export function getCompetitionDef(id: string): NationalCompetitionDef | undefine
 }
 
 export function getCompetitionsForConfederation(conf: Confederation): NationalCompetitionDef[] {
-  return NATIONAL_COMPETITIONS.filter(c => c.confederations.includes(conf))
+  return NATIONAL_COMPETITIONS.filter(c => !c.legacy && c.confederations.includes(conf))
 }
 
 // ============================================================
@@ -276,7 +435,10 @@ export function createNationalCompetition(
     ? (def.kind === "qualifier" ? "Eliminatorias" : def.kind === "friendly" ? "Amistosos" : "Fase de Grupos")
     : "Fase de Grupos"
 
-  const schedule = roundRobinSchedule(participants.length)
+  const firstLeg = roundRobinSchedule(participants.length)
+  const schedule = def.doubleRoundRobin
+    ? [...firstLeg, ...firstLeg.map(round => round.map(([home, away]) => [away, home]))]
+    : firstLeg
   const fixtures: NationalFixture[] = []
   let fid = 1
   schedule.forEach((pairs, rIdx) => {
@@ -306,7 +468,7 @@ export function createNationalCompetition(
     fixtures,
     table: participants.map((p, i) => emptyRow(p, i === 0)),
     totalGroupRounds: schedule.length,
-    knockoutStages: def.format === "group_knockout" ? [...(def.knockoutStages ?? [])] : [],
+    knockoutStages: [...(def.knockoutStages ?? [])],
     currentRound: 1,
     stage: stageLabel,
     status: "active",
@@ -353,13 +515,14 @@ function sortTable(table: GroupRow[]): GroupRow[] {
 }
 
 // Avanca uma rodada da competicao. Retorna novo estado (imutavel).
-export function advanceNationalRound(state: NationalCompetitionState, userId: string): NationalCompetitionState {
+export function advanceNationalRound(state: NationalCompetitionState, userId: string, userStrength?: number): NationalCompetitionState {
   if (state.status !== "active") return state
   const strengths = getAllNationalStrengths()
   const next: NationalCompetitionState = JSON.parse(JSON.stringify(state))
-  const rng = makeRng(`${next.competitionId}-${userId}-${next.season}-r${next.currentRound}-${Date.now() % 100000}`)
+  // A rodada deve produzir o mesmo resultado ao recarregar o mesmo save.
+  const rng = makeRng(`${next.competitionId}-${userId}-${next.season}-r${next.currentRound}`)
 
-  const strengthOf = (id: string) => strengths[id] ?? 60
+  const strengthOf = (id: string) => id === userId && userStrength != null ? userStrength : (strengths[id] ?? 60)
 
   const roundFixtures = next.fixtures.filter(f => f.round === next.currentRound && !f.played)
   let userResult = ""
@@ -432,6 +595,29 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
       if (userPos <= qualify) {
         next.status = "qualified"
         next.lastSummary = `Classificado para a Copa do Mundo! (${userPos}o lugar)`
+      } else if (
+        def?.playoffFrom != null && def.playoffTo != null
+        && userPos >= def.playoffFrom && userPos <= def.playoffTo
+        && next.knockoutStages.length > 0
+      ) {
+        const userNT = NATIONAL_TEAMS.find(n => n.id === userId)
+        const koRng = makeRng(`${next.competitionId}-${userId}-${next.season}-playoff`)
+        const opponents = userNT ? pickOpponents(userNT, next.knockoutStages.length, koRng) : []
+        let fid = next.fixtures.length + 1
+        next.knockoutStages.forEach((stage, index) => {
+          const opponent = opponents[index] ?? { id: "tbd", name: "Adversario", code: "TBD" }
+          next.fixtures.push({
+            id: fid++, round: next.totalGroupRounds + 1 + index, stage,
+            homeId: userId, homeName: userNT?.name ?? "Selecao", homeCode: userNT?.code ?? "SEL",
+            awayId: opponent.id, awayName: opponent.name, awayCode: opponent.code,
+            isUserMatch: true, played: false,
+          })
+        })
+        next.currentRound = next.totalGroupRounds + 1
+        next.stage = next.knockoutStages[0]
+        next.status = "active"
+        next.lastSummary = `Classificado para a ${next.knockoutStages[0]} (${userPos}o lugar).`
+        return next
       } else {
         next.status = "finished"
         next.lastSummary = `Fora da Copa: terminou em ${userPos}o lugar.`
@@ -455,7 +641,15 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
     const qualify = def?.qualifyFromGroup ?? 2
     const sorted = sortTable(next.table)
     const userPos = sorted.findIndex(r => r.teamId === userId) + 1
-    if (userPos > qualify) {
+    // Torneios de 24 selecoes classificam tambem os quatro melhores terceiros.
+    // Como somente o grupo do usuario e simulado em detalhe, comparamos o
+    // aproveitamento do terceiro com uma linha de corte deterministica (4 pontos
+    // ou saldo nao-negativo), em vez de classifica-lo automaticamente.
+    const userRow = sorted.find(r => r.teamId === userId)
+    const bestThirdEligible = userPos === qualify + 1 && (def?.bestThirdPlaces ?? 0) > 0
+      && !!userRow
+      && (userRow.points >= 4 || (userRow.points === 3 && userRow.gf - userRow.ga >= 0))
+    if (userPos > qualify && !bestThirdEligible) {
       next.status = "eliminated"
       next.stage = "Eliminado na fase de grupos"
       next.lastSummary = `Eliminado na fase de grupos (${userPos}o lugar).`
@@ -485,7 +679,9 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
     next.currentRound = next.totalGroupRounds + 1
     next.stage = next.knockoutStages[0]
     next.status = "active"
-    next.lastSummary = `Classificado em ${userPos}o! Proxima fase: ${next.knockoutStages[0]}.`
+    next.lastSummary = bestThirdEligible
+      ? `Classificado entre os melhores terceiros! Proxima fase: ${next.knockoutStages[0]}.`
+      : `Classificado em ${userPos}o! Proxima fase: ${next.knockoutStages[0]}.`
     return next
   }
 
@@ -515,9 +711,11 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
 
     const isFinal = koIndex === next.knockoutStages.length - 1
     if (isFinal) {
-      next.status = "champion"
-      next.stage = "Campeao"
-      next.lastSummary = `CAMPEAO da ${next.competitionName}! ${userResult}`
+      next.status = next.kind === "qualifier" ? "qualified" : "champion"
+      next.stage = next.kind === "qualifier" ? "Classificado" : "Campeao"
+      next.lastSummary = next.kind === "qualifier"
+        ? `Classificado para a Copa do Mundo! ${userResult}`
+        : `CAMPEAO da ${next.competitionName}! ${userResult}`
       return next
     }
 

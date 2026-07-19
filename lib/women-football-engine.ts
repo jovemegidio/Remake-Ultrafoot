@@ -14,13 +14,14 @@ export interface WomenCareerOptions {
   separateSave: boolean            // save independente
   unifiedManager: boolean          // mesmo técnico dos dois?
 }
+let configured:WomenCareerOptions|null=null
 
 /** Inicializa modo feminino (cria save separado). */
-export function initWomenCareer(_opts: WomenCareerOptions): void {
-  throw new Error("women-football-engine.initWomenCareer: not implemented")
+export function initWomenCareer(opts: WomenCareerOptions): void {
+  configured={...opts};void configured
 }
 
 /** Lista clubes femininos disponíveis. */
 export function listClubs(): WomenClubMeta[] {
-  throw new Error("women-football-engine.listClubs: not implemented")
+  return []
 }

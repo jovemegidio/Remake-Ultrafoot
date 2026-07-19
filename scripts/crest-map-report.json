@@ -1,0 +1,762 @@
+{
+  "mapped": 542,
+  "unresolved": [
+    {
+      "fileKey": "abc_rn",
+      "nome": "ABC",
+      "cor1": "#ffffff",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "trem_ap",
+      "nome": "Trem",
+      "cor1": "#006633",
+      "cor2": "#ffffff"
+    },
+    {
+      "fileKey": "hellas_verona",
+      "nome": "Hellas Verona",
+      "pais": "Italia",
+      "cor1": "#003D7F",
+      "cor2": "#FFD100"
+    },
+    {
+      "fileKey": "al_qadsiah",
+      "nome": "Al-Qadsiah",
+      "pais": "Arabia Saudita",
+      "cor1": "#0F9D58",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "nycfc",
+      "nome": "NYCFC",
+      "pais": "Estados Unidos",
+      "cor1": "#6CACE4",
+      "cor2": "#F15523"
+    },
+    {
+      "fileKey": "vancouver_whitecaps",
+      "nome": "Vancouver Whitecaps",
+      "pais": "Canada",
+      "cor1": "#00245D",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "kashiwa_reysol",
+      "nome": "Kashiwa Reysol",
+      "pais": "Japao",
+      "cor1": "#FFCC00",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "avispa_fukuoka",
+      "nome": "Avispa Fukuoka",
+      "pais": "Japao",
+      "cor1": "#003DA5",
+      "cor2": "#E30613"
+    },
+    {
+      "fileKey": "shonan_bellmare",
+      "nome": "Shonan Bellmare",
+      "pais": "Japao",
+      "cor1": "#0F9D58",
+      "cor2": "#FFD700"
+    },
+    {
+      "fileKey": "sagan_tosu",
+      "nome": "Sagan Tosu",
+      "pais": "Japao",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "jubilo_iwata",
+      "nome": "Jubilo Iwata",
+      "pais": "Japao",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "albirex_niigata",
+      "nome": "Albirex Niigata",
+      "pais": "Japao",
+      "cor1": "#FF6B00",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "tokyo_verdy",
+      "nome": "Tokyo Verdy",
+      "pais": "Japao",
+      "cor1": "#0F9D58",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "machida_zelvia",
+      "nome": "Machida Zelvia",
+      "pais": "Japao",
+      "cor1": "#0F9D58",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "feyenoord",
+      "nome": "Feyenoord",
+      "pais": "Holanda",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "nec_nijmegen",
+      "nome": "NEC Nijmegen",
+      "pais": "Holanda",
+      "cor1": "#003399",
+      "cor2": "#CC0000"
+    },
+    {
+      "fileKey": "rkc_waalwijk",
+      "nome": "RKC Waalwijk",
+      "pais": "Holanda",
+      "cor1": "#003DA5",
+      "cor2": "#FFCC00"
+    },
+    {
+      "fileKey": "celtic",
+      "nome": "Celtic",
+      "pais": "Escocia",
+      "cor1": "#00A650",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "kilmarnock",
+      "nome": "Kilmarnock FC",
+      "pais": "Escocia",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "antalyaspor",
+      "nome": "Antalyaspor",
+      "pais": "Turquia",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "gaziantep",
+      "nome": "Gaziantep FK",
+      "pais": "Turquia",
+      "cor1": "#CC0000",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "rizespor",
+      "nome": "Rizespor",
+      "pais": "Turquia",
+      "cor1": "#006633",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "kaa_gent",
+      "nome": "KAA Gent",
+      "pais": "Belgica",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "mechelen",
+      "nome": "Mechelen",
+      "pais": "Belgica",
+      "cor1": "#FFCC00",
+      "cor2": "#CC0000"
+    },
+    {
+      "fileKey": "westerlo",
+      "nome": "Westerlo",
+      "pais": "Belgica",
+      "cor1": "#FFCC00",
+      "cor2": "#003DA5"
+    },
+    {
+      "fileKey": "ohl_leuven",
+      "nome": "OHL Leuven",
+      "pais": "Belgica",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "zulte_waregem",
+      "nome": "Zulte Waregem",
+      "pais": "Belgica",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "torpedo_moscow",
+      "nome": "Torpedo Moscow",
+      "pais": "Russia",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "estudiantes_lp",
+      "nome": "Estudiantes LP",
+      "pais": "Argentina",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "newells_old_boys",
+      "nome": "Newells Old Boys",
+      "pais": "Argentina",
+      "cor1": "#CC0000",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "gimnasia_la_plata",
+      "nome": "Gimnasia La Plata",
+      "pais": "Argentina",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "millonarios",
+      "nome": "Millonarios",
+      "pais": "Colombia",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "dep_pereira",
+      "nome": "Deportivo Pereira",
+      "pais": "Colombia",
+      "cor1": "#CC0000",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "aguilas_doradas",
+      "nome": "Aguilas Doradas",
+      "pais": "Colombia",
+      "cor1": "#FFFF00",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "dep_pasto",
+      "nome": "Deportivo Pasto",
+      "pais": "Colombia",
+      "cor1": "#CC0000",
+      "cor2": "#006633"
+    },
+    {
+      "fileKey": "u_de_chile",
+      "nome": "Universidad de Chile",
+      "pais": "Chile",
+      "cor1": "#003DA5",
+      "cor2": "#CC0000"
+    },
+    {
+      "fileKey": "dep_antofagasta",
+      "nome": "Deportes Antofagasta",
+      "pais": "Chile",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "dep_la_serena",
+      "nome": "Deportes La Serena",
+      "pais": "Chile",
+      "cor1": "#006633",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "city_torque",
+      "nome": "City Torque",
+      "pais": "Uruguai",
+      "cor1": "#FFFF00",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "suwon_samsung",
+      "nome": "Suwon Samsung Bluewings",
+      "pais": "Coreia do Sul",
+      "cor1": "#003DA5",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "jeju_united",
+      "nome": "Jeju United",
+      "pais": "Coreia do Sul",
+      "cor1": "#FF6600",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "incheon_united",
+      "nome": "Incheon United",
+      "pais": "Coreia do Sul",
+      "cor1": "#003DA5",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "seongnam_fc",
+      "nome": "Seongnam FC",
+      "pais": "Coreia do Sul",
+      "cor1": "#000000",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "daejeon_citizen",
+      "nome": "Daejeon Citizen",
+      "pais": "Coreia do Sul",
+      "cor1": "#003DA5",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "gwangju_fc",
+      "nome": "Gwangju FC",
+      "pais": "Coreia do Sul",
+      "cor1": "#FFFF00",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "gimcheon_sangmu",
+      "nome": "Gimcheon Sangmu",
+      "pais": "Coreia do Sul",
+      "cor1": "#003DA5",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "shanghai_port",
+      "nome": "Shanghai Port",
+      "pais": "China",
+      "cor1": "#CC0000",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "beijing_guoan",
+      "nome": "Beijing Guoan",
+      "pais": "China",
+      "cor1": "#006633",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "wuhan_three_towns",
+      "nome": "Wuhan Three Towns",
+      "pais": "China",
+      "cor1": "#CC0000",
+      "cor2": "#003DA5"
+    },
+    {
+      "fileKey": "chengdu_rongcheng",
+      "nome": "Chengdu Rongcheng",
+      "pais": "China",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "zhejiang_fc",
+      "nome": "Zhejiang FC",
+      "pais": "China",
+      "cor1": "#006633",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "dalian_pro",
+      "nome": "Dalian Pro",
+      "pais": "China",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "tianjin_jinmen",
+      "nome": "Tianjin Jinmen Tiger",
+      "pais": "China",
+      "cor1": "#FFFF00",
+      "cor2": "#CC0000"
+    },
+    {
+      "fileKey": "changchun_yatai",
+      "nome": "Changchun Yatai",
+      "pais": "China",
+      "cor1": "#006633",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "cangzhou_mighty",
+      "nome": "Cangzhou Mighty Lions",
+      "pais": "China",
+      "cor1": "#003DA5",
+      "cor2": "#FFFF00"
+    },
+    {
+      "fileKey": "wuhan_fc",
+      "nome": "Wuhan FC",
+      "pais": "China",
+      "cor1": "#FFFF00",
+      "cor2": "#CC0000"
+    },
+    {
+      "fileKey": "al_adalah",
+      "nome": "Al-Adalah",
+      "pais": "Arabia Saudita",
+      "cor1": "#003087",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "al_sahel",
+      "nome": "Al-Sahel",
+      "pais": "Arabia Saudita",
+      "cor1": "#003087",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "ohud_fc",
+      "nome": "Ohud",
+      "pais": "Arabia Saudita",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "al_faisaly_harma",
+      "nome": "Al-Faisaly Harma",
+      "pais": "Arabia Saudita",
+      "cor1": "#006400",
+      "cor2": "#FFD700"
+    },
+    {
+      "fileKey": "al_jalala",
+      "nome": "Al-Jalala",
+      "pais": "Arabia Saudita",
+      "cor1": "#003087",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "al_afaq",
+      "nome": "Al-Afaq",
+      "pais": "Arabia Saudita",
+      "cor1": "#CC0000",
+      "cor2": "#FFD700"
+    },
+    {
+      "fileKey": "al_jandal",
+      "nome": "Al-Jandal",
+      "pais": "Arabia Saudita",
+      "cor1": "#006400",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "al_nojoom",
+      "nome": "Al-Nojoom",
+      "pais": "Arabia Saudita",
+      "cor1": "#003087",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "abha_club",
+      "nome": "Abha Club",
+      "pais": "Arabia Saudita",
+      "cor1": "#CC0000",
+      "cor2": "#006400"
+    },
+    {
+      "fileKey": "charlton_athletic",
+      "nome": "Charlton Athletic",
+      "pais": "Inglaterra",
+      "cor1": "#D2122E",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "preston_north_end",
+      "nome": "Preston North End",
+      "pais": "Inglaterra",
+      "cor1": "#FFFFFF",
+      "cor2": "#001C58"
+    },
+    {
+      "fileKey": "pisa_sporting_club",
+      "nome": "Pisa Sporting Club",
+      "pais": "Italia",
+      "cor1": "#5CB8E4",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "uc_sampdoria",
+      "nome": "UC Sampdoria",
+      "pais": "Italia",
+      "cor1": "#0F2B5B",
+      "cor2": "#C8102E"
+    },
+    {
+      "fileKey": "virtus_entella",
+      "nome": "Virtus Entella",
+      "pais": "Italia",
+      "cor1": "#FFFFFF",
+      "cor2": "#5CB8E4"
+    },
+    {
+      "fileKey": "calcio_padova",
+      "nome": "Calcio Padova",
+      "pais": "Italia",
+      "cor1": "#FFFFFF",
+      "cor2": "#C8102E"
+    },
+    {
+      "fileKey": "fc_kaiserslautern",
+      "nome": "1. FC Kaiserslautern",
+      "pais": "Alemanha",
+      "cor1": "#C8102E",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "fc_nurnberg",
+      "nome": "1. FC Nürnberg",
+      "pais": "Alemanha",
+      "cor1": "#C8102E",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "fc_magdeburg",
+      "nome": "1. FC Magdeburg",
+      "pais": "Alemanha",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "spvgg_greuther_furth",
+      "nome": "SpVgg Greuther Furth",
+      "pais": "Alemanha",
+      "cor1": "#00843D",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "dijon_fco",
+      "nome": "Dijon FCO",
+      "pais": "Franca",
+      "cor1": "#C8102E",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "stade_lavallois",
+      "nome": "Stade Lavallois",
+      "pais": "Franca",
+      "cor1": "#F4761E",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "metz",
+      "nome": "FC Metz",
+      "pais": "Franca",
+      "cor1": "#7B0828",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "nancy_lorraine",
+      "nome": "AS Nancy-Lorraine",
+      "pais": "Franca",
+      "cor1": "#FFFFFF",
+      "cor2": "#C8102E"
+    },
+    {
+      "fileKey": "sochaux_montbeliard",
+      "nome": "FC Sochaux-Montbéliard",
+      "pais": "Franca",
+      "cor1": "#FFD500",
+      "cor2": "#003DA5"
+    },
+    {
+      "fileKey": "ud_almeria",
+      "nome": "UD Almería",
+      "pais": "Espanha",
+      "cor1": "#C8102E",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "cd_castellon",
+      "nome": "CD Castellón",
+      "pais": "Espanha",
+      "cor1": "#FFFFFF",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "celta_fortuna",
+      "nome": "RC Celta Fortuna",
+      "pais": "Espanha",
+      "cor1": "#87CEEB",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "ad_ceuta_fc",
+      "nome": "AD Ceuta FC",
+      "pais": "Espanha",
+      "cor1": "#FFFFFF",
+      "cor2": "#000000"
+    },
+    {
+      "fileKey": "sd_eibar",
+      "nome": "SD Eibar",
+      "pais": "Espanha",
+      "cor1": "#003DA5",
+      "cor2": "#7B0828"
+    },
+    {
+      "fileKey": "cd_eldense",
+      "nome": "CD Eldense",
+      "pais": "Espanha",
+      "cor1": "#003DA5",
+      "cor2": "#7B0828"
+    },
+    {
+      "fileKey": "ce_sabadell_fc",
+      "nome": "CE Sabadell FC",
+      "pais": "Espanha",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF"
+    },
+    {
+      "fileKey": "cd_tenerife",
+      "nome": "CD Tenerife",
+      "pais": "Espanha",
+      "cor1": "#FFFFFF",
+      "cor2": "#003DA5"
+    }
+  ],
+  "ambiguous": [
+    {
+      "fileKey": "santacruz_pe",
+      "nome": "Santa Cruz",
+      "cor1": "#dd0000",
+      "cor2": "#000000",
+      "candidates": [
+        "/escudos/santacruzrn.png",
+        "/escudos/santacruz_rs.png",
+        "/escudos/santacruz-ac.png",
+        "/escudos/santacruz_chi.png"
+      ]
+    },
+    {
+      "fileKey": "botafogo_pb",
+      "nome": "Botafogo-PB",
+      "cor1": "#000000",
+      "cor2": "#ffffff",
+      "candidates": [
+        "/escudos/botafogopb_bra.png",
+        "/escudos/botafogorj_bra.png",
+        "/escudos/botafogosp_bra.png",
+        "/escudos/brasil/botafogo.png"
+      ]
+    },
+    {
+      "fileKey": "athletic_mg",
+      "nome": "Athletic Club",
+      "cor1": "#000000",
+      "cor2": "#ffcc00",
+      "candidates": [
+        "/escudos/athleticclub_mg.png",
+        "/escudos/la_liga/athletic_bilbao.png"
+      ]
+    },
+    {
+      "fileKey": "river_pi",
+      "nome": "River-PI",
+      "cor1": "#dd0000",
+      "cor2": "#ffffff",
+      "candidates": [
+        "/escudos/rivers_nga.png",
+        "/escudos/riverpi_bra.png",
+        "/escudos/riverplate_arg.png",
+        "/escudos/riverplate_uru.png"
+      ]
+    },
+    {
+      "fileKey": "portovelho_ro",
+      "nome": "Porto Velho",
+      "cor1": "#003399",
+      "cor2": "#ffffff",
+      "candidates": [
+        "/escudos/portovelho.png",
+        "/escudos/portovelho_bra.png",
+        "/escudos/porto.png",
+        "/escudos/porto_ba.png"
+      ]
+    },
+    {
+      "fileKey": "stuttgart",
+      "nome": "Stuttgart",
+      "pais": "Alemanha",
+      "cor1": "#E32219",
+      "cor2": "#FFFFFF",
+      "candidates": [
+        "/escudos/StuttgartII_ale.png",
+        "/escudos/StuttgarterKickers_ale.png"
+      ]
+    },
+    {
+      "fileKey": "atletico_san_luis",
+      "nome": "Atlético San Luis",
+      "pais": "Mexico",
+      "cor1": "#E30613",
+      "cor2": "#FFFFFF",
+      "candidates": [
+        "/escudos/atleticopi.png",
+        "/escudos/atletico_col.png",
+        "/escudos/brasil/atleticopr.png",
+        "/escudos/brasil/atleticomg.png"
+      ]
+    },
+    {
+      "fileKey": "vitesse",
+      "nome": "Vitesse",
+      "pais": "Holanda",
+      "cor1": "#FFFF00",
+      "cor2": "#000000",
+      "candidates": [
+        "/escudos/vitesse_hol.png",
+        "/escudos/VitesseII_hol.png"
+      ]
+    },
+    {
+      "fileKey": "sparta_rotterdam",
+      "nome": "Sparta Rotterdam",
+      "pais": "Holanda",
+      "cor1": "#CC0000",
+      "cor2": "#FFFFFF",
+      "candidates": [
+        "/escudos/sparta_hol.png",
+        "/escudos/SpartaRotterdamII_hol.png"
+      ]
+    },
+    {
+      "fileKey": "dundee_fc",
+      "nome": "Dundee FC",
+      "pais": "Escocia",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF",
+      "candidates": [
+        "/escudos/dundee_esc.png",
+        "/escudos/dundeeunited_esc.png"
+      ]
+    },
+    {
+      "fileKey": "atletico_tucuman",
+      "nome": "Atletico Tucuman",
+      "pais": "Argentina",
+      "cor1": "#003DA5",
+      "cor2": "#FFFFFF",
+      "candidates": [
+        "/escudos/atleticopi.png",
+        "/escudos/atletico_col.png",
+        "/escudos/brasil/atleticopr.png",
+        "/escudos/brasil/atleticomg.png"
+      ]
+    },
+    {
+      "fileKey": "ind_medellin",
+      "nome": "Independiente Medellin",
+      "pais": "Colombia",
+      "cor1": "#CC0000",
+      "cor2": "#003DA5",
+      "candidates": [
+        "/escudos/independiente_chi.png",
+        "/escudos/independiente_arg.png",
+        "/escudos/independiente_par.png",
+        "/escudos/independiente_equ.png"
+      ]
+    }
+  ]
+}

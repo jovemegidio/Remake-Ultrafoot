@@ -15,7 +15,7 @@ import { getCamisaUrl, type Team } from "@/lib/teams-data"
 export type KitVariant = "home" | "away" | "third"
 
 /** Cores da camisa por variante — derivadas das cores do clube. */
-function kitColors(team: Team, variant: KitVariant): { body: string; accent: string } {
+export function getKitColors(team: Team, variant: KitVariant): { body: string; accent: string } {
   const c1 = team.cor1 || "#2a2a2a"
   const c2 = team.cor2 || "#ffffff"
   switch (variant) {
@@ -32,7 +32,7 @@ function kitColors(team: Team, variant: KitVariant): { body: string; accent: str
 
 /** Camisa desenhada — usada quando nao ha arte para o clube. */
 function DrawnKit({ team, variant }: { team: Team; variant: KitVariant }) {
-  const { body, accent } = kitColors(team, variant)
+  const { body, accent } = getKitColors(team, variant)
   return (
     <svg viewBox="0 0 100 100" className="h-full w-full" role="img" aria-label={`Uniforme ${team.nome}`}>
       {/* Corpo + mangas */}
@@ -66,31 +66,62 @@ function DrawnKit({ team, variant }: { team: Team; variant: KitVariant }) {
 }
 
 export function KitImage({ team, variant }: { team: Team; variant: KitVariant }) {
-  const url = getCamisaUrl(team.file_key, variant)
+  const [revision, setRevision] = useState(0)
+  const [retryCount, setRetryCount] = useState(0)
+  // revision faz o componente reler o override depois que o store assincrono
+  // termina de hidratar ou quando o editor salva/importa uma camisa.
+  const url = getCamisaUrl(team.file_key, variant, team.nome)
   const [failed, setFailed] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
 
+  useEffect(() => {
+    const refresh = (event?: Event) => {
+      const key = (event as CustomEvent<{ key?: string }> | undefined)?.detail?.key
+      if (!key || key === team.file_key) setRevision(value => value + 1)
+    }
+    window.addEventListener("ultrafoot:store:ready", refresh)
+    window.addEventListener("ultrafoot:team:changed", refresh)
+    return () => {
+      window.removeEventListener("ultrafoot:store:ready", refresh)
+      window.removeEventListener("ultrafoot:team:changed", refresh)
+    }
+  }, [team.file_key])
+
   // Troca de time/variante: volta a tentar a arte.
-  useEffect(() => { setFailed(false) }, [url])
+  useEffect(() => { setFailed(false); setRetryCount(0) }, [url, revision])
 
   // Imagem em CACHE nao dispara onError/onLoad depois do mount — checa na mao.
   // (Mesmo problema que ja tinha derrubado os escudos no TeamCrest.)
   useEffect(() => {
     const img = imgRef.current
     if (img?.complete && img.naturalWidth === 0) setFailed(true)
-  }, [url])
+  }, [url, retryCount, revision])
+
+  const handleError = () => {
+    // O protocolo customizado pode receber a primeira requisicao antes de os
+    // recursos extraidos estarem prontos. Quatro novas tentativas evitam marcar
+    // kits existentes como ausentes (caso visto em Arsenal/Manchester/Real).
+    if (retryCount < 4) {
+      window.setTimeout(() => setRetryCount(value => value + 1), 140)
+      return
+    }
+    setFailed(true)
+  }
 
   if (failed || !url) return <DrawnKit team={team} variant={variant} />
+  const source = /^(data:|blob:)/i.test(url)
+    ? url
+    : `${url}${url.includes("?") ? "&" : "?"}uf_retry=${retryCount}`
 
   return (
     // <img> cru (nao next/image): precisamos do onError para cair no desenho.
     // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={imgRef}
-      src={url}
+      src={source}
       alt={`Uniforme ${team.nome}`}
       className="h-full w-full object-contain"
-      onError={() => setFailed(true)}
+      onError={handleError}
       draggable={false}
     />
   )

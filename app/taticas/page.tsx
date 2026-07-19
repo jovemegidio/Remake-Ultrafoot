@@ -29,7 +29,7 @@ import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-import { useGameEngine, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
+import { useGameEngine, persistGameEngineNow, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
 import { useRouter } from "next/navigation"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
@@ -142,6 +142,9 @@ export default function TaticasPage() {
   ]
 
   const handleSaveTactics = () => {
+    // A confirmacao nao pode ser apenas visual: garante que o snapshot ja esteja
+    // gravado antes de voltar ao elenco ou iniciar uma partida.
+    persistGameEngineNow()
     setShowSaveConfirm(true)
     setTimeout(() => setShowSaveConfirm(false), 2000)
   }

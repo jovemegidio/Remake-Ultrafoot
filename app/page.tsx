@@ -118,9 +118,26 @@ export default function DashboardPage() {
   }, [refreshJobOffers])
 
   useEffect(() => {
-    setSessionActive(window.sessionStorage.getItem("ultrafoot:session-active") === "true")
+    const careerEntry = new URLSearchParams(window.location.search).get("career") === "1"
+    const bootstrapRaw = window.localStorage.getItem("ultrafoot:career-bootstrap")
+    let bootstrapValid = false
+    if (bootstrapRaw) {
+      try {
+        const bootstrap = JSON.parse(bootstrapRaw) as { teamShort?: string; createdAt?: number }
+        bootstrapValid = Boolean(bootstrap.teamShort) && Date.now() - (bootstrap.createdAt ?? 0) < 120_000
+      } catch { /* marcador invalido e ignorado */ }
+    }
+    const active = careerEntry || bootstrapValid || window.sessionStorage.getItem("ultrafoot:session-active") === "true"
+    if (active) window.sessionStorage.setItem("ultrafoot:session-active", "true")
+    setSessionActive(active)
     setSessionChecked(true)
   }, [])
+
+  useEffect(() => {
+    if (hydrated && saveState.selectedTeamShort) {
+      window.localStorage.removeItem("ultrafoot:career-bootstrap")
+    }
+  }, [hydrated, saveState.selectedTeamShort])
 
   // Redireciona para splash quando a home foi aberta fora do fluxo do jogo.
   useEffect(() => {
@@ -157,7 +174,9 @@ export default function DashboardPage() {
   }, [])
 
   // Aguarda hidratacao
-  if (!hydrated || !sessionChecked || !sessionActive || !userTeam) {
+  // A sessao controla o redirecionamento, mas nao pode bloquear a renderizacao. Alguns
+  // WebViews descartam sessionStorage no reload e antes deixavam este spinner eterno.
+  if (!hydrated || !userTeam) {
     return (
       <div className="h-screen bg-[#050508] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -175,6 +194,16 @@ export default function DashboardPage() {
   const recentResults = seasonCalendar.fixtures
     .filter(f => f.isUserMatch && f.played)
     .slice(-3)
+
+  const standingsPreview = (() => {
+    const top = standings.slice(0, 8)
+    const userIndex = standings.findIndex(row => row.teamShort === userTeam.curto)
+    if (userIndex < 0 || userIndex < 8) return top.map((row, index) => ({ row, position: index + 1 }))
+    return [
+      ...top.slice(0, 7).map((row, index) => ({ row, position: index + 1 })),
+      { row: standings[userIndex], position: userIndex + 1 },
+    ]
+  })()
 
   // ── Pressao da diretoria: meta -> confianca -> risco de demissao ──────────
   // Sem isso a campanha ruim nao custa nada; e o risco que transforma tabela em carreira.
@@ -205,7 +234,19 @@ export default function DashboardPage() {
   /** Aceitar proposta: assume o novo clube e limpa as propostas pendentes. */
   const handleAcceptJobOffer = (offer: PendingJobOffer) => {
     clearJobOffers()
-    setState({ selectedTeamShort: offer.clubShort })
+    // Trocar apenas o codigo do clube deixava o elenco, a tatica e os fixtures do
+    // emprego anterior no motor. Recarrega o clube e preserva somente o tempo da carreira.
+    gameEngine.initializeGame(offer.clubShort)
+    useGameEngine.setState({ currentWeek: saveState.week, currentSeason: saveState.season })
+    setState({
+      selectedTeamShort: offer.clubShort,
+      divisionOverride: undefined,
+      fixtures: [],
+      standings: [],
+      squadPlayers: undefined,
+      youthPlayers: undefined,
+      youthCareer: undefined,
+    })
     hardNavigate("/")
   }
 
@@ -215,7 +256,8 @@ export default function DashboardPage() {
    */
   const handleResign = () => {
     clearJobOffers()
-    hardNavigate("/splash?menu=1")
+    setState({ selectedTeamShort: null })
+    hardNavigate("/sem-clube")
   }
 
   const weeklyIncome = gameEngine.weeklyIncome ?? 0
@@ -641,7 +683,7 @@ export default function DashboardPage() {
                   <span>#</span><span>{t.dashboard.col.club}</span><span className="text-center">{t.dashboard.col.pts}</span>
                   <span className="text-center">{t.dashboard.col.w}</span><span className="text-center">{t.dashboard.col.d}</span><span className="text-center">{t.dashboard.col.l}</span>
                 </div>
-                {standings.slice(0, 8).map((s, i) => {
+                {standingsPreview.map(({ row: s, position }) => {
                   const standingTeam = getTeamByShort(s.teamShort)
                   return (
                     <div
@@ -651,7 +693,7 @@ export default function DashboardPage() {
                         s.teamShort === userTeam.curto && "bg-primary/10 border-l-2 border-primary"
                       )}
                     >
-                      <span className={cn("text-xs font-medium", i < 4 ? "text-[#00ffc8]" : i >= 16 ? "text-red-500" : "text-white/50")}>{i + 1}</span>
+                      <span className={cn("text-xs font-medium", position <= 4 ? "text-[#00ffc8]" : position >= 17 ? "text-red-500" : "text-white/50")}>{position}</span>
                       <div className="flex items-center gap-2 min-w-0">
                         {standingTeam && <TeamCrest team={standingTeam} size="xs" />}
                         <span className="truncate text-xs text-white">{standingTeam?.curto ?? s.teamShort}</span>
@@ -773,7 +815,10 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
   const nextLabel = t.common.nextMatch.toUpperCase()
 
   return (
-    <div className={cn("flex items-center gap-4 px-5 py-3", isNext && "bg-[#00ffc8]/5")}>
+    <div className={cn(
+      "flex items-center gap-4 border-l-2 border-[#00ffc8]/60 bg-[#00ffc8]/[0.035] px-5 py-3",
+      isNext && "bg-[#00ffc8]/10",
+    )}>
       <div className="w-20 text-xs">
         <div className="text-white/80">Rod. {fixture.round}</div>
         <div className="text-[10px] text-white/45">{fixtureDateLine(fixture.round, fixture.month)}</div>
@@ -805,6 +850,8 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
       <span className={cn("px-2 py-0.5 rounded text-[10px] font-medium", isHome ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "bg-white/10 text-white/60")}>
         {isHome ? homeLabel : awayLabel}
       </span>
+
+      <span className="hidden rounded bg-[#00ffc8]/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#00ffc8] sm:inline">Meu clube</span>
 
       {isNext && !fixture.played && (
         <span className="px-2 py-0.5 rounded bg-[#00ffc8] text-black text-[10px] font-semibold">{nextLabel}</span>
