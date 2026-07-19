@@ -25,7 +25,7 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: services/multiplayer-relay/package-lock.json
       - run: npm ci
