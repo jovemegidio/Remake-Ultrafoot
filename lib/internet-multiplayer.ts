@@ -1,4 +1,4 @@
-import { GAME_DATA_HASH, GAME_DATA_VERSION, ONLINE_GAME_VERSION } from "@/lib/online-multiplayer"
+import { GAME_DATA_HASH, GAME_DATA_VERSION, ONLINE_PROTOCOL_VERSION } from "@/lib/online-multiplayer"
 
 export type InternetConnectionState = "connecting" | "connected" | "reconnecting" | "closed" | "error"
 
@@ -123,7 +123,7 @@ export async function checkRelayHealth(relayUrl = configuredRelayUrl()): Promise
 export async function createInternetRoom(input: { managerName: string; teamShort: string; maxPlayers?: number; mode?: "career" | "tournament"; leagueSettings: InternetLeagueSettings }): Promise<InternetSession> {
   const relayUrl = configuredRelayUrl()
   if (!relayUrl) throw new Error("O relay público ainda não foi implantado/configurado.")
-  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${relayUrl}/v1/rooms`, { method: "POST", body: JSON.stringify({ hostName: input.managerName, hostTeam: input.teamShort, gameVersion: ONLINE_GAME_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH, maxPlayers: Math.max(20, Math.min(32, input.maxPlayers ?? 32)), mode: input.mode ?? "tournament", leagueSettings: input.leagueSettings }) })
+  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${relayUrl}/v1/rooms`, { method: "POST", body: JSON.stringify({ hostName: input.managerName, hostTeam: input.teamShort, gameVersion: ONLINE_PROTOCOL_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH, maxPlayers: Math.max(20, Math.min(32, input.maxPlayers ?? 32)), mode: input.mode ?? "tournament", leagueSettings: input.leagueSettings }) })
   const session = { relayUrl, participantId: response.participantId, sessionToken: response.sessionToken, room: response.room }
   persist(session); return session
 }
@@ -132,13 +132,13 @@ export async function joinInternetRoom(input: { code: string; managerName: strin
   const relayUrl = configuredRelayUrl()
   if (!relayUrl) throw new Error("O relay público ainda não foi implantado/configurado.")
   const code = input.code.trim().toUpperCase()
-  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${relayUrl}/v1/rooms/${code}/join`, { method: "POST", body: JSON.stringify({ managerName: input.managerName, teamShort: input.teamShort, gameVersion: ONLINE_GAME_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH }) })
+  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${relayUrl}/v1/rooms/${code}/join`, { method: "POST", body: JSON.stringify({ managerName: input.managerName, teamShort: input.teamShort, gameVersion: ONLINE_PROTOCOL_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH }) })
   const session = { relayUrl, participantId: response.participantId, sessionToken: response.sessionToken, room: response.room }
   persist(session); return session
 }
 
 export async function reconnectInternetRoom(session: InternetSession): Promise<InternetSession> {
-  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${session.relayUrl}/v1/rooms/${session.room.code}/join`, { method: "POST", body: JSON.stringify({ managerName: "", teamShort: "", gameVersion: ONLINE_GAME_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH, participantId: session.participantId, sessionToken: session.sessionToken }) })
+  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${session.relayUrl}/v1/rooms/${session.room.code}/join`, { method: "POST", body: JSON.stringify({ managerName: "", teamShort: "", gameVersion: ONLINE_PROTOCOL_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH, participantId: session.participantId, sessionToken: session.sessionToken }) })
   const restored = { ...session, room: response.room }
   persist(restored); return restored
 }

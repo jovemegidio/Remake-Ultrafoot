@@ -3,6 +3,8 @@ import { NATIONAL_COMPETITIONS } from "@/lib/national-competitions"
 import { YOUTH_COMPETITION_FORMATS_2026 } from "@/lib/youth-career-engine"
 
 export const ONLINE_GAME_VERSION = "1.0.98"
+// Compatibilidade com o relay público enquanto ele é migrado para a nova build.
+export const ONLINE_PROTOCOL_VERSION = "1.0.96"
 export const GAME_DATA_VERSION = "2026.07.18"
 
 export interface OnlineParticipant {
