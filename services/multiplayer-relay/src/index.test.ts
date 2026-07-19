@@ -32,7 +32,7 @@ describe("API do relay", () => {
     const create = await SELF.fetch("https://relay.test/v1/rooms", {
       method: "POST",
       headers: { "content-type": "application/json" },
-    body: JSON.stringify({ hostName: "Host", hostTeam: "INT", gameVersion: "1.0.88", dataVersion: "2026.07", dataHash: "qa-hash", maxPlayers: 32, mode: "tournament" }),
+    body: JSON.stringify({ hostName: "Host", hostTeam: "INT", gameVersion: "1.0.96", dataVersion: "2026.07", dataHash: "qa-hash", maxPlayers: 32, mode: "tournament" }),
     })
     expect(create.status).toBe(201)
     const payload = await create.json<{ room: { code: string; maxPlayers: number }; participantId: string; sessionToken: string }>()
@@ -41,14 +41,14 @@ describe("API do relay", () => {
       const joined = await SELF.fetch(`https://relay.test/v1/rooms/${payload.room.code}/join`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ managerName: `Técnico ${index}`, teamShort: `T${index}`, gameVersion: "1.0.88", dataVersion: "2026.07", dataHash: "qa-hash" }),
+    body: JSON.stringify({ managerName: `Técnico ${index}`, teamShort: `T${index}`, gameVersion: "1.0.96", dataVersion: "2026.07", dataHash: "qa-hash" }),
       })
       expect(joined.status).toBe(201)
     }
     const duplicate = await SELF.fetch(`https://relay.test/v1/rooms/${payload.room.code}/join`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-    body: JSON.stringify({ managerName: "Duplicado", teamShort: "T20", gameVersion: "1.0.88", dataVersion: "2026.07", dataHash: "qa-hash" }),
+    body: JSON.stringify({ managerName: "Duplicado", teamShort: "T20", gameVersion: "1.0.96", dataVersion: "2026.07", dataHash: "qa-hash" }),
     })
     expect(duplicate.status).toBe(409)
     const denied = await SELF.fetch(`https://relay.test/v1/rooms/${payload.room.code}/snapshot`)
