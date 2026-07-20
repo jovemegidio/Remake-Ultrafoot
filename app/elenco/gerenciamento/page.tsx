@@ -30,7 +30,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FORMATIONS, assignPlayersToFormation, normalizePosition } from "@/lib/formations"
+import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI } from "@/lib/formations"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
@@ -316,6 +316,33 @@ export default function ElencoPage() {
       }
     })
   }, [players])
+
+  /**
+   * Escala automaticamente o melhor XI para a formação atual.
+   *
+   * `pickStartingXI` já existia e era usado pela partida ao vivo para completar
+   * escalações incompletas, mas nunca foi exposto ao técnico: montar o time
+   * exigia arrastar os 11 na mão, toda vez.
+   */
+  const autoPickLineup = useCallback(() => {
+    const squad = [...players, ...bench]
+    if (squad.length < 11) return
+    const { starters, bench: rest } = pickStartingXI(
+      squad,
+      p => normalizePosition(p.position),
+      p => p.overall,
+      formation,
+    )
+    setPlayers(starters)
+    setBench(rest)
+    setPlayerPositions({})
+    addNotification({
+      type: "system",
+      title: "Escalação automática",
+      message: `Melhor XI disponível montado no ${formation}.`,
+      priority: "low",
+    })
+  }, [players, bench, formation, setPlayers, setBench, addNotification])
 
   const nextFormation = () => {
     const nextIndex = (currentFormationIndex + 1) % formationKeys.length
@@ -1051,11 +1078,22 @@ export default function ElencoPage() {
                 <option key={f} value={f} className="bg-[#0c0c14] text-white font-bold">{f}</option>
               ))}
             </select>
-            <button 
+            <button
               onClick={nextFormation}
               className="p-1.5 md:p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition"
             >
               <ChevronRight className="h-4 w-4" />
+            </button>
+            {/* Monta o melhor XI para a formação escolhida. O motor já sabia
+                fazer isto (pickStartingXI), mas o técnico precisava arrastar
+                os 11 na mão toda vez. */}
+            <button
+              onClick={autoPickLineup}
+              title="Escalar o melhor XI disponível nesta formação"
+              className="ml-1 flex items-center gap-1.5 rounded-lg border border-[#00ffc8]/30 bg-[#00ffc8]/10 px-2.5 py-1.5 text-[10px] font-bold text-[#00ffc8] transition hover:bg-[#00ffc8]/20 md:text-xs"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Auto-escalar</span>
             </button>
           </div>
         </div>
