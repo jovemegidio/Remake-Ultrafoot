@@ -5,7 +5,7 @@
 //
 // Rodar: npx tsx scripts/test-fixture-catchup.ts
 
-import { isOverdueUserFixture, selectOverdueUserFixtures } from "../lib/fixture-catchup"
+import { isOverdueUserFixture, isSeasonOver, selectOverdueUserFixtures } from "../lib/fixture-catchup"
 
 let failures = 0
 
@@ -63,6 +63,26 @@ const pendentes = calendario.filter(f => f.isUserMatch && !f.played).length
 check("nenhuma partida do usuário fica pendente", pendentes, 0)
 check("usuário termina com 38 jogos, como os rivais", jogosUsuario, jogosRivais)
 check("as 23 rodadas perdidas foram recuperadas", recuperadas, 23)
+
+console.log("\nFim de temporada\n")
+
+const jogado = (n: number) => Array.from({ length: n }, () => ({ played: true }))
+const pendente = (n: number) => Array.from({ length: n }, () => ({ played: false }))
+
+check("liga incompleta NUNCA encerra, mesmo passando do fim",
+  isSeasonOver({ leagueComplete: false, currentWeek: 99, seasonEndWeek: 38, userFixtures: jogado(38) }), false)
+
+check("sem mais compromissos encerra antes do contador de semanas",
+  isSeasonOver({ leagueComplete: true, currentWeek: 30, seasonEndWeek: 60, userFixtures: jogado(38) }), true)
+
+check("com partida pendente nao encerra antes do contador",
+  isSeasonOver({ leagueComplete: true, currentWeek: 30, seasonEndWeek: 60, userFixtures: [...jogado(37), ...pendente(1)] }), false)
+
+check("passar do fim da temporada encerra mesmo com copa pendente",
+  isSeasonOver({ leagueComplete: true, currentWeek: 61, seasonEndWeek: 60, userFixtures: [...jogado(37), ...pendente(1)] }), true)
+
+check("calendario vazio nao encerra por 'nao ter compromissos'",
+  isSeasonOver({ leagueComplete: true, currentWeek: 10, seasonEndWeek: 60, userFixtures: [] }), false)
 
 console.log(`\n${failures === 0 ? "TODOS OS TESTES PASSARAM" : `${failures} TESTE(S) FALHARAM`}\n`)
 process.exit(failures === 0 ? 0 : 1)

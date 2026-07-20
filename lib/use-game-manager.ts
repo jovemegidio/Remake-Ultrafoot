@@ -19,7 +19,7 @@ import { resolveDivisionChange } from "@/lib/promotion-relegation"
 import { processDebtMonth } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
-import { selectOverdueUserFixtures } from "@/lib/fixture-catchup"
+import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 
@@ -1352,10 +1352,25 @@ export function useGameManager() {
     const leagueFixturesComplete = leagueUserFixtures.length >= expectedLeagueFixtures &&
       leagueUserFixtures.every(fixture => fixture.played)
 
+    // O clube ainda tem algum compromisso? Cobre liga, estadual, copas e
+    // continentais de uma vez.
+    //
+    // Sem isto a temporada só fechava quando o CONTADOR DE SEMANAS ultrapassava
+    // seasonEndWeek, mesmo com o time sem absolutamente nada para jogar: quem
+    // caía cedo nas copas terminava a liga e ficava clicando "avançar" em
+    // semanas vazias até o contador alcançar um fim de temporada teórico.
+    // Agora, acabou a última partida do clube, acabou a temporada.
+    const allUserFixtures = seasonCalendarRef.current.fixtures.filter(fixture => fixture.isUserMatch)
+
     // Mesmo que uma semana tenha sido avançada rapidamente, não permite que o
     // save processe acesso/rebaixamento enquanto a liga do usuário estiver
     // incompleta. Isto impede o caso reportado de rebaixamento após 15 jogos.
-    if (newWeek > seasonEndWeek && leagueFixturesComplete) {
+    if (isSeasonOver({
+      leagueComplete: leagueFixturesComplete,
+      currentWeek: newWeek,
+      seasonEndWeek,
+      userFixtures: allUserFixtures,
+    })) {
       const currentStandings = useGameEngine.getState().serieAStandings
       const nextSeason = currentState.season + 1
 

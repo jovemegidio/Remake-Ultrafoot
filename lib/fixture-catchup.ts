@@ -30,6 +30,30 @@ export function isOverdueUserFixture(
   return true
 }
 
+/**
+ * A temporada do usuário acabou?
+ *
+ * Duas condições, e a segunda é a que faltava: o clube pode não ter mais NADA
+ * para jogar (eliminado das copas, liga encerrada) muito antes de o contador de
+ * semanas alcançar o fim teórico da temporada. Antes disso o jogador ficava
+ * clicando "avançar" em semanas vazias.
+ *
+ * `leagueComplete` continua sendo pré-requisito em ambos os caminhos: sem ele o
+ * save processaria acesso/rebaixamento com a liga pela metade — exatamente o
+ * bug do "rebaixado com 15 jogos".
+ */
+export function isSeasonOver(input: {
+  leagueComplete: boolean
+  currentWeek: number
+  seasonEndWeek: number
+  userFixtures: readonly { played?: boolean }[]
+}): boolean {
+  if (!input.leagueComplete) return false
+  const semCompromissos =
+    input.userFixtures.length > 0 && input.userFixtures.every(fixture => fixture.played)
+  return input.currentWeek > input.seasonEndWeek || semCompromissos
+}
+
 /** Aplica a regra a um calendário inteiro, preservando a ordem cronológica. */
 export function selectOverdueUserFixtures<T extends CatchupFixture>(
   fixtures: readonly T[],
