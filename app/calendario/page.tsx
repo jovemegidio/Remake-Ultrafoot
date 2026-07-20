@@ -135,14 +135,17 @@ export default function CalendarioPage() {
 
         // Cruzou mais uma semana de calendario -> simula essa rodada no engine.
         if (advanced < weeks && d >= Math.round((advanced + 1) * perWeek)) {
-          advanceWeek()
+          // AWAIT obrigatorio: sem ele as chamadas concorrem, todas leem a
+          // MESMA semana e so uma avanca — dai "simular ate marco" ficava
+          // parado em janeiro (relato).
+          await advanceWeek()
           advanced++
         }
         await new Promise(r => setTimeout(r, delay))
       }
       // Garante que nenhuma semana ficou para tras por arredondamento.
       while (advanced < weeks) {
-        advanceWeek()
+        await advanceWeek()
         advanced++
       }
 
