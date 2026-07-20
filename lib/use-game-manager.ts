@@ -22,6 +22,7 @@ import { useNotifications } from "@/components/notifications-system"
 import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
+import { berthsForSeason, type SuperCupBerth } from "@/lib/super-cups"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -371,10 +372,22 @@ const TOP_FLIGHT_DIVISIONS = new Set([
 
 // Determina quais copas/continentais o time do usuario disputa e quantos jogos.
 // Usa os dados de competitionsByLeague e, quando faltam, deriva por confederacao.
-export function getUserCupPlan(userTeam: Team): CupCompetitionPlan[] {
+export function getUserCupPlan(userTeam: Team, superCups: readonly SuperCupBerth[] = []): CupCompetitionPlan[] {
   const division = String(userTeam.divisao)
   const comps = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
   const plans: CupCompetitionPlan[] = []
+
+  // ── Supercopas ─────────────────────────────────────────────────────────
+  // Decisões entre campeões da temporada anterior. Vêm primeiro porque são
+  // disputadas antes do calendário regular. Só existem quando o clube conquistou
+  // a vaga — ver lib/super-cups.ts.
+  for (const vaga of superCups) {
+    plans.push({
+      competition: makeComp(vaga.id, vaga.name, 75, "nacional", "cup"),
+      competitionType: "cup",
+      matchCount: vaga.matchCount,
+    })
+  }
 
   // ── Copa nacional ──────────────────────────────────────────────────────
   const nationalCups = comps.filter(c => c.type === "cup").sort((a, b) => b.prestige - a.prestige)
@@ -413,10 +426,10 @@ export function getUserCupPlan(userTeam: Team): CupCompetitionPlan[] {
 }
 
 // Conta deterministicamente quantos jogos de copa/continental o usuario tem na temporada
-function getUserCupMatchCount(userTeamShort: string): number {
+function getUserCupMatchCount(userTeamShort: string, superCups: readonly SuperCupBerth[] = []): number {
   const userTeam = getTeamByShort(userTeamShort)
   if (!userTeam) return 0
-  return getUserCupPlan(userTeam).reduce((sum, p) => sum + p.matchCount, 0)
+  return getUserCupPlan(userTeam, superCups).reduce((sum, p) => sum + p.matchCount, 0)
 }
 
 // Monta o pool de adversarios para uma competicao
@@ -1182,6 +1195,11 @@ export function useGameManager() {
       }
     }
 
+    // Supercopas conquistadas na temporada anterior (Supercopa do Brasil,
+    // Recopa, Supercopa da UEFA, Mundial). Vazio quando o clube não foi campeão
+    // de nada — a maioria das temporadas.
+    const superCupBerths = berthsForSeason(saveState.seasonHistory, userTeamShort, saveState.season)
+
     const leagueTeams = getUserLeagueTeams(userTeamShort, saveState.divisionOverride)
     const competition = LEAGUE_NAMES[division] ?? getLeagueName(userTeamShort)
     // Gera a liga com round=1..L (semana sera reatribuida ao intercalar as copas)
@@ -1196,7 +1214,7 @@ export function useGameManager() {
       // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
       // nas copas para nao criar o relato confuso de tres jogos contra o mesmo clube.
       const cupOpponents = new Set(leagueTeams.filter(t => t.curto !== userTeam.curto).map(t => t.curto))
-      for (const plan of getUserCupPlan(userTeam)) {
+      for (const plan of getUserCupPlan(userTeam, superCupBerths)) {
         cupMatches.push(...generateUserCupMatches(userTeam, plan, saveState.season, cupOpponents))
       }
     }
@@ -1281,7 +1299,7 @@ export function useGameManager() {
     )
 
     // Encontra rodada atual — total inclui estadual + liga + copas/continentais
-    const cupMatchCount = getUserCupMatchCount(userTeamShort)
+    const cupMatchCount = getUserCupMatchCount(userTeamShort, superCupBerths)
     const totalWeeks = stateChampRoundsCount + (leagueTeams.length - 1) * 2 + cupMatchCount
     const currentRound = Math.max(1, Math.min(totalWeeks, currentWeek))
 
@@ -1328,7 +1346,7 @@ export function useGameManager() {
       getLeagueRounds(divOverride ?? getTeamByShort(userShort)?.divisao ?? "serie_a"),
       (leagueTeamsForEnd.length - 1) * 2,
     )
-    const cupMatchesForEnd = getUserCupMatchCount(userShort)
+    const cupMatchesForEnd = getUserCupMatchCount(userShort, berthsForSeason(currentState.seasonHistory, userShort, currentState.season))
     const computedSeasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd + cupMatchesForEnd
     const seasonEndWeek = Math.max(
       computedSeasonEndWeek,
