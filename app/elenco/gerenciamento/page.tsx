@@ -31,10 +31,10 @@ import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI } from "@/lib/formations"
-import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { formatCurrency, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
-import { defaultRoleForPosition, PLAYER_ROLE_INFO, saveTacticalSetup, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
+import { defaultRoleForPosition, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
 import { useUserRoster } from "@/lib/use-user-roster"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
@@ -116,6 +116,9 @@ export default function ElencoPage() {
   const enginePlayerInstructions = useGameEngine(s => s.playerInstructions)
   const transferListedIds = useGameEngine(s => s.transferListedIds)
   const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
+  const engineTerminateContract = useGameEngine(s => s.terminateContract)
+  const engineBalance = useGameEngine(s => s.balance)
+  const engineCurrentWeek = useGameEngine(s => s.currentWeek)
   const engineSetPlayerShirtNumber = useGameEngine(s => s.setPlayerShirtNumber)
   const teamTactics = useGameEngine(s => s.teamTactics)
   const setTeamTactics = useGameEngine(s => s.setTeamTactics)
@@ -1808,6 +1811,52 @@ export default function ElencoPage() {
                   Clubes interessados passam a sondar este atleta com muito mais frequência.
                 </p>
               )}
+
+              {/* Rescisão: não havia como dispensar ninguém. Um atleta caro que o
+                  mercado não quisesse ficava travado no elenco consumindo folha
+                  até o contrato vencer sozinho. */}
+              {(() => {
+                // O elenco da tela e o do engine sao tipos diferentes (contrato só
+                // existe no engine) e os IDs divergem para atletas importados — a
+                // ponte é pelo nome, como no resto da página.
+                const enginePlayer = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+                if (!enginePlayer) return null
+                const cost = terminationCost(enginePlayer, engineCurrentWeek)
+                const affordable = engineBalance >= cost
+                return (
+                  <>
+                    <button
+                      onClick={() => {
+                        if (!affordable) return
+                        if (engineTerminateContract(enginePlayer.id)) {
+                          addNotification({
+                            type: "system",
+                            title: "Contrato rescindido",
+                            message: `${selectedPlayer.name} deixou o clube. Multa paga: ${formatCurrency(cost)}.`,
+                            priority: "medium",
+                          })
+                          setShowPlayerProfile(false)
+                        }
+                      }}
+                      disabled={!affordable}
+                      className={cn(
+                        "mt-2 flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-xs font-bold transition-all",
+                        affordable
+                          ? "border-red-400/40 text-red-300 hover:bg-red-400/10"
+                          : "cursor-not-allowed border-white/10 text-white/25",
+                      )}
+                    >
+                      <X className="h-4 w-4" />
+                      Rescindir contrato — {formatCurrency(cost)}
+                    </button>
+                    {!affordable && (
+                      <p className="mt-2 text-center text-[10px] text-red-300/70">
+                        Caixa insuficiente para pagar a multa.
+                      </p>
+                    )}
+                  </>
+                )
+              })()}
             </motion.div>
           </motion.div>
         )}

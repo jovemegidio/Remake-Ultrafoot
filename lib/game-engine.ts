@@ -23,6 +23,21 @@ export interface ContractBonus {
   achieved: boolean
 }
 
+/**
+ * Custo de rescindir um contrato: salário restante até o vencimento, com 40% de
+ * desconto (acordo negociado). Piso de 4 semanas para que dispensar alguém de
+ * contrato quase vencido ainda custe algo.
+ */
+export function terminationCost(
+  player: { contract?: { salary: number; endDate: number } | null },
+  currentWeek: number,
+): number {
+  const salary = player.contract?.salary ?? 0
+  if (salary <= 0) return 0
+  const weeksLeft = Math.max(4, (player.contract?.endDate ?? currentWeek) - currentWeek)
+  return Math.round(salary * weeksLeft * 0.6)
+}
+
 export interface PlayerContract {
   salary: number // Salario semanal
   endDate: number // Semana de termino (week absoluto)
@@ -1894,6 +1909,9 @@ interface GameEngineState {
   transferListedIds: number[]
   toggleTransferListed: (playerId: number) => void
 
+  /** Rescinde o contrato pagando multa. `false` = sem caixa suficiente. */
+  terminateContract: (playerId: number) => boolean
+
   // Processar fim de temporada (envelhecimento, aposentadoria, jovens da base)
   processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => void
 }
@@ -2364,10 +2382,17 @@ export const useGameEngine = create<GameEngineState>()(
           const trainingLvl = s.clubInfrastructure?.training ?? 2
           const trainImproveChance = Math.min(0.9, 0.6 + trainingLvl * 0.05)
 
-          // Processar recuperacao de lesoes
+          // Processar recuperacao de lesoes.
+          // O Centro Medico era decorativo: a tela de infraestrutura promete
+          // "-10% a -50% no tempo de lesao" por nivel, mas a recuperacao descontava
+          // sempre 1 semana fixa. Agora o nivel acelera de verdade (nivel 1 = 1
+          // semana, nivel 5 = 2 semanas por rodada), e o gramado sintetico — que
+          // pitchInjuryDurationMultiplier ja penalizava — pesa contra.
+          const medicalLvl = s.clubInfrastructure?.medical ?? 2
+          const recoveryPerWeek = Math.max(1, Math.round(1 + (medicalLvl - 1) * 0.25))
           const updatedPlayers = s.squadPlayers.map(player => {
             if (player.injury) {
-              const weeksRemaining = player.injury.weeksRemaining - 1
+              const weeksRemaining = player.injury.weeksRemaining - recoveryPerWeek
               if (weeksRemaining <= 0) {
                 return { ...player, injury: null, energy: 70 }
               }
@@ -2724,6 +2749,29 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
+      /**
+       * Rescinde o contrato pagando multa. Não existia forma de dispensar
+       * ninguém: um atleta caro que o mercado não quisesse ficava travado no
+       * elenco consumindo folha até o contrato vencer sozinho.
+       *
+       * A multa é o salário restante até o fim do contrato, com desconto — é
+       * assim que funciona a rescisão real, e impede que dispensar saia de graça.
+       */
+      terminateContract: (playerId) => {
+        const state = get()
+        const player = state.squadPlayers.find(p => p.id === playerId)
+        if (!player) return false
+        const cost = terminationCost(player, state.currentWeek)
+        if (state.balance < cost) return false
+        set((s) => ({
+          squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
+          transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
+          balance: s.balance - cost,
+          weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary ?? 0)),
+        }))
+        return true
+      },
+
       buyPlayer: (player, fee, isFreeAgent = false) => {
         const state = get()
         if (state.balance < fee) return "failed"
