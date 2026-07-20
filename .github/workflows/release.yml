@@ -88,7 +88,12 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          args: --config src-tauri/tauri.windows.conf.json
+          # src-tauri/tauri.windows.conf.json NUNCA foi versionado (está apenas na
+          # máquina local), então o CI falhava com "Provided config path does not
+          # exist". Ele só restringia o alvo para NSIS e adicionava o DLL do
+          # Discord — que também não está no repositório nem é referenciado pelo
+          # código Rust. O alvo NSIS vai inline; o resto vem de tauri.conf.json.
+          args: --config "{\"bundle\":{\"targets\":[\"nsis\"]}}"
           tagName: ${{ github.ref_name }}
           releaseName: "Ultrafoot 26 ${{ github.ref_name }}"
           releaseBody: "Atualização automática do Ultrafoot 26. O jogo baixa e instala sozinho na próxima abertura."
