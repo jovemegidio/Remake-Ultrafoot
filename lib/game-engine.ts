@@ -2405,7 +2405,12 @@ export const useGameEngine = create<GameEngineState>()(
           // semana, nivel 5 = 2 semanas por rodada), e o gramado sintetico — que
           // pitchInjuryDurationMultiplier ja penalizava — pesa contra.
           const medicalLvl = s.clubInfrastructure?.medical ?? 2
-          const recoveryPerWeek = Math.max(1, Math.round(1 + (medicalLvl - 1) * 0.25))
+          // Chefe Médico da comissão soma à estrutura. O AVAILABLE_STAFF promete
+          // "curas mais rápidas" no passiveEffect desde sempre, mas só o Diretor
+          // de Marketing tinha efeito realmente aplicado — os demais eram texto.
+          const chefeMedico = s.staffMembers.find(m => m.role === "chefe_medico")
+          const bonusMedico = chefeMedico ? chefeMedico.competence / 100 : 0
+          const recoveryPerWeek = Math.max(1, Math.round(1 + (medicalLvl - 1) * 0.25 + bonusMedico))
           const updatedPlayers = s.squadPlayers.map(player => {
             if (player.injury) {
               const weeksRemaining = player.injury.weeksRemaining - recoveryPerWeek
