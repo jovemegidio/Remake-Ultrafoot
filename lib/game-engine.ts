@@ -28,6 +28,21 @@ export interface ContractBonus {
  * desconto (acordo negociado). Piso de 4 semanas para que dispensar alguém de
  * contrato quase vencido ainda custe algo.
  */
+/**
+ * A contratação estoura o teto salarial da diretoria?
+ *
+ * `wageBudget` é MENSAL (o save o calcula como folha semanal x 4 com margem),
+ * então a folha semanal precisa ser convertida antes de comparar.
+ */
+export function exceedsWageBudget(
+  state: { squadPlayers: { contract?: { salary: number } | null }[]; wageBudget: number },
+  newSalary: number,
+): boolean {
+  if (state.wageBudget <= 0) return false
+  const currentWeekly = state.squadPlayers.reduce((sum, p) => sum + (p.contract?.salary ?? 0), 0)
+  return (currentWeekly + newSalary) * 4 > state.wageBudget
+}
+
 export function terminationCost(
   player: { contract?: { salary: number; endDate: number } | null },
   currentWeek: number,
@@ -1813,7 +1828,8 @@ interface GameEngineState {
   setStarter: (playerId: number, isStarter: boolean) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   sellPlayer: (playerId: number) => void
-  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean) => "joined" | "pending" | "failed"
+  /** "wage_budget" = recusado pela diretoria por estourar o teto salarial. */
+  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
   payClubDebt: (amount: number) => number
   spendClubFunds: (amount: number) => boolean
   addClubRevenue: (amount: number) => void
@@ -2775,6 +2791,11 @@ export const useGameEngine = create<GameEngineState>()(
       buyPlayer: (player, fee, isFreeAgent = false) => {
         const state = get()
         if (state.balance < fee) return "failed"
+        // Teto salarial: a tela de Finanças já avisava "limite salarial excedido",
+        // mas nada impedia a contratação — o orçamento era decorativo e o clube
+        // podia se afundar em folha sem nenhuma barreira. Agora a diretoria
+        // recusa o negócio que estoura o teto.
+        if (exceedsWageBudget(state, player.contract?.salary ?? 0)) return "wage_budget"
         // Uma confirmacao repetida do modal nao pode cobrar duas vezes nem criar clones.
         const normalizedName = player.name.trim().toLocaleLowerCase("pt-BR")
         if (state.squadPlayers.some(p => p.name.trim().toLocaleLowerCase("pt-BR") === normalizedName) || state.pendingIncomingTransfers.some(p => p.player.name.trim().toLocaleLowerCase("pt-BR") === normalizedName)) return "failed"

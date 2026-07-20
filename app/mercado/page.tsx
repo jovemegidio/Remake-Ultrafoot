@@ -1729,6 +1729,12 @@ export default function MercadoPage() {
             }
             const isFreeAgent = !selectedPlayer.team
             const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent)
+            if (transferResult === "wage_budget") {
+              setMarketNotice(
+                "A diretoria vetou: o salário deste atleta estoura o teto da folha. Libere espaço vendendo, rescindindo ou renegociando contratos.",
+              )
+              return
+            }
             if (transferResult === "failed") {
               setMarketNotice("A contratação não foi concluída ou o atleta já pertence ao plantel.")
               setActiveTab("enviadas")
