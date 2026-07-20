@@ -102,11 +102,15 @@ export default function GlobalError({
             </button>
           </div>
 
-          {error?.digest && (
-            <p style={{ marginTop: 20, fontSize: 11, color: "#6b6f7d" }}>
-              Código do erro: {error.digest}
-            </p>
-          )}
+          {/* A mensagem REAL do erro, copiavel: sem ela todo relato de jogador
+              vira "da erro na tela" e a causa fica impossivel de rastrear. */}
+          <pre
+            style={{ marginTop: 20, fontSize: 11, color: "#8b8fa0", background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "10px 12px", textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-word", userSelect: "text" }}
+          >
+            {error?.message ?? "erro desconhecido"}
+            {error?.digest ? "\ndigest: " + error.digest : ""}
+            {error?.stack ? "\n" + error.stack.split("\n").slice(1, 3).join("\n") : ""}
+          </pre>
         </div>
       </body>
     </html>
