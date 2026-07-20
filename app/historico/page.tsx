@@ -17,7 +17,8 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { useGameState, useUserTeam } from "@/lib/save-system"
+import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
 import { cn } from "@/lib/utils"
 
 // Gera dados históricos determinísticos baseados no time (sem Math.random)
@@ -78,11 +79,21 @@ function getTeamHistory(teamShort: string, teamName: string, prestige: number) {
 export default function HistoricoPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
+  const { state } = useGameState()
 
   const history = useMemo(
     () => getTeamHistory(userTeam.curto, userTeam.nome, userTeam.prestigio),
     [userTeam]
   )
+
+  // Carreira REAL do técnico, a partir do seasonHistory do save. O
+  // hall-of-fame-engine existia desde a fase 32 e nunca havia sido consumido —
+  // e o próprio seasonHistory nunca era preenchido, então não haveria o que ler.
+  const carreira = useMemo(() => {
+    const historico = state.seasonHistory ?? []
+    return historico.length > 0 ? buildCareerStats(historico) : null
+  }, [state.seasonHistory])
+  const ranking = useMemo(() => (carreira ? rankInHistory(carreira) : null), [carreira])
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -98,6 +109,84 @@ export default function HistoricoPage() {
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
+        {/* Carreira do técnico — dados REAIS do save, ao contrário do histórico
+            do clube mais abaixo, que é gerado a partir do nome do time. */}
+        <section className="rounded-xl border border-[#ffd700]/20 bg-[#ffd700]/[0.04] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+              <Trophy className="h-5 w-5 text-[#ffd700]" />
+              Sua carreira
+            </h2>
+            {carreira && ranking && (
+              <span className="text-xs text-white/50">
+                Reputação {carreira.reputation}/100 · ~{ranking.position}º entre os técnicos
+              </span>
+            )}
+          </div>
+
+          {!carreira ? (
+            <p className="mt-3 text-sm text-white/45">
+              Sua trajetória aparece aqui ao encerrar a primeira temporada: clubes treinados,
+              títulos, aproveitamento e reputação.
+            </p>
+          ) : (
+            <>
+              <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+                {[
+                  ["Temporadas", String(carreira.totalSeasons)],
+                  ["Partidas", String(carreira.totalMatches)],
+                  ["Aproveitamento", `${carreira.winRate}%`],
+                  ["Títulos", String(carreira.trophies.length)],
+                  ["Pontos somados", String(carreira.totalPoints)],
+                ].map(([rotulo, valor]) => (
+                  <div key={rotulo} className="rounded-lg bg-black/30 p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-white/40">{rotulo}</p>
+                    <p className="mt-1 text-xl font-bold text-white">{valor}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Clubes treinados</p>
+                  <div className="mt-2 space-y-1.5">
+                    {carreira.clubs.map(clube => (
+                      <div key={clube.clubCurto} className="flex items-center justify-between rounded-lg bg-black/25 px-3 py-2">
+                        <span className="text-sm text-white">{clube.clubNome}</span>
+                        <span className="text-[11px] text-white/40">
+                          {clube.fromSeason}–{clube.toSeason} · {clube.wins}/{clube.matches} vitórias
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Títulos conquistados</p>
+                  {carreira.trophies.length === 0 ? (
+                    <p className="mt-2 text-sm text-white/35">Nenhum título ainda.</p>
+                  ) : (
+                    <div className="mt-2 space-y-1.5">
+                      {carreira.trophies.map(t => (
+                        <div key={`${t.competition}-${t.season}`} className="flex items-center justify-between rounded-lg bg-black/25 px-3 py-2">
+                          <span className="text-sm text-white">{t.competition}</span>
+                          <span className="text-[11px] text-[#ffd700]">{t.season} · {t.clubNome}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {ranking && (
+                <p className="mt-4 text-[11px] text-white/40">
+                  Comparável a: {ranking.similarTo.join(", ")}
+                </p>
+              )}
+            </>
+          )}
+        </section>
+
         {/* Header */}
         <div className="flex items-center gap-6">
           <div className="relative">

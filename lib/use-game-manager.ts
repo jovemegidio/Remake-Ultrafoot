@@ -1408,6 +1408,32 @@ export function useGameManager() {
         }
       }
 
+      // Registro da temporada encerrada.
+      //
+      // `seasonHistory` era inicializado como [] e NUNCA recebia nada. Tudo que
+      // depende dele lia um array vazio para sempre: hall da fama (carreira do
+      // técnico), museu do clube, contagem de títulos da bilheteria e os
+      // desafios que checam promoção/posição final. A carreira não acumulava
+      // história nenhuma entre temporadas.
+      const userStanding = sortedForChampion.find(entry => entry.teamShort === userShort)
+      const seasonRecord = userStanding && userFinalPos > 0 ? {
+        season: currentState.season,
+        competition: getLeagueName(userShort, divOverride),
+        position: userFinalPos,
+        points: userStanding.points,
+        won: userStanding.won,
+        drawn: userStanding.drawn,
+        lost: userStanding.lost,
+        goalsFor: userStanding.goalsFor,
+        goalsAgainst: userStanding.goalsAgainst,
+        champion: champion ?? "",
+        managerName: currentState.managerName || "Técnico",
+        promoted: divisionMovement?.movement === "promoted" && divisionMovement.season === nextSeason,
+        relegated: divisionMovement?.movement === "relegated" && divisionMovement.season === nextSeason,
+        teamCurto: userShort,
+        teamNome: userTeamStatic?.nome ?? userShort,
+      } : null
+
       // Adversarios da PROXIMA temporada: da divisao ja atualizada.
       const teamsForReset = getUserLeagueTeams(userShort, nextDivisionOverride)
       const newStandings = initializeStandings(teamsForReset)
@@ -1445,6 +1471,9 @@ export function useGameManager() {
         seasonAwards: seasonAwards
           ? [...(currentState.seasonAwards ?? []), seasonAwards]
           : currentState.seasonAwards,
+        seasonHistory: seasonRecord
+          ? [...(currentState.seasonHistory ?? []), seasonRecord]
+          : currentState.seasonHistory,
       }
       saveStateRef.current = { ...currentState, ...patch }
       setSaveState(patch)
