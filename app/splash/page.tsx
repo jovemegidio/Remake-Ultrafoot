@@ -46,7 +46,10 @@ export default function SplashPage() {
   const { state: gameState, setState: setGameState } = useGameState()
   const [phase, setPhase] = useState<SplashPhase>("black")
   // Idioma é a primeira decisão da sessão, antes de qualquer opção de carreira.
-  const [languageSelected, setLanguageSelected] = useState(false)
+  // Selecao de idioma REMOVIDA da splash a pedido do usuario (2026-07-20):
+  // o idioma agora se ajusta somente nas Configuracoes. Iniciar como true pula
+  // o carrossel direto para o menu; o restante do fluxo fica intacto.
+  const [languageSelected, setLanguageSelected] = useState(true)
   const [languageIndex, setLanguageIndex] = useState(0)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)

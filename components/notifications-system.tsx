@@ -283,9 +283,12 @@ export function NotificationToastContainer() {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  // Sem clube selecionado não há carreira — toasts na splash/novo jogo/editor
-  // seriam ruído de um save que o jogador nem abriu.
-  if (!gateState.selectedTeamShort) return null
+  // Toasts so nas telas da carreira. Checar apenas selectedTeamShort nao
+  // bastava: com carreira ativa no save, o autosave disparava toast em cima
+  // da SPLASH (bug relatado com print da intro).
+  const rota = typeof window !== "undefined" ? window.location.pathname : ""
+  const foraDaCarreira = ["/splash", "/novo-jogo", "/editar", "/editor", "/sem-clube", "/legal"].some(p => rota.startsWith(p))
+  if (!gateState.selectedTeamShort || foraDaCarreira) return null
 
   return (
     <div className="fixed top-16 right-4 z-50 flex flex-col gap-3">

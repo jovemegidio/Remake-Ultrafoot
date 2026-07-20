@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useNotifications } from "@/components/notifications-system"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -28,23 +28,23 @@ export function PendingInboxGate() {
   const pathname = usePathname()
   const { unreadCount, notifications } = useNotifications()
   const { state } = useGameState()
-  const jaRedirecionou = useRef(false)
+  // sessionStorage, NAO useRef: hardNavigate faz reload completo e um ref
+  // zerava a cada navegacao — o portao redirecionava SEMPRE e prendia o
+  // jogador na central sem conseguir abrir o office (bug relatado). A chave
+  // dura a sessao do app: cobra a caixa UMA vez por abertura do jogo.
+  const GATE_KEY = "ultrafoot:inbox-gate-shown"
 
   useEffect(() => {
     // Notificações pertencem à CARREIRA: sem clube selecionado (splash, novo
     // jogo, sem-clube) não há caixa de entrada a cobrar.
     if (!state.selectedTeamShort) return
-    if (!ROTAS_COM_PORTAO.includes(pathname)) {
-      // Saiu do escritório: libera o portão para a próxima entrada.
-      jaRedirecionou.current = false
-      return
-    }
-    if (jaRedirecionou.current) return
+    if (!ROTAS_COM_PORTAO.includes(pathname)) return
+    if (sessionStorage.getItem(GATE_KEY)) return
     // `notifications.length === 0` com unreadCount 0 pode ser "ainda carregando".
     // Só agimos quando há de fato algo não lido.
     if (unreadCount <= 0) return
 
-    jaRedirecionou.current = true
+    sessionStorage.setItem(GATE_KEY, "1")
     hardNavigate("/notificacoes")
   }, [pathname, unreadCount, notifications.length, state.selectedTeamShort])
 
