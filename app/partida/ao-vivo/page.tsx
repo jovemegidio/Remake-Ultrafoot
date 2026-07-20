@@ -1048,8 +1048,8 @@ export default function PartidaAoVivoPage() {
   //    Arredonda a 1 casa a cada tick.
   useEffect(() => {
     if (state.phase !== "first" && state.phase !== "second") return
-    const drena = (p: { pos: string; stamina: number }) => {
-      const taxa = p.pos === "GOL" ? 0.22 : 0.62
+    const drena = (p: { position: string; stamina: number }) => {
+      const taxa = p.position === "GOL" ? 0.22 : 0.62
       return Math.max(0, Math.round((p.stamina - taxa) * 10) / 10)
     }
     setHomeSquad(prev => prev.map(p => ({ ...p, stamina: drena(p) })))
