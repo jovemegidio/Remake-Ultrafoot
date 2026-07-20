@@ -4,9 +4,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut } from "lucide-react"
+import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
-import { NotificationBell, NotificationCenter } from "@/components/notifications-system"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { persistGameEngineNow } from "@/lib/game-engine"
@@ -106,7 +105,6 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [advancing, setAdvancing] = useState(false)
   // Data "correndo" durante o avanco (animacao dia a dia)
   const [advanceDate, setAdvanceDate] = useState<Date | null>(null)
-  const [showNotifications, setShowNotifications] = useState(false)
   const [showCoachDropdown, setShowCoachDropdown] = useState(false)
   const [showNavMenu, setShowNavMenu] = useState(false)
   const [showResignConfirm, setShowResignConfirm] = useState(false)
@@ -386,7 +384,10 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           <span className="hidden sm:inline">Avancar</span>
         </button>
 
-        <NotificationBell onClick={() => setShowNotifications(true)} />
+        {/* O sino abria um drawer que sumia a cada navegação e passava
+            despercebido — mensagens da diretoria e propostas ficavam sem
+            resposta. A Central de Notificações agora é uma TELA do menu [W], e
+            o escritório redireciona para ela enquanto houver algo não lido. */}
 
         <Link
           href="/configuracoes"
@@ -396,8 +397,6 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         >
           <Settings className="h-4 w-4" />
         </Link>
-
-        <NotificationCenter isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
 
         {/* Widget do clube: escudo + forma + estrela (dropdown do tecnico) */}
         <div className="relative" ref={dropdownRef}>
@@ -626,6 +625,8 @@ function ResignConfirmDialog({ teamName, onCancel, onConfirm }: { teamName: stri
 // Paginas do menu de navegacao rapida (tecla W).
 const NAV_MENU_ITEMS: { label: string; href: string; icon: typeof Save }[] = [
   { label: "Escritorio", href: "/", icon: Trophy },
+  { label: "Area do Treinador", href: "/treinador", icon: User },
+  { label: "Notificacoes", href: "/notificacoes", icon: Bell },
   { label: "Elenco", href: "/elenco", icon: User },
   { label: "Taticas", href: "/elenco/taticas", icon: Settings },
   { label: "Mercado", href: "/mercado", icon: TrendingUp },

@@ -9,7 +9,7 @@ import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
 import { getCareerScopedKey } from "@/lib/save-system"
 
 // Types
-interface Notification {
+export interface Notification {
   id: string
   type: "goal" | "match_start" | "match_end" | "transfer" | "injury" | "achievement" | "news" | "system"
   title: string
