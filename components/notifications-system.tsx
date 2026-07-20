@@ -6,7 +6,7 @@ import { X, Trophy, Goal, Zap, TrendingUp, AlertTriangle, Bell, Star, Users, Dol
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
-import { getCareerScopedKey } from "@/lib/save-system"
+import { getCareerScopedKey, useGameState } from "@/lib/save-system"
 
 // Types
 export interface Notification {
@@ -261,6 +261,8 @@ export function NotificationToast({ notification, onClose }: { notification: Not
 export function NotificationToastContainer() {
   const [toasts, setToasts] = useState<Notification[]>([])
   const { notifications } = useNotifications()
+  // Toasts pertencem a carreira: fora dela (splash, novo jogo, editor) nada aparece.
+  const { state: gateState } = useGameState()
   // Fechar um toast nao deve apagar a notificacao da central, mas tambem nao pode
   // deixa-lo reaparecer em cada render. Antes o X removia da lista visual e este
   // efeito o inseria novamente imediatamente porque ainda era a ultima notificacao.
@@ -280,6 +282,10 @@ export function NotificationToastContainer() {
     dismissedToastIds.current.add(id)
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
+
+  // Sem clube selecionado não há carreira — toasts na splash/novo jogo/editor
+  // seriam ruído de um save que o jogador nem abriu.
+  if (!gateState.selectedTeamShort) return null
 
   return (
     <div className="fixed top-16 right-4 z-50 flex flex-col gap-3">

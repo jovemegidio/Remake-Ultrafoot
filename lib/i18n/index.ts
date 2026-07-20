@@ -6,7 +6,18 @@ import { enUS } from "./translations/en-US"
 import { esES } from "./translations/es-ES"
 import { storeGet, initPersistentStore } from "@/lib/persistent-store"
 
-const STORAGE_KEY = "ultrafoot:save"
+// ⚠️ BUG CORRIGIDO (2026-07-20): este arquivo lia SEMPRE "ultrafoot:save" — a
+// chave LEGADA. Desde o sistema de múltiplas carreiras o save vive em
+// "ultrafoot:save:<careerId>", então a escolha de idioma da splash era gravada
+// numa chave e lida de outra: TODO idioma caía no fallback pt-BR. Era isso o
+// "os idiomas não estão funcionando".
+// Não importamos save-system aqui (risco de ciclo) — replicamos a resolução.
+const LEGACY_KEY = "ultrafoot:save"
+const ACTIVE_CAREER_KEY = "ultrafoot:active-career"
+function saveKey(): string {
+  const careerId = storeGet(ACTIVE_CAREER_KEY)
+  return careerId ? `ultrafoot:save:${careerId}` : LEGACY_KEY
+}
 
 const map: Record<string, Translations> = {
   "pt-BR": ptBR,
@@ -22,7 +33,8 @@ const map: Record<string, Translations> = {
 // devolvia sempre pt-BR pos-update, ignorando a escolha do usuario.
 function readLanguage(): string {
   try {
-    const raw = storeGet(STORAGE_KEY)
+    // Career-scoped primeiro; legado como fallback para saves antigos.
+    const raw = storeGet(saveKey()) ?? storeGet(LEGACY_KEY)
     if (!raw) return "pt-BR"
     const parsed = JSON.parse(raw) as { language?: string }
     return parsed.language || "pt-BR"

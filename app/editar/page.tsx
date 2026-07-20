@@ -121,12 +121,19 @@ const PAIS_CODE: Record<string, string> = {
 }
 
 // Clube do pool? (divisao no formato "pool:<pais>")
+import { normalizeCountry } from "@/lib/country-normalize"
+
 const isPoolTeam = (team: Team) => typeof team.divisao === "string" && team.divisao.startsWith("pool:")
 
 const countryCodeOf = (team: Team): string => {
   if (isPoolTeam(team)) {
-    const pais = team.pais ?? (team.divisao as string).slice(5)
-    return PAIS_CODE[pais] ?? pais ?? "INT"
+    // O valor cru virava "país": clube com pais="SP" (sigla de estado) criava um
+    // grupo "SP" ao lado de "São Paulo", e fragmentos de nome de clube
+    // ("SPORT", "OPERARIOMT") viravam grupos-fantasma. Normaliza primeiro —
+    // UFs viram Brasil, lixo vira Indefinido — e só então busca o código.
+    const pais = normalizeCountry(team.pais ?? (team.divisao as string).slice(5))
+    if (pais === "Brasil") return "BRA"
+    return PAIS_CODE[pais] ?? "INT"
   }
   return DIV_COUNTRY[team.divisao] ?? "INT"
 }

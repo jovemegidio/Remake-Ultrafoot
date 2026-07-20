@@ -86,7 +86,7 @@ const ALIAS_NOME: Record<string, string> = {
  * registros "Sem Contrato" (agentes livres, que não pertencem a país nenhum) e
  * em fragmentos de nome de clube.
  */
-const NAO_E_PAIS = new Set(["172", "B.O", "ARUC", "FC", "EC", "AC.", "IEM", "ESK", "RDG", "NASR", "MIA"])
+const NAO_E_PAIS = new Set(["172", "B.O", "ARUC", "FC", "EC", "AC.", "IEM", "ESK", "RDG", "NASR", "MIA", "SPORT", "MENEMENSPOR", "OPERARIOMT"])
 
 /** País desconhecido — melhor do que atribuir um errado. */
 export const PAIS_DESCONHECIDO = "Indefinido"

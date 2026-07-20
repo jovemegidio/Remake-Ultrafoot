@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 import { useNotifications } from "@/components/notifications-system"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { useGameState } from "@/lib/save-system"
 
 /**
  * Antes de entrar no escritório, resolve a caixa de entrada.
@@ -26,9 +27,13 @@ const ROTAS_COM_PORTAO = ["/", "/pre-office"]
 export function PendingInboxGate() {
   const pathname = usePathname()
   const { unreadCount, notifications } = useNotifications()
+  const { state } = useGameState()
   const jaRedirecionou = useRef(false)
 
   useEffect(() => {
+    // Notificações pertencem à CARREIRA: sem clube selecionado (splash, novo
+    // jogo, sem-clube) não há caixa de entrada a cobrar.
+    if (!state.selectedTeamShort) return
     if (!ROTAS_COM_PORTAO.includes(pathname)) {
       // Saiu do escritório: libera o portão para a próxima entrada.
       jaRedirecionou.current = false
@@ -41,7 +46,7 @@ export function PendingInboxGate() {
 
     jaRedirecionou.current = true
     hardNavigate("/notificacoes")
-  }, [pathname, unreadCount, notifications.length])
+  }, [pathname, unreadCount, notifications.length, state.selectedTeamShort])
 
   return null
 }
