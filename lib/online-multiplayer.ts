@@ -2,13 +2,13 @@ import { allTeams } from "@/lib/teams-data"
 import { NATIONAL_COMPETITIONS } from "@/lib/national-competitions"
 import { YOUTH_COMPETITION_FORMATS_2026 } from "@/lib/youth-career-engine"
 
-export const ONLINE_GAME_VERSION = "1.0.100"
+export const ONLINE_GAME_VERSION = "1.0.103"
 // O relay valida `gameVersion` contra ALLOWED_GAME_VERSION e devolve 409
 // (unsupported_game_version) quando não bate. Ficar preso em 1.0.96 enquanto o
 // relay foi implantado em 1.0.98 quebrou a criação/entrada em salas em produção.
 // Cliente, relay (services/multiplayer-relay/wrangler.jsonc) e o preflight do
 // release precisam andar juntos — este valor acompanha a versão da build.
-export const ONLINE_PROTOCOL_VERSION = "1.0.100"
+export const ONLINE_PROTOCOL_VERSION = "1.0.103"
 export const GAME_DATA_VERSION = "2026.07.18"
 
 export interface OnlineParticipant {
