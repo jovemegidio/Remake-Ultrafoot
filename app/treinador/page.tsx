@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { GameHeader } from "@/components/game-header"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
@@ -80,21 +81,35 @@ export default function TreinadorPage() {
   }, [ultimos])
 
   return (
-    <div className="h-screen overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="relative h-screen overflow-hidden bg-[#050508] pb-20 md:pb-0">
+      {/* Mesmo pano de fundo do escritório (pedido: visual profissional igual
+          ao office/pre-office): crossfade das fotos + véu para leitura. */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
+        <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
+        <div className="absolute inset-0 bg-[#050508]/72" />
+      </div>
+
+      <div className="relative z-10">
       <GameHeader team={userTeam} />
 
       <main className="flex h-[calc(100vh-48px-56px)] flex-col">
-        <div className="border-b border-white/[0.04] bg-[#0d0d0d] px-4 py-3">
+        {/* Hero do técnico — identidade em destaque, como o cabeçalho do office */}
+        <div className="border-b border-white/[0.06] bg-black/35 px-4 py-4 backdrop-blur-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="flex items-center gap-2 text-lg font-bold text-white">
-                <UserCircle className="h-5 w-5 text-[#00ffc8]" />
-                {state.managerName || "Técnico"}
-              </h1>
-              <p className="mt-0.5 text-xs text-white/50">
-                {userTeam.nome} · Temporada {currentSeason}
-                {ranking && ` · ~${ranking.position}º entre os técnicos`}
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#00ffc8]/30 bg-[#00ffc8]/10">
+                <UserCircle className="h-8 w-8 text-[#00ffc8]" />
+              </div>
+              <div>
+                <h1 className="text-xl font-black tracking-tight text-white">
+                  {state.managerName || "Técnico"}
+                </h1>
+                <p className="mt-0.5 text-xs text-white/55">
+                  {userTeam.nome} · Temporada {currentSeason}
+                  {ranking && ` · ~${ranking.position}º entre os técnicos`}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-4 text-right">
               {/* A reputação vem do hall-of-fame-engine (derivada de títulos,
@@ -116,9 +131,9 @@ export default function TreinadorPage() {
           {/* Propostas — antes só apareciam no escritório e passavam despercebidas. */}
           <section className={cn(
             "rounded-xl border p-5",
-            ofertas.length > 0 ? "border-[#ffd700]/30 bg-[#ffd700]/[0.05]" : "border-white/[0.06] bg-[#0c0c10]",
+            ofertas.length > 0 ? "border-[#ffd700]/30 bg-[#ffd700]/[0.05]" : "border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30",
           )}>
-            <h2 className="flex items-center gap-2 text-base font-bold text-white">
+            <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
               <Briefcase className="h-4 w-4 text-[#ffd700]" />
               Propostas de trabalho
               {ofertas.length > 0 && (
@@ -126,7 +141,7 @@ export default function TreinadorPage() {
                   {ofertas.length}
                 </span>
               )}
-            </h2>
+            </h2><span className="h-px flex-1 bg-gradient-to-r from-[#ffd700]/40 to-transparent" /></div>
 
             {ofertas.length === 0 ? (
               <p className="mt-2 text-sm text-white/45">
@@ -162,12 +177,12 @@ export default function TreinadorPage() {
           </section>
 
           {/* Últimos resultados */}
-          <section className="mt-4 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+          <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-base font-bold text-white">
+              <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
                 <ClipboardList className="h-4 w-4 text-[#00ffc8]" />
                 Últimos resultados
-              </h2>
+              </h2><span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" /></div>
               {aproveitamentoRecente !== null && (
                 <span className={cn(
                   "flex items-center gap-1 text-xs font-semibold",
@@ -204,11 +219,11 @@ export default function TreinadorPage() {
           </section>
 
           {/* Carreira */}
-          <section className="mt-4 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
-            <h2 className="flex items-center gap-2 text-base font-bold text-white">
+          <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
+            <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
               <Trophy className="h-4 w-4 text-[#ffd700]" />
               Carreira
-            </h2>
+            </h2><span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" /></div>
 
             {!carreira ? (
               <p className="mt-2 text-sm text-white/45">
@@ -263,6 +278,7 @@ export default function TreinadorPage() {
 
         </div>
       </main>
+      </div>
     </div>
   )
 }
