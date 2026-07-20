@@ -5,7 +5,9 @@ import { calculateStandings, roundRobin } from "./index"
 // A versão vem do wrangler.jsonc em vez de ficar fixa no teste: o relay recusa
 // (409) qualquer gameVersion diferente de ALLOWED_GAME_VERSION, então cravar o
 // número aqui fazia a suíte quebrar a cada bump de versão do jogo.
-const GAME_VERSION = env.ALLOWED_GAME_VERSION
+// O cast é necessário porque o Env de index.ts não é exportado e o tipo gerado
+// para `env` não conhece as vars declaradas no wrangler.jsonc.
+const GAME_VERSION = (env as unknown as { ALLOWED_GAME_VERSION: string }).ALLOWED_GAME_VERSION
 
 describe("tabela para campeonato remoto", () => {
   it("gera 31 rodadas com 16 partidas simultâneas para 32 técnicos", () => {
