@@ -7,8 +7,28 @@ estado da correção. Serve para não perder contexto entre sessões.
 
 ## #1 — Calendário dessincroniza e o clube do usuário é rebaixado sem jogar
 
-**Reportado em:** 2026-07-20 · **Versão:** 1.0.98 · **Estado:** aberto
+**Reportado em:** 2026-07-20 · **Versão:** 1.0.98 · **Estado:** CORRIGIDO (1.0.101)
 **Severidade:** alta — arruína a temporada do jogador
+
+> **Resolução.** O relato descrevia DOIS sintomas ("rebaixado com 15 jogos" e
+> "fica aguardando sorteio") que se revelaram **três causas distintas**:
+>
+> 1. Partidas do usuário nunca resolvidas — só os adversários eram simulados.
+>    Corrigido em `lib/fixture-catchup.ts` (`ddf6b84`, 14 testes).
+> 2. Quatro ligas com `LEAGUE_CALENDAR` divergente do calendário gerado
+>    (Série C 30x38, Série D 36x38, Scottish 22x38, Pro League BEL 30x34):
+>    `leagueFixturesComplete` era impossível e a temporada nunca fechava.
+>    Corrigido em `4cb8123`, achado por `scripts/audit-competicoes.ts`.
+> 3. Temporada presa ao contador de semanas mesmo sem competições restantes.
+>    Corrigido por `isSeasonOver()` em `ddf6b84`.
+>
+> Verificado com o calendário REAL da Série A: usuário para na rodada 15,
+> 23 partidas pendentes, todas recuperadas, termina 38/38 como os rivais.
+>
+> ⚠️ A 1.0.98 já continha uma tentativa de correção deste bug (travar o fim de
+> temporada até a liga completar). Ela foi publicada **sem teste** e apenas
+> trocou o sintoma: virou a carreira presa em "aguardando sorteio". É a razão
+> de a lógica agora viver em funções puras com teste.
 
 ### Relato
 
@@ -54,8 +74,21 @@ ir para os jogadores.
 
 ## #2 — Busca por posição retorna atletas de outra posição
 
-**Reportado em:** 2026-07-20 · **Versão:** 1.0.98 · **Estado:** aberto
+**Reportado em:** 2026-07-20 · **Versão:** 1.0.98 · **Estado:** CORRIGIDO (1.0.100)
 **Severidade:** média — mercado fica confuso, mas não quebra a carreira
+
+> **Resolução.** A hipótese inicial ("dado do pool errado") estava certa, mas a
+> causa era mais simples: `mapPos` em `lib/transfer-engine.ts` tinha
+> `return "MEI"` como fallback e conhecia só 9 códigos. O banco importado marca
+> todo atleta fora dos 11 titulares como `BAN` (banco, não posição) — 25.078
+> registros. Somados a `CA` e `LAT`, o mercado virava um depósito de meias.
+>
+> Medido em 53.406 atletas (`scripts/test-market-positions.ts`):
+> PD 0 (0,0%) → 2.078 (3,9%) · PE 0 → 2.077 · VOL 53 → 2.155 · MEI 61,2% → 22,0%
+>
+> Existiam **zero pontas no banco inteiro** — por isso a busca por ponta
+> devolvia qualquer outra coisa. Os elencos já tratavam `BAN` corretamente
+> (`FILLER_POSITION_ORDER`); só o mercado não.
 
 ### Relato
 
