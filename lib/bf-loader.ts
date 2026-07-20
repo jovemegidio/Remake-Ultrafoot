@@ -1,6 +1,7 @@
 "use client"
 
 /** TypeScript types for BF2026-27 imported data */
+import { normalizeCountry } from "@/lib/country-normalize"
 
 export interface BFTeam {
   id: string
@@ -66,8 +67,13 @@ export async function loadBFTeams(): Promise<BFTeamsIndex> {
 export function groupByCountryAndLeague(teams: BFTeam[]): Map<string, Map<string, BFTeam[]>> {
   const result = new Map<string, Map<string, BFTeam[]>>()
   for (const team of teams) {
-    if (!result.has(team.pais)) result.set(team.pais, new Map())
-    const leagues = result.get(team.pais)!
+    // Sem normalizar, o mesmo país aparecia partido em várias entradas: 126
+    // clubes brasileiros trazem a SIGLA DO ESTADO no campo `pais` (Nova Iguaçu
+    // = "RJ", Cruzeiro = "BR"), e códigos de 3 letras convivem com o nome por
+    // extenso. Ver lib/country-normalize.ts.
+    const pais = normalizeCountry(team.pais)
+    if (!result.has(pais)) result.set(pais, new Map())
+    const leagues = result.get(pais)!
     if (!leagues.has(team.liga)) leagues.set(team.liga, [])
     leagues.get(team.liga)!.push(team)
   }
@@ -91,13 +97,15 @@ export function getFlag(pais: string): string {
 export function sortedCountries(teams: BFTeam[], regiao: string): string[] {
   const paisSet = new Set<string>()
   for (const t of teams) {
-    if (regiao === "all" || getRegiao(t.pais) === regiao) {
-      paisSet.add(t.pais)
+    const pais = normalizeCountry(t.pais)
+    if (regiao === "all" || getRegiao(pais) === regiao) {
+      paisSet.add(pais)
     }
   }
   const counts = new Map<string, number>()
   for (const t of teams) {
-    if (paisSet.has(t.pais)) counts.set(t.pais, (counts.get(t.pais) || 0) + 1)
+    const pais = normalizeCountry(t.pais)
+    if (paisSet.has(pais)) counts.set(pais, (counts.get(pais) || 0) + 1)
   }
   return [...paisSet].sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0))
 }
