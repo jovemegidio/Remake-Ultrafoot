@@ -23,6 +23,7 @@ import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 import { berthsForSeason, type SuperCupBerth } from "@/lib/super-cups"
+import { regionalCupForState } from "@/lib/regional-cups"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -134,6 +135,13 @@ export const ESTADO_CAMPEONATO: Record<string, string> = {
   SE: "Campeonato Sergipano",
   RO: "Campeonato Rondoniense",
   AP: "Campeonato Amapaense",
+  // Auditoria 2026-07-20 (scripts/audit-estados.ts): MS e AC têm 4 clubes cada
+  // no dado real e estavam FORA do mapa — jogadores desses estados ficavam sem
+  // estadual. MT/RO/AP continuam mapeados mas com <4 clubes: o
+  // getStateChampionshipTeams devolve [] e o estadual não acontece; para
+  // resolver esses é preciso importar mais clubes, não mudar código.
+  MS: "Campeonato Sul-Mato-Grossense",
+  AC: "Campeonato Acreano",
 }
 
 const BRAZILIAN_DIVISIONS = ["serie_a", "serie_b", "serie_c", "serie_d"]
@@ -359,6 +367,8 @@ export interface CupCompetitionPlan {
   competition: Competition
   competitionType: "cup" | "continental"
   matchCount: number
+  /** Copas regionais: restringe os adversários a estas UFs (ver lib/regional-cups.ts). */
+  opponentStates?: readonly string[]
 }
 
 // Define se uma divisao e de primeiro nivel (top flight) — so o top flight tem
@@ -387,6 +397,21 @@ export function getUserCupPlan(userTeam: Team, superCups: readonly SuperCupBerth
       competitionType: "cup",
       matchCount: vaga.matchCount,
     })
+  }
+
+  // ── Copa regional (Nordeste / Verde) ───────────────────────────────────
+  // Elegibilidade pelo ESTADO do clube, como no regulamento da CBF. Estados do
+  // eixo Sul/Sudeste (menos ES) não disputam nenhuma — igual à vida real.
+  if (isBrazilianDivision(division)) {
+    const regional = regionalCupForState(userTeam.estado)
+    if (regional) {
+      plans.push({
+        competition: makeComp(regional.id, regional.name, 55, "nacional", "cup"),
+        competitionType: "cup",
+        matchCount: regional.matchCount,
+        opponentStates: regional.states,
+      })
+    }
   }
 
   // ── Copa nacional ──────────────────────────────────────────────────────
@@ -435,6 +460,19 @@ function getUserCupMatchCount(userTeamShort: string, superCups: readonly SuperCu
 // Monta o pool de adversarios para uma competicao
 export function getOpponentPool(userTeam: Team, plan: CupCompetitionPlan): Team[] {
   const userShort = userTeam.curto
+  // Copa regional: só clubes das UFs elegíveis. Sem este filtro a Copa do
+  // Nordeste sortearia adversário paulista.
+  if (plan.opponentStates?.length) {
+    const seen = new Set<string>()
+    return [...allBrazilianTeams, ...allPoolTeams]
+      .filter(t => t.curto !== userShort && t.estado && plan.opponentStates!.includes(t.estado))
+      .filter(team => {
+        const key = (team.file_key || team.curto).trim().toLocaleLowerCase()
+        if (!key || seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+  }
   if (plan.competitionType === "cup") {
     // Copa nacional: todas as divisoes do MESMO pais. O código antigo usava somente
     // a liga atual; como os 19 rivais já estavam marcados como usados, o sorteio
