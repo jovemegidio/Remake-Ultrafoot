@@ -81,6 +81,18 @@ jobs:
         run: |
           if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY)) { throw "TAURI_SIGNING_PRIVATE_KEY ausente — sem ela o auto-updater rejeita o pacote" }
 
+      # src-tauri/tauri.windows.conf.json NUNCA foi versionado (existe só na
+      # máquina local), então o CI falhava com "Provided config path does not
+      # exist". Ele apenas restringia o alvo para NSIS e embutia o DLL do Discord
+      # — que também não está no repositório nem é referenciado pelo código Rust.
+      # Geramos aqui um config com o único conteúdo que importa. Passar o JSON
+      # inline em `args` não funciona: o Windows quebra as aspas e o Tauri tenta
+      # abrir "{\" como caminho de arquivo.
+      - name: Gera config de bundle do CI
+        shell: pwsh
+        run: |
+          '{"bundle":{"targets":["nsis"]}}' | Set-Content "src-tauri/tauri.ci.conf.json" -Encoding utf8
+
       - name: Build & publish release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -88,12 +100,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          # src-tauri/tauri.windows.conf.json NUNCA foi versionado (está apenas na
-          # máquina local), então o CI falhava com "Provided config path does not
-          # exist". Ele só restringia o alvo para NSIS e adicionava o DLL do
-          # Discord — que também não está no repositório nem é referenciado pelo
-          # código Rust. O alvo NSIS vai inline; o resto vem de tauri.conf.json.
-          args: --config "{\"bundle\":{\"targets\":[\"nsis\"]}}"
+          args: --config src-tauri/tauri.ci.conf.json
           tagName: ${{ github.ref_name }}
           releaseName: "Ultrafoot 26 ${{ github.ref_name }}"
           releaseBody: "Atualização automática do Ultrafoot 26. O jogo baixa e instala sozinho na próxima abertura."
