@@ -187,7 +187,9 @@ function PlayerCard({
           <span className="flex items-center gap-0.5">
             <Heart className="h-2 w-2" /> ENERGIA
           </span>
-          <span>{player.stamina}%</span>
+          {/* Math.round: a stamina chega como float acumulado do drain por
+              minuto e aparecia "5.4000000000012%" no card (relato com print). */}
+          <span>{Math.round(player.stamina ?? 100)}%</span>
         </div>
         <div className="h-1 w-full rounded-full bg-black/30 overflow-hidden">
           <div

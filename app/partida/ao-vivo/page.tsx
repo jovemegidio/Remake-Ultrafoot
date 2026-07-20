@@ -1040,11 +1040,20 @@ export default function PartidaAoVivoPage() {
     }
   }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek, matchCtx.friendly, matchCtx.youth, savedGame, setSavedGame, userSide])
 
-  // Stamina drena por minuto
+  // Stamina drena por minuto.
+  // Dois bugs do relato ("até o goleiro cansou kk" + print "5.4000000000012%"):
+  // 1) dreno FIXO de 1.1 para todos — 90' zeravam qualquer atleta, goleiro
+  //    incluído. GK agora drena ~20% do ritmo de linha.
+  // 2) subtração de floats acumulava lixo binário que vazava para a tela.
+  //    Arredonda a 1 casa a cada tick.
   useEffect(() => {
     if (state.phase !== "first" && state.phase !== "second") return
-    setHomeSquad(prev => prev.map(p => ({ ...p, stamina: Math.max(0, p.stamina - 1.1) })))
-    setAwaySquad(prev => prev.map(p => ({ ...p, stamina: Math.max(0, p.stamina - 1.1) })))
+    const drena = (p: { pos: string; stamina: number }) => {
+      const taxa = p.pos === "GOL" ? 0.22 : 0.62
+      return Math.max(0, Math.round((p.stamina - taxa) * 10) / 10)
+    }
+    setHomeSquad(prev => prev.map(p => ({ ...p, stamina: drena(p) })))
+    setAwaySquad(prev => prev.map(p => ({ ...p, stamina: drena(p) })))
   }, [state.minute, state.phase])
 
   // Mantém FC Hub e Discord Rich Presence sincronizados com o jogo ao vivo.
