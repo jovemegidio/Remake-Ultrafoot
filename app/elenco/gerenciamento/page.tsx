@@ -1120,7 +1120,10 @@ export default function ElencoPage() {
 
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
           {/* Main content area */}
-          <div className="flex-1 flex flex-col p-2 md:p-4 min-h-0">
+          {/* overflow-y-auto: a coluna cortava no viewport e as ultimas fileiras
+              dos reservas ficavam INALCANCAVEIS (area vermelha do relato) — o
+              scroll interno dos reservas nao ajudava porque o pai ja clipava. */}
+          <div className="flex-1 flex flex-col p-2 md:p-4 min-h-0 overflow-y-auto scrollbar-game">
             {/* Tab Content: Elenco */}
             {activeTab === "elenco" && (
             <>
