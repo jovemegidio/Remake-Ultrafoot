@@ -15,6 +15,13 @@ import {
   type SquadPlayer,
   type PenaltyOutcome,
 } from "@/lib/match-engine"
+import {
+  applyDecision,
+  pruneExpired,
+  suggestDecision,
+  type ActiveDecision,
+  type MatchDecisionId,
+} from "@/lib/match-decisions"
 
 export interface UseMatchSimulation {
   state: MatchState
@@ -32,6 +39,15 @@ export interface UseMatchSimulation {
   // Simular até o fim instantaneamente
   fastForward: () => void
   /**
+   * Decisões do técnico durante a partida (gritar, pressionar, segurar o
+   * resultado...). O lib/match-decisions.ts já existia completo mas nunca foi
+   * ligado: a única alavanca ao vivo era a mentalidade.
+   */
+  activeDecisions: ActiveDecision[]
+  /** Sugestão do auxiliar para o momento atual — null quando não há nada a fazer. */
+  suggestedDecision: MatchDecisionId | null
+  applyCoachDecision: (id: MatchDecisionId) => void
+  /**
    * Cobra o penalti pendente com o batedor escolhido pelo usuario.
    * Enquanto houver penalti pendente o relogio fica parado, entao isto e o que
    * destrava a partida.
@@ -43,6 +59,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
   const [state, setState] = useState<MatchState>(() => createInitialState())
   const [speed, setSpeed] = useState<MatchSpeed>("normal")
   const [isRunning, setIsRunning] = useState(false)
+  const [activeDecisions, setActiveDecisions] = useState<ActiveDecision[]>([])
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const stateRef = useRef(state)
@@ -76,6 +93,11 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
       const next = tickMinute(current, cfg)
       stateRef.current = next
       setState(next)
+      // Decisões têm duração: expiram sozinhas conforme o relógio anda.
+      setActiveDecisions(prev => {
+        const kept = pruneExpired(prev, next.minute)
+        return kept.length === prev.length ? prev : kept
+      })
     }, intervalMs)
   }, [stopTimer])
 
@@ -209,10 +231,30 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     return outcome
   }, [])
 
+  /**
+   * Aplica uma decisão do técnico. `applyDecision` mexe no momentum do estado
+   * corrente — é a mesma grandeza que o tickMinute usa para decidir quem cria
+   * chance, então o efeito aparece na simulação, não só na tela.
+   */
+  const applyCoachDecision = useCallback((id: MatchDecisionId) => {
+    const current = stateRef.current
+    if (current.phase === "fulltime") return
+    const { state: next, active } = applyDecision(current, id)
+    stateRef.current = next
+    setState(next)
+    setActiveDecisions(prev => [...pruneExpired(prev, next.minute).filter(d => d.id !== id), active])
+  }, [])
+
+  // Sugestão do auxiliar: recalculada a cada minuto a partir do placar/momentum.
+  const suggestedDecision = state.phase === "fulltime" ? null : suggestDecision(state)
+
   return {
     state,
     speed,
     isRunning,
+    activeDecisions,
+    suggestedDecision,
+    applyCoachDecision,
     start,
     pause,
     resume,

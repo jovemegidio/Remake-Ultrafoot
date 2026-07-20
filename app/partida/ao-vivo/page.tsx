@@ -1546,6 +1546,55 @@ export default function PartidaAoVivoPage() {
                       </div>
                     </div>
 
+                    {/* Decisões do técnico — efeito temporizado no momentum, que é
+                        a mesma grandeza que o motor usa para decidir quem cria
+                        chance. Complementa a mentalidade: ela é o ajuste contínuo,
+                        estas são intervenções pontuais. */}
+                    <div className="mb-4 rounded-lg border border-amber-400/20 bg-amber-400/[0.04] p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-white/70">Decisões do técnico</span>
+                        {sim.suggestedDecision && (
+                          <span className="text-[10px] text-amber-300">auxiliar sugere</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {([
+                          ["gritar", "Gritar"],
+                          ["acalmar", "Acalmar"],
+                          ["pressionar", "Pressionar"],
+                          ["recuar", "Recuar"],
+                          ["tudo_ou_nada", "Tudo ou nada"],
+                          ["segurar_resultado", "Segurar"],
+                          ["bola_longa", "Bola longa"],
+                          ["sub_sugerida", "Poupar"],
+                        ] as const).map(([id, label]) => {
+                          const active = sim.activeDecisions.some(d => d.id === id)
+                          const suggested = sim.suggestedDecision === id
+                          return (
+                            <button
+                              key={id}
+                              onClick={() => sim.applyCoachDecision(id)}
+                              className={cn(
+                                "rounded-lg border px-1.5 py-2 text-center text-[10px] font-bold transition-all",
+                                active
+                                  ? "border-amber-400 bg-amber-400/20 text-amber-200"
+                                  : suggested
+                                    ? "border-amber-300/60 bg-amber-300/10 text-amber-200"
+                                    : "border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/[0.06]",
+                              )}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {sim.activeDecisions.length > 0 && (
+                        <p className="mt-2 text-[10px] text-white/40">
+                          Em vigor: {sim.activeDecisions.map(d => `${d.id.replace(/_/g, " ")} (até ${d.appliedAtMinute + d.effect.durationMinutes}')`).join(" · ")}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       {/* Formacao Casa */}
                       <div className="bg-white/5 rounded-lg p-3">
