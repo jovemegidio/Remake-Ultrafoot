@@ -18,6 +18,8 @@ import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
 import { resolveDivisionChange } from "@/lib/promotion-relegation"
 import { processDebtMonth } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
+import { useNotifications } from "@/components/notifications-system"
+import { selectOverdueUserFixtures } from "@/lib/fixture-catchup"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 
@@ -1043,6 +1045,11 @@ export function useGameManager() {
   saveStateRef.current = saveState
   const seasonCalendarRef = useRef<SeasonCalendar>({ fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null })
   const lastCompletedFixtureWeekRef = useRef<number | null>(null)
+  // Ref para não entrar nas deps do advanceWeek (o provider recria addNotification
+  // a cada render e isso invalidaria o callback a cada ciclo).
+  const { addNotification } = useNotifications()
+  const addNotificationRef = useRef(addNotification)
+  addNotificationRef.current = addNotification
 
   useEffect(() => {
     setEngineHydrated(useGameEngine.persist.hasHydrated())
@@ -1424,6 +1431,21 @@ export function useGameManager() {
       f => f.week > currentWeek && f.week <= newWeek && !f.isUserMatch && !f.played
     )
 
+    // Partidas do USUÁRIO que ficaram para trás.
+    //
+    // Antes só os adversários eram simulados: uma partida do usuário não
+    // disputada permanecia pendente para sempre enquanto o resto da liga seguia.
+    // O clube acumulava jogos a menos (relato: 15 partidas contra 38 dos rivais)
+    // e era rebaixado por pontos que nunca teve chance de somar. A 1.0.98 tentou
+    // conter isso travando o fim de temporada até o usuário completar a liga —
+    // o que só trocou o rebaixamento indevido por uma carreira presa em
+    // "aguardando sorteio", porque as partidas continuavam sem nunca acontecer.
+    //
+    // `week < newWeek` (estritamente no passado) é intencional: a partida da
+    // semana que está começando ainda é do jogador para disputar; só o que ficou
+    // para trás é resolvido automaticamente.
+    const overdueUserFixtures = selectOverdueUserFixtures(seasonCalendarRef.current.fixtures, newWeek)
+
     // Atualiza fixtures no gameState para rastreamento de fim de temporada
     const prevFixtures = (saveStateRef.current as unknown as Record<string, unknown>).fixtures as import("@/lib/career-types").MatchFixture[] | undefined ?? []
     let updatedStateFixtures = [...prevFixtures]
@@ -1463,6 +1485,61 @@ export function useGameManager() {
       }
     }
 
+    // Resolve as partidas do usuário que ficaram para trás, pelo mesmo motor que
+    // simula os adversários. Sem isto o clube fica com jogos a menos que o resto
+    // da liga e a temporada nunca fecha.
+    const autoPlayed: string[] = []
+    const completedKeysFromAuto: string[] = []
+    for (const fixture of overdueUserFixtures) {
+      const simulated = simulateMatchResult(
+        fixture.homeTeam,
+        fixture.awayTeam,
+        fixture.week,
+        currentState.season,
+        fixture.competition,
+      )
+      const fixtureKey = getCalendarFixtureKey(fixture, currentState.season)
+      // Não reprocessa o que já foi registrado (ex.: partida disputada cujo
+      // fixture em memória ainda não recebeu played=true neste tick).
+      const already = useGameEngine.getState().matchResults.some(r => r.fixtureKey === fixtureKey)
+        || (currentState.completedFixtureKeys ?? []).includes(fixtureKey)
+      if (already) continue
+
+      const result: MatchResult = {
+        ...simulated,
+        fixtureKey,
+        fixtureId: fixture.id,
+        week: fixture.week,
+      }
+      if (fixture.competitionType === "league") {
+        gameEngine.updateStandings(result)
+      } else {
+        gameEngine.addMatchResultOnly(result)
+      }
+      completedKeysFromAuto.push(fixtureKey)
+
+      const idx = updatedStateFixtures.findIndex(
+        f => f.isUserMatch && !f.played && f.round === (fixture.round ?? fixture.week)
+          && f.homeCurto === fixture.homeTeam.curto && f.awayCurto === fixture.awayTeam.curto
+      )
+      if (idx !== -1) {
+        updatedStateFixtures[idx] = {
+          ...updatedStateFixtures[idx],
+          played: true,
+          homeGoals: result.homeScore,
+          awayGoals: result.awayScore,
+        }
+      }
+
+      const userIsHome = fixture.homeTeam.curto === userShort
+      const userGoals = userIsHome ? result.homeScore : result.awayScore
+      const rivalGoals = userIsHome ? result.awayScore : result.homeScore
+      autoPlayed.push(
+        `${fixture.homeTeam.curto} ${result.homeScore}x${result.awayScore} ${fixture.awayTeam.curto}` +
+        ` (${userGoals > rivalGoals ? "vitória" : userGoals < rivalGoals ? "derrota" : "empate"})`,
+      )
+    }
+
     // Avanca game engine
     gameEngine.advanceWeek()
 
@@ -1471,8 +1548,23 @@ export function useGameManager() {
     if(debt?.enabled&&newWeek>=debt.nextPaymentWeek){const payment=processDebtMonth(debt,useGameEngine.getState().balance);gameEngine.payClubDebt(payment.paid);debt=payment.debt}
     if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)}
     const scoutingDepartment=currentState.scoutingDepartment?advanceScoutingWeek(currentState.scoutingDepartment,newWeek):undefined
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment } as Partial<typeof currentState> & { fixtures: unknown })
+    // As chaves das partidas resolvidas automaticamente entram no save junto com
+    // a semana: sem isso elas voltariam a ser candidatas na próxima chamada.
+    const completedFixtureKeys = completedKeysFromAuto.length > 0
+      ? Array.from(new Set([...(currentState.completedFixtureKeys ?? []), ...completedKeysFromAuto]))
+      : currentState.completedFixtureKeys
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment, completedFixtureKeys } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment, completedFixtureKeys } as Partial<typeof currentState> & { fixtures: unknown })
+
+    // O jogador precisa saber que uma partida dele foi resolvida sem ele.
+    if (autoPlayed.length > 0) {
+      addNotificationRef.current({
+        type: "system",
+        title: autoPlayed.length === 1 ? "Partida simulada" : `${autoPlayed.length} partidas simuladas`,
+        message: `Você avançou o calendário sem disputar. Resultado: ${autoPlayed.join(" · ")}`,
+        priority: "high",
+      })
+    }
 
     // Detecta campeao da liga apenas ao final da ultima rodada
     let leagueChampion: { competition: string; season: string; stats: { won: number; drawn: number; lost: number; goalsFor: number } } | null = null

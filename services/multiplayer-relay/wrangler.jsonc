@@ -13,7 +13,7 @@
   ],
   "observability": { "enabled": true },
   "vars": {
-    "ALLOWED_GAME_VERSION": "1.0.99",
+    "ALLOWED_GAME_VERSION": "1.0.100",
     "ALLOWED_ORIGINS": "tauri://localhost,http://tauri.localhost,https://tauri.localhost"
   }
 }

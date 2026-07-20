@@ -28,18 +28,38 @@ interface BfTeamRaw {
 
 const ALL_BF_TEAMS = (importedBF as { teams?: BfTeamRaw[] }).teams ?? []
 
-function mapPos(p: string): string {
+// Distribuição usada para quem vem sem posição na fonte — mesma ideia do
+// FILLER_POSITION_ORDER de players-data.ts, que já resolve isso nos elencos.
+const BENCH_POSITION_ORDER = ["GOL", "ZAG", "ZAG", "LD", "LE", "VOL", "MEI", "MEI", "PD", "PE", "ATA", "ATA"]
+
+/**
+ * Converte a posição da fonte para o código do jogo.
+ *
+ * O fallback anterior era `return "MEI"`, e o banco importado marca TODO atleta
+ * fora dos 11 titulares como "BAN" (banco, não uma posição): 25.078 registros —
+ * de longe o valor mais comum — viravam meias. Somados a "CA" (centroavante) e
+ * "LAT", o mercado ficava inundado de MEI e a busca por ATA, VOL, PD ou PE
+ * praticamente não devolvia ninguém correto. Relato de jogador em 2026-07-20.
+ *
+ * `index` mantém a distribuição estável: o mesmo atleta cai sempre na mesma
+ * posição, em vez de mudar a cada listagem do mercado.
+ */
+function mapPos(p: string, index = 0): string {
   const u = (p || "").toUpperCase()
   if (u === "GOL" || u === "GK") return "GOL"
   if (u === "LD" || u === "RB") return "LD"
   if (u === "LE" || u === "LB") return "LE"
+  if (u === "LAT") return "LD"
   if (u === "DEF" || u === "ZAG" || u === "CB") return "ZAG"
-  if (u === "VOL") return "VOL"
-  if (u === "MEI" || u === "MID" || u === "MED" || u === "MC") return "MEI"
-  if (u === "PD" || u === "RW") return "PD"
-  if (u === "PE" || u === "LW") return "PE"
-  if (u === "ATA" || u === "FWD" || u === "ST") return "ATA"
-  return "MEI"
+  if (u === "VOL" || u === "DM" || u === "CDM" || u === "MCD") return "VOL"
+  if (u === "MEI" || u === "MID" || u === "MED" || u === "MC" || u === "CM" || u === "CAM" || u === "MO") return "MEI"
+  if (u === "PD" || u === "RW" || u === "AD" || u === "MD") return "PD"
+  if (u === "PE" || u === "LW" || u === "AE" || u === "ME") return "PE"
+  // CA é centroavante no banco importado, não "meia central".
+  if (u === "ATA" || u === "FWD" || u === "ST" || u === "CA" || u === "CF" || u === "SA") return "ATA"
+  // "BAN" (e qualquer código desconhecido) não carrega informação de posição:
+  // distribui pelos setores em vez de fingir que todos são meias.
+  return BENCH_POSITION_ORDER[Math.abs(index) % BENCH_POSITION_ORDER.length]
 }
 
 function calcMarketValueFromAttrs(overall: number, age: number): number {
@@ -90,7 +110,7 @@ export function generateMarketTargets(userTeamCurto: string, count = 24, season 
     result.push({
       id: `tgt_${season}_${idx}_${result.length}`,
       name: c.player.nome,
-      position: mapPos(c.player.posicao),
+      position: mapPos(c.player.posicao, idx),
       age: c.player.idade,
       overall: c.player.overall,
       potential: calcPotential(c.player.overall, c.player.idade),
@@ -283,7 +303,7 @@ export function generateDetailedMarketTargets(
   for (const idx of selectedIndexes) {
     const { team, player } = candidates[idx]
 
-    const position = mapPos(player.posicao)
+    const position = mapPos(player.posicao, idx)
     const overall = Math.max(1, Math.min(99, player.overall))
     const age = player.idade
     const potBonus = age < 20 ? 8 + Math.floor(rng() * 5) :
