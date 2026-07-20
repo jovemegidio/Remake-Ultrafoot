@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { SELF } from "cloudflare:test"
+import { SELF, env } from "cloudflare:test"
 import { calculateStandings, roundRobin } from "./index"
+
+// A versão vem do wrangler.jsonc em vez de ficar fixa no teste: o relay recusa
+// (409) qualquer gameVersion diferente de ALLOWED_GAME_VERSION, então cravar o
+// número aqui fazia a suíte quebrar a cada bump de versão do jogo.
+const GAME_VERSION = env.ALLOWED_GAME_VERSION
 
 describe("tabela para campeonato remoto", () => {
   it("gera 31 rodadas com 16 partidas simultâneas para 32 técnicos", () => {
@@ -32,7 +37,7 @@ describe("API do relay", () => {
     const create = await SELF.fetch("https://relay.test/v1/rooms", {
       method: "POST",
       headers: { "content-type": "application/json" },
-    body: JSON.stringify({ hostName: "Host", hostTeam: "INT", gameVersion: "1.0.98", dataVersion: "2026.07", dataHash: "qa-hash", maxPlayers: 32, mode: "tournament" }),
+    body: JSON.stringify({ hostName: "Host", hostTeam: "INT", gameVersion: GAME_VERSION, dataVersion: "2026.07", dataHash: "qa-hash", maxPlayers: 32, mode: "tournament" }),
     })
     expect(create.status).toBe(201)
     const payload = await create.json<{ room: { code: string; maxPlayers: number }; participantId: string; sessionToken: string }>()
@@ -41,14 +46,14 @@ describe("API do relay", () => {
       const joined = await SELF.fetch(`https://relay.test/v1/rooms/${payload.room.code}/join`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-    body: JSON.stringify({ managerName: `Técnico ${index}`, teamShort: `T${index}`, gameVersion: "1.0.98", dataVersion: "2026.07", dataHash: "qa-hash" }),
+    body: JSON.stringify({ managerName: `Técnico ${index}`, teamShort: `T${index}`, gameVersion: GAME_VERSION, dataVersion: "2026.07", dataHash: "qa-hash" }),
       })
       expect(joined.status).toBe(201)
     }
     const duplicate = await SELF.fetch(`https://relay.test/v1/rooms/${payload.room.code}/join`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-    body: JSON.stringify({ managerName: "Duplicado", teamShort: "T20", gameVersion: "1.0.98", dataVersion: "2026.07", dataHash: "qa-hash" }),
+    body: JSON.stringify({ managerName: "Duplicado", teamShort: "T20", gameVersion: GAME_VERSION, dataVersion: "2026.07", dataHash: "qa-hash" }),
     })
     expect(duplicate.status).toBe(409)
     const denied = await SELF.fetch(`https://relay.test/v1/rooms/${payload.room.code}/snapshot`)
