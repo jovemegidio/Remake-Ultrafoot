@@ -1890,6 +1890,10 @@ interface GameEngineState {
   ticketTier: TicketTier
   setTicketTier: (tier: TicketTier) => void
 
+  /** Atletas anunciados no mercado: a IA passa a sondá-los ativamente. */
+  transferListedIds: number[]
+  toggleTransferListed: (playerId: number) => void
+
   // Processar fim de temporada (envelhecimento, aposentadoria, jovens da base)
   processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => void
 }
@@ -2287,6 +2291,7 @@ export const useGameEngine = create<GameEngineState>()(
       clubInfrastructure: { stadium: 2, acoustics: 1, pitch: 2, training: 2, youth: 1, medical: 2, security: 1, data: 1 },
       infraUpgradesInProgress: {},
       ticketTier: "normal",
+      transferListedIds: [],
 
       // Taticas padrao
       teamTactics: {
@@ -2894,6 +2899,13 @@ export const useGameEngine = create<GameEngineState>()(
 
       setTicketTier: (tier) => set({ ticketTier: tier }),
 
+      toggleTransferListed: (playerId) => set((s) => {
+        const current = s.transferListedIds ?? []
+        return current.includes(playerId)
+          ? { transferListedIds: current.filter(id => id !== playerId) }
+          : { transferListedIds: [...current, playerId] }
+      }),
+
       simulateOtherMatches: () => {
         const poissonGoals = (lambda: number): number => {
           const L = Math.exp(-lambda)
@@ -2960,11 +2972,15 @@ export const useGameEngine = create<GameEngineState>()(
       
       generateAIOffers: () => {
         const state = get()
+        const listed = new Set(state.transferListedIds ?? [])
 
-        // Jogadores com mercado: overall alto, jovens com potencial ou em boa forma
+        // Jogadores com mercado: overall alto, jovens com potencial ou em boa forma.
+        // Quem o técnico colocou na lista de transferíveis entra SEMPRE — é o
+        // ponto da lista: sinalizar ao mercado que o atleta está disponível.
         const marketable = state.squadPlayers.filter(p => {
           if (p.isLoanedIn || p.injury) return false
           if (p.calledUp) return false
+          if (listed.has(p.id)) return true
           const youngGem = p.age <= 22 && p.potential >= 80
           const goodForm = p.form >= p.overall + 3 && p.overall >= 72
           return p.overall >= 75 || youngGem || goodForm
@@ -2983,7 +2999,9 @@ export const useGameEngine = create<GameEngineState>()(
           const attractiveness = (player.overall - 70) * 0.012
             + (player.potential - player.overall) * 0.008
             + Math.max(0, player.form - player.overall) * 0.01
-          if (Math.random() > Math.max(0.03, Math.min(0.28, attractiveness))) continue
+            // Estar na lista multiplica o interesse: o clube está anunciando o atleta.
+            + (listed.has(player.id) ? 0.35 : 0)
+          if (Math.random() > Math.max(0.03, Math.min(0.7, attractiveness))) continue
 
           // Clubes candidatos avaliados pela própria IA (perfil + orçamento)
           const interested = AI_TEAMS

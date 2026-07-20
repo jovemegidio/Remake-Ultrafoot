@@ -114,6 +114,8 @@ export default function ElencoPage() {
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
   const engineSetStarter = useGameEngine(s => s.setStarter)
   const enginePlayerInstructions = useGameEngine(s => s.playerInstructions)
+  const transferListedIds = useGameEngine(s => s.transferListedIds)
+  const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const engineSetPlayerShirtNumber = useGameEngine(s => s.setPlayerShirtNumber)
   const teamTactics = useGameEngine(s => s.teamTactics)
   const setTeamTactics = useGameEngine(s => s.setTeamTactics)
@@ -1745,6 +1747,29 @@ export default function ElencoPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Lista de transferíveis: anuncia o atleta ao mercado. Antes não
+                  havia como colocar ninguém à venda — só dava para reagir a
+                  sondagens que a IA fizesse por conta própria. */}
+              <button
+                onClick={() => engineToggleTransferListed(selectedPlayer.id)}
+                className={cn(
+                  "mt-4 flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-xs font-bold transition-all",
+                  transferListedIds.includes(selectedPlayer.id)
+                    ? "border-amber-400/50 bg-amber-400/10 text-amber-300"
+                    : "border-white/15 text-white/70 hover:border-white/30 hover:text-white",
+                )}
+              >
+                <ArrowLeftRight className="h-4 w-4" />
+                {transferListedIds.includes(selectedPlayer.id)
+                  ? "Anunciado no mercado — remover da lista"
+                  : "Colocar na lista de transferíveis"}
+              </button>
+              {transferListedIds.includes(selectedPlayer.id) && (
+                <p className="mt-2 text-center text-[10px] leading-4 text-white/40">
+                  Clubes interessados passam a sondar este atleta com muito mais frequência.
+                </p>
+              )}
             </motion.div>
           </motion.div>
         )}
