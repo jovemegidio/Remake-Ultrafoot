@@ -1021,6 +1021,12 @@ export default function PartidaAoVivoPage() {
             events
           )
           clearMatchContext()
+          // Título de mata-mata (estadual/copa) é detectado pelo
+          // registerUserMatchResult acima, que grava o pending-champion. Sem
+          // esta checagem o botão CERIMÔNIA só aparecia para a liga.
+          if (typeof window !== "undefined" && localStorage.getItem("ultrafoot-pending-champion")) {
+            setIsLeagueChampion(true)
+          }
           postMatchAdvance.current = advanceWeek().then(result => {
             if (result && "leagueChampion" in result && result.leagueChampion) {
               const champ = result.leagueChampion

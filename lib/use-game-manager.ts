@@ -1844,6 +1844,26 @@ export function useGameManager() {
     const userScore = userIsHome ? homeScore : awayScore
     const oppScore = userIsHome ? awayScore : homeScore
     const won = userScore > oppScore
+
+    // Título de mata-mata (estadual/copa): a cerimônia de campeão só disparava
+    // para a LIGA (leagueChampion no fim de temporada). Relato real: ganhou o
+    // Gauchão e "nem percebeu". Regra: esta era a ÚLTIMA partida do usuário
+    // nessa competição não-liga e ele venceu → campeão. A página /campeao lê
+    // "ultrafoot-pending-champion" (contrato já existente).
+    if (won && !isLeagueMatch && typeof window !== "undefined") {
+      const restantes = seasonCalendarRef.current.fixtures.filter(f =>
+        f.isUserMatch && !f.played && f.competition === competitionName &&
+        getCalendarFixtureKey(f, currentState.season) !== fixtureKey,
+      ).length
+      if (restantes === 0) {
+        localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
+          competition: competitionName,
+          season: String(currentState.season),
+          type: "cup",
+          stats: null,
+        }))
+      }
+    }
     const lost = userScore < oppScore
 
     // === Bilheteria ===
