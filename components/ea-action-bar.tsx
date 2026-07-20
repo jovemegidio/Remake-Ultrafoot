@@ -165,7 +165,7 @@ function EaMark() {
 // Telas que controlam seus proprios rodapes fixos (nenhuma usa useActionBar) e
 // por isso nao devem receber a barra global, que ficaria sobreposta e bloquearia
 // cliques nos botoes dessas telas (ex: "Iniciar Partida" em /partida).
-const HIDDEN_PATHS = ["/splash", "/novo-jogo", "/pre-office", "/partida", "/editar", "/editor", "/elenco/gerenciamento"]
+const HIDDEN_PATHS = ["/splash", "/novo-jogo", "/pre-office", "/partida", "/editar", "/editor", "/elenco/gerenciamento", "/calendario"]
 
 export function EaActionBar() {
   const ctx = useContext(ActionBarContext)

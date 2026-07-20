@@ -17,6 +17,7 @@ import { ActionHint, GamepadButton, ShoulderHints } from "@/components/gamepad-i
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
+import { GameHeader } from "@/components/game-header"
 import { useGameManager, type Fixture } from "@/lib/use-game-manager"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
@@ -329,6 +330,10 @@ export default function CalendarioPage() {
   {/* Subtle corner accents to complement cyan glow */}
   <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/40" />
   </div>
+
+      {/* GameHeader padrão: dá ao calendário o menu [W], salvar e avançar —
+          a página só tinha o header local de navegação de mês (relato). */}
+      <div className="relative z-20"><GameHeader team={userTeam} /></div>
 
       {/* Top Navigation Bar */}
       <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">

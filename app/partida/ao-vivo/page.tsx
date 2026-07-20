@@ -1141,7 +1141,10 @@ export default function PartidaAoVivoPage() {
 
   return (
     <div className={cn(
-      "h-[100dvh] overflow-hidden flex flex-col",
+      // fixed inset-0 (era h-[100dvh]): no WebView2 o dvh calculava menor que a
+      // janela e o body vazava como FAIXA PRETA abaixo do rodapé (2 prints do
+      // usuário). Fixando aos 4 cantos, a tela cobre o viewport sempre.
+      "fixed inset-0 overflow-hidden flex flex-col",
       "bg-gradient-to-br from-[#1a3d3d] via-[#0d2626] to-[#051515]"
     )} data-match-end={state.phase === "fulltime" ? "true" : undefined}>
 
