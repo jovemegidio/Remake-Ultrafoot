@@ -32,6 +32,8 @@ type SplashPhase =
 
 type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
+const MENU_BGS = ["/images/pre-jogo/in-game-1.png", "/images/pre-jogo/in-game-5.png", "/images/pre-jogo/in-game-8.png", "/images/pre-jogo/in-game-2.png"]
+
 const LANGUAGE_COUNTRIES = [
   { id: "pt-BR", language: "Português", country: "Brasil", flag: "br", code: "BR" },
   { id: "pt-PT", language: "Português", country: "Portugal", flag: "pt", code: "PT" },
@@ -50,6 +52,12 @@ export default function SplashPage() {
   // o idioma agora se ajusta somente nas Configuracoes. Iniciar como true pula
   // o carrossel direto para o menu; o restante do fluxo fica intacto.
   const [languageSelected, setLanguageSelected] = useState(true)
+  // Fundos do menu em rotacao (ordem pedida: 1, 5, 8, 2).
+  const [menuBgIndex, setMenuBgIndex] = useState(0)
+  useEffect(() => {
+    const timer = window.setInterval(() => setMenuBgIndex(i => (i + 1) % MENU_BGS.length), 10000)
+    return () => window.clearInterval(timer)
+  }, [])
   const [languageIndex, setLanguageIndex] = useState(0)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -736,13 +744,15 @@ export default function SplashPage() {
         phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
 
-        {/* Cinematic stadium backdrop */}
+        {/* Cinematic stadium backdrop — roda os fundos 1→5→8→2 (pedido com
+            print), com crossfade suave a cada troca. */}
         <div className="absolute inset-0 overflow-hidden">
           <Image
-            src="/images/menu-bg.png"
+            key={MENU_BGS[menuBgIndex]}
+            src={MENU_BGS[menuBgIndex]}
             alt=""
             fill
-            className="object-cover"
+            className="object-cover animate-in fade-in duration-1000"
             style={{
               transform: phase === "main-menu" ? "scale(1.08)" : "scale(1)",
               transition: "transform 12s ease-out",

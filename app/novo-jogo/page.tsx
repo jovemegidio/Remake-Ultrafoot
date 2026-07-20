@@ -396,7 +396,10 @@ export default function NovoJogoPage() {
         case "ArrowUp": prevCountry(); break
         case "ArrowDown": nextCountry(); break
         case "Enter": handleStart(); break
-        case "Escape":
+        // Esc NÃO volta mais à splash (relato: expulsava do seletor). Fecha o
+        // modal da foto do estádio quando aberto; senão é no-op. Sair do
+        // seletor fica no Backspace e no botão Voltar.
+        case "Escape": setShowStadiumPhoto(false); break
         case "Backspace": hardNavigate("/splash"); break
       }
     }
