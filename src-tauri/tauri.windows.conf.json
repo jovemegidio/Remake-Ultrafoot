@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "targets": ["nsis"],
+    "resources": {
+      "vendor/discord-social-sdk/bin/discord_partner_sdk.dll": "discord_partner_sdk.dll"
+    }
+  }
+}

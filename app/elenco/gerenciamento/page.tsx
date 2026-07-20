@@ -327,17 +327,34 @@ export default function ElencoPage() {
    * escalações incompletas, mas nunca foi exposto ao técnico: montar o time
    * exigia arrastar os 11 na mão, toda vez.
    */
+  // Lesão/treino por NOME (a ponte padrão desta tela: os ids divergem do engine).
+  const statusFor = useCallback((name: string) => {
+    const ep = engineSquadPlayers.find(p => p.name === name)
+    return {
+      injured: !!ep?.injury,
+      injuryWeeks: ep?.injury?.weeksRemaining ?? 0,
+      training: !!ep?.training?.currentFocus,
+    }
+  }, [engineSquadPlayers])
+
   const autoPickLineup = useCallback(() => {
     const squad = [...players, ...bench]
     if (squad.length < 11) return
+    // Lesionado NÃO entra no XI automático (config pedida pelo usuário após o
+    // relato). Quem está em TREINO segue disponível — treino não afasta de
+    // jogo, só reduz a recuperação de energia — mas fica sinalizado no card.
+    const aptos = squad.filter(p => !statusFor(p.name).injured)
+    const base = aptos.length >= 11 ? aptos : squad
     const { starters, bench: rest } = pickStartingXI(
-      squad,
+      base,
       p => normalizePosition(p.position),
       p => p.overall,
       formation,
     )
     setPlayers(starters)
-    setBench(rest)
+    // Lesionados que ficaram fora do XI voltam para o banco.
+    const cortados = base === squad ? [] : squad.filter(p => statusFor(p.name).injured)
+    setBench([...rest, ...cortados])
     setPlayerPositions({})
     addNotification({
       type: "system",
@@ -345,7 +362,7 @@ export default function ElencoPage() {
       message: `Melhor XI disponível montado no ${formation}.`,
       priority: "low",
     })
-  }, [players, bench, formation, setPlayers, setBench, addNotification])
+  }, [players, bench, formation, setPlayers, setBench, addNotification, statusFor])
 
   const nextFormation = () => {
     const nextIndex = (currentFormationIndex + 1) % formationKeys.length
@@ -1239,6 +1256,22 @@ export default function ElencoPage() {
                         <TrendingUp className="h-2 w-2 text-black" />
                       </div>
                     )}
+                    {/* Lesão/treino visíveis no card — o relato "em treino fica
+                        afastado?" nasceu de status invisível na escalação. */}
+                    {(() => {
+                      const st = statusFor(player.name)
+                      if (st.injured) return (
+                        <div className="absolute inset-x-0 -top-1 mx-auto w-fit rounded bg-red-500 px-1 text-[7px] font-black text-white">
+                          LESÃO {st.injuryWeeks}sem
+                        </div>
+                      )
+                      if (st.training) return (
+                        <div className="absolute inset-x-0 -top-1 mx-auto w-fit rounded bg-amber-400 px-1 text-[7px] font-black text-black">
+                          TREINO
+                        </div>
+                      )
+                      return null
+                    })()}
                   </div>
                 </motion.div>
               ))}

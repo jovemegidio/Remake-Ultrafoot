@@ -1,0 +1,20 @@
+{
+  "build": {
+    "frontendDist": "../out",
+    "beforeBuildCommand": ""
+  },
+  "bundle": {
+    "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
+    "resources": [
+      "resources/game-assets.zip",
+      "resources/install-game-assets.ps1",
+      "resources/extractor/7z.exe",
+      "resources/extractor/7z.dll",
+      "resources/extractor/License.txt",
+      "resources/prerequisites/vc_redist.x64.exe",
+      "vendor/discord-social-sdk/License-Notices.txt",
+      "vendor/discord-social-sdk/bin/discord_partner_sdk.dll"
+    ]
+  }
+}

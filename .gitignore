@@ -63,6 +63,7 @@ public/escudos-selecoes/
 
 # npm lock (projeto usa pnpm)
 package-lock.json
+!services/multiplayer-relay/package-lock.json
 
 # Build outputs (variantes duplicadas geradas no Windows)
 .next*/
@@ -123,3 +124,21 @@ public/jogadores/
 # selecoes (3 MB) e trofeus (1 MB) NAO sao pesados e a main sempre os rastreou:
 # deixa-los de fora sumiria com eles do repo ao alinhar a main.
 data/seeds/*.bak
+
+# Originais preservados por scripts/mobile-compress-assets.mjs (conversao com perdas)
+.assets-backup/
+
+# node_modules quebrados renomeados durante recuperacao (entulho local)
+.node_modules-broken-*/
+.node_modules-corrupt-*/
+
+# Temporarios de ferramentas locais
+.codex-pdf-preview/
+.face-import-temp/
+
+# Instaladores gerados (vao para GitHub Releases, nao para o repo)
+releases/
+
+# Material de trabalho de escudos (fontes soltas; os usados ficam em public/)
+Escudos/
+Escudos para Importar/
