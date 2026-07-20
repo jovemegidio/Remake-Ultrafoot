@@ -73,6 +73,17 @@ const RELAY_OVERRIDE_KEY = "ultrafoot:relay-url"
 
 function normalizedUrl(value: string): string { return value.trim().replace(/\/+$/, "") }
 
+/**
+ * Multiplayer por relay: ligado apenas quando existe um relay público
+ * configurado em NEXT_PUBLIC_ULTRAFOOT_RELAY_URL.
+ *
+ * Sem relay implantado, a área "Campeonato pela internet" ficava visível no FC
+ * Hub e falhava em qualquer clique — e o preflight do release ainda exigia que
+ * o relay respondesse, travando a publicação de builds que nem usavam online.
+ * Basta definir a variável para a função voltar a aparecer sozinha.
+ */
+export const ONLINE_RELAY_ENABLED = Boolean(normalizedUrl(process.env.NEXT_PUBLIC_ULTRAFOOT_RELAY_URL ?? ""))
+
 export function configuredRelayUrl(): string {
   if (typeof window !== "undefined") {
     const override = normalizedUrl(localStorage.getItem(RELAY_OVERRIDE_KEY) ?? "")

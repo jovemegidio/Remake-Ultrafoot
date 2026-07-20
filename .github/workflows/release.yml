@@ -57,19 +57,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      # O multiplayer por relay está desligado no jogo (ver ONLINE_RELAY_ENABLED
+      # em lib/internet-multiplayer.ts), então o release não depende mais dele.
+      # Ao reativar o online, restaure aqui a checagem de /health comparando com
+      # ONLINE_PROTOCOL_VERSION — e não com a versão da build, que obrigava um
+      # redeploy do relay a cada release.
       - name: Release preflight
         shell: pwsh
         env:
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-          RELAY_URL: ${{ vars.NEXT_PUBLIC_ULTRAFOOT_RELAY_URL }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE)) { throw "WINDOWS_CERTIFICATE Authenticode ausente" }
           if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)) { throw "WINDOWS_CERTIFICATE_PASSWORD ausente" }
-          if ([string]::IsNullOrWhiteSpace($env:RELAY_URL)) { throw "NEXT_PUBLIC_ULTRAFOOT_RELAY_URL ausente" }
-          $health = Invoke-RestMethod -Uri "$($env:RELAY_URL.TrimEnd('/'))/health"
-          $version = (Get-Content "src-tauri/tauri.conf.json" -Raw | ConvertFrom-Json).version
-          if (-not $health.ok -or $health.gameVersion -ne $version) { throw "Relay indisponível ou incompatível com a build $version" }
 
       - name: Import Authenticode certificate
         shell: pwsh

@@ -28,6 +28,7 @@ import {
 import {
   checkRelayHealth,
   configuredRelayUrl,
+  ONLINE_RELAY_ENABLED,
   connectInternetRoom,
   createInternetRoom,
   joinInternetRoom,
@@ -346,7 +347,7 @@ export function FcHub() {
             <button onClick={() => void getDiscordSocialSnapshot().then(setSocial)} className="rounded-lg border border-white/10 px-3 text-white/60" aria-label="Atualizar"><RefreshCw className="h-4 w-4"/></button>
           </div>
         </div>
-        <div id="hub-groups" className="scroll-mt-5 rounded-xl border border-violet-400/30 bg-violet-400/[.06] p-4 backdrop-blur-sm" data-testid="fc-hub-internet">
+        {ONLINE_RELAY_ENABLED && <div id="hub-groups" className="scroll-mt-5 rounded-xl border border-violet-400/30 bg-violet-400/[.06] p-4 backdrop-blur-sm" data-testid="fc-hub-internet">
           <div className="flex flex-wrap items-center gap-2 text-white"><Wifi className="h-4 w-4 text-violet-300"/><b>Campeonato pela internet</b><span className="ml-auto rounded bg-violet-400/10 px-2 py-0.5 text-[10px] font-bold text-violet-200">20–32 TÉCNICOS</span></div>
           <p className="mt-2 text-xs leading-relaxed text-white/45">Cada técnico joga de sua própria casa. O relay WSS mantém sala, reconexão, tabela e até 16 partidas simultâneas por rodada; todos precisam da mesma versão e banco.</p>
           {!internet ? <div className="mt-4 space-y-3">
@@ -393,7 +394,7 @@ export function FcHub() {
             </div>
           </div>}
           {internetError && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-2 text-xs text-red-300">{internetError}</p>}
-        </div>
+        </div>}
         <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/[.04] p-4" data-testid="fc-hub-online">
           <div className="flex items-center gap-2 text-white"><Server className="h-4 w-4 text-cyan-300"/><b>Sala local / LAN</b><span className="ml-auto rounded bg-cyan-400/10 px-2 py-0.5 text-[10px] font-bold text-cyan-200">MESMA REDE</span></div>
           <p className="mt-2 text-xs leading-relaxed text-white/45">O host mantém o save oficial. Escalações, negociações e confirmações trafegam como ações; imagens e atualizações do banco permanecem dados do jogo.</p>
