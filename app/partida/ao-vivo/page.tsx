@@ -507,6 +507,7 @@ export default function PartidaAoVivoPage() {
   const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics } = useGameEngine()
   const engineMatchResults = useGameEngine(s => s.matchResults)
   const engineSeason = useGameEngine(s => s.currentSeason)
+  const engineSetPieceTakers = useGameEngine(s => s.setPieceTakers)
   // Mantém a identidade da partida encerrada mesmo depois de advanceWeek trocar o
   // próximo confronto; o modal da rodada precisa dessa chave estável.
   const [finalMatch, setFinalMatch] = useState<{ home: Team; away: Team; userSide: "home" | "away" } | null>(null)
@@ -688,6 +689,9 @@ export default function PartidaAoVivoPage() {
     // Diz ao motor qual lado e o do usuario: no penalti dele, o motor PARA e espera
     // a escolha do batedor em vez de cobrar sozinho.
     userSide,
+    // Cobradores designados na tática. Sem isto o motor sorteia por posição a
+    // cada lance e o especialista do elenco batia por acaso.
+    userSetPieceTakers: engineSetPieceTakers,
     // Mentalidade aplicada ao lado do usuario (afeta a simulacao ao vivo).
     homeMentality: userSide === "home" ? userMentality : undefined,
     awayMentality: userSide === "away" ? userMentality : undefined,
@@ -697,7 +701,7 @@ export default function PartidaAoVivoPage() {
     awayAttack: userSide === "away" ? awayTeam.prestigio + tacticalForces.attack : undefined,
     awayDefense: userSide === "away" ? awayTeam.prestigio + tacticalForces.defense : undefined,
     awayMidfield: userSide === "away" ? awayTeam.prestigio + tacticalForces.midfield : undefined,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces])
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, engineSetPieceTakers])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty } = sim

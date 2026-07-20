@@ -146,6 +146,14 @@ export interface MatchConfig {
    * espera a escolha do batedor (resolvePendingPenalty). Sem isto, ele cobra sozinho.
    */
   userSide?: Side
+  /**
+   * Cobradores designados do lado do USUÁRIO, por nome.
+   *
+   * Sem isto o motor sorteia o cobrador por posição a cada lance, então o
+   * especialista do elenco batia por acaso. Só vale para `userSide`: a IA
+   * continua sorteando.
+   */
+  userSetPieceTakers?: { freeKick?: string; corner?: string; penalty?: string }
 }
 
 export interface MatchModifiers {
@@ -256,6 +264,32 @@ function pickPlayerFull(side: Side, config: MatchConfig, posFilter?: string[]): 
   const pool = posFilter ? squad.filter(p => posFilter.includes(p.pos)) : squad
   const src = pool.length > 0 ? pool : squad
   return src[Math.floor(rnd() * src.length)]
+}
+
+/**
+ * Cobrador de bola parada: o designado pelo técnico quando existe e está em
+ * campo; senão cai no sorteio por posição de sempre.
+ *
+ * Só se aplica ao lado do usuário — a IA continua sorteando. O nome é a chave
+ * porque os IDs divergem entre o elenco da tela e o do motor.
+ */
+export function pickSetPieceTaker(
+  side: Side,
+  config: MatchConfig,
+  tipo: "freeKick" | "corner" | "penalty",
+  posFilter: string[],
+): SquadPlayer | null {
+  if (config.userSide === side) {
+    const nome = config.userSetPieceTakers?.[tipo]
+    if (nome) {
+      const squad = side === "home" ? config.homeSquad : config.awaySquad
+      // Precisa estar EM CAMPO: designar alguém que saiu ou nem foi escalado
+      // não pode travar a cobrança.
+      const designado = squad?.find(p => p.nome === nome)
+      if (designado) return designado
+    }
+  }
+  return pickPlayerFull(side, config, posFilter)
 }
 
 function pickPlayer(side: Side, config: MatchConfig, posFilter?: string[]): string {
@@ -604,7 +638,7 @@ function resolveShot(side: Side, state: MatchState, config: MatchConfig, probs: 
           teamStats.shotsOnTarget += 1
           if (rnd() < 0.18) {
             teamStats.goals += 1
-            const takerData = pickPlayerFull(side, config, ["MEI", "PD", "PE"])
+            const takerData = pickSetPieceTaker(side, config, "corner", ["MEI", "PD", "PE"])
             const cornerCandidate = takerData?.nome ?? pickPlayer(side, config, ["MEI", "PD", "PE"])
             const cornerTaker = cornerCandidate !== hdrName ? cornerCandidate : undefined
             state.events = [{
@@ -820,7 +854,9 @@ function resolvePenaltyKick(
   const teamStats = isHome ? state.home : state.away
   const minute = state.minute
 
-  const takerData = taker ?? pickPlayerFull(side, config, ["ATA", "MEI"])
+  // Ordem: escolha explícita do usuário no modal > cobrador designado na tática
+  // > sorteio por posição.
+  const takerData = taker ?? pickSetPieceTaker(side, config, "penalty", ["ATA", "MEI"])
   const takerShooting = takerData?.shooting ?? (isHome ? probs.homeAttStr : probs.awayAttStr)
   const takerName = takerData?.nome ?? pickPlayer(side, config, ["ATA"])
   const gkData = pickPlayerFull(gkSide, config, ["GOL"])

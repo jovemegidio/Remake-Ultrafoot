@@ -119,13 +119,15 @@ const ROLE_INFO: Record<PlayerRole, { label: string; desc: string; positions: st
   atacante_pivot: { label: "Atacante Pivo", desc: "Joga de costas e distribui", positions: ["ATA"] },
 }
 
-type TabType = "mentalidade" | "comBola" | "semBola" | "instrucoes" | "adversario"
+type TabType = "mentalidade" | "comBola" | "semBola" | "bolaParada" | "instrucoes" | "adversario"
 
 export default function TaticasPage() {
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   useDiscordActivity("Configurando táticas", userTeam.nome)
   const gameEngine = useGameEngine()
+  const setPieceTakers = useGameEngine(s => s.setPieceTakers)
+  const setSetPieceTaker = useGameEngine(s => s.setSetPieceTaker)
   
   const [activeTab, setActiveTab] = useState<TabType>("mentalidade")
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
@@ -137,6 +139,7 @@ export default function TaticasPage() {
     { id: "mentalidade", label: "Mentalidade", icon: Brain },
     { id: "comBola", label: "Com a Bola", icon: Zap },
     { id: "semBola", label: "Sem a Bola", icon: Shield },
+    { id: "bolaParada", label: "Bola Parada", icon: Target },
     { id: "instrucoes", label: "Instrucoes", icon: Users },
     { id: "adversario", label: "Adversario", icon: Eye },
   ]
@@ -664,6 +667,56 @@ export default function TaticasPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "bolaParada" && (
+            <motion.div
+              key="bolaParada"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              <div className="rounded-xl border border-white/10 bg-[#0c0c10] p-5">
+                <h3 className="text-lg font-bold text-white">Cobradores designados</h3>
+                <p className="mt-1 text-sm text-white/50">
+                  Sem escolha definida, o motor sorteia um jogador da posição a cada lance — o
+                  especialista do elenco batia por acaso. Quem for designado e estiver em campo cobra.
+                </p>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  {([
+                    ["freeKick", "Faltas", "Chute e passe pesam mais"],
+                    ["corner", "Escanteios", "Passe define a qualidade do cruzamento"],
+                    ["penalty", "Pênaltis", "Sugestão inicial no modal da partida"],
+                  ] as const).map(([tipo, titulo, dica]) => (
+                    <div key={tipo} className="rounded-lg border border-white/[0.06] bg-black/25 p-4">
+                      <p className="text-sm font-semibold text-white">{titulo}</p>
+                      <p className="mt-0.5 text-[11px] leading-4 text-white/40">{dica}</p>
+                      <select
+                        value={setPieceTakers?.[tipo] ?? ""}
+                        onChange={event => setSetPieceTaker(tipo, event.target.value || null)}
+                        className="mt-3 w-full rounded-lg border border-white/10 bg-[#12131a] px-3 py-2 text-xs text-white"
+                      >
+                        <option value="">Deixar o motor escolher</option>
+                        {[...squadPlayers]
+                          .sort((a, b) => b.overall - a.overall)
+                          .map(player => (
+                            <option key={player.id} value={player.name}>
+                              {player.name} · {player.position} · {player.overall}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-4 text-[11px] leading-4 text-white/35">
+                  Vale apenas para o seu time. Se o designado não estiver em campo no momento da
+                  cobrança, o motor escolhe um substituto pela posição.
+                </p>
               </div>
             </motion.div>
           )}

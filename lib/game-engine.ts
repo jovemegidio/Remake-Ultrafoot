@@ -1921,6 +1921,18 @@ interface GameEngineState {
   ticketTier: TicketTier
   setTicketTier: (tier: TicketTier) => void
 
+  /**
+   * Cobradores designados de bola parada.
+   *
+   * Antes o motor sorteava o cobrador por POSIÇÃO a cada lance
+   * (`pickPlayerFull(side, config, ["MEI","PD","PE"])`), então o especialista do
+   * elenco batia por acaso. Guardamos o NOME porque os IDs divergem entre o
+   * elenco da tela e o do engine para atletas importados — é a mesma ponte que
+   * o resto do projeto usa.
+   */
+  setPieceTakers: { freeKick?: string; corner?: string; penalty?: string }
+  setSetPieceTaker: (tipo: "freeKick" | "corner" | "penalty", playerName: string | null) => void
+
   /** Atletas anunciados no mercado: a IA passa a sondá-los ativamente. */
   transferListedIds: number[]
   toggleTransferListed: (playerId: number) => void
@@ -2325,6 +2337,7 @@ export const useGameEngine = create<GameEngineState>()(
       clubInfrastructure: { stadium: 2, acoustics: 1, pitch: 2, training: 2, youth: 1, medical: 2, security: 1, data: 1 },
       infraUpgradesInProgress: {},
       ticketTier: "normal",
+      setPieceTakers: {},
       transferListedIds: [],
 
       // Taticas padrao
@@ -2972,6 +2985,10 @@ export const useGameEngine = create<GameEngineState>()(
       },
 
       setTicketTier: (tier) => set({ ticketTier: tier }),
+
+      setSetPieceTaker: (tipo, playerName) => set((s) => ({
+        setPieceTakers: { ...s.setPieceTakers, [tipo]: playerName ?? undefined },
+      })),
 
       toggleTransferListed: (playerId) => set((s) => {
         const current = s.transferListedIds ?? []
