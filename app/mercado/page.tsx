@@ -537,6 +537,33 @@ export default function MercadoPage() {
     () => filteredPlayers.slice(marketPage * MARKET_PAGE_SIZE, (marketPage + 1) * MARKET_PAGE_SIZE),
     [filteredPlayers, marketPage],
   )
+
+  // Setas do painel de detalhe (eram decorativas): navegam o jogador
+  // anterior/próximo dentro da página visível.
+  const detailNav = useMemo(() => {
+    if (!selectedPlayer) return { prev: undefined, next: undefined }
+    const idx = visibleMarketPlayers.findIndex(p => p.id === selectedPlayer.id)
+    return {
+      prev: idx > 0 ? () => setSelectedPlayer(visibleMarketPlayers[idx - 1]) : undefined,
+      next: idx >= 0 && idx < visibleMarketPlayers.length - 1 ? () => setSelectedPlayer(visibleMarketPlayers[idx + 1]) : undefined,
+    }
+  }, [selectedPlayer, visibleMarketPlayers])
+
+  // Atalhos X/C dos keycaps da aba Rede (eram enfeite): ciclam o filtro de setor.
+  useEffect(() => {
+    const FILTROS = ["Tudo", "Ata", "Mei", "Def"]
+    const onKey = (e: KeyboardEvent) => {
+      const alvo = e.target as HTMLElement | null
+      if (alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.tagName === "SELECT")) return
+      const k = e.key.toLowerCase()
+      if (k !== "x" && k !== "c") return
+      const i = FILTROS.indexOf(positionFilter)
+      const atual = i >= 0 ? i : 0
+      setPositionFilter(FILTROS[(atual + (k === "c" ? 1 : FILTROS.length - 1)) % FILTROS.length])
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [positionFilter])
   useEffect(() => setMarketPage(0), [searchQuery, nameFilter, selectedPosition, minAge, maxAge,
     positionFilter, filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
   useEffect(() => {
@@ -642,6 +669,11 @@ export default function MercadoPage() {
     // dinheiro, e faz sentido voltar com uma oferta maior.
     if (!accepted && rejectedBy === "player" && player.id != null) {
       markPlayerRejection(player.id, gameDate)
+      // Jogador que recusou SAI da Central (pedido com print): manter a
+      // proposta rejeitada listada convidava a reabrir negociação que o
+      // atleta congelou por 30 dias. O toast já comunica a carência.
+      setSentProposals(current => current.filter(p => p.playerName !== player.name))
+      return
     }
 
     const proposalStatus: SentProposalStatus = accepted ? "aceita" : "rejeitada"
@@ -1078,9 +1110,11 @@ export default function MercadoPage() {
               {/* Player Details Panel */}
               <div className="overflow-y-auto pr-1 scrollbar-thin">
                 {selectedPlayer ? (
-                  <PlayerDetailsPanel
+                    <PlayerDetailsPanel
                     player={selectedPlayer}
                     onNegotiate={handleNegotiate}
+                    onPrev={detailNav.prev}
+                    onNext={detailNav.next}
                   />
                 ) : (
                   <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 h-full flex flex-col items-center justify-center text-center">
@@ -2125,7 +2159,7 @@ function PlayerListCard({
 }
 
 // Player Details Panel Component
-function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotiate: (type: "buy" | "loan") => void }) {
+function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext }: { player: Player, onNegotiate: (type: "buy" | "loan") => void, onPrev?: () => void, onNext?: () => void }) {
   const t = useTranslation()
   const isNew = player.scoutProgress && player.scoutProgress < 100
   const isNotScouted = !player.scoutedBy
@@ -2294,11 +2328,12 @@ function PlayerDetailsPanel({ player, onNegotiate }: { player: Player, onNegotia
 
         {/* Navigation dots */}
         <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-white/[0.04]">
-          <button className="text-white/40 hover:text-white/60">
+          {/* Antes decorativo (sem onClick): agora navega o jogador anterior/proximo da lista. */}
+          <button onClick={onPrev} disabled={!onPrev} className="text-white/40 hover:text-white/60 disabled:opacity-30">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-white/50 text-xs">Num</span>
-          <button className="text-white/40 hover:text-white/60">
+          <button onClick={onNext} disabled={!onNext} className="text-white/40 hover:text-white/60 disabled:opacity-30">
             <ChevronRight className="h-4 w-4" />
           </button>
           <div className="flex gap-1 ml-2">
