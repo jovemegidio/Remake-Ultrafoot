@@ -30,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { getGameDate } from "@/lib/game-date"
 import { getFormationSlots, normalizePosition } from "@/lib/formations"
+import { inferredNationality } from "@/lib/country-normalize"
 
 /** Setores da aba "Rede Mundial" — cada botão cobre todas as posições do setor. */
 const REDE_SECTOR_POSITIONS: Record<string, string[]> = {
@@ -2124,8 +2125,13 @@ function PlayerListCard({
       {/* Player Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-3 bg-green-600 rounded-sm flex items-center justify-center">
-            <span className="text-[8px] text-white font-bold">BR</span>
+          {/* Era "BR" FIXO para todo atleta — um uruguaio do Peñarol aparecia
+              brasileiro. Nacionalidade INFERIDA do país do clube (o banco não
+              traz a real; ver lib/country-normalize.ts). */}
+          <div className="h-3 min-w-4 rounded-sm bg-white/15 px-0.5 flex items-center justify-center" title={inferredNationality(player.team.pais)}>
+            <span className="text-[8px] text-white font-bold">
+              {inferredNationality(player.team.pais).normalize("NFD").replace(/[̀-ͯ]/g, "").slice(0, 3).toUpperCase()}
+            </span>
           </div>
           <span className="text-[10px] text-white/50 uppercase">{player.name.split(" ")[0]}</span>
         </div>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react"
 import { getClubFacts } from "@/lib/club-facts"
+import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
 import Image from "next/image"
 import { Star, StarHalf, ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat } from "lucide-react"
 import {
@@ -257,6 +258,10 @@ export default function NovoJogoPage() {
   const selectedTeam = teams[teamIndex]
 
   // Dados de perfil do clube, derivados de forma deterministica (estaveis por time)
+  // Modal com a FOTO real do estádio (acervo de 1785 fotos, por nome do clube).
+  const [showStadiumPhoto, setShowStadiumPhoto] = useState(false)
+  const stadiumPhoto = useMemo(() => getTeamStadiumBackground(selectedTeam?.nome), [selectedTeam?.nome])
+
   const profile = useMemo(() => {
     const t = selectedTeam
     const name = t?.nome || ""
@@ -617,13 +622,35 @@ export default function NovoJogoPage() {
                 </div>
               </button>
 
-              {/* Card Estadio */}
-              <div className={cn(cardBase, "flex flex-col items-center px-5 py-4 gap-2")}>
+              {/* Card Estadio — clique/hover abre modal com a FOTO real do
+                  estádio (acervo de 1785 fotos já embutido, por nome do clube). */}
+              <button
+                onClick={() => stadiumPhoto && setShowStadiumPhoto(true)}
+                onMouseEnter={() => stadiumPhoto && setShowStadiumPhoto(true)}
+                className={cn(cardBase, "flex flex-col items-center px-5 py-4 gap-2", stadiumPhoto && "cursor-pointer hover:ring-1 hover:ring-[#00ffc8]/40")}
+              >
                 <span className="text-xs text-white/50 tracking-wide">Nome do estádio</span>
                 <span className="text-sm font-black uppercase tracking-wide text-white text-center text-balance leading-tight">{selectedTeam?.estadio_nome}</span>
                 <Building2 className="w-9 h-9 text-white/70 mt-1" strokeWidth={1.5} />
                 <span className="text-[11px] text-white/40 tabular-nums">{(selectedTeam?.estadio_cap || 0).toLocaleString("pt-BR")} lugares</span>
-              </div>
+              </button>
+
+              {showStadiumPhoto && stadiumPhoto && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                  onClick={() => setShowStadiumPhoto(false)}
+                  onMouseLeave={() => setShowStadiumPhoto(false)}
+                >
+                  <div className="relative mx-4 w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={stadiumPhoto} alt={selectedTeam?.estadio_nome ?? "Estádio"} className="h-auto w-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-4">
+                      <p className="text-lg font-black text-white">{selectedTeam?.estadio_nome}</p>
+                      <p className="text-xs text-white/60">{(selectedTeam?.estadio_cap || 0).toLocaleString("pt-BR")} lugares · {selectedTeam?.nome}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── Zona 3: Estatisticas + Diretoria ── */}
