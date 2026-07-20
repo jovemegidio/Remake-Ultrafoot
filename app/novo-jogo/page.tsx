@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react"
+import { getClubFacts } from "@/lib/club-facts"
 import Image from "next/image"
 import { Star, StarHalf, ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat } from "lucide-react"
 import {
@@ -267,10 +268,13 @@ export default function NovoJogoPage() {
       return Math.abs(x % 1000) / 1000
     }
     const tierFactor = prest / 100
-    const foundation = 1888 + Math.floor(h(7) * 47) // 1888..1935
-    const ligas = Math.max(0, Math.round(tierFactor * 12 * (0.45 + h(8) * 0.7)))
-    const copas = Math.max(0, Math.round(tierFactor * 9 * (0.35 + h(9) * 0.8)))
-    const continental = Math.max(0, Math.round(Math.pow(tierFactor, 1.6) * 5 * h(10)))
+    // Fatos REAIS (lib/club-facts): fundacao e titulos eram inventados por hash
+    // — Corinthians saia como 1895/11 ligas (real: 1910/7). Sem curadoria, "—".
+    const facts = getClubFacts(t?.curto)
+    const foundation = facts?.foundation ?? null
+    const ligas = facts?.ligas ?? null
+    const copas = facts?.copas ?? null
+    const continental = facts?.continental ?? null
     const clubValue = (t?.saldo || 0) * (3 + tierFactor * 5) + (t?.estadio_cap || 0) * 45000
     const transferBudget = t?.saldo || 0
     // niveis 0..100
@@ -628,7 +632,7 @@ export default function NovoJogoPage() {
                 {/* Fundacao */}
                 <div className="text-center">
                   <span className="text-xs text-white/50 tracking-wide">Fundação</span>
-                  <div className="text-4xl font-black text-white tabular-nums leading-tight">{profile.foundation}</div>
+                  <div className="text-4xl font-black text-white tabular-nums leading-tight">{profile.foundation ?? "—"}</div>
                   <div className="mx-auto mt-1 h-px w-20 bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
                 </div>
 
@@ -642,7 +646,7 @@ export default function NovoJogoPage() {
                     <div key={label} className="flex flex-col items-center text-center">
                       <Icon className="w-7 h-7 text-white/80" strokeWidth={1.5} />
                       <span className="text-[10px] text-white/45 mt-1.5 leading-tight">{label}</span>
-                      <span className="text-2xl font-black text-white tabular-nums mt-1">{value}</span>
+                      <span className="text-2xl font-black text-white tabular-nums mt-1">{value ?? "—"}</span>
                     </div>
                   ))}
                 </div>
