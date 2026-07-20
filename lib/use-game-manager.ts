@@ -1338,7 +1338,18 @@ export function useGameManager() {
     const leagueUserFixtures = seasonCalendarRef.current.fixtures.filter(
       fixture => fixture.isUserMatch && fixture.competitionType === "league",
     )
-    const leagueFixturesComplete = leagueUserFixtures.length >= leagueRoundsForEnd &&
+    // Quantas partidas de liga a temporada REALMENTE tem, pelo turno-returno dos
+    // times inscritos — que é exatamente o que generateSeasonFixtures produz.
+    //
+    // Antes esta comparação usava `leagueRoundsForEnd`, que embute o valor
+    // declarado em LEAGUE_CALENDAR. Quando a constante superava o calendário real
+    // a condição ficava impossível e a temporada NUNCA terminava. Auditoria de
+    // 2026-07-20 (scripts/audit-competicoes.ts) pegou quatro ligas nesse estado:
+    //   Série C (30 partidas x 38 declaradas), Série D (36 x 38),
+    //   Scottish Premiership (22 x 38) e Pro League BEL (30 x 34).
+    // Quem escolhesse esses clubes ficava presa no fim da temporada para sempre.
+    const expectedLeagueFixtures = Math.max(1, (leagueTeamsForEnd.length - 1) * 2)
+    const leagueFixturesComplete = leagueUserFixtures.length >= expectedLeagueFixtures &&
       leagueUserFixtures.every(fixture => fixture.played)
 
     // Mesmo que uma semana tenha sido avançada rapidamente, não permite que o
