@@ -1,0 +1,581 @@
+{
+ "clubs": {
+  "FENIXXUR": {
+   "nome": "Fénix",
+   "url": "https://www.transfermarkt.com.br/ca-fenix/startseite/verein/3829",
+   "players": [
+    {
+     "tmId": "465821",
+     "nome": "Nahuel Suárez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "74255",
+     "nome": "Ernesto Hernández",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "595413",
+     "nome": "Santiago Rodríguez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "881652",
+     "nome": "Guillermo Pereira",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1115613",
+     "nome": "Lautaro Centurión",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "753815",
+     "nome": "Guido Segalerba",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1420383",
+     "nome": "Renzo Galeano",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "503778",
+     "nome": "Fabián Píriz",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "984963",
+     "nome": "Augusto Gallo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "886385",
+     "nome": "Alan Acevedo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "203018",
+     "nome": "Alex Silva",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "208006",
+     "nome": "Ángel Rodríguez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "131104",
+     "nome": "Nicolás Prieto",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1038830",
+     "nome": "Enzo Suárez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "599738",
+     "nome": "Gonzalo Andrada",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "933619",
+     "nome": "Matías Cabrera",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "981044",
+     "nome": "Nahuel De Armas",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1382637",
+     "nome": "Nicholas Negro",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "160705",
+     "nome": "Esteban González",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "653551",
+     "nome": "Diego Rosa",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "264331",
+     "nome": "Fabricio Fernández",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "993406",
+     "nome": "Sebastián De Marco",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "727854",
+     "nome": "Lucas Goberville",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "657758",
+     "nome": "Axel Pérez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "981755",
+     "nome": "Diago Fernández",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1194385",
+     "nome": "Jeremías Silveira",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "179059",
+     "nome": "Gastón Colmán",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "45577",
+     "nome": "Sebastián Ribas",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1425875",
+     "nome": "Franco Ramos",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    }
+   ]
+  },
+  "RACINGXU": {
+   "nome": "Racing Montevideo",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ORENSEXE": {
+   "nome": "Orense",
+   "url": "https://www.transfermarkt.com.br/orense-sc/startseite/verein/36020",
+   "players": [
+    {
+     "tmId": "718989",
+     "nome": "Rolando Silva",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1003045",
+     "nome": "Jordy Ortiz",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "891999",
+     "nome": "Óscar Quiñónez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "556300",
+     "nome": "Stefano Callegari",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "653330",
+     "nome": "Sixto Mina",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "544037",
+     "nome": "Alan Lorenzo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "983013",
+     "nome": "Bryan Quiñónez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "123475",
+     "nome": "Gabriel Achilier",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "666148",
+     "nome": "Bryan Viñán",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "421091",
+     "nome": "Beder Caicedo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "201420",
+     "nome": "Pedro Velasco",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "883618",
+     "nome": "Steeven Quiñónez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "983022",
+     "nome": "Sergio Vásquez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "342792",
+     "nome": "Renny Jaramillo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "659801",
+     "nome": "Erick Plúas",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "719226",
+     "nome": "Nixon Molina",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1257424",
+     "nome": "Cristhian Ortiz",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1252761",
+     "nome": "Gonzalo Rostagno",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "556725",
+     "nome": "Diego Armas",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1165987",
+     "nome": "Erick Zambrano",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "123609",
+     "nome": "Ángel Mena",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "872775",
+     "nome": "Agustín Herrera",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "242444",
+     "nome": "Miguel Parrales",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1074488",
+     "nome": "Michael Bermúdez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1525010",
+     "nome": "Luis Miguel Garcés",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    }
+   ]
+  },
+  "INSTITUT": {
+   "nome": "Instituto",
+   "url": "https://www.transfermarkt.com.br/instituto-ac-cordoba/startseite/verein/1829",
+   "players": [
+    {
+     "tmId": "344421",
+     "nome": "Marcos Ledesma",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "911581",
+     "nome": "Lautaro Maldonado",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "717685",
+     "nome": "Emanuel Sittaro",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "407517",
+     "nome": "Leonel Mosevich",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "216730",
+     "nome": "Jonatan Galván",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1221014",
+     "nome": "Agustín Massaccesi",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1225789",
+     "nome": "Lautaro Carrera",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "868503",
+     "nome": "Agustín Bravo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "464365",
+     "nome": "Diego Sosa",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "579977",
+     "nome": "Iván Erquiaga",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "971423",
+     "nome": "Giuliano Cerato",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "552628",
+     "nome": "Hernán de la Fuente",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "486030",
+     "nome": "Gustavo Abregú",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1322189",
+     "nome": "Joaquín Medina",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "563878",
+     "nome": "Gastón Lodico",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "843126",
+     "nome": "Alex Luna",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1227286",
+     "nome": "Jeremías Lázaro",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "990785",
+     "nome": "Matías Gallardo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1295872",
+     "nome": "Ignacio Rossi",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "538530",
+     "nome": "Jonás Acevedo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "628879",
+     "nome": "Jhon Córdoba",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "503001",
+     "nome": "Matías Tissera",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "534037",
+     "nome": "Nicolás Guerra",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "538919",
+     "nome": "Matías Fonseca",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "900478",
+     "nome": "Jonathan Dellarossa",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  }
+ },
+ "updatedAt": "2026-07-21T02:16:37.785Z"
+}
