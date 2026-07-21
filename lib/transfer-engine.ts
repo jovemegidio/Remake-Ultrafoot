@@ -228,6 +228,19 @@ const COUNTRY_NAMES = new Set([
   "Estados Unidos", "EUA", "México", "Mexico", "Canadá", "Canada", "Arábia Saudita", "Arabia Saudita", "Emirados Árabes Unidos", "Catar", "China", "Japão", "Japao", "Coreia do Sul", "Índia", "India", "Irã", "Ira", "Tailândia", "Tailandia", "Austrália", "Australia", "África do Sul", "Africa do Sul", "Egito", "Marrocos", "Tunísia", "Tunisia", "Nigéria", "Nigeria", "Gana",
 ])
 
+/**
+ * Nome de clube em forma comparavel entre a base do jogo e o catalogo BF, que
+ * escrevem o mesmo time de formas diferentes ("Corinthians" x "SC Corinthians").
+ * Tira acento, caixa, pontuacao e as siglas de tipo de clube.
+ */
+const SIGLA_CLUBE = new Set(["fc", "sc", "ec", "ca", "cr", "ac", "se", "afc", "cf", "ud", "cd", "clube", "club"])
+function normalizeClubName(nome?: string): string {
+  return (nome ?? "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+    .split(" ").filter(w => w && !SIGLA_CLUBE.has(w)).join(" ")
+}
+
 function normalizedCountry(raw?: string, fileKey?: string): string | undefined {
   const value = (raw ?? "").trim()
   if (COUNTRY_CODES[value.toUpperCase()]) return COUNTRY_CODES[value.toUpperCase()]
@@ -289,12 +302,20 @@ export function generateDetailedMarketTargets(
   userTeamCurto: string,
   count?: number,
   season = 0,
+  userTeamNome?: string,
 ): DetailedMarketTarget[] {
   const rng = mulberry32(hashSeed(`${userTeamCurto}-${season}-mercado`))
 
+  // Excluir o proprio clube por CURTO nao basta: o catalogo BF usa outra tabela
+  // de codigos ("CORINTHI") que nao bate com a do jogo ("COR"), entao o clube do
+  // usuario escapava do filtro e seus jogadores apareciam a venda (relato: "no
+  // mercado consigo comprar o jogador do meu proprio time"). O NOME normalizado
+  // e consistente entre as duas bases e fecha essa brecha.
+  const nomeAlvo = normalizeClubName(userTeamNome)
   const candidates: Array<{ team: BfTeamRaw; player: NonNullable<BfTeamRaw["jogadores"]>[number] }> = []
   for (const team of ALL_BF_TEAMS) {
     if (team.curto === userTeamCurto) continue
+    if (nomeAlvo && normalizeClubName(team.nome) === nomeAlvo) continue
     for (const j of team.jogadores ?? []) candidates.push({ team, player: j })
   }
   if (candidates.length === 0) return []

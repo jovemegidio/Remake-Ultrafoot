@@ -59,6 +59,15 @@ import { cn } from "@/lib/utils"
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
 type Player = DetailedMarketTarget
+
+/** Nome de clube comparável (sem acento/caixa/sigla), para casar save x catálogo. */
+const SIGLA_CLUBE_MERCADO = new Set(["fc", "sc", "ec", "ca", "cr", "ac", "se", "afc", "cf", "ud", "cd", "clube", "club"])
+function normalizeClubShort(nome?: string): string {
+  return (nome ?? "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+    .split(" ").filter(w => w && !SIGLA_CLUBE_MERCADO.has(w)).join(" ")
+}
 type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "enviadas" | "recebidas"
 type SentProposalStatus = "aceita" | "rejeitada"
 
@@ -322,8 +331,8 @@ export default function MercadoPage() {
   // dentro da temporada. A versão anterior passava `60` e, por isso, filtros de
   // país/liga/time pesquisavam somente uma vitrine aleatória — não o mercado real.
   const transferTargets = useMemo(
-    () => generateDetailedMarketTargets(userTeam?.curto ?? "", undefined, gameEngine.currentSeason),
-    [userTeam?.curto, gameEngine.currentSeason],
+    () => generateDetailedMarketTargets(userTeam?.curto ?? "", undefined, gameEngine.currentSeason, userTeam?.nome),
+    [userTeam?.curto, userTeam?.nome, gameEngine.currentSeason],
   )
 
   // Opções reais e encadeadas: país -> liga -> time. Nacionalidade e País/Região
@@ -367,7 +376,14 @@ export default function MercadoPage() {
 
   // Filter players by all criteria
   const filteredPlayers = useMemo(() => {
+    // Salvaguarda de ultima linha: nunca listar o proprio clube, mesmo que o
+    // catalogo use um curto diferente do save (COR x CORINTHI). O gerador ja
+    // filtra por nome, isto garante que nenhum caminho contorne a regra.
+    const meuCurto = (userTeam?.curto ?? "").toUpperCase()
+    const meuNome = normalizeClubShort(userTeam?.nome)
     return transferTargets.filter(p => {
+      if ((p.team?.curto ?? "").toUpperCase() === meuCurto) return false
+      if (meuNome && normalizeClubShort(p.team?.nome) === meuNome) return false
       // Name filter (uses searchQuery for real-time search)
       const searchTerm = searchQuery || nameFilter
       if (searchTerm && !p.name.toLowerCase().includes(searchTerm.toLowerCase())) {

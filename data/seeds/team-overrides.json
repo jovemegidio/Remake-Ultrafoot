@@ -693,5 +693,11 @@
  },
  "tigres": {
   "logoUrl": "/overrides/tigres-logo.png"
+ },
+ "orlandocity433_eua": {
+  "logoUrl": "/overrides/orlandocity433_eua-logo.png"
+ },
+ "nashville433_eua": {
+  "logoUrl": "/overrides/nashville433_eua-logo.png"
  }
 }
