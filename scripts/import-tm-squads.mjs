@@ -97,6 +97,30 @@ const PAIS_ALIAS = {
 // UFs brasileiras: um clube cujo "país" é RJ/SP/MG é, obviamente, do Brasil.
 const UF_BR = new Set(["ac","al","ap","am","ba","ce","df","es","go","ma","mt","ms","mg","pa","pb","pr","pe","pi","rj","rn","rs","ro","rr","sc","sp","se","to"])
 
+// Siglas de tipo de clube. "Chelsea" x "Chelsea FC" e "Palmeiras" x "SE
+// Palmeiras" sao o mesmo time; sem tirar essas siglas nenhum casamento exato
+// acontecia e o clube caia na regra de ambiguidade junto com "Berekum Chelsea
+// FC" e "Ferrocarril Palmeiras".
+const SIGLAS_CLUBE = new Set("fc cf sc ca ac se cr ec ud cd afc ssc as ss us rc rcd sv tsv vfb vfl bsc if ik fk nk hnk sk ask club clube cp cs ce aa ad sd rs bk gk os fk1 psv ogc rcs".split(" "))
+
+/** Nome comparável: sem acento, sem pontuação e sem sigla de tipo de clube. */
+function limparNome(s) {
+  return nameKey(s).split(" ").filter(w => w && !SIGLAS_CLUBE.has(w)).join(" ")
+}
+
+/**
+ * Chaves pelas quais um candidato pode ser reconhecido.
+ *
+ * Inclui o SLUG da URL de propósito: o Transfermarkt em português TRADUZ nomes
+ * de cidade — o Bayern aparece como "FC Bayern Munique" — então comparar só
+ * pelo texto exibido nunca casava, e o único candidato que ainda escrevia
+ * "München" era o time SUB-17. O slug (`fc-bayern-munchen`) não é traduzido.
+ */
+function chavesCandidato(c) {
+  const slug = c.href.split("/").filter(Boolean)[0] ?? ""
+  return new Set([limparNome(c.nome), limparNome(slug.replace(/-/g, " "))])
+}
+
 /** Devolve o país em forma comparável, ou null se não der para saber. */
 function paisKey(bruto) {
   const k = nameKey(bruto)
@@ -146,7 +170,7 @@ async function findClubUrl(clubName, clubCountry, buscar) {
   const alvoPais = paisKey(clubCountry)
   const alvoNome = nameKey(clubName)
   const candidatos = []
-  for (const row of secao.split(/<tr class="(?:odd|even)">/).slice(1)) {
+  for (const row of secao.split(/<tr class="(?:odd|even)[^"]*">/).slice(1)) {
     const link = row.match(/href="(\/[^"]*\/startseite\/verein\/\d+)"[^>]*>\s*([^<]+)/)
     const pais = row.match(/title="([^"]+)"[^>]*class="flaggenrahmen/)
     if (!link) continue
@@ -154,20 +178,40 @@ async function findClubUrl(clubName, clubCountry, buscar) {
   }
   if (candidatos.length === 0) return { semClube: true }
 
-  // Times B/sub-20 aparecem primeiro em algumas buscas e não são o clube.
-  const principal = c => !/\b(ii|b|u\s?\d{2}|sub\s?\d{2})\b/i.test(c.nome)
+  // Times B / juvenis / sub-XX aparecem primeiro em algumas buscas e NAO sao o
+  // clube. Sem "jugend" e "juvenil" na lista, "Bayern München" foi casado com o
+  // fc-bayern-munchen-JUGEND e teria importado o elenco da base.
+  const principal = c =>
+    !/\b(ii|b|u\s?\d{2}|sub\s?\d{2})\b/i.test(c.nome) &&
+    !/(jugend|juvenil|youth|academy|amateure|reserv)/i.test(c.nome) &&
+    !/(jugend|juvenil|youth|academy|amateure|u\d{2})/i.test(c.href)
 
   const mesmoPais = alvoPais ? candidatos.filter(c => paisKey(c.pais) === alvoPais) : []
-  // País desconhecido no seed: aceita só nome IDÊNTICO. Sem essa trava foi que
-  // "Fénix" do Uruguai virou um clube dominicano.
-  const pool = mesmoPais.length > 0 ? mesmoPais : candidatos.filter(c => nameKey(c.nome) === alvoNome)
-  if (pool.length === 0) return { semClube: true }
 
-  const ordenado = [...pool.filter(principal), ...pool.filter(c => !principal(c))]
-  const exato = ordenado.find(c => nameKey(c.nome) === alvoNome)
-  const contem = ordenado.find(c => nameKey(c.nome).includes(alvoNome) || alvoNome.includes(nameKey(c.nome)))
-  const escolhido = exato ?? contem ?? ordenado[0]
-  return { url: `https://www.transfermarkt.com.br${escolhido.href}` }
+  // Times B / juvenis / femininos saem do jogo INTEIRAMENTE, nunca ficam como
+  // ultimo recurso: quando so eles sobravam, o Bayern acabava importando o
+  // elenco do sub-17.
+  const alvoLimpo = limparNome(clubName)
+  const elegiveis = (mesmoPais.length > 0 ? mesmoPais : candidatos).filter(principal)
+  if (elegiveis.length === 0) return { semClube: true }
+
+  // Nome idêntico (já sem sigla de clube, e conferindo também o slug).
+  const exatos = elegiveis.filter(c => chavesCandidato(c).has(alvoLimpo))
+  if (exatos.length > 0) {
+    return { url: `https://www.transfermarkt.com.br${exatos[0].href}` }
+  }
+
+  // Sem exato, aceita contenção — mas só se for INEQUÍVOCA. Dois candidatos
+  // contendo o nome ("Santos FC" e "Santos Laguna") é ambiguidade, e chutar foi
+  // como "Manchester City" recebeu o elenco do MANCHESTER UNITED. Elenco do
+  // rival é pior que elenco nenhum: sem casamento defensável devolvemos "não
+  // encontrado" e o clube fica com os dados que já tinha.
+  const contidos = elegiveis.filter(c =>
+    [...chavesCandidato(c)].some(k => k && (k.includes(alvoLimpo) || alvoLimpo.includes(k))),
+  )
+  const distintos = new Set(contidos.map(c => c.href))
+  if (distintos.size !== 1) return { semClube: true }
+  return { url: `https://www.transfermarkt.com.br${contidos[0].href}` }
 }
 
 /** Extrai [{nome, posicao, nacionalidade}] da página de elenco. */
@@ -175,17 +219,28 @@ export function parseSquad(html) {
   const out = []
   // As linhas contêm tabelas aninhadas; cortar por INÍCIO de linha, não por </tr>
   // (o </tr> interno truncava a linha e a bandeira ficava de fora).
-  const parts = html.split(/<tr class="(?:odd|even)">/).slice(1)
+  const parts = html.split(/<tr class="(?:odd|even)[^"]*">/).slice(1)
   for (const row of parts) {
-    // Nome + a posição específica, que vem na linha seguinte da sub-tabela.
-    const m = row.match(/\/profil\/spieler\/(\d+)">\s*([^<]+?)\s*<\/a>[\s\S]*?<tr>\s*<td>\s*([^<]+?)\s*<\/td>/)
+    // O nome pode vir com markup DENTRO do link: quem esta lesionado ou suspenso
+    // ganha um <span title="Lesao muscular..."> antes do </a>. Exigir texto puro
+    // ate o </a> descartava esses atletas em silencio, em TODOS os clubes (3 de
+    // 16 so no Real Madrid). Por isso: pega o conteudo inteiro do link e limpa.
+    const link = row.match(/\/profil\/spieler\/(\d+)">([\s\S]*?)<\/a>/)
+    if (!link) continue
+    const nome = link[2].replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").trim()
+    if (!nome) continue
+
+    // A posicao especifica vem na linha seguinte da sub-tabela, depois do nome.
+    const depois = row.slice(row.indexOf(link[0]) + link[0].length)
+    const pos = depois.match(/<tr>\s*<td>\s*([^<]+?)\s*<\/td>/)
+    if (!pos) continue
+
     const nac = row.match(/title="([^"]+)"[^>]*class="flaggenrahmen/)
-    if (!m) continue
     out.push({
-      tmId: m[1],
-      nome: m[2],
-      posicaoTM: m[3],
-      posicao: mapPos(m[3]),
+      tmId: link[1],
+      nome,
+      posicaoTM: pos[1],
+      posicao: mapPos(pos[1]),
       nacionalidade: nac ? nac[1] : null,
     })
   }
@@ -198,7 +253,18 @@ async function main() {
   const cache = existsSync(OUT) ? JSON.parse(await readFile(OUT, "utf8")) : { clubs: {}, updatedAt: null }
 
   // Refaz o que foi gravado por um parser antigo.
-  const pendentes = teams.filter(t => (cache.clubs[t.curto]?.v ?? 0) < PARSER_V).slice(0, limit)
+  //
+  // ORDEM POR PRESTIGIO, e nao pela ordem do arquivo: o site so tolera ~1
+  // requisicao a cada 2s (rajada leva bloqueio temporario), entao a importacao
+  // completa leva horas e pode ser interrompida a qualquer momento. Comecando
+  // pelos clubes de maior prestigio, uma corrida parcial ja conserta justamente
+  // os elencos que o jogador enxerga — que e de onde vem o relato do "Cole
+  // Palmer como goleiro". Deixar em ordem de arquivo gastaria as primeiras horas
+  // em times de divisao estadual.
+  const pendentes = teams
+    .filter(t => (cache.clubs[t.curto]?.v ?? 0) < PARSER_V)
+    .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
+    .slice(0, limit)
   console.log(`${teams.length} clubes no seed | ${Object.keys(cache.clubs).length} já importados | processando ${pendentes.length}`)
 
   let ok = 0, semClube = 0, erro = 0, feitos = 0
@@ -224,23 +290,31 @@ async function main() {
    */
   let proximo = 0
   let pausaAte = 0
+  // Recuo PROGRESSIVO. A primeira versao parava todas as tarefas por 60s a cada
+  // 429; como o recuo era global, um unico tropeco congelava a corrida inteira e
+  // o ritmo caiu de ~30 para ~6 clubes/min. Agora comeca curto e so escala se o
+  // site insistir — e volta ao normal no primeiro sucesso.
+  let recuos = 0
   const respeitarPausa = async () => {
     const espera = pausaAte - Date.now()
     if (espera > 0) await sleep(espera)
   }
-  const recuar = (segundos, motivo) => {
-    pausaAte = Math.max(pausaAte, Date.now() + segundos * 1000)
-    console.log(`  ! ${motivo} — pausando ${segundos}s`)
+  const recuar = motivo => {
+    recuos++
+    const seg = Math.min(120, 8 * 2 ** (recuos - 1))
+    pausaAte = Math.max(pausaAte, Date.now() + seg * 1000)
+    console.log(`  ! ${motivo} — pausando ${seg}s (recuo ${recuos})`)
   }
 
   const buscar = async url => {
     await respeitarPausa()
     const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } })
     if (res.status === 429 || res.status === 403) {
-      recuar(60, `HTTP ${res.status}`)
+      recuar(`HTTP ${res.status}`)
       await respeitarPausa()
       return fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } })
     }
+    if (res.ok) recuos = 0
     return res
   }
 

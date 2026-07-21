@@ -337,7 +337,13 @@ export default function MercadoPage() {
     const byLeague = filterLeague === "Qualquer"
       ? byCountry
       : byCountry.filter((p) => p.team.liga === filterLeague)
+    // Duas coisas DIFERENTES que estavam saindo da mesma lista: "País/Região" é
+    // onde o clube joga; "Nacionalidade" é de onde o ATLETA é. O filtro compara
+    // contra p.nationality, mas as opções vinham de p.team.pais — entao escolher
+    // uma nacionalidade que so existe como estrangeiro (um paraguaio no Sao
+    // Paulo) simplesmente nao era oferecida, e escolher "Brasil" o excluia.
     const countries = transferTargets.map((p) => p.team.pais ?? p.nationality)
+    const nationalities = transferTargets.map((p) => p.nationality ?? p.team.pais)
     const groupedTeams = new Map<string, Set<string>>()
     for (const player of byLeague) {
       const country = player.team.pais ?? "Outros países"
@@ -346,7 +352,7 @@ export default function MercadoPage() {
       groupedTeams.set(country, names)
     }
     return {
-      nacionalidade: uniq(countries),
+      nacionalidade: uniq(nationalities),
       pais: uniq(countries),
       liga: uniq(byCountry.map((p) => p.team.liga ?? divisaoLabel(p.team.divisao))),
       time: uniq(byLeague.map((p) => p.team.nome)),
@@ -2128,11 +2134,21 @@ function PlayerListCard({
           {/* Era "BR" FIXO para todo atleta — um uruguaio do Peñarol aparecia
               brasileiro. Nacionalidade INFERIDA do país do clube (o banco não
               traz a real; ver lib/country-normalize.ts). */}
-          <div className="h-3 min-w-4 rounded-sm bg-white/15 px-0.5 flex items-center justify-center" title={inferredNationality(player.team.pais)}>
-            <span className="text-[8px] text-white font-bold">
-              {inferredNationality(player.team.pais).normalize("NFD").replace(/[̀-ͯ]/g, "").slice(0, 3).toUpperCase()}
-            </span>
-          </div>
+          {/* player.nationality e a nacionalidade REAL (Transfermarkt) quando existe.
+              Este card ignorava o campo e inferia sempre pelo pais do CLUBE, entao
+              todo estrangeiro aparecia com a bandeira errada — um paraguaio no Sao
+              Paulo saia como brasileiro. O pais do clube fica so como ultimo
+              recurso, para quem ainda nao tem dado real. */}
+          {(() => {
+            const nac = player.nationality || inferredNationality(player.team.pais)
+            return (
+              <div className="h-3 min-w-4 rounded-sm bg-white/15 px-0.5 flex items-center justify-center" title={nac}>
+                <span className="text-[8px] text-white font-bold">
+                  {nac.normalize("NFD").replace(/[̀-ͯ]/g, "").slice(0, 3).toUpperCase()}
+                </span>
+              </div>
+            )
+          })()}
           <span className="text-[10px] text-white/50 uppercase">{player.name.split(" ")[0]}</span>
         </div>
         <div className="font-bold text-white text-sm truncate">{player.name.split(" ").slice(-1)[0].toUpperCase()}</div>

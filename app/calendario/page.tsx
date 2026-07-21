@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { ActionHint, GamepadButton, ShoulderHints } from "@/components/gamepad-icons"
+import { GamepadButton } from "@/components/gamepad-icons"
 import { TeamCrest } from "@/components/team-crest"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
@@ -201,26 +201,9 @@ export default function CalendarioPage() {
     return Array.from(comps)
   }, [seasonCalendar.fixtures])
 
-  const handleAdvanceRound = useCallback(async () => {
-    setIsSimulating(true)
-    try {
-      const result = await advanceWeek()
-      if (result?.newSeason) {
-        setChampionTeam(standings[0]?.teamShort ?? null)
-        setShowChampionScreen(true)
-      }
-    } finally {
-      setIsSimulating(false)
-    }
-  }, [advanceWeek, standings])
-
-  const totalSeasonWeeks = useMemo(() => {
-    return seasonCalendar.fixtures.length > 0
-      ? Math.max(...seasonCalendar.fixtures.map(f => f.week))
-      : 38
-  }, [seasonCalendar.fixtures])
-
-  const canSimulate = currentWeek < totalSeasonWeeks && !isSimulating
+  // handleAdvanceRound/canSimulate sairam junto com o rodape: eram usados so por
+  // ele. Simular pelo calendario continua vivo em "Simular ate esta partida", na
+  // barra lateral, que e o caminho que o jogador de fato usa.
 
   useEffect(() => {
     const handleGamepadButton = (e: Event) => {
