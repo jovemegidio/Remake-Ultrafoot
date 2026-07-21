@@ -1,6 +1,7 @@
 {
  "clubs": {
   "FENIXXUR": {
+   "v": 2,
    "nome": "Fénix",
    "url": "https://www.transfermarkt.com.br/ca-fenix/startseite/verein/3829",
    "players": [
@@ -28,193 +29,195 @@
     {
      "tmId": "881652",
      "nome": "Guillermo Pereira",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "1115613",
      "nome": "Lautaro Centurión",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "753815",
      "nome": "Guido Segalerba",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "1420383",
      "nome": "Renzo Galeano",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "503778",
      "nome": "Fabián Píriz",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "984963",
      "nome": "Augusto Gallo",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "886385",
      "nome": "Alan Acevedo",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "203018",
      "nome": "Alex Silva",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "208006",
      "nome": "Ángel Rodríguez",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "131104",
      "nome": "Nicolás Prieto",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "1038830",
      "nome": "Enzo Suárez",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "599738",
      "nome": "Gonzalo Andrada",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "933619",
      "nome": "Matías Cabrera",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "981044",
      "nome": "Nahuel De Armas",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "1382637",
      "nome": "Nicholas Negro",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "160705",
      "nome": "Esteban González",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Direita",
+     "posicao": "MEI",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "653551",
      "nome": "Diego Rosa",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "264331",
      "nome": "Fabricio Fernández",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "993406",
      "nome": "Sebastián De Marco",
-     "posicaoTM": "Atacante",
-     "posicao": "ATA",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "727854",
      "nome": "Lucas Goberville",
-     "posicaoTM": "Atacante",
-     "posicao": "ATA",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "657758",
      "nome": "Axel Pérez",
-     "posicaoTM": "Atacante",
-     "posicao": "ATA",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "981755",
      "nome": "Diago Fernández",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "1194385",
      "nome": "Jeremías Silveira",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "179059",
      "nome": "Gastón Colmán",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "45577",
      "nome": "Sebastián Ribas",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "1425875",
      "nome": "Franco Ramos",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Uruguai"
     }
    ]
   },
   "RACINGXU": {
+   "v": 2,
    "nome": "Racing Montevideo",
    "players": [],
    "naoEncontrado": true
   },
   "ORENSEXE": {
+   "v": 2,
    "nome": "Orense",
    "url": "https://www.transfermarkt.com.br/orense-sc/startseite/verein/36020",
    "players": [
@@ -235,154 +238,154 @@
     {
      "tmId": "891999",
      "nome": "Óscar Quiñónez",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "556300",
      "nome": "Stefano Callegari",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "653330",
      "nome": "Sixto Mina",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "544037",
      "nome": "Alan Lorenzo",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "983013",
      "nome": "Bryan Quiñónez",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "123475",
      "nome": "Gabriel Achilier",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "666148",
      "nome": "Bryan Viñán",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "421091",
      "nome": "Beder Caicedo",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "201420",
      "nome": "Pedro Velasco",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "883618",
      "nome": "Steeven Quiñónez",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "983022",
      "nome": "Sergio Vásquez",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "342792",
      "nome": "Renny Jaramillo",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "659801",
      "nome": "Erick Plúas",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "719226",
      "nome": "Nixon Molina",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "1257424",
      "nome": "Cristhian Ortiz",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "1252761",
      "nome": "Gonzalo Rostagno",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "556725",
      "nome": "Diego Armas",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "1165987",
      "nome": "Erick Zambrano",
-     "posicaoTM": "Atacante",
-     "posicao": "ATA",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "123609",
      "nome": "Ángel Mena",
-     "posicaoTM": "Atacante",
-     "posicao": "ATA",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "872775",
      "nome": "Agustín Herrera",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "242444",
      "nome": "Miguel Parrales",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Equador"
     },
     {
      "tmId": "1074488",
      "nome": "Michael Bermúdez",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Equador"
     },
@@ -396,6 +399,7 @@
    ]
   },
   "INSTITUT": {
+   "v": 2,
    "nome": "Instituto",
    "url": "https://www.transfermarkt.com.br/instituto-ac-cordoba/startseite/verein/1829",
    "players": [
@@ -423,159 +427,3999 @@
     {
      "tmId": "407517",
      "nome": "Leonel Mosevich",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "216730",
      "nome": "Jonatan Galván",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "1221014",
      "nome": "Agustín Massaccesi",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "1225789",
      "nome": "Lautaro Carrera",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "868503",
      "nome": "Agustín Bravo",
-     "posicaoTM": "Defensor",
+     "posicaoTM": "Zagueiro",
      "posicao": "ZAG",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "464365",
      "nome": "Diego Sosa",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "579977",
      "nome": "Iván Erquiaga",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "971423",
      "nome": "Giuliano Cerato",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "552628",
      "nome": "Hernán de la Fuente",
-     "posicaoTM": "Defensor",
-     "posicao": "ZAG",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "486030",
      "nome": "Gustavo Abregú",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "1322189",
      "nome": "Joaquín Medina",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "563878",
      "nome": "Gastón Lodico",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "843126",
      "nome": "Alex Luna",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "1227286",
      "nome": "Jeremías Lázaro",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "990785",
      "nome": "Matías Gallardo",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "1295872",
      "nome": "Ignacio Rossi",
-     "posicaoTM": "Meio-Campo",
-     "posicao": null,
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "538530",
      "nome": "Jonás Acevedo",
-     "posicaoTM": "Atacante",
-     "posicao": "ATA",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "628879",
      "nome": "Jhon Córdoba",
-     "posicaoTM": "Atacante",
-     "posicao": "ATA",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
      "nacionalidade": "Colômbia"
     },
     {
      "tmId": "503001",
      "nome": "Matías Tissera",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Argentina"
     },
     {
      "tmId": "534037",
      "nome": "Nicolás Guerra",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Chile"
     },
     {
      "tmId": "538919",
      "nome": "Matías Fonseca",
-     "posicaoTM": "Atacante",
+     "posicaoTM": "Centroavante",
      "posicao": "ATA",
      "nacionalidade": "Uruguai"
     },
     {
      "tmId": "900478",
      "nome": "Jonathan Dellarossa",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "BUNYODKO": {
+   "nome": "Bunyodkor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BARCELON": {
+   "nome": "Barcelona Guayaquil",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "OHIGGINS": {
+   "nome": "O'Higgins",
+   "url": "https://www.transfermarkt.com.br/cd-ohiggins/startseite/verein/11470",
+   "players": [
+    {
+     "tmId": "462231",
+     "nome": "Omar Carabalí",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "695981",
+     "nome": "Jorge Peña",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "662755",
+     "nome": "Diego Carreño",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "1064191",
+     "nome": "Tomás Avilés",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "689465",
+     "nome": "Miguel Brizuela",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "662748",
+     "nome": "Nicolás Garrido",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "1344425",
+     "nome": "José Tomás Movillo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "658849",
+     "nome": "Leandro Díaz",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "1119917",
+     "nome": "Felipe Faúndez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "744278",
+     "nome": "Benjamín Rojas",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "1119916",
+     "nome": "Cristián Morales",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "981701",
+     "nome": "Felipe Ogaz",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "1150009",
+     "nome": "Gabriel Pinto",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "194493",
+     "nome": "Juan Leiva",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "160217",
+     "nome": "Bryan Rabello",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "1064210",
+     "nome": "Martín Maturana",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "505002",
+     "nome": "Martín Sarrafiore",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "600028",
+     "nome": "Bastián Yáñez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "1150014",
+     "nome": "Rodrigo Godoy",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "703564",
+     "nome": "Francisco González",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1150012",
+     "nome": "Joaquín Tapia",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "589527",
+     "nome": "Thiago Vecino",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "461837",
+     "nome": "Arnaldo Castillo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Paraguai"
+    },
+    {
+     "tmId": "1032493",
+     "nome": "Esteban Calderón",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Chile"
+    },
+    {
+     "tmId": "749448",
+     "nome": "Esteban Moreira",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Chile"
+    }
+   ]
+  },
+  "OLIMPIKX": {
+   "nome": "Olimpik Donetsk ",
+   "url": "https://www.transfermarkt.com.br/olimpik-donetsk-u17/startseite/verein/31205",
+   "players": []
+  },
+  "MIAMIFC4": {
+   "nome": "Miami FC",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SANLOREN": {
+   "nome": "San Lorenzo",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "JUXREZXM": {
+   "nome": "FC Juárez",
+   "url": "https://www.transfermarkt.com.br/fc-juarez/startseite/verein/49283",
+   "players": [
+    {
+     "tmId": "450406",
+     "nome": "Sebastián Jurado",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "433962",
+     "nome": "Benny Díaz",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Estados Unidos"
+    },
+    {
+     "tmId": "991158",
+     "nome": "Guillermo Ruiz",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "596929",
+     "nome": "Gilberto Sepúlveda",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "364058",
+     "nome": "Jesús Murillo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "371169",
+     "nome": "Haret Ortega",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "352552",
+     "nome": "José Juan Manríquez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "994004",
+     "nome": "Bryan Romero",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Estados Unidos"
+    },
+    {
+     "tmId": "401344",
+     "nome": "Alejandro Mayorga",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "1235196",
+     "nome": "Eder López",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "600956",
+     "nome": "Francisco Nevárez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "111082",
+     "nome": "Javier Aquino",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "997057",
+     "nome": "Denzell García",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "656344",
+     "nome": "Homer Martínez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "1101843",
+     "nome": "Said Godínez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "282727",
+     "nome": "Monchu",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "726005",
+     "nome": "Guilherme Castilho",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1011024",
+     "nome": "Juan Sigala",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "600905",
+     "nome": "Raymundo Fulgencio",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "554300",
+     "nome": "Madson",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "671657",
+     "nome": "Ricardinho",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Portugal"
+    },
+    {
+     "tmId": "371185",
+     "nome": "Jairo Torres",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "388266",
+     "nome": "Óscar Estupiñán",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "831110",
+     "nome": "Luca Martínez Dupuy",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "945935",
+     "nome": "Ettson Ayón",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    }
+   ]
+  },
+  "FORTUNAX": {
+   "nome": "Fortuna Sittard",
+   "url": "https://www.transfermarkt.com.br/fortuna-sittard/startseite/verein/385",
+   "players": [
+    {
+     "tmId": "205128",
+     "nome": "Mattijs Branderhorst",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "235108",
+     "nome": "Luuk Koopmans",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "678641",
+     "nome": "Justin Hubner",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Indonésia"
+    },
+    {
+     "tmId": "485586",
+     "nome": "Syb van Ottele",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "296227",
+     "nome": "Iván Márquez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "576682",
+     "nome": "Jasper Dahlhaus",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "639974",
+     "nome": "Nick de Groot",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "583920",
+     "nome": "Siebe Wylin",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "900072",
+     "nome": "Philip Brittijn",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "659521",
+     "nome": "Edouard Michut",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "566911",
+     "nome": "Yassin Oukili",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Marrocos"
+    },
+    {
+     "tmId": "1161423",
+     "nome": "Moussa Gbemou",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "503638",
+     "nome": "Mohamed Ihattaren",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Marrocos"
+    },
+    {
+     "tmId": "595247",
+     "nome": "Shiloh 't Zand",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "186704",
+     "nome": "Kristoffer Peterson",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Suécia"
+    },
+    {
+     "tmId": "728864",
+     "nome": "Lequincio Zeefuik",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "361070",
+     "nome": "Ole Romeny",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Indonésia"
+    }
+   ]
+  },
+  "COLONXAR": {
+   "nome": "Colón",
+   "url": "https://www.transfermarkt.com.br/club-atletico-colon/startseite/verein/1070",
+   "players": [
+    {
+     "tmId": "873244",
+     "nome": "Matías Budiño",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "639648",
+     "nome": "Tomás Giménez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1369147",
+     "nome": "Tomás Paredes",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1034775",
+     "nome": "Sebastián Olmedo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Paraguai"
+    },
+    {
+     "tmId": "131219",
+     "nome": "Federico Rasmussen",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "118756",
+     "nome": "Pier Barrios",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "563923",
+     "nome": "Nicolás Thaller",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "865002",
+     "nome": "Leandro Allende",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "532350",
+     "nome": "Gabriel Risso Patrón",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "578056",
+     "nome": "Facundo Castet",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "668545",
+     "nome": "Conrado Ibarra",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "989571",
+     "nome": "Mauro Peinipil",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "539554",
+     "nome": "Emanuel Beltrán",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "125104",
+     "nome": "Federico Lértora",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "486238",
+     "nome": "Matías Muñoz",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "876881",
+     "nome": "Agustín Toledo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "441266",
+     "nome": "Ignacio Antonio",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1321196",
+     "nome": "Zahir Yunis",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1369146",
+     "nome": "Tomás Gallay",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1372631",
+     "nome": "Agustín Giménez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "813459",
+     "nome": "Ignacio Lago",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "633041",
+     "nome": "Julián Marcioni",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "668552",
+     "nome": "Darío Sarmiento",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1292771",
+     "nome": "Leandro Zabala",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "538609",
+     "nome": "Alan Bonansea",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "300308",
+     "nome": "Leandro Garate",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1394668",
+     "nome": "Matías Córdoba",
      "posicaoTM": "Atacante",
      "posicao": "ATA",
      "nacionalidade": "Argentina"
     }
    ]
+  },
+  "BALTIKAX": {
+   "nome": "Baltika",
+   "url": "https://www.transfermarkt.com.br/baltika-kaliningrad/startseite/verein/2741",
+   "players": [
+    {
+     "tmId": "526448",
+     "nome": "Maksim Borisko",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "577714",
+     "nome": "Egor Lyubakov",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "692563",
+     "nome": "Ivan Kukushkin",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "555159",
+     "nome": "Sergey Varatynov",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "815346",
+     "nome": "Nathan Gassama",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Mali"
+    },
+    {
+     "tmId": "637545",
+     "nome": "Ilya Kirsh",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "742858",
+     "nome": "Eduardo Anderson",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Panamá"
+    },
+    {
+     "tmId": "917404",
+     "nome": "Mikhail Ryadno",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "317764",
+     "nome": "Eldar Civic",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bósnia-Herzegovina"
+    },
+    {
+     "tmId": "616035",
+     "nome": "Dmitriy Begun",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "360451",
+     "nome": "Mingiyan Beveev",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "265589",
+     "nome": "Fahd Moufi",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Marrocos"
+    },
+    {
+     "tmId": "637552",
+     "nome": "Maksim Shnaptsev",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "1247237",
+     "nome": "Ivan Belikov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "593480",
+     "nome": "Aymane Mourid",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Marrocos"
+    },
+    {
+     "tmId": "431708",
+     "nome": "Maksim Petrov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "297034",
+     "nome": "Ilya Petrov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "606526",
+     "nome": "Nikolay Titkov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "376127",
+     "nome": "Stefan Kovac",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Bósnia-Herzegovina"
+    },
+    {
+     "tmId": "699266",
+     "nome": "Konstantin Shiltsov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "1151887",
+     "nome": "Vladislav Pospelov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "620015",
+     "nome": "Tenton Yenne",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Nigéria"
+    },
+    {
+     "tmId": "667980",
+     "nome": "Irakliy Manelov",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "693412",
+     "nome": "Chinonso Offor",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Nigéria"
+    },
+    {
+     "tmId": "743906",
+     "nome": "Kirill Nikishin",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "1151889",
+     "nome": "Dmitriy Nikitin",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia"
+    }
+   ]
+  },
+  "SALZBURG": {
+   "nome": "RB Salzburg",
+   "url": "https://www.transfermarkt.com.br/red-bull-salzburg/startseite/verein/409",
+   "players": [
+    {
+     "tmId": "915421",
+     "nome": "Christian Zawieschitzky",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "905426",
+     "nome": "Nikola Sarcevic",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "709727",
+     "nome": "Kévin Boma",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Togo"
+    },
+    {
+     "tmId": "822958",
+     "nome": "Tim Drexler",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha"
+    },
+    {
+     "tmId": "1072724",
+     "nome": "John Mellberg",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Suécia"
+    },
+    {
+     "tmId": "948537",
+     "nome": "Anrie Chase",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "804831",
+     "nome": "Hendry Blank",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha"
+    },
+    {
+     "tmId": "960455",
+     "nome": "Valentin Zabransky",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "359409",
+     "nome": "Dominik Schmid",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Suiça"
+    },
+    {
+     "tmId": "604320",
+     "nome": "Frans Krätzig",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha"
+    },
+    {
+     "tmId": "404260",
+     "nome": "Aleksa Terzic",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Sérvia"
+    },
+    {
+     "tmId": "786822",
+     "nome": "Leandro Morgalla",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha"
+    },
+    {
+     "tmId": "85791",
+     "nome": "Stefan Lainer",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "1089004",
+     "nome": "Soumaïla Diabaté",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Mali"
+    },
+    {
+     "tmId": "620313",
+     "nome": "Lucas Gourna-Douath",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "671593",
+     "nome": "Mamady Diambou",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Mali"
+    },
+    {
+     "tmId": "515650",
+     "nome": "Takumu Kawamura",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "610405",
+     "nome": "Maurits Kjærgaard",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Dinamarca"
+    },
+    {
+     "tmId": "657575",
+     "nome": "Abubakr Barry",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Gâmbia"
+    },
+    {
+     "tmId": "915896",
+     "nome": "Oliver Lukic",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Croácia"
+    },
+    {
+     "tmId": "804034",
+     "nome": "Valentin Sulzbacher",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "671114",
+     "nome": "Sota Kitano",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1118873",
+     "nome": "Bartosz Mazurek",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Polónia"
+    },
+    {
+     "tmId": "1073631",
+     "nome": "Filip Matijasevic",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Sérvia"
+    },
+    {
+     "tmId": "953893",
+     "nome": "Clement Bischoff",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Dinamarca"
+    },
+    {
+     "tmId": "1078649",
+     "nome": "Johannes Moser",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "1133788",
+     "nome": "Aboubacar Camara",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Burkina Faso"
+    },
+    {
+     "tmId": "881297",
+     "nome": "Adam Daghim",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Dinamarca"
+    },
+    {
+     "tmId": "715956",
+     "nome": "Damir Redzic",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Hungria"
+    },
+    {
+     "tmId": "847278",
+     "nome": "Karim Konaté",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "1236853",
+     "nome": "Edmund Baidoo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Gana"
+    },
+    {
+     "tmId": "409517",
+     "nome": "Yorbe Vertessen",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1227723",
+     "nome": "Gaoussou Diakité",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Mali"
+    },
+    {
+     "tmId": "1057525",
+     "nome": "Enrique Aguilar",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Suiça"
+    }
+   ]
+  },
+  "STURMGRA": {
+   "nome": "Sturm Graz",
+   "url": "https://www.transfermarkt.com.br/sk-sturm-graz/startseite/verein/122",
+   "players": [
+    {
+     "tmId": "718756",
+     "nome": "Daniil Khudyakov",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "307598",
+     "nome": "Ammar Helac",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "948135",
+     "nome": "Elias Lorenz",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "856068",
+     "nome": "Jeyland Mitchell",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Costa Rica"
+    },
+    {
+     "tmId": "942034",
+     "nome": "Petar Petrovic",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Sérvia"
+    },
+    {
+     "tmId": "523895",
+     "nome": "Paul Koller",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "261935",
+     "nome": "Albert Vallci",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "394008",
+     "nome": "Niklas Geyrhofer",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "913495",
+     "nome": "Emran Soglo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "245034",
+     "nome": "Jon Gorenc Stankovic",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Eslovénia"
+    },
+    {
+     "tmId": "620832",
+     "nome": "Ryan Fosso",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Camarões"
+    },
+    {
+     "tmId": "1169411",
+     "nome": "Luca Weinhandl",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "620496",
+     "nome": "Simon Seidl",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "960463",
+     "nome": "Jacob Peter Hödl",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "271223",
+     "nome": "Jürgen Heil",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "352596",
+     "nome": "Otar Kiteishvili",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Geórgia"
+    },
+    {
+     "tmId": "724965",
+     "nome": "Gizo Mamageishvili",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Geórgia"
+    },
+    {
+     "tmId": "796213",
+     "nome": "Nelson Weiper",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Alemanha"
+    },
+    {
+     "tmId": "922788",
+     "nome": "Axel Kayombo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "661206",
+     "nome": "Seedy Jatta",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Noruega"
+    },
+    {
+     "tmId": "693092",
+     "nome": "Belmin Beganovic",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "405568",
+     "nome": "Maurice Malone",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Alemanha"
+    },
+    {
+     "tmId": "554282",
+     "nome": "Szymon Wlodarczyk",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Polónia"
+    },
+    {
+     "tmId": "692756",
+     "nome": "Peter Kiedl",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Áustria"
+    }
+   ]
+  },
+  "RAPIDVIE": {
+   "nome": "Rapid Viena",
+   "url": "https://www.transfermarkt.com.br/sk-rapid-wien/startseite/verein/170",
+   "players": [
+    {
+     "tmId": "404881",
+     "nome": "Niklas Hedl",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "223957",
+     "nome": "Paul Gartler",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "658130",
+     "nome": "Laurenz Orgler",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "692605",
+     "nome": "Benjamin Göschl",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "683891",
+     "nome": "Serge-Philippe Raux-Yao",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "847257",
+     "nome": "Ange Ahoussou",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "715893",
+     "nome": "Jakob Schöller",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "319482",
+     "nome": "Nenad Cvetkovic",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Sérvia"
+    },
+    {
+     "tmId": "679865",
+     "nome": "Dominic Vincze",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "803046",
+     "nome": "Amin-Elias Gröller",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Tunísia"
+    },
+    {
+     "tmId": "393766",
+     "nome": "Jonas Auer",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "439351",
+     "nome": "Bendegúz Bolla",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Hungria"
+    },
+    {
+     "tmId": "692598",
+     "nome": "Furkan Demir",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "960443",
+     "nome": "Eaden Roka",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "961937",
+     "nome": "Romeo Amane",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "629040",
+     "nome": "Nicolas Bajlicz",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "526032",
+     "nome": "Moritz Oswald",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "147485",
+     "nome": "Louis Schaub",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "619657",
+     "nome": "Tobias Gulliksen",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Noruega"
+    },
+    {
+     "tmId": "912078",
+     "nome": "Petter Nosa Dahl",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Noruega"
+    },
+    {
+     "tmId": "803052",
+     "nome": "Nikolaus Wurmbrand",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Áustria"
+    },
+    {
+     "tmId": "565531",
+     "nome": "Marco Tilio",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Austrália"
+    },
+    {
+     "tmId": "1435202",
+     "nome": "Moulaye Haïdara",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Mali"
+    },
+    {
+     "tmId": "599215",
+     "nome": "Tonni Adamsen",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Dinamarca"
+    },
+    {
+     "tmId": "320701",
+     "nome": "Ercan Kara",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Áustria"
+    }
+   ]
+  },
+  "CERCLEBR": {
+   "nome": "Cercle Brugge",
+   "url": "https://www.transfermarkt.com.br/cercle-brugge/startseite/verein/520",
+   "players": [
+    {
+     "tmId": "409490",
+     "nome": "Maxime Delanghe",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "338651",
+     "nome": "Gaëtan Coucke",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "993333",
+     "nome": "Bas Langenbick",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1027253",
+     "nome": "Geoffrey Kondo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "579089",
+     "nome": "Christiaan Ravych",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1233680",
+     "nome": "Emmanuel Kakou",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "1274489",
+     "nome": "Royer Caicedo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "1010225",
+     "nome": "Jonas Lietaert",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1120020",
+     "nome": "Valy Konaté",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "679050",
+     "nome": "Gary Magnée",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "919173",
+     "nome": "Ibrahim Diakité",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Guiné"
+    },
+    {
+     "tmId": "1053160",
+     "nome": "Ibrahima Diaby",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "733410",
+     "nome": "Lawrence Agyekum",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Gana"
+    },
+    {
+     "tmId": "435808",
+     "nome": "Lazare Amani",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "1086381",
+     "nome": "Erick Nunes",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "950874",
+     "nome": "Heriberto Jurado",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "884822",
+     "nome": "Charles Herrmann",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Alemanha"
+    },
+    {
+     "tmId": "1208836",
+     "nome": "Krys Kouassi",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "1123952",
+     "nome": "Alama Bayo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "923838",
+     "nome": "Steve Ngoura",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "289648",
+     "nome": "Dante Vanzeir",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Bélgica"
+    }
+   ]
+  },
+  "GENTXBEL": {
+   "nome": "KAA Gent",
+   "url": "https://www.transfermarkt.com.br/kaa-gent/startseite/verein/157",
+   "players": [
+    {
+     "tmId": "654919",
+     "nome": "Kjell Peersman",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "387990",
+     "nome": "Tom Vandenberghe",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1231353",
+     "nome": "Bas Evers",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1053009",
+     "nome": "Victor De Coninck",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "488298",
+     "nome": "Maksim Paskotsi",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Estónia"
+    },
+    {
+     "tmId": "400131",
+     "nome": "Siebe Van der Heyden",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "781812",
+     "nome": "Matties Volckaert",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "244221",
+     "nome": "Christian Burgess",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "775403",
+     "nome": "Hugo Gambor",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "República Central Africana"
+    },
+    {
+     "tmId": "922792",
+     "nome": "Mouhamed Ngom",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "481628",
+     "nome": "Tiago Araújo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Portugal"
+    },
+    {
+     "tmId": "1160184",
+     "nome": "Abdoul Ayinde",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Burkina Faso"
+    },
+    {
+     "tmId": "1064973",
+     "nome": "Lars Cooman",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1005835",
+     "nome": "Gilles De Meyer",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1105542",
+     "nome": "Mohammed El Âdfaoui",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "931525",
+     "nome": "Wout Asselman",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "723487",
+     "nome": "Mathias Delorge",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "1019173",
+     "nome": "Tibe De Vlieger",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "243188",
+     "nome": "László Bénes",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Eslováquia"
+    },
+    {
+     "tmId": "492715",
+     "nome": "Atsuki Ito",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "348756",
+     "nome": "Leonardo Lopes",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Portugal"
+    },
+    {
+     "tmId": "592400",
+     "nome": "Abdelkahar Kadri",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argélia"
+    },
+    {
+     "tmId": "568373",
+     "nome": "Aimé Omgba",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "183383",
+     "nome": "Pieter Gerkens",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "929876",
+     "nome": "Momodou Sonko",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Suécia"
+    },
+    {
+     "tmId": "1285174",
+     "nome": "Hyllarion Goore",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "395523",
+     "nome": "Wilfried Kanga",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Costa do Marfim"
+    },
+    {
+     "tmId": "805889",
+     "nome": "Max Dean",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "1291709",
+     "nome": "Josué Vergara",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Panamá"
+    },
+    {
+     "tmId": "1473866",
+     "nome": "Ibrahima Cissé",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1125610",
+     "nome": "Moctar Diop",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    }
+   ]
+  },
+  "DEPXGUAD": {
+   "nome": "Deportivo Guadalajara",
+   "url": "https://www.transfermarkt.com.br/deportivo-guadalajara/startseite/verein/6711",
+   "players": [
+    {
+     "tmId": "260662",
+     "nome": "Óscar Whalley",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1127591",
+     "nome": "Sebastián Liceaga",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "802857",
+     "nome": "Diego Campillo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "811373",
+     "nome": "José Castillo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "636066",
+     "nome": "Daniel Aguirre",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Estados Unidos"
+    },
+    {
+     "tmId": "401340",
+     "nome": "Miguel Tapias",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "704556",
+     "nome": "Bryan González",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "469855",
+     "nome": "Leonardo Sepúlveda",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "575367",
+     "nome": "Richard Ledezma",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "832308",
+     "nome": "Miguel Gómez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "686445",
+     "nome": "Luis Gabriel Rey",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "282927",
+     "nome": "Omar Govea",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "274963",
+     "nome": "Fernando González",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "504113",
+     "nome": "Efraín Álvarez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "599732",
+     "nome": "Kevin Castañeda",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "1260851",
+     "nome": "Santiago Sandoval",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "740574",
+     "nome": "Jordán Carrillo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "694158",
+     "nome": "Jonathan Pérez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "955223",
+     "nome": "Hugo Camberos",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "400194",
+     "nome": "Ricardo Marín",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "631331",
+     "nome": "Teun Wilke",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    }
+   ]
+  },
+  "CSKAMOSC": {
+   "nome": "CSKA Moscow",
+   "url": "https://www.transfermarkt.com.br/zska-moskau/startseite/verein/2410",
+   "players": [
+    {
+     "tmId": "555146",
+     "nome": "Vladislav Torop",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "864314",
+     "nome": "Egor Besaev",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "960578",
+     "nome": "Nikolay Barovskiy",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "624340",
+     "nome": "Matvey Lukin",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "671145",
+     "nome": "João Victor",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1131030",
+     "nome": "Kirill Danilov",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "917402",
+     "nome": "Dzhamalutdin Abdulkadyrov",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "368468",
+     "nome": "Moisés",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "379249",
+     "nome": "Matheus Reis",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "245030",
+     "nome": "Milan Gajic",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Sérvia"
+    },
+    {
+     "tmId": "263905",
+     "nome": "Dmitriy Barinov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "917403",
+     "nome": "Artem Bandikyan",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Arménia"
+    },
+    {
+     "tmId": "651580",
+     "nome": "Matvey Kislyak",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "419845",
+     "nome": "Ivan Oblyakov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "372535",
+     "nome": "Danil Krugovoy",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "1127813",
+     "nome": "Matheus Alves",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "720287",
+     "nome": "Danila Kozlov",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "1012421",
+     "nome": "Matija Popović",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Sérvia"
+    },
+    {
+     "tmId": "1242657",
+     "nome": "Imran Firov",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "865414",
+     "nome": "Kirill Glebov",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "1009031",
+     "nome": "Henrique Carmo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1052489",
+     "nome": "Artem Serikov",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "851111",
+     "nome": "Luciano Gondou",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "654117",
+     "nome": "Tamerlan Musaev",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "898119",
+     "nome": "Artem Shumanskiy",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Bielorrússia"
+    }
+   ]
+  },
+  "OLIMPIAX": {
+   "nome": "Olimpija Ljubljana",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "CELJEXEL": {
+   "nome": "NK Celje",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALLBOYSX": {
+   "nome": "All Boys",
+   "url": "https://www.transfermarkt.com.br/ca-all-boys-buenos-aires/startseite/verein/12100",
+   "players": [
+    {
+     "tmId": "1290951",
+     "nome": "Lukas Ramil Sauer",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "503346",
+     "nome": "Juan Pablo Noce",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "486027",
+     "nome": "Nicolás Carrizo",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1025921",
+     "nome": "Felipe Coronel",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "849618",
+     "nome": "Iván Zafarana",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1131017",
+     "nome": "Alejo Rodríguez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "689468",
+     "nome": "Yago De Vito",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "125082",
+     "nome": "Maximiliano Coronel",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "756988",
+     "nome": "Alejo Tabares",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "534032",
+     "nome": "Franco Quiroz",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "471638",
+     "nome": "Emiliano Purita",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "78482",
+     "nome": "Hernán Grana",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "459243",
+     "nome": "Gabriel Ramírez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "486131",
+     "nome": "Gustavo Turraca",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1071269",
+     "nome": "Alexis Melo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1189250",
+     "nome": "Santiago Cáceres",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "972371",
+     "nome": "Axel Abet",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "878734",
+     "nome": "Nicolás Barrientos",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "441597",
+     "nome": "Matías Rodríguez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1248384",
+     "nome": "Ignacio Palacio",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1284966",
+     "nome": "Tiago Pucciarelli",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "539165",
+     "nome": "Matías Nouet",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "871502",
+     "nome": "Thiago Calone",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "216036",
+     "nome": "Lucas Cano",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "878335",
+     "nome": "Santiago Apa",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1370707",
+     "nome": "Bruno Medina",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1447326",
+     "nome": "Ulices Delgado",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Paraguai"
+    }
+   ]
+  },
+  "ALVORADO": {
+   "nome": "Alvarado",
+   "url": "https://www.transfermarkt.com.br/ca-alvarado-ii/startseite/verein/75127",
+   "players": [
+    {
+     "tmId": "1528215",
+     "nome": "Kevin Heim",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1174948",
+     "nome": "Matías Pérez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1301385",
+     "nome": "Maximiliano Sangra",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1436306",
+     "nome": "Agustín Melean",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "ATLANTAX": {
+   "nome": "Atlanta",
+   "url": "https://www.transfermarkt.com.br/club-atletico-atlanta/startseite/verein/8057",
+   "players": [
+    {
+     "tmId": "671896",
+     "nome": "Francisco Rago",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "688589",
+     "nome": "Lautaro López Kaleniuk",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1332143",
+     "nome": "Rocco Pasquale",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1119109",
+     "nome": "Tomás Rojas",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "124244",
+     "nome": "Leonel Galeano",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "842911",
+     "nome": "Patricio Ostachuk",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "294878",
+     "nome": "Rodrigo Moreira",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "966192",
+     "nome": "Román Herrera",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "932276",
+     "nome": "Santino Pasini",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1104653",
+     "nome": "Rodrigo Sosa",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1374565",
+     "nome": "Dylan Argüello",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "612620",
+     "nome": "Martín García",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "690437",
+     "nome": "Nicolás Previtali",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "997368",
+     "nome": "Gustavo Mendoza",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "906771",
+     "nome": "Kevin Benítez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1425931",
+     "nome": "Nahuel Urtasún",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "400896",
+     "nome": "Braian Rivero",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "840778",
+     "nome": "Alejo Dramisino",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "836491",
+     "nome": "Tomás Castro Ponce",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "821924",
+     "nome": "Jeremías Puch",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "866060",
+     "nome": "Federico Bisanz",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1057314",
+     "nome": "Julián Aquino",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1298407",
+     "nome": "Mateo Araujo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1127575",
+     "nome": "Federico Álvarez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "267572",
+     "nome": "Christian Bernardi",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "907664",
+     "nome": "Agustín Morales",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1149566",
+     "nome": "Ignacio Rodríguez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "135732",
+     "nome": "Alejandro Quintana",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "359042",
+     "nome": "Federico Castro",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "GIMNASIA": {
+   "nome": "Gimnasia y Tiro",
+   "url": "https://www.transfermarkt.com.br/gimnasia-y-tiro-salta-/startseite/verein/14688",
+   "players": [
+    {
+     "tmId": "359231",
+     "nome": "Joaquín Papaleo",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "133911",
+     "nome": "Federico Cosentino",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1139217",
+     "nome": "Santiago Nogales",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "376083",
+     "nome": "Manuel Guanini",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "149490",
+     "nome": "Gonzalo Soto",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "730132",
+     "nome": "Adolfo Tallura",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "432558",
+     "nome": "Lautaro Montoya",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "439625",
+     "nome": "Ivo Chaves",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "749231",
+     "nome": "Juan Galetto",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "87812",
+     "nome": "Matías Birge",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "267420",
+     "nome": "Walter Montoya",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "539160",
+     "nome": "Nicolás Rinaldi",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "744806",
+     "nome": "Tiago Banega",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "625204",
+     "nome": "Franco Sivetti",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "997403",
+     "nome": "Ruben Villarreal",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "149436",
+     "nome": "Jonás Aguirre",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1172076",
+     "nome": "Juan Ignacio Capano",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "991812",
+     "nome": "Juan Rocca",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "577743",
+     "nome": "Lautaro Gordillo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1130800",
+     "nome": "Fabricio Rojas",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "340164",
+     "nome": "Nicolás Contin",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1293758",
+     "nome": "Juan Turletti",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "SANMARTI": {
+   "nome": "San Martin de Tucumán",
+   "url": "https://www.transfermarkt.com.br/ca-san-martin-tucuman-/startseite/verein/12709",
+   "players": [
+    {
+     "tmId": "526432",
+     "nome": "Darío Sand",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "880019",
+     "nome": "Nahuel Manganelli",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "497148",
+     "nome": "Juan Jaime",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1111181",
+     "nome": "Guillermo Rodríguez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "296808",
+     "nome": "Nicolás Ferreyra",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "210742",
+     "nome": "Ezequiel Parnisari",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1114998",
+     "nome": "Tiago Peñalba",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "370534",
+     "nome": "Rodrigo Ayala",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "548466",
+     "nome": "Nahuel Gallardo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1385551",
+     "nome": "Aníbal Paz",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "347749",
+     "nome": "Víctor Salazar",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "621376",
+     "nome": "Santiago Briñone",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1118619",
+     "nome": "Laureano Rodríguez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1409216",
+     "nome": "Agustín Graneros",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "441160",
+     "nome": "Nicolás Castro",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "610251",
+     "nome": "Jesús Soraire",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "840874",
+     "nome": "Jorge Juárez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "280157",
+     "nome": "Gabriel Carabajal",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1328320",
+     "nome": "Alan Cisnero",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "140687",
+     "nome": "Gonzalo Rodríguez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "668551",
+     "nome": "Lautaro Ovando",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "697012",
+     "nome": "Álvaro Veliez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1235860",
+     "nome": "Bruno Cabrera",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "270906",
+     "nome": "Diego Diellos",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1022573",
+     "nome": "Mauro Verón",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "882081",
+     "nome": "Nicolás Moreno",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1298405",
+     "nome": "Luca Arfaras",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1371615",
+     "nome": "Tadeo Polli",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "QUILMESX": {
+   "nome": "Centenario",
+   "url": "https://www.transfermarkt.com.br/club-centenario-msdyb/startseite/verein/73571",
+   "players": [
+    {
+     "tmId": "1522919",
+     "nome": "Nicolas Baravalle",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "SAMPAIOC": {
+   "nome": "Sampaio Corrêa-RJ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "NOVAIGUA": {
+   "nome": "Nova Iguaçu",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MADUREIR": {
+   "nome": "Madureira",
+   "url": "https://www.transfermarkt.com.br/madureira-esporte-clube-rj-/startseite/verein/4907",
+   "players": [
+    {
+     "tmId": "1094978",
+     "nome": "Guilherme Cabo",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1145195",
+     "nome": "Yan",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "504383",
+     "nome": "Leozão",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "964183",
+     "nome": "Eisy",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1542182",
+     "nome": "Bruno Trepte",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "554458",
+     "nome": "Daniel Felipe",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "796604",
+     "nome": "Raphinha",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1008160",
+     "nome": "Guilherme",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1362816",
+     "nome": "David Freitas",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "539221",
+     "nome": "Celsinho",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1094977",
+     "nome": "Cauã Coutinho",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "186922",
+     "nome": "Rodrigo Lindoso",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "972425",
+     "nome": "Juan Sánchez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "668233",
+     "nome": "Fubá",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "787316",
+     "nome": "José Santos",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1097080",
+     "nome": "Adriano",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1362824",
+     "nome": "Dilsinho",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "137225",
+     "nome": "Rodrigo Andrade",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "588627",
+     "nome": "Lucas Santos",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1094974",
+     "nome": "Welington Zarú",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "737097",
+     "nome": "Vinicius Balotelli",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1094596",
+     "nome": "Yan de Jesus",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "135576",
+     "nome": "Geovane Maranhão",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "696655",
+     "nome": "Kibe",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "628531",
+     "nome": "João Carlos",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1408360",
+     "nome": "Michael Fashanu",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Nigéria"
+    },
+    {
+     "tmId": "1532036",
+     "nome": "Gabriel Alves",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    }
+   ]
+  },
+  "URAWARED": {
+   "nome": "Urawa Reds",
+   "url": "https://www.transfermarkt.com.br/urawa-red-diamonds/startseite/verein/828",
+   "players": [
+    {
+     "tmId": "505640",
+     "nome": "Koki Fukui",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "81787",
+     "nome": "Shusaku Nishikawa",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "519056",
+     "nome": "Yoshiaki Arai",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "606136",
+     "nome": "Danilo Boza",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "683328",
+     "nome": "Yuta Miyamoto",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "869280",
+     "nome": "Kota Kudo",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "899093",
+     "nome": "Kenta Nemoto",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1373942",
+     "nome": "Luka Didulica",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Austrália"
+    },
+    {
+     "tmId": "1402676",
+     "nome": "Yoshitaka Tanaka",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1035012",
+     "nome": "Kotaro Hayashi",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "310201",
+     "nome": "Eiichi Katayama",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "255473",
+     "nome": "Samuel Gustafson",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Suécia"
+    },
+    {
+     "tmId": "615296",
+     "nome": "Kaito Yasui",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1328401",
+     "nome": "Shuta Sasa",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1426251",
+     "nome": "Hayate Ueki",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "909946",
+     "nome": "Yota Horiuchi",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1265619",
+     "nome": "Takeshi Wada",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "351563",
+     "nome": "Yoichi Naganuma",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "312666",
+     "nome": "Matheus Savio",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "909961",
+     "nome": "Jumpei Hayakawa",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "657625",
+     "nome": "Takuro Kaneko",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "79419",
+     "nome": "Kota Mizunuma",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "829174",
+     "nome": "Hiiro Komori",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "308133",
+     "nome": "Ado Onaiwu",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "729051",
+     "nome": "Harumi Minamino",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1121048",
+     "nome": "Renji Hidano",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Japão"
+    }
+   ]
+  },
+  "AVENIDAX": {
+   "nome": "Avenida",
+   "url": "https://www.transfermarkt.com.br/esporte-clube-avenida-rs-/startseite/verein/12777",
+   "players": [
+    {
+     "tmId": "117063",
+     "nome": "Anderson Uchôa",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "724826",
+     "nome": "Emerson Júnior",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "982544",
+     "nome": "Kauan Bizescki",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "123176",
+     "nome": "Alexandre Camargo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "446850",
+     "nome": "Juan Pablo Ramírez",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "187315",
+     "nome": "Branquinho",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "374413",
+     "nome": "Wesley Pionteck",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    }
+   ]
+  },
+  "NEWENGLA": {
+   "nome": "New England Revolution",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AUSTIN43": {
+   "nome": "Austin FC",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "TIGRESXM": {
+   "nome": "Tigres UANL",
+   "url": "https://www.transfermarkt.com.br/tigres-uanl/startseite/verein/7055",
+   "players": [
+    {
+     "tmId": "87859",
+     "nome": "Nahuel Guzmán",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "102699",
+     "nome": "Felipe Rodríguez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "826462",
+     "nome": "Antonio Carrera",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Estados Unidos"
+    },
+    {
+     "tmId": "860857",
+     "nome": "Joaquim",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "503343",
+     "nome": "Alan Franco",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "553816",
+     "nome": "Juan José Purata",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "971630",
+     "nome": "Rafael Guerrero",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "611018",
+     "nome": "Francisco Reyes",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "295426",
+     "nome": "Osvaldo Rodríguez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "1086862",
+     "nome": "Fernando Ordóñez",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "691075",
+     "nome": "Jesús Garza",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "599569",
+     "nome": "Vladímir Loroña",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "687359",
+     "nome": "Rômulo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "690533",
+     "nome": "César Araújo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1263461",
+     "nome": "Henrique Simeone",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "310744",
+     "nome": "Fernando Gorriarán",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "234227",
+     "nome": "Juan Pablo Vigón",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "466268",
+     "nome": "Juan Brunetta",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1094408",
+     "nome": "Diego Sánchez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "371174",
+     "nome": "Diego Lainez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "629006",
+     "nome": "Ozziel Herrera",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "266807",
+     "nome": "Ángel Correa",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "WIGANXIN": {
+   "nome": "Wigan Athletic",
+   "url": "https://www.transfermarkt.com.br/wigan-athletic/startseite/verein/1071",
+   "players": [
+    {
+     "tmId": "690548",
+     "nome": "Joe Walsh",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "874012",
+     "nome": "Tom Watson",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "719681",
+     "nome": "Jeremiah Chilokoa-Mullen",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Escócia"
+    },
+    {
+     "tmId": "733314",
+     "nome": "James Carragher",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Malta"
+    },
+    {
+     "tmId": "250277",
+     "nome": "Morgan Fox",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "País de Gales"
+    },
+    {
+     "tmId": "1314725",
+     "nome": "K'Marni Miller",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "610652",
+     "nome": "Connor Barrett",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "1090021",
+     "nome": "Llyton Chapman",
+     "posicaoTM": "Defensor",
+     "posicao": "ZAG",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "520651",
+     "nome": "Jensen Weir",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "528894",
+     "nome": "Matt Smith",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "746338",
+     "nome": "Baba Adeeko",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Irlanda"
+    },
+    {
+     "tmId": "504939",
+     "nome": "Jon Mellish",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "158534",
+     "nome": "Max Power",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "1100585",
+     "nome": "Kai Payne",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "1091409",
+     "nome": "Tobias Brenan",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "399262",
+     "nome": "Fraser Murray",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Escócia"
+    },
+    {
+     "tmId": "671486",
+     "nome": "Ronan Darcy",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "1286987",
+     "nome": "Harrison Bettoni",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "874009",
+     "nome": "Chris Sze",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "1047258",
+     "nome": "Hindolo Mustapha",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Serra Leoa"
+    },
+    {
+     "tmId": "1043559",
+     "nome": "Joe Adams",
+     "posicaoTM": "Meio-Campo",
+     "posicao": null,
+     "nacionalidade": "Guernsey"
+    },
+    {
+     "tmId": "614700",
+     "nome": "Dara Costelloe",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Irlanda"
+    },
+    {
+     "tmId": "670877",
+     "nome": "Sonny Perkins",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "725703",
+     "nome": "Joseph Hungbo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "922476",
+     "nome": "Akeel Higgins",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "61711",
+     "nome": "Callum McManaman",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Inglaterra"
+    },
+    {
+     "tmId": "655835",
+     "nome": "Christian Saydee",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Inglaterra"
+    }
+   ]
   }
  },
- "updatedAt": "2026-07-21T02:16:37.785Z"
+ "updatedAt": "2026-07-21T02:36:13.098Z"
 }

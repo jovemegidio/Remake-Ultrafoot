@@ -23,7 +23,8 @@ interface BfTeamRaw {
   saldo?: number
   escudo?: string
   fileKey?: string
-  jogadores?: Array<{ nome: string; posicao: string; overall: number; idade: number; salario?: number }>
+  // `nac` é assado por scripts/apply-tm-squads.mjs a partir do Transfermarkt.
+  jogadores?: Array<{ nome: string; posicao: string; overall: number; idade: number; salario?: number; nac?: string }>
 }
 
 const ALL_BF_TEAMS = (importedBF as { teams?: BfTeamRaw[] }).teams ?? []
@@ -347,7 +348,10 @@ export function generateDetailedMarketTargets(
       potential,
       value,
       trend,
-      nationality: normalizedCountry(team.pais, team.fileKey) ?? "Brasil",
+      // Nacionalidade real do Transfermarkt quando existe; o país do clube é só
+      // o palpite de reserva (errava todo estrangeiro: um paraguaio no São Paulo
+      // aparecia como brasileiro).
+      nationality: player.nac ?? normalizedCountry(team.pais, team.fileKey) ?? "Brasil",
       height: `${heightCm} cm`,
       weight: `${weightKg} kg`,
       foot: rng() < 0.72 ? "D" : "E",

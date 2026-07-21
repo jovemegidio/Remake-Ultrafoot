@@ -24,16 +24,35 @@ const SEED = path.resolve("data/seeds/imported-bf2026.json")
 const OUT = path.resolve("data/seeds/tm-squads.json")
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
 
-// Transfermarkt PT-BR -> códigos do jogo.
-const POS_MAP = {
-  "Goleiro": "GOL",
-  "Zagueiro": "ZAG", "Defensor": "ZAG", "Líbero": "ZAG",
-  "Lateral direito": "LD", "Lateral esquerdo": "LE",
-  "Volante": "VOL",
-  "Meia central": "MEI", "Meio-campista ofensivo": "MEI", "Meia ofensivo": "MEI",
-  "Meio-campo": "MEI", "Meia": "MEI",
-  "Ponta direita": "PD", "Ponta esquerda": "PE",
-  "Centroavante": "ATA", "Atacante": "ATA", "Segundo atacante": "ATA",
+// Versão do parser. Clube gravado com versão anterior é rebaixado e refeito —
+// foi assim que a v1 (que só lia o grupo grosso) foi descartada sem eu ter de
+// apagar o cache na mão.
+const PARSER_V = 2
+
+/**
+ * Transfermarkt PT-BR -> códigos do jogo.
+ *
+ * ⚠️ NÃO usar o title da célula da camisa (`rueckennummer`): ele traz só o GRUPO
+ * ("Defensor", "Meio-Campo", "Atacante", "Goleiro") — quatro baldes. Importar
+ * por ali transformava TODO lateral em zagueiro e TODO ponta em centroavante,
+ * que é exatamente o bug que este script existe para corrigir. A posição real
+ * está na sub-tabela, na linha logo abaixo do nome.
+ *
+ * Por palavra-chave e não por string exata porque o TM alterna entre "Lateral
+ * Esq." e "Lateral esquerdo" conforme a página.
+ */
+function mapPos(txt) {
+  const s = (txt || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  if (s.includes("goleiro")) return "GOL"
+  // Lateral antes de zagueiro/defensor: "Lateral" não pode cair em ZAG.
+  if (s.includes("lateral")) return s.includes("esq") ? "LE" : s.includes("dir") ? "LD" : "LD"
+  if (s.includes("zagueiro") || s.includes("libero") || s.includes("defensor")) return "ZAG"
+  if (s.includes("volante")) return "VOL"
+  // Ponta antes de atacante: "Ponta" não pode cair em ATA.
+  if (s.includes("ponta")) return s.includes("esq") ? "PE" : s.includes("dir") ? "PD" : "PD"
+  if (s.includes("centroavante") || s.includes("atacante") || s.includes("ataque")) return "ATA"
+  if (s.includes("meia") || s.includes("meio")) return "MEI"
+  return null
 }
 
 const args = process.argv.slice(2)
@@ -100,15 +119,15 @@ export function parseSquad(html) {
   // (o </tr> interno truncava a linha e a bandeira ficava de fora).
   const parts = html.split(/<tr class="(?:odd|even)">/).slice(1)
   for (const row of parts) {
-    const pos = row.match(/rueckennummer[^"]*" title="([^"]+)"/)
-    const nome = row.match(/\/profil\/spieler\/(\d+)">\s*([^<]+?)\s*<\/a>/)
+    // Nome + a posição específica, que vem na linha seguinte da sub-tabela.
+    const m = row.match(/\/profil\/spieler\/(\d+)">\s*([^<]+?)\s*<\/a>[\s\S]*?<tr>\s*<td>\s*([^<]+?)\s*<\/td>/)
     const nac = row.match(/title="([^"]+)"[^>]*class="flaggenrahmen/)
-    if (!nome || !pos) continue
+    if (!m) continue
     out.push({
-      tmId: nome[1],
-      nome: nome[2],
-      posicaoTM: pos[1],
-      posicao: POS_MAP[pos[1]] ?? null,
+      tmId: m[1],
+      nome: m[2],
+      posicaoTM: m[3],
+      posicao: mapPos(m[3]),
       nacionalidade: nac ? nac[1] : null,
     })
   }
@@ -120,22 +139,23 @@ async function main() {
   const teams = seed.teams ?? []
   const cache = existsSync(OUT) ? JSON.parse(await readFile(OUT, "utf8")) : { clubs: {}, updatedAt: null }
 
-  const pendentes = teams.filter(t => !cache.clubs[t.curto]).slice(0, limit)
+  // Refaz o que foi gravado por um parser antigo.
+  const pendentes = teams.filter(t => (cache.clubs[t.curto]?.v ?? 0) < PARSER_V).slice(0, limit)
   console.log(`${teams.length} clubes no seed | ${Object.keys(cache.clubs).length} já importados | processando ${pendentes.length}`)
 
   let ok = 0, semClube = 0, erro = 0
   for (const [i, team] of pendentes.entries()) {
     try {
       const url = await findClubUrl(team.nome, team.pais)
-      if (!url) { cache.clubs[team.curto] = { nome: team.nome, players: [], naoEncontrado: true }; semClube++; continue }
+      if (!url) { cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, players: [], naoEncontrado: true }; semClube++; continue }
       await sleep(delayMs)
       const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } })
       const squad = res.ok ? parseSquad(await res.text()) : []
-      cache.clubs[team.curto] = { nome: team.nome, url, players: squad }
+      cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, url, players: squad }
       ok++
       console.log(`[${i + 1}/${pendentes.length}] ${team.nome}: ${squad.length} atletas`)
     } catch (e) {
-      cache.clubs[team.curto] = { nome: team.nome, players: [], erro: String(e).slice(0, 120) }
+      cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, players: [], erro: String(e).slice(0, 120) }
       erro++
     }
     // Grava a cada clube: interromper nunca perde o que já foi baixado.
