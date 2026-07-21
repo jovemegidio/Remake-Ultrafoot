@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell } from "lucide-react"
+import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
@@ -633,6 +633,7 @@ const NAV_MENU_ITEMS: { label: string; href: string; icon: typeof Save }[] = [
   { label: "Area do Treinador", href: "/treinador", icon: User },
   { label: "Notificacoes", href: "/notificacoes", icon: Bell },
   { label: "Elenco", href: "/elenco", icon: User },
+  { label: "Juniores", href: "/base", icon: Sprout },
   { label: "Taticas", href: "/elenco/taticas", icon: Settings },
   { label: "Mercado", href: "/mercado", icon: TrendingUp },
   { label: "Calendario", href: "/calendario", icon: Calendar },

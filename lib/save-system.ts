@@ -416,6 +416,8 @@ export interface GameState {
   // Opcional para manter compatibilidade com saves anteriores.
   youthCareerStartSeason?: number
   youthAutoPromotedSeason?: number
+  /** Ultima temporada em que a base envelheceu (promocao automatica aos 18). */
+  youthAgedSeason?: number
   /** Carreira opcional iniciada nas categorias de base. */
   youthCareer?: YouthCareerState
   debt?: ClubDebtState

@@ -12,12 +12,14 @@ import { generateYouthProspects } from "@/lib/youth-academy"
 import { advanceYouthMonth, generateYouthBatch, loanYouth, runTryout } from "@/lib/youth-engine"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { useNotifications } from "@/components/notifications-system"
 
 const PROMOTION_FEE = 200_000
 
 export default function BasePage() {
   const { team } = useUserTeam()
   const { state, setState } = useGameState()
+  const { addNotification } = useNotifications()
   const youth = state.youthPlayers ?? []
   const balance = state.balance && state.balance > 0 ? state.balance : team.saldo
 
@@ -42,26 +44,39 @@ export default function BasePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [team?.curto, state.season])
 
-  // Ao concluir a terceira temporada, a turma remanescente sobe em bloco. O marco
-  // 2026 cobre saves antigos (anteriores ao campo youthCareerStartSeason); novas
-  // carreiras podem gravar esse marco quando o motor de base for criado. Executa uma
-  // unica vez e persiste o marcador, evitando repetir ao reabrir a tela.
+  // ENVELHECIMENTO + PROMOÇÃO AUTOMÁTICA AOS 18 (pedido do usuário).
+  //
+  // A cada virada de temporada, a base envelhece um ano e QUEM COMPLETA 18 sobe
+  // automaticamente ao profissional — não mais em bloco após 3 temporadas. O
+  // `youthAgedSeason` garante que a idade só avança uma vez por temporada, mesmo
+  // reabrindo a tela. Roda depois da semeadura, então a turma nova (14-17) do ano
+  // não é promovida no mesmo tick.
   useEffect(() => {
-    const youthStartSeason = state.youthCareerStartSeason ?? 2026
-    if (state.season < youthStartSeason + 3 || state.youthAutoPromotedSeason === state.season || youth.length === 0) return
-    const promoted = youth.map((player, index) => ({
-      ...player,
-      id: `pro_auto_${state.season}_${index}_${player.id}`,
+    if (state.youthSeededSeason !== state.season) return // espera semear
+    if (state.youthAgedSeason === state.season || youth.length === 0) return
+    const envelhecida = youth.map(p => ({ ...p, age: (p.age ?? 16) + 1 }))
+    const sobem = envelhecida.filter(p => (p.age ?? 0) >= 18)
+    const ficam = envelhecida.filter(p => (p.age ?? 0) < 18)
+    const promovidos = sobem.map((p, i) => ({
+      ...p,
+      id: `pro_auto_${state.season}_${i}_${p.id}`,
       fromTeam: "Categoria de Base",
       seasonSigned: state.season,
     }))
     setState({
-      squadPlayers: [...(state.squadPlayers ?? []), ...promoted],
-      youthPlayers: [],
-      youthAutoPromotedSeason: state.season,
+      youthPlayers: ficam,
+      squadPlayers: promovidos.length ? [...(state.squadPlayers ?? []), ...promovidos] : state.squadPlayers,
+      youthAgedSeason: state.season,
     })
+    if (promovidos.length) {
+      addNotification({
+        type: "system", priority: "medium",
+        title: `${promovidos.length} da base subiu ao profissional`,
+        message: `${promovidos.map(p => p.name).join(", ")} completou 18 anos e foi promovido automaticamente.`,
+      })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.season, state.youthAutoPromotedSeason, youth.length])
+  }, [state.season, state.youthSeededSeason, state.youthAgedSeason, youth.length])
 
   const replacementFor = (player: SquadPlayer): SquadPlayer => {
     const generated = generateYouthBatch(state.season, 1, team.prestigio ?? 60)[0]

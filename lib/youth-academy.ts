@@ -62,7 +62,9 @@ export function generateYouthProspects(
       95,
       Math.max(overall + 6, potentialCeil - 8 + Math.floor(rnd() * 16)),
     )
-    const age = 16 + Math.floor(rnd() * 4)                          // 16-19
+    // Base começa aos 14 (pedido): garotos de 14-17 vão amadurecendo até
+    // subirem ao profissional aos 18. Antes nasciam 16-19 (já quase prontos).
+    const age = 14 + Math.floor(rnd() * 4)                          // 14-17
     // Valor cresce com o potencial (a joia vale pela promessa, nao pelo hoje).
     const value = Math.round((overall * 40_000 + potential * 90_000) / 10_000) * 10_000
 
