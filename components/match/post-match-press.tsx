@@ -179,7 +179,14 @@ interface PostMatchPressProps {
   homeGoals: number
   awayGoals: number
   userSide: "home" | "away"
-  onComplete: (moraleImpact: number) => void
+  /**
+   * Fecha a coletiva devolvendo o efeito das respostas.
+   *
+   * O TOM vai junto do numero porque diretoria e elenco julgam coisas
+   * diferentes: uma resposta agressiva pode levantar o vestiario e ao mesmo
+   * tempo desagradar a diretoria. So o saldo de moral nao permitia distinguir.
+   */
+  onComplete: (efeito: { moraleImpact: number; tons: string[] }) => void
 }
 
 export function PostMatchPress({
@@ -242,13 +249,13 @@ export function PostMatchPress({
   // Finalizar e voltar para o office
   const finishAndReturn = useCallback(() => {
     const totalImpact = answeredQuestions.reduce((sum, q) => sum + q.impact, 0)
-    onComplete(totalImpact)
+    onComplete({ moraleImpact: totalImpact, tons: answeredQuestions.map(q => q.tone) })
     router.push("/")
   }, [answeredQuestions, onComplete, router])
 
   // Pular coletiva
   const skipPress = useCallback(() => {
-    onComplete(0)
+    onComplete({ moraleImpact: 0, tons: [] })
     router.push("/")
   }, [onComplete, router])
 

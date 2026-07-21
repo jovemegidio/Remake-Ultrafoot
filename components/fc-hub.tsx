@@ -1,5 +1,6 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { CalendarDays, Clock3, Copy, Database, ExternalLink, Inbox, LoaderCircle, LogOut, MessageCircle, MessagesSquare, Play, Power, RefreshCw, Search, Server, ShieldCheck, UserPlus, Users, Wifi, X } from "lucide-react"
@@ -141,7 +142,7 @@ export function FcHub() {
       if (pendingMs < 1) return
       persistedTotal += Math.floor(pendingMs / 1000)
       pendingMs %= 1000
-      localStorage.setItem(TOTAL_PLAYTIME_KEY, String(persistedTotal))
+      safeLocalSet(TOTAL_PLAYTIME_KEY, String(persistedTotal))
       sessionStorage.setItem(SESSION_VISIBLE_KEY, String(visibleMs))
     }
     const tick = () => {

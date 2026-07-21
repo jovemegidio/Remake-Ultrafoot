@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ChevronLeft,
@@ -36,13 +37,16 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { loadGameState, saveGameStateAndFlush, useGameState, useUserTeam } from "@/lib/save-system"
+import { calcularEfeitoColetiva } from "@/lib/press-effects"
+import { useNotifications } from "@/components/notifications-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
 import { assignPlayersToFormation, pickStartingXI } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
 import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
 import { useGamepad, type GamepadButtonName } from "@/hooks/use-gamepad"
-import { useGameManager } from "@/lib/use-game-manager"
+import { useGameManager, getStateChampRounds } from "@/lib/use-game-manager"
+import { outrosEstaduaisDaRodada } from "@/lib/parallel-rounds"
 import { useDiscordRPC } from "@/hooks/use-discord-rpc"
 import { useTranslation } from "@/lib/i18n"
 import { persistGameEngineNow, useGameEngine, shootingForPosition, type Player as EnginePlayer } from "@/lib/game-engine"
@@ -501,6 +505,7 @@ function TabButton({
 
 export default function PartidaAoVivoPage() {
   const { state: savedGame, setState: setSavedGame } = useGameState()
+  const { addNotification } = useNotifications()
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
   const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
@@ -539,7 +544,12 @@ export default function PartidaAoVivoPage() {
     )
     if (!userResult) return []
     return daTemporada
-      .filter(r => r.week === userResult.week && r.competition === userResult.competition)
+      // TODAS as competicoes que rodaram nesta semana, nao so a que eu disputei.
+      // O filtro tinha `&& r.competition === userResult.competition`, entao a
+      // tela chamada "Resultados da Rodada" mostrava apenas o Paulista enquanto
+      // Brasileirao, Copa do Brasil e Sul-Americana corriam no mesmo periodo e
+      // ficavam invisiveis.
+      .filter(r => r.week === userResult.week)
       // Um clube joga UMA vez por rodada. Se outro resultado da mesma rodada
       // envolver o meu time, ele nao pode ser meu — e uma partida que o motor
       // resolveu por engano — e mostrar os dois foi o relato "ao terminar a
@@ -554,7 +564,16 @@ export default function PartidaAoVivoPage() {
         homeScore: r.homeScore,
         awayScore: r.awayScore,
       }))
-  }, [engineMatchResults, engineSeason, finalMatch, currentMatch])
+      // Os demais estaduais correm na mesma janela do ano e o motor nao os
+      // simula. Sem eles a tela dizia "Resultados da Rodada" mostrando um
+      // campeonato so, como se o resto do pais nao estivesse jogando.
+      .concat(outrosEstaduaisDaRodada({
+        season: engineSeason,
+        week: userResult.week,
+        estadoDoUsuario: _userTeamHook.estado ?? "",
+        semanasDeEstadual: getStateChampRounds(_userTeamHook.curto),
+      }))
+  }, [engineMatchResults, engineSeason, finalMatch, currentMatch, _userTeamHook.estado, _userTeamHook.curto])
 
   const resultRegistered = useRef(false)
   const t = useTranslation()
@@ -1046,7 +1065,7 @@ export default function PartidaAoVivoPage() {
           postMatchAdvance.current = advanceWeek().then(result => {
             if (result && "leagueChampion" in result && result.leagueChampion) {
               const champ = result.leagueChampion
-              localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
+              safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
                 competition: champ.competition,
                 season: champ.season,
                 type: "league",
@@ -1861,8 +1880,39 @@ export default function PartidaAoVivoPage() {
       awayGoals={state.away.goals}
       userSide={finalMatch?.userSide ?? userSide}
       onClose={() => setShowPressConference(false)}
-      onComplete={async (moraleImpact) => {
+      onComplete={async ({ moraleImpact, tons }) => {
         setShowPressConference(false)
+
+        // A coletiva agora TEM consequencia. O callback recebia o saldo das
+        // respostas e ignorava o valor: escolher "vou cobrar no vestiario" ou
+        // "o grupo esta de parabens" dava exatamente no mesmo lugar.
+        const userGoals = (finalMatch?.userSide ?? userSide) === "home" ? state.home.goals : state.away.goals
+        const rivalGoals = (finalMatch?.userSide ?? userSide) === "home" ? state.away.goals : state.home.goals
+        const efeito = calcularEfeitoColetiva({
+          moraleImpact,
+          tons,
+          venceu: userGoals > rivalGoals,
+          perdeu: userGoals < rivalGoals,
+        })
+
+        if (efeito.moralDelta !== 0 || efeito.diretoriaDelta !== 0) {
+          const atual = loadGameState()
+          setSavedGame({
+            teamMorale: Math.max(0, Math.min(100, (atual.teamMorale ?? 65) + efeito.moralDelta)),
+            boardConfidence: Math.max(0, Math.min(100, (atual.boardConfidence ?? 60) + efeito.diretoriaDelta)),
+          })
+        }
+        // O jogador precisa VER a consequencia; senao o efeito existe e passa
+        // despercebido, que na pratica e o mesmo que nao existir.
+        if (efeito.recadoElenco) {
+          addNotification({ type: "system", priority: efeito.moralDelta > 0 ? "normal" : "high",
+            title: efeito.recadoElenco.titulo, message: efeito.recadoElenco.texto })
+        }
+        if (efeito.recadoDiretoria) {
+          addNotification({ type: "system", priority: efeito.diretoriaDelta > 0 ? "normal" : "high",
+            title: efeito.recadoDiretoria.titulo, message: efeito.recadoDiretoria.texto })
+        }
+
         // O save so pode liberar a tela depois que resultado, rodada e motor foram
         // confirmados no disco. O href direto quebrava no build Tauri (ERR_FILE_NOT_FOUND)
         // e podia matar o autosave ainda pendente.

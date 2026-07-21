@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react"
+import { safeLocalSet } from "@/lib/safe-storage"
 import { getClubFacts } from "@/lib/club-facts"
 import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
 import Image from "next/image"
@@ -325,7 +326,7 @@ export default function NovoJogoPage() {
     }
     // Marcador pequeno e sincrono para recuperar a navegacao no WebView caso o
     // sessionStorage seja descartado durante o reload do protocolo Tauri.
-    window.localStorage.setItem("ultrafoot:career-bootstrap", JSON.stringify({
+    safeLocalSet("ultrafoot:career-bootstrap", JSON.stringify({
       teamShort: selectedTeam.curto,
       managerName: managerName.trim(),
       createdAt: Date.now(),

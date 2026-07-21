@@ -226,7 +226,16 @@ export default function ElencoHubPage() {
 
             {/* Cards Grid */}
             <div className="flex-1 flex items-center justify-center">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl w-full min-w-0">
+              {/* Colunas derivadas da QUANTIDADE de cards. Era `md:grid-cols-3`
+                  fixo; ao remover o card "Escalacoes" sobraram dois, a terceira
+                  coluna ficou vazia e o conjunto encostou na esquerda. Assim,
+                  incluir ou remover um card nunca mais desalinha a tela. */}
+              <div
+                className={cn(
+                  "grid w-full min-w-0 grid-cols-1 gap-4",
+                  cards.length >= 3 ? "max-w-5xl md:grid-cols-3" : "max-w-3xl md:grid-cols-2",
+                )}
+              >
                 {cards.map((card, index) => (
                   <motion.div
                     key={card.id}

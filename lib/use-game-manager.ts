@@ -3,6 +3,7 @@
 
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
@@ -1877,7 +1878,7 @@ export function useGameManager() {
         getCalendarFixtureKey(f, currentState.season) !== fixtureKey,
       ).length
       if (restantes === 0) {
-        localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
+        safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
           competition: competitionName,
           season: String(currentState.season),
           type: "cup",

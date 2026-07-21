@@ -1,5 +1,7 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
+
 // Acessibilidade: escala de fonte, alto contraste, reducao de movimento e foco visivel.
 //
 // Aplica tudo no elemento <html> (data-attributes + uma variavel CSS de escala), entao
@@ -67,7 +69,7 @@ function load(): AccessibilitySettings {
 
 function persist(s: AccessibilitySettings) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s))
+    safeLocalSet(KEY, JSON.stringify(s))
   } catch {
     /* ignore */
   }

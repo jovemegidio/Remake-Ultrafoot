@@ -1302,16 +1302,21 @@ export default function ElencoPage() {
               </button>
             </div>
             
-            {/* Reserves section - Melhorado com scroll vertical */}
-            <div className="mt-2 p-3 rounded-xl bg-[#111111] border border-white/[0.04] flex-shrink-0">
+            {/* Banco de reservas.
+                max-h-[46vh] e nao 30vh: com 15 reservas em 7 colunas sao TRES
+                fileiras, e 30vh so mostrava duas e um pedaco da terceira — o
+                scroll existia mas a fileira cortada nao parecia alcancavel.
+                Agora o painel cresce ate metade da tela e o campo cede o resto. */}
+            <div className="mt-2 flex max-h-[46vh] min-h-0 flex-shrink-0 flex-col rounded-xl border border-white/[0.04] bg-[#111111] p-3">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">{t.squad.reserves} ({bench.length})</h3>
                 <span className="text-[10px] text-white/40">{t.squad.dragToSubstitute}</span>
               </div>
               
-              {/* Teto em vh, nao em px: 280px fixos ocupavam um terco de uma tela de
-                  laptop e ainda assim estouravam em telas menores. */}
-              <div className="max-h-[30vh] overflow-y-auto scrollbar-game pr-1">
+              {/* min-h-0 + flex-1: a lista ocupa a altura que sobrar dentro do
+                  teto do painel, em vez de ter um teto proprio que brigava com o
+                  do pai e deixava a ultima fileira sempre pela metade. */}
+              <div className="min-h-0 flex-1 overflow-y-auto scrollbar-game pr-1">
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
                   {bench.map((player) => {
                     const posColors = positionColors[player.position] || positionColors.MEI

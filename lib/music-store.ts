@@ -1,5 +1,6 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { gameAssetUrl } from "@/lib/game-asset"
 
 export type PlayerRepeat = "off" | "all" | "one"
@@ -68,7 +69,7 @@ function setState(patch: Partial<MusicState>) {
 
 function persist(key: string, value: string) {
   try {
-    localStorage.setItem(key, value)
+    safeLocalSet(key, value)
   } catch {
     /* ignore */
   }

@@ -1,3 +1,4 @@
+import { safeLocalSet } from "@/lib/safe-storage"
 import { GAME_DATA_HASH, GAME_DATA_VERSION, ONLINE_PROTOCOL_VERSION } from "@/lib/online-multiplayer"
 
 export type InternetConnectionState = "connecting" | "connected" | "reconnecting" | "closed" | "error"
@@ -95,7 +96,7 @@ export function configuredRelayUrl(): string {
 export function setRelayOverride(url: string): void {
   if (typeof window === "undefined") return
   const normalized = normalizedUrl(url)
-  if (normalized) localStorage.setItem(RELAY_OVERRIDE_KEY, normalized)
+  if (normalized) safeLocalSet(RELAY_OVERRIDE_KEY, normalized)
   else localStorage.removeItem(RELAY_OVERRIDE_KEY)
 }
 

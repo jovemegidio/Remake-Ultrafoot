@@ -1,5 +1,6 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { Fragment, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { normalizeAppHref, toClientRoute } from "@/lib/hard-navigation"
@@ -274,7 +275,7 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       )}
       {showWhatsNew && (
         <WhatsNewDialog onClose={() => {
-          localStorage.setItem("ultrafoot:last-seen-whats-new", "1.0.97")
+          safeLocalSet("ultrafoot:last-seen-whats-new", "1.0.97")
           setShowWhatsNew(false)
         }} />
       )}

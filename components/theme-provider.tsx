@@ -1,5 +1,6 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { createContext, useContext, useEffect, useState } from "react"
 
 type ThemeColor = "cyan" | "green" | "red" | "blue" | "orange" | "purple" | "gold" | "team"
@@ -109,7 +110,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: ThemeColor) => {
     setThemeState(newTheme)
-    if (mounted) localStorage.setItem("ultrafoot-theme", newTheme)
+    if (mounted) safeLocalSet("ultrafoot-theme", newTheme)
   }
 
   useEffect(() => {
@@ -136,7 +137,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!mounted || !teamColors) return
-    localStorage.setItem("ultrafoot-team-colors", JSON.stringify(teamColors))
+    safeLocalSet("ultrafoot-team-colors", JSON.stringify(teamColors))
   }, [teamColors, mounted])
 
   const config = theme === "team" 

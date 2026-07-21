@@ -1,5 +1,6 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { ChevronDown, ChevronUp, Heart, ListMusic, Maximize2, Mic2, Minimize2, MonitorSpeaker, Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume1, Volume2, VolumeX, X } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useMemo, useSyncExternalStore } from "react"
@@ -59,7 +60,7 @@ export function MusicPlayer({ className, defaultSize = "mini", autoPlay = true, 
     const savedSize = localStorage.getItem("ultrafoot:music-size")
     if (savedSize !== null) setSize(savedSize as PlayerSize)
   }, [])
-  useEffect(() => { localStorage.setItem("ultrafoot:music-size", size) }, [size])
+  useEffect(() => { safeLocalSet("ultrafoot:music-size", size) }, [size])
 
   // Autoplay (apenas instancias com autoPlay habilitado)
   useEffect(() => {

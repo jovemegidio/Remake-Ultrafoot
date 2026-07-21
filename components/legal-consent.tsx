@@ -1,5 +1,6 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ShieldCheck } from "lucide-react"
@@ -22,7 +23,7 @@ export function LegalConsent({ onAccepted }: { onAccepted: () => void }) {
       <h1 className="mt-3 text-xl font-black text-white">Antes de jogar</h1>
       <p className="mt-2 text-sm leading-6 text-white/65">Para usar o Ultrafoot 26, leia e aceite os Termos de Uso e a Política de Privacidade. O uso de automação, coleta em massa ou tentativa de contornar os serviços online é proibido.</p>
       <div className="mt-4 flex gap-4 text-sm font-semibold text-[#00ffc8]"><Link href="/legal/" target="_blank">Ler termos e privacidade</Link><Link href="/legal/#uso" target="_blank">Regras de uso</Link></div>
-      <button onClick={() => { window.localStorage.setItem(ACCEPTANCE_KEY, LEGAL_VERSION); setAccepted(true); onAccepted() }} className="mt-6 w-full rounded-lg bg-[#00ffc8] px-4 py-3 text-sm font-black text-black hover:bg-[#42ffe0]">Aceito os termos</button>
+      <button onClick={() => { safeLocalSet(ACCEPTANCE_KEY, LEGAL_VERSION); setAccepted(true); onAccepted() }} className="mt-6 w-full rounded-lg bg-[#00ffc8] px-4 py-3 text-sm font-black text-black hover:bg-[#42ffe0]">Aceito os termos</button>
     </div>
   </div>
 }

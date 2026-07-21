@@ -1,3 +1,4 @@
+import { safeLocalSet } from "@/lib/safe-storage"
 // Carencia apos o jogador recusar uma proposta.
 //
 // Sem isso, recusar nao custava nada: bastava reabrir o modal e propor de novo no
@@ -12,7 +13,7 @@ const MS_PER_DAY = 86_400_000
 /** Registra a recusa do jogador na data ATUAL do jogo (nao a data real). */
 export function markPlayerRejection(playerId: number | string, gameDate: Date): void {
   try {
-    localStorage.setItem(KEY(playerId), gameDate.toISOString())
+    safeLocalSet(KEY(playerId), gameDate.toISOString())
   } catch {
     /* ignore */
   }

@@ -1,3 +1,4 @@
+import { safeLocalSet } from "@/lib/safe-storage"
 // Save na "nuvem" baseado em codigo de 6 caracteres.
 // Sem backend configurado, os saves sao guardados localmente sob o codigo,
 // permitindo exportar/importar entre sessoes no mesmo dispositivo.
@@ -46,8 +47,8 @@ export async function uploadSave(code?: string): Promise<CloudResult & { code?: 
     const save = window.localStorage.getItem(SAVE_KEY)
     if (!save) return { success: false, error: "Nenhum jogo salvo para enviar" }
     const finalCode = (code && code.length === 6 ? code : generateCloudCode()).toUpperCase()
-    window.localStorage.setItem(CLOUD_PREFIX + finalCode, save)
-    window.localStorage.setItem(LAST_CODE_KEY, finalCode)
+    safeLocalSet(CLOUD_PREFIX + finalCode, save)
+    safeLocalSet(LAST_CODE_KEY, finalCode)
     return { success: true, code: finalCode }
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Erro ao enviar" }
@@ -69,8 +70,8 @@ export async function downloadSave(code: string): Promise<CloudResult> {
       return { success: false, error: "Codigo nao encontrado (404)" }
     }
     // Aplica o save baixado como save atual.
-    window.localStorage.setItem(SAVE_KEY, stored)
-    window.localStorage.setItem(LAST_CODE_KEY, normalized)
+    safeLocalSet(SAVE_KEY, stored)
+    safeLocalSet(LAST_CODE_KEY, normalized)
     return { success: true }
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Erro ao baixar" }

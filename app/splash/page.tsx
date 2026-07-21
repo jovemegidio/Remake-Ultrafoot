@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { safeLocalSet } from "@/lib/safe-storage"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight } from "lucide-react"
@@ -244,7 +245,7 @@ export default function SplashPage() {
     const validKeyPattern = /^ULTRA-FOOT-2026-[A-Z0-9]{4}$/
     
     if (validKeyPattern.test(serialKey.toUpperCase())) {
-      window.localStorage.setItem("ultrafoot:registered", "1")
+      safeLocalSet("ultrafoot:registered", "1")
       setIsRegistered(true)
       setIsValidating(false)
       setTimeout(() => {

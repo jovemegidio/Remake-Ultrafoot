@@ -1,3 +1,4 @@
+import { safeLocalSet } from "@/lib/safe-storage"
 // Sistema de configuracao de performance para diferentes tipos de hardware
 // Otimizado para computadores fracos e de alta performance
 
@@ -161,7 +162,7 @@ const PERF_STORAGE_KEY = "ultrafoot:performance"
 // Salva configuracao de performance
 export function savePerformanceLevel(level: PerformanceLevel): void {
   if (typeof window !== "undefined") {
-    localStorage.setItem(PERF_STORAGE_KEY, level)
+    safeLocalSet(PERF_STORAGE_KEY, level)
   }
 }
 

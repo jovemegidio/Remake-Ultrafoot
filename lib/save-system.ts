@@ -452,6 +452,11 @@ export interface GameState {
   injuries?: InjuryRecord[]
   playerFatigue?: FatigueMap
   teamMorale?: number
+  /**
+   * Confianca da diretoria (0-100). Sobe e desce conforme as respostas na
+   * coletiva pos-jogo; antes as respostas nao afetavam nada.
+   */
+  boardConfidence?: number
   activeChallenge?: ChallengeProgress
 }
 

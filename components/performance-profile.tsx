@@ -1,5 +1,6 @@
 "use client"
 
+import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect } from "react"
 
 export type PerformanceProfile = "economy" | "balanced" | "quality"
@@ -7,7 +8,7 @@ export const PERFORMANCE_STORAGE_KEY = "ultrafoot:performance-profile"
 
 export function applyPerformanceProfile(profile: PerformanceProfile) {
   document.documentElement.dataset.performance = profile
-  localStorage.setItem(PERFORMANCE_STORAGE_KEY, profile)
+  safeLocalSet(PERFORMANCE_STORAGE_KEY, profile)
 }
 
 export function PerformanceProfileBootstrap() {

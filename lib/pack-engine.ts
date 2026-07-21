@@ -1,3 +1,4 @@
+import { safeLocalSet } from "@/lib/safe-storage"
 // PHASE 7 — Sistema de packs (.ultrafoot)
 // Status: skeleton — importar/exportar packs, validar, preview escudo/camisa,
 // ativar/desativar, compatibilidade com Brasfoot/fantasy/retrô/comunidade.
@@ -45,7 +46,7 @@ export type PackValidationError =
 const PACKS_KEY="ultrafoot:installed-packs"
 const memoryPacks:InstalledPack[]=[]
 function readPacks():InstalledPack[]{if(typeof localStorage==="undefined")return memoryPacks.map(p=>structuredClone(p));try{return JSON.parse(localStorage.getItem(PACKS_KEY)??"[]") as InstalledPack[]}catch{return[]}}
-function writePacks(p:InstalledPack[]):void{if(typeof localStorage==="undefined"){memoryPacks.splice(0,memoryPacks.length,...p.map(x=>structuredClone(x)));return}localStorage.setItem(PACKS_KEY,JSON.stringify(p))}
+function writePacks(p:InstalledPack[]):void{if(typeof localStorage==="undefined"){memoryPacks.splice(0,memoryPacks.length,...p.map(x=>structuredClone(x)));return}safeLocalSet(PACKS_KEY,JSON.stringify(p))}
 async function readManifest(input:string|Blob):Promise<PackManifest>{if(input instanceof Blob)return JSON.parse(await input.text()) as PackManifest;if(input.trim().startsWith("{"))return JSON.parse(input) as PackManifest;throw new Error("O caminho precisa ser lido pelo seletor nativo antes da importação.")}
 
 /** Importa pack a partir de arquivo .ultrafoot (zip-like). */

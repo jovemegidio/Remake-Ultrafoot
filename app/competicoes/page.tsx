@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
+import { safeLocalSet } from "@/lib/safe-storage"
 import { useRouter } from "next/navigation"
 import {
   Trophy,
@@ -187,7 +188,7 @@ function useCompetitions(userTeamShort: string, userPosition: number, season: nu
   // Salvar no localStorage
   useEffect(() => {
     if (skipSave.current) { skipSave.current = false; return }
-    localStorage.setItem(storageKey, JSON.stringify(state))
+    safeLocalSet(storageKey, JSON.stringify(state))
   }, [state, storageKey])
   
   // Pool REAL da Copa do Brasil: os melhores clubes do Brasil por prestigio (Serie A a D),
@@ -530,7 +531,7 @@ export default function CompeticoesPage() {
   const handleSimulateCopa = (competitionName: string, season: string) => {
     const userWon = simulateCopaBrasilRound()
     if (userWon) {
-      localStorage.setItem("ultrafoot-pending-champion", JSON.stringify({
+      safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
         competition: competitionName,
         season,
         type: "cup",
