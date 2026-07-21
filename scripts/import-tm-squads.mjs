@@ -121,6 +121,20 @@ function chavesCandidato(c) {
   return new Set([limparNome(c.nome), limparNome(slug.replace(/-/g, " "))])
 }
 
+/**
+ * Chave do cache. NÃO use `curto` sozinho: ele não é único no seed — 134 códigos
+ * são compartilhados por 400 times. `BARCELON` serve a CINCO clubes (Guayaquil,
+ * Ilhéus, Espanha, Barcelona-RO, Barcelona II), `FORTUNAX` serve Sittard e
+ * Düsseldorf, `SALZBURG` serve RB Salzburg e Salzburger AK.
+ *
+ * Com `curto` de chave, esses clubes dividiam UMA entrada e o último processado
+ * sobrescrevia os outros — foi isso, e não erro de casamento, que fez o
+ * "Barcelona Guayaquil" aparecer com o elenco do Barcelona da Espanha.
+ */
+export function chaveClube(team) {
+  return `${team.curto}|${nameKey(team.nome)}`
+}
+
 /** Devolve o país em forma comparável, ou null se não der para saber. */
 function paisKey(bruto) {
   const k = nameKey(bruto)
@@ -262,7 +276,7 @@ async function main() {
   // Palmer como goleiro". Deixar em ordem de arquivo gastaria as primeiras horas
   // em times de divisao estadual.
   const pendentes = teams
-    .filter(t => (cache.clubs[t.curto]?.v ?? 0) < PARSER_V)
+    .filter(t => (cache.clubs[chaveClube(t)]?.v ?? 0) < PARSER_V)
     .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
     .slice(0, limit)
   console.log(`${teams.length} clubes no seed | ${Object.keys(cache.clubs).length} já importados | processando ${pendentes.length}`)
@@ -335,14 +349,14 @@ async function main() {
           // Não grava nada: fica pendente e uma passada posterior tenta de novo.
           erro++
         } else if (achado.semClube) {
-          cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, players: [], naoEncontrado: true }
+          cache.clubs[chaveClube(team)] = { v: PARSER_V, curto: team.curto, nome: team.nome, players: [], naoEncontrado: true }
           semClube++
         } else {
           await sleep(delayMs)
           const res = await buscar(achado.url)
           if (!res.ok) { erro++; feitos++; await sleep(delayMs); continue }
           const squad = parseSquad(await res.text())
-          cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, url: achado.url, players: squad }
+          cache.clubs[chaveClube(team)] = { v: PARSER_V, curto: team.curto, nome: team.nome, url: achado.url, players: squad }
           ok++
         }
       } catch {

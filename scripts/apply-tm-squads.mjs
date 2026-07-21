@@ -81,7 +81,7 @@ async function main() {
   const rejeitados = []
 
   for (const team of seed.teams ?? []) {
-    const club = tm.clubs?.[team.curto]
+    const club = tm.clubs?.[`${team.curto}|${nameKey(team.nome)}`]
     if (!club?.players?.length) continue
     const idx = buildIndex(club.players)
 
