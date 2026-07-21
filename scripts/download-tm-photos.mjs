@@ -4,7 +4,8 @@
 // foto de atleta que nenhuma tela resolve seria peso morto no instalador.
 // Em "medium" (~8,8 KB/foto, medido) o lote custa ~27 MB.
 //
-// Destino: public/jogadores/tm/{ft}.jpg — a pasta public/jogadores ja e
+// Destino: RAIZ de public/jogadores ({ft}.jpg) — o resource-glob do Tauri
+// ACHATA subpastas (jogadores/tm sumiu na 1.0.111), e a pasta ja e
 // empacotada como resource do Tauri e servida offline por gameAssetUrl, entao
 // nenhuma configuracao de build muda.
 //
@@ -20,7 +21,7 @@ import { existsSync } from "node:fs"
 import path from "node:path"
 
 const SEED = path.resolve("data/seeds/imported-bf2026.json")
-const DIR = path.resolve("public/jogadores/tm")
+const DIR = path.resolve("public/jogadores")
 const MANIFEST = path.resolve("data/seeds/tm-fotos-local.json")
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
 
@@ -35,7 +36,7 @@ async function main() {
   for (const t of seed.teams ?? []) for (const j of t.jogadores ?? []) if (j.ft) fts.add(j.ft)
 
   await mkdir(DIR, { recursive: true })
-  const existentes = new Set((await readdir(DIR)).filter(f => f.endsWith(".jpg")).map(f => f.slice(0, -4)))
+  const existentes = new Set((await readdir(DIR)).filter(f => /^\d+-\d+\.jpg$/.test(f)).map(f => f.slice(0, -4)))
   const fila = [...fts].filter(ft => !existentes.has(ft))
   console.log(`fotos usadas pelo jogo: ${fts.size} | ja em disco: ${existentes.size} | baixando: ${fila.length}`)
 
@@ -67,7 +68,9 @@ async function main() {
   await Promise.all(Array.from({ length: conc }, tarefa))
 
   // Manifesto = o que DE FATO esta em disco (inclui downloads de rodadas anteriores).
-  const locais = (await readdir(DIR)).filter(f => f.endsWith(".jpg")).map(f => f.slice(0, -4)).sort()
+  // So padrao de ft ("id-timestamp"): a raiz tambem guarda os slugs antigos
+  // por nome, que nao pertencem a este manifesto.
+  const locais = (await readdir(DIR)).filter(f => /^\d+-\d+\.jpg$/.test(f)).map(f => f.slice(0, -4)).sort()
   await writeFile(MANIFEST, JSON.stringify({ fts: locais }))
 
   console.log(`\nbaixadas: ${ok} | falhas: ${falha} | ${(bytes / 1048576).toFixed(1)} MB nesta rodada`)

@@ -13,8 +13,12 @@ const photoMap = (manifest as { entries: Record<string, string> }).entries
 // scripts/apply-tm-squads.mjs com casamento exato de nome DENTRO do clube.
 //
 // OFFLINE-FIRST: scripts/download-tm-photos.mjs baixa as fotos usadas pelo jogo
-// para public/jogadores/tm (que ja e resource do Tauri) e registra o que esta
-// em disco em tm-fotos-local.json. So apontamos para arquivo local se ele esta
+// para a RAIZ de public/jogadores e registra o que esta em disco em
+// tm-fotos-local.json. Raiz, e nao subpasta: o empacotador de resources do
+// Tauri ACHATA os globs (constatei na 1.0.111 instalada — jogadores/tm sumiu e
+// os arquivos cairam na raiz), entao subpasta funcionaria no navegador e
+// quebraria no instalado. Os nomes nao colidem: ft e "id-timestamp.jpg", os
+// arquivos antigos sao slugs de nome. So apontamos para arquivo local se ele esta
 // no manifesto — um download que falhou cai na URL remota, nunca em imagem
 // quebrada. Sem internet E sem arquivo, o onError do PlayerAvatar mostra as
 // iniciais.
@@ -70,7 +74,7 @@ export function getPlayerPhotoUrl(name: string, playerId?: string): string | und
   // baixada; remota como reserva.
   const ft = getTmFotoMap().get(normalizePlayerKey(name))
   if (!ft) return undefined
-  return TM_LOCAL.has(ft) ? gameAssetUrl(`/jogadores/tm/${ft}.jpg`) : `${TM_PORTRAIT}${ft}.jpg`
+  return TM_LOCAL.has(ft) ? gameAssetUrl(`/jogadores/${ft}.jpg`) : `${TM_PORTRAIT}${ft}.jpg`
 }
 
 export function setPlayerPhotoOverride(name: string, dataUrl: string): void {
