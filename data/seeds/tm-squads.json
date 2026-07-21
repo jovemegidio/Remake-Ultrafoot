@@ -339055,7 +339055,3631 @@
      "nacionalidade": "Senegal"
     }
    ]
+  },
+  "LEIOAXES|estadio sarriena": {
+   "v": 2,
+   "curto": "LEIOAXES",
+   "nome": "Estadio Sarriena",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LUMEZZAN|tullio saleri": {
+   "v": 2,
+   "curto": "LUMEZZAN",
+   "nome": "Tullio Saleri",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "STMAURLU|complexe sportif louison bobet": {
+   "v": 2,
+   "curto": "STMAURLU",
+   "nome": "Complexe Sportif Louison Bobet",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "HANSALUN|hansa luneburger": {
+   "v": 2,
+   "curto": "HANSALUN",
+   "nome": "Hansa Luneburger",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LATINAXI|domenico francioni": {
+   "v": 2,
+   "curto": "LATINAXI",
+   "nome": "Domenico Francioni",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LINCOLNX|sincil bannk": {
+   "v": 2,
+   "curto": "LINCOLNX",
+   "nome": "Sincil Bannk",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DAGENHAM|dagenham redbridge": {
+   "v": 2,
+   "curto": "DAGENHAM",
+   "nome": "Dagenham & Redbridge",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "JUVENTUD|juventude ma": {
+   "v": 2,
+   "curto": "JUVENTUD",
+   "nome": "Juventude-MA",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "VIRYCHAT|viry chatillon": {
+   "v": 2,
+   "curto": "VIRYCHAT",
+   "nome": "Viry Chatillon ",
+   "url": "https://www.transfermarkt.com.br/es-viry-chatillon/startseite/verein/6372",
+   "players": [
+    {
+     "tmId": "646046",
+     "nome": "Vincent Da Silva",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646055",
+     "nome": "Hélder Vieira Tavares",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "657249",
+     "nome": "Loïc Thenault",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "374427",
+     "nome": "Miguel Smeralda",
+     "posicaoTM": "Defensores",
+     "posicao": "ZAG",
+     "nacionalidade": "Martinica"
+    },
+    {
+     "tmId": "646048",
+     "nome": "Ibrahim Sankouna",
+     "posicaoTM": "Defensores",
+     "posicao": "ZAG",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "55686",
+     "nome": "Philippe Fostier",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica"
+    },
+    {
+     "tmId": "646047",
+     "nome": "Landu Ngoyi",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646051",
+     "nome": "Franck Djoko Ketchateng",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646057",
+     "nome": "Jean-Baptiste Saint-Péron",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646059",
+     "nome": "Tidiani Diallo",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646060",
+     "nome": "Bilal Gacem",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "496609",
+     "nome": "Mohamed Boutghatine",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646054",
+     "nome": "Aziz Bensaïdi",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646061",
+     "nome": "Smaïl Yahya",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "646062",
+     "nome": "Moussa Traoré",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "867498",
+     "nome": "Benjamin Betourné",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "1107699",
+     "nome": "Nazouam Ali",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    }
+   ]
+  },
+  "HOMBURGS|homburg saar": {
+   "v": 2,
+   "curto": "HOMBURGS",
+   "nome": "Homburg Saar",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "CHASSELA|monts d or azergues": {
+   "v": 2,
+   "curto": "CHASSELA",
+   "nome": "Monts D'Or Azergues",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LINENSEX|real linense": {
+   "v": 2,
+   "curto": "LINENSEX",
+   "nome": "Real Linense",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "NOTTSXIN|notts country": {
+   "v": 2,
+   "curto": "NOTTSXIN",
+   "nome": "Notts Country",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SPORTING|sporting toulon": {
+   "v": 2,
+   "curto": "SPORTING",
+   "nome": "Sporting Toulon",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "STADEBRI|stade brionchin": {
+   "v": 2,
+   "curto": "STADEBRI",
+   "nome": "Stade Brionchin",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "GREMIOAN|gremio anapolis": {
+   "v": 2,
+   "curto": "GREMIOAN",
+   "nome": "Grêmio Anápolis",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AMIENSAC|athletic amiens": {
+   "v": 2,
+   "curto": "AMIENSAC",
+   "nome": "Athletic Amiens",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LILLEXFR|grimonprez jooris": {
+   "v": 2,
+   "curto": "LILLEXFR",
+   "nome": "Grimonprez-Jooris",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEYTONXI|matchroom": {
+   "v": 2,
+   "curto": "LEYTONXI",
+   "nome": "Matchroom",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ATLETICO|atletico de ibirama": {
+   "v": 2,
+   "curto": "ATLETICO",
+   "nome": "Atlético de Ibirama",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "RAONETAP|raon etape": {
+   "v": 2,
+   "curto": "RAONETAP",
+   "nome": "Raon Etape",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MLADOSTL|mladost lua ani": {
+   "v": 2,
+   "curto": "MLADOSTL",
+   "nome": "Mladost LuÄani",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SANCAKTE|sancaktepe belediyespor": {
+   "v": 2,
+   "curto": "SANCAKTE",
+   "nome": "Sancaktepe Belediyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SVELCHED|elchede": {
+   "v": 2,
+   "curto": "SVELCHED",
+   "nome": "Elchede",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DEFENSOR|def de pronunciamento": {
+   "v": 2,
+   "curto": "DEFENSOR",
+   "nome": "Def. de Pronunciamento",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LLANEROS|manuel calle lombana": {
+   "v": 2,
+   "curto": "LLANEROS",
+   "nome": "Manuel Calle Lombana",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "WIJGMAAL|olympia wijgmaal": {
+   "v": 2,
+   "curto": "WIJGMAAL",
+   "nome": "Olympia Wijgmaal",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LIAPIXKO|stadiumi zahir pajaziti": {
+   "v": 2,
+   "curto": "LIAPIXKO",
+   "nome": "Stadiumi Zahir Pajaziti",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KIRIKHAN|ka ra khanspor": {
+   "v": 2,
+   "curto": "KIRIKHAN",
+   "nome": "KÄ±rÄ±khanspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PETROLER|petrolero yacuiba": {
+   "v": 2,
+   "curto": "PETROLER",
+   "nome": "Petrolero Yacuiba",
+   "url": "https://www.transfermarkt.com.br/petrolero-de-yacuiba/startseite/verein/36134",
+   "players": [
+    {
+     "tmId": "891622",
+     "nome": "Mariano De Souza",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1158396",
+     "nome": "Angel Altovich",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1323243",
+     "nome": "Jamer Almazán",
+     "posicaoTM": "Defensores",
+     "posicao": "ZAG",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1338425",
+     "nome": "Luis Altovich",
+     "posicaoTM": "Defensores",
+     "posicao": "ZAG",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1125144",
+     "nome": "Ignacio Rodríguez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1446162",
+     "nome": "Kevin Texeira",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "491665",
+     "nome": "Alan Siles",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "953576",
+     "nome": "José Flores",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "959081",
+     "nome": "Rollyn Supayabe",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1151857",
+     "nome": "Brayan Rodriguez",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "644197",
+     "nome": "Robin Canido",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1323244",
+     "nome": "Paúl Flores",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1338423",
+     "nome": "Marco Cavero",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "953612",
+     "nome": "Franco Castillo",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "961004",
+     "nome": "Luis Galvis",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "1287000",
+     "nome": "Cristian Montero",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "972734",
+     "nome": "Jorge Ojeda",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "579561",
+     "nome": "Alejandro Medina",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "628399",
+     "nome": "Shelove Achelus",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Haiti"
+    },
+    {
+     "tmId": "950413",
+     "nome": "Alexander Rosado",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Bolívia"
+    },
+    {
+     "tmId": "866542",
+     "nome": "Diefri Sandy",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "República Dominicana"
+    },
+    {
+     "tmId": "1338424",
+     "nome": "Luis Solares",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Bolívia"
+    }
+   ]
+  },
+  "VERL1924|verl 1924": {
+   "v": 2,
+   "curto": "VERL1924",
+   "nome": "Verl 1924",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "GUANGZHO|guangzhou r f": {
+   "v": 2,
+   "curto": "GUANGZHO",
+   "nome": "Guangzhou R&F",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LAGUNARN|nazarenao": {
+   "v": 2,
+   "curto": "LAGUNARN",
+   "nome": "Nazarenão",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LLAGOSTE|nou municipal de palamos": {
+   "v": 2,
+   "curto": "LLAGOSTE",
+   "nome": "Nou Municipal de Palamós",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "GIMNASIE|gimnasia concepcion": {
+   "v": 2,
+   "curto": "GIMNASIE",
+   "nome": "Gimnasia Concepción",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ASCXSOCI|asc societe et miniere": {
+   "v": 2,
+   "curto": "ASCXSOCI",
+   "nome": "ASC Société et Minière",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MERSINID|mersin a dman yurdu": {
+   "v": 2,
+   "curto": "MERSINID",
+   "nome": "Mersin Ä°dman Yurdu",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PORTUGUE|portuguesa santista": {
+   "v": 2,
+   "curto": "PORTUGUE",
+   "nome": "Portuguesa Santista",
+   "url": "https://www.transfermarkt.com.br/associacao-atletica-portuguesa-sp-/startseite/verein/7057",
+   "players": [
+    {
+     "tmId": "187627",
+     "nome": "Gauther",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "208121",
+     "nome": "Vitor Prada",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1307164",
+     "nome": "Fábio Huck",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1464394",
+     "nome": "Ygor Oliveira",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "319280",
+     "nome": "Diogo Rangel",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "552959",
+     "nome": "Alemão",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1080727",
+     "nome": "Levi",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "980980",
+     "nome": "Jonathan",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "678087",
+     "nome": "Alison Rodrigo",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "999245",
+     "nome": "Diego Almeida",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1096252",
+     "nome": "Guilherme",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1239955",
+     "nome": "Dudu",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "176997",
+     "nome": "Anderson Carvalho",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "936094",
+     "nome": "Otávio",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "722669",
+     "nome": "Danilo",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "873515",
+     "nome": "Rafinha",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1500005",
+     "nome": "Luan",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "532218",
+     "nome": "Lucas Xavier",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "731527",
+     "nome": "Xilú",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "722661",
+     "nome": "Denis Ribeiro",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "106094",
+     "nome": "Bruno Moraes",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "440714",
+     "nome": "João Pedro",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "657434",
+     "nome": "Bruno Pelegrini",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "1371067",
+     "nome": "Matheus Ney",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil"
+    }
+   ]
+  },
+  "LEGANESX|butarque": {
+   "v": 2,
+   "curto": "LEGANESX",
+   "nome": "Butarque",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEMANSXF|mmarena": {
+   "v": 2,
+   "curto": "LEMANSXF",
+   "nome": "MMArena",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LYONDUCH|stade de balmont": {
+   "v": 2,
+   "curto": "LYONDUCH",
+   "nome": "Stade de Balmont",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LORIENTX|stade du moustoir": {
+   "v": 2,
+   "curto": "LORIENTX",
+   "nome": "Stade du Moustoir",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ESCUELAM|escuela macul": {
+   "v": 2,
+   "curto": "ESCUELAM",
+   "nome": "Escuela Macul",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BOULOGNE|boulogne billancourt": {
+   "v": 2,
+   "curto": "BOULOGNE",
+   "nome": "Boulogne Billancourt",
+   "url": "https://www.transfermarkt.com.br/ac-boulogne-billancourt/startseite/verein/23390",
+   "players": [
+    {
+     "tmId": "109596",
+     "nome": "Arnaud Gibert",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "1112220",
+     "nome": "Emile Sireau",
+     "posicaoTM": "Defensores",
+     "posicao": "ZAG",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "1340985",
+     "nome": "Loïc Assen A Zang",
+     "posicaoTM": "Defensores",
+     "posicao": "ZAG",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "352394",
+     "nome": "Khalid El Hamdaoui",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Marrocos"
+    },
+    {
+     "tmId": "476067",
+     "nome": "Nobie Boua Gnoumou",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "704915",
+     "nome": "Régis Léveillé",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Guiana Francesa"
+    },
+    {
+     "tmId": "1107279",
+     "nome": "Mehdi Drari",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "884043",
+     "nome": "Grégory Soupramanien",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "254397",
+     "nome": "Ahmed Tafat",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argélia"
+    },
+    {
+     "tmId": "365194",
+     "nome": "Wilfried Tagbo",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "914884",
+     "nome": "Igor Jevremovic",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "1151723",
+     "nome": "Corentin Barreteau",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "1197026",
+     "nome": "Oscar Le Guillou",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França"
+    }
+   ]
+  },
+  "BORUSSIA|borussia hildesheim": {
+   "v": 2,
+   "curto": "BORUSSIA",
+   "nome": "Borussia Hildesheim",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEALTADX|estadio las callejas": {
+   "v": 2,
+   "curto": "LEALTADX",
+   "nome": "Estadio Las Callejas",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LYUBERTS|stadion torpedo": {
+   "v": 2,
+   "curto": "LYUBERTS",
+   "nome": "Stadion Torpedo",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PIRATAXP|molinos el pirata": {
+   "v": 2,
+   "curto": "PIRATAXP",
+   "nome": "Molinos El Pirata",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MANISABB|manisa bbsk": {
+   "v": 2,
+   "curto": "MANISABB",
+   "nome": "Manisa BBSK",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KIZILCAB|ka za lcabolukspor": {
+   "v": 2,
+   "curto": "KIZILCAB",
+   "nome": "KÄ±zÄ±lcabolukspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "WISLAXPL|wisa a pa ock": {
+   "v": 2,
+   "curto": "WISLAXPL",
+   "nome": "WisÅ‚a PÅ‚ock",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LOKERENX|daknamstadion": {
+   "v": 2,
+   "curto": "LOKERENX",
+   "nome": "Daknamstadion",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALEXANDR|al ittihad alexandria": {
+   "v": 2,
+   "curto": "ALEXANDR",
+   "nome": "Al-Ittihad Alexandria",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEGIAWAR|polish army": {
+   "v": 2,
+   "curto": "LEGIAWAR",
+   "nome": "Polish Army",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LESHERBI|massabielle": {
+   "v": 2,
+   "curto": "LESHERBI",
+   "nome": "Massabielle",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "INDEPEND|independiente neuquen": {
+   "v": 2,
+   "curto": "INDEPEND",
+   "nome": "Independiente Neuquen",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PORTOVIE|reales tamarindos": {
+   "v": 2,
+   "curto": "PORTOVIE",
+   "nome": "Reales Tamarindos",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AYDINSPO|ayda nspor 1923": {
+   "v": 2,
+   "curto": "AYDINSPO",
+   "nome": "AydÄ±nspor 1923",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "COPENHAG|fc k benhavn": {
+   "v": 2,
+   "curto": "COPENHAG",
+   "nome": "FC København",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BRIGHTON|brighton hove albion": {
+   "v": 2,
+   "curto": "BRIGHTON",
+   "nome": "Brighton & Hove Albion",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AGRISPOR|agra spor": {
+   "v": 2,
+   "curto": "AGRISPOR",
+   "nome": "AgrÄ±spor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "POGONXPL|pogoa szczecin": {
+   "v": 2,
+   "curto": "POGONXPL",
+   "nome": "PogoÅ„ Szczecin",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BUGSASSP|bugsasspor": {
+   "v": 2,
+   "curto": "BUGSASSP",
+   "nome": "Bugsasspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KESHLAXA|keshla": {
+   "v": 2,
+   "curto": "KESHLAXA",
+   "nome": "Keshla",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "HANGZHOU|zhejiang greentown": {
+   "v": 2,
+   "curto": "HANGZHOU",
+   "nome": "Zhejiang Greentown",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "JAVORIVA|javor ivanjica": {
+   "v": 2,
+   "curto": "JAVORIVA",
+   "nome": "Javor Ivanjica",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "OFCXHOL|ofc oostzaanse": {
+   "v": 2,
+   "curto": "OFCXHOL",
+   "nome": "OFC Oostzaanse",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "JJURQUIZ|jj urquiza": {
+   "v": 2,
+   "curto": "JJURQUIZ",
+   "nome": "JJ Urquiza",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ELPROVEN|el provenir": {
+   "v": 2,
+   "curto": "ELPROVEN",
+   "nome": "El Provenir",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LIMIANOS|campo do cruzeiro": {
+   "v": 2,
+   "curto": "LIMIANOS",
+   "nome": "Campo do Cruzeiro",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "FONDIXIT|unicusano fondi": {
+   "v": 2,
+   "curto": "FONDIXIT",
+   "nome": "Unicusano Fondi",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AKADEMIY|akademiya futbola": {
+   "v": 2,
+   "curto": "AKADEMIY",
+   "nome": "Akademiya Futbola",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MARIGNAM|marigname gignac": {
+   "v": 2,
+   "curto": "MARIGNAM",
+   "nome": "Marigname Gignac",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALWAHDAX|al wahda damasco": {
+   "v": 2,
+   "curto": "ALWAHDAX",
+   "nome": "Al-Wahda Damasco",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ANADOLUS|anadolu selcukspor": {
+   "v": 2,
+   "curto": "ANADOLUS",
+   "nome": "Anadolu Selcukspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "12BINGOL|12 bingolspor": {
+   "v": 2,
+   "curto": "12BINGOL",
+   "nome": "12 Bingolspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "GRAFICAR|grafia ar": {
+   "v": 2,
+   "curto": "GRAFICAR",
+   "nome": "GrafiÄar",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEGIONDI|dinamo stadium makhachkala": {
+   "v": 2,
+   "curto": "LEGIONDI",
+   "nome": "Dinamo Stadium Makhachkala",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "TARSUSID|tarsus a dman yurdu": {
+   "v": 2,
+   "curto": "TARSUSID",
+   "nome": "Tarsus Ä°dman Yurdu",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "YENIORDU|yeni orduspor": {
+   "v": 2,
+   "curto": "YENIORDU",
+   "nome": "Yeni Orduspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEVADIAK|stadio livadias": {
+   "v": 2,
+   "curto": "LEVADIAK",
+   "nome": "Stadio Livadias",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LENSXFR|bollaert delelis": {
+   "v": 2,
+   "curto": "LENSXFR",
+   "nome": "Bollaert-Delelis ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "TALLERES|talleres de remedios": {
+   "v": 2,
+   "curto": "TALLERES",
+   "nome": "Talleres de Remedios",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "INDIJAXS|ina ija": {
+   "v": 2,
+   "curto": "INDIJAXS",
+   "nome": "InÄ‘ija",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "RIDAVIAD|ridavia venado": {
+   "v": 2,
+   "curto": "RIDAVIAD",
+   "nome": "Ridavia Venado",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AHZAPLAX|ah zapla": {
+   "v": 2,
+   "curto": "AHZAPLAX",
+   "nome": "AH Zapla",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "NINGXIAH|ningxia helanshan": {
+   "v": 2,
+   "curto": "NINGXIAH",
+   "nome": "Ningxia Helanshan",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEOBENDO|franz haas stadion": {
+   "v": 2,
+   "curto": "LEOBENDO",
+   "nome": "Franz Haas Stadion",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SAMPAIOC|sampaio correa rj": {
+   "v": 2,
+   "curto": "SAMPAIOC",
+   "nome": "Sampaio Corrêa-RJ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LALOUVIE|stade du tivoli": {
+   "v": 2,
+   "curto": "LALOUVIE",
+   "nome": "Stade du Tivoli",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KASIMPAS|kasa mpaaya": {
+   "v": 2,
+   "curto": "KASIMPAS",
+   "nome": "KasÄ±mpaÅŸa ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEHAVREX|stade oceane": {
+   "v": 2,
+   "curto": "LEHAVREX",
+   "nome": "Stade Océane",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PLATENSE|platense montevideo": {
+   "v": 2,
+   "curto": "PLATENSE",
+   "nome": "Platense Montevideo",
+   "url": "https://www.transfermarkt.com.br/club-atletico-platense-montevideo-/startseite/verein/24229",
+   "players": [
+    {
+     "tmId": "1038567",
+     "nome": "Andrés Fleitas",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "125418",
+     "nome": "Luis Piedra",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1236914",
+     "nome": "Santiago Silva",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1246435",
+     "nome": "Ivan Vega",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "570230",
+     "nome": "Mathías Richino",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "672115",
+     "nome": "Michael Bonette",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1115962",
+     "nome": "Enzo Ribeiro",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "202904",
+     "nome": "Kiyotaka Miyoshi",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Japão"
+    },
+    {
+     "tmId": "1273460",
+     "nome": "Nicolás González",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1459523",
+     "nome": "Nelson Alegre",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1446069",
+     "nome": "Nicolás Mouro",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1034004",
+     "nome": "Fabio Sastre",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "414237",
+     "nome": "Richard Gómez",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "262233",
+     "nome": "Emiliano Fernandez",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1246447",
+     "nome": "Lautaro González",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "638179",
+     "nome": "Nestor Ferreira",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1319150",
+     "nome": "Ayrton Costa",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1422820",
+     "nome": "Maximiliano Rodríguez",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "125478",
+     "nome": "Juan Franchi",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1021584",
+     "nome": "Emerson Tejera",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "374214",
+     "nome": "Kevin Lado",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1038827",
+     "nome": "Santiago Ballestero",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "692610",
+     "nome": "Rodrigo Vidal",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "801236",
+     "nome": "Bruno Ávila",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1003305",
+     "nome": "Carlos González",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Paraguai"
+    },
+    {
+     "tmId": "1115862",
+     "nome": "Lucas Sequeira",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    }
+   ]
+  },
+  "GINASIOA|ginasio alcobaca": {
+   "v": 2,
+   "curto": "GINASIOA",
+   "nome": "Ginásio Alcobaça",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "RHINOSXE|rochester rhinos": {
+   "v": 2,
+   "curto": "RHINOSXE",
+   "nome": "Rochester Rhinos",
+   "url": "https://www.transfermarkt.com.br/rochester-rhinos/startseite/verein/3372",
+   "players": []
+  },
+  "INEGOLSP|a negolspor": {
+   "v": 2,
+   "curto": "INEGOLSP",
+   "nome": "Ä°negolspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AVILESIN|industrial aviles": {
+   "v": 2,
+   "curto": "AVILESIN",
+   "nome": "Industrial Avilés",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEVSKISO|vivacom": {
+   "v": 2,
+   "curto": "LEVSKISO",
+   "nome": "Vivacom",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ADIYAMAN|ada yaman 1954": {
+   "v": 2,
+   "curto": "ADIYAMAN",
+   "nome": "AdÄ±yaman 1954",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "INDEPEND|independencia ac": {
+   "v": 2,
+   "curto": "INDEPEND",
+   "nome": "Independência-AC",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DEPORTIV|deportivo liberacion": {
+   "v": 2,
+   "curto": "DEPORTIV",
+   "nome": "Deportivo Liberación",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MALLECOX|malleco unido joven": {
+   "v": 2,
+   "curto": "MALLECOX",
+   "nome": "Malleco Unido Joven",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ORHANGAZ|orhangazispor": {
+   "v": 2,
+   "curto": "ORHANGAZ",
+   "nome": "Orhangazispor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UTCXPER|universidad cajamarca": {
+   "v": 2,
+   "curto": "UTCXPER",
+   "nome": "Universidad Cajamarca",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALXFATEH|al fateh": {
+   "v": 2,
+   "curto": "ALXFATEH",
+   "nome": "Al Fateh",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BIDDAXCA|al bidda": {
+   "v": 2,
+   "curto": "BIDDAXCA",
+   "nome": "Al Bidda",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KUBANHOL|kuban pavlovskaya": {
+   "v": 2,
+   "curto": "KUBANHOL",
+   "nome": "Kuban Pavlovskaya",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ZONGULDA|zonguldak komurspor": {
+   "v": 2,
+   "curto": "ZONGULDA",
+   "nome": "Zonguldak Komurspor",
+   "url": "https://www.transfermarkt.com.br/zonguldak-komurspor/startseite/verein/1515",
+   "players": [
+    {
+     "tmId": "631601",
+     "nome": "Enes Kalyoncu",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "317086",
+     "nome": "Enes Fidayeo",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "1120132",
+     "nome": "Ege Mert Nurkaya",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "1175622",
+     "nome": "Sabahattin Emir Boz",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "700153",
+     "nome": "Melih Mert Kaya",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "1413211",
+     "nome": "Ekin Çiftçi",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "615165",
+     "nome": "Umut Ayar",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "388360",
+     "nome": "Rıdvan Özdemir",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "1506752",
+     "nome": "Baki Özgül",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "667563",
+     "nome": "Efe Binici",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "591362",
+     "nome": "Rohat Ağca",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Holanda"
+    },
+    {
+     "tmId": "1521173",
+     "nome": "Fazlı Arda Topkaya",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "617209",
+     "nome": "Yusuf Emre Alyaprak",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "937419",
+     "nome": "Efe Sayhan",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "1486321",
+     "nome": "Semih Ata Can",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "292299",
+     "nome": "Serhat Baştan",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "811950",
+     "nome": "Muhammed Leyis Alzın",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Síria"
+    },
+    {
+     "tmId": "596179",
+     "nome": "Özcan Yaşar",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "1330159",
+     "nome": "Adem Barkın",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "695481",
+     "nome": "Yiğit Kotan",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "383024",
+     "nome": "Berkay Ekici",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Turquia"
+    },
+    {
+     "tmId": "1053714",
+     "nome": "Miraç Furkan Türközü",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Turquia"
+    }
+   ]
+  },
+  "ESTUDIAN|estudiantes rio cuarto": {
+   "v": 2,
+   "curto": "ESTUDIAN",
+   "nome": "Estudiantes Río Cuarto",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALTINORD|alta nordu fk": {
+   "v": 2,
+   "curto": "ALTINORD",
+   "nome": "AltÄ±nordu FK",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MOJZELXS|al mujazzal": {
+   "v": 2,
+   "curto": "MOJZELXS",
+   "nome": "Al-Mujazzal",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PROGRESS|progresso rr": {
+   "v": 2,
+   "curto": "PROGRESS",
+   "nome": "Progresso-RR ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "OPERARIO|operario mt": {
+   "v": 2,
+   "curto": "OPERARIO",
+   "nome": "Operário-MT",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KARAKOPR|karakopru belediyesi": {
+   "v": 2,
+   "curto": "KARAKOPR",
+   "nome": "Karakopru Belediyesi",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SANJORGE|san jorge tucuman": {
+   "v": 2,
+   "curto": "SANJORGE",
+   "nome": "San Jorge Tucumán",
+   "url": "https://www.transfermarkt.com.br/csd-san-jorge-tucuman-/startseite/verein/53007",
+   "players": []
+  },
+  "KARACABE|karacabey birlkspor": {
+   "v": 2,
+   "curto": "KARACABE",
+   "nome": "Karacabey Birlkspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "REALSCXP|real queluz": {
+   "v": 2,
+   "curto": "REALSCXP",
+   "nome": "Real Queluz",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ITTIHADX|al ittihad kalba": {
+   "v": 2,
+   "curto": "ITTIHADX",
+   "nome": "Al Ittihad Kalba",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "QUERXTAR|estadio la corregidora": {
+   "v": 2,
+   "curto": "QUERXTAR",
+   "nome": "Estadio La Corregidora",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "INDEPEND|independiente chivilcoy": {
+   "v": 2,
+   "curto": "INDEPEND",
+   "nome": "Independiente Chivilcoy",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "NEUSIEDL|sportzentrum neusiedl": {
+   "v": 2,
+   "curto": "NEUSIEDL",
+   "nome": "Sportzentrum Neusiedl ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DIARAFXS|asc diaraf": {
+   "v": 2,
+   "curto": "DIARAFXS",
+   "nome": "ASC Diaraf",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ANADOLUB|anadolu bagca lar": {
+   "v": 2,
+   "curto": "ANADOLUB",
+   "nome": "Anadolu BagcÄ±lar",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALAHLIXC|al ahli doha": {
+   "v": 2,
+   "curto": "ALAHLIXC",
+   "nome": "Al Ahli Doha",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ATLETICO|atletico alagoinhas": {
+   "v": 2,
+   "curto": "ATLETICO",
+   "nome": "Atlético Alagoinhas",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KAZANKAX|kazanka moscou": {
+   "v": 2,
+   "curto": "KAZANKAX",
+   "nome": "Kazanka Moscou",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AGMKXUZB|fc agmk": {
+   "v": 2,
+   "curto": "AGMKXUZB",
+   "nome": "FC AGMK",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LAGARTOX|barretao": {
+   "v": 2,
+   "curto": "LAGARTOX",
+   "nome": "Barretão",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALXQAISO|al qaisoma": {
+   "v": 2,
+   "curto": "ALXQAISO",
+   "nome": "Al-Qaisoma",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "1XDEZEMB|1 dezembro": {
+   "v": 2,
+   "curto": "1XDEZEMB",
+   "nome": "1º Dezembro",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ATENASXA|atenas rio cuarto": {
+   "v": 2,
+   "curto": "ATENASXA",
+   "nome": "Atenas Rio Cuarto",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UNIONDES|union sunchales": {
+   "v": 2,
+   "curto": "UNIONDES",
+   "nome": "Unión Sunchales",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BRAZOSVA|brazos valley cavalry": {
+   "v": 2,
+   "curto": "BRAZOSVA",
+   "nome": "Brazos Valley Cavalry",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BERGAMAB|bergama belediyespor": {
+   "v": 2,
+   "curto": "BERGAMAB",
+   "nome": "Bergama Belediyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "RACINGXU|racing montevideo": {
+   "v": 2,
+   "curto": "RACINGXU",
+   "nome": "Racing Montevideo",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LUZIANIA|estadio zequinha roriz": {
+   "v": 2,
+   "curto": "LUZIANIA",
+   "nome": "Estádio Zequinha Roriz",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LANUSXAR|frank kudelka": {
+   "v": 2,
+   "curto": "LANUSXAR",
+   "nome": "Frank Kudelka",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DEPORTIV|deportivo caaguazu": {
+   "v": 2,
+   "curto": "DEPORTIV",
+   "nome": "Deportivo Caaguazú",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MORDOVIA|mordoviya saransk": {
+   "v": 2,
+   "curto": "MORDOVIA",
+   "nome": "Mordoviya Saransk",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ERZINBEL|erzin belediyespor": {
+   "v": 2,
+   "curto": "ERZINBEL",
+   "nome": "Erzin Belediyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KONYASPO|konyaspor kulubu": {
+   "v": 2,
+   "curto": "KONYASPO",
+   "nome": "Konyaspor Kulübü",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "HACETTEP|hacettepespor": {
+   "v": 2,
+   "curto": "HACETTEP",
+   "nome": "Hacettepespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ESTUDIAN|estudiantes de caseros": {
+   "v": 2,
+   "curto": "ESTUDIAN",
+   "nome": "Estudiantes de Caseros",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "VITORIAG|vitoria de guimaraes b": {
+   "v": 2,
+   "curto": "VITORIAG",
+   "nome": "Vitória de Guimarães B",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LUZERNXS|swissporarena": {
+   "v": 2,
+   "curto": "LUZERNXS",
+   "nome": "Swissporarena",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "1DEAGOST|1 de agosto": {
+   "v": 2,
+   "curto": "1DEAGOST",
+   "nome": "1º de Agosto",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ZHENJIAN|zhenjiang huasa": {
+   "v": 2,
+   "curto": "ZHENJIAN",
+   "nome": "Zhenjiang Huasa",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KERKYRAX|aok kerkyra": {
+   "v": 2,
+   "curto": "KERKYRAX",
+   "nome": "AOK Kerkyra",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALXNAJOO|al najoom": {
+   "v": 2,
+   "curto": "ALXNAJOO",
+   "nome": "Al-Najoom",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SACRECOE|dakar sacre coeur": {
+   "v": 2,
+   "curto": "SACRECOE",
+   "nome": "Dakar Sacré-Coeur",
+   "url": "https://www.transfermarkt.com.br/as-dakar-sacre-coeur/startseite/verein/31624",
+   "players": [
+    {
+     "tmId": "1496269",
+     "nome": "Seydou Ba",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1414662",
+     "nome": "El Hadji Diouf",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1401767",
+     "nome": "Alioune Sarr Ndao",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496263",
+     "nome": "Mor Ka",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496736",
+     "nome": "Boubacar Sané",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "176557",
+     "nome": "Abdoulaye Diouf",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1506987",
+     "nome": "Fallou Diouf",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496273",
+     "nome": "Famady Traoré",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496265",
+     "nome": "Ismaïla Dabo",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496266",
+     "nome": "Mamadou Dieng",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496262",
+     "nome": "Mouhamed Coly",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1497806",
+     "nome": "Albert Sasylva",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496270",
+     "nome": "Souleymane Touré",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1497785",
+     "nome": "Seydou Ndiaye",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1545003",
+     "nome": "Ibrahima Diatta",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496735",
+     "nome": "Ibrahima Delgado",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1545004",
+     "nome": "Mouhameth Ndiaye",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "847287",
+     "nome": "Ibrahima Mané",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496271",
+     "nome": "Joachim Gomis",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "866560",
+     "nome": "Cheikh Bèye",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1392154",
+     "nome": "El Hadji Ibrahima Sow",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1306751",
+     "nome": "Cheikh Sene",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1498038",
+     "nome": "Moussa Paye",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1478677",
+     "nome": "Fara Mendy",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496268",
+     "nome": "Thurbuce Ndiaye",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496272",
+     "nome": "Ibrahima Samb",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1496274",
+     "nome": "Mouhamed Faye",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "936675",
+     "nome": "Mandoumbé Wade",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1522906",
+     "nome": "Khadim Diop",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "1393094",
+     "nome": "Cheikhna Sané",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    }
+   ]
+  },
+  "GFCAJACC|gazelec ajaccio": {
+   "v": 2,
+   "curto": "GFCAJACC",
+   "nome": "Gazélec Ajaccio",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "POTIGUAR|potiguar de mossoro": {
+   "v": 2,
+   "curto": "POTIGUAR",
+   "nome": "Potiguar de Mossoró",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SERRABRA|serra branca pb": {
+   "v": 2,
+   "curto": "SERRABRA",
+   "nome": "Serra Branca-PB",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SANLIURF|sanla urfaspor": {
+   "v": 2,
+   "curto": "SANLIURF",
+   "nome": "SanlÄ±urfaspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ARGENTIN|argentino merlo": {
+   "v": 2,
+   "curto": "ARGENTIN",
+   "nome": "Argentino Merlo",
+   "url": "https://www.transfermarkt.com.br/club-atletico-argentino-de-merlo/startseite/verein/17486",
+   "players": [
+    {
+     "tmId": "673169",
+     "nome": "Alejo Tello",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "730386",
+     "nome": "Germán Oviedo",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1166506",
+     "nome": "Nicolás Bardagi",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "755317",
+     "nome": "Enzo Tamborelli",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1166530",
+     "nome": "Ezequiel Cohen",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1523232",
+     "nome": "Bruno Maceri",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "874174",
+     "nome": "Federico López",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1033887",
+     "nome": "Victor López",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "683479",
+     "nome": "Cristian Marcial",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "732438",
+     "nome": "Luis Monge",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1166529",
+     "nome": "Diego Ursino",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "730380",
+     "nome": "Nahuel Sica",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "872132",
+     "nome": "Cristian Medina",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1394111",
+     "nome": "Máximo Gomez",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1484842",
+     "nome": "Lautaro Romero",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "933714",
+     "nome": "Bruno Costella",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "727874",
+     "nome": "Gastón Scisci",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1123353",
+     "nome": "Tomás Jerez Sayago",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1511388",
+     "nome": "Tomás Candelaresi",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1171661",
+     "nome": "Joel Ortíz",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "267862",
+     "nome": "Diego Aguirre",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "727872",
+     "nome": "Alan Salvador",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "730396",
+     "nome": "Lucas Scarnato",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1228375",
+     "nome": "Diego Guallama",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1375408",
+     "nome": "Fernando Maldonado",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1482249",
+     "nome": "Thiago Paulovich",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "LUKIENER|express stadion": {
+   "v": 2,
+   "curto": "LUKIENER",
+   "nome": "Express Stadion",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALAHLYTR|al ahly tripoli": {
+   "v": 2,
+   "curto": "ALAHLYTR",
+   "nome": "Al-Ahly Tripoli",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "HALIDEED|halide edip ada var": {
+   "v": 2,
+   "curto": "HALIDEED",
+   "nome": "Halide Edip AdÄ±var",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DEFENSOR|defensores belgrano": {
+   "v": 2,
+   "curto": "DEFENSOR",
+   "nome": "Defensores Belgrano",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UNIAORSX|uniao rs": {
+   "v": 2,
+   "curto": "UNIAORSX",
+   "nome": "União-RS",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LINENSEX|gilbertao": {
+   "v": 2,
+   "curto": "LINENSEX",
+   "nome": "Gilbertão",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BELAVIST|bela vista to": {
+   "v": 2,
+   "curto": "BELAVIST",
+   "nome": "Bela Vista-TO",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SARMIENT|sarmiento leones": {
+   "v": 2,
+   "curto": "SARMIENT",
+   "nome": "Sarmiento Leones",
+   "url": "https://www.transfermarkt.com.br/sarmiento-de-leones/startseite/verein/30095",
+   "players": [
+    {
+     "tmId": "997413",
+     "nome": "Lucas Roa",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "481119",
+     "nome": "Matías Giammalva",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "670059",
+     "nome": "Ignacio Talavera",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1336599",
+     "nome": "Lucas Piedra",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1293129",
+     "nome": "Alejo Vaca",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "911008",
+     "nome": "Iván More",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1272414",
+     "nome": "Gonzalo Robles Castro",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "58383",
+     "nome": "Gonzalo Castillejos",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1489979",
+     "nome": "Facundo Martínez",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "BAOTOUNA|baotou nanjiao": {
+   "v": 2,
+   "curto": "BAOTOUNA",
+   "nome": "Baotou Nanjiao",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LUSITANO|parque desp eng joaquim carneiro": {
+   "v": 2,
+   "curto": "LUSITANO",
+   "nome": "Parque Desp. Eng.º Joaquim Carneiro",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "TIRE1922|tire 1922": {
+   "v": 2,
+   "curto": "TIRE1922",
+   "nome": "Tire 1922",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "GIMNASIA|gimnasia de la plata": {
+   "v": 2,
+   "curto": "GIMNASIA",
+   "nome": "Gimnasia de La Plata",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "STORMERS|stormers chuquisaca": {
+   "v": 2,
+   "curto": "STORMERS",
+   "nome": "Stormers Chuquisaca",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LEONESXC|metropolitano ciudad de itagui": {
+   "v": 2,
+   "curto": "LEONESXC",
+   "nome": "Metropolitano Ciudad de Itagüí",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALMOKAWL|al mokawloon": {
+   "v": 2,
+   "curto": "ALMOKAWL",
+   "nome": "Al Mokawloon",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "INDEPEND|independiente cauquenes": {
+   "v": 2,
+   "curto": "INDEPEND",
+   "nome": "Independiente Cauquenes",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LAECITYX|ignatius kilage": {
+   "v": 2,
+   "curto": "LAECITYX",
+   "nome": "Ignatius Kilage",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "NIGDEBEL|nigde belediyespor": {
+   "v": 2,
+   "curto": "NIGDEBEL",
+   "nome": "Nigde Belediyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SIVASBEL|sivas belediyespor": {
+   "v": 2,
+   "curto": "SIVASBEL",
+   "nome": "Sivas Belediyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BAYRAMPA|bayrampasaspor": {
+   "v": 2,
+   "curto": "BAYRAMPA",
+   "nome": "Bayrampasaspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SANMARTI|san martin burzaco": {
+   "v": 2,
+   "curto": "SANMARTI",
+   "nome": "San Martin Burzaco",
+   "url": "https://www.transfermarkt.com.br/csd-san-martin-burzaco-/startseite/verein/28142",
+   "players": [
+    {
+     "tmId": "133912",
+     "nome": "Maximiliano Gagliardo",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1408696",
+     "nome": "Nicolás Marchesi",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "559601",
+     "nome": "David Orellana",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "992607",
+     "nome": "Ariel Siliman",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1249235",
+     "nome": "Nicolás Barrera",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1254824",
+     "nome": "Facundo Valdez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1375823",
+     "nome": "Juan Pablo Tobón",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "1383899",
+     "nome": "Richard Lazarev",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1071271",
+     "nome": "Luis Geneiro",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1279373",
+     "nome": "Franco Juárez",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1500276",
+     "nome": "Luciano Iglesias",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "211015",
+     "nome": "Sergio Modón",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "864754",
+     "nome": "Elías Brizuela",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1140302",
+     "nome": "Fabrizio Acosta",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "401584",
+     "nome": "Matías Escudero",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "878778",
+     "nome": "Rodrigo González",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1515100",
+     "nome": "Rodrigo Peralta",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1218917",
+     "nome": "Kevin Denis",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1503517",
+     "nome": "David Soria",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "984622",
+     "nome": "Rodrigo Diaz",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1013490",
+     "nome": "Rodrigo Velázquez",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1221363",
+     "nome": "Ariel Torres",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1242508",
+     "nome": "Julian Berardinelli",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1298408",
+     "nome": "Miguel González",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "440105",
+     "nome": "Nicolás Gauna",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "193780",
+     "nome": "Cipriano Treppo",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "563720",
+     "nome": "Lucas Lezcano",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "439280",
+     "nome": "Emanuel Zagert",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "832429",
+     "nome": "Esteban Selpa",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1246116",
+     "nome": "Juan Aróstegui",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1305672",
+     "nome": "Manuel Muzzio",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1398869",
+     "nome": "Ignacio Serpa",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1482242",
+     "nome": "Alejo Funes",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "LOTASCHW|municipal federico schwager": {
+   "v": 2,
+   "curto": "LOTASCHW",
+   "nome": "Municipal Federico Schwager",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LAFNITZX|fu ballarena lafnitz": {
+   "v": 2,
+   "curto": "LAFNITZX",
+   "nome": "Fußballarena Lafnitz",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KIRKLARE|ka rklarelispor": {
+   "v": 2,
+   "curto": "KIRKLARE",
+   "nome": "KÄ±rklarelispor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UNIVCONC|universidad concepcion": {
+   "v": 2,
+   "curto": "UNIVCONC",
+   "nome": "Universidad Concepción",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "TEREKGRO|akhmat arena": {
+   "v": 2,
+   "curto": "TEREKGRO",
+   "nome": "Akhmat-Arena",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "YENIALTI|yeni alta ndag bs": {
+   "v": 2,
+   "curto": "YENIALTI",
+   "nome": "Yeni AltÄ±ndag BS",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ARARATMO|ararat moscou": {
+   "v": 2,
+   "curto": "ARARATMO",
+   "nome": "Ararat Moscou",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "TORPEDOX|torpedo belaz": {
+   "v": 2,
+   "curto": "TORPEDOX",
+   "nome": "Torpedo BelAZ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "RACINGXB|racing huamachuco": {
+   "v": 2,
+   "curto": "RACINGXB",
+   "nome": "Racing Huamachuco",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UNIVERSI|universitario sucre": {
+   "v": 2,
+   "curto": "UNIVERSI",
+   "nome": "Universitario Sucre",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BACKATOP|baa ka topola": {
+   "v": 2,
+   "curto": "BACKATOP",
+   "nome": "BaÄka Topola",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ELAZIZBE|elaziz belediyespor": {
+   "v": 2,
+   "curto": "ELAZIZBE",
+   "nome": "Elaziz Belediyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LONDRINA|estadio municipal jacy scaff": {
+   "v": 2,
+   "curto": "LONDRINA",
+   "nome": "Estádio Municipal Jacy Scaff",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UROZHAYX|urozhay krasnodar": {
+   "v": 2,
+   "curto": "UROZHAYX",
+   "nome": "Urozhay Krasnodar",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MAGUARYX|maguary pe": {
+   "v": 2,
+   "curto": "MAGUARYX",
+   "nome": "Maguary-PE",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALIANZAX|alianza huanuco": {
+   "v": 2,
+   "curto": "ALIANZAX",
+   "nome": "Alianza Huánuco",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BANDIRMA|banda rmaspor": {
+   "v": 2,
+   "curto": "BANDIRMA",
+   "nome": "BandÄ±rmaspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "MITREDES|mitre de salta": {
+   "v": 2,
+   "curto": "MITREDES",
+   "nome": "Mitre de Salta",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SPRIMONT|sprimont comblain": {
+   "v": 2,
+   "curto": "SPRIMONT",
+   "nome": "Sprimont-Comblain",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LOSANDES|eduardo gallardon": {
+   "v": 2,
+   "curto": "LOSANDES",
+   "nome": "Eduardo Gallardón",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ANTALYSP|antalyaspor kulubu": {
+   "v": 2,
+   "curto": "ANTALYSP",
+   "nome": "Antalyaspor Kulübü",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "RADNICKI|radnia ki pirot": {
+   "v": 2,
+   "curto": "RADNICKI",
+   "nome": "RadniÄki Pirot",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "CORUMBEL|corum belediyespor": {
+   "v": 2,
+   "curto": "CORUMBEL",
+   "nome": "Çorum Belediyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "INTERXAN|inter d escaldes": {
+   "v": 2,
+   "curto": "INTERXAN",
+   "nome": "Inter d'Escaldes",
+   "url": "https://www.transfermarkt.com.br/inter-club-descaldes/startseite/verein/41916",
+   "players": [
+    {
+     "tmId": "396107",
+     "nome": "Javi Díaz",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1319364",
+     "nome": "Juanda Terrádez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "686069",
+     "nome": "Jaouad Erraji",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Marrocos"
+    },
+    {
+     "tmId": "685286",
+     "nome": "Guillermo Torres",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1131071",
+     "nome": "Anwar Hernández",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "México"
+    },
+    {
+     "tmId": "689563",
+     "nome": "Álex Sánchez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1461224",
+     "nome": "Pol Cabanes",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Andorra"
+    },
+    {
+     "tmId": "274556",
+     "nome": "Jilmar Torres",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "547255",
+     "nome": "Dacu",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Andorra"
+    },
+    {
+     "tmId": "943867",
+     "nome": "Marc Rodríguez",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Andorra"
+    },
+    {
+     "tmId": "229811",
+     "nome": "Joseba Muguruza",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "323868",
+     "nome": "Klebinho",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil"
+    },
+    {
+     "tmId": "374082",
+     "nome": "Antonio Otegui",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "711963",
+     "nome": "David López",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "720519",
+     "nome": "Pablo Molina",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1060824",
+     "nome": "Arnau Sans",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1427905",
+     "nome": "Lamine Diaby",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "263343",
+     "nome": "Víctor Alonso",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "162039",
+     "nome": "Juan Cámara",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "298276",
+     "nome": "José García",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "339122",
+     "nome": "Domi Berlanga",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Marrocos"
+    },
+    {
+     "tmId": "537366",
+     "nome": "Maurizio Pochettino",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "883283",
+     "nome": "Soule Sidibe",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Mali"
+    },
+    {
+     "tmId": "1474254",
+     "nome": "Borja Arellano",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "632370",
+     "nome": "Faysal Chouaib",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "510999",
+     "nome": "Kaxe",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1045507",
+     "nome": "Toni Paredes",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1194242",
+     "nome": "Adria Figueiredo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Andorra"
+    }
+   ]
+  },
+  "CUKARICK|a ukaria ki": {
+   "v": 2,
+   "curto": "CUKARICK",
+   "nome": "ÄŒukariÄki",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALXTAEEX|al ta i": {
+   "v": 2,
+   "curto": "ALXTAEEX",
+   "nome": "Al-Ta'i",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UPETANGE|union petange": {
+   "v": 2,
+   "curto": "UPETANGE",
+   "nome": "Union Pétange",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PRYKARPA|prukarpattua": {
+   "v": 2,
+   "curto": "PRYKARPA",
+   "nome": "Prukarpattua",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LAFIORIT|igor crescentini": {
+   "v": 2,
+   "curto": "LAFIORIT",
+   "nome": "Igor Crescentini",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "JUVENTUD|juventud las piedras": {
+   "v": 2,
+   "curto": "JUVENTUD",
+   "nome": "Juventud Las Piedras",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BESIKTAS|beayiktaay": {
+   "v": 2,
+   "curto": "BESIKTAS",
+   "nome": "BeÅŸiktaÅŸ ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DARICAGE|dara ca genclerbirligi": {
+   "v": 2,
+   "curto": "DARICAGE",
+   "nome": "DarÄ±ca Genclerbirligi",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LIERSEXB|herman vanderpoortenstadion": {
+   "v": 2,
+   "curto": "LIERSEXB",
+   "nome": "Herman Vanderpoortenstadion",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ATXMALVE|atletico malveira": {
+   "v": 2,
+   "curto": "ATXMALVE",
+   "nome": "Atlético Malveira",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "INTERZAP|inter zapresic": {
+   "v": 2,
+   "curto": "INTERZAP",
+   "nome": "Inter Zapresic",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UNAXHOL|una zeelst": {
+   "v": 2,
+   "curto": "UNAXHOL",
+   "nome": "UNA Zeelst",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "GERMINAL|germinal rawson": {
+   "v": 2,
+   "curto": "GERMINAL",
+   "nome": "Germinal Rawson",
+   "url": "https://www.transfermarkt.com.br/club-atletico-germinal-de-rawson-/startseite/verein/14316",
+   "players": [
+    {
+     "tmId": "163082",
+     "nome": "Luciano Molini",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1516221",
+     "nome": "Franco Grigera",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1536895",
+     "nome": "Lucas Rodríguez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1241096",
+     "nome": "Nicolás Ríos",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1264846",
+     "nome": "Laureano Sveruk",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1513710",
+     "nome": "Juan Silva",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1513711",
+     "nome": "Fabrizio Romero",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "210535",
+     "nome": "Alan Moreno",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1305325",
+     "nome": "Pedro Galíndez",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1516222",
+     "nome": "Arian Castillo",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1119111",
+     "nome": "Lautaro Yocco",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1534471",
+     "nome": "Yamil Martínez",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "844802",
+     "nome": "Kevin Lencina",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1325433",
+     "nome": "Juan Cruz Martínez",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1471879",
+     "nome": "Santiago Marrone",
+     "posicaoTM": "Meio-Campo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "755435",
+     "nome": "Nicolás Macaroff",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1222202",
+     "nome": "Joaquín Rojas",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "87356",
+     "nome": "Jorge Velázquez",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1230217",
+     "nome": "Martin Lires",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "861188",
+     "nome": "Gabriel Navarro",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "872371",
+     "nome": "Gerónimo Núñez",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1164994",
+     "nome": "Edwin Santilli",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1289770",
+     "nome": "Thomas Oliveri",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "972354",
+     "nome": "Damián De Hoyos",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1385742",
+     "nome": "Alex González",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1513708",
+     "nome": "Joaquín Estrada",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1528222",
+     "nome": "Fernando Rodríguez",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1559524",
+     "nome": "Jeremías Huenchual",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    }
+   ]
+  },
+  "GANDRAXP|alianca gandra": {
+   "v": 2,
+   "curto": "GANDRAXP",
+   "nome": "Aliança Gandra",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ALWAHDAX|al wahda abu dhabi": {
+   "v": 2,
+   "curto": "ALWAHDAX",
+   "nome": "Al Wahda Abu Dhabi",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LAPAZFCX|estadio hernando siles": {
+   "v": 2,
+   "curto": "LAPAZFCX",
+   "nome": "Estadio Hernando Siles",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "HURACANX|huracan montevideo": {
+   "v": 2,
+   "curto": "HURACANX",
+   "nome": "Huracan Montevideo",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "QUIXADAX|abilhao": {
+   "v": 2,
+   "curto": "QUIXADAX",
+   "nome": "Abilhão",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BBERZURU|bb erzurumspor": {
+   "v": 2,
+   "curto": "BBERZURU",
+   "nome": "BB Erzurumspor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "DOBANOVI|budua nost dobanovici": {
+   "v": 2,
+   "curto": "DOBANOVI",
+   "nome": "BuduÄ‡nost Dobanovici",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ISTANBUL|a stanbulspor as": {
+   "v": 2,
+   "curto": "ISTANBUL",
+   "nome": "Ä°stanbulspor AS",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BASAKSEH|a stanbul baayakayehir": {
+   "v": 2,
+   "curto": "BASAKSEH",
+   "nome": "Ä°stanbul BaÅŸakÅŸehir ",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "PROGRXSN|progres niedercorn": {
+   "v": 2,
+   "curto": "PROGRXSN",
+   "nome": "Progrès Niedercorn",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ANKARAAD|ankara adliyespor": {
+   "v": 2,
+   "curto": "ANKARAAD",
+   "nome": "Ankara Adliyespor",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "NORDSJAE|fc nordsj lland": {
+   "v": 2,
+   "curto": "NORDSJAE",
+   "nome": "FC Nordsjælland",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "AFCUNITE|athletic eskilstuna": {
+   "v": 2,
+   "curto": "AFCUNITE",
+   "nome": "Athletic Eskilstuna",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SARMIENT|sarmiento ayacucho": {
+   "v": 2,
+   "curto": "SARMIENT",
+   "nome": "Sarmiento Ayacucho",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "GENERALC|general caballero asuncion": {
+   "v": 2,
+   "curto": "GENERALC",
+   "nome": "General Caballero Asunción",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LADADIMI|stadion torpedo": {
+   "v": 2,
+   "curto": "LADADIMI",
+   "nome": "Stadion Torpedo",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LOSCAIMA|municipal de la juventud": {
+   "v": 2,
+   "curto": "LOSCAIMA",
+   "nome": "Municipal de la Juventud",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LONDERZE|burgemeester lambertsstadion": {
+   "v": 2,
+   "curto": "LONDERZE",
+   "nome": "Burgemeester Lambertsstadion",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "UNIVCATO|univ catolica": {
+   "v": 2,
+   "curto": "UNIVCATO",
+   "nome": "Univ. Católica",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "ZIRKAKRO|zirka kiev": {
+   "v": 2,
+   "curto": "ZIRKAKRO",
+   "nome": "Zirka Kiev",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LAVALLEJ|estadio mario sobrero": {
+   "v": 2,
+   "curto": "LAVALLEJ",
+   "nome": "Estadio Mario Sobrero",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LECHPOZN|stadion poznaa": {
+   "v": 2,
+   "curto": "LECHPOZN",
+   "nome": "Stadion PoznaÅ„",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LOMMELUN|stedelijk": {
+   "v": 2,
+   "curto": "LOMMELUN",
+   "nome": "Stedelijk",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LOULETAN|estadio municipal de loule": {
+   "v": 2,
+   "curto": "LOULETAN",
+   "nome": "Estádio Municipal de Loulé",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LOKOMOTI|kranjceviceva": {
+   "v": 2,
+   "curto": "LOKOMOTI",
+   "nome": "Kranjceviceva",
+   "players": [],
+   "naoEncontrado": true
   }
  },
- "updatedAt": "2026-07-21T11:31:42.923Z"
+ "updatedAt": "2026-07-21T12:01:57.179Z"
 }

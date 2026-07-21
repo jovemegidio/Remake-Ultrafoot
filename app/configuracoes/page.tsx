@@ -42,6 +42,7 @@ import {
   deleteLineup,
   type SavedLineup,
 } from "@/lib/saved-lineups"
+import { ManagerAvatarPicker } from "@/components/manager-avatar"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { isFullscreenEnabled, setFullscreen } from "@/lib/fullscreen"
@@ -529,14 +530,29 @@ export default function ConfiguracoesPage() {
                 <User className="h-4 w-4 text-primary" />
                 {t.settings.managerInfo}
               </h3>
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-white">{state.managerName || "Tecnico"}</h2>
-                  <p className="text-sm text-white/50">{userTeam.nome}</p>
-                </div>
+              {/* Foto e apelido agora sao editaveis aqui — antes o nome so podia ser
+                  definido na criacao da carreira e a foto nao existia. */}
+              <ManagerAvatarPicker
+                value={state.managerAvatar ?? ""}
+                onChange={managerAvatar => setState({ managerAvatar })}
+              />
+
+              <div className="space-y-1.5">
+                <label htmlFor="apelido-tecnico" className="text-xs text-white/40">
+                  {t.settings.managerName}
+                </label>
+                <input
+                  id="apelido-tecnico"
+                  value={state.managerName ?? ""}
+                  onChange={e => setState({ managerName: e.target.value })}
+                  // Vazio volta para "Tecnico" so ao SAIR do campo: validar a cada
+                  // tecla impediria de apagar tudo para escrever outro nome.
+                  onBlur={e => { if (!e.target.value.trim()) setState({ managerName: "Tecnico" }) }}
+                  maxLength={28}
+                  placeholder="Tecnico"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-lg font-bold text-white outline-none transition-colors focus:border-primary/60"
+                />
+                <p className="text-sm text-white/50">{userTeam.nome}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 rounded-lg bg-white/5">

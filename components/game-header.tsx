@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
 import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
+import { ManagerAvatar } from "@/components/manager-avatar"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { persistGameEngineNow } from "@/lib/game-engine"
@@ -421,8 +422,12 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             <div className="absolute top-full right-0 mt-2 w-80 rounded-xl border border-white/[0.08] bg-[#0a0a0c]/98 shadow-2xl overflow-hidden z-50 animate-fade-in backdrop-blur-xl">
               <div className="p-5 border-b border-white/[0.04] bg-gradient-to-r from-[#00ffc8]/10 via-transparent to-transparent">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/10 flex items-center justify-center ring-2 ring-[#00ffc8]/20">
-                    <User className="h-7 w-7 text-[#00ffc8]" />
+                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/10 ring-2 ring-[#00ffc8]/20">
+                    <ManagerAvatar
+                      src={state.managerAvatar}
+                      className="w-14 h-14"
+                      iconClassName="h-7 w-7 text-[#00ffc8]"
+                    />
                   </div>
                   <div>
                     <div className="text-sm font-bold text-white">{coachData.nome}</div>

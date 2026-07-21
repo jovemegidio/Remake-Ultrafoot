@@ -367,6 +367,12 @@ export interface GameState {
   saveName: string
   selectedTeamShort: string | null
   managerName: string
+  /**
+   * Foto do tecnico, como data URI ja reduzida (128px, JPEG). Fica no save e nao
+   * num arquivo porque e por CARREIRA: duas carreiras podem ter tecnicos
+   * diferentes, e exportar o save leva a foto junto.
+   */
+  managerAvatar: string
   season: number
   week: number
   language: string
@@ -464,6 +470,7 @@ export const DEFAULT_STATE: GameState = {
   saveName: "Carreira principal",
   selectedTeamShort: null,
   managerName: "Tecnico",
+  managerAvatar: "",
   season: 2026,
   week: 0,
   language: "pt-BR",

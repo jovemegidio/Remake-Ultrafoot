@@ -115,12 +115,36 @@ export default function CalendarioPage() {
   const [simDate, setSimDate] = useState<Date | null>(null)
   const [simProgress, setSimProgress] = useState(0)
 
+  /**
+   * Minhas partidas ainda nao jogadas, na ordem em que o motor vai resolve-las.
+   *
+   * A POSICAO nesta fila — e nao a diferenca de semanas — e o numero de vezes
+   * que advanceWeek() precisa rodar, porque cada chamada resolve UMA partida
+   * minha. A conta antiga era `target.week - currentWeek - 1`, que so acerta com
+   * exatamente uma partida por semana. Com jogos em 1, 5 e 8 de janeiro ela dava
+   * 1: simulava o dia 1 e abria a partida do dia 5, nao a do dia 8 que o jogador
+   * escolheu (relato: "simulou somente uma e logo em seguida foi para a outra").
+   */
+  const filaPendentes = useMemo(
+    () => seasonCalendar.fixtures
+      .filter(f => f.isUserMatch && !f.played)
+      .sort((a, b) => a.week - b.week || a.id - b.id),
+    [seasonCalendar.fixtures],
+  )
+
+  /** Quantas partidas serao simuladas antes da selecionada; null se ela nao esta na fila. */
+  const partidasAntesDoAlvo = useMemo(() => {
+    if (!selectedFixture) return null
+    const i = filaPendentes.findIndex(f => f.id === selectedFixture.id)
+    return i < 0 ? null : i
+  }, [filaPendentes, selectedFixture])
+
   const simulateUntilMatch = useCallback(
     async (target: Fixture) => {
       if (isSimulating) return
       setIsSimulating(true)
 
-      const weeks = Math.max(0, target.week - currentWeek - 1)
+      const weeks = Math.max(0, filaPendentes.findIndex(f => f.id === target.id))
       const start = getGameDate(currentSeason, currentWeek)
       const end = new Date(currentSeason, target.month ?? start.getMonth(), roundToDay(target.round))
       const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000))
@@ -152,7 +176,7 @@ export default function CalendarioPage() {
 
       hardNavigate("/partida")
     },
-    [advanceWeek, currentWeek, currentSeason, isSimulating],
+    [advanceWeek, currentWeek, currentSeason, isSimulating, filaPendentes],
   )
 
   // Dias do calendario
@@ -440,8 +464,10 @@ export default function CalendarioPage() {
             </div>
           )}
 
-          {/* Simular ate a partida selecionada e ir para o jogo */}
-          {selectedFixture && !selectedFixture.played && selectedFixture.week > currentWeek && (
+          {/* Simular ate a partida selecionada e ir para o jogo.
+              Condicao pela FILA e nao por `week > currentWeek`: uma partida da
+              semana corrente ainda nao jogada tambem precisa deste botao. */}
+          {selectedFixture && !selectedFixture.played && selectedFixture.isUserMatch && partidasAntesDoAlvo !== null && (
             <button
               onClick={() => simulateUntilMatch(selectedFixture)}
               disabled={isSimulating}
@@ -456,7 +482,7 @@ export default function CalendarioPage() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Simulando...
                 </>
-              ) : selectedFixture.week === currentWeek + 1 ? (
+              ) : partidasAntesDoAlvo === 0 ? (
                 <>
                   <Play className="h-4 w-4" />
                   Ir para o jogo
@@ -464,7 +490,9 @@ export default function CalendarioPage() {
               ) : (
                 <>
                   <FastForward className="h-4 w-4" />
-                  Simular ate esta partida
+                  {/* Diz QUANTAS serao simuladas: o jogador escolhe sabendo o que
+                      vai perder de jogar, em vez de descobrir depois. */}
+                  Simular {partidasAntesDoAlvo} {partidasAntesDoAlvo === 1 ? "partida" : "partidas"} e jogar esta
                 </>
               )}
             </button>

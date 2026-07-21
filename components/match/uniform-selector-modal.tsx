@@ -1,12 +1,40 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
+import { AlertTriangle, Check } from "lucide-react"
 import { type Team } from "@/lib/teams-data"
+import { TeamCrest } from "@/components/team-crest"
 import { KitImage, type KitVariant } from "@/components/match/kit-image"
 import { cn } from "@/lib/utils"
 
 const VARIANTS: KitVariant[] = ["home", "away", "third"]
 const LABEL: Record<KitVariant, string> = { home: "Casa", away: "Visitante", third: "Terceiro" }
+
+/**
+ * Cor dominante estimada de cada uniforme.
+ *
+ * APROXIMACAO ASSUMIDA: o clube guarda so duas cores (cor1/cor2), nao uma cor
+ * por camisa. Casa usa a primeira, visitante e terceiro usam a segunda. Serve
+ * para AVISAR sobre cores parecidas, nunca para impedir a escolha — se a
+ * estimativa errar, o jogador decide do mesmo jeito.
+ */
+function corDoUniforme(team: Team, v: KitVariant): string {
+  return (v === "home" ? team.cor1 : team.cor2) || team.cor1 || "#888888"
+}
+
+function paraRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "")
+  const c = h.length === 3 ? h.split("").map(x => x + x).join("") : h.padEnd(6, "0")
+  return [parseInt(c.slice(0, 2), 16), parseInt(c.slice(2, 4), 16), parseInt(c.slice(4, 6), 16)]
+}
+
+/** Distancia euclidiana no RGB. Grosseira de proposito: basta separar "parecido" de "distinto". */
+function coresConflitam(a: string, b: string): boolean {
+  const [r1, g1, b1] = paraRgb(a)
+  const [r2, g2, b2] = paraRgb(b)
+  const d = Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
+  return d < 90 // ~35% do maximo (441)
+}
 
 // Modal de selecao de uniformes: escolhe o kit (casa/visitante/terceiro) do time da casa
 // e do adversario. Abre com a tecla Q na pre-partida, no lugar de "Opcoes de vantagem".
@@ -15,39 +43,74 @@ const LABEL: Record<KitVariant, string> = { home: "Casa", away: "Visitante", thi
 // a camisa com as cores do time em vez de mostrar o texto alternativo — que era o que
 // deixava o modal com cara de quebrado.
 function TeamKits({
-  team, selected, onSelect,
+  team, selected, onSelect, lado, dica,
 }: {
   team: Team
   selected: KitVariant
   onSelect: (v: KitVariant) => void
+  lado: "casa" | "visitante"
+  dica: string
 }) {
+  const cor = team.cor1 || "#ffffff"
   return (
-    <div className="min-w-0 flex flex-col items-center gap-3">
-      <h3 className="max-w-full truncate text-base font-bold text-white">{team.nome}</h3>
-      <div className="grid w-full grid-cols-3 gap-2">
+    <div className="flex min-w-0 flex-col gap-4">
+      {/* Cabecalho com escudo e cor do clube: antes so havia o nome em texto, e
+          nada dizia de quem era cada coluna alem da posicao na tela. */}
+      <div className="flex items-center gap-3">
+        <TeamCrest team={team} size="md" />
+        <div className="min-w-0">
+          <div className="truncate text-base font-bold leading-tight text-white">{team.nome}</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+            {lado === "casa" ? "Mandante" : "Visitante"}
+          </div>
+        </div>
+      </div>
+      <div className="h-0.5 w-full rounded-full" style={{ background: `linear-gradient(90deg, ${cor}, transparent)` }} />
+
+      <div className="grid w-full grid-cols-3 gap-2.5">
         {VARIANTS.map((v) => {
           const isSel = selected === v
           return (
             <button
               key={v}
               onClick={() => onSelect(v)}
+              aria-pressed={isSel}
               className={cn(
-                "min-w-0 flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all",
+                "group relative flex min-w-0 flex-col items-center gap-2 rounded-xl border p-3 transition-all",
                 isSel
-                  ? "border-[#00ffc8] bg-[#00ffc8]/10"
-                  : "border-white/10 bg-white/[0.03] hover:border-white/30",
+                  ? "border-transparent bg-white/[0.07] shadow-lg"
+                  : "border-white/[0.07] bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]",
               )}
+              style={isSel ? { boxShadow: `0 0 0 2px ${cor}, 0 8px 24px -12px ${cor}` } : undefined}
             >
-              <div className="relative h-20 w-20 max-[720px]:h-16 max-[720px]:w-16">
+              <div
+                className={cn(
+                  "relative transition-transform duration-200",
+                  "h-24 w-24 max-[860px]:h-20 max-[860px]:w-20 max-[720px]:h-16 max-[720px]:w-16",
+                  isSel ? "scale-105" : "opacity-60 group-hover:opacity-90",
+                )}
+              >
                 <KitImage team={team} variant={v} />
               </div>
-              <span className={cn("text-xs font-semibold", isSel ? "text-[#00ffc8]" : "text-white/50")}>
+              <span
+                className={cn("text-[11px] font-bold uppercase tracking-wide", isSel ? "text-white" : "text-white/40")}
+              >
                 {LABEL[v]}
               </span>
+              {isSel && (
+                <span
+                  className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full"
+                  style={{ backgroundColor: cor }}
+                >
+                  <Check className="h-2.5 w-2.5" strokeWidth={3.5} color="#08121a" />
+                </span>
+              )}
             </button>
           )
         })}
       </div>
+
+      <div className="text-center text-[10px] text-white/25">{dica}</div>
     </div>
   )
 }
@@ -101,6 +164,11 @@ export function UniformSelectorModal({
     }
   }, [open, onClose, homeKit, awayKit, onHomeKit, onAwayKit])
 
+  const conflito = useMemo(
+    () => coresConflitam(corDoUniforme(homeTeam, homeKit), corDoUniforme(awayTeam, awayKit)),
+    [homeTeam, awayTeam, homeKit, awayKit],
+  )
+
   if (!open) return null
 
   return (
@@ -114,26 +182,56 @@ export function UniformSelectorModal({
         className="my-auto flex max-h-[calc(100vh-24px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c1214] p-5 shadow-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 shrink-0 text-center">
-          <h2 className="text-xl font-bold text-white">Uniformes</h2>
-          <p className="text-xs text-white/40">Escolha o uniforme de cada time</p>
+        <div className="mb-5 shrink-0 text-center">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#00ffc8]/70">Pre-jogo</div>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-white">Uniformes</h2>
+          <p className="mt-0.5 text-xs text-white/35">Escolha o uniforme de cada equipe</p>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 overflow-y-auto px-1">
-          <TeamKits team={homeTeam} selected={homeKit} onSelect={onHomeKit} />
-          <div className="text-2xl font-black text-white/20">VS</div>
-          <TeamKits team={awayTeam} selected={awayKit} onSelect={onAwayKit} />
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-5 overflow-y-auto px-1 sm:gap-8">
+          <TeamKits
+            team={homeTeam}
+            selected={homeKit}
+            onSelect={onHomeKit}
+            lado="casa"
+            dica="LB / RB"
+          />
+
+          <div className="flex flex-col items-center gap-2 self-center">
+            <div className="h-16 w-px bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+            <span className="text-sm font-black tracking-widest text-white/25">VS</span>
+            <div className="h-16 w-px bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+          </div>
+
+          <TeamKits
+            team={awayTeam}
+            selected={awayKit}
+            onSelect={onAwayKit}
+            lado="visitante"
+            dica="LT / RT"
+          />
         </div>
 
-        <div className="mt-4 flex shrink-0 flex-col items-center gap-2">
+        {/* Aviso de cores parecidas — a razao de existir troca de uniforme. Sem
+            ele o modal so pergunta "qual camisa?" sem dizer por que importa. */}
+        {conflito && (
+          <div className="mt-4 flex shrink-0 items-center justify-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.07] px-4 py-2">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+            <span className="text-[11px] text-amber-200/80">
+              As duas equipes entram com cores parecidas. Considere trocar um dos uniformes.
+            </span>
+          </div>
+        )}
+
+        <div className="mt-5 flex shrink-0 flex-col items-center gap-2.5">
           <button
             onClick={onClose}
-            className="rounded-lg bg-[#00ffc8] px-8 py-2.5 text-sm font-bold text-black transition-opacity hover:opacity-90"
+            className="rounded-xl bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] px-10 py-2.5 text-sm font-bold text-black shadow-lg shadow-[#00ffc8]/15 transition-all hover:brightness-110"
           >
             Confirmar
           </button>
           <p className="text-[10px] text-white/25">
-            Controle: LB/RB trocam o uniforme da casa · LT/RT o do visitante · A confirma
+            LB/RB trocam o uniforme do mandante · LT/RT o do visitante · A confirma
           </p>
         </div>
       </div>

@@ -548,11 +548,16 @@ export default function MercadoPage() {
   // Setas do painel de detalhe (eram decorativas): navegam o jogador
   // anterior/próximo dentro da página visível.
   const detailNav = useMemo(() => {
-    if (!selectedPlayer) return { prev: undefined, next: undefined }
+    if (!selectedPlayer) return { prev: undefined, next: undefined, indice: -1, total: 0, irPara: undefined }
     const idx = visibleMarketPlayers.findIndex(p => p.id === selectedPlayer.id)
     return {
       prev: idx > 0 ? () => setSelectedPlayer(visibleMarketPlayers[idx - 1]) : undefined,
       next: idx >= 0 && idx < visibleMarketPlayers.length - 1 ? () => setSelectedPlayer(visibleMarketPlayers[idx + 1]) : undefined,
+      // Posicao e total reais: o rodape do painel mostrava a palavra "Num" e
+      // cinco bolinhas fixas, com a primeira sempre acesa. Nao indicavam nada.
+      indice: idx,
+      total: visibleMarketPlayers.length,
+      irPara: (i: number) => setSelectedPlayer(visibleMarketPlayers[i]),
     }
   }, [selectedPlayer, visibleMarketPlayers])
 
@@ -1122,6 +1127,9 @@ export default function MercadoPage() {
                     onNegotiate={handleNegotiate}
                     onPrev={detailNav.prev}
                     onNext={detailNav.next}
+                    indice={detailNav.indice}
+                    total={detailNav.total}
+                    irPara={detailNav.irPara}
                   />
                 ) : (
                   <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 h-full flex flex-col items-center justify-center text-center">
@@ -2181,7 +2189,7 @@ function PlayerListCard({
 }
 
 // Player Details Panel Component
-function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext }: { player: Player, onNegotiate: (type: "buy" | "loan") => void, onPrev?: () => void, onNext?: () => void }) {
+function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, total = 0, irPara }: { player: Player, onNegotiate: (type: "buy" | "loan") => void, onPrev?: () => void, onNext?: () => void, indice?: number, total?: number, irPara?: (i: number) => void }) {
   const t = useTranslation()
   const isNew = player.scoutProgress && player.scoutProgress < 100
   const isNotScouted = !player.scoutedBy
@@ -2348,23 +2356,54 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext }: { player: P
           </div>
         </div>
 
-        {/* Navigation dots */}
-        <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-white/[0.04]">
-          {/* Antes decorativo (sem onClick): agora navega o jogador anterior/proximo da lista. */}
-          <button onClick={onPrev} disabled={!onPrev} className="text-white/40 hover:text-white/60 disabled:opacity-30">
+        {/* Navegacao entre os atletas da pagina.
+            Antes: a palavra "Num" e cinco bolinhas FIXAS, com a primeira sempre
+            acesa — nao diziam em que atleta voce estava nem quantos havia. Agora
+            mostra a posicao real e as bolinhas acompanham (e levam) a selecao. */}
+        <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-white/[0.04]">
+          <button
+            onClick={onPrev}
+            disabled={!onPrev}
+            title="Atleta anterior"
+            className="rounded-md p-1 text-white/40 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent"
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-white/50 text-xs">Num</span>
-          <button onClick={onNext} disabled={!onNext} className="text-white/40 hover:text-white/60 disabled:opacity-30">
+
+          <span className="text-xs tabular-nums text-white/50">
+            {indice >= 0 ? `${indice + 1} de ${total}` : "-"}
+          </span>
+
+          <button
+            onClick={onNext}
+            disabled={!onNext}
+            title="Proximo atleta"
+            className="rounded-md p-1 text-white/40 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <div className="flex gap-1 ml-2">
-            <div className="w-2 h-2 rounded-full bg-white" />
-            <div className="w-2 h-2 rounded-full bg-white/30" />
-            <div className="w-2 h-2 rounded-full bg-white/30" />
-            <div className="w-2 h-2 rounded-full bg-white/30" />
-            <div className="w-2 h-2 rounded-full bg-white/30" />
-          </div>
+
+          {/* Janela de ate 7 pontos centrada na selecao: com 100 atletas na
+              pagina, desenhar um ponto por atleta viraria uma tira ilegivel. */}
+          {indice >= 0 && total > 1 && (
+            <div className="ml-1 flex items-center gap-1">
+              {(() => {
+                const MAX = 7
+                const inicio = Math.max(0, Math.min(indice - Math.floor(MAX / 2), total - MAX))
+                return Array.from({ length: Math.min(MAX, total) }, (_, k) => inicio + k).map(i => (
+                  <button
+                    key={i}
+                    onClick={() => irPara?.(i)}
+                    title={`Atleta ${i + 1}`}
+                    className={cn(
+                      "h-2 rounded-full transition-all",
+                      i === indice ? "w-5 bg-white" : "w-2 bg-white/25 hover:bg-white/50",
+                    )}
+                  />
+                ))
+              })()}
+            </div>
+          )}
         </div>
       </div>
     </div>
