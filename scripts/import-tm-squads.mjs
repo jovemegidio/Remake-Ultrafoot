@@ -16,7 +16,7 @@
 //
 // Seguro para interromper: grava o progresso a cada clube e retoma de onde parou.
 
-import { readFile, writeFile, mkdir } from "node:fs/promises"
+import { readFile, writeFile, mkdir, rename } from "node:fs/promises"
 import { existsSync } from "node:fs"
 import path from "node:path"
 
@@ -278,7 +278,13 @@ async function main() {
     sujo = false
     cache.updatedAt = new Date().toISOString()
     await mkdir(path.dirname(OUT), { recursive: true })
-    await writeFile(OUT, JSON.stringify(cache, null, 1))
+    // Grava em temporário e RENOMEIA. writeFile direto trunca o arquivo antes de
+    // escrever: uma interrupção no instante errado — ou só ler o arquivo enquanto
+    // ele grava — devolve JSON pela metade. Num trabalho de horas, retomável, um
+    // arquivo corrompido custaria tudo o que já foi baixado. rename é atômico.
+    const tmp = `${OUT}.tmp`
+    await writeFile(tmp, JSON.stringify(cache, null, 1))
+    await rename(tmp, OUT)
   }
   const timerSalvar = setInterval(() => { salvar().catch(() => {}) }, 10_000)
 
