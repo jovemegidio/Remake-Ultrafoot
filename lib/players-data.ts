@@ -8,6 +8,7 @@ import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 import realSquadsJson from "@/data/seeds/real-positions.json"
 import { allTeams, type Team } from "@/lib/teams-data"
 import { getPlayerOverride } from "@/lib/player-overrides"
+import { hasDeparted } from "@/lib/departed-players"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
   string,
@@ -22,6 +23,8 @@ export interface Player {
   idade: number
   base: number
   time: string
+  /** Nacionalidade real (Transfermarkt), assada no seed. Ausente = desconhecida. */
+  nac?: string
   // Atributos individuais (so presentes quando o jogador foi editado no editor). A partida
   // usa estes valores quando existem; senao deriva do overall+posicao.
   pace?: number
@@ -41,7 +44,7 @@ const IMPORTED = importedBF2026 as {
     id?: string
     nome: string
     curto?: string
-    jogadores?: Array<{ nome: string; posicao: string; idade: number; overall: number }>
+    jogadores?: Array<{ nome: string; posicao: string; idade: number; overall: number; nac?: string; ft?: string }>
   }>
 }
 
@@ -126,17 +129,17 @@ for (const team of importedTeams) {
 // Indice global evita perder idade/overall quando o CSV atualizado move o atleta para
 // outro clube, mas o seed antigo ainda o guarda no time anterior. So usamos nomes com
 // uma unica combinacao de idade para nao confundir homonimos.
-const globalImportedPlayers = new Map<string, Array<{ idade: number; overall: number }>>()
+const globalImportedPlayers = new Map<string, Array<{ idade: number; overall: number; nac?: string }>>()
 for (const importedTeam of importedTeams) {
   for (const player of importedTeam.jogadores ?? []) {
     const key = normalizeTeamName(player.nome)
     const list = globalImportedPlayers.get(key) ?? []
-    list.push({ idade: player.idade, overall: player.overall })
+    list.push({ idade: player.idade, overall: player.overall, nac: player.nac })
     globalImportedPlayers.set(key, list)
   }
 }
 
-function findUniqueImportedPlayer(name: string): { idade: number; overall: number } | undefined {
+function findUniqueImportedPlayer(name: string): { idade: number; overall: number; nac?: string } | undefined {
   const candidates = globalImportedPlayers.get(normalizeTeamName(name)) ?? []
   const unique = new Map(candidates.map(p => [`${p.idade}:${p.overall}`, p]))
   return unique.size === 1 ? [...unique.values()][0] : undefined
@@ -487,6 +490,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
         idade: globalSeed?.idade ?? 25,
         base: globalSeed ? Math.min(globalSeed.overall, MAX_IMPORTED_OVERALL) : estimated,
         time: team.nome,
+        nac: globalSeed?.nac,
       }
     })
     if (converted.some((player) => player.pos === "GOL")) return converted
@@ -504,7 +508,9 @@ function getImportedPlayersForTeam(team: Team): Player[] {
     return [...seedGoalkeepers, ...converted]
   }
 
-  // Sem CSV para este clube: segue o seed como antes.
+  // Sem CSV para este clube: segue o seed como antes. É o caminho que carrega a
+  // nacionalidade real (`nac`), assada no seed pelo apply-tm-squads — a coluna
+  // PAÍS do editor lia sempre "-" porque este dado nunca era propagado.
   return importedTeam.jogadores
     .map((player, index) => ({
       nome: player.nome,
@@ -517,6 +523,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
       idade: player.idade ?? 25,
       base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
       time: team.nome,
+      nac: player.nac,
     }))
 }
 
@@ -632,7 +639,14 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
   // Clubes do pool completo não fazem parte de `allTeams` e, portanto, não entram no
   // índice curado criado no boot. Consultar a importação diretamente evita que os quase
   // 3 mil clubes recebam um elenco inteiramente genérico.
-  const source = indexed.length ? indexed : getImportedPlayersForTeam(team)
+  const sourceRaw = indexed.length ? indexed : getImportedPlayersForTeam(team)
+  // Remove quem foi contratado pelo usuário: sem isto o atleta ficava nos DOIS
+  // elencos (relato "contratei o Neymar mas ele continua no Santos"). O editor
+  // pede `raw` e nesse modo NAO filtramos — ali o objetivo e ver o elenco
+  // original do clube, edicoes e transferencias a parte.
+  const source = opts?.raw
+    ? sourceRaw
+    : sourceRaw.filter(p => !hasDeparted(team.nome, p.nome))
   const players = calibrateSquadRatings(team, ensurePlayableSquad(team, source))
   const cap = DIVISION_RATING_CAP[team.divisao as string] ?? 92
   const capped = cap >= 92 ? players : players.map(p => p.base > cap ? { ...p, base: cap } : p)

@@ -185,7 +185,8 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
       originalName: p.nome,
       nome: ov?.nome ?? p.nome,
       posicao: pos,
-      pais: "-",
+      // Nacionalidade real do seed (Transfermarkt); "-" só quando desconhecida.
+      pais: p.nac ?? "-",
       idade: ov?.idade ?? p.idade,
       overall: base,
       caracteristica: "-",

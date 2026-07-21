@@ -43,6 +43,7 @@ import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-co
 import { formatCurrency } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useGameState, useUserTeam } from "@/lib/save-system"
+import { markDeparted, hasDeparted } from "@/lib/departed-players"
 import {
   AVAILABLE_SCOUTS,
   useGameEngine,
@@ -384,6 +385,9 @@ export default function MercadoPage() {
     return transferTargets.filter(p => {
       if ((p.team?.curto ?? "").toUpperCase() === meuCurto) return false
       if (meuNome && normalizeClubShort(p.team?.nome) === meuNome) return false
+      // Já contratado (por você ou já cedido): sai da vitrine, senão daria para
+      // "comprar" de novo um atleta que não está mais no clube de origem.
+      if (p.team?.nome && hasDeparted(p.team.nome, p.name)) return false
       // Name filter (uses searchQuery for real-time search)
       const searchTerm = searchQuery || nameFilter
       if (searchTerm && !p.name.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -1785,6 +1789,11 @@ export default function MercadoPage() {
           const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer)
           if (negotiationType === "loan") {
             const result = gameEngine.loanPlayer(enginePlayer, 26, Math.round(fee / 26))
+            // Empréstimo tira o atleta do clube de origem durante o vínculo, senão
+            // ele jogaria contra você defendendo o próprio time enquanto está no seu.
+            if ((result === "joined" || result === "pending") && selectedPlayer.team?.nome) {
+              markDeparted(selectedPlayer.team.nome, selectedPlayer.name)
+            }
             setMarketNotice(result === "pending"
               ? `${selectedPlayer.name} assinou e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
               : result === "joined" ? `${selectedPlayer.name} chegou por emprestimo.` : "Não foi possível concluir o empréstimo.")
@@ -1807,6 +1816,9 @@ export default function MercadoPage() {
               setActiveTab("enviadas")
               return
             }
+            // Sucesso (joined ou pending): o atleta sai do clube de origem, para
+            // nao aparecer mais no elenco dele (relato do Neymar no Santos).
+            if (selectedPlayer.team?.nome) markDeparted(selectedPlayer.team.nome, selectedPlayer.name)
             // Mantem tambem o save da carreira sincronizado. Base/transferencias ainda
             // consultam este resumo, enquanto elenco/radar usam o game-engine completo.
             if (transferResult === "joined" && !(careerState.squadPlayers ?? []).some(player => player.name.toLocaleLowerCase("pt-BR") === selectedPlayer.name.toLocaleLowerCase("pt-BR"))) {
