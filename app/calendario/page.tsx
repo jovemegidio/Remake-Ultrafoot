@@ -597,52 +597,9 @@ export default function CalendarioPage() {
         </main>
       </div>
 
-      {/* Bottom Action Bar (EA FC Style) */}
-      <footer className="absolute bottom-0 left-0 right-0 md:ml-16 h-14 flex items-center justify-between px-6 bg-black/50 backdrop-blur-sm border-t border-white/10 z-10">
-        <div className="flex items-center gap-6 text-xs text-white/70">
-          <button 
-            onClick={handleAdvanceRound}
-            disabled={!canSimulate}
-            className="flex items-center gap-2 hover:text-white disabled:opacity-50 transition-colors"
-          >
-            <GamepadButton button="cross" platform="playstation" size="sm" />
-            <span>Simular ate data</span>
-          </button>
-          <button 
-            onClick={() => router.back()}
-            className="flex items-center gap-2 hover:text-white transition-colors"
-          >
-            <GamepadButton button="circle" platform="playstation" size="sm" />
-            <span>Voltar</span>
-          </button>
-          {nextUserMatch && (
-            <Link 
-              href="/partida"
-              className="flex items-center gap-2 hover:text-white transition-colors"
-            >
-              <GamepadButton button="square" platform="playstation" size="sm" />
-              <span>Ver partida</span>
-            </Link>
-          )}
-          <Link 
-            href="/competicoes"
-            className="flex items-center gap-2 hover:text-white transition-colors"
-          >
-            <Trophy className="h-4 w-4 text-yellow-400" />
-            <span>Competicoes</span>
-          </Link>
-          <div className="flex items-center gap-1.5">
-            <GamepadButton button="l1" platform="playstation" size="xs" />
-            <GamepadButton button="r1" platform="playstation" size="xs" />
-            <span className="ml-1">Mes</span>
-          </div>
-        </div>
-
-        {/* FC HUB */}
-        <div className="flex items-center gap-2 text-white/50 text-xs">
-          <span>Central UF</span>
-        </div>
-      </footer>
+      {/* Sem barra de acao no rodape: "Avancar" ja esta no cabecalho e o menu [W]
+          cobre competicoes/partida. A barra so repetia o que ja havia e comia
+          altura util do calendario. */}
 
       {/* Champion Screen */}
       {showChampionScreen && (

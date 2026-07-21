@@ -58,6 +58,10 @@ function mapPos(txt) {
 const args = process.argv.slice(2)
 const limit = args.includes("--limit") ? Number(args[args.indexOf("--limit") + 1]) : Infinity
 const delayMs = args.includes("--delay") ? Number(args[args.indexOf("--delay") + 1]) : 1500
+// Concorrência modesta de propósito: 2.947 clubes em série levariam ~4h. Quatro
+// tarefas, cada uma ainda respeitando o delay, derrubam para ~1h sem virar
+// enxurrada em cima do site.
+const conc = args.includes("--conc") ? Number(args[args.indexOf("--conc") + 1]) : 4
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
@@ -66,6 +70,41 @@ export function nameKey(s) {
   return (s || "")
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+}
+
+// O campo `pais` do seed é inconsistente: às vezes nome inteiro ("Uruguai"),
+// às vezes sigla ("ENG", "FR", "UZB"), às vezes UF brasileira ("RJ"). Comparar
+// cru contra o nome em português do Transfermarkt reprovava TODO clube com
+// sigla — Preston, Caen e Bristol City caíam por isso, não por não existirem.
+const PAIS_ALIAS = {
+  eng: "inglaterra", gbr: "inglaterra", uk: "inglaterra", sco: "escocia", wal: "gales", nir: "irlanda do norte",
+  fr: "franca", fra: "franca", esp: "espanha", es: "espanha", ita: "italia", it: "italia",
+  ale: "alemanha", ger: "alemanha", de: "alemanha", por: "portugal", pt: "portugal",
+  hol: "paises baixos", ned: "paises baixos", nl: "paises baixos", holanda: "paises baixos",
+  bel: "belgica", sui: "suica", tur: "turquia", gre: "grecia", rus: "russia", ucr: "ucrania",
+  aut: "austria", din: "dinamarca", sue: "suecia", nor: "noruega", fin: "finlandia",
+  pol: "polonia", tch: "republica tcheca", cze: "republica tcheca", cro: "croacia",
+  ser: "servia", srb: "servia", rom: "romenia", bul: "bulgaria", hun: "hungria",
+  esl: "eslovenia", svn: "eslovenia", elv: "eslovenia", svk: "eslovaquia",
+  uzb: "uzbequistao", jap: "japao", jpn: "japao", cor: "coreia do sul", kor: "coreia do sul",
+  chn: "china", ara: "arabia saudita", ksa: "arabia saudita", eau: "emirados arabes unidos",
+  eua: "estados unidos", usa: "estados unidos", mex: "mexico", can: "canada",
+  arg: "argentina", uru: "uruguai", ury: "uruguai", par: "paraguai", chi: "chile",
+  col: "colombia", equ: "equador", ecu: "equador", per: "peru", bol: "bolivia", ven: "venezuela",
+  bra: "brasil", br: "brasil", aus: "australia", mar: "marrocos", egi: "egito", rsa: "africa do sul",
+}
+
+// UFs brasileiras: um clube cujo "país" é RJ/SP/MG é, obviamente, do Brasil.
+const UF_BR = new Set(["ac","al","ap","am","ba","ce","df","es","go","ma","mt","ms","mg","pa","pb","pr","pe","pi","rj","rn","rs","ro","rr","sc","sp","se","to"])
+
+/** Devolve o país em forma comparável, ou null se não der para saber. */
+function paisKey(bruto) {
+  const k = nameKey(bruto)
+  if (!k) return null
+  if (UF_BR.has(k)) return "brasil"
+  // "es" é Espírito Santo E Espanha; a UF vence porque o seed usa UF com muito
+  // mais frequência do que sigla de país de duas letras.
+  return PAIS_ALIAS[k] ?? k
 }
 
 /**
@@ -80,18 +119,31 @@ export function nameKey(s) {
  *     virou um clube italiano.
  * Por isso: recorta a seção de CLUBES e só aceita país compatível.
  */
-async function findClubUrl(clubName, clubCountry) {
+/**
+ * Devolve { url } | { semClube: true } | { falhou: true }.
+ *
+ * A distinção importa: "falhou" (HTTP ruim, resposta sem a seção de clubes —
+ * tipicamente throttling) NÃO pode virar cache definitivo. Na primeira versão
+ * virava, e 39% dos clubes ficavam marcados como inexistentes para sempre
+ * enquanto a mesma busca, feita à mão, achava o clube na hora. Seria uma base
+ * silenciosamente pela metade se dando por concluída.
+ */
+async function findClubUrl(clubName, clubCountry, buscar) {
   const q = encodeURIComponent(clubName)
   const url = `https://www.transfermarkt.com.br/schnellsuche/ergebnis/schnellsuche?query=${q}`
-  const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } })
-  if (!res.ok) return null
+  const res = await buscar(url)
+  if (!res.ok) return { falhou: true }
   const html = await res.text()
 
   const i = html.indexOf("Resultados da pesquisa para Clubes")
-  if (i < 0) return null
+  if (i < 0) {
+    // Sem NENHUMA seção de resultado: resposta anômala, provavelmente bloqueio.
+    // Com outras seções presentes, a busca funcionou e o clube é que não existe.
+    return html.includes("Resultados da pesquisa") ? { semClube: true } : { falhou: true }
+  }
   const secao = html.slice(i, i + 20000)
 
-  const alvoPais = nameKey(clubCountry)
+  const alvoPais = paisKey(clubCountry)
   const alvoNome = nameKey(clubName)
   const candidatos = []
   for (const row of secao.split(/<tr class="(?:odd|even)">/).slice(1)) {
@@ -100,16 +152,22 @@ async function findClubUrl(clubName, clubCountry) {
     if (!link) continue
     candidatos.push({ href: link[1], nome: link[2].trim(), pais: pais ? pais[1] : "" })
   }
-  if (candidatos.length === 0) return null
+  if (candidatos.length === 0) return { semClube: true }
 
-  const mesmoPais = candidatos.filter(c => alvoPais && nameKey(c.pais) === alvoPais)
-  if (mesmoPais.length === 0) return null // sem país compatível: NÃO adivinha
+  // Times B/sub-20 aparecem primeiro em algumas buscas e não são o clube.
+  const principal = c => !/\b(ii|b|u\s?\d{2}|sub\s?\d{2})\b/i.test(c.nome)
 
-  // Dentro do país certo, prefere o nome mais próximo (exato > contém > 1º).
-  const exato = mesmoPais.find(c => nameKey(c.nome) === alvoNome)
-  const contem = mesmoPais.find(c => nameKey(c.nome).includes(alvoNome) || alvoNome.includes(nameKey(c.nome)))
-  const escolhido = exato ?? contem ?? mesmoPais[0]
-  return `https://www.transfermarkt.com.br${escolhido.href}`
+  const mesmoPais = alvoPais ? candidatos.filter(c => paisKey(c.pais) === alvoPais) : []
+  // País desconhecido no seed: aceita só nome IDÊNTICO. Sem essa trava foi que
+  // "Fénix" do Uruguai virou um clube dominicano.
+  const pool = mesmoPais.length > 0 ? mesmoPais : candidatos.filter(c => nameKey(c.nome) === alvoNome)
+  if (pool.length === 0) return { semClube: true }
+
+  const ordenado = [...pool.filter(principal), ...pool.filter(c => !principal(c))]
+  const exato = ordenado.find(c => nameKey(c.nome) === alvoNome)
+  const contem = ordenado.find(c => nameKey(c.nome).includes(alvoNome) || alvoNome.includes(nameKey(c.nome)))
+  const escolhido = exato ?? contem ?? ordenado[0]
+  return { url: `https://www.transfermarkt.com.br${escolhido.href}` }
 }
 
 /** Extrai [{nome, posicao, nacionalidade}] da página de elenco. */
@@ -143,31 +201,93 @@ async function main() {
   const pendentes = teams.filter(t => (cache.clubs[t.curto]?.v ?? 0) < PARSER_V).slice(0, limit)
   console.log(`${teams.length} clubes no seed | ${Object.keys(cache.clubs).length} já importados | processando ${pendentes.length}`)
 
-  let ok = 0, semClube = 0, erro = 0
-  for (const [i, team] of pendentes.entries()) {
-    try {
-      const url = await findClubUrl(team.nome, team.pais)
-      if (!url) { cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, players: [], naoEncontrado: true }; semClube++; continue }
-      await sleep(delayMs)
-      const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } })
-      const squad = res.ok ? parseSquad(await res.text()) : []
-      cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, url, players: squad }
-      ok++
-      console.log(`[${i + 1}/${pendentes.length}] ${team.nome}: ${squad.length} atletas`)
-    } catch (e) {
-      cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, players: [], erro: String(e).slice(0, 120) }
-      erro++
-    }
-    // Grava a cada clube: interromper nunca perde o que já foi baixado.
+  let ok = 0, semClube = 0, erro = 0, feitos = 0
+  let sujo = false
+  const t0 = Date.now()
+
+  // Grava em intervalo, não a cada clube: com várias tarefas em paralelo,
+  // reserializar 2.900 clubes a cada resposta custava mais que o download.
+  const salvar = async () => {
+    if (!sujo) return
+    sujo = false
     cache.updatedAt = new Date().toISOString()
     await mkdir(path.dirname(OUT), { recursive: true })
     await writeFile(OUT, JSON.stringify(cache, null, 1))
-    await sleep(delayMs)
   }
+  const timerSalvar = setInterval(() => { salvar().catch(() => {}) }, 10_000)
+
+  /**
+   * Uma tarefa puxa clubes da fila comum. Concorrência baixa e delay mantido por
+   * tarefa: o site continua vendo requisições espaçadas, só que intercaladas.
+   * Se ele reclamar (429/403), TODAS recuam juntas — ser bloqueado no meio
+   * perderia horas de download.
+   */
+  let proximo = 0
+  let pausaAte = 0
+  const respeitarPausa = async () => {
+    const espera = pausaAte - Date.now()
+    if (espera > 0) await sleep(espera)
+  }
+  const recuar = (segundos, motivo) => {
+    pausaAte = Math.max(pausaAte, Date.now() + segundos * 1000)
+    console.log(`  ! ${motivo} — pausando ${segundos}s`)
+  }
+
+  const buscar = async url => {
+    await respeitarPausa()
+    const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } })
+    if (res.status === 429 || res.status === 403) {
+      recuar(60, `HTTP ${res.status}`)
+      await respeitarPausa()
+      return fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } })
+    }
+    return res
+  }
+
+  async function tarefa() {
+    while (true) {
+      const i = proximo++
+      if (i >= pendentes.length) return
+      const team = pendentes[i]
+      try {
+        const achado = await findClubUrl(team.nome, team.pais, buscar)
+        if (achado.falhou) {
+          // Não grava nada: fica pendente e uma passada posterior tenta de novo.
+          erro++
+        } else if (achado.semClube) {
+          cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, players: [], naoEncontrado: true }
+          semClube++
+        } else {
+          await sleep(delayMs)
+          const res = await buscar(achado.url)
+          if (!res.ok) { erro++; feitos++; await sleep(delayMs); continue }
+          const squad = parseSquad(await res.text())
+          cache.clubs[team.curto] = { v: PARSER_V, nome: team.nome, url: achado.url, players: squad }
+          ok++
+        }
+      } catch {
+        erro++ // idem: transitório, não vira registro definitivo
+      }
+      sujo = true
+      feitos++
+      if (feitos % 25 === 0) {
+        const min = (Date.now() - t0) / 60000
+        const restam = ((pendentes.length - feitos) / (feitos / min)).toFixed(0)
+        console.log(`${feitos}/${pendentes.length} | ok ${ok} | s/clube ${semClube} | erro ${erro} | ~${restam} min restantes`)
+      }
+      await sleep(delayMs)
+    }
+  }
+
+  await Promise.all(Array.from({ length: conc }, tarefa))
+  clearInterval(timerSalvar)
+  sujo = true
+  await salvar()
 
   const totalAtletas = Object.values(cache.clubs).reduce((n, c) => n + (c.players?.length ?? 0), 0)
   console.log(`\nOK: ${ok} | clube não encontrado: ${semClube} | erro: ${erro}`)
   console.log(`Total acumulado: ${totalAtletas} atletas em ${Object.keys(cache.clubs).length} clubes`)
+  console.log(`Tempo: ${((Date.now() - t0) / 60000).toFixed(1)} min`)
   console.log(`Arquivo: ${OUT}`)
 }
 

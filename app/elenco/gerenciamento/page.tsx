@@ -1126,10 +1126,12 @@ export default function ElencoPage() {
 
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
           {/* Main content area */}
-          {/* overflow-y-auto: a coluna cortava no viewport e as ultimas fileiras
-              dos reservas ficavam INALCANCAVEIS (area vermelha do relato) — o
-              scroll interno dos reservas nao ajudava porque o pai ja clipava. */}
-          <div className="flex-1 flex flex-col p-2 md:p-4 min-h-0 overflow-y-auto scrollbar-game">
+          {/* overflow-hidden + coluna flex de verdade: antes era overflow-y-auto e o
+              campo (flex-1, sem teto) crescia ate empurrar os reservas para BAIXO
+              da tela. O scroll interno do painel nunca entrava em acao porque o
+              painel inteiro estava fora do viewport — dava a impressao de que
+              faltava scroll quando na verdade faltava ANCORAR o painel. */}
+          <div className="flex-1 flex flex-col p-2 md:p-4 min-h-0 overflow-hidden">
             {/* Tab Content: Elenco */}
             {activeTab === "elenco" && (
             <>
@@ -1138,7 +1140,9 @@ export default function ElencoPage() {
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
-              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] w-full max-w-[560px] mx-auto"
+              // min-h-0: o campo pode encolher para o painel de reservas caber. Com
+              // min-h-[350px] ele se recusava a ceder em telas baixas e o banco sumia.
+              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-0 w-full max-w-[560px] mx-auto"
               style={{
                 // Prancheta tática em azul-marinho, como a referência do dossiê:
                 // os cards de função ficam legíveis por cima, o que o verde vivo
@@ -1305,8 +1309,9 @@ export default function ElencoPage() {
                 <span className="text-[10px] text-white/40">{t.squad.dragToSubstitute}</span>
               </div>
               
-              {/* Container com altura maxima e scroll vertical */}
-              <div className="max-h-[280px] overflow-y-auto scrollbar-game pr-1">
+              {/* Teto em vh, nao em px: 280px fixos ocupavam um terco de uma tela de
+                  laptop e ainda assim estouravam em telas menores. */}
+              <div className="max-h-[30vh] overflow-y-auto scrollbar-game pr-1">
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
                   {bench.map((player) => {
                     const posColors = positionColors[player.position] || positionColors.MEI

@@ -97,12 +97,16 @@ async function main() {
   console.log(`clubes atualizados: ${updated}`)
   console.log(`total no seed:     ${Object.keys(seed).length}`)
   console.log(`peso das imagens:  ${mb(totalWeight)} MB`)
+  // Obrigatorio: o editor exporta as imagens como data URI, e deixa-las dentro do
+  // JSON faz o modulo ser importado inteiro por components/team-crest.tsx — que
+  // aparece em quase toda tela. Ja custou 20 MB de JSON parseado por navegacao.
+  // Extrair para public/ deixa o navegador buscar so o escudo que a tela usa.
+  console.log(`\nextraindo imagens para public/overrides...`)
+  const { execFileSync } = await import("node:child_process")
+  execFileSync(process.execPath, ["scripts/split-override-assets.mjs"], { stdio: "inherit" })
+
   console.log(`\nOK — edicoes gravadas em data/seeds/team-overrides.json`)
   console.log(`O PROXIMO BUILD ja sai com elas: todo jogador recebe seus escudos/uniformes.`)
-
-  if (totalWeight > 20 * 1048576) {
-    console.log(`\nAVISO: mais de 20 MB de imagem embutida — o instalador vai crescer.`)
-  }
 }
 
 main()

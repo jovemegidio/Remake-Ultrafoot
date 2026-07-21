@@ -350,14 +350,16 @@ export function PostMatchPress({
                         style={{ backgroundColor: currentMedia.bgColor }}
                       >
                         {currentMedia.logo ? (
-                          // A logo do veículo preenche todo o card: com padding +
-                          // object-contain sobrava moldura vazia em volta dela.
+                          // object-contain, NAO object-cover: as logos tem proporcoes
+                          // diferentes e o cover cortava as laterais das marcas largas
+                          // (a CBN aparecia sem as bordas). Mutilar a marca e pior do
+                          // que uma folga; o bgColor do veiculo preenche o resto.
                           <Image
                             src={currentMedia.logo}
                             alt={currentMedia.name}
                             width={80}
                             height={64}
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-contain p-1.5"
                           />
                         ) : (
                           <span className="text-white font-bold text-sm">{currentMedia.name.slice(0, 3)}</span>

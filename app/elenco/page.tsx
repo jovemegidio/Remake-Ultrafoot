@@ -153,18 +153,8 @@ export default function ElencoHubPage() {
       borderColor: "border-cyan-500/30",
       accentColor: "text-cyan-400",
     },
-    {
-      id: 3,
-      title: "Escalacoes",
-      subtitle: "Escalacoes criadas: 1",
-      icon: null,
-      customIcon: "lineups",
-      description: "Monte e use diversas escalacoes para aproveitar o elenco ao maximo. Alterne escalacoes para se adaptar aos times adversarios e dar ao elenco inteiro uma chance de entrar em campo.",
-      route: "/elenco/escalacoes",
-      color: "from-cyan-500/20 to-teal-500/10",
-      borderColor: "border-cyan-500/30",
-      accentColor: "text-cyan-400",
-    },
+    // "Escalacoes" saiu daqui: Gerenciamento do Time ja monta e salva a escalacao,
+    // e o card duplicado so dava dois caminhos para a mesma coisa.
   ]
 
   const handleCardClick = (card: typeof cards[0]) => {
