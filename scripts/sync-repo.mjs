@@ -14,6 +14,7 @@
 //                                         souber que o remoto diverge de proposito)
 
 import { readFile } from "node:fs/promises"
+import { existsSync } from "node:fs"
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
@@ -26,6 +27,19 @@ const git = async (...args) => {
 }
 
 async function main() {
+  // O build de RELEASE nao roda no repositorio: o projeto e copiado para
+  // C:\Ultrafoot (o Google Drive nao suporta symlink nem npm install confiavel)
+  // e la NAO existe .git. Sem esta checagem, o hook posttauri:build morria com
+  // "not a git repository" e o `tauri build` inteiro saia com codigo 1 — o
+  // instalador e a assinatura JA estavam prontos, mas toda build era reportada
+  // como falha. Custou umas dez investigacoes de falha que nao existia.
+  //
+  // Sincronizar o repo e util, mas e ACESSORIO ao build: nao pode reprova-lo.
+  if (!existsSync(".git")) {
+    console.log("sem .git aqui (build fora do repositorio) — sincronizacao dispensada")
+    return
+  }
+
   const conf = JSON.parse(await readFile("src-tauri/tauri.conf.json", "utf8"))
   const version = conf.version
 
@@ -46,15 +60,17 @@ async function main() {
     await exec("git", pushArgs)
     console.log(`repo atualizado: https://github.com/jovemegidio/Ultrafoot26 (main)`)
   } catch (err) {
-    console.error("push para origin main falhou:")
+    // Idem: rede caindo nao pode reprovar um instalador que ficou pronto. O
+    // commit local esta feito e o push pode ser refeito a mao a qualquer hora.
+    console.error("push para origin main falhou (o build NAO foi afetado):")
     console.error(err.stderr ?? err.message)
-    console.error("\nSe o remoto divergiu de proposito e voce quer sobrescrever:")
-    console.error("  node scripts/sync-repo.mjs --force")
-    process.exit(1)
+    console.error("\nRefaca quando a rede voltar:  node scripts/sync-repo.mjs")
+    console.error("Se o remoto divergiu de proposito:  node scripts/sync-repo.mjs --force")
   }
 }
 
 main().catch((err) => {
-  console.error(err)
-  process.exit(1)
+  // Nada aqui e essencial ao build. Reportar e sair limpo.
+  console.error("sincronizacao do repo falhou (o build NAO foi afetado):")
+  console.error(err.stderr ?? err.message ?? err)
 })
