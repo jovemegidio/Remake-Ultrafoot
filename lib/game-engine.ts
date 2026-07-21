@@ -575,12 +575,19 @@ export function generateScoutedLead(region: string, scoutSkill: number, week: nu
   const name = regionData.names[Math.floor(Math.random() * regionData.names.length)]
   const nationality = regionData.nationalities[Math.floor(Math.random() * regionData.nationalities.length)]
   const position = LEAD_POSITIONS[Math.floor(Math.random() * LEAD_POSITIONS.length)]
-  const age = 16 + Math.floor(Math.random() * 10)
+  const age = 16 + Math.floor(Math.random() * 8) // 16-23: olheiro traz PROJETO, nao pronto
 
-  const minOvr = 50 + scoutSkill * 4
-  const maxOvr = 65 + scoutSkill * 6
-  const overall = Math.min(99, Math.max(50, Math.floor(Math.random() * (maxOvr - minOvr) + minOvr)))
-  const potential = Math.min(99, overall + Math.floor(Math.random() * 20))
+  // Revelado nasce com overall BAIXO e potencial ALTO — e um projeto que evolui
+  // por treino e temporadas, nao um reforco pronto (pedido do usuario). Quanto
+  // mais jovem, mais cru o overall atual e maior a margem de crescimento.
+  // O scout melhor nao entrega jogador mais PRONTO, entrega mais POTENCIAL (acha
+  // a joia antes de amadurecer).
+  const crueza = age <= 17 ? 14 : age <= 19 ? 10 : age <= 21 ? 6 : 3
+  const baseOvr = 52 + scoutSkill * 2 + Math.floor(Math.random() * 6)
+  const overall = Math.min(78, Math.max(46, baseOvr - crueza))
+  // Potencial: margem grande para jovem (ate ~+34), estreita para quem ja tem 22-23.
+  const margem = (age <= 17 ? 22 : age <= 19 ? 16 : age <= 21 ? 11 : 7) + scoutSkill * 2
+  const potential = Math.min(94, overall + 6 + Math.floor(Math.random() * margem))
 
   const ageMultiplier = age <= 19 ? 2.5 : age <= 22 ? 1.8 : 1.0
   const marketValue = Math.round(overall * 80000 * ageMultiplier * (0.8 + Math.random() * 0.4))
@@ -4575,11 +4582,30 @@ export const useGameEngine = create<GameEngineState>()(
       processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => {
         set((s) => {
           // Envelhece jogadores e reseta stats da temporada
-          const agedPlayers = s.squadPlayers.map(p => ({
-            ...p,
-            age: p.age + 1,
-            seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 }
-          }))
+          const agedPlayers = s.squadPlayers.map(p => {
+            const age = p.age + 1
+            // EVOLUCAO POR TEMPORADA (pedido: revelado começa baixo e evolui por
+            // treino E temporadas). Jovem com margem para o potencial ganha alguns
+            // pontos ao virar o ano — mais quanto mais jogou e mais nova a idade;
+            // veterano acima do pico começa a cair. O treino continua somando por
+            // cima disto durante o ano (training-engine).
+            const margem = p.potential - p.overall
+            let overall = p.overall
+            if (age <= 23 && margem > 0) {
+              const jogos = p.seasonStats?.matchesPlayed ?? 0
+              const ritmo = age <= 19 ? 4 : age <= 21 ? 3 : 2
+              const ganho = Math.min(margem, ritmo + Math.floor(jogos / 12))
+              overall = Math.min(p.potential, p.overall + ganho)
+            } else if (age >= 32) {
+              overall = Math.max(p.potential - 12, p.overall - (age >= 35 ? 2 : 1))
+            }
+            return {
+              ...p,
+              age,
+              overall,
+              seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
+            }
+          })
 
           // Aposentadoria: 38+ se aposentam, 35-37 tem 30% de chance
           const retiredPositions: string[] = []

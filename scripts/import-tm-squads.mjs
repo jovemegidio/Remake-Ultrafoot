@@ -305,12 +305,15 @@ export function parseSquad(html) {
     if (!pos) continue
 
     const nac = row.match(/title="([^"]+)"[^>]*class="flaggenrahmen/)
+    // Idade: a celula "DD/MM/AAAA (NN)" traz a idade entre parenteses.
+    const idade = row.match(/\((\d{2})\)/)
     out.push({
       tmId: link[1],
       nome,
       posicaoTM: pos[1],
       posicao: mapPos(pos[1]),
       nacionalidade: nac ? nac[1] : null,
+      idade: idade ? Number(idade[1]) : null,
     })
   }
   return out
