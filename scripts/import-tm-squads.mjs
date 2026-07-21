@@ -166,7 +166,7 @@ function paisKey(bruto) {
  * enquanto a mesma busca, feita à mão, achava o clube na hora. Seria uma base
  * silenciosamente pela metade se dando por concluída.
  */
-async function findClubUrl(clubName, clubCountry, buscar) {
+async function findClubUrl(clubName, clubCountry, buscar, seedNames) {
   // Segunda chance com o nome encurtado: a busca do TM é bem literal e não acha
   // "Racing Montevideo" (lá é "Racing Club de Montevideo") nem "Barcelona
   // Guayaquil" (é "Barcelona SC Guayaquil"). Tirando o qualificador final, acha.
@@ -183,7 +183,7 @@ async function findClubUrl(clubName, clubCountry, buscar) {
 
   let ultimo = { semClube: true }
   for (const { termo, exigir } of tentativas) {
-    const r = await tentarBusca(termo, clubName, clubCountry, buscar, exigir)
+    const r = await tentarBusca(termo, clubName, clubCountry, buscar, exigir, seedNames)
     if (r.url) return r
     if (r.falhou) return r // problema de rede: não gasta a segunda tentativa
     ultimo = r
@@ -191,7 +191,7 @@ async function findClubUrl(clubName, clubCountry, buscar) {
   return ultimo
 }
 
-async function tentarBusca(termo, clubName, clubCountry, buscar, exigirPalavra) {
+async function tentarBusca(termo, clubName, clubCountry, buscar, exigirPalavra, seedNames) {
   const q = encodeURIComponent(termo)
   const url = `https://www.transfermarkt.com.br/schnellsuche/ergebnis/schnellsuche?query=${q}`
   const res = await buscar(url)
@@ -248,23 +248,39 @@ async function tentarBusca(termo, clubName, clubCountry, buscar, exigirPalavra) 
   }
   if (elegiveis.length === 0) return { semClube: true }
 
-  // Nome idêntico (já sem sigla de clube, e conferindo também o slug).
-  const exatos = elegiveis.filter(c => chavesCandidato(c).has(alvoLimpo))
-  if (exatos.length > 0) {
-    return { url: `https://www.transfermarkt.com.br${exatos[0].href}` }
-  }
-
-  // Sem exato, aceita contenção — mas só se for INEQUÍVOCA. Dois candidatos
-  // contendo o nome ("Santos FC" e "Santos Laguna") é ambiguidade, e chutar foi
-  // como "Manchester City" recebeu o elenco do MANCHESTER UNITED. Elenco do
-  // rival é pior que elenco nenhum: sem casamento defensável devolvemos "não
-  // encontrado" e o clube fica com os dados que já tinha.
-  const contidos = elegiveis.filter(c =>
-    [...chavesCandidato(c)].some(k => k && (k.includes(alvoLimpo) || alvoLimpo.includes(k))),
+  // Candidatos plausiveis: nome identico OU um contido no outro. Botafogo-RJ
+  // ("Botafogo FR") e Botafogo-SP ("Botafogo FC") sao AMBOS plausiveis para o
+  // alvo "botafogo" — juntar os dois aqui e o que permite desempatar depois.
+  const plausiveis = elegiveis.filter(c =>
+    [...chavesCandidato(c)].some(k => k && (k === alvoLimpo || k.includes(alvoLimpo) || alvoLimpo.includes(k))),
   )
-  const distintos = new Set(contidos.map(c => c.href))
-  if (distintos.size !== 1) return { semClube: true }
-  return { url: `https://www.transfermarkt.com.br${contidos[0].href}` }
+  const distintos = [...new Map(plausiveis.map(c => [c.href, c])).values()]
+  if (distintos.length === 0) return { semClube: true }
+  if (distintos.length === 1) return { url: `https://www.transfermarkt.com.br${distintos[0].href}` }
+
+  // AMBIGUIDADE (Botafogo RJ/SP/PB, America MG/RJ...): mesmo nome, mesmo pais.
+  // Nome nao separa; o ELENCO separa. Baixa o elenco de cada candidato e escolhe
+  // o que mais casa com os nomes do seed — a mesma metrica que o apply usa para
+  // rejeitar. Sem os nomes do seed (chamada antiga) nao ha como desempatar:
+  // devolve semClube em vez de chutar, que foi como o RJ virou SP.
+  if (!seedNames || seedNames.length === 0) return { semClube: true }
+  const alvoSet = new Set(seedNames.map(nameKey))
+
+  let melhor = null
+  for (const c of distintos.slice(0, 4)) { // no maximo 4 fetches por clube ambiguo
+    const url = `https://www.transfermarkt.com.br${c.href}`
+    try {
+      const res = await buscar(url)
+      if (!res.ok) continue
+      const squad = parseSquad(await res.text())
+      let hit = 0
+      for (const p of squad) if (alvoSet.has(nameKey(p.nome))) hit++
+      if (!melhor || hit > melhor.hit) melhor = { url, hit, total: squad.length }
+    } catch { /* candidato ruim, ignora */ }
+  }
+  // Exige pelo menos 2 nomes em comum: 1 pode ser homonimo de jogador.
+  if (!melhor || melhor.hit < 2) return { semClube: true }
+  return { url: melhor.url }
 }
 
 /** Extrai [{nome, posicao, nacionalidade}] da página de elenco. */
@@ -383,7 +399,10 @@ async function main() {
       if (i >= pendentes.length) return
       const team = pendentes[i]
       try {
-        const achado = await findClubUrl(team.nome, team.pais, buscar)
+        // Nomes do elenco do seed: usados para desempatar clubes homonimos
+        // (Botafogo RJ/SP/PB) pela sobreposicao de jogadores.
+        const seedNames = (team.jogadores ?? []).map(j => j.nome)
+        const achado = await findClubUrl(team.nome, team.pais, buscar, seedNames)
         if (achado.falhou) {
           // Não grava nada: fica pendente e uma passada posterior tenta de novo.
           erro++
