@@ -30,6 +30,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
 import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI } from "@/lib/formations"
 import { formatCurrency, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
@@ -159,6 +160,8 @@ export default function ElencoPage() {
   const [isMatchInProgress] = useState(false)
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false)
   const [showPlayerProfile, setShowPlayerProfile] = useState(false)
+  /** Qual negociacao de contrato esta aberta (null = nenhuma). */
+  const [negociacao, setNegociacao] = useState<"renovar" | "rescindir" | null>(null)
   const [showTutorials, setShowTutorials] = useState(false)
   const [showSuggestedSubs, setShowSuggestedSubs] = useState(false)
   const [tacticalSaved, setTacticalSaved] = useState(false)
@@ -1909,12 +1912,10 @@ export default function ElencoPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
+                      {/* Abre a NEGOCIACAO. Antes este botao renovava direto por
+                          salario x1,12 e 3 anos, sem ninguem do outro lado. */}
                       <button
-                        onClick={() => {
-                          const salary = enginePlayer.contract?.salary ?? 40000
-                          engineRenewContract(enginePlayer.id, Math.round(salary * 1.12), 156)
-                          addNotification({ type: "system", title: "Contrato renovado", message: `${selectedPlayer.name} renovou por mais 3 anos.`, priority: "low" })
-                        }}
+                        onClick={() => setNegociacao("renovar")}
                         className="rounded-lg border border-[#00ffc8]/30 py-2 text-xs font-bold text-[#00ffc8] hover:bg-[#00ffc8]/10"
                       >
                         Renovar contrato
@@ -1949,18 +1950,7 @@ export default function ElencoPage() {
                 return (
                   <>
                     <button
-                      onClick={() => {
-                        if (!affordable) return
-                        if (engineTerminateContract(enginePlayer.id)) {
-                          addNotification({
-                            type: "system",
-                            title: "Contrato rescindido",
-                            message: `${selectedPlayer.name} deixou o clube. Multa paga: ${formatCurrency(cost)}.`,
-                            priority: "medium",
-                          })
-                          setShowPlayerProfile(false)
-                        }
-                      }}
+                      onClick={() => setNegociacao("rescindir")}
                       disabled={!affordable}
                       className={cn(
                         "mt-2 flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-xs font-bold transition-all",
@@ -1970,7 +1960,7 @@ export default function ElencoPage() {
                       )}
                     >
                       <X className="h-4 w-4" />
-                      Rescindir contrato — {formatCurrency(cost)}
+                      Negociar rescisao — ate {formatCurrency(cost)}
                     </button>
                     {!affordable && (
                       <p className="mt-2 text-center text-[10px] text-red-300/70">
@@ -1987,6 +1977,50 @@ export default function ElencoPage() {
       
       {/* Tutorials Modal */}
       <AnimatePresence>
+        {/* Negociacao de contrato: renovar e rescindir passam por rodadas de
+            proposta e contraproposta, em vez de executar direto. */}
+        {negociacao && selectedPlayer && (() => {
+          const ep = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+          if (!ep) return null
+          const semanasRestantes = Math.max(0, (ep.contract?.endDate ?? engineCurrentWeek) - engineCurrentWeek)
+          // O engine guarda moral como rotulo; o motor de negociacao usa 0-100.
+          const moralNum = { Feliz: 90, Motivado: 80, Normal: 65, Insatisfeito: 40, Infeliz: 25 }[ep.morale] ?? 65
+          return (
+            <ContractNegotiationModal
+              open
+              modo={negociacao}
+              clubPrestige={userTeam.prestigio ?? 60}
+              clubBalance={engineBalance}
+              player={{
+                name: selectedPlayer.name,
+                overall: selectedPlayer.overall,
+                age: selectedPlayer.age,
+                salary: ep.contract?.salary ?? 40000,
+                // O engine nao guarda valor de mercado; derivamos como o mercado
+                // faz (overall^3 ancorado), suficiente para ancorar o pedido.
+                marketValue: Math.round(Math.pow(selectedPlayer.overall / 60, 3) * 5_000_000),
+                weeksLeft: semanasRestantes,
+                morale: moralNum,
+              }}
+              onClose={() => setNegociacao(null)}
+              onRenew={terms => {
+                engineRenewContract(ep.id, terms.salary, terms.contractYears * 52)
+                addNotification({ type: "system", priority: "low", title: "Contrato renovado",
+                  message: `${selectedPlayer.name} renovou por ${terms.contractYears} ano(s) a ${formatCurrency(terms.salary)}/mes.` })
+                setNegociacao(null)
+              }}
+              onRescind={valor => {
+                if (engineTerminateContract(ep.id)) {
+                  addNotification({ type: "system", priority: "medium", title: "Contrato rescindido",
+                    message: `${selectedPlayer.name} deixou o clube. Acordo: ${formatCurrency(valor)}.` })
+                  setNegociacao(null)
+                  setShowPlayerProfile(false)
+                }
+              }}
+            />
+          )
+        })()}
+
         {showTutorials && (
           <motion.div
             initial={{ opacity: 0 }}

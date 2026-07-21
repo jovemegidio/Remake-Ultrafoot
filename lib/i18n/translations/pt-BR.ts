@@ -155,6 +155,7 @@ export const ptBR = {
     notifications: "Notificacoes",
     notificationsDesc: "Alertas do jogo",
     managerInfo: "Informacoes do Tecnico",
+    managerName: "Apelido do Tecnico",
     language: "Idioma",
     matchSpeed: "Velocidade de Partida",
     slow: "lento",

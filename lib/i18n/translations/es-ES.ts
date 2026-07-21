@@ -157,6 +157,7 @@ export const esES: Translations = {
     notifications: "Notificaciones",
     notificationsDesc: "Alertas del juego",
     managerInfo: "Informacion del Entrenador",
+    managerName: "Apodo del entrenador",
     language: "Idioma",
     matchSpeed: "Velocidad del Partido",
     slow: "lento",

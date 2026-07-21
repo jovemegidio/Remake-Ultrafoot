@@ -157,6 +157,7 @@ export const enUS: Translations = {
     notifications: "Notifications",
     notificationsDesc: "Game alerts",
     managerInfo: "Manager Information",
+    managerName: "Manager nickname",
     language: "Language",
     matchSpeed: "Match Speed",
     slow: "slow",

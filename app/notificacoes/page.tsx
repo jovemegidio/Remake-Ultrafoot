@@ -40,14 +40,23 @@ export default function NotificacoesPage() {
    */
   const mensagensDiretoria = useMemo(() => {
     if (!saveState.selectedTeamShort) return []
-    const objetivo = calcSeasonObjective(userTeam)
+    // board-engine trabalha com SavedTeam (tem fileKey/estadio); useUserTeam
+    // devolve Team, que usa file_key/estadio_nome. Adaptamos aqui em vez de
+    // afrouxar o tipo do motor.
+    const time = {
+      ...userTeam,
+      fileKey: userTeam.file_key ?? userTeam.curto,
+      estadio: userTeam.estadio_nome ?? "",
+      pais: userTeam.pais ?? "Brasil",
+    }
+    const objetivo = calcSeasonObjective(time)
     const posicao = Math.max(1, standings.findIndex(s => s.teamShort === userTeam.curto) + 1)
     const rodada = Math.max(1, currentWeek)
     return [
-      generateBoardObjectiveMessage(userTeam, saveState.managerName || "Tecnico", saveState.season, objetivo),
+      generateBoardObjectiveMessage(time, saveState.managerName || "Tecnico", saveState.season, objetivo),
       // A avaliacao so existe nas rodadas 10/20/30 — fora delas o motor devolve null.
       generateBoardEvaluation(
-        userTeam, saveState.managerName || "Tecnico", saveState.season,
+        time, saveState.managerName || "Tecnico", saveState.season,
         rodada, posicao, standings.length || 20, objetivo,
       ),
     ].filter(Boolean)

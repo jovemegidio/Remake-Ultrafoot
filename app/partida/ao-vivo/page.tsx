@@ -1905,11 +1905,11 @@ export default function PartidaAoVivoPage() {
         // O jogador precisa VER a consequencia; senao o efeito existe e passa
         // despercebido, que na pratica e o mesmo que nao existir.
         if (efeito.recadoElenco) {
-          addNotification({ type: "system", priority: efeito.moralDelta > 0 ? "normal" : "high",
+          addNotification({ type: "system", priority: efeito.moralDelta > 0 ? "medium" : "high",
             title: efeito.recadoElenco.titulo, message: efeito.recadoElenco.texto })
         }
         if (efeito.recadoDiretoria) {
-          addNotification({ type: "system", priority: efeito.diretoriaDelta > 0 ? "normal" : "high",
+          addNotification({ type: "system", priority: efeito.diretoriaDelta > 0 ? "medium" : "high",
             title: efeito.recadoDiretoria.titulo, message: efeito.recadoDiretoria.texto })
         }
 
