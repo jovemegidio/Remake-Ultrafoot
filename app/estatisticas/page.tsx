@@ -428,7 +428,11 @@ function SquadStatsTable({
 
       {/* Rows */}
       <div className="divide-y divide-white/5">
-        {data.sort((a, b) => b.rating - a.rating).map((player) => (
+        {/* [...data] antes do sort: `data` e uma prop, e Array.sort MUTA no lugar.
+            Ordenar a prop durante o render reordena o array do componente pai a
+            cada frame — efeito colateral silencioso que pode embaralhar a lista
+            de quem passou o dado. */}
+        {[...data].sort((a, b) => b.rating - a.rating).map((player) => (
           <div
             key={player.id}
             className="grid grid-cols-[1fr_60px_50px_50px_50px_50px_50px_60px] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02]"
