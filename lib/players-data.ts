@@ -7,6 +7,7 @@ import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 // CSVs). Corrige as posicoes que o seed atribui por indice E o elenco desatualizado.
 import realSquadsJson from "@/data/seeds/real-positions.json"
 import { allTeams, type Team } from "@/lib/teams-data"
+import realSquadsTM from "@/data/seeds/real-squads-tm.json"
 import { getPlayerOverride } from "@/lib/player-overrides"
 import { hasDeparted } from "@/lib/departed-players"
 
@@ -666,12 +667,36 @@ function enrichWithSeedNationality(team: Team, players: Player[]): Player[] {
   })
 }
 
+// ─── Elencos REAIS (Transfermarkt) ─────────────────────────────────────────────
+// Camada de MAIOR prioridade: quando existe elenco real para o clube, ele
+// substitui o roster (nomes/posição/nacionalidade/overall reais), em vez de só
+// remendar o fictício. Gerado por scripts/build-real-squads.mjs; chave
+// `<curto>|<nomeNormalizado>` (mesma do tm-squads). Clubes sem entrada aqui
+// seguem pelo caminho antigo — a maioria dos ~1.050 fictícios de divisão menor.
+interface RealSquadPlayerTM { nome: string; pos: string; nac?: string; ft?: string; idade: number; overall: number }
+const REAL_SQUADS_TM = realSquadsTM as Record<string, RealSquadPlayerTM[]>
+
+function getRealSquad(team: Team): Player[] | null {
+  const roster = REAL_SQUADS_TM[`${team.curto}|${normalizeTeamName(team.nome)}`]
+  if (!roster?.length) return null
+  return roster.map(p => ({
+    nome: p.nome,
+    pos: toPlayerPosition(p.pos),
+    idade: p.idade,
+    base: p.overall,
+    time: team.nome,
+    nac: p.nac,
+  }))
+}
+
 export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[] {
   const indexed = getPlayersByTeam(team.nome)
   // Clubes do pool completo não fazem parte de `allTeams` e, portanto, não entram no
   // índice curado criado no boot. Consultar a importação diretamente evita que os quase
   // 3 mil clubes recebam um elenco inteiramente genérico.
-  const sourceRaw = enrichWithSeedNationality(team, indexed.length ? indexed : getImportedPlayersForTeam(team))
+  // Elenco REAL vence tudo; sem ele, curado > importado (enriquecido com nac).
+  const sourceRaw = getRealSquad(team)
+    ?? enrichWithSeedNationality(team, indexed.length ? indexed : getImportedPlayersForTeam(team))
   // Remove quem foi contratado pelo usuário: sem isto o atleta ficava nos DOIS
   // elencos (relato "contratei o Neymar mas ele continua no Santos"). O editor
   // pede `raw` e nesse modo NAO filtramos — ali o objetivo e ver o elenco
