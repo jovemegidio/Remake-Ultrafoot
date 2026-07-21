@@ -56,6 +56,7 @@ import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { PlayerAvatar } from "@/components/player-avatar"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+import { getLeagueLogo } from "@/lib/league-logos"
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -1023,6 +1024,7 @@ export default function MercadoPage() {
               <FilterDropdownCard
                 label={t.market.league}
                 icon={<Trophy className="h-10 w-10 text-white/30" strokeWidth={1.5} />}
+                leagueLogo={filterLeague !== "Qualquer" ? getLeagueLogo(filterLeague) : null}
                 value={filterLeague}
                 options={filterOptions.liga}
                 onSelect={(league) => {
@@ -2037,6 +2039,7 @@ function FilterDropdownCard({
   options,
   groups,
   onSelect,
+  leagueLogo,
 }: {
   label: string
   icon: React.ReactNode
@@ -2044,8 +2047,11 @@ function FilterDropdownCard({
   options: string[]
   groups?: Array<{ label: string; options: string[] }>
   onSelect: (v: string) => void
+  /** Logo a exibir no lugar do icone (usado pela Liga). */
+  leagueLogo?: string | null
 }) {
   const [open, setOpen] = useState(false)
+  const [dropUp, setDropUp] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -2054,11 +2060,23 @@ function FilterDropdownCard({
     document.addEventListener("mousedown", h)
     return () => document.removeEventListener("mousedown", h)
   }, [])
+  // Abre para CIMA quando nao ha espaco abaixo: os cards Liga/Pais/Time ficam na
+  // fileira de baixo e o dropdown (max-h-64 = 256px) era cortado pelo rodape/
+  // container (relato: filtros de liga/pais cortados).
+  const toggle = () => {
+    setOpen(o => {
+      if (!o && ref.current) {
+        const r = ref.current.getBoundingClientRect()
+        setDropUp(window.innerHeight - r.bottom < 280 && r.top > 280)
+      }
+      return !o
+    })
+  }
   const active = value !== "Qualquer" && value !== "Tudo"
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         className={cn(
           "relative w-full rounded-xl p-4 h-44 text-left transition-all overflow-hidden",
           "bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618]",
@@ -2069,7 +2087,12 @@ function FilterDropdownCard({
       >
         <h3 className="text-sm font-semibold text-white relative z-10">{label}</h3>
         <div className="relative z-10 flex h-[calc(100%-2rem)] flex-col items-center justify-center gap-3">
-          {icon}
+          {/* Logo da liga selecionada substitui o icone generico quando ha uma. */}
+          {leagueLogo ? (
+            <div className="relative h-12 w-12">
+              <Image src={leagueLogo} alt={value} fill className="object-contain" sizes="48px" />
+            </div>
+          ) : icon}
           <span className={cn("text-sm font-medium text-center px-2 truncate max-w-full", active ? "text-[#00ffc8]" : "text-white/50")}>
             {value}
           </span>
@@ -2077,7 +2100,10 @@ function FilterDropdownCard({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0c0c12] shadow-2xl scrollbar-thin">
+        <div className={cn(
+          "absolute left-0 right-0 z-40 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0c0c12] shadow-2xl scrollbar-thin",
+          dropUp ? "bottom-full mb-1" : "top-full mt-1",
+        )}>
           {!groups && options.map((opt) => (
             <button
               key={opt}
