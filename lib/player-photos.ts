@@ -1,4 +1,5 @@
 import manifest from "@/data/seeds/faces-manifest.json"
+import importedBF from "@/data/seeds/imported-bf2026.json"
 import { gameAssetUrl } from "@/lib/game-asset"
 import { storeGet, storeSet } from "@/lib/persistent-store"
 
@@ -6,6 +7,39 @@ import { storeGet, storeSet } from "@/lib/persistent-store"
 // maior e inclui fotos planejadas; consultá-lo gerava milhares de 404 e prejudicava
 // máquinas com pouca memória/disco lento.
 const photoMap = (manifest as { entries: Record<string, string> }).entries
+
+// ─── Fotos reais do Transfermarkt ─────────────────────────────────────────────
+// O seed principal carrega `ft` ("371247-1780359299"), assado por
+// scripts/apply-tm-squads.mjs com casamento exato de nome DENTRO do clube. A URL
+// e remota (peso zero no instalador); se estiver offline, o onError do
+// PlayerAvatar cai no avatar de iniciais — nada quebra.
+const TM_PORTRAIT = "https://img.a.transfermarkt.technology/portrait/medium/"
+
+interface SeedPlayerFt { nome: string; ft?: string }
+interface SeedTeamFt { jogadores?: SeedPlayerFt[] }
+
+let tmFotoMap: Map<string, string | null> | null = null
+/**
+ * nome normalizado -> ft. Construido UMA vez, na primeira consulta; o seed ja
+ * esta no bundle por outros modulos, entao isto nao adiciona download nenhum.
+ * Nome que aparece com DOIS ft diferentes vira null: dois atletas distintos com
+ * o mesmo nome, e mostrar a foto de um no outro e pior do que nao mostrar.
+ */
+function getTmFotoMap(): Map<string, string | null> {
+  if (tmFotoMap) return tmFotoMap
+  tmFotoMap = new Map()
+  for (const team of ((importedBF as { teams?: SeedTeamFt[] }).teams) ?? []) {
+    for (const j of team.jogadores ?? []) {
+      if (!j.ft) continue
+      const k = normalizePlayerKey(j.nome)
+      if (!k) continue
+      const prev = tmFotoMap.get(k)
+      if (prev === undefined) tmFotoMap.set(k, j.ft)
+      else if (prev !== j.ft) tmFotoMap.set(k, null)
+    }
+  }
+  return tmFotoMap
+}
 
 // Normalizes a player name into a lookup key: "Gabriel Barbosa" → "gabriel-barbosa"
 export function normalizePlayerKey(name: string): string {
@@ -24,8 +58,10 @@ export function getPlayerPhotoUrl(name: string, playerId?: string): string | und
   if (custom) return custom
   const rawUrl =
     (playerId && photoMap[playerId]) ? photoMap[playerId] : photoMap[normalizePlayerKey(name)]
-  if (!rawUrl) return undefined
-  return gameAssetUrl(rawUrl)
+  if (rawUrl) return gameAssetUrl(rawUrl)
+  // Sem arquivo empacotado: tenta a foto real do Transfermarkt.
+  const ft = getTmFotoMap().get(normalizePlayerKey(name))
+  return ft ? `${TM_PORTRAIT}${ft}.jpg` : undefined
 }
 
 export function setPlayerPhotoOverride(name: string, dataUrl: string): void {

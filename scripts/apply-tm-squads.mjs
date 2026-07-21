@@ -76,7 +76,7 @@ async function main() {
   if (!existsSync(BACKUP)) await copyFile(SEED, BACKUP)
 
   let clubesComDados = 0, clubesRejeitados = 0, atletas = 0
-  let posCorrigida = 0, nacDefinida = 0, semMatch = 0
+  let posCorrigida = 0, nacDefinida = 0, fotoDefinida = 0, semMatch = 0
   const mudancasPos = []
   const rejeitados = []
 
@@ -107,6 +107,14 @@ async function main() {
         jog.nac = real.nacionalidade
         nacDefinida++
       }
+      // Referencia da foto em forma COMPACTA ("371247-1780359299"), nao a URL
+      // inteira: 20 bytes em vez de ~90 por atleta. A URL e reconstruida em
+      // lib/player-photos.ts. So o miolo varia; repetir o prefixo 30 mil vezes
+      // so incharia o seed que viaja no bundle.
+      if (real.foto) {
+        const m = /portrait\/\w+\/([\d-]+)\.jpg/.exec(real.foto)
+        if (m) { jog.ft = m[1]; fotoDefinida++ }
+      }
     }
   }
 
@@ -118,6 +126,7 @@ async function main() {
   console.log(`atletas nos aceitos     : ${atletas}`)
   console.log(`  posição corrigida     : ${posCorrigida}`)
   console.log(`  nacionalidade real    : ${nacDefinida}`)
+  console.log(`  foto vinculada        : ${fotoDefinida}`)
   console.log(`  sem correspondência   : ${semMatch} (mantêm o que já tinham)`)
   console.log(`\nbackup do original: ${path.basename(BACKUP)}`)
   console.log(`\namostra de clubes rejeitados:`)
