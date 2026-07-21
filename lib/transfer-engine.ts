@@ -33,6 +33,17 @@ const ALL_BF_TEAMS = (importedBF as { teams?: BfTeamRaw[] }).teams ?? []
 const BENCH_POSITION_ORDER = ["GOL", "ZAG", "ZAG", "LD", "LE", "VOL", "MEI", "MEI", "PD", "PE", "ATA", "ATA"]
 
 /**
+ * Overall exibido, comprimindo o topo. O banco importado tem valores até 107;
+ * clampar em 99 criava uma parede de atletas todos "99". Abaixo de 90 passa
+ * intacto; de 90 a 107 mapeia para 90-99, preservando a ordem.
+ */
+function rescaleOverall(raw: number): number {
+  const v = Math.max(1, raw || 1)
+  if (v <= 90) return Math.min(99, v)
+  return Math.min(99, Math.round(90 + (v - 90) * (9 / 17)))
+}
+
+/**
  * Converte a posição da fonte para o código do jogo.
  *
  * O fallback anterior era `return "MEI"`, e o banco importado marca TODO atleta
@@ -304,7 +315,10 @@ export function generateDetailedMarketTargets(
     const { team, player } = candidates[idx]
 
     const position = mapPos(player.posicao, idx)
-    const overall = Math.max(1, Math.min(99, player.overall))
+    // O banco tem overalls ATÉ 107. Clampar em 99 empilhava dezenas de atletas
+    // todos como "99" (relato: "jogadores com 99+ e por aí vai"). Comprime a
+    // faixa 90-107 para 90-99, preservando a ordem e espalhando o topo.
+    const overall = rescaleOverall(player.overall)
     const age = player.idade
     const potBonus = age < 20 ? 8 + Math.floor(rng() * 5) :
                      age < 23 ? 4 + Math.floor(rng() * 4) :

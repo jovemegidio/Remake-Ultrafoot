@@ -698,7 +698,7 @@ export default function MercadoPage() {
 
   const handleGenerateReceivedOffer = () => {
     const before = useGameEngine.getState().transferOffers.length
-    gameEngine.generateAIOffers()
+    gameEngine.generateAIOffers(userTeam?.curto)
     const after = useGameEngine.getState().transferOffers.length
     setMarketNotice(
       after > before

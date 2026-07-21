@@ -1821,7 +1821,7 @@ interface GameEngineState {
 
   // Acoes
   advanceWeek: () => void
-  generateAIOffers: () => void
+  generateAIOffers: (userTeamShort?: string) => void
   respondToOffer: (offerId: number, accept: boolean) => void
   counterTransferOffer: (offerId: number, amount: number, wageCoverage?: number, loanWeeks?: number) => "accepted" | "revised" | "rejected"
   trainPlayer: (playerId: number, attribute: string) => void
@@ -1939,6 +1939,15 @@ interface GameEngineState {
 
   /** Rescinde o contrato pagando multa. `false` = sem caixa suficiente. */
   terminateContract: (playerId: number) => boolean
+
+  /** Muda a POSIÇÃO do atleta (ATA→MEI etc.) — pedido do modal de gerenciamento. */
+  setPlayerPosition: (playerId: number, position: string) => void
+
+  /** Clube do usuário — impede a IA de ofertar por atleta do próprio elenco. */
+  myTeamShort: string
+  /** Atletas listados para EMPRÉSTIMO: a IA passa a fazer ofertas de empréstimo. */
+  loanListedIds: number[]
+  toggleLoanListed: (playerId: number) => void
 
   // Processar fim de temporada (envelhecimento, aposentadoria, jovens da base)
   processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => void
@@ -2339,6 +2348,8 @@ export const useGameEngine = create<GameEngineState>()(
       ticketTier: "normal",
       setPieceTakers: {},
       transferListedIds: [],
+      loanListedIds: [],
+      myTeamShort: "",
 
       // Taticas padrao
       teamTactics: {
@@ -2997,6 +3008,20 @@ export const useGameEngine = create<GameEngineState>()(
           : { transferListedIds: [...current, playerId] }
       }),
 
+      toggleLoanListed: (playerId) => set((s) => {
+        const current = s.loanListedIds ?? []
+        return current.includes(playerId)
+          ? { loanListedIds: current.filter(id => id !== playerId) }
+          : { loanListedIds: [...current, playerId] }
+      }),
+
+      // Mudanca de POSICAO pelo modal do gerenciamento (ATA->MEI, MEI->VOL...).
+      // A FUNCAO dentro da posicao (falso 9, segundo atacante) vive em
+      // playerInstructions.role — sao camadas diferentes.
+      setPlayerPosition: (playerId, position) => set((s) => ({
+        squadPlayers: s.squadPlayers.map(p => p.id === playerId ? { ...p, position } : p),
+      })),
+
       simulateOtherMatches: () => {
         const poissonGoals = (lambda: number): number => {
           const L = Math.exp(-lambda)
@@ -3061,9 +3086,14 @@ export const useGameEngine = create<GameEngineState>()(
         })
       },
       
-      generateAIOffers: () => {
+      generateAIOffers: (userTeamShort?: string) => {
         const state = get()
-        const listed = new Set(state.transferListedIds ?? [])
+        const listed = new Set([...(state.transferListedIds ?? []), ...(state.loanListedIds ?? [])])
+        // O próprio clube NÃO pode ofertar por atleta do próprio elenco (relato:
+        // "recebo proposta do São Paulo por jogador do São Paulo"). AI_TEAMS é
+        // uma lista fixa de clubes BR; se o usuário É um deles, ele saía como
+        // pretendente.
+        const meuTime = (userTeamShort ?? state.myTeamShort ?? "").trim().toUpperCase()
 
         // Jogadores com mercado: overall alto, jovens com potencial ou em boa forma.
         // Quem o técnico colocou na lista de transferíveis entra SEMPRE — é o
@@ -3108,6 +3138,7 @@ export const useGameEngine = create<GameEngineState>()(
             })
             .filter(({ team, verdict }) =>
               verdict.wants &&
+              team.short.toUpperCase() !== meuTime &&
               team.budget >= verdict.maxFee * 0.6 &&
               // Clube grande não busca reserva mediano; clube menor não alcança estrela
               Math.abs(team.prestige - (player.overall + 5)) <= 18
@@ -3119,6 +3150,9 @@ export const useGameEngine = create<GameEngineState>()(
 
           // Empréstimo: jovens fora do time titular ou clube sem caixa para compra
           const wantsLoan =
+            // Listado para empréstimo pelo técnico: a IA vem com proposta de
+            // empréstimo, não de compra (modal do gerenciamento).
+            (state.loanListedIds ?? []).includes(player.id) ||
             (player.age <= 22 && !player.isStarter && Math.random() < 0.55) ||
             buyingTeam.budget < verdict.maxFee
 
@@ -3474,6 +3508,7 @@ export const useGameEngine = create<GameEngineState>()(
           scoutedLeads: [],
           transferOffers: [],
           formation: "4-3-3",
+          myTeamShort: teamShort,
         })
       },
       
