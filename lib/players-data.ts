@@ -439,17 +439,21 @@ function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
   return [...covered, ...fillers]
 }
 
-function getImportedPlayersForTeam(team: Team): Player[] {
+/** Time do seed importado (imported-bf2026) que corresponde a este clube, ou undefined. */
+function getImportedTeamRaw(team: Team): (typeof importedTeams)[number] | undefined {
   const aliases = [
     ...(teamAliasOverrides[team.file_key] ?? []),
     team.nome,
     team.curto,
     team.file_key,
   ]
-
-  const importedTeam = aliases
+  return aliases
     .map((alias) => importedTeamMap.get(normalizeTeamName(alias)))
     .find((match) => match && match.jogadores?.length)
+}
+
+function getImportedPlayersForTeam(team: Team): Player[] {
+  const importedTeam = getImportedTeamRaw(team)
 
   if (!importedTeam?.jogadores?.length) return []
 
@@ -464,6 +468,13 @@ function getImportedPlayersForTeam(team: Team): Player[] {
   // reais, titulares primeiro. O overall/idade vem do seed quando o jogador existe la;
   // para quem e novo, estimamos a partir do proprio elenco do clube (e so isso — nao
   // inventamos posicao nem nome).
+  // aliases saiu para getImportedTeamRaw; findRealSquad ainda precisa deles.
+  const aliases = [
+    ...(teamAliasOverrides[team.file_key] ?? []),
+    team.nome,
+    team.curto,
+    team.file_key,
+  ]
   const realSquad = findRealSquad(team, aliases)
 
   const seedByName = new Map(
@@ -634,12 +645,33 @@ function calibrateSquadRatings(team: Team, players: Player[]): Player[] {
   })
 }
 
+/**
+ * Anexa nacionalidade (e a referência de foto) do seed aos jogadores CURADOS.
+ *
+ * O índice curado (players_br.json) tem prioridade e só guarda nome/pos/idade/
+ * overall — nunca nac/ft. Era por isso que o editor mostrava PAÍS "-" para
+ * Corinthians, São Paulo etc. mesmo com a nacionalidade assada no seed: o
+ * caminho curado ganhava e descartava o dado. Aqui casamos por NOME dentro do
+ * mesmo clube (o seed importado do próprio time) e preenchemos o que falta.
+ */
+function enrichWithSeedNationality(team: Team, players: Player[]): Player[] {
+  if (players.every(p => p.nac)) return players
+  const seedPlayers = getImportedTeamRaw(team)?.jogadores ?? []
+  if (!seedPlayers.length) return players
+  const byName = new Map(seedPlayers.map(p => [normalizeTeamName(p.nome), p]))
+  return players.map(p => {
+    if (p.nac) return p
+    const seed = byName.get(normalizeTeamName(p.nome))
+    return seed?.nac ? { ...p, nac: seed.nac } : p
+  })
+}
+
 export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[] {
   const indexed = getPlayersByTeam(team.nome)
   // Clubes do pool completo não fazem parte de `allTeams` e, portanto, não entram no
   // índice curado criado no boot. Consultar a importação diretamente evita que os quase
   // 3 mil clubes recebam um elenco inteiramente genérico.
-  const sourceRaw = indexed.length ? indexed : getImportedPlayersForTeam(team)
+  const sourceRaw = enrichWithSeedNationality(team, indexed.length ? indexed : getImportedPlayersForTeam(team))
   // Remove quem foi contratado pelo usuário: sem isto o atleta ficava nos DOIS
   // elencos (relato "contratei o Neymar mas ele continua no Santos"). O editor
   // pede `raw` e nesse modo NAO filtramos — ali o objetivo e ver o elenco

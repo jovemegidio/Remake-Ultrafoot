@@ -17,6 +17,7 @@ import {
   ArrowLeftRight,
   RotateCcw,
   Shuffle,
+  Trophy,
   Info,
   Scale,
   Clock,
@@ -31,6 +32,7 @@ import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
+import { artilheiros, cartoes } from "@/lib/leaderboards"
 import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI } from "@/lib/formations"
 import { formatCurrency, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
@@ -113,6 +115,8 @@ export default function ElencoPage() {
   const engineFormation = useGameEngine(s => s.formation)
   const engineSetFormation = useGameEngine(s => s.setFormation)
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
+  const engineMatchResults = useGameEngine(s => s.matchResults)
+  const engineSeason = useGameEngine(s => s.currentSeason)
   const engineSetStarter = useGameEngine(s => s.setStarter)
   const enginePlayerInstructions = useGameEngine(s => s.playerInstructions)
   const engineSetPlayerPosition = useGameEngine(s => s.setPlayerPosition)
@@ -164,6 +168,7 @@ export default function ElencoPage() {
   const [negociacao, setNegociacao] = useState<"renovar" | "rescindir" | null>(null)
   const [showTutorials, setShowTutorials] = useState(false)
   const [showSuggestedSubs, setShowSuggestedSubs] = useState(false)
+  const [showLeaderboards, setShowLeaderboards] = useState(false)
   const [tacticalSaved, setTacticalSaved] = useState(false)
   const [ballInstruction, setBallInstruction] = useState<"sem_bola" | "com_bola">("sem_bola")
   const pitchRef = useRef<HTMLDivElement>(null)
@@ -1711,9 +1716,20 @@ export default function ElencoPage() {
         </div>
         
         <div className="flex items-center gap-1 md:gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowLeaderboards(true)}
+            aria-label="Destaques"
+            title="Artilheiros, assistências e cartões"
+            className="bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white text-[10px] md:text-sm px-2 md:px-3"
+          >
+            <Trophy className="h-3 w-3 md:h-4 md:w-4 mr-0.5 md:mr-1 text-yellow-400" />
+            <span className="hidden sm:inline">Destaques</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowSuggestedSubs(true)}
             aria-label="Substituicoes sugeridas"
             title="Substituicoes sugeridas"
@@ -1852,6 +1868,34 @@ export default function ElencoPage() {
                 ))}
               </div>
 
+              {/* Resumo da temporada: gols, assistências, cartões e jogos, do
+                  seasonStats REAL do engine (era um dado que o jogo acumulava mas
+                  nenhuma tela mostrava no perfil do atleta). */}
+              {(() => {
+                const st = engineSquadPlayers.find(p => p.name === selectedPlayer.name)?.seasonStats
+                const linhas: { label: string; value: number; cor?: string }[] = [
+                  { label: "Jogos", value: st?.matchesPlayed ?? 0 },
+                  { label: "Gols", value: st?.goals ?? 0, cor: "text-[#00ffc8]" },
+                  { label: "Assist.", value: st?.assists ?? 0, cor: "text-sky-300" },
+                  { label: "Amarelos", value: st?.yellowCards ?? 0, cor: "text-yellow-400" },
+                  { label: "Vermelhos", value: st?.redCards ?? 0, cor: "text-red-400" },
+                  { label: selectedPlayer.position === "GOL" ? "S/ sofrer" : "Craque", value: (selectedPlayer.position === "GOL" ? st?.cleanSheets : st?.manOfTheMatch) ?? 0 },
+                ]
+                return (
+                  <div className="mt-4">
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-white/40">Temporada</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {linhas.map(l => (
+                        <div key={l.label} className="rounded-lg bg-white/[0.03] p-2.5 text-center">
+                          <div className={cn("text-lg font-black tabular-nums", l.cor ?? "text-white")}>{l.value}</div>
+                          <div className="text-[9px] uppercase text-white/35">{l.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Lista de transferíveis: anuncia o atleta ao mercado. Antes não
                   havia como colocar ninguém à venda — só dava para reagir a
                   sondagens que a IA fizesse por conta própria. */}
@@ -1983,6 +2027,67 @@ export default function ElencoPage() {
       
       {/* Tutorials Modal */}
       <AnimatePresence>
+        {/* Destaques: artilheiros/assistências/cartões do ELENCO (seasonStats
+            real) e do CAMPEONATO (agregado dos eventos de todas as partidas). */}
+        {showLeaderboards && (() => {
+          const elencoOrd = (campo: "goals" | "assists" | "yellowCards" | "redCards") =>
+            [...engineSquadPlayers]
+              .map(p => ({ nome: p.name, valor: p.seasonStats?.[campo] ?? 0 }))
+              .filter(p => p.valor > 0)
+              .sort((a, b) => b.valor - a.valor)
+              .slice(0, 8)
+          const campArtilheiros = artilheiros(engineMatchResults, engineSeason, 10)
+          const campCartoes = cartoes(engineMatchResults, engineSeason, 10)
+
+          const Bloco = ({ titulo, linhas, sufixo }: { titulo: string; linhas: { nome: string; valor: number }[]; sufixo: string }) => (
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-white/40">{titulo}</div>
+              {linhas.length === 0 ? (
+                <div className="py-3 text-center text-[11px] text-white/25">Sem dados ainda — jogue algumas partidas.</div>
+              ) : (
+                <ol className="space-y-1">
+                  {linhas.map((l, i) => (
+                    <li key={l.nome + i} className="flex items-center gap-2 text-xs">
+                      <span className="w-4 text-right text-white/30 tabular-nums">{i + 1}</span>
+                      <span className="min-w-0 flex-1 truncate text-white/80">{l.nome}</span>
+                      <span className="font-bold tabular-nums text-white">{l.valor}</span>
+                      <span className="text-[9px] text-white/30">{sufixo}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setShowLeaderboards(false)}>
+              <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-[#141414] p-5 scrollbar-game" onClick={e => e.stopPropagation()}>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-white"><Trophy className="h-5 w-5 text-yellow-400" /> Destaques da temporada</h2>
+                  <button onClick={() => setShowLeaderboards(false)} className="rounded-lg p-2 hover:bg-white/10"><X className="h-5 w-5 text-white/60" /></button>
+                </div>
+
+                <div className="mb-2 text-xs font-semibold text-[#00ffc8]">Seu elenco</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Bloco titulo="Artilheiros" linhas={elencoOrd("goals")} sufixo="gols" />
+                  <Bloco titulo="Assistências" linhas={elencoOrd("assists")} sufixo="assist" />
+                  <Bloco titulo="Mais amarelos" linhas={elencoOrd("yellowCards")} sufixo="CA" />
+                  <Bloco titulo="Mais vermelhos" linhas={elencoOrd("redCards")} sufixo="CV" />
+                </div>
+
+                <div className="mb-2 mt-5 text-xs font-semibold text-[#00ffc8]">Campeonato</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Bloco titulo="Artilharia" linhas={campArtilheiros} sufixo="gols" />
+                  <Bloco titulo="Cartões" linhas={campCartoes.map(c => ({ nome: c.nome, valor: c.valor }))} sufixo="pts" />
+                </div>
+                <p className="mt-3 text-center text-[10px] leading-4 text-white/30">
+                  O campeonato conta os gols de todas as partidas já disputadas nesta temporada.
+                </p>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Negociacao de contrato: renovar e rescindir passam por rodadas de
             proposta e contraproposta, em vez de executar direto. */}
         {negociacao && selectedPlayer && (() => {
