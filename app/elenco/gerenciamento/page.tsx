@@ -1015,7 +1015,13 @@ export default function ElencoPage() {
     // deixando uma faixa vazia a esquerda. Agora o conteudo ocupa a largura toda.
     // flex flex-col: sem isso o flex-1 do conteudo nao tinha efeito (o pai nao era flex),
     // o campo parava na altura natural e sobrava uma faixa preta ate o rodape.
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050508]">
+    //
+    // pb-12 md:pb-14: a barra de acoes e `fixed bottom-0 h-12 md:h-14` e SOBREPOE o
+    // layout. Sem reservar essa faixa, a ultima fileira dos reservas ficava
+    // escondida ATRAS da barra — e sem scroll nenhum, porque a lista nao
+    // transborda (medido: painel bottom 757 < viewport 768, scrollH == clientH).
+    // Era isso, nao falta de scroll, o relato das "reservas cortadas".
+    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-12 md:pb-14">
       <GameHeader team={userTeam} />
       
       {/* Match notification toast - only shows during actual match simulations */}
