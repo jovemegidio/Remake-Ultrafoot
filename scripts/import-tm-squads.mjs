@@ -167,16 +167,48 @@ function paisKey(bruto) {
  * silenciosamente pela metade se dando por concluída.
  */
 async function findClubUrl(clubName, clubCountry, buscar) {
-  const q = encodeURIComponent(clubName)
+  // Segunda chance com o nome encurtado: a busca do TM é bem literal e não acha
+  // "Racing Montevideo" (lá é "Racing Club de Montevideo") nem "Barcelona
+  // Guayaquil" (é "Barcelona SC Guayaquil"). Tirando o qualificador final, acha.
+  //
+  // Só que encurtar joga fora justamente a palavra que DISTINGUE: na primeira
+  // versão "Juventus Jaraguá" (SC) casou com o "Clube Atlético Juventus" (SP) —
+  // mesmo país, nome curto único, tudo "válido". Por isso a tentativa curta
+  // exige que o candidato ainda contenha a palavra descartada.
+  const palavras = clubName.trim().split(/\s+/)
+  const tentativas = [{ termo: clubName, exigir: null }]
+  if (palavras.length > 1) {
+    tentativas.push({ termo: palavras.slice(0, -1).join(" "), exigir: nameKey(palavras.at(-1)) })
+  }
+
+  let ultimo = { semClube: true }
+  for (const { termo, exigir } of tentativas) {
+    const r = await tentarBusca(termo, clubName, clubCountry, buscar, exigir)
+    if (r.url) return r
+    if (r.falhou) return r // problema de rede: não gasta a segunda tentativa
+    ultimo = r
+  }
+  return ultimo
+}
+
+async function tentarBusca(termo, clubName, clubCountry, buscar, exigirPalavra) {
+  const q = encodeURIComponent(termo)
   const url = `https://www.transfermarkt.com.br/schnellsuche/ergebnis/schnellsuche?query=${q}`
   const res = await buscar(url)
   if (!res.ok) return { falhou: true }
   const html = await res.text()
 
+  // ⚠️ Busca vazia é RESPOSTA VÁLIDA, não falha. Eu usava a presença de
+  // "Resultados da pesquisa" como prova de que a busca funcionou; quando o TM
+  // não acha nada ele responde "Pesquisa sem resultado?" e aquela string some,
+  // então um vazio legítimo era classificado como bloqueio e o clube voltava
+  // para a fila PARA SEMPRE — 262 clubes girando em erro eterno, 50 de 50
+  // "falhando" com o site respondendo 200 normalmente.
+  if (html.includes("Pesquisa sem resultado")) return { semClube: true }
+
   const i = html.indexOf("Resultados da pesquisa para Clubes")
   if (i < 0) {
-    // Sem NENHUMA seção de resultado: resposta anômala, provavelmente bloqueio.
-    // Com outras seções presentes, a busca funcionou e o clube é que não existe.
+    // Nem resultados, nem o aviso de busca vazia: aí sim a resposta é anômala.
     return html.includes("Resultados da pesquisa") ? { semClube: true } : { falhou: true }
   }
   const secao = html.slice(i, i + 20000)
@@ -206,7 +238,14 @@ async function findClubUrl(clubName, clubCountry, buscar) {
   // ultimo recurso: quando so eles sobravam, o Bayern acabava importando o
   // elenco do sub-17.
   const alvoLimpo = limparNome(clubName)
-  const elegiveis = (mesmoPais.length > 0 ? mesmoPais : candidatos).filter(principal)
+  let elegiveis = (mesmoPais.length > 0 ? mesmoPais : candidatos).filter(principal)
+  // Busca encurtada: o candidato tem de trazer de volta a palavra que eu tirei,
+  // senão "Juventus Jaraguá" vira o "Juventus" de São Paulo.
+  if (exigirPalavra) {
+    elegiveis = elegiveis.filter(c =>
+      [...chavesCandidato(c)].some(k => k.includes(exigirPalavra)),
+    )
+  }
   if (elegiveis.length === 0) return { semClube: true }
 
   // Nome idêntico (já sem sigla de clube, e conferindo também o slug).

@@ -338556,7 +338556,506 @@
      "nacionalidade": "França"
     }
    ]
+  },
+  "ARSENALS|arsenal de sarandi": {
+   "v": 2,
+   "curto": "ARSENALS",
+   "nome": "Arsenal de Sarandí",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SANTOSXP|santos de nasca": {
+   "v": 2,
+   "curto": "SANTOSXP",
+   "nome": "Santos de Nasca",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BARCELON|barcelona de ilheus": {
+   "v": 2,
+   "curto": "BARCELON",
+   "nome": "Barcelona de Ilhéus",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BEZIERSX|avenir beziers": {
+   "v": 2,
+   "curto": "BEZIERSX",
+   "nome": "Avenir Béziers",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "CONSOLAT|consolat marseille": {
+   "v": 2,
+   "curto": "CONSOLAT",
+   "nome": "Consolat Marseille",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "HAVANTXI|havant waterlooville": {
+   "v": 2,
+   "curto": "HAVANTXI",
+   "nome": "Havant & Waterlooville",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "QUEVILLY|amable et micheline lozai": {
+   "v": 2,
+   "curto": "QUEVILLY",
+   "nome": "Amable-et-Micheline-Lozai",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LECCEXIT|ettore giardiniero": {
+   "v": 2,
+   "curto": "LECCEXIT",
+   "nome": "Ettore Giardiniero",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "BARCELON|barcelona guayaquil": {
+   "v": 2,
+   "curto": "BARCELON",
+   "nome": "Barcelona Guayaquil",
+   "url": "https://www.transfermarkt.com.br/barcelona-sc-guayaquil/startseite/verein/3523",
+   "players": [
+    {
+     "tmId": "308226",
+     "nome": "José Contreras",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Venezuela"
+    },
+    {
+     "tmId": "400942",
+     "nome": "José Gabriel Cevallos",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "591965",
+     "nome": "José Angulo",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "819709",
+     "nome": "Kleber Pinargote",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "875118",
+     "nome": "Álex Rangel",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "477041",
+     "nome": "Gustavo Vallecilla",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "87360",
+     "nome": "Javier Báez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Paraguai"
+    },
+    {
+     "tmId": "1051820",
+     "nome": "Jhonnier Chalá",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "680511",
+     "nome": "Jonnathan Mina",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "545547",
+     "nome": "Jonathan Perlaza",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "391486",
+     "nome": "Bryan Carabalí",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "400961",
+     "nome": "Byron Castillo",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "473096",
+     "nome": "Willian Vargas",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "310639",
+     "nome": "Jefferson Intriago",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "909738",
+     "nome": "Matías Lugo",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "437842",
+     "nome": "Jhonny Quiñónez",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1234675",
+     "nome": "Jordan Medina",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1241107",
+     "nome": "Jandry Gómez",
+     "posicaoTM": "Meia Direita",
+     "posicao": "MEI",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "271438",
+     "nome": "Tomás Martínez",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1257416",
+     "nome": "Johan García",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "621170",
+     "nome": "Luis Cano",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "370203",
+     "nome": "Joao Rojas",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1048907",
+     "nome": "Erick Mendoza",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1143336",
+     "nome": "Ronald Perlaza",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "237061",
+     "nome": "Héctor Villalba",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Paraguai"
+    },
+    {
+     "tmId": "656117",
+     "nome": "Marcos Mejía",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "340179",
+     "nome": "Sergio Díaz",
+     "posicaoTM": "Seg. Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Paraguai"
+    },
+    {
+     "tmId": "569205",
+     "nome": "Tomás Rodríguez",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Panamá"
+    },
+    {
+     "tmId": "1050373",
+     "nome": "Allen Obando",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "801881",
+     "nome": "Sergio Núñez",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "1521837",
+     "nome": "Jefferson Wila",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "92693",
+     "nome": "Darío Benedetto",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "1161480",
+     "nome": "Richard Borja",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    },
+    {
+     "tmId": "1235130",
+     "nome": "Klever Caicedo",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Equador"
+    }
+   ]
+  },
+  "JUVENTUS|juventus jaragua": {
+   "v": 2,
+   "curto": "JUVENTUS",
+   "nome": "Juventus Jaraguá",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "LUCCHESE|port elisa": {
+   "v": 2,
+   "curto": "LUCCHESE",
+   "nome": "Port Elisa",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "TOLEDOXE|toledo castela mancha": {
+   "v": 2,
+   "curto": "TOLEDOXE",
+   "nome": "Toledo Castela-Mancha",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "KICKERSO|kickers offenbacher": {
+   "v": 2,
+   "curto": "KICKERSO",
+   "nome": "Kickers Offenbacher",
+   "players": [],
+   "naoEncontrado": true
+  },
+  "SPORTING|real sporting gijon": {
+   "v": 2,
+   "curto": "SPORTING",
+   "nome": "Real Sporting Gijón",
+   "url": "https://www.transfermarkt.com.br/sporting-gijon/startseite/verein/2448",
+   "players": [
+    {
+     "tmId": "246335",
+     "nome": "Rubén Yáñez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "711367",
+     "nome": "Egoitz Arana",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "365947",
+     "nome": "Emanuel Gularte",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai"
+    },
+    {
+     "tmId": "825184",
+     "nome": "Diego Sánchez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "340339",
+     "nome": "Jorge Sáenz",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "446516",
+     "nome": "Pablo Vázquez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "834488",
+     "nome": "Aimar Duñabeitia",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "620163",
+     "nome": "Yann Kembo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França"
+    },
+    {
+     "tmId": "636300",
+     "nome": "Pablo García",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "557146",
+     "nome": "Guille Rosas",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "364237",
+     "nome": "Mamadou Loum",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Senegal"
+    },
+    {
+     "tmId": "719722",
+     "nome": "Nacho Martín",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1064469",
+     "nome": "Manu Rodríguez",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "268167",
+     "nome": "Àlex Corredera",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "509483",
+     "nome": "Jesús Bernal",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "505308",
+     "nome": "César Gelabert",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "580525",
+     "nome": "Gaspar Campos",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "614464",
+     "nome": "Nikita Iosifov",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Rússia"
+    },
+    {
+     "tmId": "719726",
+     "nome": "Dani Queipo",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "628621",
+     "nome": "Jonathan Dubasin",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Espanha"
+    },
+    {
+     "tmId": "1000675",
+     "nome": "Alejo Sarco",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina"
+    },
+    {
+     "tmId": "332305",
+     "nome": "Juan Otero",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Colômbia"
+    },
+    {
+     "tmId": "938669",
+     "nome": "Amadou Coundoul",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal"
+    }
+   ]
   }
  },
- "updatedAt": "2026-07-21T11:15:43.396Z"
+ "updatedAt": "2026-07-21T11:31:42.923Z"
 }
