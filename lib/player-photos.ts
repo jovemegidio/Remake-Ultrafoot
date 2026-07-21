@@ -10,9 +10,16 @@ const photoMap = (manifest as { entries: Record<string, string> }).entries
 
 // ─── Fotos reais do Transfermarkt ─────────────────────────────────────────────
 // O seed principal carrega `ft` ("371247-1780359299"), assado por
-// scripts/apply-tm-squads.mjs com casamento exato de nome DENTRO do clube. A URL
-// e remota (peso zero no instalador); se estiver offline, o onError do
-// PlayerAvatar cai no avatar de iniciais — nada quebra.
+// scripts/apply-tm-squads.mjs com casamento exato de nome DENTRO do clube.
+//
+// OFFLINE-FIRST: scripts/download-tm-photos.mjs baixa as fotos usadas pelo jogo
+// para public/jogadores/tm (que ja e resource do Tauri) e registra o que esta
+// em disco em tm-fotos-local.json. So apontamos para arquivo local se ele esta
+// no manifesto — um download que falhou cai na URL remota, nunca em imagem
+// quebrada. Sem internet E sem arquivo, o onError do PlayerAvatar mostra as
+// iniciais.
+import fotosLocais from "@/data/seeds/tm-fotos-local.json"
+const TM_LOCAL = new Set((fotosLocais as { fts: string[] }).fts)
 const TM_PORTRAIT = "https://img.a.transfermarkt.technology/portrait/medium/"
 
 interface SeedPlayerFt { nome: string; ft?: string }
@@ -59,9 +66,11 @@ export function getPlayerPhotoUrl(name: string, playerId?: string): string | und
   const rawUrl =
     (playerId && photoMap[playerId]) ? photoMap[playerId] : photoMap[normalizePlayerKey(name)]
   if (rawUrl) return gameAssetUrl(rawUrl)
-  // Sem arquivo empacotado: tenta a foto real do Transfermarkt.
+  // Sem arquivo empacotado: foto real do Transfermarkt — local (offline) quando
+  // baixada; remota como reserva.
   const ft = getTmFotoMap().get(normalizePlayerKey(name))
-  return ft ? `${TM_PORTRAIT}${ft}.jpg` : undefined
+  if (!ft) return undefined
+  return TM_LOCAL.has(ft) ? gameAssetUrl(`/jogadores/tm/${ft}.jpg`) : `${TM_PORTRAIT}${ft}.jpg`
 }
 
 export function setPlayerPhotoOverride(name: string, dataUrl: string): void {
