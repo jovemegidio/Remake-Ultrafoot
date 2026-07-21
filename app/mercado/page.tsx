@@ -728,7 +728,9 @@ export default function MercadoPage() {
   return (
     <div className="relative h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
       {/* Background stadium image */}
-      <div className="absolute inset-0 md:ml-16 pointer-events-none">
+      {/* Sem md:ml-16: reservava 64px para uma sidebar inexistente e deixava uma
+          faixa sem fundo na esquerda a partir do breakpoint md. */}
+      <div className="absolute inset-0 pointer-events-none">
         <Image
           src="/images/market-transfer-background.png"
           alt=""

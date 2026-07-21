@@ -1786,9 +1786,30 @@ export function useGameManager() {
     const orderedPending = seasonCalendarRef.current.fixtures
       .filter(fixture => fixture.isUserMatch && !fixture.played)
       .sort((a, b) => a.week - b.week || a.id - b.id)
-    const fixtureForWeek = orderedPending.find(fixture =>
-      fixture.homeTeam.curto === homeTeam && fixture.awayTeam.curto === awayTeam,
-    ) ?? seasonCalendarRef.current.nextUserMatch
+    /**
+     * A qual confronto do calendario este placar pertence.
+     *
+     * ⚠️ O fallback era `?? nextUserMatch` INCONDICIONAL, e ele atribuia o placar
+     * a um jogo entre OUTROS clubes. Relato: o jogador venceu COR 2x0 SAN e o
+     * jogo anunciou "PON 1x1 COR simulada" — o resultado tinha sido gravado sob
+     * a chave de PON x COR, entao o confronto real nunca foi marcado como
+     * disputado e voltou como pendente para o motor resolver sozinho. O clube
+     * aparecia duas vezes na mesma rodada.
+     *
+     * Agora: par exato, depois o mesmo par invertido (mando trocado), e o
+     * fallback so vale se envolver OS MESMOS DOIS CLUBES. Sem isso preferimos
+     * uma chave avulsa a atribuir o jogo a quem nao o disputou.
+     */
+    const mesmoConfronto = (f: { homeTeam: { curto: string }; awayTeam: { curto: string } }) => {
+      const par = new Set([f.homeTeam.curto, f.awayTeam.curto])
+      return par.has(homeTeam) && par.has(awayTeam)
+    }
+    const fixtureForWeek =
+      orderedPending.find(f => f.homeTeam.curto === homeTeam && f.awayTeam.curto === awayTeam)
+      ?? orderedPending.find(mesmoConfronto)
+      ?? (seasonCalendarRef.current.nextUserMatch && mesmoConfronto(seasonCalendarRef.current.nextUserMatch)
+        ? seasonCalendarRef.current.nextUserMatch
+        : null)
     const targetWeek = fixtureForWeek?.week ?? currentState.week + 1
     const fixtureKey = fixtureForWeek
       ? getCalendarFixtureKey(fixtureForWeek, currentState.season)

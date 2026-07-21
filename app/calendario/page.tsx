@@ -308,7 +308,9 @@ export default function CalendarioPage() {
   )}
 
   {/* Background Image - Futuristic Grid */}
-  <div className="absolute inset-0 md:ml-16">
+  {/* Sem md:ml-16: a margem reservava 64px para uma sidebar que NAO existe nesta
+      tela, deixando uma faixa sem fundo na esquerda a partir do breakpoint md. */}
+  <div className="absolute inset-0">
   <Image
   src="/images/pre-jogo/in-game-6.png"
   alt="Calendar Background"

@@ -1,12 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { GameHeader } from "@/components/game-header"
-import { useUserTeam } from "@/lib/save-system"
+import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useNotifications, type Notification } from "@/components/notifications-system"
+import { calcSeasonObjective, generateBoardEvaluation, generateBoardObjectiveMessage } from "@/lib/board-engine"
+import { detectEvents, respondToEvent, type DressingRoomEvent } from "@/lib/dressing-room-engine"
+import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
-import { Bell, CheckCheck, Inbox, MessagesSquare, Trash2 } from "lucide-react"
+import { Bell, Building2, CheckCheck, MessagesSquare, Trash2, Users } from "lucide-react"
+
+type Aba = "notificacoes" | "diretoria" | "atletas"
 
 /**
  * Central de Notificações — página, não mais painel lateral.
@@ -21,6 +26,41 @@ export default function NotificacoesPage() {
   const { team: userTeam } = useUserTeam()
   const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotifications()
   const [selecionada, setSelecionada] = useState<Notification | null>(null)
+  const [aba, setAba] = useState<Aba>("notificacoes")
+  const { state: saveState, replaceState } = useGameState()
+  const { standings, currentWeek } = useGameManager()
+
+  /**
+   * Conversas com a DIRETORIA e com os ATLETAS.
+   *
+   * Nao inventei um sistema de mensagens: board-engine e dressing-room-engine ja
+   * geravam esse conteudo a partir do estado real da carreira e nada os exibia.
+   * A pagina /mensagens que existia mostra uma lista FIXA, escrita a mao, igual
+   * para todo mundo — por isso nao a reaproveitei aqui.
+   */
+  const mensagensDiretoria = useMemo(() => {
+    if (!saveState.selectedTeamShort) return []
+    const objetivo = calcSeasonObjective(userTeam)
+    const posicao = Math.max(1, standings.findIndex(s => s.teamShort === userTeam.curto) + 1)
+    const rodada = Math.max(1, currentWeek)
+    return [
+      generateBoardObjectiveMessage(userTeam, saveState.managerName || "Tecnico", saveState.season, objetivo),
+      // A avaliacao so existe nas rodadas 10/20/30 — fora delas o motor devolve null.
+      generateBoardEvaluation(
+        userTeam, saveState.managerName || "Tecnico", saveState.season,
+        rodada, posicao, standings.length || 20, objetivo,
+      ),
+    ].filter(Boolean)
+  }, [userTeam, saveState.selectedTeamShort, saveState.managerName, saveState.season, standings, currentWeek])
+
+  const eventosVestiario = useMemo<DressingRoomEvent[]>(() => {
+    if (!saveState.selectedTeamShort) return []
+    return detectEvents(saveState, currentWeek)
+  }, [saveState, currentWeek])
+
+  const responderVestiario = (eventId: string, responseId: string) => {
+    replaceState(respondToEvent(saveState, eventId, responseId))
+  }
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -84,6 +124,95 @@ export default function NotificacoesPage() {
           </div>
         </div>
 
+        {/* Abas: a Central so mostrava avisos do sistema (autosave, partida
+            simulada). Diretoria e atletas ja tinham conteudo gerado pelos motores
+            e nenhuma tela os exibia. */}
+        <div className="flex gap-1 border-b border-white/[0.04] bg-[#0d0d0d] px-4 pb-2">
+          {([
+            { id: "notificacoes", rotulo: "Avisos", icone: Bell, contagem: notifications.length },
+            { id: "diretoria", rotulo: "Diretoria", icone: Building2, contagem: mensagensDiretoria.length },
+            { id: "atletas", rotulo: "Atletas", icone: Users, contagem: eventosVestiario.length },
+          ] as const).map(({ id, rotulo, icone: Icone, contagem }) => (
+            <button
+              key={id}
+              onClick={() => { setAba(id); setSelecionada(null) }}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+                aba === id ? "bg-[#00ffc8]/10 text-[#00ffc8]" : "text-white/45 hover:bg-white/5 hover:text-white/70",
+              )}
+            >
+              <Icone className="h-3.5 w-3.5" />
+              {rotulo}
+              {contagem > 0 && (
+                <span className={cn(
+                  "rounded-full px-1.5 text-[10px] font-black",
+                  aba === id ? "bg-[#00ffc8] text-black" : "bg-white/10 text-white/60",
+                )}>
+                  {contagem}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {aba === "diretoria" && (
+          <div className="flex-1 space-y-3 overflow-y-auto p-4 scrollbar-game">
+            {mensagensDiretoria.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-white/35">
+                <Building2 className="h-12 w-12" />
+                <p className="text-sm">A diretoria ainda não se manifestou nesta temporada.</p>
+              </div>
+            ) : mensagensDiretoria.map(msg => msg && (
+              <article key={msg.id} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-amber-400/80">
+                  <Building2 className="h-3.5 w-3.5" />
+                  {msg.from}
+                </div>
+                <h3 className="mt-1.5 text-base font-bold text-white">{msg.subject}</h3>
+                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/65">{msg.fullContent}</p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {aba === "atletas" && (
+          <div className="flex-1 space-y-3 overflow-y-auto p-4 scrollbar-game">
+            {eventosVestiario.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-white/35">
+                <Users className="h-12 w-12" />
+                <p className="text-sm">Vestiário tranquilo. Ninguém pediu conversa.</p>
+              </div>
+            ) : eventosVestiario.map(ev => (
+              <article key={ev.id} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[#00ffc8]/80">
+                  <MessagesSquare className="h-3.5 w-3.5" />
+                  Vestiário
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-white/80">{ev.description}</p>
+                {/* As respostas mexem de verdade na moral do elenco (respondToEvent). */}
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  {ev.options.map(op => (
+                    <button
+                      key={op.id}
+                      onClick={() => responderVestiario(ev.id, op.id)}
+                      className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left text-xs text-white/75 transition-colors hover:border-[#00ffc8]/40 hover:text-white"
+                    >
+                      <span className="block font-semibold">{op.text}</span>
+                      <span className={cn(
+                        "mt-0.5 block text-[10px]",
+                        op.effects.moralDelta >= 0 ? "text-emerald-400/70" : "text-red-400/70",
+                      )}>
+                        {op.effects.moralDelta >= 0 ? "+" : ""}{op.effects.moralDelta} moral
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {aba === "notificacoes" && (
         <div className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
           {/* Lista */}
           <div className="overflow-y-auto pr-1 scrollbar-game">
@@ -152,17 +281,20 @@ export default function NotificacoesPage() {
               </div>
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-4 rounded-2xl border border-white/[0.05] bg-[#0c0c10] p-8 text-center">
-                <Inbox className="h-10 w-10 text-white/15" />
-                <p className="text-sm text-white/40">Selecione uma notificação para ler</p>
+                <Bell className="h-10 w-10 text-white/15" />
+                <p className="text-sm text-white/40">Selecione um aviso para ler</p>
+                {/* Os botoes daqui mandavam para /mensagens, uma lista escrita a
+                    mao e igual para todo mundo. Diretoria e atletas agora sao
+                    abas desta propria tela, com conteudo da sua carreira. */}
                 <div className="flex flex-wrap justify-center gap-2">
                   <button
-                    onClick={() => router.push("/mensagens")}
+                    onClick={() => setAba("diretoria")}
                     className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:text-white"
                   >
-                    <Inbox className="h-3.5 w-3.5" />Caixa de entrada
+                    <Building2 className="h-3.5 w-3.5" />Diretoria
                   </button>
                   <button
-                    onClick={() => router.push("/mensagens?tab=atletas")}
+                    onClick={() => setAba("atletas")}
                     className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:text-white"
                   >
                     <MessagesSquare className="h-3.5 w-3.5" />Conversas com atletas
@@ -172,6 +304,7 @@ export default function NotificacoesPage() {
             )}
           </div>
         </div>
+        )}
       </main>
     </div>
   )

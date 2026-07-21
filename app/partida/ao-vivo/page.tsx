@@ -540,6 +540,13 @@ export default function PartidaAoVivoPage() {
     if (!userResult) return []
     return daTemporada
       .filter(r => r.week === userResult.week && r.competition === userResult.competition)
+      // Um clube joga UMA vez por rodada. Se outro resultado da mesma rodada
+      // envolver o meu time, ele nao pode ser meu — e uma partida que o motor
+      // resolveu por engano — e mostrar os dois foi o relato "ao terminar a
+      // partida, exibe o resultado de outra partida". A que vale e a que acabou
+      // de ser disputada.
+      .filter(r => r === userResult || (r.homeTeam !== targetHome && r.homeTeam !== targetAway
+        && r.awayTeam !== targetHome && r.awayTeam !== targetAway))
       .map(r => ({
         competition: r.competition,
         homeTeam: r.homeTeam,
