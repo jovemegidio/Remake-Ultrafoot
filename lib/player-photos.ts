@@ -1,5 +1,6 @@
 import manifest from "@/data/seeds/faces-manifest.json"
 import importedBF from "@/data/seeds/imported-bf2026.json"
+import realSquadsTM from "@/data/seeds/real-squads-tm.json"
 import { gameAssetUrl } from "@/lib/game-asset"
 import { storeGet, storeSet } from "@/lib/persistent-store"
 
@@ -39,15 +40,21 @@ let tmFotoMap: Map<string, string | null> | null = null
 function getTmFotoMap(): Map<string, string | null> {
   if (tmFotoMap) return tmFotoMap
   tmFotoMap = new Map()
+  const add = (nome: string, ft?: string) => {
+    if (!ft) return
+    const k = normalizePlayerKey(nome)
+    if (!k) return
+    const prev = tmFotoMap!.get(k)
+    if (prev === undefined) tmFotoMap!.set(k, ft)
+    else if (prev !== ft) tmFotoMap!.set(k, null) // nome ambiguo: nao arrisca
+  }
+  // Elencos REAIS primeiro: e a foto do roster que o jogo de fato usa.
+  for (const roster of Object.values(realSquadsTM as Record<string, { nome: string; ft?: string }[]>)) {
+    for (const p of roster) add(p.nome, p.ft)
+  }
+  // Seed importado depois (clubes ficticios que nao viraram elenco real).
   for (const team of ((importedBF as { teams?: SeedTeamFt[] }).teams) ?? []) {
-    for (const j of team.jogadores ?? []) {
-      if (!j.ft) continue
-      const k = normalizePlayerKey(j.nome)
-      if (!k) continue
-      const prev = tmFotoMap.get(k)
-      if (prev === undefined) tmFotoMap.set(k, j.ft)
-      else if (prev !== j.ft) tmFotoMap.set(k, null)
-    }
+    for (const j of team.jogadores ?? []) add(j.nome, j.ft)
   }
   return tmFotoMap
 }

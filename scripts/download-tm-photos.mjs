@@ -21,6 +21,7 @@ import { existsSync } from "node:fs"
 import path from "node:path"
 
 const SEED = path.resolve("data/seeds/imported-bf2026.json")
+const REAL = path.resolve("data/seeds/real-squads-tm.json")
 const DIR = path.resolve("public/jogadores")
 const MANIFEST = path.resolve("data/seeds/tm-fotos-local.json")
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
@@ -33,6 +34,12 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 async function main() {
   const seed = JSON.parse(await readFile(SEED, "utf8"))
   const fts = new Set()
+  // Elencos REAIS: e o roster que o jogo usa nos ~1.790 clubes reais.
+  try {
+    const real = JSON.parse(await readFile(REAL, "utf8"))
+    for (const roster of Object.values(real)) for (const p of roster) if (p.ft) fts.add(p.ft)
+  } catch { /* sem elencos reais ainda */ }
+  // Seed: clubes ficticios que seguem pelo caminho antigo.
   for (const t of seed.teams ?? []) for (const j of t.jogadores ?? []) if (j.ft) fts.add(j.ft)
 
   await mkdir(DIR, { recursive: true })
