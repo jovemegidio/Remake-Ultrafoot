@@ -1683,6 +1683,14 @@ export const ANALYSIS_NEGATIVES: Omit<AnalysisPoint, "relatedPlayers">[] = [
 ]
 
 // Sistema de Ofertas da IA
+export interface MarketInterest {
+  id: string
+  playerId: number
+  playerName: string
+  club: string
+  week: number
+}
+
 export interface TransferOffer {
   id: number
   playerId: number
@@ -1784,6 +1792,8 @@ interface GameEngineState {
   // Ofertas de transferencia
   transferOffers: TransferOffer[]
   pendingIncomingTransfers: PendingIncomingTransfer[]
+  /** Sondagens: clubes de olho num jogador meu, antes de uma proposta formal. */
+  marketInterests: MarketInterest[]
   
   // Taticas
   teamTactics: TeamTactics
@@ -2331,6 +2341,7 @@ export const useGameEngine = create<GameEngineState>()(
       topScorers: [],
       
       transferOffers: [],
+      marketInterests: [],
       pendingIncomingTransfers: [],
 
       // Panelinhas
@@ -3193,8 +3204,33 @@ export const useGameEngine = create<GameEngineState>()(
           if (newOffers.length >= 2) break // máx 2 ofertas novas por semana
         }
 
-        if (newOffers.length > 0) {
-          set((s) => ({ transferOffers: [...s.transferOffers, ...newOffers] }))
+        // SONDAGENS: alem das ofertas formais, alguns clubes so "ficam de olho".
+        // Um jogador atraente que nao recebeu proposta esta semana pode virar
+        // sondagem — o aviso antecipa que uma oferta pode chegar. Mantem no
+        // maximo as 8 mais recentes para nao inchar o save.
+        const novasSondagens: MarketInterest[] = []
+        const jaSondados = new Set((state.marketInterests ?? []).map(i => i.playerId))
+        for (const player of marketable) {
+          if (pendingIds.has(player.id) || jaSondados.has(player.id)) continue
+          if (player.overall < 74) continue
+          if (Math.random() > 0.12) continue
+          const club = AI_TEAMS[Math.floor(Math.random() * AI_TEAMS.length)]
+          novasSondagens.push({
+            id: `interest-${state.currentSeason}-${state.currentWeek}-${player.id}`,
+            playerId: player.id, playerName: player.name,
+            club: typeof club === "string" ? club : (club?.name ?? "Um clube"),
+            week: state.currentWeek,
+          })
+          if (novasSondagens.length >= 2) break
+        }
+
+        if (newOffers.length > 0 || novasSondagens.length > 0) {
+          set((s) => ({
+            transferOffers: newOffers.length ? [...s.transferOffers, ...newOffers] : s.transferOffers,
+            marketInterests: novasSondagens.length
+              ? [...(s.marketInterests ?? []), ...novasSondagens].slice(-8)
+              : s.marketInterests,
+          }))
         }
       },
       
@@ -3514,6 +3550,7 @@ export const useGameEngine = create<GameEngineState>()(
           postMatchAnalyses: [],
           scoutedLeads: [],
           transferOffers: [],
+      marketInterests: [],
           formation: "4-3-3",
           myTeamShort: teamShort,
         })

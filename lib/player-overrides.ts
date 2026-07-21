@@ -28,8 +28,19 @@ export interface PlayerOverride {
   physical?: number
   preferredFoot?: "Direita" | "Esquerda" | "Ambidestro"
   reputation?: "normal" | "estrela" | "top_mundial"
+  /** Nacionalidade editada manualmente (sobrepoe a do seed). */
+  nac?: string
   traits?: string[]
   faceDataUrl?: string
+}
+
+/**
+ * Bonus de atributos por reputacao. Estrela e top mundial nao sao so um selo —
+ * dao um salto real de qualidade (pedido: "melhora os atributos
+ * significativamente"). Aplicado sobre os atributos-base do atleta.
+ */
+export function reputationBonus(rep?: "normal" | "estrela" | "top_mundial"): number {
+  return rep === "top_mundial" ? 10 : rep === "estrela" ? 5 : 0
 }
 
 /** Atributos padrao derivados do overall + posicao (mesma logica do motor de partida). */

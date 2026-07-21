@@ -732,6 +732,7 @@ function applyPlayerOverrides(fileKey: string, players: Player[]): Player[] {
       ...(ov.physical != null ? { physical: ov.physical } : {}),
       ...(ov.preferredFoot ? { preferredFoot: ov.preferredFoot } : {}),
       ...(ov.reputation ? { reputation: ov.reputation } : {}),
+      ...(ov.nac ? { nac: ov.nac } : {}),
       ...(ov.traits ? { traits: ov.traits } : {}),
     }
   })

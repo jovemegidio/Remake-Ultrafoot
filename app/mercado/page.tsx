@@ -44,6 +44,7 @@ import { formatCurrency } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { markDeparted, hasDeparted } from "@/lib/departed-players"
+import { useNotifications } from "@/components/notifications-system"
 import {
   AVAILABLE_SCOUTS,
   useGameEngine,
@@ -196,6 +197,7 @@ function marketPlayerToEnginePlayer(p: Player): EnginePlayer {
 
 export default function MercadoPage() {
   const { team: userTeam } = useUserTeam()
+  const { addNotification } = useNotifications()
   const { state: careerState, setState: setCareerState } = useGameState()
   const t = useTranslation()
   const gameEngine = useGameEngine()
@@ -711,6 +713,17 @@ export default function MercadoPage() {
 
     const proposalStatus: SentProposalStatus = accepted ? "aceita" : "rejeitada"
     announceOnlineAction("transfer_decision", { player: player.name, type, offer, accepted, rejectedBy: rejectedBy ?? null })
+
+    // Aviso na Central da resposta à MINHA proposta (pedido). A decisão é
+    // sincrona aqui, entao notificamos direto — a ponte global cuida das
+    // propostas RECEBIDAS e das sondagens.
+    addNotification({
+      type: "transfer", priority: accepted ? "high" : "medium",
+      title: accepted ? `Proposta aceita: ${player.name}` : `Proposta recusada: ${player.name}`,
+      message: accepted
+        ? `${player.team?.nome ?? "O clube"} aceitou sua proposta por ${player.name}. Conclua a contratação.`
+        : `${rejectedBy ?? player.team?.nome ?? "O clube"} recusou sua proposta por ${player.name}.`,
+    })
 
     setSentProposals((current) => [
       {

@@ -30,7 +30,7 @@ import {
 } from "@/lib/teams-data"
 import { allInternationalTeams } from "@/lib/international-teams"
 import { getPlayersForTeam } from "@/lib/players-data"
-import { getPlayerOverride, setPlayerOverride, defaultPlayerAttributes } from "@/lib/player-overrides"
+import { getPlayerOverride, setPlayerOverride, defaultPlayerAttributes, reputationBonus } from "@/lib/player-overrides"
 import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
 import { isTauri } from "@/lib/game-asset"
 import { compressImageDataUrl } from "@/lib/image-utils"
@@ -186,7 +186,7 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
       nome: ov?.nome ?? p.nome,
       posicao: pos,
       // Nacionalidade real do seed (Transfermarkt); "-" só quando desconhecida.
-      pais: p.nac ?? "-",
+      pais: ov?.nac ?? p.nac ?? "-",
       idade: ov?.idade ?? p.idade,
       overall: base,
       caracteristica: "-",
@@ -229,11 +229,30 @@ export default function EditarPage() {
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)
   // Edicao de jogador (nome/posicao/overall) — persiste via player-overrides.
   const [editingPlayer, setEditingPlayer] = useState<EditorPlayer | null>(null)
-  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, preferredFoot: "Direita" as "Direita" | "Esquerda" | "Ambidestro", reputation: "normal" as "normal" | "estrela" | "top_mundial", traits: [] as string[], faceDataUrl: "", pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
+  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, nac: "", preferredFoot: "Direita" as "Direita" | "Esquerda" | "Ambidestro", reputation: "normal" as "normal" | "estrela" | "top_mundial", traits: [] as string[], faceDataUrl: "", pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
   const openPlayerEdit = (p: EditorPlayer) => {
     setEditingPlayer(p)
     const ov = selectedTeam ? getPlayerOverride(selectedTeam.file_key, p.originalName) : null
-    setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, preferredFoot: ov?.preferredFoot ?? "Direita", reputation: ov?.reputation ?? "normal", traits: ov?.traits ?? [], faceDataUrl: ov?.faceDataUrl ?? "", pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
+    setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, nac: ov?.nac ?? p.pais ?? "", preferredFoot: ov?.preferredFoot ?? "Direita", reputation: ov?.reputation ?? "normal", traits: ov?.traits ?? [], faceDataUrl: ov?.faceDataUrl ?? "", pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
+  }
+
+  /** Aplica reputacao recomputando atributos a partir da base, para trocar de
+   *  reputacao ser reversivel (estrela<->top<->normal sem acumular). */
+  const aplicarReputacao = (rep: "normal" | "estrela" | "top_mundial") => {
+    if (!editingPlayer) return
+    const bonus = reputationBonus(rep)
+    const clamp = (n: number) => Math.max(40, Math.min(99, n))
+    setPDraft(d => ({
+      ...d,
+      reputation: rep,
+      overall: clamp(editingPlayer.overall + bonus),
+      pace: clamp(editingPlayer.pace + bonus),
+      shooting: clamp(editingPlayer.shooting + bonus),
+      passing: clamp(editingPlayer.passing + bonus),
+      dribbling: clamp(editingPlayer.dribbling + bonus),
+      defending: clamp(editingPlayer.defending + bonus),
+      physical: clamp(editingPlayer.physical + bonus),
+    }))
   }
   const [activeTab, setActiveTab] = useState<"principal" | "juniores" | "dados">("principal")
   useEffect(() => setSelectedPlayerIndex(0), [activeTab])
@@ -1329,10 +1348,19 @@ export default function EditarPage() {
                 </div>
                 <div>
                   <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Reputação</label>
-                  <select value={pDraft.reputation} onChange={e => setPDraft(d => ({ ...d, reputation: e.target.value as typeof d.reputation }))} className="w-full rounded-lg border border-white/10 bg-[#14252a] px-3 py-2 text-sm text-white">
-                    <option value="normal">Normal</option><option value="estrela">Estrela</option><option value="top_mundial">Top mundial</option>
+                  <select value={pDraft.reputation} onChange={e => aplicarReputacao(e.target.value as typeof pDraft.reputation)} className="w-full rounded-lg border border-white/10 bg-[#14252a] px-3 py-2 text-sm text-white">
+                    <option value="normal">Normal</option><option value="estrela">Estrela (+5)</option><option value="top_mundial">Top mundial (+10)</option>
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Nacionalidade</label>
+                <input
+                  value={pDraft.nac}
+                  onChange={e => setPDraft(d => ({ ...d, nac: e.target.value }))}
+                  placeholder="Ex: Brasil, Argentina, França..."
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:border-[#00ffc8]/50 focus:outline-none"
+                />
               </div>
 
               <div>
@@ -1408,6 +1436,7 @@ export default function EditarPage() {
                         physical: pDraft.physical,
                         preferredFoot: pDraft.preferredFoot,
                         reputation: pDraft.reputation,
+                        nac: pDraft.nac.trim() || undefined,
                         traits: pDraft.traits,
                         faceDataUrl,
                       })

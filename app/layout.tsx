@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Oswald } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
 import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
+import { MarketNotificationsBridge } from "@/components/market-notifications-bridge"
 import { PendingInboxGate } from "@/components/pending-inbox-gate"
 import { NativeAppProvider } from "@/components/native-app-provider"
 import { MusicPlayerWrapper } from "@/components/music-player-wrapper"
@@ -56,6 +57,7 @@ export default function RootLayout({
             <GamepadProvider>
               <NotificationsProvider>
                 <GameAutosave />
+                <MarketNotificationsBridge />
                 <PendingInboxGate />
                 <PerformanceProfileBootstrap />
                 <EaActionBarProvider>
