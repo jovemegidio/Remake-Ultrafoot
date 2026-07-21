@@ -114,6 +114,11 @@ export default function ElencoPage() {
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
   const engineSetStarter = useGameEngine(s => s.setStarter)
   const enginePlayerInstructions = useGameEngine(s => s.playerInstructions)
+  const engineSetPlayerPosition = useGameEngine(s => s.setPlayerPosition)
+  const engineSetPlayerInstructions = useGameEngine(s => s.setPlayerInstructions)
+  const engineRenewContract = useGameEngine(s => s.renewContract)
+  const engineToggleLoanListed = useGameEngine(s => s.toggleLoanListed)
+  const loanListedIds = useGameEngine(s => s.loanListedIds)
   const transferListedIds = useGameEngine(s => s.transferListedIds)
   const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
@@ -923,6 +928,7 @@ export default function ElencoPage() {
                     animate={{ left: `${player.x}%`, top: `${player.y}%` }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     onClick={() => setSelectedPlayerId(player.id)}
+                    onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
                     className={cn(
                       "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group z-10",
                       selectedPlayerId === player.id && "z-20"
@@ -1213,6 +1219,7 @@ export default function ElencoPage() {
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   onClick={() => setSelectedPlayerId(player.id)}
+                    onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
                   className={cn(
                     "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing group z-10",
                     selectedPlayerId === player.id && "z-20",
@@ -1317,6 +1324,7 @@ export default function ElencoPage() {
                           opacity: draggingPlayer === player.id ? 0.7 : 1,
                         }}
                         onClick={() => setSelectedPlayerId(player.id)}
+                    onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
                         className={cn(
                           "flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
                           selectedPlayerId === player.id
@@ -1847,6 +1855,75 @@ export default function ElencoPage() {
                   Clubes interessados passam a sondar este atleta com muito mais frequência.
                 </p>
               )}
+
+              {/* Posição, função, renovação e empréstimo — o modal do
+                  gerenciamento agora concentra as decisões sobre o atleta
+                  (pedido: duplo-clique abre tudo, inclusive para reservas). */}
+              {(() => {
+                const enginePlayer = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+                if (!enginePlayer) return null
+                const posFamily = normalizePosition(enginePlayer.position)
+                const roleAtual = enginePlayerInstructions?.[enginePlayer.id]?.role
+                  ?? defaultRoleForPosition(posFamily)
+                // Funções compatíveis com a posição atual (falso 9, segundo
+                // atacante, centroavante para ATA; regista, box-to-box... etc.).
+                const rolesCompat = (Object.keys(PLAYER_ROLE_INFO) as PlayerRole[])
+                  .filter(r => PLAYER_ROLE_INFO[r].positions.includes(posFamily))
+                return (
+                  <div className="mt-4 space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="text-[10px] uppercase tracking-wide text-white/40">
+                        Posição
+                        <select
+                          value={posFamily}
+                          onChange={e => engineSetPlayerPosition(enginePlayer.id, e.target.value)}
+                          className="mt-1 w-full rounded bg-black/40 px-2 py-1.5 text-xs text-white"
+                        >
+                          {["GOL", "ZAG", "LD", "LE", "VOL", "MEI", "PD", "PE", "ATA"].map(p => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="text-[10px] uppercase tracking-wide text-white/40">
+                        Função
+                        <select
+                          value={roleAtual}
+                          onChange={e => engineSetPlayerInstructions(enginePlayer.id, { role: e.target.value as PlayerRole })}
+                          className="mt-1 w-full rounded bg-black/40 px-2 py-1.5 text-xs text-white"
+                        >
+                          {rolesCompat.map(r => (
+                            <option key={r} value={r}>{PLAYER_ROLE_INFO[r].name}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          const salary = enginePlayer.contract?.salary ?? 40000
+                          engineRenewContract(enginePlayer.id, Math.round(salary * 1.12), 156)
+                          addNotification({ type: "system", title: "Contrato renovado", message: `${selectedPlayer.name} renovou por mais 3 anos.`, priority: "low" })
+                        }}
+                        className="rounded-lg border border-[#00ffc8]/30 py-2 text-xs font-bold text-[#00ffc8] hover:bg-[#00ffc8]/10"
+                      >
+                        Renovar contrato
+                      </button>
+                      <button
+                        onClick={() => engineToggleLoanListed(enginePlayer.id)}
+                        className={cn(
+                          "rounded-lg border py-2 text-xs font-bold transition-all",
+                          loanListedIds?.includes(enginePlayer.id)
+                            ? "border-sky-400/50 bg-sky-400/10 text-sky-300"
+                            : "border-white/15 text-white/70 hover:border-white/30",
+                        )}
+                      >
+                        {loanListedIds?.includes(enginePlayer.id) ? "Retirar do empréstimo" : "Emprestar"}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* Rescisão: não havia como dispensar ninguém. Um atleta caro que o
                   mercado não quisesse ficava travado no elenco consumindo folha
