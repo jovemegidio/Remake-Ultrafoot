@@ -24,6 +24,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { faseDaPartida } from "@/lib/competition-phase"
 import { useGameManager } from "@/lib/use-game-manager"
 import { useGameEngine, getContractStatus } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -307,10 +308,17 @@ export default function PreOfficePage() {
         <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
         <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
       </div>
-      {/* Brilho verde radial para profundidade */}
+      {/* Brilho radial para profundidade. Em DIA DE FINAL o escritorio fica
+          tematico: o verde padrao da lugar ao dourado de decisao (pedido). */}
       <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.12) 0%, transparent 60%)"
+        background: faseDaPartida(nextUserMatch)?.isFinal
+          ? "radial-gradient(ellipse 95% 75% at 50% 15%, rgba(255,199,0,0.22) 0%, rgba(255,140,0,0.08) 38%, transparent 65%)"
+          : "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.12) 0%, transparent 60%)"
       }} />
+      {/* Moldura dourada sutil emoldurando a tela na final. */}
+      {faseDaPartida(nextUserMatch)?.isFinal && (
+        <div className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-[#ffd700]/25" />
+      )}
       {/* Camadas de escurecimento para legibilidade do conteudo */}
       <div className="absolute inset-0 bg-[#050508]/78" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#050b07] via-[#050b07]/70 to-[#050b07]/40" />
@@ -375,7 +383,20 @@ export default function PreOfficePage() {
                     </div>
                     <div className="ml-4 text-right">
                       <div className="text-xs text-white/40 uppercase tracking-wider">{nextUserMatch.competition}</div>
-                      <div className="text-sm text-white/70">Rod. {nextUserMatch.round}</div>
+                      {(() => {
+                        const fase = faseDaPartida(nextUserMatch)
+                        if (!fase) return <div className="text-sm text-white/70">Rod. {nextUserMatch.round}</div>
+                        return (
+                          <div className={cn(
+                            "mt-0.5 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
+                            fase.isFinal
+                              ? "bg-gradient-to-r from-[#ffd700] to-[#ffb300] text-black shadow-[0_0_12px_rgba(255,215,0,0.5)]"
+                              : fase.isKnockout ? "bg-red-500/20 text-red-300" : "bg-white/10 text-white/60",
+                          )}>
+                            {fase.isFinal ? "🏆 " : ""}{fase.label}
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 ) : (
