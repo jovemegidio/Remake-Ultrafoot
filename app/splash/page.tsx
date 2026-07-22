@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
+import { mensagemDeErro, validarCodigo } from "@/lib/license"
+import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight } from "lucide-react"
@@ -128,7 +130,9 @@ export default function SplashPage() {
     { id: "novo-jogo", label: t.splash.newGame, icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
     { id: "editar", label: t.splash.clubEditor, icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
     { id: "carregar", label: t.splash.loadGame, icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
-    { id: "registrar", label: t.splash.register, icon: <Key className="h-7 w-7" strokeWidth={1.5} /> },
+    // Sem codigo, o item vira um lembrete visivel — o jogo NAO trava (decisao do
+    // usuario: falso negativo com comprador legitimo doi mais do que vale).
+    { id: "registrar", label: isRegistered ? t.splash.register : `${t.splash.register} — versao nao registrada`, icon: <Key className={cn("h-7 w-7", !isRegistered && "text-amber-400")} strokeWidth={1.5} /> },
     { id: "sair", label: t.splash.exit, icon: <LogOut className="h-7 w-7" strokeWidth={1.5} /> },
   ]
 
@@ -270,21 +274,23 @@ export default function SplashPage() {
     setRegisterError("")
     setIsValidating(true)
     
-    // Simula validacao da chave (em producao, seria uma API call)
-    await delay(1500)
-    
-    // Chave de exemplo valida: ULTRA-FOOT-2026-XXXX
-    const validKeyPattern = /^ULTRA-FOOT-2026-[A-Z0-9]{4}$/
-    
-    if (validKeyPattern.test(serialKey.toUpperCase())) {
+    // A validacao e local e instantanea; a espera existe so para o campo nao
+    // piscar entre "validando" e o resultado.
+    await delay(600)
+
+    const r = await validarCodigo(serialKey, licencasRevogadas)
+    if (r.valido) {
       safeLocalSet("ultrafoot:registered", "1")
+      // Guardado para o suporte: quando o jogador escrever, e por este numero
+      // que voce acha a venda no CSV de emissao.
+      if (r.serie !== undefined) safeLocalSet("ultrafoot:registro-serie", String(r.serie))
       setIsRegistered(true)
       setIsValidating(false)
       setTimeout(() => {
         setShowRegisterModal(false)
       }, 2000)
     } else {
-      setRegisterError("Chave de serial invalida. Verifique e tente novamente.")
+      setRegisterError(mensagemDeErro(r.motivo))
       setIsValidating(false)
     }
   }, [serialKey])
