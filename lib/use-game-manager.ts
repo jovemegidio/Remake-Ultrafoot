@@ -546,6 +546,117 @@ export function generateUserCupMatches(userTeam: Team, plan: CupCompetitionPlan,
   return matches
 }
 
+// Decompoe um conjunto de confrontos em rodadas onde todo mundo joga uma vez.
+// Backtracking: escolhe o primeiro time sem adversario e testa cada aresta livre.
+function dividirEmRodadas(teams: Team[], arestas: Array<[Team, Team]>, roundCount: number): Array<Array<[Team, Team]>> {
+  const rounds: Array<Array<[Team, Team]>> = []
+  let restantes = arestas
+  const chave = (a: Team, b: Team) => [a.curto, b.curto].sort().join(":")
+
+  for (let round = 0; round < roundCount; round++) {
+    const disponiveis = restantes
+    const buscar = (semAdversario: Team[], escolhidas: Array<[Team, Team]>): Array<[Team, Team]> | null => {
+      if (!semAdversario.length) return escolhidas
+      const casa = semAdversario[0]
+      for (const par of disponiveis) {
+        const [a, b] = par
+        const ehDele = a.curto === casa.curto || b.curto === casa.curto
+        if (!ehDele) continue
+        const fora = a.curto === casa.curto ? b : a
+        if (!semAdversario.some(t => t.curto === fora.curto)) continue
+        if (escolhidas.some(([x, y]) => chave(x, y) === chave(a, b))) continue
+        const r = buscar(semAdversario.filter(t => t.curto !== casa.curto && t.curto !== fora.curto), [...escolhidas, par])
+        if (r) return r
+      }
+      return null
+    }
+    const rodada = buscar(teams, [])
+    if (!rodada) return []   // deu no que nao dava: quem chama volta ao sorteio simples
+    rounds.push(rodada.map(par => [par[0], par[1]] as [Team, Team]))
+    const usadas = new Set(rodada.map(([a, b]) => chave(a, b)))
+    restantes = restantes.filter(([a, b]) => !usadas.has(chave(a, b)))
+  }
+  return equilibrarMando(rounds)
+}
+
+/**
+ * Distribui o mando de campo. Sem isto o alternar ingenuo por indice de rodada
+ * deixava clube com 7 jogos em casa e outro com 1 — o regulamento prevê metade
+ * e metade. Passa varias vezes invertendo o confronto sempre que o mandante ja
+ * tem mais jogos em casa do que o visitante.
+ */
+function equilibrarMando(rounds: Array<Array<[Team, Team]>>): Array<Array<[Team, Team]>> {
+  const emCasa = new Map<string, number>()
+  for (const rodada of rounds) for (const [casa] of rodada) emCasa.set(casa.curto, (emCasa.get(casa.curto) ?? 0) + 1)
+  const conta = (t: Team) => emCasa.get(t.curto) ?? 0
+
+  for (let passo = 0; passo < 12; passo++) {
+    let mudou = false
+    for (const rodada of rounds) {
+      for (let i = 0; i < rodada.length; i++) {
+        const [casa, fora] = rodada[i]
+        if (conta(casa) - conta(fora) < 2) continue
+        rodada[i] = [fora, casa]
+        emCasa.set(casa.curto, conta(casa) - 1)
+        emCasa.set(fora.curto, conta(fora) + 1)
+        mudou = true
+      }
+    }
+    if (!mudou) break
+  }
+  return rounds
+}
+
+/**
+ * Formato de POTES (Paulistao 2026, inspirado na Champions): 4 potes de 4, cada
+ * clube enfrenta os 3 do proprio pote e mais 5 de fora, em turno unico.
+ *
+ * Os 5 cruzados nao dividem por igual entre os 3 outros potes, entao a distribuicao
+ * e 2+2+1, rotacionada para que os dois lados de cada par de potes fechem a conta.
+ * Devolve [] se os nomes do regulamento nao casarem com os times em jogo — quem
+ * chama entao cai no sorteio simples, que e melhor do que um calendario torto.
+ */
+function generatePotRounds(
+  teams: Team[],
+  pots: readonly (readonly string[])[],
+  roundCount: number,
+): Array<Array<[Team, Team]>> {
+  if (pots.length !== 4 || teams.length !== 16) return []
+  const doPote = new Map<string, number>()
+  for (const [indice, pote] of pots.entries()) {
+    for (const nome of pote) {
+      const alvo = normalizeCompetitionClub(nome)
+      const time = teams.find(t => {
+        const n = normalizeCompetitionClub(t.nome)
+        return n === alvo || n.includes(alvo) || alvo.includes(n)
+      })
+      if (!time || doPote.has(time.curto)) return []
+      doPote.set(time.curto, indice)
+    }
+  }
+  if (doPote.size !== 16) return []
+
+  const porPote = Array.from({ length: 4 }, (_, p) => teams.filter(t => doPote.get(t.curto) === p))
+  if (porPote.some(p => p.length !== 4)) return []
+
+  const arestas: Array<[Team, Team]> = []
+  // Dentro do pote: todos contra todos (3 jogos para cada um).
+  for (const pote of porPote) {
+    for (let i = 0; i < pote.length; i++) for (let j = i + 1; j < pote.length; j++) arestas.push([pote[i], pote[j]])
+  }
+  // Entre potes: 2 jogos nos pares "fortes" e 1 no par restante, somando 5 por clube.
+  const doisJogos: Array<[number, number]> = [[0, 1], [0, 2], [1, 3], [2, 3]]
+  const umJogo: Array<[number, number]> = [[0, 3], [1, 2]]
+  for (const [p, q] of doisJogos) {
+    for (let i = 0; i < 4; i++) for (const desloc of [0, 1]) arestas.push([porPote[p][i], porPote[q][(i + desloc) % 4]])
+  }
+  for (const [p, q] of umJogo) {
+    for (let i = 0; i < 4; i++) arestas.push([porPote[p][i], porPote[q][i]])
+  }
+
+  return dividirEmRodadas(teams, arestas, roundCount)
+}
+
 // Gera fixtures do campeonato estadual (Jan-Mar)
 function generateCrossGroupRounds(teams: Team[], groupCount: number, roundCount: number): Array<Array<[Team, Team]>> {
   if (groupCount < 2 || teams.length % groupCount !== 0) return []
@@ -602,7 +713,9 @@ export function generateStateChampionshipFixtures(
   const totalRounds = isDouble ? halfSeason * 2 : halfSeason
 
   const regulation = getStateCompetitionRule(userTeamShort)
-  const crossGroupRounds = regulation?.groups ? generateCrossGroupRounds(stateTeams, regulation.groups, halfSeason) : []
+  const crossGroupRounds = regulation?.pots
+    ? generatePotRounds(stateTeams, regulation.pots, halfSeason)
+    : regulation?.groups ? generateCrossGroupRounds(stateTeams, regulation.groups, halfSeason) : []
   for (let round = 1; round <= halfSeason; round++) {
     const matchups = crossGroupRounds[round - 1] ?? generateRoundMatchups(stateTeams, round)
     matchups.forEach(([home, away]) => {
