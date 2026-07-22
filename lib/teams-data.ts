@@ -1313,10 +1313,23 @@ export function getTeamsByDivision(divisao: string): Team[] {
 }
 
 // Função para buscar time por curto (busca tambem por divisao para evitar duplicatas)
+/**
+ * Procura o clube pelo codigo curto. Olha os CURADOS primeiro e so entao o POOL:
+ * o codigo nao e unico na base (134 codigos para ~3.000 clubes) e, na duvida, o
+ * curado — que tem elenco, escudo e liga de verdade — tem de vencer.
+ *
+ * O pool nao era consultado, e isso quebrava mais do que parece: getTeamByShort
+ * devolvia undefined para Ituano, Taubate, Capivariano e companhia, entao os
+ * clubes da Paulista A2/A3 nao achavam o proprio regulamento estadual e ficavam
+ * sem divisao. Qualquer tela que resolva clube por codigo tinha o mesmo furo.
+ */
 export function getTeamByShort(curto: string, divisao?: string): Team | undefined {
-  const resolved = allTeams.map(applyTeamOverride)
-  if (divisao) return resolved.find(t => t.curto === curto && t.divisao === divisao)
-  return resolved.find(t => t.curto === curto)
+  const curados = allTeams.map(applyTeamOverride)
+  if (divisao) {
+    return curados.find(t => t.curto === curto && t.divisao === divisao)
+      ?? allPoolTeams.find(t => t.curto === curto && t.divisao === divisao)
+  }
+  return curados.find(t => t.curto === curto) ?? allPoolTeams.find(t => t.curto === curto)
 }
 
 // Função para buscar time por file_key
