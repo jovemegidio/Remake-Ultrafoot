@@ -1,4 +1,9 @@
+// Rich Presence e SO DESKTOP: a crate usa IPC do Discord (named pipes/sockets) e
+// nao ha cliente Discord no Android/iOS. Guardado com cfg(desktop) para o build
+// mobile nem compilar essa dependencia.
+#[cfg(desktop)]
 use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
+#[cfg(desktop)]
 use std::sync::Mutex;
 use tauri::Manager;
 
@@ -160,6 +165,7 @@ mod bluetooth_battery {
 // https://discord.com/developers/applications → New Application → General Information → Application ID
 const DISCORD_APP_ID: &str = "1481784878197637160";
 
+#[cfg(desktop)]
 struct DiscordRpc(Mutex<Option<DiscordIpcClient>>);
 
 #[cfg(target_os = "windows")]
@@ -247,6 +253,7 @@ fn discord_social_disconnect() {
     discord_social::disconnect();
 }
 
+#[cfg(desktop)]
 #[tauri::command]
 fn discord_update(
     rpc: tauri::State<DiscordRpc>,
@@ -294,6 +301,7 @@ fn discord_update(
     }
 }
 
+#[cfg(desktop)]
 #[tauri::command]
 fn discord_clear(rpc: tauri::State<DiscordRpc>) {
     let mut guard = rpc.0.lock().unwrap();
@@ -457,7 +465,8 @@ fn media_previous() -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Tenta conectar ao Discord — falha silenciosamente se o Discord não estiver aberto
+    // DESKTOP: conecta ao Discord (falha em silencio se ele nao estiver aberto).
+    #[cfg(desktop)]
     let discord_client = DiscordIpcClient::new(DISCORD_APP_ID)
         .ok()
         .and_then(|mut c| c.connect().ok().map(|_| c));
@@ -469,8 +478,19 @@ pub fn run() {
     };
 
     let builder = tauri::Builder::default()
-        .manage(DiscordRpc(Mutex::new(discord_client)))
         .manage(online_server::OnlineServerManager::default())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_process::init());
+
+    // updater e Rich Presence sao SO DESKTOP. O updater mobile nao existe (a loja
+    // atualiza o app); o Rich Presence depende do cliente Discord no PC.
+    #[cfg(desktop)]
+    let builder = builder
+        .manage(DiscordRpc(Mutex::new(discord_client)))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             discord_update,
             discord_clear,
@@ -489,13 +509,29 @@ pub fn run() {
             ,online_server::online_room_snapshot
             ,online_server::online_set_ready
             ,online_server::online_submit_action
-        ])
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init());
+        ]);
+
+    // MOBILE: o mesmo jogo, sem os comandos que dependem do Discord. Os que tem
+    // fallback multiplataforma (midia, bateria do controle) continuam expostos.
+    #[cfg(not(desktop))]
+    let builder = builder
+        .invoke_handler(tauri::generate_handler![
+            discord_social_snapshot,
+            discord_social_login,
+            discord_social_disconnect,
+            get_bluetooth_gamepad_battery,
+            media_now_playing,
+            media_play_pause,
+            media_next,
+            media_previous
+            ,online_server::online_start_server
+            ,online_server::online_stop_server
+            ,online_server::online_server_status
+            ,online_server::online_join_server
+            ,online_server::online_room_snapshot
+            ,online_server::online_set_ready
+            ,online_server::online_submit_action
+        ]);
 
     #[cfg(target_os = "windows")]
     let builder = builder.manage(discord_social_guard);
