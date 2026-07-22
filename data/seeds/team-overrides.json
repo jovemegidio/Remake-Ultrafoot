@@ -48,7 +48,15 @@
   }
  },
  "remo_pa": {
-  "logoUrl": "/overrides/remo_pa-logo.png"
+  "logoUrl": "/overrides/remo_pa-logo.png",
+  "kits": {
+   "home": {
+    "imageUrl": "/overrides/remo_pa-kit-home.png"
+   },
+   "away": {
+    "imageUrl": "/overrides/remo_pa-kit-away.png"
+   }
+  }
  },
  "internacional_bra": {
   "logoUrl": "/overrides/internacional_bra-logo.png",
@@ -699,5 +707,15 @@
  },
  "nashville433_eua": {
   "logoUrl": "/overrides/nashville433_eua-logo.png"
+ },
+ "chapecoense_bra": {
+  "kits": {
+   "home": {
+    "imageUrl": "/overrides/chapecoense_bra-kit-home.png"
+   },
+   "away": {
+    "imageUrl": "/overrides/chapecoense_bra-kit-away.png"
+   }
+  }
  }
 }
