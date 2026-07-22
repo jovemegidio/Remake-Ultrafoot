@@ -673,19 +673,21 @@ function enrichWithSeedNationality(team: Team, players: Player[]): Player[] {
 // remendar o fictício. Gerado por scripts/build-real-squads.mjs; chave
 // `<curto>|<nomeNormalizado>` (mesma do tm-squads). Clubes sem entrada aqui
 // seguem pelo caminho antigo — a maioria dos ~1.050 fictícios de divisão menor.
-interface RealSquadPlayerTM { nome: string; pos: string; nac?: string; ft?: string; idade: number; overall: number }
+// Chaves curtas para nao inchar o bundle (45 mil atletas):
+// n=nome p=posicao c=nacionalidade f=foto i=idade o=overall
+interface RealSquadPlayerTM { n: string; p: string; c?: string; f?: string; i: number; o: number }
 const REAL_SQUADS_TM = realSquadsTM as Record<string, RealSquadPlayerTM[]>
 
 function getRealSquad(team: Team): Player[] | null {
   const roster = REAL_SQUADS_TM[`${team.curto}|${normalizeTeamName(team.nome)}`]
   if (!roster?.length) return null
   return roster.map(p => ({
-    nome: p.nome,
-    pos: toPlayerPosition(p.pos),
-    idade: p.idade,
-    base: p.overall,
+    nome: p.n,
+    pos: toPlayerPosition(p.p),
+    idade: p.i,
+    base: p.o,
     time: team.nome,
-    nac: p.nac,
+    nac: p.c,
   }))
 }
 

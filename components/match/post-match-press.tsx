@@ -295,13 +295,13 @@ export function PostMatchPress({
       .filter(q => q.alvo && q.tomAtleta)
       .map(q => repercussaoDoAtleta(q.alvo!, q.tomAtleta!, q.impact))
     onComplete({ moraleImpact: totalImpact, tons: answeredQuestions.map(q => q.tone), repercussoes })
-    router.push("/")
+    router.push("/pre-office")
   }, [answeredQuestions, onComplete, router])
 
   // Pular coletiva
   const skipPress = useCallback(() => {
     onComplete({ moraleImpact: 0, tons: [], repercussoes: [] })
-    router.push("/")
+    router.push("/pre-office")
   }, [onComplete, router])
 
   const getToneColor = (tone: string) => {

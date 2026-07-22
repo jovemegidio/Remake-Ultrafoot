@@ -49,8 +49,8 @@ function getTmFotoMap(): Map<string, string | null> {
     else if (prev !== ft) tmFotoMap!.set(k, null) // nome ambiguo: nao arrisca
   }
   // Elencos REAIS primeiro: e a foto do roster que o jogo de fato usa.
-  for (const roster of Object.values(realSquadsTM as Record<string, { nome: string; ft?: string }[]>)) {
-    for (const p of roster) add(p.nome, p.ft)
+  for (const roster of Object.values(realSquadsTM as Record<string, { n: string; f?: string }[]>)) {
+    for (const p of roster) add(p.n, p.f)
   }
   // Seed importado depois (clubes ficticios que nao viraram elenco real).
   for (const team of ((importedBF as { teams?: SeedTeamFt[] }).teams) ?? []) {

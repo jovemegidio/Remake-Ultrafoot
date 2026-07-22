@@ -140,9 +140,27 @@ const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "envi
 function divisaoLabel(d?: string): string {
   if (!d) return "Outra"
   const map: Record<string, string> = {
-    serie_a: "Série A", serie_b: "Série B", serie_c: "Série C", serie_d: "Série D",
+    // Com o país no nome: "Série A" (Brasil) e "Serie A" (Itália) apareciam como
+    // duas entradas praticamente iguais no filtro — mesma grafia aos olhos e a
+    // MESMA logo. Sem o qualificador não dava para saber qual era qual.
+    serie_a: "Série A (Brasil)", serie_b: "Série B (Brasil)",
+    serie_c: "Série C (Brasil)", serie_d: "Série D (Brasil)",
   }
   return map[d] ?? d.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+/**
+ * Nome de liga sem ambiguidade entre países. "Serie A" existe na Itália e no
+ * Brasil; "Primera División" em quatro países sul-americanos. Sem o país, o
+ * filtro mostra entradas duplicadas e indistinguíveis.
+ */
+function ligaComPais(liga?: string, pais?: string): string | undefined {
+  const nome = (liga ?? "").trim()
+  // undefined (e nao "Outra") para o chamador cair no divisaoLabel da divisão.
+  if (!nome) return undefined
+  const AMBIGUAS = /^(serie a|série a|serie b|série b|primera divisi[oó]n|liga nacional|premier league|primeira liga)$/i
+  if (!AMBIGUAS.test(nome) || !pais) return nome
+  return `${nome} (${pais})`
 }
 
 const scoutingRegions = [
@@ -367,7 +385,7 @@ export default function MercadoPage() {
     return {
       nacionalidade: uniq(nationalities),
       pais: uniq(countries),
-      liga: uniq(byCountry.map((p) => p.team.liga ?? divisaoLabel(p.team.divisao))),
+      liga: uniq(byCountry.map((p) => ligaComPais(p.team.liga, p.team.pais) ?? divisaoLabel(p.team.divisao))),
       time: uniq(byLeague.map((p) => p.team.nome)),
       timeGroups: Array.from(groupedTeams.entries())
         .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
@@ -417,7 +435,7 @@ export default function MercadoPage() {
       // Nacionalidade / Pais / Liga / Time
       if (filterNationality !== "Qualquer" && p.nationality !== filterNationality) return false
       if (filterCountry !== "Qualquer" && (p.team.pais ?? "") !== filterCountry) return false
-      if (filterLeague !== "Qualquer" && (p.team.liga ?? divisaoLabel(p.team.divisao)) !== filterLeague) return false
+      if (filterLeague !== "Qualquer" && (ligaComPais(p.team.liga, p.team.pais) ?? divisaoLabel(p.team.divisao)) !== filterLeague) return false
       if (filterTeam !== "Qualquer" && p.team.nome !== filterTeam) return false
       // Status de transferencia
       if (filterStatus === "Com multa rescisória" && p.releaseClause == null) return false

@@ -1939,7 +1939,13 @@ export default function PartidaAoVivoPage() {
         persistGameEngineNow()
         await flushPersistentStore()
         await saveGameStateAndFlush(loadGameState())
-        hardNavigate(matchCtx.youth ? "/base/carreira" : "/")
+        // REARMA o portao da caixa de entrada: ele so dispara uma vez por sessao
+        // do app, mas o usuario quer a Central SEMPRE apos a partida — e e depois
+        // do jogo que chegam os recados do elenco, da diretoria e do mercado.
+        try { sessionStorage.removeItem("ultrafoot:inbox-gate-shown") } catch { /* ignora */ }
+        // Pos-partida vai ao PRE-OFFICE (pedido), nao ao escritorio direto: e
+        // la que ficam o resumo da rodada, as tarefas e o proximo compromisso.
+        hardNavigate(matchCtx.youth ? "/base/carreira" : "/pre-office")
       }}
     />
   )}

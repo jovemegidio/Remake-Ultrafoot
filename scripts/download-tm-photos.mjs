@@ -37,7 +37,7 @@ async function main() {
   // Elencos REAIS: e o roster que o jogo usa nos ~1.790 clubes reais.
   try {
     const real = JSON.parse(await readFile(REAL, "utf8"))
-    for (const roster of Object.values(real)) for (const p of roster) if (p.ft) fts.add(p.ft)
+    for (const roster of Object.values(real)) for (const p of roster) if (p.f) fts.add(p.f)
   } catch { /* sem elencos reais ainda */ }
   // Seed: clubes ficticios que seguem pelo caminho antigo.
   for (const t of seed.teams ?? []) for (const j of t.jogadores ?? []) if (j.ft) fts.add(j.ft)

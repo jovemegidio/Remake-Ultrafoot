@@ -82,13 +82,17 @@ async function main() {
       .map(p => {
         const ov = overallDeValor(p.valor)
         if (ov == null) semValor++
+        // CHAVES CURTAS de proposito: sao 45 mil atletas, e "nome/pos/nac/ft/
+        // idade/overall" repetidos custavam 1,4 MB so em nomes de campo dentro
+        // do bundle — peso que a maquina do jogador paga no boot.
+        // n=nome p=posicao c=nacionalidade f=foto i=idade o=overall
         return {
-          nome: p.nome,
-          pos: p.posicao,
-          nac: p.nacionalidade ?? undefined,
-          ft: p.foto ? /portrait\/\w+\/([\d-]+)\.jpg/.exec(p.foto)?.[1] : undefined,
-          idade: p.idade ?? idadeSeed.get(`${curto}|${clubeNorm}|${nameKey(p.nome)}`) ?? idadeMediana,
-          overall: ov ?? overallMediano,
+          n: p.nome,
+          p: p.posicao,
+          c: p.nacionalidade ?? undefined,
+          f: p.foto ? /portrait\/\w+\/([\d-]+)\.jpg/.exec(p.foto)?.[1] : undefined,
+          i: p.idade ?? idadeSeed.get(`${curto}|${clubeNorm}|${nameKey(p.nome)}`) ?? idadeMediana,
+          o: ov ?? overallMediano,
         }
       })
 
