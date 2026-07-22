@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { safeLocalSet } from "@/lib/safe-storage"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight } from "lucide-react"
@@ -34,6 +34,9 @@ type SplashPhase =
 type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
 const MENU_BGS = ["/images/pre-jogo/in-game-1.png", "/images/pre-jogo/in-game-5.png", "/images/pre-jogo/in-game-8.png", "/images/pre-jogo/in-game-2.png"]
+
+/** Marca que a abertura institucional ja foi exibida — a partir dai o jogo abre curto. */
+const INTRO_VISTA = "ultrafoot:intro-vista"
 
 const LANGUAGE_COUNTRIES = [
   { id: "pt-BR", language: "Português", country: "Brasil", flag: "br", code: "BR" },
@@ -129,9 +132,19 @@ export default function SplashPage() {
     { id: "sair", label: t.splash.exit, icon: <LogOut className="h-7 w-7" strokeWidth={1.5} /> },
   ]
 
-  // Sequencia de fases da splash
+  // ABERTURA. Era uma sequencia de 8,5 s: preto 0,8 + estudio 2 + aviso 2 + ligas
+  // 2,5 + barra 1,2. Cada troca de fase ainda levava 1 s de dissolucao. Ficava
+  // longa e arrastada — jogo profissional abre rapido e deixa pular.
+  //
+  // Agora: ~3,4 s na primeira vez, ~1,2 s nas seguintes (a abertura institucional
+  // e apresentacao, nao precisa se repetir a cada partida), e qualquer clique ou
+  // tecla corta direto para o menu.
+  const pulou = useRef(false)
+
   useEffect(() => {
     if (!languageSelected) return
+    let vivo = true
+
     const sequence = async () => {
       // Se vier com ?menu=1 (ex: ao pressionar Voltar de outra tela), pula direto pro menu
       if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("menu") === "1") {
@@ -141,36 +154,55 @@ export default function SplashPage() {
 
       const nav = navigator as Navigator & { deviceMemory?: number }
       const lightweight = (nav.hardwareConcurrency ?? 8) <= 4 || (nav.deviceMemory ?? 8) <= 4
-      const wait = (ms: number) => delay(lightweight ? Math.min(ms, 350) : ms)
+      // `pulou` checado a cada espera: sem isso o clique de pular levava ao menu
+      // e a sequencia continuava rodando por tras, voltando para o carregamento.
+      const wait = async (ms: number) => {
+        await delay(lightweight ? Math.min(ms, 250) : ms)
+        return vivo && !pulou.current
+      }
 
-      // Fase 1: Tela preta inicial
-      await wait(800)
-      setPhase("studio-logo")
-      
-      // Fase 2: Logo do estudio
-      await wait(2000)
-      setPhase("ea-warning")
-      
-      // Fase 3: Aviso legal
-      await wait(2000)
-      setPhase("leagues")
-      
-      // Fase 4: Logos das ligas e competicoes
-      await wait(2500)
+      const jaViu = safeLocalGet(INTRO_VISTA) === "1"
+
+      if (!jaViu) {
+        if (!(await wait(200))) return
+        setPhase("studio-logo")
+        if (!(await wait(1300))) return
+        setPhase("ea-warning")
+        if (!(await wait(900))) return
+        setPhase("leagues")
+        if (!(await wait(1000))) return
+        safeLocalSet(INTRO_VISTA, "1")
+      }
+
       setPhase("loading")
-      
-      // Fase 5: Tela de carregamento
-      for (let i = 0; i <= 100; i += 4) {
-        await delay(lightweight ? 8 : 30)
+      for (let i = 0; i <= 100; i += 5) {
+        if (!(await wait(lightweight ? 5 : 16))) return
         setLoadingProgress(i)
       }
-      
-      await wait(400)
+      if (!(await wait(150))) return
       setPhase("main-menu")
     }
-    
+
     sequence()
+    return () => { vivo = false }
   }, [hasSaveGame, languageSelected])
+
+  // PULAR: um clique ou uma tecla durante a abertura vai direto ao menu.
+  useEffect(() => {
+    if (phase === "main-menu" || phase === "fade-out") return
+    const cortar = () => {
+      pulou.current = true
+      safeLocalSet(INTRO_VISTA, "1")
+      setLoadingProgress(100)
+      setPhase("main-menu")
+    }
+    window.addEventListener("pointerdown", cortar)
+    window.addEventListener("keydown", cortar)
+    return () => {
+      window.removeEventListener("pointerdown", cortar)
+      window.removeEventListener("keydown", cortar)
+    }
+  }, [phase])
 
   // Handler para navegacao no menu
   const handleMenuSelect = useCallback((index: number) => {
@@ -423,13 +455,13 @@ export default function SplashPage() {
 
       {/* Phase: Black screen */}
       <div className={cn(
-        "absolute inset-0 bg-black transition-opacity duration-1000",
+        "absolute inset-0 bg-black transition-opacity duration-500",
         phase === "black" ? "opacity-100" : "opacity-0 pointer-events-none"
       )} />
 
       {/* Phase: Studio Logo - Agencia do Japa */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 bg-black overflow-hidden",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 bg-black overflow-hidden",
         phase === "studio-logo" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         {/* Subtle ambient particles */}
@@ -511,7 +543,7 @@ export default function SplashPage() {
 
       {/* Phase: Warning */}
       <div className={cn(
-        "absolute inset-0 flex items-center justify-center p-8 transition-all duration-1000 bg-black",
+        "absolute inset-0 flex items-center justify-center p-8 transition-all duration-500 bg-black",
         phase === "ea-warning" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         <div className="max-w-2xl text-center">
@@ -524,7 +556,7 @@ export default function SplashPage() {
 
       {/* Phase: Leagues - Logos das ligas e competicoes */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 overflow-hidden bg-black",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 overflow-hidden bg-black",
         phase === "leagues" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         {/* Leagues image container with fade-in animation */}
@@ -572,7 +604,7 @@ export default function SplashPage() {
 
       {/* Phase: Loading - Professional Institutional Style */}
       <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 overflow-hidden",
+        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 overflow-hidden",
         phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
         {/* Background with subtle gradient */}
