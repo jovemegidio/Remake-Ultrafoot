@@ -65,8 +65,23 @@ console.log(`  valores distintos: ${antes.size} -> ${depois.size}`)
 console.log(`  clubes no Brasil:  ${brasilAntes} -> ${brasilDepois} (+${brasilDepois - brasilAntes} reunificados)`)
 console.log(`  indefinidos:       ${seed.teams.filter(t => normalizeCountry(t.pais) === PAIS_DESCONHECIDO).length}`)
 
-if (depois.size >= antes.size) { console.log("\nFALHA: normalização não reduziu os valores distintos"); falhas++ }
-if (brasilDepois <= brasilAntes) { console.log("FALHA: clubes brasileiros não foram reunificados"); falhas++ }
+// Estas duas verificacoes mudaram de forma em 22/07/2026. Antes o seed guardava
+// o defeito (UF e codigo de pais no campo `pais`) e o teste exigia que o
+// normalizador o consertasse EM TEMPO DE EXECUCAO. O seed foi corrigido na
+// origem por fix-pool-countries.mjs e assign-pool-br-states.mjs, entao ja nao
+// ha o que reunificar — exigir aumento fazia o teste falhar justamente porque o
+// dado ficou certo. O normalizador segue valendo como protecao para o PROXIMO
+// import, que vem da mesma fonte torta.
+if (depois.size > antes.size) { console.log("FALHA: normalizacao AUMENTOU os valores distintos"); falhas++ }
+if (brasilDepois < brasilAntes) { console.log("FALHA: normalizacao PERDEU clubes brasileiros"); falhas++ }
+
+const SIGLA = /^[A-Z.0-9]{1,3}$/
+const siglasQueSobraram = [...depois].filter(pais => SIGLA.test(pais) && pais !== PAIS_DESCONHECIDO)
+if (siglasQueSobraram.length > 0) { console.log(`FALHA: ainda passam siglas como pais: ${siglasQueSobraram.join(", ")}`); falhas++ }
+
+const braForaDoBrasil = seed.teams.filter(t =>
+  /_bra$/.test(String((t as { fileKey?: string }).fileKey ?? "")) && normalizeCountry(t.pais) !== "Brasil")
+if (braForaDoBrasil.length > 0) { console.log(`FALHA: ${braForaDoBrasil.length} clubes com fileKey _bra fora do Brasil`); falhas++ }
 
 console.log(`\n${falhas === 0 ? "TODOS OS TESTES PASSARAM" : `${falhas} FALHA(S)`}\n`)
 process.exit(falhas === 0 ? 0 : 1)

@@ -2,6 +2,7 @@
 // https://github.com/jovemegidio/Ultrafoot
 
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
+import { normalizeCountry } from "@/lib/country-normalize"
 import { applyTeamOverride, getTeamOverride } from "@/lib/team-overrides"
 import { getCurrency } from "@/lib/currency"
 import importedBF2026 from "@/data/seeds/imported-bf2026.json"
@@ -1263,8 +1264,13 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
     patrocinador: "",
     // So aponta escudo quando o arquivo existe (senao cai no fallback do editor).
     escudo_url: t.escudoDisponivel ? String(t.escudo ?? "") : "",
-    divisao: `pool:${String(t.pais ?? "INT")}`,
-    pais: String(t.pais ?? "") || undefined,
+    // normalizeCountry: o campo `pais` do banco importado mistura nome por
+    // extenso com CODIGO ("IT" e "Itália", "ARA" e "Arábia Saudita") e, nos
+    // clubes brasileiros, com a UF. Sem normalizar aqui, a divisao do pool saía
+    // `pool:IT` e a Juventus ficava numa "liga" separada da Serie A. O modulo
+    // ja existia e era usado no editor e no bf-loader — faltava nesta porta.
+    divisao: `pool:${normalizeCountry(t.pais) || "INT"}`,
+    pais: normalizeCountry(t.pais) || undefined,
   }))
 
 // Times por divisao
