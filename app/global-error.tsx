@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+
 // Rede de seguranca do app inteiro.
 //
 // Sem isto, um erro de render (ex.: o React #310 de hooks fora de ordem) fazia o WebView
@@ -18,6 +20,80 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  // RECUPERACAO SILENCIOSA (pedido: "nao exibir a tela de erro para os
+  // jogadores"). A maioria dos erros de render e transitoria — um re-render
+  // limpo resolve. Entao, na primeira vez, tentamos nos recuperar sozinhos sem
+  // mostrar nada ao jogador.
+  //
+  // A TRAVA importa: se a recuperacao ja foi tentada ha pouco, NAO tentamos de
+  // novo. Sem isso, um erro persistente (ex.: laco de render) viraria um ciclo
+  // infinito de recarga — pior do que a tela de erro. Passados 30s sem novo
+  // erro, a trava expira e o jogo volta a ter direito a uma tentativa.
+  const [recuperando, setRecuperando] = useState(true)
+
+  useEffect(() => {
+    const CHAVE_TS = "ultrafoot:auto-recover-ts"
+    const CHAVE_N = "ultrafoot:auto-recover-n"
+    let tentativa = 1
+    try {
+      const ts = Number(sessionStorage.getItem(CHAVE_TS) ?? 0)
+      // Passados 30s sem novo erro, considera-se resolvido: a contagem zera e o
+      // jogo volta a ter direito a escada inteira.
+      const recente = Date.now() - ts < 30_000
+      tentativa = recente ? Number(sessionStorage.getItem(CHAVE_N) ?? 1) + 1 : 1
+      sessionStorage.setItem(CHAVE_TS, String(Date.now()))
+      sessionStorage.setItem(CHAVE_N, String(tentativa))
+      // Guarda o ultimo erro para diagnostico posterior, mesmo quando o jogador
+      // nunca chega a ver a tela.
+      localStorage.setItem("ultrafoot:ultimo-erro", JSON.stringify({
+        quando: new Date().toISOString(),
+        tela: window.location.pathname,
+        msg: error?.message ?? "",
+        digest: error?.digest ?? "",
+        stack: (error?.stack ?? "").split("\n").slice(0, 8).join("\n"),
+      }))
+    } catch { /* sem storage: cai direto na tela visivel */ }
+
+    // Descobre a raiz do app exportado (o fallback nao tem roteador do Next).
+    const raiz = () => {
+      const s = document.querySelector("script[src*='/_next/']") as HTMLScriptElement | null
+      const i = (s?.src ?? "").indexOf("/_next/")
+      return i >= 0 ? (s as HTMLScriptElement).src.slice(0, i) : window.location.origin
+    }
+
+    // 1a tentativa: remontar a arvore. Resolve o caso comum (erro transitorio de
+    // render) sem o jogador perceber nada.
+    if (tentativa === 1) {
+      const t = setTimeout(() => { try { reset() } catch { setRecuperando(false) } }, 60)
+      return () => clearTimeout(t)
+    }
+
+    // 2a: o erro se repetiu, ou seja, e determinístico naquela tela — remontar de
+    // novo so repetiria o erro. Em vez de mostrar o aviso, devolvemos o jogador
+    // ao pre-office, que e o hub do jogo. O progresso ja esta salvo.
+    if (tentativa === 2) {
+      const t = setTimeout(() => {
+        try { window.location.replace(`${raiz()}/pre-office/index.html`) }
+        catch { setRecuperando(false) }
+      }, 60)
+      return () => clearTimeout(t)
+    }
+
+    // 3a: nem o hub carrega. Ai o problema e serio e a tela com o detalhe tecnico
+    // e mais util do que uma recarga eterna.
+    setRecuperando(false)
+  }, [reset, error])
+
+  // Enquanto tenta se recuperar, mostra apenas o fundo do jogo — o jogador nao
+  // ve mensagem de erro nenhuma.
+  if (recuperando) {
+    return (
+      <html lang="pt-BR">
+        <body style={{ margin: 0, minHeight: "100vh", background: "#050508" }} />
+      </html>
+    )
+  }
+
   return (
     <html lang="pt-BR">
       <body
@@ -146,15 +222,7 @@ export default function GlobalError({
             </button>
           </div>
 
-          {/* A mensagem REAL do erro, copiavel: sem ela todo relato de jogador
-              vira "da erro na tela" e a causa fica impossivel de rastrear. */}
-          <pre
-            style={{ marginTop: 20, fontSize: 11, color: "#8b8fa0", background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "10px 12px", textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-word", userSelect: "text" }}
-          >
-            {error?.message ?? "erro desconhecido"}
-            {error?.digest ? "\ndigest: " + error.digest : ""}
-            {error?.stack ? "\n" + error.stack.split("\n").slice(1, 3).join("\n") : ""}
-          </pre>
+          
         </div>
       </body>
     </html>

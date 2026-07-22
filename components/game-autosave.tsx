@@ -10,6 +10,12 @@ export function GameAutosave() {
   const matchResults = useGameEngine(state => state.matchResults)
   const { state, hydrated } = useGameState()
   const { addNotification } = useNotifications()
+  // Via REF, e fora das dependencias: a identidade de addNotification muda a
+  // cada notificacao criada. Como dependencia, o proprio aviso de "jogo salvo"
+  // reagendava o efeito que o criou — realimentacao que leva ao React #185
+  // ("Maximum update depth exceeded") e derruba o app inteiro.
+  const notificar = useRef(addNotification)
+  notificar.current = addNotification
   const ready = useRef(false)
   const saving = useRef(false)
   const teamShort = state.selectedTeamShort
@@ -37,7 +43,7 @@ export function GameAutosave() {
         persistGameEngineNow()
         const next = { ...state, lastAutoSaveMatchCount: matchCount, updatedAt: Date.now() }
         await saveGameStateAndFlush(next)
-        addNotification({
+        notificar.current({
           type: "system",
           title: "Jogo salvo automaticamente",
           message: `Progresso salvo após ${matchCount} partida${matchCount === 1 ? "" : "s"}.`,
@@ -47,7 +53,7 @@ export function GameAutosave() {
         saving.current = false
       }
     })()
-  }, [addNotification, hydrated, matchCount, state])
+  }, [hydrated, matchCount, state])
 
   return null
 }

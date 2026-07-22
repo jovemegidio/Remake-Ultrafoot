@@ -21,6 +21,12 @@ import { formatCurrency } from "@/lib/teams-data"
  */
 export function MarketNotificationsBridge() {
   const { addNotification } = useNotifications()
+  // addNotification via REF: a identidade dela muda toda vez que uma notificacao
+  // e criada. Como dependencia de efeito, isso realimentava o proprio efeito —
+  // caminho classico para "Maximum update depth exceeded" (React #185), que
+  // derrubava o app inteiro porque esta ponte roda em TODA tela.
+  const notificar = useRef(addNotification)
+  notificar.current = addNotification
   const transferOffers = useGameEngine(s => s.transferOffers)
   const marketInterests = useGameEngine(s => s.marketInterests)
 
@@ -44,14 +50,14 @@ export function MarketNotificationsBridge() {
       if (seenOffers.current.has(o.id)) continue
       seenOffers.current.add(o.id)
       if (o.status !== "pendente") continue
-      addNotification({
+      notificar.current({
         type: "transfer", priority: "high",
         title: `Proposta por ${o.playerName}`,
         message: `${o.fromTeam} ofereceu ${formatCurrency(o.offerAmount)} ` +
           `${o.offerType === "emprestimo" ? "por empréstimo" : "pela compra"} de ${o.playerName}. Responda na Central de Transferências.`,
       })
     }
-  }, [transferOffers, addNotification])
+  }, [transferOffers])
 
   // SONDAGEM: interesse antes da proposta formal.
   useEffect(() => {
@@ -59,13 +65,13 @@ export function MarketNotificationsBridge() {
     for (const i of marketInterests ?? []) {
       if (seenInterests.current.has(i.id)) continue
       seenInterests.current.add(i.id)
-      addNotification({
+      notificar.current({
         type: "transfer", priority: "medium",
         title: `Sondagem por ${i.playerName}`,
         message: `${i.club} está de olho em ${i.playerName}. Uma proposta pode chegar em breve.`,
       })
     }
-  }, [marketInterests, addNotification])
+  }, [marketInterests])
 
   return null
 }
