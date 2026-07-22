@@ -1880,7 +1880,18 @@ export default function PartidaAoVivoPage() {
       awayGoals={state.away.goals}
       userSide={finalMatch?.userSide ?? userSide}
       onClose={() => setShowPressConference(false)}
-      onComplete={async ({ moraleImpact, tons }) => {
+      // Artilheiros do MEU time nesta partida: alimentam as perguntas
+      // individuais da coletiva (elogiar/cobrar alguem de verdade).
+      atletasDaPartida={(() => {
+        const meuLado = finalMatch?.userSide ?? userSide
+        const golsPorAtleta = new Map<string, number>()
+        for (const e of state.events) {
+          if (e.type !== "goal" || e.side !== meuLado || !e.player) continue
+          golsPorAtleta.set(e.player, (golsPorAtleta.get(e.player) ?? 0) + 1)
+        }
+        return [...golsPorAtleta.entries()].map(([nome, gols]) => ({ nome, gols }))
+      })()}
+      onComplete={async ({ moraleImpact, tons, repercussoes }) => {
         setShowPressConference(false)
 
         // A coletiva agora TEM consequencia. O callback recebia o saldo das
@@ -1911,6 +1922,14 @@ export default function PartidaAoVivoPage() {
         if (efeito.recadoDiretoria) {
           addNotification({ type: "system", priority: efeito.diretoriaDelta > 0 ? "medium" : "high",
             title: efeito.recadoDiretoria.titulo, message: efeito.recadoDiretoria.texto })
+        }
+        // RECADO DE CADA ATLETA CITADO na coletiva (pedido: elogiar o Memphis
+        // gera mensagem dele). Elogio agrada, cobranca publica magoa.
+        for (const r of repercussoes ?? []) {
+          addNotification({
+            type: "news", priority: r.tom === "cobranca" ? "high" : "medium",
+            title: r.titulo, message: r.mensagem,
+          })
         }
 
         // O save so pode liberar a tela depois que resultado, rodada e motor foram

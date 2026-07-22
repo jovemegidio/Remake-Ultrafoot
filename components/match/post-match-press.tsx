@@ -1,6 +1,13 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import {
+  perguntasSobreAtletas,
+  repercussaoDoAtleta,
+  type AtletaDaPartida,
+  type RepercussaoAtleta,
+  type TomResposta,
+} from "@/lib/press-player-questions"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
@@ -67,10 +74,14 @@ interface PressQuestion {
   id: number
   condition: "win" | "loss" | "draw" | "any"
   question: string
+  /** Atleta a quem a pergunta se refere (perguntas geradas da partida). */
+  alvo?: string
   options: {
     text: string
     tone: "positivo" | "neutro" | "negativo" | "agressivo"
     impact: number
+    /** Tom na otica do ATLETA (elogio/cobranca) — gera a repercussao dele. */
+    tomAtleta?: TomResposta
   }[]
 }
 
@@ -186,7 +197,14 @@ interface PostMatchPressProps {
    * diferentes: uma resposta agressiva pode levantar o vestiario e ao mesmo
    * tempo desagradar a diretoria. So o saldo de moral nao permitia distinguir.
    */
-  onComplete: (efeito: { moraleImpact: number; tons: string[] }) => void
+  /** Atletas do usuario na partida (gols/nota), para as perguntas individuais. */
+  atletasDaPartida?: AtletaDaPartida[]
+  onComplete: (efeito: {
+    moraleImpact: number
+    tons: string[]
+    /** Recados dos atletas citados, para a Central de Notificacoes. */
+    repercussoes: RepercussaoAtleta[]
+  }) => void
 }
 
 export function PostMatchPress({
@@ -197,11 +215,12 @@ export function PostMatchPress({
   homeGoals,
   awayGoals,
   userSide,
+  atletasDaPartida,
   onComplete
 }: PostMatchPressProps) {
   const router = useRouter()
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [answeredQuestions, setAnsweredQuestions] = useState<{ tone: string; impact: number }[]>([])
+  const [answeredQuestions, setAnsweredQuestions] = useState<{ tone: string; impact: number; alvo?: string; tomAtleta?: TomResposta }[]>([])
   const [showResult, setShowResult] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
 
@@ -216,14 +235,36 @@ export function PostMatchPress({
 
   const userTeam = userSide === "home" ? homeTeam : awayTeam
 
-  // Seleciona 3 perguntas apropriadas para o resultado
+  // Perguntas SOBRE ATLETAS da partida (quem marcou, quem foi mal). Vêm antes
+  // das genéricas porque é o que o jornalista perguntaria primeiro — e são elas
+  // que geram repercussão individual no vestiário.
+  const perguntasDeAtleta = useMemo(
+    () => perguntasSobreAtletas(atletasDaPartida ?? [], matchResult === "win", 2),
+    [atletasDaPartida, matchResult],
+  )
+
+  // Completa com perguntas genéricas do resultado até 3 no total.
   const selectedQuestions = useMemo(() => {
     const matchQuestions = POST_MATCH_QUESTIONS.filter(
       q => q.condition === matchResult || q.condition === "any"
     )
     const shuffled = [...matchQuestions].sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, 3)
-  }, [matchResult])
+    const genericas: PressQuestion[] = shuffled.slice(0, Math.max(1, 3 - perguntasDeAtleta.length))
+    // As de atleta viram o mesmo formato de PressQuestion, guardando o alvo.
+    const deAtleta: PressQuestion[] = perguntasDeAtleta.map((p, i) => ({
+      id: 1000 + i,
+      condition: "any",
+      question: p.pergunta,
+      alvo: p.atleta,
+      options: p.opcoes.map(o => ({
+        text: o.texto,
+        tone: o.tom === "elogio" ? "positivo" : o.tom === "cobranca" ? "agressivo" : "neutro",
+        impact: o.moralDelta,
+        tomAtleta: o.tom,
+      })),
+    }))
+    return [...deAtleta, ...genericas]
+  }, [matchResult, perguntasDeAtleta])
 
   const currentQuestion = selectedQuestions[currentQuestionIndex]
   const currentMedia = MEDIA_OUTLETS[currentQuestionIndex % MEDIA_OUTLETS.length]
@@ -234,7 +275,7 @@ export function PostMatchPress({
     setIsAnimating(true)
 
     const option = currentQuestion.options[optionIndex]
-    setAnsweredQuestions(prev => [...prev, { tone: option.tone, impact: option.impact }])
+    setAnsweredQuestions(prev => [...prev, { tone: option.tone, impact: option.impact, alvo: currentQuestion.alvo, tomAtleta: option.tomAtleta }])
 
     setTimeout(() => {
       if (currentQuestionIndex < selectedQuestions.length - 1) {
@@ -249,13 +290,17 @@ export function PostMatchPress({
   // Finalizar e voltar para o office
   const finishAndReturn = useCallback(() => {
     const totalImpact = answeredQuestions.reduce((sum, q) => sum + q.impact, 0)
-    onComplete({ moraleImpact: totalImpact, tons: answeredQuestions.map(q => q.tone) })
+    // Cada resposta dirigida a um atleta vira um recado dele na Central.
+    const repercussoes = answeredQuestions
+      .filter(q => q.alvo && q.tomAtleta)
+      .map(q => repercussaoDoAtleta(q.alvo!, q.tomAtleta!, q.impact))
+    onComplete({ moraleImpact: totalImpact, tons: answeredQuestions.map(q => q.tone), repercussoes })
     router.push("/")
   }, [answeredQuestions, onComplete, router])
 
   // Pular coletiva
   const skipPress = useCallback(() => {
-    onComplete({ moraleImpact: 0, tons: [] })
+    onComplete({ moraleImpact: 0, tons: [], repercussoes: [] })
     router.push("/")
   }, [onComplete, router])
 
