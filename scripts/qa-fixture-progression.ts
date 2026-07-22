@@ -123,10 +123,29 @@ for (const team of allTeams) {
   for (const plan of getUserCupPlan(team)) {
     const pool = getOpponentPool(team, plan)
     const unusedBefore = pool.filter(opponent => !used.has(opponent.curto)).length
-    const matches = generateUserCupMatches(team, plan, 2026, used)
+    const matches = generateUserCupMatches(team, plan, 2026, used).filter(m => m !== null)
     const opponents = matches.map(match => match.homeTeam.curto === team.curto ? match.awayTeam.curto : match.homeTeam.curto)
-    if (unusedBefore >= matches.length && new Set(opponents).size !== opponents.length) {
-      fail(`${team.nome}/${plan.competition.name}: repetiu adversário com alternativas disponíveis`)
+    // Adversario REPETE de proposito agora: ida e volta e o mesmo rival duas
+    // vezes, e a fase de grupos e turno e returno contra tres. O que nao pode e
+    // o mesmo rival aparecer em FASES diferentes.
+    const rivalPorFase = new Map<string, Set<string>>()
+    for (const match of matches) {
+      const rival = match.homeTeam.curto === team.curto ? match.awayTeam.curto : match.homeTeam.curto
+      const fase = rivalPorFase.get(match.stage) ?? new Set<string>()
+      fase.add(rival)
+      rivalPorFase.set(match.stage, fase)
+    }
+    const rivaisPorFase = [...rivalPorFase.entries()]
+    const repetidoEntreFases = rivaisPorFase.flatMap(([, rivais]) => [...rivais])
+    if (unusedBefore >= matches.length && new Set(repetidoEntreFases).size !== repetidoEntreFases.length) {
+      fail(`${team.nome}/${plan.competition.name}: mesmo adversário em fases diferentes`)
+    }
+    // Cada fase de confronto tem UM rival; a de grupos tem tres.
+    for (const [fase, rivais] of rivaisPorFase) {
+      const esperado = fase === "fase_grupos" ? 3 : 1
+      if (rivais.size !== esperado) {
+        fail(`${team.nome}/${plan.competition.name}: fase ${fase} com ${rivais.size} rivais (esperado ${esperado})`)
+      }
     }
     if (unusedBefore >= matches.length && opponents.some(opponent => leagueOpponents.has(opponent))) {
       fail(`${team.nome}/${plan.competition.name}: repetiu rival da liga com alternativas nacionais`)

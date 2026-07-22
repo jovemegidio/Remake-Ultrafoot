@@ -11,6 +11,7 @@ import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent }
 import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
+import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective } from "@/lib/board-engine"
@@ -448,7 +449,10 @@ export function getUserCupPlan(userTeam: Team, superCups: readonly SuperCupBerth
     }
   }
 
-  return plans
+  // O tamanho de cada campanha vem do REGULAMENTO, nao mais de um numero fixo
+  // (5 para copa nacional, 6/8 para continental). E o caminho ate a final: as
+  // semanas ficam reservadas mesmo que o clube caia antes.
+  return plans.map(plan => ({ ...plan, matchCount: tamanhoDoCaminho(userTeam, plan) }))
 }
 
 // Conta deterministicamente quantos jogos de copa/continental o usuario tem na temporada
@@ -456,6 +460,13 @@ function getUserCupMatchCount(userTeamShort: string, superCups: readonly SuperCu
   const userTeam = getTeamByShort(userTeamShort)
   if (!userTeam) return 0
   return getUserCupPlan(userTeam, superCups).reduce((sum, p) => sum + p.matchCount, 0)
+}
+
+/** Partidas do caminho COMPLETO (ate a final) — e o que reserva as semanas. */
+export function tamanhoDoCaminho(userTeam: Team, plan: CupCompetitionPlan): number {
+  const entraTarde = TOP_FLIGHT_DIVISIONS.has(String(userTeam.divisao))
+  return caminhoDaCopa(plan.competition.id, plan.competition.name, plan.competitionType, entraTarde)
+    .reduce((soma, etapa) => soma + etapa.jogos, 0)
 }
 
 // Monta o pool de adversarios para uma competicao
@@ -512,38 +523,119 @@ interface CupMatchDescriptor {
   competitionType: "cup" | "continental"
   homeTeam: Team
   awayTeam: Team
+  /** Fase do regulamento — e o que o calendario destaca. */
+  stage: FaseCopa
 }
 
-export function generateUserCupMatches(userTeam: Team, plan: CupCompetitionPlan, season: number, usedOpponents = new Set<string>()): CupMatchDescriptor[] {
-  const rng = seededRandom(`${userTeam.curto}:${plan.competition.id}:${season}`)
+/**
+ * Partidas do usuario na copa, FASE A FASE e com eliminacao.
+ *
+ * Devolve uma posicao por partida do caminho maximo (ate a final). `null` marca
+ * a partida que NAO acontece porque o clube ja foi eliminado. Devolver o vetor
+ * do mesmo tamanho sempre e proposital: as semanas da temporada sao distribuidas
+ * a partir dele, e encolher o vetor no meio da campanha deslocaria todas as
+ * rodadas de liga seguintes, fazendo o calendario pular partidas ja agendadas.
+ * Sem confronto, a semana simplesmente fica livre — o clube esta fora da copa.
+ */
+export function generateUserCupMatches(
+  userTeam: Team,
+  plan: CupCompetitionPlan,
+  season: number,
+  usedOpponents = new Set<string>(),
+  resultados: readonly MatchResult[] = [],
+): Array<CupMatchDescriptor | null> {
   const pool = getOpponentPool(userTeam, plan)
   if (pool.length === 0) return []
 
-  const matches: CupMatchDescriptor[] = []
-  const used = usedOpponents
-  let previousOpponent = ""
-  for (let i = 0; i < plan.matchCount; i++) {
-    // O tamanho de `used` inclui rivais de OUTRAS competições; comparar used.size
-    // com pool.length liberava repetições prematuramente. Filtramos o pool de fato.
-    const unused = pool.filter(candidate => !used.has(candidate.curto))
-    const withoutImmediateRepeat = pool.filter(candidate => candidate.curto !== previousOpponent)
-    const candidates = unused.length > 0
-      ? unused
-      : (withoutImmediateRepeat.length > 0 ? withoutImmediateRepeat : pool)
-    const opponent = candidates[Math.floor(rng() * candidates.length)]
-    used.add(opponent.curto)
-    previousOpponent = opponent.curto
+  const entraTarde = TOP_FLIGHT_DIVISIONS.has(String(userTeam.divisao))
+  const etapas = caminhoDaCopa(plan.competition.id, plan.competition.name, plan.competitionType, entraTarde)
 
-    // Mando alterna por jogo (ida/volta)
-    const userIsHome = i % 2 === 0
-    matches.push({
-      competition: plan.competition.name,
-      competitionType: plan.competitionType,
-      homeTeam: userIsHome ? userTeam : opponent,
-      awayTeam: userIsHome ? opponent : userTeam,
-    })
+  // Placares do usuario NESTA copa, em ordem de disputa.
+  const placares: PlacarDaCopa[] = resultados
+    .filter(r => r.season === season && r.competition === plan.competition.name
+      && (r.homeTeam === userTeam.curto || r.awayTeam === userTeam.curto))
+    .sort((a, b) => a.week - b.week)
+    .map(r => r.homeTeam === userTeam.curto
+      ? { golsPro: r.homeScore, golsContra: r.awayScore }
+      : { golsPro: r.awayScore, golsContra: r.homeScore })
+
+  // Adversario fica mais forte a cada fase: quem chega a semifinal nao pega o
+  // lanterna da segunda divisao.
+  const porForca = [...pool].sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
+  const escolher = (indiceDaEtapa: number, quantos: number, semente: string): Team[] => {
+    const rng = seededRandom(semente)
+    const fatia = Math.max(1, Math.floor(porForca.length / Math.max(1, etapas.length)))
+    // Ultimas fases sorteiam do topo da lista; as primeiras, do fundo.
+    const restantes = etapas.length - indiceDaEtapa
+    const inicio = Math.min(porForca.length - 1, Math.max(0, (restantes - 1) * fatia))
+    const janela = porForca.slice(inicio, inicio + Math.max(fatia, quantos * 3))
+    const candidatos = (janela.length >= quantos ? janela : porForca)
+      .filter(t => !usedOpponents.has(t.curto))
+    const base = candidatos.length >= quantos ? candidatos : porForca
+    const saida: Team[] = []
+    const vistos = new Set<string>()
+    while (saida.length < quantos && vistos.size < base.length) {
+      const t = base[Math.floor(rng() * base.length)]
+      if (!t || vistos.has(t.curto)) { vistos.add(t?.curto ?? String(vistos.size)); continue }
+      vistos.add(t.curto)
+      usedOpponents.add(t.curto)
+      saida.push(t)
+    }
+    return saida
   }
-  return matches
+
+  const partidas: Array<CupMatchDescriptor | null> = []
+  let consumidos = 0
+  let eliminado = false
+
+  for (const [indice, etapa] of etapas.entries()) {
+    const semente = `${userTeam.curto}:${plan.competition.id}:${season}:${etapa.stage}`
+
+    if (eliminado) {
+      for (let i = 0; i < etapa.jogos; i++) partidas.push(null)
+      continue
+    }
+
+    if (etapa.tipo === "grupo") {
+      const rivais = escolher(indice, 3, semente)
+      if (rivais.length < 3) { for (let i = 0; i < etapa.jogos; i++) partidas.push(null); continue }
+      // Turno e returno contra os tres do grupo.
+      for (let i = 0; i < etapa.jogos; i++) {
+        const rival = rivais[i % rivais.length]
+        const emCasa = i < rivais.length
+        partidas.push({
+          competition: plan.competition.name,
+          competitionType: plan.competitionType,
+          homeTeam: emCasa ? userTeam : rival,
+          awayTeam: emCasa ? rival : userTeam,
+          stage: etapa.stage,
+        })
+      }
+      const passou = passouNoGrupo(placares.slice(consumidos, consumidos + etapa.jogos), etapa.jogos, rivais, userTeam.prestigio ?? 60, semente)
+      consumidos += etapa.jogos
+      if (passou === false) eliminado = true
+      continue
+    }
+
+    const [rival] = escolher(indice, 1, semente)
+    if (!rival) { for (let i = 0; i < etapa.jogos; i++) partidas.push(null); continue }
+    for (let i = 0; i < etapa.jogos; i++) {
+      // Ida fora, volta em casa — quem tem melhor campanha decide em casa.
+      const emCasa = etapa.jogos === 1 ? (userTeam.prestigio ?? 0) >= (rival.prestigio ?? 0) : i === 1
+      partidas.push({
+        competition: plan.competition.name,
+        competitionType: plan.competitionType,
+        homeTeam: emCasa ? userTeam : rival,
+        awayTeam: emCasa ? rival : userTeam,
+        stage: etapa.stage,
+      })
+    }
+    const passou = passouNoConfronto(placares.slice(consumidos, consumidos + etapa.jogos), etapa.jogos, semente)
+    consumidos += etapa.jogos
+    if (passou === false) eliminado = true
+  }
+
+  return partidas
 }
 
 // Decompoe um conjunto de confrontos em rodadas onde todo mundo joga uma vez.
@@ -1361,13 +1453,16 @@ export function useGameManager() {
     // Cada partida do usuario ocupa uma semana unica (1 jogo por semana). As
     // partidas de copa entram em "meios de semana" distribuidos ao longo da liga.
     const leagueRoundCount = (leagueTeams.length - 1) * 2
-    const cupMatches: CupMatchDescriptor[] = []
+    const cupMatches: Array<CupMatchDescriptor | null> = []
     if (userTeam) {
       // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
       // nas copas para nao criar o relato confuso de tres jogos contra o mesmo clube.
       const cupOpponents = new Set(leagueTeams.filter(t => t.curto !== userTeam.curto).map(t => t.curto))
       for (const plan of getUserCupPlan(userTeam, superCupBerths)) {
-        cupMatches.push(...generateUserCupMatches(userTeam, plan, saveState.season, cupOpponents))
+        cupMatches.push(...generateUserCupMatches(
+          userTeam, plan, saveState.season, cupOpponents,
+          gameEngine.matchResults.filter(r => r.season === saveState.season),
+        ))
       }
     }
 
@@ -1400,7 +1495,8 @@ export function useGameManager() {
         while (cupIdx < C && r >= Math.round(((cupIdx + 1) * leagueRoundCount) / (C + 1))) {
           week++
           const cm = cupMatches[cupIdx]
-          allFixtures.push({
+          // `null` = clube eliminado: a semana existe, o jogo nao.
+          if (cm) allFixtures.push({
             id: cupFixtureId++,
             round: cupIdx + 1,
             week,
@@ -1411,6 +1507,7 @@ export function useGameManager() {
             isUserMatch: true,
             month: roundMonth,
             competitionType: cm.competitionType,
+            stage: cm.stage,
           })
           cupIdx++
         }
@@ -1419,7 +1516,7 @@ export function useGameManager() {
       while (cupIdx < C) {
         week++
         const cm = cupMatches[cupIdx]
-        allFixtures.push({
+        if (cm) allFixtures.push({
           id: cupFixtureId++,
           round: cupIdx + 1,
           week,
@@ -1430,6 +1527,7 @@ export function useGameManager() {
           isUserMatch: true,
           month: 11,
           competitionType: cm.competitionType,
+          stage: cm.stage,
         })
         cupIdx++
       }
