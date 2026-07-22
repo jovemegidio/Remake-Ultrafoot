@@ -56,6 +56,20 @@ const CURATED = {
 // entram nomes SEM homonimo conhecido — Botafogo (RJ/SP/PB), Guarani (SP/MG/CE),
 // Portuguesa (SP/RJ), Palmeira, Ulbra e Santa Rosa ficam de fora de proposito:
 // a trava de clubes homonimos ja custou caro nesta base.
+// Conferidos um a um pelo ESTADIO que consta no proprio pool — nao por palpite:
+//   Amapa -> Milton de Souza Correa (Macapa/AP)
+//   Passo das Emas -> Wagner Lopes, o Luverdense (Lucas do Rio Verde/MT)
+//   Andraus -> Atilio Gionedis (Curitiba/PR)
+//   Palmeira -> fileKey palmeirrn_bra
+//   Santa Catarina -> fileKey santacatarina_cg_br
+//   Portuguesa -> Caninde (Sao Paulo/SP); a homonima do pool e da Venezuela
+// SERC fica sem UF: o estadio ("Estadio da SERC") nao identifica o estado, e
+// chutar aqui e exatamente o erro que essa lista existe para evitar.
+const CURATED_FILEKEY = {
+  amapa_bra:"AP", luverdensemt_bra:"MT", andraus_bra:"PR",
+  palmeirrn_bra:"RN", santacatarina_cg_br:"SC", portuguesa_bra:"SP",
+}
+
 const CURATED_POOL = {
   cruzeiro:"MG", rbbragantino:"SP", coritiba:"PR", chapecoense:"SC", internacional:"RS",
   crb:"AL", brusque:"SC", ceara:"CE", cuiaba:"MT", avai:"SC", criciuma:"SC",
@@ -65,6 +79,23 @@ const CURATED_POOL = {
 
 // Aliases especificos p/ nomes com pontuacao no pool.
 const NAME_UF = { "Porto - PE":"PE" }
+
+/**
+ * UF a partir do fileKey — a fonte mais confiavel que existe no pool, porque foi
+ * gerada junto com o escudo: `guaranisp_bra`, `botafogorj_bra`, `ulbraro_bra`.
+ *
+ * O cuidado: `flamengo_bra` termina em "go" e viraria Goias. So aceitamos quando
+ * o que sobra depois de tirar a UF É EXATAMENTE o nome do clube normalizado —
+ * assim "guarani"+"sp" passa e "flamengo" (sem sobra) nao vira nada.
+ */
+function ufFromFileKey(fileKey, nome) {
+  const raiz = String(fileKey || "").toLowerCase().replace(/_bra?$/, "").replace(/_br$/, "")
+  if (raiz.length < 4) return null
+  const uf = raiz.slice(-2).toUpperCase()
+  if (!UFS.includes(uf)) return null
+  const semUf = raiz.slice(0, -2)
+  return semUf === norm(nome) ? uf : null
+}
 
 function ufFromSuffix(nome) {
   // "-RJ", " RJ", " - PE", "-MG"
@@ -95,6 +126,18 @@ async function main() {
     realocados++
   }
 
+  // CORRECOES — estado que veio ERRADO na fonte, com duas evidencias
+  // independentes concordando. Aplicadas por cima do valor existente.
+  //   Decisao: estava SE. O fileKey (decisaope_bra), o codigo curto (DECISAOP)
+  //   e o estadio ("Artuzao", em Camaragibe) apontam PE.
+  const CORRECOES = { decisaope_bra: "PE" }
+  let corrigidos = 0
+  for (const t of teams) {
+    const uf = CORRECOES[String(t.fileKey || "")]
+    if (uf && t.estado !== uf) { t.estado = uf; corrigidos++ }
+  }
+  if (corrigidos) console.log(`estados corrigidos: ${corrigidos}`)
+
   // PASSO 2 — clubes ja marcados como Brasil que seguem sem UF: tenta o sufixo
   // do nome e o mapa curado.
   for (const t of teams) {
@@ -102,7 +145,8 @@ async function main() {
     if (t.estado) continue
     const nome = t.nome || ""
     if (isJunk(nome)) { junk++; continue }
-    const uf = NAME_UF[nome] || ufFromSuffix(nome) || CURATED[norm(nome)] || CURATED_POOL[norm(nome)] || null
+    const uf = ufFromFileKey(t.fileKey, nome) || CURATED_FILEKEY[String(t.fileKey || "")]
+      || NAME_UF[nome] || ufFromSuffix(nome) || CURATED[norm(nome)] || CURATED_POOL[norm(nome)] || null
     if (uf) { t.estado = uf; assigned++ }
     else unknown.push(nome)
   }
