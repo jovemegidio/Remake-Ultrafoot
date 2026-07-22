@@ -1232,6 +1232,36 @@ const _normKey = (s: string) =>
 const _curatedKeys = new Set<string>()
 for (const t of allTeams) { _curatedKeys.add(_normKey(t.file_key)); _curatedKeys.add(_normKey(t.nome)) }
 
+/**
+ * A chave do pool traz o sufixo do pais (`brighton_ing`, `pisa_it`), a do curado
+ * nao (`brighton`). Sem tirar o sufixo, o filtro de duplicatas abaixo nao via
+ * que eram o mesmo clube e o editor listava os dois — "Brighton" e
+ * "Brighton & Hove Albion", "Tottenham" e "Tottenham Hotspur".
+ */
+const _semSufixoDePais = (chave: string) => chave.replace(/(ing|ita|esp|ale|fra|por|hol|bel|arg|bra|rus|tur|eua|chn|ara|mex|col|chi|per|uru|par|esc|sui|ucr|sue|aut|gre|din|nor|jap|cat|egi|mar|aus|it|fr|ar|pt|pl|ru|hk|en)$/, "")
+const _curatedStems = new Set<string>()
+for (const t of allTeams) _curatedStems.add(_semSufixoDePais(_normKey(t.file_key)))
+
+/**
+ * Mesmo clube com nome diferente nas duas fontes, conferido um a um. NAO entra
+ * aqui time B nem xara: Benfica B, Zenit Penza, Independiente Chivilcoy e
+ * Stuttgarter Kickers sao clubes DIFERENTES, e uni-los apagaria elenco de
+ * verdade. O criterio foi: mesmo pais, mesma cidade e mesmo clube real.
+ */
+const _MESMO_CLUBE: Record<string, string> = {
+  tottenhamhotspur: "tottenham",
+  ascoli: "ascolicalcio1898",
+  mantova: "mantova1911",
+  pisa: "pisasportingclub",
+  carrarese: "carraresecalcio",
+  antalyspor: "antalyaspor",
+  ural: "uralsyekaterinburg",
+  fakel: "fakelvoronezh",
+  jaguares: "jaguarescordoba",
+  alfaisaly: "alfaisalyharma",
+  sanmartinsj: "sanmartinsj",
+}
+
 interface PoolTeamRaw {
   nome?: string; curto?: string; cor1?: string; cor2?: string; prestigio?: number
   saldo?: number; fileKey?: string; estadio?: string; escudo?: string
@@ -1244,7 +1274,11 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
     const fk = _normKey(String(t.fileKey ?? ""))
     const nm = _normKey(repairMojibake(String(t.nome ?? "")))
     const unique = `${nm}:${String(t.pais ?? "")}`
+    const raiz = _semSufixoDePais(fk)
+    const apelido = _MESMO_CLUBE[raiz]
     if (!fk || _curatedKeys.has(fk) || _curatedKeys.has(nm) || _seenPoolTeams.has(unique)) return false
+    if (_curatedStems.has(raiz)) return false
+    if (apelido && _curatedKeys.has(apelido)) return false
     _seenPoolTeams.add(unique)
     return true
   })
