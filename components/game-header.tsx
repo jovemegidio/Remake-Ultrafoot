@@ -8,7 +8,7 @@ import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy,
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { saveGameStateAndFlush, useGameState } from "@/lib/save-system"
+import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { persistGameEngineNow } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { clearJobOffers } from "@/lib/career-moves"
@@ -270,6 +270,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const gameDateLabel = `${gameDate.getDate().toString().padStart(2, "0")} ${MONTHS_SHORT[gameDate.getMonth()]}`
 
   const handleSave = async () => {
+    // Sem carreira iniciada no pre-office nao ha o que salvar.
+    if (!podeSalvarCarreira(state)) return
     setSaving(true)
     persistGameEngineNow()
     await saveGameStateAndFlush({ ...state, updatedAt: Date.now() })

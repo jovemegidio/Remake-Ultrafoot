@@ -7,7 +7,7 @@ import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import { useActionBar } from "@/components/ea-action-bar"
-import { saveGameStateAndFlush, useGameState } from "@/lib/save-system"
+import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { persistGameEngineNow } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
@@ -44,6 +44,12 @@ export default function SalvarPage() {
   }, [hydrated, state.saveName])
 
   const commitSave = async () => {
+    if (!podeSalvarCarreira(state)) {
+      setSaveFeedback("Entre no pré-jogo para começar a carreira antes de salvar.")
+      setNaming(false)
+      setTimeout(() => setSaveFeedback(""), 3500)
+      return
+    }
     const name = saveName.trim() || "Carreira principal"
     persistGameEngineNow()
     await saveGameStateAndFlush({ ...state, saveName: name, updatedAt: Date.now() })

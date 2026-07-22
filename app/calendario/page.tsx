@@ -15,6 +15,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { GamepadButton } from "@/components/gamepad-icons"
 import { TeamCrest } from "@/components/team-crest"
+import { faseDaPartida } from "@/lib/competition-phase"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { GameHeader } from "@/components/game-header"
@@ -416,6 +417,24 @@ export default function CalendarioPage() {
               <div className="text-white text-sm font-bold">
                 {selectedFixture.competition === "Brasileirao Serie A" ? "Brasileirao Serie A" : selectedFixture.competition}
               </div>
+              {/* Fase do regulamento: sem isto o painel dizia so o nome da
+                  competicao, e uma semifinal parecia rodada comum. */}
+              {(() => {
+                const fase = faseDaPartida(selectedFixture)
+                if (!fase) return null
+                return (
+                  <div
+                    className="mt-1.5 inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider"
+                    style={fase.isFinal
+                      ? { background: "rgba(255,196,0,0.16)", borderColor: "rgba(255,196,0,0.55)", color: "#ffe08a" }
+                      : fase.isKnockout
+                        ? { background: "rgba(190,120,255,0.14)", borderColor: "rgba(190,120,255,0.5)", color: "#dcbcff" }
+                        : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.55)" }}
+                  >
+                    {fase.label}
+                  </div>
+                )
+              })()}
             </div>
           )}
 
@@ -544,6 +563,16 @@ export default function CalendarioPage() {
                 const hasMatch = item.fixture !== null
                 const isHome = item.fixture?.homeTeam.curto === userTeam.curto
                 const opponent = item.fixture ? (isHome ? item.fixture.awayTeam : item.fixture.homeTeam) : null
+                // Mata-mata precisa saltar aos olhos no calendario: uma final nao pode
+                // ter o mesmo cartao de uma rodada qualquer de pontos corridos.
+                const fase = faseDaPartida(item.fixture)
+                const cores = fase?.isFinal
+                  ? { fundo: "rgba(255, 196, 0, 0.38)", borda: "rgba(255, 196, 0, 0.85)", texto: "#ffe08a" }
+                  : fase?.isKnockout
+                    ? { fundo: "rgba(190, 120, 255, 0.32)", borda: "rgba(190, 120, 255, 0.7)", texto: "#dcbcff" }
+                    : isHome
+                      ? { fundo: "rgba(0, 136, 255, 0.35)", borda: "rgba(0, 136, 255, 0.6)", texto: "#8ed0ff" }
+                      : { fundo: "rgba(0, 204, 102, 0.35)", borda: "rgba(0, 204, 102, 0.6)", texto: "#86ffb0" }
                 
                 return (
                   <button
@@ -577,8 +606,9 @@ export default function CalendarioPage() {
                         style={{
                           bottom: 6,
                           height: 32,
-                          backgroundColor: isHome ? "rgba(0, 136, 255, 0.35)" : "rgba(0, 204, 102, 0.35)",
-                          borderColor: isHome ? "rgba(0, 136, 255, 0.6)" : "rgba(0, 204, 102, 0.6)",
+                          backgroundColor: cores.fundo,
+                          borderColor: cores.borda,
+                          boxShadow: fase?.isFinal ? "0 0 12px rgba(255,196,0,0.45)" : undefined,
                         }}
                       >
                         <TeamCrest team={opponent} size="xs" />
@@ -586,18 +616,20 @@ export default function CalendarioPage() {
                           <div
                             className="font-black uppercase"
                             style={{
-                              color: isHome ? "#8ed0ff" : "#86ffb0",
+                              color: cores.texto,
                               fontSize: 9,
                               lineHeight: "10px",
                             }}
                           >
-                            {isHome ? "Casa" : "Fora"}
+                            {fase?.isKnockout ? fase.label : isHome ? "Casa" : "Fora"}
                           </div>
                           <div
                             className="font-bold text-white/60 uppercase"
                             style={{ fontSize: 8, lineHeight: "9px" }}
                           >
-                            {item.fixture?.competition === "Brasileirao Serie A" ? "Liga" : "Copa"}
+                            {fase?.isKnockout
+                              ? (isHome ? "Casa" : "Fora")
+                              : item.fixture?.competition === "Brasileirao Serie A" ? "Liga" : "Copa"}
                           </div>
                         </div>
                       </div>

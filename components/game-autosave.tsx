@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { persistGameEngineNow, useGameEngine } from "@/lib/game-engine"
-import { saveGameStateAndFlush, useGameState } from "@/lib/save-system"
+import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { useNotifications } from "@/components/notifications-system"
 
 /** Salva os dois estados da carreira após a quantidade configurada de partidas. */
@@ -25,6 +25,9 @@ export function GameAutosave() {
 
   useEffect(() => {
     if (!hydrated) return
+    // Mesma regra do salvamento manual: nada e gravado antes de a carreira
+    // comecar no pre-office.
+    if (!podeSalvarCarreira(state)) return
     // A primeira leitura apenas estabelece o ponto de partida da sessão. Isso impede
     // um aviso de autosave ao abrir uma carreira antiga, antes de jogar outra partida.
     if (!ready.current) {

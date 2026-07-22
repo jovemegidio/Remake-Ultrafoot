@@ -393,6 +393,13 @@ export interface GameState {
   /** 0 desativa; os demais valores salvam apos essa quantidade de partidas. */
   autoSaveInterval: 0 | 1 | 3 | 5
   lastAutoSaveMatchCount: number
+  /**
+   * A carreira so pode ser salva depois que o tecnico entra no PRE-OFFICE pela
+   * primeira vez. Antes disso a carreira ainda nao comecou de fato e salvar
+   * criava um slot vazio, que depois aparecia na lista de "Carregar" sem nada
+   * dentro. Marcado ao abrir o pre-office com clube ja escolhido.
+   */
+  preOfficeVisitado: boolean
   // Arvore de habilidades do treinador (Just-in-Time)
   coachSkills: CoachSkill[]
   coachXP: number
@@ -498,6 +505,7 @@ export const DEFAULT_STATE: GameState = {
   commentaryVolume: 80,
   autoSaveInterval: 1,
   lastAutoSaveMatchCount: 0,
+  preOfficeVisitado: false,
   // Treinador
   coachSkills: COACH_SKILL_CATALOG.map(s => ({ ...s })),
   coachXP: 0,
@@ -611,6 +619,11 @@ function safeParse(raw: string | null): GameState | null {
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as GameState
+    // Carreira que JA existia em disco nasceu antes da trava do pre-office. Se
+    // ficasse com o padrao `false`, o tecnico veria "nao da para salvar" numa
+    // campanha em andamento — regressao pior do que o problema que a trava
+    // resolve. Um save gravado e, por definicao, uma carreira ja iniciada.
+    if (parsed.preOfficeVisitado === undefined) parsed.preOfficeVisitado = true
     // Migra version 2 para a atual (adiciona campos de treinador e legado)
     if (parsed.version === 2) {
       return {
@@ -707,6 +720,15 @@ export function saveGameState(state: GameState): void {
 export async function saveGameStateAndFlush(state: GameState): Promise<void> {
   saveGameState(state)
   await flushPersistentStore()
+}
+
+/**
+ * A carreira so e salvavel depois de o tecnico entrar no pre-office. Antes disso
+ * ele ainda esta no fluxo de criacao (escolha de clube, cutscene, escritorio
+ * inicial) e um save ali gravava um slot sem temporada nenhuma.
+ */
+export function podeSalvarCarreira(state: GameState): boolean {
+  return Boolean(state.careerId && state.selectedTeamShort && state.preOfficeVisitado)
 }
 
 export function clearGameState(): void {

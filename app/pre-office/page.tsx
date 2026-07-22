@@ -30,6 +30,7 @@ import { useGameEngine, getContractStatus } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { generateDynamicNews, NEWS_SOURCES, type NewsItem } from "@/components/news-feed"
 import { getGameDate } from "@/lib/game-date"
+import { useGameState } from "@/lib/save-system"
 
 const WEEKDAYS = ["DOMINGO", "SEGUNDA-FEIRA", "TERCA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA", "SABADO"]
 const MONTHS = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
@@ -83,6 +84,16 @@ export default function PreOfficePage() {
     saveState,
   } = useGameManager()
   const gameEngine = useGameEngine()
+
+  // A partir daqui a carreira existe de verdade e pode ser salva. Antes do
+  // pre-office o tecnico ainda esta no fluxo de criacao, e salvar gravava um
+  // slot vazio que aparecia em "Carregar" sem temporada nenhuma.
+  const { state: estadoSalvo, setState: setEstadoSalvo } = useGameState()
+  useEffect(() => {
+    if (!hydrated) return
+    if (!estadoSalvo.selectedTeamShort || estadoSalvo.preOfficeVisitado) return
+    setEstadoSalvo({ preOfficeVisitado: true })
+  }, [hydrated, estadoSalvo.selectedTeamShort, estadoSalvo.preOfficeVisitado, setEstadoSalvo])
 
   const [isAdvancing, setIsAdvancing] = useState(false)
   const [selectedTask, setSelectedTask] = useState(0)
