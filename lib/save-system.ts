@@ -418,6 +418,8 @@ export interface GameState {
   youthAutoPromotedSeason?: number
   /** Ultima temporada em que a base envelheceu (promocao automatica aos 18). */
   youthAgedSeason?: number
+  /** Semana da ultima cobranca da diretoria sobre a base. */
+  youthBoardCheckWeek?: number
   /** Carreira opcional iniciada nas categorias de base. */
   youthCareer?: YouthCareerState
   debt?: ClubDebtState

@@ -11,9 +11,14 @@ import { useUserTeam, useGameState, type SquadPlayer } from "@/lib/save-system"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateYouthProspects } from "@/lib/youth-academy"
 import { advanceYouthMonth, generateYouthBatch, loanYouth, runTryout } from "@/lib/youth-engine"
+import {
+  capacidadeDaBase, vagasNaBase, evoluirSemana, propostaPorJovem,
+  valorDeMercadoJovem, cobrancaDaDiretoria, type JovemBase,
+} from "@/lib/youth-academy-rules"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useNotifications } from "@/components/notifications-system"
+import { useGameEngine } from "@/lib/game-engine"
 
 const PROMOTION_FEE = 200_000
 
@@ -23,6 +28,11 @@ export default function BasePage() {
   const { addNotification } = useNotifications()
   const youth = state.youthPlayers ?? []
   const balance = state.balance && state.balance > 0 ? state.balance : team.saldo
+  // Capacidade da base escala com a academia (ate 100 no nivel 5). O nivel vive
+  // no game-engine (infraestrutura), nao no save da carreira.
+  const nivelAcademia = useGameEngine(st => st.clubInfrastructure?.youthAcademyLevel) ?? 1
+  const capacidade = capacidadeDaBase(nivelAcademia)
+  const vagas = vagasNaBase(youth.length, nivelAcademia)
 
   // SEMEIA a base quando vazia.
   //
@@ -79,6 +89,25 @@ export default function BasePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.season, state.youthSeededSeason, state.youthAgedSeason, youth.length])
 
+  // COBRANÇA DA DIRETORIA pelo uso da base, em momentos definidos da temporada
+  // (pedido). Dispara uma vez por janela, marcada em youthBoardCheckWeek.
+  useEffect(() => {
+    const semana = state.week ?? 0
+    const cob = cobrancaDaDiretoria({
+      semana,
+      nivelAcademia,
+      promovidosNaTemporada: (state.squadPlayers ?? [])
+        .filter(p => p.fromTeam === "Categoria de Base" && p.seasonSigned === state.season).length,
+    })
+    if (!cob || state.youthBoardCheckWeek === semana) return
+    setState({ youthBoardCheckWeek: semana })
+    addNotification({
+      type: "system", priority: cob.cumprida ? "medium" : "high",
+      title: cob.titulo, message: cob.mensagem,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.week, state.season, nivelAcademia])
+
   const replacementFor = (player: SquadPlayer): SquadPlayer => {
     const generated = generateYouthBatch(state.season, 1, team.prestigio ?? 60)[0]
     return { ...generated, id: `replacement_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, position: player.position, fromTeam: "Nova geração da base" }
@@ -133,6 +162,40 @@ export default function BasePage() {
     window.alert(`${result.report.highlights.length} jovem(ns) evoluíram neste mês.`)
   }
 
+  /** Uma semana de trabalho na base — o acompanhamento semanal pedido. */
+  const acompanharSemana = () => {
+    const r = evoluirSemana(youth as unknown as JovemBase[], nivelAcademia)
+    setState({ youthPlayers: r.jovens as unknown as SquadPlayer[] })
+    if (r.destaques.length === 0) {
+      addNotification({ type: "system", priority: "low", title: "Semana na base",
+        message: "Semana sem evolução relevante entre os garotos." })
+      return
+    }
+    addNotification({
+      type: "system", priority: "medium",
+      title: `${r.destaques.length} garoto(s) evoluíram nesta semana`,
+      message: r.destaques.slice(0, 6).map(d => `${d.nome} +${d.ganho}`).join(", ")
+        + (r.prontosParaSubir.length ? ` — pronto(s) para o profissional: ${r.prontosParaSubir.join(", ")}.` : ""),
+    })
+  }
+
+  /** Vende um garoto: proposta gerada pelo valor de promessa, com negociação. */
+  const venderJovem = (player: SquadPlayer) => {
+    const j = player as unknown as JovemBase
+    const clubes = ["Benfica", "Ajax", "Porto", "Shakhtar", "Red Bull Salzburg", "Palmeiras", "Flamengo"]
+    const p = propostaPorJovem(j, clubes[Math.floor(Math.random() * clubes.length)])
+    const justo = valorDeMercadoJovem(j)
+    const texto = `${p.clube} oferece ${formatCurrency(p.valor)} por ${player.name}.\n` +
+      `Valor estimado: ${formatCurrency(justo)}${p.abaixoDoValor ? "\n\nA proposta está ABAIXO do valor do atleta." : ""}\n\nAceitar a venda?`
+    if (typeof window !== "undefined" && !window.confirm(texto)) return
+    setState({
+      youthPlayers: youth.filter(x => x.id !== player.id),
+      balance: balance + p.valor,
+    })
+    addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
+      message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
+  }
+
   const sendOnLoan = (player: SquadPlayer) => {
     const club = window.prompt("Clube de destino do empréstimo:")?.trim()
     if (!club) return
@@ -162,13 +225,27 @@ export default function BasePage() {
           <Sprout className="h-7 w-7 text-[#1db954]" />
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">CATEGORIA DE BASE</h1>
-            <p className="text-white/50 mt-1">{youth.length} prospecto{youth.length !== 1 ? "s" : ""} disponível{youth.length !== 1 ? "is" : ""} • Taxa de promoção: R$ {(PROMOTION_FEE / 1000).toFixed(0)}k</p>
+            {/* Ocupação x capacidade: a base tem teto (ate 100 na academia nivel 5). */}
+            <p className="text-white/50 mt-1">
+              <span className={cn("font-semibold", vagas === 0 ? "text-amber-400" : "text-white/70")}>
+                {youth.length}/{capacidade}
+              </span>{" "}
+              garotos • {vagas} vaga{vagas !== 1 ? "s" : ""} • Promoção: R$ {(PROMOTION_FEE / 1000).toFixed(0)}k
+            </p>
           </div>
           <div className="ml-auto flex gap-2">
+            <Button variant="outline" onClick={acompanharSemana} className="border-white/15 text-white">
+              <RefreshCw className="mr-2 h-4 w-4" /> Acompanhar semana
+            </Button>
             <Button variant="outline" onClick={developMonth} className="border-white/15 text-white">
               <RefreshCw className="mr-2 h-4 w-4" /> Evoluir um mês
             </Button>
-            <Button onClick={holdTryout} className="bg-[#1db954] text-black hover:bg-[#1ed760]">
+            <Button
+              onClick={holdTryout}
+              disabled={vagas === 0}
+              title={vagas === 0 ? "Base lotada — dispense ou promova alguém" : undefined}
+              className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-40"
+            >
               <Sprout className="mr-2 h-4 w-4" /> Peneira Sub-17 · R$ 100 mil
             </Button>
           </div>
@@ -245,9 +322,20 @@ export default function BasePage() {
                       size="sm"
                       variant="outline"
                       onClick={() => sendOnLoan(p)}
+                      title="Emprestar"
                       className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 text-xs"
                     >
                       <Send className="h-3.5 w-3.5" />
+                    </Button>
+                    {/* Negociar o garoto: proposta pelo valor de PROMESSA. */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => venderJovem(p)}
+                      title={`Vender — vale ~${formatCurrency(valorDeMercadoJovem(p as unknown as JovemBase))}`}
+                      className="border-amber-400/40 text-amber-300 hover:bg-amber-400/10 text-xs"
+                    >
+                      Vender
                     </Button>
                     <Button
                       size="sm"
