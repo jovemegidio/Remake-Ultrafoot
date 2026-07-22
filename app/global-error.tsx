@@ -53,10 +53,54 @@ export default function GlobalError({
           <h1 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 8px" }}>
             Algo deu errado ao carregar esta tela
           </h1>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: "#a2a6b2", margin: "0 0 24px" }}>
+          <p style={{ fontSize: 14, lineHeight: 1.5, color: "#a2a6b2", margin: "0 0 16px" }}>
             Seu progresso está salvo. Você pode recarregar esta tela ou voltar ao menu
             principal.
           </p>
+
+          {/* DIAGNOSTICO VISIVEL. Sem isto o relato do jogador e sempre "deu erro
+              em uma tela", sem tela nem causa — impossivel corrigir. Aqui ele ve
+              a mensagem real e o endereco, e pode copiar com um clique. */}
+          <div
+            style={{
+              textAlign: "left",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.10)",
+              borderRadius: 10,
+              padding: "12px 14px",
+              margin: "0 0 20px",
+              fontSize: 12,
+              lineHeight: 1.6,
+              color: "#c9ccd6",
+              wordBreak: "break-word",
+            }}
+          >
+            <div style={{ color: "#8b90a0", fontSize: 10, letterSpacing: 1, marginBottom: 6 }}>
+              DETALHE TÉCNICO
+            </div>
+            <div><b>Tela:</b> {typeof window !== "undefined" ? window.location.pathname : "?"}</div>
+            <div><b>Erro:</b> {error?.message || "(sem mensagem)"}</div>
+            {error?.digest && <div><b>Código:</b> {error.digest}</div>}
+            <button
+              onClick={() => {
+                if (typeof navigator === "undefined") return
+                const txt = [
+                  `Tela: ${window.location.pathname}`,
+                  `Erro: ${error?.message ?? ""}`,
+                  error?.digest ? `Codigo: ${error.digest}` : "",
+                  (error?.stack ?? "").split("\n").slice(0, 6).join("\n"),
+                ].filter(Boolean).join("\n")
+                void navigator.clipboard?.writeText(txt)
+              }}
+              style={{
+                marginTop: 10, borderRadius: 8, padding: "6px 12px", fontSize: 11,
+                fontWeight: 700, cursor: "pointer", background: "rgba(255,255,255,0.08)",
+                color: "#e6e8ee", border: "1px solid rgba(255,255,255,0.14)",
+              }}
+            >
+              Copiar detalhes do erro
+            </button>
+          </div>
 
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button

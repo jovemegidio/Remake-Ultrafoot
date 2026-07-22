@@ -475,6 +475,20 @@ export interface Scout {
   foundPlayers: number[] // IDs dos jogadores descobertos
   weeksToComplete?: number // semanas restantes para completar busca
   searchCost?: number // custo da viagem/busca
+  /**
+   * O QUE o olheiro foi procurar (pedido: "dizer qual jogador voce procura").
+   * Sem isto ele saia e trazia qualquer coisa; agora a missao tem alvo.
+   */
+  searchCriteria?: ScoutCriteria | null
+}
+
+export interface ScoutCriteria {
+  /** Posicao desejada; vazio = qualquer. */
+  position?: string | null
+  /** Potencial minimo aceitavel — filtra o que o olheiro reporta. */
+  minPotential?: number
+  /** Idade maxima (buscar promessa jovem x pronto). */
+  maxAge?: number
 }
 
 export interface ScoutedPlayer {
@@ -569,13 +583,19 @@ export function shootingForPosition(base: number, position: string): number {
   }
 }
 
-export function generateScoutedLead(region: string, scoutSkill: number, week: number): ScoutedLead {
+export function generateScoutedLead(region: string, scoutSkill: number, week: number, criteria?: ScoutCriteria | null): ScoutedLead {
   const key = region.toLowerCase().replace(/[^a-z]/g, "")
   const regionData = SCOUT_NAMES_BY_REGION[key] ?? SCOUT_NAMES_BY_REGION.brasil
   const name = regionData.names[Math.floor(Math.random() * regionData.names.length)]
   const nationality = regionData.nationalities[Math.floor(Math.random() * regionData.nationalities.length)]
-  const position = LEAD_POSITIONS[Math.floor(Math.random() * LEAD_POSITIONS.length)]
-  const age = 16 + Math.floor(Math.random() * 8) // 16-23: olheiro traz PROJETO, nao pronto
+  // Posicao PEDIDA na missao vence o sorteio — o olheiro foi atras do que o
+  // tecnico mandou procurar, nao de qualquer um.
+  const position = criteria?.position && LEAD_POSITIONS.includes(criteria.position)
+    ? criteria.position
+    : LEAD_POSITIONS[Math.floor(Math.random() * LEAD_POSITIONS.length)]
+  // 16-23: olheiro traz PROJETO, nao pronto. Idade maxima da missao estreita a faixa.
+  const tetoIdade = Math.max(16, Math.min(23, criteria?.maxAge ?? 23))
+  const age = 16 + Math.floor(Math.random() * Math.max(1, tetoIdade - 15))
 
   // Revelado nasce com overall BAIXO e potencial ALTO — e um projeto que evolui
   // por treino e temporadas, nao um reforco pronto (pedido do usuario). Quanto
@@ -587,7 +607,10 @@ export function generateScoutedLead(region: string, scoutSkill: number, week: nu
   const overall = Math.min(78, Math.max(46, baseOvr - crueza))
   // Potencial: margem grande para jovem (ate ~+34), estreita para quem ja tem 22-23.
   const margem = (age <= 17 ? 22 : age <= 19 ? 16 : age <= 21 ? 11 : 7) + scoutSkill * 2
-  const potential = Math.min(94, overall + 6 + Math.floor(Math.random() * margem))
+  let potential = Math.min(94, overall + 6 + Math.floor(Math.random() * margem))
+  // Potencial minimo da missao: o olheiro so REPORTA quem atende ao pedido, entao
+  // garantimos o piso (limitado a 94 para nao criar joia impossivel).
+  if (criteria?.minPotential) potential = Math.min(94, Math.max(potential, criteria.minPotential))
 
   const ageMultiplier = age <= 19 ? 2.5 : age <= 22 ? 1.8 : 1.0
   const marketValue = Math.round(overall * 80000 * ageMultiplier * (0.8 + Math.random() * 0.4))
@@ -1852,7 +1875,7 @@ interface GameEngineState {
   addClubRevenue: (amount: number) => void
   loanPlayer: (player: Player, weeks: number, salary: number) => "joined" | "pending" | "failed"
   hireScout: (scout: Scout) => void
-  startScoutSearch: (scoutId: number, region: string, weeksToComplete?: number, searchCost?: number) => void
+  startScoutSearch: (scoutId: number, region: string, weeksToComplete?: number, searchCost?: number, criteria?: ScoutCriteria | null) => void
   stopScoutSearch: (scoutId: number) => void
   fireScout: (scoutId: number) => void
   simulateOtherMatches: () => void
@@ -2710,7 +2733,7 @@ export const useGameEngine = create<GameEngineState>()(
             const total = elapsed + remaining
             const progress = Math.round((elapsed / total) * 100)
             if (remaining === 0) {
-              const lead = generateScoutedLead(scout.region, scout.skill, newWeek)
+              const lead = generateScoutedLead(scout.region, scout.skill, newWeek, scout.searchCriteria)
               newLeads.push(lead)
               return { ...scout, isSearching: false, searchProgress: 100, weeksToComplete: 0, weeksSearching: elapsed, foundPlayers: [...scout.foundPlayers, lead.id] }
             }
@@ -2933,7 +2956,7 @@ export const useGameEngine = create<GameEngineState>()(
         })
       },
       
-      startScoutSearch: (scoutId, region, weeksToComplete, searchCost) => {
+      startScoutSearch: (scoutId, region, weeksToComplete, searchCost, criteria) => {
         set((s) => {
           const scout = s.scouts.find((item) => item.id === scoutId)
           const cost = searchCost ?? scout?.searchCost ?? 0
@@ -2943,7 +2966,7 @@ export const useGameEngine = create<GameEngineState>()(
             balance: s.balance - cost,
             scouts: s.scouts.map((item) =>
               item.id === scoutId
-                ? { ...item, isSearching: true, searchProgress: 0, searchTarget: region, region, weeksToComplete: weeksToComplete ?? 4, weeksSearching: 0, searchCost: cost }
+                ? { ...item, isSearching: true, searchProgress: 0, searchTarget: region, region, weeksToComplete: weeksToComplete ?? 4, weeksSearching: 0, searchCost: cost, searchCriteria: criteria ?? null }
                 : item
             )
           }

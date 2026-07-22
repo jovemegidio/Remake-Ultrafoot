@@ -163,13 +163,30 @@ function ligaComPais(liga?: string, pais?: string): string | undefined {
   return `${nome} (${pais})`
 }
 
+// Destinos do olheiro: continentes (busca ampla, mais barata por atleta) e
+// PAISES especificos (pedido: "procurar no Continente Europeu ou apenas na
+// Espanha"). Pais custa mais e demora menos: e uma varredura focada.
 const scoutingRegions = [
-  { id: "Brasil", name: "Brasil", weeksToComplete: 2, searchCost: 50000 },
-  { id: "Americas", name: "Americas", weeksToComplete: 3, searchCost: 150000 },
-  { id: "Europa", name: "Europa", weeksToComplete: 4, searchCost: 300000 },
-  { id: "Africa", name: "Africa", weeksToComplete: 3, searchCost: 120000 },
-  { id: "Asia", name: "Asia", weeksToComplete: 3, searchCost: 100000 },
+  // Continentes
+  { id: "Brasil", name: "Brasil", weeksToComplete: 2, searchCost: 50000, tipo: "continente" as const },
+  { id: "Americas", name: "Américas", weeksToComplete: 3, searchCost: 150000, tipo: "continente" as const },
+  { id: "Europa", name: "Europa", weeksToComplete: 4, searchCost: 300000, tipo: "continente" as const },
+  { id: "Africa", name: "África", weeksToComplete: 3, searchCost: 120000, tipo: "continente" as const },
+  { id: "Asia", name: "Ásia", weeksToComplete: 3, searchCost: 100000, tipo: "continente" as const },
+  // Paises — foco maior, prazo menor, custo por atleta mais alto
+  { id: "Espanha", name: "Espanha", weeksToComplete: 2, searchCost: 220000, tipo: "pais" as const },
+  { id: "Inglaterra", name: "Inglaterra", weeksToComplete: 2, searchCost: 260000, tipo: "pais" as const },
+  { id: "Italia", name: "Itália", weeksToComplete: 2, searchCost: 200000, tipo: "pais" as const },
+  { id: "Alemanha", name: "Alemanha", weeksToComplete: 2, searchCost: 200000, tipo: "pais" as const },
+  { id: "Franca", name: "França", weeksToComplete: 2, searchCost: 190000, tipo: "pais" as const },
+  { id: "Portugal", name: "Portugal", weeksToComplete: 2, searchCost: 150000, tipo: "pais" as const },
+  { id: "Argentina", name: "Argentina", weeksToComplete: 2, searchCost: 110000, tipo: "pais" as const },
+  { id: "Uruguai", name: "Uruguai", weeksToComplete: 2, searchCost: 90000, tipo: "pais" as const },
+  { id: "Colombia", name: "Colômbia", weeksToComplete: 2, searchCost: 85000, tipo: "pais" as const },
 ]
+
+/** Posições que o técnico pode encomendar ao olheiro. */
+const SCOUT_POSICOES = ["GOL", "ZAG", "LD", "LE", "VOL", "MEI", "PD", "PE", "ATA"]
 
 // Filter card types
 type FilterType = "nome" | "posicao" | "nacionalidade" | "status" | "idade" | "pais" | "liga" | "time"
@@ -689,6 +706,11 @@ export default function MercadoPage() {
     setMarketNotice(`${scoutData.name} foi contratado para o departamento de olheiros.`)
   }
 
+  // Criterios da missao do olheiro (posicao / potencial minimo / idade maxima).
+  const [scoutPos, setScoutPos] = useState<string>("")
+  const [scoutMinPot, setScoutMinPot] = useState<number>(0)
+  const [scoutMaxAge, setScoutMaxAge] = useState<number>(23)
+
   const handleStartScoutSearch = (scoutId: number, regionId: string) => {
     const region = scoutingRegions.find((item) => item.id === regionId)
     if (!region) return
@@ -698,9 +720,15 @@ export default function MercadoPage() {
       return
     }
 
-    gameEngine.startScoutSearch(scoutId, region.id, region.weeksToComplete, region.searchCost)
+    gameEngine.startScoutSearch(scoutId, region.id, region.weeksToComplete, region.searchCost, {
+      position: scoutPos || null,
+      minPotential: scoutMinPot || undefined,
+      maxAge: scoutMaxAge,
+    })
     setExpandedScoutId(null)
-    setMarketNotice(`Busca iniciada em ${region.name}. Avance semanas para receber relatorios.`)
+    const alvo = [scoutPos || null, scoutMinPot ? `potencial ${scoutMinPot}+` : null, `até ${scoutMaxAge} anos`]
+      .filter(Boolean).join(", ")
+    setMarketNotice(`Busca iniciada em ${region.name} (${alvo}). Avance semanas para receber relatórios.`)
   }
 
   const handleNegotiationResult = ({
@@ -1276,8 +1304,47 @@ export default function MercadoPage() {
                           </div>
                         </div>
 
+                        {/* O QUE procurar (pedido): posicao, potencial minimo e
+                            idade maxima. Sem isto o olheiro trazia qualquer um. */}
                         {expandedScoutId === scout.id && !scout.isSearching && (
-                          <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-2 border-t border-white/[0.04] pt-4">
+                          <div className="mt-4 grid gap-3 border-t border-white/[0.04] pt-4 sm:grid-cols-3">
+                            <label className="flex flex-col gap-1">
+                              <span className="text-[10px] uppercase tracking-wider text-white/40">Posição procurada</span>
+                              <select
+                                value={scoutPos}
+                                onChange={e => setScoutPos(e.target.value)}
+                                className="rounded-lg border border-white/10 bg-[#14252a] px-2 py-1.5 text-xs text-white"
+                              >
+                                <option value="">Qualquer</option>
+                                {SCOUT_POSICOES.map(p => <option key={p} value={p}>{p}</option>)}
+                              </select>
+                            </label>
+                            <label className="flex flex-col gap-1">
+                              <span className="text-[10px] uppercase tracking-wider text-white/40">Potencial mínimo</span>
+                              <select
+                                value={scoutMinPot}
+                                onChange={e => setScoutMinPot(Number(e.target.value))}
+                                className="rounded-lg border border-white/10 bg-[#14252a] px-2 py-1.5 text-xs text-white"
+                              >
+                                <option value={0}>Qualquer</option>
+                                {[70, 75, 80, 85, 90].map(v => <option key={v} value={v}>{v}+</option>)}
+                              </select>
+                            </label>
+                            <label className="flex flex-col gap-1">
+                              <span className="text-[10px] uppercase tracking-wider text-white/40">Idade máxima</span>
+                              <select
+                                value={scoutMaxAge}
+                                onChange={e => setScoutMaxAge(Number(e.target.value))}
+                                className="rounded-lg border border-white/10 bg-[#14252a] px-2 py-1.5 text-xs text-white"
+                              >
+                                {[17, 19, 21, 23].map(v => <option key={v} value={v}>até {v} anos</option>)}
+                              </select>
+                            </label>
+                          </div>
+                        )}
+
+                        {expandedScoutId === scout.id && !scout.isSearching && (
+                          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2 border-t border-white/[0.04] pt-4">
                             {scoutingRegions.map((region) => (
                               <button
                                 key={region.id}
