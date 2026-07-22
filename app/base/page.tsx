@@ -31,6 +31,14 @@ export default function BasePage() {
   // Capacidade da base escala com a academia (ate 100 no nivel 5). O nivel vive
   // no game-engine (infraestrutura), nao no save da carreira.
   const nivelAcademia = useGameEngine(st => st.clubInfrastructure?.youthAcademyLevel) ?? 1
+  // Elenco e caixa vivem no MOTOR, nao no save. Escrever em state.squadPlayers /
+  // state.balance (como era) nao aparecia em lugar nenhum: o Elenco le de
+  // players-data, o Gerenciamento le do motor e o caixa do cabecalho tambem.
+  // Era por isso que promover nao trazia o garoto e vender nao pingava dinheiro.
+  const promoverNoMotor = useGameEngine(st => st.promoverDaBase)
+  const receberPorJovem = useGameEngine(st => st.receberPorJovem)
+  const caixaDoMotor = useGameEngine(st => st.balance)
+  const gastarDoCaixa = useGameEngine(st => st.spendClubFunds)
   const capacidade = capacidadeDaBase(nivelAcademia)
   const vagas = vagasNaBase(youth.length, nivelAcademia)
 
@@ -114,11 +122,21 @@ export default function BasePage() {
   }
 
   const promote = (player: SquadPlayer) => {
-    if (balance < PROMOTION_FEE) {
+    if (caixaDoMotor < PROMOTION_FEE) {
       if (typeof window !== "undefined") window.alert("Saldo insuficiente para promover (R$ 200.000).")
       return
     }
     if (typeof window !== "undefined" && !window.confirm(`Promover ${player.name} ao elenco profissional por R$ 200.000?`)) {
+      return
+    }
+    const subiu = promoverNoMotor({
+      name: player.name, position: player.position, age: player.age,
+      overall: player.overall, potential: player.potential,
+      pace: player.pace, shooting: player.shooting, passing: player.passing,
+      dribbling: player.dribbling, defending: player.defending, physical: player.physical,
+    }, PROMOTION_FEE)
+    if (!subiu) {
+      if (typeof window !== "undefined") window.alert("Nao foi possivel promover: saldo insuficiente.")
       return
     }
     const promoted: SquadPlayer = {
@@ -128,9 +146,10 @@ export default function BasePage() {
       seasonSigned: state.season,
     }
     setState({
+      // Mantido no save tambem: e daqui que sai a cobranca da diretoria por uso
+      // da base e o historico de promovidos.
       squadPlayers: [...(state.squadPlayers ?? []), promoted],
       youthPlayers: [...youth.filter(p => p.id !== player.id), replacementFor(player)],
-      balance: balance - PROMOTION_FEE,
       transfers: [...(state.transfers ?? []), {
         id: `youth_promo_${Date.now()}`,
         playerName: player.name,
@@ -151,9 +170,10 @@ export default function BasePage() {
 
   const holdTryout = () => {
     const fee = 100_000
-    if (balance < fee) return window.alert("Saldo insuficiente para realizar a peneira.")
+    if (caixaDoMotor < fee) return window.alert("Saldo insuficiente para realizar a peneira.")
+    if (!gastarDoCaixa(fee)) return window.alert("Saldo insuficiente para realizar a peneira.")
     const intake = runTryout(state, "sub17")
-    setState({ youthPlayers: [...youth, ...intake.players], balance: balance - fee })
+    setState({ youthPlayers: [...youth, ...intake.players] })
   }
 
   const developMonth = () => {
@@ -188,10 +208,8 @@ export default function BasePage() {
     const texto = `${p.clube} oferece ${formatCurrency(p.valor)} por ${player.name}.\n` +
       `Valor estimado: ${formatCurrency(justo)}${p.abaixoDoValor ? "\n\nA proposta está ABAIXO do valor do atleta." : ""}\n\nAceitar a venda?`
     if (typeof window !== "undefined" && !window.confirm(texto)) return
-    setState({
-      youthPlayers: youth.filter(x => x.id !== player.id),
-      balance: balance + p.valor,
-    })
+    receberPorJovem(p.valor)
+    setState({ youthPlayers: youth.filter(x => x.id !== player.id) })
     addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
       message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
   }
@@ -206,7 +224,11 @@ export default function BasePage() {
   return (
     // Mesmo tratamento visual do pre-office (pedido): fundo do escritorio,
     // brilho radial e escurecimento, no lugar do preto chapado.
-    <div className="relative min-h-screen pl-[72px] pb-24">
+    // `html` e `body` sao overflow:hidden no globals.css — o documento NAO rola.
+    // Cada tela precisa do proprio container de scroll; esta nao tinha, e tudo
+    // que passasse da primeira dobra ficava inalcancavel (relato: "falta scroll").
+    // pb-28 livra a ultima linha de cards da barra fixa de acoes (h-11).
+    <div className="relative h-screen overflow-hidden pl-[72px]">
       <div className="fixed inset-0 bg-[#050508]" />
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
@@ -217,10 +239,10 @@ export default function BasePage() {
       }} />
       <div className="pointer-events-none fixed inset-0 bg-black/60" />
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex h-full flex-col">
       <GameSidebar />
       <GameHeader team={team} />
-      <main className="p-6 space-y-6">
+      <main className="flex-1 overflow-y-auto p-6 pb-28 space-y-6">
         <header className="flex flex-wrap items-center gap-3">
           <Sprout className="h-7 w-7 text-[#1db954]" />
           <div>

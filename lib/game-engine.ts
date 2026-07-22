@@ -1868,6 +1868,17 @@ interface GameEngineState {
   setStarter: (playerId: number, isStarter: boolean) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   sellPlayer: (playerId: number) => void
+  /**
+   * Sobe um garoto da base ao elenco profissional. NAO passa por buyPlayer de
+   * proposito: promocao da base nao e transferencia e nao depende de janela.
+   * Devolve false quando falta caixa.
+   */
+  promoverDaBase: (jovem: {
+    name: string; position: string; age: number; overall: number; potential: number
+    pace?: number; shooting?: number; passing?: number; dribbling?: number; defending?: number; physical?: number
+  }, taxa: number) => boolean
+  /** Entrada de caixa da venda de um atleta da base. */
+  receberPorJovem: (valor: number) => void
   /** "wage_budget" = recusado pela diretoria por estourar o teto salarial. */
   buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
   payClubDebt: (amount: number) => number
@@ -2823,6 +2834,64 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
       
+      promoverDaBase: (jovem, taxa) => {
+        const state = get()
+        if (state.balance < taxa) return false
+
+        // O card da base as vezes vem com os atributos zerados (o gerador de
+        // prospectos nem sempre os preenche). Subir assim criaria um
+        // profissional com VEL/FIN/PAS 0, que o motor de partida trata como
+        // perna de pau. Sem atributo, deriva-se do overall.
+        const base = jovem.overall
+        const ou = (v: number | undefined, desvio: number) =>
+          v && v > 0 ? v : Math.max(20, Math.min(99, Math.round(base + desvio)))
+
+        const salario = Math.round(Math.max(8_000, base * 900))
+        const novo: Player = {
+          id: Math.max(Date.now(), ...state.squadPlayers.map(p => p.id + 1)),
+          name: jovem.name,
+          position: jovem.position,
+          age: jovem.age,
+          overall: jovem.overall,
+          potential: Math.max(jovem.potential, jovem.overall),
+          nationality: "Brasil",
+          pace: ou(jovem.pace, 4), shooting: ou(jovem.shooting, -3), passing: ou(jovem.passing, -1),
+          dribbling: ou(jovem.dribbling, 2), defending: ou(jovem.defending, -5), physical: ou(jovem.physical, -4),
+          energy: 100, morale: "Motivado", form: 70,
+          contract: {
+            salary: salario,
+            // Tres temporadas de contrato para o garoto da base — tempo de se
+            // firmar sem virar agente livre no meio do caminho.
+            endDate: state.currentWeek + 52 * 3,
+            releaseClause: null,
+            signedWeek: state.currentWeek,
+            signedSeason: state.currentSeason,
+          },
+          marketValue: Math.round(base * base * 900),
+          isStarter: false,
+          isLoanedIn: false,
+          joinedClubWeek: state.currentWeek,
+          joinedClubSeason: state.currentSeason,
+          seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
+          injury: null,
+          training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
+          nationalTeam: null,
+          calledUp: false,
+        }
+
+        set((s) => ({
+          squadPlayers: [...s.squadPlayers, novo],
+          balance: s.balance - taxa,
+          weeklyExpenses: s.weeklyExpenses + salario,
+        }))
+        return true
+      },
+
+      receberPorJovem: (valor) => {
+        if (!Number.isFinite(valor) || valor <= 0) return
+        set((s) => ({ balance: s.balance + valor }))
+      },
+
       sellPlayer: (playerId) => {
         const state = get()
         const player = state.squadPlayers.find(p => p.id === playerId)

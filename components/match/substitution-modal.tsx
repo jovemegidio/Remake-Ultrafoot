@@ -29,6 +29,9 @@ export interface MatchPlayer {
   // que o radar redesenhe todos os jogadores em posições diferentes.
   tacticalSlot?: number
   formationPosition?: string
+  /** Posicao no campo (0-100) definida pelo tecnico em Gerenciamento do Time. */
+  fieldX?: number
+  fieldY?: number
 }
 
 interface SubstitutionModalProps {

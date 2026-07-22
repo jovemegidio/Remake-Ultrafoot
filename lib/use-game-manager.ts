@@ -601,11 +601,14 @@ export function generateUserCupMatches(
   const partidas: Array<CupMatchDescriptor | null> = []
   let consumidos = 0
   let eliminado = false
+  // A fase seguinte so aparece depois que a atual termina. Sem isto o calendario
+  // ja mostrava a FINAL da Copa do Brasil antes de o clube passar pelas oitavas.
+  let aguardando = false
 
   for (const [indice, etapa] of etapas.entries()) {
     const semente = `${userTeam.curto}:${plan.competition.id}:${season}:${etapa.stage}`
 
-    if (eliminado) {
+    if (eliminado || aguardando) {
       for (let i = 0; i < etapa.jogos; i++) partidas.push(null)
       continue
     }
@@ -628,6 +631,7 @@ export function generateUserCupMatches(
       const passou = passouNoGrupo(placares.slice(consumidos, consumidos + etapa.jogos), etapa.jogos, rivais, userTeam.prestigio ?? 60, semente)
       consumidos += etapa.jogos
       if (passou === false) eliminado = true
+      else if (passou === null) aguardando = true
       continue
     }
 
@@ -647,6 +651,7 @@ export function generateUserCupMatches(
     const passou = passouNoConfronto(placares.slice(consumidos, consumidos + etapa.jogos), etapa.jogos, semente)
     consumidos += etapa.jogos
     if (passou === false) eliminado = true
+    else if (passou === null) aguardando = true   // confronto em aberto: para por aqui
   }
 
   return partidas
@@ -952,6 +957,18 @@ export function generateStateChampionshipFixtures(
     return output.sort(compareShort)
   }
 
+  /**
+   * A fase so esta decidida quando TODOS os confrontos dela foram disputados.
+   * Sem isto o calendario montava quartas, semifinal e final de uma vez — e como
+   * `winners()` chuta um vencedor quando o confronto ainda nao aconteceu, a
+   * final aparecia com finalista definido antes de a semi ser jogada.
+   */
+  const faseDecidida = (stageFixtures: Fixture[]): boolean => {
+    if (!stageFixtures.length) return false
+    const hidratada = reconcilePlayedFixtures(stageFixtures, knownResults, season)
+    return hidratada.every(m => m.played && m.homeScore !== undefined && m.awayScore !== undefined)
+  }
+
   let entrants: string[] = []
   for (const stage of rule.knockout) {
     if (stage === "segunda_fase") {
@@ -976,6 +993,7 @@ export function generateStateChampionshipFixtures(
         nextWeek++
       }
       fixtures.push(...secondPhaseFixtures)
+      if (!faseDecidida(secondPhaseFixtures)) break
       const hydrated = reconcilePlayedFixtures(secondPhaseFixtures, knownResults, season)
       entrants = groups.flatMap(group => {
         const mini = computeStandingsFromFixtures(hydrated, competition)
@@ -990,6 +1008,9 @@ export function generateStateChampionshipFixtures(
     if (!entrants.length || entrants.length !== required) entrants = qualify(required)
     const legs = rule.stageRounds?.[stage] ?? rule.knockoutLegs?.[stage] ?? (stage === "final" ? rule.finalLegs : 1) ?? 1
     const stageFixtures = addPairStage(stage, entrants, legs)
+    // A proxima fase so entra no calendario depois que esta terminar. E assim
+    // que o jogador ve a semifinal sem ja ter a final marcada ao lado.
+    if (!faseDecidida(stageFixtures)) break
     entrants = winners(entrants, stageFixtures)
   }
 

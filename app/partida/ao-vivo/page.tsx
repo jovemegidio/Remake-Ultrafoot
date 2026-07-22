@@ -163,7 +163,13 @@ function playersToMatchSquad(players: Player[], idOffset = 0): { starters: Match
 }
 
 // Converte jogadores do game-engine para MatchPlayer
-function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0, formation = "4-3-3"): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
+function enginePlayersToMatchSquad(
+  players: EnginePlayer[],
+  idOffset = 0,
+  formation = "4-3-3",
+  /** Posicoes que o tecnico arrastou no campinho, por NOME (como o motor guarda). */
+  posicoesDoTecnico: Record<string, { x: number; y: number }> = {},
+): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
   const available = players.filter(p => !p.injury && !p.calledUp)
 
   // Se o usuario montou a escalacao (isStarter), RESPEITA o XI dele. Senao, encaixa na
@@ -186,7 +192,15 @@ function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0, format
   }
 
   const num = makeNumberAllocator()
-  const slotted = assignPlayersToFormation(xi, formation)
+  // assignPlayersToFormation ja aceitava posicoes customizadas, mas ninguem
+  // passava: o motor guarda por NOME e a funcao espera por ID. Era por isso que
+  // arrastar o jogador no campinho nao refletia na partida nem no radar.
+  const porId: Record<number, { x: number; y: number }> = {}
+  for (const p of xi) {
+    const custom = posicoesDoTecnico[p.name]
+    if (custom) porId[p.id] = custom
+  }
+  const slotted = assignPlayersToFormation(xi, formation, porId)
   const starters: MatchPlayer[] = slotted.map((p, i) => ({
     id: idOffset + i + 1,
     name: p.name,
@@ -202,6 +216,8 @@ function enginePlayersToMatchSquad(players: EnginePlayer[], idOffset = 0, format
     physical: p.physical,
     tacticalSlot: i,
     formationPosition: p.slotPos,
+    fieldX: p.x,
+    fieldY: p.y,
   }))
 
   const bench: MatchPlayer[] = benchPool.map((p, i) => ({
@@ -509,7 +525,7 @@ export default function PartidaAoVivoPage() {
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
   const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
-  const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics } = useGameEngine()
+  const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions } = useGameEngine()
   const engineMatchResults = useGameEngine(s => s.matchResults)
   const engineSeason = useGameEngine(s => s.currentSeason)
   const engineSetPieceTakers = useGameEngine(s => s.setPieceTakers)
@@ -640,7 +656,7 @@ export default function PartidaAoVivoPage() {
       if (isHome) { setHomeSquad(youthSquad.starters); setHomeBench(youthSquad.bench); setAwaySquad(opponent.starters); setAwayBench(opponent.bench) }
       else { setAwaySquad(youthSquad.starters); setAwayBench(youthSquad.bench); setHomeSquad(opponent.starters); setHomeBench(opponent.bench) }
     } else if (enginePlayers && enginePlayers.length > 0) {
-      const userSquad = enginePlayersToMatchSquad(enginePlayers, isHome ? 0 : 200, savedFormation ?? "4-3-3")
+      const userSquad = enginePlayersToMatchSquad(enginePlayers, isHome ? 0 : 200, savedFormation ?? "4-3-3", tacticalPlayerPositions ?? {})
       if (isHome) {
         const opp = buildSideFromData(awayTeam, 200, "A_")
         setHomeSquad(userSquad.starters)

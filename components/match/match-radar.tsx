@@ -12,6 +12,9 @@ interface RadarPlayer {
   stamina?: number
   tacticalSlot?: number
   formationPosition?: string
+  /** Posicao arrastada pelo tecnico no campinho (0-100). Vence o template. */
+  fieldX?: number
+  fieldY?: number
 }
 
 interface BallState {
@@ -206,7 +209,15 @@ function buildSlots(squad: RadarPlayer[], isHome: boolean, color: string, reques
     }).filter(Boolean)
 
   return starters.map((p, i) => {
-    const slot = template[i] ?? { depth: 0.5, x: 0.5 }
+    // O tecnico posiciona os atletas no campinho de Gerenciamento do Time; ate
+    // agora o radar ignorava isso e usava so o proprio template de formacao,
+    // entao arrastar um jogador nao mudava nada na partida. As coordenadas do
+    // motor vem em 0-100 com y=92 no proprio gol; o radar usa profundidade 0-1
+    // crescendo para o ataque.
+    const doTecnico = Number.isFinite(p.fieldX) && Number.isFinite(p.fieldY)
+      ? { depth: (100 - (p.fieldY as number)) / 100, x: (p.fieldX as number) / 100 }
+      : null
+    const slot = doTecnico ?? template[i] ?? { depth: 0.5, x: 0.5 }
     const group = posGroup(p.position)
     return {
       key: `${isHome ? "h" : "a"}-${p.id}`,

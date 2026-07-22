@@ -38,8 +38,15 @@ const time = getTeamByShort("COR")!
 const plano = getUserCupPlan(time).find(p => /Copa do Brasil/i.test(p.competition.name))!
 const semResultado = generateUserCupMatches(time, plano, 2026, new Set())
 checar(semResultado.length === 9, `sem resultados: 9 vagas no calendario — ${semResultado.length}`)
-checar(semResultado.every(m => m !== null), "sem resultados, todas as partidas existem")
-checar(semResultado[0]?.stage === "quinta_fase" && semResultado[8]?.stage === "final", "fases na ordem do regulamento")
+// ATUALIZADO em 22/07/2026. Antes se cobrava que TODAS as 9 partidas ja
+// existissem no calendario. Isso estava errado e o jogador viu: a FINAL da copa
+// aparecia marcada antes de o clube passar pelas oitavas. So a fase corrente
+// pode estar visivel; as seguintes sao vagas vazias ate a classificacao.
+const visiveis = semResultado.filter(m => m !== null)
+checar(visiveis.length === 2, `sem resultados, so a 5a fase visivel (2 jogos) — ${visiveis.length}`)
+checar(visiveis.every(m => m!.stage === "quinta_fase"), "nenhuma fase alem da atual aparece")
+checar(!visiveis.some(m => m!.stage === "final"), "a FINAL nao aparece antes de classificar")
+checar(semResultado[0]?.stage === "quinta_fase", "a primeira etapa e a do regulamento")
 
 const derrota: MatchResult[] = [0, 1].map(i => ({
   week: 10 + i, season: 2026, competition: plano.competition.name,

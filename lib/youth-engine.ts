@@ -46,11 +46,44 @@ export interface YouthMonthlyReport {
 }
 
 /** Roda peneira: gera novos jovens conforme infra/categoria. */
+/**
+ * PENEIRA. Antes ela usava o mesmo gerador do elenco de base e devolvia garotos
+ * de overall 55-75 — ou seja, entregava jogador PRONTO por R$ 100 mil. Peneira
+ * nao funciona assim: vem molecada crua, quase toda sem futuro, e de vez em
+ * quando aparece um com potencial de sobra. O que se compra numa peneira e a
+ * chance, nao o atleta.
+ *
+ * Overall 34-50, potencial concentrado em 58-72, com 12% de chance de um
+ * promissor (75-84) e 3% de joia (85-92). Nunca sai estrela feita.
+ */
 export function runTryout(state: GameState, category: YouthCategory): YouthIntake {
   const prestige = state.selectedTeam?.prestigio ?? 60
   const qualityRoll = Math.max(1, Math.min(100, Math.round(prestige * 0.7 + Math.random() * 30)))
   const count = category === "sub17" ? 5 : 4
-  const players = generateYouthBatch(state.season, count, prestige).map((player, index): YouthPlayer => ({
+
+  const crus = generateYouthBatch(state.season, count, prestige).map((player) => {
+    // Clube grande atrai um pouco melhor, mas nem o maior deles acha pronto.
+    const teto = 44 + Math.round((prestige - 50) * 0.12)          // ~44-50
+    const overall = Math.max(34, Math.min(teto, 34 + Math.floor(Math.random() * (teto - 33))))
+    const sorte = Math.random()
+    const potencial = sorte < 0.03
+      ? 85 + Math.floor(Math.random() * 8)                        // joia rara
+      : sorte < 0.15
+        ? 75 + Math.floor(Math.random() * 10)                     // promissor
+        : 58 + Math.floor(Math.random() * 15)                     // a maioria
+    const escala = overall / Math.max(1, player.overall)
+    const cru = (v: number | undefined) => Math.max(25, Math.round((v ?? overall) * escala))
+    return {
+      ...player,
+      overall,
+      potential: Math.max(overall + 5, potencial),
+      value: Math.round((overall * 15_000 + potencial * 45_000) / 10_000) * 10_000,
+      pace: cru(player.pace), shooting: cru(player.shooting), passing: cru(player.passing),
+      dribbling: cru(player.dribbling), defending: cru(player.defending), physical: cru(player.physical),
+    }
+  })
+
+  const players = crus.map((player, index): YouthPlayer => ({
     ...player,
     id: `youth_${category}_${state.season}_${Date.now()}_${index}`,
     age: category === "sub17" ? 15 + Math.floor(Math.random() * 3) : 17 + Math.floor(Math.random() * 4),

@@ -388,7 +388,28 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   // disputadas e imersivas sem virar impossivel. Jogos IA vs IA (sem userSide) ficam
   // neutros. Como os atributos vivem na escala ~40-99, +6 equivale a um "degrau" de
   // qualidade — perceptivel, porem justo.
-  const CPU_DIFFICULTY = 6
+  // Um valor FIXO para todo adversario era o problema: o lanterna virava muralha
+  // e o lider nao apertava mais do que ele. Agora a dificuldade tem tres partes,
+  // e e por isso que fica mais dificil E mais realista ao mesmo tempo:
+  //
+  //   1. base — o degrau de qualidade que a maquina ganha por ser a maquina;
+  //   2. quem e melhor que voce IMPOE mais (e quem e pior nao vira gigante):
+  //      a diferenca de forca entra com peso, mas limitada nas duas pontas;
+  //   3. jogo grande aperta — classico, decisao e final pesam, como na vida.
+  const cpuEhVisitante = config.userSide === "home"
+  const forcaCpu = cpuEhVisitante ? config.awayRating : config.homeRating
+  const forcaUsuario = cpuEhVisitante ? config.homeRating : config.awayRating
+
+  let CPU_DIFFICULTY = 0
+  if (config.userSide) {
+    CPU_DIFFICULTY = 9
+    CPU_DIFFICULTY += Math.max(-3, Math.min(7, (forcaCpu - forcaUsuario) * 0.09))
+    const ctx = config.modifiers
+    if (ctx?.isDerby) CPU_DIFFICULTY += 2
+    if (ctx?.matchImportance === "decisivo") CPU_DIFFICULTY += 2
+    else if (ctx?.matchImportance === "final") CPU_DIFFICULTY += 3
+  }
+
   if (config.userSide === "home") {
     awaySt.attack += CPU_DIFFICULTY
     awaySt.defense += CPU_DIFFICULTY
@@ -1224,9 +1245,27 @@ export function startMatch(state: MatchState): MatchState {
 // Simulação rápida (sem ticks visuais)
 // ───────────────────────────────��─────────────────────────────────────────────
 
+/**
+ * Simulacao HEADLESS (sem UI): usada pela simulacao rapida, pela virada de
+ * temporada e pelas copas.
+ *
+ * TRAVAVA PARA SEMPRE quando `userSide` estava definido. Ao sair um penalti para
+ * o time do usuario, o motor guarda `pendingPenalty` e PARA — de proposito, para
+ * a UI abrir o modal do batedor. Mas aqui nao ha UI: `tickMinute` devolvia o
+ * mesmo estado, o minuto nunca andava e o laco girava em 100% de CPU sem nunca
+ * chegar a "fulltime". Uma unica partida bastava para pendurar a aba.
+ *
+ * Agora a cobranca e resolvida na hora (batedor escolhido pelo motor), e um
+ * limite de voltas garante que nenhuma condicao nova volte a prender o jogo.
+ */
 export function simulateFullMatch(config: MatchConfig): MatchState {
   let state = startMatch(createInitialState())
-  while (state.phase !== "fulltime") {
+  let voltas = 0
+  while (state.phase !== "fulltime" && voltas++ < 600) {
+    if (state.pendingPenalty) {
+      state = resolvePendingPenalty(state, config, null).state
+      continue
+    }
     state = tickMinute(state, config)
   }
   return state

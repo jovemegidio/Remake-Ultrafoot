@@ -68,6 +68,24 @@ export function generateYouthProspects(
     // Valor cresce com o potencial (a joia vale pela promessa, nao pelo hoje).
     const value = Math.round((overall * 40_000 + potential * 90_000) / 10_000) * 10_000
 
+    // ATRIBUTOS. Nao eram preenchidos: o card da base mostrava VEL/FIN/PAS 0
+    // em todo garoto recem-gerado, e quem subisse ao profissional viraria perna
+    // de pau no motor de partida. Cada posicao puxa os seus para cima.
+    const vies: Record<string, Partial<Record<"pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical", number>>> = {
+      GOL: { defending: 6, physical: 4, pace: -10, shooting: -14, dribbling: -10 },
+      ZAG: { defending: 7, physical: 6, pace: -4, shooting: -10, dribbling: -6 },
+      LE: { pace: 6, defending: 3, shooting: -6 },
+      LD: { pace: 6, defending: 3, shooting: -6 },
+      VOL: { defending: 5, passing: 3, physical: 3, shooting: -5 },
+      MEI: { passing: 7, dribbling: 5, defending: -6, physical: -4 },
+      PE: { pace: 7, dribbling: 6, defending: -8, physical: -5 },
+      PD: { pace: 7, dribbling: 6, defending: -8, physical: -5 },
+      ATA: { shooting: 8, pace: 4, defending: -10 },
+    }
+    const b = vies[position] ?? {}
+    const atr = (chave: keyof typeof b) =>
+      Math.max(25, Math.min(85, overall + (b[chave] ?? 0) + Math.floor(rnd() * 9) - 4))
+
     out.push({
       id: `youth_${teamShort}_${season}_${i}`,
       name: `${pick(FIRST)} ${pick(LAST)}`,
@@ -76,6 +94,12 @@ export function generateYouthProspects(
       overall,
       potential,
       value,
+      pace: atr("pace"),
+      shooting: atr("shooting"),
+      passing: atr("passing"),
+      dribbling: atr("dribbling"),
+      defending: atr("defending"),
+      physical: atr("physical"),
       fromTeam: "Categoria de Base",
       trend: "up",
       seasonSigned: season,

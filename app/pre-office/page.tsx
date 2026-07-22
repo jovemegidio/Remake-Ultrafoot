@@ -17,6 +17,7 @@ import {
   Newspaper,
   TrendingUp,
   ShoppingBag,
+  Users,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { GamepadControlsBar } from "@/components/gamepad-controls-bar"
@@ -31,6 +32,9 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { generateDynamicNews, NEWS_SOURCES, type NewsItem } from "@/components/news-feed"
 import { getGameDate } from "@/lib/game-date"
 import { useGameState } from "@/lib/save-system"
+
+/** Sentinela: nao e rota, e a acao de virar o ano. */
+const PROXIMA_TEMPORADA = "__proxima-temporada__"
 
 const WEEKDAYS = ["DOMINGO", "SEGUNDA-FEIRA", "TERCA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA", "SABADO"]
 const MONTHS = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]
@@ -184,6 +188,28 @@ export default function PreOfficePage() {
       priority: "high" | "medium" | "low"
     }> = []
 
+    // FIM DE TEMPORADA. Sem partida marcada, a lista ficava sem o item principal
+    // e o tecnico nao tinha por onde seguir — nao havia como iniciar o ano
+    // seguinte a nao ser avancando semanas no escuro.
+    if (!nextUserMatch) {
+      tasks.push({
+        id: 100,
+        title: "Iniciar a proxima temporada",
+        icon: Trophy,
+        action: PROXIMA_TEMPORADA,
+        actionLabel: "Comecar temporada",
+        priority: "high",
+      })
+      tasks.push({
+        id: 101,
+        title: "Marcar amistosos da pre-temporada",
+        icon: Users,
+        action: "/amistosos",
+        actionLabel: "Marcar amistosos",
+        priority: "medium",
+      })
+    }
+
     // Proxima partida
     if (nextUserMatch) {
       const opponent = nextUserMatch.homeTeam.curto === userTeam.curto
@@ -263,6 +289,14 @@ export default function PreOfficePage() {
 
     return tasks
   }, [gameEngine.squadPlayers, gameEngine.transferOffers, gameEngine.currentWeek, nextUserMatch, userTeam])
+
+  // A tarefa de virar a temporada nao e uma rota: precisa RODAR o avanco, que e
+  // quem apura campeao, acesso/rebaixamento e monta o calendario novo.
+  const abrirTarefa = useCallback(async (destino: string) => {
+    if (destino !== PROXIMA_TEMPORADA) { hardNavigate(destino); return }
+    await advanceWeek()
+    hardNavigate("/")
+  }, [advanceWeek])
 
   // Avanca rodada real e navega conforme resultado
   const handleAdvance = useCallback(async () => {
@@ -441,7 +475,7 @@ export default function PreOfficePage() {
                         key={task.id}
                         onClick={() => {
                           setSelectedTask(index)
-                          hardNavigate(task.action)
+                          void abrirTarefa(task.action)
                         }}
                         className={cn(
                           "w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left",

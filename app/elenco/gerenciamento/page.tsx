@@ -37,7 +37,7 @@ import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI
 import { formatCurrency, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
-import { defaultRoleForPosition, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
+import { defaultRoleForPosition, getContractStatus, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
 import { useUserRoster } from "@/lib/use-user-roster"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
@@ -129,6 +129,23 @@ export default function ElencoPage() {
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
   const engineBalance = useGameEngine(s => s.balance)
   const engineCurrentWeek = useGameEngine(s => s.currentWeek)
+  // SITUACAO CONTRATUAL por nome. O elenco desta tela vem do hook de UI e nao
+  // carrega contrato; o contrato esta no motor. Sem isto, atleta de contrato
+  // VENCIDO ficava visualmente igual aos demais e o tecnico so descobria quando
+  // ele ia embora de graca.
+  const situacaoContrato = useMemo(() => {
+    const mapa = new Map<string, "ok" | "expiring" | "expired">()
+    for (const p of engineSquadPlayers) mapa.set(p.name, getContractStatus(p, engineCurrentWeek))
+    return mapa
+  }, [engineSquadPlayers, engineCurrentWeek])
+
+  /** Moldura do card/linha conforme o contrato. */
+  const molduraContrato = (nome: string) => {
+    const st = situacaoContrato.get(nome)
+    if (st === "expired") return "ring-1 ring-red-500/70 bg-red-500/10"
+    if (st === "expiring") return "ring-1 ring-amber-400/60 bg-amber-400/[0.07]"
+    return ""
+  }
   const engineSetPlayerShirtNumber = useGameEngine(s => s.setPlayerShirtNumber)
   const teamTactics = useGameEngine(s => s.teamTactics)
   const setTeamTactics = useGameEngine(s => s.setTeamTactics)
@@ -1526,11 +1543,19 @@ export default function ElencoPage() {
                     <h3 className="text-sm font-semibold text-white mb-4">{t.squad.individualRoles}</h3>
                     <div className="space-y-3">
                       {players.map(player => (
-                        <div key={player.id} className="flex items-center gap-4 p-3 rounded-lg bg-white/5">
+                        <div key={player.id} className={cn("flex items-center gap-4 p-3 rounded-lg bg-white/5", molduraContrato(player.name))}>
                           <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
                           <div className="flex-1 min-w-0">
                             <div className="truncate text-sm font-medium text-white">{player.name}</div>
-                            <div className="text-[10px] text-white/40">{player.position}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-white/40">{player.position}</span>
+                              {situacaoContrato.get(player.name) === "expired" && (
+                                <span className="rounded bg-red-500/25 px-1.5 text-[9px] font-black uppercase tracking-wide text-red-300">contrato vencido</span>
+                              )}
+                              {situacaoContrato.get(player.name) === "expiring" && (
+                                <span className="rounded bg-amber-400/20 px-1.5 text-[9px] font-black uppercase tracking-wide text-amber-300">a vencer</span>
+                              )}
+                            </div>
                           </div>
                           <select
                             value={playerRoles[player.id] ?? player.function}
