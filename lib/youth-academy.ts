@@ -58,8 +58,11 @@ export function generateYouthProspects(
   for (let i = 0; i < count; i++) {
     const position = pick(POSITIONS)
     const overall = overallFloor + Math.floor(rnd() * 10)          // ~48-64
+    // Teto de potencial 73 na base (pedido). A base e formacao modesta: promessa
+    // de verdade nao nasce garantida no clube. Sem o teto, dava para ficar
+    // dispensando garoto ate sair uma joia de potencial 90.
     const potential = Math.min(
-      95,
+      73,
       Math.max(overall + 6, potentialCeil - 8 + Math.floor(rnd() * 16)),
     )
     // Base começa aos 14 (pedido): garotos de 14-17 vão amadurecendo até

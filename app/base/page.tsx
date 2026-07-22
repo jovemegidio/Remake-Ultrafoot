@@ -164,8 +164,12 @@ export default function BasePage() {
   }
 
   const releaseYouth = (player: SquadPlayer) => {
-    if (typeof window !== "undefined" && !window.confirm(`Dispensar ${player.name} da categoria de base?`)) return
-    setState({ youthPlayers: [...youth.filter(p => p.id !== player.id), replacementFor(player)] })
+    if (typeof window !== "undefined" && !window.confirm(`Dispensar ${player.name} da categoria de base? A vaga fica aberta até a próxima peneira ou temporada.`)) return
+    // Dispensar NAO gera substituto na hora. Antes gerava, e dava para ficar
+    // apertando dispensar ate sair um bom (relato do jogador) — cada clique era
+    // um novo sorteio. Agora a vaga apenas abre; para preencher, use a peneira
+    // (paga) ou espere a proxima temporada semear a base.
+    setState({ youthPlayers: youth.filter(p => p.id !== player.id) })
   }
 
   const holdTryout = () => {

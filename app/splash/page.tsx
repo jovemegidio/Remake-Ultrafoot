@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
 import { mensagemDeErro, validarCodigo } from "@/lib/license"
+import { getDeviceId } from "@/lib/device-id"
 import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -280,10 +281,21 @@ export default function SplashPage() {
 
     const r = await validarCodigo(serialKey, licencasRevogadas)
     if (r.valido) {
+      // UM CODIGO POR MAQUINA (pedido). Se esta instalacao ja foi registrada com
+      // OUTRO codigo, recusa — sem isso a mesma maquina cadastraria varios
+      // codigos. A serie registrada e o id do aparelho ficam guardados juntos.
+      const serieAtual = safeLocalGet("ultrafoot:registro-serie")
+      if (serieAtual && r.serie !== undefined && serieAtual !== String(r.serie)) {
+        setRegisterError("Esta máquina já foi registrada com outro código.")
+        setIsValidating(false)
+        return
+      }
       safeLocalSet("ultrafoot:registered", "1")
       // Guardado para o suporte: quando o jogador escrever, e por este numero
-      // que voce acha a venda no CSV de emissao.
+      // que voce acha a venda no CSV de emissao. O device-id junto permite, se um
+      // dia houver servidor, detectar o mesmo codigo em maquinas diferentes.
       if (r.serie !== undefined) safeLocalSet("ultrafoot:registro-serie", String(r.serie))
+      safeLocalSet("ultrafoot:registro-device", getDeviceId())
       setIsRegistered(true)
       setIsValidating(false)
       setTimeout(() => {

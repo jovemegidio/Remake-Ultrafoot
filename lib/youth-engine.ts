@@ -66,11 +66,12 @@ export function runTryout(state: GameState, category: YouthCategory): YouthIntak
     const teto = 44 + Math.round((prestige - 50) * 0.12)          // ~44-50
     const overall = Math.max(34, Math.min(teto, 34 + Math.floor(Math.random() * (teto - 33))))
     const sorte = Math.random()
-    const potencial = sorte < 0.03
-      ? 85 + Math.floor(Math.random() * 8)                        // joia rara
-      : sorte < 0.15
-        ? 75 + Math.floor(Math.random() * 10)                     // promissor
-        : 58 + Math.floor(Math.random() * 15)                     // a maioria
+    // Teto de potencial 73 tambem na peneira (pedido): a base inteira e limitada.
+    // Ha variacao — um garoto de 70 vale mais que um de 58 — mas nenhum sai como
+    // futura estrela, o que tirava a graca de rerolar dispensando.
+    const potencial = sorte < 0.15
+      ? 68 + Math.floor(Math.random() * 6)                        // 68-73: promissor
+      : 55 + Math.floor(Math.random() * 14)                       // 55-68: a maioria
     const escala = overall / Math.max(1, player.overall)
     const cru = (v: number | undefined) => Math.max(25, Math.round((v ?? overall) * escala))
     return {
@@ -182,7 +183,9 @@ export function generateYouthBatch(
     const baseOverall = 50 + Math.floor(Math.random() * 23) + Math.floor(prestige * 0.05) // 55-72 ajustado por prestigio
     const overall = Math.min(75, baseOverall)
     const potentialBonus = 6 + Math.floor(Math.random() * 14) // +6..+19
-    const potential = Math.min(99, overall + potentialBonus)
+    // Teto 73: a base inteira e limitada (pedido). Nenhum garoto da base nasce
+    // com potencial de estrela.
+    const potential = Math.min(73, overall + potentialBonus)
     const pos = YOUTH_POSITIONS[Math.floor(Math.random() * YOUTH_POSITIONS.length)]
     result.push({
       id: `youth_${season}_${i}_${Math.random().toString(36).slice(2, 6)}`,

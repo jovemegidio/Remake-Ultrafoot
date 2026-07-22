@@ -3302,11 +3302,16 @@ export const useGameEngine = create<GameEngineState>()(
         // maximo as 8 mais recentes para nao inchar o save.
         const novasSondagens: MarketInterest[] = []
         const jaSondados = new Set((state.marketInterests ?? []).map(i => i.playerId))
+        // O sondador NUNCA pode ser o proprio clube (relato: "meu time esta
+        // sondando meu jogador"). A oferta formal ja excluia meuTime; a sondagem
+        // sorteava de AI_TEAMS sem esse filtro.
+        const clubesSondadores = AI_TEAMS.filter(t => t.short.toUpperCase() !== meuTime)
         for (const player of marketable) {
           if (pendingIds.has(player.id) || jaSondados.has(player.id)) continue
           if (player.overall < 74) continue
           if (Math.random() > 0.12) continue
-          const club = AI_TEAMS[Math.floor(Math.random() * AI_TEAMS.length)]
+          if (clubesSondadores.length === 0) break
+          const club = clubesSondadores[Math.floor(Math.random() * clubesSondadores.length)]
           novasSondagens.push({
             id: `interest-${state.currentSeason}-${state.currentWeek}-${player.id}`,
             playerId: player.id, playerName: player.name,
