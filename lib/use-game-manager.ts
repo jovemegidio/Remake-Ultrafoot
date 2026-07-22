@@ -1021,6 +1021,12 @@ export interface Fixture {
   month: number
   competitionType: "state" | "league" | "cup" | "continental"
   stage?: string
+  /**
+   * Jogo de MEIO DE SEMANA: divide a semana com a rodada de liga, como no
+   * futebol de verdade. Sem isto cada partida de copa consumia uma semana
+   * inteira e a temporada 2026 do Flamengo terminava em maio de 2027.
+   */
+  midweek?: boolean
 }
 
 export interface SeasonCalendar {
@@ -1491,9 +1497,10 @@ export function useGameManager() {
           f.week = week
           allFixtures.push(f)
         }
-        // Insere as partidas de copa devidas ate aqui (distribuidas uniformemente)
-        while (cupIdx < C && r >= Math.round(((cupIdx + 1) * leagueRoundCount) / (C + 1))) {
-          week++
+        // Copa entra no MEIO DA SEMANA da rodada de liga — sem consumir semana
+        // propria. `if` e nao `while`: no maximo um jogo de copa por rodada,
+        // senao tres partidas do usuario cairiam na mesma semana.
+        if (cupIdx < C && r >= Math.round(((cupIdx + 1) * leagueRoundCount) / (C + 1))) {
           const cm = cupMatches[cupIdx]
           // `null` = clube eliminado: a semana existe, o jogo nao.
           if (cm) allFixtures.push({
@@ -1508,6 +1515,7 @@ export function useGameManager() {
             month: roundMonth,
             competitionType: cm.competitionType,
             stage: cm.stage,
+            midweek: true,
           })
           cupIdx++
         }
@@ -1549,8 +1557,13 @@ export function useGameManager() {
     )
 
     // Encontra rodada atual — total inclui estadual + liga + copas/continentais
-    const cupMatchCount = getUserCupMatchCount(userTeamShort, superCupBerths)
-    const totalWeeks = stateChampRoundsCount + (leagueTeams.length - 1) * 2 + cupMatchCount
+    // As copas agora dividem a semana com a liga, entao NAO somam semanas. O que
+    // ainda pode alongar a temporada e a sobra que nao coube em nenhuma rodada,
+    // e essa ja aparece na maior semana dos fixtures.
+    const totalWeeks = Math.max(
+      stateChampRoundsCount + (leagueTeams.length - 1) * 2,
+      ...allFixtures.map(f => f.week),
+    )
     const currentRound = Math.max(1, Math.min(totalWeeks, currentWeek))
 
     // Proxima partida do usuario (a de menor semana ainda nao jogada)
@@ -1596,8 +1609,9 @@ export function useGameManager() {
       getLeagueRounds(divOverride ?? getTeamByShort(userShort)?.divisao ?? "serie_a"),
       (leagueTeamsForEnd.length - 1) * 2,
     )
-    const cupMatchesForEnd = getUserCupMatchCount(userShort, berthsForSeason(currentState.seasonHistory, userShort, currentState.season))
-    const computedSeasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd + cupMatchesForEnd
+    // Copa em meio de semana nao alonga a temporada; o Math.max abaixo cobre a
+    // sobra que porventura tenha ido para o fim.
+    const computedSeasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd
     const seasonEndWeek = Math.max(
       computedSeasonEndWeek,
       ...seasonCalendarRef.current.fixtures.map(fixture => fixture.week),

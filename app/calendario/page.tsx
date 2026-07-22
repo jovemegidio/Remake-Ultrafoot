@@ -30,6 +30,15 @@ function roundToDay(round: number): number {
   return daysInRound[(round - 1) % 9] || 15
 }
 
+/**
+ * Dia do jogo no calendario. Copa e jogo de MEIO DE SEMANA: cai depois da
+ * rodada de liga daquela semana. Sem o deslocamento os dois cairiam na mesma
+ * celula e o calendario mostraria so um deles.
+ */
+function diaDaPartida(fixture: { round: number; midweek?: boolean }): number {
+  return roundToDay(fixture.round) + (fixture.midweek ? 2 : 0)
+}
+
 // Meses visiveis no calendario dependendo da regiao do time
 const EUROPE_DIVISIONS = ["premier_league","la_liga","serie_a_ita","bundesliga","ligue_1","primeira_liga","eredivisie","scottish_prem","super_lig","pro_league_bel","russian_prem","championship","la_liga_2","serie_b_ita","bundesliga_2","ligue_2","liga_portugal_2","eerste_divisie","challenger_pro","tff_1_lig","russian_first"]
 const SUMMER_LEAGUES = ["mls","j_league","k_league_1","chinese_super","j2_league","k_league_2","china_league_one"] // Fev-Nov/Dez
@@ -104,7 +113,7 @@ export default function CalendarioPage() {
   const selectedFixture = useMemo(() => {
     if (!selectedDay) return nextUserMatch
     return monthFixtures.find(f => {
-      const fixtureDay = roundToDay(f.round)
+      const fixtureDay = diaDaPartida(f)
       return fixtureDay === selectedDay && f.isUserMatch
     }) || nextUserMatch
   }, [selectedDay, monthFixtures, nextUserMatch])
@@ -195,7 +204,7 @@ export default function CalendarioPage() {
     
     for (let d = 1; d <= daysInMonth; d++) {
       const fixture = monthFixtures.find(f => {
-        const fixtureDay = roundToDay(f.round)
+        const fixtureDay = diaDaPartida(f)
         return fixtureDay === d && f.isUserMatch
       })
       days.push({ day: d, isCurrentMonth: true, fixture: fixture || null })
