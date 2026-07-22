@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import Image from "next/image"
 import { Sprout, Star, ArrowUp, AlertTriangle, RefreshCw, Send } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
@@ -140,7 +141,20 @@ export default function BasePage() {
   }
 
   return (
-    <div className="min-h-screen pl-[72px] pb-24 bg-[#0a0a0a]">
+    // Mesmo tratamento visual do pre-office (pedido): fundo do escritorio,
+    // brilho radial e escurecimento, no lugar do preto chapado.
+    <div className="relative min-h-screen pl-[72px] pb-24">
+      <div className="fixed inset-0 bg-[#050508]" />
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
+        <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
+      </div>
+      <div className="pointer-events-none fixed inset-0" style={{
+        background: "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.14) 0%, transparent 60%)",
+      }} />
+      <div className="pointer-events-none fixed inset-0 bg-black/60" />
+
+      <div className="relative z-10">
       <GameSidebar />
       <GameHeader team={team} />
       <main className="p-6 space-y-6">
@@ -258,6 +272,7 @@ export default function BasePage() {
         </div>
       </main>
       <SystemMediaPlayer />
+      </div>
     </div>
   )
 }

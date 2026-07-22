@@ -237,12 +237,25 @@ export default function InfraestruturaPage() {
   const selectedAreaData = selectedArea ? INFRASTRUCTURE_AREAS.find(a => a.id === selectedArea) : null
 
   return (
-    <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    // Mesmo tratamento visual do pre-office (pedido): fundo do escritorio com
+    // crossfade, brilho radial e camadas de escurecimento, em vez do preto chapado.
+    <div className="relative h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0">
+      <div className="absolute inset-0 bg-[#050508]" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
+        <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
+      </div>
+      <div className="pointer-events-none absolute inset-0" style={{
+        background: "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.12) 0%, transparent 60%)",
+      }} />
+      <div className="pointer-events-none absolute inset-0 bg-black/55" />
+
+      <div className="relative z-10 flex h-full flex-col">
       <GameHeader team={userTeam ?? undefined} />
 
       <main className="h-[calc(100vh-48px-56px)] flex flex-col">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-white/[0.04] bg-[#0d0d0d]">
+        <div className="px-4 py-3 border-b border-white/[0.04] bg-[#0d0d0d]/80 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-white flex items-center gap-2">
@@ -573,6 +586,7 @@ export default function InfraestruturaPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   )
 }
