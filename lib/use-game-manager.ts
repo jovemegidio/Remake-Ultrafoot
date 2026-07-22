@@ -192,13 +192,24 @@ export function getStateChampionshipTeams(userTeamShort: string): Team[] {
   // Curados + clubes do POOL do mesmo estado (o pool ganhou `estado` via
   // assign-pool-br-states.mjs), para estaduais de BA/RS/CE/PR/etc. deixarem de ficar vazios.
   // Dedup por file_key/curto; ordena por prestigio (mais forte primeiro).
+  // Dedup por file_key E POR `curto`. O codigo curto NAO e unico na base (134
+  // codigos para ~400 clubes): Rio Branco-ES e Rio Branco VN, por exemplo, tem
+  // file_keys diferentes e o mesmo RIOBRANC. Como o motor de partidas identifica
+  // time por `curto`, os dois no mesmo estadual faziam o clube jogar duas vezes
+  // na mesma rodada. Dois clubes com o mesmo codigo nao podem dividir a mesma
+  // competicao — fica o de maior prestigio, que entra primeiro na ordenacao.
   const seen = new Set<string>()
+  const codigosUsados = new Set<string>()
   const stateTeams = [...allBrazilianTeams, ...allPoolTeams]
     .filter(t => t.estado === estado)
+    .sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome))
     .filter(t => {
       const k = (t.file_key || t.curto || t.nome).toLowerCase()
-      if (seen.has(k)) return false
-      seen.add(k); return true
+      const codigo = (t.curto || "").toLowerCase()
+      if (seen.has(k) || (codigo && codigosUsados.has(codigo))) return false
+      seen.add(k)
+      if (codigo) codigosUsados.add(codigo)
+      return true
     })
     .sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome))
   if (stateTeams.length < 4) return []
@@ -224,10 +235,13 @@ export function getStateChampionshipTeams(userTeamShort: string): Team[] {
 
     const completed: Team[] = []
     const completedKeys = new Set<string>()
+    const completedCodes = new Set<string>()
     const addUnique = (team: Team) => {
       const key = (team.file_key || team.curto || team.nome).toLowerCase()
-      if (completedKeys.has(key)) return
+      const codigo = (team.curto || "").toLowerCase()
+      if (completedKeys.has(key) || (codigo && completedCodes.has(codigo))) return
       completedKeys.add(key)
+      if (codigo) completedCodes.add(codigo)
       completed.push(team)
     }
     selected.forEach(addUnique)

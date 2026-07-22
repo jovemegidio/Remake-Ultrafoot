@@ -420,7 +420,8 @@
    "away": {
     "imageUrl": "/overrides/newells_old_boys-kit-away.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/newells_old_boys-logo.png"
  },
  "fortaleza": {
   "kits": {
@@ -461,7 +462,8 @@
    "third": {
     "imageUrl": "/overrides/goias-kit-third.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/goias-logo.png"
  },
  "sport": {
   "kits": {
@@ -474,7 +476,8 @@
    "third": {
     "imageUrl": "/overrides/sport-kit-third.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/sport-logo.png"
  },
  "vitoria": {
   "kits": {
@@ -498,7 +501,8 @@
    "away": {
     "imageUrl": "/overrides/boca_juniors-kit-away.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/boca_juniors-logo.png"
  },
  "estudiantes_lp": {
   "kits": {
@@ -603,7 +607,8 @@
    "third": {
     "imageUrl": "/overrides/abc_rn-kit-third.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/abc_rn-logo.png"
  },
  "botafogo_pb": {
   "kits": {
@@ -717,5 +722,125 @@
     "imageUrl": "/overrides/chapecoense_bra-kit-away.png"
    }
   }
+ },
+ "jacuipense_bra": {
+  "logoUrl": "/overrides/jacuipense_bra-logo.png"
+ },
+ "atleticoalagoinhas_bra": {
+  "logoUrl": "/overrides/atleticoalagoinhas_bra-logo.png"
+ },
+ "saojosers_bra": {
+  "logoUrl": "/overrides/saojosers_bra-logo.png"
+ },
+ "ananindeua_bra": {
+  "logoUrl": "/overrides/ananindeua_bra-logo.png"
+ },
+ "macaerj_bra": {
+  "logoUrl": "/overrides/macaerj_bra-logo.png"
+ },
+ "vitoriaconquista_bra": {
+  "logoUrl": "/overrides/vitoriaconquista_bra-logo.png"
+ },
+ "resenderj_bra": {
+  "logoUrl": "/overrides/resenderj_bra-logo.png"
+ },
+ "vitoriape_bra": {
+  "logoUrl": "/overrides/vitoriape_bra-logo.png"
+ },
+ "salgueirope_bra": {
+  "logoUrl": "/overrides/salgueirope_bra-logo.png"
+ },
+ "pelotas_bra": {
+  "logoUrl": "/overrides/pelotas_bra-logo.png"
+ },
+ "avenida_bra": {
+  "logoUrl": "/overrides/avenida_bra-logo.png"
+ },
+ "sampaio_ma": {
+  "logoUrl": "/overrides/sampaio_ma-logo.png"
+ },
+ "afogadospe_bra": {
+  "logoUrl": "/overrides/afogadospe_bra-logo.png"
+ },
+ "primavera_bra": {
+  "logoUrl": "/overrides/primavera_bra-logo.png"
+ },
+ "argentinojnrs_arg": {
+  "logoUrl": "/overrides/argentinojnrs_arg-logo.png"
+ },
+ "cabofriense_bra": {
+  "logoUrl": "/overrides/cabofriense_bra-logo.png"
+ },
+ "central_bra": {
+  "logoUrl": "/overrides/central_bra-logo.png"
+ },
+ "uniaors_bra": {
+  "logoUrl": "/overrides/uniaors_bra-logo.png"
+ },
+ "platense_arg": {
+  "logoUrl": "/overrides/platense_arg-logo.png"
+ },
+ "talleres_arg": {
+  "logoUrl": "/overrides/talleres_arg-logo.png"
+ },
+ "comercial_sp": {
+  "logoUrl": "/overrides/comercial_sp-logo.png"
+ },
+ "motoclub_ma": {
+  "logoUrl": "/overrides/motoclub_ma-logo.png"
+ },
+ "londrina_pr": {
+  "logoUrl": "/overrides/londrina_pr-logo.png"
+ },
+ "portuguesasantista_bra": {
+  "logoUrl": "/overrides/portuguesasantista_bra-logo.png"
+ },
+ "tapajospa_bra": {
+  "logoUrl": "/overrides/tapajospa_bra-logo.png"
+ },
+ "portope_bra": {
+  "logoUrl": "/overrides/portope_bra-logo.png"
+ },
+ "galvez_bra": {
+  "logoUrl": "/overrides/galvez_bra-logo.png"
+ },
+ "monsoon_rs_bra": {
+  "logoUrl": "/overrides/monsoon_rs_bra-logo.png"
+ },
+ "toledopr_bra": {
+  "logoUrl": "/overrides/toledopr_bra-logo.png"
+ },
+ "saobento_bra": {
+  "logoUrl": "/overrides/saobento_bra-logo.png"
+ },
+ "riobrancoac_bra": {
+  "logoUrl": "/overrides/riobrancoac_bra-logo.png"
+ },
+ "aguiapa_bra": {
+  "logoUrl": "/overrides/aguiapa_bra-logo.png"
+ },
+ "serranope_bra": {
+  "logoUrl": "/overrides/serranope_bra-logo.png"
+ },
+ "retrope_bra": {
+  "logoUrl": "/overrides/retrope_bra-logo.png"
+ },
+ "vascoac_bra": {
+  "logoUrl": "/overrides/vascoac_bra-logo.png"
+ },
+ "vilago": {
+  "logoUrl": "/overrides/vilago-logo.png"
+ },
+ "tigre_arg": {
+  "logoUrl": "/overrides/tigre_arg-logo.png"
+ },
+ "ipitanga_bra": {
+  "logoUrl": "/overrides/ipitanga_bra-logo.png"
+ },
+ "capivariano_bra": {
+  "logoUrl": "/overrides/capivariano_bra-logo.png"
+ },
+ "novohamburgo_bra": {
+  "logoUrl": "/overrides/novohamburgo_bra-logo.png"
  }
 }

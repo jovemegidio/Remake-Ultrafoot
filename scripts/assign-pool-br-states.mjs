@@ -52,6 +52,17 @@ const CURATED = {
   riverpi:"PI", flamengopi:"PI",
 }
 
+// Clubes do pool que ficaram sem UF depois de a UF sair do campo `pais`. So
+// entram nomes SEM homonimo conhecido — Botafogo (RJ/SP/PB), Guarani (SP/MG/CE),
+// Portuguesa (SP/RJ), Palmeira, Ulbra e Santa Rosa ficam de fora de proposito:
+// a trava de clubes homonimos ja custou caro nesta base.
+const CURATED_POOL = {
+  cruzeiro:"MG", rbbragantino:"SP", coritiba:"PR", chapecoense:"SC", internacional:"RS",
+  crb:"AL", brusque:"SC", ceara:"CE", cuiaba:"MT", avai:"SC", criciuma:"SC",
+  pontepreta:"SP", corinthians:"SP", saopaulo:"SP", parnahyba:"PI", naviraiense:"MS",
+  manauara:"AM", amazoniaindependente:"AM", guapore:"RO", uniaocarmolandense:"TO",
+}
+
 // Aliases especificos p/ nomes com pontuacao no pool.
 const NAME_UF = { "Porto - PE":"PE" }
 
@@ -69,14 +80,33 @@ async function main() {
   const teams = data.teams || data
   let assigned = 0, junk = 0, unknown = []
 
+  // PASSO 1 — a UF foi parar no campo `pais`. Sao 103 clubes com pais "AP",
+  // "BA", "PE"... e estado vazio. Como a divisao do pool e derivada de `pais`
+  // (`pool:<pais>`), eles apareciam no editor sob um "pais" chamado AP, fora do
+  // Brasil e sem estado nenhum. Aqui a UF volta para o lugar dela.
+  let realocados = 0
+  for (const t of teams) {
+    const paisAtual = String(t.pais || "").toUpperCase()
+    // "BR" e o codigo do pais, nao uma UF: vira Brasil sem estado definido.
+    if (paisAtual === "BR") { t.pais = "Brasil"; realocados++; continue }
+    if (!UFS.includes(paisAtual)) continue
+    if (!t.estado) t.estado = paisAtual
+    t.pais = "Brasil"
+    realocados++
+  }
+
+  // PASSO 2 — clubes ja marcados como Brasil que seguem sem UF: tenta o sufixo
+  // do nome e o mapa curado.
   for (const t of teams) {
     if (!/brasil/i.test(t.pais || "")) continue
+    if (t.estado) continue
     const nome = t.nome || ""
     if (isJunk(nome)) { junk++; continue }
-    const uf = NAME_UF[nome] || ufFromSuffix(nome) || CURATED[norm(nome)] || null
+    const uf = NAME_UF[nome] || ufFromSuffix(nome) || CURATED[norm(nome)] || CURATED_POOL[norm(nome)] || null
     if (uf) { t.estado = uf; assigned++ }
     else unknown.push(nome)
   }
+  console.log(`UF movida de pais para estado: ${realocados}`)
 
   await writeFile(POOL, JSON.stringify(data), "utf8")
   console.log(`clubes BR com estado atribuido: ${assigned}`)
