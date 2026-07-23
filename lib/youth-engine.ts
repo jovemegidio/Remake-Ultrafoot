@@ -66,12 +66,15 @@ export function runTryout(state: GameState, category: YouthCategory): YouthIntak
     const teto = 44 + Math.round((prestige - 50) * 0.12)          // ~44-50
     const overall = Math.max(34, Math.min(teto, 34 + Math.floor(Math.random() * (teto - 33))))
     const sorte = Math.random()
-    // Teto de potencial 73 tambem na peneira (pedido): a base inteira e limitada.
-    // Ha variacao — um garoto de 70 vale mais que um de 58 — mas nenhum sai como
-    // futura estrela, o que tirava a graca de rerolar dispensando.
-    const potencial = sorte < 0.15
-      ? 68 + Math.floor(Math.random() * 6)                        // 68-73: promissor
-      : 55 + Math.floor(Math.random() * 14)                       // 55-68: a maioria
+    // A maioria e formacao modesta, mas ha JOIA RARA (3%) e promissores (12%),
+    // como o proprio comentario do topo e a UI ("joias >=85 sao raras") prometem.
+    // Antes o teto era 73 fixo: a joia nunca aparecia e `rareGem` (>=88) era
+    // sempre nulo. A raridade (3%) preserva o anti-abuso de rerolar a peneira.
+    const potencial = sorte < 0.03
+      ? 82 + Math.floor(Math.random() * 11)                       // 82-92: joia rara
+      : sorte < 0.15
+      ? 75 + Math.floor(Math.random() * 9)                        // 75-83: promissor
+      : 55 + Math.floor(Math.random() * 18)                       // 55-72: a maioria
     const escala = overall / Math.max(1, player.overall)
     const cru = (v: number | undefined) => Math.max(25, Math.round((v ?? overall) * escala))
     return {

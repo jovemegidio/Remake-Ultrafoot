@@ -58,13 +58,15 @@ export function generateYouthProspects(
   for (let i = 0; i < count; i++) {
     const position = pick(POSITIONS)
     const overall = overallFloor + Math.floor(rnd() * 10)          // ~48-64
-    // Teto de potencial 73 na base (pedido). A base e formacao modesta: promessa
-    // de verdade nao nasce garantida no clube. Sem o teto, dava para ficar
-    // dispensando garoto ate sair uma joia de potencial 90.
-    const potential = Math.min(
-      73,
-      Math.max(overall + 6, potentialCeil - 8 + Math.floor(rnd() * 16)),
-    )
+    // A base e formacao modesta: a MAIORIA tem teto de potencial ~73. Mas ha uma
+    // JOIA RARA — chance pequena, maior em clubes de mais prestigio — que nasce
+    // com potencial 82-92, como as academias reais volta e meia revelam. Antes o
+    // teto era 73 fixo e a UI ainda prometia "joias >=85 sao raras" (promessa
+    // morta: nunca aparecia uma).
+    const gemChance = 0.03 + Math.max(0, prestige - 55) * 0.004     // ~3% a ~15%
+    const potential = rnd() < gemChance
+      ? Math.min(92, 82 + Math.floor(rnd() * 11))
+      : Math.min(73, Math.max(overall + 6, potentialCeil - 8 + Math.floor(rnd() * 16)))
     // Base começa aos 14 (pedido): garotos de 14-17 vão amadurecendo até
     // subirem ao profissional aos 18. Antes nasciam 16-19 (já quase prontos).
     const age = 14 + Math.floor(rnd() * 4)                          // 14-17

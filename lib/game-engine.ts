@@ -16,6 +16,7 @@ import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
 import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor } from "@/lib/club-economy"
+import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@/lib/player-attributes"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -591,6 +592,13 @@ function randAttr(base: number): number {
 // posicao, entao um zagueiro de elenco forte (base ~90) saia com FIN 94/95 e liderava
 // a lista de batedores de penalti. Aqui goleiros/zagueiros/laterais tem finalizacao
 // baixa e atacantes/meias alta — como manda a posicao.
+// Os 6 atributos coerentes com a posicao, a partir do overall. Fina camada sobre
+// lib/player-attributes (o modulo puro e testado). Substitui a geracao antiga em
+// que so `shooting` respeitava a posicao.
+function atributosPorPosicao(base: number, position: string, seed: string) {
+  return attributesFromOverall(base, position, seed)
+}
+
 export function shootingForPosition(base: number, position: string): number {
   const r = (spread: number) => Math.floor(Math.random() * spread)
   const clamp = (v: number) => Math.max(18, Math.min(99, v))
@@ -2538,22 +2546,36 @@ export const useGameEngine = create<GameEngineState>()(
               if (weeksTrained >= 4) {
                 const attribute = player.training.currentFocus as keyof Player
                 const currentValue = player[attribute] as number
-                const maxValue = player.potential
 
-                if (currentValue < maxValue) {
-                  const improvement = Math.random() < trainImproveChance ? 1 : 0
-                  return {
-                    ...player,
-                    [attribute]: Math.min(99, currentValue + improvement),
-                    energy: newEnergy,
-                    training: { ...player.training, weeksTrained: 0 }
-                  }
+                // O TETO e o OVERALL (nao cada atributo): um atacante pode ter
+                // finalizacao acima do overall. Se ja atingiu o potencial, para.
+                if (player.overall >= player.potential) {
+                  return { ...player, energy: newEnergy, training: { ...player.training, weeksTrained: 0 } }
                 }
-                // Jogador no potencial maximo — reseta contador para nao acumular
+
+                // Jovem evolui mais rapido; veterano mais devagar. Antes o treino
+                // semanal IGNORAVA a idade (so o fim de temporada diferenciava).
+                const fatorIdade = player.age <= 20 ? 1.5 : player.age <= 24 ? 1.15 : player.age <= 29 ? 0.9 : 0.55
+                const chance = Math.min(0.95, trainImproveChance * fatorIdade)
+                const ganho = Math.random() < chance ? (player.age <= 20 && Math.random() < 0.3 ? 2 : 1) : 0
+                if (ganho === 0) {
+                  return { ...player, energy: newEnergy, training: { ...player.training, weeksTrained: 0 } }
+                }
+
+                const atualizado = { ...player, [attribute]: Math.min(99, currentValue + ganho) }
+                // RECALCULA o overall a partir dos atributos. Antes treinar 20
+                // semanas subia o atributo mas NUNCA o overall — o craque so
+                // crescia na virada de temporada. Treino nunca REDUZ o overall,
+                // e nunca passa do potencial.
+                const novoOverall = overallFromAttributes({
+                  pace: atualizado.pace, shooting: atualizado.shooting, passing: atualizado.passing,
+                  dribbling: atualizado.dribbling, defending: atualizado.defending, physical: atualizado.physical,
+                }, player.position)
                 return {
-                  ...player,
+                  ...atualizado,
+                  overall: Math.min(player.potential, Math.max(player.overall, novoOverall)),
                   energy: newEnergy,
-                  training: { ...player.training, weeksTrained: 0 }
+                  training: { ...player.training, weeksTrained: 0 },
                 }
               }
               
@@ -3855,12 +3877,10 @@ export const useGameEngine = create<GameEngineState>()(
               overall: base,
               potential: Math.min(99, base + Math.floor(Math.random() * 8)),
               nationality: "Brasil",
-              pace: Math.min(99, base - 5 + Math.floor(Math.random() * 15)),
-              shooting: shootingForPosition(base, position),
-              passing: Math.min(99, base - 5 + Math.floor(Math.random() * 15)),
-              dribbling: Math.min(99, base - 8 + Math.floor(Math.random() * 18)),
-              defending: Math.min(99, base - 10 + Math.floor(Math.random() * 20)),
-              physical: Math.min(99, base - 5 + Math.floor(Math.random() * 15)),
+              // Atributos COERENTES com a posicao e reconciliados com o overall
+              // (zagueiro: defesa alta/finalizacao baixa; atacante o inverso).
+              // Antes so shooting respeitava a posicao; o resto saia cego a ela.
+              ...atributosPorPosicao(base, position, sp.nome),
               energy: 100,
               morale: "Normal" as const,
               form: base,
@@ -5022,14 +5042,26 @@ export const useGameEngine = create<GameEngineState>()(
               const ganho = Math.min(margem, Math.max(1, Math.round(ganhoBase * fatorPersona)))
               overall = Math.min(p.potential, p.overall + ganho)
             } else if (age >= 32) {
-              // Profissional cuida do corpo: cai mais devagar.
-              const cai = (age >= 35 ? 2 : 1) - (persona.profissionalismo >= 15 ? 1 : 0)
-              overall = Math.max(p.potential - 12, p.overall - Math.max(0, cai))
+              // Declinio do veterano — mais forte a cada ano apos os 32. Antes o
+              // piso era `potential-12` (um craque de potencial 90 nunca caia de
+              // 78, irreal); agora o veterano de fato desbota, ate um piso baixo.
+              const cai = (age >= 36 ? 3 : age >= 34 ? 2 : 1) - (persona.profissionalismo >= 15 ? 1 : 0)
+              overall = Math.max(42, p.overall - Math.max(0, cai))
             }
+            // Overall mudou -> desloca os atributos para acompanhar (mantem overall
+            // e atributos reconciliados; senao voltariam a divergir).
+            const deltaOverall = overall - p.overall
+            const attrsAjustados = deltaOverall !== 0
+              ? shiftAttributes(
+                  { pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical },
+                  p.position, deltaOverall,
+                )
+              : null
             return {
               ...p,
               age,
               overall,
+              ...(attrsAjustados ?? {}),
               persona,
               seasonYellows: 0, // zera o acumulo de cartoes a cada temporada
               seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
@@ -5054,8 +5086,11 @@ export const useGameEngine = create<GameEngineState>()(
             return { ...p, marketValue: Math.round(p.marketValue * mult) }
           })
 
-          // Gera jovens da base para substituir aposentados
-          const youthAcadLevel = (s as any).infrastructure?.youthAcademyLevel ?? 2
+          // Gera jovens da base para substituir aposentados. A academia de base e
+          // clubInfrastructure.youth (nivel 1-5). Antes lia infrastructure.
+          // youthAcademyLevel — campo inexistente — e caia sempre no default 2,
+          // entao a academia NAO afetava os jovens do fim de temporada.
+          const youthAcadLevel = s.clubInfrastructure?.youth ?? 2
           const staffCoord = (s as any).staffMembers?.find((sm: StaffMember) => sm.role === "coordenador_base")
           const coordBonus = staffCoord ? Math.round(staffCoord.competence / 20) : 0
 
@@ -5094,12 +5129,8 @@ export const useGameEngine = create<GameEngineState>()(
               overall: base,
               potential,
               nationality,
-              pace: Math.min(99, base + Math.floor(Math.random() * 15) + region.physBonus),
-              shooting: Math.min(99, shootingForPosition(base, pos) + region.techBonus),
-              passing: Math.min(99, base - 5 + Math.floor(Math.random() * 15) + region.techBonus),
-              dribbling: Math.min(99, base - 8 + Math.floor(Math.random() * 18) + region.techBonus),
-              defending: Math.min(99, base - 10 + Math.floor(Math.random() * 20) + region.physBonus),
-              physical: Math.min(99, base - 5 + Math.floor(Math.random() * 15) + region.physBonus),
+              // Atributos por posicao, reconciliados com o overall (como no elenco).
+              ...atributosPorPosicao(base, pos, `${firstName} ${lastName}`),
               energy: 100,
               morale: "Motivado" as const,
               form: base - 5,
