@@ -1923,6 +1923,7 @@ interface GameEngineState {
   updatePlayerStats: (playerId: number, stats: Partial<PlayerStats>) => void
   processarDesempenhoPartida: (golsPro: number, golsContra: number, events: MatchEvent[]) => void
   rolarLesaoSimulada: (qtdJogos: number) => void
+  acumularEstatisticasSimuladas: (golsPro: number, golsContra: number) => void
   cumprirSuspensao: (playerId: number) => void
   setPlayerShirtNumber: (playerId: number, shirtNumber: number) => boolean
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
@@ -3627,6 +3628,22 @@ export const useGameEngine = create<GameEngineState>()(
               form: Math.max(0, Math.min(100, (p.form ?? 70) + deltaForma)),
               moralePoints: Math.round(novosPontos),
               morale: novoRotulo,
+              // ESTATISTICAS DA TEMPORADA — o perfil do jogador mostrava tudo 0
+              // porque NINGUEM acumulava estes campos: processarDesempenhoPartida
+              // so gravava nota/moral/craque, e updatePlayerStats nunca era
+              // chamado. Este titular JOGOU, entao conta o jogo e o que ele
+              // produziu (contrib vem dos eventos reais da partida).
+              seasonStats: {
+                ...p.seasonStats,
+                matchesPlayed: (p.seasonStats.matchesPlayed ?? 0) + 1,
+                minutesPlayed: (p.seasonStats.minutesPlayed ?? 0) + 90,
+                goals: (p.seasonStats.goals ?? 0) + c.gols,
+                assists: (p.seasonStats.assists ?? 0) + c.assistencias,
+                yellowCards: (p.seasonStats.yellowCards ?? 0) + c.amarelos,
+                redCards: (p.seasonStats.redCards ?? 0) + (c.vermelho ? 1 : 0),
+                cleanSheets: (p.seasonStats.cleanSheets ?? 0)
+                  + (p.position === "GOL" && golsContra === 0 ? 1 : 0),
+              },
               ...(novaLesao ? { injury: novaLesao } : {}),
             }
             return { ...p, ...persist }
@@ -3681,6 +3698,85 @@ export const useGameEngine = create<GameEngineState>()(
               : p),
           }))
         }
+      },
+
+      /**
+       * ESTATISTICAS DE UM JOGO SIMULADO. Quando o usuario nao joga ao vivo, o
+       * motor ao-vivo (que emite os eventos por jogador) nao roda — so temos o
+       * PLACAR. Sem isto, JOGOS/GOLS/ASSIST do perfil ficavam 0 mesmo depois de
+       * uma temporada inteira simulada.
+       *
+       * O jogo (matchesPlayed) e certo: todo titular apto disputou. Os gols e
+       * assistencias do placar sao DISTRIBUIDOS entre os titulares ponderando
+       * pela posicao e finalizacao — atacante marca muito mais que zagueiro —
+       * para os totais da temporada baterem com o placar e ficarem plausiveis
+       * por atleta. Cartoes saem de uma pequena chance por jogo.
+       */
+      acumularEstatisticasSimuladas: (golsPro, golsContra) => {
+        set((s) => {
+          const titulares = s.squadPlayers.filter(
+            p => p.isStarter && !p.injury && (p.suspendedMatches ?? 0) <= 0,
+          )
+          if (titulares.length === 0) return {}
+
+          // Peso de marcar/assistir por linha. Zagueiro nao fica em 0 (bola
+          // parada existe), mas fica bem abaixo do atacante.
+          const pesoGol = (pos: string) =>
+            pos === "ATA" ? 10 : pos === "PE" || pos === "PD" ? 7
+              : pos === "MEI" ? 5 : pos === "VOL" ? 2 : pos === "GOL" ? 0 : 1.2
+          const pesoAssist = (pos: string) =>
+            pos === "MEI" ? 9 : pos === "PE" || pos === "PD" ? 8 : pos === "ATA" ? 5
+              : pos === "VOL" ? 4 : pos === "LD" || pos === "LE" ? 4 : pos === "GOL" ? 0 : 2
+
+        const sortear = (pesoDe: (pos: string) => number): number | null => {
+            const pesos = titulares.map(p => ({ id: p.id, peso: pesoDe(p.position) * (0.6 + (p.overall ?? 65) / 100) }))
+            const soma = pesos.reduce((a, b) => a + b.peso, 0)
+            if (soma <= 0) return null
+            let r = Math.random() * soma
+            return (pesos.find(x => (r -= x.peso) <= 0) ?? pesos[pesos.length - 1]).id
+          }
+
+          const golsPorId = new Map<number, number>()
+          const assistsPorId = new Map<number, number>()
+          for (let g = 0; g < golsPro; g++) {
+            const artilheiro = sortear(pesoGol)
+            if (artilheiro != null) golsPorId.set(artilheiro, (golsPorId.get(artilheiro) ?? 0) + 1)
+            // ~65% dos gols tem assistencia, de outro jogador.
+            if (Math.random() < 0.65) {
+              const assistente = sortear(pesoAssist)
+              if (assistente != null && assistente !== artilheiro) {
+                assistsPorId.set(assistente, (assistsPorId.get(assistente) ?? 0) + 1)
+              }
+            }
+          }
+
+          const titularIds = new Set(titulares.map(p => p.id))
+          return {
+            squadPlayers: s.squadPlayers.map(p => {
+              if (!titularIds.has(p.id)) return p
+              const gols = golsPorId.get(p.id) ?? 0
+              const assists = assistsPorId.get(p.id) ?? 0
+              // Cartao: ~14% amarelo por jogo (volante/zaga um pouco mais), ~1% vermelho.
+              const propAmarelo = p.position === "VOL" || p.position === "ZAG" ? 0.18 : 0.12
+              const amarelo = Math.random() < propAmarelo ? 1 : 0
+              const vermelho = Math.random() < 0.01 ? 1 : 0
+              return {
+                ...p,
+                seasonStats: {
+                  ...p.seasonStats,
+                  matchesPlayed: (p.seasonStats.matchesPlayed ?? 0) + 1,
+                  minutesPlayed: (p.seasonStats.minutesPlayed ?? 0) + 90,
+                  goals: (p.seasonStats.goals ?? 0) + gols,
+                  assists: (p.seasonStats.assists ?? 0) + assists,
+                  yellowCards: (p.seasonStats.yellowCards ?? 0) + amarelo,
+                  redCards: (p.seasonStats.redCards ?? 0) + vermelho,
+                  cleanSheets: (p.seasonStats.cleanSheets ?? 0)
+                    + (p.position === "GOL" && golsContra === 0 ? 1 : 0),
+                },
+              }
+            }),
+          }
+        })
       },
 
       /** Ao entrar em campo, um jogo de suspensao e cumprido (decrementa). */

@@ -1948,6 +1948,13 @@ export function useGameManager() {
       // Partida do usuario SIMULADA (nao jogada ao vivo): rola a chance de lesao
       // no elenco, para uma temporada simulada nao sair sem nenhuma lesao.
       gameEngine.rolarLesaoSimulada(1)
+      // E acumula as estatisticas da temporada (JOGOS/GOLS/ASSIST/cartoes) no XI
+      // titular. Sem isto, simular a carreira deixava o perfil de todos zerado.
+      const usuarioEmCasa = fixture.homeTeam.curto === (currentState.selectedTeamShort ?? "")
+      gameEngine.acumularEstatisticasSimuladas(
+        usuarioEmCasa ? result.homeScore : result.awayScore,
+        usuarioEmCasa ? result.awayScore : result.homeScore,
+      )
 
       const idx = updatedStateFixtures.findIndex(
         f => f.isUserMatch && !f.played && f.round === (fixture.round ?? fixture.week)
