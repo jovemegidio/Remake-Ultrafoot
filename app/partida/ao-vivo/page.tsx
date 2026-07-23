@@ -1083,12 +1083,13 @@ export default function PartidaAoVivoPage() {
             const porNome = new Map<string, number>()
             for (const p of enginePlayers) porNome.set(p.name.trim().toLowerCase(), p.id)
             const idDe = (nome?: string) => (nome ? porNome.get(nome.trim().toLowerCase()) : undefined)
-            const evJogador: { minute: number; type: "goal" | "assist" | "yellow" | "red"; playerId: number; playerName: string; assistPlayerId?: number; assistPlayerName?: string }[] = []
+            const evJogador: { minute: number; type: "goal" | "assist" | "yellow" | "red" | "injury"; playerId: number; playerName: string; assistPlayerId?: number; assistPlayerName?: string }[] = []
             for (const e of state.events) {
               if (e.side !== meuLado) continue
-              const tipo: "goal" | "yellow" | "red" | null = e.type === "goal" ? "goal"
+              const tipo: "goal" | "yellow" | "red" | "injury" | null = e.type === "goal" ? "goal"
                 : e.type === "yellow_card" ? "yellow"
-                : e.type === "red_card" ? "red" : null
+                : e.type === "red_card" ? "red"
+                : e.type === "injury" ? "injury" : null
               if (!tipo) continue
               const id = idDe(e.player)
               if (id === undefined) continue

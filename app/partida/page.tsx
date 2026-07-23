@@ -37,7 +37,7 @@ import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { clearMatchContext, saveMatchContext } from "@/lib/match-context"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { simulateFullMatch, type MatchEvent as SimEvent, type MatchState } from "@/lib/match-engine"
-import { type MatchEvent as EngineEvent } from "@/lib/game-engine"
+import { useGameEngine, type MatchEvent as EngineEvent, type Player } from "@/lib/game-engine"
 import { teamRating } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
 import { getLeagueLogo } from "@/lib/league-logos"
@@ -241,6 +241,50 @@ export default function PartidaPage() {
   const [livePhase, setLivePhase] = useState(true)
   const [advantageOptions, setAdvantageOptions] = useState(false)
   const [showUniformModal, setShowUniformModal] = useState(false)
+
+  // VALIDACAO DA ESCALACAO (pedido): expulso/lesionado/suspenso NAO pode ser
+  // escalado. Se houver algum titular nessas condicoes, abre uma tela com duas
+  // opcoes — corrigir automatico (substituir) ou corrigir manual.
+  const enginePlayersPre = useGameEngine(s => s.squadPlayers)
+  const setStarterPre = useGameEngine(s => s.setStarter)
+  const [escalacaoInvalida, setEscalacaoInvalida] = useState<Player[] | null>(null)
+
+  const titularesInvalidos = useMemo(
+    () => enginePlayersPre.filter(p => p.isStarter && (p.injury || (p.suspendedMatches ?? 0) > 0)),
+    [enginePlayersPre],
+  )
+
+  /** Motivo da inelegibilidade, para a tela. */
+  const motivoInelegivel = (p: Player) =>
+    p.injury ? `lesionado (${p.injury.type}, ${p.injury.weeksRemaining} sem.)`
+      : (p.suspendedMatches ?? 0) > 0 ? `suspenso (${p.suspendedMatches} jogo${(p.suspendedMatches ?? 0) > 1 ? "s" : ""})`
+        : "indisponível"
+
+  /** Ir para a partida — mas so depois de checar a escalacao. */
+  const irParaPartida = useCallback(() => {
+    if (titularesInvalidos.length > 0) { setEscalacaoInvalida(titularesInvalidos); return }
+    hardNavigate("/partida/ao-vivo")
+  }, [titularesInvalidos])
+
+  /** Corrige automatico: para cada titular invalido, promove o melhor reserva
+   *  APTO da mesma posicao (ou o melhor apto geral) e tira o invalido do XI. */
+  const corrigirAutomatico = useCallback(() => {
+    const aptos = enginePlayersPre.filter(p => !p.isStarter && !p.injury && (p.suspendedMatches ?? 0) <= 0)
+    const usados = new Set<number>()
+    for (const inval of titularesInvalidos) {
+      const mesmaPos = aptos
+        .filter(r => !usados.has(r.id) && r.position === inval.position)
+        .sort((a, b) => b.overall - a.overall)[0]
+      const qualquer = aptos
+        .filter(r => !usados.has(r.id))
+        .sort((a, b) => b.overall - a.overall)[0]
+      const escolhido = mesmaPos ?? qualquer
+      setStarterPre(inval.id, false)
+      if (escolhido) { setStarterPre(escolhido.id, true); usados.add(escolhido.id) }
+    }
+    setEscalacaoInvalida(null)
+    hardNavigate("/partida/ao-vivo")
+  }, [enginePlayersPre, titularesInvalidos, setStarterPre])
   const [focusedSide, setFocusedSide] = useState<"home" | "away">("home")
   const [showSettings, setShowSettings] = useState(false)
   const [showQuickSim, setShowQuickSim] = useState(false)
@@ -412,7 +456,7 @@ export default function PartidaPage() {
 
       switch (button) {
         case "A":
-          router.push("/partida/ao-vivo")
+          irParaPartida()
           break
         case "B":
           // "Voltar" devolve ao ESCRITORIO (de onde a pre-partida foi aberta), nao ao
@@ -452,7 +496,7 @@ export default function PartidaPage() {
 
       if (event.key === "Enter") {
         event.preventDefault()
-        hardNavigate("/partida/ao-vivo")
+        irParaPartida()
       } else if (event.key.toLowerCase() === "x") {
         event.preventDefault()
         handleQuickSim()
@@ -592,12 +636,12 @@ export default function PartidaPage() {
           <div className="flex items-center justify-between">
             {/* Atalhos estilo EA FC */}
             <div className="flex items-center gap-7">
-              <Link href="/partida/ao-vivo" className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
+              <button onClick={irParaPartida} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
                 <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
                   ⏎
                 </span>
                 <span className="text-sm font-semibold">Selecionar</span>
-              </Link>
+              </button>
               <button onClick={() => hardNavigate("/")} className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">
                 <span className="flex h-7 min-w-7 items-center justify-center rounded-md border border-white/20 bg-white/10 px-1.5 text-xs font-bold">
                   Esc
@@ -607,10 +651,44 @@ export default function PartidaPage() {
             </div>
 
             {/* Botao iniciar (acesso direto) */}
-            <CtaPill href="/partida/ao-vivo">INICIAR PARTIDA</CtaPill>
+            <CtaPill onClick={irParaPartida}>INICIAR PARTIDA</CtaPill>
           </div>
         </div>
       </main>
+
+      {/* ESCALACAO INVALIDA: titular lesionado/suspenso/expulso. Duas opcoes. */}
+      {escalacaoInvalida && escalacaoInvalida.length > 0 && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="w-full max-w-md rounded-2xl border border-amber-400/25 bg-[#0c0d12] p-6 shadow-2xl">
+            <h2 className="text-lg font-black text-white">Escalação inválida</h2>
+            <p className="mt-1 text-sm text-white/55">
+              Você tem {escalacaoInvalida.length} titular{escalacaoInvalida.length > 1 ? "es" : ""} que não pode{escalacaoInvalida.length > 1 ? "m" : ""} jogar:
+            </p>
+            <ul className="mt-3 space-y-1.5">
+              {escalacaoInvalida.map(p => (
+                <li key={p.id} className="flex items-center justify-between rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-sm">
+                  <span className="font-semibold text-white">{p.name} <span className="text-white/40 font-normal">({p.position})</span></span>
+                  <span className="text-[11px] font-medium text-red-300">{motivoInelegivel(p)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-5 space-y-2">
+              <button onClick={corrigirAutomatico}
+                className="w-full rounded-lg bg-[#00ffc8] py-3 text-sm font-bold text-black hover:brightness-110">
+                Corrigir automaticamente
+                <span className="block text-[11px] font-medium text-black/60">Substitui pelos melhores reservas aptos e inicia a partida</span>
+              </button>
+              <button onClick={() => { setEscalacaoInvalida(null); hardNavigate("/elenco/gerenciamento") }}
+                className="w-full rounded-lg bg-white/8 border border-white/12 py-3 text-sm font-semibold text-white hover:bg-white/12">
+                Corrigir manualmente
+                <span className="block text-[11px] font-normal text-white/45">Abre o Gerenciamento do Time para você ajustar</span>
+              </button>
+              <button onClick={() => setEscalacaoInvalida(null)}
+                className="w-full py-2 text-xs text-white/40 hover:text-white/60">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Sim Modal */}
       {showQuickSim && (

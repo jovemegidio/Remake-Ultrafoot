@@ -3557,11 +3557,27 @@ export const useGameEngine = create<GameEngineState>()(
         const resultado: "win" | "draw" | "loss" =
           golsPro > golsContra ? "win" : golsPro === golsContra ? "draw" : "loss"
         const contrib = contribuicoesPorJogador(events)
+        // LESAO real a partir do evento da partida (antes era so narracao). O
+        // atleta lesionado fica indisponivel por 1-6 semanas e sai da escalacao.
+        const lesionados = new Map<number, PlayerInjury>()
+        for (const e of events) {
+          if (e.type !== "injury" || !e.playerId) continue
+          const grav = Math.random()
+          const sev: PlayerInjury["severity"] = grav < 0.55 ? "leve" : grav < 0.88 ? "media" : "grave"
+          const semanas = sev === "leve" ? 1 + Math.floor(Math.random() * 2)
+            : sev === "media" ? 3 + Math.floor(Math.random() * 3) : 6 + Math.floor(Math.random() * 8)
+          lesionados.set(e.playerId, {
+            type: INJURY_TYPES[Math.floor(Math.random() * INJURY_TYPES.length)],
+            severity: sev, weeksRemaining: semanas, startWeek: get().currentWeek,
+          })
+        }
         set((s) => {
           // Melhor nota entre os titulares vira homem do jogo.
           let melhorId = -1
           let melhorNota = -1
           const comNota = s.squadPlayers.map(p => {
+            // Lesionado NA partida: aplica a lesao real (fica indisponivel).
+            const novaLesao = lesionados.get(p.id)
             if (!p.isStarter || p.injury) {
               // Quem estava suspenso e NAO jogou cumpriu um jogo da punicao.
               if ((p.suspendedMatches ?? 0) > 0) {
@@ -3604,6 +3620,7 @@ export const useGameEngine = create<GameEngineState>()(
               form: Math.max(0, Math.min(100, (p.form ?? 70) + deltaForma)),
               moralePoints: Math.round(novosPontos),
               morale: novoRotulo,
+              ...(novaLesao ? { injury: novaLesao } : {}),
             }
             return { ...p, ...persist }
           })
