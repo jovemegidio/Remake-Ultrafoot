@@ -79,7 +79,19 @@ export function BenchTalk() {
     if (tipo === "promete") {
       fala = "Fico feliz de ouvir isso, professor. Vou dar meu máximo para retribuir a confiança."
       ajustarMoral(jogador.id, +2)
-      setStarter(jogador.id, true) // promete titularidade: entra no XI
+      // Promete titularidade: ele ENTRA e alguem SAI. Antes so ligava o
+      // isStarter dele, deixando o time com 12 titulares — uma escalacao
+      // invalida, que fazia a tela descartar o XI salvo e voltar ao padrao.
+      // Quem sai e o titular de menor overall da MESMA posicao (o concorrente
+      // direto); sem concorrente na posicao, sai o pior titular de linha.
+      const titulares = squad.filter(p => p.isStarter && p.id !== jogador.id)
+      const mesmaPos = titulares.filter(p => p.position === jogador.position)
+      const candidatos = mesmaPos.length > 0
+        ? mesmaPos
+        : titulares.filter(p => p.position !== "GOL")
+      const sai = [...candidatos].sort((a, b) => a.overall - b.overall)[0]
+      if (sai) setStarter(sai.id, false)
+      setStarter(jogador.id, true)
     } else if (tipo === "merece") {
       fala = "Entendo. Vou trabalhar mais forte no treino para conquistar meu espaço."
       ajustarMoral(jogador.id, +1)

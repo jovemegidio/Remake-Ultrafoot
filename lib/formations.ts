@@ -226,6 +226,87 @@ export function pickStartingXI<T>(
 }
 
 /**
+ * CONSERTA a escalacao do tecnico em vez de joga-la fora.
+ *
+ * O relato do jogador: "a escalacao salva volta para a padrao apos a partida".
+ * A causa era uma validacao tudo-ou-nada — se os titulares declarados nao fossem
+ * EXATAMENTE 11 com EXATAMENTE 1 goleiro, o XI inteiro era descartado e trocado
+ * pelo automatico. E a tela entao gravava esse automatico por cima do salvo, o
+ * que tornava a perda PERMANENTE.
+ *
+ * Bastava um evento comum para desequilibrar a conta:
+ *  - a conversa com o reserva promete titularidade e cria um 12o titular;
+ *  - um titular vendido ou emprestado deixa o XI com 10.
+ *
+ * Aqui as escolhas do tecnico sao respeitadas ao maximo: sobrando, sai quem tem
+ * o menor overall (nunca o unico goleiro); faltando, entra o melhor do banco
+ * pelo slot que a formacao pede. So cai no automatico se nao houver XI algum.
+ */
+export function repararEscalacao<T>(
+  declarados: T[],
+  disponiveis: T[],
+  getPos: (p: T) => string,
+  getRating: (p: T) => number,
+  formation = "4-3-3",
+): { starters: T[]; bench: T[] } | null {
+  if (declarados.length === 0) return null
+
+  const ehGol = (p: T) => normalizePosition(getPos(p)) === "GOL"
+  const piorPrimeiro = (a: T, b: T) => getRating(a) - getRating(b)
+  let xi = [...declarados]
+
+  // 1) Goleiros: mantem so o melhor; os demais voltam ao banco.
+  const gols = xi.filter(ehGol).sort((a, b) => getRating(b) - getRating(a))
+  if (gols.length > 1) {
+    const excedentes = new Set(gols.slice(1))
+    xi = xi.filter(p => !excedentes.has(p))
+  }
+
+  // 2) Sem goleiro nenhum: chama o melhor do banco (um XI sem goleiro nao joga).
+  if (!xi.some(ehGol)) {
+    const golBanco = disponiveis
+      .filter(p => ehGol(p) && !xi.includes(p))
+      .sort((a, b) => getRating(b) - getRating(a))[0]
+    if (!golBanco) return null
+    if (xi.length >= 11) xi = xi.filter(p => p !== [...xi].sort(piorPrimeiro)[0])
+    xi.push(golBanco)
+  }
+
+  // 3) Sobrando: corta o de menor overall, preservando sempre o goleiro.
+  while (xi.length > 11) {
+    const cortavel = xi.filter(p => !ehGol(p)).sort(piorPrimeiro)[0] ?? xi.sort(piorPrimeiro)[0]
+    xi = xi.filter(p => p !== cortavel)
+  }
+
+  // 4) Faltando: completa com o banco pelos slots que a formacao ainda pede.
+  if (xi.length < 11) {
+    const noXi = new Set(xi)
+    const banco = disponiveis
+      .filter(p => !noXi.has(p) && !ehGol(p))
+      .sort((a, b) => getRating(b) - getRating(a))
+    const faltam = 11 - xi.length
+    const completado = assignPlayersToFormation(
+      [...xi, ...banco.slice(0, faltam * 3)].map((ref, id) => ({ id, position: normalizePosition(getPos(ref)), ref })),
+      formation,
+    )
+    // O alocador devolve 11 pelos slots; garante que ninguem declarado caia fora.
+    const escolhidos = completado.map(a => a.ref as T)
+    const perdidos = xi.filter(p => !escolhidos.includes(p))
+    xi = [...perdidos, ...escolhidos].slice(0, 11)
+    if (xi.length < 11) {
+      for (const p of banco) {
+        if (xi.length >= 11) break
+        if (!xi.includes(p)) xi.push(p)
+      }
+    }
+  }
+
+  if (xi.length !== 11 || xi.filter(ehGol).length !== 1) return null
+  const dentro = new Set(xi)
+  return { starters: xi, bench: disponiveis.filter(p => !dentro.has(p)) }
+}
+
+/**
  * Garante NO MAXIMO 1 goleiro no XI titular.
  *
  * As telas de partida montavam o time com sortByPosition(...).slice(0, 11). Como GOL e a

@@ -20,7 +20,7 @@
 import { useEffect, useState } from "react"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
-import { capGoalkeepers, pickStartingXI } from "@/lib/formations"
+import { capGoalkeepers, pickStartingXI, repararEscalacao } from "@/lib/formations"
 import type { Player as EnginePlayer } from "@/lib/game-engine"
 
 function hashString(input: string): number {
@@ -140,10 +140,13 @@ export function useUserRoster(
     if (engineSquad.length >= 11) {
       const available = engineSquad.filter(p => !p.loanedOut)
       const declared = available.filter(p => p.isStarter)
-      const declaredIsValid = declared.length === 11 && declared.filter(p => p.position === "GOL").length === 1
-      const starters = declaredIsValid
-        ? declared
-        : pickStartingXI(available, p => p.position, p => p.overall).starters
+      // NAO descarta o XI do tecnico quando a conta nao fecha em 11: conserta.
+      // Um 12o titular (promessa na conversa com reserva) ou um titular vendido
+      // derrubava a escalacao inteira de volta para a automatica — e a tela
+      // gravava a automatica por cima, perdendo a escalacao salva para sempre.
+      const reparado = repararEscalacao(declared, available, p => p.position, p => p.overall)
+      const starters = reparado?.starters
+        ?? pickStartingXI(available, p => p.position, p => p.overall).starters
       const starterIds = new Set(starters.map(p => p.id))
       return {
         players: starters.map(enginePlayerToElenco),
