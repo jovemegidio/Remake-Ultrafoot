@@ -319,7 +319,11 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       className={cn(
         // Transparente como o rodape (pedido): so um leve gradiente do topo para
         // a legibilidade, sem a barra solida #070708 que "cortava" o fundo.
-        "sticky top-0 z-30 flex h-16 items-center justify-between bg-gradient-to-b from-black/55 to-transparent backdrop-blur-sm border-b border-white/[0.04] pl-3 pr-5",
+        // TRANSPARENTE como o rodape (pedido): so um gradiente sutil para
+        // legibilidade do texto, sem faixa solida nem blur — o cenario do
+        // escritorio aparece atras. Mesma formula do ea-action-bar, invertida.
+        "sticky top-0 z-30 flex h-16 items-center justify-between pl-3 pr-5",
+        "bg-gradient-to-b from-black/35 via-black/10 to-transparent border-b border-white/[0.03]",
         className,
       )}
     >
@@ -533,11 +537,13 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       {/* Menu de navegacao (tecla W ou clique na secao pai). */}
       {showNavMenu && (
         <div
-          className="fixed inset-0 z-[70] bg-black/55 backdrop-blur-[7px]"
+          className="fixed inset-0 z-[70] bg-black/25"
           onClick={() => setShowNavMenu(false)}
         >
           <div
-          className="absolute left-5 top-16 flex max-h-[calc(100vh-4rem)] w-[min(292px,88vw)] flex-col overflow-hidden border-l border-white/10 bg-gradient-to-r from-[#07090d]/98 via-[#090c11]/94 to-[#090c11]/75 shadow-[28px_0_70px_rgba(0,0,0,.48)]"
+          // TRANSPARENTE como o header e o rodape (pedido): gradiente suave
+          // apenas para legibilidade, deixando o cenario aparecer atras.
+          className="absolute left-5 top-16 flex max-h-[calc(100vh-4rem)] w-[min(292px,88vw)] flex-col overflow-hidden border-l border-white/[0.06] bg-gradient-to-r from-black/45 via-black/20 to-transparent"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
@@ -654,10 +660,10 @@ const NAV_MENU_ITEMS: { label: string; href: string; icon: typeof Save }[] = [
   { label: "Taticas", href: "/elenco/taticas", icon: Settings },
   { label: "Mercado", href: "/mercado", icon: TrendingUp },
   { label: "Calendario", href: "/calendario", icon: Calendar },
-  { label: "Competicoes", href: "/competicoes", icon: Trophy },
-  { label: "Classificacao", href: "/competicoes", icon: TrendingUp },
+  // Competicoes e Classificacao apontavam para a MESMA rota — eram duas
+  // entradas para a mesma tela. Viraram uma so.
+  { label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy },
   { label: "Financas", href: "/financas", icon: TrendingUp },
   { label: "Treinamento", href: "/treinamento", icon: User },
-  { label: "Infraestrutura", href: "/infraestrutura", icon: Settings },
   { label: "Configuracoes", href: "/configuracoes", icon: Settings },
 ]

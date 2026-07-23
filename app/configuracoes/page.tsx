@@ -30,8 +30,7 @@ import {
   HelpCircle,
   Keyboard,
   DollarSign,
-  X,
-} from "lucide-react"
+  X, Building2 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -56,7 +55,7 @@ import { CONTROL_MAPPINGS, ACTION_LABELS, type GameContext, type GameAction } fr
 import { useTranslation } from "@/lib/i18n"
 import { applyPerformanceProfile, PERFORMANCE_STORAGE_KEY, type PerformanceProfile } from "@/components/performance-profile"
 
-type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "tempo" | "escalacoes" | "musica" | "creditos" | "tutorial"
+type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "tempo" | "escalacoes" | "musica" | "creditos" | "tutorial" | "infraestrutura"
 
 const menuCards = [
   { id: "configuracoes" as ViewType, title: "Configuracoes", icon: Settings, row: 0 },
@@ -67,6 +66,9 @@ const menuCards = [
   { id: "musica" as ViewType, title: "Musica", icon: Music, row: 1 },
   { id: "creditos" as ViewType, title: "Creditos", icon: Award, row: 1 },
   { id: "tutorial" as ViewType, title: "Tutorial\ne Controles", icon: HelpCircle, row: 2 },
+  // INFRAESTRUTURA vive aqui (pedido: "configuracoes e infraestrutura num so").
+  // Nao e uma view interna — leva para a tela propria, que ja existe e e grande.
+  { id: "infraestrutura" as ViewType, title: "Infraestrutura", icon: Building2, row: 2 },
 ]
 
 const languageOptions = [
@@ -283,7 +285,7 @@ export default function ConfiguracoesPage() {
                     key={card.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setCurrentView(card.id)}
+                    onClick={() => card.id === "infraestrutura" ? hardNavigate("/infraestrutura") : setCurrentView(card.id)}
                     onMouseEnter={() => setSelectedCardIndex(index)}
                     className={cn(
                       // Antes era aspect-square: com 3 colunas os cards ficavam ~285px de
