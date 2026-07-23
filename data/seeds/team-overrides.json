@@ -396,7 +396,8 @@
    "away": {
     "imageUrl": "/overrides/independiente_arg-kit-away.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/independiente_arg-logo.png"
  },
  "ceara_bra": {
   "kits": {
@@ -525,7 +526,8 @@
    "away": {
     "imageUrl": "/overrides/velez_sarsfield-kit-away.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/velez_sarsfield-logo.png"
  },
  "coritiba_bra": {
   "kits": {
@@ -552,7 +554,8 @@
    "third": {
     "imageUrl": "/overrides/lanus_arg-kit-third.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/lanus_arg-logo.png"
  },
  "cuiaba_bra": {
   "logoUrl": "/overrides/cuiaba_bra-logo.png"
@@ -721,7 +724,8 @@
    "away": {
     "imageUrl": "/overrides/chapecoense_bra-kit-away.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/chapecoense_bra-logo.png"
  },
  "jacuipense_bra": {
   "logoUrl": "/overrides/jacuipense_bra-logo.png"
@@ -842,5 +846,171 @@
  },
  "novohamburgo_bra": {
   "logoUrl": "/overrides/novohamburgo_bra-logo.png"
+ },
+ "gimnasia_la_plata": {
+  "logoUrl": "/overrides/gimnasia_la_plata-logo.png"
+ },
+ "coventry_ing": {
+  "logoUrl": "/overrides/coventry_ing-logo.png"
+ },
+ "atletico_tucuman": {
+  "logoUrl": "/overrides/atletico_tucuman-logo.png"
+ },
+ "tottenham": {
+  "logoUrl": "/overrides/tottenham-logo.png"
+ },
+ "juventus_sp": {
+  "logoUrl": "/overrides/juventus_sp-logo.png"
+ },
+ "sarmiento_arg": {
+  "logoUrl": "/overrides/sarmiento_arg-logo.png"
+ },
+ "hullcity_ing": {
+  "logoUrl": "/overrides/hullcity_ing-logo.png"
+ },
+ "brentford": {
+  "logoUrl": "/overrides/brentford-logo.png"
+ },
+ "belgrano_cordoba": {
+  "logoUrl": "/overrides/belgrano_cordoba-logo.png"
+ },
+ "newcastle": {
+  "logoUrl": "/overrides/newcastle-logo.png"
+ },
+ "brighton": {
+  "logoUrl": "/overrides/brighton-logo.png"
+ },
+ "saojosesp_bra": {
+  "logoUrl": "/overrides/saojosesp_bra-logo.png",
+  "kits": {
+   "home": {
+    "primary": "#ffff00",
+    "secondary": "#0066cc",
+    "pattern": "solid"
+   },
+   "away": {
+    "primary": "#0066cc",
+    "secondary": "#ffff00",
+    "pattern": "solid"
+   },
+   "third": {
+    "primary": "#1a1a2e",
+    "secondary": "#ffff00",
+    "pattern": "diagonal"
+   }
+  }
+ },
+ "fluminenseba_bra": {
+  "logoUrl": "/overrides/fluminenseba_bra-logo.png"
+ },
+ "bournemouth": {
+  "logoUrl": "/overrides/bournemouth-logo.png"
+ },
+ "uniaobarbarense_bra": {
+  "logoUrl": "/overrides/uniaobarbarense_bra-logo.png",
+  "kits": {
+   "home": {
+    "primary": "#000000",
+    "secondary": "#ffffff",
+    "pattern": "solid"
+   },
+   "away": {
+    "primary": "#ffffff",
+    "secondary": "#000000",
+    "pattern": "solid"
+   },
+   "third": {
+    "primary": "#1a1a2e",
+    "secondary": "#000000",
+    "pattern": "diagonal"
+   }
+  }
+ },
+ "manchester_united": {
+  "logoUrl": "/overrides/manchester_united-logo.png"
+ },
+ "saocaetano_bra": {
+  "logoUrl": "/overrides/saocaetano_bra-logo.png",
+  "kits": {
+   "home": {
+    "primary": "#067512",
+    "secondary": "#ffff27",
+    "pattern": "solid"
+   },
+   "away": {
+    "primary": "#ffff27",
+    "secondary": "#067512",
+    "pattern": "solid"
+   },
+   "third": {
+    "primary": "#1a1a2e",
+    "secondary": "#067512",
+    "pattern": "diagonal"
+   }
+  }
+ },
+ "ituano_sp": {
+  "logoUrl": "/overrides/ituano_sp-logo.png",
+  "kits": {
+   "home": {
+    "primary": "#000000",
+    "secondary": "#ff0000",
+    "pattern": "solid"
+   },
+   "away": {
+    "primary": "#ff0000",
+    "secondary": "#000000",
+    "pattern": "solid"
+   },
+   "third": {
+    "primary": "#1a1a2e",
+    "secondary": "#000000",
+    "pattern": "diagonal"
+   }
+  }
+ },
+ "talleres_cordoba": {
+  "logoUrl": "/overrides/talleres_cordoba-logo.png"
+ },
+ "ipswich": {
+  "logoUrl": "/overrides/ipswich-logo.png"
+ },
+ "Instituto_arg": {
+  "logoUrl": "/overrides/Instituto_arg-logo.png",
+  "kits": {
+   "home": {
+    "primary": "#ee2d36",
+    "secondary": "#ffffff",
+    "pattern": "solid"
+   },
+   "away": {
+    "primary": "#ffffff",
+    "secondary": "#ee2d36",
+    "pattern": "solid"
+   },
+   "third": {
+    "primary": "#1a1a2e",
+    "secondary": "#ee2d36",
+    "pattern": "diagonal"
+   }
+  }
+ },
+ "nottingham_forest": {
+  "logoUrl": "/overrides/nottingham_forest-logo.png"
+ },
+ "brighton_ing": {
+  "logoUrl": "/overrides/brighton_ing-logo.png"
+ },
+ "tottenhamhotspur_ing": {
+  "logoUrl": "/overrides/tottenhamhotspur_ing-logo.png"
+ },
+ "everton": {
+  "logoUrl": "/overrides/everton-logo.png"
+ },
+ "liverpool": {
+  "logoUrl": "/overrides/liverpool-logo.png"
+ },
+ "san_lorenzo": {
+  "logoUrl": "/overrides/san_lorenzo-logo.png"
  }
 }
