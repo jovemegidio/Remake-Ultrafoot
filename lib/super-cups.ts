@@ -100,3 +100,27 @@ export function berthsForSeason(
 export function superCupMatchCount(vagas: readonly SuperCupBerth[]): number {
   return vagas.reduce((total, vaga) => total + vaga.matchCount, 0)
 }
+
+/**
+ * Vaga na continental PRINCIPAL por titulo continental na temporada anterior,
+ * como na vida real: campeao da Sul-Americana entra na Libertadores; campeao da
+ * Europa League entra na Champions. Vencer a principal (Libertadores/Champions)
+ * tambem garante a vaga do ano seguinte.
+ *
+ * Retorna "primary" quando o clube tem vaga garantida na continental de topo do
+ * seu continente — independentemente da posicao na liga.
+ */
+export function continentalTitleBerth(
+  seasonHistory: readonly SeasonRecord[] | undefined,
+  clubeCurto: string,
+  temporadaAtual: number,
+): "primary" | null {
+  if (!seasonHistory?.length || !clubeCurto) return null
+  const anterior = seasonHistory.filter(r => r.season === temporadaAtual - 1 && r.teamCurto === clubeCurto)
+  for (const r of anterior) {
+    if (!foiCampeao(r, clubeCurto)) continue
+    const c = chave(r.competition)
+    if (/sulamericana|sudamericana|europaleague|libertadores|championsleague/.test(c)) return "primary"
+  }
+  return null
+}

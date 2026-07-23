@@ -25,7 +25,7 @@ import { useNotifications } from "@/components/notifications-system"
 import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
-import { berthsForSeason, type SuperCupBerth } from "@/lib/super-cups"
+import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
 import { regionalCupForState } from "@/lib/regional-cups"
 
 const LEAGUE_NAMES: Record<string, string> = {
@@ -344,6 +344,24 @@ export function getStateChampRounds(userTeamShort: string): number {
   return firstPhase + finalPhases
 }
 
+/**
+ * Premio em dinheiro por conquistar um titulo, por peso da competicao. Valores
+ * na moeda do jogo (saldo inicial ~27,5M; receita semanal 0,8-4,5M), calibrados
+ * para o titulo pesar sem quebrar a economia: uma Libertadores paga varias
+ * semanas de operacao, um estadual e simbolico.
+ */
+export function cupTitlePrize(competitionName: string): number {
+  const c = competitionName
+    .normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  if (/champions league|libertadores/.test(c)) return 45_000_000
+  if (/europa league|sul-?americana|sudamericana/.test(c)) return 18_000_000
+  if (/conference league/.test(c)) return 9_000_000
+  if (/copa do brasil/.test(c)) return 12_000_000
+  if (/supercopa|recopa|super cup|mundial/.test(c)) return 8_000_000
+  // Estaduais e demais copas regionais: simbolico.
+  return 1_500_000
+}
+
 // Retorna o total de rodadas da liga principal
 export function getLeagueRounds(division: string): number {
   return LEAGUE_CALENDAR[division]?.rounds ?? 38
@@ -455,7 +473,11 @@ const TOP_FLIGHT_DIVISIONS = new Set([
 
 // Determina quais copas/continentais o time do usuario disputa e quantos jogos.
 // Usa os dados de competitionsByLeague e, quando faltam, deriva por confederacao.
-export function getUserCupPlan(userTeam: Team, superCups: readonly SuperCupBerth[] = []): CupCompetitionPlan[] {
+export function getUserCupPlan(
+  userTeam: Team,
+  superCups: readonly SuperCupBerth[] = [],
+  continentalBerth: "primary" | null = null,
+): CupCompetitionPlan[] {
   const division = String(userTeam.divisao)
   const comps = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
   const plans: CupCompetitionPlan[] = []
@@ -509,7 +531,11 @@ export function getUserCupPlan(userTeam: Team, superCups: readonly SuperCupBerth
     const leagueTeams = [...getUserLeagueTeams(userTeam.curto)].sort((a, b) => b.prestigio - a.prestigio)
     const rank = leagueTeams.findIndex(t => t.curto === userTeam.curto)
     let chosen: Competition | null = null
-    if (rank >= 0 && rank < 4) chosen = continentals[0]
+    // Titulo continental na temporada anterior garante a PRINCIPAL (Libertadores/
+    // Champions) independentemente da posicao na liga — campeao da Sul-Americana
+    // sobe para a Libertadores, campeao da Europa League para a Champions.
+    if (continentalBerth === "primary") chosen = continentals[0]
+    else if (rank >= 0 && rank < 4) chosen = continentals[0]
     else if (rank >= 0 && rank < 10) chosen = continentals[1] ?? continentals[0]
     else if (continentals.length >= 3) chosen = continentals[2]
     // Times de elite (prestigio alto) garantem ao menos a continental secundaria
@@ -1541,6 +1567,9 @@ export function useGameManager() {
     // Recopa, Supercopa da UEFA, Mundial). Vazio quando o clube não foi campeão
     // de nada — a maioria das temporadas.
     const superCupBerths = berthsForSeason(saveState.seasonHistory, userTeamShort, saveState.season)
+    // Vaga na continental principal por titulo continental do ano anterior
+    // (Sul-Americana -> Libertadores, Europa League -> Champions).
+    const continentalBerth = continentalTitleBerth(saveState.seasonHistory, userTeamShort, saveState.season)
 
     const leagueTeams = getUserLeagueTeams(userTeamShort, saveState.divisionOverride)
     const competition = LEAGUE_NAMES[division] ?? getLeagueName(userTeamShort)
@@ -1556,7 +1585,7 @@ export function useGameManager() {
       // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
       // nas copas para nao criar o relato confuso de tres jogos contra o mesmo clube.
       const cupOpponents = new Set(leagueTeams.filter(t => t.curto !== userTeam.curto).map(t => t.curto))
-      for (const plan of getUserCupPlan(userTeam, superCupBerths)) {
+      for (const plan of getUserCupPlan(userTeam, superCupBerths, continentalBerth)) {
         cupMatches.push(...generateUserCupMatches(
           userTeam, plan, saveState.season, cupOpponents,
           gameEngine.matchResults.filter(r => r.season === saveState.season),
@@ -2222,6 +2251,13 @@ export function useGameManager() {
     // Gauchão e "nem percebeu". Regra: esta era a ÚLTIMA partida do usuário
     // nessa competição não-liga e ele venceu → campeão. A página /campeao lê
     // "ultrafoot-pending-champion" (contrato já existente).
+    // Registro do titulo de copa (continental/nacional/estadual) e premiacao.
+    // Antes a cerimonia era so uma tela: o titulo NAO entrava no seasonHistory,
+    // entao nao virava trofeu na carreira, nao dava vaga na Recopa/Supercopa nem
+    // classificava para a Libertadores/Champions, e nao rendia premio. Tudo isso
+    // lia o seasonHistory, que so tinha a liga. Aqui o titulo passa a existir.
+    let cupTitleRecord: import("@/lib/career-types").SeasonRecord | null = null
+    let cupPrize = 0
     if (won && !isLeagueMatch && typeof window !== "undefined") {
       // A partida precisa ser a FINAL. "Nao restam partidas no calendario" nao
       // basta mais: as fases de mata-mata agora so entram DEPOIS da classificacao,
@@ -2239,6 +2275,24 @@ export function useGameManager() {
           type: "cup",
           stats: null,
         }))
+        // Um registro de copa no seasonHistory: posicao 1 e champion = usuario.
+        // Distinto do registro da liga (que entra no fim da temporada) — cada
+        // competicao e uma linha. berthsForSeason, o hall da fama e a contagem de
+        // titulos passam a enxergar a conquista.
+        cupTitleRecord = {
+          season: currentState.season,
+          competition: competitionName,
+          position: 1,
+          points: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0,
+          champion: userShort,
+          managerName: currentState.managerName || "Técnico",
+          promoted: false,
+          relegated: false,
+          teamCurto: userShort,
+          teamNome: userTeamForComp?.nome ?? userShort,
+        }
+        cupPrize = cupTitlePrize(competitionName)
+        if (cupPrize > 0) gameEngine.addClubRevenue(cupPrize)
       }
     }
     const lost = userScore < oppScore
@@ -2295,6 +2349,11 @@ export function useGameManager() {
       coachSkills: updatedSkills,
       completedFixtureKeys,
       fanBase,
+      // Titulo de copa entra no historico ja aqui (a liga entra no fim da
+      // temporada). Sem duplicar: o guard idempotente no topo garante um registro.
+      ...(cupTitleRecord
+        ? { seasonHistory: [...(currentState.seasonHistory ?? []), cupTitleRecord] }
+        : {}),
     }
     saveStateRef.current = { ...currentState, ...patch }
     lastCompletedFixtureWeekRef.current = targetWeek
