@@ -96,10 +96,25 @@ export function getCanonicalSeedPosition(playerName: string): Posicao | undefine
 
 const MAX_IMPORTED_OVERALL = 92
 
+// Elencos CURADOS (players_br.json). Este era o QUARTO caminho de montagem de
+// elenco — e o unico que eu nao havia ligado a nacionalidade real. Por isso
+// Botafogo, Palmeiras e companhia seguiam com a coluna PAIS vazia mesmo depois
+// da correcao: os clubes brasileiros curados vem daqui, nao do seed importado.
+// A resolucao acontece de forma preguicosa (getter) porque `nacionalidadePorNome`
+// e construido mais abaixo no arquivo.
 export const playersByTeam: Record<string, Player[]> = Object.fromEntries(
   Object.entries(RAW).map(([time, list]) => [
     time,
-    list.map(p => ({ ...p, pos: toPlayerPosition(p.pos), time })),
+    list.map(p => ({
+      ...p,
+      pos: toPlayerPosition(p.pos),
+      time,
+      // Resolve contra o elenco do PROPRIO clube (o nome do time e a chave aqui),
+      // o que desempata apelidos comuns como Paulinho/Vitinho.
+      get nac(): string | undefined {
+        return resolverNac(p.nome, undefined, { nome: time, curto: "", file_key: "" } as unknown as Team)
+      },
+    })),
   ])
 )
 
@@ -173,11 +188,96 @@ const nacionalidadePorNome: Map<string, string> = (() => {
   return mapa
 })()
 
-/** Nacionalidade do atleta: o que o seed trouxer, senao a do Transfermarkt. */
-function resolverNac(nome: string, doSeed?: string): string | undefined {
+/**
+ * Nacionalidade POR CLUBE. A busca global por nome falha justamente nos casos
+ * mais comuns do futebol brasileiro: "Paulinho", "Vitinho" e "Jorginho"
+ * aparecem em varios clubes, entao a regra de conflito os descartava; e
+ * "Arrascaeta" no TM e "Giorgian de Arrascaeta". Dentro do elenco do clube o
+ * nome e praticamente unico, o que resolve os dois casos com seguranca.
+ */
+const nacPorClube: Map<string, Map<string, string>> = (() => {
+  const mapa = new Map<string, Map<string, string>>()
+  const porCurto = new Map<string, Map<string, string> | null>()
+
+  for (const [chaveClube, elenco] of Object.entries(
+    realSquadsTM as Record<string, Array<{ n?: string; c?: string }>>,
+  )) {
+    if (!Array.isArray(elenco)) continue
+    const porNome = new Map<string, string>()
+    for (const j of elenco) {
+      if (!j?.n || !j?.c) continue
+      porNome.set(normalizeTeamName(j.n), j.c)
+    }
+    // A chave do TM e "CURTO|nome". O NOME e especifico ("botafogo",
+    // "botafogo sp", "botafogo pb") e pode indexar direto.
+    const [curto, nome] = chaveClube.split("|")
+    const kNome = normalizeTeamName(nome ?? "")
+    if (kNome) mapa.set(kNome, porNome)
+
+    // O CURTO nao e unico: BOTAFOGO cobre RJ, SP e PB. Indexar por ele faria o
+    // Botafogo-RJ ler o elenco do Botafogo-PB — nacionalidade do atleta errado.
+    // So indexamos curtos que apontam para UM unico clube.
+    const kCurto = normalizeTeamName(curto ?? "")
+    if (kCurto) porCurto.set(kCurto, porCurto.has(kCurto) ? null : porNome)
+  }
+  for (const [k, v] of porCurto) if (v && !mapa.has(k)) mapa.set(k, v)
+  return mapa
+})()
+
+/**
+ * Elenco do TM correspondente a este clube.
+ *
+ * Tenta nome, file_key, curto E os APELIDOS ja mapeados em teamAliasOverrides —
+ * sem eles, clubes cujo nome difere entre as bases ficavam sem elenco do TM
+ * ("Bayern Munich" aqui x "bayern munchen" no TM), o que zerava a nacionalidade
+ * e ainda deixava as posicoes grosseiras.
+ */
+function elencoTmDoClube(team?: Team | null): Map<string, string> | undefined {
+  if (!team) return undefined
+  const candidatos = [
+    team.nome,
+    team.file_key,
+    team.curto,
+    ...(teamAliasOverrides[team.file_key ?? ""] ?? []),
+  ]
+  for (const c of candidatos) {
+    const k = normalizeTeamName(String(c ?? ""))
+    if (!k) continue
+    const achado = nacPorClube.get(k)
+    if (achado) return achado
+  }
+  return undefined
+}
+
+/**
+ * Nacionalidade do atleta, em ordem de confianca:
+ *   1. o que o seed ja trouxer;
+ *   2. nome EXATO dentro do elenco do proprio clube (TM);
+ *   3. nome PARCIAL dentro do clube ("Arrascaeta" ⊂ "Giorgian de Arrascaeta"),
+ *      aceito so quando ha um unico candidato;
+ *   4. nome unico globalmente.
+ */
+function resolverNac(nome: string, doSeed?: string, team?: Team | null): string | undefined {
   const s = String(doSeed ?? "").trim()
   if (s && s !== "?") return s
-  return nacionalidadePorNome.get(normalizeTeamName(nome))
+  const chave = normalizeTeamName(nome)
+  if (!chave) return undefined
+
+  const doClube = elencoTmDoClube(team)
+  if (doClube) {
+    const exato = doClube.get(chave)
+    if (exato) return exato
+    // Parcial: um contem o outro. So aceita se houver UM candidato — dois
+    // "Silva" no mesmo elenco nao decidem nada.
+    let unico: string | undefined
+    let quantos = 0
+    for (const [k, nac] of doClube) {
+      if (k.length >= 4 && (k.includes(chave) || chave.includes(k))) { quantos++; unico = nac }
+      if (quantos > 1) break
+    }
+    if (quantos === 1 && unico) return unico
+  }
+  return nacionalidadePorNome.get(chave)
 }
 
 const teamAliasOverrides: Record<string, string[]> = {
@@ -536,7 +636,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
         idade: globalSeed?.idade ?? 25,
         base: globalSeed ? Math.min(globalSeed.overall, MAX_IMPORTED_OVERALL) : estimated,
         time: team.nome,
-        nac: resolverNac(p.nome, globalSeed?.nac),
+        nac: resolverNac(p.nome, globalSeed?.nac, team),
       }
     })
     if (converted.some((player) => player.pos === "GOL")) return converted
@@ -550,7 +650,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
         idade: player.idade ?? 25,
         base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
         time: team.nome,
-        nac: resolverNac(player.nome, player.nac),
+        nac: resolverNac(player.nome, player.nac, team),
       }))
     return [...seedGoalkeepers, ...converted]
   }
@@ -570,7 +670,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
       idade: player.idade ?? 25,
       base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
       time: team.nome,
-      nac: resolverNac(player.nome, player.nac),
+      nac: resolverNac(player.nome, player.nac, team),
     }))
 }
 
@@ -713,8 +813,37 @@ function enrichWithSeedNationality(team: Team, players: Player[]): Player[] {
 interface RealSquadPlayerTM { n: string; p: string; c?: string; f?: string; i: number; o: number }
 const REAL_SQUADS_TM = realSquadsTM as Record<string, RealSquadPlayerTM[]>
 
+/**
+ * Elenco real indexado por NOME do clube, para quando a chave composta falha.
+ *
+ * A busca original exigia `CURTO|nome` EXATO. O `curto` do clube curado nem
+ * sempre e o mesmo do Transfermarkt (curado "LIV" x TM "LIVERPOO"), entao
+ * clubes grandes — Liverpool, Bayern, Dortmund, Lazio, Gremio — nao achavam o
+ * proprio elenco real e caiam no caminho ficticio: perdiam nacionalidade,
+ * posicoes finas (ficavam so GOL/ZAG/MEI/ATA) e o overall real.
+ *
+ * Nome que aparece em MAIS DE UM clube (Botafogo RJ/SP/PB) fica de fora deste
+ * indice — carregar o elenco do clube errado seria pior do que nao carregar.
+ */
+const REAL_SQUADS_POR_NOME: Map<string, RealSquadPlayerTM[]> = (() => {
+  const mapa = new Map<string, RealSquadPlayerTM[]>()
+  const duplicados = new Set<string>()
+  for (const [chave, roster] of Object.entries(REAL_SQUADS_TM)) {
+    const nome = normalizeTeamName(chave.split("|")[1] ?? "")
+    if (!nome || !roster?.length) continue
+    if (mapa.has(nome)) duplicados.add(nome)
+    else mapa.set(nome, roster)
+  }
+  for (const d of duplicados) mapa.delete(d)
+  return mapa
+})()
+
 function getRealSquad(team: Team): Player[] | null {
   const roster = REAL_SQUADS_TM[`${team.curto}|${normalizeTeamName(team.nome)}`]
+    ?? REAL_SQUADS_POR_NOME.get(normalizeTeamName(team.nome))
+    ?? (teamAliasOverrides[team.file_key ?? ""] ?? [])
+      .map(a => REAL_SQUADS_POR_NOME.get(normalizeTeamName(a)))
+      .find(Boolean)
   if (!roster?.length) return null
   return roster.map(p => ({
     nome: p.n,
@@ -731,8 +860,17 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
   // Clubes do pool completo não fazem parte de `allTeams` e, portanto, não entram no
   // índice curado criado no boot. Consultar a importação diretamente evita que os quase
   // 3 mil clubes recebam um elenco inteiramente genérico.
-  // Elenco REAL vence tudo; sem ele, curado > importado (enriquecido com nac).
-  const sourceRaw = getRealSquad(team)
+  // ORDEM DE PRIORIDADE (importa):
+  //   1. overlay dos CSVs (real-positions) — e o elenco MAIS ATUAL (2026/27);
+  //   2. elenco real do Transfermarkt;
+  //   3. curado > importado.
+  //
+  // O overlay do CSV precisa vir ANTES do TM. Quando ampliei o casamento do TM
+  // por nome do clube, ele passou a vencer o CSV e trouxe de volta atletas que
+  // ja tinham saido (Gillespie/Ramsdale/Trippier voltaram ao Newcastle) — o
+  // qa-real-positions pegou. O TM cobre os clubes que o CSV nao alcanca.
+  const temOverlayCsv = Boolean(findRealSquad(team, teamAliasOverrides[team.file_key ?? ""] ?? []))
+  const sourceRaw = (temOverlayCsv ? null : getRealSquad(team))
     ?? enrichWithSeedNationality(team, indexed.length ? indexed : getImportedPlayersForTeam(team))
   // Remove quem foi contratado pelo usuário: sem isto o atleta ficava nos DOIS
   // elencos (relato "contratei o Neymar mas ele continua no Santos"). O editor

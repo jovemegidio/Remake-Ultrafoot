@@ -1162,7 +1162,16 @@ export const serieDTeams: Team[] = [
 import { allInternationalTeams } from "./international-teams"
 
 // Todos os times brasileiros
+// PAIS dos clubes brasileiros curados. 79 deles nao tinham o campo `pais`
+// preenchido (so `divisao: serie_a..d`), o que fazia qualquer inferencia por
+// pais do clube falhar — a coluna PAIS do editor ficava "-" e o agrupamento por
+// pais os deixava de fora. A divisao ja diz que sao do Brasil; preenchemos aqui
+// em vez de editar centenas de entradas a mao.
+const _comPaisBR = <T extends { pais?: string }>(t: T): T =>
+  String(t.pais ?? "").trim() ? t : { ...t, pais: "Brasil" }
+
 export const allBrazilianTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams]
+  .map(_comPaisBR)
 
 // Todos os times (incluindo internacionais)
 export const allTeams = [...allBrazilianTeams, ...allInternationalTeams]
