@@ -10,8 +10,12 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { saveMatchContext } from "@/lib/match-context"
 import { allTeams, getTeamByShort } from "@/lib/teams-data"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 
 export default function YouthCareerPage(){
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/base") })
+
   const {state,setState}=useGameState(),{initializeNewGame}=useGameManager(),career=state.youthCareer,players=state.youthPlayers??[]
   if(!career)return <main className="min-h-screen bg-[#06090d] text-white"><GameHeader/><div className="p-10 text-center"><p>Nenhuma carreira Sub-20 ativa.</p><Button className="mt-4" onClick={()=>hardNavigate("/novo-jogo")}>Criar carreira</Button></div></main>
   const apply=(next:ReturnType<typeof simulateYouthRound>)=>setState(next)

@@ -33,6 +33,8 @@ import {
 } from "@/lib/national-teams"
 import { getCompetitionsForConfederation, getCompetitionDef } from "@/lib/national-competitions"
 import type { NationalOffer } from "@/lib/save-system"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 function NationalCrest({ team, size = 48 }: { team: { code: string; cor1: string; cor2: string }; size?: number }) {
   return (
@@ -328,6 +330,9 @@ function CompetitionPanel() {
 }
 
 export default function SelecaoPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+
   const { team: userTeam, hydrated: teamHydrated } = useUserTeam()
   const { state, setState } = useGameState()
   const t = useTranslation()

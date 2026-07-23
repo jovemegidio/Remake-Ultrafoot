@@ -13,12 +13,16 @@ import { allTeams, type Team } from "@/lib/teams-data"
 import { saveMatchContext } from "@/lib/match-context"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { cn } from "@/lib/utils"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 
 function norm(s: string) {
   return (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 }
 
 export default function AmistososPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+
   const { team: userTeam } = useUserTeam()
   const [query, setQuery] = useState("")
   const [userIsHome, setUserIsHome] = useState(true)

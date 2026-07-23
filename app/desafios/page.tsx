@@ -5,6 +5,8 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { CHALLENGES, startChallenge, type ChallengeId, type ChallengeProgress } from "@/lib/challenge-engine"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 const DIFF_COLORS: Record<string, string> = {
   facil: "text-green-400 bg-green-400/10",
@@ -14,6 +16,9 @@ const DIFF_COLORS: Record<string, string> = {
 }
 
 export default function DesafiosPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+
   const { team } = useUserTeam()
   const { state, setState } = useGameState()
   const active = state.activeChallenge

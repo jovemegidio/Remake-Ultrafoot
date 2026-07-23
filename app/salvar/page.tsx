@@ -11,6 +11,7 @@ import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/s
 import { persistGameEngineNow } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 
 const MESES = [
   "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -27,6 +28,9 @@ function formatLongDate(ts: number) {
 type Tab = "principais" | "controle"
 
 export default function SalvarPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/configuracoes") })
+
   const { state, hydrated } = useGameState()
   const { seasonCalendar } = useGameManager()
 

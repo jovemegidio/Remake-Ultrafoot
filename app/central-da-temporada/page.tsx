@@ -4,8 +4,13 @@ import { Calendar, Target, TrendingUp, AlertCircle, Newspaper, ShoppingCart, Sta
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { useUserTeam, useGameState } from "@/lib/save-system"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 export default function CentralDaTemporadaPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+
   const { team } = useUserTeam()
   const { state } = useGameState()
 

@@ -2,6 +2,8 @@
 
 import { Search, ArrowLeftRight, ClipboardList, Eye, History } from "lucide-react"
 import { HubScreen, type HubCard } from "@/components/hub-screen"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 const cards: HubCard[] = [
   {
@@ -47,6 +49,9 @@ const cards: HubCard[] = [
 ]
 
 export default function TransferenciasHubPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+
   return (
     <HubScreen
       tagline="Mercado de transferencias"

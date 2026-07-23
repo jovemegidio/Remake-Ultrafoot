@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { getPlayersForTeam } from "@/lib/players-data"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 // Formacoes predefinidas com coordenadas para campo 100x133
 const FORMATIONS: Record<string, { name: string; positions: { pos: string; x: number; y: number }[] }> = {
@@ -116,6 +118,9 @@ interface SavedLineup {
 }
 
 export default function EscalacoesPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/elenco") })
+
   const router = useRouter()
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]

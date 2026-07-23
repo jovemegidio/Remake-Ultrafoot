@@ -24,6 +24,7 @@ import { useGameState } from "@/lib/save-system"
 import { useGameEngine, persistGameEngineNow, type TeamMentality, type TeamTactics } from "@/lib/game-engine"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { announceOnlineAction } from "@/lib/online-multiplayer"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 
 const TACTICAL_PRESETS = [
   {
@@ -83,6 +84,9 @@ const TACTICAL_PRESETS = [
 ]
 
 export default function TaticasPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/elenco") })
+
   const router = useRouter()
   const { state } = useGameState()
   const userTeam = getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]

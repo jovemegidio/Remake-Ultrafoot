@@ -19,10 +19,14 @@ import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useNotifications } from "@/components/notifications-system"
 import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 
 const PROMOTION_FEE = 200_000
 
 export default function BasePage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+
   const { team } = useUserTeam()
   const { state, setState } = useGameState()
   const { addNotification } = useNotifications()

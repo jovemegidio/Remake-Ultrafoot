@@ -26,6 +26,7 @@ import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
 import { useGameEngine } from "@/lib/game-engine"
+import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 
 const TACTICAL_STYLE_DETAILS = {
   posse_bola: { label: "Posse de Bola", impact: "Passe curto e controle do ritmo", icon: Target },
@@ -95,6 +96,9 @@ function LineupsIcon({ className }: { className?: string }) {
 }
 
 export default function ElencoHubPage() {
+  // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
+  useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
+
   const router = useRouter()
   const { state } = useGameState()
   const playingStyle = useGameEngine((game) => game.teamTactics.playingStyle)
