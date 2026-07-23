@@ -109,86 +109,91 @@ export function useGamepad(options: UseGamepadOptions = {}) {
   const lastPollRef = useRef<number>(0)
   const nativeBatteryRef = useRef<number | null>(null)
 
-  const pollGamepad = useCallback(() => {
-    const now = performance.now()
-    if (now - lastPollRef.current < pollRate) {
-      animationFrameRef.current = requestAnimationFrame(pollGamepad)
-      return
-    }
-    lastPollRef.current = now
+  // CALLBACKS EM REF. Antes o laco de polling dependia das callbacks (recriadas a
+  // cada render pelo useGamepadNavigation), entao ele se DESMONTAVA e remontava a
+  // cada render — cancelando e reagendando requestAnimationFrame o tempo todo, o
+  // que embaralhava a deteccao. Agora o laco roda UMA vez e le as callbacks daqui.
+  const cbRef = useRef({ onButtonPress, onButtonRelease, onConnect, onDisconnect })
+  cbRef.current = { onButtonPress, onButtonRelease, onConnect, onDisconnect }
 
-    const gamepads = navigator.getGamepads()
-    const gamepad = gamepads[0] || gamepads[1] || gamepads[2] || gamepads[3]
-
-    if (!gamepad) {
-      if (state.connected) {
-        setState(prev => ({ ...prev, connected: false }))
-        onDisconnect?.()
-      }
-      animationFrameRef.current = requestAnimationFrame(pollGamepad)
-      return
-    }
-
-    // Check button states
-    const newButtons: Record<GamepadButtonName, boolean> = {} as Record<GamepadButtonName, boolean>
-    
-    for (const [name, index] of Object.entries(GAMEPAD_BUTTONS)) {
-      const button = gamepad.buttons[index]
-      const isPressed = button ? (typeof button === "object" ? button.pressed : button > 0.5) : false
-      newButtons[name as GamepadButtonName] = isPressed
-
-      // Detect button press/release
-      const wasPressed = previousButtonsRef.current[name as GamepadButtonName]
-      if (isPressed && !wasPressed) {
-        onButtonPress?.(name as GamepadButtonName)
-        // Dispatches evento global para que qualquer pagina possa ouvir sem precisar chamar useGamepad
-        window.dispatchEvent(new CustomEvent("gamepad:button", { detail: { button: name as GamepadButtonName } }))
-      } else if (!isPressed && wasPressed) {
-        onButtonRelease?.(name as GamepadButtonName)
-      }
-    }
-
-    previousButtonsRef.current = newButtons
-
-    // Apply deadzone to sticks
-    const applyDeadzone = (value: number) => Math.abs(value) < deadzone ? 0 : value
-
-    const leftStick = {
-      x: applyDeadzone(gamepad.axes[0] || 0),
-      y: applyDeadzone(gamepad.axes[1] || 0),
-    }
-    const rightStick = {
-      x: applyDeadzone(gamepad.axes[2] || 0),
-      y: applyDeadzone(gamepad.axes[3] || 0),
-    }
-
-    // battery is non-standard — available on some Chromium/WebView2 builds
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawBattery = (gamepad as any).battery
-    const browserBattery: number | null =
-      typeof rawBattery === "number"
-        ? rawBattery
-        : typeof rawBattery?.batteryLevel === "number"
-          ? rawBattery.batteryLevel
-          : null
-    const battery = browserBattery ?? nativeBatteryRef.current
-
-    setState({
-      connected: true,
-      controllerType: detectControllerType(gamepad.id),
-      controllerName: gamepad.id,
-      battery,
-      buttons: newButtons,
-      leftStick,
-      rightStick,
-    })
-
-    animationFrameRef.current = requestAnimationFrame(pollGamepad)
-  }, [state.connected, onButtonPress, onButtonRelease, onDisconnect, deadzone, pollRate])
+  // Snapshot em ref para a UI ler o analogico em tempo real sem forcar render.
+  const stateRef = useRef(state)
+  stateRef.current = state
 
   useEffect(() => {
+    const applyDeadzone = (value: number) => (Math.abs(value) < deadzone ? 0 : value)
+
+    const poll = () => {
+      animationFrameRef.current = requestAnimationFrame(poll)
+
+      const now = performance.now()
+      if (now - lastPollRef.current < pollRate) return
+      lastPollRef.current = now
+
+      const gamepads = navigator.getGamepads?.() ?? []
+      const gamepad = gamepads[0] || gamepads[1] || gamepads[2] || gamepads[3] || null
+
+      if (!gamepad) {
+        if (stateRef.current.connected) {
+          cbRef.current.onDisconnect?.()
+          setState(prev => (prev.connected ? { ...prev, connected: false } : prev))
+        }
+        return
+      }
+
+      // Bordas dos botoes: DISPARA sempre, mesmo sem re-render (e o que as telas
+      // ouvem, via evento gamepad:button).
+      const newButtons = {} as Record<GamepadButtonName, boolean>
+      let algumMudou = false
+      for (const [name, index] of Object.entries(GAMEPAD_BUTTONS)) {
+        const button = gamepad.buttons[index]
+        const isPressed = button ? (typeof button === "object" ? button.pressed : button > 0.5) : false
+        newButtons[name as GamepadButtonName] = isPressed
+        const wasPressed = previousButtonsRef.current[name as GamepadButtonName]
+        if (isPressed !== wasPressed) algumMudou = true
+        if (isPressed && !wasPressed) {
+          cbRef.current.onButtonPress?.(name as GamepadButtonName)
+          window.dispatchEvent(new CustomEvent("gamepad:button", { detail: { button: name as GamepadButtonName } }))
+        } else if (!isPressed && wasPressed) {
+          cbRef.current.onButtonRelease?.(name as GamepadButtonName)
+        }
+      }
+      previousButtonsRef.current = newButtons
+
+      const leftStick = { x: applyDeadzone(gamepad.axes[0] || 0), y: applyDeadzone(gamepad.axes[1] || 0) }
+      const rightStick = { x: applyDeadzone(gamepad.axes[2] || 0), y: applyDeadzone(gamepad.axes[3] || 0) }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawBattery = (gamepad as any).battery
+      const browserBattery: number | null =
+        typeof rawBattery === "number" ? rawBattery
+          : typeof rawBattery?.batteryLevel === "number" ? rawBattery.batteryLevel : null
+      const battery = browserBattery ?? nativeBatteryRef.current
+
+      // SO faz setState quando algo RELEVANTE muda. Antes chamava setState a 60fps,
+      // rerenderizando o app inteiro 60x/s — travava maquina fraca e competia com
+      // o proprio laco. Botao e "balde" do analogico (passou do limiar) disparam
+      // render; micro-variacao de eixo, nao.
+      const prev = stateRef.current
+      const bucket = (v: number) => (v > 0.5 ? 1 : v < -0.5 ? -1 : 0)
+      const stickMudou =
+        bucket(leftStick.x) !== bucket(prev.leftStick.x) ||
+        bucket(leftStick.y) !== bucket(prev.leftStick.y)
+      if (!prev.connected || algumMudou || stickMudou || prev.battery !== battery) {
+        setState({
+          connected: true,
+          controllerType: detectControllerType(gamepad.id),
+          controllerName: gamepad.id,
+          battery,
+          buttons: newButtons,
+          leftStick,
+          rightStick,
+        })
+      }
+    }
+
     const handleGamepadConnected = (e: GamepadEvent) => {
-      onConnect?.(e.gamepad)
+      cbRef.current.onConnect?.(e.gamepad)
       setState(prev => ({
         ...prev,
         connected: true,
@@ -196,26 +201,23 @@ export function useGamepad(options: UseGamepadOptions = {}) {
         controllerName: e.gamepad.id,
       }))
     }
-
     const handleGamepadDisconnected = () => {
-      onDisconnect?.()
+      cbRef.current.onDisconnect?.()
       setState(prev => ({ ...prev, connected: false }))
     }
 
     window.addEventListener("gamepadconnected", handleGamepadConnected)
     window.addEventListener("gamepaddisconnected", handleGamepadDisconnected)
-
-    // Start polling
-    animationFrameRef.current = requestAnimationFrame(pollGamepad)
+    animationFrameRef.current = requestAnimationFrame(poll)
 
     return () => {
       window.removeEventListener("gamepadconnected", handleGamepadConnected)
       window.removeEventListener("gamepaddisconnected", handleGamepadDisconnected)
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [pollGamepad, onConnect, onDisconnect])
+    // Laco unico e estavel: nao depende de callbacks nem de state (lidos por ref).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deadzone, pollRate])
 
   useEffect(() => {
     if (!state.connected || !("__TAURI_INTERNALS__" in window)) {
