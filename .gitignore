@@ -142,3 +142,6 @@ releases/
 # Material de trabalho de escudos (fontes soltas; os usados ficam em public/)
 Escudos/
 Escudos para Importar/
+
+# Backup temporario do split de escudos/uniformes (gerado a cada build)
+data/seeds/team-overrides.inline-backup.json
