@@ -1136,6 +1136,33 @@ export default function PartidaAoVivoPage() {
             processarDesempenhoPartida(golsPro, golsContra, evJogador)
           } catch { /* nota e um extra: nunca deve travar o fim da partida */ }
 
+          // NOTIFICACOES que nao existiam: resultado da partida e lesoes. Antes
+          // os tipos match_end/injury so viviam na demo — nada era disparado.
+          if (!matchCtx.friendly && !matchCtx.youth) {
+            try {
+              const meuNome = (userSide === "home" ? homeTeam : awayTeam).nome
+              const rivalNome = (userSide === "home" ? awayTeam : homeTeam).nome
+              const gp = userSide === "home" ? state.home.goals : state.away.goals
+              const gc = userSide === "home" ? state.away.goals : state.home.goals
+              const res = gp > gc ? "Vitória" : gp < gc ? "Derrota" : "Empate"
+              addNotification({
+                type: "match_end", priority: "medium",
+                title: `${res}: ${meuNome} ${gp} x ${gc} ${rivalNome}`,
+                message: `${displayCompetition}. ${gp > gc ? "Três pontos importantes!" : gp < gc ? "Resultado a superar na próxima." : "Um ponto somado."}`,
+                href: "/central",
+              })
+              const lesionados = state.events.filter(e => e.type === "injury" && e.side === userSide).map(e => e.player).filter(Boolean)
+              for (const nome of lesionados) {
+                addNotification({
+                  type: "injury", priority: "high",
+                  title: `${nome} se lesionou`,
+                  message: `${nome} deixou o jogo machucado e será reavaliado pelo departamento médico. Confira a gravidade no elenco.`,
+                  href: "/elenco/gerenciamento",
+                })
+              }
+            } catch { /* notificacao e um extra */ }
+          }
+
           clearMatchContext()
           // Título de mata-mata (estadual/copa) é detectado pelo
           // registerUserMatchResult acima, que grava o pending-champion. Sem

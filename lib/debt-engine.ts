@@ -42,6 +42,26 @@ export function debtTransferLimit(debt: ClubDebtState | undefined, balance: numb
   return Math.max(0,Math.round(balance*(burden>.75?.25:burden>.4?.5:.75)))
 }
 
+/**
+ * Transferencias CONGELADAS por inadimplencia: atrasar 3+ parcelas trava as
+ * contratacoes (a diretoria corta o mercado ate regularizar). Antes missedPayments
+ * era incrementado e NUNCA lido — atrasar nao tinha consequencia nenhuma.
+ */
+export function transfersFrozen(debt: ClubDebtState | undefined): boolean {
+  return Boolean(debt?.enabled && debt.missedPayments >= 3)
+}
+
+/** Uma compra de `fee` e permitida? Respeita o teto por divido e o congelamento. */
+export function canAffordTransfer(
+  debt: ClubDebtState | undefined,
+  balance: number,
+  fee: number,
+): { ok: boolean; reason?: "frozen" | "limit" } {
+  if (transfersFrozen(debt)) return { ok: false, reason: "frozen" }
+  if (fee > debtTransferLimit(debt, balance)) return { ok: false, reason: "limit" }
+  return { ok: true }
+}
+
 export function renegotiateDebt(debt: ClubDebtState): ClubDebtState {
   if(!debt.enabled||debt.renegotiations>=2)return debt
   const next={...debt,annualInterestRate:debt.annualInterestRate+.01,termMonths:debt.termMonths+24,renegotiations:debt.renegotiations+1}

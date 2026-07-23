@@ -23,6 +23,9 @@ export interface Notification {
     label: string
     onClick: () => void
   }
+  // Deep-link ACIONAVEL que sobrevive ao save (diferente de `action.onClick`, que
+  // e um callback e nao pode ser persistido). Ex.: "/contratos", "/elenco".
+  href?: string
 }
 
 interface NotificationContextType {
@@ -223,13 +226,22 @@ export function NotificationToast({ notification, onClose }: { notification: Not
         </div>
         <p className="text-xs text-white/50 mt-1 leading-relaxed line-clamp-2">{notification.message}</p>
         {notification.action && (
-          <button 
+          <button
             onClick={notification.action.onClick}
             className={cn("text-xs font-medium mt-2.5 flex items-center gap-1 hover:underline", config.accentColor)}
           >
             {notification.action.label}
             <ChevronRight className="h-3 w-3" />
           </button>
+        )}
+        {!notification.action && notification.href && (
+          // Deep-link acionavel que sobrevive ao save (ver interface Notification).
+          <a
+            href={notification.href}
+            className={cn("text-xs font-medium mt-2.5 flex items-center gap-1 hover:underline", config.accentColor)}
+          >
+            Ver <ChevronRight className="h-3 w-3" />
+          </a>
         )}
       </div>
 

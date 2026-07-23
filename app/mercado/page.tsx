@@ -60,6 +60,7 @@ import { cn } from "@/lib/utils"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { playerSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall } from "@/lib/player-attributes"
+import { canAffordTransfer } from "@/lib/debt-engine"
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -1907,6 +1908,17 @@ export default function MercadoPage() {
               ? `${selectedPlayer.name} assinou e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
               : result === "joined" ? `${selectedPlayer.name} chegou por emprestimo.` : "Não foi possível concluir o empréstimo.")
           } else {
+            // DIVIDA: a compra respeita o teto por endividamento e o congelamento
+            // por inadimplencia. Antes o limite so era exibido em /financas — nada
+            // barrava a compra, e atrasar parcela nao tinha consequencia.
+            const permissao = canAffordTransfer(careerState.debt, gameEngine.balance, fee)
+            if (!permissao.ok) {
+              setMarketNotice(permissao.reason === "frozen"
+                ? "Mercado congelado: a diretoria suspendeu as contratações por causa das parcelas da dívida em atraso. Regularize as finanças primeiro."
+                : "A dívida do clube reduz o teto de gastos com transferências. Esta oferta ultrapassa o limite atual — quite parte da dívida ou reduza o valor.")
+              setActiveTab("enviadas")
+              return
+            }
             if (gameEngine.balance < fee) {
               setMarketNotice("Saldo insuficiente para concluir esta transferencia.")
               setActiveTab("enviadas")

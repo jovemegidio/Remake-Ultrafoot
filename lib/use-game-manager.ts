@@ -2051,7 +2051,22 @@ export function useGameManager() {
 
     // Update ref immediately so the next loop iteration sees the incremented week
     let debt=currentState.debt
-    if(debt?.enabled&&newWeek>=debt.nextPaymentWeek){const payment=processDebtMonth(debt,useGameEngine.getState().balance);gameEngine.payClubDebt(payment.paid);debt=payment.debt}
+    if(debt?.enabled&&newWeek>=debt.nextPaymentWeek){
+      const antesMissed=debt.missedPayments
+      const payment=processDebtMonth(debt,useGameEngine.getState().balance);gameEngine.payClubDebt(payment.paid);debt=payment.debt
+      // CONSEQUENCIA da inadimplencia (antes missedPayments so era contado, nunca
+      // usado): a diretoria pressiona, e ao atrasar a 3a parcela o mercado congela.
+      if(debt.missedPayments>antesMissed){
+        const congelou=debt.missedPayments>=3
+        addNotificationRef.current({
+          type:"system",priority:"high",
+          title:congelou?"Mercado congelado pela dívida":"Parcela da dívida em atraso",
+          message:congelou
+            ?`A diretoria não conseguiu quitar a parcela (${debt.missedPayments}ª em atraso) e SUSPENDEU as contratações até regularizar as finanças.`
+            :`O caixa não cobriu a parcela da dívida deste mês (multa de 2% somada ao saldo devedor). Regularize antes que a diretoria corte o mercado.`,
+        })
+      }
+    }
     if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)}
     const scoutingDepartment=currentState.scoutingDepartment?advanceScoutingWeek(currentState.scoutingDepartment,newWeek):undefined
     // As chaves das partidas resolvidas automaticamente entram no save junto com

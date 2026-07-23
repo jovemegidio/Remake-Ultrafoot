@@ -410,16 +410,10 @@ export function generateJobOffers(
     reason: `O ${c.nome} acompanhou seu trabalho: ${currentPosition}º lugar, confiança da diretoria em ${Math.round(confidence)}% e ${experience} temporada${experience === 1 ? "" : "s"} de experiência.`,
   })
 
-  // Selecao: so para campanhas de elite.
-  if (opts.allowNationalTeam && weeks % 26 === 0 && experience >= 3 && (titles >= 1 || experience >= 5) && confidence >= 85 && currentPosition <= 2) {
-    offers.push({
-      clubShort: "BRA",
-      clubName: "Selecao Brasileira",
-      clubPrestige: 95,
-      kind: "national",
-      reason: "A CBF quer conversar sobre o comando da Selecao.",
-    })
-  }
-
+  // Convites de SELECAO NAO saem daqui. Havia uma oferta "Selecao Brasileira"
+  // hardcoded cujo aceite chamava assumirClube("BRA") -> initializeGame("BRA"),
+  // tratando a selecao como se fosse um CLUBE (bug). O fluxo real e proprio:
+  // lib/use-national-team.ts + app/selecao/page.tsx, com contrato, objetivos e
+  // competicoes internacionais. Este gerador cuida so de propostas de CLUBE.
   return offers
 }

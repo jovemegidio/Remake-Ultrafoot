@@ -23,7 +23,11 @@ import {
   type NationalCompetitionDef,
 } from "@/lib/national-competitions"
 
-const MIN_SCORE_FOR_OFFERS = 0
+// Piso de reputacao para receber convite de SELECAO. Era 0 — um tecnico sem
+// nenhum titulo ja recebia convites logo na semana 9, irreal. Agora exige
+// alguma bagagem (uns 2 titulos, ou nivel de legado + XP): as selecoes fracas
+// chamam quem ja mostrou serviço; as fortes, so os consagrados (score alto).
+const MIN_SCORE_FOR_OFFERS = 6
 const MAX_OFFERS = 3
 const OFFER_START_WEEK = 9 // inicio aproximado do terceiro mes
 const OFFER_GUARANTEE_WEEK = 13 // durante o quarto mes
