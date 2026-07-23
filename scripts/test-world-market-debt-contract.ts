@@ -96,5 +96,43 @@ function checar(nome: string, ok: boolean, detalhe = "") {
   checar("contrato passado do prazo = vencido", status2028 === "expired")
 }
 
+// ── 4. Save ANTIGO nao pode ver o elenco todo vencido de uma vez ───────────
+{
+  // Simula a migracao: contratos gravados sob a regra quebrada (endDate pequeno)
+  // num save avancado (2030) seriam TODOS vencidos sem o rebase.
+  const agora = absoluteWeek(2030, 0) // 208
+  const antigos = [
+    { age: 21, overall: 72, endDate: 60 },   // venceria
+    { age: 27, overall: 76, endDate: 120 },  // venceria
+    { age: 33, overall: 70, endDate: 90 },   // venceria
+    { age: 25, overall: 80, endDate: 300 },  // ainda longe: NAO deve ser mexido
+  ]
+  const migrados = antigos.map(p => {
+    const restante = p.endDate - agora
+    if (restante > 26) return { ...p, endDateNovo: p.endDate }
+    const anos = p.age <= 23 ? 4 : p.overall >= 80 ? 3 : p.age >= 32 ? 1 : 2
+    return { ...p, endDateNovo: agora + 52 * anos }
+  })
+  const vencidosDepois = migrados.filter(p => p.endDateNovo - agora <= 0).length
+  console.log(`   migracao (save 2030): ${migrados.map(p => `${p.age}a=${p.endDateNovo - agora}sem`).join(" ")}`)
+  checar("nenhum contrato fica vencido apos a migracao", vencidosDepois === 0)
+  checar("jovem recebe o prazo mais longo", (migrados[0].endDateNovo - agora) === 52 * 4)
+  checar("veterano recebe prazo curto", (migrados[2].endDateNovo - agora) === 52 * 1)
+  checar("contrato ainda longo NAO e mexido", migrados[3].endDateNovo === 300)
+}
+
+// ── 5. Renovacao grava prazo ABSOLUTO (nao nasce vencida) ──────────────────
+{
+  // renewContract passa a usar absoluteWeek(season, week) + weeks.
+  const season = 2030, week = 10, weeks = 104
+  const endDate = absoluteWeek(season, week) + weeks
+  const jogador = { contract: { endDate, salary: 1000, releaseClause: null, signedWeek: 0, signedSeason: season } } as Player
+  checar("contrato renovado em save avancado fica valido", getContractStatus(jogador, week, season) === "ok",
+    `${endDate - absoluteWeek(season, week)} semanas restantes`)
+  // Sob a regra ANTIGA (currentWeek + weeks) o endDate seria 114 -> ja vencido.
+  const antigo = { contract: { endDate: week + weeks, salary: 1000, releaseClause: null, signedWeek: 0, signedSeason: season } } as Player
+  checar("a regra antiga geraria contrato ja vencido (prova do bug)", getContractStatus(antigo, week, season) === "expired")
+}
+
 console.log(falhas === 0 ? "\n== TODOS OS TESTES PASSARAM ==" : `\n== ${falhas} FALHA(S) ==`)
 process.exit(falhas === 0 ? 0 : 1)

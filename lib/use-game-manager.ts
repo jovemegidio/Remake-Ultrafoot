@@ -1442,6 +1442,17 @@ export function useGameManager() {
     return unsub
   }, [])
 
+  // MIGRACAO de save antigo para o relogio ABSOLUTO de contrato. Ate a 1.0.136 o
+  // endDate era comparado com a semana da temporada (que zera todo ano) e nenhum
+  // contrato vencia. Sem esta migracao, um save em andamento veria o elenco
+  // inteiro como "vencido" de uma vez ao abrir a versao corrigida.
+  useEffect(() => {
+    if (!hydrated || !engineHydrated) return
+    if (!saveState.selectedTeamShort) return
+    gameEngine.migrarContratosParaSemanaAbsoluta()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, engineHydrated, saveState.selectedTeamShort])
+
   // Auto-reinit: engine resetou (versão nova) mas save tem time selecionado
   useEffect(() => {
     if (!hydrated) return

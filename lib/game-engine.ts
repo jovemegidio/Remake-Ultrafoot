@@ -1860,6 +1860,8 @@ interface GameEngineState {
   squadMorale: SquadMorale
   /** Entrosamento do time 0-100 (estilo FM): sobe jogando junto, da bonus. */
   squadCohesion: number
+  /** Save ja migrado para o relogio absoluto de contrato (ver migracao). */
+  contractsAbsoluteMigrated?: boolean
   
   // Conferencias de imprensa
   pressConferences: PressConference[]
@@ -1899,6 +1901,8 @@ interface GameEngineState {
   trainPlayer: (playerId: number, attribute: string) => void
   setStarter: (playerId: number, isStarter: boolean) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
+  /** Migra contratos de saves antigos para o relogio absoluto (roda uma vez). */
+  migrarContratosParaSemanaAbsoluta: () => void
   sellPlayer: (playerId: number) => void
   /**
    * Sobe um garoto da base ao elenco profissional. NAO passa por buyPlayer de
@@ -2873,7 +2877,10 @@ export const useGameEngine = create<GameEngineState>()(
                   ...p,
                   contract: {
                     salary: newSalary,
-                    endDate: s.currentWeek + weeks,
+                    // Semana ABSOLUTA. Era `currentWeek + weeks` — a semana zera
+                    // a cada temporada, entao renovar num save avancado gravava
+                    // um contrato que ja nascia vencido.
+                    endDate: absoluteWeek(s.currentSeason, s.currentWeek) + weeks,
                     releaseClause: p.contract?.releaseClause || null,
                     signedWeek: s.currentWeek,
                     signedSeason: s.currentSeason
@@ -2885,7 +2892,36 @@ export const useGameEngine = create<GameEngineState>()(
           weeklyExpenses: s.weeklyExpenses + (newSalary - oldSalary)
         }))
       },
-      
+
+      /**
+       * MIGRACAO de saves antigos para o relogio ABSOLUTO de contrato.
+       *
+       * Ate a 1.0.136 o `endDate` era comparado com a semana da temporada (que
+       * zera todo ano), entao nenhum contrato vencia — e os saves carregam
+       * valores gravados sob essa regra. Ao ligar o relogio correto, um save
+       * avancado veria TODO o elenco como vencido de uma vez.
+       *
+       * Aqui rebaseamos apenas quem ficaria vencido/quase, dando um prazo
+       * plausivel a partir de agora (jovem e craque assinam mais longo). Roda
+       * uma unica vez por carreira.
+       */
+      migrarContratosParaSemanaAbsoluta: () => {
+        const s = get()
+        if (s.contractsAbsoluteMigrated) return
+        const agora = absoluteWeek(s.currentSeason, s.currentWeek)
+        set((st) => ({
+          contractsAbsoluteMigrated: true,
+          squadPlayers: st.squadPlayers.map(p => {
+            if (!p.contract) return p
+            const restante = p.contract.endDate - agora
+            if (restante > 26) return p // ainda faz sentido, nao mexe
+            // Prazo novo: 1 a 4 anos, mais longo para jovem/craque.
+            const anos = p.age <= 23 ? 4 : p.overall >= 80 ? 3 : p.age >= 32 ? 1 : 2
+            return { ...p, contract: { ...p.contract, endDate: agora + 52 * anos } }
+          }),
+        }))
+      },
+
       promoverDaBase: (jovem, taxa) => {
         const state = get()
         if (state.balance < taxa) return false
