@@ -125,16 +125,9 @@ export default function CalendarioPage() {
   const [simDate, setSimDate] = useState<Date | null>(null)
   const [simProgress, setSimProgress] = useState(0)
 
-  /**
-   * Minhas partidas ainda nao jogadas, na ordem em que o motor vai resolve-las.
-   *
-   * A POSICAO nesta fila — e nao a diferenca de semanas — e o numero de vezes
-   * que advanceWeek() precisa rodar, porque cada chamada resolve UMA partida
-   * minha. A conta antiga era `target.week - currentWeek - 1`, que so acerta com
-   * exatamente uma partida por semana. Com jogos em 1, 5 e 8 de janeiro ela dava
-   * 1: simulava o dia 1 e abria a partida do dia 5, nao a do dia 8 que o jogador
-   * escolheu (relato: "simulou somente uma e logo em seguida foi para a outra").
-   */
+  // Fila de partidas pendentes — usada so para EXIBIR quantas serao simuladas.
+  // (advanceWeek avanca UMA SEMANA por chamada; com copas em meio de semana, a
+  // posicao na fila deixou de medir semanas — a conta certa e target.week.)
   const filaPendentes = useMemo(
     () => seasonCalendar.fixtures
       .filter(f => f.isUserMatch && !f.played)
@@ -154,9 +147,15 @@ export default function CalendarioPage() {
       if (isSimulating) return
       setIsSimulating(true)
 
-      const weeks = Math.max(0, filaPendentes.findIndex(f => f.id === target.id))
+      // Semanas REAIS ate o alvo (target.week - semana atual). O indice na fila
+      // de pendentes nao serve mais: com as copas em MEIO DE SEMANA, duas
+      // partidas dividem a mesma semana — o indice superestimava e a simulacao
+      // parava/estourava no lugar errado ("simulo ate dezembro e para na
+      // metade"). A data final tambem sai da semana (7 dias por rodada), nao do
+      // palpite mes+dia.
+      const weeks = Math.max(0, (target.week ?? 0) - currentWeek)
       const start = getGameDate(currentSeason, currentWeek)
-      const end = new Date(currentSeason, target.month ?? start.getMonth(), roundToDay(target.round))
+      const end = getGameDate(currentSeason, target.week ?? currentWeek)
       const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000))
 
       // Quanto mais longe a data, mais rapido o dia corre (mantem a animacao curta).
@@ -186,7 +185,7 @@ export default function CalendarioPage() {
 
       hardNavigate("/partida")
     },
-    [advanceWeek, currentWeek, currentSeason, isSimulating, filaPendentes],
+    [advanceWeek, currentWeek, currentSeason, isSimulating],
   )
 
   // Dias do calendario

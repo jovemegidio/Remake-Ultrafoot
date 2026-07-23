@@ -7,6 +7,38 @@ import { repairMojibake } from "@/lib/text-normalization"
 import type { SquadPlayer } from "@/lib/save-system"
 import type { MarketTarget, IncomingOffer } from "@/lib/career-types"
 import importedBF from "@/data/seeds/imported-bf2026.json"
+import realSquadsTm from "@/data/seeds/real-squads-tm.json"
+
+/**
+ * POSICAO REAL por nome, vinda do Transfermarkt (real-squads-tm).
+ *
+ * O campo `posicao` do pool e grosseiro: 2.187 atletas vem como "BAN"
+ * (desconhecido — cada um caia numa posicao ALEATORIA) e "DEF" vira tudo
+ * zagueiro. Relato: "ajuste as posicoes dos jogadores do mercado". A coleta do
+ * TM tem a posicao real de 46 mil atletas; cruzamos por nome normalizado.
+ * Nome que aparece com DUAS posicoes diferentes e descartado — melhor cair no
+ * mapeamento antigo do que chutar no homonimo.
+ */
+const _normNome = (s: string) =>
+  repairMojibake(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "")
+
+const POSICAO_REAL_POR_NOME: Map<string, string> = (() => {
+  const mapa = new Map<string, string>()
+  const conflito = new Set<string>()
+  for (const elenco of Object.values(realSquadsTm as Record<string, Array<{ n?: string; p?: string }>>)) {
+    if (!Array.isArray(elenco)) continue
+    for (const j of elenco) {
+      if (!j?.n || !j?.p) continue
+      const chave = _normNome(j.n)
+      if (!chave) continue
+      const anterior = mapa.get(chave)
+      if (anterior && anterior !== j.p) conflito.add(chave)
+      else mapa.set(chave, j.p)
+    }
+  }
+  for (const chave of conflito) mapa.delete(chave)
+  return mapa
+})()
 
 // ─── MVP: Alvos dinâmicos do mercado ───────────────────────────────────────────
 
@@ -122,7 +154,7 @@ export function generateMarketTargets(userTeamCurto: string, count = 24, season 
     result.push({
       id: `tgt_${season}_${idx}_${result.length}`,
       name: c.player.nome,
-      position: mapPos(c.player.posicao, idx),
+      position: mapPos(POSICAO_REAL_POR_NOME.get(_normNome(c.player.nome)) ?? c.player.posicao, idx),
       age: c.player.idade,
       overall: c.player.overall,
       potential: calcPotential(c.player.overall, c.player.idade),
@@ -336,7 +368,9 @@ export function generateDetailedMarketTargets(
   for (const idx of selectedIndexes) {
     const { team, player } = candidates[idx]
 
-    const position = mapPos(player.posicao, idx)
+    // Posicao REAL do TM quando o nome casa; o mapeamento do pool e o fallback.
+    const posReal = POSICAO_REAL_POR_NOME.get(_normNome(player.nome))
+    const position = mapPos(posReal ?? player.posicao, idx)
     // O banco tem overalls ATÉ 107. Clampar em 99 empilhava dezenas de atletas
     // todos como "99" (relato: "jogadores com 99+ e por aí vai"). Comprime a
     // faixa 90-107 para 90-99, preservando a ordem e espalhando o topo.

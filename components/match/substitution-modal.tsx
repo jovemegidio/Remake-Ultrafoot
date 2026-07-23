@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowLeftRight, Check, X, ChevronRight, Zap, Heart, Activity, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -260,6 +260,51 @@ export function SubstitutionModal({
   const [out, setOut] = useState<MatchPlayer | null>(null)
   const [inPlayer, setIn] = useState<MatchPlayer | null>(null)
   const [pending, setPending] = useState<SubstitutionChange[]>([])
+  // Cursor do CONTROLE: area (quem SAI / quem ENTRA) + indice na grade. O modal
+  // abria pelo controle mas era inoperavel sem mouse — nenhum botao selecionava
+  // ninguem (relato: "nao consigo fazer substituicoes").
+  const [padArea, setPadArea] = useState<"out" | "in">("out")
+  const [padIndex, setPadIndex] = useState(0)
+
+  // Handlers em ref para o listener global nao ser recriado a cada render.
+  const padStateRef = useRef({ padArea, padIndex, out, inPlayer, pending })
+  padStateRef.current = { padArea, padIndex, out, inPlayer, pending }
+
+  useEffect(() => {
+    if (!open) return
+    const onPad = (e: Event) => {
+      const { button } = (e as CustomEvent<{ button: string }>).detail || {}
+      const cur = padStateRef.current
+      const lista = cur.padArea === "out" ? starters : bench
+      if (button === "DPAD_LEFT") setPadIndex(i => Math.max(0, i - 1))
+      else if (button === "DPAD_RIGHT") setPadIndex(i => Math.min(Math.max(0, lista.length - 1), i + 1))
+      else if (button === "DPAD_UP" || button === "DPAD_DOWN") {
+        // Alterna entre as duas colunas (sai <-> entra), preservando o indice.
+        setPadArea(a => (a === "out" ? "in" : "out"))
+        setPadIndex(i => Math.min(i, Math.max(0, (cur.padArea === "out" ? bench : starters).length - 1)))
+      } else if (button === "A") {
+        const alvo = lista[cur.padIndex]
+        if (!alvo) return
+        if (cur.padArea === "out") {
+          if (!pendingIdsRef.current.usedOut.has(alvo.id)) setOut(o => (o?.id === alvo.id ? null : alvo))
+        } else {
+          if (!pendingIdsRef.current.usedIn.has(alvo.id)) setIn(o => (o?.id === alvo.id ? null : alvo))
+        }
+      } else if (button === "X") {
+        addRef.current()
+      } else if (button === "START") {
+        confirmRef.current()
+      }
+      // B fecha via handler da partida (setShowSubModal(false)).
+    }
+    window.addEventListener("gamepad:button", onPad)
+    return () => window.removeEventListener("gamepad:button", onPad)
+  }, [open, starters, bench])
+
+  // Refs preenchidas mais abaixo (apos handleAdd/handleConfirm existirem).
+  const addRef = useRef<() => void>(() => {})
+  const confirmRef = useRef<() => void>(() => {})
+  const pendingIdsRef = useRef<{ usedOut: Set<number>; usedIn: Set<number> }>({ usedOut: new Set(), usedIn: new Set() })
 
   if (!open) return null
 
@@ -292,6 +337,11 @@ export function SubstitutionModal({
   const usedOut = new Set(pending.map(change => change.out.id))
   const usedIn = new Set(pending.map(change => change.inPlayer.id))
   const suggestedOut = starters.filter(player => !usedOut.has(player.id)).sort((a, b) => a.stamina - b.stamina)[0]
+
+  // Alimenta as refs usadas pelo handler do controle (declaradas antes do return).
+  addRef.current = handleAdd
+  confirmRef.current = handleConfirm
+  pendingIdsRef.current = { usedOut, usedIn }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
@@ -363,16 +413,17 @@ export function SubstitutionModal({
               )}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[480px] overflow-y-auto pr-1">
-              {starters.map(p => (
-                <PlayerCard
-                  key={p.id}
-                  player={p}
-                  team={team}
-                  selected={out?.id === p.id}
-                  disabled={usedOut.has(p.id)}
-                  variant="out"
-                  onClick={() => setOut(out?.id === p.id ? null : p)}
-                />
+              {starters.map((p, i) => (
+                <div key={p.id} className={cn("rounded-lg", padArea === "out" && padIndex === i && "ring-2 ring-white/90 ring-offset-2 ring-offset-black")}>
+                  <PlayerCard
+                    player={p}
+                    team={team}
+                    selected={out?.id === p.id}
+                    disabled={usedOut.has(p.id)}
+                    variant="out"
+                    onClick={() => setOut(out?.id === p.id ? null : p)}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -389,16 +440,17 @@ export function SubstitutionModal({
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[480px] overflow-y-auto pr-1">
-              {bench.map(p => (
-                <PlayerCard
-                  key={p.id}
-                  player={p}
-                  team={team}
-                  selected={inPlayer?.id === p.id}
-                  disabled={usedIn.has(p.id)}
-                  variant="in"
-                  onClick={() => setIn(inPlayer?.id === p.id ? null : p)}
-                />
+              {bench.map((p, i) => (
+                <div key={p.id} className={cn("rounded-lg", padArea === "in" && padIndex === i && "ring-2 ring-white/90 ring-offset-2 ring-offset-black")}>
+                  <PlayerCard
+                    player={p}
+                    team={team}
+                    selected={inPlayer?.id === p.id}
+                    disabled={usedIn.has(p.id)}
+                    variant="in"
+                    onClick={() => setIn(inPlayer?.id === p.id ? null : p)}
+                  />
+                </div>
               ))}
               {bench.length === 0 && (
                 <div className="col-span-full rounded-xl border border-white/[0.04] bg-white/[0.02] p-8 text-center text-xs text-white/40">

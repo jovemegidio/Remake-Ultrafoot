@@ -30,32 +30,37 @@ const TM_PORTRAIT = "https://img.a.transfermarkt.technology/portrait/medium/"
 interface SeedPlayerFt { nome: string; ft?: string }
 interface SeedTeamFt { jogadores?: SeedPlayerFt[] }
 
-let tmFotoMap: Map<string, string | null> | null = null
+let tmFotoMap: Map<string, string> | null = null
 /**
  * nome normalizado -> ft. Construido UMA vez, na primeira consulta; o seed ja
  * esta no bundle por outros modulos, entao isto nao adiciona download nenhum.
- * Nome que aparece com DOIS ft diferentes vira null: dois atletas distintos com
- * o mesmo nome, e mostrar a foto de um no outro e pior do que nao mostrar.
+ *
+ * Nome REPETIDO entre pessoas diferentes (Rony do Santos x Rony do Santa Rosa,
+ * Gabriel Barbosa do Santos x do Farense): antes viravam `null` e o CRAQUE
+ * ficava sem foto — o pior dos mundos, porque e justamente ele que aparece na
+ * tela. Agora fica a foto do atleta de MAIOR overall, que e quase sempre o certo
+ * (o Gabigol de o~85 vence o xara de divisao de acesso). O namesake obscuro cai
+ * na silhueta, o que e aceitavel.
  */
-function getTmFotoMap(): Map<string, string | null> {
+function getTmFotoMap(): Map<string, string> {
   if (tmFotoMap) return tmFotoMap
-  tmFotoMap = new Map()
-  const add = (nome: string, ft?: string) => {
+  const melhor = new Map<string, { ft: string; overall: number }>()
+  const add = (nome: string, ft?: string, overall = 0) => {
     if (!ft) return
     const k = normalizePlayerKey(nome)
     if (!k) return
-    const prev = tmFotoMap!.get(k)
-    if (prev === undefined) tmFotoMap!.set(k, ft)
-    else if (prev !== ft) tmFotoMap!.set(k, null) // nome ambiguo: nao arrisca
+    const atual = melhor.get(k)
+    if (!atual || overall > atual.overall) melhor.set(k, { ft, overall })
   }
   // Elencos REAIS primeiro: e a foto do roster que o jogo de fato usa.
-  for (const roster of Object.values(realSquadsTM as Record<string, { n: string; f?: string }[]>)) {
-    for (const p of roster) add(p.n, p.f)
+  for (const roster of Object.values(realSquadsTM as Record<string, { n: string; f?: string; o?: number }[]>)) {
+    for (const p of roster) add(p.n, p.f, p.o ?? 0)
   }
   // Seed importado depois (clubes ficticios que nao viraram elenco real).
   for (const team of ((importedBF as { teams?: SeedTeamFt[] }).teams) ?? []) {
-    for (const j of team.jogadores ?? []) add(j.nome, j.ft)
+    for (const j of team.jogadores ?? []) add(j.nome, j.ft, (j as { overall?: number }).overall ?? 0)
   }
+  tmFotoMap = new Map([...melhor].map(([k, v]) => [k, v.ft]))
   return tmFotoMap
 }
 

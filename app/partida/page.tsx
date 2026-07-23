@@ -432,6 +432,11 @@ export default function PartidaPage() {
         case "RB":
           setHomeKit(prev => cycleKit(prev, 1))
           break
+        case "LT":
+          // Abre o MODAL de uniformes pelo controle (antes so a tecla Q ou o
+          // clique abriam — relato: "nao consigo abrir o modal de uniforme").
+          setShowUniformModal(v => !v)
+          break
       }
     }
 

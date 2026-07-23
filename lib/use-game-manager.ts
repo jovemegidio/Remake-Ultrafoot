@@ -2133,11 +2133,16 @@ export function useGameManager() {
     // nessa competição não-liga e ele venceu → campeão. A página /campeao lê
     // "ultrafoot-pending-champion" (contrato já existente).
     if (won && !isLeagueMatch && typeof window !== "undefined") {
+      // A partida precisa ser a FINAL. "Nao restam partidas no calendario" nao
+      // basta mais: as fases de mata-mata agora so entram DEPOIS da classificacao,
+      // entao logo apos vencer as quartas nao ha semifinal agendada ainda — e o
+      // criterio antigo disparava a cerimonia de campeao nas quartas (relato).
+      const ehFinal = String(fixtureForWeek?.stage ?? "").toLowerCase() === "final"
       const restantes = seasonCalendarRef.current.fixtures.filter(f =>
         f.isUserMatch && !f.played && f.competition === competitionName &&
         getCalendarFixtureKey(f, currentState.season) !== fixtureKey,
       ).length
-      if (restantes === 0) {
+      if (ehFinal && restantes === 0) {
         safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
           competition: competitionName,
           season: String(currentState.season),

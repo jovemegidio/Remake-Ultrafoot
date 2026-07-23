@@ -351,6 +351,11 @@ export default function SplashPage() {
           e.preventDefault()
           setSelectedSaveIndex(prev => prev < savedGames.length - 1 ? prev + 1 : 0)
         } else if (e.key === "Enter") {
+          // Se o foco esta em OUTRO botao do modal (ex.: "Apagar save"), deixa o
+          // Enter nativo clicar nele. Antes este handler interceptava sempre e
+          // carregava o save — "seleciono para apagar e ele abre o jogo".
+          const focado = document.activeElement as HTMLElement | null
+          if (focado?.closest("[data-acao-modal]")) return
           e.preventDefault()
           handleLoadSave(savedGames[selectedSaveIndex].id)
         }
@@ -1139,7 +1144,13 @@ export default function SplashPage() {
                 {t.splash.navHint}
               </div>
               <button
-                onClick={() => { clearAllGameData(); setShowLoadModal(false) }}
+                data-acao-modal="apagar"
+                onClick={() => {
+                  // Apagar TODOS os saves e irreversivel — confirmacao obrigatoria.
+                  if (!window.confirm("Apagar TODOS os saves? Esta ação não pode ser desfeita.")) return
+                  clearAllGameData()
+                  setShowLoadModal(false)
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400/60 hover:text-red-400 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />

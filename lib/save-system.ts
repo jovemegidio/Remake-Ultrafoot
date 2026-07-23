@@ -747,7 +747,21 @@ export function clearGameState(): void {
 
 export function clearAllGameData(): void {
   if (typeof window === "undefined") return
-  clearGameState()
+  // TODAS as carreiras, nao so a ativa. O botao "Apagar save" chamava
+  // clearGameState (que limpa apenas a carreira ativa): com mais de uma
+  // carreira, as outras continuavam existindo e a lista de "Carregar" voltava
+  // cheia — "nao consigo apagar o save".
+  for (const item of readCareerIndex()) {
+    storeRemove(saveKey(item.id))
+    storeRemove(backupKey(item.id))
+    storeRemove(`ultrafoot-game-engine:${item.id}`)
+  }
+  storeRemove(CAREER_INDEX_KEY)
+  storeRemove(LEGACY_STORAGE_KEY)
+  storeRemove(ACTIVE_CAREER_KEY)
+  // Garante que a exclusao chegou ao ARQUIVO antes de qualquer recarga; sem o
+  // flush, reabrir rapido o jogo ressuscitava o save do disco.
+  void flushPersistentStore()
 }
 
 export function hasSave(): boolean {

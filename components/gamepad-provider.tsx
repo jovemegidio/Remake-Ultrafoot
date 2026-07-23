@@ -147,10 +147,18 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
     window.dispatchEvent(event)
   }, [])
 
+  // PILOTO AUTOMATICO DESLIGADO. So a sidebar registra elementos focaveis, mas
+  // este provider navegava/clicava/voltava GLOBALMENTE: cada D-pad movia o foco
+  // para um item da sidebar, o A clicava esse item (navegando para outra tela no
+  // meio de qualquer acao — "nao consigo selecionar para jogar partida") e o B
+  // fazia router.back() ALEM do handler da propria tela (voltava em dobro,
+  // fechando o modal de uniforme recem-aberto). As 26 telas cuidam do proprio
+  // input pelos eventos gamepad:button; o provider agora so entrega estado,
+  // eventos e o registro de focaveis para quem optar por ele.
+  void handleNavigate
+  void handleSelect
+  void handleBack
   const gamepad = useGamepadNavigation({
-    onNavigate: handleNavigate,
-    onSelect: handleSelect,
-    onBack: handleBack,
     onAction: handleAction,
     repeatDelay: 200,
   })
@@ -163,10 +171,16 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!gamepad.connected) return
 
-    const THRESHOLD = 0.5
-    const REPEAT_MS = 200
+    // Comportamento de TECLADO: dispara na hora, espera um delay inicial LONGO
+    // e so entao repete. Antes o repeat era 200ms desde o primeiro disparo — um
+    // toque rapido no analogico (~250ms) disparava DUAS vezes e o menu pulava
+    // opcoes (relato). Limiar 0.6 tambem evita disparo por roce no stick.
+    const THRESHOLD = 0.6
+    const INITIAL_DELAY_MS = 400
+    const REPEAT_MS = 160
     let lastDir = ""
-    let lastTime = 0
+    let dirStart = 0
+    let lastFire = 0
 
     const id = setInterval(() => {
       const now = Date.now()
@@ -181,12 +195,21 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
         else if (x > THRESHOLD) dir = "DPAD_RIGHT"
       }
 
-      if (dir && (dir !== lastDir || now - lastTime > REPEAT_MS)) {
+      if (!dir) { lastDir = ""; return }
+
+      if (dir !== lastDir) {
+        // Nova direcao: dispara imediatamente e abre a janela do delay inicial.
         window.dispatchEvent(new CustomEvent("gamepad:button", { detail: { button: dir } }))
-        lastTime = now
         lastDir = dir
-      } else if (!dir) {
-        lastDir = ""
+        dirStart = now
+        lastFire = now
+        return
+      }
+
+      // Mesma direcao segurada: repete so depois do delay inicial.
+      if (now - dirStart >= INITIAL_DELAY_MS && now - lastFire >= REPEAT_MS) {
+        window.dispatchEvent(new CustomEvent("gamepad:button", { detail: { button: dir } }))
+        lastFire = now
       }
     }, 50)
 
