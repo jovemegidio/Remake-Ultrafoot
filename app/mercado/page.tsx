@@ -58,6 +58,8 @@ import { PlayerAvatar } from "@/components/player-avatar"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { getLeagueLogo } from "@/lib/league-logos"
+import { playerSalaryWeekly } from "@/lib/club-economy"
+import { attributesFromOverall } from "@/lib/player-attributes"
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -198,7 +200,10 @@ interface FilterCard {
   value: string
 }
 
-function marketPlayerToEnginePlayer(p: Player): EnginePlayer {
+function marketPlayerToEnginePlayer(p: Player, division = "serie_a", salarioNegociado?: number): EnginePlayer {
+  // Atributos coerentes com a posicao quando o alvo nao os traz (antes usava
+  // defaults planos 70/65/55 cegos a posicao).
+  const attrs = attributesFromOverall(p.overall, p.position, p.name)
   return {
     id: p.id + 9000,
     name: p.name,
@@ -207,16 +212,19 @@ function marketPlayerToEnginePlayer(p: Player): EnginePlayer {
     overall: p.overall,
     potential: p.potential,
     nationality: p.nationality,
-    pace: p.stats?.pace ?? 70,
-    shooting: p.stats?.shooting ?? 65,
-    passing: p.stats?.passing ?? 65,
-    dribbling: p.stats?.dribbling ?? 65,
-    defending: p.stats?.defense ?? 55,
-    physical: p.stats?.physical ?? 65,
+    pace: p.stats?.pace ?? attrs.pace,
+    shooting: p.stats?.shooting ?? attrs.shooting,
+    passing: p.stats?.passing ?? attrs.passing,
+    dribbling: p.stats?.dribbling ?? attrs.dribbling,
+    defending: p.stats?.defense ?? attrs.defending,
+    physical: p.stats?.physical ?? attrs.physical,
     energy: 100,
     morale: "Normal" as const,
     form: p.overall,
-    contract: { salary: Math.round(p.overall * 800), endDate: 52, releaseClause: p.releaseClause ?? null, signedWeek: 0, signedSeason: 2026 },
+    // Salario REALISTA por divisao (consistente com a economia do jogo), ou o
+    // valor negociado na mesa do agente. Antes era overall*800 fixo — irreal
+    // para clubes pequenos e desligado da nova economia.
+    contract: { salary: salarioNegociado ?? playerSalaryWeekly(p.overall, division), endDate: 52, releaseClause: p.releaseClause ?? null, signedWeek: 0, signedSeason: 2026 },
     injury: null,
     seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
     training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
@@ -1884,9 +1892,10 @@ export default function MercadoPage() {
         player={selectedPlayer}
         type={negotiationType}
         team={userTeam}
-        onConfirm={(fee) => {
+        onConfirm={(fee, salarioSemanal) => {
           if (!selectedPlayer) return
-          const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer)
+          const divisaoUsuario = String(careerState.divisionOverride ?? userTeam.divisao ?? "serie_a")
+          const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer, divisaoUsuario, salarioSemanal)
           if (negotiationType === "loan") {
             const result = gameEngine.loanPlayer(enginePlayer, 26, Math.round(fee / 26))
             // Empréstimo tira o atleta do clube de origem durante o vínculo, senão

@@ -38,6 +38,7 @@ interface Player {
   team?: Team
   age?: number
   potential?: number
+  releaseClause?: number | null
 }
 
 interface NegotiationModalProps {
@@ -46,7 +47,7 @@ interface NegotiationModalProps {
   player: Player | null
   type: "buy" | "sell" | "loan"
   team?: Team
-  onConfirm?: (offer: number) => void
+  onConfirm?: (offer: number, salaryWeekly?: number) => void
   onNegotiationResult?: (result: {
     player: Player
     type: "buy" | "sell" | "loan"
@@ -119,7 +120,13 @@ export function NegotiationModal({
     : player.value
   const offerPercentage = Math.round((offer / fairValue) * 100)
 
+  // CLAUSULA DE RESCISAO: pagar a multa forca a venda — o clube NAO pode recusar
+  // (como na vida real). Antes o valor da clausula so aparecia, sem efeito.
+  const releaseClause = type === "buy" ? (player.releaseClause ?? null) : null
+  const clausulaAtingida = releaseClause != null && releaseClause > 0 && offer >= releaseClause
+
   const getOfferStatus = () => {
+    if (clausulaAtingida) return { label: "Cláusula paga", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 100 }
     if (offerPercentage >= 110) return { label: "Excelente", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 95 }
     if (offerPercentage >= 100) return { label: "Justa", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 75 }
     if (offerPercentage >= 90) return { label: "Razoavel", color: "text-[#ffd700]", bgColor: "bg-[#ffd700]", chance: 50 }
@@ -135,7 +142,9 @@ export function NegotiationModal({
   const relEffect = getRelationshipEffect(team?.nome ?? "", player.team?.nome ?? "", type)
   // Chance efetiva do clube aceitar, ja com o relacionamento. Rival com oferta abaixo de
   // 130% do valor: praticamente barrado (so cede por muito dinheiro).
-  const clubChance = Math.max(
+  // Clausula paga => 100% garantido, o relacionamento nao barra (nem rival pode
+  // segurar quem tem multa quitada).
+  const clubChance = clausulaAtingida ? 100 : Math.max(
     1,
     Math.min(99, Math.round(
       status.chance * relEffect.chanceMult -
@@ -274,7 +283,9 @@ export function NegotiationModal({
   }
 
   const handleConfirm = () => {
-    onConfirm?.(offer)
+    // Passa TAMBEM o salario negociado (mensal -> semanal) para valer de verdade
+    // no contrato. Antes so a taxa (offer) ia; a mesa do agente era cosmetica.
+    onConfirm?.(offer, salary > 0 ? Math.round(salary / 4.33) : undefined)
     handleClose()
   }
 
