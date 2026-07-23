@@ -253,7 +253,18 @@ function targetFor(
   bx: number,  // ball x in radar coords: 0 = home goal, 1 = away goal
   by: number,  // ball y in radar coords: 0 = left, 1 = right
   time: number,
+  paradoNoLugar = false,  // pre-jogo/intervalo: formacao parada, so respiracao leve
 ): { x: number; y: number } {
+  // ANTES DO APITO os jogadores nao correm nem disparam: ficam POSTADOS na
+  // formacao (realista). O motor so centralizava a bola; os atletas seguiam
+  // com sprint/wander/atracao pela bola. Aqui devolvemos a posicao exata do
+  // slot com uma respiracao minima, sem block-shift nem magnetismo.
+  if (paradoNoLugar) {
+    const idleX = Math.sin(time * 0.5 + slot.seed) * 0.004
+    const idleY = Math.cos(time * 0.45 + slot.seed * 1.3) * 0.006
+    const fx = slot.isHome ? slot.fDepth : 1 - slot.fDepth
+    return { x: clamp(fx + idleX, 0.02, 0.98), y: clamp(slot.fWidth + idleY, 0.04, 0.96) }
+  }
   // How much the team is in attack mode (0=deep defending, 1=full attack)
   const attackPhase = slot.isHome ? bx : (1 - bx)
 
@@ -368,6 +379,10 @@ export function MatchRadar({
   const carrierRef = useRef<string>("")
 
   useEffect(() => { slotsRef.current = slots }, [slots])
+  // phase via ref: o loop de animacao roda uma vez e nao deve reiniciar so
+  // porque a fase mudou; le a fase atual daqui.
+  const phaseRef = useRef(phase)
+  phaseRef.current = phase
 
   useEffect(() => {
     const stopped = phase === "pre" || phase === "halftime" || phase === "fulltime"
@@ -432,8 +447,9 @@ export function MatchRadar({
       }
       carrierRef.current = carrierKey
 
+      const parado = phaseRef.current === "pre" || phaseRef.current === "halftime" || phaseRef.current === "fulltime"
       for (const s of currentSlots) {
-        const { x: tx, y: ty } = targetFor(s, bp.x, bp.y, time)
+        const { x: tx, y: ty } = targetFor(s, bp.x, bp.y, time, parado)
 
         let x = tx
         let y = ty

@@ -1879,6 +1879,7 @@ interface GameEngineState {
   }, taxa: number) => boolean
   /** Entrada de caixa da venda de um atleta da base. */
   receberPorJovem: (valor: number) => void
+  ajustarMoralJogador: (playerId: number, degraus: number) => void
   /** "wage_budget" = recusado pela diretoria por estourar o teto salarial. */
   buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
   payClubDebt: (amount: number) => number
@@ -2890,6 +2891,20 @@ export const useGameEngine = create<GameEngineState>()(
       receberPorJovem: (valor) => {
         if (!Number.isFinite(valor) || valor <= 0) return
         set((s) => ({ balance: s.balance + valor }))
+      },
+
+      /** Move a moral de um atleta N degraus (+ melhora, - piora). Usado pela
+       *  conversa com o reserva insatisfeito. */
+      ajustarMoralJogador: (playerId, degraus) => {
+        const escala: Player["morale"][] = ["Infeliz", "Insatisfeito", "Normal", "Motivado", "Feliz"]
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p => {
+            if (p.id !== playerId) return p
+            const i = Math.max(0, escala.indexOf(p.morale))
+            const novo = Math.max(0, Math.min(escala.length - 1, i + degraus))
+            return { ...p, morale: escala[novo] }
+          }),
+        }))
       },
 
       sellPlayer: (playerId) => {
