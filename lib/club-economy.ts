@@ -1,0 +1,97 @@
+// ECONOMIA DOS CLUBES — realista e diferenciada por DIVISAO e prestigio.
+//
+// O que a auditoria achou de irreal:
+//   - Receita forcada a ser sempre >= 108% da folha (game-engine.ts:3904): todo
+//     clube lucrava toda semana, por construcao. Ninguem operava no vermelho.
+//   - Receita so em 4 degraus de prestigio, IGNORANDO a divisao: toda a Serie C
+//     e D recebia o mesmo piso de 800k/semana (~R$42 mi/ano — irreal).
+//   - Salario plano base*800: um jogador de Serie D "ganhava" ~R$166 mil/mes.
+//
+// Este modulo centraliza a economia por DIVISAO, com valores em R$/semana. A
+// escala e RELATIVA e coerente: um gigante da Serie A opera na casa dos milhoes;
+// um clube de Serie D, em dezenas de milhares — como na vida real.
+
+/** Quanto uma divisao paga de salario, em relacao a Serie A (=1). */
+const DIVISION_WAGE_FACTOR: Record<string, number> = {
+  serie_a: 1.0, serie_b: 0.30, serie_c: 0.11, serie_d: 0.045,
+  premier_league: 2.4, championship: 0.5,
+  la_liga: 1.9, la_liga_2: 0.4,
+  serie_a_ita: 1.6, serie_b_ita: 0.4,
+  bundesliga: 1.7, bundesliga_2: 0.42,
+  ligue_1: 1.35, ligue_2: 0.35,
+  primeira_liga: 0.8, eredivisie: 0.85, scottish_prem: 0.6, super_lig: 0.7,
+  pro_league_bel: 0.7, russian_prem: 0.9,
+  saudi_pro: 1.4, saudi_first_div: 0.35,
+  mls: 1.1, liga_mx: 0.95, liga_argentina: 0.5, primera_a_col: 0.35,
+  primera_div_chi: 0.3, primera_div_ury: 0.28,
+  j_league: 0.9, k_league_1: 0.6, chinese_super: 1.0,
+}
+const DEFAULT_WAGE_FACTOR = 0.5
+
+/**
+ * SALARIO SEMANAL de um jogador (R$), por overall e divisao. A curva por overall
+ * e super-linear — o craque custa muito mais que o titular mediano — e a divisao
+ * escala o time todo. Serie D em milhares, Serie A em dezenas/centenas de milhar.
+ */
+export function playerSalaryWeekly(overall: number, division: string): number {
+  const curva = Math.pow(Math.max(40, overall) / 50, 3.2) * 9000
+  const fator = DIVISION_WAGE_FACTOR[division] ?? DEFAULT_WAGE_FACTOR
+  return Math.max(700, Math.round(curva * fator))
+}
+
+/** Valor de mercado (R$) — coerente com o salario/divisao. */
+export function playerMarketValue(overall: number, division: string): number {
+  const anualEquivalente = playerSalaryWeekly(overall, division) * 52
+  // Multiplicador de valor sobe com o overall (ativo mais valioso, nao so caro).
+  const mult = overall >= 85 ? 9 : overall >= 78 ? 6.5 : overall >= 70 ? 4.5 : 3
+  return Math.round(anualEquivalente * mult)
+}
+
+/** Receita operacional semanal base por divisao (R$), ANTES do prestigio. Cobre
+ *  TV, socios e receita comercial — a bilheteria e o patrocinio entram por fora. */
+const DIVISION_INCOME_BASE: Record<string, number> = {
+  // Calibrado para a receita OPERACIONAL cobrir ~1,2-1,6x a folha de um clube bem
+  // gerido — a bilheteria e o patrocinio (por fora) fecham o lucro. Assim o
+  // gigante lucra, mas apertar a folha (contratacoes caras) leva ao vermelho.
+  serie_a: 1_050_000, serie_b: 340_000, serie_c: 110_000, serie_d: 35_000,
+  premier_league: 4_200_000, championship: 620_000,
+  la_liga: 2_800_000, la_liga_2: 300_000,
+  serie_a_ita: 2_300_000, serie_b_ita: 300_000,
+  bundesliga: 2_500_000, bundesliga_2: 320_000,
+  ligue_1: 1_800_000, ligue_2: 240_000,
+  primeira_liga: 650_000, eredivisie: 720_000, scottish_prem: 380_000,
+  super_lig: 520_000, pro_league_bel: 480_000, russian_prem: 800_000,
+  saudi_pro: 1_600_000, saudi_first_div: 230_000,
+  mls: 1_050_000, liga_mx: 1_000_000, liga_argentina: 440_000,
+  primera_a_col: 270_000, primera_div_chi: 230_000, primera_div_ury: 190_000,
+  j_league: 850_000, k_league_1: 440_000, chinese_super: 950_000,
+}
+const DEFAULT_INCOME_BASE = 300_000
+
+/**
+ * RECEITA OPERACIONAL SEMANAL (R$) por divisao e prestigio. Sem piso que garanta
+ * lucro: um clube pode operar no vermelho se a folha superar a receita.
+ */
+export function weeklyIncomeFor(division: string, prestige: number): number {
+  const base = DIVISION_INCOME_BASE[division] ?? DEFAULT_INCOME_BASE
+  // prestigio 10 -> 0.63x; 50 -> 1.15x; 90 -> 1.67x. Diferencia gigante de medio.
+  const mult = 0.5 + (Math.max(0, Math.min(100, prestige)) / 100) * 1.3
+  return Math.round(base * mult)
+}
+
+/** Premiacao de LIGA por posicao final (R$), creditada no fim da temporada. Antes
+ *  aparecia no painel mas nunca entrava no caixa. Escala com a divisao. */
+export function leaguePrizeMoney(division: string, position: number, size: number): number {
+  const topPrize: Record<string, number> = {
+    serie_a: 30_000_000, serie_b: 8_000_000, serie_c: 2_500_000, serie_d: 800_000,
+    premier_league: 90_000_000, championship: 12_000_000,
+    la_liga: 60_000_000, serie_a_ita: 45_000_000, bundesliga: 50_000_000,
+    ligue_1: 35_000_000, saudi_pro: 40_000_000,
+  }
+  const top = topPrize[division] ?? 5_000_000
+  if (position < 1 || size < 1) return 0
+  // Decai linearmente do campeao (100%) ao ultimo (~10%). Todo mundo leva algo
+  // (cota de participacao), mas o campeao leva muito mais.
+  const frac = 1 - ((position - 1) / Math.max(1, size - 1)) * 0.9
+  return Math.round(top * frac)
+}

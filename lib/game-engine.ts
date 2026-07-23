@@ -15,6 +15,7 @@ import { getCanonicalSeedPosition, getPlayersForTeam } from "@/lib/players-data"
 import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
 import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
+import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor } from "@/lib/club-economy"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -3834,6 +3835,7 @@ export const useGameEngine = create<GameEngineState>()(
 
         // Carrega elenco do time escolhido a partir dos dados de seed
         const chosenTeam = getTeamByShort(teamShort)
+        const chosenDivision = String(chosenTeam?.divisao ?? "serie_a")
         let seedPlayers: Player[] = []
 
         if (chosenTeam) {
@@ -3863,9 +3865,11 @@ export const useGameEngine = create<GameEngineState>()(
               morale: "Normal" as const,
               form: base,
               contract: {
-                salary: Math.round(base * 800),
+                // Salario realista por DIVISAO (Serie D em milhares, A em dezenas
+                // de milhar). Antes base*800 pagava R$166 mil/mes a um jogador de D.
+                salary: playerSalaryWeekly(base, chosenDivision),
                 endDate: 52 + Math.floor(Math.random() * 104),
-                releaseClause: base >= 80 ? base * 500000 : null,
+                releaseClause: base >= 80 ? playerMarketValue(base, chosenDivision) * 1.6 : null,
                 signedWeek: 0,
                 signedSeason: 2026
               },
@@ -3874,7 +3878,7 @@ export const useGameEngine = create<GameEngineState>()(
               training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
               nationalTeam: null,
               calledUp: false,
-              marketValue: base >= 80 ? base * 300000 : base * 100000,
+              marketValue: playerMarketValue(base, chosenDivision),
               joinedClubWeek: 0,
               joinedClubSeason: 2026,
               isLoanedIn: false,
@@ -3894,14 +3898,12 @@ export const useGameEngine = create<GameEngineState>()(
         const initialWeeklyExpenses = (seedPlayers.length > 0 ? seedPlayers : initialPlayers)
           .reduce((sum, p) => sum + (p.contract?.salary ?? 0), 0)
         const prestige = chosenTeam?.prestigio ?? 70
-        const prestigeWeeklyIncome = prestige >= 85 ? 4500000
-          : prestige >= 75 ? 2500000
-          : prestige >= 60 ? 1400000
-          : 800000
-        // TV, bilheteria, sócios, marketing e patrocínios precisam ao menos sustentar
-        // a operação inicial. Sem este piso, clubes importados com folhas reais
-        // acumulavam centenas de milhões em dívida mesmo sem nenhuma contratação.
-        const initialWeeklyIncome = Math.max(prestigeWeeklyIncome, Math.round(initialWeeklyExpenses * 1.08))
+        // Receita operacional REALISTA por divisao e prestigio (TV + socios +
+        // comercial). SEM piso: antes a receita era forcada a >= 108% da folha, o
+        // que fazia TODO clube lucrar toda semana. Agora um clube pode operar no
+        // vermelho — a bilheteria e o patrocinio (creditados por fora) ajudam a
+        // fechar a conta, mas nao ha garantia. Salarios ja escalam por divisao.
+        const initialWeeklyIncome = weeklyIncomeFor(chosenDivision, prestige)
 
         set({
           currentWeek: 0,

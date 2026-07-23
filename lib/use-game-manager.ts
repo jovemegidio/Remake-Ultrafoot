@@ -24,6 +24,7 @@ import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
 import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
+import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
 import { regionalCupForState } from "@/lib/regional-cups"
@@ -1820,6 +1821,14 @@ export function useGameManager() {
       for (const [curto, div] of Object.entries(moved)) {
         if (div === staticDiv.get(curto)) delete nextClubDivisions[curto]
         else nextClubDivisions[curto] = div
+      }
+
+      // PREMIACAO DE LIGA (creditada de verdade — antes so aparecia no painel).
+      // Campeao leva muito mais; todo mundo leva a cota de participacao. Escala
+      // com a divisao (Serie A paga muito mais que a D).
+      if (userFinalPos > 0) {
+        const premio = leaguePrizeMoney(currentDivision, userFinalPos, sortedForChampion.length)
+        if (premio > 0) gameEngine.addClubRevenue(premio)
       }
 
       // Divisao do usuario na proxima temporada, do MESMO resultado da piramide.
