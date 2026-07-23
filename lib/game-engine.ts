@@ -1849,6 +1849,8 @@ interface GameEngineState {
   
   // Moral e vestiario
   squadMorale: SquadMorale
+  /** Entrosamento do time 0-100 (estilo FM): sobe jogando junto, da bonus. */
+  squadCohesion: number
   
   // Conferencias de imprensa
   pressConferences: PressConference[]
@@ -2455,6 +2457,7 @@ export const useGameEngine = create<GameEngineState>()(
       opponentAnalyses: [],
       
       // Moral
+      squadCohesion: 60,
       squadMorale: {
         overall: 70,
         unity: 75,
@@ -3604,7 +3607,12 @@ export const useGameEngine = create<GameEngineState>()(
             }
             return { ...p, ...persist }
           })
+          // ENTROSAMENTO sobe jogando: cada partida disputada aproxima o time do
+          // teto. Vitoria constroi mais que derrota.
+          const ganhoEntrosamento = resultado === "win" ? 3 : resultado === "draw" ? 2 : 1
+          const novoEntrosamento = Math.max(0, Math.min(100, (s.squadCohesion ?? 60) + ganhoEntrosamento))
           return {
+            squadCohesion: novoEntrosamento,
             squadPlayers: comNota.map(p =>
               p.id === melhorId
                 ? { ...p, seasonStats: { ...p.seasonStats, manOfTheMatch: (p.seasonStats.manOfTheMatch ?? 0) + 1 } }

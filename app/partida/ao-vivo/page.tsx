@@ -526,7 +526,8 @@ export default function PartidaAoVivoPage() {
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
   const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
-  const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions, processarDesempenhoPartida } = useGameEngine()
+  const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions, processarDesempenhoPartida, squadCohesion } = useGameEngine()
+  const bonusEntrosamento = Math.round(Math.max(0, ((squadCohesion ?? 60) - 60)) / 8)
   const engineMatchResults = useGameEngine(s => s.matchResults)
   const engineSeason = useGameEngine(s => s.currentSeason)
   const engineSetPieceTakers = useGameEngine(s => s.setPieceTakers)
@@ -725,8 +726,10 @@ export default function PartidaAoVivoPage() {
     awayTeam,
     // A IA recebe apenas um pequeno ganho de preparo; a diferença principal continua
     // vindo do elenco. Isso aumenta a dificuldade sem manipular placares.
-    homeRating: homeTeam.prestigio + (userSide === "away" ? 2 : 0),
-    awayRating: awayTeam.prestigio + (userSide === "home" ? 2 : 0),
+    // ENTROSAMENTO do usuario vira ate +5 de forca (time que joga junto rende
+    // mais, estilo FM). So o lado do usuario recebe; a IA fica no prestigio.
+    homeRating: homeTeam.prestigio + (userSide === "away" ? 2 : userSide === "home" ? bonusEntrosamento : 0),
+    awayRating: awayTeam.prestigio + (userSide === "home" ? 2 : userSide === "away" ? bonusEntrosamento : 0),
     homeSquad: homeSquad.map(toSquadPlayer),
     awaySquad: awaySquad.map(toSquadPlayer),
     durationMinutes: matchCtx.duration,
