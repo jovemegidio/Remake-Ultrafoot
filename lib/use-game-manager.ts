@@ -144,12 +144,28 @@ export const ESTADO_CAMPEONATO: Record<string, string> = {
   // resolver esses é preciso importar mais clubes, não mudar código.
   MS: "Campeonato Sul-Mato-Grossense",
   AC: "Campeonato Acreano",
+  // Auditoria 2026-07-23: RR (8 clubes na base) e TO (7) tinham clubes e
+  // NENHUM estadual mapeado — eram os dois ultimos estados de fora. Com eles,
+  // os 27 estados estao cobertos.
+  RR: "Campeonato Roraimense",
+  TO: "Campeonato Tocantinense",
 }
 
 const BRAZILIAN_DIVISIONS = ["serie_a", "serie_b", "serie_c", "serie_d"]
 
 function isBrazilianDivision(division: string): boolean {
   return BRAZILIAN_DIVISIONS.includes(division)
+}
+
+// Clube brasileiro para efeito de ESTADUAL. Diferente de isBrazilianDivision,
+// que responde "esta em uma das quatro Series" e governa a geracao das LIGAS
+// nacionais — ali `pool:Brasil` nao entra mesmo.
+//
+// O estadual, porem, nao depende de divisao: clube de varzea disputa estadual.
+// Barrar por divisao deixava SEM estadual todo clube que existe apenas no pool
+// (MS e AC inteiros, e qualquer clube pool-only dos outros 25 estados).
+function disputaEstadual(division: string): boolean {
+  return isBrazilianDivision(division) || division === "pool:Brasil"
 }
 
 // Mapeia rodada para mes com base na config do calendario da liga
@@ -186,7 +202,7 @@ export function getStateCompetitionRule(userTeamShort: string): CompetitionRegul
 // Antes havia um cap fixo de 8 -> SP (13 times) ficava com 5 clubes de fora.
 export function getStateChampionshipTeams(userTeamShort: string): Team[] {
   const userTeam = getTeamByShort(userTeamShort)
-  if (!userTeam || !isBrazilianDivision(userTeam.divisao)) return []
+  if (!userTeam || !disputaEstadual(userTeam.divisao)) return []
   const estado = userTeam.estado
   if (!ESTADO_CAMPEONATO[estado]) return []
   // Curados + clubes do POOL do mesmo estado (o pool ganhou `estado` via
