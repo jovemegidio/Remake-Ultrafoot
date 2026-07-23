@@ -146,6 +146,40 @@ function findUniqueImportedPlayer(name: string): { idade: number; overall: numbe
   return unique.size === 1 ? [...unique.values()][0] : undefined
 }
 
+/**
+ * NACIONALIDADE REAL por nome, vinda do Transfermarkt (real-squads-tm, campo
+ * `c`). O seed do pool so traz `nac` para uma fatia dos atletas — auditoria de
+ * 23/07/2026: apenas 18% do elenco curado tinha pais, e 461 dos 542 clubes
+ * estavam com mais da metade em branco (a coluna PAIS do editor ficava "-").
+ * A coleta do TM tem o pais de 45.803 atletas; cruzamos por nome normalizado.
+ * Nome com DUAS nacionalidades diferentes e descartado — melhor vazio do que
+ * atribuir a bandeira errada a um homonimo.
+ */
+const nacionalidadePorNome: Map<string, string> = (() => {
+  const mapa = new Map<string, string>()
+  const conflito = new Set<string>()
+  for (const elenco of Object.values(realSquadsTM as Record<string, Array<{ n?: string; c?: string }>>)) {
+    if (!Array.isArray(elenco)) continue
+    for (const j of elenco) {
+      if (!j?.n || !j?.c) continue
+      const chave = normalizeTeamName(j.n)
+      if (!chave) continue
+      const anterior = mapa.get(chave)
+      if (anterior && anterior !== j.c) conflito.add(chave)
+      else mapa.set(chave, j.c)
+    }
+  }
+  for (const c of conflito) mapa.delete(c)
+  return mapa
+})()
+
+/** Nacionalidade do atleta: o que o seed trouxer, senao a do Transfermarkt. */
+function resolverNac(nome: string, doSeed?: string): string | undefined {
+  const s = String(doSeed ?? "").trim()
+  if (s && s !== "?") return s
+  return nacionalidadePorNome.get(normalizeTeamName(nome))
+}
+
 const teamAliasOverrides: Record<string, string[]> = {
   saojose_rs: ["saojosers_bra", "Sao Jose", "São José"],
   inter_milan: ["Inter de Milao", "Inter de Milão"],
@@ -502,7 +536,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
         idade: globalSeed?.idade ?? 25,
         base: globalSeed ? Math.min(globalSeed.overall, MAX_IMPORTED_OVERALL) : estimated,
         time: team.nome,
-        nac: globalSeed?.nac,
+        nac: resolverNac(p.nome, globalSeed?.nac),
       }
     })
     if (converted.some((player) => player.pos === "GOL")) return converted
@@ -516,6 +550,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
         idade: player.idade ?? 25,
         base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
         time: team.nome,
+        nac: resolverNac(player.nome, player.nac),
       }))
     return [...seedGoalkeepers, ...converted]
   }
@@ -535,7 +570,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
       idade: player.idade ?? 25,
       base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
       time: team.nome,
-      nac: player.nac,
+      nac: resolverNac(player.nome, player.nac),
     }))
 }
 

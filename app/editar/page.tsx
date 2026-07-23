@@ -121,7 +121,7 @@ const PAIS_CODE: Record<string, string> = {
 }
 
 // Clube do pool? (divisao no formato "pool:<pais>")
-import { normalizeCountry } from "@/lib/country-normalize"
+import { inferredNationality, normalizeCountry } from "@/lib/country-normalize"
 
 const isPoolTeam = (team: Team) => typeof team.divisao === "string" && team.divisao.startsWith("pool:")
 
@@ -185,8 +185,13 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
       originalName: p.nome,
       nome: ov?.nome ?? p.nome,
       posicao: pos,
-      // Nacionalidade real do seed (Transfermarkt); "-" só quando desconhecida.
-      pais: ov?.nac ?? p.nac ?? "-",
+      // Nacionalidade: edicao manual > real (Transfermarkt) > pais do CLUBE como
+      // ultimo recurso. Essa ultima etapa segue a MESMA convencao que o mercado
+      // ja usa (inferredNationality). Antes a coluna ficava "-" para 82% do
+      // elenco; a maioria desses atletas joga no proprio pais, entao inferir do
+      // clube acerta muito mais do que deixar em branco. Edicao manual sempre
+      // vence, e quem tiver nacionalidade real nunca e sobrescrito.
+      pais: ov?.nac ?? p.nac ?? inferredNationality(team.pais) ?? "-",
       idade: ov?.idade ?? p.idade,
       overall: base,
       caracteristica: "-",
