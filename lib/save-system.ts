@@ -462,6 +462,8 @@ export interface GameState {
   results?: MatchResult[]
   finances?: FinanceEntry[]
   seasonHistory?: SeasonRecord[]
+  /** Resultado da avaliacao da diretoria no fim da temporada. */
+  renewalStatus?: "auto" | "negociar" | "ofertas"
   injuries?: InjuryRecord[]
   playerFatigue?: FatigueMap
   teamMorale?: number

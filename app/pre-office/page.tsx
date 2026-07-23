@@ -192,13 +192,37 @@ export default function PreOfficePage() {
     // e o tecnico nao tinha por onde seguir — nao havia como iniciar o ano
     // seguinte a nao ser avancando semanas no escuro.
     if (!nextUserMatch) {
+      // A diretoria (SeasonReviewBridge) definiu o desfecho da renovacao:
+      //  - ofertas: sem renovacao -> Area do Treinador para ver as propostas;
+      //  - negociar: renovacao com contraproposta na Area do Treinador;
+      //  - auto/indefinido: renovado, segue para a proxima temporada.
+      const renovacao = estadoSalvo.renewalStatus
+      if (renovacao === "ofertas") {
+        tasks.push({
+          id: 102,
+          title: "Contrato não renovado — ver propostas",
+          icon: Users,
+          action: "/treinador",
+          actionLabel: "Área do Treinador",
+          priority: "high",
+        })
+      } else if (renovacao === "negociar") {
+        tasks.push({
+          id: 103,
+          title: "Negociar renovação com a diretoria",
+          icon: Users,
+          action: "/treinador",
+          actionLabel: "Negociar renovação",
+          priority: "high",
+        })
+      }
       tasks.push({
         id: 100,
-        title: "Iniciar a proxima temporada",
+        title: renovacao === "ofertas" ? "Ignorar propostas e seguir com o clube" : "Iniciar a proxima temporada",
         icon: Trophy,
         action: PROXIMA_TEMPORADA,
         actionLabel: "Comecar temporada",
-        priority: "high",
+        priority: renovacao === "ofertas" || renovacao === "negociar" ? "medium" : "high",
       })
       tasks.push({
         id: 101,
@@ -288,7 +312,7 @@ export default function PreOfficePage() {
     })
 
     return tasks
-  }, [gameEngine.squadPlayers, gameEngine.transferOffers, gameEngine.currentWeek, nextUserMatch, userTeam])
+  }, [gameEngine.squadPlayers, gameEngine.transferOffers, gameEngine.currentWeek, nextUserMatch, userTeam, estadoSalvo.renewalStatus])
 
   // A tarefa de virar a temporada nao e uma rota: precisa RODAR o avanco, que e
   // quem apura campeao, acesso/rebaixamento e monta o calendario novo.
