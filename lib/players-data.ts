@@ -948,3 +948,64 @@ export function teamRating(teamName: string): number {
 export function teamRatings(): Record<string, number> {
   return Object.fromEntries(allTeams.map(t => [t.nome, teamRating(t.nome)]))
 }
+
+/**
+ * FORCA REAL DO ELENCO POR LINHA — ataque, meio e defesa.
+ *
+ * Use esta, nao `teamRating`. A diferenca importa:
+ *
+ * `teamRating` recebe um NOME e chama `getPlayersByTeam`, que devolve o seed
+ * CRU — sem passar por `calibrateSquadRatings`. O seed legado mistura escalas
+ * (clubes com atletas 100+ ao lado de clubes todos em 55), e a calibracao e
+ * justamente o que ancora tudo na forca da liga e no prestigio do clube.
+ * Resultado: `teamRating` devolvia ~90 para Palmeiras, Corinthians, Flamengo,
+ * Santos E Bahia — todos iguais e todos inflados. A tela de partida rapida
+ * mostrava 88-92 e alimentava a simulacao com esse numero.
+ *
+ * Aqui partimos de `getPlayersForTeam(team)`, que e o elenco real ja calibrado:
+ * os mesmos clubes viram 78, 78, 79, 77 e 77 — diferenciados e na escala certa.
+ *
+ * Cada linha usa os jogadores que de fato entrariam nela, nao o elenco inteiro,
+ * senao o terceiro goleiro e o lateral reserva puxariam a media para baixo.
+ * Usamos `base` (o overall calibrado) e nao os atributos individuais: eles sao
+ * opcionais — so existem para atletas editados no editor — e NAO passam pela
+ * calibracao, entao misturar os dois traria de volta a escala furada.
+ */
+export interface TeamSectorRatings {
+  /** Media dos 11 melhores — o overall do time. */
+  overall: number
+  ata: number
+  mei: number
+  def: number
+}
+
+export function teamSectorRatings(team: Team): TeamSectorRatings {
+  const squad = getPlayersForTeam(team)
+  if (!squad.length) {
+    // Sem elenco, o prestigio e a unica informacao real disponivel.
+    const fromPrestige = Math.max(45, Math.min(90, 45 + Math.round(team.prestigio * 0.5)))
+    return { overall: fromPrestige, ata: fromPrestige, mei: fromPrestige, def: fromPrestige }
+  }
+
+  const melhores = (posicoes: string[], quantos: number): number => {
+    const grupo = squad
+      .filter(p => posicoes.includes(p.pos))
+      .sort((a, b) => b.base - a.base)
+      .slice(0, quantos)
+    if (!grupo.length) return 0
+    return grupo.reduce((s, p) => s + p.base, 0) / grupo.length
+  }
+
+  const top11 = [...squad].sort((a, b) => b.base - a.base).slice(0, 11)
+  const overall = Math.round(top11.reduce((s, p) => s + p.base, 0) / top11.length)
+
+  // Quantidades de uma formacao comum (3 na frente, 4 no meio, 4 atras + goleiro).
+  // Linha vazia cai no overall: melhor repetir o time do que exibir zero.
+  const ata = melhores(["ATA", "PE", "PD"], 3) || overall
+  const mei = melhores(["MEI", "VOL"], 4) || overall
+  const defLinha = melhores(["ZAG", "LD", "LE"], 4)
+  const gol = melhores(["GOL"], 1)
+  const def = defLinha && gol ? (defLinha * 4 + gol) / 5 : (defLinha || gol || overall)
+
+  return { overall, ata: Math.round(ata), mei: Math.round(mei), def: Math.round(def) }
+}

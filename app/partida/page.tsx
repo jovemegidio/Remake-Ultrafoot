@@ -38,7 +38,7 @@ import { clearMatchContext, saveMatchContext } from "@/lib/match-context"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { simulateFullMatch, type MatchEvent as SimEvent, type MatchState } from "@/lib/match-engine"
 import { useGameEngine, type MatchEvent as EngineEvent, type Player } from "@/lib/game-engine"
-import { teamRating } from "@/lib/players-data"
+import { teamSectorRatings } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { getCompetitionLogo } from "@/lib/competition-logo"
@@ -88,22 +88,31 @@ function TeamPanel({
   leagueLogo: string | null
   onSelect: () => void
 }) {
-  const overallRating = teamRating(team.curto) || teamRating(team.nome) || 75
   const country = getCountryInfo(team)
 
   // Avaliacao em estrelas com suporte a meia-estrela (prestigio em escala 0-10)
   const ratingHalf = Math.max(0.5, Math.min(5, Math.round(team.prestigio) / 2))
 
-  const baseRating = overallRating || 75
   const cor1 = team.cor1 || "#10b981"
+  // ATA/MEI/DEF vinham das LETRAS do codigo do clube:
+  //   ata = rating + (curto.charCodeAt(0) % 5) - 2
+  // Nao era dado nenhum — nem o rating, que usava `teamRating` (seed cru, sem
+  // calibracao) e devolvia ~90 para todos os grandes brasileiros.
+  // Agora sai do elenco real calibrado; ver teamSectorRatings.
   const stats = useMemo(() => {
-    const trends = ["up", "neutral", "down"] as const
+    const s = teamSectorRatings(team)
+    // A seta compara a linha com o proprio time: um ataque 4 acima do overall e
+    // mesmo o forte do elenco. Isso e informacao util antes do jogo, ao
+    // contrario da seta antiga, sorteada pelo codigo do clube.
+    const trend = (valor: number) =>
+      valor >= s.overall + 2 ? "up" : valor <= s.overall - 2 ? "down" : "neutral"
     return {
-      ata: { value: Math.round(baseRating + (team.curto.charCodeAt(0) % 5) - 2), trend: trends[team.curto.charCodeAt(0) % 3] },
-      mei: { value: Math.round(baseRating + (team.curto.charCodeAt(1) % 5) - 2), trend: trends[team.curto.charCodeAt(1) % 3] },
-      def: { value: Math.round(baseRating + (team.curto.charCodeAt(2) % 5) - 2), trend: trends[team.curto.charCodeAt(2) % 3] },
+      overall: s.overall,
+      ata: { value: s.ata, trend: trend(s.ata) },
+      mei: { value: s.mei, trend: trend(s.mei) },
+      def: { value: s.def, trend: trend(s.def) },
     }
-  }, [baseRating, team.curto])
+  }, [team])
 
   const TrendIndicator = ({ trend }: { trend: string }) => {
     if (trend === "up") return <ChevronUp className="h-3.5 w-3.5 text-emerald-400" />
@@ -385,8 +394,9 @@ export default function PartidaPage() {
     const result = simulateFullMatch({
       homeTeam,
       awayTeam,
-      homeRating: teamRating(homeTeam.curto) || teamRating(homeTeam.nome) || 75,
-      awayRating: teamRating(awayTeam.curto) || teamRating(awayTeam.nome) || 75,
+      // Mesma fonte que o card exibe: o numero mostrado e o numero simulado.
+      homeRating: teamSectorRatings(homeTeam).overall,
+      awayRating: teamSectorRatings(awayTeam).overall,
     })
     setTimeout(() => {
       setQuickSimResult({
