@@ -7,6 +7,9 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { createTauriZustandStorage, storeSet } from "@/lib/persistent-store"
 import { getCareerScopedKey } from "@/lib/save-system"
 import { allTeams, getTeamByShort } from "@/lib/teams-data"
+import {
+  type PlayerPersona, gerarPersona, contribuicoesPorJogador, calcularNota, suspensaoPorCartoes,
+} from "@/lib/player-realism"
 import { getCanonicalSeedPosition, getPlayersForTeam } from "@/lib/players-data"
 import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
 import { pickStartingXI } from "@/lib/formations"
@@ -453,6 +456,21 @@ export interface Player {
 
   // Escalacao manual (true = titular, false = reserva)
   isStarter?: boolean
+
+  // ── REALISMO estilo FM ──────────────────────────────────────────────────
+  /** Nota da ultima partida (6.0-10.0). Alimenta forma/moral/homem do jogo. */
+  lastMatchRating?: number
+  /** Media de notas na temporada (para o perfil do atleta). */
+  avgMatchRating?: number
+  /** Amarelos acumulados na temporada rumo a suspensao automatica. */
+  seasonYellows?: number
+  /** Partidas de suspensao pendentes — fica FORA da escalacao ate zerar. */
+  suspendedMatches?: number
+  /**
+   * Personalidade e atributos ocultos (estilo FM): moldam desenvolvimento,
+   * consistencia, reacao a moral e negociacao. Gerados uma vez por atleta.
+   */
+  persona?: PlayerPersona
 
   // Status Effects permanentes/temporarios (traumas, virtudes, momentum)
   statusEffects?: StatusEffect[]
@@ -1898,6 +1916,8 @@ interface GameEngineState {
   returnFromNationalTeam: (playerId: number) => void
   getPlayerById: (playerId: number) => Player | undefined
   updatePlayerStats: (playerId: number, stats: Partial<PlayerStats>) => void
+  processarDesempenhoPartida: (golsPro: number, golsContra: number, events: MatchEvent[]) => void
+  cumprirSuspensao: (playerId: number) => void
   setPlayerShirtNumber: (playerId: number, shirtNumber: number) => boolean
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
   healPlayer: (playerId: number) => void
@@ -3514,11 +3534,86 @@ export const useGameEngine = create<GameEngineState>()(
       
       updatePlayerStats: (playerId, stats) => {
         set((s) => ({
-          squadPlayers: s.squadPlayers.map(p => 
-            p.id === playerId 
+          squadPlayers: s.squadPlayers.map(p =>
+            p.id === playerId
               ? { ...p, seasonStats: { ...p.seasonStats, ...stats } }
               : p
           )
+        }))
+      },
+
+      /**
+       * PÓS-PARTIDA (realismo FM): calcula a NOTA de cada titular, acumula
+       * cartoes -> suspensao, e ajusta forma/moral pela atuacao. Chamado ao fim
+       * de uma partida do usuario, com os eventos (gols, cartoes) da peleja.
+       */
+      processarDesempenhoPartida: (golsPro, golsContra, events) => {
+        const resultado: "win" | "draw" | "loss" =
+          golsPro > golsContra ? "win" : golsPro === golsContra ? "draw" : "loss"
+        const contrib = contribuicoesPorJogador(events)
+        set((s) => {
+          // Melhor nota entre os titulares vira homem do jogo.
+          let melhorId = -1
+          let melhorNota = -1
+          const comNota = s.squadPlayers.map(p => {
+            if (!p.isStarter || p.injury) {
+              // Quem estava suspenso e NAO jogou cumpriu um jogo da punicao.
+              if ((p.suspendedMatches ?? 0) > 0) {
+                return { ...p, suspendedMatches: (p.suspendedMatches ?? 0) - 1 }
+              }
+              return p
+            }
+            const persona = p.persona ?? gerarPersona(p.id, p.overall)
+            const c = contrib.get(p.id) ?? { gols: 0, assistencias: 0, amarelos: 0, vermelho: false }
+            const nota = calcularNota({
+              posicao: p.position, contrib: c, resultado, golsSofridos: golsContra,
+              consistencia: persona.consistencia, semente: p.id + golsPro * 7 + golsContra * 13,
+            })
+            if (nota > melhorNota) { melhorNota = nota; melhorId = p.id }
+
+            const { suspender, amarelosRestantes } = suspensaoPorCartoes(
+              p.seasonYellows ?? 0, c.amarelos, c.vermelho,
+            )
+            // Forma e moral reagem a nota: >=7.5 sobe, <6.0 cai.
+            const deltaForma = nota >= 7.5 ? 4 : nota >= 7 ? 2 : nota < 6 ? -4 : 0
+            const escala: Player["morale"][] = ["Infeliz", "Insatisfeito", "Normal", "Motivado", "Feliz"]
+            let mi = Math.max(0, escala.indexOf(p.morale))
+            if (nota >= 7.8) mi = Math.min(4, mi + 1)
+            else if (nota < 5.5) mi = Math.max(0, mi - 1)
+
+            const jogos = (p.avgMatchRating ? p.seasonStats.matchesPlayed : 0)
+            const novaMedia = jogos > 0
+              ? ((p.avgMatchRating ?? nota) * jogos + nota) / (jogos + 1)
+              : nota
+
+            const persist: Partial<Player> = {
+              persona,
+              lastMatchRating: nota,
+              avgMatchRating: Math.round(novaMedia * 10) / 10,
+              seasonYellows: amarelosRestantes,
+              suspendedMatches: (p.suspendedMatches ?? 0) + suspender,
+              form: Math.max(0, Math.min(100, (p.form ?? 70) + deltaForma)),
+              morale: escala[mi],
+            }
+            return { ...p, ...persist }
+          })
+          return {
+            squadPlayers: comNota.map(p =>
+              p.id === melhorId
+                ? { ...p, seasonStats: { ...p.seasonStats, manOfTheMatch: (p.seasonStats.manOfTheMatch ?? 0) + 1 } }
+                : p,
+            ),
+          }
+        })
+      },
+
+      /** Ao entrar em campo, um jogo de suspensao e cumprido (decrementa). */
+      cumprirSuspensao: (playerId) => {
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p =>
+            p.id === playerId && (p.suspendedMatches ?? 0) > 0
+              ? { ...p, suspendedMatches: (p.suspendedMatches ?? 0) - 1 }
+              : p),
         }))
       },
 

@@ -170,7 +170,8 @@ function enginePlayersToMatchSquad(
   /** Posicoes que o tecnico arrastou no campinho, por NOME (como o motor guarda). */
   posicoesDoTecnico: Record<string, { x: number; y: number }> = {},
 ): { starters: MatchPlayer[]; bench: MatchPlayer[] } {
-  const available = players.filter(p => !p.injury && !p.calledUp)
+  // SUSPENSO nao entra em campo (realismo FM): fica fora ate cumprir a punicao.
+  const available = players.filter(p => !p.injury && !p.calledUp && (p.suspendedMatches ?? 0) <= 0)
 
   // Se o usuario montou a escalacao (isStarter), RESPEITA o XI dele. Senao, encaixa na
   // formacao (defesa/meio/ataque completos) em vez de "os 11 primeiros por posicao".
@@ -525,7 +526,7 @@ export default function PartidaAoVivoPage() {
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
   const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
-  const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions } = useGameEngine()
+  const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions, processarDesempenhoPartida } = useGameEngine()
   const engineMatchResults = useGameEngine(s => s.matchResults)
   const engineSeason = useGameEngine(s => s.currentSeason)
   const engineSetPieceTakers = useGameEngine(s => s.setPieceTakers)
@@ -1071,6 +1072,33 @@ export default function PartidaAoVivoPage() {
             state.away.goals,
             events
           )
+
+          // REALISMO: nota por jogador + cartoes->suspensao. Mapeia os eventos do
+          // MEU lado (nome -> id do elenco do motor) e processa o desempenho.
+          try {
+            const meuLado = userSide // "home" | "away"
+            const porNome = new Map<string, number>()
+            for (const p of enginePlayers) porNome.set(p.name.trim().toLowerCase(), p.id)
+            const idDe = (nome?: string) => (nome ? porNome.get(nome.trim().toLowerCase()) : undefined)
+            const evJogador: { minute: number; type: "goal" | "assist" | "yellow" | "red"; playerId: number; playerName: string; assistPlayerId?: number; assistPlayerName?: string }[] = []
+            for (const e of state.events) {
+              if (e.side !== meuLado) continue
+              const tipo: "goal" | "yellow" | "red" | null = e.type === "goal" ? "goal"
+                : e.type === "yellow_card" ? "yellow"
+                : e.type === "red_card" ? "red" : null
+              if (!tipo) continue
+              const id = idDe(e.player)
+              if (id === undefined) continue
+              evJogador.push({
+                minute: e.minute, type: tipo, playerId: id, playerName: e.player ?? "",
+                assistPlayerId: idDe(e.assist), assistPlayerName: e.assist,
+              })
+            }
+            const golsPro = meuLado === "home" ? state.home.goals : state.away.goals
+            const golsContra = meuLado === "home" ? state.away.goals : state.home.goals
+            processarDesempenhoPartida(golsPro, golsContra, evJogador)
+          } catch { /* nota e um extra: nunca deve travar o fim da partida */ }
+
           clearMatchContext()
           // Título de mata-mata (estadual/copa) é detectado pelo
           // registerUserMatchResult acima, que grava o pending-champion. Sem
