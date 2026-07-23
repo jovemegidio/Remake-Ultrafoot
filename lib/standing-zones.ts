@@ -53,6 +53,20 @@ const DIVISION_ZONES: Record<string, ZoneTemplate[]> = {
   serie_d: [
     { id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 4 },
   ],
+  // Primeiras divisoes europeias: 3 rebaixados (piramide viva).
+  premier_league: [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
+  la_liga:        [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
+  serie_a_ita:    [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
+  bundesliga:     [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
+  ligue_1:        [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
+  saudi_pro:      [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
+  // Segundas divisoes: 3 sobem para a elite (sem rebaixamento no jogo — sao a base).
+  championship:     [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
+  la_liga_2:        [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
+  serie_b_ita:      [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
+  bundesliga_2:     [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
+  ligue_2:          [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
+  saudi_first_div:  [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
 }
 
 // Template generico para ligas internacionais e divisoes nao mapeadas.

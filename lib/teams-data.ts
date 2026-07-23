@@ -1317,8 +1317,25 @@ export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[]
   }))
 
 // Times por divisao
+// PIRAMIDE VIVA: override global de divisao por clube. Depois de cada temporada,
+// rivais sobem/descem (lib/league-pyramid.ts) e o resultado fica aqui — um mapa
+// curto -> divisao atual. getTeamsByDivision passa a montar as ligas por este
+// mapa, entao a Serie A do ano que vem tem os clubes que REALMENTE subiram.
+// O game-manager chama setClubDivisions ao carregar o save e ao virar a temporada.
+let _clubDivisions: Record<string, string> = {}
+export function setClubDivisions(map: Record<string, string> | undefined): void {
+  _clubDivisions = map ?? {}
+}
+export function getClubDivisions(): Record<string, string> {
+  return _clubDivisions
+}
+/** Divisao ATUAL do clube: o override da piramide, ou a divisao estatica. */
+export function effectiveDivision(team: { curto: string; divisao: string }): string {
+  return _clubDivisions[team.curto] ?? team.divisao
+}
+
 export function getTeamsByDivision(divisao: string): Team[] {
-  return allTeams.filter(t => t.divisao === divisao).map(applyTeamOverride)
+  return allTeams.filter(t => effectiveDivision(t) === divisao).map(applyTeamOverride)
 }
 
 // Função para buscar time por curto (busca tambem por divisao para evitar duplicatas)

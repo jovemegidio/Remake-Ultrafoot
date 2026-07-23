@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
@@ -18,7 +18,7 @@ import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldF
 import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
 import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
-import { resolveDivisionChange } from "@/lib/promotion-relegation"
+import { resolveDivisionChange, evolvePyramids, type PyramidClub } from "@/lib/league-pyramid"
 import { processDebtMonth } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
@@ -1448,6 +1448,7 @@ export function useGameManager() {
     // Reinit se standings ou squad estiverem vazios (initialPlayers tem 1 jogador default)
     if (gameEngine.squadPlayers.length > 1 && gameEngine.serieAStandings.length > 0) return
     const teamShort = saveState.selectedTeamShort
+    setClubDivisions(saveState.clubDivisions) // piramide viva antes de montar a liga
     const leagueTeams = getUserLeagueTeams(teamShort, saveState.divisionOverride)
     gameEngine.initializeGame(teamShort)
     useGameEngine.setState({
@@ -1539,6 +1540,9 @@ export function useGameManager() {
 
     const userTeamShort = saveState.selectedTeamShort
     const currentWeek = saveState.week
+    // PIRAMIDE VIVA: aplica os acessos/rebaixamentos acumulados ANTES de montar a
+    // liga, para os rivais desta divisao ja serem os clubes que realmente subiram.
+    setClubDivisions(saveState.clubDivisions)
     const userTeam = getTeamByShort(userTeamShort)
     // Divisao ATUAL (override de acesso/rebaixamento) — define o campeonato desta temporada.
     const division = saveState.divisionOverride ?? userTeam?.divisao ?? "serie_a"
@@ -1721,6 +1725,7 @@ export function useGameManager() {
     // Verifica fim de temporada — total inclui estadual + liga + copas/continentais
     const userShort = currentState.selectedTeamShort ?? ""
     const divOverride = currentState.divisionOverride
+    setClubDivisions(currentState.clubDivisions) // piramide viva antes de montar ligas
     const leagueTeamsForEnd = getUserLeagueTeams(userShort, divOverride)
     const stateRoundsForEnd = getStateChampRounds(userShort)
     // A temporada de liga jamais pode acabar por ter menos confrontos do que o
@@ -1795,19 +1800,40 @@ export function useGameManager() {
       const currentDivision = divOverride ?? userTeamStatic?.divisao ?? "serie_a"
       const userFinalPos = sortedForChampion.findIndex(s => s.teamShort === userShort) + 1
 
-      let nextDivisionOverride = divOverride
+      // PIRAMIDE VIVA: evolui TODOS os clubes de todas as piramides. A divisao do
+      // usuario sai da classificacao real; as demais, do prestigio com ruido.
+      setClubDivisions(currentState.clubDivisions)
+      const staticDiv = new Map(allTeams.map(t => [t.curto, String(t.divisao)]))
+      const pyramidClubs: PyramidClub[] = allTeams.map(t => ({
+        curto: t.curto,
+        division: effectiveDivision(t),
+        prestige: t.prestigio ?? 60,
+      }))
+      const moved = evolvePyramids({
+        clubs: pyramidClubs,
+        userDivision: currentDivision,
+        userFinalOrder: sortedForChampion.map(s => s.teamShort),
+        seed: currentState.season,
+      })
+      // Mapa absoluto atualizado: aplica quem mudou; limpa quem voltou a estatica.
+      const nextClubDivisions: Record<string, string> = { ...(currentState.clubDivisions ?? {}) }
+      for (const [curto, div] of Object.entries(moved)) {
+        if (div === staticDiv.get(curto)) delete nextClubDivisions[curto]
+        else nextClubDivisions[curto] = div
+      }
+
+      // Divisao do usuario na proxima temporada, do MESMO resultado da piramide.
+      const userNextDivision = nextClubDivisions[userShort] ?? staticDiv.get(userShort) ?? currentDivision
+      let nextDivisionOverride = userNextDivision === userTeamStatic?.divisao ? undefined : userNextDivision
       let divisionMovement = currentState.divisionMovement
-      if (userFinalPos > 0) {
+      if (userFinalPos > 0 && userNextDivision !== currentDivision) {
         const outcome = resolveDivisionChange(
-          currentDivision, userFinalPos, userTeamStatic?.nome ?? "Seu clube",
+          currentDivision, userFinalPos, sortedForChampion.length, userTeamStatic?.nome ?? "Seu clube",
         )
-        if (outcome.movement !== "stay") {
-          // undefined quando volta a divisao estatica original (limpa o override).
-          nextDivisionOverride =
-            outcome.nextDivision === userTeamStatic?.divisao ? undefined : outcome.nextDivision
-          divisionMovement = {
-            movement: outcome.movement, message: outcome.message, season: nextSeason,
-          }
+        divisionMovement = {
+          movement: outcome.movement === "stay"
+            ? "promoted" : outcome.movement, // seguranca: mudou de divisao => houve movimento
+          message: outcome.message, season: nextSeason,
         }
       }
 
@@ -1837,7 +1863,9 @@ export function useGameManager() {
         teamNome: userTeamStatic?.nome ?? userShort,
       } : null
 
-      // Adversarios da PROXIMA temporada: da divisao ja atualizada.
+      // Adversarios da PROXIMA temporada: da divisao ja atualizada E com a
+      // piramide nova aplicada (rivais que subiram/cairam ja no lugar certo).
+      setClubDivisions(nextClubDivisions)
       const teamsForReset = getUserLeagueTeams(userShort, nextDivisionOverride)
       const newStandings = initializeStandings(teamsForReset)
 
@@ -1869,6 +1897,7 @@ export function useGameManager() {
       const patch = {
         week: 0, season: nextSeason,
         divisionOverride: nextDivisionOverride,
+        clubDivisions: nextClubDivisions,
         divisionMovement,
         completedFixtureKeys: [],
         seasonAwards: seasonAwards
