@@ -181,16 +181,10 @@ export default function InfraestruturaPage() {
   const upgradesInProgress = gameEngine.infraUpgradesInProgress
   const knownUpgrades = useRef(upgradesInProgress)
 
-  useEffect(() => {
-    const before = knownUpgrades.current
-    Object.keys(before).forEach((areaId) => {
-      if (!upgradesInProgress[areaId]) {
-        const area = INFRASTRUCTURE_AREAS.find(item => item.id === areaId)
-        if (area) addNotification({ type: "news", title: "Obra concluída", message: `${area.name} chegou ao nível ${gameEngine.clubInfrastructure[areaId] ?? before[areaId].targetLevel}. A melhoria já está ativa no clube.`, priority: "medium" })
-      }
-    })
-    knownUpgrades.current = upgradesInProgress
-  }, [upgradesInProgress, gameEngine.clubInfrastructure, addNotification])
+  // Aviso de obra concluida agora e GLOBAL (FinanceInfraNotificationsBridge no
+  // layout) — dispara mesmo com esta pagina fechada. So mantemos o ref para nao
+  // reprocessar aqui.
+  void knownUpgrades
 
   const balance = gameEngine.balance
 

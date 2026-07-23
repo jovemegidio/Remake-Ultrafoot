@@ -263,11 +263,15 @@ export default function FinancasPage() {
         id: "bilheteria",
         icon: Ticket,
         label: "Bilheteria",
-        value: dynamicFinances.matchdayRevenue,
+        // MENSAL, como TV e patrocinio. Antes mostrava a renda de UM jogo
+        // (matchdayRevenue) ao lado de valores mensais — parecia baixa e errada.
+        // O detalhe abaixo abre o preco do ingresso e a renda por jogo.
+        value: dynamicFinances.income.ticketRevenue,
         detail: [
+          { label: "Preço do ingresso", value: formatCurrency(dynamicFinances.ticketPrice) },
+          { label: "Renda por jogo em casa", value: formatCurrency(dynamicFinances.matchdayRevenue) },
           { label: "Público médio", value: dynamicFinances.avgAttendance.toLocaleString("pt-BR") },
           { label: "Capacidade do estádio", value: dynamicFinances.capacity.toLocaleString("pt-BR") },
-          { label: "Preço do ingresso", value: formatCurrency(dynamicFinances.ticketPrice) },
         ],
         share: dynamicFinances.occupancy,
         shareLabel: "de ocupação",
