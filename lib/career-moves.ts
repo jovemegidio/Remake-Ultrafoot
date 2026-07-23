@@ -81,3 +81,39 @@ export function removeJobOffer(id: string): void {
 export function clearJobOffers(): void {
   writeAll([])
 }
+
+/**
+ * ASSUMIR UM CLUBE a partir de uma proposta. Centraliza a troca de emprego que
+ * antes so existia no card do Escritorio — a Area do Treinador so deixava
+ * RECUSAR, e mandava o usuario ir a outra tela para aceitar.
+ *
+ * Recarrega o motor no clube novo (senao elenco, tatica e fixtures do emprego
+ * anterior ficavam para tras) e preserva apenas o tempo da carreira. As
+ * dependencias entram por parametro para este modulo nao importar o store nem o
+ * roteador (evita ciclo e mantem a funcao testavel).
+ */
+export function assumirClube(
+  clubShort: string,
+  deps: {
+    initializeGame: (short: string) => void
+    setEngineTime: (week: number, season: number) => void
+    setSaveState: (patch: Record<string, unknown>) => void
+    navigate: (href: string) => void
+    week: number
+    season: number
+  },
+): void {
+  clearJobOffers()
+  deps.initializeGame(clubShort)
+  deps.setEngineTime(deps.week, deps.season)
+  deps.setSaveState({
+    selectedTeamShort: clubShort,
+    divisionOverride: undefined,
+    fixtures: [],
+    standings: [],
+    squadPlayers: undefined,
+    youthPlayers: undefined,
+    youthCareer: undefined,
+  })
+  deps.navigate("/")
+}

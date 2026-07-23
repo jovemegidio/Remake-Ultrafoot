@@ -6,13 +6,8 @@ import { useGameState } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { allTeams, type Team } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
-
-const SECOND_DIVISIONS = new Set([
-  "championship", "la_liga_2", "serie_b_ita", "bundesliga_2", "ligue_2",
-  "liga_portugal_2", "eerste_divisie", "challenger_pro", "tff_1_lig", "russian_first",
-  "primera_b_arg", "torneo_betplay", "primera_b_chi", "segunda_div_ury",
-  "saudi_first_div", "j2_league", "k_league_2", "china_league_one",
-])
+import { buildCareerStats } from "@/lib/hall-of-fame-engine"
+import { ofertasParaDesempregado, coachStandingScore } from "@/lib/coach-market"
 
 type RoundResult = { home: Team; away: Team; homeGoals: number; awayGoals: number }
 
@@ -22,24 +17,24 @@ function hash(value: string): number {
   return h >>> 0
 }
 
-function eligibleClubs(): Team[] {
-  return allTeams.filter(team => {
-    const division = String(team.divisao)
-    if (["serie_a", "serie_b", "serie_c", "serie_d"].includes(division)) {
-      // Clubes de elite quase nunca ficam disponíveis. Na Série A entram apenas os de
-      // menor investimento; B/C/D podem procurar normalmente.
-      return division !== "serie_a" || team.prestigio < 78
-    }
-    return SECOND_DIVISIONS.has(division)
-  })
-}
-
 export default function UnemployedCareerPage() {
   const { state, setState } = useGameState()
   const engine = useGameEngine()
   const [round, setRound] = useState(Math.max(1, state.week + 1))
   const [phase, setPhase] = useState<"ready" | "results" | "offers">("ready")
-  const candidates = useMemo(eligibleClubs, [])
+
+  // Reputacao do tecnico — o que faz uma otima temporada valer no mercado.
+  const standing = useMemo(() => {
+    const historia = state.seasonHistory ?? []
+    const rep = historia.length ? buildCareerStats(historia).reputation : 0
+    return {
+      reputation: rep,
+      totalTitles: (state.coachTotalTitles ?? 0) + (state.coachLegacy?.totalTitles ?? 0),
+      reputationLevel: state.coachLegacy?.reputationLevel ?? 0,
+    }
+  }, [state.seasonHistory, state.coachTotalTitles, state.coachLegacy])
+
+  const score = useMemo(() => coachStandingScore(standing), [standing])
 
   const results = useMemo<RoundResult[]>(() => {
     const brazil = allTeams.filter(t => t.divisao === "serie_a")
@@ -55,12 +50,12 @@ export default function UnemployedCareerPage() {
     return out
   }, [round])
 
-  const offers = useMemo(() => {
-    const ordered = [...candidates].sort((a, b) => hash(`${round}:${a.file_key}`) - hash(`${round}:${b.file_key}`))
-    // Uma vaga de Série A de baixo orçamento é rara; as demais vêm das divisões
-    // permitidas. Nunca oferece os gigantes apenas porque o usuário avançou uma rodada.
-    return ordered.slice(0, 3)
-  }, [candidates, round])
+  // Propostas ancoradas na reputacao: campeao recebe grandes, iniciante recebe
+  // modestos. A rodada e a semente, entao "recusar e continuar" traz outro lote.
+  const offers = useMemo(
+    () => ofertasParaDesempregado(allTeams, standing, round),
+    [standing, round],
+  )
 
   const continueFromResults = () => {
     setState({ week: round })
@@ -100,7 +95,7 @@ export default function UnemployedCareerPage() {
 
         {phase === "results" && <section><h2 className="mb-4 text-xl font-black">Resultados da rodada</h2><div className="grid gap-2 md:grid-cols-2">{results.map(game => <div key={`${game.home.curto}-${game.away.curto}`} className="grid grid-cols-[1fr_auto_1fr] items-center rounded-xl border border-white/8 bg-white/[.035] px-4 py-3 text-sm"><span className="text-right font-bold">{game.home.nome}</span><strong className="mx-4 rounded-lg bg-black/40 px-3 py-1 text-lg">{game.homeGoals} : {game.awayGoals}</strong><span className="font-bold">{game.away.nome}</span></div>)}</div><button onClick={continueFromResults} className="ml-auto mt-6 flex items-center gap-2 rounded-xl bg-[#00ffc8] px-6 py-3 font-black text-black">Continuar <ChevronRight className="h-4 w-4" /></button></section>}
 
-        {phase === "offers" && <section><div className="mb-5"><p className="text-xs font-black uppercase tracking-wider text-[#00ffc8]">Mercado de treinadores</p><h2 className="text-2xl font-black">Propostas recebidas</h2></div><div className="grid gap-4 md:grid-cols-3">{offers.map(team => <article key={team.file_key} className="rounded-2xl border border-white/10 bg-white/[.04] p-5"><Briefcase className="h-7 w-7 text-[#00ffc8]" /><h3 className="mt-4 text-lg font-black">{team.nome}</h3><p className="mt-1 text-sm text-white/45">{String(team.divisao).replaceAll("_", " ")} · Prestígio {team.prestigio}</p><p className="mt-4 text-sm leading-6 text-white/65">A diretoria abriu o cargo e deseja conversar com você para assumir imediatamente.</p><button onClick={() => accept(team)} className="mt-5 w-full rounded-lg bg-[#00ffc8] py-2.5 text-sm font-black text-black">Aceitar proposta</button></article>)}</div><button onClick={declineAll} className="mt-6 rounded-lg border border-white/15 px-5 py-2.5 text-sm font-bold text-white/65 hover:bg-white/5">Recusar e continuar simulando</button></section>}
+        {phase === "offers" && <section><div className="mb-5 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-[#00ffc8]">Mercado de treinadores</p><h2 className="text-2xl font-black">Propostas recebidas</h2></div><div className="text-right text-xs text-white/45">Sua reputação<div className="text-lg font-black text-white">{score >= 80 ? "Elite" : score >= 60 ? "Consolidada" : score >= 35 ? "Em ascensão" : "Iniciante"}</div></div></div><div className="grid gap-4 md:grid-cols-3">{offers.map(team => <article key={team.file_key} className="rounded-2xl border border-white/10 bg-white/[.04] p-5"><Briefcase className="h-7 w-7 text-[#00ffc8]" /><h3 className="mt-4 text-lg font-black">{team.nome}</h3><p className="mt-1 text-sm text-white/45">{String(team.divisao).replaceAll("_", " ")} · Prestígio {team.prestigio}</p><p className="mt-4 text-sm leading-6 text-white/65">A diretoria abriu o cargo e deseja conversar com você para assumir imediatamente.</p><button onClick={() => accept(team)} className="mt-5 w-full rounded-lg bg-[#00ffc8] py-2.5 text-sm font-black text-black">Aceitar proposta</button></article>)}</div><button onClick={declineAll} className="mt-6 rounded-lg border border-white/15 px-5 py-2.5 text-sm font-bold text-white/65 hover:bg-white/5">Recusar e continuar simulando</button></section>}
       </div>
     </main>
   )

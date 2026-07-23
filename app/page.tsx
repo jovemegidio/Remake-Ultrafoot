@@ -42,6 +42,7 @@ import {
   listJobOffers,
   removeJobOffer,
   clearJobOffers,
+  assumirClube,
   type PendingJobOffer,
 } from "@/lib/career-moves"
 import { useTranslation } from "@/lib/i18n"
@@ -233,21 +234,15 @@ export default function DashboardPage() {
 
   /** Aceitar proposta: assume o novo clube e limpa as propostas pendentes. */
   const handleAcceptJobOffer = (offer: PendingJobOffer) => {
-    clearJobOffers()
-    // Trocar apenas o codigo do clube deixava o elenco, a tatica e os fixtures do
-    // emprego anterior no motor. Recarrega o clube e preserva somente o tempo da carreira.
-    gameEngine.initializeGame(offer.clubShort)
-    useGameEngine.setState({ currentWeek: saveState.week, currentSeason: saveState.season })
-    setState({
-      selectedTeamShort: offer.clubShort,
-      divisionOverride: undefined,
-      fixtures: [],
-      standings: [],
-      squadPlayers: undefined,
-      youthPlayers: undefined,
-      youthCareer: undefined,
+    // Mesma troca de emprego da Area do Treinador, pela funcao compartilhada.
+    assumirClube(offer.clubShort, {
+      initializeGame: gameEngine.initializeGame,
+      setEngineTime: (week, season) => useGameEngine.setState({ currentWeek: week, currentSeason: season }),
+      setSaveState: (patch) => setState(patch as Parameters<typeof setState>[0]),
+      navigate: hardNavigate,
+      week: saveState.week,
+      season: saveState.season,
     })
-    hardNavigate("/")
   }
 
   /**

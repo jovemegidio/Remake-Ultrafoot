@@ -14,8 +14,9 @@ import { competitionsByLeague, type Competition } from "@/lib/international-comp
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
-import { generateJobOffers, computeBoardConfidence, calcSeasonObjective } from "@/lib/board-engine"
+import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldFireManager } from "@/lib/board-engine"
 import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
+import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
 import { resolveDivisionChange } from "@/lib/promotion-relegation"
 import { processDebtMonth } from "@/lib/debt-engine"
@@ -2087,6 +2088,28 @@ export function useGameManager() {
           },
         )
         if (ofertas.length) addJobOffers(ofertas, st.season, newWeek)
+
+        // ── DEMISSAO PELA DIRETORIA ──────────────────────────────────────────
+        //
+        // shouldFireManager (board-engine) existia mas nunca era chamada — por
+        // pior que fosse a campanha, o jogo jamais te tirava do clube. Agora a
+        // diretoria demite em estado CRITICO (confianca < 25) e, ainda assim,
+        // por chance, com mais paciencia no comeco da temporada. Poupamos o
+        // comeco absoluto (semana <= 4) para nao demitir antes de o time jogar.
+        const progressoTemporada = Math.min(1, newWeek / Math.max(1, seasonEndWeek))
+        if (newWeek > 4 && shouldFireManager(confianca, progressoTemporada)) {
+          addNotificationRef.current({
+            type: "system",
+            title: "Você foi demitido",
+            message: `A diretoria do ${teamNow.nome} decidiu encerrar seu ciclo após a sequência de resultados. Você está livre no mercado de treinadores.`,
+            priority: "high",
+          })
+          clearJobOffers()
+          setSaveState({ selectedTeamShort: null } as Partial<typeof currentState>)
+          if (typeof window !== "undefined") hardNavigate("/sem-clube")
+          // Encerra o avanco: sem clube, nao ha ceremonia de campeao a checar.
+          return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
+        }
       }
     } catch {
       // Propostas sao um extra: se algo falhar aqui, o avanco de semana NAO pode quebrar.

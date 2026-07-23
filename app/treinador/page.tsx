@@ -8,7 +8,8 @@ import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
-import { listJobOffers, removeJobOffer, type PendingJobOffer } from "@/lib/career-moves"
+import { listJobOffers, removeJobOffer, assumirClube, type PendingJobOffer } from "@/lib/career-moves"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { cn } from "@/lib/utils"
 import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle } from "lucide-react"
 
@@ -22,9 +23,23 @@ import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy
 export default function TreinadorPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
-  const { state } = useGameState()
+  const { state, setState } = useGameState()
   const { currentSeason } = useGameManager()
   const matchResults = useGameEngine(s => s.matchResults)
+  const initializeGame = useGameEngine(s => s.initializeGame)
+
+  // Aceitar a proposta AQUI (antes so dava para recusar; aceitar exigia ir ao
+  // Escritorio). Mesma troca de emprego, pela funcao compartilhada.
+  const aceitarOferta = useCallback((oferta: PendingJobOffer) => {
+    assumirClube(oferta.clubShort, {
+      initializeGame,
+      setEngineTime: (week, season) => useGameEngine.setState({ currentWeek: week, currentSeason: season }),
+      setSaveState: (patch) => setState(patch as Parameters<typeof setState>[0]),
+      navigate: hardNavigate,
+      week: state.week,
+      season: state.season,
+    })
+  }, [initializeGame, setState, state.week, state.season])
 
   const [ofertas, setOfertas] = useState<PendingJobOffer[]>([])
   const atualizarOfertas = useCallback(() => {
@@ -162,6 +177,12 @@ export default function TreinadorPage() {
                     </div>
                     <span className="text-[11px] text-white/40">prestígio {oferta.clubPrestige}</span>
                     <button
+                      onClick={() => aceitarOferta(oferta)}
+                      className="rounded-lg bg-[#00ffc8] px-3 py-1.5 text-xs font-black text-black hover:brightness-110"
+                    >
+                      Aceitar
+                    </button>
+                    <button
                       onClick={() => { removeJobOffer(oferta.id); atualizarOfertas() }}
                       className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/40 hover:bg-white/5 hover:text-white/70"
                     >
@@ -169,9 +190,6 @@ export default function TreinadorPage() {
                     </button>
                   </div>
                 ))}
-                <p className="text-[10px] text-white/35">
-                  Para aceitar uma proposta, use o card do Escritório — é lá que a troca de clube acontece.
-                </p>
               </div>
             )}
           </section>
