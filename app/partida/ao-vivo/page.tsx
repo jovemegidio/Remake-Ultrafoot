@@ -720,6 +720,36 @@ export default function PartidaAoVivoPage() {
     return { ...base, attack: 1, midfield: 2 }
   }, [teamTactics.playingStyle])
 
+  // FORCA REAL DO LADO DO USUARIO — do elenco, nao do prestigio do clube.
+  // Antes homeAttack/Defense/Midfield = prestigio (um numero so): um elenco
+  // recheado de craques nao criava mais chances que um mediano de mesmo
+  // prestigio. Aqui saem dos atributos do XI titular, por setor, mais a tatica
+  // e um modificador de FORMA e MORAL (que o motor ignorava por completo).
+  const userForces = useMemo(() => {
+    const xi = enginePlayers.filter(p => p.isStarter && !p.injury)
+    const setor = (posicoes: string[], quantos: number) => {
+      const g = xi.filter(p => posicoes.includes(p.position)).sort((a, b) => b.overall - a.overall).slice(0, quantos)
+      return g.length ? g.reduce((s, p) => s + p.overall, 0) / g.length : 65
+    }
+    const atk = setor(["ATA", "PE", "PD"], 3)
+    const mid = setor(["MEI", "VOL"], 4)
+    const linha = setor(["ZAG", "LD", "LE"], 4)
+    const gk = setor(["GOL"], 1)
+    const def = (linha * 4 + gk) / 5
+    const overall = xi.length ? xi.reduce((s, p) => s + p.overall, 0) / xi.length : (userSide === "home" ? homeTeam.prestigio : awayTeam.prestigio)
+    // Forma (0-100) e moral (rotulo) do XI viram um modificador de +/- ~7.
+    const pMoral = (m: string) => (m === "Feliz" ? 80 : m === "Motivado" ? 68 : m === "Descontente" ? 35 : m === "Revoltado" ? 20 : 55)
+    const formaMedia = xi.length ? xi.reduce((s, p) => s + (p.form ?? 70), 0) / xi.length : 70
+    const moralMedia = xi.length ? xi.reduce((s, p) => s + (p.moralePoints ?? pMoral(p.morale)), 0) / xi.length : 55
+    const mod = (formaMedia - 70) / 9 + (moralMedia - 55) / 13
+    return {
+      overall,
+      attack: atk + tacticalForces.attack + mod,
+      defense: def + tacticalForces.defense + mod,
+      midfield: mid + tacticalForces.midfield + mod,
+    }
+  }, [enginePlayers, tacticalForces, userSide, homeTeam.prestigio, awayTeam.prestigio])
+
   // Config da simulacao
   const config = useMemo(() => ({
     homeTeam,
@@ -728,8 +758,10 @@ export default function PartidaAoVivoPage() {
     // vindo do elenco. Isso aumenta a dificuldade sem manipular placares.
     // ENTROSAMENTO do usuario vira ate +5 de forca (time que joga junto rende
     // mais, estilo FM). So o lado do usuario recebe; a IA fica no prestigio.
-    homeRating: homeTeam.prestigio + (userSide === "away" ? 2 : userSide === "home" ? bonusEntrosamento : 0),
-    awayRating: awayTeam.prestigio + (userSide === "home" ? 2 : userSide === "away" ? bonusEntrosamento : 0),
+    // Rating do lado do usuario vem do OVERALL do elenco real (+entrosamento);
+    // a IA segue no prestigio + pequeno ganho de preparo.
+    homeRating: userSide === "home" ? userForces.overall + bonusEntrosamento : homeTeam.prestigio + (userSide === "away" ? 2 : 0),
+    awayRating: userSide === "away" ? userForces.overall + bonusEntrosamento : awayTeam.prestigio + (userSide === "home" ? 2 : 0),
     homeSquad: homeSquad.map(toSquadPlayer),
     awaySquad: awaySquad.map(toSquadPlayer),
     durationMinutes: matchCtx.duration,
@@ -750,13 +782,14 @@ export default function PartidaAoVivoPage() {
     // Mentalidade aplicada ao lado do usuario (afeta a simulacao ao vivo).
     homeMentality: userSide === "home" ? userMentality : undefined,
     awayMentality: userSide === "away" ? userMentality : undefined,
-    homeAttack: userSide === "home" ? homeTeam.prestigio + tacticalForces.attack : undefined,
-    homeDefense: userSide === "home" ? homeTeam.prestigio + tacticalForces.defense : undefined,
-    homeMidfield: userSide === "home" ? homeTeam.prestigio + tacticalForces.midfield : undefined,
-    awayAttack: userSide === "away" ? awayTeam.prestigio + tacticalForces.attack : undefined,
-    awayDefense: userSide === "away" ? awayTeam.prestigio + tacticalForces.defense : undefined,
-    awayMidfield: userSide === "away" ? awayTeam.prestigio + tacticalForces.midfield : undefined,
-  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, engineSetPieceTakers, engineTacticalAssignments])
+    // Forcas por setor do lado do usuario — do elenco real + tatica + forma/moral.
+    homeAttack: userSide === "home" ? userForces.attack : undefined,
+    homeDefense: userSide === "home" ? userForces.defense : undefined,
+    homeMidfield: userSide === "home" ? userForces.midfield : undefined,
+    awayAttack: userSide === "away" ? userForces.attack : undefined,
+    awayDefense: userSide === "away" ? userForces.defense : undefined,
+    awayMidfield: userSide === "away" ? userForces.midfield : undefined,
+  }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments])
 
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty } = sim

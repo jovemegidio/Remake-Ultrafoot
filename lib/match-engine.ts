@@ -91,6 +91,8 @@ export interface MatchState {
   momentum: number  // -50 a +50 (positivo = mandante dominando)
   homeReds: number  // quantos vermelhos o mandante tem
   awayReds: number
+  homeInjuries: number // lesoes no jogo (o substituto rende um pouco menos)
+  awayInjuries: number
   /** Amarelos por atleta na partida; o segundo sempre gera expulsão. */
   playerYellowCards: Record<string, number>
   playerRedCards: Record<string, boolean>
@@ -202,6 +204,8 @@ export function createInitialState(): MatchState {
     momentum: 0,
     homeReds: 0,
     awayReds: 0,
+    homeInjuries: 0,
+    awayInjuries: 0,
     playerYellowCards: {},
     playerRedCards: {},
     pendingPenalty: null,
@@ -465,17 +469,33 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   const avg = total / 2
   const baseShot = Math.min(0.15, 0.075 + (avg - 60) * 0.0022)
 
-  // Diferencial ataque vs defesa adversária
-  const homeAttDiff = (homeAttEff - awayDefEff) * 0.0010
-  const awayAttDiff = (awayAttEff - homeDefEff) * 0.0010
+  // Diferencial ataque vs defesa adversária — peso AUMENTADO para o favoritismo
+  // aparecer de verdade. Antes *0.0010: 20 pts de vantagem mudavam a chance de
+  // chute em so 0.02 (o acaso dominava). Agora um elenco superior cria mais.
+  const homeAttDiff = (homeAttEff - awayDefEff) * 0.0020
+  const awayAttDiff = (awayAttEff - homeDefEff) * 0.0020
 
-  // Bônus de momentum para o time dominante
-  const homeMomBonus = state.momentum > 0 ? Math.min(0.06, state.momentum * 0.0012) : 0
-  const awayMomBonus = state.momentum < 0 ? Math.min(0.06, -state.momentum * 0.0012) : 0
+  // MEIO-CAMPO cria chances (antes so mexia na posse, um numero cosmetico):
+  // dominar o meio gera mais finalizacoes, como na vida real.
+  const midDiff = homeSt.midfield - awaySt.midfield
+  const homeMidBonus = Math.max(-0.05, Math.min(0.05, midDiff * 0.0016))
+  const awayMidBonus = Math.max(-0.05, Math.min(0.05, -midDiff * 0.0016))
+
+  // ANTI-GOLEADA / gestao de resultado: o gol dava momentum ao ARTILHEIRO, que
+  // ficava mais forte — bola de neve rumo a goleada. Invertido: quem esta na
+  // FRENTE recua (cria menos); quem esta ATRAS se lanca (cria mais). E o que os
+  // times fazem de verdade — segurar o resultado / partir para o desespero.
+  const lead = state.home.goals - state.away.goals
+  const homeLeadAdj = lead >= 2 ? -0.03 : lead === 1 ? -0.012 : lead === -1 ? 0.012 : lead <= -2 ? 0.03 : 0
+  const awayLeadAdj = -homeLeadAdj
 
   // Penalidade por time com 10 jogadores
   const homeRedShotPen = state.homeReds * 0.09
   const awayRedShotPen = state.awayReds * 0.09
+
+  // Lesao enfraquece o time (substituto rende menos), efeito modesto e limitado.
+  const homeInjPen = Math.min(0.045, state.homeInjuries * 0.018)
+  const awayInjPen = Math.min(0.045, state.awayInjuries * 0.018)
 
   // Desespero nos minutos finais do time que está perdendo
   let homeLateBonus = 0
@@ -490,11 +510,11 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   // weatherFactor (0.85-1.0): chuva/gramado ruim reduz a criação de chances
   const wf = config.weatherFactor != null ? Math.max(0.75, Math.min(1, config.weatherFactor)) : 1
 
-  const homeShotChance = Math.max(0.04, Math.min(0.22,
-    (baseShot + homeAttDiff + homeMomBonus - homeRedShotPen + homeLateBonus) * wf * (0.96 + homeAdvantage * 0.44)
+  const homeShotChance = Math.max(0.03, Math.min(0.24,
+    (baseShot + homeAttDiff + homeMidBonus + homeLeadAdj - homeRedShotPen - homeInjPen + homeLateBonus) * wf * (0.96 + homeAdvantage * 0.44)
   ))
-  const awayShotChance = Math.max(0.04, Math.min(0.22,
-    (baseShot + awayAttDiff + awayMomBonus - awayRedShotPen + awayLateBonus) * wf * (1.06 - homeAdvantage * 0.38)
+  const awayShotChance = Math.max(0.03, Math.min(0.24,
+    (baseShot + awayAttDiff + awayMidBonus + awayLeadAdj - awayRedShotPen - awayInjPen + awayLateBonus) * wf * (1.06 - homeAdvantage * 0.38)
   ))
 
   // ── Faltas e cartões ──────────────────────────────────────────────────────
@@ -555,11 +575,14 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
 
 function computeXG(shooterShooting: number, gkDefending: number, minute: number): number {
   // Calibrado para xG/chute medio ~0.11 (realista). Total ~2.6-2.9 por jogo.
-  const base = 0.03 + rnd() * 0.11
-  const shooterBonus = (shooterShooting - 70) * 0.0015   // bom chutador aumenta
-  const gkPenalty = (gkDefending - 70) * 0.0013          // bom goleiro reduz
+  // Peso do finalizador e do goleiro AUMENTADO: antes (0.0015/0.0013) o acaso
+  // dominava e a qualidade individual quase nao aparecia — um artilheiro 90
+  // convertia quase igual a um zagueiro. Agora a habilidade pesa de verdade.
+  const base = 0.035 + rnd() * 0.085
+  const shooterBonus = (shooterShooting - 70) * 0.0030   // bom chutador aumenta
+  const gkPenalty = (gkDefending - 70) * 0.0026          // bom goleiro reduz
   const lateBonus = minute >= 85 ? 0.022 : minute >= 78 ? 0.012 : 0
-  return Math.max(0.02, Math.min(0.55, base + shooterBonus - gkPenalty + lateBonus))
+  return Math.max(0.02, Math.min(0.6, base + shooterBonus - gkPenalty + lateBonus))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -812,12 +835,17 @@ function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
   if (rnd() < baseInjury * lateMulti) {
     const injSide: Side = rnd() < probs.homeAdvantage ? "away" : "home"
     const injured = pickPlayer(injSide, config, ["ZAG", "VOL", "MEI", "ATA", "LD", "LE"])
+    // Lesao TIRA de campo: o time enfraquece um pouco pelo resto do jogo (o
+    // substituto rende menos). Antes a lesao era so um flash narrativo.
+    if (injSide === "home") state.homeInjuries += 1
+    else state.awayInjuries += 1
+    const entra = pickPlayer(injSide, config, ["ATA", "MEI", "VOL", "ZAG", "LD", "LE"])
     state.events = [{
       id: nameId(), minute, type: "injury", side: injSide,
-      text: `${injured} fica no chão — possível lesão`,
+      text: `${injured} se machuca e não tem condições — ${entra} entra no lugar`,
       player: injured, important: true,
     }, ...state.events]
-    state.flash = { side: injSide, type: "chance" }
+    state.flash = null
   }
 
   // Pênalti (raro — ~1% por minuto)
