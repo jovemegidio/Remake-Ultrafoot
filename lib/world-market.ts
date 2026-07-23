@@ -1,0 +1,183 @@
+"use client"
+
+// MERCADO DO MUNDO — a IA negociando entre si.
+//
+// O buraco: so o clube do USUARIO mudava de elenco. Os adversarios eram gerados
+// na hora a partir do seed, entao o mundo era estatico — o mesmo Flamengo, com
+// os mesmos jogadores, para sempre. `tickAIDecisions` (ai-club-engine) era um
+// stub que devolvia lista vazia.
+//
+// Aqui fica o registro das CHEGADAS. A SAIDA ja tinha registro
+// ([[departed-players]]), que o getPlayersForTeam usa para tirar do elenco de
+// origem quem foi embora. Juntando os dois lados, uma transferencia entre dois
+// clubes da IA passa a existir de verdade: some de la, aparece aqui.
+//
+// Este modulo NAO importa players-data (que importa este) — a simulacao recebe o
+// elenco por callback. Mesmo motivo de departed-players ficar fora do engine.
+
+import { storeGet, storeSet } from "@/lib/persistent-store"
+import { getActiveCareerId, getCareerScopedKey } from "@/lib/save-system"
+import { markDeparted } from "@/lib/departed-players"
+
+const KEY = () => getCareerScopedKey("ultrafoot:world-arrivals")
+
+const SIGLA_CLUBE = new Set(["fc", "cf", "sc", "ec", "ca", "cr", "ac", "se", "afc", "ud", "cd", "clube", "club"])
+function norm(s: string): string {
+  const base = (s || "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+  return base.split(" ").filter(w => w && !SIGLA_CLUBE.has(w)).join(" ")
+}
+
+/** Atleta que CHEGOU a um clube por transferencia entre clubes da IA. */
+export interface ArrivedPlayer {
+  nome: string
+  pos: string
+  idade: number
+  base: number
+  nac?: string
+  /** Clube de origem — so para a noticia/historico. */
+  deOnde: string
+  temporada: number
+}
+
+type ArrivalsMap = Record<string, ArrivedPlayer[]>
+
+let cache: ArrivalsMap | null = null
+let cacheCareerId: string | null = null
+
+function carregar(): ArrivalsMap {
+  const atual = getActiveCareerId()
+  if (cache && cacheCareerId === atual) return cache
+  cacheCareerId = atual
+  try {
+    const raw = storeGet(KEY())
+    cache = raw ? (JSON.parse(raw) as ArrivalsMap) : {}
+  } catch {
+    cache = {}
+  }
+  return cache
+}
+
+function salvar(map: ArrivalsMap): void {
+  cache = map
+  storeSet(KEY(), JSON.stringify(map))
+}
+
+/** Reforcos que este clube recebeu da IA (vazio na maioria dos clubes). */
+export function getArrivals(clubeNome: string): ArrivedPlayer[] {
+  return carregar()[norm(clubeNome)] ?? []
+}
+
+/** Alguem chegou a algum clube? Atalho barato para o caminho quente. */
+export function hasAnyArrival(): boolean {
+  return Object.keys(carregar()).length > 0
+}
+
+/** Registra a transferencia: sai da origem (departed) e entra no destino. */
+export function recordWorldTransfer(
+  origem: string,
+  destino: string,
+  atleta: Omit<ArrivedPlayer, "deOnde">,
+): void {
+  if (!origem || !destino || !atleta?.nome) return
+  markDeparted(origem, atleta.nome)
+  const map = { ...carregar() }
+  const k = norm(destino)
+  const lista = map[k] ?? []
+  if (lista.some(a => norm(a.nome) === norm(atleta.nome))) return
+  map[k] = [...lista, { ...atleta, deOnde: origem }]
+  salvar(map)
+}
+
+export function reloadWorldMarket(): void {
+  cache = null
+  cacheCareerId = null
+}
+
+// ── Janela de transferencias do mundo ──────────────────────────────────────
+
+export interface WorldTransferNews {
+  atleta: string
+  de: string
+  para: string
+  valor: number
+}
+
+interface ClubeParaMercado {
+  nome: string
+  curto: string
+  prestigio: number
+  divisao: string
+}
+
+function hash(v: string): number {
+  let h = 2166136261
+  for (const c of v) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+  return h >>> 0
+}
+
+/**
+ * JANELA DA IA: move um punhado de atletas entre clubes da IA ao virar a
+ * temporada. Deterministica pela semente (a mesma temporada gera as mesmas
+ * transferencias) e conservadora — poucos negocios por ano, sempre de um clube
+ * menor para um MAIOR, como o fluxo real do mercado.
+ *
+ * `squadOf` entra por parametro para este modulo nao importar players-data.
+ * `clubeDoUsuario` fica de fora: o elenco dele e do engine, nao daqui.
+ */
+export function simulateWorldTransferWindow(params: {
+  clubes: readonly ClubeParaMercado[]
+  squadOf: (curto: string) => { nome: string; pos: string; idade: number; base: number; nac?: string }[]
+  clubeDoUsuario: string
+  temporada: number
+  /** Quantos negocios tentar nesta janela. */
+  quantidade?: number
+}): WorldTransferNews[] {
+  const { clubes, squadOf, clubeDoUsuario, temporada } = params
+  const quantidade = params.quantidade ?? 14
+  const noticias: WorldTransferNews[] = []
+
+  // So clubes com alguma expressao entram no mercado do mundo (evita ruido de
+  // milhares de clubes pequenos e mantem o custo baixo).
+  const elegiveis = clubes
+    .filter(c => c.curto !== clubeDoUsuario && (c.prestigio ?? 0) >= 55)
+    .sort((a, b) => b.prestigio - a.prestigio)
+  if (elegiveis.length < 4) return noticias
+
+  const jaMovido = new Set<string>()
+  for (let i = 0; i < quantidade; i++) {
+    const semente = hash(`${temporada}:${i}`)
+    // Comprador: sorteado entre os de MAIOR prestigio (metade de cima).
+    const topo = elegiveis.slice(0, Math.max(2, Math.floor(elegiveis.length / 2)))
+    const comprador = topo[semente % topo.length]
+    // Vendedor: alguem de prestigio MENOR que o comprador.
+    const menores = elegiveis.filter(c => c.prestigio < comprador.prestigio - 3)
+    if (menores.length === 0) continue
+    const vendedor = menores[hash(`v${temporada}:${i}`) % menores.length]
+
+    const elenco = squadOf(vendedor.curto)
+    if (elenco.length < 14) continue // nao esvazia elenco curto
+    // Alvo: um dos melhores do vendedor, preferindo jovens (mercado real).
+    const alvos = [...elenco]
+      .sort((a, b) => (b.base + (b.idade <= 24 ? 4 : 0)) - (a.base + (a.idade <= 24 ? 4 : 0)))
+      .slice(0, 6)
+      .filter(p => !jaMovido.has(`${norm(vendedor.nome)}::${norm(p.nome)}`))
+    if (alvos.length === 0) continue
+    const alvo = alvos[hash(`a${temporada}:${i}`) % alvos.length]
+
+    // O comprador so leva quem agrega (nao compra pior do que ja tem em media).
+    if (alvo.base < comprador.prestigio - 18) continue
+
+    jaMovido.add(`${norm(vendedor.nome)}::${norm(alvo.nome)}`)
+    recordWorldTransfer(vendedor.nome, comprador.nome, {
+      nome: alvo.nome, pos: alvo.pos, idade: alvo.idade, base: alvo.base, nac: alvo.nac,
+      temporada,
+    })
+    noticias.push({
+      atleta: alvo.nome, de: vendedor.nome, para: comprador.nome,
+      valor: Math.round(Math.pow(alvo.base / 60, 3) * 4_000_000),
+    })
+  }
+  return noticias
+}

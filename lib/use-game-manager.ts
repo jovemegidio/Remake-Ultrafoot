@@ -7,9 +7,10 @@ import { safeLocalSet } from "@/lib/safe-storage"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
-import { useGameEngine, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
+import { useGameEngine, getContractStatus, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
 import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam } from "@/lib/players-data"
+import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
@@ -1875,6 +1876,50 @@ export function useGameManager() {
       // Adversarios da PROXIMA temporada: da divisao ja atualizada E com a
       // piramide nova aplicada (rivais que subiram/cairam ja no lugar certo).
       setClubDivisions(nextClubDivisions)
+
+      // CONTRATO VENCENDO: agora dispara de verdade. Antes o relogio comparava o
+      // endDate absoluto com a semana da temporada (que zera), entao nenhum
+      // contrato chegava a "expiring" — o aviso nunca saia. Ver absoluteWeek.
+      try {
+        const elenco = useGameEngine.getState().squadPlayers
+        const vencendo = elenco.filter(p => getContractStatus(p, 0, nextSeason) === "expiring")
+        const vencidos = elenco.filter(p => getContractStatus(p, 0, nextSeason) === "expired")
+        if (vencendo.length > 0 || vencidos.length > 0) {
+          const nomes = [...vencidos, ...vencendo].slice(0, 4).map(p => p.name).join(", ")
+          addNotificationRef.current({
+            type: "system", priority: "high",
+            title: vencidos.length > 0
+              ? `${vencidos.length} contrato${vencidos.length === 1 ? "" : "s"} vencido${vencidos.length === 1 ? "" : "s"}`
+              : `${vencendo.length} contrato${vencendo.length === 1 ? "" : "s"} perto do fim`,
+            message: `${nomes}${(vencendo.length + vencidos.length) > 4 ? " e outros" : ""}. Renove antes de perder o atleta de graça.`,
+            href: "/contratos",
+          })
+        }
+      } catch { /* aviso e extra */ }
+
+      // MERCADO DO MUNDO: a IA negocia entre si na virada da temporada. Sem isto
+      // os elencos adversarios eram os mesmos do seed para sempre. Deterministico
+      // pela temporada; conservador (poucos negocios, sempre rumo a clube maior).
+      try {
+        const noticias = simulateWorldTransferWindow({
+          clubes: allTeams.map(t => ({ nome: t.nome, curto: t.curto, prestigio: t.prestigio ?? 60, divisao: String(t.divisao) })),
+          squadOf: (curto) => {
+            const t = getTeamByShort(curto)
+            return t ? getPlayersForTeam(t).map(p => ({ nome: p.nome, pos: String(p.pos), idade: p.idade, base: p.base, nac: p.nac })) : []
+          },
+          clubeDoUsuario: userShort,
+          temporada: currentState.season,
+        })
+        if (noticias.length > 0) {
+          const destaque = noticias.slice(0, 3).map(n => `${n.atleta} (${n.de} → ${n.para})`).join("; ")
+          addNotificationRef.current({
+            type: "transfer", priority: "medium",
+            title: `Mercado movimentado: ${noticias.length} transferências`,
+            message: `A janela mexeu com os elencos rivais. Destaques: ${destaque}.`,
+            href: "/mercado",
+          })
+        }
+      } catch { /* o mercado do mundo e um extra: nunca derruba a virada de temporada */ }
       const teamsForReset = getUserLeagueTeams(userShort, nextDivisionOverride)
       const newStandings = initializeStandings(teamsForReset)
 

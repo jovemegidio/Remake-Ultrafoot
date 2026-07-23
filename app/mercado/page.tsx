@@ -52,6 +52,7 @@ import {
   type Scout,
   type TransferOffer,
   nextTransferWindowWeek,
+  absoluteWeek,
 } from "@/lib/game-engine"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { PlayerAvatar } from "@/components/player-avatar"
@@ -60,7 +61,7 @@ import { cn } from "@/lib/utils"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { playerSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall } from "@/lib/player-attributes"
-import { canAffordTransfer } from "@/lib/debt-engine"
+import { canAffordTransfer, financeWithDebt, borrowingCapacity } from "@/lib/debt-engine"
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -201,7 +202,12 @@ interface FilterCard {
   value: string
 }
 
-function marketPlayerToEnginePlayer(p: Player, division = "serie_a", salarioNegociado?: number): EnginePlayer {
+function marketPlayerToEnginePlayer(
+  p: Player,
+  division = "serie_a",
+  salarioNegociado?: number,
+  fimContrato?: number,
+): EnginePlayer {
   // Atributos coerentes com a posicao quando o alvo nao os traz (antes usava
   // defaults planos 70/65/55 cegos a posicao).
   const attrs = attributesFromOverall(p.overall, p.position, p.name)
@@ -225,7 +231,9 @@ function marketPlayerToEnginePlayer(p: Player, division = "serie_a", salarioNego
     // Salario REALISTA por divisao (consistente com a economia do jogo), ou o
     // valor negociado na mesa do agente. Antes era overall*800 fixo — irreal
     // para clubes pequenos e desligado da nova economia.
-    contract: { salary: salarioNegociado ?? playerSalaryWeekly(p.overall, division), endDate: 52, releaseClause: p.releaseClause ?? null, signedWeek: 0, signedSeason: 2026 },
+    // endDate e semana ABSOLUTA (ver absoluteWeek). Era 52 fixo: um contrato
+    // assinado em 2028 ja nascia vencido, e nas primeiras temporadas nunca vencia.
+    contract: { salary: salarioNegociado ?? playerSalaryWeekly(p.overall, division), endDate: fimContrato ?? 52, releaseClause: p.releaseClause ?? null, signedWeek: 0, signedSeason: 2026 },
     injury: null,
     seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
     training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
@@ -1896,7 +1904,9 @@ export default function MercadoPage() {
         onConfirm={(fee, salarioSemanal) => {
           if (!selectedPlayer) return
           const divisaoUsuario = String(careerState.divisionOverride ?? userTeam.divisao ?? "serie_a")
-          const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer, divisaoUsuario, salarioSemanal)
+          // Contrato de 3 anos a partir de AGORA, em semana absoluta.
+          const fimContrato = absoluteWeek(gameEngine.currentSeason, gameEngine.currentWeek) + 52 * 3
+          const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer, divisaoUsuario, salarioSemanal, fimContrato)
           if (negotiationType === "loan") {
             const result = gameEngine.loanPlayer(enginePlayer, 26, Math.round(fee / 26))
             // Empréstimo tira o atleta do clube de origem durante o vínculo, senão
@@ -1920,9 +1930,19 @@ export default function MercadoPage() {
               return
             }
             if (gameEngine.balance < fee) {
-              setMarketNotice("Saldo insuficiente para concluir esta transferencia.")
-              setActiveTab("enviadas")
-              return
+              // FINANCIAR: falta caixa, mas o clube pode tomar emprestimo — o
+              // ciclo real (endividar para reforcar). Antes a compra so falhava.
+              const falta = fee - gameEngine.balance
+              const capacidade = borrowingCapacity(careerState.debt, gameEngine.weeklyIncome ?? 0)
+              if (falta > capacidade) {
+                setMarketNotice(`Saldo insuficiente e o banco não cobre a diferença (falta ${formatCurrency(falta)}, crédito disponível ${formatCurrency(capacidade)}). Venda alguém ou reduza a oferta.`)
+                setActiveTab("enviadas")
+                return
+              }
+              const novaDivida = financeWithDebt(careerState.debt, falta)
+              setCareerState({ debt: novaDivida })
+              gameEngine.addClubRevenue(falta)
+              setMarketNotice(`Contratação FINANCIADA: o clube tomou ${formatCurrency(falta)} emprestado (parcela de ${formatCurrency(novaDivida.monthlyPayment)}/mês). Atrasar parcelas congela o mercado.`)
             }
             const isFreeAgent = !selectedPlayer.team
             const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent)

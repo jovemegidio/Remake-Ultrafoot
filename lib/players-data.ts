@@ -10,6 +10,7 @@ import { allTeams, type Team } from "@/lib/teams-data"
 import realSquadsTM from "@/data/seeds/real-squads-tm.json"
 import { getPlayerOverride } from "@/lib/player-overrides"
 import { hasDeparted } from "@/lib/departed-players"
+import { getArrivals, hasAnyArrival } from "@/lib/world-market"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
   string,
@@ -876,9 +877,23 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
   // elencos (relato "contratei o Neymar mas ele continua no Santos"). O editor
   // pede `raw` e nesse modo NAO filtramos — ali o objetivo e ver o elenco
   // original do clube, edicoes e transferencias a parte.
+  // Sai quem foi embora E entra quem CHEGOU. As chegadas fecham o outro lado da
+  // transferencia entre clubes da IA: antes so a saida era registrada, entao o
+  // atleta sumia do vendedor e nao aparecia em lugar nenhum — o mundo perdia
+  // jogadores. Ver [[world-market]]. No modo `raw` (editor) nada disso se aplica.
   const source = opts?.raw
     ? sourceRaw
-    : sourceRaw.filter(p => !hasDeparted(team.nome, p.nome))
+    : (() => {
+        const semSaidas = sourceRaw.filter(p => !hasDeparted(team.nome, p.nome))
+        if (!hasAnyArrival()) return semSaidas
+        const chegadas = getArrivals(team.nome)
+        if (chegadas.length === 0) return semSaidas
+        const jaTem = new Set(semSaidas.map(p => p.nome.toLowerCase()))
+        const novos = chegadas
+          .filter(a => !jaTem.has(a.nome.toLowerCase()))
+          .map(a => ({ nome: a.nome, pos: a.pos as Player["pos"], idade: a.idade, base: a.base, time: team.nome, nac: a.nac }))
+        return [...semSaidas, ...novos]
+      })()
   const players = calibrateSquadRatings(team, ensurePlayableSquad(team, source))
   const cap = DIVISION_RATING_CAP[team.divisao as string] ?? 92
   const capped = cap >= 92 ? players : players.map(p => p.base > cap ? { ...p, base: cap } : p)

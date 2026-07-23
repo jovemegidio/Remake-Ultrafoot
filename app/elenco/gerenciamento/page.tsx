@@ -135,9 +135,9 @@ export default function ElencoPage() {
   // ele ia embora de graca.
   const situacaoContrato = useMemo(() => {
     const mapa = new Map<string, "ok" | "expiring" | "expired">()
-    for (const p of engineSquadPlayers) mapa.set(p.name, getContractStatus(p, engineCurrentWeek))
+    for (const p of engineSquadPlayers) mapa.set(p.name, getContractStatus(p, engineCurrentWeek, engineSeason))
     return mapa
-  }, [engineSquadPlayers, engineCurrentWeek])
+  }, [engineSquadPlayers, engineCurrentWeek, engineSeason])
 
   /** Moldura do card/linha conforme o contrato. */
   const molduraContrato = (nome: string) => {

@@ -179,6 +179,7 @@ export default function PreOfficePage() {
   const realTasks = useMemo(() => {
     if (!userTeam) return []
     const engineWeek = gameEngine.currentWeek
+    const engineSeason = gameEngine.currentSeason
     const tasks: Array<{
       id: number
       title: string
@@ -264,8 +265,8 @@ export default function PreOfficePage() {
 
     // Contratos expirando
     const expiring = gameEngine.squadPlayers.filter(p =>
-      getContractStatus(p, engineWeek) === "expiring" ||
-      getContractStatus(p, engineWeek) === "expired"
+      getContractStatus(p, engineWeek, engineSeason) === "expiring" ||
+      getContractStatus(p, engineWeek, engineSeason) === "expired"
     )
     if (expiring.length > 0) {
       tasks.push({

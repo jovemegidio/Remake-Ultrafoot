@@ -19,7 +19,7 @@ import { GameHeader } from "@/components/game-header"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
-import { useGameEngine, type Player, getContractStatus, formatWeeksToDate } from "@/lib/game-engine"
+import { useGameEngine, type Player, getContractStatus, formatWeeksToDate, absoluteWeek } from "@/lib/game-engine"
 import { formatCurrency } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 
@@ -47,8 +47,8 @@ export default function ContratosPage() {
     return squadPlayers
       .map(p => ({
         ...p,
-        contractStatus: getContractStatus(p, currentWeek),
-        weeksRemaining: p.contract ? p.contract.endDate - currentWeek : 0
+        contractStatus: getContractStatus(p, currentWeek, currentSeason),
+        weeksRemaining: p.contract ? p.contract.endDate - absoluteWeek(currentSeason, currentWeek) : 0
       }))
       .filter(p => {
         if (filter === "expiring") return p.contractStatus === "expiring"
@@ -60,13 +60,13 @@ export default function ContratosPage() {
         const statusOrder = { expired: 0, expiring: 1, ok: 2 }
         return statusOrder[a.contractStatus] - statusOrder[b.contractStatus]
       })
-  }, [squadPlayers, currentWeek, filter])
+  }, [squadPlayers, currentWeek, currentSeason, filter])
 
   // Contagem por status
   const statusCounts = useMemo(() => {
     const counts = { expiring: 0, expired: 0, ok: 0 }
     squadPlayers.forEach(p => {
-      counts[getContractStatus(p, currentWeek)]++
+      counts[getContractStatus(p, currentWeek, currentSeason)]++
     })
     return counts
   }, [squadPlayers, currentWeek])

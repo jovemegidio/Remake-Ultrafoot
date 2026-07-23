@@ -62,6 +62,53 @@ export function canAffordTransfer(
   return { ok: true }
 }
 
+/**
+ * FINANCIAR uma contratacao: o clube toma um emprestimo para cobrir o que falta
+ * no caixa. Antes a compra simplesmente falhava com "saldo insuficiente" — nao
+ * havia como se endividar para reforcar o elenco, que e o ciclo real do futebol.
+ *
+ * Cria a divida se ainda nao existir, ou soma ao saldo devedor e recalcula a
+ * parcela. A taxa de um credito novo e mais salgada que a da divida herdada.
+ */
+export function financeWithDebt(
+  debt: ClubDebtState | undefined,
+  amount: number,
+  opts?: { rate?: number; months?: number },
+): ClubDebtState {
+  const valor = Math.max(0, Math.round(amount))
+  const rate = opts?.rate ?? 0.13
+  const months = opts?.months ?? 48
+  if (!debt?.enabled || debt.principal <= 0) {
+    const monthlyRate = rate / 12
+    const payment = Math.round(valor * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months)))
+    return {
+      enabled: valor > 0, originalPrincipal: valor, principal: valor,
+      annualInterestRate: rate, termMonths: months, monthsPaid: 0,
+      monthlyPayment: payment, nextPaymentWeek: 4, missedPayments: 0,
+      renegotiations: 0, sponsorContributions: 0,
+    }
+  }
+  const next = { ...debt }
+  next.principal += valor
+  next.originalPrincipal += valor
+  // Mistura a taxa nova ao saldo (media ponderada) e recalcula a parcela.
+  const peso = valor / Math.max(1, next.principal)
+  next.annualInterestRate = next.annualInterestRate * (1 - peso) + rate * peso
+  const restante = Math.max(1, next.termMonths - next.monthsPaid)
+  const r = next.annualInterestRate / 12
+  next.monthlyPayment = Math.round(next.principal * r / (1 - Math.pow(1 + r, -restante)))
+  return next
+}
+
+/** Quanto o clube consegue tomar emprestado agora (teto prudencial). */
+export function borrowingCapacity(debt: ClubDebtState | undefined, weeklyIncome: number): number {
+  if (transfersFrozen(debt)) return 0
+  // Ate ~30 semanas de receita, menos o que ja deve.
+  const teto = Math.max(0, Math.round(weeklyIncome * 30))
+  const jaDevido = debt?.enabled ? debt.principal : 0
+  return Math.max(0, teto - jaDevido)
+}
+
 export function renegotiateDebt(debt: ClubDebtState): ClubDebtState {
   if(!debt.enabled||debt.renegotiations>=2)return debt
   const next={...debt,annualInterestRate:debt.annualInterestRate+.01,termMonths:debt.termMonths+24,renegotiations:debt.renegotiations+1}

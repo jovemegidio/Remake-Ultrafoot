@@ -5235,9 +5235,26 @@ export function formatWeeksToDate(weeks: number, startSeason: number): string {
   return `${months[month]} ${season}`
 }
 
-export function getContractStatus(player: Player, currentWeek: number): "ok" | "expiring" | "expired" {
+/** Temporada em que a carreira comeca — epoca do relogio de contratos. */
+export const CONTRACT_EPOCH_SEASON = 2026
+
+/**
+ * Semana ABSOLUTA desde o inicio da carreira. O `week` do save ZERA a cada
+ * temporada; `contract.endDate` e absoluto. Comparar os dois direto fazia
+ * `endDate - week` nunca diminuir entre temporadas — nenhum contrato vencia
+ * jamais, e o aviso de "contrato acabando" nunca disparava.
+ */
+export function absoluteWeek(season: number, week: number): number {
+  return Math.max(0, (season - CONTRACT_EPOCH_SEASON)) * 52 + Math.max(0, week)
+}
+
+export function getContractStatus(
+  player: Player,
+  currentWeek: number,
+  currentSeason = CONTRACT_EPOCH_SEASON,
+): "ok" | "expiring" | "expired" {
   if (!player.contract) return "expired"
-  const weeksRemaining = player.contract.endDate - currentWeek
+  const weeksRemaining = player.contract.endDate - absoluteWeek(currentSeason, currentWeek)
   if (weeksRemaining <= 0) return "expired"
   if (weeksRemaining <= 26) return "expiring" // 6 meses
   return "ok"
