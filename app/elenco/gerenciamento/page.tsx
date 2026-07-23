@@ -146,6 +146,21 @@ export default function ElencoPage() {
     if (st === "expiring") return "ring-1 ring-amber-400/60 bg-amber-400/[0.07]"
     return ""
   }
+
+  // REALISMO: nota da ultima partida, media, suspensao e persona por nome — o
+  // elenco desta tela vem do hook de UI, os dados vivem no motor.
+  const dadosMotor = useMemo(() => {
+    const mapa = new Map<string, { nota?: number; media?: number; susp: number; persona?: string }>()
+    for (const p of engineSquadPlayers) {
+      mapa.set(p.name, {
+        nota: p.lastMatchRating, media: p.avgMatchRating,
+        susp: p.suspendedMatches ?? 0, persona: p.persona?.rotulo,
+      })
+    }
+    return mapa
+  }, [engineSquadPlayers])
+  const corDaNota = (n?: number) =>
+    n == null ? "text-white/30" : n >= 7.5 ? "text-[#00ffc8]" : n >= 6.5 ? "text-white" : "text-amber-300"
   const engineSetPlayerShirtNumber = useGameEngine(s => s.setPlayerShirtNumber)
   const teamTactics = useGameEngine(s => s.teamTactics)
   const setTeamTactics = useGameEngine(s => s.setTeamTactics)
@@ -1547,8 +1562,23 @@ export default function ElencoPage() {
                           <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
                           <div className="flex-1 min-w-0">
                             <div className="truncate text-sm font-medium text-white">{player.name}</div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-[10px] text-white/40">{player.position}</span>
+                              {(() => { const d = dadosMotor.get(player.name); return (<>
+                                {d?.nota != null && (
+                                  <span className={cn("rounded bg-white/8 px-1.5 text-[9px] font-black tabular-nums", corDaNota(d.nota))} title="Nota da última partida">
+                                    {d.nota.toFixed(1)}
+                                  </span>
+                                )}
+                                {d && d.susp > 0 && (
+                                  <span className="rounded bg-red-500/25 px-1.5 text-[9px] font-black uppercase tracking-wide text-red-300" title="Suspenso">
+                                    suspenso {d.susp}
+                                  </span>
+                                )}
+                                {d?.persona && (
+                                  <span className="rounded bg-white/6 px-1.5 text-[9px] font-medium uppercase tracking-wide text-white/45">{d.persona}</span>
+                                )}
+                              </>) })()}
                               {situacaoContrato.get(player.name) === "expired" && (
                                 <span className="rounded bg-red-500/25 px-1.5 text-[9px] font-black uppercase tracking-wide text-red-300">contrato vencido</span>
                               )}

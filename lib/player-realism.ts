@@ -125,6 +125,28 @@ export function calcularNota(params: {
   return Math.max(4.5, Math.min(10, Math.round(nota * 10) / 10))
 }
 
+// ─── MORAL CONTINUA (0-100) ───────────────────────────────────────────────────
+//
+// A moral do jogo e um ROTULO ("Feliz".."Infeliz") em 112 lugares — refatorar
+// tudo seria arriscado. Em vez disso guardamos um valor 0-100 que SUSTENTA o
+// rotulo: a nota de partida move os pontos de forma fina, e o rotulo e derivado
+// deles. Codigo antigo que le o rotulo continua funcionando.
+
+export type MoralLabel = "Infeliz" | "Insatisfeito" | "Normal" | "Motivado" | "Feliz"
+
+export function rotuloDaMoral(pontos: number): MoralLabel {
+  if (pontos >= 82) return "Feliz"
+  if (pontos >= 64) return "Motivado"
+  if (pontos >= 42) return "Normal"
+  if (pontos >= 22) return "Insatisfeito"
+  return "Infeliz"
+}
+
+/** Ponto de partida quando so existe o rotulo (saves antigos). */
+export function pontosDoRotulo(label: MoralLabel): number {
+  return { Feliz: 90, Motivado: 74, Normal: 55, Insatisfeito: 32, Infeliz: 12 }[label] ?? 55
+}
+
 // ─── CARTOES → SUSPENSAO ──────────────────────────────────────────────────────
 
 /**

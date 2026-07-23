@@ -9,6 +9,7 @@ import { getCareerScopedKey } from "@/lib/save-system"
 import { allTeams, getTeamByShort } from "@/lib/teams-data"
 import {
   type PlayerPersona, gerarPersona, contribuicoesPorJogador, calcularNota, suspensaoPorCartoes,
+  rotuloDaMoral, pontosDoRotulo,
 } from "@/lib/player-realism"
 import { getCanonicalSeedPosition, getPlayersForTeam } from "@/lib/players-data"
 import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
@@ -462,6 +463,8 @@ export interface Player {
   lastMatchRating?: number
   /** Media de notas na temporada (para o perfil do atleta). */
   avgMatchRating?: number
+  /** Moral continua 0-100 que sustenta o rotulo morale. */
+  moralePoints?: number
   /** Amarelos acumulados na temporada rumo a suspensao automatica. */
   seasonYellows?: number
   /** Partidas de suspensao pendentes — fica FORA da escalacao ate zerar. */
@@ -3576,10 +3579,13 @@ export const useGameEngine = create<GameEngineState>()(
             )
             // Forma e moral reagem a nota: >=7.5 sobe, <6.0 cai.
             const deltaForma = nota >= 7.5 ? 4 : nota >= 7 ? 2 : nota < 6 ? -4 : 0
-            const escala: Player["morale"][] = ["Infeliz", "Insatisfeito", "Normal", "Motivado", "Feliz"]
-            let mi = Math.max(0, escala.indexOf(p.morale))
-            if (nota >= 7.8) mi = Math.min(4, mi + 1)
-            else if (nota < 5.5) mi = Math.max(0, mi - 1)
+            // MORAL CONTINUA (0-100) sustenta o rotulo: a nota move os pontos de
+            // forma fina (jogador reativo — temperamento baixo — oscila mais).
+            const pontosAtuais = p.moralePoints ?? pontosDoRotulo(p.morale)
+            const reatividade = 1 + (12 - persona.temperamentoNum) / 20 // ~0.6-1.5
+            const deltaMoral = (nota - 6.7) * 6 * reatividade + (resultado === "win" ? 3 : resultado === "loss" ? -3 : 0)
+            const novosPontos = Math.max(0, Math.min(100, pontosAtuais + deltaMoral))
+            const novoRotulo = rotuloDaMoral(novosPontos)
 
             const jogos = (p.avgMatchRating ? p.seasonStats.matchesPlayed : 0)
             const novaMedia = jogos > 0
@@ -3593,7 +3599,8 @@ export const useGameEngine = create<GameEngineState>()(
               seasonYellows: amarelosRestantes,
               suspendedMatches: (p.suspendedMatches ?? 0) + suspender,
               form: Math.max(0, Math.min(100, (p.form ?? 70) + deltaForma)),
-              morale: escala[mi],
+              moralePoints: Math.round(novosPontos),
+              morale: novoRotulo,
             }
             return { ...p, ...persist }
           })
@@ -4835,18 +4842,29 @@ export const useGameEngine = create<GameEngineState>()(
             // cima disto durante o ano (training-engine).
             const margem = p.potential - p.overall
             let overall = p.overall
+            // PERSONA molda o desenvolvimento (realismo FM): determinacao e
+            // profissionalismo altos aceleram o jovem rumo ao potencial; baixos
+            // fazem o talento "se perder". E por isso que dois jovens de mesmo
+            // potencial evoluem diferente.
+            const persona = p.persona ?? gerarPersona(p.id, p.overall)
+            const fatorPersona = 0.7 + ((persona.determinacao + persona.profissionalismo) / 40) * 0.9 // ~0.7-1.6
             if (age <= 23 && margem > 0) {
               const jogos = p.seasonStats?.matchesPlayed ?? 0
               const ritmo = age <= 19 ? 4 : age <= 21 ? 3 : 2
-              const ganho = Math.min(margem, ritmo + Math.floor(jogos / 12))
+              const ganhoBase = ritmo + Math.floor(jogos / 12)
+              const ganho = Math.min(margem, Math.max(1, Math.round(ganhoBase * fatorPersona)))
               overall = Math.min(p.potential, p.overall + ganho)
             } else if (age >= 32) {
-              overall = Math.max(p.potential - 12, p.overall - (age >= 35 ? 2 : 1))
+              // Profissional cuida do corpo: cai mais devagar.
+              const cai = (age >= 35 ? 2 : 1) - (persona.profissionalismo >= 15 ? 1 : 0)
+              overall = Math.max(p.potential - 12, p.overall - Math.max(0, cai))
             }
             return {
               ...p,
               age,
               overall,
+              persona,
+              seasonYellows: 0, // zera o acumulo de cartoes a cada temporada
               seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
             }
           })
