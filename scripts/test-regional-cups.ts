@@ -35,7 +35,14 @@ if (!nordestino || !paulista) { console.log(" FALHA: dado real sem clube BA/SP")
 const planoBA = getUserCupPlan(nordestino)
 const regionalBA = planoBA.find(p => p.competition.id === "copa_nordeste")
 ck(`${nordestino.nome} (BA) tem a Copa do Nordeste no calendário`, !!regionalBA)
-ck("a campanha regional tem 4 partidas", regionalBA?.matchCount === 4, String(regionalBA?.matchCount))
+// ATUALIZADO 23/07/2026: a copa regional deixou de ser um bloco fixo de 4 jogos
+// e passou a ter CAMINHO REAL (fase de grupos + mata-mata), como a Copa do
+// Nordeste de verdade. O matchCount agora vem de tamanhoDoCaminho, nao mais do
+// valor declarado em regional-cups.ts. Cobramos uma campanha de tamanho
+// plausivel em vez do 4 antigo.
+ck("a campanha regional tem caminho de grupos + mata-mata (8-14 jogos)",
+  (regionalBA?.matchCount ?? 0) >= 8 && (regionalBA?.matchCount ?? 0) <= 14,
+  String(regionalBA?.matchCount))
 // O predicado anterior usava startsWith("copa_") e casava com a copa_brasil —
 // que o Palmeiras DEVE ter. Compara com os ids exatos das regionais.
 ck(`${paulista.nome} (SP) NÃO tem copa regional`,
