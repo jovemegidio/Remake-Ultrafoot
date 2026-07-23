@@ -191,6 +191,23 @@ const STATE_RULE_IDS: Record<string, readonly string[]> = {
   CE: ["cearense"],
   GO: ["goiano"],
   SC: ["catarinense"],
+  AL: ["alagoano"],
+  PA: ["paraense"],
+  AM: ["amazonense"],
+  DF: ["brasiliense"],
+  ES: ["capixaba"],
+  MT: ["mato_grossense"],
+  RN: ["potiguar"],
+  PB: ["paraibano"],
+  MA: ["maranhense"],
+  PI: ["piauiense"],
+  SE: ["sergipano"],
+  RO: ["rondoniense"],
+  AP: ["amapaense"],
+  MS: ["sul_mato_grossense"],
+  AC: ["acreano"],
+  RR: ["roraimense"],
+  TO: ["tocantinense"],
 }
 
 export function getStateCompetitionRule(userTeamShort: string): CompetitionRegulation2026 | undefined {
@@ -305,8 +322,19 @@ export function getStateChampRounds(userTeamShort: string): number {
   const regulation = getStateCompetitionRule(userTeamShort)
   const officialRounds = regulation?.firstPhaseRounds
   const half = getRoundRobinHalfRounds(teams.length)
+  // O teto do turno unico (`half`) impedia um regulamento de TURNO E RETURNO de
+  // acontecer: o Rondoniense (7 clubes, 42 jogos) ficava com 7 rodadas em vez de
+  // 14 — meio campeonato. Se o proprio regulamento pede mais rodadas do que um
+  // turno do seu campo comporta, ele e de returno, e o teto passa a ser dois
+  // turnos. Quando faltam clubes na base para o formato oficial (Brasiliense e
+  // Roraimense hoje), o clamp continua valendo: melhor um turno curto do que
+  // rodadas que o campo nao tem como jogar.
+  const regulationIsDoubleRound = Boolean(
+    officialRounds && regulation && officialRounds > getRoundRobinHalfRounds(regulation.participants),
+  )
+  const maxJogavel = regulationIsDoubleRound ? half * 2 : half
   const firstPhase = officialRounds
-    ? Math.min(officialRounds, half)
+    ? Math.min(officialRounds, maxJogavel)
     : stateChampIsDoubleRound(teams.length) ? half * 2 : half
   const finalPhases = regulation
     ? (regulation.knockout ?? []).reduce((total, stage) =>
