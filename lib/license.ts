@@ -26,12 +26,22 @@ const PREFIXO = "UF26"
 /** Segredo injetado no build (ver scripts/gerar-codigos.mjs para emitir). */
 const SEGREDO = process.env.NEXT_PUBLIC_ULTRAFOOT_LICENSE_SECRET ?? ""
 
+/**
+ * Lote 0 e RESERVADO para uso interno (codigo master de dev). Vendas comecam no
+ * lote 1. Um codigo de lote 0 valida como qualquer outro, mas vem marcado como
+ * `dev` — a UI o trata como registro interno, e ele fica de fora da trava de "um
+ * codigo por maquina" para o time poder testar em varias maquinas.
+ */
+const LOTE_DEV = 0
+
 export interface ResultadoLicenca {
   valido: boolean
   /** Número de série do comprador — é o que você cruza com a planilha de vendas. */
   serie?: number
   /** Lote da emissão (campanha, loja, revendedor). */
   lote?: number
+  /** true = código master interno (lote 0), não é uma licença de venda. */
+  dev?: boolean
   motivo?: "formato" | "assinatura" | "revogado" | "sem-segredo"
 }
 
@@ -151,7 +161,7 @@ export async function validarCodigo(
   if (macRecebido !== macEsperado) return { valido: false, motivo: "assinatura" }
   if (revogados.includes(serie)) return { valido: false, serie, lote, motivo: "revogado" }
 
-  return { valido: true, serie, lote }
+  return { valido: true, serie, lote, dev: lote === LOTE_DEV }
 }
 
 /** Mensagem para o jogador — sem jargão e sem entregar o motivo exato a quem tenta forjar. */

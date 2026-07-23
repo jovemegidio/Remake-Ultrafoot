@@ -99,6 +99,19 @@ function main() {
   const paraRevogar = arg("revogar")
   if (paraRevogar) return revogar(Number(paraRevogar))
 
+  // CODIGO MASTER (uso interno). Serie 1 + lote 0, fixos: com o mesmo segredo, e
+  // SEMPRE o mesmo codigo — por isso "o" codigo master, um so. Nao consome serie
+  // de venda e nao entra na contagem do CSV de vendas. O jogo o reconhece como
+  // registro de dev (lote 0) e o isenta da trava de uma maquina por codigo.
+  if (process.argv.includes("--dev") || process.argv.includes("--master")) {
+    const codigo = montarCodigo(1, 0, segredo())
+    console.log("CODIGO MASTER (dev / uso interno):\n")
+    console.log(`  ${codigo}\n`)
+    console.log("Vale em qualquer maquina, sem consumir licenca de venda.")
+    console.log("So funciona em builds feitas com este mesmo segredo. NAO distribua.")
+    return
+  }
+
   const quantidade = Number(arg("quantidade", "1"))
   const lote = Number(arg("lote", "1"))
   const para = arg("para", "")
@@ -106,8 +119,10 @@ function main() {
   if (!Number.isFinite(quantidade) || quantidade < 1 || quantidade > 5000) {
     console.error("--quantidade precisa ser entre 1 e 5000"); process.exit(1)
   }
-  if (!Number.isFinite(lote) || lote < 0 || lote > 63) {
-    console.error("--lote precisa ser entre 0 e 63"); process.exit(1)
+  // Lote 0 e reservado para o codigo master (--dev). Vendas usam 1..63, senao um
+  // lote de venda geraria codigos que o jogo trataria como dev.
+  if (!Number.isFinite(lote) || lote < 1 || lote > 63) {
+    console.error("--lote precisa ser entre 1 e 63 (0 e reservado para --dev)"); process.exit(1)
   }
 
   const chave = segredo()

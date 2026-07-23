@@ -283,14 +283,17 @@ export default function SplashPage() {
     if (r.valido) {
       // UM CODIGO POR MAQUINA (pedido). Se esta instalacao ja foi registrada com
       // OUTRO codigo, recusa — sem isso a mesma maquina cadastraria varios
-      // codigos. A serie registrada e o id do aparelho ficam guardados juntos.
+      // codigos. O codigo MASTER (dev) e isento: o time testa em varias maquinas
+      // e alterna com codigos de venda para reproduzir o que o comprador ve.
       const serieAtual = safeLocalGet("ultrafoot:registro-serie")
-      if (serieAtual && r.serie !== undefined && serieAtual !== String(r.serie)) {
+      if (!r.dev && serieAtual && r.serie !== undefined && serieAtual !== String(r.serie)) {
         setRegisterError("Esta máquina já foi registrada com outro código.")
         setIsValidating(false)
         return
       }
       safeLocalSet("ultrafoot:registered", "1")
+      // Marca registro de dev para a UI poder distinguir de uma licenca de venda.
+      safeLocalSet("ultrafoot:registro-dev", r.dev ? "1" : "0")
       // Guardado para o suporte: quando o jogador escrever, e por este numero
       // que voce acha a venda no CSV de emissao. O device-id junto permite, se um
       // dia houver servidor, detectar o mesmo codigo em maquinas diferentes.
