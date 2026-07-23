@@ -115,7 +115,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const handleResign = () => {
     clearJobOffers()
     setState({ selectedTeamShort: null })
-    hardNavigate("/sem-clube")
+    // Sem clube leva a Area do Treinador, onde as propostas por reputacao
+    // aparecem e o tecnico assume um novo clube.
+    hardNavigate("/treinador")
   }
   // Item destacado no menu de navegacao — so existe para o CONTROLE (no mouse o hover
   // ja resolve). Sem isto, o menu que criei nao era utilizavel no gamepad.

@@ -51,10 +51,13 @@ const campeao: CoachStanding = { reputation: 92, totalTitles: 6, reputationLevel
   checar("nenhuma oferta ao campeao acima do teto dele", oCam.every(t => t.prestigio <= tetoCam),
     oCam.map(t => `${t.nome}=${t.prestigio}`).join(", "))
 
-  const medioIni = oIni.reduce((s, t) => s + t.prestigio, 0) / oIni.length
-  const medioCam = oCam.reduce((s, t) => s + t.prestigio, 0) / oCam.length
-  console.log(`   prestigio medio: iniciante=${medioIni.toFixed(1)} campeao=${medioCam.toFixed(1)}`)
-  checar("campeao recebe clubes de prestigio maior, em media", medioCam > medioIni + 8, `${medioCam.toFixed(1)} x ${medioIni.toFixed(1)}`)
+  // O CAMPEAO recebe um MIX: ao menos um clube forte E ao menos um modesto.
+  const maxCam = Math.max(...oCam.map(t => t.prestigio))
+  const minCam = Math.min(...oCam.map(t => t.prestigio))
+  console.log(`   campeao: ${oCam.map(t => `${t.nome}=${t.prestigio}`).join(", ")}`)
+  checar("campeao recebe ao menos um clube forte (>= 80)", maxCam >= 80, `max=${maxCam}`)
+  checar("campeao recebe ao menos um clube modesto (<= 65)", minCam <= 65, `min=${minCam}`)
+  checar("campeao tem faixa ampla (forte e pequeno juntos)", maxCam - minCam >= 20, `${minCam}..${maxCam}`)
 }
 
 // ── 4. Sempre devolve algo (nunca deixa o tecnico sem proposta) ────────────

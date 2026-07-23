@@ -140,11 +140,15 @@ export default function DashboardPage() {
     }
   }, [hydrated, saveState.selectedTeamShort])
 
-  // Redireciona para splash quando a home foi aberta fora do fluxo do jogo.
+  // Redireciona para fora do escritorio quando ele nao faz sentido:
+  //  - sessao inativa (home aberta fora do fluxo do jogo) -> splash;
+  //  - sessao ativa mas SEM CLUBE (demissao/demitido) -> Area do Treinador, o hub
+  //    do tecnico sem clube, onde as propostas aparecem. Sem isto, o botao voltar
+  //    caia no escritorio com um time fallback e daqui ia para o splash.
   useEffect(() => {
-    if (hydrated && sessionChecked && (!saveState.selectedTeamShort || !sessionActive)) {
-      hardNavigate("/splash", true)
-    }
+    if (!hydrated || !sessionChecked) return
+    if (!sessionActive) hardNavigate("/splash", true)
+    else if (!saveState.selectedTeamShort) hardNavigate("/treinador", true)
   }, [hydrated, saveState.selectedTeamShort, sessionActive, sessionChecked])
 
   // Navegacao por controle no dashboard
@@ -252,7 +256,7 @@ export default function DashboardPage() {
   const handleResign = () => {
     clearJobOffers()
     setState({ selectedTeamShort: null })
-    hardNavigate("/sem-clube")
+    hardNavigate("/treinador")
   }
 
   const weeklyIncome = gameEngine.weeklyIncome ?? 0

@@ -61,9 +61,14 @@ export function prestigeCeilingForStanding(score: number): number {
 
 /**
  * Clubes que abririam o cargo para este tecnico, na semente dada. Retorna ate
- * `quantidade` propostas, das divisoes jogaveis e 2as divisoes do mundo, dentro
- * de uma faixa de prestigio ancorada no teto. Sempre devolve algo: se a faixa
- * de cima nao enche, desce o piso ate completar.
+ * `quantidade` propostas das divisoes jogaveis e 2as divisoes do mundo.
+ *
+ * O teto de prestigio cresce com a reputacao — so um consagrado atrai gigantes.
+ * Mas NAO ha piso: um campeao tambem recebe sondagem de clubes pequenos (um
+ * clube modesto adora fisgar um tecnico vitorioso). Para o consagrado ver um
+ * MIX de verdade — grande, medio e pequeno — o pool e dividido em faixas de
+ * prestigio e sorteamos uma de cada. Semente = rodada, entao "recusar e
+ * continuar" traz outro lote.
  */
 export function ofertasParaDesempregado(
   clubs: readonly Team[],
@@ -73,40 +78,49 @@ export function ofertasParaDesempregado(
 ): Team[] {
   const score = coachStandingScore(standing)
   const teto = prestigeCeilingForStanding(score)
-  // Faixa de 18 pontos abaixo do teto: um campeao recebe grandes E medios, nunca
-  // so o topo absoluto (o mercado real tambem oferece opcoes de "reconstrucao").
-  const pisoInicial = teto - 18
 
-  const elegivel = (team: Team, piso: number): boolean => {
-    const divisao = String(team.divisao)
-    const divisaoOk = BRAZILIAN_TIERS.includes(divisao) || SECOND_DIVISIONS.has(divisao)
-    if (!divisaoOk) return false
-    return team.prestigio <= teto && team.prestigio >= piso
-  }
+  const pool = clubs
+    .filter(t => {
+      const d = String(t.divisao)
+      return (BRAZILIAN_TIERS.includes(d) || SECOND_DIVISIONS.has(d)) && t.prestigio <= teto
+    })
+    .sort((a, b) => b.prestigio - a.prestigio) // do mais forte ao mais fraco
 
-  // Vai afrouxando o piso ate ter candidatos suficientes (ou o piso zerar).
-  let piso = pisoInicial
-  let pool: Team[] = []
-  while (piso >= 0) {
-    pool = clubs.filter(t => elegivel(t, piso))
-    if (pool.length >= quantidade) break
-    piso -= 6
-  }
-  if (pool.length === 0) {
-    // Nem assim? Pega os de menor prestigio das divisoes permitidas (fallback duro).
-    pool = clubs
+  if (pool.length <= quantidade) {
+    if (pool.length > 0) return pool
+    // Sem ninguem sob o teto? Pega os de menor prestigio das divisoes permitidas.
+    return clubs
       .filter(t => BRAZILIAN_TIERS.includes(String(t.divisao)) || SECOND_DIVISIONS.has(String(t.divisao)))
       .sort((a, b) => a.prestigio - b.prestigio)
+      .slice(0, quantidade)
   }
 
-  // Ordena pela semente (varia a cada rodada), mas com um leve vies para os de
-  // maior prestigio dentro da faixa — os melhores clubes disponiveis aparecem
-  // primeiro, sem ser sempre os mesmos.
-  return [...pool]
-    .sort((a, b) => {
-      const ra = hash(`${seed}:${a.file_key ?? a.curto}`) + a.prestigio * 900000
-      const rb = hash(`${seed}:${b.file_key ?? b.curto}`) + b.prestigio * 900000
-      return rb - ra
-    })
-    .slice(0, quantidade)
+  // Faixas por VALOR DE PRESTIGIO relativo ao teto (nao por contagem): o pool tem
+  // milhares de clubes, quase todos modestos, entao "o terco de cima por
+  // quantidade" ainda seria pequeno. Ancorando no teto, a faixa ALTA pega os
+  // clubes de fato grandes disponiveis, e a BAIXA os pequenos — o consagrado ve
+  // as duas pontas de uma vez.
+  const bandas: Array<(p: number) => boolean> = [
+    p => p >= teto - 12,                       // fortes
+    p => p >= teto - 28 && p < teto - 12,      // medios
+    p => p < teto - 28,                        // modestos
+  ]
+  const escolhidas: Team[] = []
+  const usados = new Set<string>()
+  const pegar = (faixa: Team[], tag: string) => {
+    const livres = faixa.filter(t => !usados.has(t.file_key ?? t.curto))
+    if (livres.length === 0) return
+    const escolhido = livres[hash(`${seed}:${tag}`) % livres.length]
+    usados.add(escolhido.file_key ?? escolhido.curto)
+    escolhidas.push(escolhido)
+  }
+  bandas.slice(0, quantidade).forEach((teste, i) => pegar(pool.filter(t => teste(t.prestigio)), `b${i}`))
+  // Faixa vazia (ex.: iniciante sem clubes fortes) deixa vaga; completa com os
+  // melhores restantes para sempre entregar `quantidade` propostas.
+  for (const t of pool) {
+    if (escolhidas.length >= quantidade) break
+    const chave = t.file_key ?? t.curto
+    if (!usados.has(chave)) { usados.add(chave); escolhidas.push(t) }
+  }
+  return escolhidas.sort((a, b) => b.prestigio - a.prestigio)
 }

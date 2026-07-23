@@ -9,6 +9,8 @@ import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
 import { listJobOffers, removeJobOffer, assumirClube, type PendingJobOffer } from "@/lib/career-moves"
+import { ofertasParaDesempregado, coachStandingScore } from "@/lib/coach-market"
+import { allTeams } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { cn } from "@/lib/utils"
 import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle } from "lucide-react"
@@ -67,6 +69,45 @@ export default function TreinadorPage() {
   }, [state.seasonHistory])
   const ranking = useMemo(() => (carreira ? rankInHistory(carreira) : null), [carreira])
 
+  // ── ESTADO SEM CLUBE ──────────────────────────────────────────────────────
+  // Ao pedir demissao ou ser demitido, o tecnico vem PARA CA (nao mais para uma
+  // tela separada) e fica aqui ate assumir um clube. As propostas SEMPRE
+  // aparecem, ancoradas na reputacao (ver lib/coach-market). "Aguardar novas
+  // propostas" avanca uma rodada da carreira e traz outro lote.
+  const desempregado = !state.selectedTeamShort
+  const [rodadaMercado, setRodadaMercado] = useState(0)
+  const standing = useMemo(() => {
+    const rep = carreira?.reputation ?? 0
+    return {
+      reputation: rep,
+      totalTitles: (state.coachTotalTitles ?? 0) + (state.coachLegacy?.totalTitles ?? 0),
+      reputationLevel: state.coachLegacy?.reputationLevel ?? 0,
+    }
+  }, [carreira, state.coachTotalTitles, state.coachLegacy])
+  const patamar = useMemo(() => {
+    const s = coachStandingScore(standing)
+    return s >= 80 ? "Elite" : s >= 60 ? "Consolidada" : s >= 35 ? "Em ascensão" : "Iniciante"
+  }, [standing])
+  const ofertasDesemprego = useMemo<PendingJobOffer[]>(() => {
+    if (!desempregado) return []
+    return ofertasParaDesempregado(allTeams, standing, (state.week ?? 0) + rodadaMercado).map(t => ({
+      id: `free_${t.curto}_${rodadaMercado}`,
+      clubShort: t.curto,
+      clubName: t.nome,
+      clubPrestige: t.prestigio,
+      kind: "club" as const,
+      reason: `${String(t.divisao).replaceAll("_", " ")} · abriu o cargo e quer conversar com você.`,
+      season: state.season ?? 2026,
+      week: state.week ?? 0,
+    }))
+  }, [desempregado, standing, state.week, state.season, rodadaMercado])
+
+  const aguardarPropostas = useCallback(() => {
+    // Passa uma semana da carreira (o futebol segue) e reembaralha as ofertas.
+    setState({ week: (state.week ?? 0) + 1 } as Parameters<typeof setState>[0])
+    setRodadaMercado(r => r + 1)
+  }, [setState, state.week])
+
   // Últimos resultados do clube do usuário, do mais recente para o mais antigo.
   const ultimos = useMemo(() => {
     const curto = state.selectedTeamShort ?? userTeam.curto
@@ -121,7 +162,9 @@ export default function TreinadorPage() {
                   {state.managerName || "Técnico"}
                 </h1>
                 <p className="mt-0.5 text-xs text-white/55">
-                  {userTeam.nome} · Temporada {currentSeason}
+                  {desempregado
+                    ? `Sem clube · Reputação ${patamar} · Temporada ${currentSeason}`
+                    : `${userTeam.nome} · Temporada ${currentSeason}`}
                   {ranking && ` · ~${ranking.position}º entre os técnicos`}
                 </p>
               </div>
@@ -143,28 +186,39 @@ export default function TreinadorPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
-          {/* Propostas — antes só apareciam no escritório e passavam despercebidas. */}
+          {(() => {
+            // Sem clube: mostra as propostas por reputacao (sempre ha). Empregado:
+            // mostra as propostas que chegaram enquanto trabalha.
+            const lista = desempregado ? ofertasDesemprego : ofertas
+            return (
           <section className={cn(
             "rounded-xl border p-5",
-            ofertas.length > 0 ? "border-[#ffd700]/30 bg-[#ffd700]/[0.05]" : "border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30",
+            desempregado ? "border-[#00ffc8]/40 bg-[#00ffc8]/[0.06]"
+              : lista.length > 0 ? "border-[#ffd700]/30 bg-[#ffd700]/[0.05]" : "border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30",
           )}>
             <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
               <Briefcase className="h-4 w-4 text-[#ffd700]" />
-              Propostas de trabalho
-              {ofertas.length > 0 && (
+              {desempregado ? "Mercado de treinadores" : "Propostas de trabalho"}
+              {lista.length > 0 && (
                 <span className="rounded-full bg-[#ffd700] px-2 py-0.5 text-[10px] font-black text-black">
-                  {ofertas.length}
+                  {lista.length}
                 </span>
               )}
             </h2><span className="h-px flex-1 bg-gradient-to-r from-[#ffd700]/40 to-transparent" /></div>
 
-            {ofertas.length === 0 ? (
+            {desempregado && (
+              <p className="mt-1 mb-2 text-xs text-white/55">
+                Você está sem clube. Estas diretorias abriram o cargo para você — aceite uma para voltar ao trabalho, ou aguarde novas sondagens.
+              </p>
+            )}
+
+            {lista.length === 0 ? (
               <p className="mt-2 text-sm text-white/45">
                 Nenhuma proposta no momento. Entregue resultado e outros clubes procuram você.
               </p>
             ) : (
               <div className="mt-3 space-y-2">
-                {ofertas.map(oferta => (
+                {lista.map(oferta => (
                   <div key={oferta.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-black/30 p-3">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-white">
@@ -182,17 +236,30 @@ export default function TreinadorPage() {
                     >
                       Aceitar
                     </button>
-                    <button
-                      onClick={() => { removeJobOffer(oferta.id); atualizarOfertas() }}
-                      className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/40 hover:bg-white/5 hover:text-white/70"
-                    >
-                      Recusar
-                    </button>
+                    {!desempregado && (
+                      <button
+                        onClick={() => { removeJobOffer(oferta.id); atualizarOfertas() }}
+                        className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/40 hover:bg-white/5 hover:text-white/70"
+                      >
+                        Recusar
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
             )}
+
+            {desempregado && (
+              <button
+                onClick={aguardarPropostas}
+                className="mt-4 rounded-lg border border-white/15 px-4 py-2 text-xs font-bold text-white/70 hover:bg-white/5"
+              >
+                Aguardar novas propostas (avança 1 semana)
+              </button>
+            )}
           </section>
+            )
+          })()}
 
           {/* Últimos resultados */}
           <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">

@@ -2106,7 +2106,8 @@ export function useGameManager() {
           })
           clearJobOffers()
           setSaveState({ selectedTeamShort: null } as Partial<typeof currentState>)
-          if (typeof window !== "undefined") hardNavigate("/sem-clube")
+          // Demitido vai para a Area do Treinador, onde as propostas aparecem.
+          if (typeof window !== "undefined") hardNavigate("/treinador")
           // Encerra o avanco: sem clube, nao ha ceremonia de campeao a checar.
           return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
         }

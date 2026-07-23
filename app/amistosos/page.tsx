@@ -5,10 +5,10 @@
 // leva a flag `friendly`, que a tela da partida respeita.
 
 import { useMemo, useState } from "react"
-import { Search, Swords, ArrowRightLeft, Home, Plane } from "lucide-react"
+import { Search, Swords, ArrowRightLeft, Home, Plane, CalendarDays } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam, useGameState } from "@/lib/save-system"
 import { allTeams, type Team } from "@/lib/teams-data"
 import { saveMatchContext } from "@/lib/match-context"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -19,13 +19,39 @@ function norm(s: string) {
   return (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
 }
 
+const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+
+/** Datas jogaveis a partir da semana atual da carreira: os proximos sabados.
+ *  O calendario da carreira comeca em 1 de janeiro da temporada; cada semana = 7 dias. */
+function proximasDatas(season: number, week: number, quantas = 8): { label: string; iso: string }[] {
+  const base = new Date(season, 0, 1 + Math.max(0, week - 1) * 7)
+  // Anda ate o proximo sabado (dia 6).
+  const ateSabado = (6 - base.getDay() + 7) % 7
+  const primeiro = new Date(base.getTime() + ateSabado * 86400000)
+  return Array.from({ length: quantas }, (_, i) => {
+    const d = new Date(primeiro.getTime() + i * 7 * 86400000)
+    return {
+      label: `${DIAS[d.getDay()]}, ${d.getDate()} ${MESES[d.getMonth()]}`,
+      iso: d.toISOString().slice(0, 10),
+    }
+  })
+}
+
 export default function AmistososPage() {
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
 
   const { team: userTeam } = useUserTeam()
+  const { state } = useGameState()
   const [query, setQuery] = useState("")
   const [userIsHome, setUserIsHome] = useState(true)
+
+  const datas = useMemo(
+    () => proximasDatas(state.season ?? 2026, state.week ?? 1),
+    [state.season, state.week],
+  )
+  const [dataIdx, setDataIdx] = useState(0)
 
   const opponents = useMemo(() => {
     const q = norm(query.trim())
@@ -43,7 +69,9 @@ export default function AmistososPage() {
       homeKit: "home",
       awayKit: userIsHome ? "away" : "home",
       competition: "Amistoso",
-      round: "Pré-temporada",
+      // A data escolhida vai no rotulo da partida (o amistoso segue sem contar
+      // para a temporada — nao avanca a semana).
+      round: `Amistoso · ${datas[dataIdx]?.label ?? "Pré-temporada"}`,
       friendly: true,
       duration: 90,
     })
@@ -80,6 +108,25 @@ export default function AmistososPage() {
           >
             <Plane className="h-4 w-4" /> {userTeam.curto} fora
           </button>
+        </div>
+
+        {/* Data do amistoso */}
+        <div className="mb-4">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/40">
+            <CalendarDays className="h-3.5 w-3.5" /> Data do jogo
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {datas.map((d, i) => (
+              <button
+                key={d.iso}
+                onClick={() => setDataIdx(i)}
+                className={cn("rounded-lg border px-3 py-2 text-sm font-semibold transition-all",
+                  dataIdx === i ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]")}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Busca */}
