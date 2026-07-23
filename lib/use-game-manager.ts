@@ -185,6 +185,12 @@ const STATE_RULE_IDS: Record<string, readonly string[]> = {
   RJ: ["carioca_a1"],
   MG: ["mineiro_modulo_i"],
   RS: ["gaucho_a1"],
+  BA: ["baiano"],
+  PR: ["paranaense"],
+  PE: ["pernambucano"],
+  CE: ["cearense"],
+  GO: ["goiano"],
+  SC: ["catarinense"],
 }
 
 export function getStateCompetitionRule(userTeamShort: string): CompetitionRegulation2026 | undefined {
@@ -271,7 +277,13 @@ export function getStateChampionshipTeams(userTeamShort: string): Team[] {
     if (completed.length >= 4) return completed.slice(0, regulation.participants)
   }
 
-  const teams = stateTeams.slice(0, STATE_MAX_TEAMS)
+  // Sem lista nominal de participantes, o teto era sempre STATE_MAX_TEAMS (20).
+  // Isso ignorava o `participants` do regulamento: Paranaense e Catarinense sao
+  // formatos de 12 e entravam com 15 e 14 clubes, e o Goiano de 12 com 16 — o
+  // numero de rodadas do regulamento deixa de fechar com o numero de times, e a
+  // fase de grupos fica torta. Quando ha regulamento, ele manda no tamanho.
+  const limite = regulation?.participants ?? STATE_MAX_TEAMS
+  const teams = stateTeams.slice(0, Math.min(limite, STATE_MAX_TEAMS))
   if (!teams.some(t => t.curto === userTeamShort)) teams[0] = userTeam
   return teams
 }
