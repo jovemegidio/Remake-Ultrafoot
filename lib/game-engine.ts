@@ -1922,6 +1922,7 @@ interface GameEngineState {
   getPlayerById: (playerId: number) => Player | undefined
   updatePlayerStats: (playerId: number, stats: Partial<PlayerStats>) => void
   processarDesempenhoPartida: (golsPro: number, golsContra: number, events: MatchEvent[]) => void
+  rolarLesaoSimulada: (qtdJogos: number) => void
   cumprirSuspensao: (playerId: number) => void
   setPlayerShirtNumber: (playerId: number, shirtNumber: number) => boolean
   injurePlayer: (playerId: number, injury: PlayerInjury) => void
@@ -3562,7 +3563,13 @@ export const useGameEngine = create<GameEngineState>()(
         const lesionados = new Map<number, PlayerInjury>()
         for (const e of events) {
           if (e.type !== "injury" || !e.playerId) continue
-          const grav = Math.random()
+          const alvoP = get().squadPlayers.find(p => p.id === e.playerId)
+          const prof = (alvoP?.persona ?? (alvoP ? gerarPersona(alvoP.id, alvoP.overall) : null))?.profissionalismo ?? 10
+          // PROPENSAO: o profissional (cuida do corpo) tem chance de sair so com
+          // um susto — a lesao pode ser "amortecida" para mais leve ou evitada.
+          if (prof >= 15 && Math.random() < 0.35) continue // escapou
+          let grav = Math.random()
+          if (prof >= 13) grav *= 0.75 // puxa para gravidade menor
           const sev: PlayerInjury["severity"] = grav < 0.55 ? "leve" : grav < 0.88 ? "media" : "grave"
           const semanas = sev === "leve" ? 1 + Math.floor(Math.random() * 2)
             : sev === "media" ? 3 + Math.floor(Math.random() * 3) : 6 + Math.floor(Math.random() * 8)
@@ -3637,6 +3644,43 @@ export const useGameEngine = create<GameEngineState>()(
             ),
           }
         })
+      },
+
+      /**
+       * LESAO EM JOGO SIMULADO (pedido): quando o usuario SIMULA a partida (nao
+       * joga ao vivo), o motor ao-vivo nao roda, entao nenhuma lesao surgia — uma
+       * temporada simulada saia sem lesao, o que e irreal. Aqui rolamos, por jogo
+       * simulado, uma chance de lesionar um titular apto. A PROPENSAO e por
+       * jogador: profissionalismo alto (persona) reduz o risco — o "durao" x o
+       * "de vidro".
+       */
+      rolarLesaoSimulada: (qtdJogos) => {
+        for (let i = 0; i < Math.max(0, qtdJogos); i++) {
+          const s = get()
+          const aptos = s.squadPlayers.filter(p => p.isStarter && !p.injury && (p.suspendedMatches ?? 0) <= 0)
+          if (aptos.length === 0) return
+          // ~22% base por jogo; sobe um pouco com elenco cansado nao modelado aqui.
+          if (Math.random() > 0.22) continue
+          // Escolhe o alvo ponderando pela FRAGILIDADE (menos profissional, mais
+          // provavel). GK quase nunca se lesiona em jogo.
+          const pesos = aptos.map(p => {
+            const persona = p.persona ?? gerarPersona(p.id, p.overall)
+            const fragil = 1.4 - persona.profissionalismo / 20 // ~0.4-1.35
+            return { p, peso: (p.position === "GOL" ? 0.3 : 1) * Math.max(0.2, fragil) }
+          })
+          const soma = pesos.reduce((a, b) => a + b.peso, 0)
+          let r = Math.random() * soma
+          const alvo = (pesos.find(x => (r -= x.peso) <= 0) ?? pesos[0]).p
+          const grav = Math.random()
+          const sev: PlayerInjury["severity"] = grav < 0.6 ? "leve" : grav < 0.9 ? "media" : "grave"
+          const semanas = sev === "leve" ? 1 + Math.floor(Math.random() * 2)
+            : sev === "media" ? 3 + Math.floor(Math.random() * 3) : 6 + Math.floor(Math.random() * 8)
+          set((st) => ({
+            squadPlayers: st.squadPlayers.map(p => p.id === alvo.id
+              ? { ...p, injury: { type: INJURY_TYPES[Math.floor(Math.random() * INJURY_TYPES.length)], severity: sev, weeksRemaining: semanas, startWeek: st.currentWeek } }
+              : p),
+          }))
+        }
       },
 
       /** Ao entrar em campo, um jogo de suspensao e cumprido (decrementa). */

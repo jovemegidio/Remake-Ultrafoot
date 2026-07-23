@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
 import { mensagemDeErro, validarCodigo } from "@/lib/license"
 import { getDeviceId } from "@/lib/device-id"
+import { lerRegistro, gravarRegistro } from "@/lib/registration"
 import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -92,11 +93,16 @@ export default function SplashPage() {
     setLanguageSelected(true)
   }, [languageIndex, setGameState])
 
-  // Carrega estado de registro e código de nuvem do localStorage ao montar
+  // Carrega o registro do armazenamento DURAVEL (sobrevive a atualizacoes) e
+  // re-le quando o store termina de hidratar do disco — senao o primeiro render
+  // (antes do arquivo carregar) diria "nao registrado" a quem esta registrado.
   useEffect(() => {
-    setIsRegistered(window.localStorage.getItem("ultrafoot:registered") === "1")
+    const aplicar = () => setIsRegistered(lerRegistro().registrado)
+    aplicar()
+    window.addEventListener("ultrafoot:store:ready", aplicar)
     const savedCode = getSavedCloudCode()
     if (savedCode) setCloudCode(savedCode)
+    return () => window.removeEventListener("ultrafoot:store:ready", aplicar)
   }, [])
 
   // Save real (persistent-store). Como o store carrega do disco de forma async,
@@ -285,20 +291,21 @@ export default function SplashPage() {
       // OUTRO codigo, recusa — sem isso a mesma maquina cadastraria varios
       // codigos. O codigo MASTER (dev) e isento: o time testa em varias maquinas
       // e alterna com codigos de venda para reproduzir o que o comprador ve.
-      const serieAtual = safeLocalGet("ultrafoot:registro-serie")
+      const serieAtual = lerRegistro().serie
       if (!r.dev && serieAtual && r.serie !== undefined && serieAtual !== String(r.serie)) {
         setRegisterError("Esta máquina já foi registrada com outro código.")
         setIsValidating(false)
         return
       }
-      safeLocalSet("ultrafoot:registered", "1")
-      // Marca registro de dev para a UI poder distinguir de uma licenca de venda.
-      safeLocalSet("ultrafoot:registro-dev", r.dev ? "1" : "0")
-      // Guardado para o suporte: quando o jogador escrever, e por este numero
-      // que voce acha a venda no CSV de emissao. O device-id junto permite, se um
-      // dia houver servidor, detectar o mesmo codigo em maquinas diferentes.
-      if (r.serie !== undefined) safeLocalSet("ultrafoot:registro-serie", String(r.serie))
-      safeLocalSet("ultrafoot:registro-device", getDeviceId())
+      // Grava no armazenamento DURAVEL (+ espelho no localStorage). E por isso
+      // que atualizar o jogo nao desregistra mais: a fonte de verdade e o mesmo
+      // arquivo que guarda os saves.
+      gravarRegistro({
+        registrado: true,
+        serie: r.serie !== undefined ? String(r.serie) : undefined,
+        device: getDeviceId(),
+        dev: !!r.dev,
+      })
       setIsRegistered(true)
       setIsValidating(false)
       setTimeout(() => {

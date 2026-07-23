@@ -1889,6 +1889,9 @@ export function useGameManager() {
         gameEngine.addMatchResultOnly(result)
       }
       completedKeysFromAuto.push(fixtureKey)
+      // Partida do usuario SIMULADA (nao jogada ao vivo): rola a chance de lesao
+      // no elenco, para uma temporada simulada nao sair sem nenhuma lesao.
+      gameEngine.rolarLesaoSimulada(1)
 
       const idx = updatedStateFixtures.findIndex(
         f => f.isUserMatch && !f.played && f.round === (fixture.round ?? fixture.week)
