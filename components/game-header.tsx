@@ -153,8 +153,21 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       e.preventDefault()
       setShowNavMenu((v) => !v)
     }
+    // CONTROLE abre o menu: Y ou START (Options no PS) — o mesmo mapeamento que a
+    // tela de Configuracoes ja documentava ("Y = Menu · START = Menu/Pausar"),
+    // mas nenhum botao chegava a ABRIR o menu, so a tecla W. Sem input de texto
+    // no controle, nao precisa da guarda de campo focado.
+    const onPad = (e: Event) => {
+      if (document.querySelector('[role="dialog"][data-state="open"]')) return
+      const { button } = (e as CustomEvent<{ button: string }>).detail || {}
+      if (button === "Y" || button === "START") setShowNavMenu((v) => !v)
+    }
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
+    window.addEventListener("gamepad:button", onPad)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("gamepad:button", onPad)
+    }
   }, [showNav])
 
   // CONTROLE no menu de navegacao: D-pad move, A confirma, B/Y fecha.
