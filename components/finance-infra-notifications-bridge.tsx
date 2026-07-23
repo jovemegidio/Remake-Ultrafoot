@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { useGameEngine } from "@/lib/game-engine"
+import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
 import { useNotifications } from "@/components/notifications-system"
 import { formatCurrency } from "@/lib/teams-data"
 
@@ -45,9 +45,11 @@ export function FinanceInfraNotificationsBridge() {
   const infraEmObra = useGameEngine(s => s.infraUpgradesInProgress)
   const infraNiveis = useGameEngine(s => s.clubInfrastructure)
   const saldo = useGameEngine(s => s.balance)
+  const semana = useGameEngine(s => s.currentWeek)
 
   const obrasVistas = useRef<Record<string, number>>({})
   const faixaAnterior = useRef<FaixaCaixa | null>(null)
+  const janelaAberta = useRef<boolean | null>(null)
   const primed = useRef(false)
 
   // Primeira passada: fotografa o estado atual SEM notificar, para nao despejar
@@ -59,7 +61,24 @@ export function FinanceInfraNotificationsBridge() {
     for (const [areaId, up] of Object.entries(infraEmObra ?? {})) foto[areaId] = up.targetLevel
     obrasVistas.current = foto
     faixaAnterior.current = faixaDoCaixa(saldo)
-  }, [infraEmObra, saldo])
+    janelaAberta.current = isTransferWindowOpen(semana)
+  }, [infraEmObra, saldo, semana])
+
+  // JANELA DE TRANSFERENCIAS: pop-up quando ABRE (fechada -> aberta). O pedido e
+  // um aviso a cada abertura; nao repetimos enquanto ela seguir aberta.
+  useEffect(() => {
+    if (!primed.current) return
+    const aberta = isTransferWindowOpen(semana)
+    const antes = janelaAberta.current
+    janelaAberta.current = aberta
+    if (antes === false && aberta) {
+      notificar.current({
+        type: "transfer", priority: "high",
+        title: "Janela de transferências ABERTA",
+        message: "O mercado está aberto: contrate reforços, negocie saídas e ajuste o elenco. Vendas de atletas da base também se concretizam agora.",
+      })
+    }
+  }, [semana])
 
   // OBRA CONCLUIDA: uma area que estava em obra saiu do mapa e o nivel novo ja
   // consta em clubInfrastructure.

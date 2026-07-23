@@ -317,7 +317,9 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-16 items-center justify-between bg-[#070708]/95 backdrop-blur-xl border-b border-white/[0.06] pl-3 pr-5",
+        // Transparente como o rodape (pedido): so um leve gradiente do topo para
+        // a legibilidade, sem a barra solida #070708 que "cortava" o fundo.
+        "sticky top-0 z-30 flex h-16 items-center justify-between bg-gradient-to-b from-black/55 to-transparent backdrop-blur-sm border-b border-white/[0.04] pl-3 pr-5",
         className,
       )}
     >

@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useNotifications } from "@/components/notifications-system"
-import { useGameEngine } from "@/lib/game-engine"
+import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
 
 const PROMOTION_FEE = 200_000
 
@@ -39,6 +39,7 @@ export default function BasePage() {
   const receberPorJovem = useGameEngine(st => st.receberPorJovem)
   const caixaDoMotor = useGameEngine(st => st.balance)
   const gastarDoCaixa = useGameEngine(st => st.spendClubFunds)
+  const semanaAtual = useGameEngine(st => st.currentWeek)
   const capacidade = capacidadeDaBase(nivelAcademia)
   const vagas = vagasNaBase(youth.length, nivelAcademia)
 
@@ -115,6 +116,23 @@ export default function BasePage() {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.week, state.season, nivelAcademia])
+
+  // Efetiva as vendas de jovens ACERTADAS fora da janela, assim que a janela
+  // abre: o jovem sai da base e o valor entra no caixa (pedido).
+  useEffect(() => {
+    if (!isTransferWindowOpen(semanaAtual)) return
+    const aVender = youth.filter(p => p.vendaPendente)
+    if (aVender.length === 0) return
+    let total = 0
+    for (const p of aVender) total += p.vendaPendente!.valor
+    receberPorJovem(total)
+    setState({ youthPlayers: youth.filter(p => !p.vendaPendente) })
+    for (const p of aVender) {
+      addNotification({ type: "transfer", priority: "medium", title: `${p.name} vendido`,
+        message: `${p.vendaPendente!.clube} concretizou a compra de ${p.name} por ${formatCurrency(p.vendaPendente!.valor)} na abertura da janela.` })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semanaAtual])
 
   const replacementFor = (player: SquadPlayer): SquadPlayer => {
     const generated = generateYouthBatch(state.season, 1, team.prestigio ?? 60)[0]
@@ -203,19 +221,37 @@ export default function BasePage() {
     })
   }
 
-  /** Vende um garoto: proposta gerada pelo valor de promessa, com negociação. */
+  /** Vende um garoto: proposta pelo valor de promessa. So se concretiza com a
+   *  janela de transferencias ABERTA (pedido). Fora da janela, a venda e
+   *  ACERTADA e o jovem sai da base quando a janela abrir. */
   const venderJovem = (player: SquadPlayer) => {
     const j = player as unknown as JovemBase
     const clubes = ["Benfica", "Ajax", "Porto", "Shakhtar", "Red Bull Salzburg", "Palmeiras", "Flamengo"]
     const p = propostaPorJovem(j, clubes[Math.floor(Math.random() * clubes.length)])
     const justo = valorDeMercadoJovem(j)
+    const janelaAberta = isTransferWindowOpen(semanaAtual)
+    const aviso = janelaAberta
+      ? ""
+      : "\n\nA janela está FECHADA: a venda fica acertada e o jovem sai da base assim que a janela abrir."
     const texto = `${p.clube} oferece ${formatCurrency(p.valor)} por ${player.name}.\n` +
-      `Valor estimado: ${formatCurrency(justo)}${p.abaixoDoValor ? "\n\nA proposta está ABAIXO do valor do atleta." : ""}\n\nAceitar a venda?`
+      `Valor estimado: ${formatCurrency(justo)}${p.abaixoDoValor ? "\n\nA proposta está ABAIXO do valor do atleta." : ""}${aviso}\n\nAceitar a venda?`
     if (typeof window !== "undefined" && !window.confirm(texto)) return
-    receberPorJovem(p.valor)
-    setState({ youthPlayers: youth.filter(x => x.id !== player.id) })
-    addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
-      message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
+
+    if (janelaAberta) {
+      receberPorJovem(p.valor)
+      setState({ youthPlayers: youth.filter(x => x.id !== player.id) })
+      addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
+        message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
+    } else {
+      // Marca a saida pendente: o jovem continua na base ate a janela abrir.
+      setState({
+        youthPlayers: youth.map(x => x.id === player.id
+          ? ({ ...x, vendaPendente: { clube: p.clube, valor: p.valor } } as SquadPlayer)
+          : x),
+      })
+      addNotification({ type: "transfer", priority: "medium", title: `Venda acertada: ${player.name}`,
+        message: `${p.clube} pagará ${formatCurrency(p.valor)} por ${player.name} quando a janela abrir.` })
+    }
   }
 
   const sendOnLoan = (player: SquadPlayer) => {

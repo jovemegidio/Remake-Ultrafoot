@@ -41,6 +41,8 @@ export interface SquadPlayer {
   fromTeam?: string
   trend?: "up" | "down" | "stable"
   seasonSigned?: number
+  /** Venda de jovem acertada fora da janela: efetivada quando a janela abre. */
+  vendaPendente?: { clube: string; valor: number }
 }
 
 export interface YouthAlumniRecord {
