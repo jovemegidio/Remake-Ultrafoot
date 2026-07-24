@@ -42,6 +42,26 @@ const INTERNACIONAIS: { id: string; nomes: string[]; periodo: PeriodoCompeticao 
   { id: "conference_league", nomes: ["UEFA Conference League", "Conference League"], periodo: { startsOn: "2025-10-02", endsOn: "2026-05-27" } },
   // Intercontinental: final normalmente na 1a semana de dezembro (data movel).
   { id: "copa_intercontinental", nomes: ["Copa Intercontinental", "Mundial de Clubes FIFA"], periodo: { startsOn: "2026-12-01", endsOn: "2026-12-10", aproximado: true } },
+
+  // ── Ligas europeias (temporada 2025/26; ULTIMA RODADA informada) ─────────
+  // Nao tem final unica — sao decididas pela classificacao. O inicio (ago/2025)
+  // e o padrao dessas ligas; a data que importa, o encerramento, veio na fonte.
+  { id: "premier_league", nomes: ["Premier League"], periodo: { startsOn: "2025-08-15", endsOn: "2026-05-24" } },
+  { id: "la_liga", nomes: ["La Liga", "LaLiga"], periodo: { startsOn: "2025-08-15", endsOn: "2026-05-24" } },
+  { id: "serie_a_ita", nomes: ["Serie A"], periodo: { startsOn: "2025-08-23", endsOn: "2026-05-24" } },
+  { id: "bundesliga", nomes: ["Bundesliga"], periodo: { startsOn: "2025-08-22", endsOn: "2026-05-16" } },
+  { id: "ligue_1", nomes: ["Ligue 1"], periodo: { startsOn: "2025-08-15", endsOn: "2026-05-16" } },
+  { id: "primeira_liga", nomes: ["Primeira Liga", "Liga Portugal"], periodo: { startsOn: "2025-08-08", endsOn: "2026-05-16" } },
+  { id: "eredivisie", nomes: ["Eredivisie"], periodo: { startsOn: "2025-08-08", endsOn: "2026-05-17" } },
+
+  // ── Copas nacionais europeias (FINAL informada) ──────────────────────────
+  { id: "fa_cup", nomes: ["FA Cup"], periodo: { startsOn: "2025-11-01", endsOn: "2026-05-16" } },
+  { id: "copa_del_rey", nomes: ["Copa del Rey"], periodo: { startsOn: "2025-10-29", endsOn: "2026-04-18" } },
+  { id: "coppa_italia", nomes: ["Coppa Italia"], periodo: { startsOn: "2025-08-15", endsOn: "2026-05-13" } },
+  { id: "dfb_pokal", nomes: ["DFB-Pokal"], periodo: { startsOn: "2025-08-15", endsOn: "2026-05-23" } },
+  { id: "coupe_de_france", nomes: ["Coupe de France", "Copa da Franca"], periodo: { startsOn: "2025-11-14", endsOn: "2026-05-22" } },
+  { id: "taca_portugal", nomes: ["Taca de Portugal", "Taça de Portugal"], periodo: { startsOn: "2025-09-12", endsOn: "2026-05-24" } },
+  { id: "knvb_beker", nomes: ["KNVB Beker"], periodo: { startsOn: "2025-08-29", endsOn: "2026-04-19" } },
 ]
 
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]

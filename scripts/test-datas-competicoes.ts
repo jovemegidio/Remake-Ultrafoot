@@ -32,7 +32,25 @@ check(periodoLabelPorNome("CONMEBOL Libertadores") === periodoLabel("libertadore
 check(periodoLabelPorNome("Copa do Brasil") !== null, "casa 'Copa do Brasil' por nome (via regulamento)")
 check(periodoLabelPorNome("Brasileirão Série A") !== null, "casa 'Brasileirão Série A' por nome (via regulamento)")
 
-// 6) Competicao sem data configurada nao quebra.
+// 6) Ligas europeias — ultima rodada informada (2025/26).
+check(periodo2026("premier_league")?.endsOn === "2026-05-24", "Premier League 24/mai")
+check(periodo2026("bundesliga")?.endsOn === "2026-05-16", "Bundesliga 16/mai")
+check(periodo2026("eredivisie")?.endsOn === "2026-05-17", "Eredivisie 17/mai")
+check(periodoLabelPorNome("Premier League") !== null, "casa 'Premier League' por nome")
+
+// 7) Copas nacionais europeias — final informada.
+check(periodo2026("copa_del_rey")?.endsOn === "2026-04-18", "Copa del Rey 18/abr")
+check(periodo2026("coppa_italia")?.endsOn === "2026-05-13", "Coppa Italia 13/mai")
+check(periodoLabelPorNome("FA Cup") !== null, "casa 'FA Cup' por nome")
+check(periodoLabelPorNome("DFB-Pokal") !== null, "casa 'DFB-Pokal' por nome")
+
+// 8) Estaduais corrigidos (via regulamento): Baiano/Paranaense/Alagoano 7/mar.
+check(periodo2026("baiano")?.endsOn === "2026-03-07", "Baiano 7/mar")
+check(periodo2026("paranaense")?.endsOn === "2026-03-07", "Paranaense 7/mar")
+check(periodo2026("alagoano")?.endsOn === "2026-03-07", "Alagoano 7/mar")
+check(periodo2026("mato_grossense")?.endsOn === "2026-03-08", "Mato-Grossense 8/mar")
+
+// 9) Competicao sem data configurada nao quebra.
 check(periodoLabelPorNome("Torneio Inexistente") === null, "nome desconhecido -> null")
 
 console.log(falhas === 0 ? "\nOK — datas reais configuradas e casando por id e nome" : `\n${falhas} FALHA(S)`)
