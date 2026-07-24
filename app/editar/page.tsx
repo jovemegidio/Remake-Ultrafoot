@@ -169,6 +169,18 @@ const POS_STYLE: Record<string, { text: string; bg: string }> = {
   ATA: { text: "text-rose-300",   bg: "bg-rose-400/10 border-rose-400/25" },
 }
 
+type PlayerRow = ReturnType<typeof generatePlayersForTeam>[number]
+
+const POSICOES = ["GOL", "LAT", "ZAG", "VOL", "MEI", "ATA"] as const
+const LADOS: { value: string; label: string }[] = [
+  { value: "D", label: "Direito" },
+  { value: "E", label: "Esquerdo" },
+  { value: "A", label: "Ambos" },
+]
+const CARACTERISTICAS = [
+  "Reflexos", "Velocidade", "Marcacao", "Cabecada", "Passe", "Drible", "Finalizacao",
+]
+
 export default function EditarPage() {
   useEffect(() => {
     const handler = (e: Event) => {
@@ -193,6 +205,13 @@ export default function EditarPage() {
   // Edit draft state
   const [editDraft, setEditDraft] = useState<TeamOverride>({})
   const [editSaved, setEditSaved] = useState(false)
+
+  // Modal: editar clube
+  const [showClubModal, setShowClubModal] = useState(false)
+
+  // Modal: editar / adicionar jogador
+  const [playerDraft, setPlayerDraft] = useState<PlayerRow | null>(null)
+  const [isNewPlayer, setIsNewPlayer] = useState(false)
 
   const initDraft = (team: Team) => {
     const override = getTeamOverride(team.file_key) ?? {}
@@ -225,6 +244,54 @@ export default function EditarPage() {
     if (!selectedTeam) return
     clearTeamOverride(selectedTeam.file_key)
     initDraft(selectedTeam)
+  }
+
+  // ── Jogadores ──
+  const openPlayerEditor = (index: number) => {
+    const p = sortedPlayers[index]
+    if (!p) return
+    setPlayerDraft({ ...p })
+    setIsNewPlayer(false)
+  }
+
+  const openNewPlayer = () => {
+    setPlayerDraft({
+      id: Date.now(),
+      nome: "",
+      posicao: "MEI",
+      pais: "BRA",
+      idade: 20,
+      overall: 65,
+      caracteristica: "Passe",
+      lado: "D",
+    })
+    setIsNewPlayer(true)
+  }
+
+  const savePlayerDraft = () => {
+    if (!playerDraft || !playerDraft.nome.trim()) return
+    setPlayers(prev =>
+      isNewPlayer
+        ? [...prev, playerDraft]
+        : prev.map(p => (p.id === playerDraft.id ? playerDraft : p)),
+    )
+    setPlayerDraft(null)
+    setIsNewPlayer(false)
+  }
+
+  const removeSelectedPlayer = () => {
+    const p = sortedPlayers[selectedPlayerIndex]
+    if (!p) return
+    setPlayers(prev => prev.filter(x => x.id !== p.id))
+    setSelectedPlayerIndex(0)
+  }
+
+  const randomizeSelectedPlayer = () => {
+    const p = sortedPlayers[selectedPlayerIndex]
+    if (!p) return
+    const rndOvr = 50 + Math.floor(Math.random() * 45)
+    const rndCar = CARACTERISTICAS[Math.floor(Math.random() * CARACTERISTICAS.length)]
+    setPlayers(prev => prev.map(x => (x.id === p.id ? { ...x, overall: rndOvr, caracteristica: rndCar } : x)))
   }
 
   const handleKitImageUpload = async (variant: "home" | "away" | "third") => {
@@ -486,36 +553,22 @@ export default function EditarPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#050508]/80 via-transparent to-[#050508]/80" />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 h-14 flex-shrink-0 bg-black/70 backdrop-blur-xl border-b border-white/[0.06] px-5 flex items-center justify-between">
-        <div className="flex items-center gap-5">
-          <Link
-            href="/splash?menu=1"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white rounded-lg transition-all text-sm font-medium border border-white/[0.06]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Voltar ao Menu</span>
-          </Link>
-
-          <div className="h-4 w-px bg-white/10" />
-
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-white/30" />
-            <h1 className="text-sm font-semibold text-white/70 tracking-wide">Editor de Clubes</h1>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs text-white/25">
-          <kbd className="px-2 py-0.5 bg-white/5 rounded border border-white/10 font-mono">ESC</kbd>
-          <span>para voltar</span>
-        </div>
-      </header>
-
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden relative z-10">
 
         {/* Left Panel – Teams List */}
         <aside className="w-64 lg:w-72 flex-shrink-0 flex flex-col bg-black/50 backdrop-blur-sm border-r border-white/[0.06]">
+          {/* Voltar — unico controle de navegacao desta tela */}
+          <div className="p-3 border-b border-white/[0.06]">
+            <Link
+              href="/splash?menu=1"
+              aria-label="Voltar ao menu"
+              className="flex items-center gap-2 px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-white/55 hover:text-white rounded-lg transition-all text-sm font-medium border border-white/[0.06]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Voltar</span>
+            </Link>
+          </div>
           {/* Search */}
           <div className="p-3 border-b border-white/[0.06]">
             <div className="relative">
@@ -733,12 +786,11 @@ export default function EditarPage() {
                     <div className="text-[9px] text-white/30 font-semibold tracking-widest mt-0.5">OVERALL</div>
                   </div>
 
-                  {/* Tabs */}
-                  <div className="flex-shrink-0 flex gap-1">
+                  {/* Tabs + Editar clube */}
+                  <div className="flex-shrink-0 flex items-center gap-1">
                     {([
                       { id: "principal", label: "Elenco" },
                       { id: "juniores",  label: "Juniores" },
-                      { id: "dados",     label: "Editar" },
                     ] as const).map(({ id, label }) => (
                       <button
                         key={id}
@@ -754,13 +806,20 @@ export default function EditarPage() {
                         {label}
                       </button>
                     ))}
+                    <div className="mx-1 h-5 w-px bg-white/10" />
+                    <button
+                      onClick={() => setShowClubModal(true)}
+                      className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-white/[0.05] text-white/60 hover:bg-white/[0.08] hover:text-white border border-white/[0.06] transition-all"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar clube
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Tab Content */}
-              {activeTab !== "dados" ? (
-                <>
+              {/* Tab Content — lista de jogadores */}
+              <>
                   {/* Players Table */}
                   <div className="flex-1 flex flex-col overflow-hidden">
                     {/* Column headers */}
@@ -788,6 +847,8 @@ export default function EditarPage() {
                           <button
                             key={player.id}
                             onClick={() => setSelectedPlayerIndex(index)}
+                            onDoubleClick={() => openPlayerEditor(index)}
+                            title="Clique para selecionar, duplo clique para editar"
                             className={cn(
                               "w-full grid grid-cols-[1fr_64px_52px_48px_52px_100px_44px] text-xs border-b border-white/[0.04] transition-all",
                               isSelected
@@ -833,28 +894,65 @@ export default function EditarPage() {
                       <span className="text-white/30">/55 jogadores</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#00ffc8]/10 hover:bg-[#00ffc8]/20 text-[#00ffc8] rounded-lg transition-all border border-[#00ffc8]/20">
+                      <button
+                        onClick={openNewPlayer}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#00ffc8]/10 hover:bg-[#00ffc8]/20 text-[#00ffc8] rounded-lg transition-all border border-[#00ffc8]/20"
+                      >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline">Adicionar</span>
                       </button>
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]">
+                      <button
+                        onClick={() => openPlayerEditor(selectedPlayerIndex)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]"
+                      >
                         <Pencil className="h-3 w-3" />
                         <span className="hidden sm:inline">Editar</span>
                       </button>
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]">
+                      <button
+                        onClick={randomizeSelectedPlayer}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/50 hover:text-white rounded-lg transition-all border border-white/[0.06]"
+                      >
                         <Shuffle className="h-3 w-3" />
                         <span className="hidden sm:inline">Aleatorio</span>
                       </button>
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-lg transition-all border border-rose-500/20">
+                      <button
+                        onClick={removeSelectedPlayer}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 rounded-lg transition-all border border-rose-500/20"
+                      >
                         <Trash2 className="h-3 w-3" />
                         <span className="hidden sm:inline">Remover</span>
                       </button>
                     </div>
                   </div>
                 </>
-              ) : (
-                /* ── DADOS / EDITAR TAB ── */
-                <div className="flex-1 flex flex-col overflow-hidden">
+
+              {/* ── MODAL: Editar clube ── */}
+              {showClubModal && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+                  onClick={() => setShowClubModal(false)}
+                >
+                  <div
+                    className="w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0f0e] shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Cabecalho do modal */}
+                    <div className="flex-shrink-0 flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] bg-white/[0.02]">
+                      <div className="flex items-center gap-2.5">
+                        <Shield className="h-4 w-4" style={{ color: teamColor }} />
+                        <div>
+                          <h2 className="text-sm font-bold text-white leading-tight">Editar clube</h2>
+                          <span className="text-[11px] text-white/40">{selectedTeam.nome}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowClubModal(false)}
+                        aria-label="Fechar"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   <div className="flex-1 overflow-y-auto scrollbar-thin px-6 py-5 space-y-6">
 
                     {/* Dados gerais */}
