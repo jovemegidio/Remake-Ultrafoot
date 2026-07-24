@@ -271,15 +271,22 @@ fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn launch_game(path: Option<String>) -> Result<(), String> {
+fn launch_game(app: AppHandle, path: Option<String>) -> Result<(), String> {
     let exe = path
         .filter(|p| !p.is_empty())
         .or_else(|| read_installed_game().path)
         .ok_or_else(|| "não encontrei o executável do jogo".to_string())?;
 
+    // "--via-launcher" avisa o jogo que ele foi aberto pelo launcher, para ele NÃO
+    // redirecionar de volta pra cá (senão ficaria em loop). O env é redundância.
     std::process::Command::new(&exe)
+        .arg("--via-launcher")
+        .env("ULTRAFOOT_VIA_LAUNCHER", "1")
         .spawn()
         .map_err(|e| format!("não consegui abrir o jogo: {e}"))?;
+
+    // O jogo assume a partir daqui — o launcher fecha.
+    app.exit(0);
     Ok(())
 }
 

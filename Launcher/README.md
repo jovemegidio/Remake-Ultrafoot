@@ -97,6 +97,10 @@ normalmente e o passo do launcher é ignorado.
 
 ## O que mudou no JOGO (resumo)
 
+- **Abrir o jogo abre o launcher primeiro:** ao ser iniciado direto (atalho/`.exe`),
+  o jogo procura o launcher instalado, abre-o e se encerra. O launcher abre o jogo com
+  `--via-launcher`, e aí o jogo roda normalmente. Sem launcher instalado, o jogo abre
+  direto (nunca trava o jogador). Ao clicar **Jogar** no launcher, ele fecha e o jogo assume.
 - **Sem updater in-game:** o plugin `tauri-plugin-updater` não é mais registrado
   (`src-tauri/src/lib.rs`) e `updater:default` saiu das capabilities. O jogo não baixa
   nem instala atualização sozinho.

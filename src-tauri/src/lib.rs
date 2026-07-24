@@ -461,10 +461,109 @@ fn media_previous() -> bool {
     }
 }
 
+// ─── Redirecionamento para o launcher ────────────────────────────────────────
+
+// Ao ser aberto DIRETO (atalho, duplo-clique no .exe), o jogo abre o Ultrafoot
+// Launcher primeiro e se encerra — o launcher assume o boot. Quando o launcher
+// abre o jogo, ele passa "--via-launcher", e af o jogo segue normalmente. Se o
+// launcher nao estiver instalado, o jogo abre normal (nunca trava o jogador).
+#[cfg(desktop)]
+fn maybe_redirect_to_launcher() {
+    let via_launcher = std::env::args().any(|a| a == "--via-launcher")
+        || std::env::var("ULTRAFOOT_VIA_LAUNCHER").is_ok();
+    if via_launcher {
+        return;
+    }
+    if let Some(launcher) = find_launcher_exe() {
+        if std::process::Command::new(&launcher).spawn().is_ok() {
+            std::process::exit(0);
+        }
+    }
+}
+
+#[cfg(all(desktop, windows))]
+fn find_launcher_exe() -> Option<std::path::PathBuf> {
+    use std::path::Path;
+    use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+    use winreg::RegKey;
+
+    let roots = [
+        (
+            RegKey::predef(HKEY_CURRENT_USER),
+            r"Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
+        (
+            RegKey::predef(HKEY_LOCAL_MACHINE),
+            r"Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
+        (
+            RegKey::predef(HKEY_LOCAL_MACHINE),
+            r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        ),
+    ];
+
+    for (root, path) in roots.iter() {
+        let Ok(uninstall) = root.open_subkey(*path) else {
+            continue;
+        };
+        for name in uninstall.enum_keys().flatten() {
+            let Ok(sub) = uninstall.open_subkey(&name) else {
+                continue;
+            };
+            let display: String = sub.get_value("DisplayName").unwrap_or_default();
+            let d = display.to_lowercase();
+            if !d.contains("ultrafoot") || !d.contains("launcher") {
+                continue;
+            }
+            let loc: String = sub.get_value("InstallLocation").unwrap_or_default();
+            if !loc.is_empty() {
+                let exe = Path::new(&loc).join("Ultrafoot Launcher.exe");
+                if exe.exists() {
+                    return Some(exe);
+                }
+                if let Ok(entries) = std::fs::read_dir(&loc) {
+                    for entry in entries.flatten() {
+                        let p = entry.path();
+                        let is_exe = p
+                            .extension()
+                            .map(|x| x.eq_ignore_ascii_case("exe"))
+                            .unwrap_or(false);
+                        let stem = p
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("")
+                            .to_lowercase();
+                        if is_exe && stem.contains("launcher") {
+                            return Some(p);
+                        }
+                    }
+                }
+            }
+            let icon: String = sub.get_value("DisplayIcon").unwrap_or_default();
+            if !icon.is_empty() {
+                let ic = icon.split(',').next().unwrap_or(icon.as_str()).trim().trim_matches('"');
+                if Path::new(ic).exists() {
+                    return Some(std::path::PathBuf::from(ic));
+                }
+            }
+        }
+    }
+    None
+}
+
+#[cfg(all(desktop, not(windows)))]
+fn find_launcher_exe() -> Option<std::path::PathBuf> {
+    None
+}
+
 // ─── App entry point ─────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Antes de tudo: se o jogo foi aberto direto, abre o launcher e sai.
+    #[cfg(desktop)]
+    maybe_redirect_to_launcher();
+
     // DESKTOP: conecta ao Discord (falha em silencio se ele nao estiver aberto).
     #[cfg(desktop)]
     let discord_client = DiscordIpcClient::new(DISCORD_APP_ID)

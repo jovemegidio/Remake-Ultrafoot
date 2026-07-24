@@ -46,6 +46,8 @@ windows = { version = "0.61.3", features = [
   "Media_Control",
 ] }
 windows-collections = "0.2.0"
+# Localiza o Ultrafoot Launcher no registro para redirecionar o boot do jogo.
+winreg = "0.52"
 
 [profile.dev]
 incremental = true
