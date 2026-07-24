@@ -926,10 +926,17 @@ export default function EditarPage() {
                                   : "bg-white/[0.015] hover:bg-white/[0.035]"
                             )}
                           >
+                            {/* FOTO na linha. O editor so mostrava avatar dentro
+                                do modal de edicao — a lista era texto puro, e o
+                                relato era exatamente "as fotos nao sao exibidas".
+                                O rosto real vem do Transfermarkt por nome. */}
                             <div className={cn(
-                              "px-4 py-2.5 text-left truncate font-medium",
+                              "flex items-center gap-2.5 px-3 py-2 text-left font-medium min-w-0",
                               isSelected ? "text-white" : "text-white/65"
-                            )}>{player.nome}</div>
+                            )}>
+                              <PlayerAvatar name={player.nome} position={player.posicao} size="xs" />
+                              <span className="truncate">{player.nome}</span>
+                            </div>
 
                             <div className="px-2 py-2.5 flex items-center justify-center">
                               <span className={cn(

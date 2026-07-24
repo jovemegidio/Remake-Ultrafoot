@@ -1,6 +1,7 @@
 import manifest from "@/data/seeds/faces-manifest.json"
 import importedBF from "@/data/seeds/imported-bf2026.json"
 import realSquadsTM from "@/data/seeds/real-squads-tm.json"
+import tmPhotos from "@/data/seeds/tm-photos.json"
 import { gameAssetUrl } from "@/lib/game-asset"
 import { storeGet, storeSet } from "@/lib/persistent-store"
 
@@ -60,8 +61,54 @@ function getTmFotoMap(): Map<string, string> {
   for (const team of ((importedBF as { teams?: SeedTeamFt[] }).teams) ?? []) {
     for (const j of team.jogadores ?? []) add(j.nome, j.ft, (j as { overall?: number }).overall ?? 0)
   }
+  // CACHE DO TRANSFERMARKT por ultimo (menor prioridade, so preenche o que
+  // faltou). Clubes CURADOS — Liverpool, Bayern — sao servidos pelo overlay de
+  // elencos, que quase nao tem retrato: o Liverpool aparecia com 1 foto em 22
+  // atletas. Este mapa cobre 17 mil nomes que o TM ja tinha baixado.
+  for (const [chave, ft] of Object.entries(tmPhotos as Record<string, string>)) {
+    if (!melhor.has(chave)) melhor.set(chave, { ft, overall: -1 })
+  }
   tmFotoMap = new Map([...melhor].map(([k, v]) => [k, v.ft]))
   return tmFotoMap
+}
+
+let sobrenomeMap: Map<string, string> | null = null
+/**
+ * SOBRENOME -> foto, apenas para sobrenomes UNICOS no acervo.
+ *
+ * Clubes curados (Bayern, Liverpool) trazem o nome ABREVIADO — "D. Upamecano",
+ * "M. Neuer" — enquanto o Transfermarkt guarda "Dayot Upamecano". As chaves nao
+ * casavam e esses elencos apareciam inteiros sem foto (Bayern 0 de 25), mesmo
+ * com o retrato baixado.
+ *
+ * So entra sobrenome que aparece UMA vez: "silva" e "santos" ficam de fora, e a
+ * silhueta e melhor do que a cara de outra pessoa.
+ */
+function getSobrenomeMap(): Map<string, string> {
+  if (sobrenomeMap) return sobrenomeMap
+  const contagem = new Map<string, { ft: string; vezes: number }>()
+  for (const [chave, ft] of getTmFotoMap()) {
+    const partes = chave.split("-")
+    if (partes.length < 2) continue
+    const sobrenome = partes[partes.length - 1]
+    if (sobrenome.length < 4) continue
+    const atual = contagem.get(sobrenome)
+    if (atual) atual.vezes++
+    else contagem.set(sobrenome, { ft, vezes: 1 })
+  }
+  sobrenomeMap = new Map()
+  for (const [s, v] of contagem) if (v.vezes === 1) sobrenomeMap.set(s, v.ft)
+  return sobrenomeMap
+}
+
+/** Nome abreviado ("D. Upamecano") -> tenta o sobrenome. */
+function fotoPorSobrenome(name: string): string | undefined {
+  const chave = normalizePlayerKey(name)
+  const partes = chave.split("-")
+  if (partes.length < 2) return undefined
+  const sobrenome = partes[partes.length - 1]
+  if (sobrenome.length < 4) return undefined
+  return getSobrenomeMap().get(sobrenome)
 }
 
 // Normalizes a player name into a lookup key: "Gabriel Barbosa" → "gabriel-barbosa"
@@ -84,7 +131,7 @@ export function getPlayerPhotoUrl(name: string, playerId?: string): string | und
   if (rawUrl) return gameAssetUrl(rawUrl)
   // Sem arquivo empacotado: foto real do Transfermarkt — local (offline) quando
   // baixada; remota como reserva.
-  const ft = getTmFotoMap().get(normalizePlayerKey(name))
+  const ft = getTmFotoMap().get(normalizePlayerKey(name)) ?? fotoPorSobrenome(name)
   if (!ft) return undefined
   return TM_LOCAL.has(ft) ? gameAssetUrl(`/jogadores/${ft}.jpg`) : `${TM_PORTRAIT}${ft}.jpg`
 }
