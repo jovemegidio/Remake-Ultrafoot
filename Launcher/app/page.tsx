@@ -1,8 +1,6 @@
 import { getFeaturedGame, getNewsForGame } from "@/lib/data"
 import { LauncherShell } from "@/components/launcher/launcher-shell"
 
-export const dynamic = "force-dynamic"
-
 export default async function Page() {
   const game = await getFeaturedGame()
 

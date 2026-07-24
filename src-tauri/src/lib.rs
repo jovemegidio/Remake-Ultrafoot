@@ -486,12 +486,12 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_http::init());
 
-    // updater e Rich Presence sao SO DESKTOP. O updater mobile nao existe (a loja
-    // atualiza o app); o Rich Presence depende do cliente Discord no PC.
+    // Rich Presence e SO DESKTOP (depende do cliente Discord no PC). A atualizacao
+    // do jogo agora e responsabilidade do Ultrafoot Launcher — nao ha mais updater
+    // in-game (o jogo so verifica a versao para travar o online desatualizado).
     #[cfg(desktop)]
     let builder = builder
         .manage(DiscordRpc(Mutex::new(discord_client)))
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             discord_update,
             discord_clear,

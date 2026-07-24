@@ -21,6 +21,9 @@ tauri-plugin-opener = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-store = "2"
+# Mantido apenas para o bundler assinar o instalador (createUpdaterArtifacts -> .sig,
+# usado por scripts/publish-release.mjs). O plugin NAO e mais registrado em runtime:
+# a atualizacao do jogo agora e feita pelo Ultrafoot Launcher, nao mais in-game.
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 # Noticias reais: o webview aplica CORS e feeds RSS nao liberam. O plugin http

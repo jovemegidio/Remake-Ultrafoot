@@ -54,6 +54,7 @@
       "resources/extractor/7z.exe": "extractor/7z.exe",
       "resources/extractor/7z.dll": "extractor/7z.dll",
       "resources/extractor/License.txt": "extractor/License.txt",
+      "resources/launcher/*": "launcher/",
       "vendor/discord-social-sdk/License-Notices.txt": "Discord-Social-SDK-License-Notices.txt"
     },
     "publisher": "Ultrafoot Studio",

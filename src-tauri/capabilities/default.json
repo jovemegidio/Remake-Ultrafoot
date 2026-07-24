@@ -23,7 +23,6 @@
     "fs:default",
     "dialog:default",
     "store:default",
-    "updater:default",
     "process:default",
     {
       "identifier": "http:default",
@@ -39,6 +38,12 @@
         },
         {
           "url": "https://rss.app/*"
+        },
+        {
+          "url": "https://github.com/jovemegidio/Ultrafoot26/*"
+        },
+        {
+          "url": "https://objects.githubusercontent.com/*"
         }
       ]
     }

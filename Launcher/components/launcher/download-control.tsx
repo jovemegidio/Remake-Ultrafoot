@@ -24,21 +24,32 @@ export function DownloadControl({
   const online = mode === "online"
   if (status === "downloading") {
     const pct = Math.round(install.progress)
+    const installing = install.phase === "installing"
+    const label = installing
+      ? "Instalando"
+      : install.version
+        ? "Atualizando"
+        : "Baixando"
     return (
       <div className={cn("w-full", size === "lg" ? "max-w-md" : "max-w-none")}>
         <div className="mb-1.5 flex items-center justify-between text-xs">
           <span className="flex items-center gap-1.5 font-medium text-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-            {install.version ? "Atualizando" : "Baixando"}… {pct}%
+            {label}… {installing ? "" : `${pct}%`}
           </span>
-          <span className="text-muted-foreground">
-            {formatSize(Math.round(((downloadSizeMb || 0) * pct) / 100))} / {formatSize(downloadSizeMb)}
-          </span>
+          {!installing && (
+            <span className="text-muted-foreground">
+              {formatSize(Math.round(((downloadSizeMb || 0) * pct) / 100))} / {formatSize(downloadSizeMb)}
+            </span>
+          )}
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-200"
-            style={{ width: `${pct}%` }}
+            className={cn(
+              "h-full rounded-full bg-primary transition-all duration-200",
+              installing && "animate-pulse",
+            )}
+            style={{ width: installing ? "100%" : `${pct}%` }}
           />
         </div>
       </div>

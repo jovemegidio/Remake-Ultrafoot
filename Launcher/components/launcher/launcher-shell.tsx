@@ -1,12 +1,19 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import type { GameWithReleases, NewsWithGame } from "@/lib/data"
 import { GameHero } from "./game-hero"
 import { NewsFeed } from "./news-feed"
 import { ChangelogView } from "./changelog-view"
 import { SecurityPanel } from "./security-panel"
 import { cn } from "@/lib/utils"
+import {
+  getInstalledGame,
+  fetchLatest,
+  installOrUpdate,
+  launchGame,
+  type ProgressPhase,
+} from "@/lib/launcher-bridge"
 import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff } from "lucide-react"
 
 export type GameStatus = "not-installed" | "downloading" | "update" | "playable"
@@ -14,7 +21,9 @@ export type LaunchMode = "online" | "offline"
 
 export type InstallState = {
   version: string | null
+  path: string | null
   downloading: boolean
+  phase: ProgressPhase
   progress: number
 }
 
@@ -29,21 +38,39 @@ export function LauncherShell({
 }) {
   const [tab, setTab] = useState<Tab>("home")
   const [mode, setMode] = useState<LaunchMode>("online")
-  // Estado inicial simulado nesta sessão: instalado numa versão antiga -> "Atualizar".
-  const [install, setInstall] = useState<InstallState>(() => {
-    const old = game.releases.find((r) => !r.isLatest)
-    return { version: old?.version ?? null, downloading: false, progress: 0 }
-  })
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Última versão publicada: parte do dado estático embutido e é confirmada em
+  // runtime pelo latest.json — assim o launcher reconhece uma versão nova sem
+  // precisar ser recompilado.
+  const [latest, setLatest] = useState<{ version: string | null; url: string | null }>(() => ({
+    version: game.latestRelease?.version ?? null,
+    url: game.latestRelease?.downloadUrl ?? null,
+  }))
+
+  const [install, setInstall] = useState<InstallState>({
+    version: null,
+    path: null,
+    downloading: false,
+    phase: "downloading",
+    progress: 0,
+  })
+
+  // Ao abrir: detecta a versão instalada (registro do Windows) e confirma a
+  // última versão publicada (latest.json do GitHub).
   useEffect(() => {
+    let alive = true
+    void (async () => {
+      const [installed, remote] = await Promise.all([getInstalledGame(), fetchLatest()])
+      if (!alive) return
+      setInstall((prev) => ({ ...prev, version: installed.version, path: installed.path }))
+      if (remote) setLatest({ version: remote.version, url: remote.url })
+    })()
     return () => {
-      if (timer.current) clearInterval(timer.current)
+      alive = false
     }
   }, [])
 
-  const latestVersion = game.latestRelease?.version ?? null
-  const downloadUrl = game.latestRelease?.downloadUrl ?? null
+  const latestVersion = latest.version
 
   const status: GameStatus = install.downloading
     ? "downloading"
@@ -55,28 +82,37 @@ export function LauncherShell({
 
   const startDownload = useCallback(() => {
     if (install.downloading) return
-    if (status === "playable") return // "Jogar" — sem launch real no portal web
+    if (status === "playable") {
+      void launchGame(install.path) // abre o jogo instalado
+      return
+    }
 
-    // Abre o setup.exe real publicado no GitHub (mesmo release do auto-updater).
-    // A barra animada abaixo é apenas o feedback visual do portal web.
-    if (downloadUrl) window.open(downloadUrl, "_blank", "noopener,noreferrer")
+    const url = latest.url ?? game.latestRelease?.downloadUrl
+    if (!url) return
 
-    setInstall((prev) => ({ ...prev, downloading: true, progress: 0 }))
-
-    if (timer.current) clearInterval(timer.current)
-    timer.current = setInterval(() => {
-      setInstall((prev) => {
-        if (!prev.downloading) return prev
-        const next = Math.min(100, prev.progress + Math.random() * 12 + 4)
-        if (next >= 100) {
-          if (timer.current) clearInterval(timer.current)
-          timer.current = null
-          return { version: latestVersion ?? prev.version, downloading: false, progress: 100 }
-        }
-        return { ...prev, progress: next }
+    setInstall((prev) => ({ ...prev, downloading: true, phase: "downloading", progress: 0 }))
+    installOrUpdate(url, (p) => {
+      setInstall((prev) => ({
+        ...prev,
+        downloading: p.phase !== "done",
+        phase: p.phase,
+        progress: p.percent,
+      }))
+    })
+      .then(() => {
+        setInstall((prev) => ({
+          ...prev,
+          version: latest.version ?? prev.version,
+          downloading: false,
+          phase: "done",
+          progress: 100,
+        }))
       })
-    }, 350)
-  }, [install.downloading, status, latestVersion, downloadUrl])
+      .catch((err) => {
+        console.error("[launcher] falha ao instalar:", err)
+        setInstall((prev) => ({ ...prev, downloading: false }))
+      })
+  }, [install.downloading, install.path, status, latest.url, latest.version, game.latestRelease?.downloadUrl])
 
   const online = mode === "online"
 

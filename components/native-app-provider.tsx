@@ -350,42 +350,23 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
 }
 
 function InGameUpdateDialog({ offer, onLater }: { offer: InGameUpdateOffer; onLater: () => void }) {
-  const [progress, setProgress] = useState<number | null>(null)
-  const [error, setError] = useState("")
-
-  const install = async () => {
-    setError("")
-    setProgress(0)
-    try {
-      await offer.install(setProgress)
-    } catch {
-      setProgress(null)
-      setError("Não foi possível instalar agora. Verifique sua conexão e tente novamente.")
-    }
-  }
-
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-5 backdrop-blur-md">
       <section className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#00ffc8]/25 bg-[#0b1014] shadow-[0_24px_90px_rgba(0,255,200,.16)]">
         <div className="border-b border-white/10 bg-gradient-to-r from-[#00ffc8]/15 to-cyan-500/5 px-6 py-5">
           <p className="text-[11px] font-black uppercase tracking-[.22em] text-[#00ffc8]">Atualização do jogo</p>
           <h2 className="mt-1 text-2xl font-black text-white">Ultrafoot 26 v{offer.version}</h2>
-          <p className="mt-1 text-sm text-white/55">Uma nova build está pronta para instalar.</p>
+          <p className="mt-1 text-sm text-white/55">Uma nova versão está disponível.</p>
         </div>
         <div className="px-6 py-5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-white/50">Novidades</h3>
           <p className="mt-2 max-h-36 overflow-y-auto whitespace-pre-line text-sm leading-6 text-white/75">{offer.notes}</p>
-          {progress !== null && (
-            <div className="mt-5">
-              <div className="mb-2 flex justify-between text-xs text-white/60"><span>Baixando e instalando</span><span>{progress}%</span></div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-[#00ffc8] transition-[width]" style={{ width: `${progress}%` }} /></div>
-              <p className="mt-2 text-xs text-white/40">O jogo será reiniciado automaticamente ao concluir.</p>
-            </div>
-          )}
-          {error && <p className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+          <div className="mt-5 rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/5 p-4 text-sm leading-6 text-white/80">
+            Para atualizar, feche o Ultrafoot 26 e abra o <strong className="text-white">Ultrafoot Launcher</strong>.
+            Ele baixa e instala a nova versão automaticamente — não é mais preciso atualizar por dentro do jogo.
+          </div>
           <div className="mt-6 flex justify-end gap-3">
-            <button disabled={progress !== null} onClick={onLater} className="rounded-lg px-4 py-2.5 text-sm font-bold text-white/55 hover:bg-white/10 disabled:opacity-40">Mais tarde</button>
-            <button disabled={progress !== null} onClick={install} className="rounded-lg bg-[#00ffc8] px-5 py-2.5 text-sm font-black text-black hover:bg-[#4dffda] disabled:opacity-60">Atualizar agora</button>
+            <button onClick={onLater} className="rounded-lg bg-[#00ffc8] px-5 py-2.5 text-sm font-black text-black hover:bg-[#4dffda]">Entendi</button>
           </div>
         </div>
       </section>

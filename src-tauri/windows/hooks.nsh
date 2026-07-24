@@ -49,5 +49,26 @@
   ${EndIf}
 
   ultrafoot_vcredist_done:
+
+  ; ─── Ultrafoot Launcher ─────────────────────────────────────────────────────
+  ; Instala/atualiza o launcher em SILENCIO junto com o jogo. Assim, quem ja tem o
+  ; Ultrafoot passa a ter o launcher automaticamente ao instalar esta build — sem
+  ; clicar em nada. O launcher e quem baixa/atualiza o jogo daqui pra frente.
+  StrCpy $7 ""
+  ${If} ${FileExists} "$INSTDIR\launcher\UltrafootLauncher-setup.exe"
+    StrCpy $7 "$INSTDIR\launcher\UltrafootLauncher-setup.exe"
+  ${ElseIf} ${FileExists} "$INSTDIR\resources\launcher\UltrafootLauncher-setup.exe"
+    StrCpy $7 "$INSTDIR\resources\launcher\UltrafootLauncher-setup.exe"
+  ${EndIf}
+  ${If} $7 != ""
+    DetailPrint "Instalando o Ultrafoot Launcher..."
+    ExecWait '"$7" /S' $8
+    ${If} $8 == 0
+      DetailPrint "Ultrafoot Launcher instalado."
+    ${Else}
+      DetailPrint "Aviso: o instalador do Ultrafoot Launcher retornou o codigo $8."
+    ${EndIf}
+  ${EndIf}
+
   SetRegView lastused
 !macroend
