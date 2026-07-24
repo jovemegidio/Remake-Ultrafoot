@@ -42,7 +42,6 @@ import { teamSectorRatings } from "@/lib/players-data"
 import { TacticalEditor } from "@/components/tactical-editor"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { getCompetitionLogo } from "@/lib/competition-logo"
-import { getPreMatchBackground } from "@/lib/pre-match-bg"
 import { UniformSelectorModal } from "@/components/match/uniform-selector-modal"
 import { MatchResultModal } from "@/components/match/match-result-modal"
 import { RoundResultsModal } from "@/components/match/round-results-modal"
@@ -379,12 +378,6 @@ export default function PartidaPage() {
     [matchInfo.competition, homeTeam.divisao],
   )
 
-  // Fundo da tela conforme a competicao da partida.
-  const preMatchBg = useMemo(
-    () => getPreMatchBackground(matchInfo.competition, league, homeTeam.nome),
-    [matchInfo.competition, league, homeTeam.nome],
-  )
-
   // Quick sim handler
   const handleQuickSim = useCallback(() => {
     if (!homeTeam || !awayTeam) return
@@ -551,16 +544,23 @@ export default function PartidaPage() {
 
       {/* Main Content */}
       <main className="relative flex-1 overflow-hidden">
-        {/* Background conforme a COMPETICAO disputada (Paulistao, Libertadores, Champions...).
-            Antes era sempre o estadio noturno. Cai no generico quando nao ha arte. */}
-        <div className="absolute inset-0">
-          <Image
-            src={preMatchBg}
-            alt=""
-            fill
-            priority
-            className="object-cover"
-            unoptimized
+        {/* Fundo FIXO para toda partida: a cutscene roda em loop, muda, atras dos
+            paineis. Antes o fundo vinha por competicao/estadio (lib/pre-match-bg)
+            e mostrava "image not found" sempre que faltava a arte daquele clube —
+            justamente o que acontecia com times menores. Um video fixo nunca
+            depende de arte que pode faltar.
+            No modo economico o CSS esconde <video> (poupa GPU fraca); por isso a
+            base e um gradiente escuro proprio, que aparece no lugar sem quebrar
+            nada. Ver components/performance-profile. */}
+        <div className="absolute inset-0 bg-[#050508]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,#132534_0%,#070a0f_72%)]" />
+          <video
+            src="/cutscenes/pre-match-bg.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover"
           />
           {/* Escurecimento para legibilidade */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/65 to-black/90" />
