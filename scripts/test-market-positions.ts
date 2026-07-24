@@ -79,11 +79,19 @@ for (const k of chaves) {
 let falhas = 0
 const meiAntes = (antes.get("MEI") ?? 0) / total
 const meiDepois = (depois.get("MEI") ?? 0) / total
-if (meiAntes < 0.5) { console.log("\nFALHA: esperava MEI dominante ANTES da correcao"); falhas++ }
+// O que este teste GARANTE e a distribuicao FINAL. A premissa antiga exigia MEI
+// >= 50% no dado CRU (o bug em que todo registro "BAN" virava meia). Ela caiu
+// quando o seed passou a receber os elencos reais do Transfermarkt, que ja vem
+// com a posicao certa: a origem melhorou, entao o "antes" deixou de ser torto.
+// Exigir o defeito seria travar a melhoria do dado.
 if (meiDepois > 0.25) { console.log("\nFALHA: MEI continua inflado DEPOIS da correcao"); falhas++ }
+if (meiDepois > meiAntes) { console.log("\nFALHA: a correcao AUMENTOU o excesso de meias"); falhas++ }
 for (const k of ["ATA", "VOL", "PD", "PE", "LD", "LE"]) {
   if ((depois.get(k) ?? 0) < total * 0.03) { console.log(`FALHA: ${k} quase ausente depois da correcao`); falhas++ }
 }
+// Goleiro tem de ficar numa faixa plausivel (2-3 por elenco de ~25).
+const golPct = (depois.get("GOL") ?? 0) / total
+if (golPct < 0.06 || golPct > 0.16) { console.log(`FALHA: proporcao de goleiros irreal (${(golPct*100).toFixed(1)}%)`); falhas++ }
 
 console.log(`\nMEI: ${(meiAntes * 100).toFixed(1)}% -> ${(meiDepois * 100).toFixed(1)}%`)
 console.log(falhas === 0 ? "\nDISTRIBUICAO OK\n" : `\n${falhas} PROBLEMA(S)\n`)

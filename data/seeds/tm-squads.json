@@ -11331,9 +11331,267 @@
   },
   "FIORENTI|fiorentina": {
    "v": 2,
+   "curto": "FIORENTI",
    "nome": "Fiorentina",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/ac-florenz/startseite/verein/430",
+   "players": [
+    {
+     "tmId": "59377",
+     "nome": "David de Gea",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha",
+     "idade": 35
+    },
+    {
+     "tmId": "471936",
+     "nome": "Oliver Christensen",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Dinamarca",
+     "idade": 27
+    },
+    {
+     "tmId": "988977",
+     "nome": "Tommaso Vannucchi",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 19
+    },
+    {
+     "tmId": "135747",
+     "nome": "Luca Lezzerini",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 31
+    },
+    {
+     "tmId": "746712",
+     "nome": "Pietro Comuzzo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Itália",
+     "idade": 21
+    },
+    {
+     "tmId": "568559",
+     "nome": "Radu Drăgușin",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Roménia",
+     "idade": 24
+    },
+    {
+     "tmId": "282144",
+     "nome": "Marin Pongracic",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Croácia",
+     "idade": 28
+    },
+    {
+     "tmId": "950393",
+     "nome": "Viery",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "1144700",
+     "nome": "Matías Moreno",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "346561",
+     "nome": "Luca Ranieri",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Itália",
+     "idade": 27
+    },
+    {
+     "tmId": "860992",
+     "nome": "Nicolás Valentini",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 25
+    },
+    {
+     "tmId": "1015822",
+     "nome": "Eman Košpo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bósnia-Herzegovina",
+     "idade": 19
+    },
+    {
+     "tmId": "984964",
+     "nome": "Niccolò Fortini",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Itália",
+     "idade": 20
+    },
+    {
+     "tmId": "547985",
+     "nome": "Fabiano Parisi",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Itália",
+     "idade": 25
+    },
+    {
+     "tmId": "1012731",
+     "nome": "Luis Balbo",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Venezuela",
+     "idade": 20
+    },
+    {
+     "tmId": "741257",
+     "nome": "Álex Jiménez",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha",
+     "idade": 21
+    },
+    {
+     "tmId": "401529",
+     "nome": "Dodô",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "308279",
+     "nome": "Rolando Mandragora",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Itália",
+     "idade": 29
+    },
+    {
+     "tmId": "1057839",
+     "nome": "Lapo Deli",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Itália",
+     "idade": 20
+    },
+    {
+     "tmId": "1279526",
+     "nome": "Christ Inao Oulaï",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 20
+    },
+    {
+     "tmId": "855308",
+     "nome": "Arthur Atta",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "651005",
+     "nome": "Cher Ndour",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 21
+    },
+    {
+     "tmId": "432090",
+     "nome": "Nicolò Fagioli",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 25
+    },
+    {
+     "tmId": "459128",
+     "nome": "Marco Brescianini",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 26
+    },
+    {
+     "tmId": "507486",
+     "nome": "Simon Sohm",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Suiça",
+     "idade": 25
+    },
+    {
+     "tmId": "633668",
+     "nome": "Giovanni Fabbian",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 23
+    },
+    {
+     "tmId": "386455",
+     "nome": "Riccardo Sottil",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Itália",
+     "idade": 27
+    },
+    {
+     "tmId": "305947",
+     "nome": "Albert Gudmundsson",
+     "posicaoTM": "Seg. Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Islândia",
+     "idade": 29
+    },
+    {
+     "tmId": "364135",
+     "nome": "Moise Kean",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 26
+    },
+    {
+     "tmId": "432092",
+     "nome": "Roberto Piccoli",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 25
+    },
+    {
+     "tmId": "354814",
+     "nome": "M'Bala Nzola",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Angola",
+     "idade": 29
+    },
+    {
+     "tmId": "934514",
+     "nome": "Riccardo Braschi",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 19
+    }
+   ]
   },
   "ESPANYOL|espanyol": {
    "v": 2,
@@ -14251,9 +14509,235 @@
   },
   "DYNAMODR|dynamo dresden": {
    "v": 2,
+   "curto": "DYNAMODR",
    "nome": "Dynamo Dresden",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/sg-dynamo-dresden/startseite/verein/129",
+   "players": [
+    {
+     "tmId": "426685",
+     "nome": "Tim Schreiber",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 24
+    },
+    {
+     "tmId": "601918",
+     "nome": "Elias Bethke",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 23
+    },
+    {
+     "tmId": "309397",
+     "nome": "Lennart Grill",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 27
+    },
+    {
+     "tmId": "150080",
+     "nome": "Daniel Mesenhöler",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 31
+    },
+    {
+     "tmId": "485747",
+     "nome": "Thomas Keller",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 26
+    },
+    {
+     "tmId": "921485",
+     "nome": "Friedrich Müller",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 20
+    },
+    {
+     "tmId": "527276",
+     "nome": "Kenneth Schmidt",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 24
+    },
+    {
+     "tmId": "271323",
+     "nome": "Ahmet Muhamedbegovic",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria",
+     "idade": 27
+    },
+    {
+     "tmId": "227078",
+     "nome": "Lukas Boeder",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 29
+    },
+    {
+     "tmId": "379114",
+     "nome": "Lars Bünning",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 28
+    },
+    {
+     "tmId": "1070022",
+     "nome": "Till Neininger",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 19
+    },
+    {
+     "tmId": "296188",
+     "nome": "Alexander Rossipal",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Alemanha",
+     "idade": 30
+    },
+    {
+     "tmId": "521474",
+     "nome": "Brooklyn Ezeh",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Alemanha",
+     "idade": 25
+    },
+    {
+     "tmId": "528619",
+     "nome": "Jonas Sterner",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Alemanha",
+     "idade": 24
+    },
+    {
+     "tmId": "379879",
+     "nome": "Simon Straudi",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Itália",
+     "idade": 27
+    },
+    {
+     "tmId": "185427",
+     "nome": "Nicolai Rapp",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Alemanha",
+     "idade": 29
+    },
+    {
+     "tmId": "690429",
+     "nome": "Robert Wagner",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 23
+    },
+    {
+     "tmId": "384745",
+     "nome": "Tobias Raschl",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 26
+    },
+    {
+     "tmId": "296372",
+     "nome": "Luca Herrmann",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 27
+    },
+    {
+     "tmId": "205544",
+     "nome": "Niklas Hauptmann",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 30
+    },
+    {
+     "tmId": "532784",
+     "nome": "Nils Fröling",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Suécia",
+     "idade": 26
+    },
+    {
+     "tmId": "661711",
+     "nome": "Jonas Oehmichen",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 22
+    },
+    {
+     "tmId": "1149111",
+     "nome": "Quentin Enold",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 18
+    },
+    {
+     "tmId": "658116",
+     "nome": "Ben Bobzien",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Alemanha",
+     "idade": 23
+    },
+    {
+     "tmId": "453324",
+     "nome": "Jakob Lemmer",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Alemanha",
+     "idade": 26
+    },
+    {
+     "tmId": "324851",
+     "nome": "Christoph Daferner",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Alemanha",
+     "idade": 28
+    },
+    {
+     "tmId": "273054",
+     "nome": "Vincent Vermeij",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Holanda",
+     "idade": 31
+    },
+    {
+     "tmId": "1186442",
+     "nome": "Kaan Inanoglu",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Turquia",
+     "idade": 20
+    }
+   ]
   },
   "ERZGEBIR|erzgebirge aue": {
    "v": 2,
@@ -52494,9 +52978,251 @@
   },
   "PARMAXIT|parma": {
    "v": 2,
+   "curto": "PARMAXIT",
    "nome": "Parma",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/parma-calcio-1913/startseite/verein/130",
+   "players": [
+    {
+     "tmId": "432298",
+     "nome": "Zion Suzuki",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Japão",
+     "idade": 23
+    },
+    {
+     "tmId": "814473",
+     "nome": "Giovanni Daffara",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 21
+    },
+    {
+     "tmId": "528181",
+     "nome": "Edoardo Corvi",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 25
+    },
+    {
+     "tmId": "867137",
+     "nome": "Alessandro Circati",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Austrália",
+     "idade": 22
+    },
+    {
+     "tmId": "1159864",
+     "nome": "Mariano Troilo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 23
+    },
+    {
+     "tmId": "673514",
+     "nome": "Abdoulaye Ndiaye",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Senegal",
+     "idade": 24
+    },
+    {
+     "tmId": "543727",
+     "nome": "Botond Balogh",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Hungria",
+     "idade": 24
+    },
+    {
+     "tmId": "625202",
+     "nome": "Lautaro Valenti",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 27
+    },
+    {
+     "tmId": "1009616",
+     "nome": "Dominik Drobnic",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Eslovénia",
+     "idade": 19
+    },
+    {
+     "tmId": "858677",
+     "nome": "Peter Amoran",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Suécia",
+     "idade": 22
+    },
+    {
+     "tmId": "445126",
+     "nome": "Emanuele Valeri",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Itália",
+     "idade": 27
+    },
+    {
+     "tmId": "731491",
+     "nome": "Franco Carboni",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina",
+     "idade": 23
+    },
+    {
+     "tmId": "932187",
+     "nome": "Sascha Britschgi",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Suiça",
+     "idade": 19
+    },
+    {
+     "tmId": "392956",
+     "nome": "Enrico Delprato",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Itália",
+     "idade": 26
+    },
+    {
+     "tmId": "707844",
+     "nome": "Mandela Keita",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Bélgica",
+     "idade": 24
+    },
+    {
+     "tmId": "430280",
+     "nome": "Hans Nicolussi Caviglia",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Itália",
+     "idade": 26
+    },
+    {
+     "tmId": "466802",
+     "nome": "Adrián Bernabé",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 25
+    },
+    {
+     "tmId": "514888",
+     "nome": "Oliver Sørensen",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Dinamarca",
+     "idade": 24
+    },
+    {
+     "tmId": "1043646",
+     "nome": "Christian Ordóñez",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "999127",
+     "nome": "Benja Cremaschi",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Estados Unidos",
+     "idade": 21
+    },
+    {
+     "tmId": "702324",
+     "nome": "Rachid Kouda",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 23
+    },
+    {
+     "tmId": "1087009",
+     "nome": "Abdou-Salam Konate",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal",
+     "idade": 19
+    },
+    {
+     "tmId": "663237",
+     "nome": "Jacob Ondrejka",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Suécia",
+     "idade": 23
+    },
+    {
+     "tmId": "1028162",
+     "nome": "Antoine Joujou",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "300532",
+     "nome": "Pontus Almqvist",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Suécia",
+     "idade": 27
+    },
+    {
+     "tmId": "856530",
+     "nome": "Mateo Pellegrino",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 24
+    },
+    {
+     "tmId": "840149",
+     "nome": "Matija Frigan",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Croácia",
+     "idade": 23
+    },
+    {
+     "tmId": "454386",
+     "nome": "Adrian Benedyczak",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Polónia",
+     "idade": 25
+    },
+    {
+     "tmId": "862606",
+     "nome": "Nesta Elphege",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França",
+     "idade": 25
+    },
+    {
+     "tmId": "991459",
+     "nome": "Daniel Mikołajewski",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Polónia",
+     "idade": 20
+    }
+   ]
   },
   "KAISERSL|kaiserslautern": {
    "v": 2,
@@ -70009,9 +70735,283 @@
   },
   "GREMIO|gremio": {
    "v": 2,
+   "curto": "GREMIO",
    "nome": "Grêmio",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/gremio-porto-alegre/startseite/verein/210",
+   "players": [
+    {
+     "tmId": "878037",
+     "nome": "Gabriel Grando",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "69400",
+     "nome": "Weverton",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 38
+    },
+    {
+     "tmId": "959088",
+     "nome": "Thiago Beltrame",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 23
+    },
+    {
+     "tmId": "1446971",
+     "nome": "Gabriel Menegon",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 17
+    },
+    {
+     "tmId": "874223",
+     "nome": "Gustavo Martins",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 23
+    },
+    {
+     "tmId": "671572",
+     "nome": "Wagner Leonardo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "285548",
+     "nome": "Fabián Balbuena",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Paraguai",
+     "idade": 34
+    },
+    {
+     "tmId": "145400",
+     "nome": "Walter Kannemann",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 35
+    },
+    {
+     "tmId": "1219466",
+     "nome": "Wallace",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "1355268",
+     "nome": "Luis Eduardo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 18
+    },
+    {
+     "tmId": "406675",
+     "nome": "Marlon",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "601011",
+     "nome": "Caio Paulista",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "1253927",
+     "nome": "Pedro Gabriel",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 19
+    },
+    {
+     "tmId": "373170",
+     "nome": "Cristian Pavón",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina",
+     "idade": 30
+    },
+    {
+     "tmId": "342024",
+     "nome": "João Pedro",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "75435",
+     "nome": "Marcos Rocha",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 37
+    },
+    {
+     "tmId": "839031",
+     "nome": "Leonel Pérez",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 21
+    },
+    {
+     "tmId": "723853",
+     "nome": "Erick Noriega",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Perú",
+     "idade": 24
+    },
+    {
+     "tmId": "436385",
+     "nome": "Mathías Villasanti",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Paraguai",
+     "idade": 29
+    },
+    {
+     "tmId": "373174",
+     "nome": "Dodi",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 30
+    },
+    {
+     "tmId": "689211",
+     "nome": "Juan Nardoni",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 24
+    },
+    {
+     "tmId": "1285798",
+     "nome": "Tiaguinho",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 18
+    },
+    {
+     "tmId": "1228661",
+     "nome": "Gabriel Mec",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 18
+    },
+    {
+     "tmId": "828045",
+     "nome": "Miguel Monsalve",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Colômbia",
+     "idade": 22
+    },
+    {
+     "tmId": "1221317",
+     "nome": "Riquelme",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 19
+    },
+    {
+     "tmId": "423604",
+     "nome": "Francis Amuzu",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Gana",
+     "idade": 26
+    },
+    {
+     "tmId": "448466",
+     "nome": "Jovane Cabral",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Cabo Verde",
+     "idade": 28
+    },
+    {
+     "tmId": "52769",
+     "nome": "Willian",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 37
+    },
+    {
+     "tmId": "371256",
+     "nome": "Tetê",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "633428",
+     "nome": "José Enamorado",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Colômbia",
+     "idade": 27
+    },
+    {
+     "tmId": "1260202",
+     "nome": "Roger",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 18
+    },
+    {
+     "tmId": "525287",
+     "nome": "Carlos Vinícius",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "743594",
+     "nome": "Matheus Nascimento",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 22
+    },
+    {
+     "tmId": "95732",
+     "nome": "Martin Braithwaite",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Dinamarca",
+     "idade": 35
+    }
+   ]
   },
   "AUSTRIAL|austria lustenau": {
    "v": 2,
@@ -71206,6 +72206,7 @@
   },
   "BAYERLEV|bayer leverkusen": {
    "v": 2,
+   "curto": "BAYERLEV",
    "nome": "Bayer Leverkusen",
    "players": [],
    "naoEncontrado": true
@@ -71511,9 +72512,251 @@
   },
   "UNIONBER|union berlin": {
    "v": 2,
+   "curto": "UNIONBER",
    "nome": "Union Berlin",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/1-fc-union-berlin/startseite/verein/89",
+   "players": [
+    {
+     "tmId": "107775",
+     "nome": "Frederik Rönnow",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Dinamarca",
+     "idade": 33
+    },
+    {
+     "tmId": "386685",
+     "nome": "Matheo Raab",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 27
+    },
+    {
+     "tmId": "161057",
+     "nome": "Carl Klaus",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 32
+    },
+    {
+     "tmId": "597432",
+     "nome": "Leopold Querfeld",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria",
+     "idade": 22
+    },
+    {
+     "tmId": "738774",
+     "nome": "Zeno Van Den Bosch",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 23
+    },
+    {
+     "tmId": "371141",
+     "nome": "Stanley Nsoki",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 27
+    },
+    {
+     "tmId": "196231",
+     "nome": "Marvin Friedrich",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 30
+    },
+    {
+     "tmId": "995520",
+     "nome": "Oluwaseun Ogbemudia",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 20
+    },
+    {
+     "tmId": "798043",
+     "nome": "Tom Rothe",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Alemanha",
+     "idade": 21
+    },
+    {
+     "tmId": "391780",
+     "nome": "Derrick Köhn",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Gana",
+     "idade": 27
+    },
+    {
+     "tmId": "1027870",
+     "nome": "Andrik Markgraf",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Alemanha",
+     "idade": 20
+    },
+    {
+     "tmId": "362977",
+     "nome": "Josip Juranovic",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Croácia",
+     "idade": 30
+    },
+    {
+     "tmId": "75921",
+     "nome": "Christopher Trimmel",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Áustria",
+     "idade": 39
+    },
+    {
+     "tmId": "692737",
+     "nome": "Aljoscha Kemlein",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Alemanha",
+     "idade": 21
+    },
+    {
+     "tmId": "124410",
+     "nome": "Rani Khedira",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Tunísia",
+     "idade": 32
+    },
+    {
+     "tmId": "1131153",
+     "nome": "Tim Blaszczak",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Alemanha",
+     "idade": 18
+    },
+    {
+     "tmId": "454863",
+     "nome": "András Schäfer",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Hungria",
+     "idade": 27
+    },
+    {
+     "tmId": "177779",
+     "nome": "Janik Haberer",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 32
+    },
+    {
+     "tmId": "270393",
+     "nome": "Robert Skov",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Dinamarca",
+     "idade": 30
+    },
+    {
+     "tmId": "297583",
+     "nome": "Woo-yeong Jeong",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Coreia do Sul",
+     "idade": 26
+    },
+    {
+     "tmId": "519872",
+     "nome": "Livan Burcu",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Turquia",
+     "idade": 21
+    },
+    {
+     "tmId": "1378338",
+     "nome": "Linus Güther",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Alemanha",
+     "idade": 16
+    },
+    {
+     "tmId": "1033581",
+     "nome": "Julien Friedrich",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Alemanha",
+     "idade": 19
+    },
+    {
+     "tmId": "1035765",
+     "nome": "Ilyas Ansah",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Alemanha",
+     "idade": 21
+    },
+    {
+     "tmId": "583699",
+     "nome": "Andrej Ilic",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Sérvia",
+     "idade": 26
+    },
+    {
+     "tmId": "341317",
+     "nome": "Oliver Burke",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Escócia",
+     "idade": 29
+    },
+    {
+     "tmId": "838236",
+     "nome": "Marin Ljubicic",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Croácia",
+     "idade": 24
+    },
+    {
+     "tmId": "287920",
+     "nome": "Tim Skarke",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Alemanha",
+     "idade": 29
+    },
+    {
+     "tmId": "1045446",
+     "nome": "Dmytro Bogdanov",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Ucrânia",
+     "idade": 19
+    },
+    {
+     "tmId": "1162925",
+     "nome": "Mekhi Gray",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Jamaica",
+     "idade": 19
+    }
+   ]
   },
   "BALIKESI|bal kesirspor kulubu": {
    "v": 2,
@@ -73329,9 +74572,219 @@
   },
   "ALAVESXE|alaves": {
    "v": 2,
+   "curto": "ALAVESXE",
    "nome": "Alavés",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/deportivo-alaves/startseite/verein/1108",
+   "players": [
+    {
+     "tmId": "298197",
+     "nome": "Antonio Sivera",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha",
+     "idade": 29
+    },
+    {
+     "tmId": "631693",
+     "nome": "Jesús Owono",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Guiné Equatorial",
+     "idade": 25
+    },
+    {
+     "tmId": "608382",
+     "nome": "Adrián Rodríguez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina",
+     "idade": 25
+    },
+    {
+     "tmId": "694509",
+     "nome": "Moussa Diarra",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Mali",
+     "idade": 25
+    },
+    {
+     "tmId": "581326",
+     "nome": "Ville Koski",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Finlândia",
+     "idade": 24
+    },
+    {
+     "tmId": "258475",
+     "nome": "Nikola Maras",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Sérvia",
+     "idade": 30
+    },
+    {
+     "tmId": "533354",
+     "nome": "Facundo Garcés",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Malásia",
+     "idade": 26
+    },
+    {
+     "tmId": "741289",
+     "nome": "Youssef Enríquez",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Marrocos",
+     "idade": 20
+    },
+    {
+     "tmId": "533568",
+     "nome": "Nahuel Tenaglia",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina",
+     "idade": 30
+    },
+    {
+     "tmId": "175446",
+     "nome": "Jonny Otto",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha",
+     "idade": 32
+    },
+    {
+     "tmId": "668276",
+     "nome": "Hugo Novoa",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha",
+     "idade": 23
+    },
+    {
+     "tmId": "495621",
+     "nome": "Antonio Blanco",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Espanha",
+     "idade": 26
+    },
+    {
+     "tmId": "431190",
+     "nome": "Carlos Protesoni",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Uruguai",
+     "idade": 28
+    },
+    {
+     "tmId": "646734",
+     "nome": "Tomás Mendes",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Guiné Bissau",
+     "idade": 21
+    },
+    {
+     "tmId": "785353",
+     "nome": "Pablo Ibáñez",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 27
+    },
+    {
+     "tmId": "284854",
+     "nome": "Carles Aleñá",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 28
+    },
+    {
+     "tmId": "465967",
+     "nome": "Ander Guevara",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 29
+    },
+    {
+     "tmId": "721660",
+     "nome": "Mikel Rodriguez",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 24
+    },
+    {
+     "tmId": "1054931",
+     "nome": "Selu Diallo",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Guiné",
+     "idade": 22
+    },
+    {
+     "tmId": "165007",
+     "nome": "Denis Suárez",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 32
+    },
+    {
+     "tmId": "718034",
+     "nome": "Abde Rebbach",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Argélia",
+     "idade": 27
+    },
+    {
+     "tmId": "1124136",
+     "nome": "Ángel Pérez",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Espanha",
+     "idade": 24
+    },
+    {
+     "tmId": "302371",
+     "nome": "Toni Martínez",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha",
+     "idade": 29
+    },
+    {
+     "tmId": "334222",
+     "nome": "Lucas Boyé",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 30
+    },
+    {
+     "tmId": "935232",
+     "nome": "Aitor Mañas",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha",
+     "idade": 23
+    },
+    {
+     "tmId": "225020",
+     "nome": "Mariano Díaz",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "República Dominicana",
+     "idade": 32
+    }
+   ]
   },
   "GENOAXIT|genoa": {
    "v": 2,
@@ -73695,9 +75148,283 @@
   },
   "CAGLIARI|cagliari": {
    "v": 2,
+   "curto": "CAGLIARI",
    "nome": "Cagliari",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/cagliari-calcio/startseite/verein/1390",
+   "players": [
+    {
+     "tmId": "421873",
+     "nome": "Elia Caprile",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 24
+    },
+    {
+     "tmId": "304144",
+     "nome": "Alen Sherri",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Albânia",
+     "idade": 28
+    },
+    {
+     "tmId": "258482",
+     "nome": "Boris Radunović",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Sérvia",
+     "idade": 30
+    },
+    {
+     "tmId": "535740",
+     "nome": "Giuseppe Ciocci",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 24
+    },
+    {
+     "tmId": "1228231",
+     "nome": "Juan Rodríguez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai",
+     "idade": 21
+    },
+    {
+     "tmId": "406151",
+     "nome": "Zé Pedro",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Portugal",
+     "idade": 29
+    },
+    {
+     "tmId": "289446",
+     "nome": "Yerry Mina",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Colômbia",
+     "idade": 31
+    },
+    {
+     "tmId": "208172",
+     "nome": "Mateusz Wieteska",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Polónia",
+     "idade": 29
+    },
+    {
+     "tmId": "705097",
+     "nome": "Davide Veroli",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Itália",
+     "idade": 23
+    },
+    {
+     "tmId": "885230",
+     "nome": "Nicola Pintus",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Itália",
+     "idade": 21
+    },
+    {
+     "tmId": "887650",
+     "nome": "Francesco Gallea",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Mali",
+     "idade": 21
+    },
+    {
+     "tmId": "568333",
+     "nome": "Adam Obert",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Eslováquia",
+     "idade": 23
+    },
+    {
+     "tmId": "885226",
+     "nome": "Riyad Idrissi",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Itália",
+     "idade": 21
+    },
+    {
+     "tmId": "392569",
+     "nome": "Gabriele Zappa",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Itália",
+     "idade": 26
+    },
+    {
+     "tmId": "997478",
+     "nome": "Othniël Raterink",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Holanda",
+     "idade": 20
+    },
+    {
+     "tmId": "876298",
+     "nome": "Matteo Prati",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Itália",
+     "idade": 22
+    },
+    {
+     "tmId": "249126",
+     "nome": "Harry Winks",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Inglaterra",
+     "idade": 30
+    },
+    {
+     "tmId": "911224",
+     "nome": "Alessandro Romano",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Suiça",
+     "idade": 20
+    },
+    {
+     "tmId": "691482",
+     "nome": "Jacopo Fazzini",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 23
+    },
+    {
+     "tmId": "564305",
+     "nome": "Michel Adopo",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 26
+    },
+    {
+     "tmId": "1134304",
+     "nome": "Joseph Liteta",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Zâmbia",
+     "idade": 20
+    },
+    {
+     "tmId": "235931",
+     "nome": "Alessandro Deiola",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 30
+    },
+    {
+     "tmId": "926839",
+     "nome": "Ivan Sulev",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Bulgária",
+     "idade": 19
+    },
+    {
+     "tmId": "1078164",
+     "nome": "Demi Akarakiri",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Inglaterra",
+     "idade": 18
+    },
+    {
+     "tmId": "1048013",
+     "nome": "Nicola Grandu",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 20
+    },
+    {
+     "tmId": "701842",
+     "nome": "Nicolò Cavuoti",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 23
+    },
+    {
+     "tmId": "600041",
+     "nome": "Mattia Felici",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Itália",
+     "idade": 25
+    },
+    {
+     "tmId": "1104206",
+     "nome": "Agustín Albarracín",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Uruguai",
+     "idade": 20
+    },
+    {
+     "tmId": "967814",
+     "nome": "Sebastiano Di Paolo",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Itália",
+     "idade": 19
+    },
+    {
+     "tmId": "538918",
+     "nome": "Sebastiano Esposito",
+     "posicaoTM": "Seg. Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 24
+    },
+    {
+     "tmId": "1371793",
+     "nome": "Paul Mendy",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal",
+     "idade": 19
+    },
+    {
+     "tmId": "1111663",
+     "nome": "Kingstone Mutandwa",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Zâmbia",
+     "idade": 23
+    },
+    {
+     "tmId": "459988",
+     "nome": "Gennaro Borrelli",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 26
+    },
+    {
+     "tmId": "1099924",
+     "nome": "Yael Trepy",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França",
+     "idade": 20
+    }
+   ]
   },
   "LEVANTEX|ciutat de valencia": {
    "v": 2,
@@ -77997,6 +79724,7 @@
   },
   "STANDARD|standard liege": {
    "v": 2,
+   "curto": "STANDARD",
    "nome": "Standard Liège",
    "players": [],
    "naoEncontrado": true
@@ -85007,9 +86735,275 @@
   },
   "RENNESXF|rennes": {
    "v": 2,
+   "curto": "RENNESXF",
    "nome": "Rennes",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/fc-stade-rennes/startseite/verein/273",
+   "players": [
+    {
+     "tmId": "191056",
+     "nome": "Brice Samba",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França",
+     "idade": 32
+    },
+    {
+     "tmId": "373939",
+     "nome": "Nicolas Lemaître",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França",
+     "idade": 29
+    },
+    {
+     "tmId": "1169721",
+     "nome": "Kilian Belazzoug",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argélia",
+     "idade": 20
+    },
+    {
+     "tmId": "485960",
+     "nome": "Lilian Brassier",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 26
+    },
+    {
+     "tmId": "690799",
+     "nome": "Anthony Rouault",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 25
+    },
+    {
+     "tmId": "1134251",
+     "nome": "Abdelhamid Ait Boudlal",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Marrocos",
+     "idade": 20
+    },
+    {
+     "tmId": "798404",
+     "nome": "Alidu Seidu",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Gana",
+     "idade": 26
+    },
+    {
+     "tmId": "1078918",
+     "nome": "Gonçalo Oliveira",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Portugal",
+     "idade": 20
+    },
+    {
+     "tmId": "1119839",
+     "nome": "Jonathan Do Marcolino",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Gabão",
+     "idade": 20
+    },
+    {
+     "tmId": "557613",
+     "nome": "Quentin Merlin",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "França",
+     "idade": 24
+    },
+    {
+     "tmId": "1176345",
+     "nome": "Mahamadou Nagida",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Camarões",
+     "idade": 21
+    },
+    {
+     "tmId": "239743",
+     "nome": "Przemyslaw Frankowski",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Polónia",
+     "idade": 31
+    },
+    {
+     "tmId": "475208",
+     "nome": "Bryan Reynolds",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Estados Unidos",
+     "idade": 25
+    },
+    {
+     "tmId": "979760",
+     "nome": "Rayan Bamba",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "França",
+     "idade": 22
+    },
+    {
+     "tmId": "667517",
+     "nome": "Jordan James",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "País de Gales",
+     "idade": 22
+    },
+    {
+     "tmId": "324795",
+     "nome": "Mahdi Camara",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 28
+    },
+    {
+     "tmId": "931160",
+     "nome": "Djaoui Cissé",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 22
+    },
+    {
+     "tmId": "182893",
+     "nome": "Seko Fofana",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 31
+    },
+    {
+     "tmId": "332889",
+     "nome": "Valentin Rongier",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 31
+    },
+    {
+     "tmId": "215977",
+     "nome": "Adrien Thomasson",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 32
+    },
+    {
+     "tmId": "242632",
+     "nome": "Glen Kamara",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Finlândia",
+     "idade": 30
+    },
+    {
+     "tmId": "288225",
+     "nome": "Ludovic Blas",
+     "posicaoTM": "Meia Direita",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 28
+    },
+    {
+     "tmId": "320748",
+     "nome": "Sebastian Szymanski",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Polónia",
+     "idade": 27
+    },
+    {
+     "tmId": "977877",
+     "nome": "Ayanda Sishuba",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "568698",
+     "nome": "Issa Soumaré",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Senegal",
+     "idade": 25
+    },
+    {
+     "tmId": "551505",
+     "nome": "Mousa Al-Tamari",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Jordânia",
+     "idade": 29
+    },
+    {
+     "tmId": "324811",
+     "nome": "Arnaud Nordin",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "França",
+     "idade": 28
+    },
+    {
+     "tmId": "1227106",
+     "nome": "Elías Legendre Quiñónez",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Equador",
+     "idade": 18
+    },
+    {
+     "tmId": "986285",
+     "nome": "Nordan Mukiele",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "França",
+     "idade": 20
+    },
+    {
+     "tmId": "461607",
+     "nome": "Estéban Lepaul",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França",
+     "idade": 26
+    },
+    {
+     "tmId": "967346",
+     "nome": "Eliezer Mayenda",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha",
+     "idade": 21
+    },
+    {
+     "tmId": "237662",
+     "nome": "Breel Embolo",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Suiça",
+     "idade": 29
+    },
+    {
+     "tmId": "1153105",
+     "nome": "Yassir Zabiri",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Marrocos",
+     "idade": 21
+    }
+   ]
   },
   "NECAXAXM|club necaxa": {
    "v": 2,
@@ -87306,9 +89300,195 @@
   },
   "VITESSEX|vitesse": {
    "v": 2,
+   "curto": "VITESSEX",
    "nome": "Vitesse",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/vitesse-arnheim/startseite/verein/499",
+   "players": [
+    {
+     "tmId": "477476",
+     "nome": "Connor van den Berg",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Holanda",
+     "idade": 25
+    },
+    {
+     "tmId": "596103",
+     "nome": "Maximilian Brüll",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 23
+    },
+    {
+     "tmId": "992165",
+     "nome": "Jayden Siecker",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Holanda",
+     "idade": 20
+    },
+    {
+     "tmId": "928593",
+     "nome": "Dylan Tevreden",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Holanda",
+     "idade": 21
+    },
+    {
+     "tmId": "482383",
+     "nome": "Valon Zumberi",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Kosovo",
+     "idade": 23
+    },
+    {
+     "tmId": "949959",
+     "nome": "Omar Achouitar",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Marrocos",
+     "idade": 21
+    },
+    {
+     "tmId": "607141",
+     "nome": "Marcus Steffen",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Holanda",
+     "idade": 23
+    },
+    {
+     "tmId": "703775",
+     "nome": "Chiel Olde Keizer",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Holanda",
+     "idade": 23
+    },
+    {
+     "tmId": "761283",
+     "nome": "Xiamaro Thenu",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Holanda",
+     "idade": 21
+    },
+    {
+     "tmId": "38003",
+     "nome": "Alexander Büttner",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Holanda",
+     "idade": 37
+    },
+    {
+     "tmId": "508637",
+     "nome": "Solomon Bonnah",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Holanda",
+     "idade": 22
+    },
+    {
+     "tmId": "451576",
+     "nome": "Nathan Markelo",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Curacao",
+     "idade": 27
+    },
+    {
+     "tmId": "229792",
+     "nome": "Marco Schikora",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Alemanha",
+     "idade": 31
+    },
+    {
+     "tmId": "1107997",
+     "nome": "Youssef Ouallil",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Holanda",
+     "idade": 18
+    },
+    {
+     "tmId": "775988",
+     "nome": "Mathijs Marschalk",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Holanda",
+     "idade": 21
+    },
+    {
+     "tmId": "659353",
+     "nome": "Filipe de Carvalho",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Suiça",
+     "idade": 22
+    },
+    {
+     "tmId": "701756",
+     "nome": "Ricardo-Felipe Schwarz",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 22
+    },
+    {
+     "tmId": "1042450",
+     "nome": "Yuval Ranon",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Israel",
+     "idade": 20
+    },
+    {
+     "tmId": "936572",
+     "nome": "Nino Zonneveld",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Holanda",
+     "idade": 20
+    },
+    {
+     "tmId": "574391",
+     "nome": "Ayman Sellouf",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Holanda",
+     "idade": 24
+    },
+    {
+     "tmId": "430800",
+     "nome": "Naoufal Bannis",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Marrocos",
+     "idade": 24
+    },
+    {
+     "tmId": "824949",
+     "nome": "João Pinto",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Portugal",
+     "idade": 22
+    },
+    {
+     "tmId": "717076",
+     "nome": "Eduard Probst",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Alemanha",
+     "idade": 25
+    }
+   ]
   },
   "CARPIXIT|carpi": {
    "v": 2,
@@ -98456,9 +100636,211 @@
   },
   "BETISXES|real betis": {
    "v": 2,
+   "curto": "BETISXES",
    "nome": "Real Bétis",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/real-betis-sevilla/startseite/verein/150",
+   "players": [
+    {
+     "tmId": "417913",
+     "nome": "Álvaro Valles",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha",
+     "idade": 28
+    },
+    {
+     "tmId": "341713",
+     "nome": "Diego Conde",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Espanha",
+     "idade": 27
+    },
+    {
+     "tmId": "735568",
+     "nome": "Natan",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "985383",
+     "nome": "Valentín Gómez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 23
+    },
+    {
+     "tmId": "246291",
+     "nome": "Diego Llorente",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha",
+     "idade": 32
+    },
+    {
+     "tmId": "99922",
+     "nome": "Marc Bartra",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha",
+     "idade": 35
+    },
+    {
+     "tmId": "341264",
+     "nome": "Fran García",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Espanha",
+     "idade": 26
+    },
+    {
+     "tmId": "374139",
+     "nome": "Junior Firpo",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "República Dominicana",
+     "idade": 29
+    },
+    {
+     "tmId": "933908",
+     "nome": "Ángel Ortiz",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha",
+     "idade": 21
+    },
+    {
+     "tmId": "191217",
+     "nome": "Héctor Bellerín",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha",
+     "idade": 31
+    },
+    {
+     "tmId": "898350",
+     "nome": "Facundo Bernal",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Uruguai",
+     "idade": 22
+    },
+    {
+     "tmId": "336869",
+     "nome": "Marc Roca",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Espanha",
+     "idade": 29
+    },
+    {
+     "tmId": "907559",
+     "nome": "Nelson Deossa",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Colômbia",
+     "idade": 26
+    },
+    {
+     "tmId": "357885",
+     "nome": "Pablo Fornals",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 30
+    },
+    {
+     "tmId": "261503",
+     "nome": "Álvaro Fidalgo",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "México",
+     "idade": 29
+    },
+    {
+     "tmId": "348795",
+     "nome": "Giovani Lo Celso",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 30
+    },
+    {
+     "tmId": "85288",
+     "nome": "Isco",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 34
+    },
+    {
+     "tmId": "724520",
+     "nome": "Abde Ezzalzouli",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Marrocos",
+     "idade": 24
+    },
+    {
+     "tmId": "461617",
+     "nome": "Rodrigo Riquelme",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Espanha",
+     "idade": 26
+    },
+    {
+     "tmId": "602105",
+     "nome": "Antony",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "961087",
+     "nome": "Pablo García",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Espanha",
+     "idade": 20
+    },
+    {
+     "tmId": "378139",
+     "nome": "Aitor Ruibal",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Espanha",
+     "idade": 30
+    },
+    {
+     "tmId": "632741",
+     "nome": "Iker Losada",
+     "posicaoTM": "Seg. Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha",
+     "idade": 24
+    },
+    {
+     "tmId": "459463",
+     "nome": "Cucho Hernández",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Colômbia",
+     "idade": 27
+    },
+    {
+     "tmId": "997814",
+     "nome": "Gonzalo Petit",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Uruguai",
+     "idade": 19
+    }
+   ]
   },
   "MURICIAL|murici": {
    "v": 2,
@@ -101677,9 +104059,315 @@
   },
   "COMOXIT|como": {
    "v": 2,
+   "curto": "COMOXIT",
    "nome": "Como",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/como-1907/startseite/verein/1047",
+   "players": [
+    {
+     "tmId": "290537",
+     "nome": "Jean Butez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França",
+     "idade": 31
+    },
+    {
+     "tmId": "256339",
+     "nome": "Emil Audero",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Indonésia",
+     "idade": 29
+    },
+    {
+     "tmId": "730531",
+     "nome": "Noel Törnqvist",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Suécia",
+     "idade": 24
+    },
+    {
+     "tmId": "88595",
+     "nome": "Mauro Vigorito",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 36
+    },
+    {
+     "tmId": "948278",
+     "nome": "Jacobo Ramón",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha",
+     "idade": 21
+    },
+    {
+     "tmId": "223974",
+     "nome": "Stefan Posch",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Áustria",
+     "idade": 29
+    },
+    {
+     "tmId": "385394",
+     "nome": "Alberto Dossena",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Itália",
+     "idade": 27
+    },
+    {
+     "tmId": "160938",
+     "nome": "Marc Oliver Kempf",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 31
+    },
+    {
+     "tmId": "242940",
+     "nome": "Edoardo Goldaniga",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Itália",
+     "idade": 32
+    },
+    {
+     "tmId": "962111",
+     "nome": "Andrés Cuenca",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Espanha",
+     "idade": 19
+    },
+    {
+     "tmId": "879217",
+     "nome": "Kaiki",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 23
+    },
+    {
+     "tmId": "709957",
+     "nome": "Álex Valle",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Espanha",
+     "idade": 22
+    },
+    {
+     "tmId": "571271",
+     "nome": "Ivan Smolcic",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Croácia",
+     "idade": 25
+    },
+    {
+     "tmId": "490423",
+     "nome": "Ignace Van der Brempt",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bélgica",
+     "idade": 24
+    },
+    {
+     "tmId": "668547",
+     "nome": "Máximo Perrone",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 23
+    },
+    {
+     "tmId": "1204163",
+     "nome": "Andréa Le Borgne",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "França",
+     "idade": 19
+    },
+    {
+     "tmId": "495667",
+     "nome": "Lucas Da Cunha",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 25
+    },
+    {
+     "tmId": "395237",
+     "nome": "Maxence Caqueret",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 26
+    },
+    {
+     "tmId": "1231993",
+     "nome": "Adrian Lahdo",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Suécia",
+     "idade": 18
+    },
+    {
+     "tmId": "981136",
+     "nome": "Fabio Rispoli",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 19
+    },
+    {
+     "tmId": "281989",
+     "nome": "Luis Milla",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 31
+    },
+    {
+     "tmId": "226025",
+     "nome": "Luca Mazzitelli",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 30
+    },
+    {
+     "tmId": "488052",
+     "nome": "Matthias Braunöder",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Áustria",
+     "idade": 24
+    },
+    {
+     "tmId": "948294",
+     "nome": "Nico Paz",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 21
+    },
+    {
+     "tmId": "580451",
+     "nome": "Martin Baturina",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Croácia",
+     "idade": 23
+    },
+    {
+     "tmId": "988964",
+     "nome": "Mattia Liberali",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 19
+    },
+    {
+     "tmId": "1190411",
+     "nome": "Jesús Rodríguez",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Espanha",
+     "idade": 20
+    },
+    {
+     "tmId": "1061282",
+     "nome": "Assane Diao",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Senegal",
+     "idade": 20
+    },
+    {
+     "tmId": "749552",
+     "nome": "Alieu Fadera",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Gâmbia",
+     "idade": 24
+    },
+    {
+     "tmId": "877672",
+     "nome": "Ali Jasim",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Iraque",
+     "idade": 22
+    },
+    {
+     "tmId": "747720",
+     "nome": "Jayden Addai",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Holanda",
+     "idade": 20
+    },
+    {
+     "tmId": "336012",
+     "nome": "Nicolas Kühn",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Alemanha",
+     "idade": 26
+    },
+    {
+     "tmId": "523318",
+     "nome": "Anastasios Douvikas",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Grécia",
+     "idade": 26
+    },
+    {
+     "tmId": "128223",
+     "nome": "Álvaro Morata",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha",
+     "idade": 33
+    },
+    {
+     "tmId": "633306",
+     "nome": "Iván Azón",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha",
+     "idade": 23
+    },
+    {
+     "tmId": "311333",
+     "nome": "Alessandro Gabrielloni",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 32
+    },
+    {
+     "tmId": "532495",
+     "nome": "Marlon Mustapha",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Áustria",
+     "idade": 25
+    },
+    {
+     "tmId": "691678",
+     "nome": "Tommaso Fumagalli",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 26
+    }
+   ]
   },
   "VERONAXI|hellas verona": {
    "v": 2,
@@ -143155,9 +145843,323 @@
   },
   "UDINESEX|udinese": {
    "v": 2,
+   "curto": "UDINESEX",
    "nome": "Udinese",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/udinese-calcio/startseite/verein/410",
+   "players": [
+    {
+     "tmId": "340353",
+     "nome": "Maduka Okoye",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Nigéria",
+     "idade": 26
+    },
+    {
+     "tmId": "612059",
+     "nome": "Edoardo Piana",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 22
+    },
+    {
+     "tmId": "27807",
+     "nome": "Daniele Padelli",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Itália",
+     "idade": 40
+    },
+    {
+     "tmId": "463665",
+     "nome": "Oumar Solet",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 26
+    },
+    {
+     "tmId": "698259",
+     "nome": "Thomas Kristensen",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Dinamarca",
+     "idade": 24
+    },
+    {
+     "tmId": "632831",
+     "nome": "Nicolò Bertola",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Itália",
+     "idade": 23
+    },
+    {
+     "tmId": "1058354",
+     "nome": "Matteo Palma",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 18
+    },
+    {
+     "tmId": "1300966",
+     "nome": "Branimir Mlacic",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Croácia",
+     "idade": 19
+    },
+    {
+     "tmId": "648032",
+     "nome": "James Abankwah",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Irlanda",
+     "idade": 22
+    },
+    {
+     "tmId": "906160",
+     "nome": "Saba Goglichidze",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Geórgia",
+     "idade": 22
+    },
+    {
+     "tmId": "342877",
+     "nome": "Enzo Ebosse",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Camarões",
+     "idade": 27
+    },
+    {
+     "tmId": "81512",
+     "nome": "Christian Kabasele",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 35
+    },
+    {
+     "tmId": "633530",
+     "nome": "Jordan Zemura",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Zimbabué",
+     "idade": 26
+    },
+    {
+     "tmId": "290017",
+     "nome": "Hassane Kamara",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 32
+    },
+    {
+     "tmId": "653415",
+     "nome": "Leonardo Buta",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Portugal",
+     "idade": 24
+    },
+    {
+     "tmId": "397225",
+     "nome": "Alessandro Zanoli",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Itália",
+     "idade": 25
+    },
+    {
+     "tmId": "336125",
+     "nome": "Mërgim Vojvoda",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Kosovo",
+     "idade": 31
+    },
+    {
+     "tmId": "222855",
+     "nome": "Jesper Karlström",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Suécia",
+     "idade": 31
+    },
+    {
+     "tmId": "1210116",
+     "nome": "Abdoulaye Camara",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "França",
+     "idade": 17
+    },
+    {
+     "tmId": "361068",
+     "nome": "Jurgen Ekkelenkamp",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Holanda",
+     "idade": 26
+    },
+    {
+     "tmId": "924857",
+     "nome": "Lennon Miller",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Escócia",
+     "idade": 19
+    },
+    {
+     "tmId": "555820",
+     "nome": "Martín Payero",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 27
+    },
+    {
+     "tmId": "377243",
+     "nome": "Jakub Piotrowski",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Polónia",
+     "idade": 28
+    },
+    {
+     "tmId": "268429",
+     "nome": "Sandi Lovrić",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Eslovénia",
+     "idade": 28
+    },
+    {
+     "tmId": "524010",
+     "nome": "Oier Zarraga",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 27
+    },
+    {
+     "tmId": "1118347",
+     "nome": "Juan Arizala",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Colômbia",
+     "idade": 20
+    },
+    {
+     "tmId": "834752",
+     "nome": "Unai Gómez",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Espanha",
+     "idade": 23
+    },
+    {
+     "tmId": "876400",
+     "nome": "Simone Pafundi",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Itália",
+     "idade": 20
+    },
+    {
+     "tmId": "412616",
+     "nome": "Giorgi Chakvetadze",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Geórgia",
+     "idade": 26
+    },
+    {
+     "tmId": "1009633",
+     "nome": "David Pejičić",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Eslovénia",
+     "idade": 19
+    },
+    {
+     "tmId": "671799",
+     "nome": "Rui Modesto",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Angola",
+     "idade": 26
+    },
+    {
+     "tmId": "392085",
+     "nome": "Nicolò Zaniolo",
+     "posicaoTM": "Seg. Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 27
+    },
+    {
+     "tmId": "412660",
+     "nome": "Keinan Davis",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Inglaterra",
+     "idade": 28
+    },
+    {
+     "tmId": "668950",
+     "nome": "Luca Kjerrumgaard",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Dinamarca",
+     "idade": 23
+    },
+    {
+     "tmId": "1178488",
+     "nome": "Idrissa Gueye",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal",
+     "idade": 19
+    },
+    {
+     "tmId": "267160",
+     "nome": "Adam Buksa",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Polónia",
+     "idade": 30
+    },
+    {
+     "tmId": "741292",
+     "nome": "Iker Bravo",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Espanha",
+     "idade": 21
+    },
+    {
+     "tmId": "375877",
+     "nome": "Vakoun Bayo",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 29
+    },
+    {
+     "tmId": "1078784",
+     "nome": "Giulio Vinciati",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Itália",
+     "idade": 18
+    }
+   ]
   },
   "PISAXIT|pisa": {
    "v": 2,
@@ -145807,9 +148809,211 @@
   },
   "CHARLERO|charleroi": {
    "v": 2,
+   "curto": "CHARLERO",
    "nome": "Charleroi",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/rsc-charleroi/startseite/verein/172",
+   "players": [
+    {
+     "tmId": "911985",
+     "nome": "Mohamed Koné",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 24
+    },
+    {
+     "tmId": "903223",
+     "nome": "Martin Delavallée",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica",
+     "idade": 22
+    },
+    {
+     "tmId": "104543",
+     "nome": "Théo Defourny",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica",
+     "idade": 34
+    },
+    {
+     "tmId": "548619",
+     "nome": "Arthur Cremer",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica",
+     "idade": 25
+    },
+    {
+     "tmId": "820146",
+     "nome": "Check Keita",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Mali",
+     "idade": 23
+    },
+    {
+     "tmId": "585068",
+     "nome": "Aiham Ousou",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Síria",
+     "idade": 26
+    },
+    {
+     "tmId": "1037260",
+     "nome": "Noah Solheid",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 23
+    },
+    {
+     "tmId": "959576",
+     "nome": "Massamba Sow",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 22
+    },
+    {
+     "tmId": "1318685",
+     "nome": "Naël Piron",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 17
+    },
+    {
+     "tmId": "463738",
+     "nome": "Mardochée Nzita",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Bélgica",
+     "idade": 26
+    },
+    {
+     "tmId": "400680",
+     "nome": "Kevin Van Den Kerkhof",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argélia",
+     "idade": 30
+    },
+    {
+     "tmId": "961051",
+     "nome": "Amine Boukamir",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Marrocos",
+     "idade": 19
+    },
+    {
+     "tmId": "1308524",
+     "nome": "Mory Kera",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Bélgica",
+     "idade": 18
+    },
+    {
+     "tmId": "1173870",
+     "nome": "Boubakar Dembaga",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "França",
+     "idade": 20
+    },
+    {
+     "tmId": "748445",
+     "nome": "Yassine Titraoui",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argélia",
+     "idade": 22
+    },
+    {
+     "tmId": "869462",
+     "nome": "Yassine Khalifi",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Marrocos",
+     "idade": 20
+    },
+    {
+     "tmId": "159522",
+     "nome": "Patrick Pflücke",
+     "posicaoTM": "Meia Direita",
+     "posicao": "MEI",
+     "nacionalidade": "Alemanha",
+     "idade": 29
+    },
+    {
+     "tmId": "902401",
+     "nome": "Jakob Napoleon Romsaas",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Noruega",
+     "idade": 22
+    },
+    {
+     "tmId": "624913",
+     "nome": "Parfait Guiagon",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 25
+    },
+    {
+     "tmId": "983364",
+     "nome": "Freddy Mbemba",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "1182739",
+     "nome": "Severin Nioule",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 21
+    },
+    {
+     "tmId": "340343",
+     "nome": "Antoine Bernier",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Bélgica",
+     "idade": 28
+    },
+    {
+     "tmId": "497175",
+     "nome": "Aurélien Scheidler",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França",
+     "idade": 28
+    },
+    {
+     "tmId": "1111912",
+     "nome": "Adama Bojang",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Gâmbia",
+     "idade": 22
+    },
+    {
+     "tmId": "440953",
+     "nome": "Antoine Colassin",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Bélgica",
+     "idade": 25
+    }
+   ]
   },
   "DEGERFOR|degerfors if": {
    "v": 2,
@@ -215403,6 +218607,7 @@
   },
   "CSKAMOSC|cska moscow": {
    "v": 2,
+   "curto": "CSKAMOSC",
    "nome": "CSKA Moscow",
    "players": [],
    "naoEncontrado": true
@@ -224964,9 +228169,227 @@
   },
   "ANDERLEC|anderlecht": {
    "v": 2,
+   "curto": "ANDERLEC",
    "nome": "Anderlecht",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/rsc-anderlecht/startseite/verein/58",
+   "players": [
+    {
+     "tmId": "154351",
+     "nome": "Colin Coosemans",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica",
+     "idade": 33
+    },
+    {
+     "tmId": "453770",
+     "nome": "Justin Heekeren",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Alemanha",
+     "idade": 25
+    },
+    {
+     "tmId": "486051",
+     "nome": "Marco Kana",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 23
+    },
+    {
+     "tmId": "728924",
+     "nome": "Lucas Hey",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Dinamarca",
+     "idade": 23
+    },
+    {
+     "tmId": "536507",
+     "nome": "Giulian Biancone",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 26
+    },
+    {
+     "tmId": "412829",
+     "nome": "Léo Pétrot",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 29
+    },
+    {
+     "tmId": "649022",
+     "nome": "Moussa Ndiaye",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Senegal",
+     "idade": 24
+    },
+    {
+     "tmId": "170646",
+     "nome": "Ludwig Augustinsson",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Suécia",
+     "idade": 32
+    },
+    {
+     "tmId": "570781",
+     "nome": "Ilay Camara",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Senegal",
+     "idade": 23
+    },
+    {
+     "tmId": "454336",
+     "nome": "Killian Sardella",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bélgica",
+     "idade": 24
+    },
+    {
+     "tmId": "920585",
+     "nome": "Ali Maamar",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Marrocos",
+     "idade": 21
+    },
+    {
+     "tmId": "215114",
+     "nome": "Thomas Foket",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bélgica",
+     "idade": 31
+    },
+    {
+     "tmId": "682568",
+     "nome": "Cedric Hatenboer",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Holanda",
+     "idade": 21
+    },
+    {
+     "tmId": "412945",
+     "nome": "Enric Llansana",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Holanda",
+     "idade": 25
+    },
+    {
+     "tmId": "842420",
+     "nome": "Nathan-Dylan Saliba",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Canadá",
+     "idade": 22
+    },
+    {
+     "tmId": "360140",
+     "nome": "Majeed Ashimeru",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Gana",
+     "idade": 28
+    },
+    {
+     "tmId": "671548",
+     "nome": "Lukas Ambros",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "República Checa",
+     "idade": 22
+    },
+    {
+     "tmId": "588866",
+     "nome": "Mario Stroeykens",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "RD do Congo",
+     "idade": 21
+    },
+    {
+     "tmId": "395242",
+     "nome": "Alexis Flips",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 26
+    },
+    {
+     "tmId": "540315",
+     "nome": "César Huerta",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "México",
+     "idade": 25
+    },
+    {
+     "tmId": "903513",
+     "nome": "Tristan Degreef",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "1232103",
+     "nome": "Joshua Nga Kana",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Bélgica",
+     "idade": 17
+    },
+    {
+     "tmId": "897510",
+     "nome": "Mihajlo Cvetkovic",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Sérvia",
+     "idade": 19
+    },
+    {
+     "tmId": "417228",
+     "nome": "Danylo Sikan",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Ucrânia",
+     "idade": 25
+    },
+    {
+     "tmId": "364896",
+     "nome": "Adriano Bertaccini",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Bélgica",
+     "idade": 25
+    },
+    {
+     "tmId": "844516",
+     "nome": "Luis Vázquez",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 25
+    },
+    {
+     "tmId": "1047103",
+     "nome": "Elyèss Dao",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Marrocos",
+     "idade": 19
+    }
+   ]
   },
   "COBRESAL|cobresal": {
    "v": 2,
@@ -226512,6 +229935,7 @@
   },
   "NWREDBUL|new york red bulls": {
    "v": 2,
+   "curto": "NWREDBUL",
    "nome": "New York Red Bulls",
    "players": [],
    "naoEncontrado": true
@@ -226977,9 +230401,283 @@
   },
   "REMO|remo": {
    "v": 2,
+   "curto": "REMO",
    "nome": "Remo",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/clube-do-remo-pa-/startseite/verein/10997",
+   "players": [
+    {
+     "tmId": "364257",
+     "nome": "Ivan",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "412610",
+     "nome": "Marcelo Rangel",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 38
+    },
+    {
+     "tmId": "555201",
+     "nome": "Ygor Vinhas",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 32
+    },
+    {
+     "tmId": "484848",
+     "nome": "Zé Ivaldo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "490760",
+     "nome": "Tchamba",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Camarões",
+     "idade": 28
+    },
+    {
+     "tmId": "882916",
+     "nome": "Matheus Felipe",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "874307",
+     "nome": "Thalisson",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 24
+    },
+    {
+     "tmId": "539135",
+     "nome": "Léo Andrade",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "166032",
+     "nome": "Marllon",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 34
+    },
+    {
+     "tmId": "358738",
+     "nome": "Cristian Tassano",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai",
+     "idade": 30
+    },
+    {
+     "tmId": "401521",
+     "nome": "Braian Cufré",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina",
+     "idade": 29
+    },
+    {
+     "tmId": "603423",
+     "nome": "Mayk",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "1095628",
+     "nome": "Edson Kauã",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 22
+    },
+    {
+     "tmId": "672292",
+     "nome": "João Lucas",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "617687",
+     "nome": "Matheus Alexandre",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "681494",
+     "nome": "Marcelinho",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "1093622",
+     "nome": "Caio Magalhães",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "663077",
+     "nome": "Leonel Picco",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 27
+    },
+    {
+     "tmId": "323452",
+     "nome": "Zé Welison",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "1091022",
+     "nome": "David Braga",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 24
+    },
+    {
+     "tmId": "686332",
+     "nome": "Edson Fernando",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "600549",
+     "nome": "Zé Ricardo",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "333159",
+     "nome": "Patrick",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 33
+    },
+    {
+     "tmId": "833886",
+     "nome": "Franco Catarozzi",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai",
+     "idade": 26
+    },
+    {
+     "tmId": "390368",
+     "nome": "Vitor Bueno",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "726092",
+     "nome": "Jajá",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "653349",
+     "nome": "Jáderson",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "612479",
+     "nome": "Alef Manga",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "265660",
+     "nome": "Yago Pikachu",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 34
+    },
+    {
+     "tmId": "1095630",
+     "nome": "Tico",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 19
+    },
+    {
+     "tmId": "585876",
+     "nome": "Gabriel Taliari",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "732443",
+     "nome": "Rafael Monti",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 26
+    },
+    {
+     "tmId": "592346",
+     "nome": "Gabriel Poveda",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "738503",
+     "nome": "Eduardo Melo",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    }
+   ]
   },
   "YOMRASPO|yomraspor": {
    "v": 2,
@@ -244487,6 +248185,7 @@
   },
   "INTERLIM|inter de limeira": {
    "v": 2,
+   "curto": "INTERLIM",
    "nome": "Inter de Limeira",
    "players": [],
    "naoEncontrado": true
@@ -247548,9 +251247,219 @@
   },
   "KRYLYASO|krylya sovetov": {
    "v": 2,
+   "curto": "KRYLYASO",
    "nome": "Krylya Sovetov",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/krylya-sovetov-samara/startseite/verein/2696",
+   "players": [
+    {
+     "tmId": "538954",
+     "nome": "Nikita Kokarev",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia",
+     "idade": 23
+    },
+    {
+     "tmId": "61397",
+     "nome": "Sergey Pesjakov",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia",
+     "idade": 37
+    },
+    {
+     "tmId": "177350",
+     "nome": "Evgeniy Frolov",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Rússia",
+     "idade": 38
+    },
+    {
+     "tmId": "214238",
+     "nome": "Nikita Chernov",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia",
+     "idade": 30
+    },
+    {
+     "tmId": "353559",
+     "nome": "Dominik Oroz",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Croácia",
+     "idade": 25
+    },
+    {
+     "tmId": "697954",
+     "nome": "Ivan Lepskiy",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia",
+     "idade": 21
+    },
+    {
+     "tmId": "265282",
+     "nome": "Sergey Bozhin",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Rússia",
+     "idade": 31
+    },
+    {
+     "tmId": "498015",
+     "nome": "Kirill Pechenin",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Bielorrússia",
+     "idade": 29
+    },
+    {
+     "tmId": "539469",
+     "nome": "Thomas Galdames",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Chile",
+     "idade": 27
+    },
+    {
+     "tmId": "285868",
+     "nome": "Nikolay Rasskazov",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Rússia",
+     "idade": 28
+    },
+    {
+     "tmId": "403187",
+     "nome": "Dani Fernández",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Espanha",
+     "idade": 29
+    },
+    {
+     "tmId": "524403",
+     "nome": "Fernando Costanza",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "447101",
+     "nome": "Maksim Vityugov",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Rússia",
+     "idade": 28
+    },
+    {
+     "tmId": "622461",
+     "nome": "Sergey Babkin",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Rússia",
+     "idade": 23
+    },
+    {
+     "tmId": "585082",
+     "nome": "Mihajlo Banjac",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Sérvia",
+     "idade": 26
+    },
+    {
+     "tmId": "718763",
+     "nome": "Kirill Stolbov",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Rússia",
+     "idade": 22
+    },
+    {
+     "tmId": "166086",
+     "nome": "Amar Rahmanovic",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Bósnia-Herzegovina",
+     "idade": 32
+    },
+    {
+     "tmId": "318705",
+     "nome": "Martin Kramaric",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Eslovénia",
+     "idade": 28
+    },
+    {
+     "tmId": "371627",
+     "nome": "Ivan Oleynikov",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Rússia",
+     "idade": 27
+    },
+    {
+     "tmId": "599203",
+     "nome": "Denis Makarov",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Rússia",
+     "idade": 28
+    },
+    {
+     "tmId": "372730",
+     "nome": "Jimmy Marín",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Costa Rica",
+     "idade": 28
+    },
+    {
+     "tmId": "758701",
+     "nome": "Ivan Bober",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Rússia",
+     "idade": 20
+    },
+    {
+     "tmId": "538773",
+     "nome": "Chinedu Geoffrey",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Nigéria",
+     "idade": 28
+    },
+    {
+     "tmId": "516749",
+     "nome": "Vladislav Shitov",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia",
+     "idade": 23
+    },
+    {
+     "tmId": "1249173",
+     "nome": "Vladimir Ignatenko",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia",
+     "idade": 20
+    },
+    {
+     "tmId": "652459",
+     "nome": "Pavel Popov",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Rússia",
+     "idade": 23
+    }
+   ]
   },
   "KANSASCI|sporting kansas city": {
    "v": 2,
@@ -283686,9 +287595,219 @@
   },
   "CSAXBRA|csa": {
    "v": 2,
+   "curto": "CSAXBRA",
    "nome": "CSA",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/centro-sportivo-alagoano-al-/startseite/verein/18545",
+   "players": [
+    {
+     "tmId": "978278",
+     "nome": "Yago Oliveira",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "999801",
+     "nome": "Wellerson",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "1091918",
+     "nome": "Arthur Silveira",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 24
+    },
+    {
+     "tmId": "75378",
+     "nome": "Rayan",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 36
+    },
+    {
+     "tmId": "1020973",
+     "nome": "Marlon Lopes",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "1077155",
+     "nome": "Amorim",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 24
+    },
+    {
+     "tmId": "1154987",
+     "nome": "Mikael",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 24
+    },
+    {
+     "tmId": "417100",
+     "nome": "Kaike",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "981508",
+     "nome": "Ailton Santos",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "1102810",
+     "nome": "Félix Jorge",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "375242",
+     "nome": "Marcos Ytalo",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 30
+    },
+    {
+     "tmId": "980613",
+     "nome": "Caio Hila",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "120239",
+     "nome": "Everton Heleno",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 35
+    },
+    {
+     "tmId": "723533",
+     "nome": "Renato Pitbull",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "874166",
+     "nome": "Ramon Batista",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "995644",
+     "nome": "Kayllan",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "1261179",
+     "nome": "Wanderson",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 20
+    },
+    {
+     "tmId": "97507",
+     "nome": "Camacho",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 36
+    },
+    {
+     "tmId": "500046",
+     "nome": "Fabrício Bigode",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "175183",
+     "nome": "Dudu Figueiredo",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 35
+    },
+    {
+     "tmId": "236952",
+     "nome": "Ronaldo Mendes",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 33
+    },
+    {
+     "tmId": "1144483",
+     "nome": "Matheus Melo",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "644158",
+     "nome": "Lucas Silva",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "1092001",
+     "nome": "Rian Santana",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "797734",
+     "nome": "Matheus Souza",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "871644",
+     "nome": "Lucas Lima",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    }
+   ]
   },
   "INTERXIT|inter de milao": {
    "v": 2,
@@ -317215,9 +321334,187 @@
   },
   "WESTERLO|westerlo": {
    "v": 2,
+   "curto": "WESTERLO",
    "nome": "Westerlo ",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/kvc-westerlo/startseite/verein/968",
+   "players": [
+    {
+     "tmId": "592924",
+     "nome": "Andreas Jungdal",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Dinamarca",
+     "idade": 24
+    },
+    {
+     "tmId": "601556",
+     "nome": "Bill Lathouwers",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica",
+     "idade": 26
+    },
+    {
+     "tmId": "1063262",
+     "nome": "Oskar Annell",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "934645",
+     "nome": "Reno Münz",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Alemanha",
+     "idade": 20
+    },
+    {
+     "tmId": "501749",
+     "nome": "Seiji Kimura",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Japão",
+     "idade": 24
+    },
+    {
+     "tmId": "1029619",
+     "nome": "Amando Lapage",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "1247587",
+     "nome": "Michée Ndembi",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 19
+    },
+    {
+     "tmId": "579084",
+     "nome": "Fabio Ferraro",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Bélgica",
+     "idade": 23
+    },
+    {
+     "tmId": "1010044",
+     "nome": "Dylan Ourega",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "França",
+     "idade": 21
+    },
+    {
+     "tmId": "937111",
+     "nome": "Lucas Mbamba",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bélgica",
+     "idade": 19
+    },
+    {
+     "tmId": "387143",
+     "nome": "Doğucan Haspolat",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Turquia",
+     "idade": 26
+    },
+    {
+     "tmId": "1001788",
+     "nome": "Ibrahim Fofana",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 22
+    },
+    {
+     "tmId": "124182",
+     "nome": "Sergiy Sydorchuk",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Ucrânia",
+     "idade": 35
+    },
+    {
+     "tmId": "502298",
+     "nome": "Thomas Van den Keybus",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Bélgica",
+     "idade": 25
+    },
+    {
+     "tmId": "1094135",
+     "nome": "Reda Laalaoui",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Marrocos",
+     "idade": 21
+    },
+    {
+     "tmId": "814491",
+     "nome": "Isa Sakamoto",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Japão",
+     "idade": 22
+    },
+    {
+     "tmId": "890272",
+     "nome": "Karol Borys",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Polónia",
+     "idade": 19
+    },
+    {
+     "tmId": "1318194",
+     "nome": "Naoufal Bohamdi-Kamoni",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Marrocos",
+     "idade": 18
+    },
+    {
+     "tmId": "1194136",
+     "nome": "Shunsuke Saito",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Japão",
+     "idade": 21
+    },
+    {
+     "tmId": "924051",
+     "nome": "David Amegnaglo",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "França",
+     "idade": 21
+    },
+    {
+     "tmId": "802997",
+     "nome": "Norman Bassette",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "1006449",
+     "nome": "Afonso Patrão",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Portugal",
+     "idade": 19
+    }
+   ]
   },
   "VENLOXHO|vvv venlo": {
    "v": 2,
@@ -319622,9 +323919,235 @@
   },
   "KORTRIJK|kortrijk": {
    "v": 2,
+   "curto": "KORTRIJK",
    "nome": "Kortrijk",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/kv-kortrijk/startseite/verein/601",
+   "players": [
+    {
+     "tmId": "343953",
+     "nome": "Marko Ilic",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Sérvia",
+     "idade": 28
+    },
+    {
+     "tmId": "429563",
+     "nome": "Patrik Gunnarsson",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Islândia",
+     "idade": 25
+    },
+    {
+     "tmId": "989448",
+     "nome": "Ebbe De Vlaeminck",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Bélgica",
+     "idade": 20
+    },
+    {
+     "tmId": "1040824",
+     "nome": "James Ndjeungoue",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Camarões",
+     "idade": 23
+    },
+    {
+     "tmId": "917101",
+     "nome": "Rudy Kohon",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 22
+    },
+    {
+     "tmId": "271441",
+     "nome": "Gilles Ruyssen",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Bélgica",
+     "idade": 32
+    },
+    {
+     "tmId": "985691",
+     "nome": "Harrison Murray-Campbell",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Inglaterra",
+     "idade": 19
+    },
+    {
+     "tmId": "719670",
+     "nome": "Matthew Anderson",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Escócia",
+     "idade": 22
+    },
+    {
+     "tmId": "1391239",
+     "nome": "Mohamed Fofana",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 20
+    },
+    {
+     "tmId": "250138",
+     "nome": "Gilles Dewaele",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bélgica",
+     "idade": 30
+    },
+    {
+     "tmId": "1358448",
+     "nome": "Fuhna Wirsiy Nsolo",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "585711",
+     "nome": "Boris Lambert",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Bélgica",
+     "idade": 26
+    },
+    {
+     "tmId": "486053",
+     "nome": "Nayel Mehssatou",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Chile",
+     "idade": 24
+    },
+    {
+     "tmId": "671678",
+     "nome": "Liam De Smet",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Bélgica",
+     "idade": 22
+    },
+    {
+     "tmId": "159098",
+     "nome": "Brecht Dejaegere",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Bélgica",
+     "idade": 35
+    },
+    {
+     "tmId": "578655",
+     "nome": "Ken Masui",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Japão",
+     "idade": 25
+    },
+    {
+     "tmId": "332686",
+     "nome": "Lennard Hens",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Bélgica",
+     "idade": 30
+    },
+    {
+     "tmId": "1175165",
+     "nome": "Mohamed Boussadia",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 20
+    },
+    {
+     "tmId": "1159786",
+     "nome": "Shandre Campbell",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "África do Sul",
+     "idade": 21
+    },
+    {
+     "tmId": "292815",
+     "nome": "Jellert Van Landschoot",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Bélgica",
+     "idade": 28
+    },
+    {
+     "tmId": "671679",
+     "nome": "Lenn De Smet",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Bélgica",
+     "idade": 22
+    },
+    {
+     "tmId": "540827",
+     "nome": "Suf Podgoreanu",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Israel",
+     "idade": 24
+    },
+    {
+     "tmId": "838792",
+     "nome": "Csanád Vilmos Dénes",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Hungria",
+     "idade": 21
+    },
+    {
+     "tmId": "525140",
+     "nome": "Goduine Koyalipou",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "República Central Africana",
+     "idade": 26
+    },
+    {
+     "tmId": "265763",
+     "nome": "Thierry Ambrose",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Guadalupe",
+     "idade": 29
+    },
+    {
+     "tmId": "654092",
+     "nome": "Bryan Adinany",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Madagascar",
+     "idade": 26
+    },
+    {
+     "tmId": "1230201",
+     "nome": "Sixtus Ogbuehi",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Nigéria",
+     "idade": 23
+    },
+    {
+     "tmId": "1436492",
+     "nome": "Abdoul Diop",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Senegal",
+     "idade": 21
+    }
+   ]
   },
   "HSCX21XH|hsc 21": {
    "v": 2,
@@ -326572,9 +331095,259 @@
   },
   "AUXERREX|auxerre": {
    "v": 2,
+   "curto": "AUXERREX",
    "nome": "Auxerre",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/aj-auxerre/startseite/verein/290",
+   "players": [
+    {
+     "tmId": "917147",
+     "nome": "Mamadou Diop",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Mauritânia",
+     "idade": 26
+    },
+    {
+     "tmId": "189744",
+     "nome": "Paul Nardi",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França",
+     "idade": 32
+    },
+    {
+     "tmId": "1167216",
+     "nome": "Louis Mezerette",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "França",
+     "idade": 19
+    },
+    {
+     "tmId": "806793",
+     "nome": "Clément Akpa",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 24
+    },
+    {
+     "tmId": "702441",
+     "nome": "Sinaly Diomandé",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 25
+    },
+    {
+     "tmId": "539795",
+     "nome": "Bryan Okoh",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Suiça",
+     "idade": 23
+    },
+    {
+     "tmId": "371436",
+     "nome": "Francisco Sierralta",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile",
+     "idade": 29
+    },
+    {
+     "tmId": "1091353",
+     "nome": "Telli Siwe",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 21
+    },
+    {
+     "tmId": "1113528",
+     "nome": "Christ Makosso",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Congo",
+     "idade": 22
+    },
+    {
+     "tmId": "1291928",
+     "nome": "Elikya Legros",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 18
+    },
+    {
+     "tmId": "1144938",
+     "nome": "Alvin Petit Dol",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 19
+    },
+    {
+     "tmId": "539665",
+     "nome": "Fredrik Oppegård",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Noruega",
+     "idade": 23
+    },
+    {
+     "tmId": "668941",
+     "nome": "Sékou Fofana",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "1205629",
+     "nome": "Ackah-Tidiane Zoukrou",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "França",
+     "idade": 17
+    },
+    {
+     "tmId": "830890",
+     "nome": "Marvin Senaya",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Gana",
+     "idade": 25
+    },
+    {
+     "tmId": "796865",
+     "nome": "Lamine Sy",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "395695",
+     "nome": "Elisha Owusu",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Gana",
+     "idade": 28
+    },
+    {
+     "tmId": "775981",
+     "nome": "Arthur Piedfort",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "287635",
+     "nome": "Assane Dioussé",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Senegal",
+     "idade": 28
+    },
+    {
+     "tmId": "743496",
+     "nome": "Kévin Danois",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 22
+    },
+    {
+     "tmId": "538971",
+     "nome": "Naouirou Ahamada",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 24
+    },
+    {
+     "tmId": "1174032",
+     "nome": "Tidiane Devernois",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 18
+    },
+    {
+     "tmId": "555076",
+     "nome": "Romain Faivre",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 28
+    },
+    {
+     "tmId": "392767",
+     "nome": "Danny Namaso",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Camarões",
+     "idade": 25
+    },
+    {
+     "tmId": "1310513",
+     "nome": "Aristide Zossou",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 21
+    },
+    {
+     "tmId": "763182",
+     "nome": "Josué Casimir",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Haiti",
+     "idade": 24
+    },
+    {
+     "tmId": "658534",
+     "nome": "Lasso Coulibaly",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 23
+    },
+    {
+     "tmId": "412934",
+     "nome": "Eros Maddy",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Holanda",
+     "idade": 25
+    },
+    {
+     "tmId": "501709",
+     "nome": "Theo Bair",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Canadá",
+     "idade": 26
+    },
+    {
+     "tmId": "1010856",
+     "nome": "Ryan Rodin",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França",
+     "idade": 20
+    },
+    {
+     "tmId": "1265965",
+     "nome": "Xiangxin Wei",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "China",
+     "idade": 18
+    }
+   ]
   },
   "FULHAM|fulham": {
    "v": 2,
@@ -347463,6 +352236,7 @@
   },
   "DCUNITED|dc united": {
    "v": 2,
+   "curto": "DCUNITED",
    "nome": "DC United",
    "players": [],
    "naoEncontrado": true
@@ -360885,9 +365659,283 @@
   },
   "GODOYCRU|godoy cruz": {
    "v": 2,
+   "curto": "GODOYCRU",
    "nome": "Godoy Cruz",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/club-deportivo-godoy-cruz-antonio-tomba/startseite/verein/12574",
+   "players": [
+    {
+     "tmId": "332248",
+     "nome": "Roberto Ramírez",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina",
+     "idade": 30
+    },
+    {
+     "tmId": "1131418",
+     "nome": "Nicolás Cláa",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina",
+     "idade": 21
+    },
+    {
+     "tmId": "887662",
+     "nome": "Juan Strumia",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Argentina",
+     "idade": 26
+    },
+    {
+     "tmId": "1103933",
+     "nome": "Mateo Mendoza",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 21
+    },
+    {
+     "tmId": "1011921",
+     "nome": "Nahuel Brunet",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 26
+    },
+    {
+     "tmId": "178660",
+     "nome": "Diego Viera",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Paraguai",
+     "idade": 35
+    },
+    {
+     "tmId": "856020",
+     "nome": "Tomás Rossi",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 27
+    },
+    {
+     "tmId": "849532",
+     "nome": "Leandro Quiroz",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "337922",
+     "nome": "Esteban Burgos",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 34
+    },
+    {
+     "tmId": "1125691",
+     "nome": "Camilo Alessandria",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Argentina",
+     "idade": 26
+    },
+    {
+     "tmId": "1305914",
+     "nome": "Juan Morán",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina",
+     "idade": 20
+    },
+    {
+     "tmId": "283395",
+     "nome": "Federico Milo",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina",
+     "idade": 34
+    },
+    {
+     "tmId": "754470",
+     "nome": "Lucas Arce",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina",
+     "idade": 28
+    },
+    {
+     "tmId": "745789",
+     "nome": "Francisco Gerometta",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Argentina",
+     "idade": 26
+    },
+    {
+     "tmId": "222052",
+     "nome": "Gastón Gil Romero",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 33
+    },
+    {
+     "tmId": "1141726",
+     "nome": "Benjamín Schamine",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "457212",
+     "nome": "Juan Andrada",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 31
+    },
+    {
+     "tmId": "1305913",
+     "nome": "Gonzalo Quinteros",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "657744",
+     "nome": "Vicente Poggi",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai",
+     "idade": 24
+    },
+    {
+     "tmId": "657421",
+     "nome": "Felipe Cairus",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Uruguai",
+     "idade": 26
+    },
+    {
+     "tmId": "1335580",
+     "nome": "Exequiel Tejada",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 21
+    },
+    {
+     "tmId": "1131421",
+     "nome": "Agustín Valverde",
+     "posicaoTM": "Meia Direita",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 24
+    },
+    {
+     "tmId": "563719",
+     "nome": "Valentín Burgoa",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 25
+    },
+    {
+     "tmId": "838796",
+     "nome": "Tomás Pozzo",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 25
+    },
+    {
+     "tmId": "495124",
+     "nome": "Brian Orosco",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 28
+    },
+    {
+     "tmId": "497156",
+     "nome": "Bautista Cejas",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 28
+    },
+    {
+     "tmId": "1318646",
+     "nome": "Santiago Martínez",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "1322856",
+     "nome": "Rodrigo Fernández",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Argentina",
+     "idade": 19
+    },
+    {
+     "tmId": "996587",
+     "nome": "Misael Sosa",
+     "posicaoTM": "Seg. Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 24
+    },
+    {
+     "tmId": "556906",
+     "nome": "Martín Pino",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 28
+    },
+    {
+     "tmId": "397218",
+     "nome": "Axel Rodríguez",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 29
+    },
+    {
+     "tmId": "845336",
+     "nome": "Nahuel Ulariaga",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 24
+    },
+    {
+     "tmId": "1118625",
+     "nome": "Bruno Barrionuevo",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 20
+    },
+    {
+     "tmId": "1446743",
+     "nome": "Willian Riquelme",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Paraguai",
+     "idade": 24
+    }
+   ]
   },
   "MENEMENS|ilce": {
    "v": 2,
@@ -361570,9 +366618,203 @@
   },
   "APXTREM|trem": {
    "v": 2,
+   "curto": "APXTREM",
    "nome": "Trem",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/trem-desportivo-clube-ap-/startseite/verein/36012",
+   "players": [
+    {
+     "tmId": "735046",
+     "nome": "Victor Lube",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 32
+    },
+    {
+     "tmId": "1008749",
+     "nome": "Hiago",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "1220152",
+     "nome": "Felipe Fortaleza",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "1143816",
+     "nome": "Eduardo Felipe",
+     "posicaoTM": "Defensores",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "520377",
+     "nome": "Perema",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 33
+    },
+    {
+     "tmId": "1094313",
+     "nome": "Léo Reis",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 24
+    },
+    {
+     "tmId": "1552037",
+     "nome": "Agenor Neto",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "867002",
+     "nome": "Rivaldo",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "1383545",
+     "nome": "Eduardo Orelha",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "597161",
+     "nome": "Rafael Baiano",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 30
+    },
+    {
+     "tmId": "788138",
+     "nome": "Luiz Felipe",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "538101",
+     "nome": "Alysson Barros",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "978431",
+     "nome": "George Pitbull",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "876879",
+     "nome": "Fábio Mucajá",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "1008793",
+     "nome": "Zé Lucas",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "1102170",
+     "nome": "Marcos Paulo",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "1112208",
+     "nome": "Lucas Rondineles",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "1261158",
+     "nome": "Cleilton",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "980320",
+     "nome": "Rafinha",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 23
+    },
+    {
+     "tmId": "983502",
+     "nome": "Thiaguinho",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "1008667",
+     "nome": "Gerson",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "650986",
+     "nome": "Wander Silva",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 32
+    },
+    {
+     "tmId": "978092",
+     "nome": "Foguete",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "939787",
+     "nome": "Mauro Praia",
+     "posicaoTM": "Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 32
+    }
+   ]
   },
   "FOZDOIGU|foz do iguacu": {
    "v": 2,
@@ -363197,9 +368439,259 @@
   },
   "SPORT|sport": {
    "v": 2,
+   "curto": "SPORT",
    "nome": "Sport",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/sport-club-do-recife/startseite/verein/8718",
+   "players": [
+    {
+     "tmId": "546217",
+     "nome": "Thiago Couto",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "734169",
+     "nome": "Halls",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "75102",
+     "nome": "Denis",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 39
+    },
+    {
+     "tmId": "738411",
+     "nome": "Adriano",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Brasil",
+     "idade": 23
+    },
+    {
+     "tmId": "461903",
+     "nome": "João Silva",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Portugal",
+     "idade": 27
+    },
+    {
+     "tmId": "476339",
+     "nome": "Marcelo Benevenuto",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 30
+    },
+    {
+     "tmId": "965630",
+     "nome": "Habraão",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "1089609",
+     "nome": "Kayky Almeida",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "910216",
+     "nome": "Marcelo Ajul",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 23
+    },
+    {
+     "tmId": "1130054",
+     "nome": "Patrick",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Brasil",
+     "idade": 21
+    },
+    {
+     "tmId": "798167",
+     "nome": "Felipinho",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 29
+    },
+    {
+     "tmId": "886688",
+     "nome": "Edson Lucas",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "697845",
+     "nome": "Claudinho",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "1355323",
+     "nome": "Augusto",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 18
+    },
+    {
+     "tmId": "177845",
+     "nome": "Madson",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Brasil",
+     "idade": 34
+    },
+    {
+     "tmId": "1365897",
+     "nome": "Zé Lucas",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 18
+    },
+    {
+     "tmId": "670968",
+     "nome": "Zé Gabriel",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 27
+    },
+    {
+     "tmId": "866884",
+     "nome": "Pedro Martins",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "346935",
+     "nome": "Yago Felipe",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "1087725",
+     "nome": "Fábio Matheus",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 23
+    },
+    {
+     "tmId": "867139",
+     "nome": "Biel Fonseca",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Brasil",
+     "idade": 24
+    },
+    {
+     "tmId": "800732",
+     "nome": "Diego Hernández",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Uruguai",
+     "idade": 26
+    },
+    {
+     "tmId": "257740",
+     "nome": "Carlos de Pena",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Uruguai",
+     "idade": 34
+    },
+    {
+     "tmId": "392809",
+     "nome": "Clayson",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 31
+    },
+    {
+     "tmId": "752560",
+     "nome": "Gustavo Maia",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "635807",
+     "nome": "Marlon",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "695232",
+     "nome": "Chrystian Barletta",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Brasil",
+     "idade": 25
+    },
+    {
+     "tmId": "594561",
+     "nome": "Dudu Teodora",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 26
+    },
+    {
+     "tmId": "432959",
+     "nome": "Perotti",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 28
+    },
+    {
+     "tmId": "366450",
+     "nome": "Iury Castilho",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 30
+    },
+    {
+     "tmId": "305428",
+     "nome": "Zé Roberto",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Brasil",
+     "idade": 32
+    }
+   ]
   },
   "NOVORINZ|gremio novorizontino": {
    "v": 2,
@@ -364116,9 +369608,251 @@
   },
   "BENFICAX|benfica": {
    "v": 2,
+   "curto": "BENFICAX",
    "nome": "Benfica",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/benfica-lissabon/startseite/verein/294",
+   "players": [
+    {
+     "tmId": "537844",
+     "nome": "Anatoliy Trubin",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Ucrânia",
+     "idade": 24
+    },
+    {
+     "tmId": "504072",
+     "nome": "Samuel Soares",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Portugal",
+     "idade": 24
+    },
+    {
+     "tmId": "504087",
+     "nome": "Tomás Araújo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Portugal",
+     "idade": 24
+    },
+    {
+     "tmId": "650568",
+     "nome": "António Silva",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Portugal",
+     "idade": 22
+    },
+    {
+     "tmId": "182904",
+     "nome": "Clément Lenglet",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 31
+    },
+    {
+     "tmId": "605396",
+     "nome": "Samuel Dahl",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Suécia",
+     "idade": 23
+    },
+    {
+     "tmId": "646747",
+     "nome": "Rafa Obrador",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Espanha",
+     "idade": 22
+    },
+    {
+     "tmId": "1233701",
+     "nome": "José Neto",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Portugal",
+     "idade": 18
+    },
+    {
+     "tmId": "519184",
+     "nome": "Amar Dedić",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Bósnia-Herzegovina",
+     "idade": 23
+    },
+    {
+     "tmId": "452607",
+     "nome": "Alexander Bah",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Dinamarca",
+     "idade": 28
+    },
+    {
+     "tmId": "1134199",
+     "nome": "Daniel Banjaqui",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Portugal",
+     "idade": 18
+    },
+    {
+     "tmId": "735573",
+     "nome": "Richard Ríos",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Colômbia",
+     "idade": 26
+    },
+    {
+     "tmId": "671915",
+     "nome": "Enzo Barrenechea",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Argentina",
+     "idade": 25
+    },
+    {
+     "tmId": "699592",
+     "nome": "Manu Silva",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Portugal",
+     "idade": 25
+    },
+    {
+     "tmId": "357233",
+     "nome": "Leandro Barreiro",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Luxemburgo",
+     "idade": 26
+    },
+    {
+     "tmId": "223367",
+     "nome": "Fredrik Aursnes",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Noruega",
+     "idade": 30
+    },
+    {
+     "tmId": "623325",
+     "nome": "Georgiy Sudakov",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Ucrânia",
+     "idade": 23
+    },
+    {
+     "tmId": "931415",
+     "nome": "João Rego",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Portugal",
+     "idade": 21
+    },
+    {
+     "tmId": "670103",
+     "nome": "Andreas Schjelderup",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Noruega",
+     "idade": 22
+    },
+    {
+     "tmId": "407098",
+     "nome": "Jakub Kamiński",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Polónia",
+     "idade": 24
+    },
+    {
+     "tmId": "139396",
+     "nome": "Bruma",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Portugal",
+     "idade": 31
+    },
+    {
+     "tmId": "1000674",
+     "nome": "Gianluca Prestianni",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Argentina",
+     "idade": 20
+    },
+    {
+     "tmId": "303259",
+     "nome": "Dodi Lukébakio",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Bélgica",
+     "idade": 28
+    },
+    {
+     "tmId": "479638",
+     "nome": "Tiago Gouveia",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Portugal",
+     "idade": 25
+    },
+    {
+     "tmId": "238055",
+     "nome": "Rafa Silva",
+     "posicaoTM": "Seg. Atacante",
+     "posicao": "ATA",
+     "nacionalidade": "Portugal",
+     "idade": 33
+    },
+    {
+     "tmId": "324503",
+     "nome": "Vangelis Pavlidis",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Grécia",
+     "idade": 27
+    },
+    {
+     "tmId": "548028",
+     "nome": "Franjo Ivanović",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Croácia",
+     "idade": 22
+    },
+    {
+     "tmId": "649317",
+     "nome": "Jhon Durán",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Colômbia",
+     "idade": 22
+    },
+    {
+     "tmId": "1092964",
+     "nome": "Anísio Cabral",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Portugal",
+     "idade": 18
+    },
+    {
+     "tmId": "617267",
+     "nome": "Henrique Araújo",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Portugal",
+     "idade": 24
+    }
+   ]
   },
   "TEXASUNI|texas united": {
    "v": 2,
@@ -417213,8 +422947,281 @@
    "v": 2,
    "curto": "STRASBOU",
    "nome": "Strasbourg",
-   "players": [],
-   "naoEncontrado": true
+   "url": "https://www.transfermarkt.com.br/rc-strassburg-alsace/startseite/verein/667",
+   "players": [
+    {
+     "tmId": "965043",
+     "nome": "Milosz Piekutowski",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Polónia",
+     "idade": 20
+    },
+    {
+     "tmId": "786436",
+     "nome": "Ismaël Doukouré",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "926978",
+     "nome": "Lucas Høgsberg",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Dinamarca",
+     "idade": 20
+    },
+    {
+     "tmId": "621993",
+     "nome": "Andrew Omobamidele",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Irlanda",
+     "idade": 24
+    },
+    {
+     "tmId": "659513",
+     "nome": "Soumaïla Coulibaly",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 22
+    },
+    {
+     "tmId": "807128",
+     "nome": "Saïdou Sow",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Guiné",
+     "idade": 24
+    },
+    {
+     "tmId": "962555",
+     "nome": "Abakar Sylla",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 23
+    },
+    {
+     "tmId": "988272",
+     "nome": "Yoni Gomis",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "França",
+     "idade": 20
+    },
+    {
+     "tmId": "316125",
+     "nome": "Ben Chilwell",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Inglaterra",
+     "idade": 29
+    },
+    {
+     "tmId": "984529",
+     "nome": "Mateo Del Blanco",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "711980",
+     "nome": "Guéla Doué",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 23
+    },
+    {
+     "tmId": "991487",
+     "nome": "Abdoul Ouattara",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 20
+    },
+    {
+     "tmId": "937729",
+     "nome": "Diogo Sousa",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Portugal",
+     "idade": 20
+    },
+    {
+     "tmId": "1011200",
+     "nome": "Junior Mwanga",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "863204",
+     "nome": "Maxi Oyedele",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Polónia",
+     "idade": 21
+    },
+    {
+     "tmId": "1183575",
+     "nome": "Pape Diong",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Senegal",
+     "idade": 20
+    },
+    {
+     "tmId": "1068110",
+     "nome": "Rabby Nzingoula",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "França",
+     "idade": 20
+    },
+    {
+     "tmId": "849410",
+     "nome": "Valentín Barco",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 22
+    },
+    {
+     "tmId": "1130514",
+     "nome": "Samir El Mourabet",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Marrocos",
+     "idade": 20
+    },
+    {
+     "tmId": "949113",
+     "nome": "Pape Demba Diop",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Senegal",
+     "idade": 22
+    },
+    {
+     "tmId": "1010854",
+     "nome": "Mathis Amougou",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "França",
+     "idade": 20
+    },
+    {
+     "tmId": "655006",
+     "nome": "Diego Moreira",
+     "posicaoTM": "Meia Esquerda",
+     "posicao": "MEI",
+     "nacionalidade": "Bélgica",
+     "idade": 21
+    },
+    {
+     "tmId": "660867",
+     "nome": "Julio Enciso",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Paraguai",
+     "idade": 22
+    },
+    {
+     "tmId": "1172441",
+     "nome": "Benjamin Brantlind",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Suécia",
+     "idade": 17
+    },
+    {
+     "tmId": "992686",
+     "nome": "Martial Godo",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Costa do Marfim",
+     "idade": 23
+    },
+    {
+     "tmId": "579928",
+     "nome": "Sebastian Nanasi",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Suécia",
+     "idade": 24
+    },
+    {
+     "tmId": "1075590",
+     "nome": "Rayane Messi",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "França",
+     "idade": 19
+    },
+    {
+     "tmId": "1015624",
+     "nome": "Óscar Perea",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Colômbia",
+     "idade": 20
+    },
+    {
+     "tmId": "1151929",
+     "nome": "Gessime Yassine",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Marrocos",
+     "idade": 20
+    },
+    {
+     "tmId": "933900",
+     "nome": "Samuel Amo-Ameyaw",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Inglaterra",
+     "idade": 20
+    },
+    {
+     "tmId": "1133733",
+     "nome": "Yaya Diémé",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Senegal",
+     "idade": 18
+    },
+    {
+     "tmId": "1064871",
+     "nome": "Joaquín Panichelli",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 23
+    },
+    {
+     "tmId": "557612",
+     "nome": "Sékou Mara",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "França",
+     "idade": 23
+    },
+    {
+     "tmId": "845872",
+     "nome": "Milos Lukovic",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Sérvia",
+     "idade": 20
+    }
+   ]
   },
   "SPORTIVO|sportivo trinidense": {
    "v": 2,
@@ -423320,9 +429327,202 @@
   "COLOCOLO|colo colo": {
    "v": 2,
    "curto": "COLOCOLO",
-   "nome": "Colo-Colo",
-   "url": "https://www.transfermarkt.com.br/colo-colo-de-futebol-e-regatas-ba-/startseite/verein/13510",
-   "players": []
+   "nome": "Colo Colo",
+   "url": "https://www.transfermarkt.com.br/csd-colo-colo/startseite/verein/2433",
+   "players": [
+    {
+     "tmId": "1240268",
+     "nome": "Gabriel Maureira",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Chile",
+     "idade": 19
+    },
+    {
+     "tmId": "157766",
+     "nome": "Fernando de Paul",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Chile",
+     "idade": 35
+    },
+    {
+     "tmId": "964447",
+     "nome": "Eduardo Villanueva",
+     "posicaoTM": "Goleiro",
+     "posicao": "GOL",
+     "nacionalidade": "Chile",
+     "idade": 21
+    },
+    {
+     "tmId": "747716",
+     "nome": "Jonathan Villagra",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile",
+     "idade": 25
+    },
+    {
+     "tmId": "657742",
+     "nome": "Joaquín Sosa",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai",
+     "idade": 24
+    },
+    {
+     "tmId": "285772",
+     "nome": "Javier Méndez",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Uruguai",
+     "idade": 31
+    },
+    {
+     "tmId": "950598",
+     "nome": "Miguel Toledo",
+     "posicaoTM": "Zagueiro",
+     "posicao": "ZAG",
+     "nacionalidade": "Chile",
+     "idade": 22
+    },
+    {
+     "tmId": "981821",
+     "nome": "Diego Ulloa",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Chile",
+     "idade": 23
+    },
+    {
+     "tmId": "531286",
+     "nome": "Erick Wiemberg",
+     "posicaoTM": "Lateral Esq.",
+     "posicao": "LE",
+     "nacionalidade": "Chile",
+     "idade": 32
+    },
+    {
+     "tmId": "749052",
+     "nome": "Jeyson Rojas",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Chile",
+     "idade": 24
+    },
+    {
+     "tmId": "402519",
+     "nome": "Matías Fernández",
+     "posicaoTM": "Lateral Dir.",
+     "posicao": "LD",
+     "nacionalidade": "Chile",
+     "idade": 30
+    },
+    {
+     "tmId": "454238",
+     "nome": "Tomás Alarcón",
+     "posicaoTM": "Volante",
+     "posicao": "VOL",
+     "nacionalidade": "Chile",
+     "idade": 27
+    },
+    {
+     "tmId": "538281",
+     "nome": "Víctor Méndez",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Chile",
+     "idade": 26
+    },
+    {
+     "tmId": "271880",
+     "nome": "Álvaro Madrid",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Chile",
+     "idade": 31
+    },
+    {
+     "tmId": "37666",
+     "nome": "Arturo Vidal",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Chile",
+     "idade": 39
+    },
+    {
+     "tmId": "1099214",
+     "nome": "Bastián Silva",
+     "posicaoTM": "Meia Central",
+     "posicao": "MEI",
+     "nacionalidade": "Chile",
+     "idade": 22
+    },
+    {
+     "tmId": "141813",
+     "nome": "Claudio Aquino",
+     "posicaoTM": "Meia Ofensivo",
+     "posicao": "MEI",
+     "nacionalidade": "Argentina",
+     "idade": 35
+    },
+    {
+     "tmId": "1005969",
+     "nome": "Lautaro Pastrán",
+     "posicaoTM": "Ponta Esquerda",
+     "posicao": "PE",
+     "nacionalidade": "Chile",
+     "idade": 24
+    },
+    {
+     "tmId": "1119923",
+     "nome": "Francisco Marchant",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Chile",
+     "idade": 19
+    },
+    {
+     "tmId": "1172013",
+     "nome": "Leandro Hernández",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Chile",
+     "idade": 21
+    },
+    {
+     "tmId": "265765",
+     "nome": "Marcos Bolados",
+     "posicaoTM": "Ponta Direita",
+     "posicao": "PD",
+     "nacionalidade": "Chile",
+     "idade": 30
+    },
+    {
+     "tmId": "365758",
+     "nome": "Maximiliano Romero",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 27
+    },
+    {
+     "tmId": "130413",
+     "nome": "Javier Correa",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Argentina",
+     "idade": 33
+    },
+    {
+     "tmId": "1177408",
+     "nome": "Yastin Cuevas",
+     "posicaoTM": "Centroavante",
+     "posicao": "ATA",
+     "nacionalidade": "Chile",
+     "idade": 18
+    }
+   ]
   },
   "BOAVISTA|boavista": {
    "v": 2,
@@ -467795,5 +473995,5 @@
    "naoEncontrado": true
   }
  },
- "updatedAt": "2026-07-21T20:02:19.561Z"
+ "updatedAt": "2026-07-24T00:54:56.375Z"
 }

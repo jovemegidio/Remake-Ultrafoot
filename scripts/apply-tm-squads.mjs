@@ -65,6 +65,77 @@ function sobreposicao(jogadores, idx) {
   return { pct: hit / jogadores.length, hit }
 }
 
+// ── Elenco DESATUALIZADO x clube casado errado ─────────────────────────────
+//
+// A trava de sobreposicao nao sabia distinguir as duas coisas. Wigan casou com
+// wigan-athletic (certo!) e mesmo assim foi rejeitado: o seed tem o elenco de
+// ~2019 (David Marshall, Antonee Robinson) e o TM tem o de hoje. Eram 1.236
+// clubes assim — com URL certa e elenco velho, ficando fictícios no jogo.
+//
+// Confianca vem do SLUG da URL do TM contra o nome do clube no jogo. Slug
+// batendo = clube certo; ai o elenco do TM (atual) SUBSTITUI o do seed.
+
+/** Tokens uteis do nome de um clube (tira siglas e ruido). */
+function tokensClube(s) {
+  const RUIDO = new Set(["fc", "cf", "sc", "ec", "ca", "cr", "ac", "se", "afc", "ud", "cd", "club", "clube",
+    "futebol", "football", "futbol", "calcio", "de", "do", "da", "dos", "das", "the", "1", "sport"])
+  return new Set(
+    (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ")
+      .filter(w => w.length > 2 && !RUIDO.has(w)),
+  )
+}
+
+/** O slug do TM confirma que e este clube? */
+function casamentoConfiavel(nomeJogo, url) {
+  const slug = (url || "").split("/")[3] ?? ""
+  if (!slug) return false
+  const a = tokensClube(nomeJogo)
+  const b = tokensClube(slug.replace(/-/g, " "))
+  if (a.size === 0 || b.size === 0) return false
+  let comuns = 0
+  for (const t of a) if (b.has(t)) comuns++
+  // Todo token distintivo do nome do jogo aparece no slug (ex.: "wigan" em
+  // "wigan-athletic", "cercle"+"brugge" em "cercle-brugge").
+  return comuns === a.size || (comuns >= 2 && comuns / a.size >= 0.6)
+}
+
+/**
+ * Converte o elenco do TM em atletas do seed, derivando o OVERALL do valor de
+ * mercado e ancorando na forca atual do clube — o clube nao fica mais forte nem
+ * mais fraco do que era, mas passa a ter os jogadores CERTOS.
+ */
+function elencoDoTm(playersTm, jogadoresSeed) {
+  const basesAntigas = (jogadoresSeed ?? []).map(j => j.overall).filter(Number.isFinite)
+  const media = basesAntigas.length ? basesAntigas.reduce((a, b) => a + b, 0) / basesAntigas.length : 62
+  // Faixa do elenco. O seed antigo as vezes vem COMPRIMIDO (todo mundo entre 82
+  // e 84), e ancorar so nele achataria o elenco novo — o quarto goleiro saia com
+  // o mesmo overall do craque. Garantimos uma amplitude minima de 20 pontos.
+  const teto = Math.max(basesAntigas.length ? Math.max(...basesAntigas) : media + 8, Math.round(media) + 8)
+  const piso = Math.min(basesAntigas.length ? Math.min(...basesAntigas) : media - 8, teto - 20)
+  const maxAntigo = teto
+  const minAntigo = piso
+
+  // Ordena por valor de mercado: o mais caro vira o melhor do elenco.
+  const ordenados = [...playersTm].sort((a, b) => (b.valor ?? 0) - (a.valor ?? 0))
+  const n = Math.max(1, ordenados.length - 1)
+  return ordenados.map((p, i) => {
+    // Distribui do teto antigo ao piso antigo, seguindo o ranking de valor.
+    const overall = Math.round(maxAntigo - (i / n) * (maxAntigo - minAntigo))
+    const foto = /portrait\/\w+\/([\d-]+)\.jpg/.exec(p.foto ?? "")
+    return {
+      id: `tm_${p.tmId ?? i}`,
+      nome: p.nome,
+      posicao: p.posicao,
+      overall,
+      idade: p.idade ?? 25,
+      salario: Math.round(overall * 800),
+      nac: p.nacionalidade || undefined,
+      ...(foto ? { ft: foto[1] } : {}),
+    }
+  })
+}
+
 async function main() {
   if (!existsSync(TM)) {
     console.error("Falta data/seeds/tm-squads.json — rode antes: node scripts/import-tm-squads.mjs")
@@ -79,11 +150,30 @@ async function main() {
   let posCorrigida = 0, nacDefinida = 0, fotoDefinida = 0, semMatch = 0
   const mudancasPos = []
   const rejeitados = []
+  let elencosSubstituidos = 0, atletasSubstituidos = 0
+  const substituidos = []
 
   for (const team of seed.teams ?? []) {
     const club = tm.clubs?.[`${team.curto}|${nameKey(team.nome)}`]
     if (!club?.players?.length) continue
     const idx = buildIndex(club.players)
+
+    // SLUG CONFIAVEL => o elenco do TM (atual e completo) SUBSTITUI o do seed,
+    // independentemente da sobreposicao.
+    //
+    // A regra antiga so substituia quando a sobreposicao era BAIXA, e isso
+    // deixava o pior caso de fora: o Bayern casava alguns nomes reais (Neuer,
+    // Upamecano), entrava no caminho de "correcao" e MANTINHA os fictícios do
+    // seed — o elenco ficava com "Atacante BAY 3" ao lado do Neuer. Corrigir so
+    // conserta quem ja esta la; nao traz Kane nem tira o placeholder.
+    if (casamentoConfiavel(team.nome, club.url) && club.players.length >= 11) {
+      const antes = team.jogadores?.length ?? 0
+      team.jogadores = elencoDoTm(club.players, team.jogadores)
+      elencosSubstituidos++
+      atletasSubstituidos += team.jogadores.length
+      substituidos.push(`${team.nome}: ${antes} -> ${team.jogadores.length} atletas (${club.url?.split("/")[3]})`)
+      continue
+    }
 
     const { pct, hit } = sobreposicao(team.jogadores, idx)
     if (pct < PISO_SOBREPOSICAO || hit < MIN_CASADOS) {
@@ -121,7 +211,8 @@ async function main() {
   seed.tmAppliedAt = new Date().toISOString()
   await writeFile(SEED, JSON.stringify(seed))
 
-  console.log(`clubes aceitos          : ${clubesComDados}`)
+  console.log(`clubes aceitos (correcao): ${clubesComDados}`)
+  console.log(`elencos SUBSTITUIDOS     : ${elencosSubstituidos} (${atletasSubstituidos} atletas — seed desatualizado x elenco atual do TM)`)
   console.log(`clubes REJEITADOS       : ${clubesRejeitados} (sobreposição < ${PISO_SOBREPOSICAO * 100}%: clube provavelmente casado errado)`)
   console.log(`atletas nos aceitos     : ${atletas}`)
   console.log(`  posição corrigida     : ${posCorrigida}`)

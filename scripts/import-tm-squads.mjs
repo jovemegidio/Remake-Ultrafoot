@@ -166,6 +166,65 @@ function paisKey(bruto) {
  * enquanto a mesma busca, feita à mão, achava o clube na hora. Seria uma base
  * silenciosamente pela metade se dando por concluída.
  */
+/**
+ * ALIAS de busca: o nome do clube no jogo x o nome no Transfermarkt.
+ *
+ * A busca do TM e literal. Clubes grandes ficavam sem elenco so porque o jogo os
+ * chama de um jeito e o TM de outro: "Gremio" (sem acento) x "Grêmio",
+ * "Bayer Leverkusen" x "Bayer 04 Leverkusen", "Rennes" x "Stade Rennais".
+ * Eram 35 clubes JOGAVEIS sem elenco real — Leverkusen, Benfica, Fiorentina,
+ * Betis, Anderlecht, Colo-Colo, o proprio Gremio.
+ *
+ * O alias so muda o TERMO BUSCADO. A validacao continua a mesma (mesmo pais,
+ * sem time B/juvenil, sobreposicao de elenco): alias errado e REJEITADO, nao
+ * importa elenco de outro clube.
+ */
+const ALIAS_TM = {
+  // "Colo-Colo" puro casa com o Colo Colo de Futebol e Regatas (BA). O chileno
+  // e o CSD Colo-Colo — a trava de sobreposicao rejeitou o errado, mas melhor
+  // nem buscar ambiguo.
+  "colo colo": "CSD Colo-Colo",
+  "bayer leverkusen": "Bayer 04 Leverkusen",
+  "benfica": "SL Benfica",
+  "cska moscow": "CSKA Moscou",
+  "anderlecht": "RSC Anderlecht",
+  "spartak moscow": "Spartak Moscou",
+  "gremio": "Grêmio Foot-Ball Porto Alegrense",
+  "fiorentina": "ACF Fiorentina",
+  "real betis": "Real Betis Balompié",
+  "standard liege": "Standard de Liège",
+  "godoy cruz": "Godoy Cruz Antonio Tomba",
+  "union berlin": "1.FC Union Berlin",
+  "rennes": "Stade Rennais FC",
+  "new york red bulls": "New York Red Bulls",
+  "vitesse": "Vitesse Arnhem",
+  "dalian pro": "Dalian Pro",
+  "udinese": "Udinese Calcio",
+  "parma": "Parma Calcio 1913",
+  "strasbourg": "RC Strasbourg Alsace",
+  "sport": "Sport Recife",
+  "cagliari": "Cagliari Calcio",
+  "montpellier": "Montpellier HSC",
+  "dc united": "DC United",
+  "charleroi": "Sporting Charleroi",
+  "krylya sovetov": "Krylya Sovetov Samara",
+  "auxerre": "AJ Auxerre",
+  "alaves": "Deportivo Alavés",
+  "westerlo": "KVC Westerlo",
+  "kortrijk": "KV Kortrijk",
+  "como": "Como 1907",
+  "dynamo dresden": "Dynamo Dresden",
+  "remo": "Clube do Remo",
+  "csa": "Centro Sportivo Alagoano",
+  "inter de limeira": "Inter de Limeira",
+  "trem": "Trem Desportivo Clube",
+}
+
+function aliasTm(clubName) {
+  const k = (clubName || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
+  return ALIAS_TM[k] ?? null
+}
+
 async function findClubUrl(clubName, clubCountry, buscar, seedNames) {
   // Segunda chance com o nome encurtado: a busca do TM é bem literal e não acha
   // "Racing Montevideo" (lá é "Racing Club de Montevideo") nem "Barcelona
@@ -176,7 +235,11 @@ async function findClubUrl(clubName, clubCountry, buscar, seedNames) {
   // mesmo país, nome curto único, tudo "válido". Por isso a tentativa curta
   // exige que o candidato ainda contenha a palavra descartada.
   const palavras = clubName.trim().split(/\s+/)
-  const tentativas = [{ termo: clubName, exigir: null }]
+  const tentativas = []
+  // O ALIAS vem primeiro: e o nome exato do clube no TM (ver ALIAS_TM).
+  const alias = aliasTm(clubName)
+  if (alias) tentativas.push({ termo: alias, exigir: null })
+  tentativas.push({ termo: clubName, exigir: null })
   if (palavras.length > 1) {
     tentativas.push({ termo: palavras.slice(0, -1).join(" "), exigir: nameKey(palavras.at(-1)) })
   }
@@ -333,8 +396,17 @@ async function main() {
   // os elencos que o jogador enxerga — que e de onde vem o relato do "Cole
   // Palmer como goleiro". Deixar em ordem de arquivo gastaria as primeiras horas
   // em times de divisao estadual.
+  // --retry-alias: reprocessa os clubes marcados como NAO ENCONTRADO que agora
+  // tem alias (ver ALIAS_TM). Sem isto eles ficariam para sempre no cache como
+  // vazios, porque a retomada normal so pega quem tem versao de parser antiga.
+  const retryAlias = args.includes("--retry-alias")
   const pendentes = teams
-    .filter(t => (cache.clubs[chaveClube(t)]?.v ?? 0) < PARSER_V)
+    .filter(t => {
+      const c = cache.clubs[chaveClube(t)]
+      if ((c?.v ?? 0) < PARSER_V) return true
+      if (retryAlias && c?.naoEncontrado && aliasTm(t.nome)) return true
+      return false
+    })
     .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
     .slice(0, limit)
   console.log(`${teams.length} clubes no seed | ${Object.keys(cache.clubs).length} já importados | processando ${pendentes.length}`)
