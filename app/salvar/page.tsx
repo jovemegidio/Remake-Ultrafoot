@@ -88,7 +88,7 @@ export default function SalvarPage() {
       </div>
 
       {/* Cabecalho: emblema mc + trilha Personalizar > Salvar + sub-abas */}
-      <header className="relative z-10 flex h-20 shrink-0 items-center gap-5 px-10">
+      <header className="relative z-10 flex h-14 md:h-20 shrink-0 items-center gap-3 md:gap-5 px-3 md:px-10 overflow-x-auto scrollbar-none">
         <button
           onClick={() => hardNavigate("/")}
           aria-label="Inicio"
@@ -99,7 +99,7 @@ export default function SalvarPage() {
             alt="UF26"
             width={120}
             height={44}
-            className="h-9 w-auto object-contain"
+            className="h-7 md:h-9 w-auto object-contain"
             priority
           />
         </button>
@@ -107,7 +107,7 @@ export default function SalvarPage() {
         {/* Secao pai */}
         <button
           onClick={() => hardNavigate("/configuracoes")}
-          className="group flex shrink-0 flex-col items-center gap-1"
+          className="group hidden sm:flex shrink-0 flex-col items-center gap-1"
         >
           <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded-[4px] border border-white/20 bg-white/[0.06] px-1 font-mono text-[9px] font-semibold text-white/70">
             W
@@ -118,18 +118,18 @@ export default function SalvarPage() {
         </button>
 
         {/* Pagina atual */}
-        <span className="shrink-0 pb-[2px] text-[18px] font-extrabold tracking-tight text-white">Salvar</span>
+        <span className="shrink-0 pb-[2px] text-[16px] md:text-[18px] font-extrabold tracking-tight text-white">Salvar</span>
 
         {/* Divisor */}
-        <div className="mx-3 h-7 w-px bg-white/15" />
+        <div className="mx-1 md:mx-3 h-7 w-px bg-white/15" />
 
         {/* Sub-abas */}
-        <nav className="flex items-end gap-7">
+        <nav className="flex items-end gap-4 md:gap-7 shrink-0">
           <button
             onClick={() => setTab("principais")}
             className="group flex flex-col items-start gap-1"
           >
-            <span className="flex gap-1">
+            <span className="hidden sm:flex gap-1">
               <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded-[4px] border border-white/20 bg-white/[0.06] px-1 font-mono text-[9px] font-semibold text-white/70">
                 X
               </kbd>
@@ -139,7 +139,7 @@ export default function SalvarPage() {
             </span>
             <span
               className={cn(
-                "text-[15px] font-bold tracking-tight transition-colors",
+                "whitespace-nowrap text-[14px] md:text-[15px] font-bold tracking-tight transition-colors",
                 tab === "principais" ? "text-white" : "text-white/40 group-hover:text-white/70",
               )}
             >
@@ -152,7 +152,7 @@ export default function SalvarPage() {
           >
             <span
               className={cn(
-                "text-[15px] font-bold tracking-tight transition-colors",
+                "whitespace-nowrap text-[14px] md:text-[15px] font-bold tracking-tight transition-colors",
                 tab === "controle" ? "text-white" : "text-white/40 hover:text-white/70",
               )}
             >
@@ -163,10 +163,10 @@ export default function SalvarPage() {
       </header>
 
       {/* Conteudo */}
-      <main className="relative z-10 flex-1 overflow-y-auto px-10 pb-24">
+      <main className="relative z-10 flex-1 overflow-y-auto px-4 md:px-10 pb-24">
         {/* Linha de instrucao + espacos livres */}
-        <div className="mb-8 mt-2 flex items-start justify-between gap-6">
-          <p className="max-w-3xl text-[15px] leading-relaxed text-white/55">
+        <div className="mb-6 md:mb-8 mt-2 flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-6">
+          <p className="max-w-3xl text-sm md:text-[15px] leading-relaxed text-white/55">
             {tab === "principais"
               ? "Crie um arquivo para salvar o seu progresso. Todos os seus salvamentos automaticos usarao este espaco."
               : "Crie um ponto de controle no qual voce podera voltar a qualquer momento. O salvamento automatico nao altera os pontos de controle."}
@@ -181,7 +181,7 @@ export default function SalvarPage() {
           {/* Card vazio: criar novo */}
           <button
             onClick={() => setNaming(true)}
-            className="group flex h-[560px] items-center justify-center rounded-2xl border border-white/[0.07] bg-black/40 transition-colors hover:border-white/20 hover:bg-black/30"
+            className="group flex h-[280px] md:h-[560px] items-center justify-center rounded-2xl border border-white/[0.07] bg-black/40 transition-colors hover:border-white/20 hover:bg-black/30"
           >
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white transition-transform group-hover:scale-105">
               <Plus className="h-10 w-10 text-black" strokeWidth={3} />
@@ -189,7 +189,7 @@ export default function SalvarPage() {
           </button>
 
           {/* Card de save existente */}
-          <div className="flex h-[560px] flex-col rounded-2xl border border-[#00ffc8]/60 bg-black/55 px-8 py-7 shadow-[0_0_34px_rgba(0,255,200,0.12)]">
+          <div className="flex md:h-[560px] flex-col rounded-2xl border border-[#00ffc8]/60 bg-black/55 px-5 md:px-8 py-6 md:py-7 shadow-[0_0_34px_rgba(0,255,200,0.12)]">
             {/* Titulo com glifo mc */}
             <div className="flex items-center justify-center gap-1.5">
               <span
