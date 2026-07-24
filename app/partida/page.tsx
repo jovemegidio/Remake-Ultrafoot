@@ -437,10 +437,9 @@ export default function PartidaPage() {
   const awayLeague = getLeagueName(awayTeam.curto)
 
   return (
-    <div className="h-screen bg-[#050508] flex flex-col overflow-hidden">
-
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-[#050508] lg:h-screen lg:overflow-hidden">
       {/* Main Content */}
-      <main className="relative flex-1 overflow-hidden">
+      <main className="relative flex-1 overflow-visible lg:overflow-hidden">
         {/* Background conforme a COMPETICAO disputada (Paulistao, Libertadores, Champions...).
             Antes era sempre o estadio noturno. Cai no generico quando nao ha arte. */}
         <div className="absolute inset-0">
@@ -458,7 +457,7 @@ export default function PartidaPage() {
         </div>
 
         {/* Header */}
-        <div className="relative z-20 flex items-center gap-4 px-8 pt-6">
+        <div className="relative z-20 flex flex-wrap items-center gap-3 px-4 pt-4 sm:px-8 sm:pt-6 lg:gap-4">
           <Image
             src="/brand/uf26-logo.png"
             alt="UF26"
@@ -473,7 +472,7 @@ export default function PartidaPage() {
         </div>
 
         {/* Teams Section */}
-        <div className="relative z-10 flex h-[calc(100%-150px)] items-center justify-center gap-4 px-6 xl:gap-10 xl:px-20">
+        <div className="relative z-10 flex flex-col items-center gap-5 overflow-y-auto px-4 pb-32 pt-6 sm:px-6 lg:h-[calc(100%-150px)] lg:flex-row lg:justify-center lg:overflow-hidden lg:pb-0 lg:pt-0 xl:gap-10 xl:px-20">
           {/* Painel CASA */}
           <TeamPanel
             team={homeTeam}
@@ -531,7 +530,7 @@ export default function PartidaPage() {
 
         {/* Bottom Action Bar */}
         <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent px-8 py-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             {/* Atalhos estilo EA FC */}
             <div className="flex items-center gap-7">
               <Link href="/partida/ao-vivo" className="flex items-center gap-2 text-white transition-opacity hover:opacity-80">

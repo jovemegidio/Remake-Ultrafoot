@@ -30,6 +30,7 @@ interface RouteMeta {
   title: string
 }
 const ROUTE_META: { prefix: string; meta: RouteMeta }[] = [
+  { prefix: "/area-treinador", meta: { parent: "Inicio", parentHref: "/", title: "Area do Treinador" } },
   { prefix: "/central", meta: { parent: "Inicio", parentHref: "/", title: "Central" } },
   { prefix: "/notificacoes", meta: { parent: "Notificacoes", parentHref: "/notificacoes", title: "Caixa de Entrada" } },
   { prefix: "/mensagens", meta: { parent: "Notificacoes", parentHref: "/notificacoes", title: "Mensagens" } },
@@ -236,7 +237,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-16 items-center justify-between bg-[#070708]/95 backdrop-blur-xl border-b border-white/[0.06] pl-3 pr-5",
+        "sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/[0.06] bg-[#070708]/95 px-3 backdrop-blur-xl sm:pr-5",
         className,
       )}
     >
@@ -283,7 +284,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       </div>
 
       {/* Direita: acoes + widget do clube */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
         {/* Info temporada/calendario (data real, nao contador de rodada) */}
         <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
           <Calendar className="h-3.5 w-3.5 text-[#00ffc8]" />
@@ -415,13 +416,13 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 </div>
               </div>
 
-              <div className="p-4 border-t border-white/[0.04] bg-white/[0.01] space-y-1">
+              <div className="flex flex-col gap-1 border-t border-white/[0.04] bg-white/[0.01] p-4">
                 <Link
-                  href="/configuracoes"
-                  onClick={(e) => { e.preventDefault(); setShowCoachDropdown(false); hardNavigate("/configuracoes") }}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-[#00ffc8] hover:text-[#00ffdc] transition-colors rounded-lg hover:bg-[#00ffc8]/10"
+                  href="/area-treinador"
+                  onClick={(e) => { e.preventDefault(); setShowCoachDropdown(false); hardNavigate("/area-treinador") }}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold text-[#00ffc8] transition-colors hover:bg-[#00ffc8]/10 hover:text-[#00ffdc]"
                 >
-                  Ver perfil completo
+                  Abrir Área do Treinador
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
 

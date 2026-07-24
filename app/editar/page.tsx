@@ -472,7 +472,7 @@ export default function EditarPage() {
   const teamColor = selectedTeam?.cor1 ?? "#00ffc8"
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[#050508]">
+    <div className="min-h-screen bg-[#050508] flex flex-col overflow-x-hidden lg:h-screen lg:overflow-hidden">
       {/* Stadium background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <Image
@@ -512,10 +512,10 @@ export default function EditarPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      <div className="relative z-10 flex flex-1 flex-col overflow-visible lg:flex-row lg:overflow-hidden">
 
         {/* Left Panel – Teams List */}
-        <aside className="w-64 lg:w-72 flex-shrink-0 flex flex-col bg-black/50 backdrop-blur-sm border-r border-white/[0.06]">
+        <aside className="flex max-h-72 w-full shrink-0 flex-col border-b border-white/[0.06] bg-black/60 backdrop-blur-xl lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
           {/* Search */}
           <div className="p-3 border-b border-white/[0.06]">
             <div className="relative">
@@ -613,7 +613,7 @@ export default function EditarPage() {
         </aside>
 
         {/* Right Panel – Team Details */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex min-h-[650px] flex-1 flex-col overflow-hidden lg:min-h-0">
           {selectedTeam && (
             <>
               {/* Team Info Header */}

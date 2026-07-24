@@ -269,7 +269,7 @@ export default function CalendarioPage() {
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
 
   return (
-  <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 relative">
+  <div className="min-h-screen overflow-x-hidden bg-[#050508] pb-20 md:h-screen md:overflow-hidden md:pb-0 relative">
 
   {/* Overlay de simulacao DIA A DIA (imersao: a data corre dia por dia ate a partida) */}
   {isSimulating && simDate && (
@@ -328,12 +328,12 @@ export default function CalendarioPage() {
   </div>
 
       {/* Top Navigation Bar */}
-      <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
-        <div className="flex items-center gap-6">
+      <header className="relative z-10 flex min-h-14 flex-col gap-3 border-b border-white/10 bg-black/55 px-4 py-3 backdrop-blur-xl md:h-16 md:flex-row md:items-center md:justify-between md:px-6 md:py-0">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-center md:gap-6">
           <span className="text-white/60 text-sm font-medium">Escritorio</span>
           <span className="text-white text-sm font-bold">Calendario</span>
           {/* Month Tabs */}
-          <div className="flex items-center gap-1 ml-4">
+          <div className="scrollbar-none -mx-1 flex items-center gap-1 overflow-x-auto px-1 md:ml-4">
             <button
               onClick={() => setCurrentMonth(m => {
                 const idx = seasonMonths.indexOf(m)
@@ -377,9 +377,9 @@ export default function CalendarioPage() {
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 flex h-[calc(100vh-48px-56px)] p-6 gap-6">
+      <div className="relative z-10 flex flex-col gap-4 p-4 md:h-[calc(100vh-120px)] md:flex-row md:gap-6 md:p-6">
         {/* Left Panel - Match Info (EA FC Style) */}
-        <aside className="w-56 flex-shrink-0 flex flex-col">
+        <aside className="flex w-full shrink-0 flex-col rounded-2xl border border-white/10 bg-black/45 p-4 backdrop-blur-xl md:w-56 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
           {/* Current Date - Large */}
           <div className="mb-8">
             <div className="text-white/60 text-xs font-medium tracking-wider uppercase mb-1">
@@ -505,8 +505,8 @@ export default function CalendarioPage() {
         </aside>
 
         {/* Calendar Grid (EA FC Glassmorphism Style) */}
-        <main className="flex-1 flex flex-col">
-          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
+        <main className="flex min-h-[430px] flex-1 flex-col md:min-h-0">
+          <div className="min-h-[430px] flex-1 overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md md:min-h-0">
             {/* Week days header */}
             <div className="grid grid-cols-7 border-b border-white/10">
               {WEEK_DAYS.map((day) => (
@@ -517,7 +517,7 @@ export default function CalendarioPage() {
             </div>
 
             {/* Calendar days */}
-            <div className="grid grid-cols-7 auto-rows-fr h-[calc(100%-44px)]">
+            <div className="grid min-h-[386px] grid-cols-7 grid-rows-6 md:h-[calc(100%-44px)] md:min-h-0">
               {calendarDays.map((item, i) => {
                 const isSelected = item.isCurrentMonth && item.day === selectedDay
                 const hasMatch = item.fixture !== null
