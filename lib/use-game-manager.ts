@@ -28,6 +28,7 @@ import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity 
 import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
+import { qualificacaoReal2026 } from "@/lib/qualificacao-2026"
 import { regionalCupForState } from "@/lib/regional-cups"
 
 const LEAGUE_NAMES: Record<string, string> = {
@@ -483,6 +484,7 @@ export function getUserCupPlan(
   userTeam: Team,
   superCups: readonly SuperCupBerth[] = [],
   continentalBerth: "primary" | null = null,
+  temporada = 0,
 ): CupCompetitionPlan[] {
   const division = String(userTeam.divisao)
   const comps = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
@@ -547,10 +549,23 @@ export function getUserCupPlan(
     const leagueTeams = [...getUserLeagueTeams(userTeam.curto)].sort((a, b) => b.prestigio - a.prestigio)
     const rank = leagueTeams.findIndex(t => t.curto === userTeam.curto)
     let chosen: Competition | null = null
+    // TEMPORADA INICIAL: quem decide e a vida real, nao o ranking de prestigio.
+    // As vagas de 2026 ja estavam definidas pelo que aconteceu em 2025 — o
+    // Corinthians entrou pela Copa do Brasil, o Flamengo como campeao da
+    // Libertadores. Sem isto o jogo mandaria o Corinthians (rank 5 de prestigio)
+    // para a Sul-Americana, e o jogador percebe o erro na primeira tela.
+    // De 2027 em diante manda o que aconteceu DENTRO do jogo.
+    const real = qualificacaoReal2026(userTeam.nome, temporada)
+    if (real) {
+      const alvo = real.competicao === "libertadores" || real.competicao === "champions_league"
+        ? continentals[0]
+        : (continentals[1] ?? continentals[0])
+      chosen = alvo ?? null
+    }
     // Titulo continental na temporada anterior garante a PRINCIPAL (Libertadores/
     // Champions) independentemente da posicao na liga — campeao da Sul-Americana
     // sobe para a Libertadores, campeao da Europa League para a Champions.
-    if (continentalBerth === "primary") chosen = continentals[0]
+    else if (continentalBerth === "primary") chosen = continentals[0]
     else if (rank >= 0 && rank < 4) chosen = continentals[0]
     else if (rank >= 0 && rank < 10) chosen = continentals[1] ?? continentals[0]
     else if (continentals.length >= 3) chosen = continentals[2]
@@ -1633,7 +1648,7 @@ export function useGameManager() {
       // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
       // nas copas para nao criar o relato confuso de tres jogos contra o mesmo clube.
       const cupOpponents = new Set(leagueTeams.filter(t => t.curto !== userTeam.curto).map(t => t.curto))
-      for (const plan of getUserCupPlan(userTeam, superCupBerths, continentalBerth)) {
+      for (const plan of getUserCupPlan(userTeam, superCupBerths, continentalBerth, saveState.season)) {
         cupMatches.push(...generateUserCupMatches(
           userTeam, plan, saveState.season, cupOpponents,
           gameEngine.matchResults.filter(r => r.season === saveState.season),
