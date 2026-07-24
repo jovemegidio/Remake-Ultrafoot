@@ -92,6 +92,10 @@ const CODIGO_PAIS: Record<string, string> = {
   ISL: "Islândia",
   LET: "Letônia",
   LIT: "Lituânia",
+  // No banco, LIB sao os 4 clubes libios (Tripoli/Sirte/Benghazi, fileKey _lib),
+  // nao Libano (esse e LBN/LEB). Sem isto, o Al-Nasr libio colidia com o
+  // Al-Nasr de pais "NASR" (lixo) — ambos caíam em Indefinido.
+  LIB: "Líbia",
   TUN: "Tunísia",
   UAE: "Emirados Árabes Unidos",
   CYP: "Chipre",
