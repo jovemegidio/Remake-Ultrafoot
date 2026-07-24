@@ -2150,27 +2150,8 @@ export const saudiProTeams: Team[] = [
     regiao: "asia",
     pais: "Arabia Saudita"
   },
-  // Cinco clubes que ja tinham escudo empacotado mas faltavam na base — a liga
-  // rodava com 15 num regulamento de 18. O Al-Ahli e um dos grandes do pais.
-  {
-    nome: "Al-Ahli",
-    curto: "AHL",
-    cidade: "Jeddah",
-    estado: "Arabia Saudita",
-    cor1: "#00A650",
-    cor2: "#FFFFFF",
-    prestigio: 76,
-    torcida: 30000000,
-    estadio_cap: 62345,
-    saldo: 320000000,
-    file_key: "al_ahli",
-    estadio_nome: "King Abdullah Sports City",
-    patrocinador: "Aramco",
-    escudo_url: getIntlEscudo("al_ahli"),
-    divisao: "saudi_pro",
-    regiao: "asia",
-    pais: "Arabia Saudita"
-  },
+  // Al-Riyadh e Al-Hazem ja tinham escudo empacotado mas faltavam na base
+  // (Saudi Pro 2026-27). O Al-Ahli ja existia acima — nao dupliquei de novo.
   {
     nome: "Al-Riyadh",
     curto: "RYD",
@@ -2656,25 +2637,7 @@ export const mlsTeams: Team[] = [
     regiao: "americas",
     pais: "Estados Unidos"
   },
-  {
-    nome: "New York Red Bulls",
-    curto: "NYR",
-    cidade: "Harrison",
-    estado: "Nova Jersey",
-    cor1: "#ED1E36",
-    cor2: "#FEDD00",
-    prestigio: 66,
-    torcida: 18000000,
-    estadio_cap: 25000,
-    saldo: 120000000,
-    file_key: "new_york_red_bulls",
-    estadio_nome: "Sports Illustrated Stadium",
-    patrocinador: "Red Bull",
-    escudo_url: getIntlEscudo("new_york_red_bulls"),
-    divisao: "mls",
-    regiao: "americas",
-    pais: "Estados Unidos"
-  },
+  // (New York Red Bulls ja existia na base como ny_red_bulls — nao dupliquei.)
   {
     nome: "Orlando City",
     curto: "ORL",
@@ -4018,7 +3981,6 @@ export const saudiFirstDivTeams: Team[] = [
   { nome: "Al-Adalah", curto: "ADA", cidade: "Jizan", estado: "Arabia Saudita", cor1: "#003087", cor2: "#FFFFFF", prestigio: 60, torcida: 18000000, estadio_cap: 12000, saldo: 9000000, file_key: "al_adalah", estadio_nome: "Prince Mohammed bin Nasser Stadium", patrocinador: "Jizan", escudo_url: getIntlEscudo("al_adalah"), divisao: "saudi_first_div", regiao: "asia", pais: "Arabia Saudita" },
   { nome: "Al-Sahel", curto: "SAH", cidade: "Safwa", estado: "Arabia Saudita", cor1: "#003087", cor2: "#FFFFFF", prestigio: 59, torcida: 14000000, estadio_cap: 10000, saldo: 8000000, file_key: "al_sahel", estadio_nome: "Al-Sahel Stadium", patrocinador: "Al-Sahel", escudo_url: getIntlEscudo("al_sahel"), divisao: "saudi_first_div", regiao: "asia", pais: "Arabia Saudita" },
   { nome: "Hajer FC", curto: "HAJ", cidade: "Al-Ahsa", estado: "Arabia Saudita", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 59, torcida: 14000000, estadio_cap: 10000, saldo: 8000000, file_key: "hajer_fc", estadio_nome: "Hajer Stadium", patrocinador: "Hajer", escudo_url: getIntlEscudo("hajer_fc"), divisao: "saudi_first_div", regiao: "asia", pais: "Arabia Saudita" },
-  { nome: "Al-Hazem", curto: "HAZ", cidade: "Rass", estado: "Arabia Saudita", cor1: "#FFD700", cor2: "#006400", prestigio: 63, torcida: 20000000, estadio_cap: 14000, saldo: 11000000, file_key: "al_hazem", estadio_nome: "Al-Hazem Stadium", patrocinador: "Al-Hazem", escudo_url: getIntlEscudo("al_hazem"), divisao: "saudi_first_div", regiao: "asia", pais: "Arabia Saudita" },
   { nome: "Al-Ansar", curto: "ANS", cidade: "Medina", estado: "Arabia Saudita", cor1: "#006400", cor2: "#FFFFFF", prestigio: 61, torcida: 22000000, estadio_cap: 15000, saldo: 10000000, file_key: "al_ansar", estadio_nome: "Prince Naif bin Abdelaziz Stadium", patrocinador: "Medina", escudo_url: getIntlEscudo("al_ansar"), divisao: "saudi_first_div", regiao: "asia", pais: "Arabia Saudita" },
   { nome: "Al-Khaleej", curto: "KHL", cidade: "Saihat", estado: "Arabia Saudita", cor1: "#003087", cor2: "#FFFFFF", prestigio: 61, torcida: 18000000, estadio_cap: 14000, saldo: 10000000, file_key: "al_khaleej", estadio_nome: "Al-Khaleej Stadium", patrocinador: "Al-Khaleej", escudo_url: getIntlEscudo("al_khaleej"), divisao: "saudi_first_div", regiao: "asia", pais: "Arabia Saudita" },
   { nome: "Ohud", curto: "OHD", cidade: "Medina", estado: "Arabia Saudita", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 58, torcida: 12000000, estadio_cap: 10000, saldo: 7000000, file_key: "ohud_fc", estadio_nome: "Ohud Stadium", patrocinador: "Ohud", escudo_url: getIntlEscudo("ohud_fc"), divisao: "saudi_first_div", regiao: "asia", pais: "Arabia Saudita" },
