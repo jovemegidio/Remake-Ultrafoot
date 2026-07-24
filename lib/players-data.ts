@@ -525,6 +525,62 @@ const FILLER_POSITION_ORDER: Posicao[] = [
   "GOL",
 ]
 
+// NOMES PLAUSIVEIS para o preenchimento de elenco curto.
+//
+// Quando a fonte real traz menos atletas do que um time precisa para jogar, o
+// jogo completa o elenco. O nome do preenchimento era o rotulo da posicao —
+// "Atacante BAY 3", "Reserva PAL 17" — e denunciava o dado sintetico bem no
+// meio do elenco. Sao 567 atletas em 115 clubes (saudita, mexicano, japones,
+// onde a coleta traz elenco curto).
+//
+// Agora recebem nome coerente com o PAIS do clube. Continua sendo dado gerado,
+// mas deixa de gritar. Deterministico pelo clube+indice: o mesmo elenco sai
+// igual toda vez.
+const NOMES_PREENCHIMENTO: Record<string, { pri: string[]; ult: string[] }> = {
+  Brasil: { pri: ["Lucas", "Matheus", "Gabriel", "Rafael", "Bruno", "Thiago", "Felipe", "Diego"], ult: ["Silva", "Souza", "Oliveira", "Costa", "Ribeiro", "Almeida", "Barbosa", "Rocha"] },
+  Argentina: { pri: ["Juan", "Diego", "Matías", "Nicolás", "Franco", "Lucas", "Agustín", "Tomás"], ult: ["González", "Rodríguez", "Fernández", "López", "Martínez", "Pérez", "Romero", "Díaz"] },
+  Espanha: { pri: ["Sergio", "Javier", "Carlos", "Pablo", "Álvaro", "Adrián", "Iker", "Marcos"], ult: ["García", "Martín", "Sánchez", "Ruiz", "Moreno", "Navarro", "Torres", "Gil"] },
+  Mexico: { pri: ["José", "Luis", "Miguel", "Ángel", "Carlos", "Jesús", "Emilio", "Andrés"], ult: ["Hernández", "Ramírez", "Flores", "Vargas", "Castillo", "Mendoza", "Reyes", "Cruz"] },
+  Japao: { pri: ["Yuto", "Kenta", "Sho", "Takumi", "Riku", "Haruto", "Sota", "Kaito"], ult: ["Tanaka", "Suzuki", "Sato", "Watanabe", "Ito", "Yamamoto", "Nakamura", "Kobayashi"] },
+  Arabia: { pri: ["Ahmed", "Mohammed", "Abdullah", "Faisal", "Khalid", "Omar", "Saud", "Yousef"], ult: ["Al-Harbi", "Al-Qahtani", "Al-Dossari", "Al-Ghamdi", "Al-Shehri", "Al-Otaibi", "Al-Zahrani", "Al-Amri"] },
+  Padrao: { pri: ["Alex", "Marco", "David", "Daniel", "Leo", "Ivan", "Nikola", "Stefan"], ult: ["Novak", "Kovac", "Popov", "Horvat", "Petrov", "Marin", "Ilic", "Vidal"] },
+}
+
+function poolDeNomes(team: Team) {
+  const pais = (team.pais ?? "").toLowerCase()
+  const div = String(team.divisao)
+  if (pais.includes("brasil") || div.startsWith("serie_")) return NOMES_PREENCHIMENTO.Brasil
+  if (pais.includes("argentin")) return NOMES_PREENCHIMENTO.Argentina
+  if (pais.includes("espanh") || pais.includes("spain")) return NOMES_PREENCHIMENTO.Espanha
+  if (pais.includes("méxic") || pais.includes("mexic")) return NOMES_PREENCHIMENTO.Mexico
+  if (pais.includes("jap")) return NOMES_PREENCHIMENTO.Japao
+  if (pais.includes("aráb") || pais.includes("arab") || div.includes("saudi")) return NOMES_PREENCHIMENTO.Arabia
+  return NOMES_PREENCHIMENTO.Padrao
+}
+
+/**
+ * Nome deterministico para um atleta de preenchimento, UNICO dentro do elenco.
+ *
+ * O pool tem 8x8 = 64 combinacoes; sem checar colisao, um elenco de 18 repetia
+ * nomes (o qa-rosters pegou: 7 duplicados no Al-Afaq). Tentamos ate achar um
+ * livre e, no limite, desempatamos com o indice.
+ */
+function nomePreenchimento(team: Team, indice: number, usados?: Set<string>): string {
+  const pool = poolDeNomes(team)
+  for (let tentativa = 0; tentativa < 40; tentativa++) {
+    let h = 2166136261
+    for (const c of `${team.curto}:${team.file_key ?? ""}:${indice}:${tentativa}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+    const nome = `${pool.pri[(h >>> 0) % pool.pri.length]} ${pool.ult[((h >>> 9) >>> 0) % pool.ult.length]}`
+    if (!usados || !usados.has(normalizeTeamName(nome))) {
+      usados?.add(normalizeTeamName(nome))
+      return nome
+    }
+  }
+  const fallback = `${pool.pri[indice % pool.pri.length]} ${pool.ult[(indice * 3) % pool.ult.length]} ${indice}`
+  usados?.add(normalizeTeamName(fallback))
+  return fallback
+}
+
 function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
   const seenNames = new Set<string>()
   players = players.filter(player => {
@@ -538,22 +594,22 @@ function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
   // goleiro. A garantia de jogabilidade precisa validar composicao, nao so quantidade.
   const withGoalkeeper = players.some((player) => player.pos === "GOL")
     ? players
-    : [{ nome: `Goleiro ${team.curto}`, pos: "GOL" as Posicao, idade: 23, base: Math.max(50, Math.min(72, Math.round(team.prestigio * 0.72))), time: team.nome }, ...players]
+    : [{ nome: nomePreenchimento(team, 0, seenNames), pos: "GOL" as Posicao, idade: 23, base: Math.max(50, Math.min(72, Math.round(team.prestigio * 0.72))), time: team.nome }, ...players]
   // Além do goleiro, garante cobertura mínima de linhas. Isso protege clubes de bases
   // incompletas sem reclassificar atletas reais: só cria uma peça de reposição quando a
   // linha inteira não existe.
   const covered = [...withGoalkeeper]
   const baseRating = Math.max(48, Math.min(68, Math.round(team.prestigio * 0.7)))
   const addMissing = (label: string, pos: Posicao, exists: (p: Player) => boolean) => {
-    if (!covered.some(exists)) covered.push({ nome: `${label} ${team.curto}`, pos, idade: 22, base: baseRating, time: team.nome })
+    if (!covered.some(exists)) covered.push({ nome: nomePreenchimento(team, covered.length + 1, seenNames), pos, idade: 22, base: baseRating, time: team.nome })
   }
   addMissing("Zagueiro", "ZAG", p => ["ZAG", "LD", "LE"].includes(p.pos))
   addMissing("Meio-campista", "VOL", p => ["VOL", "MC", "MEI", "ME", "MD"].includes(p.pos))
   addMissing("Atacante", "ATA", p => ["ATA", "CA", "PE", "PD"].includes(p.pos))
   const ensureCount = (label: string, positions: string[], fallback: Posicao, minimum: number) => {
     while (covered.filter(p => positions.includes(p.pos)).length < minimum) {
-      const n = covered.filter(p => p.nome.startsWith(`${label} ${team.curto}`)).length + 1
-      covered.push({ nome: `${label} ${team.curto} ${n}`, pos: fallback, idade: 21 + n, base: Math.max(45, baseRating - n), time: team.nome })
+      const n = covered.length + 1
+      covered.push({ nome: nomePreenchimento(team, n, seenNames), pos: fallback, idade: 21 + (n % 12), base: Math.max(45, baseRating - (n % 6)), time: team.nome })
     }
   }
   ensureCount("Defensor", ["ZAG", "LD", "LE"], "ZAG", 4)
@@ -564,7 +620,7 @@ function ensurePlayableSquad(team: Team, players: Player[]): Player[] {
   const fillers = Array.from({ length: MIN_PLAYABLE_SQUAD_SIZE - covered.length }, (_, index) => {
     const squadNumber = covered.length + index + 1
     return {
-      nome: `Reserva ${team.curto} ${squadNumber}`,
+      nome: nomePreenchimento(team, squadNumber, seenNames),
       pos: FILLER_POSITION_ORDER[(covered.length + index) % FILLER_POSITION_ORDER.length],
       idade: 19 + ((team.prestigio + index) % 13),
       base: Math.max(45, baseRating - (index % 6)),
