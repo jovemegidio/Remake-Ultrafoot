@@ -543,9 +543,12 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           onClick={() => setShowNavMenu(false)}
         >
           <div
-          // TRANSPARENTE como o header e o rodape (pedido): gradiente suave
-          // apenas para legibilidade, deixando o cenario aparecer atras.
-          className="absolute left-5 top-16 flex max-h-[calc(100vh-4rem)] w-[min(292px,88vw)] flex-col overflow-hidden border-l border-white/[0.06] bg-gradient-to-r from-black/45 via-black/20 to-transparent"
+          // Vidro fosco (pedido): 90% transparente — fundo com so 10% de opacidade
+          // — e um desfoque LEVE do cenario atras. O jogo aparece por tras do menu,
+          // mas o borrao sutil segura a legibilidade dos itens.
+          // OBS: no modo economico o CSS remove backdrop-blur (poupa GPU fraca);
+          // sobra o preto a 10%, que continua funcionando. Ver performance-profile.
+          className="absolute left-5 top-16 flex max-h-[calc(100vh-4rem)] w-[min(292px,88vw)] flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black/10 backdrop-blur-sm"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
