@@ -200,10 +200,10 @@ export default function EscalacoesPage() {
           <span className="text-white/60 text-sm">Escalacoes</span>
         </div>
         
-        <main className="flex-1 overflow-hidden min-h-0">
+        <main className="flex-1 overflow-y-auto md:overflow-hidden min-h-0">
           {/* Background gradient - EA FC style */}
           <div 
-            className="h-full w-full flex"
+            className="min-h-full w-full flex flex-col md:flex-row"
             style={{
               background: `linear-gradient(135deg, 
                 oklch(0.45 0.12 200) 0%, 
@@ -212,7 +212,7 @@ export default function EscalacoesPage() {
             }}
           >
             {/* Left Column - Actions and Lineup List */}
-            <div className="w-[260px] md:w-[340px] lg:w-[420px] flex-shrink-0 p-6 overflow-auto">
+            <div className="w-full md:w-[340px] lg:w-[420px] flex-shrink-0 p-4 md:p-6 md:overflow-auto">
               {/* Action Cards */}
               <div className="flex gap-4 mb-6">
                 {/* Nova Escalacao */}
@@ -312,18 +312,20 @@ export default function EscalacoesPage() {
             </div>
 
             {/* Right Column - Large Tactical Preview */}
-            <div className="flex-1 p-6 flex flex-col">
+            <div className="flex-1 p-4 md:p-6 flex flex-col min-h-[420px] md:min-h-0">
               {/* Preview Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-black text-white tracking-tight">
+              <div className="flex items-center justify-between mb-4 gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-xl md:text-2xl font-black text-white tracking-tight truncate">
                     Padrao {userTeam.nome.toUpperCase()}
                   </h2>
                   <p className="text-sm text-cyan-300 font-medium">
                     {selectedLineup?.formation} {selectedLineup?.style}
                   </p>
                 </div>
-                <TeamCrest team={userTeam} size="lg" />
+                <div className="flex-shrink-0">
+                  <TeamCrest team={userTeam} size="lg" />
+                </div>
               </div>
 
               {/* Large Tactical Field */}

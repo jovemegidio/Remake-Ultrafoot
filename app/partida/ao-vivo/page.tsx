@@ -924,9 +924,9 @@ export default function PartidaAoVivoPage() {
             </div>
 
             {/* Times */}
-            <div className="flex items-center justify-between px-8 py-8 gap-4">
+            <div className="flex items-center justify-between px-4 md:px-8 py-8 gap-2 md:gap-4">
               {/* Time da casa */}
-              <div className="flex flex-col items-center gap-3 flex-1">
+              <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
                 <div className="relative">
                   <div
                     className="absolute inset-0 blur-2xl opacity-40 scale-150 rounded-full"
@@ -943,7 +943,7 @@ export default function PartidaAoVivoPage() {
               </div>
 
               {/* Time visitante */}
-              <div className="flex flex-col items-center gap-3 flex-1">
+              <div className="flex flex-col items-center gap-3 flex-1 min-w-0">
                 <div className="relative">
                   <div
                     className="absolute inset-0 blur-2xl opacity-40 scale-150 rounded-full"
