@@ -11,7 +11,13 @@
 
 import type { SeasonRecord } from "@/lib/career-types"
 
-export type SuperCupId = "supercopa_brasil" | "recopa_sulamericana" | "supercopa_uefa" | "mundial_clubes"
+export type SuperCupId = "supercopa_brasil" | "recopa_sulamericana" | "supercopa_uefa" | "mundial_clubes" | "copa_intercontinental"
+
+/** O Mundial de 32 clubes acontece de 4 em 4 anos (2025, 2029, 2033...). */
+export const ANO_BASE_MUNDIAL = 2025
+export function temMundialNaTemporada(season: number): boolean {
+  return (season - ANO_BASE_MUNDIAL) % 4 === 0
+}
 
 export interface SuperCupBerth {
   id: SuperCupId
@@ -28,7 +34,11 @@ const CATALOGO: Record<SuperCupId, Omit<SuperCupBerth, "reason">> = {
   supercopa_brasil:   { id: "supercopa_brasil",   name: "Supercopa do Brasil",     matchCount: 1, priority: 1 },
   recopa_sulamericana:{ id: "recopa_sulamericana",name: "Recopa Sul-Americana",    matchCount: 2, priority: 2 },
   supercopa_uefa:     { id: "supercopa_uefa",     name: "Supercopa da UEFA",       matchCount: 1, priority: 2 },
-  mundial_clubes:     { id: "mundial_clubes",     name: "Mundial de Clubes FIFA",  matchCount: 2, priority: 3 },
+  // MUNDIAL DE CLUBES no formato de 32: 3 jogos de grupo + oitavas, quartas,
+  // semi e final = 7 partidas. Antes era tratado como supercopa de 2 clubes.
+  mundial_clubes:     { id: "mundial_clubes",     name: "Mundial de Clubes FIFA",  matchCount: 7, priority: 3 },
+  // COPA INTERCONTINENTAL: anual, entre os campeoes continentais. Nao existia.
+  copa_intercontinental: { id: "copa_intercontinental", name: "Copa Intercontinental", matchCount: 2, priority: 3 },
 }
 
 /** Normaliza para comparar nomes de competição vindos de fontes diferentes. */
@@ -58,14 +68,17 @@ export function berthsForSeason(
 ): SuperCupBerth[] {
   if (!seasonHistory?.length || !clubeCurto) return []
 
-  const anterior = seasonHistory.filter(r => r.season === temporadaAtual - 1 && r.teamCurto === clubeCurto)
-  if (anterior.length === 0) return []
-
   const vagas: SuperCupBerth[] = []
   const conquistou = (id: SuperCupId, reason: string) => {
     if (vagas.some(v => v.id === id)) return
     vagas.push({ ...CATALOGO[id], reason })
   }
+
+  // As supercopas dependem da temporada ANTERIOR; o Mundial, do CICLO de 4 anos
+  // (bloco mais abaixo). Por isso a ausencia de registro do ano passado nao pode
+  // mais encerrar a funcao — o campeao de 2026 tem vaga no Mundial de 2029
+  // mesmo sem nada em 2028.
+  const anterior = seasonHistory.filter(r => r.season === temporadaAtual - 1 && r.teamCurto === clubeCurto)
 
   for (const registro of anterior) {
     if (!foiCampeao(registro, clubeCurto)) continue
@@ -75,21 +88,41 @@ export function berthsForSeason(
     if (comp.includes("brasileirao") || comp.includes("copadobrasil")) {
       conquistou("supercopa_brasil", `Campeão: ${registro.competition} ${registro.season}`)
     }
-    // Libertadores dá Recopa e Mundial; Sul-Americana dá só a Recopa.
+    // Libertadores dá Recopa e Intercontinental; Sul-Americana dá só a Recopa.
     if (comp.includes("libertadores")) {
       conquistou("recopa_sulamericana", `Campeão da Libertadores ${registro.season}`)
-      conquistou("mundial_clubes", `Campeão da Libertadores ${registro.season}`)
+      conquistou("copa_intercontinental", `Campeão da Libertadores ${registro.season}`)
     }
     if (comp.includes("sulamericana") || comp.includes("sudamericana")) {
       conquistou("recopa_sulamericana", `Campeão da Sul-Americana ${registro.season}`)
     }
-    // Europa: Champions dá Supercopa da UEFA e Mundial; Europa League dá a Supercopa.
+    // Europa: Champions dá Supercopa da UEFA e Intercontinental; Europa League dá a Supercopa.
     if (comp.includes("championsleague")) {
       conquistou("supercopa_uefa", `Campeão da Champions ${registro.season}`)
-      conquistou("mundial_clubes", `Campeão da Champions ${registro.season}`)
+      conquistou("copa_intercontinental", `Campeão da Champions ${registro.season}`)
     }
     if (comp.includes("europaleague")) {
       conquistou("supercopa_uefa", `Campeão da Europa League ${registro.season}`)
+    }
+  }
+
+  // ── MUNDIAL DE CLUBES: janela de 4 anos ─────────────────────────────────
+  //
+  // O Mundial de 32 nao e uma supercopa da temporada anterior: a vaga vem de
+  // ter sido campeao continental em QUALQUER uma das 4 temporadas do ciclo, e o
+  // torneio so acontece de 4 em 4 anos. Tratar como "campeao do ano passado"
+  // fazia dele uma decisao de 2 clubes todo ano — que era o comportamento antigo.
+  if (temMundialNaTemporada(temporadaAtual)) {
+    const cicloInicio = temporadaAtual - 4
+    const noCiclo = seasonHistory.filter(r =>
+      r.teamCurto === clubeCurto && r.season >= cicloInicio && r.season < temporadaAtual && foiCampeao(r, clubeCurto))
+    const continental = noCiclo.find(r => {
+      const c = chave(r.competition)
+      return c.includes("libertadores") || c.includes("championsleague")
+        || c.includes("sulamericana") || c.includes("sudamericana") || c.includes("europaleague")
+    })
+    if (continental) {
+      conquistou("mundial_clubes", `Campeão continental em ${continental.season} — vaga no ciclo do Mundial`)
     }
   }
 

@@ -139,6 +139,19 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
       text: "#ffffff",
     },
   },
+  // A Copa Intercontinental nao existia no jogo — sem intro, cairia no generico.
+  copa_intercontinental: {
+    id: "copa_intercontinental",
+    name: "Copa Intercontinental",
+    tagline: "OS CAMPEOES DO MUNDO SE ENCONTRAM",
+    trophy: "/trofeus/tr_mundial.png",
+    colors: {
+      primary: "#c0952f",
+      accent: "#ffd970",
+      background: "radial-gradient(ellipse at center, #1c1608 0%, #08070a 70%)",
+      text: "#ffffff",
+    },
+  },
   // A Supercopa da UEFA caia no `supercopa` acima e exibia o trofeu da Supercopa
   // do BRASIL — nome e arte de outra competicao. Agora tem a propria (o acervo
   // nao tem o trofeu da UEFA; usamos o generico, que ao menos nao mente).
@@ -219,6 +232,9 @@ const INTRO_KEYWORDS: Array<{ keys: string[]; intro: string }> = [
   { keys: ["champions"], intro: "champions_league" },
   { keys: ["europa league", "uefa europa", "liga europa"], intro: "europa_league" },
   { keys: ["conference"], intro: "conference_league" },
+  // Intercontinental ANTES de "mundial": as duas sao da FIFA e o generico
+  // capturaria a primeira.
+  { keys: ["intercontinental"], intro: "copa_intercontinental" },
   { keys: ["mundial de clubes", "mundial fifa", "club world", "mundial"], intro: "mundial_clubes" },
   { keys: ["copa do mundo", "world cup", "fifa world", "mundo fifa"], intro: "copa_mundo" },
   { keys: ["fa cup", "copa da inglaterra"], intro: "copa_inglaterra" },

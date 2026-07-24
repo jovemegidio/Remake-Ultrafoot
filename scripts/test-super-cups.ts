@@ -16,24 +16,28 @@ ck("campeão da Copa do Brasil também disputa", berthsForSeason(copaBr,"FLA",20
 const liberta=[reg({competition:"Copa Libertadores",position:1,champion:"FLA"})]
 const vLib=berthsForSeason(liberta,"FLA",2027)
 ck("campeão da Libertadores vai à Recopa", vLib.some(v=>v.id==="recopa_sulamericana"))
-ck("campeão da Libertadores vai ao Mundial", vLib.some(v=>v.id==="mundial_clubes"))
+// O Mundial virou o torneio de 32 clubes, a cada 4 anos (2025, 2029...). O
+// campeao continental disputa a INTERCONTINENTAL todo ano; a vaga no Mundial
+// vem do ciclo — ver test-mundial-intercontinental.
+ck("campeão da Libertadores vai à Intercontinental", vLib.some(v=>v.id==="copa_intercontinental"))
+ck("Mundial NÃO acontece em 2027 (fora do ciclo)", !vLib.some(v=>v.id==="mundial_clubes"))
 
 const sula=[reg({competition:"Copa Sul-Americana",position:1,champion:"FLA"})]
 const vSul=berthsForSeason(sula,"FLA",2027)
 ck("campeão da Sul-Americana vai à Recopa", vSul.some(v=>v.id==="recopa_sulamericana"))
-ck("campeão da Sul-Americana NÃO vai ao Mundial", !vSul.some(v=>v.id==="mundial_clubes"))
+ck("campeão da Sul-Americana NÃO vai à Intercontinental", !vSul.some(v=>v.id==="copa_intercontinental"))
 
 const ucl=[reg({competition:"UEFA Champions League",position:1,champion:"RMA",teamCurto:"RMA"})]
 const vUcl=berthsForSeason(ucl,"RMA",2027)
 ck("campeão da Champions vai à Supercopa da UEFA", vUcl.some(v=>v.id==="supercopa_uefa"))
-ck("campeão da Champions vai ao Mundial", vUcl.some(v=>v.id==="mundial_clubes"))
+ck("campeão da Champions vai à Intercontinental", vUcl.some(v=>v.id==="copa_intercontinental"))
 
 console.log("\nAcúmulo e contagem\n")
 const duplo=[reg({position:1,champion:"FLA"}),reg({competition:"Copa Libertadores",position:1,champion:"FLA"})]
 const vD=berthsForSeason(duplo,"FLA",2027)
 ck("campeão duplo acumula 3 vagas", vD.length===3, `veio ${vD.length}: ${vD.map(v=>v.id).join(",")}`)
 ck("não duplica a mesma vaga", new Set(vD.map(v=>v.id)).size===vD.length)
-ck("Supercopa=1 jogo, Recopa=2, Mundial=2 -> 5", superCupMatchCount(vD)===5, String(superCupMatchCount(vD)))
+ck("Supercopa=1, Recopa=2, Intercontinental=2 -> 5", superCupMatchCount(vD)===5, String(superCupMatchCount(vD)))
 
 console.log("\nRobustez\n")
 ck("histórico vazio não quebra", berthsForSeason([],"FLA",2027).length===0)

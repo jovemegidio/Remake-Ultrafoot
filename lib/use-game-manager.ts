@@ -359,7 +359,11 @@ export function cupTitlePrize(competitionName: string): number {
   if (/europa league|sul-?americana|sudamericana/.test(c)) return 18_000_000
   if (/conference league/.test(c)) return 9_000_000
   if (/copa do brasil/.test(c)) return 12_000_000
-  if (/supercopa|recopa|super cup|mundial/.test(c)) return 8_000_000
+  // O Mundial de 32 paga muito mais que uma supercopa — e o torneio mais rico do
+  // calendario de clubes. A Intercontinental fica no meio do caminho.
+  if (/mundial/.test(c)) return 60_000_000
+  if (/intercontinental/.test(c)) return 20_000_000
+  if (/supercopa|recopa|super cup/.test(c)) return 8_000_000
   // Estaduais e demais copas regionais: simbolico.
   return 1_500_000
 }
@@ -498,7 +502,7 @@ export function getUserCupPlan(
     const regiao = vaga.id === "supercopa_brasil" ? "nacional"
       : vaga.id === "recopa_sulamericana" ? "america_sul"
       : vaga.id === "supercopa_uefa" ? "europa"
-      : "mundo" // mundial_clubes -> adversario de qualquer confederacao
+      : "mundo" // mundial_clubes e copa_intercontinental -> qualquer confederacao
     plans.push({
       competition: makeComp(vaga.id, vaga.name, 75, regiao, vaga.id === "supercopa_brasil" ? "cup" : "continental"),
       competitionType: "cup",

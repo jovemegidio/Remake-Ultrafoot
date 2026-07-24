@@ -107,10 +107,21 @@ export function caminhoDaCopa(
   // RECOPA e ida e volta (o catalogo ja dizia matchCount 2, mas o regex de
   // "supercopa" a capturava antes e ela virava jogo unico).
   if (/recopa/.test(id)) return [confronto("final", 2)]
-  // MUNDIAL DE CLUBES: decisao entre os campeoes continentais, em jogo unico.
-  // Sem esta regra caia no fallback COPA_JOGO_UNICO — oitavas+quartas+semi+final,
-  // 4 partidas, contra o matchCount 2 declarado no catalogo.
-  if (/mundial/.test(id)) return [confronto("semifinal", 1), confronto("final", 1)]
+  // COPA INTERCONTINENTAL: anual, entre os campeoes continentais. O clube das
+  // Americas/Europa entra direto na decisao; os demais vem de uma eliminatoria.
+  if (/intercontinental/.test(id)) return [confronto("semifinal", 1), confronto("final", 1)]
+  // MUNDIAL DE CLUBES no formato de 32: fase de grupos de 3 jogos e mata-mata
+  // ate a final, tudo em jogo unico (como o torneio real). Antes caia no
+  // fallback de copa nacional e virava um mata-mata de 4 jogos.
+  if (/mundial/.test(id)) {
+    return [
+      grupo(3),
+      confronto("oitavas", 1),
+      confronto("quartas", 1),
+      confronto("semifinal", 1),
+      confronto("final", 1),
+    ]
+  }
   if (/supercopa|supercup|super cup/.test(id)) return SUPERCOPA
   if (/copa do brasil|copa_brasil/.test(id)) return copaDoBrasil(entraTarde)
   if (/libertadores/.test(id)) return LIBERTADORES
