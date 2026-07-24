@@ -127,13 +127,11 @@ export function LauncherShell({
     <div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
       <header className="flex shrink-0 flex-col gap-3 border-b border-border bg-background/80 px-4 pt-3 backdrop-blur md:px-6">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <img
-              src="/games/ultrafoot-logo.png"
-              alt="Ultrafoot UF26"
-              className="h-20 w-auto object-contain"
-            />
-            <span className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:inline">
+          <div className="flex flex-col leading-none">
+            <span className="font-display text-2xl font-bold tracking-tight text-foreground">
+              Ultrafoot 26
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
               Launcher
             </span>
           </div>

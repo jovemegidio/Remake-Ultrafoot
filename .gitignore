@@ -145,3 +145,6 @@ Escudos para Importar/
 
 # Backup temporario do split de escudos/uniformes (gerado a cada build)
 data/seeds/team-overrides.inline-backup.json
+
+# instalador do launcher (artefato de build, staged manualmente)
+src-tauri/resources/launcher/*.exe

@@ -23,15 +23,10 @@ export function GameHero({
   const online = mode === "online"
   return (
     <section className="relative overflow-hidden rounded-xl border border-border">
+      {/* Fundo sem imagem (por enquanto): gradiente com as cores do tema. */}
       <div className="absolute inset-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={game.bannerImage || "/placeholder.svg"}
-          alt={`Arte de ${game.name}`}
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/90 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/40 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/30" />
       </div>
 
       <div className="relative flex min-h-[380px] flex-col justify-end gap-4 p-6 md:p-8">

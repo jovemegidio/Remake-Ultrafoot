@@ -21,33 +21,23 @@ export function NewsFeed({ news, title = "Novidades" }: { news: NewsWithGame[]; 
 
       {featured && (
         <article className="group overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40">
-          <div className="grid md:grid-cols-2">
-            <div className="relative h-48 md:h-full">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={featured.image || "/placeholder.svg?height=300&width=500&query=game news"}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+          <div className="flex flex-col gap-2 p-5">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                {featured.category}
+              </span>
+              {featured.isPinned && <Pin className="h-3.5 w-3.5 text-accent" fill="currentColor" />}
+              <span className="text-xs text-muted-foreground">{timeAgo(featured.publishedAt)}</span>
             </div>
-            <div className="flex flex-col gap-2 p-5">
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                  {featured.category}
-                </span>
-                {featured.isPinned && <Pin className="h-3.5 w-3.5 text-accent" fill="currentColor" />}
-                <span className="text-xs text-muted-foreground">{timeAgo(featured.publishedAt)}</span>
-              </div>
-              <h3 className="text-pretty text-lg font-semibold leading-snug text-foreground">
-                {featured.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{featured.body}</p>
-              {featured.gameName && (
-                <span className="mt-auto pt-2 text-xs text-muted-foreground">
-                  em <span className="text-foreground">{featured.gameName}</span>
-                </span>
-              )}
-            </div>
+            <h3 className="text-pretty text-lg font-semibold leading-snug text-foreground">
+              {featured.title}
+            </h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{featured.body}</p>
+            {featured.gameName && (
+              <span className="mt-auto pt-2 text-xs text-muted-foreground">
+                em <span className="text-foreground">{featured.gameName}</span>
+              </span>
+            )}
           </div>
         </article>
       )}
