@@ -8,7 +8,7 @@ import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
-import { listJobOffers, removeJobOffer, assumirClube, type PendingJobOffer } from "@/lib/career-moves"
+import { listJobOffers, removeJobOffer, assumirClube, podeTrocarDeClube, type PendingJobOffer } from "@/lib/career-moves"
 import { ofertasParaDesempregado, coachStandingScore } from "@/lib/coach-market"
 import { allTeams } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -32,7 +32,14 @@ export default function TreinadorPage() {
 
   // Aceitar a proposta AQUI (antes so dava para recusar; aceitar exigia ir ao
   // Escritorio). Mesma troca de emprego, pela funcao compartilhada.
+  const [avisoTroca, setAvisoTroca] = useState<string | null>(null)
   const aceitarOferta = useCallback((oferta: PendingJobOffer) => {
+    // Trava de meio de temporada: quem acabou de assumir precisa cumprir o ano.
+    const permissao = podeTrocarDeClube(state.contratadoEm, state.season, Boolean(state.selectedTeamShort))
+    if (!permissao.pode) {
+      setAvisoTroca(permissao.motivo ?? "Não é possível trocar de clube agora.")
+      return
+    }
     assumirClube(oferta.clubShort, {
       initializeGame,
       setEngineTime: (week, season) => useGameEngine.setState({ currentWeek: week, currentSeason: season }),
@@ -41,7 +48,7 @@ export default function TreinadorPage() {
       week: state.week,
       season: state.season,
     })
-  }, [initializeGame, setState, state.week, state.season])
+  }, [initializeGame, setState, state.week, state.season, state.contratadoEm, state.selectedTeamShort])
 
   const [ofertas, setOfertas] = useState<PendingJobOffer[]>([])
   const atualizarOfertas = useCallback(() => {
@@ -209,6 +216,12 @@ export default function TreinadorPage() {
             {desempregado && (
               <p className="mt-1 mb-2 text-xs text-white/55">
                 Você está sem clube. Estas diretorias abriram o cargo para você — aceite uma para voltar ao trabalho, ou aguarde novas sondagens.
+              </p>
+            )}
+
+            {avisoTroca && (
+              <p className="mt-1 mb-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
+                {avisoTroca}
               </p>
             )}
 

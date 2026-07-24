@@ -139,6 +139,21 @@ export const COMPETITION_INTROS: Record<string, CompetitionIntroConfig> = {
       text: "#ffffff",
     },
   },
+  // A Supercopa da UEFA caia no `supercopa` acima e exibia o trofeu da Supercopa
+  // do BRASIL — nome e arte de outra competicao. Agora tem a propria (o acervo
+  // nao tem o trofeu da UEFA; usamos o generico, que ao menos nao mente).
+  supercopa_uefa: {
+    id: "supercopa_uefa",
+    name: "Supercopa da UEFA",
+    tagline: "CAMPEAO DA EUROPA X CAMPEAO DA LIGA EUROPA",
+    trophy: "/trofeus/tr_supercopa_generico.png",
+    colors: {
+      primary: "#1e3a8a",
+      accent: "#60a5fa",
+      background: "radial-gradient(ellipse at center, #0b1530 0%, #05070f 70%)",
+      text: "#ffffff",
+    },
+  },
   recopa: {
     id: "recopa",
     name: "Recopa Sul-Americana",
@@ -197,6 +212,9 @@ const INTRO_KEYWORDS: Array<{ keys: string[]; intro: string }> = [
   { keys: ["copa do brasil"], intro: "copa_brasil" },
   { keys: ["sul-americana", "sulamericana", "sudamericana", "sul americana"], intro: "sulamericana" },
   { keys: ["recopa"], intro: "recopa" },
+  // A da UEFA vem ANTES do "supercopa" generico, senao e capturada por ele e
+  // exibe o trofeu da Supercopa do Brasil.
+  { keys: ["supercopa da uefa", "supercopa uefa", "uefa super cup", "super cup uefa"], intro: "supercopa_uefa" },
   { keys: ["supercopa", "super copa"], intro: "supercopa" },
   { keys: ["champions"], intro: "champions_league" },
   { keys: ["europa league", "uefa europa", "liga europa"], intro: "europa_league" },

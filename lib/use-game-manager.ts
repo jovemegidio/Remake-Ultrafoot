@@ -489,8 +489,18 @@ export function getUserCupPlan(
   // disputadas antes do calendário regular. Só existem quando o clube conquistou
   // a vaga — ver lib/super-cups.ts.
   for (const vaga of superCups) {
+    // A REGIAO decide de onde sai o adversario. Todas as supercopas nasciam como
+    // "nacional", entao getOpponentPool sorteava um clube do MESMO PAIS: o
+    // Mundial de Clubes e a Recopa eram disputados contra times brasileiros.
+    // Supercopa do Brasil e nacional de verdade; as outras sao internacionais.
+    // Regioes validas em getOpponentPool: "america_sul", "europa" e qualquer
+    // outra = pool GLOBAL (que e justamente o certo para o Mundial de Clubes).
+    const regiao = vaga.id === "supercopa_brasil" ? "nacional"
+      : vaga.id === "recopa_sulamericana" ? "america_sul"
+      : vaga.id === "supercopa_uefa" ? "europa"
+      : "mundo" // mundial_clubes -> adversario de qualquer confederacao
     plans.push({
-      competition: makeComp(vaga.id, vaga.name, 75, "nacional", "cup"),
+      competition: makeComp(vaga.id, vaga.name, 75, regiao, vaga.id === "supercopa_brasil" ? "cup" : "continental"),
       competitionType: "cup",
       matchCount: vaga.matchCount,
     })
@@ -909,12 +919,22 @@ export function generateStateChampionshipFixtures(
   const totalRounds = isDouble ? halfSeason * 2 : halfSeason
 
   const regulation = getStateCompetitionRule(userTeamShort)
-  const crossGroupRounds = regulation?.pots
+  // Formato de GRUPOS/POTES exige clubes suficientes. O Amazonense preve 2 grupos
+  // mas o AM tem 5 clubes na base: dividir 5 em 2 grupos gerava pareamento
+  // invalido e o clube chegava a enfrentar A SI MESMO. Sem gente para o formato
+  // oficial, cai no returno simples — melhor um formato mais simples do que uma
+  // tabela quebrada.
+  const grupos = regulation?.groups ?? 0
+  const cabeNosGrupos = grupos > 0 && stateTeams.length >= grupos * 3
+  const cabemOsPotes = Boolean(regulation?.pots) && stateTeams.length >= (regulation?.pots?.length ?? 0) * 2
+  const crossGroupRounds = cabemOsPotes && regulation?.pots
     ? generatePotRounds(stateTeams, regulation.pots, halfSeason)
-    : regulation?.groups ? generateCrossGroupRounds(stateTeams, regulation.groups, halfSeason) : []
+    : cabeNosGrupos ? generateCrossGroupRounds(stateTeams, grupos, halfSeason) : []
   for (let round = 1; round <= halfSeason; round++) {
     const matchups = crossGroupRounds[round - 1] ?? generateRoundMatchups(stateTeams, round)
     matchups.forEach(([home, away]) => {
+      // Blindagem final: nenhum confronto pode ter o mesmo clube dos dois lados.
+      if (!home || !away || home.curto === away.curto) return
       fixtures.push({
         id: fixtureId++,
         round,
@@ -998,7 +1018,14 @@ export function generateStateChampionshipFixtures(
   const addPairStage = (stage: string, entrants: string[], legs: number): Fixture[] => {
     const created: Fixture[] = []
     const pairs: Array<[string, string]> = []
-    for (let i = 0; i < entrants.length / 2; i++) pairs.push([entrants[i], entrants[entrants.length - 1 - i]])
+    // Math.FLOOR e o par (a, b) tem de ser distinto. Com numero IMPAR de
+    // classificados (estadual pequeno, ex.: Amazonense com 5 clubes na base),
+    // `i < length/2` chegava ao meio e casava entrants[2] com entrants[2] — o
+    // clube enfrentava A SI MESMO. O do meio agora passa direto (bye).
+    for (let i = 0; i < Math.floor(entrants.length / 2); i++) {
+      const casa = entrants[i], fora = entrants[entrants.length - 1 - i]
+      if (casa && fora && casa !== fora) pairs.push([casa, fora])
+    }
     for (let leg = 0; leg < legs; leg++) {
       for (const [seededHome, seededAway] of pairs) {
         const first = teamByShort.get(leg % 2 === 0 ? seededHome : seededAway)

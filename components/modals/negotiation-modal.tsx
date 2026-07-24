@@ -115,9 +115,22 @@ export function NegotiationModal({
   const maxOffer = isLoan
     ? Math.floor(player.value * loanMonthlyRate * 24) // 24 months maximum
     : Math.floor(player.value * 1.5)
-  const fairValue = isLoan 
+  // ── CRAQUE CUSTA CARO E CUSTA A SAIR ─────────────────────────────────────
+  //
+  // Antes o overall nao pesava na negociacao: um centroavante 90 e um reserva 70
+  // saiam pelo mesmo percentual do valor de mercado e com a MESMA chance de
+  // aceite. Na vida real ninguem entrega o craque por 100% da avaliacao — o
+  // clube pede premio e ainda pensa duas vezes.
+  const reputacao: "top_mundial" | "estrela" | "normal" =
+    player.overall >= 85 ? "top_mundial" : player.overall >= 79 ? "estrela" : "normal"
+  // Premio de craque sobre o valor de mercado (o clube pede acima da avaliacao).
+  const premioCraque = reputacao === "top_mundial" ? 1.45 : reputacao === "estrela" ? 1.2 : 1
+  // E o clube resiste: derruba a chance de aceite em qualquer patamar de oferta.
+  const resistenciaCraque = reputacao === "top_mundial" ? 0.5 : reputacao === "estrela" ? 0.72 : 1
+
+  const fairValue = isLoan
     ? Math.floor(player.value * loanMonthlyRate * loanMonths)
-    : player.value
+    : Math.floor(player.value * premioCraque)
   const offerPercentage = Math.round((offer / fairValue) * 100)
 
   // CLAUSULA DE RESCISAO: pagar a multa forca a venda — o clube NAO pode recusar
@@ -144,10 +157,12 @@ export function NegotiationModal({
   // 130% do valor: praticamente barrado (so cede por muito dinheiro).
   // Clausula paga => 100% garantido, o relacionamento nao barra (nem rival pode
   // segurar quem tem multa quitada).
+  // Clausula paga vence tudo (inclusive a resistencia do craque) — e o preco de
+  // mercado dele; por isso a multa existe.
   const clubChance = clausulaAtingida ? 100 : Math.max(
     1,
     Math.min(99, Math.round(
-      status.chance * relEffect.chanceMult -
+      status.chance * relEffect.chanceMult * resistenciaCraque -
       (relEffect.hardBlock && offerPercentage < 130 ? 55 : 0),
     )),
   )

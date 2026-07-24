@@ -104,6 +104,10 @@ export function assumirClube(
   },
 ): void {
   clearJobOffers()
+  // CENTRAL DE NOTIFICACOES ZERA ao trocar de clube: os avisos do emprego
+  // anterior (proposta por um atleta que nao e mais seu, obra do estadio antigo,
+  // recado da diretoria que te demitiu) nao fazem sentido no clube novo.
+  limparNotificacoes()
   deps.initializeGame(clubShort)
   deps.setEngineTime(deps.week, deps.season)
   deps.setSaveState({
@@ -114,6 +118,41 @@ export function assumirClube(
     squadPlayers: undefined,
     youthPlayers: undefined,
     youthCareer: undefined,
+    // COOLDOWN: registra quando o tecnico assumiu. Sem isto dava para aceitar
+    // uma proposta e, na semana seguinte, aceitar outra — trocando de clube
+    // varias vezes na mesma temporada. Ver podeTrocarDeClube.
+    contratadoEm: { season: deps.season, week: deps.week },
   })
   deps.navigate("/")
+}
+
+/** Notificacoes sao por carreira; ao trocar de clube o historico e zerado. */
+function limparNotificacoes(): void {
+  if (typeof window === "undefined") return
+  try {
+    storeSet(getCareerScopedKey("ultrafoot:notifications"), JSON.stringify([]))
+    window.dispatchEvent(new CustomEvent("ultrafoot:notifications:cleared"))
+  } catch { /* limpar aviso nunca pode impedir a troca de clube */ }
+}
+
+/**
+ * O tecnico pode assumir outro clube agora?
+ *
+ * Na vida real ninguem troca de clube tres vezes no mesmo ano. Depois de assumir,
+ * e preciso CUMPRIR a temporada: so a partir da temporada seguinte outras
+ * propostas podem ser aceitas. Quem esta sem clube (demitido ou pediu demissao)
+ * nao tem trava — precisa poder voltar a trabalhar.
+ */
+export function podeTrocarDeClube(
+  contratadoEm: { season: number; week: number } | undefined,
+  temporadaAtual: number,
+  temClube: boolean,
+): { pode: boolean; motivo?: string } {
+  if (!temClube) return { pode: true }
+  if (!contratadoEm) return { pode: true } // carreira antiga, sem registro
+  if (temporadaAtual > contratadoEm.season) return { pode: true }
+  return {
+    pode: false,
+    motivo: "Você assumiu este clube nesta temporada. Cumpra o ano antes de aceitar outra proposta — trocar de clube no meio do caminho queima seu nome no mercado.",
+  }
 }

@@ -449,6 +449,9 @@ export interface GameState {
   // getTeamsByDivision via setClubDivisions, para os rivais tambem trocarem de
   // divisao entre temporadas (nao so o clube do usuario).
   clubDivisions?: Record<string, string>
+  // Quando o tecnico assumiu o clube ATUAL. Trava a troca de clube no meio da
+  // temporada (ver podeTrocarDeClube em career-moves).
+  contratadoEm?: { season: number; week: number }
   // Aviso a mostrar no office apos subir/cair (limpo depois de exibido).
   divisionMovement?: { movement: "promoted" | "relegated"; message: string; season: number }
   // Convocacao manual da selecao: jogadores CORTADOS e CONVOCADOS a dedo pelo tecnico

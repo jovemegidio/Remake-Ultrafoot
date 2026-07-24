@@ -104,7 +104,14 @@ export function caminhoDaCopa(
 ): EtapaCopa[] {
   const id = `${competicaoId} ${nome}`.toLowerCase()
 
-  if (/supercopa|supercup|recopa|super cup/.test(id)) return SUPERCOPA
+  // RECOPA e ida e volta (o catalogo ja dizia matchCount 2, mas o regex de
+  // "supercopa" a capturava antes e ela virava jogo unico).
+  if (/recopa/.test(id)) return [confronto("final", 2)]
+  // MUNDIAL DE CLUBES: decisao entre os campeoes continentais, em jogo unico.
+  // Sem esta regra caia no fallback COPA_JOGO_UNICO — oitavas+quartas+semi+final,
+  // 4 partidas, contra o matchCount 2 declarado no catalogo.
+  if (/mundial/.test(id)) return [confronto("semifinal", 1), confronto("final", 1)]
+  if (/supercopa|supercup|super cup/.test(id)) return SUPERCOPA
   if (/copa do brasil|copa_brasil/.test(id)) return copaDoBrasil(entraTarde)
   if (/libertadores/.test(id)) return LIBERTADORES
   if (/sul-?americana|sudamericana/.test(id)) return SULAMERICANA
