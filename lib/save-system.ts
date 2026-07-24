@@ -457,6 +457,12 @@ export interface GameState {
   // Convocacao manual da selecao: jogadores CORTADOS e CONVOCADOS a dedo pelo tecnico
   // (chaves nome__clube). Vazio = convocacao 100% automatica.
   nationalCuts?: string[]
+  // Amistosos marcados na Area do Treinador (maximo 3). Cada um jogado da
+  // entrosamento. Ver app/treinador.
+  amistososAgendados?: { oppShort: string; oppNome: string; dateLabel: string; userIsHome: boolean }[]
+  // Chave (season-mes) da ultima janela FIFA em que o tecnico treinou o
+  // entrosamento — impede treinar a mesma data FIFA duas vezes.
+  dataFifaTreinada?: string
   nationalCalls?: string[]
   balance?: number
   selectedTeam?: SavedTeam

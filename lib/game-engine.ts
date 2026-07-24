@@ -1935,6 +1935,8 @@ interface GameEngineState {
   getPlayerById: (playerId: number) => Player | undefined
   updatePlayerStats: (playerId: number, stats: Partial<PlayerStats>) => void
   processarDesempenhoPartida: (golsPro: number, golsContra: number, events: MatchEvent[]) => void
+  /** Ajusta o entrosamento (squadCohesion, 0-100). Amistoso e treino na data FIFA alimentam. */
+  adjustSquadCohesion: (delta: number) => void
   rolarLesaoSimulada: (qtdJogos: number) => void
   acumularEstatisticasSimuladas: (golsPro: number, golsContra: number) => void
   cumprirSuspensao: (playerId: number) => void
@@ -3720,6 +3722,13 @@ export const useGameEngine = create<GameEngineState>()(
             ),
           }
         })
+      },
+
+      // Entrosamento por FORA da partida oficial: amistoso e treino na data FIFA.
+      // Mesmo teto de 100 e piso de 0; o efeito em campo ja vem do bonusEntrosamento
+      // (ao-vivo) que le squadCohesion.
+      adjustSquadCohesion: (delta) => {
+        set((s) => ({ squadCohesion: Math.max(0, Math.min(100, (s.squadCohesion ?? 60) + delta)) }))
       },
 
       /**

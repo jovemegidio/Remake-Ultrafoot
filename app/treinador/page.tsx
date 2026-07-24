@@ -10,10 +10,27 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
 import { listJobOffers, removeJobOffer, assumirClube, podeTrocarDeClube, type PendingJobOffer } from "@/lib/career-moves"
 import { ofertasParaDesempregado, coachStandingScore } from "@/lib/coach-market"
-import { allTeams } from "@/lib/teams-data"
+import { allTeams, type Team } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { saveMatchContext } from "@/lib/match-context"
+import { isFifaWindowMonth, windowLabel } from "@/lib/national-windows"
+import { TeamCrest } from "@/components/team-crest"
 import { cn } from "@/lib/utils"
-import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle } from "lucide-react"
+import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle, Swords, Home, Plane, Dumbbell, Users, X } from "lucide-react"
+
+const MESES_CURTO = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+const DIAS_CURTO = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+/** Próximos sábados a partir da semana atual da carreira (mesma base de app/amistosos). */
+function proximosSabados(season: number, week: number, quantas = 6): string[] {
+  const base = new Date(season, 0, 1 + Math.max(0, week - 1) * 7)
+  const ateSabado = (6 - base.getDay() + 7) % 7
+  const primeiro = new Date(base.getTime() + ateSabado * 86400000)
+  return Array.from({ length: quantas }, (_, i) => {
+    const d = new Date(primeiro.getTime() + i * 7 * 86400000)
+    return `${DIAS_CURTO[d.getDay()]}, ${d.getDate()} ${MESES_CURTO[d.getMonth()]}`
+  })
+}
+const MAX_AMISTOSOS = 3
 
 /**
  * Área do Treinador — a carreira sob a ótica do técnico, não do clube.
@@ -26,9 +43,11 @@ export default function TreinadorPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
   const { state, setState } = useGameState()
-  const { currentSeason } = useGameManager()
+  const { currentSeason, currentMatch } = useGameManager()
   const matchResults = useGameEngine(s => s.matchResults)
   const initializeGame = useGameEngine(s => s.initializeGame)
+  const squadCohesion = useGameEngine(s => s.squadCohesion)
+  const adjustSquadCohesion = useGameEngine(s => s.adjustSquadCohesion)
 
   // Aceitar a proposta AQUI (antes so dava para recusar; aceitar exigia ir ao
   // Escritorio). Mesma troca de emprego, pela funcao compartilhada.
@@ -142,6 +161,82 @@ export default function TreinadorPage() {
     const pontos = ultimos.reduce((s, r) => s + (r.resultado === "V" ? 3 : r.resultado === "E" ? 1 : 0), 0)
     return Math.round((pontos / (ultimos.length * 3)) * 100)
   }, [ultimos])
+
+  // ── ENTROSAMENTO, AMISTOSOS E DATA FIFA ───────────────────────────────────
+  // O entrosamento (squadCohesion, 0-100) vira ate +5 de forca em campo — a
+  // mesma conta do ao-vivo (bonusEntrosamento). Amistoso e treino na data FIFA
+  // sao os jeitos de subi-lo FORA da partida oficial.
+  const entrosamento = squadCohesion ?? 60
+  const bonusEntrosamento = Math.round(Math.max(0, (entrosamento - 60)) / 8)
+
+  // Data FIFA: quando o mes da proxima partida e janela FIFA, o clube esta parado
+  // (ver aplicarPausasFifa). Se o tecnico nao foi convocado para uma selecao e nao
+  // tem jogador na selecao, aproveita para treinar o entrosamento — uma vez por
+  // janela. (O jogo nao tira jogador do seu clube na data FIFA, entao aqui sempre
+  // ha elenco para treinar.)
+  const mesAtual = currentMatch?.month ?? -1
+  const emDataFifa = isFifaWindowMonth(mesAtual)
+  const janelaFifaKey = `${currentSeason}-${mesAtual}`
+  const jaTreinouDataFifa = state.dataFifaTreinada === janelaFifaKey
+  const [avisoTreino, setAvisoTreino] = useState<string | null>(null)
+
+  const treinarNaDataFifa = useCallback(() => {
+    if (!emDataFifa || jaTreinouDataFifa) return
+    adjustSquadCohesion(5)
+    setState({ dataFifaTreinada: janelaFifaKey } as Parameters<typeof setState>[0])
+    setAvisoTreino("Semana de treino aproveitada: +5 de entrosamento. O time joga mais junto na volta.")
+  }, [emDataFifa, jaTreinouDataFifa, adjustSquadCohesion, setState, janelaFifaKey])
+
+  // Amistosos marcados (max 3).
+  const amistosos = state.amistososAgendados ?? []
+  const datasAmistoso = useMemo(
+    () => proximosSabados(state.season ?? 2026, state.week ?? 1),
+    [state.season, state.week],
+  )
+  const [oppBusca, setOppBusca] = useState("")
+  const [dataIdx, setDataIdx] = useState(0)
+  const [emCasa, setEmCasa] = useState(true)
+  const advOpcoes = useMemo<Team[]>(() => {
+    const q = oppBusca.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    return allTeams
+      .filter(t => t.curto !== userTeam.curto && !/ II$/.test(t.nome))
+      .filter(t => !q || t.nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().includes(q))
+      .sort((a, b) => b.prestigio - a.prestigio)
+      .slice(0, 30)
+  }, [oppBusca, userTeam.curto])
+
+  const agendarAmistoso = useCallback((opp: Team) => {
+    if (amistosos.length >= MAX_AMISTOSOS) return
+    setState({
+      amistososAgendados: [...amistosos, {
+        oppShort: opp.curto, oppNome: opp.nome, dateLabel: datasAmistoso[dataIdx] ?? "Pré-temporada", userIsHome: emCasa,
+      }],
+    } as Parameters<typeof setState>[0])
+    setOppBusca("")
+  }, [amistosos, setState, datasAmistoso, dataIdx, emCasa])
+
+  const removerAmistoso = useCallback((i: number) => {
+    setState({ amistososAgendados: amistosos.filter((_, idx) => idx !== i) } as Parameters<typeof setState>[0])
+  }, [amistosos, setState])
+
+  const jogarAmistoso = useCallback((i: number) => {
+    const a = amistosos[i]
+    if (!a) return
+    // Amistoso constroi entrosamento (nao conta pra temporada). +4 por jogo.
+    adjustSquadCohesion(4)
+    setState({ amistososAgendados: amistosos.filter((_, idx) => idx !== i) } as Parameters<typeof setState>[0])
+    saveMatchContext({
+      homeShort: a.userIsHome ? userTeam.curto : a.oppShort,
+      awayShort: a.userIsHome ? a.oppShort : userTeam.curto,
+      homeKit: "home",
+      awayKit: a.userIsHome ? "away" : "home",
+      competition: "Amistoso",
+      round: `Amistoso · ${a.dateLabel}`,
+      friendly: true,
+      duration: 90,
+    })
+    hardNavigate("/partida/ao-vivo")
+  }, [amistosos, adjustSquadCohesion, setState, userTeam.curto])
 
   return (
     <div className="relative h-screen overflow-hidden bg-[#050508] pb-20 md:pb-0">
@@ -273,6 +368,98 @@ export default function TreinadorPage() {
           </section>
             )
           })()}
+
+          {/* Amistosos & Entrosamento — só com clube */}
+          {!desempregado && (
+          <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
+            <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
+              <Users className="h-4 w-4 text-[#00ffc8]" />
+              Entrosamento & Amistosos
+            </h2><span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" /></div>
+
+            {/* Barra de entrosamento */}
+            <div className="mt-3 rounded-lg bg-black/30 p-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/60">Entrosamento do elenco</span>
+                <span className="font-semibold text-white">{entrosamento}/100{bonusEntrosamento > 0 && <span className="ml-1 text-[#00ffc8]">(+{bonusEntrosamento} em campo)</span>}</span>
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#00ffc8]/70 to-[#00ffc8]" style={{ width: `${entrosamento}%` }} />
+              </div>
+              <p className="mt-2 text-[11px] leading-4 text-white/40">Time que joga junto rende mais. Sobe disputando partidas, amistosos e treinando nas datas FIFA.</p>
+            </div>
+
+            {avisoTreino && (
+              <p className="mt-3 rounded-lg border border-[#00ffc8]/30 bg-[#00ffc8]/10 px-3 py-2 text-xs text-[#00ffc8]">{avisoTreino}</p>
+            )}
+
+            {/* Treino na Data FIFA */}
+            {emDataFifa && (
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-amber-400/25 bg-amber-400/[0.06] p-3">
+                <Dumbbell className="h-5 w-5 shrink-0 text-amber-300" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-white">🌍 {windowLabel(mesAtual)} — sem convocados</p>
+                  <p className="text-[11px] leading-4 text-white/50">O campeonato de clubes está parado. Sem jogadores na seleção, use a semana para treinar o entrosamento.</p>
+                </div>
+                <button
+                  onClick={treinarNaDataFifa}
+                  disabled={jaTreinouDataFifa}
+                  className={cn("rounded-lg px-3 py-1.5 text-xs font-black transition-all",
+                    jaTreinouDataFifa ? "cursor-not-allowed bg-white/10 text-white/40" : "bg-amber-300 text-black hover:brightness-110")}
+                >
+                  {jaTreinouDataFifa ? "Já treinado" : "Treinar (+5)"}
+                </button>
+              </div>
+            )}
+
+            {/* Amistosos marcados */}
+            <div className="mt-4">
+              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-white/40">
+                <Swords className="h-3.5 w-3.5" /> Amistosos marcados ({amistosos.length}/{MAX_AMISTOSOS})
+              </div>
+              {amistosos.length > 0 && (
+                <div className="mb-3 space-y-1.5">
+                  {amistosos.map((a, i) => (
+                    <div key={`${a.oppShort}-${i}`} className="flex items-center gap-3 rounded-lg bg-black/30 p-2.5">
+                      <span className="text-[10px] text-white/40">{a.userIsHome ? <Home className="h-3.5 w-3.5" /> : <Plane className="h-3.5 w-3.5" />}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-white">{a.oppNome}</p>
+                        <p className="text-[11px] text-white/40">{a.dateLabel} · {a.userIsHome ? "em casa" : "fora"}</p>
+                      </div>
+                      <button onClick={() => jogarAmistoso(i)} className="rounded-lg bg-[#00ffc8] px-3 py-1.5 text-xs font-black text-black hover:brightness-110">Jogar</button>
+                      <button onClick={() => removerAmistoso(i)} className="rounded-lg p-1.5 text-white/30 hover:bg-white/5 hover:text-white/60"><X className="h-4 w-4" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Marcar novo amistoso */}
+              {amistosos.length < MAX_AMISTOSOS ? (
+                <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <button onClick={() => setEmCasa(true)} className={cn("flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold", emCasa ? "border-primary bg-primary/15 text-primary" : "border-white/10 text-white/50")}><Home className="h-3.5 w-3.5" /> Casa</button>
+                    <button onClick={() => setEmCasa(false)} className={cn("flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold", !emCasa ? "border-primary bg-primary/15 text-primary" : "border-white/10 text-white/50")}><Plane className="h-3.5 w-3.5" /> Fora</button>
+                    <select value={dataIdx} onChange={e => setDataIdx(Number(e.target.value))} className="rounded-lg border border-white/10 bg-[#101015] px-2 py-1.5 text-xs text-white">
+                      {datasAmistoso.map((d, i) => <option key={d} value={i}>{d}</option>)}
+                    </select>
+                  </div>
+                  <input value={oppBusca} onChange={e => setOppBusca(e.target.value)} placeholder="Buscar adversário..." className="mb-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none" />
+                  <div className="grid max-h-40 gap-1.5 overflow-y-auto sm:grid-cols-2">
+                    {advOpcoes.map(opp => (
+                      <button key={opp.curto + opp.file_key} onClick={() => agendarAmistoso(opp)} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] p-2 text-left hover:border-primary/40 hover:bg-white/[0.06]">
+                        <TeamCrest team={opp} size="sm" />
+                        <span className="min-w-0 flex-1 truncate text-xs text-white">{opp.nome}</span>
+                        <span className="text-[10px] text-white/30">{opp.prestigio}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-white/40">Limite de {MAX_AMISTOSOS} amistosos atingido. Jogue ou remova um para marcar outro.</p>
+              )}
+            </div>
+          </section>
+          )}
 
           {/* Últimos resultados */}
           <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
