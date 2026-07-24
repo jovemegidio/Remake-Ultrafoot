@@ -28,7 +28,10 @@ export interface KitData {
 }
 
 export interface TeamOverride {
+  /** Nome de EXIBICAO — o curto que aparece em tabela, escudo e placar. */
   nome?: string
+  /** Nome OFICIAL do clube ("Clube de Regatas do Flamengo"). Ver lib/club-names. */
+  nomeOficial?: string
   curto?: string
   cor1?: string
   cor2?: string

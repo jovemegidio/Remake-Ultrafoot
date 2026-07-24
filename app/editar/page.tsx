@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { nomeOficialDoClube } from "@/lib/club-names"
 import { hardNavigate } from "@/lib/hard-navigation"
 import {
   serieATeams,
@@ -1035,13 +1036,30 @@ export default function EditarPage() {
                     <section>
                       <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-3">Dados do Clube</h3>
                       <div className="grid grid-cols-2 gap-3">
-                        {/* Nome */}
+                        {/* NOME DE EXIBICAO — o curto, que aparece em tabela,
+                            placar e escudo. O rotulo dizia "Nome completo", o
+                            que confundia com o nome oficial (campo abaixo). */}
                         <div className="col-span-2">
-                          <label className="block text-[10px] text-white/40 mb-1">Nome completo</label>
+                          <label className="block text-[10px] text-white/40 mb-1">
+                            Nome de exibição <span className="text-white/25">· usado em tabelas e placares</span>
+                          </label>
                           <input
                             type="text"
                             value={editDraft.nome ?? ""}
                             onChange={e => setEditDraft(p => ({ ...p, nome: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
+                          />
+                        </div>
+                        {/* NOME DO CLUBE (oficial) */}
+                        <div className="col-span-2">
+                          <label className="block text-[10px] text-white/40 mb-1">
+                            Nome do clube <span className="text-white/25">· razão social / nome oficial</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={editDraft.nomeOficial ?? ""}
+                            placeholder={selectedTeam ? nomeOficialDoClube(selectedTeam) : "Clube de Regatas do Flamengo"}
+                            onChange={e => setEditDraft(p => ({ ...p, nomeOficial: e.target.value }))}
                             className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
                           />
                         </div>
