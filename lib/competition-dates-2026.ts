@@ -6,10 +6,15 @@
 // tem que ficar configurado". Fontes conferidas (jul/2026):
 //   Copa do Mundo FIFA 2026 ..... 11/jun – 19/jul (EUA, Mexico, Canada)
 //   Libertadores 2026 ........... final 28/nov em Montevideu (CONMEBOL)
+//   Sul-Americana 2026 .......... final 21/nov (CONMEBOL)
 //   Copa do Brasil 2026 ......... 17/fev – 06/dez (CBF)
 //   Champions League 2025/26 .... final 30/mai/2026 em Budapeste (UEFA)
-// Onde a data exata do fim ainda nao saiu, fica a estimativa do calendario da
-// entidade (marcada com ~).
+//   Europa League 2025/26 ....... final 20/mai/2026 (UEFA)
+//   Conference League 2025/26 ... final 27/mai/2026 (UEFA)
+//   Intercontinental FIFA ....... primeira semana de dezembro (por isso ~)
+// As competicoes da UEFA sao a edicao 2025/26 (final em maio/2026), que e a que
+// se encerra dentro da temporada do jogo. Onde a data exata ainda nao saiu, fica
+// a estimativa (marcada com ~).
 //
 // A tela de competicoes usa ids genericos ("libertadores", "copa-do-brasil")
 // com NOMES dinamicos (Champions League para clube europeu etc.), entao o
@@ -30,11 +35,13 @@ export interface PeriodoCompeticao {
 const INTERNACIONAIS: { id: string; nomes: string[]; periodo: PeriodoCompeticao }[] = [
   { id: "copa_mundo", nomes: ["Copa do Mundo", "Copa do Mundo FIFA"], periodo: { startsOn: "2026-06-11", endsOn: "2026-07-19" } },
   { id: "libertadores", nomes: ["CONMEBOL Libertadores", "Libertadores", "Copa Libertadores"], periodo: { startsOn: "2026-02-04", endsOn: "2026-11-28" } },
-  { id: "sulamericana", nomes: ["CONMEBOL Sul-Americana", "Sul-Americana", "Copa Sul-Americana"], periodo: { startsOn: "2026-03-03", endsOn: "2026-11-21", aproximado: true } },
-  { id: "champions_league", nomes: ["UEFA Champions League", "Champions League"], periodo: { startsOn: "2026-09-15", endsOn: "2027-05-29", aproximado: true } },
-  { id: "europa_league", nomes: ["UEFA Europa League", "Europa League"], periodo: { startsOn: "2026-09-24", endsOn: "2027-05-26", aproximado: true } },
-  { id: "conference_league", nomes: ["UEFA Conference League", "Conference League"], periodo: { startsOn: "2026-10-01", endsOn: "2027-05-26", aproximado: true } },
-  { id: "copa_intercontinental", nomes: ["Copa Intercontinental", "Mundial de Clubes FIFA"], periodo: { startsOn: "2026-12-09", endsOn: "2026-12-16", aproximado: true } },
+  { id: "sulamericana", nomes: ["CONMEBOL Sul-Americana", "Sul-Americana", "Copa Sul-Americana"], periodo: { startsOn: "2026-03-03", endsOn: "2026-11-21" } },
+  // UEFA: edicao 2025/26, que se encerra em maio/2026 (finais confirmadas).
+  { id: "champions_league", nomes: ["UEFA Champions League", "Champions League"], periodo: { startsOn: "2025-09-16", endsOn: "2026-05-30" } },
+  { id: "europa_league", nomes: ["UEFA Europa League", "Europa League"], periodo: { startsOn: "2025-09-24", endsOn: "2026-05-20" } },
+  { id: "conference_league", nomes: ["UEFA Conference League", "Conference League"], periodo: { startsOn: "2025-10-02", endsOn: "2026-05-27" } },
+  // Intercontinental: final normalmente na 1a semana de dezembro (data movel).
+  { id: "copa_intercontinental", nomes: ["Copa Intercontinental", "Mundial de Clubes FIFA"], periodo: { startsOn: "2026-12-01", endsOn: "2026-12-10", aproximado: true } },
 ]
 
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
