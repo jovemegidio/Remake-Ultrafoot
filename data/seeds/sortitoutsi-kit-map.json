@@ -119,6 +119,18 @@
     "nome": "Vitoria",
     "divisao": "serie_a"
   },
+  "aldosivi": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "aldosivi",
+    "nome": "Aldosivi",
+    "divisao": "liga_argentina"
+  },
+  "argentinos_jrs": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "argentinos_jrs",
+    "nome": "Argentinos Juniors",
+    "divisao": "liga_argentina"
+  },
   "atletico_tucuman": {
     "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "atletico_tucuman",
@@ -129,12 +141,6 @@
     "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "banfield",
     "nome": "Banfield",
-    "divisao": "liga_argentina"
-  },
-  "rosario_central": {
-    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
-    "base": "barracas_central",
-    "nome": "Rosario Central",
     "divisao": "liga_argentina"
   },
   "belgrano_cordoba": {
@@ -149,10 +155,22 @@
     "nome": "Boca Juniors",
     "divisao": "liga_argentina"
   },
-  "talleres_cordoba": {
+  "central_cordoba": {
     "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "central_cordoba",
-    "nome": "Talleres Cordoba",
+    "nome": "Central Cordoba",
+    "divisao": "liga_argentina"
+  },
+  "defensa_y_justicia": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "defensa_y_justicia",
+    "nome": "Defensa y Justicia",
+    "divisao": "liga_argentina"
+  },
+  "deportivo_riestra": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "deportivo_riestra",
+    "nome": "Deportivo Riestra",
     "divisao": "liga_argentina"
   },
   "estudiantes_lp": {
@@ -179,6 +197,18 @@
     "nome": "Independiente",
     "divisao": "liga_argentina"
   },
+  "independiente_rivadavia": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "independiente_rivadavia",
+    "nome": "Independiente Rivadavia",
+    "divisao": "liga_argentina"
+  },
+  "instituto_acc": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "instituto_acc",
+    "nome": "Instituto",
+    "divisao": "liga_argentina"
+  },
   "lanus_arg": {
     "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "lanus",
@@ -189,6 +219,12 @@
     "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "newells_old_boys",
     "nome": "Newells Old Boys",
+    "divisao": "liga_argentina"
+  },
+  "platense": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "platense",
+    "nome": "Platense",
     "divisao": "liga_argentina"
   },
   "racing_arg": {
@@ -203,10 +239,28 @@
     "nome": "River Plate",
     "divisao": "liga_argentina"
   },
+  "rosario_central": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "rosario_central",
+    "nome": "Rosario Central",
+    "divisao": "liga_argentina"
+  },
   "san_lorenzo": {
     "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "san_lorenzo",
     "nome": "San Lorenzo",
+    "divisao": "liga_argentina"
+  },
+  "sarmiento": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "sarmiento",
+    "nome": "Sarmiento",
+    "divisao": "liga_argentina"
+  },
+  "talleres_cordoba": {
+    "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
+    "base": "talleres_de_cordoba",
+    "nome": "Talleres Cordoba",
     "divisao": "liga_argentina"
   },
   "tigre_arg": {
@@ -215,10 +269,10 @@
     "nome": "Tigre",
     "divisao": "liga_argentina"
   },
-  "colon_sf": {
+  "union_santa_fe": {
     "dir": "C:\\Ultrafoot-kits-src\\Argentina_-_Primera_Division\\Argentina - Primera Division",
     "base": "union_santa_fe",
-    "nome": "Colon Santa Fe",
+    "nome": "Union Santa Fe",
     "divisao": "liga_argentina"
   },
   "velez_sarsfield": {
