@@ -371,7 +371,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                   Estatisticas da Temporada
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                     <div className="text-lg font-bold text-white">{coachData.partidasTotal}</div>
                     <div className="text-[9px] text-white/40 uppercase">Jogos</div>

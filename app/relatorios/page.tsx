@@ -347,7 +347,7 @@ export default function RelatoriosPage() {
                     </div>
 
                     {/* Estatisticas */}
-                    <div className="grid grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                       <div className="p-3 bg-white/5 rounded-lg text-center">
                         <Goal className="h-5 w-5 text-green-400 mx-auto mb-1" />
                         <div className="text-xl font-bold text-white">{selectedPlayer.seasonStats.goals}</div>

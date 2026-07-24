@@ -406,7 +406,7 @@ export default function SelecaoPage() {
                   <h2 className="text-xl font-semibold text-white">{nationalTeam.name}</h2>
                   <p className="text-xs text-white/50">{CONFEDERATION_LABEL[nationalTeam.confederation]}</p>
                 </div>
-                <div className="grid grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
                   <div className="text-center">
                     <p className={cn("text-xl font-bold tabular-nums", strengthTone(strength))}>{strength}</p>
                     <p className="text-[10px] uppercase tracking-wide text-white/40">Forca</p>

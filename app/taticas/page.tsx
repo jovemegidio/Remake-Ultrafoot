@@ -259,7 +259,7 @@ export default function TaticasPage() {
                   Mentalidade do Time
                 </h2>
                 
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                   {(Object.keys(MENTALITY_INFO) as Array<keyof typeof MENTALITY_INFO>).map((key) => {
                     const info = MENTALITY_INFO[key]
                     const isActive = teamTactics.mentality === key
@@ -291,7 +291,7 @@ export default function TaticasPage() {
                   Estilo de Jogo
                 </h2>
                 
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                   {(Object.keys(STYLE_INFO) as Array<keyof typeof STYLE_INFO>).map((key) => {
                     const info = STYLE_INFO[key]
                     const isActive = teamTactics.playingStyle === key
@@ -623,7 +623,7 @@ export default function TaticasPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-white/70 mb-2 block">Intensidade da Pressao</label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {(["baixa", "media", "alta", "muito_alta"] as const).map(opt => (
                         <button
                           key={opt}

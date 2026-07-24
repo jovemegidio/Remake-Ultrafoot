@@ -276,7 +276,7 @@ export default function TreinamentoPage() {
                     onClick={() => canPlayerTrain && !isTraining && setSelectedPlayer(player)}
                     disabled={!canPlayerTrain || isTraining}
                     className={cn(
-                      "w-full flex items-center gap-4 px-5 py-4 text-left transition-colors",
+                      "w-full flex flex-wrap md:flex-nowrap items-center gap-3 md:gap-4 px-4 md:px-5 py-4 text-left transition-colors",
                       isSelected && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]",
                       !isSelected && canPlayerTrain && !isTraining && "hover:bg-white/5",
                       (!canPlayerTrain || isTraining) && "opacity-60"
@@ -301,7 +301,7 @@ export default function TreinamentoPage() {
                     </div>
 
                     {/* Atributos */}
-                    <div className="flex-1 grid grid-cols-6 gap-2">
+                    <div className="order-last w-full md:order-none md:w-auto md:flex-1 grid grid-cols-6 gap-2">
                       {trainingTypes.map(type => {
                         const value = player[type.id as keyof Player] as number
                         const isRecommended = recommended.includes(type.id)

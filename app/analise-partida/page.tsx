@@ -162,7 +162,7 @@ export default function AnalisePartidaPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-12 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
                 
                 {/* Lista de Partidas */}
                 <div className="col-span-4 bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
@@ -421,7 +421,7 @@ export default function AnalisePartidaPage() {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                           >
-                            <div className="p-4 pt-0 grid grid-cols-4 gap-3">
+                            <div className="p-4 pt-0 grid grid-cols-2 sm:grid-cols-4 gap-3">
                               <div className="bg-white/5 rounded-lg p-4 text-center">
                                 <div className="text-2xl font-bold text-white">{selectedAnalysis.keyStats.shots}</div>
                                 <div className="text-xs text-white/50">Finalizacoes</div>

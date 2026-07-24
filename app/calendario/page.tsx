@@ -377,9 +377,9 @@ export default function CalendarioPage() {
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 flex h-[calc(100vh-48px-56px)] p-6 gap-6">
+      <div className="relative z-10 flex flex-col md:flex-row md:h-[calc(100vh-48px-56px)] h-[calc(100dvh-56px)] overflow-y-auto md:overflow-hidden p-3 md:p-6 gap-4 md:gap-6 pb-24 md:pb-6">
         {/* Left Panel - Match Info (EA FC Style) */}
-        <aside className="w-56 flex-shrink-0 flex flex-col">
+        <aside className="w-full md:w-56 md:flex-shrink-0 flex flex-col">
           {/* Current Date - Large */}
           <div className="mb-8">
             <div className="text-white/60 text-xs font-medium tracking-wider uppercase mb-1">
@@ -505,7 +505,7 @@ export default function CalendarioPage() {
         </aside>
 
         {/* Calendar Grid (EA FC Glassmorphism Style) */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col min-h-[460px] md:min-h-0">
           <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
             {/* Week days header */}
             <div className="grid grid-cols-7 border-b border-white/10">

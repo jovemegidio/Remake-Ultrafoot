@@ -143,7 +143,7 @@ export default function ReunioesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
               
               {/* Lista de Jogadores */}
               <div className="col-span-4 bg-[#12121a] rounded-xl border border-white/[0.04] overflow-hidden">
@@ -271,7 +271,7 @@ export default function ReunioesPage() {
                       </div>
                       
                       {/* Estatisticas do jogador */}
-                      <div className="grid grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div className="bg-white/5 rounded-lg p-3 text-center">
                           <div className="text-lg font-bold text-white">{selectedPlayer.seasonStats.matchesPlayed}</div>
                           <div className="text-xs text-white/50">Jogos</div>

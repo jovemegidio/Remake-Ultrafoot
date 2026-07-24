@@ -562,7 +562,7 @@ export default function OlheirosPage() {
                         </div>
 
                         {player.revealedAttributes && (
-                          <div className="mt-4 pt-4 border-t border-white/[0.04] grid grid-cols-6 gap-2">
+                          <div className="mt-4 pt-4 border-t border-white/[0.04] grid grid-cols-3 sm:grid-cols-6 gap-2">
                             {[
                               { label: "RIT", value: 78 },
                               { label: "FIN", value: 82 },

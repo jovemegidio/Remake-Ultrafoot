@@ -376,6 +376,20 @@
     }
   }
 
+  /* =========================================================================
+     Rede de seguranca responsiva (somente mobile, < 768px)
+     O jogo foi desenhado para desktop. Este guard garante que nenhuma tela
+     provoque rolagem horizontal da pagina inteira no celular. Os grids densos
+     sao corrigidos individualmente em cada tela com prefixos md:/lg:.
+     ========================================================================= */
+  @media (max-width: 767px) {
+    html,
+    body {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+  }
+
   /* EA FC Display font - Bold condensed for titles */
   .font-display {
     font-family: var(--font-display);
