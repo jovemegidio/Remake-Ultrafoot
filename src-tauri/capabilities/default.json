@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "core:path:default",
@@ -22,6 +24,23 @@
     "dialog:default",
     "store:default",
     "updater:default",
-    "process:default"
+    "process:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://ge.globo.com/*"
+        },
+        {
+          "url": "https://www.espn.com.br/*"
+        },
+        {
+          "url": "https://news.google.com/*"
+        },
+        {
+          "url": "https://rss.app/*"
+        }
+      ]
+    }
   ]
 }

@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, TrendingUp, Trophy, Users, DollarSign, Sparkles, Zap, Star, AlertCircle } from "lucide-react"
 import { getNewsImageUrl, seedFromString } from "@/lib/news-image"
+import { buscarNoticiasReais, type RealNewsItem } from "@/lib/real-news"
 import { getCountryCompetitions } from "@/lib/country-competitions"
 import { getLeagueName } from "@/lib/use-game-manager"
 import { motion, AnimatePresence } from "framer-motion"
@@ -65,6 +66,10 @@ export interface NewsItem {
   comments: number
   isNew?: boolean
   icon?: React.ReactNode
+  /** Manchete REAL vinda da internet (ver lib/real-news), nao gerada pelo jogo. */
+  isReal?: boolean
+  /** Link da materia original — so nas reais. */
+  link?: string
 }
 
 export function generateDynamicNews(
@@ -346,14 +351,39 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
 
   useEffect(() => {
     setIsClient(true)
-    setNews(generateDynamicNews(
+    const inGame = generateDynamicNews(
       userTeamShort,
       state.season,
       state.week,
       engine.matchResults ?? [],
       engine.serieAStandings ?? [],
       engine.topScorers ?? []
-    ))
+    )
+    // OFFLINE: so a noticia gerada (a da propria carreira). ONLINE: as manchetes
+    // REAIS entram na frente, para o jogador acompanhar o futebol de verdade
+    // sem sair do jogo — e a noticia da carreira continua logo atras.
+    setNews(inGame)
+    let vivo = true
+    buscarNoticiasReais()
+      .then((reais: RealNewsItem[]) => {
+        if (!vivo || reais.length === 0) return
+        const comoNoticia: NewsItem[] = reais.slice(0, 6).map((r: RealNewsItem, i: number) => ({
+          id: `real-${i}`,
+          source: "espn" as keyof typeof NEWS_SOURCES,
+          date: new Date(r.publicadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
+          type: "highlight" as const,
+          title: r.titulo,
+          description: `${r.fonte} · notícia real`,
+          likes: 0,
+          comments: 0,
+          isNew: true,
+          isReal: true,
+          link: r.link,
+        }))
+        setNews([...comoNoticia, ...inGame])
+      })
+      .catch(() => { /* sem rede: fica so a noticia in-game */ })
+    return () => { vivo = false }
   }, [userTeamShort, state.season, state.week, engine.matchResults, engine.serieAStandings, engine.topScorers])
 
   const nextNews = useCallback(() => {

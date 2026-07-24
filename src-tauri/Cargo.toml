@@ -23,6 +23,9 @@ tauri-plugin-dialog = "2"
 tauri-plugin-store = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+# Noticias reais: o webview aplica CORS e feeds RSS nao liberam. O plugin http
+# faz a requisicao no lado nativo, contornando o bloqueio.
+tauri-plugin-http = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 discord-rich-presence = "0.2"

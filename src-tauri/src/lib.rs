@@ -483,7 +483,8 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_http::init());
 
     // updater e Rich Presence sao SO DESKTOP. O updater mobile nao existe (a loja
     // atualiza o app); o Rich Presence depende do cliente Discord no PC.
