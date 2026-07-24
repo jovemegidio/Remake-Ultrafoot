@@ -29,6 +29,7 @@ import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
 import { qualificacaoReal2026 } from "@/lib/qualificacao-2026"
+import { isFifaWindowMonth, windowLabel } from "@/lib/national-windows"
 import { regionalCupForState } from "@/lib/regional-cups"
 
 const LEAGUE_NAMES: Record<string, string> = {
@@ -177,6 +178,54 @@ function disputaEstadual(division: string): boolean {
 function getRoundMonth(round: number, startMonth: number, monthsInSeason: number, totalRounds: number): number {
   const monthOffset = Math.floor((round - 1) * monthsInSeason / totalRounds)
   return (startMonth + monthOffset) % 12
+}
+
+// PAUSA PARA DATA FIFA. Na vida real o campeonato de clubes PARA quando abre a
+// janela de selecoes (amistosos, Eliminatorias, Copa America/Euro, Copa do
+// Mundo) e so volta quando ela fecha. O jogo marcava rodada de clube em cima da
+// data FIFA. Aqui inserimos uma semana de pausa no calendario de clubes toda vez
+// que a temporada ENTRA numa janela FIFA (uma pausa por janela, nao por rodada),
+// deslocando os jogos seguintes — exatamente o "fica parado ate acabar".
+//
+// A pausa e isUserMatch:false + played:true: nao conta como compromisso do
+// clube, entao nao interfere na deteccao de fim de temporada; so cria o buraco.
+export function aplicarPausasFifa(fixtures: Fixture[], userTeam: Team): Fixture[] {
+  // Mes de cada semana de LIGA — a pausa e do calendario de CLUBES.
+  const monthOfWeek = new Map<number, number>()
+  for (const f of fixtures) {
+    if (f.competitionType === "league" && !monthOfWeek.has(f.week)) monthOfWeek.set(f.week, f.month)
+  }
+  const weeks = [...monthOfWeek.keys()].sort((a, b) => a - b)
+  if (weeks.length < 2) return fixtures
+
+  // Ponto de pausa: a 1a semana de liga de CADA mes de janela FIFA. Setembro,
+  // Outubro e Novembro sao janelas SEPARADAS (cada uma pausa), por isso a condicao
+  // e "mudou para um mes FIFA", nao "entrou numa sequencia FIFA". Comeca do 2o
+  // para nunca abrir a temporada com uma pausa antes do 1o jogo.
+  const pausas: { week: number; month: number }[] = []
+  let prevMonth = monthOfWeek.get(weeks[0]) ?? -1
+  for (let i = 1; i < weeks.length; i++) {
+    const m = monthOfWeek.get(weeks[i]) ?? -1
+    if (isFifaWindowMonth(m) && m !== prevMonth) pausas.push({ week: weeks[i], month: m })
+    prevMonth = m
+  }
+  if (pausas.length === 0) return fixtures
+
+  const out = [...fixtures]
+  let breakId = 90000
+  // Do fim para o comeco: cada insercao desloca tudo a partir da semana em +1,
+  // e as pausas de semanas menores nao sao afetadas pelas de semanas maiores.
+  for (const p of [...pausas].sort((a, b) => b.week - a.week)) {
+    for (const f of out) if (f.week >= p.week) f.week += 1
+    out.push({
+      id: breakId++, round: 0, week: p.week,
+      homeTeam: userTeam, awayTeam: userTeam,
+      competition: windowLabel(p.month),
+      played: true, isUserMatch: false, month: p.month,
+      competitionType: "fifa_break",
+    })
+  }
+  return out
 }
 
 // Acima deste numero de times o estadual roda em TURNO UNICO, para nao virar um
@@ -1187,7 +1236,7 @@ export interface Fixture {
   awayScore?: number
   isUserMatch: boolean
   month: number
-  competitionType: "state" | "league" | "cup" | "continental"
+  competitionType: "state" | "league" | "cup" | "continental" | "fifa_break"
   stage?: string
   /**
    * Jogo de MEIO DE SEMANA: divide a semana com a rodada de liga, como no
@@ -1734,6 +1783,10 @@ export function useGameManager() {
     // fixture NUNCA ser marcado como jogado -> nextUserMatch travava na mesma
     // partida ("termino e continua a mesma"). Cada par home/away e unico no ida-volta,
     // entao casar so pela direcao + temporada e seguro.
+    // Insere as pausas de data FIFA ANTES de reconciliar/numerar: o calendario
+    // de clubes para na janela de selecoes e os jogos seguintes deslizam.
+    if (userTeam) allFixtures = aplicarPausasFifa(allFixtures, userTeam)
+
     const seasonNow = saveState.season
     allFixtures = reconcilePlayedFixtures(
       allFixtures,

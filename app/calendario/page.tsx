@@ -226,6 +226,13 @@ export default function CalendarioPage() {
     return { isOpen, daysUntil }
   }, [currentMonth])
 
+  // Ha data FIFA neste mes? Nela o campeonato de clubes fica parado (a pausa foi
+  // inserida no calendario por aplicarPausasFifa em use-game-manager).
+  const dataFifaNoMes = useMemo(
+    () => seasonCalendar.fixtures.some(f => f.competitionType === "fifa_break" && f.month === currentMonth),
+    [seasonCalendar.fixtures, currentMonth],
+  )
+
   const seasonCompetitions = useMemo(() => {
     const comps = new Set<string>()
     // Inclui todas as competicoes presentes nos fixtures do usuario
@@ -550,6 +557,17 @@ export default function CalendarioPage() {
               </div>
             )}
           </div>
+
+          {/* Data FIFA: campeonato de clubes parado enquanto a janela de selecoes
+              esta aberta (amistosos, Eliminatorias, Copa America/Euro, Mundial). */}
+          {dataFifaNoMes && (
+            <div className="border-t border-white/10 pt-4 mt-4">
+              <div className="text-amber-300/90 text-xs font-semibold mb-1">🌍 Data FIFA</div>
+              <div className="text-white/55 text-xs leading-snug">
+                Campeonato de clubes pausado — janela de seleções.
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Calendar Grid (EA FC Glassmorphism Style) */}
