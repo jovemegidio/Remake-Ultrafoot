@@ -1180,26 +1180,35 @@ export default function EditarPage() {
                     </section>
                   </div>
 
-                  {/* Save / Reset bar */}
-                  <div className="flex-shrink-0 h-12 flex items-center justify-between bg-black/60 backdrop-blur-sm border-t border-white/[0.06] px-5">
-                    <button
-                      onClick={handleResetOverride}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/40 hover:text-white/70 rounded-lg transition-all border border-white/[0.06]"
-                    >
-                      Restaurar padrão
-                    </button>
-                    <button
-                      onClick={handleSaveOverride}
-                      className={cn(
-                        "flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all border",
-                        editSaved
-                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                          : "text-black border-transparent shadow-lg"
-                      )}
-                      style={!editSaved ? { background: `linear-gradient(135deg, ${teamColor}, ${selectedTeam.cor2 ?? teamColor})` } : {}}
-                    >
-                      {editSaved ? "Salvo!" : "Salvar alterações"}
-                    </button>
+                    {/* Rodape do modal */}
+                    <div className="flex-shrink-0 h-14 flex items-center justify-between bg-black/40 border-t border-white/[0.06] px-5">
+                      <button
+                        onClick={handleResetOverride}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs bg-white/[0.04] hover:bg-white/[0.08] text-white/40 hover:text-white/70 rounded-lg transition-all border border-white/[0.06]"
+                      >
+                        Restaurar padrão
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShowClubModal(false)}
+                          className="px-4 py-2 text-xs font-medium text-white/50 hover:text-white rounded-lg transition-all"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => { handleSaveOverride(); }}
+                          className={cn(
+                            "flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all border",
+                            editSaved
+                              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                              : "text-black border-transparent shadow-lg"
+                          )}
+                          style={!editSaved ? { background: `linear-gradient(135deg, ${teamColor}, ${selectedTeam.cor2 ?? teamColor})` } : {}}
+                        >
+                          {editSaved ? "Salvo!" : "Salvar alterações"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1207,6 +1216,150 @@ export default function EditarPage() {
           )}
         </main>
       </div>
+
+      {/* ── MODAL: Editar / adicionar jogador ── */}
+      {playerDraft && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          onClick={() => setPlayerDraft(null)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0f0e] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cabecalho */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] bg-white/[0.02]">
+              <div className="flex items-center gap-2.5">
+                <Users className="h-4 w-4 text-[#00ffc8]" />
+                <h2 className="text-sm font-bold text-white">
+                  {isNewPlayer ? "Adicionar jogador" : "Editar jogador"}
+                </h2>
+              </div>
+              <button
+                onClick={() => setPlayerDraft(null)}
+                aria-label="Fechar"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <div className="px-5 py-5 space-y-4">
+              {/* Nome */}
+              <div>
+                <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1.5">Nome</label>
+                <input
+                  autoFocus
+                  value={playerDraft.nome}
+                  onChange={(e) => setPlayerDraft({ ...playerDraft, nome: e.target.value })}
+                  placeholder="Nome do jogador"
+                  className="w-full px-3 py-2 text-sm bg-white/[0.04] text-white rounded-lg border border-white/[0.08] focus:border-[#00ffc8]/40 focus:outline-none placeholder:text-white/25"
+                />
+              </div>
+
+              {/* Posicao + Lado */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1.5">Posicao</label>
+                  <select
+                    value={playerDraft.posicao}
+                    onChange={(e) => setPlayerDraft({ ...playerDraft, posicao: e.target.value })}
+                    className="w-full px-3 py-2 text-sm bg-white/[0.04] text-white rounded-lg border border-white/[0.08] focus:border-[#00ffc8]/40 focus:outline-none"
+                  >
+                    {POSICOES.map((p) => (
+                      <option key={p} value={p} className="bg-[#0a0f0e]">{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1.5">Pe / Lado</label>
+                  <select
+                    value={playerDraft.lado}
+                    onChange={(e) => setPlayerDraft({ ...playerDraft, lado: e.target.value })}
+                    className="w-full px-3 py-2 text-sm bg-white/[0.04] text-white rounded-lg border border-white/[0.08] focus:border-[#00ffc8]/40 focus:outline-none"
+                  >
+                    {LADOS.map((l) => (
+                      <option key={l.value} value={l.value} className="bg-[#0a0f0e]">{l.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Pais + Idade */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1.5">Pais</label>
+                  <input
+                    value={playerDraft.pais}
+                    maxLength={3}
+                    onChange={(e) => setPlayerDraft({ ...playerDraft, pais: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 text-sm bg-white/[0.04] text-white rounded-lg border border-white/[0.08] focus:border-[#00ffc8]/40 focus:outline-none uppercase"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1.5">Idade</label>
+                  <input
+                    type="number"
+                    min={15}
+                    max={45}
+                    value={playerDraft.idade}
+                    onChange={(e) => setPlayerDraft({ ...playerDraft, idade: Number(e.target.value) })}
+                    className="w-full px-3 py-2 text-sm bg-white/[0.04] text-white rounded-lg border border-white/[0.08] focus:border-[#00ffc8]/40 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Overall */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-semibold text-white/40 uppercase tracking-wide">Overall</label>
+                  <span className={cn("text-sm font-bold", ovrColor(playerDraft.overall))}>{playerDraft.overall}</span>
+                </div>
+                <input
+                  type="range"
+                  min={40}
+                  max={99}
+                  value={playerDraft.overall}
+                  onChange={(e) => setPlayerDraft({ ...playerDraft, overall: Number(e.target.value) })}
+                  className="w-full accent-[#00ffc8]"
+                />
+              </div>
+
+              {/* Caracteristica */}
+              <div>
+                <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-wide mb-1.5">Caracteristica</label>
+                <select
+                  value={playerDraft.caracteristica}
+                  onChange={(e) => setPlayerDraft({ ...playerDraft, caracteristica: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-white/[0.04] text-white rounded-lg border border-white/[0.08] focus:border-[#00ffc8]/40 focus:outline-none"
+                >
+                  {CARACTERISTICAS.map((c) => (
+                    <option key={c} value={c} className="bg-[#0a0f0e]">{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Rodape */}
+            <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-white/[0.06] bg-black/40">
+              <button
+                onClick={() => setPlayerDraft(null)}
+                className="px-4 py-2 text-xs font-medium text-white/50 hover:text-white rounded-lg transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={savePlayerDraft}
+                disabled={!playerDraft.nome.trim()}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#00ffc8] text-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                {isNewPlayer ? "Adicionar" : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
