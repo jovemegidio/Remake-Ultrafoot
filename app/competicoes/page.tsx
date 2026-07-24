@@ -20,6 +20,7 @@ import {
   Check,
   X,
   Crown,
+  CalendarRange,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -33,6 +34,7 @@ import { resolveTieByCurto } from "@/lib/cup-engine"
 import { getCountryCompetitions, getContinentalSpot, getContinentalDivisions } from "@/lib/country-competitions"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
+import { periodoLabelPorNome } from "@/lib/competition-dates-2026"
 import { cn } from "@/lib/utils"
 
 // Tipos para competicoes
@@ -752,6 +754,15 @@ export default function CompeticoesPage() {
                   <Users className="h-3 w-3" />
                   <span>{t.competitions.teamCount(comp.teams)}</span>
                 </div>
+                {/* Periodo REAL da competicao em 2026 (Copa do Mundo 11 jun – 19 jul,
+                    etc.). O motor e por semana; isto e a data de verdade exibida.
+                    Casa pelo NOME porque o card usa id generico. */}
+                {periodoLabelPorNome(comp.name) && (
+                  <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/40">
+                    <CalendarRange className="h-3 w-3" />
+                    <span>{periodoLabelPorNome(comp.name)}</span>
+                  </div>
+                )}
                 <div className={cn(
                   "mt-3 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider",
                   comp.bgColor,
