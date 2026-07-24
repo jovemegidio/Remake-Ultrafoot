@@ -305,64 +305,64 @@ export default function CalendarioPage() {
   className="object-cover"
   priority
   />
-  {/* Overlays limpos e neutros para legibilidade premium */}
-  <div className="absolute inset-0 bg-[#070a0c]/72" />
-  {/* Vinheta lateral para o painel esquerdo */}
-  <div className="absolute inset-0 bg-gradient-to-r from-[#070a0c] via-[#070a0c]/40 to-transparent" />
-  {/* Vinheta superior e inferior para barras */}
-  <div className="absolute inset-0 bg-gradient-to-b from-[#070a0c]/85 via-transparent to-[#070a0c]/90" />
-  {/* Brilho ciano sutil no topo */}
-  <div
-  className="absolute inset-x-0 top-0 h-64 opacity-40"
-  style={{ background: "radial-gradient(ellipse 60% 100% at 50% 0%, rgba(0,255,200,0.14), transparent 70%)" }}
-  />
+  {/* Professional Vignette Overlays */}
+  {/* Base dark overlay for readability */}
+  <div className="absolute inset-0 bg-black/30" />
+  
+  {/* Left vignette - stronger for sidebar info */}
+  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
+  
+  {/* Top vignette for month tabs */}
+  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
+  
+  {/* Bottom vignette for footer controls */}
+  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+  
+  {/* Radial vignette for cinematic depth */}
+  <div className="absolute inset-0" style={{ 
+  background: "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 30%, rgba(0,0,0,0.5) 100%)" 
+  }} />
+  
+  {/* Subtle corner accents to complement cyan glow */}
+  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/40" />
   </div>
 
       {/* Top Navigation Bar */}
-      <header className="relative z-10 flex items-center justify-between gap-4 h-14 px-4 md:px-6 bg-[#070a0c]/60 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center gap-3 md:gap-5 min-w-0">
-          <div className="hidden sm:flex items-center gap-2 text-sm">
-            <span className="text-white/40 font-medium">Escritorio</span>
-            <ChevronRight className="h-3.5 w-3.5 text-white/25" />
-            <span className="text-white font-bold">Calendario</span>
-          </div>
-
-          {/* Month selector */}
-          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1">
+      <header className="relative z-10 flex items-center justify-between h-12 px-6 bg-black/30 backdrop-blur-sm border-b border-white/10">
+        <div className="flex items-center gap-6">
+          <span className="text-white/60 text-sm font-medium">Escritorio</span>
+          <span className="text-white text-sm font-bold">Calendario</span>
+          {/* Month Tabs */}
+          <div className="flex items-center gap-1 ml-4">
             <button
               onClick={() => setCurrentMonth(m => {
                 const idx = seasonMonths.indexOf(m)
                 return seasonMonths[(idx - 1 + seasonMonths.length) % seasonMonths.length]
               })}
-              aria-label="Mes anterior"
-              className="flex h-7 w-7 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+              className="p-1 text-white/40 hover:text-white"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide max-w-[52vw] md:max-w-none">
-              {seasonMonths.map((monthIndex) => (
-                <button
-                  key={monthIndex}
-                  onClick={() => setCurrentMonth(monthIndex)}
-                  className={cn(
-                    "shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                    monthIndex === currentMonth
-                      ? "bg-[#00ffc8] text-black shadow-[0_0_16px_-4px_rgba(0,255,200,0.6)]"
-                      : "text-white/50 hover:bg-white/10 hover:text-white/90"
-                  )}
-                >
-                  <span className="md:hidden">{MONTH_NAMES_SHORT[monthIndex]}</span>
-                  <span className="hidden md:inline">{MONTH_NAMES[monthIndex]}</span>
-                </button>
-              ))}
-            </div>
+            {seasonMonths.map((monthIndex) => (
+              <button
+                key={monthIndex}
+                onClick={() => setCurrentMonth(monthIndex)}
+                className={cn(
+                  "px-3 py-1 text-xs font-medium transition-all rounded",
+                  monthIndex === currentMonth
+                    ? "bg-white/20 text-white"
+                    : "text-white/50 hover:text-white/80"
+                )}
+              >
+                {MONTH_NAMES[monthIndex]}
+              </button>
+            ))}
             <button
               onClick={() => setCurrentMonth(m => {
                 const idx = seasonMonths.indexOf(m)
                 return seasonMonths[(idx + 1) % seasonMonths.length]
               })}
-              aria-label="Proximo mes"
-              className="flex h-7 w-7 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+              className="p-1 text-white/40 hover:text-white"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -370,173 +370,160 @@ export default function CalendarioPage() {
         </div>
 
         {/* User Team */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <TeamCrest team={userTeam} size="xs" />
-          <span className="hidden sm:inline text-white text-sm font-semibold">{userTeam.nome}</span>
+          <span className="text-white text-sm font-medium">{userTeam.nome}</span>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col md:flex-row md:h-[calc(100vh-56px-56px)] h-[calc(100dvh-56px)] overflow-y-auto md:overflow-hidden p-3 md:p-6 gap-4 md:gap-6 pb-24 md:pb-6">
+      <div className="relative z-10 flex flex-col md:flex-row md:h-[calc(100vh-48px-56px)] h-[calc(100dvh-56px)] overflow-y-auto md:overflow-hidden p-3 md:p-6 gap-4 md:gap-6 pb-24 md:pb-6">
         {/* Left Panel - Match Info (EA FC Style) */}
-        <aside className="w-full md:w-64 md:flex-shrink-0 flex flex-col gap-4">
+        <aside className="w-full md:w-56 md:flex-shrink-0 flex flex-col">
           {/* Current Date - Large */}
-          <div>
-            <div className="text-[#00ffc8] text-[11px] font-semibold tracking-[0.25em] uppercase mb-1">
+          <div className="mb-8">
+            <div className="text-white/60 text-xs font-medium tracking-wider uppercase mb-1">
               {dayOfWeek}
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-white text-4xl font-black tracking-tight leading-none">
-                {monthName} {dayNum}
-              </span>
+            <div className="text-white text-3xl font-black tracking-tight">
+              {monthName} {dayNum}
             </div>
-            <div className="text-white/40 text-sm mt-1">{2026}</div>
+            <div className="text-white/50 text-sm">
+              {2026}
+            </div>
           </div>
 
-          {/* Next Match Card */}
+          {/* Competition */}
           {selectedFixture && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-4">
-              {(() => {
-                const isHome = selectedFixture.homeTeam.curto === userTeam.curto
-                const opponent = isHome ? selectedFixture.awayTeam : selectedFixture.homeTeam
-                return (
-                  <>
-                    {/* Competition + Home/Away */}
-                    <div className="flex items-center justify-between gap-2 mb-4">
-                      <span className="truncate text-[11px] font-bold uppercase tracking-wider text-white/70">
-                        {selectedFixture.competition}
-                      </span>
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
-                          isHome
-                            ? "bg-[#0088ff]/20 text-[#8ed0ff] border border-[#0088ff]/40"
-                            : "bg-[#00cc66]/20 text-[#86ffb0] border border-[#00cc66]/40",
-                        )}
-                      >
-                        {isHome ? "Casa" : "Fora"}
-                      </span>
-                    </div>
-
-                    {/* Crest */}
-                    <div className="flex flex-col items-center text-center">
-                      <TeamCrest team={opponent} size="2xl" />
-                      <div className="mt-3 text-lg font-black leading-tight text-white text-balance">
-                        {opponent.nome}
-                      </div>
-                      {/* Stars */}
-                      <div className="mt-2 flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={cn(
-                              "h-3.5 w-3.5",
-                              star <= 3 ? "fill-yellow-400 text-yellow-400" : "text-white/15",
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* CTA */}
-                    {!selectedFixture.played && selectedFixture.week > currentWeek && (
-                      <button
-                        onClick={() => simulateUntilMatch(selectedFixture)}
-                        disabled={isSimulating}
-                        className={cn(
-                          "mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all",
-                          "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:brightness-110",
-                          "disabled:cursor-not-allowed disabled:opacity-60",
-                        )}
-                      >
-                        {isSimulating ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Simulando...
-                          </>
-                        ) : selectedFixture.week === currentWeek + 1 ? (
-                          <>
-                            <Play className="h-4 w-4" />
-                            Ir para o jogo
-                          </>
-                        ) : (
-                          <>
-                            <FastForward className="h-4 w-4" />
-                            Simular ate aqui
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </>
-                )
-              })()}
+            <div className="mb-6">
+              <div className="text-white text-sm font-bold">
+                {selectedFixture.competition === "Brasileirao Serie A" ? "Brasileirao Serie A" : selectedFixture.competition}
+              </div>
             </div>
           )}
 
-          {/* Competitions */}
-          <Link
-            href="/competicoes"
-            className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.06]"
-          >
-            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-white/50 mb-2.5 group-hover:text-white/70 transition-colors">
-              <span className="flex items-center gap-2">
-                <Trophy className="h-3.5 w-3.5 text-yellow-400" />
-                Campeonatos
-              </span>
-              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          <Link href="/competicoes" className="mb-6 group block">
+            <div className="flex items-center gap-2 text-white/50 text-xs font-medium uppercase tracking-wider mb-2 group-hover:text-white/70 transition-colors">
+              <Trophy className="h-3.5 w-3.5 text-yellow-400" />
+              Campeonatos
             </div>
             <div className="space-y-1.5">
               {seasonCompetitions.map((competition) => (
-                <div
-                  key={competition}
-                  className="text-white/75 text-xs font-semibold leading-tight group-hover:text-white transition-colors"
-                >
+                <div key={competition} className="text-white/80 text-xs font-semibold leading-tight group-hover:text-white transition-colors">
                   {competition}
                 </div>
               ))}
             </div>
           </Link>
 
+          {/* Opponent Team with Stars */}
+          {selectedFixture && (
+            <div className="mb-8">
+              {/* Stars */}
+              <div className="flex gap-0.5 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star 
+                    key={star} 
+                    className={cn(
+                      "h-4 w-4",
+                      star <= 3 ? "fill-yellow-400 text-yellow-400" : "text-white/20"
+                    )} 
+                  />
+                ))}
+              </div>
+              
+              {/* Large Team Crest */}
+              <div className="relative mb-4">
+                <TeamCrest 
+                  team={selectedFixture.homeTeam.curto === userTeam.curto ? selectedFixture.awayTeam : selectedFixture.homeTeam} 
+                  size="2xl" 
+                />
+              </div>
+              
+              {/* Team Name */}
+              <div className="text-white text-xl font-black">
+                {selectedFixture.homeTeam.curto === userTeam.curto
+                  ? selectedFixture.awayTeam.nome
+                  : selectedFixture.homeTeam.nome}
+              </div>
+            </div>
+          )}
+
+          {/* Simular ate a partida selecionada e ir para o jogo */}
+          {selectedFixture && !selectedFixture.played && selectedFixture.week > currentWeek && (
+            <button
+              onClick={() => simulateUntilMatch(selectedFixture)}
+              disabled={isSimulating}
+              className={cn(
+                "mb-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all",
+                "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:brightness-110",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+              )}
+            >
+              {isSimulating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Simulando...
+                </>
+              ) : selectedFixture.week === currentWeek + 1 ? (
+                <>
+                  <Play className="h-4 w-4" />
+                  Ir para o jogo
+                </>
+              ) : (
+                <>
+                  <FastForward className="h-4 w-4" />
+                  Simular ate esta partida
+                </>
+              )}
+            </button>
+          )}
+
           {/* Spacer */}
-          <div className="hidden md:block flex-1" />
+          <div className="flex-1" />
 
           {/* Transfer Window */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="flex items-center gap-2 text-white/50 text-[11px] font-semibold uppercase tracking-wider mb-2">
-              <span className={cn("h-1.5 w-1.5 rounded-full", transferWindow.isOpen ? "bg-[#00ff88]" : "bg-white/30")} />
-              Janela de Transferencias
+          <div className="border-t border-white/10 pt-4">
+            <div className="text-white/50 text-xs font-medium mb-1">
+              {transferWindow.isOpen ? "Janela de Transferencias" : "Janela de Transferencias Fechada"}
             </div>
             {!transferWindow.isOpen ? (
-              <div className="flex items-baseline gap-2">
-                <span className="text-white text-3xl font-black tabular-nums">{transferWindow.daysUntil}</span>
-                <span className="text-white/45 text-xs">dias ate abrir</span>
-              </div>
+              <>
+                <div className="text-white text-4xl font-black">
+                  {transferWindow.daysUntil}
+                </div>
+                <div className="text-white/50 text-xs">
+                  Dias Ate Abrir
+                </div>
+              </>
             ) : (
-              <div className="text-[#00ff88] text-lg font-black">Aberta</div>
+              <div className="text-[#00ff88] text-lg font-bold">
+                Aberta
+              </div>
             )}
           </div>
         </aside>
 
         {/* Calendar Grid (EA FC Glassmorphism Style) */}
         <main className="flex-1 flex flex-col min-h-[460px] md:min-h-0">
-          <div className="flex-1 bg-white/[0.04] backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]">
+          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
             {/* Week days header */}
-            <div className="grid grid-cols-7 border-b border-white/10 bg-white/[0.03]">
+            <div className="grid grid-cols-7 border-b border-white/10">
               {WEEK_DAYS.map((day) => (
-                <div key={day} className="py-2.5 md:py-3 text-center text-[10px] md:text-xs font-bold text-white/45 uppercase tracking-[0.15em]">
+                <div key={day} className="p-3 text-center text-xs font-bold text-white/40 uppercase tracking-wider">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar days */}
-            <div className="grid grid-cols-7 auto-rows-fr h-[calc(100%-42px)]">
+            <div className="grid grid-cols-7 auto-rows-fr h-[calc(100%-44px)]">
               {calendarDays.map((item, i) => {
                 const isSelected = item.isCurrentMonth && item.day === selectedDay
                 const hasMatch = item.fixture !== null
                 const isHome = item.fixture?.homeTeam.curto === userTeam.curto
                 const opponent = item.fixture ? (isHome ? item.fixture.awayTeam : item.fixture.homeTeam) : null
-
+                
                 return (
                   <button
                     key={i}
@@ -545,33 +532,19 @@ export default function CalendarioPage() {
                     }}
                     disabled={!item.isCurrentMonth}
                     className={cn(
-                      "group relative overflow-hidden border-r border-b border-white/[0.06] transition-colors",
-                      item.isCurrentMonth ? "hover:bg-white/[0.06]" : "opacity-25",
-                      isSelected && "bg-[#00ffc8]/[0.08]",
+                      "relative overflow-hidden border-r border-b border-white/5 transition-all",
+                      item.isCurrentMonth ? "hover:bg-white/5" : "opacity-30",
+                      isSelected && "bg-white/10",
                     )}
                   >
-                    {/* Selected ring */}
-                    {isSelected && (
-                      <span className="pointer-events-none absolute inset-0 z-20 rounded-[2px] ring-2 ring-inset ring-[#00ffc8]/70" />
-                    )}
-
-                    {/* Match day accent bar */}
-                    {hasMatch && (
-                      <span
-                        className="absolute inset-x-0 top-0 z-10 h-[3px]"
-                        style={{ backgroundColor: isHome ? "#0088ff" : "#00cc66" }}
-                      />
-                    )}
-
                     {/* Day number */}
-                    <span
-                      className={cn(
-                        "absolute left-2 top-1.5 z-10 font-bold tabular-nums",
-                        !item.isCurrentMonth && "text-white/20",
-                        item.isCurrentMonth && !hasMatch && "text-white/45",
-                        hasMatch && "text-white",
-                      )}
-                      style={{ fontSize: 20, lineHeight: "22px" }}
+                    <span className={cn(
+                      "absolute left-0 right-0 z-10 text-center font-bold",
+                      !item.isCurrentMonth && "text-white/20",
+                      item.isCurrentMonth && !hasMatch && "text-white/50",
+                      hasMatch && "text-white"
+                    )}
+                    style={{ top: 8, fontSize: 24, lineHeight: "24px" }}
                     >
                       {item.day}
                     </span>
@@ -579,29 +552,29 @@ export default function CalendarioPage() {
                     {/* Match Card (EA FC Style) */}
                     {hasMatch && opponent && (
                       <div
-                        className="absolute left-1.5 right-1.5 rounded-lg px-1.5 flex items-center gap-1.5 overflow-hidden border backdrop-blur-sm"
+                        className="absolute left-2 right-2 rounded-lg px-2 flex items-center justify-center gap-1.5 overflow-hidden shadow-lg border"
                         style={{
                           bottom: 6,
-                          height: 34,
-                          backgroundColor: isHome ? "rgba(0, 136, 255, 0.18)" : "rgba(0, 204, 102, 0.18)",
-                          borderColor: isHome ? "rgba(0, 136, 255, 0.5)" : "rgba(0, 204, 102, 0.5)",
+                          height: 32,
+                          backgroundColor: isHome ? "rgba(0, 136, 255, 0.35)" : "rgba(0, 204, 102, 0.35)",
+                          borderColor: isHome ? "rgba(0, 136, 255, 0.6)" : "rgba(0, 204, 102, 0.6)",
                         }}
                       >
                         <TeamCrest team={opponent} size="xs" />
                         <div className="min-w-0 flex flex-col items-start leading-none">
                           <div
-                            className="font-black uppercase truncate max-w-full"
+                            className="font-black uppercase"
                             style={{
                               color: isHome ? "#8ed0ff" : "#86ffb0",
                               fontSize: 9,
-                              lineHeight: "11px",
+                              lineHeight: "10px",
                             }}
                           >
                             {isHome ? "Casa" : "Fora"}
                           </div>
                           <div
-                            className="font-bold text-white/55 uppercase truncate max-w-full"
-                            style={{ fontSize: 8, lineHeight: "10px" }}
+                            className="font-bold text-white/60 uppercase"
+                            style={{ fontSize: 8, lineHeight: "9px" }}
                           >
                             {item.fixture?.competition === "Brasileirao Serie A" ? "Liga" : "Copa"}
                           </div>
@@ -617,7 +590,7 @@ export default function CalendarioPage() {
       </div>
 
       {/* Bottom Action Bar (EA FC Style) */}
-      <footer className="absolute bottom-0 left-0 right-0 md:ml-16 h-14 hidden md:flex items-center justify-between px-6 bg-[#070a0c]/70 backdrop-blur-md border-t border-white/10 z-10">
+      <footer className="absolute bottom-0 left-0 right-0 md:ml-16 h-14 flex items-center justify-between px-6 bg-black/50 backdrop-blur-sm border-t border-white/10 z-10">
         <div className="flex items-center gap-6 text-xs text-white/70">
           <button 
             onClick={handleAdvanceRound}

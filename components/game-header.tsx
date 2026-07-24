@@ -325,7 +325,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           href="/configuracoes"
           aria-label="Configuracoes"
           onClick={(e) => { e.preventDefault(); hardNavigate("/configuracoes") }}
-          className="hidden md:flex h-8 w-8 items-center justify-center rounded-md text-white/45 hover:text-white/80 hover:bg-white/5 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-white/45 hover:text-white/80 hover:bg-white/5 transition-colors"
         >
           <Settings className="h-4 w-4" />
         </Link>

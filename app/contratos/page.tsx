@@ -247,9 +247,6 @@ export default function ContratosPage() {
             </div>
           </div>
 
-          {/* Wrapper com rolagem horizontal no mobile (tabela larga) */}
-          <div className="overflow-x-auto">
-          <div className="min-w-[680px] md:min-w-0">
           {/* Header da tabela */}
           <div className="grid grid-cols-[1fr_100px_120px_120px_100px_100px] gap-4 px-5 py-3 text-[10px] font-medium tracking-widest text-white/40 uppercase border-b border-white/[0.04] bg-white/[0.02]">
             <span>Jogador</span>
@@ -340,8 +337,6 @@ export default function ContratosPage() {
                 </div>
               )
             })}
-          </div>
-          </div>
           </div>
         </div>
       </main>
