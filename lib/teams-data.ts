@@ -38,6 +38,7 @@ export type Divisao =
   | "primera_a_col"
   | "primera_div_chi"
   | "primera_div_ury"
+  | "primera_a_ecu"
   // Asia
   | "k_league_1"
   | "chinese_super"

@@ -194,6 +194,7 @@ const OFFICIAL_SOURCE_BY_REGION: Record<string, string> = {
   colombia: "https://dimayor.com.co/reglamentos/",
   chile: "https://www.anfp.cl/bases-de-campeonatos/",
   uruguai: "https://www.auf.org.uy/documentos/",
+  equador: "https://www.ligapro.ec/reglamentos",
   coreia_do_sul: "https://www.kleague.com/about/competition.do",
   china: "https://www.thecfa.cn/lstz/20251120/37089.html",
   asia: "https://www.the-afc.com/en/more/content/official_documents.html",
@@ -204,7 +205,7 @@ const OFFICIAL_SOURCE_BY_REGION: Record<string, string> = {
 
 function catalogRegulation(competition: Competition): CompetitionRegulation2026 {
   const sourceUrl = OFFICIAL_SOURCE_BY_ID[competition.id] ?? OFFICIAL_SOURCE_BY_REGION[competition.region]
-  const cycle: "2026" | "2026/27" = ["brasil", "argentina", "colombia", "chile", "uruguai", "usa", "japao", "coreia_do_sul", "china", "america_sul", "america_norte"].includes(competition.region) ? "2026" : "2026/27"
+  const cycle: "2026" | "2026/27" = ["brasil", "argentina", "colombia", "chile", "uruguai", "equador", "usa", "japao", "coreia_do_sul", "china", "america_sul", "america_norte"].includes(competition.region) ? "2026" : "2026/27"
   return {
     id: competition.id,
     name: competition.name,

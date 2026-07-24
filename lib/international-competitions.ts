@@ -711,6 +711,11 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
     { id: "primera_div_ury", name: "Liga AUF Uruguaya", shortName: "Liga AUF", type: "league", region: "uruguai", format: "group_knockout", teams: 16, rounds: 37, groups: 2, teamsPerGroup: 8, prize: 4000000, prestige: 58, relegation: 3, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Torneio Apertura de 15 datas, Intermedio em duas séries de oito e Clausura de 15 datas; a Tabela Anual e a definição da temporada determinam o campeão e os rebaixamentos." },
   ],
 
+  // LigaPro Serie A - Equador (liga que faltava)
+  primera_a_ecu: [
+    { id: "primera_a_ecu", name: "LigaPro Serie A", shortName: "LigaPro", type: "league", region: "equador", format: "group_knockout", teams: 16, rounds: 30, prize: 4000000, prestige: 60, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Primeira e segunda etapa em pontos corridos; os vencedores de etapa decidem o titulo na final; a Tabela Acumulada define vagas continentais e os dois rebaixados." },
+  ],
+
   // K-League 1 - Coreia do Sul
   k_league_1: [
     { id: "k_league_1", name: "K League 1", shortName: "K-League 1", type: "league", region: "coreia_do_sul", format: "league_playoff", teams: 12, rounds: 33, prize: 15000000, prestige: 58, relegation: 2, formatDetails: "Três turnos antes da divisão entre grupos final A e B." },

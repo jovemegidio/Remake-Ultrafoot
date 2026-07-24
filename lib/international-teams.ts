@@ -3947,6 +3947,30 @@ export const primeraDivUryTeams: Team[] = [
 ]
 
 // =============================================
+// LIGAPRO SERIE A - EQUADOR
+// Liga que faltava no jogo. file_key = nome do arquivo sortitoutsi, para o kit
+// casar direto. 16 clubes da LigaPro 2026.
+// =============================================
+export const ecuadorTeams: Team[] = [
+  { nome: "Independiente del Valle", curto: "IDV", cidade: "Sangolqui", estado: "Equador", cor1: "#1B1B1B", cor2: "#0B5CA5", prestigio: 80, torcida: 40000000, estadio_cap: 12000, saldo: 60000000, file_key: "independiente_del_valle", estadio_nome: "Estadio Banco Guayaquil", patrocinador: "Marathon", escudo_url: getIntlEscudo("independiente_del_valle"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "LDU Quito", curto: "LDU", cidade: "Quito", estado: "Equador", cor1: "#FFFFFF", cor2: "#0B2A5B", prestigio: 79, torcida: 90000000, estadio_cap: 41575, saldo: 55000000, file_key: "ldu_quito", estadio_nome: "Estadio Rodrigo Paz Delgado", patrocinador: "Marathon", escudo_url: getIntlEscudo("ldu_quito"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Barcelona SC", curto: "BSC", cidade: "Guayaquil", estado: "Equador", cor1: "#FDE100", cor2: "#D9231F", prestigio: 78, torcida: 120000000, estadio_cap: 57267, saldo: 52000000, file_key: "barcelona_sc", estadio_nome: "Estadio Monumental Banco Pichincha", patrocinador: "Marathon", escudo_url: getIntlEscudo("barcelona_sc"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Emelec", curto: "EME", cidade: "Guayaquil", estado: "Equador", cor1: "#0B4DA2", cor2: "#FFFFFF", prestigio: 74, torcida: 85000000, estadio_cap: 40000, saldo: 40000000, file_key: "emelec", estadio_nome: "Estadio George Capwell", patrocinador: "Marathon", escudo_url: getIntlEscudo("emelec"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Aucas", curto: "AUC", cidade: "Quito", estado: "Equador", cor1: "#D9231F", cor2: "#FDE100", prestigio: 68, torcida: 30000000, estadio_cap: 18000, saldo: 26000000, file_key: "aucas", estadio_nome: "Estadio Gonzalo Pozo Ripalda", patrocinador: "Marathon", escudo_url: getIntlEscudo("aucas"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Universidad Catolica", curto: "UCA", cidade: "Quito", estado: "Equador", cor1: "#0B4DA2", cor2: "#FFFFFF", prestigio: 65, torcida: 18000000, estadio_cap: 35724, saldo: 20000000, file_key: "cd_universidad_catolica", estadio_nome: "Estadio Olimpico Atahualpa", patrocinador: "Marathon", escudo_url: getIntlEscudo("cd_universidad_catolica"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Deportivo Cuenca", curto: "DCU", cidade: "Cuenca", estado: "Equador", cor1: "#D9231F", cor2: "#FFFFFF", prestigio: 64, torcida: 22000000, estadio_cap: 18549, saldo: 18000000, file_key: "deportivo_cuenca", estadio_nome: "Estadio Alejandro Serrano Aguilar", patrocinador: "Marathon", escudo_url: getIntlEscudo("deportivo_cuenca"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Delfin SC", curto: "DEL", cidade: "Manta", estado: "Equador", cor1: "#0B2A5B", cor2: "#FFFFFF", prestigio: 63, torcida: 15000000, estadio_cap: 22000, saldo: 16000000, file_key: "delfin_sc", estadio_nome: "Estadio Jocay", patrocinador: "Marathon", escudo_url: getIntlEscudo("delfin_sc"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Orense", curto: "ORE", cidade: "Machala", estado: "Equador", cor1: "#0B7C3F", cor2: "#FFFFFF", prestigio: 60, torcida: 9000000, estadio_cap: 18000, saldo: 12000000, file_key: "orense", estadio_nome: "Estadio 9 de Mayo", patrocinador: "Marathon", escudo_url: getIntlEscudo("orense"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Macara", curto: "MAC", cidade: "Ambato", estado: "Equador", cor1: "#0B4DA2", cor2: "#FFFFFF", prestigio: 60, torcida: 11000000, estadio_cap: 16467, saldo: 12000000, file_key: "macara", estadio_nome: "Estadio Bellavista", patrocinador: "Marathon", escudo_url: getIntlEscudo("macara"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Tecnico Universitario", curto: "TEC", cidade: "Ambato", estado: "Equador", cor1: "#D9231F", cor2: "#FFFFFF", prestigio: 59, torcida: 8000000, estadio_cap: 16467, saldo: 10000000, file_key: "tecnico_universitario", estadio_nome: "Estadio Bellavista", patrocinador: "Marathon", escudo_url: getIntlEscudo("tecnico_universitario"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Mushuc Runa", curto: "MUS", cidade: "Ambato", estado: "Equador", cor1: "#0B7C3F", cor2: "#FDE100", prestigio: 58, torcida: 6000000, estadio_cap: 8000, saldo: 9000000, file_key: "mushuc_runa", estadio_nome: "Estadio Echaleche", patrocinador: "Marathon", escudo_url: getIntlEscudo("mushuc_runa"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Libertad FC", curto: "LIB", cidade: "Loja", estado: "Equador", cor1: "#0B7C3F", cor2: "#FFFFFF", prestigio: 57, torcida: 5000000, estadio_cap: 15000, saldo: 8000000, file_key: "libertad_fc", estadio_nome: "Estadio Reina del Cisne", patrocinador: "Marathon", escudo_url: getIntlEscudo("libertad_fc"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Manta FC", curto: "MAN", cidade: "Manta", estado: "Equador", cor1: "#0B7C3F", cor2: "#FFFFFF", prestigio: 56, torcida: 6000000, estadio_cap: 22000, saldo: 8000000, file_key: "manta", estadio_nome: "Estadio Jocay", patrocinador: "Marathon", escudo_url: getIntlEscudo("manta"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Guayaquil City", curto: "GYC", cidade: "Guayaquil", estado: "Equador", cor1: "#0B4DA2", cor2: "#FFFFFF", prestigio: 55, torcida: 4000000, estadio_cap: 10000, saldo: 7000000, file_key: "guayaquil_city", estadio_nome: "Estadio Christian Benitez", patrocinador: "Marathon", escudo_url: getIntlEscudo("guayaquil_city"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+  { nome: "Leones del Norte", curto: "LEO", cidade: "Ibarra", estado: "Equador", cor1: "#D9231F", cor2: "#FDE100", prestigio: 52, torcida: 2500000, estadio_cap: 18000, saldo: 6000000, file_key: "leones_del_norte", estadio_nome: "Estadio Olimpico de Ibarra", patrocinador: "Marathon", escudo_url: getIntlEscudo("leones_del_norte"), divisao: "primera_a_ecu", regiao: "americas", pais: "Equador" },
+]
+
+// =============================================
 // K-LEAGUE 1 - COREIA DO SUL
 // =============================================
 export const kLeague1Teams: Team[] = [
@@ -4146,6 +4170,7 @@ export const allInternationalTeams = [
   ...primeiraAColTeams,
   ...primeraDivChileTeams,
   ...primeraDivUryTeams,
+  ...ecuadorTeams,
   ...kLeague1Teams,
   ...chineseSuperTeams,
   ...championshipTeams,

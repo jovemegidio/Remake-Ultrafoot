@@ -89,6 +89,7 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   primera_a_col:  { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
   primera_div_chi:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
   primera_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  primera_a_ecu:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
   // Asia
   saudi_pro:      { startMonth: 7,  monthsInSeason: 10, rounds: 30 },
   j_league:       { startMonth: 1,  monthsInSeason: 11, rounds: 34 },
@@ -456,6 +457,7 @@ const NATIONAL_CUP_FALLBACK: Record<string, string> = {
   primera_a_col: "Copa Colombia",
   primera_div_chi: "Copa Chile",
   primera_div_ury: "Copa Uruguay",
+  primera_a_ecu: "Copa Ecuador",
   j_league: "Copa do Imperador",
   k_league_1: "Copa da Coreia",
   chinese_super: "Copa da China",
@@ -475,7 +477,7 @@ const TOP_FLIGHT_DIVISIONS = new Set([
   "serie_a", "premier_league", "la_liga", "serie_a_ita", "bundesliga", "ligue_1",
   "primeira_liga", "eredivisie", "scottish_prem", "super_lig", "pro_league_bel",
   "russian_prem", "saudi_pro", "mls", "liga_mx", "j_league", "k_league_1",
-  "chinese_super", "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury",
+  "chinese_super", "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury", "primera_a_ecu",
 ])
 
 // Determina quais copas/continentais o time do usuario disputa e quantos jogos.

@@ -57,6 +57,7 @@ export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
   primera_a_col: { country: "Colombia", domesticCup: "Copa Colombia", ...CONMEBOL, hasStateChampionship: false },
   primera_div_chi: { country: "Chile", domesticCup: "Copa Chile", ...CONMEBOL, hasStateChampionship: false },
   primera_div_ury: { country: "Uruguai", domesticCup: "Copa Uruguay", ...CONMEBOL, hasStateChampionship: false },
+  primera_a_ecu: { country: "Equador", domesticCup: "Copa Ecuador", ...CONMEBOL, hasStateChampionship: false },
 
   // Demais
   saudi_pro: { country: "Arabia Saudita", domesticCup: "King's Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
@@ -98,7 +99,7 @@ export type Confederation = "CONMEBOL" | "UEFA" | "AFC" | "CONCACAF"
 const CONFEDERATION_DIVISIONS: Record<Confederation, string[]> = {
   CONMEBOL: [
     "serie_a", "serie_b", "serie_c", "serie_d",
-    "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury",
+    "liga_argentina", "primera_a_col", "primera_div_chi", "primera_div_ury", "primera_a_ecu",
   ],
   UEFA: [
     "premier_league", "la_liga", "serie_a_ita", "bundesliga", "ligue_1",
