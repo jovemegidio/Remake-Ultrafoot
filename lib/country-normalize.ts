@@ -71,6 +71,75 @@ const CODIGO_PAIS: Record<string, string> = {
   CRN: "Croácia",
   UBZ: "Uzbequistão",
   UZB: "Uzbequistão",
+  // Códigos que ainda vazavam (auditoria 2026-07-24). Só os de país INEQUÍVOCO;
+  // os ambíguos/lixo caem no fallback -> "Indefinido" (melhor que país errado).
+  AR: "Argentina",
+  ENG: "Inglaterra",
+  FR: "França",
+  IT: "Itália",
+  ITA: "Itália",
+  GER: "Alemanha",
+  DEN: "Dinamarca",
+  FIN: "Finlândia",
+  PL: "Polônia",
+  POL: "Polônia",
+  PT: "Portugal",
+  SAU: "Arábia Saudita",
+  IRL: "Irlanda",
+  WAL: "País de Gales",
+  GEO: "Geórgia",
+  EST: "Estônia",
+  ISL: "Islândia",
+  LET: "Letônia",
+  LIT: "Lituânia",
+  TUN: "Tunísia",
+  UAE: "Emirados Árabes Unidos",
+  CYP: "Chipre",
+  MAL: "Malta",
+  TCH: "Tchéquia",
+  CZE: "Tchéquia",
+  HUN: "Hungria",
+  MLI: "Mali",
+  SEN: "Senegal",
+  ROM: "Romênia",
+  MKD: "Macedônia do Norte",
+  HRV: "Croácia",
+  SLK: "Eslováquia",
+  KGZ: "Quirguistão",
+  IND: "Índia",
+  IRN: "Irã",
+  IRI: "Irã",
+  IRA: "Irã",
+  JOR: "Jordânia",
+  SVN: "Eslovênia",
+  VIE: "Vietnã",
+  LUX: "Luxemburgo",
+  KOS: "Kosovo",
+  NZE: "Nova Zelândia",
+  MOC: "Moçambique",
+  MDA: "Moldávia",
+  MOL: "Moldávia",
+  SMR: "San Marino",
+  CAZ: "Cazaquistão",
+  CRC: "Costa Rica",
+  HAI: "Haiti",
+  HON: "Honduras",
+  NCA: "Nicarágua",
+  NIC: "Nicarágua",
+  PAN: "Panamá",
+  VAN: "Vanuatu",
+  ZAM: "Zâmbia",
+  UGA: "Uganda",
+  HKG: "Hong Kong",
+  NGA: "Nigéria",
+  RDO: "República Dominicana",
+  SIR: "Síria",
+  FRO: "Ilhas Faroé",
+  GIB: "Gibraltar",
+  GUA: "Guatemala",
+  ZIM: "Zimbábue",
+  GHA: "Gana",
+  MTN: "Mauritânia",
 }
 
 /** Nomes por extenso que aparecem com grafias diferentes. */
@@ -106,6 +175,12 @@ export function normalizeCountry(raw: string | undefined | null): string {
   if (UF_BRASIL.has(upper)) return "Brasil"
   if (CODIGO_PAIS[upper]) return CODIGO_PAIS[upper]
   if (ALIAS_NOME[valor]) return ALIAS_NOME[valor]
+
+  // FALLBACK: nenhum país de verdade tem nome de 1 a 3 letras. Se sobrou um
+  // codigo curto que nao reconhecemos (sigla ambigua ou lixo de parsing como
+  // "CG", "REP", "ELS"), vira Indefinido — melhor do que exibir a sigla crua ou
+  // chutar um pais errado (ex.: "MON" poderia ser Monaco OU Montenegro).
+  if (/^[A-Z0-9.]{1,3}$/.test(upper)) return PAIS_DESCONHECIDO
 
   // Nome por extenso já canônico (a grande maioria dos 2.391 clubes).
   return valor
