@@ -61,6 +61,9 @@ public/escudos-selecoes/
 # QA / browser profiles
 .qa-chrome-profile/
 
+# Cache local do Ultrafoot (caminho Windows materializado dentro do repositório)
+/C:/ultrafoot-store/
+
 # npm lock (projeto usa pnpm)
 package-lock.json
 
