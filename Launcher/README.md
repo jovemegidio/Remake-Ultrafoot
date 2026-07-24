@@ -67,8 +67,35 @@ Esse instalador suporta modo silencioso: `"...setup.exe" /S`.
 ## Distribuir para os jogadores
 
 ### Quem ainda NÃO tem o jogo
-Entregue o `Ultrafoot Launcher_<versão>_x64-setup.exe`. Ao abrir, o launcher mostra
-**Instalar**, baixa o jogo do GitHub e instala em silêncio.
+Mande o **link estável** do launcher (release rolling `launcher`):
+
+```
+https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/Ultrafoot-Launcher-Setup.exe
+```
+
+Ao abrir, o launcher mostra **Instalar**, baixa o jogo do GitHub e instala em silêncio.
+
+### O launcher se auto-atualiza
+O launcher verifica, ao abrir, o `launcher.json` do release `launcher`
+(`.../releases/download/launcher/launcher.json`). Se houver uma versão mais nova do
+**próprio launcher**, ele baixa, instala e reabre sozinho — os players nunca precisam
+reinstalar manualmente.
+
+Para publicar uma nova versão do launcher:
+
+```bash
+# 1) bump da versao em Launcher/src-tauri/Cargo.toml e Launcher/package.json (ex.: 1.0.1)
+# 2) build (em C:)
+cd Launcher && pnpm tauri:build
+
+# 3) sobe no release rolling "launcher" com nome de arquivo FIXO + o launcher.json:
+#    - renomeie o setup para Ultrafoot-Launcher-Setup.exe
+#    - atualize a "version" e a "url" no launcher.json
+gh release upload launcher "Ultrafoot-Launcher-Setup.exe" "launcher.json" \
+  --repo jovemegidio/Ultrafoot26 --clobber
+```
+
+Na próxima abertura, todos os launchers instalados detectam a nova versão e se atualizam.
 
 ### Quem JÁ tem o jogo (launcher automático e silencioso)
 O instalador do **jogo** passa a embutir o launcher e instalá-lo em silêncio no

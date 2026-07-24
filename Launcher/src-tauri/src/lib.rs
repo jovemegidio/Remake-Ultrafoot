@@ -16,6 +16,11 @@ use tauri::{AppHandle, Emitter};
 const LATEST_JSON_URL: &str =
     "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json";
 
+// Endpoint estável do PRÓPRIO launcher (release rolling "launcher"). O launcher se
+// auto-atualiza a partir daqui, independente das versões do jogo.
+const LAUNCHER_UPDATE_URL: &str =
+    "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher.json";
+
 #[derive(Serialize, Clone, Default)]
 struct InstalledGame {
     installed: bool,
@@ -184,8 +189,8 @@ async fn download_and_install(app: AppHandle, url: String) -> Result<(), String>
         .map_err(|e| format!("tarefa interrompida: {e}"))?
 }
 
-fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
-    // 1) baixa o setup.exe para a pasta temporária, reportando progresso real.
+/// Baixa `url` para `dest` reportando progresso real via evento `launcher://progress`.
+fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
     let resp = ureq::get(url)
         .call()
         .map_err(|e| format!("download falhou: {e}"))?;
@@ -194,8 +199,7 @@ fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
         .and_then(|v| v.parse().ok())
         .unwrap_or(0);
 
-    let tmp = std::env::temp_dir().join("Ultrafoot-setup.exe");
-    let mut file = std::fs::File::create(&tmp)
+    let mut file = std::fs::File::create(dest)
         .map_err(|e| format!("não consegui criar o arquivo temporário: {e}"))?;
     let mut reader = resp.into_reader();
     let mut buf = [0u8; 262_144];
@@ -232,24 +236,24 @@ fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
         }
     }
     file.flush().ok();
-    drop(file);
+    Ok(())
+}
+
+fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
+    // 1) baixa o setup.exe do JOGO para a pasta temporária.
+    let tmp = std::env::temp_dir().join("Ultrafoot-setup.exe");
+    download_with_progress(app, url, &tmp)?;
 
     // 2) instala/atualiza em SILÊNCIO (/S do NSIS). O launcher mostra "Instalando…".
     let _ = app.emit(
         "launcher://progress",
-        Progress {
-            phase: "installing",
-            percent: 100,
-            downloaded,
-            total,
-        },
+        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0 },
     );
 
     let status = std::process::Command::new(&tmp)
         .arg("/S")
         .status()
         .map_err(|e| format!("não consegui iniciar o instalador: {e}"))?;
-
     if !status.success() {
         return Err(format!(
             "o instalador terminou com erro (código {})",
@@ -260,14 +264,78 @@ fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
     let _ = std::fs::remove_file(&tmp);
     let _ = app.emit(
         "launcher://progress",
-        Progress {
-            phase: "done",
-            percent: 100,
-            downloaded,
-            total,
-        },
+        Progress { phase: "done", percent: 100, downloaded: 0, total: 0 },
     );
     Ok(())
+}
+
+fn do_self_update(app: &AppHandle, url: &str) -> Result<(), String> {
+    // Baixa o novo instalador do PRÓPRIO launcher.
+    let tmp = std::env::temp_dir().join("Ultrafoot-Launcher-setup.exe");
+    download_with_progress(app, url, &tmp)?;
+
+    let _ = app.emit(
+        "launcher://progress",
+        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0 },
+    );
+
+    // O .exe do launcher está EM USO. Um script destacado espera o launcher fechar,
+    // instala em silêncio (troca o .exe) e reabre o launcher novo.
+    spawn_installer_and_relaunch(&tmp)?;
+    Ok(())
+}
+
+/// Roda o instalador do launcher e reabre o app — DESTACADO do processo atual, para
+/// sobreviver ao `app.exit()` e conseguir substituir o .exe que está em uso.
+#[cfg(windows)]
+fn spawn_installer_and_relaunch(setup: &std::path::Path) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    const DETACHED_PROCESS: u32 = 0x0000_0008;
+
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let bat = std::env::temp_dir().join("ultrafoot-launcher-update.bat");
+    // timeout: dá tempo do launcher fechar antes de o instalador tocar no .exe.
+    let script = format!(
+        "@echo off\r\ntimeout /t 2 /nobreak >nul\r\n\"{}\" /S\r\nstart \"\" \"{}\"\r\ndel \"%~f0\"\r\n",
+        setup.display(),
+        exe.display()
+    );
+    std::fs::write(&bat, script)
+        .map_err(|e| format!("não consegui preparar a atualização: {e}"))?;
+
+    std::process::Command::new("cmd")
+        .arg("/C")
+        .arg(&bat)
+        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+        .spawn()
+        .map_err(|e| format!("não consegui iniciar a atualização: {e}"))?;
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn spawn_installer_and_relaunch(_setup: &std::path::Path) -> Result<(), String> {
+    Err("auto-update do launcher é suportado apenas no Windows".into())
+}
+
+/// Compara "1.0.1" > "1.0.0" numericamente, segmento a segmento.
+fn is_newer(latest: &str, current: &str) -> bool {
+    let parse = |s: &str| {
+        s.split('.')
+            .map(|p| p.parse::<u32>().unwrap_or(0))
+            .collect::<Vec<u32>>()
+    };
+    let a = parse(latest);
+    let b = parse(current);
+    let n = a.len().max(b.len());
+    for i in 0..n {
+        let x = a.get(i).copied().unwrap_or(0);
+        let y = b.get(i).copied().unwrap_or(0);
+        if x != y {
+            return x > y;
+        }
+    }
+    false
 }
 
 #[tauri::command]
@@ -290,6 +358,55 @@ fn launch_game(app: AppHandle, path: Option<String>) -> Result<(), String> {
     Ok(())
 }
 
+/// Verifica se há uma versão MAIS NOVA do próprio launcher (launcher.json). Retorna
+/// null se já está atualizado ou se não deu para consultar.
+#[tauri::command]
+fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
+    let body: serde_json::Value = ureq::get(LAUNCHER_UPDATE_URL)
+        .call()
+        .map_err(|e| format!("falha ao consultar atualização do launcher: {e}"))?
+        .into_json()
+        .map_err(|e| format!("launcher.json inválido: {e}"))?;
+
+    let version = body
+        .get("version")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+    let url = body
+        .get("url")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+    let notes = body
+        .get("notes")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+
+    if version.is_empty() || url.is_empty() {
+        return Ok(None);
+    }
+    if is_newer(&version, env!("CARGO_PKG_VERSION")) {
+        Ok(Some(LatestInfo { version, notes, url }))
+    } else {
+        Ok(None)
+    }
+}
+
+/// Baixa e instala uma nova versão do PRÓPRIO launcher, depois reabre. O launcher
+/// fecha para o instalador poder trocar o executável em uso.
+#[tauri::command]
+async fn self_update(app: AppHandle, url: String) -> Result<(), String> {
+    let app2 = app.clone();
+    tauri::async_runtime::spawn_blocking(move || do_self_update(&app2, &url))
+        .await
+        .map_err(|e| format!("tarefa interrompida: {e}"))??;
+    // Fecha o launcher — o script destacado assume (instala e reabre).
+    app.exit(0);
+    Ok(())
+}
+
 // ─── Entrada do app ──────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -300,7 +417,9 @@ pub fn run() {
             get_installed_game,
             fetch_latest,
             download_and_install,
-            launch_game
+            launch_game,
+            check_launcher_update,
+            self_update
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Ultrafoot Launcher");

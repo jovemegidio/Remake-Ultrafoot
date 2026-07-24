@@ -12,7 +12,10 @@ import {
   fetchLatest,
   installOrUpdate,
   launchGame,
+  checkLauncherUpdate,
+  selfUpdate,
   type ProgressPhase,
+  type LatestInfo,
 } from "@/lib/launcher-bridge"
 import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff } from "lucide-react"
 
@@ -54,6 +57,32 @@ export function LauncherShell({
     phase: "downloading",
     progress: 0,
   })
+
+  // Auto-update do PRÓPRIO launcher: se há versão nova, atualiza sozinho ao abrir.
+  const [launcherUpdate, setLauncherUpdate] = useState<LatestInfo | null>(null)
+  const [selfUpdateProgress, setSelfUpdateProgress] = useState<{ phase: ProgressPhase; percent: number }>({
+    phase: "downloading",
+    percent: 0,
+  })
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      const upd = await checkLauncherUpdate()
+      if (!alive || !upd) return
+      setLauncherUpdate(upd)
+      // Atualiza automaticamente: baixa, instala e reabre (o app fecha no fim).
+      selfUpdate(upd.url, (p) => {
+        if (alive) setSelfUpdateProgress({ phase: p.phase, percent: p.percent })
+      }).catch(() => {
+        // Falhou: não trava o launcher — segue normal nesta versão.
+        if (alive) setLauncherUpdate(null)
+      })
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // Ao abrir: detecta a versão instalada (registro do Windows) e confirma a
   // última versão publicada (latest.json do GitHub).
@@ -125,6 +154,35 @@ export function LauncherShell({
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+      {launcherUpdate && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/95 p-6 backdrop-blur">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center">
+            <h2 className="font-display text-lg font-bold text-foreground">Atualizando o launcher</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Nova versão {launcherUpdate.version}. O launcher vai reiniciar em instantes.
+            </p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
+              <div
+                className={cn(
+                  "h-full rounded-full bg-primary transition-all duration-200",
+                  selfUpdateProgress.phase === "installing" && "animate-pulse",
+                )}
+                style={{
+                  width:
+                    selfUpdateProgress.phase === "downloading"
+                      ? `${selfUpdateProgress.percent}%`
+                      : "100%",
+                }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {selfUpdateProgress.phase === "installing"
+                ? "Instalando e reiniciando…"
+                : `Baixando… ${selfUpdateProgress.percent}%`}
+            </p>
+          </div>
+        </div>
+      )}
       <header className="flex shrink-0 flex-col gap-3 border-b border-border bg-background/80 px-4 pt-3 backdrop-blur md:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">

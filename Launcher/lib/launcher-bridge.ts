@@ -73,6 +73,36 @@ export async function installOrUpdate(
   }
 }
 
+/** Há uma versão mais nova do PRÓPRIO launcher? Null se já está atualizado. */
+export async function checkLauncherUpdate(): Promise<LatestInfo | null> {
+  if (!isTauri()) return null
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<LatestInfo | null>("check_launcher_update")
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Baixa e instala uma nova versão do PRÓPRIO launcher e reabre. O launcher fecha
+ * no fim (o instalador troca o .exe em uso e reabre o app).
+ */
+export async function selfUpdate(
+  url: string,
+  onProgress: (p: ProgressPayload) => void,
+): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  const { listen } = await import("@tauri-apps/api/event")
+  const unlisten = await listen<ProgressPayload>("launcher://progress", (e) => onProgress(e.payload))
+  try {
+    await invoke("self_update", { url })
+  } finally {
+    unlisten()
+  }
+}
+
 /** Abre o jogo instalado. */
 export async function launchGame(path: string | null): Promise<void> {
   if (!isTauri()) return
