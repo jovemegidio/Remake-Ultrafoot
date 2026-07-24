@@ -236,12 +236,12 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-16 items-center justify-between bg-[#070708]/95 backdrop-blur-xl border-b border-white/[0.06] pl-3 pr-5",
+        "sticky top-0 z-30 flex h-14 md:h-16 items-center justify-between bg-[#070708]/95 backdrop-blur-xl border-b border-white/[0.06] pl-2 pr-2 md:pl-3 md:pr-5",
         className,
       )}
     >
       {/* Esquerda: emblema circular "mc" + trilha [w] SecaoPai > PaginaAtual */}
-      <div className="flex items-center gap-4 min-w-0">
+      <div className="flex items-center gap-2 md:gap-4 min-w-0">
         {/* Logo UF26 */}
         <Link
           href="/"
@@ -254,19 +254,19 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             alt="UF26"
             width={120}
             height={44}
-            className="h-9 w-auto object-contain"
+            className="h-7 md:h-9 w-auto object-contain"
             priority
           />
         </Link>
 
         {/* Trilha de navegacao */}
         {showNav && (
-          <nav className="flex items-end gap-4 min-w-0 overflow-x-auto scrollbar-none">
-            {/* Secao pai (dimmed) com keycap [w] */}
+          <nav className="flex items-end gap-2 md:gap-4 min-w-0 overflow-x-auto scrollbar-none">
+            {/* Secao pai (dimmed) com keycap [w] — keycap so no desktop (toque nao tem tecla W) */}
             <Link
               href={routeMeta.parentHref}
               onClick={(e) => { e.preventDefault(); hardNavigate(routeMeta.parentHref) }}
-              className="group relative flex shrink-0 flex-col items-center gap-1"
+              className="group relative hidden sm:flex shrink-0 flex-col items-center gap-1"
             >
               <KeyCap label="W" className="opacity-70" />
               <span className="whitespace-nowrap text-[15px] font-semibold tracking-wide text-white/40 transition-colors group-hover:text-white/70">
@@ -275,7 +275,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             </Link>
 
             {/* Pagina atual (bold/branco) */}
-            <span className="shrink-0 whitespace-nowrap pb-[2px] text-[17px] font-extrabold tracking-tight text-white">
+            <span className="shrink-0 whitespace-nowrap pb-[2px] text-[15px] md:text-[17px] font-extrabold tracking-tight text-white">
               {routeMeta.title}
             </span>
           </nav>
@@ -283,7 +283,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       </div>
 
       {/* Direita: acoes + widget do clube */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
         {/* Info temporada/calendario (data real, nao contador de rodada) */}
         <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
           <Calendar className="h-3.5 w-3.5 text-[#00ffc8]" />

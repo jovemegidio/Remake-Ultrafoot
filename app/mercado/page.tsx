@@ -505,7 +505,7 @@ export default function MercadoPage() {
 
       <GameHeader team={userTeam} />
 
-      <main className="relative z-10 p-4 h-[calc(100vh-48px)] overflow-hidden">
+      <main className="relative z-10 p-3 md:p-4 h-[calc(100dvh-56px)] overflow-y-auto md:h-[calc(100vh-48px)] md:overflow-hidden pb-24 md:pb-4">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as MarketTab)}>
           {/* EA FC Style Header Navigation */}
           <div className="flex items-center gap-4 mb-8 min-w-0">
@@ -668,7 +668,7 @@ export default function MercadoPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {/* First Row */}
               <FilterCardComponent 
                 card={filterCards[0]} 
@@ -869,7 +869,7 @@ export default function MercadoPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-180px)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:h-[calc(100vh-180px)]">
               {/* Player List */}
               <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin">
                 {Object.entries(groupedPlayers).map(([group, players]) => (
@@ -920,7 +920,7 @@ export default function MercadoPage() {
               <span className="text-white/40">Contrate, envie e acompanhe relatorios</span>
             </div>
 
-            <div className="grid grid-cols-12 gap-4 h-[calc(100vh-220px)] overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 md:h-[calc(100vh-220px)] md:overflow-hidden">
               <div className="col-span-12 xl:col-span-7 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">

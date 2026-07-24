@@ -263,6 +263,14 @@
   --sidebar-ring: oklch(0.85 0.20 175);
 }
 
+/* Mobile: desliga o "zoom-out" pensado para desktop. No celular o app usa escala
+   natural 1:1, senao todo o layout fica minusculo e ilegivel. O desktop continua 0.80. */
+@media (max-width: 767px) {
+  :root {
+    --game-view-scale: 1;
+  }
+}
+
 @theme inline {
   --font-sans: var(--font-geist), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
@@ -352,6 +360,20 @@
 
   .max-w-screen {
     max-width: calc(100vw / var(--game-view-scale)) !important;
+  }
+
+  /* Mobile: usa a altura dinamica da viewport (dvh) para o app-shell nao ser
+     cortado pela barra de enderecos do navegador que aparece/some ao rolar. */
+  @media (max-width: 767px) {
+    .h-screen {
+      height: 100dvh !important;
+    }
+    .min-h-screen {
+      min-height: 100dvh !important;
+    }
+    .max-h-screen {
+      max-height: 100dvh !important;
+    }
   }
 
   /* EA FC Display font - Bold condensed for titles */
@@ -654,6 +676,15 @@
   }
   .animate-fade-in {
     animation: fade-in 0.3s ease-out forwards;
+  }
+
+  /* Folha inferior (bottom sheet) do menu mobile "Mais" */
+  @keyframes slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .animate-slide-up {
+    animation: slide-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
   /* Card show animation */

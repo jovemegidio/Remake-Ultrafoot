@@ -6,6 +6,7 @@ import { NotificationsProvider, NotificationToastContainer } from "@/components/
 import { NativeAppProvider } from "@/components/native-app-provider"
 import { MusicPlayerWrapper } from "@/components/music-player-wrapper"
 import { EaActionBarProvider, EaActionBar } from "@/components/ea-action-bar"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import "./globals.css"
 
 const geist = Geist({
@@ -31,7 +32,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0a0e1a",
+  width: "device-width",
+  initialScale: 1,
   userScalable: true,
+  viewportFit: "cover",
 }
 
 export default function RootLayout({
@@ -48,6 +52,7 @@ export default function RootLayout({
               <NotificationsProvider>
                 <EaActionBarProvider>
                   {children}
+                  <MobileBottomNav />
                   <EaActionBar />
                 </EaActionBarProvider>
                 <NotificationToastContainer />

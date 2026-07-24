@@ -70,6 +70,11 @@ package-lock.json
 /test-results/
 /out*/
 
+# Store/cache do Tauri gravado com caminho absoluto do Windows como nome literal
+# (ex.: "C:/ultrafoot-store/...") — entulho local pesado, NUNCA versionar.
+C:/
+[A-Z]:/
+
 # Python venvs das ferramentas
 **/.venv/
 **/.venv*/
