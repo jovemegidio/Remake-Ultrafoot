@@ -52,6 +52,30 @@ async function _migrateLocalStorage(store: TauriStore): Promise<void> {
   if (migrated > 0) await store.save()
 }
 
+/**
+ * Promove para o arquivo durável as chaves ultrafoot: que existam apenas no
+ * localStorage. Usa o `cache` (ja carregado do durável) para decidir, sem
+ * round-trip async por chave. Diferente de _migrateLocalStorage, roda SEMPRE —
+ * nao so quando o durável esta vazio — para nao perder registro/settings que
+ * so vivem no localStorage. Idempotente: depois de promovida, a chave esta no
+ * cache e e ignorada.
+ */
+async function _promoteLocalOnlyKeys(store: TauriStore): Promise<void> {
+  if (typeof localStorage === "undefined") return
+  let promoted = 0
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i)
+    if (!k?.startsWith("ultrafoot:")) continue
+    if (cache.has(k)) continue // ja e durável
+    const v = localStorage.getItem(k)
+    if (v === null) continue
+    cache.set(k, v)
+    await store.set(k, v)
+    promoted++
+  }
+  if (promoted > 0) await store.save()
+}
+
 async function _init(): Promise<void> {
   if (typeof window === "undefined") {
     _initialized = true
@@ -77,6 +101,16 @@ async function _init(): Promise<void> {
           try { localStorage.setItem(k, v) } catch { /* quota/privacidade: cache segue valido */ }
         }
       }
+
+      // PROMOCAO: qualquer chave ultrafoot: que exista SO no localStorage vai para
+      // o arquivo durável agora. Sem isto, dado gravado apenas via safeLocalSet
+      // (o REGISTRO de builds antigas, e settings como acessibilidade/desempenho)
+      // se perde na proxima atualizacao — o WebView2 limpa o localStorage, e a
+      // migracao antiga so rodava com o arquivo VAZIO (o do jogador ja tem save,
+      // entao nunca rodava). Aqui promove key a key o que faltar, sem sobrescrever
+      // o que ja e durável. Como cada navegacao recarrega a pagina, roda cedo e
+      // frequente; depois de promovida, a chave ja esta no cache e e ignorada.
+      await _promoteLocalOnlyKeys(store)
     } catch (e) {
       console.warn("[persistent-store] Tauri store failed, using localStorage:", e)
       _loadFromLocalStorage()
