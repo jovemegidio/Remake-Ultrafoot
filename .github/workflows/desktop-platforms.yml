@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -31,6 +31,11 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Read game version
+        id: gamever
+        shell: bash
+        run: echo "version=$(node -p "require('./src-tauri/tauri.conf.json').version")" >> "$GITHUB_OUTPUT"
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.name == 'macos-universal' && 'x86_64-apple-darwin,aarch64-apple-darwin' || '' }}
@@ -53,9 +58,10 @@ jobs:
           pnpm exec tsx scripts/qa-smoke.ts
           pnpm exec tsx scripts/qa-rosters.ts
 
-      - name: Build native package
+      - name: Build & publish native package
         uses: tauri-apps/tauri-action@v0
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
@@ -66,6 +72,13 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           args: ${{ matrix.args }}
+          # Publica num release PRÓPRIO (Linux/macOS), sem tocar no canal do Windows
+          # (launcher lê o latest.json do release build-<versao> do Windows).
+          tagName: desktop-${{ steps.gamever.outputs.version }}
+          releaseName: "Ultrafoot 26 ${{ steps.gamever.outputs.version }} — Linux & macOS"
+          releaseBody: "Ultrafoot 26 para Linux (.AppImage e .deb) e macOS. AppImage: baixe, dê permissão de execução e rode."
+          releaseDraft: false
+          prerelease: false
 
       - name: Upload packages for QA
         uses: actions/upload-artifact@v4
