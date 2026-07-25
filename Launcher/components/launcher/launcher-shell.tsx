@@ -1,11 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { GameWithReleases, NewsWithGame } from "@/lib/data"
 import { GameHero } from "./game-hero"
 import { NewsFeed } from "./news-feed"
 import { ChangelogView } from "./changelog-view"
 import { SecurityPanel } from "./security-panel"
+import { SettingsDialog } from "./settings-dialog"
 import { cn } from "@/lib/utils"
 import {
   getInstalledGame,
@@ -14,10 +15,15 @@ import {
   launchGame,
   checkLauncherUpdate,
   selfUpdate,
+  getAutostartEnabled,
+  setAutostartEnabled,
+  setupCloseToTray,
   type ProgressPhase,
   type LatestInfo,
 } from "@/lib/launcher-bridge"
-import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff } from "lucide-react"
+import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings } from "lucide-react"
+
+const CLOSE_TO_TRAY_KEY = "ultrafoot-launcher:close-to-tray"
 
 export type GameStatus = "not-installed" | "downloading" | "update" | "playable"
 export type LaunchMode = "online" | "offline"
@@ -68,6 +74,38 @@ export function LauncherShell({
     phase: "downloading",
     percent: 0,
   })
+
+  // Configurações do launcher.
+  const [showSettings, setShowSettings] = useState(false)
+  const [autostart, setAutostart] = useState(false)
+  const [closeToTray, setCloseToTray] = useState(false)
+  const closeToTrayRef = useRef(false)
+  closeToTrayRef.current = closeToTray
+
+  useEffect(() => {
+    // Carrega preferências e liga o "fechar para a bandeja".
+    setCloseToTray(typeof window !== "undefined" && localStorage.getItem(CLOSE_TO_TRAY_KEY) === "1")
+    void getAutostartEnabled().then(setAutostart)
+    let cleanup = () => {}
+    void setupCloseToTray(() => closeToTrayRef.current).then((un) => {
+      cleanup = un
+    })
+    return () => cleanup()
+  }, [])
+
+  const toggleCloseToTray = useCallback((value: boolean) => {
+    setCloseToTray(value)
+    if (typeof window !== "undefined") localStorage.setItem(CLOSE_TO_TRAY_KEY, value ? "1" : "0")
+  }, [])
+
+  const toggleAutostart = useCallback(async (value: boolean) => {
+    setAutostart(value)
+    try {
+      await setAutostartEnabled(value)
+    } catch {
+      setAutostart(!value) // reverte se falhar
+    }
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -202,6 +240,15 @@ export function LauncherShell({
           </div>
         </div>
       )}
+      {showSettings && (
+        <SettingsDialog
+          autostart={autostart}
+          closeToTray={closeToTray}
+          onAutostart={toggleAutostart}
+          onCloseToTray={toggleCloseToTray}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
       <header className="flex shrink-0 flex-col gap-3 border-b border-border bg-background/80 px-4 pt-3 backdrop-blur md:px-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -252,6 +299,15 @@ export function LauncherShell({
                 <WifiOff className="h-3.5 w-3.5" /> Offline
               </button>
             </div>
+
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground"
+              title="Configurações"
+              aria-label="Configurações"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
           </div>
         </div>
 

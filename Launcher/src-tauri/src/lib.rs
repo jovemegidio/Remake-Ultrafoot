@@ -196,6 +196,12 @@ async fn download_and_install(app: AppHandle, url: String) -> Result<(), String>
 /// Baixa `url` para `dest` com progresso (velocidade/ETA), RETOMANDO de um download
 /// parcial e com ATÉ 3 tentativas em caso de falha de rede.
 fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
+    // Começa SEMPRE de um arquivo limpo: um temporário deixado por uma sessão
+    // anterior (ex.: uma atualização passada) tem outra versão/tamanho e quebraria
+    // a retomada (Range) — o servidor devolveria 416 e o download falharia. As
+    // retentativas ABAIXO ainda retomam de parciais criados nesta mesma chamada.
+    let _ = std::fs::remove_file(dest);
+
     let mut last_err = String::new();
     for attempt in 1..=3 {
         match download_attempt(app, url, dest) {
@@ -473,12 +479,57 @@ async fn self_update(app: AppHandle, url: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Mostra e foca a janela principal (usado pela bandeja).
+fn show_main(app: &AppHandle) {
+    use tauri::Manager;
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
+}
+
 // ─── Entrada do app ──────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
+        .setup(|app| {
+            use tauri::menu::{MenuBuilder, MenuItemBuilder};
+            use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+
+            let open_item = MenuItemBuilder::with_id("open", "Abrir launcher").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", "Sair").build(app)?;
+            let menu = MenuBuilder::new(app).items(&[&open_item, &quit_item]).build()?;
+
+            TrayIconBuilder::with_id("main-tray")
+                .icon(app.default_window_icon().unwrap().clone())
+                .tooltip("Ultrafoot Launcher")
+                .menu(&menu)
+                .show_menu_on_left_click(false)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "open" => show_main(app),
+                    "quit" => app.exit(0),
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        show_main(tray.app_handle());
+                    }
+                })
+                .build(app)?;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_installed_game,
             fetch_latest,

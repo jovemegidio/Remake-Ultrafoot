@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-launcher",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,6 +15,7 @@
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-autostart": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@vercel/analytics": "1.6.1",
     "class-variance-authority": "^0.7.1",

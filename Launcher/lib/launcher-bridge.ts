@@ -107,6 +107,44 @@ export async function selfUpdate(
   }
 }
 
+// ─── Configurações ───────────────────────────────────────────────────────────
+
+/** O launcher está configurado para iniciar com o Windows? */
+export async function getAutostartEnabled(): Promise<boolean> {
+  if (!isTauri()) return false
+  try {
+    const { isEnabled } = await import("@tauri-apps/plugin-autostart")
+    return await isEnabled()
+  } catch {
+    return false
+  }
+}
+
+/** Liga/desliga iniciar o launcher com o Windows. */
+export async function setAutostartEnabled(enabled: boolean): Promise<void> {
+  if (!isTauri()) return
+  const { enable, disable } = await import("@tauri-apps/plugin-autostart")
+  if (enabled) await enable()
+  else await disable()
+}
+
+/**
+ * Ao fechar a janela, chama `shouldMinimize()`. Se true, esconde para a bandeja em
+ * vez de sair. Retorna uma função para remover o handler.
+ */
+export async function setupCloseToTray(shouldMinimize: () => boolean): Promise<() => void> {
+  if (!isTauri()) return () => {}
+  const { getCurrentWindow } = await import("@tauri-apps/api/window")
+  const win = getCurrentWindow()
+  const unlisten = await win.onCloseRequested(async (event) => {
+    if (shouldMinimize()) {
+      event.preventDefault()
+      await win.hide()
+    }
+  })
+  return unlisten
+}
+
 /** Abre o jogo instalado. */
 export async function launchGame(path: string | null): Promise<void> {
   if (!isTauri()) return
