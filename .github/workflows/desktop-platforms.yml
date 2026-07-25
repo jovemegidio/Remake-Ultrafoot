@@ -52,6 +52,16 @@ jobs:
 
       - run: pnpm install --no-frozen-lockfile
 
+      - name: Fetch game assets
+        shell: bash
+        run: |
+          echo "Baixando pacote de assets (escudos, jogadores, uniformes, narração)..."
+          curl -fsSL -o game-assets.zip \
+            "https://github.com/jovemegidio/Ultrafoot26/releases/download/game-assets/game-assets.zip"
+          unzip -q -o game-assets.zip
+          rm -f game-assets.zip
+          echo "Assets extraídos em public/."
+
       - name: Verify distributable game assets
         run: |
           node scripts/qa-release-assets.mjs
