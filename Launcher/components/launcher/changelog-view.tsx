@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import type { GameWithReleases } from "@/lib/data"
+import type { GameWithReleases, ReleaseWithChangelog } from "@/lib/data"
 import { formatDate, formatSize } from "@/lib/format"
 import { Plus, Wrench, RefreshCw, Minus } from "lucide-react"
 
@@ -15,8 +15,16 @@ const typeConfig: Record<
   removed: { label: "Removido", icon: Minus, className: "text-destructive" },
 }
 
-export function ChangelogView({ game }: { game: GameWithReleases }) {
-  if (game.releases.length === 0) {
+export function ChangelogView({
+  game,
+  releases,
+}: {
+  game: GameWithReleases
+  releases?: ReleaseWithChangelog[]
+}) {
+  // Releases da config remota têm prioridade; senão usa as embutidas.
+  const list = releases && releases.length > 0 ? releases : game.releases
+  if (list.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
         Nenhuma versão registrada.
@@ -28,7 +36,7 @@ export function ChangelogView({ game }: { game: GameWithReleases }) {
     <div className="flex flex-col gap-4">
       <h2 className="font-display text-xl font-semibold tracking-tight">Histórico de versões</h2>
       <ol className="flex flex-col gap-4">
-        {game.releases.map((release) => (
+        {list.map((release) => (
           <li
             key={release.id}
             className="rounded-xl border border-border bg-card p-5"

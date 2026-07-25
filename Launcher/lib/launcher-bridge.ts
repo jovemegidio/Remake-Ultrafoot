@@ -112,6 +112,13 @@ export async function selfUpdate(
 export type LauncherConfig = {
   announcement?: { text: string; level?: "info" | "warning" }
   news?: Array<{ title: string; category?: string; body?: string; date?: string; pinned?: boolean }>
+  changelog?: Array<{
+    version: string
+    date?: string
+    title?: string
+    latest?: boolean
+    changes?: Array<{ type?: "added" | "fixed" | "changed" | "removed"; text: string }>
+  }>
   social?: { discord?: string; youtube?: string; tiktok?: string; instagram?: string }
   serverStatusUrl?: string
 }

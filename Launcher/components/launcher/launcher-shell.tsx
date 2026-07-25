@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { GameWithReleases, NewsWithGame } from "@/lib/data"
+import type { GameWithReleases, NewsWithGame, ReleaseWithChangelog } from "@/lib/data"
 import { GameHero } from "./game-hero"
 import { NewsFeed } from "./news-feed"
 import { ChangelogView } from "./changelog-view"
@@ -154,6 +154,31 @@ export function LauncherShell({
             return b.publishedAt.getTime() - a.publishedAt.getTime()
           })
       : news
+
+  // Changelog remoto (config) tem prioridade sobre o embutido.
+  const effectiveReleases: ReleaseWithChangelog[] | undefined =
+    config?.changelog && config.changelog.length > 0
+      ? config.changelog.map((r, ri) => ({
+          id: 200000 + ri,
+          gameId: game.id,
+          version: r.version,
+          channel: "stable",
+          title: r.title ?? null,
+          downloadUrl: null,
+          sizeMb: 0,
+          isLatest: r.latest ?? ri === 0,
+          isRequired: false,
+          releasedAt: r.date ? new Date(r.date) : new Date(),
+          createdAt: r.date ? new Date(r.date) : new Date(),
+          changelog: (r.changes ?? []).map((c, ci) => ({
+            id: 300000 + ri * 100 + ci,
+            releaseId: 200000 + ri,
+            type: c.type ?? "added",
+            description: c.text,
+            sortOrder: ci,
+          })),
+        }))
+      : undefined
 
   useEffect(() => {
     let alive = true
@@ -401,7 +426,7 @@ export function LauncherShell({
 
           {tab === "news" && <NewsFeed news={effectiveNews} title={`Novidades de ${game.name}`} />}
 
-          {tab === "changelog" && <ChangelogView game={game} />}
+          {tab === "changelog" && <ChangelogView game={game} releases={effectiveReleases} />}
 
           {tab === "security" && <SecurityPanel mode={mode} />}
         </div>
