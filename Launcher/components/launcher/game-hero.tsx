@@ -12,12 +12,14 @@ export function GameHero({
   install,
   mode,
   onDownload,
+  onRepair,
 }: {
   game: GameWithReleases
   status: GameStatus
   install: InstallState
   mode: LaunchMode
   onDownload: () => void
+  onRepair: () => void
 }) {
   const latest = game.latestRelease
   const online = mode === "online"
@@ -86,6 +88,7 @@ export function GameHero({
             mode={mode}
             downloadSizeMb={latest?.sizeMb ?? game.sizeMb}
             onDownload={onDownload}
+            onRepair={onRepair}
           />
         </div>
       </div>

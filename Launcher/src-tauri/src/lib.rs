@@ -41,6 +41,10 @@ struct Progress {
     percent: u32,
     downloaded: u64,
     total: u64,
+    /// bytes por segundo (0 quando não aplicável)
+    speed: u64,
+    /// segundos restantes estimados (0 quando desconhecido)
+    eta: u64,
 }
 
 // ─── Detecção do jogo instalado ──────────────────────────────────────────────
@@ -189,22 +193,61 @@ async fn download_and_install(app: AppHandle, url: String) -> Result<(), String>
         .map_err(|e| format!("tarefa interrompida: {e}"))?
 }
 
-/// Baixa `url` para `dest` reportando progresso real via evento `launcher://progress`.
+/// Baixa `url` para `dest` com progresso (velocidade/ETA), RETOMANDO de um download
+/// parcial e com ATÉ 3 tentativas em caso de falha de rede.
 fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
-    let resp = ureq::get(url)
-        .call()
-        .map_err(|e| format!("download falhou: {e}"))?;
-    let total: u64 = resp
+    let mut last_err = String::new();
+    for attempt in 1..=3 {
+        match download_attempt(app, url, dest) {
+            Ok(()) => return Ok(()),
+            Err(e) => {
+                last_err = e;
+                if attempt < 3 {
+                    std::thread::sleep(std::time::Duration::from_secs(2));
+                }
+            }
+        }
+    }
+    Err(format!("download falhou após 3 tentativas: {last_err}"))
+}
+
+fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
+    use std::time::Instant;
+
+    // Quanto já baixamos numa tentativa anterior? Retoma via cabeçalho Range.
+    let existing = std::fs::metadata(dest).map(|m| m.len()).unwrap_or(0);
+
+    let mut req = ureq::get(url);
+    if existing > 0 {
+        req = req.set("Range", &format!("bytes={existing}-"));
+    }
+    let resp = req.call().map_err(|e| format!("download falhou: {e}"))?;
+
+    // 206 = servidor aceitou retomar; senão, recomeça do zero.
+    let resuming = resp.status() == 206;
+    let remaining: u64 = resp
         .header("Content-Length")
         .and_then(|v| v.parse().ok())
         .unwrap_or(0);
+    let start = if resuming { existing } else { 0 };
+    let total = if resuming { existing + remaining } else { remaining };
 
-    let mut file = std::fs::File::create(dest)
-        .map_err(|e| format!("não consegui criar o arquivo temporário: {e}"))?;
+    let mut file = if resuming {
+        std::fs::OpenOptions::new()
+            .append(true)
+            .open(dest)
+            .map_err(|e| format!("não consegui abrir o arquivo parcial: {e}"))?
+    } else {
+        std::fs::File::create(dest)
+            .map_err(|e| format!("não consegui criar o arquivo temporário: {e}"))?
+    };
+
     let mut reader = resp.into_reader();
     let mut buf = [0u8; 262_144];
-    let mut downloaded: u64 = 0;
+    let mut downloaded: u64 = start;
     let mut last_percent: u32 = u32::MAX;
+    let mut last_time = Instant::now();
+    let mut last_bytes = start;
 
     loop {
         let n = reader
@@ -224,6 +267,18 @@ fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) ->
         };
         if percent != last_percent {
             last_percent = percent;
+            let now = Instant::now();
+            let dt = now.duration_since(last_time).as_secs_f64();
+            let speed = if dt > 0.05 {
+                (((downloaded - last_bytes) as f64) / dt) as u64
+            } else {
+                0
+            };
+            let eta = if speed > 0 {
+                total.saturating_sub(downloaded) / speed
+            } else {
+                0
+            };
             let _ = app.emit(
                 "launcher://progress",
                 Progress {
@@ -231,11 +286,22 @@ fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) ->
                     percent: percent.min(100),
                     downloaded,
                     total,
+                    speed,
+                    eta,
                 },
             );
+            if dt > 0.05 {
+                last_time = now;
+                last_bytes = downloaded;
+            }
         }
     }
     file.flush().ok();
+
+    // Se sabemos o total e não veio tudo, falha — deixa a próxima tentativa retomar.
+    if total > 0 && downloaded < total {
+        return Err(format!("download incompleto ({downloaded}/{total} bytes)"));
+    }
     Ok(())
 }
 
@@ -247,7 +313,7 @@ fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
     // 2) instala/atualiza em SILÊNCIO (/S do NSIS). O launcher mostra "Instalando…".
     let _ = app.emit(
         "launcher://progress",
-        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0 },
+        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0, speed: 0, eta: 0 },
     );
 
     let status = std::process::Command::new(&tmp)
@@ -264,7 +330,7 @@ fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
     let _ = std::fs::remove_file(&tmp);
     let _ = app.emit(
         "launcher://progress",
-        Progress { phase: "done", percent: 100, downloaded: 0, total: 0 },
+        Progress { phase: "done", percent: 100, downloaded: 0, total: 0, speed: 0, eta: 0 },
     );
     Ok(())
 }
@@ -276,7 +342,7 @@ fn do_self_update(app: &AppHandle, url: &str) -> Result<(), String> {
 
     let _ = app.emit(
         "launcher://progress",
-        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0 },
+        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0, speed: 0, eta: 0 },
     );
 
     // O .exe do launcher está EM USO. Um script destacado espera o launcher fechar,

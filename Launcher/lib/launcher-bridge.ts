@@ -25,6 +25,10 @@ export type ProgressPayload = {
   percent: number
   downloaded: number
   total: number
+  /** bytes por segundo (0 quando não aplicável) */
+  speed: number
+  /** segundos restantes estimados (0 quando desconhecido) */
+  eta: number
 }
 
 /** true quando o código roda dentro do runtime do Tauri (app desktop). */
@@ -113,11 +117,20 @@ export async function launchGame(path: string | null): Promise<void> {
 // ─── Fallback de navegador (dev) ─────────────────────────────────────────────
 async function simulate(onProgress: (p: ProgressPayload) => void): Promise<void> {
   const total = 438 * 1024 * 1024
+  const speed = 12 * 1024 * 1024
   for (let pct = 0; pct <= 100; pct += 7) {
-    onProgress({ phase: "downloading", percent: Math.min(100, pct), downloaded: Math.round((total * pct) / 100), total })
+    const downloaded = Math.round((total * pct) / 100)
+    onProgress({
+      phase: "downloading",
+      percent: Math.min(100, pct),
+      downloaded,
+      total,
+      speed,
+      eta: Math.max(0, Math.round((total - downloaded) / speed)),
+    })
     await new Promise((r) => setTimeout(r, 180))
   }
-  onProgress({ phase: "installing", percent: 100, downloaded: total, total })
+  onProgress({ phase: "installing", percent: 100, downloaded: total, total, speed: 0, eta: 0 })
   await new Promise((r) => setTimeout(r, 1200))
-  onProgress({ phase: "done", percent: 100, downloaded: total, total })
+  onProgress({ phase: "done", percent: 100, downloaded: total, total, speed: 0, eta: 0 })
 }

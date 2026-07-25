@@ -28,6 +28,8 @@ export type InstallState = {
   downloading: boolean
   phase: ProgressPhase
   progress: number
+  speed: number
+  eta: number
 }
 
 type Tab = "home" | "news" | "changelog" | "security"
@@ -56,6 +58,8 @@ export function LauncherShell({
     downloading: false,
     phase: "downloading",
     progress: 0,
+    speed: 0,
+    eta: 0,
   })
 
   // Auto-update do PRÓPRIO launcher: se há versão nova, atualiza sozinho ao abrir.
@@ -109,39 +113,54 @@ export function LauncherShell({
         ? "update"
         : "playable"
 
+  const runInstall = useCallback(
+    (url: string) => {
+      setInstall((prev) => ({ ...prev, downloading: true, phase: "downloading", progress: 0, speed: 0, eta: 0 }))
+      installOrUpdate(url, (p) => {
+        setInstall((prev) => ({
+          ...prev,
+          downloading: p.phase !== "done",
+          phase: p.phase,
+          progress: p.percent,
+          speed: p.speed,
+          eta: p.eta,
+        }))
+      })
+        .then(() => {
+          setInstall((prev) => ({
+            ...prev,
+            version: latest.version ?? prev.version,
+            downloading: false,
+            phase: "done",
+            progress: 100,
+          }))
+        })
+        .catch((err) => {
+          console.error("[launcher] falha ao instalar:", err)
+          setInstall((prev) => ({ ...prev, downloading: false }))
+        })
+    },
+    [latest.version],
+  )
+
   const startDownload = useCallback(() => {
     if (install.downloading) return
     if (status === "playable") {
       void launchGame(install.path) // abre o jogo instalado
       return
     }
-
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url) return
+    runInstall(url)
+  }, [install.downloading, install.path, status, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
-    setInstall((prev) => ({ ...prev, downloading: true, phase: "downloading", progress: 0 }))
-    installOrUpdate(url, (p) => {
-      setInstall((prev) => ({
-        ...prev,
-        downloading: p.phase !== "done",
-        phase: p.phase,
-        progress: p.percent,
-      }))
-    })
-      .then(() => {
-        setInstall((prev) => ({
-          ...prev,
-          version: latest.version ?? prev.version,
-          downloading: false,
-          phase: "done",
-          progress: 100,
-        }))
-      })
-      .catch((err) => {
-        console.error("[launcher] falha ao instalar:", err)
-        setInstall((prev) => ({ ...prev, downloading: false }))
-      })
-  }, [install.downloading, install.path, status, latest.url, latest.version, game.latestRelease?.downloadUrl])
+  // Reparar: reinstala a versão atual por cima, corrigindo arquivos danificados.
+  const startRepair = useCallback(() => {
+    if (install.downloading) return
+    const url = latest.url ?? game.latestRelease?.downloadUrl
+    if (!url) return
+    runInstall(url)
+  }, [install.downloading, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
   const online = mode === "online"
 
@@ -268,6 +287,7 @@ export function LauncherShell({
                 install={install}
                 mode={mode}
                 onDownload={startDownload}
+                onRepair={startRepair}
               />
               <NewsFeed news={news.slice(0, 4)} title="Últimas novidades" />
             </>
