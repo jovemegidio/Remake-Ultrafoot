@@ -58,14 +58,19 @@ jobs:
           echo "Baixando pacote de assets (escudos, jogadores, uniformes, narração)..."
           curl -fsSL -o game-assets.zip \
             "https://github.com/jovemegidio/Ultrafoot26/releases/download/game-assets/game-assets.zip"
+          # unzip/ditto retornam código 1 em AVISOS (não erro fatal); o "|| true"
+          # evita que o set -e aborte. Validamos a extração logo abaixo.
           if [ "$RUNNER_OS" = "macOS" ]; then
-            # O unzip do macOS falha em nomes com acento (escudos PT-BR). O ditto
-            # (nativo da Apple) extrai zip com Unicode correto.
-            ditto -x -k game-assets.zip .
+            ditto -x -k game-assets.zip . || true
           else
-            unzip -q -o game-assets.zip
+            unzip -q -o game-assets.zip || true
           fi
           rm -f game-assets.zip
+          # Confirma que os assets obrigatórios saíram de verdade.
+          if [ ! -d public/escudos ] || [ ! -d public/jogadores ]; then
+            echo "ERRO: a extração dos assets falhou (public/escudos ou public/jogadores ausente)."
+            exit 1
+          fi
           echo "Assets extraídos em public/."
 
       - name: Verify distributable game assets
