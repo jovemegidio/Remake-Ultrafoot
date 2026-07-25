@@ -12,6 +12,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.ultrafoot.bolso",
       "adaptiveIcon": {
         "backgroundColor": "#0a0e12",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

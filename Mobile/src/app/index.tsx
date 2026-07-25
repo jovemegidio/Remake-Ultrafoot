@@ -1,105 +1,94 @@
-import { StyleSheet, Text, View } from "react-native"
-import { Card, Screen, SectionTitle } from "@/uf/ui"
+import { useEffect, useRef, useState } from "react"
+import { ActivityIndicator, BackHandler, StyleSheet, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { WebView, type WebViewNavigation } from "react-native-webview"
 import { UF } from "@/uf/theme"
-import { CLUB, FIXTURES, NEWS } from "@/uf/data"
+import { GAME_URL } from "@/uf/config"
 
-function formShort(r: string) {
-  return r === "V" ? UF.primary : r === "E" ? UF.gold : UF.danger
-}
+export default function GameScreen() {
+  const webRef = useRef<WebView>(null)
+  const canGoBack = useRef(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
-export default function HomeScreen() {
-  const next = FIXTURES.find((f) => f.homeScore === undefined)
+  // Botão físico "voltar" do Android navega dentro do jogo em vez de fechar.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (canGoBack.current) {
+        webRef.current?.goBack()
+        return true
+      }
+      return false
+    })
+    return () => sub.remove()
+  }, [])
+
+  const onNav = (s: WebViewNavigation) => {
+    canGoBack.current = s.canGoBack
+  }
+
   return (
-    <Screen>
-      {/* Cabeçalho do clube */}
-      <View style={styles.brandRow}>
-        <View style={styles.crest}>
-          <Text style={styles.crestText}>{CLUB.short}</Text>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <WebView
+        ref={webRef}
+        source={{ uri: GAME_URL }}
+        style={styles.web}
+        onLoadStart={() => {
+          setLoading(true)
+          setError(false)
+        }}
+        onLoadEnd={() => setLoading(false)}
+        onError={() => {
+          setLoading(false)
+          setError(true)
+        }}
+        onNavigationStateChange={onNav}
+        originWhitelist={["*"]}
+        javaScriptEnabled
+        domStorageEnabled
+        allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction={false}
+        allowsBackForwardNavigationGestures
+        cacheEnabled
+        setSupportMultipleWindows={false}
+      />
+
+      {(loading || error) && (
+        <View style={styles.overlay}>
+          <Text style={styles.brand}>ULTRAFOOT</Text>
+          <Text style={styles.brandSub}>de bolso</Text>
+          {error ? (
+            <Text style={styles.error}>
+              Não consegui carregar o jogo.{"\n"}Verifique sua conexão e a URL configurada.
+            </Text>
+          ) : (
+            <>
+              <ActivityIndicator color={UF.primary} size="large" style={{ marginTop: 20 }} />
+              <Text style={styles.hint}>Carregando o jogo…</Text>
+            </>
+          )}
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.club}>{CLUB.name}</Text>
-          <Text style={styles.league}>{CLUB.league}</Text>
-        </View>
-        <View style={{ alignItems: "flex-end" }}>
-          <Text style={styles.pos}>{CLUB.position}º</Text>
-          <Text style={styles.league}>{CLUB.points} pts</Text>
-        </View>
-      </View>
-
-      {/* Forma recente */}
-      <View style={styles.formRow}>
-        <Text style={styles.formLabel}>Forma</Text>
-        {CLUB.form.map((r, i) => (
-          <View key={i} style={[styles.formDot, { backgroundColor: formShort(r) + "22", borderColor: formShort(r) }]}>
-            <Text style={[styles.formText, { color: formShort(r) }]}>{r}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Próxima partida */}
-      <SectionTitle>Próxima partida</SectionTitle>
-      <Card style={{ marginBottom: 20 }}>
-        {next ? (
-          <View style={styles.matchRow}>
-            <Text style={styles.team}>{next.home}</Text>
-            <View style={styles.vs}>
-              <Text style={styles.vsText}>VS</Text>
-              <Text style={styles.matchComp}>{next.comp}</Text>
-            </View>
-            <Text style={[styles.team, { textAlign: "right" }]}>{next.away}</Text>
-          </View>
-        ) : (
-          <Text style={styles.league}>Sem jogos agendados.</Text>
-        )}
-      </Card>
-
-      {/* Resumo financeiro/temporada */}
-      <View style={styles.statsRow}>
-        <Card style={styles.stat}>
-          <Text style={styles.statValue}>{CLUB.played}</Text>
-          <Text style={styles.statLabel}>Jogos</Text>
-        </Card>
-        <Card style={styles.stat}>
-          <Text style={styles.statValue}>{CLUB.budget}</Text>
-          <Text style={styles.statLabel}>Orçamento</Text>
-        </Card>
-      </View>
-
-      {/* Novidades */}
-      <SectionTitle>Novidades</SectionTitle>
-      {NEWS.map((n) => (
-        <Card key={n.id} style={{ marginBottom: 10 }}>
-          <Text style={styles.newsTitle}>{n.title}</Text>
-          <Text style={styles.newsBody}>{n.body}</Text>
-        </Card>
-      ))}
-    </Screen>
+      )}
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 },
-  crest: {
-    width: 56, height: 56, borderRadius: 14, alignItems: "center", justifyContent: "center",
-    backgroundColor: UF.primary + "1a", borderWidth: 1, borderColor: UF.primary + "55",
+  container: { flex: 1, backgroundColor: UF.bg },
+  web: { flex: 1, backgroundColor: UF.bg },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: UF.bg,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
   },
-  crestText: { color: UF.primary, fontWeight: "900", fontSize: 18 },
-  club: { color: UF.text, fontSize: 20, fontWeight: "800" },
-  league: { color: UF.muted, fontSize: 12 },
-  pos: { color: UF.primary, fontSize: 22, fontWeight: "900" },
-  formRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 20 },
-  formLabel: { color: UF.muted, fontSize: 12, marginRight: 4 },
-  formDot: { width: 26, height: 26, borderRadius: 8, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  formText: { fontSize: 12, fontWeight: "800" },
-  matchRow: { flexDirection: "row", alignItems: "center" },
-  team: { color: UF.text, fontSize: 15, fontWeight: "700", flex: 1 },
-  vs: { alignItems: "center", paddingHorizontal: 12 },
-  vsText: { color: UF.primary, fontWeight: "900", fontSize: 14 },
-  matchComp: { color: UF.muted, fontSize: 10, marginTop: 2 },
-  statsRow: { flexDirection: "row", gap: 12, marginBottom: 4 },
-  stat: { flex: 1, alignItems: "center" },
-  statValue: { color: UF.text, fontSize: 18, fontWeight: "800" },
-  statLabel: { color: UF.muted, fontSize: 11, marginTop: 2 },
-  newsTitle: { color: UF.text, fontSize: 14, fontWeight: "700", marginBottom: 4 },
-  newsBody: { color: UF.muted, fontSize: 12, lineHeight: 18 },
+  brand: { color: UF.primary, fontSize: 34, fontWeight: "900", letterSpacing: 2 },
+  brandSub: { color: UF.muted, fontSize: 14, fontWeight: "700", letterSpacing: 6, marginTop: 2 },
+  hint: { color: UF.muted, fontSize: 13, marginTop: 12 },
+  error: { color: UF.muted, fontSize: 13, textAlign: "center", marginTop: 20, lineHeight: 20 },
 })

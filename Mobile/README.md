@@ -1,42 +1,59 @@
 # Ultrafoot de Bolso (mobile)
 
-Versão mobile do Ultrafoot 26 — um app **Expo / React Native** para **Android** (roda
-no **Expo Go**), com a mesma identidade visual do jogo (escuro + verde neon) e a
-estrutura de um manager de bolso.
+App Android (Expo) que é a **cópia perfeita do Ultrafoot 26**: ele carrega o **jogo
+web** dentro de um WebView. Ou seja, é o mesmo jogo do PC, no celular.
 
-> Scaffold funcional: navegação, tema e telas principais com dados de exemplo. É o
-> ponto de partida para plugar os dados/engine reais do jogo.
+- Roda no **Expo Go** (teste) e vira **APK** (via EAS) para instalar direto.
+- O jogo em si roda a partir de uma **URL hospedada** (Vercel). O app só precisa apontar
+  para essa URL — por isso o APK é leve.
 
-## Como rodar (Expo Go)
+## Passo 1 — Hospedar o jogo (Vercel)
 
-1. No celular Android, instale o app **Expo Go** (Play Store).
-2. No PC (de preferência num disco local, ex.: `C:`):
-   ```bash
-   cd Mobile
-   npm install
-   npx expo start
-   ```
-3. Abra o **Expo Go** e **escaneie o QR Code** que aparece no terminal. O app abre no celular.
+O jogo é um app Next.js com `output: export`. No projeto do JOGO (raiz do Ultrafoot):
 
-> Dica: PC e celular precisam estar na **mesma rede Wi‑Fi**. Se não conectar, rode
-> `npx expo start --tunnel`.
+```bash
+npm run build            # gera a versão web em out/  (rode em disco local, ex.: C:)
+npx vercel deploy --prebuilt --prod   # publica o out/ na Vercel (faz login na 1ª vez)
+```
+
+Anote a URL final (ex.: `https://ultrafoot.vercel.app`).
+
+## Passo 2 — Apontar o app para o jogo
+
+Edite **`src/uf/config.ts`** e troque `GAME_URL` pela URL da Vercel.
+
+## Passo 3 — Testar no Expo Go
+
+```bash
+cd Mobile
+npm install
+npx expo start          # escaneie o QR no app Expo Go (Android)
+```
+
+## Passo 4 — Gerar o APK (EAS)
+
+```bash
+cd Mobile
+npm install -g eas-cli          # ou use: npx eas-cli@latest
+eas login                        # >>> VOCÊ loga na SUA conta Expo <<<
+eas build -p android --profile preview   # gera o APK na nuvem; sai um link p/ baixar
+```
+
+O perfil `preview` (em `eas.json`) produz um **APK** (`buildType: apk`) para instalação
+direta. Para a Play Store depois, use o perfil `production` (gera `.aab`).
 
 ## Estrutura
 
-- `src/app/` — rotas (expo-router). Abas: **Início**, **Elenco**, **Calendário**, **Táticas**.
-  - `_layout.tsx` — navegação por abas (tema neon).
-  - `index.tsx` — hub do clube (forma, próxima partida, novidades).
-  - `elenco.tsx` — lista do elenco por posição e overall.
-  - `calendario.tsx` — jogos e resultados.
-  - `taticas.tsx` — campo com a formação (4‑3‑3).
-- `src/uf/theme.ts` — cores do tema.
-- `src/uf/data.ts` — **dados de exemplo** (clube, elenco, calendário). É aqui que se
-  pluga os dados reais do jogo.
-- `src/uf/ui.tsx` — componentes de UI reutilizáveis (Screen, Card, etc.).
+- `src/app/index.tsx` — o WebView que carrega o jogo (com tela de carregamento/erro e
+  botão físico "voltar" navegando dentro do jogo).
+- `src/app/_layout.tsx` — stack simples, sem cabeçalho (o jogo ocupa a tela toda).
+- `src/uf/config.ts` — **a URL do jogo** (é o que você configura).
+- `src/uf/theme.ts` — cores da tela de carregamento.
+- `eas.json` — perfis de build (APK/AAB).
 
-## Próximos passos (evolução)
+## Observações
 
-- Ligar os dados reais (elenco/competições) — a estrutura já espelha a do desktop.
-- Simulação de partida simplificada para o bolso.
-- Sincronização opcional com a carreira do desktop.
-- Build de produção (APK/AAB) via EAS quando sair do Expo Go.
+- Recursos nativos do desktop (anti-cheat UltraShield, Discord Rich Presence, atalhos)
+  não existem no navegador/WebView — o jogo já tem fallback web para esses casos.
+- Salvamentos usam o armazenamento do navegador dentro do app (WebView) — considere
+  sincronização com a nuvem no futuro.
