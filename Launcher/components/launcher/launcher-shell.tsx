@@ -227,7 +227,7 @@ export function LauncherShell({
   const runInstall = useCallback(
     (url: string) => {
       setInstall((prev) => ({ ...prev, downloading: true, phase: "downloading", progress: 0, speed: 0, eta: 0 }))
-      installOrUpdate(url, (p) => {
+      installOrUpdate(url, latest.version ?? "", (p) => {
         setInstall((prev) => ({
           ...prev,
           downloading: p.phase !== "done",

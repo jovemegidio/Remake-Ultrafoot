@@ -1,13 +1,16 @@
-// Ultrafoot Launcher — backend nativo.
+// Ultrafoot Launcher — backend nativo (Windows, Linux e macOS).
 //
 // Responsabilidades:
-//   • detectar a versão do Ultrafoot 26 instalada (registro do Windows);
-//   • consultar a última versão publicada (latest.json no GitHub);
-//   • baixar o setup.exe com progresso e instalar/atualizar EM SILÊNCIO (/S);
+//   • detectar a versão do Ultrafoot 26 instalada;
+//   • consultar a última versão publicada por plataforma;
+//   • baixar e instalar/atualizar o jogo (com progresso);
 //   • abrir o jogo instalado.
 //
-// O mesmo latest.json que o updater do jogo usava — assim launcher e jogo
-// enxergam exatamente a mesma "última versão".
+// Windows: setup.exe (NSIS) via latest.json.
+// Linux:   .AppImage colocado em ~/.local/share/UltrafootLauncher, chmod +x.
+// macOS:   .dmg montado e o .app copiado para ~/Applications.
+// Em Linux/macOS o launcher guarda a versão/caminho num game.json próprio (não há
+// registro do Windows).
 
 use serde::Serialize;
 use std::io::{Read, Write};
@@ -16,15 +19,18 @@ use tauri::{AppHandle, Emitter};
 const LATEST_JSON_URL: &str =
     "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json";
 
-// Endpoint estável do PRÓPRIO launcher (release rolling "launcher"). O launcher se
-// auto-atualiza a partir daqui, independente das versões do jogo.
+// Endpoint estável do PRÓPRIO launcher (release rolling "launcher").
 const LAUNCHER_UPDATE_URL: &str =
     "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher.json";
 
 // Configuração remota do launcher (notícias, banner, redes, status do servidor).
-// Editável sem recompilar: basta atualizar o arquivo no release "launcher".
 const LAUNCHER_CONFIG_URL: &str =
     "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher-config.json";
+
+// Releases multiplataforma (Linux/macOS) publicados pela CI: tags "desktop-<versão>".
+#[cfg(not(windows))]
+const RELEASES_API_URL: &str =
+    "https://api.github.com/repos/jovemegidio/Ultrafoot26/releases?per_page=30";
 
 #[derive(Serialize, Clone, Default)]
 struct InstalledGame {
@@ -50,6 +56,13 @@ struct Progress {
     speed: u64,
     /// segundos restantes estimados (0 quando desconhecido)
     eta: u64,
+}
+
+fn emit(app: &AppHandle, phase: &'static str) {
+    let _ = app.emit(
+        "launcher://progress",
+        Progress { phase, percent: 100, downloaded: 0, total: 0, speed: 0, eta: 0 },
+    );
 }
 
 // ─── Detecção do jogo instalado ──────────────────────────────────────────────
@@ -86,7 +99,6 @@ fn read_installed_game() -> InstalledGame {
             if !display.to_lowercase().contains("ultrafoot") {
                 continue;
             }
-            // Ignora a própria entrada do launcher — queremos o JOGO.
             if display.to_lowercase().contains("launcher") {
                 continue;
             }
@@ -131,7 +143,6 @@ fn resolve_game_exe(install_loc: &str, display_icon: &str) -> Option<String> {
         }
     }
 
-    // DisplayIcon costuma ser "C:\...\Ultrafoot 26.exe,0".
     if !display_icon.is_empty() {
         let icon = display_icon
             .split(',')
@@ -146,9 +157,54 @@ fn resolve_game_exe(install_loc: &str, display_icon: &str) -> Option<String> {
     None
 }
 
+// ── Linux/macOS: o launcher gerencia a instalação e guarda um game.json ──
+
+#[cfg(not(windows))]
+fn launcher_data_dir() -> std::path::PathBuf {
+    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
+    #[cfg(target_os = "macos")]
+    let base = std::path::Path::new(&home)
+        .join("Library")
+        .join("Application Support");
+    #[cfg(not(target_os = "macos"))]
+    let base = std::path::Path::new(&home).join(".local").join("share");
+    base.join("UltrafootLauncher")
+}
+
+#[cfg(not(windows))]
+fn game_meta_path() -> std::path::PathBuf {
+    launcher_data_dir().join("game.json")
+}
+
+#[cfg(not(windows))]
+fn write_game_meta(version: &str, path: &str) -> Result<(), String> {
+    let dir = launcher_data_dir();
+    std::fs::create_dir_all(&dir).map_err(|e| format!("não consegui criar {}: {e}", dir.display()))?;
+    let meta = serde_json::json!({ "version": version, "path": path });
+    std::fs::write(game_meta_path(), meta.to_string())
+        .map_err(|e| format!("não consegui salvar metadados: {e}"))?;
+    Ok(())
+}
+
 #[cfg(not(windows))]
 fn read_installed_game() -> InstalledGame {
-    InstalledGame::default()
+    let Ok(text) = std::fs::read_to_string(game_meta_path()) else {
+        return InstalledGame::default();
+    };
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return InstalledGame::default();
+    };
+    let version = v.get("version").and_then(|x| x.as_str()).map(|s| s.to_string());
+    let path = v.get("path").and_then(|x| x.as_str()).map(|s| s.to_string());
+    let exists = path
+        .as_ref()
+        .map(|p| std::path::Path::new(p).exists())
+        .unwrap_or(false);
+    if exists {
+        InstalledGame { installed: true, version, path }
+    } else {
+        InstalledGame::default()
+    }
 }
 
 // ─── Comandos expostos à UI ──────────────────────────────────────────────────
@@ -160,22 +216,34 @@ fn get_installed_game() -> InstalledGame {
 
 #[tauri::command]
 fn fetch_latest() -> Result<LatestInfo, String> {
+    #[cfg(windows)]
+    {
+        fetch_latest_windows()
+    }
+    #[cfg(target_os = "linux")]
+    {
+        fetch_latest_desktop(".appimage")
+    }
+    #[cfg(target_os = "macos")]
+    {
+        fetch_latest_desktop(".dmg")
+    }
+    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
+    {
+        Err("plataforma não suportada".into())
+    }
+}
+
+#[cfg(windows)]
+fn fetch_latest_windows() -> Result<LatestInfo, String> {
     let body: serde_json::Value = ureq::get(LATEST_JSON_URL)
         .call()
         .map_err(|e| format!("falha ao consultar atualizações: {e}"))?
         .into_json()
         .map_err(|e| format!("latest.json inválido: {e}"))?;
 
-    let version = body
-        .get("version")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default()
-        .to_string();
-    let notes = body
-        .get("notes")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default()
-        .to_string();
+    let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+    let notes = body.get("notes").and_then(|v| v.as_str()).unwrap_or_default().to_string();
     let url = body
         .get("platforms")
         .and_then(|p| p.get("windows-x86_64"))
@@ -190,10 +258,46 @@ fn fetch_latest() -> Result<LatestInfo, String> {
     Ok(LatestInfo { version, notes, url })
 }
 
+/// Linux/macOS: acha o release "desktop-*" mais recente e o asset com a extensão.
+#[cfg(not(windows))]
+fn fetch_latest_desktop(ext: &str) -> Result<LatestInfo, String> {
+    let releases: serde_json::Value = ureq::get(RELEASES_API_URL)
+        .set("User-Agent", "UltrafootLauncher")
+        .call()
+        .map_err(|e| format!("falha ao consultar releases: {e}"))?
+        .into_json()
+        .map_err(|e| format!("resposta inválida: {e}"))?;
+
+    let arr = releases.as_array().ok_or("resposta inesperada da API")?;
+    for rel in arr {
+        let tag = rel.get("tag_name").and_then(|t| t.as_str()).unwrap_or("");
+        if !tag.starts_with("desktop-") {
+            continue;
+        }
+        let version = tag.trim_start_matches("desktop-").to_string();
+        let notes = rel.get("body").and_then(|b| b.as_str()).unwrap_or_default().to_string();
+        if let Some(assets) = rel.get("assets").and_then(|a| a.as_array()) {
+            for a in assets {
+                let name = a.get("name").and_then(|n| n.as_str()).unwrap_or("");
+                if name.to_lowercase().ends_with(ext) {
+                    let url = a
+                        .get("browser_download_url")
+                        .and_then(|u| u.as_str())
+                        .unwrap_or_default()
+                        .to_string();
+                    if !url.is_empty() {
+                        return Ok(LatestInfo { version, notes, url });
+                    }
+                }
+            }
+        }
+    }
+    Err(format!("nenhum release desktop com {ext} encontrado"))
+}
+
 #[tauri::command]
-async fn download_and_install(app: AppHandle, url: String) -> Result<(), String> {
-    // Trabalho bloqueante (rede + processo) fora da thread do webview.
-    tauri::async_runtime::spawn_blocking(move || do_install(&app, &url))
+async fn download_and_install(app: AppHandle, url: String, version: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || do_install(&app, &url, &version))
         .await
         .map_err(|e| format!("tarefa interrompida: {e}"))?
 }
@@ -201,10 +305,6 @@ async fn download_and_install(app: AppHandle, url: String) -> Result<(), String>
 /// Baixa `url` para `dest` com progresso (velocidade/ETA), RETOMANDO de um download
 /// parcial e com ATÉ 3 tentativas em caso de falha de rede.
 fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
-    // Começa SEMPRE de um arquivo limpo: um temporário deixado por uma sessão
-    // anterior (ex.: uma atualização passada) tem outra versão/tamanho e quebraria
-    // a retomada (Range) — o servidor devolveria 416 e o download falharia. As
-    // retentativas ABAIXO ainda retomam de parciais criados nesta mesma chamada.
     let _ = std::fs::remove_file(dest);
 
     let mut last_err = String::new();
@@ -225,7 +325,6 @@ fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) ->
 fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
     use std::time::Instant;
 
-    // Quanto já baixamos numa tentativa anterior? Retoma via cabeçalho Range.
     let existing = std::fs::metadata(dest).map(|m| m.len()).unwrap_or(0);
 
     let mut req = ureq::get(url);
@@ -234,7 +333,6 @@ fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Resul
     }
     let resp = req.call().map_err(|e| format!("download falhou: {e}"))?;
 
-    // 206 = servidor aceitou retomar; senão, recomeça do zero.
     let resuming = resp.status() == 206;
     let remaining: u64 = resp
         .header("Content-Length")
@@ -261,14 +359,11 @@ fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Resul
     let mut last_bytes = start;
 
     loop {
-        let n = reader
-            .read(&mut buf)
-            .map_err(|e| format!("erro ao baixar: {e}"))?;
+        let n = reader.read(&mut buf).map_err(|e| format!("erro ao baixar: {e}"))?;
         if n == 0 {
             break;
         }
-        file.write_all(&buf[..n])
-            .map_err(|e| format!("erro ao gravar: {e}"))?;
+        file.write_all(&buf[..n]).map_err(|e| format!("erro ao gravar: {e}"))?;
         downloaded += n as u64;
 
         let percent = if total > 0 {
@@ -309,23 +404,40 @@ fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Resul
     }
     file.flush().ok();
 
-    // Se sabemos o total e não veio tudo, falha — deixa a próxima tentativa retomar.
     if total > 0 && downloaded < total {
         return Err(format!("download incompleto ({downloaded}/{total} bytes)"));
     }
     Ok(())
 }
 
-fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
-    // 1) baixa o setup.exe do JOGO para a pasta temporária.
+// ── Instalação por plataforma ──
+
+fn do_install(app: &AppHandle, url: &str, version: &str) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        let _ = version;
+        do_install_windows(app, url)
+    }
+    #[cfg(target_os = "linux")]
+    {
+        do_install_linux(app, url, version)
+    }
+    #[cfg(target_os = "macos")]
+    {
+        do_install_macos(app, url, version)
+    }
+    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
+    {
+        let _ = (app, url, version);
+        Err("plataforma não suportada".into())
+    }
+}
+
+#[cfg(windows)]
+fn do_install_windows(app: &AppHandle, url: &str) -> Result<(), String> {
     let tmp = std::env::temp_dir().join("Ultrafoot-setup.exe");
     download_with_progress(app, url, &tmp)?;
-
-    // 2) instala/atualiza em SILÊNCIO (/S do NSIS). O launcher mostra "Instalando…".
-    let _ = app.emit(
-        "launcher://progress",
-        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0, speed: 0, eta: 0 },
-    );
+    emit(app, "installing");
 
     let status = std::process::Command::new(&tmp)
         .arg("/S")
@@ -339,31 +451,105 @@ fn do_install(app: &AppHandle, url: &str) -> Result<(), String> {
     }
 
     let _ = std::fs::remove_file(&tmp);
-    let _ = app.emit(
-        "launcher://progress",
-        Progress { phase: "done", percent: 100, downloaded: 0, total: 0, speed: 0, eta: 0 },
-    );
+    emit(app, "done");
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn do_install_linux(app: &AppHandle, url: &str, version: &str) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let tmp = std::env::temp_dir().join("Ultrafoot26.AppImage.part");
+    download_with_progress(app, url, &tmp)?;
+    emit(app, "installing");
+
+    let dir = launcher_data_dir();
+    std::fs::create_dir_all(&dir).map_err(|e| format!("não consegui criar {}: {e}", dir.display()))?;
+    let dest = dir.join("Ultrafoot26.AppImage");
+
+    // Move (ou copia) o AppImage baixado para o destino final.
+    if std::fs::rename(&tmp, &dest).is_err() {
+        std::fs::copy(&tmp, &dest).map_err(|e| format!("não consegui instalar: {e}"))?;
+        let _ = std::fs::remove_file(&tmp);
+    }
+
+    // chmod +x para o AppImage ser executável.
+    let mut perm = std::fs::metadata(&dest).map_err(|e| e.to_string())?.permissions();
+    perm.set_mode(0o755);
+    std::fs::set_permissions(&dest, perm).map_err(|e| e.to_string())?;
+
+    write_game_meta(version, &dest.to_string_lossy())?;
+    emit(app, "done");
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn do_install_macos(app: &AppHandle, url: &str, version: &str) -> Result<(), String> {
+    let dmg = std::env::temp_dir().join("Ultrafoot26.dmg");
+    download_with_progress(app, url, &dmg)?;
+    emit(app, "installing");
+
+    let mount = std::env::temp_dir().join("ultrafoot-mnt");
+    let _ = std::fs::create_dir_all(&mount);
+
+    let st = std::process::Command::new("hdiutil")
+        .args(["attach", "-nobrowse", "-mountpoint"])
+        .arg(&mount)
+        .arg(&dmg)
+        .status()
+        .map_err(|e| format!("hdiutil attach falhou: {e}"))?;
+    if !st.success() {
+        return Err("não consegui montar o .dmg".into());
+    }
+
+    let result = (|| -> Result<String, String> {
+        // Acha o .app dentro do dmg montado.
+        let app_src = std::fs::read_dir(&mount)
+            .map_err(|e| e.to_string())?
+            .flatten()
+            .map(|e| e.path())
+            .find(|p| p.extension().map(|x| x == "app").unwrap_or(false))
+            .ok_or("não achei o .app dentro do .dmg")?;
+
+        let home = std::env::var("HOME").map_err(|_| "sem HOME")?;
+        let apps_dir = std::path::Path::new(&home).join("Applications");
+        std::fs::create_dir_all(&apps_dir).ok();
+        let app_name = app_src.file_name().ok_or("nome de app inválido")?;
+        let dest = apps_dir.join(app_name);
+
+        // Remove versão antiga e copia a nova.
+        let _ = std::process::Command::new("rm").arg("-rf").arg(&dest).status();
+        let st = std::process::Command::new("cp")
+            .arg("-R")
+            .arg(&app_src)
+            .arg(&dest)
+            .status()
+            .map_err(|e| format!("cp falhou: {e}"))?;
+        if !st.success() {
+            return Err("não consegui copiar o app para ~/Applications".into());
+        }
+        Ok(dest.to_string_lossy().into_owned())
+    })();
+
+    // Desmonta o dmg sempre.
+    let _ = std::process::Command::new("hdiutil").arg("detach").arg(&mount).status();
+    let _ = std::fs::remove_file(&dmg);
+
+    let dest = result?;
+    write_game_meta(version, &dest)?;
+    emit(app, "done");
     Ok(())
 }
 
 fn do_self_update(app: &AppHandle, url: &str) -> Result<(), String> {
-    // Baixa o novo instalador do PRÓPRIO launcher.
     let tmp = std::env::temp_dir().join("Ultrafoot-Launcher-setup.exe");
     download_with_progress(app, url, &tmp)?;
-
-    let _ = app.emit(
-        "launcher://progress",
-        Progress { phase: "installing", percent: 100, downloaded: 0, total: 0, speed: 0, eta: 0 },
-    );
-
-    // O .exe do launcher está EM USO. Um script destacado espera o launcher fechar,
-    // instala em silêncio (troca o .exe) e reabre o launcher novo.
+    emit(app, "installing");
     spawn_installer_and_relaunch(&tmp)?;
     Ok(())
 }
 
-/// Roda o instalador do launcher e reabre o app — DESTACADO do processo atual, para
-/// sobreviver ao `app.exit()` e conseguir substituir o .exe que está em uso.
+/// Roda o instalador do launcher e reabre o app — DESTACADO (Windows).
 #[cfg(windows)]
 fn spawn_installer_and_relaunch(setup: &std::path::Path) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
@@ -372,7 +558,6 @@ fn spawn_installer_and_relaunch(setup: &std::path::Path) -> Result<(), String> {
 
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let bat = std::env::temp_dir().join("ultrafoot-launcher-update.bat");
-    // timeout: dá tempo do launcher fechar antes de o instalador tocar no .exe.
     let script = format!(
         "@echo off\r\ntimeout /t 2 /nobreak >nul\r\n\"{}\" /S\r\nstart \"\" \"{}\"\r\ndel \"%~f0\"\r\n",
         setup.display(),
@@ -417,69 +602,71 @@ fn is_newer(latest: &str, current: &str) -> bool {
 
 #[tauri::command]
 fn launch_game(app: AppHandle, path: Option<String>) -> Result<(), String> {
-    let exe = path
+    let target = path
         .filter(|p| !p.is_empty())
         .or_else(|| read_installed_game().path)
-        .ok_or_else(|| "não encontrei o executável do jogo".to_string())?;
+        .ok_or_else(|| "não encontrei o jogo instalado".to_string())?;
 
-    // "--via-launcher" avisa o jogo que ele foi aberto pelo launcher, para ele NÃO
-    // redirecionar de volta pra cá (senão ficaria em loop). O env é redundância.
-    std::process::Command::new(&exe)
-        .arg("--via-launcher")
-        .env("ULTRAFOOT_VIA_LAUNCHER", "1")
-        .spawn()
-        .map_err(|e| format!("não consegui abrir o jogo: {e}"))?;
+    #[cfg(target_os = "macos")]
+    {
+        // No macOS abrimos o bundle .app com `open`.
+        std::process::Command::new("open")
+            .arg(&target)
+            .status()
+            .map_err(|e| format!("não consegui abrir o jogo: {e}"))?;
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Windows (.exe) e Linux (.AppImage): executa direto.
+        // "--via-launcher" evita o redirecionamento do jogo de volta ao launcher.
+        std::process::Command::new(&target)
+            .arg("--via-launcher")
+            .env("ULTRAFOOT_VIA_LAUNCHER", "1")
+            .spawn()
+            .map_err(|e| format!("não consegui abrir o jogo: {e}"))?;
+    }
 
-    // O jogo assume a partir daqui — o launcher fecha.
     app.exit(0);
     Ok(())
 }
 
-/// Verifica se há uma versão MAIS NOVA do próprio launcher (launcher.json). Retorna
-/// null se já está atualizado ou se não deu para consultar.
+/// Versão MAIS NOVA do próprio launcher (launcher.json). Só no Windows por ora —
+/// o launcher.json aponta para o setup.exe do Windows.
 #[tauri::command]
 fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
-    let body: serde_json::Value = ureq::get(LAUNCHER_UPDATE_URL)
-        .call()
-        .map_err(|e| format!("falha ao consultar atualização do launcher: {e}"))?
-        .into_json()
-        .map_err(|e| format!("launcher.json inválido: {e}"))?;
-
-    let version = body
-        .get("version")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default()
-        .to_string();
-    let url = body
-        .get("url")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default()
-        .to_string();
-    let notes = body
-        .get("notes")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default()
-        .to_string();
-
-    if version.is_empty() || url.is_empty() {
+    #[cfg(not(windows))]
+    {
         return Ok(None);
     }
-    if is_newer(&version, env!("CARGO_PKG_VERSION")) {
-        Ok(Some(LatestInfo { version, notes, url }))
-    } else {
-        Ok(None)
+    #[cfg(windows)]
+    {
+        let body: serde_json::Value = ureq::get(LAUNCHER_UPDATE_URL)
+            .call()
+            .map_err(|e| format!("falha ao consultar atualização do launcher: {e}"))?
+            .into_json()
+            .map_err(|e| format!("launcher.json inválido: {e}"))?;
+
+        let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        let url = body.get("url").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        let notes = body.get("notes").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+
+        if version.is_empty() || url.is_empty() {
+            return Ok(None);
+        }
+        if is_newer(&version, env!("CARGO_PKG_VERSION")) {
+            Ok(Some(LatestInfo { version, notes, url }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
-/// Baixa e instala uma nova versão do PRÓPRIO launcher, depois reabre. O launcher
-/// fecha para o instalador poder trocar o executável em uso.
 #[tauri::command]
 async fn self_update(app: AppHandle, url: String) -> Result<(), String> {
     let app2 = app.clone();
     tauri::async_runtime::spawn_blocking(move || do_self_update(&app2, &url))
         .await
         .map_err(|e| format!("tarefa interrompida: {e}"))??;
-    // Fecha o launcher — o script destacado assume (instala e reabre).
     app.exit(0);
     Ok(())
 }
@@ -490,7 +677,6 @@ struct ServerStatus {
     game_version: Option<String>,
 }
 
-/// Baixa a configuração remota do launcher (notícias, banner, redes, etc.).
 #[tauri::command]
 fn fetch_launcher_config() -> Result<serde_json::Value, String> {
     ureq::get(LAUNCHER_CONFIG_URL)
@@ -500,7 +686,6 @@ fn fetch_launcher_config() -> Result<serde_json::Value, String> {
         .map_err(|e| format!("configuração inválida: {e}"))
 }
 
-/// Consulta `{url}/health` do relay multiplayer. Offline se não responder.
 #[tauri::command]
 fn check_server_status(url: String) -> ServerStatus {
     let health = format!("{}/health", url.trim_end_matches('/'));

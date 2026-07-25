@@ -60,6 +60,7 @@ export async function fetchLatest(): Promise<LatestInfo | null> {
  */
 export async function installOrUpdate(
   url: string,
+  version: string,
   onProgress: (p: ProgressPayload) => void,
 ): Promise<void> {
   if (!isTauri()) {
@@ -71,7 +72,7 @@ export async function installOrUpdate(
   const { listen } = await import("@tauri-apps/api/event")
   const unlisten = await listen<ProgressPayload>("launcher://progress", (e) => onProgress(e.payload))
   try {
-    await invoke("download_and_install", { url })
+    await invoke("download_and_install", { url, version })
   } finally {
     unlisten()
   }

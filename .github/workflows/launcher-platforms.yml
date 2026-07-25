@@ -1,0 +1,62 @@
+name: Launcher (Windows, Linux e macOS)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            name: linux
+          - platform: macos-14
+            name: mac
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: Launcher/src-tauri
+
+      - name: Read launcher version
+        id: ver
+        shell: bash
+        run: echo "version=$(node -p "require('./Launcher/src-tauri/tauri.conf.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Linux system dependencies
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install launcher deps
+        working-directory: Launcher
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build & publish launcher
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: Launcher
+          tagName: launcher-desktop-${{ steps.ver.outputs.version }}
+          releaseName: "Ultrafoot Launcher ${{ steps.ver.outputs.version }} (Linux & macOS)"
+          releaseBody: "Launcher do Ultrafoot 26 para Linux (.AppImage/.deb) e macOS (.dmg). Baixe, instale e o launcher cuida de baixar/atualizar o jogo."
+          releaseDraft: false
+          prerelease: false
