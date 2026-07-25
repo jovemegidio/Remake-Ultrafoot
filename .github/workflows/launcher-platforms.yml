@@ -17,7 +17,7 @@ jobs:
             args: --config src-tauri/tauri.linux.conf.json
           - platform: macos-14
             name: mac
-            args: --config src-tauri/tauri.macos.conf.json
+            args: --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +31,8 @@ jobs:
           node-version: 20
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.name == 'mac' && 'x86_64-apple-darwin,aarch64-apple-darwin' || '' }}
 
       - uses: swatinem/rust-cache@v2
         with:
