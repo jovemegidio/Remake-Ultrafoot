@@ -1,4 +1,7 @@
 # pnpm 11 não lê mais o campo "pnpm" do package.json — a config foi movida para cá.
+# `packages` é obrigatório no pnpm 9 (CI) quando existe pnpm-workspace.yaml.
+packages:
+  - .
 overrides:
   hono: 4.12.25
 onlyBuiltDependencies:
