@@ -1,0 +1,92 @@
+name: Desktop Linux and macOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            name: linux-x64
+            args: --config src-tauri/tauri.linux.conf.json
+          - platform: macos-14
+            name: macos-universal
+            args: --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Read game version
+        id: gamever
+        shell: bash
+        run: echo "version=$(node -p "require('./src-tauri/tauri.conf.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.name == 'macos-universal' && 'x86_64-apple-darwin,aarch64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Linux system dependencies
+        if: matrix.name == 'linux-x64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - run: pnpm install --no-frozen-lockfile
+
+      - name: Verify distributable game assets
+        run: |
+          node scripts/qa-release-assets.mjs
+          pnpm exec tsx scripts/qa-smoke.ts
+          pnpm exec tsx scripts/qa-rosters.ts
+
+      - name: Build & publish native package
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          args: ${{ matrix.args }}
+          # Publica num release PRÓPRIO (Linux/macOS), sem tocar no canal do Windows
+          # (launcher lê o latest.json do release build-<versao> do Windows).
+          tagName: desktop-${{ steps.gamever.outputs.version }}
+          releaseName: "Ultrafoot 26 ${{ steps.gamever.outputs.version }} — Linux & macOS"
+          releaseBody: "Ultrafoot 26 para Linux (.AppImage e .deb) e macOS. AppImage: baixe, dê permissão de execução e rode."
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload packages for QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ultrafoot-${{ matrix.name }}
+          path: |
+            src-tauri/target/**/release/bundle/**/*.AppImage
+            src-tauri/target/**/release/bundle/**/*.deb
+            src-tauri/target/**/release/bundle/**/*.dmg
+            src-tauri/target/**/release/bundle/**/*.app.tar.gz
+          if-no-files-found: error
