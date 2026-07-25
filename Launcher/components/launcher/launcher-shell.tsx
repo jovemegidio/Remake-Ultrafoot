@@ -7,6 +7,7 @@ import { NewsFeed } from "./news-feed"
 import { ChangelogView } from "./changelog-view"
 import { SecurityPanel } from "./security-panel"
 import { SettingsDialog } from "./settings-dialog"
+import { CommunityBar } from "./community-bar"
 import { cn } from "@/lib/utils"
 import {
   getInstalledGame,
@@ -18,8 +19,13 @@ import {
   getAutostartEnabled,
   setAutostartEnabled,
   setupCloseToTray,
+  fetchLauncherConfig,
+  checkServerStatus,
+  openExternal,
   type ProgressPhase,
   type LatestInfo,
+  type LauncherConfig,
+  type ServerStatus,
 } from "@/lib/launcher-bridge"
 import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings } from "lucide-react"
 
@@ -106,6 +112,48 @@ export function LauncherShell({
       setAutostart(!value) // reverte se falhar
     }
   }, [])
+
+  // Config remota (comunidade): notícias, banner, redes e status do servidor.
+  const [config, setConfig] = useState<LauncherConfig | null>(null)
+  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      const cfg = await fetchLauncherConfig()
+      if (!alive) return
+      setConfig(cfg)
+      if (cfg?.serverStatusUrl) {
+        const st = await checkServerStatus(cfg.serverStatusUrl)
+        if (alive) setServerStatus(st)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  // Notícias remotas (config) têm prioridade sobre as embutidas.
+  const effectiveNews: NewsWithGame[] =
+    config?.news && config.news.length > 0
+      ? config.news
+          .map((n, i) => ({
+            id: 100000 + i,
+            gameId: game.id,
+            title: n.title,
+            category: n.category ?? "Novidades",
+            excerpt: n.body ?? null,
+            body: n.body ?? null,
+            image: null,
+            isPinned: n.pinned ?? false,
+            publishedAt: n.date ? new Date(n.date) : new Date(),
+            gameName: null,
+          }))
+          .sort((a, b) => {
+            if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
+            return b.publishedAt.getTime() - a.publishedAt.getTime()
+          })
+      : news
 
   useEffect(() => {
     let alive = true
@@ -333,6 +381,8 @@ export function LauncherShell({
         </nav>
       </header>
 
+      <CommunityBar config={config} serverStatus={serverStatus} onOpen={openExternal} />
+
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-5xl flex-col gap-8 p-4 md:p-6">
           {tab === "home" && (
@@ -345,11 +395,11 @@ export function LauncherShell({
                 onDownload={startDownload}
                 onRepair={startRepair}
               />
-              <NewsFeed news={news.slice(0, 4)} title="Últimas novidades" />
+              <NewsFeed news={effectiveNews.slice(0, 4)} title="Últimas novidades" />
             </>
           )}
 
-          {tab === "news" && <NewsFeed news={news} title={`Novidades de ${game.name}`} />}
+          {tab === "news" && <NewsFeed news={effectiveNews} title={`Novidades de ${game.name}`} />}
 
           {tab === "changelog" && <ChangelogView game={game} />}
 

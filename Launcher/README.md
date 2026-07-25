@@ -97,6 +97,51 @@ gh release upload launcher "Ultrafoot-Launcher-Setup.exe" "launcher.json" \
 
 Na próxima abertura, todos os launchers instalados detectam a nova versão e se atualizam.
 
+### Config remota (notícias, banner, redes, status do servidor)
+O launcher lê, ao abrir, um **`launcher-config.json`** do release `launcher`
+(`.../releases/download/launcher/launcher-config.json`). Edite esse arquivo e
+**todos os launchers atualizam na hora, sem rebuild**. Campos (todos opcionais):
+
+```json
+{
+  "announcement": { "text": "Aviso no topo", "level": "info" },
+  "news": [
+    { "title": "Título", "category": "Novidades", "body": "Texto", "date": "2026-07-24", "pinned": true }
+  ],
+  "social": {
+    "discord": "https://discord.gg/SEU_CONVITE",
+    "youtube": "https://youtube.com/@SEU_CANAL",
+    "tiktok": "https://tiktok.com/@SEU_PERFIL",
+    "instagram": "https://instagram.com/SEU_PERFIL"
+  },
+  "serverStatusUrl": "https://SEU-RELAY.workers.dev"
+}
+```
+
+- `announcement`: barra no topo (`level`: `info` ou `warning`).
+- `news`: substitui as notícias embutidas (as de `config` têm prioridade).
+- `social`: botões de Discord/YouTube/TikTok/Instagram (só aparecem os preenchidos).
+- `serverStatusUrl`: o launcher faz `GET {url}/health` e mostra "Servidor online/offline".
+
+Para atualizar só a config (sem tocar no launcher):
+```bash
+gh release upload launcher launcher-config.json --repo jovemegidio/Ultrafoot26 --clobber
+```
+
+### Assinatura (Authenticode / SmartScreen)
+Sem assinatura, o Windows mostra "editor desconhecido". Para remover isso, assine o
+`-setup.exe` do launcher com um **certificado de code signing** (OV/EV de uma CA —
+certificado auto-assinado NÃO resolve o SmartScreen). Assine ANTES de subir no release:
+
+```powershell
+signtool sign /fd sha256 /td sha256 /tr http://timestamp.digicert.com `
+  /f SEU_CERT.pfx /p SUA_SENHA `
+  "src-tauri\target\release\bundle\nsis\Ultrafoot Launcher_<versao>_x64-setup.exe"
+```
+
+(É o mesmo certificado usado pelo jogo em `scripts/sign-installer.ps1`, via
+`CERT_THUMBPRINT` ou `PFX_PATH`/`PFX_PASSWORD`.)
+
 ### Quem JÁ tem o jogo (launcher automático e silencioso)
 O instalador do **jogo** passa a embutir o launcher e instalá-lo em silêncio no
 pós-instalação (hook NSIS). Fluxo a cada nova build do jogo:

@@ -107,6 +107,53 @@ export async function selfUpdate(
   }
 }
 
+// ─── Config remota / comunidade ──────────────────────────────────────────────
+
+export type LauncherConfig = {
+  announcement?: { text: string; level?: "info" | "warning" }
+  news?: Array<{ title: string; category?: string; body?: string; date?: string; pinned?: boolean }>
+  social?: { discord?: string; youtube?: string; tiktok?: string; instagram?: string }
+  serverStatusUrl?: string
+}
+
+export type ServerStatus = { online: boolean; game_version: string | null }
+
+/** Configuração remota (notícias/banner/redes/status). Null se offline. */
+export async function fetchLauncherConfig(): Promise<LauncherConfig | null> {
+  if (!isTauri()) return null
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<LauncherConfig>("fetch_launcher_config")
+  } catch {
+    return null
+  }
+}
+
+/** Status do servidor multiplayer (ping em {url}/health). */
+export async function checkServerStatus(url: string): Promise<ServerStatus | null> {
+  if (!isTauri()) return null
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<ServerStatus>("check_server_status", { url })
+  } catch {
+    return null
+  }
+}
+
+/** Abre um link no navegador padrão do sistema. */
+export async function openExternal(url: string): Promise<void> {
+  if (!isTauri()) {
+    if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer")
+    return
+  }
+  try {
+    const { openUrl } = await import("@tauri-apps/plugin-opener")
+    await openUrl(url)
+  } catch {
+    /* ignore */
+  }
+}
+
 // ─── Configurações ───────────────────────────────────────────────────────────
 
 /** O launcher está configurado para iniciar com o Windows? */

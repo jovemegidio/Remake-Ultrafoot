@@ -21,6 +21,11 @@ const LATEST_JSON_URL: &str =
 const LAUNCHER_UPDATE_URL: &str =
     "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher.json";
 
+// Configuração remota do launcher (notícias, banner, redes, status do servidor).
+// Editável sem recompilar: basta atualizar o arquivo no release "launcher".
+const LAUNCHER_CONFIG_URL: &str =
+    "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher-config.json";
+
 #[derive(Serialize, Clone, Default)]
 struct InstalledGame {
     installed: bool,
@@ -479,6 +484,43 @@ async fn self_update(app: AppHandle, url: String) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Serialize, Clone)]
+struct ServerStatus {
+    online: bool,
+    game_version: Option<String>,
+}
+
+/// Baixa a configuração remota do launcher (notícias, banner, redes, etc.).
+#[tauri::command]
+fn fetch_launcher_config() -> Result<serde_json::Value, String> {
+    ureq::get(LAUNCHER_CONFIG_URL)
+        .call()
+        .map_err(|e| format!("falha ao buscar a configuração: {e}"))?
+        .into_json()
+        .map_err(|e| format!("configuração inválida: {e}"))
+}
+
+/// Consulta `{url}/health` do relay multiplayer. Offline se não responder.
+#[tauri::command]
+fn check_server_status(url: String) -> ServerStatus {
+    let health = format!("{}/health", url.trim_end_matches('/'));
+    match ureq::get(&health)
+        .timeout(std::time::Duration::from_secs(6))
+        .call()
+    {
+        Ok(resp) => {
+            let v: serde_json::Value = resp.into_json().unwrap_or(serde_json::Value::Null);
+            let ok = v.get("ok").and_then(|b| b.as_bool()).unwrap_or(true);
+            let game_version = v
+                .get("gameVersion")
+                .and_then(|s| s.as_str())
+                .map(|s| s.to_string());
+            ServerStatus { online: ok, game_version }
+        }
+        Err(_) => ServerStatus { online: false, game_version: None },
+    }
+}
+
 /// Mostra e foca a janela principal (usado pela bandeja).
 fn show_main(app: &AppHandle) {
     use tauri::Manager;
@@ -536,7 +578,9 @@ pub fn run() {
             download_and_install,
             launch_game,
             check_launcher_update,
-            self_update
+            self_update,
+            fetch_launcher_config,
+            check_server_status
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Ultrafoot Launcher");
