@@ -14,8 +14,10 @@ jobs:
         include:
           - platform: ubuntu-22.04
             name: linux
+            args: --config src-tauri/tauri.linux.conf.json
           - platform: macos-14
             name: mac
+            args: --config src-tauri/tauri.macos.conf.json
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +57,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: Launcher
+          args: ${{ matrix.args }}
           tagName: launcher-desktop-${{ steps.ver.outputs.version }}
           releaseName: "Ultrafoot Launcher ${{ steps.ver.outputs.version }} (Linux & macOS)"
           releaseBody: "Launcher do Ultrafoot 26 para Linux (.AppImage/.deb) e macOS (.dmg). Baixe, instale e o launcher cuida de baixar/atualizar o jogo."
