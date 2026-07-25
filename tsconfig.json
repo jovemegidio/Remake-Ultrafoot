@@ -57,6 +57,7 @@
     "propostas-de-selecao",
     "src-tauri",
     "services",
-    "Launcher"
+    "Launcher",
+    "Mobile"
   ]
 }
