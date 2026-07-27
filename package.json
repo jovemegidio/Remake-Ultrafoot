@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.146",
+  "version": "1.0.188",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -123,6 +123,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",
     "postcss": "^8.5",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.2.0",
     "tsx": "^4.22.3",
     "tw-animate-css": "1.3.3",

@@ -26,18 +26,22 @@ export function stadiumTeamKey(value: string): string {
     .trim()
 }
 
-/** Retorna a foto empacotada do estadio do clube, quando o acervo possui o time. */
-export function getTeamStadiumBackground(teamName: string | undefined | null): string | null {
-  if (!teamName) return null
-  const key = stadiumTeamKey(teamName)
+/** Retorna a foto empacotada pelo nome do estadio e, como fallback, pelo clube. */
+export function getTeamStadiumBackground(
+  teamName: string | undefined | null,
+  stadiumName?: string | undefined | null,
+): string | null {
+  if (!teamName && !stadiumName) return null
+  const keys = [stadiumName, teamName].filter((value): value is string => Boolean(value)).map(stadiumTeamKey)
   // Alguns bancos usam "FC Barcelona" e o acervo usa "Barcelona" (ou vice-versa).
   // Aceita apenas prefixos/sufixos institucionais, sem busca aproximada que poderia
   // associar dois clubes diferentes da mesma cidade.
-  const candidates = [
+  const candidates = keys.flatMap(key => [
     key,
     key.replace(/^(fc|ac|afc|sc|ca|cd) /, ""),
     key.replace(/ (fc|afc|sc|cf|ac|fk)$/, ""),
-  ]
+    key.replace(/^arena (do |da |de )?/, ""),
+  ])
   for (const candidate of candidates) {
     if (STADIUMS[candidate]) return STADIUMS[candidate]
   }
@@ -95,8 +99,9 @@ export function getPreMatchBackground(
   competition: string | undefined | null,
   league: string | undefined | null,
   homeTeamName?: string | undefined | null,
+  homeStadiumName?: string | undefined | null,
 ): string {
-  const stadium = getTeamStadiumBackground(homeTeamName)
+  const stadium = getTeamStadiumBackground(homeTeamName, homeStadiumName)
   if (stadium) return stadium
   if (competition) {
     const hit = BY_COMPETITION[competition.trim().toLowerCase()]

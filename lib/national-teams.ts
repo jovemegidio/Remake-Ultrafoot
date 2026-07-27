@@ -5,6 +5,7 @@
 
 import { allTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
+import { getTeamOverride } from "@/lib/team-overrides"
 
 export type Confederation = "CONMEBOL" | "UEFA" | "CONCACAF" | "AFC" | "CAF" | "OFC"
 
@@ -84,13 +85,36 @@ export const NATIONAL_TEAMS: NationalTeam[] = [
 
 const NT_BY_ID = new Map(NATIONAL_TEAMS.map(nt => [nt.id, nt]))
 
+export function nationalTeamFileKey(id: string): string {
+  return `nation_${id}`
+}
+
+function applyNationalTeamOverride(nt: NationalTeam): NationalTeam {
+  const override = getTeamOverride(nationalTeamFileKey(nt.id))
+  if (!override) return nt
+  return {
+    ...nt,
+    name: override.nome?.trim() || nt.name,
+    code: override.curto?.trim().toUpperCase() || nt.code,
+    cor1: override.cor1 || nt.cor1,
+    cor2: override.cor2 || nt.cor2,
+  }
+}
+
 export function getNationalTeamById(id: string | null | undefined): NationalTeam | undefined {
   if (!id) return undefined
-  return NT_BY_ID.get(id)
+  const team = NT_BY_ID.get(id)
+  return team ? applyNationalTeamOverride(team) : undefined
 }
 
 export function getNationalTeamsByConfederation(conf: Confederation): NationalTeam[] {
-  return NATIONAL_TEAMS.filter(nt => nt.confederation === conf)
+  return NATIONAL_TEAMS
+    .filter(nt => nt.confederation === conf)
+    .map(applyNationalTeamOverride)
+}
+
+export function getAllNationalTeams(): NationalTeam[] {
+  return NATIONAL_TEAMS.map(applyNationalTeamOverride)
 }
 
 // Clubes que alimentam o elenco da selecao
@@ -99,9 +123,19 @@ function getClubsForNationalTeam(nt: NationalTeam): Team[] {
   return allTeams.filter(t => t.pais === nt.countryKey)
 }
 
+/** Jogador e clube de origem, para o editor persistir a alteração no atleta real. */
+export function getNationalPlayerSources(
+  nt: NationalTeam,
+  opts?: { raw?: boolean },
+): Array<{ player: Player; team: Team }> {
+  return getClubsForNationalTeam(nt).flatMap(team =>
+    getPlayersForTeam(team, opts).map(player => ({ player, team })),
+  )
+}
+
 // Pool completo de jogadores disponiveis para a selecao
 export function getNationalPlayerPool(nt: NationalTeam): Player[] {
-  return getClubsForNationalTeam(nt).flatMap((c) => getPlayersForTeam(c))
+  return getNationalPlayerSources(nt).map(entry => entry.player)
 }
 
 // Normaliza posicoes para os 4 setores
@@ -180,11 +214,45 @@ export function getNationalSquad(
 }
 
 // Forca da selecao = media dos 11 melhores (0-100)
+// FORCA CURADA das selecoes (hierarquia real 2026), para a Copa do Mundo, os
+// amistosos e as competicoes de selecao ficarem imersivos. Antes a forca vinha
+// SO da media do elenco puxado da base de clubes — e um pais forte com poucos
+// jogadores na base ficava fraco (Brasil abaixo de uma selecao menor). Agora a
+// forca e ANCORADA nesta tabela (ranking real) e so ajustada pelo elenco, nunca
+// dominada por ele. Escala ~66 (fracas) a ~91 (Argentina, campea/1o do ranking).
+export const NATIONAL_STRENGTH_2026: Record<string, number> = {
+  // CONMEBOL
+  argentina: 91, brasil: 89, uruguai: 84, colombia: 84, equador: 80, paraguai: 76, chile: 76,
+  // UEFA
+  franca: 90, espanha: 89, inglaterra: 88, portugal: 88, holanda: 87, alemanha: 87, belgica: 85,
+  croacia: 85, italia: 84, noruega: 82, suica: 80, turquia: 80, austria: 79, tchequia: 78,
+  suecia: 78, escocia: 77, bosnia: 76, russia: 76,
+  // CONCACAF
+  mexico: 82, estados_unidos: 82, canada: 79, panama: 72, curacao: 68, haiti: 66,
+  // AFC
+  japao: 82, coreia_do_sul: 80, ira: 79, australia: 78, arabia_saudita: 74, qatar: 74,
+  uzbequistao: 73, iraque: 72, jordania: 71, china: 68,
+  // CAF
+  marrocos: 85, senegal: 83, costa_do_marfim: 81, argelia: 80, egito: 80, gana: 78,
+  congo_dr: 76, tunisia: 76, africa_do_sul: 74, cabo_verde: 72,
+  // OFC
+  nova_zelandia: 68,
+}
+
 export function getNationalStrength(nt: NationalTeam, squad?: Player[]): number {
+  const editedStrength = getTeamOverride(nationalTeamFileKey(nt.id))?.prestigio
+  if (Number.isFinite(editedStrength)) {
+    return Math.max(1, Math.min(99, Math.round(editedStrength!)))
+  }
+  const ancora = NATIONAL_STRENGTH_2026[nt.id] ?? nt.baselineStrength ?? 55
   const pool = [...(squad ?? getNationalPlayerPool(nt))].sort((a, b) => b.base - a.base)
   const top = pool.slice(0, 11)
-  if (!top.length) return nt.baselineStrength ?? 55
-  return Math.round(top.reduce((s, p) => s + p.base, 0) / top.length)
+  if (!top.length) return ancora
+  // Ancora manda (70%); o elenco real ajusta (30%). Assim o Brasil nunca cai
+  // abaixo do seu patamar por falta de jogadores na base, mas um elenco forte
+  // ou fraco ainda move a agulha.
+  const elenco = top.reduce((s, p) => s + p.base, 0) / top.length
+  return Math.round(ancora * 0.7 + elenco * 0.3)
 }
 
 // Cache simples das forcas (nao muda durante a sessao)

@@ -25,10 +25,50 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { getTeamByShort, getTeamsByDivision, serieBTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
+import { getTeamByShort, getTeamByFileKey, getTeamsByDivision, serieBTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
+
+// Grupos REAIS da fase de grupos da CONMEBOL Libertadores 2026 (sorteio 20/03/2026),
+// por file_key para evitar colisao de "curto" (ha duas Universidad Catolica). Usados
+// na 1a temporada (2026): a selecao do usuario cai no seu grupo real. Fonte: CNN Brasil.
+const LIBERTADORES_2026_GROUPS: string[][] = [
+  ["flarj", "estudiantes_lp", "cusco_fc", "ind_medellin"],                     // A
+  ["nacional_ury", "universitario_per", "coquimbo_unido", "deportes_tolima"],  // B
+  ["flurj", "bolivar_bol", "dep_la_guaira", "independiente_rivadavia"],        // C
+  ["boca_juniors", "cruzeiro_bra", "u_catolica_chi", "barcelona_sc"],          // D
+  ["penarol", "corinthians_bra", "santa_fe_col", "platense"],                  // E
+  ["palmeiras", "cerro_porteno", "junior_baq", "sporting_cristal"],            // F
+  ["ldu_quito", "lanus_arg", "always_ready", "miirassol_sp"],                  // G
+  ["independiente_del_valle", "libertad_par", "rosario_central", "ucv_ven"],   // H
+]
+
+// Grupos REAIS da CONMEBOL Sul-Americana 2026 (mesmo sorteio, 20/03/2026). A aba
+// continental do jogo e uma so (Libertadores/Sul-Americana pelo rotulo), entao o
+// drawLibertadores checa os DOIS mapas e usa aquele em que o clube esta.
+const SULAMERICANA_2026_GROUPS: string[][] = [
+  ["america_cali", "tigre_arg", "macara", "alianza_atletico"],                 // A
+  ["atleticomg_bra", "cienciano", "puerto_cabello", "juventud_ury"],           // B
+  ["saopaulo_bra", "millonarios", "boston_river", "ohiggins"],                 // C
+  ["santos", "san_lorenzo", "deportivo_cuenca", "recoleta"],                   // D
+  ["racing_arg", "caracas", "independiente_bol", "botafogorj_bra"],            // E
+  ["gremio", "palestino", "city_torque", "deportivo_riestra"],                 // F
+  ["olimpia", "vasco", "audax_italiano", "barracas_central"],                  // G
+  ["river_plate", "bragantino_bra", "blooming", "carabobo"],                   // H
+]
+
+// Os 16 REAIS classificados as OITAVAS da Copa do Brasil 2026 (definidos em
+// 14/05/2026), por file_key. Na 1a temporada, as oitavas usam esses clubes.
+// Fonte: CBF / soccerway. Das oitavas em diante e confiavel (clubes grandes).
+const COPA_BRASIL_2026_OITAVAS: string[] = [
+  "vitoria", "internacional_bra", "cruzeiro_bra", "flurj", "santos", "remo_pa",
+  "vasco", "palmeiras", "atleticomg_bra", "miirassol_sp", "juventude",
+  "chapecoense_bra", "gremio", "atleticopr_bra", "fortaleza", "corinthians_bra",
+]
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams, computeStandingsFromFixtures, type Fixture } from "@/lib/use-game-manager"
 import type { StandingsEntry } from "@/lib/game-engine"
+import { useGameEngine } from "@/lib/game-engine"
+import { getPlayersForTeam } from "@/lib/players-data"
+import { gerarEstatisticasCompeticao } from "@/lib/competition-scorers"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto } from "@/lib/cup-engine"
 import { getCountryCompetitions, getContinentalSpot, getContinentalDivisions } from "@/lib/country-competitions"
@@ -239,9 +279,23 @@ function useCompetitions(userTeamShort: string, userPosition: number, season: nu
   }, [userTeamShort])
 
   const drawCopaBrasil = () => {
-    // Garante o usuario no sorteio SEM duplicar (se ele ja esta no pool, nao entra 2x).
-    const base = copaBrasilPool.filter(c => c !== userTeamShort)
-    const teams = [userTeamShort, ...base].slice(0, 16)
+    // OITAVAS REAIS 2026: na 1a temporada as oitavas usam os 16 classificados
+    // reais. O usuario e garantido — se ja e um dos 16, mantem; senao entra no
+    // lugar do ultimo. Fora de 2026, sorteio normal do pool.
+    const reais2026 = season === 2026
+      ? COPA_BRASIL_2026_OITAVAS.map(fk => getTeamByFileKey(fk)?.curto).filter((c): c is string => Boolean(c))
+      : []
+
+    let teams: string[]
+    if (reais2026.length === 16) {
+      teams = reais2026.includes(userTeamShort)
+        ? reais2026
+        : [userTeamShort, ...reais2026.filter(c => c !== userTeamShort)].slice(0, 16)
+    } else {
+      // Garante o usuario no sorteio SEM duplicar (se ele ja esta no pool, nao entra 2x).
+      const base = copaBrasilPool.filter(c => c !== userTeamShort)
+      teams = [userTeamShort, ...base].slice(0, 16)
+    }
     const shuffled = [...teams].sort(() => Math.random() - 0.5)
     
     const oitavas: BracketMatch[] = []
@@ -462,21 +516,45 @@ function useCompetitions(userTeamShort: string, userPosition: number, season: nu
   const drawLibertadores = () => {
     if (!state.libertadores.qualified) return
 
-    // Adversarios do CONTINENTE do clube. Antes vinham de uma lista fixa de
-    // sul-americanos (Boca, River, Penarol...), entao a Juventus caia num grupo
-    // contra o Boca Juniors. E o proprio usuario era rotulado como "Brasil".
-    const shuffled = [...continentalTeams].sort(() => Math.random() - 0.5).slice(0, 3)
+    // GRUPO REAL 2026: na 1a temporada, se o clube do usuario esta no sorteio real
+    // da Libertadores 2026, ele cai no seu grupo REAL com os adversarios certos.
+    // Fora disso (outra temporada, ou clube fora do sorteio), sorteia do continente.
+    const userFk = getTeamByShort(userTeamShort)?.file_key ?? ""
+    // Continental unica: checa Libertadores E Sul-Americana; usa o grupo real em
+    // que o clube do usuario esta (1a temporada 2026).
+    let grpIdx = -1
+    let grupoReal: string[] | null = null
+    if (season === 2026) {
+      grpIdx = LIBERTADORES_2026_GROUPS.findIndex(g => g.includes(userFk))
+      if (grpIdx >= 0) grupoReal = LIBERTADORES_2026_GROUPS[grpIdx]
+      else {
+        grpIdx = SULAMERICANA_2026_GROUPS.findIndex(g => g.includes(userFk))
+        if (grpIdx >= 0) grupoReal = SULAMERICANA_2026_GROUPS[grpIdx]
+      }
+    }
+
+    let groupName: string
+    let opponents: { short: string; country: string; points: number; played: number }[]
+
+    if (grupoReal) {
+      const reais = grupoReal
+        .filter(fk => fk !== userFk)
+        .map(fk => getTeamByFileKey(fk))
+        .filter((t): t is Team => Boolean(t))
+      groupName = "Grupo " + String.fromCharCode(65 + grpIdx)
+      opponents = reais.map(t => ({ short: t.curto, country: t.pais || t.estado || "", points: 0, played: 0 }))
+    } else {
+      // Adversarios do CONTINENTE do clube (sorteio livre).
+      const shuffled = [...continentalTeams].sort(() => Math.random() - 0.5).slice(0, 3)
+      groupName = "Grupo " + String.fromCharCode(65 + Math.floor(Math.random() * 8))
+      opponents = shuffled.map(t => ({ short: t.curto, country: t.pais || t.estado || "", points: 0, played: 0 }))
+    }
 
     const group = {
-      name: "Grupo " + String.fromCharCode(65 + Math.floor(Math.random() * 8)),
+      name: groupName,
       teams: [
         { short: userTeamShort, country: userCountry, points: 0, played: 0 },
-        ...shuffled.map(t => ({
-          short: t.curto,
-          country: t.pais || t.estado || "",
-          points: 0,
-          played: 0,
-        })),
+        ...opponents,
       ],
     }
 
@@ -499,12 +577,135 @@ function useCompetitions(userTeamShort: string, userPosition: number, season: nu
   }
 }
 
+// Seletor Classificacao | Artilheiros | Assistencias dentro de cada competicao.
+function CompViewTabs({
+  value,
+  onChange,
+}: {
+  value: "classificacao" | "artilheiros" | "assistencias"
+  onChange: (v: "classificacao" | "artilheiros" | "assistencias") => void
+}) {
+  const opts: { id: "classificacao" | "artilheiros" | "assistencias"; label: string }[] = [
+    { id: "classificacao", label: "Classificação" },
+    { id: "artilheiros", label: "Artilheiros" },
+    { id: "assistencias", label: "Assistências" },
+  ]
+  return (
+    <div className="mb-3 inline-flex rounded-lg border border-white/10 bg-[#141414] p-1">
+      {opts.map(o => (
+        <button
+          key={o.id}
+          onClick={() => onChange(o.id)}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+            value === o.id ? "bg-[#00ffc8] text-black" : "text-white/50 hover:text-white/80",
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Tabela de artilheiros/assistentes de uma competicao.
+function ScorersTable({
+  rows,
+  userCurto,
+  metric,
+}: {
+  rows: { name: string; teamShort: string; teamName: string; nat?: string; goals: number; assists: number; matches: number }[]
+  userCurto: string
+  metric: "goals" | "assists"
+}) {
+  const sorted = [...rows]
+    .filter(r => r[metric] > 0)
+    .sort((a, b) => b[metric] - a[metric] || (b.goals + b.assists) - (a.goals + a.assists))
+    .slice(0, 20)
+  if (sorted.length === 0) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-[#1a1a1a] p-8 text-center text-sm text-white/40">
+        Ainda não há {metric === "goals" ? "gols" : "assistências"} registrados nesta competição.
+      </div>
+    )
+  }
+  return (
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1a1a1a]">
+      <div className="grid grid-cols-[32px_1fr_36px_48px] items-center gap-3 border-b border-white/10 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/40">
+        <span>#</span>
+        <span>Jogador</span>
+        <span className="text-center">J</span>
+        <span className="text-right">{metric === "goals" ? "Gols" : "Assist."}</span>
+      </div>
+      {sorted.map((r, i) => {
+        const team = getTeamByShort(r.teamShort)
+        const isUser = r.teamShort === userCurto
+        return (
+          <div
+            key={`${r.teamShort}-${r.name}-${i}`}
+            className={cn(
+              "grid grid-cols-[32px_1fr_36px_48px] items-center gap-3 border-b border-white/5 px-4 py-2.5",
+              isUser && "bg-[#00ffc8]/[0.06]",
+            )}
+          >
+            <span className={cn("text-sm font-bold tabular-nums", i === 0 ? "text-amber-400" : "text-white/40")}>{i + 1}</span>
+            <div className="flex min-w-0 items-center gap-2">
+              {team ? <TeamCrest team={team} size="xs" /> : null}
+              <div className="min-w-0">
+                <div className={cn("truncate text-sm font-semibold", isUser ? "text-[#00ffc8]" : "text-white")}>{r.name}</div>
+                <div className="truncate text-[10px] text-white/40">{r.teamName}</div>
+              </div>
+            </div>
+            <span className="text-center text-sm tabular-nums text-white/50">{r.matches}</span>
+            <span className="text-right text-base font-black tabular-nums text-white">{r[metric]}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function CompeticoesPage() {
   const { team: userTeam } = useUserTeam()
   const { standings: gameStandings, currentWeek, currentSeason, userPosition, seasonCalendar } = useGameManager()
+  const { squadPlayers, matchResults } = useGameEngine()
   const t = useTranslation()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("brasileirao")
+  // Sub-visao de cada competicao: a classificacao OU os artilheiros/assistencias
+  // DAQUELA competicao (pedido: ver o artilheiro dentro de Competicoes).
+  const [compView, setCompView] = useState<"classificacao" | "artilheiros" | "assistencias">("classificacao")
+
+  // Numeros REAIS do elenco do usuario nesta temporada (gols/assist), como na tela
+  // de Estatisticas — o time do usuario entra com dado de verdade, nao atribuido.
+  const userSquadStatsLive = useMemo(
+    () => (squadPlayers ?? [])
+      .filter(p => (p.seasonStats?.goals ?? 0) > 0 || (p.seasonStats?.assists ?? 0) > 0)
+      .map(p => ({
+        key: `${userTeam.curto}:${p.name}`, name: p.name, teamShort: userTeam.curto,
+        teamName: userTeam.nome, nat: undefined as string | undefined,
+        goals: p.seasonStats?.goals ?? 0, assists: p.seasonStats?.assists ?? 0,
+        matches: p.seasonStats?.matchesPlayed ?? 0,
+      })),
+    [squadPlayers, userTeam.curto, userTeam.nome],
+  )
+
+  // Artilheiros/assistentes de um conjunto de clubes (uma competicao). Os gols dos
+  // placares da CPU sao atribuidos aos jogadores REAIS de cada time por posicao
+  // (deterministico); o time do usuario usa os numeros reais.
+  const scorersFor = useMemo(() => (teamShorts: string[]) => {
+    const doGrupo = new Set(teamShorts)
+    doGrupo.add(userTeam.curto)
+    const resultados = (matchResults ?? []).filter(m =>
+      m.season === currentSeason && doGrupo.has(m.homeTeam) && doGrupo.has(m.awayTeam))
+    return gerarEstatisticasCompeticao({
+      resultados,
+      squadDe: (short) => { const tm = getTeamByShort(short); return tm ? getPlayersForTeam(tm) : [] },
+      nomeDe: (short) => getTeamByShort(short)?.nome ?? short,
+      userShort: userTeam.curto,
+      userRows: userSquadStatsLive,
+    })
+  }, [matchResults, currentSeason, userTeam.curto, userSquadStatsLive])
   const didInitTab = useRef(false)
   const tabsOrder = ["brasileirao", "copabrasil", "estadual", "libertadores", "sulamericana"]
 
@@ -818,11 +1019,29 @@ export default function CompeticoesPage() {
           </TabsList>
 
           <TabsContent value="brasileirao" className="mt-4">
-            <StandingsTable standings={serieAStandings} userTeam={userTeam} division="serie_a" />
+            <CompViewTabs value={compView} onChange={setCompView} />
+            {compView === "classificacao" ? (
+              <StandingsTable standings={serieAStandings} userTeam={userTeam} division="serie_a" />
+            ) : (
+              <ScorersTable
+                rows={scorersFor(serieAStandings.map(s => s.team.curto))}
+                userCurto={userTeam.curto}
+                metric={compView === "artilheiros" ? "goals" : "assists"}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="serie-b" className="mt-4">
-            <StandingsTable standings={serieBStandings} userTeam={userTeam} division="serie_b" />
+            <CompViewTabs value={compView} onChange={setCompView} />
+            {compView === "classificacao" ? (
+              <StandingsTable standings={serieBStandings} userTeam={userTeam} division="serie_b" />
+            ) : (
+              <ScorersTable
+                rows={scorersFor(serieBStandings.map(s => s.team.curto))}
+                userCurto={userTeam.curto}
+                metric={compView === "artilheiros" ? "goals" : "assists"}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="copa-do-brasil" className="mt-4">
@@ -908,7 +1127,11 @@ function CopaBracket({
     { name: t.competitions.final, matches: state.final, isCurrent: state.currentRound === "final" },
   ]
 
-  const canSimulate = !state.champion && !state.eliminated
+        // ELIMINADO não trava mais o mata-mata: antes o botão sumia quando o
+        // usuário caía e a Copa ficava PRESA nas oitavas para sempre (relato). Agora
+        // dá para continuar simulando os confrontos até sair o campeão — o usuário
+        // só não está mais nele.
+  const canSimulate = !state.champion
 
   return (
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 overflow-x-auto scrollbar-thin">
@@ -924,7 +1147,7 @@ function CopaBracket({
             className="px-4 py-2 rounded-lg bg-[#00ffc8] text-black font-medium text-sm hover:bg-[#00c8ff] transition-colors inline-flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
-            {t.competitions.simulate} {state.currentRound}
+            {state.eliminated ? "Simular até o campeão" : `${t.competitions.simulate} ${state.currentRound}`}
           </button>
         )}
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeftRight, Check, X, ChevronRight, Zap, Heart, Activity, Star } from "lucide-react"
+import { ArrowDown, ArrowLeftRight, ArrowUp, Check, X, ChevronRight, Zap, HeartPulse } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Team } from "@/lib/teams-data"
@@ -47,42 +47,10 @@ interface SubstitutionModalProps {
 export interface SubstitutionChange { out: MatchPlayer; inPlayer: MatchPlayer }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Player Card (estilo FUT/EA FC 26)
+// Player Row — leitura rápida de banco/escalação durante a partida
 // ─────────────────────────────────────────────────────────────────────────────
 
-function getCardTier(rating: number): {
-  bg: string
-  ring: string
-  label: string
-  text: string
-} {
-  if (rating >= 87) return {
-    bg: "linear-gradient(160deg, #f1c768 0%, #c98e2b 60%, #8c5a14 100%)",
-    ring: "ring-amber-300",
-    label: "TOTW",
-    text: "#3a2400",
-  }
-  if (rating >= 82) return {
-    bg: "linear-gradient(160deg, #f8d568 0%, #d4a02b 60%, #97681a 100%)",
-    ring: "ring-yellow-300",
-    label: "GOLD",
-    text: "#2a1f00",
-  }
-  if (rating >= 75) return {
-    bg: "linear-gradient(160deg, #d8d3c0 0%, #aaa490 60%, #6f6957 100%)",
-    ring: "ring-zinc-300",
-    label: "SILVER",
-    text: "#1f1d15",
-  }
-  return {
-    bg: "linear-gradient(160deg, #b08762 0%, #8b6543 60%, #5b3f25 100%)",
-    ring: "ring-amber-700",
-    label: "BRONZE",
-    text: "#fff",
-  }
-}
-
-function PlayerCard({
+function PlayerRow({
   player,
   team,
   selected,
@@ -97,148 +65,74 @@ function PlayerCard({
   onClick: () => void
   variant?: "out" | "in"
 }) {
-  const tier = getCardTier(player.rating)
-  const stamColor =
-    player.stamina > 70 ? "#00ffc8" : player.stamina > 40 ? "#eab308" : "#ef4444"
+  const stamina = Math.round(player.stamina ?? 100)
+  const stamColor = stamina > 70 ? "#00ffc8" : stamina > 40 ? "#eab308" : "#ef4444"
+  const accent = variant === "out" ? "#fb7185" : "#00ffc8"
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "group relative flex flex-col w-full rounded-lg overflow-hidden transition-all",
-        "border-2",
-        selected
-          ? variant === "out"
-            ? "border-red-400 scale-[1.02] shadow-[0_0_24px_rgba(248,113,113,0.4)]"
-            : "border-[#00ffc8] scale-[1.02] shadow-[0_0_24px_rgba(29,185,84,0.4)]"
-          : "border-transparent hover:scale-[1.01]",
-        disabled && "opacity-30 cursor-not-allowed",
+        "group relative grid min-h-[66px] w-full grid-cols-[42px_1fr_auto] items-center gap-3 overflow-hidden rounded-xl border px-3 py-2 text-left transition-all",
+        selected ? "border-current bg-white/[0.08] shadow-lg" : "border-white/[0.06] bg-white/[0.025] hover:border-white/15 hover:bg-white/[0.055]",
+        disabled && "cursor-not-allowed opacity-30",
       )}
-      style={{ background: tier.bg }}
+      style={{ color: selected ? accent : undefined, boxShadow: selected ? `inset 3px 0 0 ${accent}, 0 12px 30px rgba(0,0,0,.22)` : undefined }}
     >
-      {/* Tier label */}
-      <div className="flex items-center justify-between px-2 py-1">
-        <span
-          className="text-[8px] font-black tracking-[0.15em]"
-          style={{ color: tier.text }}
-        >
-          {tier.label}
-        </span>
-        <span
-          className="text-[8px] font-bold"
-          style={{ color: tier.text }}
-        >
-          {team.curto}
-        </span>
-      </div>
-
-      {/* Rating + Position */}
-      <div className="flex items-start gap-2 px-2 pb-1">
-        <div className="flex flex-col items-center">
-          <span
-            className="text-2xl font-black leading-none"
-            style={{ color: tier.text }}
-          >
-            {player.rating}
-          </span>
-          <span
-            className="text-[9px] font-bold tracking-wider"
-            style={{ color: tier.text, opacity: 0.7 }}
-          >
-            {player.position}
-          </span>
-        </div>
-        {/* Avatar shape */}
-        <div className="flex-1 flex items-center justify-center">
-          <div
-            className="h-12 w-12 rounded-full flex items-center justify-center text-base font-black"
-            style={{
-              backgroundColor: team.cor1,
-              color: team.cor2,
-              border: `2px solid ${tier.text}`,
-            }}
-          >
-            #{player.number}
-          </div>
-        </div>
-      </div>
-
-      {/* Name */}
       <div
-        className="text-center text-[11px] font-black uppercase tracking-wide truncate px-1"
-        style={{ color: tier.text }}
+        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/15 text-sm font-black text-white shadow-inner"
+        style={{ background: `linear-gradient(145deg, ${team.cor1}, ${team.cor2 || "#18201f"})` }}
       >
-        {player.name}
+        {player.number}
+        <span className="absolute -bottom-1 -right-1 rounded bg-[#080b0b] px-1 py-0.5 text-[8px] font-black text-white/75">
+          {player.position}
+        </span>
       </div>
 
-      {/* Stats grid mini */}
-      {(player.pace || player.shooting) && (
-        <div className="grid grid-cols-3 gap-x-1 gap-y-0 px-2 py-1 text-[8px] font-bold" style={{ color: tier.text }}>
-          {player.pace !== undefined && <div className="flex justify-between"><span>RIT</span><span>{player.pace}</span></div>}
-          {player.shooting !== undefined && <div className="flex justify-between"><span>FIN</span><span>{player.shooting}</span></div>}
-          {player.passing !== undefined && <div className="flex justify-between"><span>PAS</span><span>{player.passing}</span></div>}
-          {player.dribbling !== undefined && <div className="flex justify-between"><span>DRI</span><span>{player.dribbling}</span></div>}
-          {player.defending !== undefined && <div className="flex justify-between"><span>DEF</span><span>{player.defending}</span></div>}
-          {player.physical !== undefined && <div className="flex justify-between"><span>FIS</span><span>{player.physical}</span></div>}
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-xs font-bold text-white">{player.name}</span>
+          {player.yellow && <span className="h-3 w-2 shrink-0 rounded-[2px] bg-yellow-400" title="Cartão amarelo" />}
+          {player.red && <span className="h-3 w-2 shrink-0 rounded-[2px] bg-red-500" title="Cartão vermelho" />}
         </div>
-      )}
+        <div className="mt-1.5 flex items-center gap-2">
+          <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full transition-all" style={{ width: `${stamina}%`, background: stamColor }} />
+          </div>
+          <span className="w-7 text-right text-[9px] font-bold tabular-nums text-white/45">{stamina}%</span>
+        </div>
+        <div className="mt-1 flex gap-2 text-[8px] font-semibold uppercase tracking-wider text-white/30">
+          {player.pace != null && <span>Rit {player.pace}</span>}
+          {player.passing != null && <span>Pas {player.passing}</span>}
+          {player.defending != null && <span>Def {player.defending}</span>}
+        </div>
+      </div>
 
-      {/* Stamina bar */}
-      <div className="px-2 pb-1.5 pt-0.5">
-        <div className="flex items-center justify-between text-[8px] font-bold mb-0.5" style={{ color: tier.text }}>
-          <span className="flex items-center gap-0.5">
-            <Heart className="h-2 w-2" /> ENERGIA
+      <div className="flex items-center gap-2">
+        <div className="text-right">
+          <div className="text-lg font-black leading-none text-white">{player.rating}</div>
+          <div className="mt-1 text-[8px] font-bold uppercase tracking-widest text-white/30">OVR</div>
+        </div>
+        {selected && (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: accent }}>
+            {variant === "out" ? <ArrowDown className="h-3.5 w-3.5 text-black" /> : <ArrowUp className="h-3.5 w-3.5 text-black" />}
           </span>
-          {/* Math.round: a stamina chega como float acumulado do drain por
-              minuto e aparecia "5.4000000000012%" no card (relato com print). */}
-          <span>{Math.round(player.stamina ?? 100)}%</span>
-        </div>
-        <div className="h-1 w-full rounded-full bg-black/30 overflow-hidden">
-          <div
-            className="h-full transition-all"
-            style={{ width: `${player.stamina}%`, backgroundColor: stamColor }}
-          />
-        </div>
-      </div>
-
-      {/* Indicators */}
-      <div className="absolute top-1 right-1 flex flex-col gap-0.5">
-        {player.goals && player.goals > 0 && (
-          <div className="h-4 px-1 rounded bg-black/60 flex items-center gap-0.5">
-            <span className="text-[9px] font-bold text-white">{player.goals}</span>
-            <span className="text-[9px] text-white">G</span>
-          </div>
         )}
-        {player.yellow && (
-          <div className="h-3 w-2 rounded-sm bg-yellow-400" />
-        )}
-        {player.red && (
-          <div className="h-3 w-2 rounded-sm bg-red-500" />
+        {!selected && (
+          <ChevronRight className="h-4 w-4 text-white/15 transition group-hover:text-white/50" />
         )}
       </div>
 
-      {/* Selected check */}
-      {selected && (
-        <div
-          className={cn(
-            "absolute inset-0 flex items-center justify-center backdrop-blur-[1px]",
-            variant === "out" ? "bg-red-500/30" : "bg-[#00ffc8]/30",
-          )}
-        >
-          <div
-            className={cn(
-              "h-12 w-12 rounded-full flex items-center justify-center shadow-lg",
-              variant === "out" ? "bg-red-500" : "bg-[#00ffc8]",
-            )}
-          >
-            {variant === "out" ? (
-              <ArrowLeftRight className="h-6 w-6 text-white rotate-180" />
-            ) : (
-              <Check className="h-6 w-6 text-black" />
-            )}
-          </div>
-        </div>
+      {player.goals != null && player.goals > 0 && (
+        <span className="absolute right-2 top-1 rounded bg-emerald-400/15 px-1.5 text-[8px] font-bold text-emerald-300">
+          {player.goals}G
+        </span>
+      )}
+      {stamina <= 45 && (
+        <span className="absolute bottom-1 left-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/15">
+          <HeartPulse className="h-2.5 w-2.5 text-red-400" />
+        </span>
       )}
     </button>
   )
@@ -344,11 +238,11 @@ export function SubstitutionModal({
   pendingIdsRef.current = { usedOut, usedIn }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-      <div className="w-full max-w-5xl rounded-2xl bg-gradient-to-br from-[#0f0f0f] to-[#0a0a0a] border border-white/10 overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-lg">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#090d0c] shadow-[0_30px_100px_rgba(0,0,0,.7)]">
         {/* Header */}
         <div
-          className="relative flex items-center justify-between px-6 py-5 border-b border-white/[0.04]"
+          className="relative flex items-center justify-between border-b border-white/[0.06] px-6 py-4"
           style={{
             background: `linear-gradient(90deg, ${team.cor1}30 0%, transparent 60%)`,
           }}
@@ -361,7 +255,8 @@ export function SubstitutionModal({
               <ArrowLeftRight className="h-5 w-5" style={{ color: team.cor1 }} />
             </div>
             <div>
-              <h3 className="text-xl font-black text-white tracking-tight">
+              <p className="mb-0.5 text-[9px] font-black uppercase tracking-[0.22em] text-[#00ffc8]/70">Central tática</p>
+              <h3 className="text-xl font-black tracking-tight text-white">
                 Substituição
               </h3>
               <p className="text-[11px] text-white/50 tracking-wider uppercase">
@@ -371,6 +266,13 @@ export function SubstitutionModal({
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-white/35 md:flex">
+              <span className={cn("rounded-full px-2 py-1", out ? "bg-rose-400/15 text-rose-300" : "bg-white/5")}>1 · Saída</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className={cn("rounded-full px-2 py-1", inPlayer ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/5")}>2 · Entrada</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className={cn("rounded-full px-2 py-1", pending.length ? "bg-white/10 text-white/75" : "bg-white/5")}>3 · Confirmar</span>
+            </div>
             <span
               className={cn(
                 "rounded-full px-3 py-1 text-[10px] font-bold tracking-wider",
@@ -394,7 +296,7 @@ export function SubstitutionModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 grid lg:grid-cols-2 gap-6">
+        <div className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[minmax(0,1fr)_52px_minmax(0,1fr)]">
           {/* SAI */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -412,10 +314,10 @@ export function SubstitutionModal({
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[480px] overflow-y-auto pr-1">
+            <div className="max-h-[55vh] space-y-1.5 overflow-y-auto pr-1 scrollbar-game">
               {starters.map((p, i) => (
-                <div key={p.id} className={cn("rounded-lg", padArea === "out" && padIndex === i && "ring-2 ring-white/90 ring-offset-2 ring-offset-black")}>
-                  <PlayerCard
+                <div key={p.id} className={cn("rounded-xl", padArea === "out" && padIndex === i && "ring-2 ring-white/80 ring-offset-2 ring-offset-[#090d0c]")}>
+                  <PlayerRow
                     player={p}
                     team={team}
                     selected={out?.id === p.id}
@@ -425,6 +327,12 @@ export function SubstitutionModal({
                   />
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="hidden items-center justify-center lg:flex">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
+              <ArrowLeftRight className="h-4 w-4 text-white/35" />
             </div>
           </div>
 
@@ -439,10 +347,10 @@ export function SubstitutionModal({
                 {bench.length} no banco
               </span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[480px] overflow-y-auto pr-1">
+            <div className="max-h-[55vh] space-y-1.5 overflow-y-auto pr-1 scrollbar-game">
               {bench.map((p, i) => (
-                <div key={p.id} className={cn("rounded-lg", padArea === "in" && padIndex === i && "ring-2 ring-white/90 ring-offset-2 ring-offset-black")}>
-                  <PlayerCard
+                <div key={p.id} className={cn("rounded-xl", padArea === "in" && padIndex === i && "ring-2 ring-white/80 ring-offset-2 ring-offset-[#090d0c]")}>
+                  <PlayerRow
                     player={p}
                     team={team}
                     selected={inPlayer?.id === p.id}
@@ -462,7 +370,7 @@ export function SubstitutionModal({
         </div>
 
         {/* Footer com preview da substituição */}
-        <div className="border-t border-white/[0.04] bg-black/40 px-6 py-4">
+        <div className="border-t border-white/[0.06] bg-black/35 px-5 py-3">
           {pending.length > 0 && <div className="mb-3 flex flex-wrap gap-2">
             {pending.map((change, index) => <button key={`${change.out.id}-${change.inPlayer.id}`} onClick={() => setPending(current => current.filter((_, i) => i !== index))} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[10px] text-white/70 hover:border-red-400/50" title="Remover troca">{change.out.name} → <span className="text-[#00ffc8]">{change.inPlayer.name}</span> ×</button>)}
           </div>}
@@ -475,7 +383,7 @@ export function SubstitutionModal({
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-white truncate">{out.name}</div>
-                    <div className="text-[10px] text-red-400">SAI · {out.stamina}%</div>
+                    <div className="text-[10px] text-red-400">SAI · {Math.round(out.stamina)}% de energia</div>
                   </div>
                 </div>
               ) : (
@@ -513,7 +421,7 @@ export function SubstitutionModal({
                 variant="outline"
                 className="text-xs border-[#00ffc8]/30 bg-transparent text-[#00ffc8] disabled:opacity-30"
               >
-                ADICIONAR TROCA
+                ADICIONAR À FILA
               </Button>
               <Button
                 onClick={handleConfirm}

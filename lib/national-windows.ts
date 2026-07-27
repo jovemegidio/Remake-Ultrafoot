@@ -42,6 +42,23 @@ export function cyclePhase(season: number): CyclePhase {
   return "qual_early"
 }
 
+// Edicoes reais da Copa do Mundo por ano-sede, para imersao na pausa do Mundial.
+export const WORLD_CUP_EDITIONS: Record<number, { hosts: string; note?: string }> = {
+  2026: { hosts: "EUA, Canada e Mexico" },
+  2030: { hosts: "Espanha, Portugal e Marrocos", note: "Centenario: jogos de abertura na Argentina, Paraguai e Uruguai" },
+  2034: { hosts: "Arabia Saudita" },
+}
+
+/** Pais(es)-sede da Copa do Mundo daquele ano (vazio se nao for edicao conhecida). */
+export function worldCupHosts(season: number): string {
+  return WORLD_CUP_EDITIONS[season]?.hosts ?? ""
+}
+
+/** Nota extra da edicao (ex.: centenario 2030). */
+export function worldCupNote(season: number): string {
+  return WORLD_CUP_EDITIONS[season]?.note ?? ""
+}
+
 export interface WindowPlan {
   /** Id da competicao a iniciar/continuar nesta janela. */
   competitionId: string

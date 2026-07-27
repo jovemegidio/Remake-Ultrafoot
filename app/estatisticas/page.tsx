@@ -19,6 +19,8 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { getTeamByShort, type Team } from "@/lib/teams-data"
+import { getPlayersForTeam } from "@/lib/players-data"
+import { gerarEstatisticasCompeticao } from "@/lib/competition-scorers"
 import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
@@ -128,6 +130,35 @@ export default function EstatisticasPage() {
   // guarda (calcTopScorers retorna []); entao mostramos os numeros REAIS do seu time em vez
   // da lista fixa de "Gabigol/Endrick" que aparecia antes.
   const userCurto = userTeam.curto
+
+  // ARTILHARIA/ASSISTENCIAS da COMPETICAO INTEIRA. Os gols da CPU sao atribuidos
+  // a jogadores plausiveis de cada time (ver lib/competition-scorers); o time do
+  // usuario entra com os numeros REAIS. Cartoes/notas seguem so do usuario — sao
+  // dados que o motor rastreia de verdade, sem chute.
+  const compRows = useMemo(() => {
+    const daLiga = new Set(standings.map(s => s.teamShort))
+    daLiga.add(userTeam.curto)
+    const resultados = matchResults.filter(m =>
+      m.season === currentSeason && daLiga.has(m.homeTeam) && daLiga.has(m.awayTeam))
+    const userRows = userSquadStatsLive
+      .filter(p => p.goals > 0 || p.assists > 0)
+      .map(p => ({ key: `${userTeam.curto}:${p.name}`, name: p.name, teamShort: userTeam.curto, teamName: userTeam.nome, nat: undefined, goals: p.goals, assists: p.assists, matches: p.matches }))
+    return gerarEstatisticasCompeticao({
+      resultados,
+      squadDe: (short) => { const t = getTeamByShort(short); return t ? getPlayersForTeam(t) : [] },
+      nomeDe: (short) => getTeamByShort(short)?.nome ?? short,
+      userShort: userTeam.curto,
+      userRows,
+    })
+  }, [standings, matchResults, currentSeason, userSquadStatsLive, userTeam.curto, userTeam.nome])
+
+  const rowsComp = (pick: "goals" | "assists"): StatRow[] =>
+    compRows
+      .filter(r => r[pick] > 0)
+      .sort((a, b) => b[pick] - a[pick] || b.goals + b.assists - (a.goals + a.assists))
+      .slice(0, 25)
+      .map((r, i) => ({ pos: i + 1, name: r.name, team: r.teamShort, matches: r.matches, isUser: r.teamShort === userCurto, nat: r.nat, valueStr: String(r[pick]) }))
+
   const mkRows = (pick: (p: (typeof userSquadStatsLive)[number]) => number): StatRow[] =>
     userSquadStatsLive
       .filter((p) => pick(p) > 0)
@@ -135,8 +166,8 @@ export default function EstatisticasPage() {
       .slice(0, 20)
       .map((p, i) => ({ pos: i + 1, name: p.name, team: userCurto, matches: p.matches, isUser: true, valueStr: String(pick(p)) }))
   const cats: { id: string; label: string; statLabel: string; rows: StatRow[] }[] = [
-    { id: "artilheiros", label: "Artilheiros", statLabel: "Gols", rows: mkRows((p) => p.goals) },
-    { id: "assistencias", label: "Assistências", statLabel: "Assistências", rows: mkRows((p) => p.assists) },
+    { id: "artilheiros", label: "Artilheiros", statLabel: "Gols", rows: rowsComp("goals") },
+    { id: "assistencias", label: "Assistências", statLabel: "Assistências", rows: rowsComp("assists") },
     { id: "clean", label: "S/ Gols Sofr.", statLabel: "S/ Gols Sofr.", rows: mkRows((p) => p.cleanSheets) },
     { id: "amarelos", label: "Cartões Amarelos", statLabel: "Cartões Amarelos", rows: mkRows((p) => p.yellows) },
     { id: "vermelhos", label: "Cartões Vermelhos", statLabel: "Cartões Vermelhos", rows: mkRows((p) => p.reds) },

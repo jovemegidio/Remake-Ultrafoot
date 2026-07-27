@@ -17,6 +17,7 @@ import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor } from "@/lib/club-economy"
 import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@/lib/player-attributes"
+import { recordWorldTransfer } from "@/lib/world-market"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -1138,6 +1139,21 @@ export interface MatchResult {
   homeScore: number
   awayScore: number
   events: MatchEvent[]
+  /**
+   * Goleadores REAIS da partida (um item por gol), com o time de cada um. O motor
+   * passa a gravar isto na simulacao — inclusive nos jogos de CPU — para a tela de
+   * estatisticas ler dado persistido em vez de atribuir o gol pelo placar na hora.
+   * Opcional: saves antigos e partidas sem geracao caem na atribuicao deterministica.
+   */
+  scorers?: MatchScorer[]
+}
+
+export interface MatchScorer {
+  teamShort: string
+  name: string
+  nat?: string
+  /** Nome do assistente (mesmo time), quando houve. */
+  assist?: string
 }
 
 export interface MatchEvent {
@@ -2509,6 +2525,11 @@ export const useGameEngine = create<GameEngineState>()(
       advanceWeek: () => {
         const state = get()
         const newWeek = state.currentWeek + 1
+        const expiredDepartures: Array<{
+          player: Player
+          origin: string
+          destination: string
+        }> = []
         
         set((s) => {
           // Chance de o treino render +1 no atributo. Antes era 0.7 fixo; agora o Centro de
@@ -2756,6 +2777,54 @@ export const useGameEngine = create<GameEngineState>()(
             }
           }
 
+          // ---- CONTRATOS: saída real ao término do vínculo ----
+          // Antes a interface avisava que o contrato estava vencendo, mas o
+          // jogador continuava para sempre no elenco se o técnico esquecesse de
+          // renovar. A partir da primeira semana após o fim:
+          //   • a opção automática, quando contratada, prorroga o vínculo;
+          //   • sem renovação, o atleta sai sem taxa e assina por outro clube.
+          const absoluteNow = absoluteWeek(s.currentSeason, newWeek)
+          const renewedPlayers = playersAfterNT.map(player => {
+            const contract = player.contract
+            if (!contract || contract.endDate > absoluteNow || !contract.autoRenewalOption) return player
+            const extension = Math.max(26, contract.autoRenewalWeeks ?? 52)
+            return {
+              ...player,
+              contract: {
+                ...contract,
+                endDate: absoluteNow + extension,
+                signedWeek: newWeek,
+                signedSeason: s.currentSeason,
+              },
+            }
+          })
+
+          const originTeam = getTeamByShort(s.myTeamShort)
+          const originName = originTeam?.nome ?? s.myTeamShort ?? "Clube anterior"
+
+          playersAfterNT = renewedPlayers.filter(player => {
+            if (!player.contract || player.contract.endDate > absoluteNow) return true
+            const destinationCandidates = allTeams
+              .filter(team => team.curto !== s.myTeamShort)
+              .filter(team => Math.abs((team.prestigio ?? 50) - Math.max(35, Math.min(95, player.overall))) <= 30)
+            const candidates = destinationCandidates.length
+              ? destinationCandidates
+              : allTeams.filter(team => team.curto !== s.myTeamShort)
+            const seed = Math.abs(
+              [...`${player.name}:${s.currentSeason}:${newWeek}`]
+                .reduce((hash, char) => Math.imul(hash ^ char.charCodeAt(0), 16777619), 2166136261),
+            )
+            const destination = candidates[seed % Math.max(1, candidates.length)]
+            if (destination) {
+              expiredDepartures.push({
+                player,
+                origin: originName,
+                destination: destination.nome,
+              })
+            }
+            return false
+          })
+
           // ---- FUNDO DE INVESTIMENTO: forcar venda se chegou a semana ----
           const fundOffers: InvestmentFundOffer[] = [...s.pendingFundOffers]
           const FUND_NAMES = ["Alpha Capital", "Sport Ventures", "Global FC Fund", "Emerald Sports"]
@@ -2791,6 +2860,28 @@ export const useGameEngine = create<GameEngineState>()(
             lastSeasonStandings: lastStandings,
           }
         })
+
+        // Atualiza o mercado mundial fora do updater do Zustand. Isso também
+        // remove o atleta do elenco-base de origem e o adiciona ao novo clube,
+        // portanto a saída não é apenas uma mensagem visual.
+        for (const departure of expiredDepartures) {
+          recordWorldTransfer(departure.origin, departure.destination, {
+            nome: departure.player.name,
+            pos: departure.player.position,
+            idade: departure.player.age,
+            base: departure.player.overall,
+            nac: departure.player.nationality,
+            temporada: state.currentSeason,
+          })
+        }
+        if (expiredDepartures.length > 0 && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("ultrafoot:contracts-expired", {
+            detail: expiredDepartures.map(item => ({
+              playerName: item.player.name,
+              destination: item.destination,
+            })),
+          }))
+        }
         
         // Processar progresso dos olheiros
         set((s) => {

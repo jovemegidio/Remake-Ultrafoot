@@ -42,6 +42,32 @@ export const GAMES: Game[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: 175,
+    gameId: 1,
+    version: "1.0.175",
+    channel: "stable",
+    title: "Propostas de clube e seleção, demissão clara e Copa do Mundo no calendário",
+    downloadUrl: setupUrl("1.0.175"),
+    sizeMb: 486,
+    isLatest: true,
+    isRequired: false,
+    releasedAt: new Date("2026-07-26T00:00:00Z"),
+    createdAt: new Date("2026-07-26T00:00:00Z"),
+  },
+  {
+    id: 174,
+    gameId: 1,
+    version: "1.0.174",
+    channel: "stable",
+    title: "Competicoes reais de 2026, escudos e correcoes de elenco",
+    downloadUrl: setupUrl("1.0.174"),
+    sizeMb: 438,
+    isLatest: false,
+    isRequired: false,
+    releasedAt: new Date("2026-07-26T00:00:00Z"),
+    createdAt: new Date("2026-07-26T00:00:00Z"),
+  },
+  {
     id: 145,
     gameId: 1,
     version: "1.0.145",
@@ -49,7 +75,7 @@ export const RELEASES: Release[] = [
     title: "Datas reais das competições de 2026",
     downloadUrl: setupUrl("1.0.145"),
     sizeMb: 438,
-    isLatest: true,
+    isLatest: false,
     isRequired: false,
     releasedAt: new Date("2026-07-23T00:00:00Z"),
     createdAt: new Date("2026-07-23T00:00:00Z"),
@@ -122,6 +148,13 @@ export const RELEASES: Release[] = [
 ]
 
 export const CHANGELOG: ChangelogEntry[] = [
+  // 1.0.175
+  { id: 20, releaseId: 175, type: "fixed", description: "Propostas de outros clubes voltam a aparecer: os grandes chamam quando você vai bem, os menores quando você tropeça.", sortOrder: 0 },
+  { id: 21, releaseId: 175, type: "fixed", description: "Convites de seleção acessíveis — seleções fracas sondam técnicos modestos; as fortes exigem currículo.", sortOrder: 1 },
+  { id: 22, releaseId: 175, type: "changed", description: "Demissão agora é clara: aviso inequívoco na Área do Treinador, sem mais \"cair no Botafogo\" sem entender.", sortOrder: 2 },
+  { id: 23, releaseId: 175, type: "added", description: "Copa do Mundo em destaque no calendário de junho/julho em anos de Mundial.", sortOrder: 3 },
+  { id: 24, releaseId: 175, type: "fixed", description: "Escudos importados pelo usuário passam a vencer o mapa padrão (fim do Al-Nassr e afins como sigla).", sortOrder: 4 },
+
   // 1.0.145
   { id: 1, releaseId: 145, type: "added", description: "Datas reais da Copa do Mundo e das competições continentais de 2026.", sortOrder: 0 },
   { id: 2, releaseId: 145, type: "changed", description: "Ligas e copas europeias e campeonatos estaduais ajustados às datas informadas.", sortOrder: 1 },

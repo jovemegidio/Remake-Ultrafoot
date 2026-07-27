@@ -112,6 +112,10 @@ export function assumirClube(
   deps.setEngineTime(deps.week, deps.season)
   deps.setSaveState({
     selectedTeamShort: clubShort,
+    // Assumir um CLUBE volta ao modo clube: se o técnico estava no modo seleção
+    // (ex.: demitido e seguindo só na seleção — caso Diniz), o novo clube passa a
+    // ser o time ativo. A seleção continua no save; alterna de volta pela /selecao.
+    managingNationalTeamId: null,
     divisionOverride: undefined,
     fixtures: [],
     standings: [],
@@ -123,6 +127,29 @@ export function assumirClube(
     // varias vezes na mesma temporada. Ver podeTrocarDeClube.
     contratadoEm: { season: deps.season, week: deps.week },
   })
+  deps.navigate("/")
+}
+
+/**
+ * MODO SELEÇÃO (Task 2). Assumir/alternar para a SELEÇÃO como time ativo. Ao
+ * contrário de trocar de CLUBE, aqui NÃO recarregamos o motor nem zeramos
+ * notificações: o clube continua existindo por baixo — só muda qual entidade o
+ * office/central/elenco/partida enxergam como "time atual". Voltar ao clube é o
+ * inverso (managingNationalTeamId = null).
+ */
+export function assumirSelecao(
+  nationalTeamId: string,
+  deps: { setSaveState: (patch: Record<string, unknown>) => void; navigate: (href: string) => void },
+): void {
+  deps.setSaveState({ managingNationalTeamId: nationalTeamId })
+  deps.navigate("/")
+}
+
+/** Volta a comandar o CLUBE (sai do modo seleção). */
+export function voltarAoClube(
+  deps: { setSaveState: (patch: Record<string, unknown>) => void; navigate: (href: string) => void },
+): void {
+  deps.setSaveState({ managingNationalTeamId: null })
   deps.navigate("/")
 }
 

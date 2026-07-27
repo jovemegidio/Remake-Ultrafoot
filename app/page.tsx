@@ -50,7 +50,9 @@ import { useTranslation } from "@/lib/i18n"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { calcSeasonObjective, computeBoardConfidence, getCareerStatus } from "@/lib/board-engine"
 import { Flag, Briefcase } from "lucide-react"
-import { useGameState } from "@/lib/save-system"
+import { useGameState, useManagingNational } from "@/lib/save-system"
+import { NationalOffice } from "@/components/national-office"
+import { WorldCupCenter } from "@/components/world-cup-center"
 
 const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const HOME_WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
@@ -89,9 +91,35 @@ function fixtureDateHeadline(round: number, month?: number): string {
 }
 
 export default function DashboardPage() {
-  const { hydrated, userTeam, seasonCalendar, currentStandings, currentCompetition, userPosition, currentSeason, saveState } = useGameManager()
+  const { hydrated, userTeam, seasonCalendar, currentStandings, currentCompetition, userPosition, currentSeason, saveState, fifaPause, advancePastFifaBreak, advanceWeek } = useGameManager()
+  const [avancandoFifa, setAvancandoFifa] = useState(false)
+  const [worldCupOpen, setWorldCupOpen] = useState(false)
+  const avancarDataFifa = useCallback(async () => {
+    if (avancandoFifa) return
+    setAvancandoFifa(true)
+    try { await advancePastFifaBreak() } finally { setAvancandoFifa(false) }
+  }, [advancePastFifaBreak, avancandoFifa])
+
+  // A Central do Mundial mapeia UMA semana de pausa para UMA rodada da Copa. Mas a
+  // pausa já fica ativa na semana anterior ao seu início (é o aviso "o campeonato
+  // vai parar"), e ali `week - fromWeek` dá -1, que era travado em 0: o primeiro
+  // clique em "acompanhar próxima rodada" repetia a rodada 1 e parecia não fazer
+  // nada. Entrar na pausa antes de abrir a Central alinha as duas contagens.
+  const abrirCentralCopa = useCallback(async () => {
+    if (avancandoFifa) return
+    if (fifaPause && saveState.week < fifaPause.fromWeek) {
+      setAvancandoFifa(true)
+      try {
+        const faltam = Math.min(8, fifaPause.fromWeek - saveState.week)
+        for (let i = 0; i < faltam; i++) await advanceWeek()
+      } finally { setAvancandoFifa(false) }
+    }
+    setWorldCupOpen(true)
+  }, [avancandoFifa, fifaPause, saveState.week, advanceWeek])
   // setState: usado para assumir o novo clube ao aceitar uma proposta de emprego.
   const { setState } = useGameState()
+  // MODO SELEÇÃO: se o técnico assumiu uma seleção, o escritório vira o da seleção.
+  const { isNational } = useManagingNational()
   // Tabela do campeonato EM DISPUTA (antes mostrava sempre a Serie A, mesmo no estadual)
   const standings = currentStandings
   const { offers: nationalOffers, hasNationalTeam } = useNationalTeam()
@@ -195,6 +223,10 @@ export default function DashboardPage() {
     )
   }
 
+  // MODO SELEÇÃO tem seu próprio escritório (mesma estrutura, dados da seleção).
+  // Fica após o early-return de carregamento e todos os hooks — não altera a ordem deles.
+  if (isNational) return <NationalOffice />
+
   const nextMatches = seasonCalendar.fixtures
     .filter(f => f.isUserMatch && !f.played)
     .slice(0, 5)
@@ -281,6 +313,18 @@ export default function DashboardPage() {
 
   return (
     <div className="relative h-screen md:pl-0 pl-0 pb-20 md:pb-12 bg-[#050508] flex flex-col overflow-hidden">
+      {fifaPause?.isWorldCup && (
+        <WorldCupCenter
+          open={worldCupOpen}
+          season={currentSeason}
+          hosts={fifaPause.hosts}
+          currentWeek={saveState.week}
+          fromWeek={fifaPause.fromWeek}
+          untilWeek={fifaPause.untilWeek}
+          onClose={() => setWorldCupOpen(false)}
+          onAdvance={async () => { await advanceWeek() }}
+        />
+      )}
       {/* Tutorial de primeira vez (aparece so uma vez). */}
       <OnboardingOverlay teamName={userTeam?.nome} />
       {/* Fundo do escritorio: dois fundos alternando com crossfade suave */}
@@ -451,8 +495,38 @@ export default function DashboardPage() {
                     <span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" />
                   </div>
 
-                  {/* Proximo jogo */}
-                  {homeTeam && awayTeam ? (
+                  {/* PAUSA FIFA / COPA DO MUNDO: o campeonato de clubes esta parado.
+                      O tecnico de clube nao joga durante a janela de selecoes —
+                      acompanha a Copa e avanca ate o campeonato voltar. */}
+                  {fifaPause?.active ? (
+                    <div className="mt-6 rounded-2xl border border-amber-400/25 bg-gradient-to-b from-amber-400/[0.08] to-transparent p-5">
+                      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+                        <span className="text-base">🌍</span>
+                        {fifaPause.isWorldCup ? "Copa do Mundo FIFA" : "Data FIFA"}
+                      </div>
+                      <h2 className="mt-2 text-xl font-black text-white">
+                        {fifaPause.isWorldCup ? "Campeonato pausado para a Copa do Mundo" : "Campeonato pausado — janela de seleções"}
+                      </h2>
+                      {fifaPause.isWorldCup && fifaPause.hosts ? (
+                        <div className="mt-1 text-xs font-semibold text-amber-300/90">
+                          Sede {currentSeason}: {fifaPause.hosts}
+                          {fifaPause.note ? <span className="block font-normal text-white/45">{fifaPause.note}</span> : null}
+                        </div>
+                      ) : null}
+                      <p className="mt-1.5 text-sm leading-relaxed text-white/55">
+                        {fifaPause.isWorldCup
+                          ? "As ligas de clubes param durante o Mundial. Acompanhe a Copa do Mundo e avance até o seu campeonato voltar. Se você for chamado para dirigir uma seleção, comanda a equipe pela Área do Treinador."
+                          : "Os jogos de clube param na janela de seleções (amistosos e Eliminatórias). Avance a data FIFA para retomar o campeonato."}
+                      </p>
+                      <button
+                        onClick={fifaPause.isWorldCup ? abrirCentralCopa : avancarDataFifa}
+                        disabled={avancandoFifa}
+                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-[#231a05] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {avancandoFifa ? "Avançando…" : fifaPause.isWorldCup ? "Abrir Central da Copa do Mundo" : "Avançar a data FIFA"}
+                      </button>
+                    </div>
+                  ) : homeTeam && awayTeam ? (
                     <div className="mt-6">
                       <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-white/45">
                         <Trophy className="h-3.5 w-3.5 text-[#ffd700]" />

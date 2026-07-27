@@ -10,11 +10,14 @@ import type { Team } from "@/lib/teams-data"
 
 export type MatchSpeed = "slow" | "normal" | "fast" | "ultra" | "hyper"
 
+// Velocidades expostas na UI: 1x, 3x, 5x (pedido do jogador). O "1x" e a base
+// (normal = 2 ticks/s); fast = 3x = 6, ultra = 5x = 10. slow/hyper ficam no tipo
+// por compatibilidade de saves antigos, mas nao aparecem mais nos botoes.
 export const SPEED_TICKS_PER_SEC: Record<MatchSpeed, number> = {
   slow: 1,
   normal: 2,
-  fast: 5,
-  ultra: 12,
+  fast: 6,
+  ultra: 10,
   hyper: 30,
 }
 

@@ -10,6 +10,7 @@
 // sobreviver mesmo depois de voce renomear o jogador.
 
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
+import { attributesFromOverall } from "@/lib/player-attributes"
 import bundled from "@/data/seeds/player-overrides.json"
 
 export interface PlayerOverride {
@@ -44,21 +45,16 @@ export function reputationBonus(rep?: "normal" | "estrela" | "top_mundial"): num
 }
 
 /** Atributos padrao derivados do overall + posicao (mesma logica do motor de partida). */
+// Atributos por posição: DELEGA ao gerador canônico do motor (lib/player-attributes),
+// que já traz perfis realistas por família (GOL/ZAG/lateral/volante/meia/ponta/atacante)
+// com pesos por posição e RECONCILIAÇÃO do overall — o mesmo que a partida usa. Antes
+// aqui havia uma fórmula própria, mais grosseira (3 baldes), que fazia o editor/elenco
+// divergirem do motor (ponta com cara de centroavante, etc.). Unificando, tudo — editor,
+// tela de elenco e simulação — mostra o MESMO atleta coerente com a posição.
 export function defaultPlayerAttributes(base: number, pos: string): {
   pace: number; shooting: number; passing: number; dribbling: number; defending: number; physical: number
 } {
-  const isGK = pos === "GOL"
-  const isAtt = ["ATA", "PE", "PD", "SA", "CA"].includes(pos)
-  const isDef = ["ZAG", "LD", "LE", "ALD", "ALE"].includes(pos)
-  const clamp = (n: number) => Math.max(40, Math.min(99, Math.round(n)))
-  return {
-    pace: clamp(isGK ? 45 : isDef ? base - 4 : isAtt ? base + 2 : base),
-    shooting: clamp(isGK ? 20 : isAtt ? base + 3 : isDef ? base - 18 : base - 6),
-    passing: clamp(isGK ? base - 12 : isDef ? base - 6 : base),
-    dribbling: clamp(isGK ? 25 : isAtt ? base + 1 : isDef ? base - 12 : base - 2),
-    defending: clamp(isGK ? base - 5 : isDef ? base + 2 : isAtt ? base - 22 : base - 8),
-    physical: clamp(isGK ? base : base - 2),
-  }
+  return attributesFromOverall(base, pos, `default:${pos}:${base}`)
 }
 
 const BUNDLED = bundled as Record<string, PlayerOverride>

@@ -251,7 +251,13 @@ export function TeamCrest({
     )
   }
 
-  const activeUrl = customLogo ?? escudoUrl
+  // SELEÇÃO (Task 2): o "time" de uma seleção usa file_key `nation_<id>`, que NÃO
+  // existe no mapa de escudos de clubes. Nesse caso o escudo real vem do próprio
+  // `escudo_url` (getNationalCrestUrl). Restrito a `nation_` para não alterar em
+  // nada a resolução dos clubes.
+  const isNationKey = (escudoKey ?? "").startsWith("nation_")
+  const nationCrest = isNationKey ? (resolvedTeam?.escudo_url || null) : null
+  const activeUrl = customLogo ?? nationCrest ?? escudoUrl
 
   if (!activeUrl || (imageError && showFallback)) {
     return <FallbackShield />

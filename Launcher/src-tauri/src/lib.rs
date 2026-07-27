@@ -435,12 +435,19 @@ fn do_install(app: &AppHandle, url: &str, version: &str) -> Result<(), String> {
 
 #[cfg(windows)]
 fn do_install_windows(app: &AppHandle, url: &str) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    // NSIS silencioso, SEM janela (pedido: instalar/atualizar dentro do launcher
+    // sem abrir o instalador nem piscar console). O /S já roda sem UI; o
+    // CREATE_NO_WINDOW garante que nenhum console apareça. O temp é apagado depois
+    // (linha do remove_file) — não deixa rastro.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     let tmp = std::env::temp_dir().join("Ultrafoot-setup.exe");
     download_with_progress(app, url, &tmp)?;
     emit(app, "installing");
 
     let status = std::process::Command::new(&tmp)
         .arg("/S")
+        .creation_flags(CREATE_NO_WINDOW)
         .status()
         .map_err(|e| format!("não consegui iniciar o instalador: {e}"))?;
     if !status.success() {
@@ -712,6 +719,7 @@ fn show_main(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.show();
         let _ = w.unminimize();
+        let _ = w.maximize();
         let _ = w.set_focus();
     }
 }
@@ -729,6 +737,15 @@ pub fn run() {
         .setup(|app| {
             use tauri::menu::{MenuBuilder, MenuItemBuilder};
             use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+            use tauri::Manager;
+
+            // O launcher SEMPRE abre em janela cheia. O `maximized` do
+            // tauri.conf.json cobre o caso normal; maximizar aqui tambem garante
+            // o estado quando a janela e restaurada de uma sessao anterior
+            // (bandeja/auto-start), em que a config inicial nao e reaplicada.
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.maximize();
+            }
 
             let open_item = MenuItemBuilder::with_id("open", "Abrir launcher").build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit", "Sair").build(app)?;

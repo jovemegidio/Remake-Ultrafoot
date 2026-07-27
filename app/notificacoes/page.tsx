@@ -9,7 +9,7 @@ import { calcSeasonObjective, generateBoardEvaluation, generateBoardObjectiveMes
 import { detectEvents, respondToEvent, type DressingRoomEvent } from "@/lib/dressing-room-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
-import { Bell, Building2, CheckCheck, MessagesSquare, Trash2, Users } from "lucide-react"
+import { Bell, Building2, CheckCheck, MessageCircle, MessagesSquare, Trash2, Users } from "lucide-react"
 
 type Aba = "notificacoes" | "diretoria" | "atletas"
 
@@ -272,6 +272,17 @@ export default function NotificacoesPage() {
                 <p className="mt-4 whitespace-pre-line text-sm leading-6 text-white/75">{selecionada.message}</p>
 
                 <div className="mt-6 flex flex-wrap gap-2">
+                  {selecionada.conversation?.kind === "bench" && (
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent("ultrafoot:bench-talk", {
+                        detail: { playerId: selecionada.conversation?.playerId },
+                      }))}
+                      className="flex items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2.5 text-xs font-black text-black transition hover:brightness-110"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Conversar com o atleta
+                    </button>
+                  )}
                   {selecionada.action && (
                     <button
                       onClick={selecionada.action.onClick}

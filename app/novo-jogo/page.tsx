@@ -58,7 +58,6 @@ import { TeamCrest } from "@/components/team-crest"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { Cutscene } from "@/components/cutscene"
 import { flushPersistentStore } from "@/lib/persistent-store"
 
 const FLAG_MAP: Record<string, string> = {
@@ -249,7 +248,6 @@ export default function NovoJogoPage() {
   const [managerName, setManagerName] = useState("")
   const [careerStart, setCareerStart] = useState<"professional" | "sub20">("professional")
   const [debtPreset, setDebtPreset] = useState<DebtPreset>("none")
-  const [showIntro, setShowIntro] = useState(false)
   const [nameError, setNameError] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
@@ -261,7 +259,10 @@ export default function NovoJogoPage() {
   // Dados de perfil do clube, derivados de forma deterministica (estaveis por time)
   // Modal com a FOTO real do estádio (acervo de 1785 fotos, por nome do clube).
   const [showStadiumPhoto, setShowStadiumPhoto] = useState(false)
-  const stadiumPhoto = useMemo(() => getTeamStadiumBackground(selectedTeam?.nome), [selectedTeam?.nome])
+  const stadiumPhoto = useMemo(
+    () => getTeamStadiumBackground(selectedTeam?.nome, selectedTeam?.estadio_nome),
+    [selectedTeam?.nome, selectedTeam?.estadio_nome],
+  )
 
   const profile = useMemo(() => {
     const t = selectedTeam
@@ -316,7 +317,7 @@ export default function NovoJogoPage() {
   const formatCompact = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 2 }).format(v)
 
-  const handleStart = useCallback(() => {
+  const handleStart = useCallback(async () => {
     if (!selectedTeam) return
     if (managerName.trim().length === 0) {
       setNameError(true)
@@ -342,21 +343,16 @@ export default function NovoJogoPage() {
       activeSponsors: [],
     })
     window.sessionStorage.setItem("ultrafoot:session-active", "true")
-    // Toca a cutscene de inicio de carreira antes de entrar no escritorio.
-    setShowIntro(true)
-  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, careerStart, debtPreset, profile])
-
-  const finishIntro = useCallback(async () => {
-    // hardNavigate recarrega a WebView. Sem aguardar o plugin-store, pular a cutscene
-    // podia destruir o cache antes de o novo clube chegar ao disco e a home carregava
-    // para sempre. O limite evita prender a UI se o sistema de arquivos falhar.
+    // Cutscene de início de carreira REMOVIDA (pedido): vai DIRETO ao escritório.
+    // Ainda aguardamos o plugin-store persistir — sem isso, o reload da WebView
+    // podia destruir o cache antes de o novo clube chegar ao disco e a home
+    // carregava para sempre. O limite de 5s evita prender a UI se o FS falhar.
     await Promise.race([
       flushPersistentStore(),
       new Promise<void>(resolve => window.setTimeout(resolve, 5000)),
     ])
-    window.sessionStorage.setItem("ultrafoot:session-active", "true")
     hardNavigate("/?career=1")
-  }, [])
+  }, [selectedTeam, managerName, initializeNewGame, setTeamColors, setTheme, careerStart, debtPreset, profile])
 
   const isNameValid = managerName.trim().length > 0
 
@@ -460,8 +456,6 @@ export default function NovoJogoPage() {
 
   return (
     <main className="h-screen w-screen overflow-hidden relative">
-      {/* Cutscene de inicio de carreira (toca ao "Iniciar Carreira", vai para o escritorio ao terminar/pular) */}
-      {showIntro && <Cutscene src="/cutscenes/intro.mp4" onComplete={() => void finishIntro()} />}
 
       {/* Background */}
       <div className="absolute inset-0 z-0">

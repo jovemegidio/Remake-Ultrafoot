@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trophy, Star, Sparkles, Home, ArrowRight, Crown, Medal } from "lucide-react"
+import { Trophy, Star, Home, ArrowRight, Crown, Medal } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { Cutscene } from "@/components/cutscene"
 import { Button } from "@/components/ui/button"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam, useGameState } from "@/lib/save-system"
 import { useRequireTeam } from "@/lib/use-require-team"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
@@ -82,6 +82,8 @@ export default function CampeaoPage() {
   useRequireTeam()
   const { team, hydrated } = useUserTeam()
   const { currentSeason } = useGameManager()
+  const { state: gameState } = useGameState()
+  const managerName = gameState.managerName || "Técnico"
   const router = useRouter()
   const [hover, setHover] = useState(false)
   const [cutsceneDone, setCutsceneDone] = useState(false)
@@ -170,85 +172,90 @@ export default function CampeaoPage() {
         />
       </div>
 
+      {/* Raios de luz atrás do troféu (godrays) — toque de transmissão. */}
+      <div className="pointer-events-none absolute inset-0 z-0 flex items-start justify-center">
+        <div
+          className="mt-[-10vh] h-[130vh] w-[70vw] opacity-25"
+          style={{
+            background: "conic-gradient(from 180deg at 50% 0%, transparent 0deg, rgba(251,191,36,0.14) 12deg, transparent 24deg, transparent 40deg, rgba(251,191,36,0.1) 55deg, transparent 70deg, transparent 300deg, rgba(251,191,36,0.1) 315deg, transparent 330deg, transparent 348deg, rgba(251,191,36,0.14) 355deg, transparent 360deg)",
+          }}
+        />
+      </div>
+
       <div className="relative z-20 flex min-h-screen flex-col items-center justify-center px-6 py-12">
-        {/* Mensagem de cabeçalho */}
-        <div className="mb-6 flex items-center gap-2 text-[11px] font-bold tracking-[0.5em] text-yellow-400 animate-fade-in">
-          <Sparkles className="h-3 w-3" />
-          TEMPORADA {seasonLabel}
-          <Sparkles className="h-3 w-3" />
+        {/* Selo superior — competição + temporada, com régua dourada (broadcast). */}
+        <div className="mb-8 flex flex-col items-center gap-3 animate-fade-in">
+          <div className="flex items-center gap-4">
+            <span className="h-px w-10 bg-gradient-to-r from-transparent to-yellow-400/70" />
+            <span className="text-[11px] font-black uppercase tracking-[0.42em] text-yellow-400/90">Campeões · Temporada {seasonLabel}</span>
+            <span className="h-px w-10 bg-gradient-to-l from-transparent to-yellow-400/70" />
+          </div>
         </div>
 
-        {/* CAMPEÃO */}
+        {/* CAMPEÃO + competição */}
         <h1
-          className="text-7xl sm:text-8xl md:text-9xl font-black tracking-tighter text-center leading-none"
+          className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter text-center leading-[0.9]"
           style={{
-            backgroundImage: `linear-gradient(180deg, #fbbf24 0%, #f59e0b 40%, #b45309 100%)`,
+            backgroundImage: "linear-gradient(180deg, #fff8dc 0%, #fbbf24 38%, #f59e0b 68%, #a55a09 100%)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             color: "transparent",
-            textShadow: "0 0 80px rgba(251,191,36,0.4)",
+            textShadow: "0 0 90px rgba(251,191,36,0.35)",
           }}
         >
           CAMPEÃO
         </h1>
+        <div className="mt-3 flex items-center gap-3 text-center">
+          <Medal className="h-4 w-4 text-yellow-400" />
+          <span className="text-sm sm:text-base font-bold uppercase tracking-[0.2em] text-white/85">{competitionName}</span>
+        </div>
 
-        {/* Time */}
+        {/* Palco: troféu majestoso sobre pedestal com reflexo. */}
         <div
-          className="mt-12 flex flex-col items-center gap-6 transition-transform duration-500"
-          style={{ transform: hover ? "scale(1.02)" : "scale(1)" }}
+          className="mt-10 flex flex-col items-center transition-transform duration-500"
+          style={{ transform: hover ? "scale(1.015)" : "scale(1)" }}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
         >
-          {/* Crest com glow */}
           <div className="relative">
-            <div
-              className="absolute inset-0 blur-3xl opacity-50 rounded-full scale-150"
-              style={{ background: `radial-gradient(circle, ${team.cor1} 0%, transparent 70%)` }}
+            {/* Halo do troféu */}
+            <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.55) 0%, transparent 70%)" }} />
+            <Trophy
+              className="relative h-36 w-36 sm:h-44 sm:w-44 animate-champ-glow"
+              style={{ color: "#fbbf24", filter: "drop-shadow(0 12px 30px rgba(251,191,36,0.55))" }}
             />
+            {/* Reflexo do troféu no pedestal */}
+            <Trophy
+              aria-hidden
+              className="absolute left-1/2 top-full h-36 w-36 sm:h-44 sm:w-44 -translate-x-1/2 scale-y-[-1] opacity-15 blur-[2px]"
+              style={{ color: "#fbbf24", maskImage: "linear-gradient(to bottom, black, transparent 70%)", WebkitMaskImage: "linear-gradient(to bottom, black, transparent 70%)" }}
+            />
+          </div>
+          {/* Pedestal */}
+          <div className="mt-2 h-2 w-56 rounded-full bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent" />
+          <div className="mt-1 h-px w-72 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+
+          {/* Clube: crest coroado + nome */}
+          <div className="mt-8 flex flex-col items-center gap-3">
             <div className="relative">
-              <TeamCrest team={team} size="2xl" />
-              {/* Coroa */}
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                <Crown className="h-12 w-12 text-yellow-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]" />
+              <div className="absolute inset-0 scale-150 rounded-full opacity-45 blur-3xl" style={{ background: `radial-gradient(circle, ${team.cor1} 0%, transparent 70%)` }} />
+              <div className="relative">
+                <TeamCrest team={team} size="xl" />
+                <Crown className="absolute -top-7 left-1/2 h-10 w-10 -translate-x-1/2 text-yellow-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.7)]" />
               </div>
             </div>
-          </div>
-
-          {/* Nome do clube */}
-          <div className="text-center">
-            <div className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white">
-              {team.nome.toUpperCase()}
-            </div>
-            <div className="mt-2 text-sm text-white/60 tracking-wider">
-              {team.cidade}, {team.estado}
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white">{team.nome.toUpperCase()}</div>
+              <div className="mt-1.5 text-xs uppercase tracking-[0.25em] text-white/45">
+                {[team.cidade, team.estado].filter(Boolean).join(" · ")}
+              </div>
+              <div className="mt-2 text-sm text-yellow-400/80">Sob o comando de <span className="font-semibold text-white/90">{managerName}</span></div>
             </div>
           </div>
 
-          {/* Troféu animado */}
-          <div className="relative my-4">
-            <div className="absolute inset-0 blur-2xl opacity-60 rounded-full" style={{ background: "#fbbf24" }} />
-            <Trophy
-              className="relative h-32 w-32 sm:h-40 sm:w-40 animate-bounce"
-              style={{
-                color: "#fbbf24",
-                filter: "drop-shadow(0 0 24px rgba(251,191,36,0.8))",
-                animationDuration: "2s",
-              }}
-            />
-          </div>
-
-          {/* Conquista */}
-          <div className="flex flex-wrap items-center justify-center gap-3 max-w-2xl">
-            <div className="flex items-center gap-3 rounded-full border border-[#ffd700]/30 bg-[#ffd700]/10 px-5 py-2.5 backdrop-blur-sm">
-              <Medal className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm font-bold text-white">{competitionName}</span>
-              <span className="text-xs text-yellow-400/80 tracking-wider">{seasonLabel}</span>
-            </div>
-          </div>
-
-          {/* Estatísticas da temporada — só exibe se houver stats reais */}
+          {/* Painel de estatísticas (broadcast) — só com stats reais. */}
           {stats.won > 0 || stats.drawn > 0 || stats.lost > 0 || stats.goalsFor > 0 ? (
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl w-full">
+            <div className="mt-9 grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
               <Stat label="VITÓRIAS" value={String(stats.won)} icon={Star} color="#00ffc8" />
               <Stat label="EMPATES" value={String(stats.drawn)} icon={Star} color="#eab308" />
               <Stat label="DERROTAS" value={String(stats.lost)} icon={Star} color="#ef4444" />
@@ -257,21 +264,15 @@ export default function CampeaoPage() {
           ) : null}
         </div>
 
-        {/* Mensagem inferior */}
-        <div className="mt-12 text-center max-w-2xl">
-          <p className="text-base text-white/80 leading-relaxed text-pretty">
-            Uma temporada para entrar para a história. Os torcedores do{" "}
-            <strong className="text-white">{team.nome}</strong> levarão essa conquista pelo
-            resto da vida.
-          </p>
-        </div>
-
-        {/* Ações */}
-        <div className="mt-10 flex flex-col sm:flex-row gap-3">
+        {/* Mensagem + ação */}
+        <p className="mt-11 max-w-xl text-center text-base leading-relaxed text-white/75 text-pretty">
+          Uma temporada para entrar para a história. A torcida do <strong className="text-white">{team.nome}</strong> levará esta conquista para sempre.
+        </p>
+        <div className="mt-9">
           <Button
             size="lg"
             onClick={() => router.push("/")}
-            className="bg-gradient-to-r from-yellow-500 to-amber-400 text-black hover:opacity-90 font-bold tracking-wider shadow-lg shadow-yellow-500/30"
+            className="bg-gradient-to-r from-yellow-500 to-amber-400 text-black hover:opacity-90 font-black tracking-wider shadow-lg shadow-yellow-500/30"
           >
             <Home className="mr-2 h-5 w-5" />
             CONTINUAR CARREIRA
@@ -300,6 +301,13 @@ export default function CampeaoPage() {
         }
         .animate-fade-in {
           animation: fade-in 0.6s ease-out both;
+        }
+        @keyframes champ-glow {
+          0%, 100% { transform: translateY(0); filter: drop-shadow(0 12px 30px rgba(251,191,36,0.5)); }
+          50% { transform: translateY(-6px); filter: drop-shadow(0 20px 42px rgba(251,191,36,0.75)); }
+        }
+        .animate-champ-glow {
+          animation: champ-glow 3.4s ease-in-out infinite;
         }
       `}</style>
     </div>

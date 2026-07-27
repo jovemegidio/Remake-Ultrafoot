@@ -4,8 +4,12 @@
 
 import { useEffect, useState } from "react"
 import { allTeams, getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { getNationalTeamById, getNationalStrength, type NationalTeam } from "@/lib/national-teams"
+import { getNationalCrestUrl } from "@/lib/national-assets"
+import { applyTeamOverride } from "@/lib/team-overrides"
 import type { NationalCompetitionState } from "@/lib/national-competitions"
 import { storeGet, storeSet, storeRemove, initPersistentStore, flushPersistentStore } from "@/lib/persistent-store"
+import { mirrorSaveToFolder, deleteSaveFromFolder, listMirroredCareerSuffixes } from "@/lib/save-folder"
 import type { TransferRecord, MatchFixture, StandingEntry, MatchResult, FinanceEntry, SeasonRecord, InjuryRecord, FatigueMap } from "@/lib/career-types"
 import type { ClubDebtState } from "@/lib/debt-engine"
 import type { ScoutingDepartmentState } from "@/lib/scout-engine"
@@ -415,12 +419,24 @@ export interface GameState {
   pendingNationalOffers: NationalOffer[]
   declinedNationalTeamIds: string[]
   lastNationalOfferSeason: number | null
+  /**
+   * MODO SELEÇÃO (Task 2 — seleção como time pleno). Quando preenchido, o técnico
+   * está comandando esta seleção como seu "time atual": o office, central,
+   * calendário, elenco (convocação) e a partida ao vivo passam a operar sobre a
+   * seleção em vez do clube. `null` = comandando o clube normalmente
+   * (retrocompatível: saves antigos não têm o campo e caem em null).
+   */
+  managingNationalTeamId?: string | null
   // Estado de carreira detalhado (opcional — semeado ao iniciar/carregar uma carreira).
   // Convive com o useGameEngine; estas telas (base/mercado/calendario/partida) leem daqui.
   squadPlayers?: SquadPlayer[]
   youthPlayers?: SquadPlayer[]
   // Temporada em que a base foi semeada — evita re-gerar prospectos toda visita.
   youthSeededSeason?: number
+  // Carimbo (absoluto: season*52 + week) da ÚLTIMA peneira. A peneira acontece a
+  // cada ~2 meses (8 semanas), como na vida real — sem isto dava para rodar
+  // peneira→vender em loop e imprimir dinheiro infinito (relato).
+  youthTryoutStamp?: number
   // Marco da carreira da base para a promoção automática após três temporadas.
   // Opcional para manter compatibilidade com saves anteriores.
   youthCareerStartSeason?: number
@@ -464,6 +480,9 @@ export interface GameState {
   // entrosamento — impede treinar a mesma data FIFA duas vezes.
   dataFifaTreinada?: string
   nationalCalls?: string[]
+  // Amistosos de SELECAO ja jogados (preparacao antes dos torneios). Guarda os
+  // ultimos resultados para exibir. Ver use-national-team.playNationalFriendly.
+  nationalFriendlies?: { opponentId: string; opponentName: string; userScore: number; oppScore: number; season: number }[]
   balance?: number
   selectedTeam?: SavedTeam
   currentRound?: number
@@ -537,6 +556,7 @@ export const DEFAULT_STATE: GameState = {
   pendingNationalOffers: [],
   declinedNationalTeamIds: [],
   lastNationalOfferSeason: null,
+  managingNationalTeamId: null,
   completedFixtureKeys: [],
 }
 
@@ -731,13 +751,27 @@ export function saveGameState(state: GameState): void {
   // Snapshot anterior permite recuperar fechamento/queda de energia durante a gravacao.
   if (previous) storeSet(backupKey(resolvedId), previous)
   setActiveCareerId(resolvedId)
-  storeSet(key, JSON.stringify(next))
+  const serialized = JSON.stringify(next)
+  storeSet(key, serialized)
   updateCareerIndex(next)
+  // Espelho na pasta VISÍVEL do Windows (Documentos\Ultrafoot 26 Saves). Throttle
+  // de 15s por carreira: saveGameState roda a cada setState; sem isto gravaria um
+  // arquivo a cada tecla. Fire-and-forget — nunca bloqueia nem quebra o save real.
+  const agora = Date.now()
+  if (agora - (_lastMirror[resolvedId] ?? 0) > 15_000) {
+    _lastMirror[resolvedId] = agora
+    void mirrorSaveToFolder(next.saveName, resolvedId, serialized)
+  }
 }
+const _lastMirror: Record<string, number> = {}
 
 export async function saveGameStateAndFlush(state: GameState): Promise<void> {
   saveGameState(state)
   await flushPersistentStore()
+  // Checkpoint (navegação): garante o espelho na pasta do Windows atualizado,
+  // sem esperar o throttle de 15s do saveGameState.
+  const id = state.careerId || getActiveCareerId()
+  if (id) { _lastMirror[id] = Date.now(); void mirrorSaveToFolder(state.saveName, id, JSON.stringify({ ...state, careerId: id, version: VERSION })) }
 }
 
 /**
@@ -761,6 +795,50 @@ export function clearGameState(): void {
     storeRemove(LEGACY_STORAGE_KEY)
   }
   storeRemove(ACTIVE_CAREER_KEY)
+}
+
+/**
+ * Apaga UMA carreira (pedido: "apagar um save apenas, não todos"). Remove save,
+ * backup, motor e a entrada do índice; se era a carreira ativa, zera o ponteiro.
+ * Também apaga o arquivo espelho na pasta de saves do Windows.
+ */
+export function deleteCareerSave(careerId: string): void {
+  if (typeof window === "undefined" || !careerId) return
+  const summary = readCareerIndex().find(item => item.id === careerId)
+  storeRemove(saveKey(careerId))
+  storeRemove(backupKey(careerId))
+  storeRemove(`ultrafoot-game-engine:${careerId}`)
+  storeSet(CAREER_INDEX_KEY, JSON.stringify(readCareerIndex().filter(item => item.id !== careerId)))
+  if (getActiveCareerId() === careerId) storeRemove(ACTIVE_CAREER_KEY)
+  void deleteSaveFromFolder(summary?.name ?? "", careerId)
+  void flushPersistentStore()
+}
+
+/**
+ * Reconcilia o índice com a PASTA de saves do Windows: se o jogador apagou o
+ * arquivo .json de um save direto na pasta, ele some daqui também (pedido). Só
+ * roda quando a pasta está acessível E populada (evita apagar saves de quem nunca
+ * teve espelho). Retorna quantas carreiras foram removidas.
+ */
+export async function reconcileCareersWithFolder(): Promise<number> {
+  if (typeof window === "undefined") return 0
+  const sufixos = await listMirroredCareerSuffixes()
+  if (!sufixos || sufixos.size === 0) return 0 // pasta vazia/indisponível: não mexe
+  const index = readCareerIndex()
+  const mantidos = index.filter(item => sufixos.has(item.id.slice(-6)))
+  const removidos = index.length - mantidos.length
+  if (removidos > 0) {
+    for (const item of index) {
+      if (sufixos.has(item.id.slice(-6))) continue
+      storeRemove(saveKey(item.id))
+      storeRemove(backupKey(item.id))
+      storeRemove(`ultrafoot-game-engine:${item.id}`)
+      if (getActiveCareerId() === item.id) storeRemove(ACTIVE_CAREER_KEY)
+    }
+    storeSet(CAREER_INDEX_KEY, JSON.stringify(mantidos))
+    void flushPersistentStore()
+  }
+  return removidos
 }
 
 export function clearAllGameData(): void {
@@ -794,7 +872,7 @@ export function hasSave(): boolean {
 export function useGameState(): {
   state: GameState
   hydrated: boolean
-  setState: (next: Partial<GameState>) => void
+  setState: (next: Partial<GameState> | ((prev: GameState) => Partial<GameState>)) => void
   replaceState: (next: GameState) => void
   reset: () => void
 } {
@@ -846,9 +924,14 @@ export function useGameState(): {
     }
   }, [])
 
-  const setState = (next: Partial<GameState>) => {
+  // Aceita objeto OU atualizador funcional (prev => patch). O funcional le sempre
+  // o estado MAIS NOVO — essencial para acoes em sequencia sem re-render entre elas
+  // (ex.: vender varios jovens da base seguidos; com objeto+closure so a ultima
+  // valia e as outras "voltavam").
+  const setState = (next: Partial<GameState> | ((prev: GameState) => Partial<GameState>)) => {
     setStateInternal(prev => {
-      const merged = { ...prev, ...next }
+      const patch = typeof next === "function" ? next(prev) : next
+      const merged = { ...prev, ...patch }
       // Salva de forma assincrona para nao bloquear
       queueMicrotask(() => saveGameState(merged))
       return merged
@@ -907,12 +990,60 @@ export function savedTeamToTeam(t: Team | SavedTeam | null | undefined): Team | 
   }
 }
 
+/**
+ * Converte uma SELEÇÃO nacional no tipo Team usado por todas as telas (office,
+ * central, calendário, elenco, partida). É a peça que permite "comandar uma
+ * seleção como um clube" (Task 2): as telas continuam falando `Team`, sem saber
+ * se por trás há um clube ou uma seleção.
+ *
+ * `file_key` recebe o prefixo `nation_` para NÃO colidir com nenhum clube; o
+ * `escudo_url` já aponta para o escudo real da seleção, então o TeamCrest resolve
+ * pela imagem mesmo sem entrada no mapa de escudos de clubes.
+ */
+export function nationalTeamToTeam(nt: NationalTeam): Team {
+  const forca = getNationalStrength(nt)
+  return applyTeamOverride({
+    nome: nt.name,
+    curto: nt.code,
+    cor1: nt.cor1,
+    cor2: nt.cor2,
+    prestigio: forca,
+    saldo: 0,
+    // Seleção não tem divisão de liga; sentinela só para satisfazer o tipo.
+    divisao: "selecao" as Team["divisao"],
+    pais: nt.name,
+    cidade: "",
+    estado: "",
+    torcida: 0,
+    estadio_cap: 0,
+    file_key: `nation_${nt.id}`,
+    estadio_nome: "",
+    patrocinador: "",
+    escudo_url: getNationalCrestUrl(nt.id),
+  })
+}
+
 export function useUserTeam(): { team: Team; hydrated: boolean } {
   const { state, hydrated } = useGameState()
-  const team = state.selectedTeamShort
-    ? getTeamByShort(state.selectedTeamShort) ?? FALLBACK_TEAM
-    : FALLBACK_TEAM
+  // MODO SELEÇÃO tem prioridade: se o técnico assumiu uma seleção, o "time atual"
+  // de todas as telas passa a ser ela. Cai no clube quando o id não resolve.
+  const nation = state.managingNationalTeamId ? getNationalTeamById(state.managingNationalTeamId) : null
+  const team = nation
+    ? nationalTeamToTeam(nation)
+    : state.selectedTeamShort
+      ? getTeamByShort(state.selectedTeamShort) ?? FALLBACK_TEAM
+      : FALLBACK_TEAM
   return { team, hydrated }
+}
+
+/**
+ * Estado do MODO SELEÇÃO para as telas que precisam adaptar o comportamento
+ * (não só o rótulo): elenco vira convocação, calendário usa janelas FIFA, etc.
+ */
+export function useManagingNational(): { isNational: boolean; nationalTeam: NationalTeam | null; hydrated: boolean } {
+  const { state, hydrated } = useGameState()
+  const nationalTeam = (state.managingNationalTeamId ? getNationalTeamById(state.managingNationalTeamId) : null) ?? null
+  return { isNational: !!nationalTeam, nationalTeam, hydrated }
 }
 
 export function selectTeam(shortName: string, managerName?: string): void {

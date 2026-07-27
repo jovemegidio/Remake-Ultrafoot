@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { 
@@ -22,11 +22,12 @@ import { TeamCrest } from "@/components/team-crest"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
-import { useGameState } from "@/lib/save-system"
+import { useGameState, useManagingNational } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
 import { useGameEngine } from "@/lib/game-engine"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useRequireClub } from "@/lib/use-require-team"
 
 const TACTICAL_STYLE_DETAILS = {
   posse_bola: { label: "Posse de Bola", impact: "Passe curto e controle do ritmo", icon: Target },
@@ -96,11 +97,16 @@ function LineupsIcon({ className }: { className?: string }) {
 }
 
 export default function ElencoHubPage() {
+  useRequireClub()
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
 
   const router = useRouter()
   const { state } = useGameState()
+  // MODO SELEÇÃO: o "elenco" da seleção é a CONVOCAÇÃO, que vive na página da
+  // seleção. Redireciona para lá em vez de mostrar o elenco de clube.
+  const { isNational } = useManagingNational()
+  useEffect(() => { if (isNational) hardNavigate("/selecao") }, [isNational])
   const playingStyle = useGameEngine((game) => game.teamTactics.playingStyle)
   // Sem time default "BGT": no Tauri o save hidrata assincrono e o primeiro render vinha
   // sem time, mostrando o elenco do RB Bragantino (34 jog, 79 OVR) para qualquer clube.

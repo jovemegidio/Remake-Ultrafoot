@@ -30,6 +30,13 @@ import {
   type Team
 } from "@/lib/teams-data"
 import { allInternationalTeams } from "@/lib/international-teams"
+import {
+  NATIONAL_TEAMS,
+  getNationalPlayerSources,
+  getNationalStrength,
+  getNationalTeamById,
+} from "@/lib/national-teams"
+import { getNationalCrestUrl } from "@/lib/national-assets"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { getPlayerOverride, setPlayerOverride, defaultPlayerAttributes, reputationBonus } from "@/lib/player-overrides"
 import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
@@ -49,6 +56,7 @@ import { generateYouthRoster, getYouthRoster, saveYouthRoster, type YouthEditorP
 import { PlayerAvatar } from "@/components/player-avatar"
 import { setPlayerPhotoOverride } from "@/lib/player-photos"
 import { KitImage } from "@/components/match/kit-image"
+import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
 
 const DIV_LABEL: Record<string, string> = {
   serie_a: "Série A", serie_b: "Série B", serie_c: "Série C", serie_d: "Série D",
@@ -79,9 +87,19 @@ const DIV_COUNTRY: Record<string, string> = {
   pro_league_bel: "BEL", russian_prem: "RUS",
   mls: "USA", liga_mx: "MEX",
   liga_argentina: "ARG", primeira_a_col: "COL",
-  primera_div_chi: "CHI", primera_div_ury: "URU",
+  primera_div_chi: "CHI", primera_b_chi: "CHI", primera_div_ury: "URU",
   saudi_pro: "KSA", saudi_first_div: "KSA",
   j_league: "JPN", k_league_1: "KOR", chinese_super: "CHN",
+  // Clubes internacionais criados (antes caíam todos em "Internacional"). O código
+  // é o NOME do país (mesmo que o pool produz via normalizeCountry) para os que não
+  // têm sigla no PAIS_CODE — assim clube criado e clube do pool caem no MESMO grupo.
+  primera_a_ecu: "Equador", primera_div_ecu: "Equador",
+  primera_div_per: "Peru", primera_div_bol: "Bolívia",
+  primera_div_par: "Paraguai", primera_div_ven: "Venezuela",
+  super_league_gre: "Grécia", superliga_den: "Dinamarca",
+  fortuna_liga_cze: "Tchéquia", premyer_liqa_aze: "Azerbaijão",
+  eliteserien_nor: "Noruega", protathlima_cyp: "Chipre",
+  premier_liga_kaz: "Cazaquistão",
 }
 
 // Nome do país (PT-BR) por código, para os cabeçalhos de grupo do editor.
@@ -91,7 +109,7 @@ const COUNTRY_NAME: Record<string, string> = {
   SCO: "Escócia", TUR: "Turquia", BEL: "Bélgica", RUS: "Rússia",
   USA: "Estados Unidos", MEX: "México", ARG: "Argentina", COL: "Colômbia",
   CHI: "Chile", URU: "Uruguai", KSA: "Arábia Saudita", JPN: "Japão",
-  KOR: "Coreia do Sul", CHN: "China", INT: "Internacional",
+  KOR: "Coreia do Sul", CHN: "China", INT: "Internacional", SEL: "Seleções",
 }
 
 // Sigla do estado -> nome completo, usado para os subgrupos (estaduais) do Brasil.
@@ -106,7 +124,9 @@ const ESTADO_LABEL: Record<string, string> = {
 }
 
 const formatDivisao = (div: string) =>
-  DIV_LABEL[div] ?? div.replace(/_/g, " ").toUpperCase()
+  div.startsWith("national:")
+    ? `Seleção · ${div.slice("national:".length)}`
+    : DIV_LABEL[div] ?? div.replace(/_/g, " ").toUpperCase()
 
 // Nome do pais (PT-BR, como vem do pool) -> codigo, para os clubes do pool caírem no
 // MESMO grupo dos curados. Paises fora do mapa usam o proprio nome como codigo.
@@ -122,11 +142,13 @@ const PAIS_CODE: Record<string, string> = {
 }
 
 // Clube do pool? (divisao no formato "pool:<pais>")
-import { inferredNationality, normalizeCountry } from "@/lib/country-normalize"
+import { inferredNationality, normalizeCountry, PAIS_DESCONHECIDO } from "@/lib/country-normalize"
 
 const isPoolTeam = (team: Team) => typeof team.divisao === "string" && team.divisao.startsWith("pool:")
+const isNationalTeam = (team: Team | null | undefined) => Boolean(team?.file_key.startsWith("nation_"))
 
 const countryCodeOf = (team: Team): string => {
+  if (isNationalTeam(team)) return "SEL"
   if (isPoolTeam(team)) {
     // O valor cru virava "país": clube com pais="SP" (sigla de estado) criava um
     // grupo "SP" ao lado de "São Paulo", e fragmentos de nome de clube
@@ -134,7 +156,12 @@ const countryCodeOf = (team: Team): string => {
     // UFs viram Brasil, lixo vira Indefinido — e só então busca o código.
     const pais = normalizeCountry(team.pais ?? (team.divisao as string).slice(5))
     if (pais === "Brasil") return "BRA"
-    return PAIS_CODE[pais] ?? "INT"
+    if (pais === PAIS_DESCONHECIDO) return "INT"
+    // Antes: PAIS_CODE[pais] ?? "INT" — todo país fora do mapa (Peru, Grécia,
+    // Sérvia, Áustria…) caía num "Internacional > Outros clubes" gigante (relato
+    // "900+ times em Internacional"). Agora, sem sigla no mapa, o PRÓPRIO nome do
+    // país vira o código do grupo — cada país tem seu grupo.
+    return PAIS_CODE[pais] ?? pais
   }
   return DIV_COUNTRY[team.divisao] ?? "INT"
 }
@@ -142,6 +169,10 @@ const countryCodeOf = (team: Team): string => {
 // Segundo nível de agrupamento: por estado (Brasil) ou por liga (internacional).
 const subGroupOf = (team: Team): { key: string; label: string } => {
   const code = countryCodeOf(team)
+  if (code === "SEL") {
+    const confederation = team.divisao.replace(/^national:/, "")
+    return { key: `SEL|${confederation}`, label: confederation }
+  }
   // Clubes BR do pool COM estado agrupam por estado (junto dos curados). Sem estado ou
   // fora do Brasil, caem num "Outros clubes" por pais (nao temos a liga no Team).
   if (isPoolTeam(team)) {
@@ -160,6 +191,7 @@ const subGroupOf = (team: Team): { key: string; label: string } => {
 interface EditorPlayer {
   id: number
   originalName: string
+  sourceTeamKey?: string
   nome: string
   posicao: string
   pais: string
@@ -176,14 +208,27 @@ interface EditorPlayer {
 }
 function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
   if (!team) return []
-  return getPlayersForTeam(team, { raw: true }).map((p, i) => {
-    const ov = getPlayerOverride(team.file_key, p.nome)
-    const base = ov?.base ?? p.base
+  const nationalId = team.file_key.startsWith("nation_")
+    ? team.file_key.slice("nation_".length)
+    : null
+  const nationalTeam = nationalId ? getNationalTeamById(nationalId) : undefined
+  const sources = nationalTeam
+    ? getNationalPlayerSources(nationalTeam, { raw: true })
+        .sort((a, b) => b.player.base - a.player.base)
+        .slice(0, 55)
+    : getPlayersForTeam(team, { raw: true }).map(player => ({ player, team }))
+
+  return sources.map(({ player: p, team: sourceTeam }, i) => {
+    const ov = getPlayerOverride(sourceTeam.file_key, p.nome)
+    // Teto rígido de 99 (relato "overall 99+"): overrides/dados antigos podiam
+    // trazer valor acima do máximo; aqui o editor nunca mostra além de 99.
+    const base = Math.min(99, Math.max(1, ov?.base ?? p.base))
     const pos = ov?.pos ?? p.pos
     const def = defaultPlayerAttributes(base, pos)
     return {
       id: i + 1,
       originalName: p.nome,
+      sourceTeamKey: sourceTeam.file_key,
       nome: ov?.nome ?? p.nome,
       posicao: pos,
       // Nacionalidade: edicao manual > real (Transfermarkt) > pais do CLUBE como
@@ -192,7 +237,7 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
       // elenco; a maioria desses atletas joga no proprio pais, entao inferir do
       // clube acerta muito mais do que deixar em branco. Edicao manual sempre
       // vence, e quem tiver nacionalidade real nunca e sobrescrito.
-      pais: ov?.nac ?? p.nac ?? inferredNationality(team.pais) ?? "-",
+      pais: ov?.nac ?? p.nac ?? inferredNationality(sourceTeam.pais) ?? nationalTeam?.name ?? "-",
       idade: ov?.idade ?? p.idade,
       overall: base,
       caracteristica: "-",
@@ -207,9 +252,28 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
   })
 }
 
-// All teams combined (brasileiros + internacionais + POOL BF2026 ~2947 clubes).
-// O pool traz todos os clubes reais que nao estao curados, para o editor listar TODOS.
-const allTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams, ...allInternationalTeams, ...allPoolTeams]
+// Todos os clubes e selecoes no mesmo formato visual do editor. A chave `nation_`
+// tambem e reconhecida pelo TeamCrest e pelo restante do modo selecao.
+const clubTeams = [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams, ...allInternationalTeams, ...allPoolTeams]
+const nationalEditorTeams: Team[] = NATIONAL_TEAMS.map(nation => ({
+  nome: nation.name,
+  curto: nation.code,
+  cidade: "",
+  estado: "",
+  cor1: nation.cor1,
+  cor2: nation.cor2,
+  prestigio: getNationalStrength(nation),
+  torcida: 0,
+  estadio_cap: 0,
+  saldo: 0,
+  file_key: `nation_${nation.id}`,
+  estadio_nome: "",
+  patrocinador: "",
+  escudo_url: getNationalCrestUrl(nation.id),
+  divisao: `national:${nation.confederation}`,
+  pais: nation.name,
+}))
+const allTeams = [...clubTeams, ...nationalEditorTeams]
 
 const POS_STYLE: Record<string, { text: string; bg: string }> = {
   GOL: { text: "text-amber-300",  bg: "bg-amber-400/10 border-amber-400/25" },
@@ -238,7 +302,8 @@ export default function EditarPage() {
   const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, nac: "", preferredFoot: "Direita" as "Direita" | "Esquerda" | "Ambidestro", reputation: "normal" as "normal" | "estrela" | "top_mundial", traits: [] as string[], faceDataUrl: "", pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
   const openPlayerEdit = (p: EditorPlayer) => {
     setEditingPlayer(p)
-    const ov = selectedTeam ? getPlayerOverride(selectedTeam.file_key, p.originalName) : null
+    const sourceTeamKey = p.sourceTeamKey ?? selectedTeam?.file_key
+    const ov = sourceTeamKey ? getPlayerOverride(sourceTeamKey, p.originalName) : null
     setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, nac: ov?.nac ?? p.pais ?? "", preferredFoot: ov?.preferredFoot ?? "Direita", reputation: ov?.reputation ?? "normal", traits: ov?.traits ?? [], faceDataUrl: ov?.faceDataUrl ?? "", pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
   }
 
@@ -468,6 +533,10 @@ export default function EditarPage() {
       // Comprime o escudo antes de gravar (evita inchar o save e travar o jogo).
       const compressed = await compressImageDataUrl(`data:${mime};base64,${base64}`, 256)
       setCustomLogoUrl(fileKey, compressed)
+      if (isNationalTeam(selectedTeam)) {
+        setTeamOverride(fileKey, { ...(getTeamOverride(fileKey) ?? {}), logoUrl: compressed })
+        await flushPersistentStore()
+      }
       setHasCustomLogo(true)
     } else {
       // Fallback para navegador
@@ -481,7 +550,12 @@ export default function EditarPage() {
         reader.onload = async (e) => {
           const dataUrl = e.target?.result as string
           if (dataUrl) {
-            setCustomLogoUrl(fileKey, await compressImageDataUrl(dataUrl, 256))
+            const compressed = await compressImageDataUrl(dataUrl, 256)
+            setCustomLogoUrl(fileKey, compressed)
+            if (isNationalTeam(selectedTeam)) {
+              setTeamOverride(fileKey, { ...(getTeamOverride(fileKey) ?? {}), logoUrl: compressed })
+              await flushPersistentStore()
+            }
             setHasCustomLogo(true)
           }
         }
@@ -494,18 +568,27 @@ export default function EditarPage() {
   const handleRemoveLogo = () => {
     if (!selectedTeam?.file_key) return
     removeCustomLogoUrl(selectedTeam.file_key)
+    if (isNationalTeam(selectedTeam)) {
+      const rest = { ...(getTeamOverride(selectedTeam.file_key) ?? {}) }
+      delete rest.logoUrl
+      setTeamOverride(selectedTeam.file_key, rest)
+      void flushPersistentStore()
+    }
     setHasCustomLogo(false)
   }
 
   useEffect(() => {
     if (selectedTeam) {
       setPlayers(generatePlayersForTeam(selectedTeam))
-      setYouthPlayers(getYouthRoster(selectedTeam.file_key))
+      setYouthPlayers(isNationalTeam(selectedTeam) ? [] : getYouthRoster(selectedTeam.file_key))
+      if (isNationalTeam(selectedTeam)) {
+        setActiveTab(current => current === "juniores" ? "principal" : current)
+      }
       setSelectedPlayerIndex(0)
       initDraft(selectedTeam)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTeam, storeReady])
+  }, [selectedTeam?.file_key, storeReady])
 
   const filteredTeams = useMemo(() => {
     if (!searchTeam) return resolvedTeams
@@ -555,12 +638,14 @@ export default function EditarPage() {
       .sort((a, b) => {
         if (a.code === "BRA") return -1
         if (b.code === "BRA") return 1
+        if (a.code === "SEL") return -1
+        if (b.code === "SEL") return 1
         return b.prestige - a.prestige || a.name.localeCompare(b.name)
       })
   }, [filteredTeams])
 
   const isSearching = searchTeam.trim().length > 0
-  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(() => new Set(["BRA"]))
+  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(() => new Set(["BRA", "SEL"]))
   const [expandedSubs, setExpandedSubs] = useState<Set<string>>(() => new Set())
 
   // Mantém o grupo do time selecionado sempre aberto (ao trocar de time).
@@ -625,13 +710,17 @@ export default function EditarPage() {
     ovr >= 55 ? "text-orange-400" : "text-white/40"
 
   const teamColor = selectedTeam?.cor1 ?? "#00ffc8"
+  const stadiumBackground = getTeamStadiumBackground(
+    selectedTeam?.nome,
+    editDraft.estadio_nome ?? selectedTeam?.estadio_nome,
+  ) ?? "/images/stadium-night.png"
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#050508]">
       {/* Stadium background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <Image
-          src="/images/stadium-night.png"
+          src={stadiumBackground}
           alt="Stadium"
           fill
           className="object-cover opacity-50"
@@ -641,28 +730,34 @@ export default function EditarPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#050508]/80 via-transparent to-[#050508]/80" />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 h-14 flex-shrink-0 bg-black/70 backdrop-blur-xl border-b border-white/[0.06] px-5 flex items-center justify-between">
-        <div className="flex items-center gap-5">
+      {/* Header — barra superior com identidade do editor. */}
+      <header className="relative z-10 h-16 flex-shrink-0 bg-black/75 backdrop-blur-xl border-b border-white/[0.08] px-5 flex items-center justify-between">
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/25 to-transparent" />
+        <div className="flex items-center gap-4">
           <Link
             href="/splash?menu=1"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white rounded-lg transition-all text-sm font-medium border border-white/[0.06]"
+            className="flex items-center gap-1.5 px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white rounded-lg transition-all text-sm font-medium border border-white/[0.06]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Voltar ao Menu</span>
+            <span className="hidden sm:inline">Menu</span>
           </Link>
 
-          <div className="h-4 w-px bg-white/10" />
+          <div className="h-6 w-px bg-white/10" />
 
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-white/30" />
-            <h1 className="text-sm font-semibold text-white/70 tracking-wide">Editor de Clubes</h1>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/10 border border-[#00ffc8]/25">
+              <Shield className="h-5 w-5 text-[#00ffc8]" />
+            </div>
+            <div className="leading-tight">
+              <h1 className="text-sm font-bold text-white tracking-wide">Editor de Clubes e Seleções</h1>
+              <p className="text-[10px] text-white/35 uppercase tracking-[0.18em]">Elencos · Escudos · Uniformes</p>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs text-white/25">
           <kbd className="px-2 py-0.5 bg-white/5 rounded border border-white/10 font-mono">ESC</kbd>
-          <span>para voltar</span>
+          <span className="hidden sm:inline">para voltar</span>
         </div>
       </header>
 
@@ -679,7 +774,7 @@ export default function EditarPage() {
                 type="text"
                 value={searchTeam}
                 onChange={(e) => setSearchTeam(e.target.value)}
-                placeholder="Procurar time..."
+                placeholder="Procurar clube ou seleção..."
                 className="w-full pl-9 pr-3 py-2 text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/25 focus:outline-none focus:border-[#00ffc8]/40 focus:ring-1 focus:ring-[#00ffc8]/15 transition-all"
               />
             </div>
@@ -687,7 +782,7 @@ export default function EditarPage() {
 
           {/* Column header */}
           <div className="grid grid-cols-[1fr_44px] bg-white/[0.03] text-white/30 text-[10px] font-semibold uppercase tracking-wider border-b border-white/[0.06]">
-            <div className="px-3 py-2">País · Estadual · Time</div>
+            <div className="px-3 py-2">País · Competição · Time</div>
             <div className="px-1 py-2 text-center">OVR</div>
           </div>
 
@@ -763,7 +858,7 @@ export default function EditarPage() {
           {/* Footer count */}
           <div className="px-3 py-2 text-[10px] text-white/25 bg-black/30 border-t border-white/[0.06] flex items-center gap-1.5">
             <Users className="h-3 w-3" />
-            <span>{filteredTeams.length} times</span>
+            <span>{filteredTeams.length} clubes e seleções</span>
           </div>
         </aside>
 
@@ -834,10 +929,16 @@ export default function EditarPage() {
                     <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {selectedTeam.estado}, Brasil
+                        {isNationalTeam(selectedTeam)
+                          ? getNationalTeamById(selectedTeam.file_key.slice("nation_".length))?.confederation
+                          : `${selectedTeam.estado}, ${selectedTeam.pais || "Brasil"}`}
                       </span>
-                      <span className="text-white/15">·</span>
-                      <span>{selectedTeam.estadio_nome}</span>
+                      {selectedTeam.estadio_nome && (
+                        <>
+                          <span className="text-white/15">·</span>
+                          <span>{selectedTeam.estadio_nome}</span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -862,21 +963,21 @@ export default function EditarPage() {
                     <div className="text-[9px] text-white/30 font-semibold tracking-widest mt-0.5">OVERALL</div>
                   </div>
 
-                  {/* Tabs */}
-                  <div className="flex-shrink-0 flex gap-1">
+                  {/* Tabs — segmented control contido, mais profissional. */}
+                  <div className="flex-shrink-0 flex gap-1 rounded-xl border border-white/[0.08] bg-black/40 p-1">
                     {([
                       { id: "principal", label: "Elenco" },
                       { id: "juniores",  label: "Juniores" },
                       { id: "dados",     label: "Editar" },
-                    ] as const).map(({ id, label }) => (
+                    ] as const).filter(({ id }) => id !== "juniores" || !isNationalTeam(selectedTeam)).map(({ id, label }) => (
                       <button
                         key={id}
                         onClick={() => setActiveTab(id)}
                         className={cn(
-                          "px-4 py-2 text-xs font-semibold rounded-lg transition-all",
+                          "px-4 py-1.5 text-xs font-bold rounded-lg transition-all",
                           activeTab === id
-                            ? "text-black shadow-lg"
-                            : "bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/70"
+                            ? "text-black shadow-md"
+                            : "text-white/45 hover:bg-white/[0.06] hover:text-white/75"
                         )}
                         style={activeTab === id ? { background: `linear-gradient(135deg, ${teamColor}, ${selectedTeam.cor2 ?? teamColor})` } : {}}
                       >
@@ -1041,7 +1142,9 @@ export default function EditarPage() {
 
                     {/* Dados gerais */}
                     <section>
-                      <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-3">Dados do Clube</h3>
+                      <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-3">
+                        {isNationalTeam(selectedTeam) ? "Dados da Seleção" : "Dados do Clube"}
+                      </h3>
                       <div className="grid grid-cols-2 gap-3">
                         {/* NOME DE EXIBICAO — o curto, que aparece em tabela,
                             placar e escudo. O rotulo dizia "Nome completo", o
@@ -1060,7 +1163,8 @@ export default function EditarPage() {
                         {/* NOME DO CLUBE (oficial) */}
                         <div className="col-span-2">
                           <label className="block text-[10px] text-white/40 mb-1">
-                            Nome do clube <span className="text-white/25">· razão social / nome oficial</span>
+                            {isNationalTeam(selectedTeam) ? "Nome oficial da seleção" : "Nome do clube"}
+                            <span className="text-white/25"> · nome institucional</span>
                           </label>
                           <input
                             type="text"
@@ -1453,7 +1557,7 @@ export default function EditarPage() {
                       saveYouthRoster(selectedTeam.file_key, next)
                     } else {
                       const faceDataUrl = pDraft.faceDataUrl ? await compressImageDataUrl(pDraft.faceDataUrl, 320) : undefined
-                      setPlayerOverride(selectedTeam.file_key, editingPlayer.originalName, {
+                      setPlayerOverride(editingPlayer.sourceTeamKey ?? selectedTeam.file_key, editingPlayer.originalName, {
                         nome: pDraft.nome.trim() || undefined,
                         pos: pDraft.posicao || undefined,
                         base: ovr || undefined,

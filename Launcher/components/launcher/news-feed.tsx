@@ -4,7 +4,7 @@ import type { NewsWithGame } from "@/lib/data"
 import { timeAgo } from "@/lib/format"
 import { Pin } from "lucide-react"
 
-export function NewsFeed({ news, title = "Novidades" }: { news: NewsWithGame[]; title?: string }) {
+export function NewsFeed({ news, title = "Novidades", compact = false }: { news: NewsWithGame[]; title?: string; compact?: boolean }) {
   if (news.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
@@ -42,11 +42,11 @@ export function NewsFeed({ news, title = "Novidades" }: { news: NewsWithGame[]; 
         </article>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className={compact ? "grid gap-2" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
         {rest.map((item) => (
           <article
             key={item.id}
-            className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
+            className={`flex flex-col rounded-xl border border-border bg-card transition-colors hover:border-primary/40 ${compact ? "gap-1.5 p-3" : "gap-2 p-4"}`}
           >
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-foreground">
@@ -54,11 +54,11 @@ export function NewsFeed({ news, title = "Novidades" }: { news: NewsWithGame[]; 
               </span>
               <span className="text-xs text-muted-foreground">{timeAgo(item.publishedAt)}</span>
             </div>
-            <h3 className="text-pretty font-semibold leading-snug text-foreground">{item.title}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
+            <h3 className={`text-pretty font-semibold leading-snug text-foreground ${compact ? "text-sm line-clamp-2" : ""}`}>{item.title}</h3>
+            <p className={`leading-relaxed text-muted-foreground ${compact ? "text-xs line-clamp-1" : "text-sm line-clamp-3"}`}>
               {item.excerpt}
             </p>
-            {item.gameName && (
+            {item.gameName && !compact && (
               <span className="mt-auto pt-1 text-xs text-muted-foreground">
                 em <span className="text-foreground">{item.gameName}</span>
               </span>

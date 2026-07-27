@@ -70,18 +70,25 @@ export function runTryout(state: GameState, category: YouthCategory): YouthIntak
     // como o proprio comentario do topo e a UI ("joias >=85 sao raras") prometem.
     // Antes o teto era 73 fixo: a joia nunca aparecia e `rareGem` (>=88) era
     // sempre nulo. A raridade (3%) preserva o anti-abuso de rerolar a peneira.
+    // Variedade REAL (pedido): joia rara, alguns promissores, muitos medianos e
+    // uma boa parte que simplesmente NÃO vinga. Peneira é loteria — na maioria das
+    // vezes vem molecada fraca, e o valor está na chance da exceção.
     const potencial = sorte < 0.03
-      ? 82 + Math.floor(Math.random() * 11)                       // 82-92: joia rara
+      ? 82 + Math.floor(Math.random() * 11)                       // 82-92: joia rara (3%)
       : sorte < 0.15
-      ? 75 + Math.floor(Math.random() * 9)                        // 75-83: promissor
-      : 55 + Math.floor(Math.random() * 18)                       // 55-72: a maioria
+      ? 74 + Math.floor(Math.random() * 10)                       // 74-83: promissor (12%)
+      : sorte < 0.55
+      ? 56 + Math.floor(Math.random() * 16)                       // 56-71: mediano (40%)
+      : 42 + Math.floor(Math.random() * 13)                       // 42-54: fraco, não vinga (45%)
     const escala = overall / Math.max(1, player.overall)
     const cru = (v: number | undefined) => Math.max(25, Math.round((v ?? overall) * escala))
     return {
       ...player,
       overall,
       potential: Math.max(overall + 5, potencial),
-      value: Math.round((overall * 15_000 + potencial * 45_000) / 10_000) * 10_000,
+      // Valor coerente com valorDeMercadoJovem (habilidade atual + prêmio modesto
+      // de promessa). Antes potencial*45k inflava o prospecto cru a milhões.
+      value: Math.round((overall * 6_000 + Math.max(0, potencial - overall) * 20_000) / 10_000) * 10_000,
       pace: cru(player.pace), shooting: cru(player.shooting), passing: cru(player.passing),
       dribbling: cru(player.dribbling), defending: cru(player.defending), physical: cru(player.physical),
     }

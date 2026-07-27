@@ -240,10 +240,18 @@ function TeamPanel({
 export default function PartidaPage() {
   const router = useRouter()
   const userTeam = useUserTeam()
-  const { currentMatch, seasonCalendar, standings, league, currentRound, registerUserMatchResult, advanceWeek } = useGameManager()
+  const { currentMatch, seasonCalendar, standings, league, currentRound, registerUserMatchResult, advanceWeek, fifaPause } = useGameManager()
 
   const { connected: gamepadConnected } = useGamepadDetection()
   const [hydrated, setHydrated] = useState(false)
+
+  // Blindagem da pausa FIFA: se o campeonato de clubes esta parado (data FIFA /
+  // Copa do Mundo), nao ha jogo de clube para disputar — volta ao escritorio, onde
+  // o painel da janela mostra a Copa e o botao de avancar. Sem isto, o link direto
+  // "proxima partida" furava a pausa (relato: "continuei jogando normalmente").
+  useEffect(() => {
+    if (fifaPause?.active) hardNavigate("/")
+  }, [fifaPause?.active])
   const [homeKit, setHomeKit] = useState<KitVariant>("home")
   const [awayKit, setAwayKit] = useState<KitVariant>("away")
   const [livePhase, setLivePhase] = useState(true)
@@ -552,22 +560,27 @@ export default function PartidaPage() {
             No modo economico o CSS esconde <video> (poupa GPU fraca); por isso a
             base e um gradiente escuro proprio, que aparece no lugar sem quebrar
             nada. Ver components/performance-profile. */}
+        {/* Fundo FIXO da tela de pre-jogo: imagem estatica (pedido do jogador, no
+            lugar da cutscene em video). Um PNG proprio nunca depende de arte por
+            clube que pode faltar, e nao consome GPU como o video em loop. */}
         <div className="absolute inset-0 bg-[#050508]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,#132534_0%,#070a0f_72%)]" />
-          <video
-            src="/cutscenes/pre-match-bg.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
+          <Image
+            src="/images/pre-jogo/pre-jogo-fundo.png"
+            alt=""
+            fill
+            priority
             className="absolute inset-0 h-full w-full object-cover"
           />
-          {/* Escurecimento para legibilidade */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/65 to-black/90" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/30" />
+          {/* Escurecimento leve para legibilidade dos paineis por cima */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/25" />
         </div>
 
-        {/* Header */}
+        {/* Header — mostra o CONTEXTO REAL da partida (competicao + rodada +
+            estadio) em vez do generico "Partida Classica / Selecionar Times".
+            Faz a tela parecer um dia de jogo do calendario, nao um modo
+            exibicao. A marca da competicao aparece a esquerda quando existe. */}
         <div className="relative z-20 flex items-center gap-4 px-8 pt-6">
           <Image
             src="/brand/uf26-logo.png"
@@ -577,9 +590,29 @@ export default function PartidaPage() {
             className="h-14 w-auto object-contain"
             priority
           />
-          <h1 className="text-lg font-bold text-white">Partida Clássica</h1>
-          <span className="h-5 w-px bg-white/25" />
-          <span className="text-base font-semibold text-white/80">Selecionar Times</span>
+          <span className="h-8 w-px bg-white/20" />
+          {matchCompetitionLogo ? (
+            <Image
+              src={matchCompetitionLogo}
+              alt={matchInfo.competition}
+              width={120}
+              height={48}
+              className="h-9 w-auto max-w-[130px] object-contain"
+              unoptimized
+            />
+          ) : null}
+          <div className="flex flex-col leading-tight">
+            <h1 className="text-lg font-black tracking-tight text-white">{matchInfo.competition}</h1>
+            <div className="flex items-center gap-2 text-xs font-semibold text-white/55">
+              <span className="uppercase tracking-wider text-[#00ffc8]">{matchInfo.round}</span>
+              {matchInfo.stadium ? (
+                <>
+                  <span className="h-3 w-px bg-white/20" />
+                  <span className="text-white/50">{matchInfo.stadium}</span>
+                </>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         {/* Teams Section */}

@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, type MoraleEvent } from "@/lib/game-engine"
+import { buildConversation, resolveChoice, type ConvTone } from "@/lib/player-conversation"
 
 // Eventos de exemplo para demonstracao
 const EXAMPLE_EVENTS: MoraleEvent[] = [
@@ -44,42 +45,6 @@ const EXAMPLE_EVENTS: MoraleEvent[] = [
   { week: 8, type: "elogio", description: "Treinador elogia dedicacao do grupo", impact: 3 },
   { week: 7, type: "derrota", description: "Derrota em casa para rival", impact: -8 },
   { week: 6, type: "lesao", description: "Lesao de jogador titular", impact: -5 },
-]
-
-// Conversas com jogadores
-const CONVERSATION_OPTIONS = [
-  {
-    id: "praise",
-    icon: Star,
-    label: "Elogiar",
-    description: "Reconhecer bom desempenho",
-    impact: { happy: 5, neutral: 2, unhappy: 3 },
-    color: "text-[#ffd700]"
-  },
-  {
-    id: "motivate",
-    icon: Zap,
-    label: "Motivar",
-    description: "Incentivar melhor desempenho",
-    impact: { happy: 2, neutral: 4, unhappy: 5 },
-    color: "text-orange-500"
-  },
-  {
-    id: "warn",
-    icon: AlertTriangle,
-    label: "Cobrar",
-    description: "Exigir mais dedicacao",
-    impact: { happy: -3, neutral: -2, unhappy: -5 },
-    color: "text-red-500"
-  },
-  {
-    id: "support",
-    icon: HandHeart,
-    label: "Apoiar",
-    description: "Oferecer suporte emocional",
-    impact: { happy: 2, neutral: 3, unhappy: 6 },
-    color: "text-green-500"
-  }
 ]
 
 // Acoes de grupo
@@ -208,39 +173,51 @@ export default function VestiarioPage() {
     return squadPlayers.find(p => p.id === selectedPlayerId)
   }, [selectedPlayerId, squadPlayers])
 
-  // Executar conversa com jogador
-  const handleConversation = (optionId: string) => {
-    if (!selectedPlayer) return
-    
-    const option = CONVERSATION_OPTIONS.find(o => o.id === optionId)
-    if (!option) return
-    
-    const moralKey = selectedPlayer.morale === "Feliz" || selectedPlayer.morale === "Motivado" 
-      ? "happy" 
-      : selectedPlayer.morale === "Normal" 
-        ? "neutral" 
-        : "unhappy"
-    
-    const impact = option.impact[moralKey]
-    
+  // CONVERSA CONTEXTUAL: o tema e a abertura do jogador saem da situação dele
+  // (tempo de jogo, forma, moral, idade). Ver lib/player-conversation.
+  const conversation = useMemo(() => {
+    if (!selectedPlayer) return null
+    return buildConversation({
+      name: selectedPlayer.name,
+      age: selectedPlayer.age,
+      morale: selectedPlayer.morale,
+      form: selectedPlayer.form,
+      isStarter: selectedPlayer.isStarter,
+      lastRating: selectedPlayer.lastMatchRating,
+      persona: selectedPlayer.persona?.rotulo,
+    })
+  }, [selectedPlayer])
+
+  // Executar conversa com jogador — resolve o desfecho pelo TOM escolhido e
+  // aplica a variação de moral (mapeando o delta em "degraus" da escala de moral).
+  const handleConversation = (tone: ConvTone) => {
+    if (!selectedPlayer || !conversation) return
+    const outcome = resolveChoice(
+      {
+        name: selectedPlayer.name, age: selectedPlayer.age, morale: selectedPlayer.morale,
+        form: selectedPlayer.form, isStarter: selectedPlayer.isStarter,
+        lastRating: selectedPlayer.lastMatchRating, persona: selectedPlayer.persona?.rotulo,
+      },
+      conversation,
+      tone,
+    )
+    // delta (~-8..+8) -> degraus (-2..+2) na escala Infeliz..Feliz.
+    const degraus = outcome.moraleChange >= 5 ? 2 : outcome.moraleChange > 0 ? 1
+      : outcome.moraleChange <= -5 ? -2 : outcome.moraleChange < 0 ? -1 : 0
+    if (degraus !== 0) gameEngine.ajustarMoralJogador(selectedPlayer.id, degraus)
+
     addMoraleEvent({
-      type: impact > 0 ? "elogio" : "conflito",
-      description: `Conversa com ${selectedPlayer.name}: ${option.label}`,
-      impact: impact
+      type: outcome.positive ? "elogio" : "conflito",
+      description: `Conversa com ${selectedPlayer.name} (${conversation.topicLabel})`,
+      impact: outcome.moraleChange,
     })
-    
-    setConversationResult({
-      success: impact > 0,
-      message: impact > 0 
-        ? `${selectedPlayer.name} respondeu bem a conversa.`
-        : `${selectedPlayer.name} nao reagiu bem.`
-    })
-    
+
+    setConversationResult({ success: outcome.positive, message: outcome.reaction })
     setTimeout(() => {
       setConversationResult(null)
       setShowConversation(false)
       setSelectedPlayerId(null)
-    }, 2000)
+    }, 2600)
   }
 
   // Executar acao de grupo
@@ -505,23 +482,32 @@ export default function VestiarioPage() {
                       </div>
                     </div>
 
-                    <p className="text-sm text-white/70 mb-6">
-                      Como voce deseja abordar {selectedPlayer.name}?
-                    </p>
+                    {/* Tema + fala de abertura do jogador (a postura dele). */}
+                    {conversation && (
+                      <>
+                        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/50">
+                          <MessageCircle className="h-3 w-3" /> {conversation.topicLabel}
+                        </div>
+                        <div className="mb-5 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                          <p className="text-sm italic leading-relaxed text-white/85">"{conversation.opening}"</p>
+                          <p className="mt-1 text-right text-[11px] text-white/40">— {selectedPlayer.name.split(" ")[0]}</p>
+                        </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      {CONVERSATION_OPTIONS.map(option => (
-                        <button
-                          key={option.id}
-                          onClick={() => handleConversation(option.id)}
-                          className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-all text-left border border-white/10 hover:border-white/20"
-                        >
-                          <option.icon className={cn("h-6 w-6 mb-2", option.color)} />
-                          <div className="font-medium text-white">{option.label}</div>
-                          <div className="text-xs text-white/50">{option.description}</div>
-                        </button>
-                      ))}
-                    </div>
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/40">Como você responde?</p>
+                        <div className="space-y-2">
+                          {conversation.choices.map(choice => (
+                            <button
+                              key={choice.id}
+                              onClick={() => handleConversation(choice.id)}
+                              className="group flex w-full items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-left transition-all hover:border-[#00ffc8]/40 hover:bg-white/[0.08]"
+                            >
+                              <ChevronRight className="h-4 w-4 shrink-0 text-white/30 transition-colors group-hover:text-[#00ffc8]" />
+                              <span className="text-sm text-white/90">{choice.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
 
                     <Button
                       variant="ghost"

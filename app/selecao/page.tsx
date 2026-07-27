@@ -18,11 +18,13 @@ import {
   Users,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
-import { useUserTeam, useGameState } from "@/lib/save-system"
+import { useUserTeam, useGameState, useManagingNational } from "@/lib/save-system"
 import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { useNationalTeam } from "@/lib/use-national-team"
+import { assumirSelecao, voltarAoClube } from "@/lib/career-moves"
 import { periodoLabelPorNome } from "@/lib/competition-dates-2026"
+import { getNationalCrestUrl, getNationalKitUrl } from "@/lib/national-assets"
 import {
   getNationalSquad,
   getNationalStrength,
@@ -30,6 +32,7 @@ import {
   getNationalPlayerPool,
   nationalPlayerKey,
   CONFEDERATION_LABEL,
+  getAllNationalTeams,
   type NationalTeam,
 } from "@/lib/national-teams"
 import { getCompetitionsForConfederation, getCompetitionDef } from "@/lib/national-competitions"
@@ -37,7 +40,22 @@ import type { NationalOffer } from "@/lib/save-system"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
 
-function NationalCrest({ team, size = 48 }: { team: { code: string; cor1: string; cor2: string }; size?: number }) {
+// Tenta o escudo real da selecao (public/escudos/nations/<id>.png, importado pelo
+// usuario); se nao existir, cai no bloco em gradiente com o codigo do pais — a
+// selecao nunca fica sem nada. `id` opcional para nao quebrar chamadas antigas.
+function NationalCrest({ team, size = 48 }: { team: { id?: string; code: string; cor1: string; cor2: string }; size?: number }) {
+  const [erro, setErro] = useState(false)
+  if (team.id && !erro) {
+    return (
+      <img
+        src={getNationalCrestUrl(team.id)}
+        alt={team.code}
+        onError={() => setErro(true)}
+        style={{ width: size, height: size }}
+        className="rounded-lg object-contain"
+      />
+    )
+  }
   return (
     <div
       className="flex items-center justify-center rounded-lg font-bold text-white shadow-inner"
@@ -52,6 +70,23 @@ function NationalCrest({ team, size = 48 }: { team: { code: string; cor1: string
     >
       {team.code}
     </div>
+  )
+}
+
+// Uniforme da selecao (home). Some silenciosamente se o arquivo nao existir —
+// so UEFA e CONCACAF tem kit importado; as demais seguem so com o escudo.
+function NationalKit({ id, size = 56 }: { id: string; size?: number }) {
+  const [erro, setErro] = useState(false)
+  if (erro) return null
+  return (
+    <img
+      src={getNationalKitUrl(id, "home")}
+      alt=""
+      onError={() => setErro(true)}
+      style={{ width: size, height: size }}
+      className="object-contain drop-shadow"
+      aria-hidden
+    />
   )
 }
 
@@ -358,10 +393,26 @@ export default function SelecaoPage() {
     declineAll,
     leaveNationalTeam,
     startCompetition,
+    playNationalFriendly,
+    nationalFriendlies,
   } = useNationalTeam()
 
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [showPool, setShowPool] = useState(false)
+  const [amistosoOppId, setAmistosoOppId] = useState("")
+
+  // MODO SELEÇÃO (Task 2). Aceitar uma proposta passa a funcionar como assumir um
+  // clube: além de firmar o contrato (acceptOffer), a seleção vira o "time atual"
+  // e o técnico cai no OFFICE dela. `entrarNoModo`/`voltar` alternam depois.
+  const { isNational } = useManagingNational()
+  const patch = (p: Record<string, unknown>) => setState(p as Parameters<typeof setState>[0])
+  const aceitarEComandar = (offer: NationalOffer) => {
+    acceptOffer(offer)
+    assumirSelecao(offer.nationalTeamId, { setSaveState: patch, navigate: hardNavigate })
+  }
+  const entrarNoModoSelecao = () => {
+    if (nationalTeam) assumirSelecao(nationalTeam.id, { setSaveState: patch, navigate: hardNavigate })
+  }
 
   // Convocacao manual: cortes e convocacoes a dedo vem do save.
   const cuts = state.nationalCuts ?? []
@@ -447,7 +498,7 @@ export default function SelecaoPage() {
                     <OfferCard
                       key={offer.nationalTeamId}
                       offer={offer}
-                      onAccept={() => acceptOffer(offer)}
+                      onAccept={() => aceitarEComandar(offer)}
                       onDecline={() => declineOffer(offer.nationalTeamId)}
                       onCounter={(salary, months) => counterOffer(offer, salary, months)}
                     />
@@ -489,6 +540,36 @@ export default function SelecaoPage() {
         {/* COM SELECAO */}
         {hasNationalTeam && nationalTeam && (
           <div className="space-y-4">
+            {/* Seletor de modo: comandar a seleção como time pleno (office próprio)
+                ou voltar ao clube. Espelha o seletor do office da seleção. */}
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#00ffc8]/25 bg-[#00ffc8]/[0.05] p-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-white">
+                  {isNational ? "Você está no comando da seleção" : "Assuma a seleção como seu time"}
+                </p>
+                <p className="truncate text-xs text-white/55">
+                  {isNational
+                    ? "O escritório, o calendário e o elenco já são os da seleção."
+                    : "Entre no modo seleção para ter office próprio, como um clube."}
+                </p>
+              </div>
+              {isNational ? (
+                <button
+                  onClick={() => voltarAoClube({ setSaveState: patch, navigate: hardNavigate })}
+                  className="flex shrink-0 items-center gap-2 rounded-lg bg-white/[0.06] px-4 py-2 text-xs font-semibold text-white/80 transition-colors hover:bg-white/[0.12]"
+                >
+                  Voltar ao clube
+                </button>
+              ) : (
+                <button
+                  onClick={entrarNoModoSelecao}
+                  className="flex shrink-0 items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2 text-xs font-black text-black transition hover:brightness-110"
+                >
+                  Entrar no modo seleção
+                </button>
+              )}
+            </div>
+
             {/* Cabecalho da selecao */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-5">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -497,6 +578,8 @@ export default function SelecaoPage() {
                   <h2 className="text-xl font-semibold text-white">{nationalTeam.name}</h2>
                   <p className="text-xs text-white/50">{CONFEDERATION_LABEL[nationalTeam.confederation]}</p>
                 </div>
+                {/* Uniforme (UEFA/CONCACAF tem; as demais some sem quebrar). */}
+                <NationalKit id={nationalTeam.id} size={56} />
                 <div className="grid grid-cols-4 gap-4 sm:gap-6">
                   <div className="text-center">
                     <p className={cn("text-xl font-bold tabular-nums", strengthTone(strength))}>{strength}</p>
@@ -515,6 +598,48 @@ export default function SelecaoPage() {
                     <p className="text-[10px] uppercase tracking-wide text-white/40">V-E-D</p>
                   </div>
                 </div>
+              </div>
+
+              {/* AMISTOSOS de selecao — preparacao antes dos torneios. Simulado
+                  pela forca dos dois lados (como as partidas oficiais de selecao). */}
+              <div className="mt-4 border-t border-white/[0.06] pt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">Amistosos de preparação</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={amistosoOppId}
+                    onChange={e => setAmistosoOppId(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-[#101015] px-3 py-2 text-sm text-white"
+                  >
+                    <option value="">Escolher adversário...</option>
+                    {getAllNationalTeams().filter(n => n.id !== nationalTeam.id)
+                      .slice().sort((a, b) => a.name.localeCompare(b.name))
+                      .map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
+                  </select>
+                  <button
+                    onClick={() => { if (amistosoOppId) { playNationalFriendly(amistosoOppId); setAmistosoOppId("") } }}
+                    disabled={!amistosoOppId}
+                    className="rounded-lg bg-[#00ffc8] px-4 py-2 text-sm font-black text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Jogar amistoso
+                  </button>
+                  <span className="text-[11px] text-white/40">Prepara o time antes das competições.</span>
+                </div>
+                {nationalFriendlies.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {nationalFriendlies.map((f, i) => {
+                      const r = f.userScore > f.oppScore ? "V" : f.userScore < f.oppScore ? "D" : "E"
+                      return (
+                        <div key={i} className="flex items-center gap-3 rounded-lg bg-black/25 px-3 py-2">
+                          <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded text-[11px] font-black",
+                            r === "V" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60")}>{r}</span>
+                          <span className="w-14 shrink-0 font-mono text-sm text-white">{f.userScore} x {f.oppScore}</span>
+                          <span className="min-w-0 flex-1 truncate text-sm text-white/70">{f.opponentName}</span>
+                          <span className="shrink-0 text-[10px] text-white/30">Amistoso</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {career.titles.length > 0 && (

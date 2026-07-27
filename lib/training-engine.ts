@@ -66,7 +66,9 @@ export function applyWeek(state: GameState, plan: TrainingWeekPlan): {
       const delta = Math.max(0, Math.round(weight[session.intensity] * session.durationDays * (player.age <= 23 ? 1.35 : .8) * 10) / 10)
       const key = attr[session.type]
       if (key !== "overall" && key !== "potential") (player as unknown as Record<string, unknown>)[key] = Math.min(99, Number((player as unknown as Record<string, unknown>)[key] ?? player.overall) + delta)
-      if (session.type === "jovens" || session.type === "fisico") player.overall = Math.min(player.potential, player.overall + delta * .15)
+      // Teto rígido de 99 além do potencial: o overall JAMAIS passa de 99, mesmo
+      // que um potencial corrompido fosse maior (relato "overall 99+").
+      if (session.type === "jovens" || session.type === "fisico") player.overall = Math.min(99, Math.min(player.potential, player.overall + delta * .15))
       gains.push({ playerId: player.id, attr: key, delta })
       const roll = (([...`${player.id}:${plan.weekStart}:${session.type}`].reduce((a,c)=>a+c.charCodeAt(0),0) * 9301 + 49297) % 10000) / 10000
       if (roll < injuryRisk(session, player.id)) injuries.push({ playerId: player.id, severity: session.intensity === "alta" ? "muscular" : "leve" })

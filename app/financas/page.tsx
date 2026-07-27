@@ -27,7 +27,8 @@ import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/teams-data"
 import { useGameState, useUserTeam } from "@/lib/save-system"
-import { debtTransferLimit, renegotiateDebt } from "@/lib/debt-engine"
+import { debtTransferLimit, renegotiateDebt, amortizeDebt } from "@/lib/debt-engine"
+import { useRequireClub } from "@/lib/use-require-team"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { getCountryCompetitions } from "@/lib/country-competitions"
@@ -98,6 +99,7 @@ interface LedgerEntry {
 }
 
 export default function FinancasPage() {
+  useRequireClub()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<FinancesTab>("geral")
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
@@ -400,7 +402,24 @@ export default function FinancasPage() {
         {saveState.debt?.enabled && <section className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><div className="text-xs font-bold uppercase tracking-wider text-amber-300">Dívida do clube</div><div className="mt-1 text-xl font-black text-white">{formatCurrency(saveState.debt.principal)}</div><p className="text-xs text-white/45">Parcela mensal {formatCurrency(saveState.debt.monthlyPayment)} · juros {(saveState.debt.annualInterestRate*100).toFixed(1)}% a.a.</p></div>
-            <div className="text-right"><div className="text-xs text-white/45">Limite atual para transferências</div><div className="font-bold text-amber-300">{formatCurrency(debtTransferLimit(saveState.debt, gameEngine.balance))}</div><button onClick={() => setSaveState({debt:renegotiateDebt(saveState.debt!)})} disabled={saveState.debt.renegotiations>=2} className="mt-2 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs text-amber-200 disabled:opacity-30">Renegociar empréstimo</button></div>
+            <div className="text-right"><div className="text-xs text-white/45">Limite atual para transferências</div><div className="font-bold text-amber-300">{formatCurrency(debtTransferLimit(saveState.debt, gameEngine.balance))}</div>
+              <div className="mt-2 flex flex-wrap justify-end gap-2">
+                {/* AMORTIZAR: paga a dívida com o caixa AGORA (resposta ao "como pago as dívidas"). */}
+                <button
+                  onClick={() => {
+                    const alvo = Math.min(gameEngine.balance ?? 0, saveState.debt!.principal)
+                    if (alvo < 10_000) { window.alert("Saldo insuficiente para amortizar a dívida agora."); return }
+                    if (!window.confirm(`Amortizar ${formatCurrency(alvo)} da dívida com o caixa agora?`)) return
+                    const r = amortizeDebt(saveState.debt!, alvo)
+                    gameEngine.payClubDebt(r.paid)
+                    setSaveState({ debt: r.debt })
+                  }}
+                  className="rounded-lg border border-[#00ffc8]/30 bg-[#00ffc8]/10 px-3 py-1.5 text-xs font-semibold text-[#00ffc8] hover:bg-[#00ffc8]/20"
+                >Amortizar com o caixa</button>
+                <button onClick={() => setSaveState({debt:renegotiateDebt(saveState.debt!)})} disabled={saveState.debt.renegotiations>=2} className="rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs text-amber-200 disabled:opacity-30">Renegociar empréstimo</button>
+              </div>
+              <p className="mt-1 text-[10px] text-white/35">A parcela mensal já é descontada automaticamente do caixa.</p>
+            </div>
           </div>
         </section>}
 

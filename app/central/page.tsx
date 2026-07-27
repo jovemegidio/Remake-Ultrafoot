@@ -56,25 +56,10 @@ const messages = [
   { from: "Olheiro", subject: "Relatorio - Jovem promessa", time: "2 dias", unread: false },
 ]
 
-const contracts = [
-  { name: "Lincoln", position: "MEI", overall: 78, endsIn: "6 meses", salary: "R$ 180.000", status: "expirando" },
-  { name: "Helinho", position: "PE", overall: 75, endsIn: "1 ano", salary: "R$ 120.000", status: "ok" },
-  { name: "Estevao", position: "MD", overall: 79, endsIn: "3 meses", salary: "R$ 250.000", status: "critico" },
-]
-
-// Mock data para disciplina
-const disciplineIssues = [
-  { id: 1, player: "Helinho", type: "atraso_treino", date: "Ontem", severity: "leve", resolved: false },
-  { id: 2, player: "Lincoln", type: "discussao_vestiario", date: "3 dias atras", severity: "moderada", resolved: true, punishment: "advertencia" },
-]
-
-const playerHierarchy = [
-  { name: "Eduardo Sasha", role: "capitao", influence: 95, respect: 92 },
-  { name: "Pedro Henrique", role: "vice_capitao", influence: 85, respect: 88 },
-  { name: "Cleiton", role: "veterano", influence: 78, respect: 85 },
-  { name: "Lincoln", role: "referencia", influence: 72, respect: 80 },
-  { name: "Helinho", role: "jovem", influence: 45, respect: 65 },
-]
+// contracts / disciplineIssues / playerHierarchy eram listas FIXAS com nomes do RB
+// Bragantino (elenco-exemplo). Por isso a central mostrava "dados do Bragantino"
+// para qualquer time. Agora sao DERIVADAS do elenco real do usuario (squadPlayers)
+// dentro do componente — ver os useMemo abaixo.
 
 export default function CentralPage() {
   const router = useRouter()
@@ -104,6 +89,60 @@ export default function CentralPage() {
         trend: p.form >= 70 ? "up" : p.form <= 45 ? "down" : "stable",
         label: p.morale,
       })),
+    [squadPlayers],
+  )
+
+  // Semana absoluta aproximada, para estimar quanto falta de contrato. Nao precisa
+  // ser exata: o que importa e usar os jogadores e salarios REAIS do elenco.
+  const currentAbsWeek = ((state.season ?? 2026) - 2026) * 46 + (state.week ?? 0)
+
+  // CONTRATOS reais: jogadores do elenco com contrato, ordenados pelo que vence
+  // primeiro. Salario e overall saem do jogador de verdade.
+  const contracts = useMemo(() => {
+    const fmtSalary = (weekly: number) => `R$ ${Math.round((weekly || 0) * 4.33).toLocaleString("pt-BR")}`
+    return (squadPlayers ?? [])
+      .filter((p) => p.contract)
+      .map((p) => {
+        const weeksLeft = Math.max(0, (p.contract!.endDate ?? currentAbsWeek) - currentAbsWeek)
+        const monthsLeft = Math.round(weeksLeft / 4.33)
+        const status = monthsLeft <= 3 ? "critico" : monthsLeft <= 9 ? "expirando" : "ok"
+        const endsIn = monthsLeft <= 0 ? "Expirado"
+          : monthsLeft < 12 ? `${monthsLeft} ${monthsLeft === 1 ? "mes" : "meses"}`
+          : `${Math.round(monthsLeft / 12)} ${monthsLeft >= 24 ? "anos" : "ano"}`
+        return { name: p.name, position: p.position, overall: p.overall, salary: fmtSalary(p.contract!.salary), endsIn, status, monthsLeft }
+      })
+      .sort((a, b) => a.monthsLeft - b.monthsLeft)
+      .slice(0, 6)
+  }, [squadPlayers, currentAbsWeek])
+
+  // HIERARQUIA real: os de maior overall lideram; idade define o papel. Influencia
+  // e respeito saem do overall/idade/moral do proprio atleta.
+  const playerHierarchy = useMemo(() => {
+    const squad = [...(squadPlayers ?? [])].sort((a, b) => b.overall - a.overall)
+    return squad.slice(0, 6).map((p, i) => ({
+      name: p.name,
+      role: i === 0 ? "capitao" : i === 1 ? "vice_capitao" : p.age >= 30 ? "veterano" : p.age <= 21 ? "jovem" : "referencia",
+      influence: Math.max(30, Math.min(99, p.overall + (p.age >= 30 ? 6 : 0) - i * 2)),
+      respect: Math.max(30, Math.min(99, p.overall + (p.morale === "Feliz" || p.morale === "Motivado" ? 5 : p.morale === "Insatisfeito" || p.morale === "Infeliz" ? -8 : 0))),
+    }))
+  }, [squadPlayers])
+
+  // DISCIPLINA/vestiario: derivada dos atletas realmente insatisfeitos, em vez de
+  // uma lista fixa. Elenco feliz => nenhum problema (a aba mostra o estado vazio).
+  const disciplineIssues = useMemo(
+    () =>
+      (squadPlayers ?? [])
+        .filter((p) => p.morale === "Insatisfeito" || p.morale === "Infeliz")
+        .slice(0, 4)
+        .map((p, i) => ({
+          id: i + 1,
+          player: p.name,
+          type: "discussao_vestiario",
+          date: "Recente",
+          severity: p.morale === "Infeliz" ? "moderada" : "leve",
+          resolved: false,
+          punishment: undefined as string | undefined,
+        })),
     [squadPlayers],
   )
 

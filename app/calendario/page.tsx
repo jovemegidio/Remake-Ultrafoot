@@ -19,11 +19,12 @@ import { faseDaPartida } from "@/lib/competition-phase"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { GameHeader } from "@/components/game-header"
-import { useGameManager, type Fixture } from "@/lib/use-game-manager"
+import { useGameManager, seasonMonthsForDivision, type Fixture } from "@/lib/use-game-manager"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
 import { cn } from "@/lib/utils"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
+import { useNotifications } from "@/components/notifications-system"
 
 function roundToDay(round: number): number {
   const daysInRound = [1, 5, 8, 12, 15, 19, 22, 26, 29]
@@ -39,27 +40,9 @@ function diaDaPartida(fixture: { round: number; midweek?: boolean }): number {
   return roundToDay(fixture.round) + (fixture.midweek ? 2 : 0)
 }
 
-// Meses visiveis no calendario dependendo da regiao do time
-const EUROPE_DIVISIONS = ["premier_league","la_liga","serie_a_ita","bundesliga","ligue_1","primeira_liga","eredivisie","scottish_prem","super_lig","pro_league_bel","russian_prem","championship","la_liga_2","serie_b_ita","bundesliga_2","ligue_2","liga_portugal_2","eerste_divisie","challenger_pro","tff_1_lig","russian_first"]
-const SUMMER_LEAGUES = ["mls","j_league","k_league_1","chinese_super","j2_league","k_league_2","china_league_one"] // Fev-Nov/Dez
-const SAUDI_LIKES = ["saudi_pro","saudi_first_div","liga_mx","liga_argentina","primera_a_col","primera_div_chi","primera_div_ury","primera_b_arg","torneo_betplay","primera_b_chi","segunda_div_ury"]
-
-function getSeasonMonths(division: string): number[] {
-  if (EUROPE_DIVISIONS.includes(division)) {
-    // Agosto a Maio do ano seguinte: [7,8,9,10,11,0,1,2,3,4]
-    return [7,8,9,10,11,0,1,2,3,4]
-  }
-  if (SUMMER_LEAGUES.includes(division)) {
-    // Fevereiro a Dezembro
-    return [1,2,3,4,5,6,7,8,9,10,11]
-  }
-  if (SAUDI_LIKES.includes(division)) {
-    // Julho a Maio
-    return [6,7,8,9,10,11,0,1,2,3,4]
-  }
-  // Brasileirao + outros: Janeiro a Novembro
-  return [0,1,2,3,4,5,6,7,8,9,10]
-}
+// Os meses visiveis agora vem de seasonMonthsForDivision (derivado do
+// LEAGUE_CALENDAR), garantindo que a aba do mes casa com o mes real dos jogos.
+// As listas de regiao escritas a mao foram removidas por divergirem do calendario.
 
 const MONTH_NAMES = [
   "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -81,6 +64,7 @@ const WEEKDAY_NAMES = [
 export default function CalendarioPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
+  const { addNotification } = useNotifications()
   useDiscordActivity("Vendo o calendario", userTeam.nome)
   const {
     seasonCalendar,
@@ -92,7 +76,7 @@ export default function CalendarioPage() {
     league,
   } = useGameManager()
 
-  const seasonMonths = useMemo(() => getSeasonMonths(league ?? "serie_a"), [league])
+  const seasonMonths = useMemo(() => seasonMonthsForDivision(league ?? "serie_a"), [league])
   const [currentMonth, setCurrentMonth] = useState(() => seasonMonths[0])
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
@@ -162,30 +146,49 @@ export default function CalendarioPage() {
       const delay = totalDays > 60 ? 18 : totalDays > 30 ? 32 : 55
       const perWeek = totalDays / Math.max(1, weeks)
 
+      // BLINDAGEM (relato: "ao simular por um tempo o jogo crasha e fica
+      // carregando"). Se advanceWeek lançar (ex.: virada de temporada complexa), o
+      // loop abortava e isSimulating ficava true PARA SEMPRE — a tela ficava presa
+      // em "carregando". Agora um erro numa semana INTERROMPE a simulação com
+      // segurança, e o finally SEMPRE devolve a tela ao estado normal.
       let advanced = 0
-      for (let d = 1; d <= totalDays; d++) {
-        setSimDate(new Date(start.getTime() + d * 86_400_000))
-        setSimProgress(Math.round((d / totalDays) * 100))
+      let falhou = false
+      try {
+        for (let d = 1; d <= totalDays && !falhou; d++) {
+          setSimDate(new Date(start.getTime() + d * 86_400_000))
+          setSimProgress(Math.round((d / totalDays) * 100))
 
-        // Cruzou mais uma semana de calendario -> simula essa rodada no engine.
-        if (advanced < weeks && d >= Math.round((advanced + 1) * perWeek)) {
-          // AWAIT obrigatorio: sem ele as chamadas concorrem, todas leem a
-          // MESMA semana e so uma avanca — dai "simular ate marco" ficava
-          // parado em janeiro (relato).
-          await advanceWeek()
-          advanced++
+          if (advanced < weeks && d >= Math.round((advanced + 1) * perWeek)) {
+            try {
+              await advanceWeek()
+              advanced++
+            } catch (e) {
+              console.error("[calendario] falha ao avançar a semana durante a simulação:", e)
+              falhou = true
+            }
+          }
+          await new Promise(r => setTimeout(r, delay))
         }
-        await new Promise(r => setTimeout(r, delay))
-      }
-      // Garante que nenhuma semana ficou para tras por arredondamento.
-      while (advanced < weeks) {
-        await advanceWeek()
-        advanced++
+        while (advanced < weeks && !falhou) {
+          try { await advanceWeek(); advanced++ }
+          catch (e) { console.error("[calendario] falha ao avançar a semana:", e); falhou = true }
+        }
+      } finally {
+        setIsSimulating(false)
+        setSimProgress(0)
       }
 
+      if (falhou) {
+        addNotification({
+          type: "system", priority: "high",
+          title: "Simulação interrompida",
+          message: "Ocorreu um erro ao avançar as semanas. O progresso foi salvo até aqui — tente simular novamente ou avance uma partida por vez.",
+        })
+        return
+      }
       hardNavigate("/partida")
     },
-    [advanceWeek, currentWeek, currentSeason, isSimulating],
+    [advanceWeek, currentWeek, currentSeason, isSimulating, addNotification],
   )
 
   // Dias do calendario
@@ -230,6 +233,14 @@ export default function CalendarioPage() {
   // inserida no calendario por aplicarPausasFifa em use-game-manager).
   const dataFifaNoMes = useMemo(
     () => seasonCalendar.fixtures.some(f => f.competitionType === "fifa_break" && f.month === currentMonth),
+    [seasonCalendar.fixtures, currentMonth],
+  )
+  // Em ano de Mundial, a pausa de junho/julho e a COPA DO MUNDO — muito maior que
+  // uma data FIFA comum. O relato "nao aparece no calendario os jogos da copa em
+  // junho/julho" vinha de a pausa aparecer so como um "Data FIFA" generico. Aqui
+  // detectamos o Mundial no mes e as SEMANAS que ele ocupa, para destaca-lo.
+  const mundialNoMes = useMemo(
+    () => seasonCalendar.fixtures.some(f => f.competitionType === "fifa_break" && f.month === currentMonth && /copa do mundo/i.test(f.competition)),
     [seasonCalendar.fixtures, currentMonth],
   )
 
@@ -562,10 +573,21 @@ export default function CalendarioPage() {
               esta aberta (amistosos, Eliminatorias, Copa America/Euro, Mundial). */}
           {dataFifaNoMes && (
             <div className="border-t border-white/10 pt-4 mt-4">
-              <div className="text-amber-300/90 text-xs font-semibold mb-1">🌍 Data FIFA</div>
-              <div className="text-white/55 text-xs leading-snug">
-                Campeonato de clubes pausado — janela de seleções.
-              </div>
+              {mundialNoMes ? (
+                <>
+                  <div className="text-[#00ffc8] text-xs font-bold mb-1">🏆 Copa do Mundo FIFA</div>
+                  <div className="text-white/60 text-xs leading-snug">
+                    O Mundial toma junho e julho. O campeonato de clubes está pausado enquanto as seleções disputam o torneio.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-amber-300/90 text-xs font-semibold mb-1">🌍 Data FIFA</div>
+                  <div className="text-white/55 text-xs leading-snug">
+                    Campeonato de clubes pausado — janela de seleções.
+                  </div>
+                </>
+              )}
             </div>
           )}
         </aside>
@@ -582,8 +604,19 @@ export default function CalendarioPage() {
               ))}
             </div>
 
+            {/* Faixa do Mundial: em junho/julho de ano de Copa, o torneio ocupa o
+                mes. Antes so havia o card de clube (vazio na pausa) e o jogador
+                achava que "a Copa nao aparecia". Agora ela toma a tela. */}
+            {mundialNoMes && (
+              <div className="flex items-center justify-center gap-2 border-b border-[#00ffc8]/25 bg-[#00ffc8]/[0.10] px-4 py-2 text-center">
+                <Trophy className="h-4 w-4 text-[#00ffc8]" />
+                <span className="text-xs font-bold uppercase tracking-wide text-[#00ffc8]">Copa do Mundo FIFA em andamento</span>
+                <span className="text-[11px] text-white/55">· clubes pausados</span>
+              </div>
+            )}
+
             {/* Calendar days */}
-            <div className="grid grid-cols-7 auto-rows-fr h-[calc(100%-44px)]">
+            <div className={cn("grid grid-cols-7 auto-rows-fr", mundialNoMes ? "h-[calc(100%-80px)]" : "h-[calc(100%-44px)]")}>
               {calendarDays.map((item, i) => {
                 const isSelected = item.isCurrentMonth && item.day === selectedDay
                 const hasMatch = item.fixture !== null

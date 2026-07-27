@@ -116,6 +116,27 @@ export function renegotiateDebt(debt: ClubDebtState): ClubDebtState {
   next.monthlyPayment=Math.round(next.principal*rate/(1-Math.pow(1+rate,-remaining)));return next
 }
 
+/**
+ * AMORTIZAR (quitar antecipado) a dívida com dinheiro do caixa — resposta direta
+ * ao "como pago as dívidas?": além do desconto automático mensal, o técnico pode
+ * abater o principal quando quiser. Retorna a dívida atualizada e o valor pago.
+ */
+export function amortizeDebt(debt: ClubDebtState, amount: number): { debt: ClubDebtState; paid: number } {
+  if (!debt.enabled || debt.principal <= 0 || amount <= 0) return { debt, paid: 0 }
+  const paid = Math.min(amount, debt.principal)
+  const principal = debt.principal - paid
+  const next: ClubDebtState = { ...debt, principal, enabled: principal > 0 }
+  // Recalcula a parcela pelo saldo restante (fica mais leve depois de amortizar).
+  if (principal > 0) {
+    const remaining = Math.max(1, next.termMonths - next.monthsPaid)
+    const rate = next.annualInterestRate / 12
+    next.monthlyPayment = Math.round(principal * rate / (1 - Math.pow(1 + rate, -remaining)))
+  } else {
+    next.monthlyPayment = 0
+  }
+  return { debt: next, paid }
+}
+
 export function applySponsorDebtContribution(debt: ClubDebtState, amount: number): ClubDebtState {
   const contribution=Math.max(0,Math.min(amount,debt.principal));return{...debt,principal:debt.principal-contribution,sponsorContributions:debt.sponsorContributions+contribution,enabled:debt.principal-contribution>0}
 }

@@ -372,10 +372,16 @@ export function generateJobOffers(
   candidates: { curto: string; nome: string; prestigio: number; divisao?: string }[],
   opts: { allowNationalTeam?: boolean; experienceSeasons?: number; careerTitles?: number; currentWeek?: number; currentDivision?: string } = {}
 ): JobOffer[] {
-  // Sem desempenho sustentado, ninguem liga. Avaliamos apenas a cada trimestre:
-  // isso elimina a loteria semanal que gerava propostas aleatorias e repetitivas.
+  // Avaliamos MENSALMENTE (a cada 4 semanas), desde cedo. Antes so a cada 13
+  // semanas E com confianca>=72 E top 6 — na pratica quase nunca saia proposta
+  // (relato: "nunca aparecem propostas de clube, nem fracas nem fortes"). Agora:
+  //  - indo BEM (confianca alta e boa posicao)  -> clubes ACIMA te cortejam;
+  //  - indo MAL (fraco/na parte de baixo)        -> clubes MENORES/laterais ainda
+  //    aparecem (na vida real um tecnico em baixa recebe sondagem de times menores
+  //    querendo reconstruir). So o comeco absoluto (semana < 5) e mudo.
   const weeks = Math.max(0, opts.currentWeek ?? 0)
-  if (weeks < 13 || weeks % 13 !== 0 || confidence < 72 || currentPosition > 6) return []
+  if (weeks < 5 || weeks % 4 !== 0) return []
+  const indoBem = confidence >= 62 && currentPosition <= 10
 
   const offers: JobOffer[] = []
 
@@ -396,8 +402,12 @@ export function generateJobOffers(
   }
   const currentTier = divisionTier(opts.currentDivision)
   const allowedTierJump = titles >= 2 || experience >= 4 ? 2 : 1
-  const eligible = candidates
-    .filter(c => c.prestigio > userPrestige + 1 && c.prestigio <= prestigeCeiling)
+  // Indo bem: clubes ACIMA (ambicao). Indo mal: clubes de porte parecido ou um
+  // pouco MENOR, que abriram vaga e apostam num tecnico livre — sempre existe
+  // mercado, so muda o tamanho do clube conforme o momento.
+  const eligible = (indoBem
+    ? candidates.filter(c => c.prestigio > userPrestige + 1 && c.prestigio <= prestigeCeiling)
+    : candidates.filter(c => c.prestigio <= userPrestige + 2 && c.prestigio >= userPrestige - 22))
     .filter(c => divisionTier(c.divisao) <= currentTier + allowedTierJump)
     .sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome))
 
@@ -407,7 +417,9 @@ export function generateJobOffers(
     clubName: c.nome,
     clubPrestige: c.prestigio,
     kind: "club",
-    reason: `O ${c.nome} acompanhou seu trabalho: ${currentPosition}º lugar, confiança da diretoria em ${Math.round(confidence)}% e ${experience} temporada${experience === 1 ? "" : "s"} de experiência.`,
+    reason: indoBem
+      ? `O ${c.nome} acompanhou seu trabalho: ${currentPosition}º lugar, confiança da diretoria em ${Math.round(confidence)}% e ${experience} temporada${experience === 1 ? "" : "s"} de experiência.`
+      : `O ${c.nome} abriu o cargo e procura um técnico livre para um novo ciclo — uma chance de recomeço.`,
   })
 
   // Convites de SELECAO NAO saem daqui. Havia uma oferta "Selecao Brasileira"

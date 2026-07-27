@@ -81,10 +81,16 @@ export function evoluirSemana(
  * juventude valoriza. Sem isso um moleque de 15 com potencial 88 sairia de graça.
  */
 export function valorDeMercadoJovem(j: JovemBase): number {
-  const promessa = j.potential * 1.6 + j.overall * 0.9
-  const fatorIdade = j.age <= 15 ? 1.5 : j.age <= 16 ? 1.3 : j.age <= 17 ? 1.15 : 1.0
-  const bruto = Math.pow(promessa / 40, 3) * 120_000 * fatorIdade
-  return Math.max(50_000, Math.round(bruto / 10_000) * 10_000)
+  // Pesa a habilidade ATUAL (comprovada) e dá um prêmio MODESTO pela promessa.
+  // Antes o potencial entrava ao CUBO e um prospecto cru de peneira "valia" ~7M —
+  // era a base do exploit de dinheiro infinito (peneira barata -> venda milionária).
+  // Agora um garoto cru vale centenas de milhares; só quem já tem overall alto
+  // (desenvolvido) alcança alguns milhões.
+  const atual = Math.pow(Math.max(30, j.overall) / 46, 3) * 500_000
+  const premio = Math.max(0, j.potential - j.overall) * 30_000
+  const fatorIdade = j.age <= 15 ? 1.4 : j.age <= 16 ? 1.25 : j.age <= 17 ? 1.12 : 1.0
+  const bruto = (atual + premio) * fatorIdade
+  return Math.max(30_000, Math.round(bruto / 10_000) * 10_000)
 }
 
 export interface PropostaPorJovem {

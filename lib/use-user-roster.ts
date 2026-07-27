@@ -20,6 +20,7 @@
 import { useEffect, useState } from "react"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
+import { attributesFromOverall } from "@/lib/player-attributes"
 import { capGoalkeepers, pickStartingXI, repararEscalacao } from "@/lib/formations"
 import type { Player as EnginePlayer } from "@/lib/game-engine"
 
@@ -60,8 +61,10 @@ export function buildElencoPlayers(teamObj: ReturnType<typeof getTeamByShort>) {
     name: p.nome,
     position: p.pos,
     age: p.idade,
-    overall: p.base,
-    potential: Math.min(99, p.base + seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "potential", 0, 7)),
+    // Teto rígido de 99: relatos de "overall 99+" vinham de dados/saves com valor
+    // acima do máximo. O overall NUNCA passa de 99 nem cai abaixo de 1.
+    overall: Math.min(99, Math.max(1, p.base)),
+    potential: Math.min(99, Math.max(1, p.base) + seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "potential", 0, 7)),
     energy: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "energy", 70, 94),
     rhythm: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "rhythm", 70, 94),
     moral: seededPick(moralOptions, `${teamObj.curto}-${p.nome}-${idx}`, "moral"),
@@ -70,12 +73,11 @@ export function buildElencoPlayers(teamObj: ReturnType<typeof getTeamByShort>) {
     function: p.pos === "GOL" ? "Goleiro" : p.pos === "ZAG" || p.pos === "LD" || p.pos === "LE" ? "Defensivo" : p.pos === "VOL" ? "Box-to-box" : p.pos === "MEI" ? "Meia Armador" : "Finalizador",
     focus: p.pos === "GOL" || p.pos === "ZAG" ? "Defesa" : p.pos === "ATA" || p.pos === "PE" || p.pos === "PD" ? "Ataque" : "Equilibrado",
     height: p.pos === "GOL" || p.pos === "ZAG" ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 185, 194) : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 170, 184),
-    pace: p.pos === "GOL" ? 45 : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "pace", 65, 89),
-    shooting: p.pos === "GOL" ? 18 : p.pos === "ZAG" || p.pos === "LD" || p.pos === "LE" ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "shooting", 40, 59) : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "shooting", 60, 84),
-    passing: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "passing", 55, 84),
-    dribbling: p.pos === "GOL" ? 30 : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "dribbling", 50, 79),
-    defending: p.pos === "ATA" || p.pos === "PE" || p.pos === "PD" ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "defending", 25, 44) : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "defending", 60, 84),
-    physical: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "physical", 60, 84),
+    // Atributos REALISTAS por posição: gerador canônico do motor (perfis por
+    // família + pesos + reconciliação do overall), com semente por jogador para
+    // variação individual. É o MESMO usado na partida — editor, elenco e simulação
+    // não divergem mais. Antes eram faixas genéricas (ponta = centroavante).
+    ...attributesFromOverall(Math.min(99, Math.max(1, p.base)), p.pos, `${teamObj.curto}-${p.nome}-${idx}`),
     fintas: p.pos === "PE" || p.pos === "PD" || p.pos === "MEI" ? 4 : p.pos === "ATA" ? 3 : 2,
   })
   return {
@@ -103,8 +105,13 @@ function enginePlayerToElenco(p: EnginePlayer) {
     name: p.name,
     position: p.position,
     age: p.age,
-    overall: p.overall,
-    potential: p.potential,
+    // Teto rígido de 99 (relato "overall 99+"): mesmo que o motor/save traga um
+    // valor corrompido acima de 99, a tela nunca exibe além de 99.
+    overall: Math.min(99, Math.max(1, p.overall)),
+    // Potencial NUNCA pode ser menor que o overall atual (relato: overall 75 com
+    // potencial 73), nem passar de 99. Quando o atleta evolui alem do potencial
+    // inicial, o teto sobe junto — mas sempre limitado a 99.
+    potential: Math.min(99, Math.max(Math.min(99, Math.max(1, p.overall)), p.potential)),
     energy: p.energy,
     rhythm: p.form,
     moral: p.morale === "Feliz" ? "Feliz" as const

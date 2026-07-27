@@ -26,6 +26,11 @@ export interface Notification {
   // Deep-link ACIONAVEL que sobrevive ao save (diferente de `action.onClick`, que
   // e um callback e nao pode ser persistido). Ex.: "/contratos", "/elenco".
   href?: string
+  /** Ação serializável que continua funcionando depois de fechar e abrir o jogo. */
+  conversation?: {
+    kind: "bench"
+    playerId: number
+  }
 }
 
 interface NotificationContextType {
@@ -100,6 +105,24 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
     setNotifications(prev => [newNotification, ...prev].slice(0, 50)) // Keep max 50
   }, [])
+
+  useEffect(() => {
+    const onContractsExpired = (event: Event) => {
+      const departures = (event as CustomEvent<Array<{ playerName: string; destination: string }>>).detail
+      if (!Array.isArray(departures)) return
+      for (const departure of departures) {
+        addNotification({
+          type: "transfer",
+          title: "Contrato encerrado",
+          message: `${departure.playerName} não renovou e deixou o clube sem custo. O atleta assinou com ${departure.destination}.`,
+          priority: "high",
+          href: "/contratos",
+        })
+      }
+    }
+    window.addEventListener("ultrafoot:contracts-expired", onContractsExpired)
+    return () => window.removeEventListener("ultrafoot:contracts-expired", onContractsExpired)
+  }, [addNotification])
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))

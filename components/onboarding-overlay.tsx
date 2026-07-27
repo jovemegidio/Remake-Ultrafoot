@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Users, ShoppingBag, Swords, Trophy, Sparkles, X } from "lucide-react"
+import { Users, ShoppingBag, Swords, Trophy, Sparkles, X, Gamepad2, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const SEEN_KEY = "ultrafoot:onboarding-seen"
@@ -30,10 +30,12 @@ interface Slide { icon: React.ReactNode; title: string; body: string }
 function buildSlides(teamName: string): Slide[] {
   return [
     { icon: <Sparkles className="h-8 w-8" />, title: `Bem-vindo ao ${teamName}`, body: "Você é o novo técnico. Sua missão: cumprir as metas da diretoria, evitar o rebaixamento e brigar por títulos. Este guia rápido mostra por onde começar." },
+    { icon: <Gamepad2 className="h-8 w-8" />, title: "Controles", body: "Jogue no teclado ou no controle. Teclado: W abre o menu de seções, Enter confirma / entra na partida, Esc volta, Tab mostra as estatísticas, e os atalhos aparecem no rodapé de cada tela. Controle: A confirma, B volta, LB/RB trocam de aba e Start abre o menu. Funciona em todas as telas." },
     { icon: <Users className="h-8 w-8" />, title: "Elenco e Táticas", body: "Em Elenco você monta a escalação, define a formação, atribuições e treina os jogadores. Salve escalações prontas para reusar nos jogos." },
     { icon: <ShoppingBag className="h-8 w-8" />, title: "Mercado e Olheiros", body: "No Mercado você compra, vende e empresta jogadores, negociando salário, luvas e bônus. Contrate olheiros para descobrir talentos pelo mundo." },
-    { icon: <Swords className="h-8 w-8" />, title: "Dia de jogo", body: "Na partida ao vivo você acompanha o placar, faz substituições e muda a mentalidade (Defensivo/Equilibrado/Ofensivo) EM TEMPO REAL — vale já no lance seguinte." },
-    { icon: <Trophy className="h-8 w-8" />, title: "A temporada", body: "Avance as semanas para disputar a liga, a Copa e a competição continental. Fique de olho nas finanças e na moral do elenco. Bom jogo!" },
+    { icon: <Swords className="h-8 w-8" />, title: "Dia de jogo", body: "Na partida ao vivo você acompanha o placar, faz substituições e muda a mentalidade (Defensivo/Equilibrado/Ofensivo) EM TEMPO REAL — vale já no lance seguinte. Ajuste a velocidade em 1x, 3x ou 5x." },
+    { icon: <CalendarDays className="h-8 w-8" />, title: "Calendário realista", body: "O ano vai de janeiro a dezembro: estaduais no começo, a liga do meio ao fim (terminando em dezembro), com Copa do Brasil e continental no meio. Em ano de Copa do Mundo o campeonato PARA na janela do Mundial — você avança pela pausa até o clube voltar." },
+    { icon: <Trophy className="h-8 w-8" />, title: "A temporada", body: "Em Competições você acompanha a classificação, os artilheiros e as assistências de cada torneio. Ganhe títulos para construir sua reputação: bons resultados atraem propostas de outros clubes e, com o tempo, de seleções. Fique de olho nas finanças e na moral. Bom jogo!" },
   ]
 }
 

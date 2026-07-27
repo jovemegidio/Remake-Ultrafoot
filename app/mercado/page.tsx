@@ -43,6 +43,7 @@ import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-co
 import { formatCurrency } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useRequireClub } from "@/lib/use-require-team"
 import { markDeparted, hasDeparted } from "@/lib/departed-players"
 import { useNotifications } from "@/components/notifications-system"
 import {
@@ -248,6 +249,7 @@ function marketPlayerToEnginePlayer(
 }
 
 export default function MercadoPage() {
+  useRequireClub()
   const { team: userTeam } = useUserTeam()
   const { addNotification } = useNotifications()
   const { state: careerState, setState: setCareerState } = useGameState()

@@ -164,3 +164,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+.launcher-shell {
+  background:
+    radial-gradient(circle at 70% -10%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 35%),
+    linear-gradient(145deg, #070b0d 0%, #091211 55%, #07090b 100%);
+}
+
+.launcher-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black, transparent 70%);
+}
+
+.launcher-pitch-lines {
+  background:
+    linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.18) 50%, transparent 50.2%),
+    radial-gradient(circle at center, transparent 0 10%, rgba(255,255,255,.15) 10.3% 10.7%, transparent 11%);
+}

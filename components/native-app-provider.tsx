@@ -1,14 +1,18 @@
 "use client"
 
-import { safeLocalSet } from "@/lib/safe-storage"
 import { Fragment, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { normalizeAppHref, toClientRoute } from "@/lib/hard-navigation"
-import { initPersistentStore } from "@/lib/persistent-store"
+import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
 import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { syncCurrencyFromStore, getCurrencyCode } from "@/lib/currency"
 import type { InGameUpdateOffer } from "@/lib/updater"
+
+// Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
+// e o que faz o modal reaparecer para quem ja viu a anterior.
+const WHATS_NEW_VERSION = "1.0.187"
+const WHATS_NEW_KEY = "ultrafoot:last-seen-whats-new"
 
 export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -58,12 +62,28 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [router])
 
+  // "O que ha de novo" aparece UMA unica vez por versao.
+  //
+  // Antes o flag era lido/gravado no localStorage cru e o modal voltava a cada
+  // abertura: o WebView2 limpa o localStorage na atualizacao (e o efeito ainda
+  // corria ANTES de initPersistentStore() espelhar o durável de volta, entao
+  // mesmo sem limpeza a leitura via de um storage vazio). O flag agora vive no
+  // store durável, e e gravado no momento em que o modal APARECE — fechar o
+  // jogo com ele aberto nao faz reaparecer.
   useEffect(() => {
-    const version = "1.0.97"
-    const key = "ultrafoot:last-seen-whats-new"
-    if (localStorage.getItem(key) !== version) {
-      const timer = window.setTimeout(() => setShowWhatsNew(true), 1200)
-      return () => window.clearTimeout(timer)
+    let cancelled = false
+    let timer = 0
+    void initPersistentStore().then(() => {
+      if (cancelled || storeGet(WHATS_NEW_KEY) === WHATS_NEW_VERSION) return
+      timer = window.setTimeout(() => {
+        if (cancelled) return
+        storeSet(WHATS_NEW_KEY, WHATS_NEW_VERSION)
+        setShowWhatsNew(true)
+      }, 1200)
+    })
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
     }
   }, [])
 
@@ -275,7 +295,7 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
       )}
       {showWhatsNew && (
         <WhatsNewDialog onClose={() => {
-          safeLocalSet("ultrafoot:last-seen-whats-new", "1.0.97")
+          storeSet(WHATS_NEW_KEY, WHATS_NEW_VERSION)
           setShowWhatsNew(false)
         }} />
       )}
@@ -287,25 +307,25 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
   const [page, setPage] = useState(0)
   const pages = [
     {
-      eyebrow: "Temporada 2026 · Build 1.0.97",
-      title: "Estádios e editor persistente",
-      body: "As partidas agora usam a foto do estádio do clube mandante quando ela existe no acervo. Edições de nome, sigla, cores, estádio, patrocinador e uniformes continuam preservadas em todo o jogo.",
-      accent: "DADOS DO JOGO",
-      bullets: ["1.781 fotos de estádios integradas", "Kits locais e importados no editor", "Alterações preservadas após reiniciar"],
+      eyebrow: "Temporada 2026 · Build 1.0.187",
+      title: "Partidas mais imersivas",
+      body: "O radar ao vivo agora respeita as dimensões reais do campo, ganhou leitura visual mais clara e mantém jogadores, bola e formações em escala coerente.",
+      accent: "DIA DE JOGO",
+      bullets: ["Campo na proporção oficial de 105 × 68", "Jogadores e nomes mais legíveis", "Física e Notas removidos da navegação"],
     },
     {
-      eyebrow: "Interface renovada",
-      title: "FC Hub inspirado no Connect",
-      body: "O Hub aberto pela tecla Tab ganhou navegação por Amigos, Grupo, Mensagens, Solicitações, Buscar pessoas, Meu clube e Recentes, mantendo Discord, multiplayer e tempo de jogo.",
-      accent: "FC HUB SOCIAL",
-      bullets: ["Lista de amigos online e offline", "Campeonatos online e salas LAN", "Discord e Rich Presence integrados"],
+      eyebrow: "Gestão de elenco",
+      title: "Decisões com contexto e resposta",
+      body: "Pedidos de conversa agora podem ser respondidos diretamente pela caixa de entrada, enquanto a central de substituições apresenta o elenco em uma lista tática limpa.",
+      accent: "VESTIÁRIO",
+      bullets: ["Botão persistente para conversar", "Três respostas com efeito na moral", "Substituições com energia, overall e atributos essenciais"],
     },
     {
-      eyebrow: "Experiência de jogo",
-      title: "Menus com linguagem de console",
-      body: "O menu rápido da tecla W, a confirmação para fechar o jogo e as telas pós-atualização agora seguem o mesmo sistema visual escuro e translúcido das referências.",
-      accent: "NOVA EXPERIÊNCIA",
-      bullets: ["Menu rápido lateral", "Confirmação de saída central", "Navegação por teclado e controle"],
+      eyebrow: "Ultrafoot Game Center",
+      title: "Launcher renovado",
+      body: "A experiência começa antes de entrar em campo: o launcher ganhou identidade visual, destaque editorial, navegação compacta e proteção contra downgrade acidental.",
+      accent: "VERSÃO 1.0.187",
+      bullets: ["Launcher 1.0.9", "Hero editorial e notícias compactas", "Comparação correta entre versões instaladas e publicadas"],
     },
   ]
   const current = pages[page]

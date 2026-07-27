@@ -8,8 +8,9 @@ import { lerRegistro, gravarRegistro } from "@/lib/registration"
 import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight } from "lucide-react"
-import { activateCareerSave, listCareerSaves, loadGameState, hasSave, clearAllGameData, useGameState } from "@/lib/save-system"
+import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight, FolderOpen } from "lucide-react"
+import { openSavesFolder } from "@/lib/save-folder"
+import { activateCareerSave, listCareerSaves, loadGameState, hasSave, clearAllGameData, deleteCareerSave, reconcileCareersWithFolder, useGameState } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useTranslation } from "@/lib/i18n"
@@ -37,7 +38,9 @@ type SplashPhase =
 
 type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
-const MENU_BGS = ["/images/pre-jogo/in-game-1.png", "/images/pre-jogo/in-game-5.png", "/images/pre-jogo/in-game-8.png", "/images/pre-jogo/in-game-2.png"]
+// Fundo FIXO da tela principal (pedido do usuário 26/07/26): estádio escuro com
+// gramado. Substitui o carrossel de prints com vinheta pesada.
+const MAIN_MENU_BG = "/images/main-menu-bg.png"
 
 /** Marca que a abertura institucional ja foi exibida — a partir dai o jogo abre curto. */
 const INTRO_VISTA = "ultrafoot:intro-vista"
@@ -60,12 +63,6 @@ export default function SplashPage() {
   // o idioma agora se ajusta somente nas Configuracoes. Iniciar como true pula
   // o carrossel direto para o menu; o restante do fluxo fica intacto.
   const [languageSelected, setLanguageSelected] = useState(true)
-  // Fundos do menu em rotacao (ordem pedida: 1, 5, 8, 2).
-  const [menuBgIndex, setMenuBgIndex] = useState(0)
-  useEffect(() => {
-    const timer = window.setInterval(() => setMenuBgIndex(i => (i + 1) % MENU_BGS.length), 10000)
-    return () => window.clearInterval(timer)
-  }, [])
   const [languageIndex, setLanguageIndex] = useState(0)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -119,6 +116,14 @@ export default function SplashPage() {
       window.removeEventListener("ultrafoot:store:changed", refresh)
     }
   }, [])
+  // Reconcilia com a PASTA de saves quando o modal abre: se o jogador apagou o
+  // .json direto na pasta do Windows, o save some daqui também (pedido). O
+  // reconcile faz storeRemove/storeSet, que já disparam o refresh acima.
+  useEffect(() => {
+    if (!showLoadModal) return
+    void reconcileCareersWithFolder()
+  }, [showLoadModal])
+
   const hasSaveGame = saveInfo.hasSaveGame
   const savedGames = saveInfo.careers.map(career => {
     const team = getTeamByShort(career.teamShort)
@@ -810,37 +815,35 @@ export default function SplashPage() {
         phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
 
-        {/* Cinematic stadium backdrop — roda os fundos 1→5→8→2 (pedido com
-            print), com crossfade suave a cada troca. */}
+        {/* Fundo FIXO (tela principal.png): estádio escuro com gramado. Vinheta
+            reduzida ao MÍNIMO — o fundo aparece quase limpo. Só um leve reforço
+            à esquerda (legibilidade dos botões) e um rodapé sutil para a barra
+            de dicas. Sem o escurecimento pesado de tela cheia que havia antes. */}
         <div className="absolute inset-0 overflow-hidden">
           <Image
-            key={MENU_BGS[menuBgIndex]}
-            src={MENU_BGS[menuBgIndex]}
+            src={MAIN_MENU_BG}
             alt=""
             fill
-            className="object-cover animate-in fade-in duration-1000"
+            className="object-cover"
             style={{
-              transform: phase === "main-menu" ? "scale(1.08)" : "scale(1)",
-              transition: "transform 12s ease-out",
-              filter: "saturate(0.85) brightness(0.55)",
+              transform: phase === "main-menu" ? "scale(1.04)" : "scale(1)",
+              transition: "transform 16s ease-out",
             }}
             priority
             unoptimized
           />
-          {/* Darkening gradients for depth + readability */}
+          {/* Vinheta mínima só à esquerda, sob os botões. */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(5,8,12,0.85) 0%, rgba(5,8,12,0.45) 35%, rgba(5,8,12,0.55) 65%, rgba(5,8,12,0.95) 100%)",
+                "linear-gradient(90deg, rgba(4,6,10,0.78) 0%, rgba(4,6,10,0.42) 28%, rgba(4,6,10,0.05) 52%, transparent 68%)",
             }}
           />
+          {/* Rodapé sutil para a barra de dicas de controle. */}
           <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse at 50% 38%, rgba(0,255,200,0.08) 0%, transparent 55%)",
-            }}
+            className="absolute inset-x-0 bottom-0 h-36"
+            style={{ background: "linear-gradient(0deg, rgba(4,6,10,0.6) 0%, transparent 100%)" }}
           />
         </div>
 
@@ -906,8 +909,15 @@ export default function SplashPage() {
               </div>
             </div>
 
-            {/* Menu vertical estilo EA FC */}
-            <nav className="flex flex-col gap-1.5">
+            {/* Menu vertical — agrupado num painel de vidro para leitura limpa e
+                organizada sobre o fundo do estádio. */}
+            <nav
+              className="flex flex-col gap-1.5 rounded-2xl border border-white/[0.08] bg-[#080b12]/55 p-2.5 shadow-[0_24px_70px_rgba(0,0,0,0.5)] backdrop-blur-md"
+              style={{
+                animation: phase === "main-menu" ? "slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                opacity: 0,
+              }}
+            >
               {mainMenuOptions.map((option, index) => {
                 const isSelected = selectedIndex === index
                 return (
@@ -916,47 +926,45 @@ export default function SplashPage() {
                     onClick={() => handleMenuSelect(index)}
                     onMouseEnter={() => setSelectedIndex(index)}
                     className={cn(
-                      "group relative flex items-center gap-4 rounded-xl border px-4 py-3 text-left transition-all duration-300 overflow-hidden",
+                      "group relative flex items-center gap-3.5 rounded-xl border px-3.5 py-3 text-left transition-all duration-200 overflow-hidden",
                       isSelected
-                        ? "border-[#00ffc8]/40 translate-x-1.5"
-                        : "border-white/[0.06] hover:border-white/15"
+                        ? "border-[#00ffc8]/35"
+                        : "border-transparent hover:border-white/10 hover:bg-white/[0.03]"
                     )}
                     style={{
-                      animation: phase === "main-menu" ? `slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + index * 0.07}s forwards` : "none",
-                      opacity: 0,
                       background: isSelected
-                        ? "linear-gradient(90deg, rgba(0,255,200,0.14) 0%, rgba(0,200,255,0.05) 45%, rgba(8,12,18,0.2) 100%)"
-                        : "rgba(8,12,18,0.35)",
-                      boxShadow: isSelected ? "0 8px 30px rgba(0,255,200,0.12)" : "none",
+                        ? "linear-gradient(90deg, rgba(0,255,200,0.16) 0%, rgba(0,200,255,0.06) 50%, transparent 100%)"
+                        : "transparent",
+                      boxShadow: isSelected ? "0 8px 26px rgba(0,255,200,0.1)" : "none",
                     }}
                   >
                     {/* Barra de acento esquerda */}
                     <span
                       className={cn(
                         "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full transition-all duration-300",
-                        isSelected ? "h-8 bg-gradient-to-b from-[#00ffc8] to-[#00c8ff]" : "h-0 bg-transparent"
+                        isSelected ? "h-9 bg-gradient-to-b from-[#00ffc8] to-[#00c8ff]" : "h-0 bg-transparent"
                       )}
                     />
 
                     {/* Icone */}
                     <div className={cn(
-                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-all duration-300 [&>svg]:h-5 [&>svg]:w-5",
-                      isSelected ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/[0.04] text-white/40 group-hover:text-white/60"
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 [&>svg]:h-5 [&>svg]:w-5",
+                      isSelected ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/[0.05] text-white/45 group-hover:text-white/70"
                     )}>
                       {option.icon}
                     </div>
 
                     {/* Label */}
                     <span className={cn(
-                      "flex-1 font-bold text-sm tracking-wide transition-colors duration-300",
-                      isSelected ? "text-white" : "text-white/45 group-hover:text-white/70"
+                      "flex-1 font-bold text-sm tracking-wide transition-colors duration-200",
+                      isSelected ? "text-white" : "text-white/55 group-hover:text-white/80"
                     )}>
                       {option.label}
                     </span>
 
                     {/* Chevron do item selecionado */}
                     <ChevronRight className={cn(
-                      "h-4 w-4 shrink-0 transition-all duration-300",
+                      "h-4 w-4 shrink-0 transition-all duration-200",
                       isSelected ? "text-[#00ffc8] opacity-100 translate-x-0" : "text-white/0 opacity-0 -translate-x-2"
                     )} />
                   </button>
@@ -1099,7 +1107,7 @@ export default function SplashPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 pt-4">
+          <div className="space-y-3 pt-4 max-h-[52vh] overflow-y-auto pr-1 scrollbar-thin">
             {savedGames.length === 0 ? (
               <div className="text-center py-8 text-white/40">
                 <Save className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -1108,48 +1116,68 @@ export default function SplashPage() {
               </div>
             ) : (
               savedGames.map((save, index) => (
-                <button
+                <div
                   key={save.id}
-                  onClick={() => handleLoadSave(save.id)}
                   onMouseEnter={() => setSelectedSaveIndex(index)}
                   className={cn(
-                    "w-full p-4 rounded-xl border transition-all duration-200 text-left",
+                    "relative rounded-xl border transition-all duration-200",
                     selectedSaveIndex === index
                       ? "bg-gradient-to-r from-[#00ffc8]/15 via-[#00c8ff]/8 to-transparent border-[#00ffc8]/40"
                       : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
                   )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
-                        selectedSaveIndex === index ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/10 text-white/80"
-                      )}>
-                        <span className="text-lg font-bold">{save.teamName.charAt(0)}</span>
+                  <button onClick={() => handleLoadSave(save.id)} className="w-full p-4 pr-12 text-left">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                          selectedSaveIndex === index ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/10 text-white/80"
+                        )}>
+                          <span className="text-lg font-bold">{save.teamName.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-white">{save.teamName}</div>
+                          <div className="text-xs text-white/50">{save.competition} - {save.position}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-semibold text-white">{save.teamName}</div>
-                        <div className="text-xs text-white/50">{save.competition} - {save.position}</div>
+                      <div className="text-right">
+                        <div className="text-sm text-white/60">{save.season}</div>
+                        <div className="text-xs text-white/30 flex items-center gap-1 justify-end">
+                          <Clock className="h-3 w-3" />
+                          {save.date}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-white/60">{save.season}</div>
-                      <div className="text-xs text-white/30 flex items-center gap-1 justify-end">
-                        <Clock className="h-3 w-3" />
-                        {save.date}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                  {/* Apagar ESTE save (pedido: um de cada vez, não todos). */}
+                  <button
+                    data-acao-modal="apagar-um"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (!window.confirm(`Apagar o save "${save.teamName}"? Esta ação não pode ser desfeita.`)) return
+                      deleteCareerSave(save.id)
+                    }}
+                    title="Apagar este save"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-red-400/40 transition-colors hover:bg-red-500/15 hover:text-red-400"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               ))
             )}
           </div>
 
-          {savedGames.length > 0 && (
-            <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-4">
-              <div className="text-xs text-white/30">
-                {t.splash.navHint}
-              </div>
+          <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-4">
+            {/* Abrir a pasta VISÍVEL de saves no Windows (Documentos\Ultrafoot 26 Saves). */}
+            <button
+              data-acao-modal="pasta"
+              onClick={() => { void openSavesFolder() }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/40 hover:text-[#00ffc8] transition-colors"
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              Abrir pasta de saves
+            </button>
+            {savedGames.length > 0 && (
               <button
                 data-acao-modal="apagar"
                 onClick={() => {
@@ -1163,8 +1191,8 @@ export default function SplashPage() {
                 <Trash2 className="h-3.5 w-3.5" />
                 {t.splash.deleteSave}
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Divisor cloud save */}
           <div className="relative my-4">

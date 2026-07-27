@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import { useGameState, type NationalOffer, DEFAULT_NATIONAL_CAREER } from "@/lib/save-system"
 import {
-  NATIONAL_TEAMS,
+  getAllNationalTeams,
   getNationalTeamById,
   getAllNationalStrengths,
   getNationalSquad,
@@ -22,26 +22,69 @@ import {
   getUserNextFixture,
   type NationalCompetitionDef,
 } from "@/lib/national-competitions"
+import { cyclePhase } from "@/lib/national-windows"
+import { useGameEngine } from "@/lib/game-engine"
 
-// Piso de reputacao para receber convite de SELECAO. Era 0 — um tecnico sem
-// nenhum titulo ja recebia convites logo na semana 9, irreal. Agora exige
-// alguma bagagem (uns 2 titulos, ou nivel de legado + XP): as selecoes fracas
-// chamam quem ja mostrou serviço; as fortes, so os consagrados (score alto).
-const MIN_SCORE_FOR_OFFERS = 6
-const MAX_OFFERS = 3
-const OFFER_START_WEEK = 9 // inicio aproximado do terceiro mes
-const OFFER_GUARANTEE_WEEK = 13 // durante o quarto mes
+// Piso de reputacao para receber convite de SELECAO. Baixo de proposito: uma
+// selecao FRACA (ranking baixo) chama ate um tecnico modesto — como na vida real.
+// O buildOffers ja escala a FORCA da selecao pelo score (desiredMax = 62 + score*2),
+// entao score baixo -> so selecoes fracas; as fortes exigem score alto (titulos +
+// aproveitamento + XP). Era 6 e, na pratica, quase ninguem recebia convite
+// (relato: "nunca vem proposta de selecao, nem pequena"). 2 abre as pequenas.
+const MIN_SCORE_FOR_OFFERS = 2
+// QUANDO chega o convite de selecao — o mais fiel possivel a vida real. O
+// carrossel de tecnicos de selecao acontece DEPOIS dos grandes torneios: as
+// federacoes trocam de treinador no meio do ano (junho/julho), apos a Copa do
+// Mundo, a Copa America/Euro ou o fim das Eliminatorias. Nao no comeco da
+// temporada (era semana 9 ~ marco, irreal). Semana 24 ~ fim de junho, logo apos
+// a janela FIFA de junho.
+const OFFER_START_WEEK = 24
+const OFFER_GUARANTEE_WEEK = 30
+// Quantos convites por temporada, conforme o ANO do ciclo: em ano de Copa do
+// Mundo (2026, 2030) e de torneio continental (2028) MUITAS selecoes trocam de
+// tecnico -> ate 3 convites, incluindo as mais fortes. Em ano "comum" abrem
+// menos vagas -> 1 a 2.
+const MAX_OFFERS_TOURNAMENT = 3
+const MAX_OFFERS_OFFYEAR = 2
 
-// Pontuacao de reputacao do treinador (titulos + nivel de reputacao + XP)
-export function computeCoachScore(state: {
-  coachTotalTitles?: number
-  coachXP?: number
-  coachLegacy?: { totalTitles?: number; reputationLevel?: number; legacyXP?: number }
-}): number {
+// Pontuacao de reputacao do treinador. Antes so titulos + reputacao + XP. Agora
+// VITORIAS e APROVEITAMENTO tambem pesam (pedido): quem ganha muito e/ou tem bom
+// aproveitamento e cortejado mesmo sem muitos titulos. Como o score eleva o teto
+// de forca em buildOffers, aproveitamento alto abre selecoes fortes; um registro
+// so mediano ainda rende convite de selecoes mais fracas — "boas ou nao".
+//
+// Titulos de estadual/copa JA entram aqui porque passaram a incrementar
+// coachTotalTitles no motor (fim de temporada / final de copa).
+export function computeCoachScore(
+  state: {
+    coachTotalTitles?: number
+    coachXP?: number
+    coachLegacy?: { totalTitles?: number; reputationLevel?: number; legacyXP?: number }
+    seasonHistory?: { won?: number; drawn?: number; lost?: number }[]
+  },
+  // Registro da temporada CORRENTE (ainda nao fechada no seasonHistory). Sem ele,
+  // no 1o ano — quando as propostas chegam (semana 24-30) — nao haveria vitoria
+  // nenhuma contabilizada e o tecnico ficava invisivel apesar da boa campanha.
+  currentRecord?: { won: number; drawn: number; lost: number },
+): number {
   const titles = (state.coachTotalTitles ?? 0) + (state.coachLegacy?.totalTitles ?? 0)
   const rep = state.coachLegacy?.reputationLevel ?? 0
   const xp = (state.coachXP ?? 0) + (state.coachLegacy?.legacyXP ?? 0)
-  return titles * 3 + rep * 3 + Math.floor(xp / 250)
+
+  let won = currentRecord?.won ?? 0
+  let drawn = currentRecord?.drawn ?? 0
+  let lost = currentRecord?.lost ?? 0
+  for (const r of state.seasonHistory ?? []) {
+    won += r.won ?? 0; drawn += r.drawn ?? 0; lost += r.lost ?? 0
+  }
+  const games = won + drawn + lost
+  // Aproveitamento = pontos ganhos / pontos possiveis (metrica classica do futebol).
+  const aproveitamento = games > 0 ? (won * 3 + drawn) / (games * 3) : 0
+  const winBonus =
+    Math.floor(won / 10) +
+    (aproveitamento >= 0.66 ? 5 : aproveitamento >= 0.55 ? 3 : aproveitamento >= 0.45 ? 1 : 0)
+
+  return titles * 3 + rep * 3 + Math.floor(xp / 250) + winBonus
 }
 
 function makeRng(seedStr: string): () => number {
@@ -61,13 +104,13 @@ function makeRng(seedStr: string): () => number {
 }
 
 // Gera propostas com base na reputacao: quanto maior o score, mais fortes as selecoes.
-function buildOffers(score: number, declined: string[], season: number, week: number, seed: string): NationalOffer[] {
+function buildOffers(score: number, declined: string[], season: number, week: number, seed: string, maxOffers: number): NationalOffer[] {
   const strengths = getAllNationalStrengths()
   const desiredMax = Math.min(95, 62 + score * 2)
   let desiredMin = desiredMax - 18
 
   const eligible = (min: number) =>
-    NATIONAL_TEAMS.filter(nt => {
+    getAllNationalTeams().filter(nt => {
       if (declined.includes(nt.id)) return false
       const s = strengths[nt.id] ?? 60
       return s <= desiredMax + 2 && s >= min
@@ -91,7 +134,7 @@ function buildOffers(score: number, declined: string[], season: number, week: nu
   const chosen: NationalTeam[] = []
   const confsUsed = new Set<string>()
   for (const nt of shuffled) {
-    if (chosen.length >= MAX_OFFERS) break
+    if (chosen.length >= maxOffers) break
     if (confsUsed.has(nt.confederation) && chosen.length < shuffled.length) {
       // tenta variar confederacao primeiro
       continue
@@ -100,9 +143,9 @@ function buildOffers(score: number, declined: string[], season: number, week: nu
     confsUsed.add(nt.confederation)
   }
   // completa caso a variacao tenha limitado demais
-  if (chosen.length < Math.min(MAX_OFFERS, shuffled.length)) {
+  if (chosen.length < Math.min(maxOffers, shuffled.length)) {
     for (const nt of shuffled) {
-      if (chosen.length >= MAX_OFFERS) break
+      if (chosen.length >= maxOffers) break
       if (!chosen.some(c => c.id === nt.id)) chosen.push(nt)
     }
   }
@@ -132,7 +175,14 @@ export function useNationalTeam() {
 
   const career = state.nationalCareer ?? DEFAULT_NATIONAL_CAREER
   const nationalTeam = getNationalTeamById(career.nationalTeamId)
-  const coachScore = computeCoachScore(state)
+  // Registro da temporada corrente (vitorias/empates/derrotas na liga do usuario),
+  // para o aproveitamento pesar ja no 1o ano, antes de a temporada fechar.
+  const userShort = state.selectedTeamShort ?? ""
+  const currentStanding = useGameEngine(s => s.serieAStandings.find(e => e.teamShort === userShort))
+  const coachScore = computeCoachScore(
+    state,
+    currentStanding ? { won: currentStanding.won, drawn: currentStanding.drawn, lost: currentStanding.lost } : undefined,
+  )
   const eligible = state.week >= OFFER_START_WEEK && coachScore >= MIN_SCORE_FOR_OFFERS
 
   // Auto-gera propostas por temporada quando elegivel e sem selecao
@@ -147,12 +197,16 @@ export function useNationalTeam() {
     if (state.week < OFFER_START_WEEK) return
     attemptedSeasonRef.current = state.season
 
+    // Ano de Copa/continental abre mais vagas de selecao (carrossel pos-torneio).
+    const fase = cyclePhase(state.season)
+    const maxOffers = fase === "wc" || fase === "continental" ? MAX_OFFERS_TOURNAMENT : MAX_OFFERS_OFFYEAR
     const offers = buildOffers(
       coachScore,
       state.declinedNationalTeamIds ?? [],
       state.season,
       state.week,
       `${state.managerName}-${state.season}-${coachScore}`,
+      maxOffers,
     )
     if (offers.length > 0) {
       setState({
@@ -325,6 +379,40 @@ export function useNationalTeam() {
     setState({ nationalCareer: careerPatch, ...coachPatch })
   }, [state.nationalCareer, state.coachTotalTitles, state.coachXP, nationalTeam, setState])
 
+  // AMISTOSO de selecao (preparacao antes dos torneios, como na vida real). E
+  // SIMULADO — como as partidas oficiais de selecao — pela forca dos dois lados,
+  // nao conta para competicao e da um pequeno ganho de preparo (coachXP). Guarda
+  // os ultimos 6 resultados para exibir.
+  const playNationalFriendly = useCallback((opponentId: string) => {
+    if (!nationalTeam || opponentId === nationalTeam.id) return
+    const opponent = getNationalTeamById(opponentId)
+    if (!opponent) return
+    const squad = getNationalSquad(nationalTeam, { cuts: state.nationalCuts ?? [], calls: state.nationalCalls ?? [] })
+    const userStr = getNationalStrength(nationalTeam, squad)
+    const oppStr = getNationalStrength(opponent)
+
+    const rng = makeRng(`${state.managerName}-${nationalTeam.id}-${opponentId}-${state.season}-${state.week}`)
+    // Poisson simples: a diferenca de forca desloca o numero esperado de gols.
+    const dif = (userStr - oppStr) / 9
+    const golsPoisson = (media: number) => {
+      const lambda = Math.max(0.25, media)
+      let L = Math.exp(-lambda), k = 0, p = 1
+      do { k++; p *= rng() } while (p > L)
+      return Math.min(6, k - 1)
+    }
+    const userScore = golsPoisson(1.35 + dif * 0.55)
+    const oppScore = golsPoisson(1.35 - dif * 0.55)
+
+    const prev = state.nationalFriendlies ?? []
+    setState({
+      nationalFriendlies: [
+        { opponentId, opponentName: opponent.name, userScore, oppScore, season: state.season },
+        ...prev,
+      ].slice(0, 6),
+      coachXP: (state.coachXP ?? 0) + 8, // preparo/entrosamento da selecao
+    } as Parameters<typeof setState>[0])
+  }, [nationalTeam, state.nationalCuts, state.nationalCalls, state.managerName, state.season, state.week, state.nationalFriendlies, state.coachXP, setState])
+
   // Encerra a competicao atual (apos terminada) e libera para iniciar outra
   const finishCompetition = useCallback(() => {
     const current = state.nationalCareer?.currentCompetition
@@ -365,6 +453,8 @@ export function useNationalTeam() {
     leaveNationalTeam,
     startCompetition,
     playNextRound,
+    playNationalFriendly,
+    nationalFriendlies: state.nationalFriendlies ?? [],
     finishCompetition,
   }
 }

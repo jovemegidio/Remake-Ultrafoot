@@ -37,8 +37,9 @@ import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI
 import { formatCurrency, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
-import { defaultRoleForPosition, getContractStatus, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
+import { absoluteWeek, CONTRACT_EPOCH_SEASON, defaultRoleForPosition, getContractStatus, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
 import { useUserRoster } from "@/lib/use-user-roster"
+import { useRequireClub } from "@/lib/use-require-team"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
 import { announceOnlineAction } from "@/lib/online-multiplayer"
@@ -109,6 +110,7 @@ function getStarRating(fintas: number) {
 type ViewType = "menu" | "visao_tatica" | "gerenciamento" | "escalacoes"
 
 export default function ElencoPage() {
+  useRequireClub()
   const router = useRouter()
   const { state } = useGameState()
   const { addNotification } = useNotifications()
@@ -127,6 +129,7 @@ export default function ElencoPage() {
   const transferListedIds = useGameEngine(s => s.transferListedIds)
   const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
+  const engineSellPlayer = useGameEngine(s => s.sellPlayer)
   const engineBalance = useGameEngine(s => s.balance)
   const engineCurrentWeek = useGameEngine(s => s.currentWeek)
   // SITUACAO CONTRATUAL por nome. O elenco desta tela vem do hook de UI e nao
@@ -138,14 +141,6 @@ export default function ElencoPage() {
     for (const p of engineSquadPlayers) mapa.set(p.name, getContractStatus(p, engineCurrentWeek, engineSeason))
     return mapa
   }, [engineSquadPlayers, engineCurrentWeek, engineSeason])
-
-  /** Moldura do card/linha conforme o contrato. */
-  const molduraContrato = (nome: string) => {
-    const st = situacaoContrato.get(nome)
-    if (st === "expired") return "ring-1 ring-red-500/70 bg-red-500/10"
-    if (st === "expiring") return "ring-1 ring-amber-400/60 bg-amber-400/[0.07]"
-    return ""
-  }
 
   // REALISMO: nota da ultima partida, media, suspensao e persona por nome — o
   // elenco desta tela vem do hook de UI, os dados vivem no motor.
@@ -379,8 +374,41 @@ export default function ElencoPage() {
       injured: !!ep?.injury,
       injuryWeeks: ep?.injury?.weeksRemaining ?? 0,
       training: !!ep?.training?.currentFocus,
+      // Empréstimo: veio EMPRESTADO de outro clube (isLoanedIn) ou você o colocou
+      // na lista de empréstimo (loanListed). Ambos merecem destaque distinto.
+      loanedIn: !!ep?.isLoanedIn,
+      loanListed: ep ? !!loanListedIds?.includes(ep.id) : false,
     }
-  }, [engineSquadPlayers])
+  }, [engineSquadPlayers, loanListedIds])
+
+  // ── DESTAQUE VISUAL UNIFICADO (lesão / contrato / empréstimo) ───────────────
+  // Antes cada situação vivia num canto: lesão só no card do campo, contrato só
+  // como moldura na aba de atribuições, empréstimo em lugar nenhum. Estes dois
+  // helpers centralizam a regra para TODOS os lugares (campo, banco, listas)
+  // ficarem coerentes. Prioridade da moldura: lesão > contrato vencido >
+  // empréstimo > a vencer.
+  const destaqueStatus = useCallback((name: string) => {
+    const st = statusFor(name)
+    const ct = situacaoContrato.get(name)
+    if (st.injured) return "ring-1 ring-red-500/70 bg-red-500/10"
+    if (ct === "expired") return "ring-1 ring-red-500/70 bg-red-500/10"
+    if (st.loanedIn || st.loanListed) return "ring-1 ring-sky-400/70 bg-sky-400/[0.08]"
+    if (ct === "expiring") return "ring-1 ring-amber-400/60 bg-amber-400/[0.07]"
+    return ""
+  }, [statusFor, situacaoContrato])
+
+  /** Pílulas de status de um jogador (mais crítica primeiro). */
+  const badgesStatus = useCallback((name: string) => {
+    const st = statusFor(name)
+    const ct = situacaoContrato.get(name)
+    const pills: { key: string; label: string; cls: string }[] = []
+    if (st.injured) pills.push({ key: "inj", label: `LESÃO ${st.injuryWeeks}sem`, cls: "bg-red-500 text-white" })
+    if (ct === "expired") pills.push({ key: "exp", label: "CONTRATO VENCIDO", cls: "bg-red-500/25 text-red-300" })
+    else if (ct === "expiring") pills.push({ key: "vnc", label: "A VENCER", cls: "bg-amber-400/20 text-amber-300" })
+    if (st.loanedIn) pills.push({ key: "loan", label: "EMPRÉSTIMO", cls: "bg-sky-400/25 text-sky-200" })
+    else if (st.loanListed) pills.push({ key: "loanl", label: "NA LISTA DE EMPRÉSTIMO", cls: "bg-sky-400/15 text-sky-200/80" })
+    return pills
+  }, [statusFor, situacaoContrato])
 
   const autoPickLineup = useCallback(() => {
     const squad = [...players, ...bench]
@@ -1320,17 +1348,22 @@ export default function ElencoPage() {
                         afastado?" nasceu de status invisível na escalação. */}
                     {(() => {
                       const st = statusFor(player.name)
-                      if (st.injured) return (
-                        <div className="absolute inset-x-0 -top-1 mx-auto w-fit rounded bg-red-500 px-1 text-[7px] font-black text-white">
-                          LESÃO {st.injuryWeeks}sem
-                        </div>
-                      )
-                      if (st.training) return (
+                      const pills = badgesStatus(player.name)
+                      // Sem lesão nem status, mas em treino: mostra só o TREINO.
+                      if (pills.length === 0 && st.training) return (
                         <div className="absolute inset-x-0 -top-1 mx-auto w-fit rounded bg-amber-400 px-1 text-[7px] font-black text-black">
                           TREINO
                         </div>
                       )
-                      return null
+                      if (pills.length === 0) return null
+                      // Empilha as pílulas (lesão/contrato/empréstimo) no topo do card.
+                      return (
+                        <div className="absolute inset-x-0 -top-1 mx-auto flex w-fit flex-col items-center gap-0.5">
+                          {pills.map(p => (
+                            <div key={p.key} className={cn("rounded px-1 text-[7px] font-black leading-tight", p.cls)}>{p.label}</div>
+                          ))}
+                        </div>
+                      )
                     })()}
                   </div>
                 </motion.div>
@@ -1358,7 +1391,13 @@ export default function ElencoPage() {
                 <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">{t.squad.reserves} ({bench.length})</h3>
                 <span className="text-[10px] text-white/40">{t.squad.dragToSubstitute}</span>
               </div>
-              
+              {/* Legenda das cores de status — para o técnico ler o elenco de relance. */}
+              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-white/45">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500 ring-1 ring-black/40" /> Lesão / contrato vencido</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400 ring-1 ring-black/40" /> Empréstimo</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400 ring-1 ring-black/40" /> Contrato a vencer</span>
+              </div>
+
               {/* min-h-0 + flex-1: a lista ocupa a altura que sobrar dentro do
                   teto do painel, em vez de ter um teto proprio que brigava com o
                   do pai e deixava a ultima fileira sempre pela metade. */}
@@ -1382,13 +1421,27 @@ export default function ElencoPage() {
                         onClick={() => setSelectedPlayerId(player.id)}
                     onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
                         className={cn(
-                          "flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
+                          "relative flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
                           selectedPlayerId === player.id
                             ? "bg-[#00ffc8]/15 ring-1 ring-[#00ffc8]/40"
-                            : "bg-white/[0.03] hover:bg-white/[0.06]",
+                            : destaqueStatus(player.name) || "bg-white/[0.03] hover:bg-white/[0.06]",
                           dragOverTarget === player.id && "ring-2 ring-[#00ffc8]"
                         )}
                       >
+                        {(() => {
+                          const st = statusFor(player.name)
+                          const ct = situacaoContrato.get(player.name)
+                          const cor = st.injured || ct === "expired" ? "bg-red-500"
+                            : (st.loanedIn || st.loanListed) ? "bg-sky-400"
+                            : ct === "expiring" ? "bg-amber-400" : null
+                          if (!cor) return null
+                          const titulo = st.injured ? `Lesão (${st.injuryWeeks} sem.)`
+                            : ct === "expired" ? "Contrato vencido"
+                            : st.loanedIn ? "Jogador por empréstimo"
+                            : st.loanListed ? "Na lista de empréstimo"
+                            : "Contrato a vencer"
+                          return <span title={titulo} className={cn("absolute right-1 top-1 z-10 h-2 w-2 rounded-full ring-1 ring-black/40", cor)} />
+                        })()}
                         <div className="relative mb-1">
                           <PlayerAvatarCircle
                             name={player.name}
@@ -1558,7 +1611,7 @@ export default function ElencoPage() {
                     <h3 className="text-sm font-semibold text-white mb-4">{t.squad.individualRoles}</h3>
                     <div className="space-y-3">
                       {players.map(player => (
-                        <div key={player.id} className={cn("flex items-center gap-4 p-3 rounded-lg bg-white/5", molduraContrato(player.name))}>
+                        <div key={player.id} className={cn("flex items-center gap-4 p-3 rounded-lg bg-white/5", destaqueStatus(player.name))}>
                           <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
                           <div className="flex-1 min-w-0">
                             <div className="truncate text-sm font-medium text-white">{player.name}</div>
@@ -1579,12 +1632,9 @@ export default function ElencoPage() {
                                   <span className="rounded bg-white/6 px-1.5 text-[9px] font-medium uppercase tracking-wide text-white/45">{d.persona}</span>
                                 )}
                               </>) })()}
-                              {situacaoContrato.get(player.name) === "expired" && (
-                                <span className="rounded bg-red-500/25 px-1.5 text-[9px] font-black uppercase tracking-wide text-red-300">contrato vencido</span>
-                              )}
-                              {situacaoContrato.get(player.name) === "expiring" && (
-                                <span className="rounded bg-amber-400/20 px-1.5 text-[9px] font-black uppercase tracking-wide text-amber-300">a vencer</span>
-                              )}
+                              {badgesStatus(player.name).map(p => (
+                                <span key={p.key} className={cn("rounded px-1.5 text-[9px] font-black uppercase tracking-wide", p.cls)}>{p.label}</span>
+                              ))}
                             </div>
                           </div>
                           <select
@@ -1951,6 +2001,43 @@ export default function ElencoPage() {
                 )
               })()}
 
+              {/* CONTRATO: tempo de vínculo do atleta (pedido). O contrato vive no
+                  motor (endDate em semana ABSOLUTA); aqui derivamos o ano de
+                  término e o tempo restante em anos/meses. */}
+              {(() => {
+                const eng = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+                const c = eng?.contract
+                const st = situacaoContrato.get(selectedPlayer.name)
+                const weeksLeft = c ? c.endDate - absoluteWeek(engineSeason, engineCurrentWeek) : 0
+                const endYear = c ? CONTRACT_EPOCH_SEASON + Math.floor(c.endDate / 52) : null
+                const tempo = !c ? "Sem contrato"
+                  : weeksLeft <= 0 ? "Contrato vencido"
+                  : weeksLeft >= 52 ? `${Math.round(weeksLeft / 52)} ano${Math.round(weeksLeft / 52) === 1 ? "" : "s"} restante${Math.round(weeksLeft / 52) === 1 ? "" : "s"}`
+                  : `${Math.max(1, Math.round(weeksLeft / 4.33))} meses restantes`
+                const tone = st === "expired" ? "text-red-300" : st === "expiring" ? "text-amber-300" : "text-[#00ffc8]"
+                return (
+                  <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+                      <Clock className="h-3 w-3" /> Contrato
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/55">Vínculo até</span>
+                      <span className={cn("font-bold", st === "expired" ? "text-red-300" : "text-white")}>{endYear ? `dez/${endYear}` : "—"}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-sm">
+                      <span className="text-white/55">Tempo de contrato</span>
+                      <span className={cn("font-semibold", tone)}>{tempo}</span>
+                    </div>
+                    {c && (
+                      <div className="mt-1 flex items-center justify-between text-sm">
+                        <span className="text-white/55">Salário</span>
+                        <span className="font-semibold text-white tabular-nums">R$ {(c.salary * 4).toLocaleString("pt-BR")}/mês</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               {/* Lista de transferíveis: anuncia o atleta ao mercado. Antes não
                   havia como colocar ninguém à venda — só dava para reagir a
                   sondagens que a IA fizesse por conta própria. */}
@@ -1973,6 +2060,26 @@ export default function ElencoPage() {
                   Clubes interessados passam a sondar este atleta com muito mais frequência.
                 </p>
               )}
+
+              {/* VENDER AGORA: sondagem imediata da IA. Aceitando, o atleta SAI do
+                  elenco na hora e o valor entra no caixa (engine.sellPlayer, que
+                  persiste no save). Antes o perfil so "listava" — o relato "diz que
+                  vendeu mas o jogador nao sai" era justamente isso: nao havia venda. */}
+              <button
+                onClick={() => {
+                  const eng = engineSquadPlayers.find(p => p.id === selectedPlayer.id)
+                  const valor = eng?.marketValue ?? 0
+                  const clube = ["Benfica", "Ajax", "Porto", "Palmeiras", "Flamengo", "Sevilla", "Wolves"][Math.floor(Math.random() * 7)]
+                  const fmt = "R$ " + valor.toLocaleString("pt-BR")
+                  if (typeof window !== "undefined" && !window.confirm(`${clube} oferece ${fmt} por ${selectedPlayer.name}.\n\nConfirmar a VENDA? O atleta sai do elenco e o valor entra no caixa.`)) return
+                  engineSellPlayer(selectedPlayer.id)
+                  setShowPlayerProfile(false)
+                }}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 py-2.5 text-xs font-bold text-red-300 transition-all hover:bg-red-500/20"
+              >
+                <ArrowLeftRight className="h-4 w-4" />
+                Vender agora
+              </button>
 
               {/* Posição, função, renovação e empréstimo — o modal do
                   gerenciamento agora concentra as decisões sobre o atleta

@@ -6,8 +6,9 @@ import {
   type Confederation,
   type NationalTeam,
   getNationalTeamsByConfederation,
+  getNationalTeamById,
   getAllNationalStrengths,
-  NATIONAL_TEAMS,
+  getAllNationalTeams,
 } from "@/lib/national-teams"
 
 // ============================================================
@@ -400,7 +401,7 @@ function pickOpponents(userNT: NationalTeam, count: number, rng: () => number): 
   let pool = [...sameConf]
   // Completa com outras confederacoes se faltar (ex.: CONCACAF com poucos times)
   if (pool.length < count) {
-    const others = NATIONAL_TEAMS.filter(nt => nt.id !== userNT.id && !pool.some(p => p.id === nt.id))
+    const others = getAllNationalTeams().filter(nt => nt.id !== userNT.id && !pool.some(p => p.id === nt.id))
     pool = [...pool, ...others]
   }
   // embaralha
@@ -418,6 +419,29 @@ function emptyRow(nt: { id: string; name: string; code: string }, isUser: boolea
   }
 }
 
+// Grupos REAIS do sorteio da Copa do Mundo 2026 (48 selecoes, 12 grupos A-L),
+// com os playoffs de marco/2026 ja resolvidos. IDs = os de national-teams.ts.
+// Fonte: sorteio final FIFA 05/12/2025 + qualificatorias 31/03/2026.
+export const WORLD_CUP_2026_GROUPS: string[][] = [
+  ["mexico", "africa_do_sul", "coreia_do_sul", "tchequia"],      // A
+  ["canada", "suica", "qatar", "bosnia"],                         // B
+  ["brasil", "marrocos", "haiti", "escocia"],                     // C
+  ["estados_unidos", "paraguai", "australia", "turquia"],         // D
+  ["alemanha", "curacao", "costa_do_marfim", "equador"],          // E
+  ["holanda", "japao", "tunisia", "suecia"],                      // F
+  ["belgica", "egito", "ira", "nova_zelandia"],                   // G
+  ["espanha", "cabo_verde", "arabia_saudita", "uruguai"],         // H
+  ["franca", "senegal", "noruega", "iraque"],                     // I
+  ["argentina", "argelia", "austria", "jordania"],                // J
+  ["portugal", "uzbequistao", "colombia", "congo_dr"],            // K
+  ["inglaterra", "croacia", "gana", "panama"],                    // L
+]
+
+/** Grupo real do Mundial 2026 que contem a selecao dada (ou null). */
+export function worldCupGroupOf(ntId: string): string[] | null {
+  return WORLD_CUP_2026_GROUPS.find(g => g.includes(ntId)) ?? null
+}
+
 export function createNationalCompetition(
   def: NationalCompetitionDef,
   userNT: NationalTeam,
@@ -425,7 +449,15 @@ export function createNationalCompetition(
 ): NationalCompetitionState {
   const rng = makeRng(`${def.id}-${userNT.id}-${season}`)
   const size = def.format === "league" ? (def.leagueTeams ?? 6) : (def.groupSize ?? 4)
-  const opponents = pickOpponents(userNT, size - 1, rng)
+  // Copa do Mundo: a selecao do usuario cai no seu GRUPO REAL do sorteio 2026,
+  // com os adversarios reais — nao mais sorteados aleatoriamente por confederacao.
+  const wcGroup = def.id === "copa_mundo" ? worldCupGroupOf(userNT.id) : null
+  const opponents = wcGroup
+    ? wcGroup
+        .filter(id => id !== userNT.id)
+        .map(id => getNationalTeamById(id))
+        .filter((nt): nt is NationalTeam => Boolean(nt))
+    : pickOpponents(userNT, size - 1, rng)
   const participants = [
     { id: userNT.id, name: userNT.name, code: userNT.code },
     ...opponents.map(o => ({ id: o.id, name: o.name, code: o.code })),
@@ -600,7 +632,7 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
         && userPos >= def.playoffFrom && userPos <= def.playoffTo
         && next.knockoutStages.length > 0
       ) {
-        const userNT = NATIONAL_TEAMS.find(n => n.id === userId)
+        const userNT = getNationalTeamById(userId)
         const koRng = makeRng(`${next.competitionId}-${userId}-${next.season}-playoff`)
         const opponents = userNT ? pickOpponents(userNT, next.knockoutStages.length, koRng) : []
         let fid = next.fixtures.length + 1
@@ -656,7 +688,7 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
       return next
     }
     // Gera o mata-mata: um adversario por fase
-    const userNT = NATIONAL_TEAMS.find(n => n.id === userId)
+    const userNT = getNationalTeamById(userId)
     const koRng = makeRng(`${next.competitionId}-${userId}-${next.season}-ko`)
     const opponents = userNT ? pickOpponents(userNT, next.knockoutStages.length, koRng) : []
     let fid = next.fixtures.length + 1

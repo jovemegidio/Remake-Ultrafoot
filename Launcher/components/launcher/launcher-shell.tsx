@@ -9,6 +9,7 @@ import { SecurityPanel } from "./security-panel"
 import { SettingsDialog } from "./settings-dialog"
 import { CommunityBar } from "./community-bar"
 import { cn } from "@/lib/utils"
+import { useLiveLatest } from "@/lib/use-live-latest"
 import {
   getInstalledGame,
   fetchLatest,
@@ -30,6 +31,7 @@ import {
 import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings } from "lucide-react"
 
 const CLOSE_TO_TRAY_KEY = "ultrafoot-launcher:close-to-tray"
+const MODE_KEY = "ultrafoot-launcher:mode"
 
 export type GameStatus = "not-installed" | "downloading" | "update" | "playable"
 export type LaunchMode = "online" | "offline"
@@ -46,6 +48,16 @@ export type InstallState = {
 
 type Tab = "home" | "news" | "changelog" | "security"
 
+function isNewerVersion(candidate: string, installed: string): boolean {
+  const a = candidate.split(".").map(part => Number.parseInt(part, 10) || 0)
+  const b = installed.split(".").map(part => Number.parseInt(part, 10) || 0)
+  for (let index = 0; index < Math.max(a.length, b.length); index++) {
+    const delta = (a[index] ?? 0) - (b[index] ?? 0)
+    if (delta !== 0) return delta > 0
+  }
+  return false
+}
+
 export function LauncherShell({
   game,
   news,
@@ -54,7 +66,14 @@ export function LauncherShell({
   news: NewsWithGame[]
 }) {
   const [tab, setTab] = useState<Tab>("home")
+
+  // Modo de execucao. Comeca SEMPRE "online" para o HTML do export estatico
+  // bater com o 1o render (hidratacao); a preferencia salva e a ausencia de rede
+  // sao aplicadas logo depois, no efeito de preferencias.
   const [mode, setMode] = useState<LaunchMode>("online")
+  // Distingue "o usuario escolheu offline" de "esta sem rede": voltando a rede,
+  // so reconectamos sozinhos quem nao pediu offline explicitamente.
+  const [forcedOffline, setForcedOffline] = useState(false)
 
   // Última versão publicada: parte do dado estático embutido e é confirmada em
   // runtime pelo latest.json — assim o launcher reconhece uma versão nova sem
@@ -91,6 +110,14 @@ export function LauncherShell({
   useEffect(() => {
     // Carrega preferências e liga o "fechar para a bandeja".
     setCloseToTray(typeof window !== "undefined" && localStorage.getItem(CLOSE_TO_TRAY_KEY) === "1")
+    const saved = localStorage.getItem(MODE_KEY)
+    if (saved === "offline") {
+      setForcedOffline(true)
+      setMode("offline")
+    } else if (!navigator.onLine) {
+      // Sem rede: abre em offline por conta propria, sem gravar a preferencia.
+      setMode("offline")
+    }
     void getAutostartEnabled().then(setAutostart)
     let cleanup = () => {}
     void setupCloseToTray(() => closeToTrayRef.current).then((un) => {
@@ -113,11 +140,34 @@ export function LauncherShell({
     }
   }, [])
 
+  // Troca de modo pelo seletor: a escolha e lembrada entre sessoes.
+  const changeMode = useCallback((value: LaunchMode) => {
+    setMode(value)
+    setForcedOffline(value === "offline")
+    if (typeof window !== "undefined") localStorage.setItem(MODE_KEY, value)
+  }, [])
+
+  // Rede caindo/voltando durante a sessao. Quem escolheu offline no seletor
+  // permanece offline mesmo com a rede de volta.
+  useEffect(() => {
+    const goOffline = () => setMode("offline")
+    const goOnline = () => setMode(forcedOffline ? "offline" : "online")
+    window.addEventListener("offline", goOffline)
+    window.addEventListener("online", goOnline)
+    return () => {
+      window.removeEventListener("offline", goOffline)
+      window.removeEventListener("online", goOnline)
+    }
+  }, [forcedOffline])
+
+  const online = mode === "online"
+
   // Config remota (comunidade): notícias, banner, redes e status do servidor.
   const [config, setConfig] = useState<LauncherConfig | null>(null)
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null)
 
   useEffect(() => {
+    if (!online) return
     let alive = true
     void (async () => {
       const cfg = await fetchLauncherConfig()
@@ -131,7 +181,7 @@ export function LauncherShell({
     return () => {
       alive = false
     }
-  }, [])
+  }, [online])
 
   // Notícias remotas (config) têm prioridade sobre as embutidas.
   const effectiveNews: NewsWithGame[] =
@@ -181,6 +231,7 @@ export function LauncherShell({
       : undefined
 
   useEffect(() => {
+    if (!online) return
     let alive = true
     void (async () => {
       const upd = await checkLauncherUpdate()
@@ -197,30 +248,43 @@ export function LauncherShell({
     return () => {
       alive = false
     }
-  }, [])
+  }, [online])
 
   // Ao abrir: detecta a versão instalada (registro do Windows) e confirma a
-  // última versão publicada (latest.json do GitHub).
+  // última versão publicada (latest.json do GitHub). A deteccao do que esta
+  // instalado e LOCAL e roda tambem no offline — e ela que libera o botao Jogar.
   useEffect(() => {
     let alive = true
     void (async () => {
-      const [installed, remote] = await Promise.all([getInstalledGame(), fetchLatest()])
+      const installed = await getInstalledGame()
       if (!alive) return
       setInstall((prev) => ({ ...prev, version: installed.version, path: installed.path }))
-      if (remote) setLatest({ version: remote.version, url: remote.url })
+      if (!online) return
+      const remote = await fetchLatest()
+      if (alive && remote) setLatest({ version: remote.version, url: remote.url })
     })()
     return () => {
       alive = false
     }
-  }, [])
+  }, [online])
+
+  // Confirmacao em RUNTIME pela API do GitHub (fetch JS puro, sem depender do
+  // comando Rust `fetch_latest`, que pode falhar e deixar o launcher preso na
+  // versao estatica). Sempre que resolve, atualiza a versao/URL reais.
+  const live = useLiveLatest(online)
+  useEffect(() => {
+    if (live?.version) setLatest({ version: live.version, url: live.downloadUrl || null })
+  }, [live])
 
   const latestVersion = latest.version
 
+  // No offline nao existe "atualizar": nao da para baixar nada, e oferecer o
+  // botao so levaria a um erro de rede. O jogo instalado fica jogavel.
   const status: GameStatus = install.downloading
     ? "downloading"
     : install.version === null
       ? "not-installed"
-      : latestVersion && install.version !== latestVersion
+      : online && latestVersion && isNewerVersion(latestVersion, install.version)
         ? "update"
         : "playable"
 
@@ -260,20 +324,19 @@ export function LauncherShell({
       void launchGame(install.path) // abre o jogo instalado
       return
     }
+    if (!online) return // instalar/atualizar exige rede
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url) return
     runInstall(url)
-  }, [install.downloading, install.path, status, latest.url, game.latestRelease?.downloadUrl, runInstall])
+  }, [install.downloading, install.path, status, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
   // Reparar: reinstala a versão atual por cima, corrigindo arquivos danificados.
   const startRepair = useCallback(() => {
-    if (install.downloading) return
+    if (install.downloading || !online) return
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url) return
     runInstall(url)
-  }, [install.downloading, latest.url, game.latestRelease?.downloadUrl, runInstall])
-
-  const online = mode === "online"
+  }, [install.downloading, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
   const tabs: { key: Tab; label: string; icon: typeof Home }[] = [
     { key: "home", label: "Início", icon: Home },
@@ -283,7 +346,8 @@ export function LauncherShell({
   ]
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+    <div className="launcher-shell relative flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+      <div className="pointer-events-none absolute inset-0 opacity-40 launcher-grid" />
       {launcherUpdate && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/95 p-6 backdrop-blur">
           <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center">
@@ -322,18 +386,19 @@ export function LauncherShell({
           onClose={() => setShowSettings(false)}
         />
       )}
-      <header className="flex shrink-0 flex-col gap-3 border-b border-border bg-background/80 px-4 pt-3 backdrop-blur md:px-6">
-        <div className="flex items-center justify-between gap-3">
+      <header className="relative z-10 flex shrink-0 flex-col border-b border-white/[0.07] bg-[#080d0f]/88 px-4 backdrop-blur-xl md:px-6">
+        <div className="flex h-16 items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/games/ultrafoot-logo.png"
               alt="Ultrafoot 26"
-              className="h-20 w-auto object-contain"
+              className="h-11 w-auto object-contain"
             />
-            <span className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:inline">
-              Launcher
-            </span>
+            <div className="hidden border-l border-white/10 pl-3 sm:block">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/65">Game Center</p>
+              <p className="text-[9px] text-white/30">Gerencie, atualize e jogue</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -348,11 +413,11 @@ export function LauncherShell({
             )}
 
             {/* Seletor de modo Online / Offline */}
-            <div className="flex items-center rounded-full border border-border bg-secondary/60 p-0.5">
+            <div className="flex items-center rounded-lg border border-white/10 bg-black/25 p-1">
               <button
-                onClick={() => setMode("online")}
+                onClick={() => changeMode("online")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
                   online
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -361,9 +426,9 @@ export function LauncherShell({
                 <Wifi className="h-3.5 w-3.5" /> Online
               </button>
               <button
-                onClick={() => setMode("offline")}
+                onClick={() => changeMode("offline")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
                   !online
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -375,7 +440,7 @@ export function LauncherShell({
 
             <button
               onClick={() => setShowSettings(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted-foreground transition-colors hover:bg-white/[0.07] hover:text-foreground"
               title="Configurações"
               aria-label="Configurações"
             >
@@ -384,7 +449,7 @@ export function LauncherShell({
           </div>
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto">
+        <nav className="flex gap-1 overflow-x-auto pb-2">
           {tabs.map((item) => {
             const active = tab === item.key
             return (
@@ -392,10 +457,10 @@ export function LauncherShell({
                 key={item.key}
                 onClick={() => setTab(item.key)}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors md:px-4",
+                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all md:px-4",
                   active
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
+                    ? "bg-primary/12 text-primary shadow-[inset_0_0_0_1px_rgba(72,238,214,.12)]"
+                    : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -408,10 +473,10 @@ export function LauncherShell({
 
       <CommunityBar config={config} serverStatus={serverStatus} onOpen={openExternal} />
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8 p-4 md:p-6">
+      <div className="relative z-[1] flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 md:p-6">
           {tab === "home" && (
-            <>
+            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
               <GameHero
                 game={game}
                 status={status}
@@ -420,8 +485,8 @@ export function LauncherShell({
                 onDownload={startDownload}
                 onRepair={startRepair}
               />
-              <NewsFeed news={effectiveNews.slice(0, 4)} title="Últimas novidades" />
-            </>
+              <NewsFeed news={effectiveNews.slice(0, 4)} title="Últimas novidades" compact />
+            </div>
           )}
 
           {tab === "news" && <NewsFeed news={effectiveNews} title={`Novidades de ${game.name}`} />}

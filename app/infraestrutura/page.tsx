@@ -194,7 +194,7 @@ export default function InfraestruturaPage() {
   const capacity = stadiumCapacity(userTeam?.estadio_cap ?? 30000, stadiumLevel)
   const nextCapacityGain = capacityGainForNextLevel(userTeam?.estadio_cap ?? 30000, stadiumLevel)
   const ticketTier = gameEngine.ticketTier ?? "normal"
-  const stadiumPhoto = getTeamStadiumBackground(userTeam?.nome)
+  const stadiumPhoto = getTeamStadiumBackground(userTeam?.nome, userTeam?.estadio_nome)
   const matchdayProjection = calcMatchdayRevenue({
     capacity,
     prestige: userTeam?.prestigio ?? 50,

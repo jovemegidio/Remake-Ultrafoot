@@ -20,10 +20,12 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import { useNotifications } from "@/components/notifications-system"
 import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { useRequireClub } from "@/lib/use-require-team"
 
 const PROMOTION_FEE = 200_000
 
 export default function BasePage() {
+  useRequireClub()
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
 
@@ -191,15 +193,27 @@ export default function BasePage() {
     // apertando dispensar ate sair um bom (relato do jogador) — cada clique era
     // um novo sorteio. Agora a vaga apenas abre; para preencher, use a peneira
     // (paga) ou espere a proxima temporada semear a base.
-    setState({ youthPlayers: youth.filter(p => p.id !== player.id) })
+    setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(p => p.id !== player.id) }))
   }
 
+  // Carimbo absoluto (semanas desde o marco) da semana atual e da última peneira.
+  const stampAtual = state.season * 52 + (state.week ?? 0)
+  const TRYOUT_COOLDOWN = 8 // ~2 meses
+  const semanasDesdePeneira = stampAtual - (state.youthTryoutStamp ?? -999)
+  const peneiraDisponivel = semanasDesdePeneira >= TRYOUT_COOLDOWN
+
   const holdTryout = () => {
+    // COOLDOWN: a peneira acontece a cada ~2 meses (8 semanas). Sem isto, rodar
+    // peneira (barata) e vender os prospectos em loop imprimia dinheiro infinito.
+    if (!peneiraDisponivel) {
+      const faltam = TRYOUT_COOLDOWN - semanasDesdePeneira
+      return window.alert(`A próxima peneira só daqui a ${faltam} semana${faltam === 1 ? "" : "s"} (uma a cada ~2 meses).`)
+    }
     const fee = 100_000
     if (caixaDoMotor < fee) return window.alert("Saldo insuficiente para realizar a peneira.")
     if (!gastarDoCaixa(fee)) return window.alert("Saldo insuficiente para realizar a peneira.")
     const intake = runTryout(state, "sub17")
-    setState({ youthPlayers: [...youth, ...intake.players] })
+    setState({ youthPlayers: [...youth, ...intake.players], youthTryoutStamp: stampAtual })
   }
 
   const developMonth = () => {
@@ -230,9 +244,16 @@ export default function BasePage() {
    *  ACERTADA e o jovem sai da base quando a janela abrir. */
   const venderJovem = (player: SquadPlayer) => {
     const j = player as unknown as JovemBase
+    const justo = valorDeMercadoJovem(j)
+    // DIFICULDADE DE VENDA (pedido): nem todo garoto atrai comprador. O interesse
+    // do mercado sobe com a promessa do atleta — um prospecto fraco raramente é
+    // sondado, uma joia quase sempre. Antes toda venda tinha comprador garantido.
+    const interesse = Math.max(0.12, Math.min(0.92, (justo - 200_000) / 3_000_000))
+    if (Math.random() > interesse) {
+      return window.alert(`Nenhum clube demonstrou interesse por ${player.name} no momento. Desenvolva-o mais e tente de novo adiante.`)
+    }
     const clubes = ["Benfica", "Ajax", "Porto", "Shakhtar", "Red Bull Salzburg", "Palmeiras", "Flamengo"]
     const p = propostaPorJovem(j, clubes[Math.floor(Math.random() * clubes.length)])
-    const justo = valorDeMercadoJovem(j)
     const janelaAberta = isTransferWindowOpen(semanaAtual)
     const aviso = janelaAberta
       ? ""
@@ -243,16 +264,17 @@ export default function BasePage() {
 
     if (janelaAberta) {
       receberPorJovem(p.valor)
-      setState({ youthPlayers: youth.filter(x => x.id !== player.id) })
+      // Funcional: le a base MAIS NOVA (vender varios seguidos nao "ressuscita" os anteriores).
+      setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(x => x.id !== player.id) }))
       addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
         message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
     } else {
       // Marca a saida pendente: o jovem continua na base ate a janela abrir.
-      setState({
-        youthPlayers: youth.map(x => x.id === player.id
+      setState(s => ({
+        youthPlayers: (s.youthPlayers ?? []).map(x => x.id === player.id
           ? ({ ...x, vendaPendente: { clube: p.clube, valor: p.valor } } as SquadPlayer)
           : x),
-      })
+      }))
       addNotification({ type: "transfer", priority: "medium", title: `Venda acertada: ${player.name}`,
         message: `${p.clube} pagará ${formatCurrency(p.valor)} por ${player.name} quando a janela abrir.` })
     }
@@ -308,11 +330,15 @@ export default function BasePage() {
             </Button>
             <Button
               onClick={holdTryout}
-              disabled={vagas === 0}
-              title={vagas === 0 ? "Base lotada — dispense ou promova alguém" : undefined}
+              disabled={vagas === 0 || !peneiraDisponivel}
+              title={
+                !peneiraDisponivel ? `Próxima peneira em ${TRYOUT_COOLDOWN - semanasDesdePeneira} semana(s)`
+                : vagas === 0 ? "Base lotada — dispense ou promova alguém" : undefined
+              }
               className="bg-[#1db954] text-black hover:bg-[#1ed760] disabled:opacity-40"
             >
-              <Sprout className="mr-2 h-4 w-4" /> Peneira Sub-17 · R$ 100 mil
+              <Sprout className="mr-2 h-4 w-4" />
+              {!peneiraDisponivel ? `Peneira em ${TRYOUT_COOLDOWN - semanasDesdePeneira} sem.` : "Peneira Sub-17 · R$ 100 mil"}
             </Button>
           </div>
         </header>

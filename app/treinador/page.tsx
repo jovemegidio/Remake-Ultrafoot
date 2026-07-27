@@ -89,6 +89,21 @@ export default function TreinadorPage() {
     return () => window.removeEventListener("gamepad:button", handler)
   }, [router])
 
+  // Aviso INEQUIVOCO de demissao: o motor grava "ultrafoot-pending-fired" ao
+  // demitir. Na simulacao rapida o toast passava batido e o jogador achava que
+  // "virou" o time de fallback. Aqui a demissao vira um banner explicito, lido
+  // uma unica vez (o flag e consumido em seguida).
+  const [avisoDemissao, setAvisoDemissao] = useState<string | null>(null)
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("ultrafoot-pending-fired")
+      if (!raw) return
+      window.localStorage.removeItem("ultrafoot-pending-fired")
+      const info = JSON.parse(raw) as { clube?: string }
+      setAvisoDemissao(info?.clube ? `A diretoria do ${info.clube} encerrou o seu ciclo. Você está livre no mercado — escolha um novo clube abaixo.` : "Você foi demitido. Escolha um novo clube abaixo.")
+    } catch { /* flag opcional: falha aqui nao pode quebrar a tela */ }
+  }, [])
+
   const carreira = useMemo(() => {
     const historico = state.seasonHistory ?? []
     return historico.length > 0 ? buildCareerStats(historico) : null
@@ -288,6 +303,18 @@ export default function TreinadorPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
+          {avisoDemissao && (
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-500/40 bg-red-500/[0.08] p-4">
+              <TrendingDown className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-red-300">Você foi demitido</p>
+                <p className="mt-0.5 text-xs text-white/70">{avisoDemissao}</p>
+              </div>
+              <button onClick={() => setAvisoDemissao(null)} className="rounded-lg p-1 text-white/40 hover:text-white" aria-label="Fechar">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           {(() => {
             // Sem clube: mostra as propostas por reputacao (sempre ha). Empregado:
             // mostra as propostas que chegaram enquanto trabalha.

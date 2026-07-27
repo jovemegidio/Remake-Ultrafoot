@@ -29,3 +29,27 @@ export function useRequireTeam(redirectTo = "/splash"): void {
     return () => { cancelled = true }
   }, [redirectTo])
 }
+
+/**
+ * Guarda das telas de GERÊNCIA DE CLUBE (elenco, mercado, finanças, base…).
+ *
+ * Quem está SEM clube (demitido / pediu demissão) NÃO pode contratar, comprar,
+ * vender nem ver elenco — relato "fui demitido e continuo no Botafogo, podendo
+ * gerenciar". Isso acontecia porque `useUserTeam` devolve um FALLBACK (Botafogo)
+ * para nunca ser null, e as telas achavam que havia um clube. Aqui, sem
+ * `selectedTeamShort`, o técnico é mandado para a Área do Treinador (ou, se estiver
+ * comandando uma seleção, para o office da seleção).
+ */
+export function useRequireClub(): void {
+  useEffect(() => {
+    let cancelled = false
+    void initPersistentStore().then(() => {
+      if (cancelled) return
+      const state = loadGameState()
+      if (!state?.selectedTeamShort) {
+        hardNavigate(state?.managingNationalTeamId ? "/" : "/treinador")
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
+}

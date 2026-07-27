@@ -48,6 +48,7 @@ export function BenchTalk() {
         type: "system", priority: "high",
         title: `${p.name} quer conversar`,
         message: `${p.name} está há ${semJogar} jogos sem começar como titular e pediu uma conversa sobre a situação dele.`,
+        conversation: { kind: "bench", playerId: p.id },
       })
       // O atleta CHAMA para conversar: a conversa abre na hora.
       window.dispatchEvent(new CustomEvent("ultrafoot:bench-talk", { detail: { playerId: p.id } }))

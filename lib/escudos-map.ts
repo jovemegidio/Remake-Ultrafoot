@@ -3,6 +3,9 @@
 
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 import generatedEscudoMap from "@/data/seeds/escudos-generated-map.json"
+// Escudos REAIS importados da pasta do usuario (scripts/import-missing-crests.ts):
+// vencem os placeholders gerados, por isso sao aplicados DEPOIS do mapa gerado.
+import userCrestOverrides from "@/data/seeds/user-crest-overrides.json"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -34,8 +37,9 @@ const escudoMap: Record<string, string> = {
 }
 
 // Mapeamento de file_keys para escudos locais
-const localEscudoMap: Record<string, string> = {
+export const localEscudoMap: Record<string, string> = {
   ...(generatedEscudoMap as Record<string, string>),
+  ...(userCrestOverrides as Record<string, string>),
   // Serie A - arquivos raiz nomeados por file_key (confiáveis)
   "botafogorj_bra": "/escudos/botafogorj_bra.png",
   "palmeiras": "/escudos/palmeiras.png",
@@ -305,6 +309,11 @@ const localEscudoMap: Record<string, string> = {
   // Ligue 1 extras
   "lorient": "/escudos/ligue_1/lorient.png",
   "clermont": "/escudos/ligue_1/clermont.png",
+  // Escudos IMPORTADOS pelo usuario vencem TUDO (inclusive as entradas manuais
+  // acima que apontam para subpastas antigas — ex.: al_nassr estava preso em
+  // /escudos/saudi_pro/ e ignorava o escudo novo). Por isso o spread fica por
+  // ultimo: a arte que o jogador forneceu tem a palavra final.
+  ...(userCrestOverrides as Record<string, string>),
 }
 
 export function getEscudoUrl(fileKey: string): string {

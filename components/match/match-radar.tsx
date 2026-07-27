@@ -37,6 +37,10 @@ interface MatchRadarProps {
   /** Cores efetivamente escolhidas no pré-jogo. Sem isto o radar usava apenas cor1. */
   homeColor?: string
   awayColor?: string
+  /** Pulso do ULTIMO evento da partida, para o radar REAGIR: no chute/gol a bola
+   *  voa pro gol; no escanteio vai pro canto e os jogadores aglomeram na area.
+   *  `seq` muda a cada evento novo (dispara a reacao uma vez). */
+  event?: { type: "shot" | "goal" | "corner" | "chance"; side: "home" | "away"; seq: number }
 }
 
 // ─── Formation Templates ──────────────────────────────────────────────────────
@@ -254,6 +258,7 @@ function targetFor(
   by: number,  // ball y in radar coords: 0 = left, 1 = right
   time: number,
   paradoNoLugar = false,  // pre-jogo/intervalo: formacao parada, so respiracao leve
+  pullBoost = 0,  // atracao EXTRA pela bola (ex.: escanteio -> aglomeracao na area)
 ): { x: number; y: number } {
   // ANTES DO APITO os jogadores nao correm nem disparam: ficam POSTADOS na
   // formacao (realista). O motor so centralizava a bola; os atletas seguiam
@@ -301,8 +306,9 @@ function targetFor(
     // Convert depth to field position (home attacks left→right)
     const fieldX = slot.isHome ? baseDepth : (1 - baseDepth)
 
-    // Mild magnetic pull toward ball (compacts team around the action)
-    x = lerp(fieldX, bx, 0.06) + wanderX
+    // Mild magnetic pull toward ball (compacts team around the action). O
+    // pullBoost aperta essa atracao em lances como escanteio (aglomeracao).
+    x = lerp(fieldX, bx, clamp(0.06 + pullBoost, 0, 0.6)) + wanderX
 
     // Sprint burst for attackers and wide midfielders (either touchline)
     const isWide = Math.min(slot.fWidth, 1 - slot.fWidth) < 0.25
@@ -346,6 +352,7 @@ export function MatchRadar({
   awayFormation,
   homeColor: selectedHomeColor,
   awayColor: selectedAwayColor,
+  event,
 }: MatchRadarProps) {
   const homeColor = selectedHomeColor || homeTeam.cor1 || "#00ffc8"
 
@@ -384,6 +391,34 @@ export function MatchRadar({
   const phaseRef = useRef(phase)
   phaseRef.current = phase
 
+  // REACAO A EVENTOS. Ao chegar um evento novo (seq muda), arma uma reacao curta:
+  // no chute/gol a bola voa pro gol; no escanteio vai pro canto e liga a
+  // aglomeracao na area. O loop de animacao le isto de reactionRef.
+  const reactionRef = useRef<{ type: "shot" | "corner"; side: "home" | "away"; tx: number; ty: number; end: number } | null>(null)
+  const lastEventSeq = useRef(-1)
+  useEffect(() => {
+    if (!event || event.seq === lastEventSeq.current) return
+    lastEventSeq.current = event.seq
+    const now = performance.now() / 1000
+    const attackingRight = event.side === "home" // casa ataca esquerda->direita
+    if (event.type === "corner") {
+      reactionRef.current = {
+        type: "corner", side: event.side,
+        tx: attackingRight ? 0.985 : 0.015,
+        ty: event.seq % 2 === 0 ? 0.06 : 0.94, // alterna os cantos
+        end: now + 1.6,
+      }
+    } else {
+      // chute / gol / chance: a bola dispara em direcao ao gol
+      reactionRef.current = {
+        type: "shot", side: event.side,
+        tx: attackingRight ? 0.965 : 0.035,
+        ty: clamp(0.5 + Math.sin(event.seq * 2.1) * 0.14, 0.3, 0.7),
+        end: now + (event.type === "goal" ? 0.9 : 0.55),
+      }
+    }
+  }, [event?.seq])
+
   useEffect(() => {
     const stopped = phase === "pre" || phase === "halftime" || phase === "fulltime"
     if (stopped || !ball) {
@@ -420,14 +455,26 @@ export function MatchRadar({
         lastFrame = now
       }
       const time = performance.now() / 1000
-      const target = ballTargetRef.current
+      const fase = phaseRef.current
+      const paradoFase = fase === "pre" || fase === "halftime" || fase === "fulltime"
 
-      // Smooth ball toward target — keep previous frame to derive speed
+      // Reacao a evento ativa? Ela ASSUME o alvo da bola por um instante (chute pro
+      // gol / escanteio no canto). Fora disso, segue o alvo normal do motor.
+      const react = reactionRef.current
+      const reacting = !!react && !paradoFase && time < react.end
+      const target = reacting
+        ? { x: react!.tx, y: react!.ty, side: react!.side }
+        : ballTargetRef.current
+      const cornerBoost = reacting && react!.type === "corner"
+
+      // Smooth ball toward target — keep previous frame to derive speed. No chute a
+      // bola VOA (lerp alto); no escanteio vai firme; normal e suave.
+      const ballLerp = reacting ? (react!.type === "shot" ? 0.34 : 0.16) : 0.10
       const bp = ballPosRef.current
       const prevBx = bp.x
       const prevBy = bp.y
-      bp.x = lerp(bp.x, target.x, 0.10)
-      bp.y = lerp(bp.y, target.y, 0.10)
+      bp.x = lerp(bp.x, target.x, ballLerp)
+      bp.y = lerp(bp.y, target.y, ballLerp)
 
       // Ball speed (per frame, normalised units) drives trail + lift + squash
       const speed = Math.hypot(bp.x - prevBx, bp.y - prevBy)
@@ -447,21 +494,42 @@ export function MatchRadar({
       }
       carrierRef.current = carrierKey
 
-      const parado = phaseRef.current === "pre" || phaseRef.current === "halftime" || phaseRef.current === "fulltime"
+      // MARCACAO: o jogador de linha mais proximo da bola no time SEM a posse sobe
+      // para pressionar o portador. Antes so o time com a bola se aproximava da
+      // acao — o outro ficava parado na formacao, pouco realista. Agora ha pressao.
+      let presserKey = ""
+      let bestPress = Infinity
       for (const s of currentSlots) {
-        const { x: tx, y: ty } = targetFor(s, bp.x, bp.y, time, parado)
+        if (s.side === target.side || s.isGK) continue
+        const cur = posRef.current.get(s.key)
+        const px = cur?.x ?? 0.5
+        const py = cur?.y ?? 0.5
+        const d = (px - bp.x) ** 2 + (py - bp.y) ** 2
+        if (d < bestPress) { bestPress = d; presserKey = s.key }
+      }
+
+      const parado = paradoFase
+      for (const s of currentSlots) {
+        // No escanteio, atacantes e meias apertam a atracao pela bola (aglomeram
+        // na area); a defesa acompanha um pouco menos.
+        const pull = cornerBoost ? (s.group === "ATT" || s.group === "MID" ? 0.16 : 0.08) : 0
+        const { x: tx, y: ty } = targetFor(s, bp.x, bp.y, time, parado, pull)
 
         let x = tx
         let y = ty
 
-        // Carrier sticks closer to ball
-        if (s.key === carrierKey) {
+        // Carrier sticks closer to ball; o marcador PRESSIONA (chega perto, mas
+        // para a ~um passo do portador). Nada disso quando a formacao esta parada.
+        if (!parado && s.key === carrierKey) {
           x = lerp(tx, bp.x, 0.55)
           y = lerp(ty, bp.y, 0.55)
+        } else if (!parado && s.key === presserKey) {
+          x = lerp(tx, bp.x, 0.42)
+          y = lerp(ty, bp.y, 0.42)
         }
 
         const prev = posRef.current.get(s.key) ?? { x, y }
-        const ease = s.key === carrierKey ? 0.22 : 0.08
+        const ease = s.key === carrierKey ? 0.22 : s.key === presserKey ? 0.16 : 0.08
         const nx = lerp(prev.x, x, ease)
         const ny = lerp(prev.y, y, ease)
         posRef.current.set(s.key, { x: nx, y: ny })
@@ -531,7 +599,7 @@ export function MatchRadar({
   }, [])
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col items-center gap-2">
+    <div className="flex flex-1 min-h-0 flex-col items-center gap-2.5">
       {/* Team labels */}
       <div className="flex w-full shrink-0 items-center justify-between px-1 text-[11px] font-semibold uppercase tracking-wider">
         <span className="flex items-center gap-1.5">
@@ -544,31 +612,45 @@ export function MatchRadar({
         </span>
       </div>
 
-      {/* Pitch */}
-      <div
-        className="relative w-full flex-1 overflow-hidden rounded-xl border border-white/10"
-        style={{
-          background:
-            "radial-gradient(120% 90% at 50% -10%, #1c5238 0%, #164632 42%, #0f3324 78%, #0a2419 100%)",
-          boxShadow: "inset 0 0 60px rgba(0,0,0,0.55)",
-        }}
-        role="img"
-        aria-label="Posicionamento tático em tempo real"
-      >
+      {/* A moldura mantém a proporção real de um campo (105 x 68). Antes o
+          radar esticava até a largura do card e deixava o campo achatado. */}
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/[0.05] bg-[#07110e] p-2 shadow-inner">
+        <div
+          className="relative h-full max-h-full max-w-full flex-none aspect-[105/68] overflow-hidden rounded-xl border border-white/15"
+          style={{
+            background:
+              "radial-gradient(90% 75% at 50% 48%, #245b3e 0%, #184b34 52%, #0c3021 100%)",
+            boxShadow: "inset 0 0 70px rgba(0,0,0,0.5), 0 18px 40px rgba(0,0,0,0.28)",
+          }}
+          role="img"
+          aria-label="Posicionamento tático em tempo real"
+        >
+        <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-white/70 backdrop-blur">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00ffc8]" />
+          Ao vivo · {minute}&apos;
+        </div>
+        <div className="pointer-events-none absolute right-3 top-3 z-20 rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[8px] font-bold tracking-wider text-white/55 backdrop-blur">
+          {homeFormation ?? detectFormation(homeSquad)} × {awayFormation ?? detectFormation(awaySquad)}
+        </div>
+
         {/* Mowed turf stripes */}
         <div className="pointer-events-none absolute inset-0">
-          {Array.from({ length: 12 }).map((_, i) => (
+          {Array.from({ length: 14 }).map((_, i) => (
             <div
               key={i}
               className="absolute top-0 h-full"
               style={{
-                left: `${(i * 100) / 12}%`,
-                width: `${100 / 12}%`,
-                background: i % 2 === 0 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.05)",
+                left: `${(i * 100) / 14}%`,
+                width: `${100 / 14}%`,
+                background: i % 2 === 0 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.055)",
               }}
             />
           ))}
         </div>
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30 mix-blend-soft-light"
+          style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.025) 3px 4px)" }}
+        />
 
         {/* Floodlight pools — four stadium corners */}
         <div
@@ -583,49 +665,49 @@ export function MatchRadar({
         />
 
         {/* Field markings */}
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 133 100" preserveAspectRatio="none">
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 105 68" preserveAspectRatio="xMidYMid meet">
           <defs>
             <pattern id="radar-net" width="1.6" height="1.6" patternUnits="userSpaceOnUse">
               <path d="M 1.6 0 L 0 0 0 1.6" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="0.18" />
             </pattern>
           </defs>
 
-          <g fill="none" stroke="rgba(255,255,255,0.42)" strokeWidth="0.55" strokeLinecap="round">
+          <g fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.38" strokeLinecap="round">
             {/* Outer border */}
-            <rect x="3" y="3" width="127" height="94" />
+            <rect x="2" y="2" width="101" height="64" />
             {/* Halfway line */}
-            <line x1="66.5" y1="3" x2="66.5" y2="97" />
+            <line x1="52.5" y1="2" x2="52.5" y2="66" />
             {/* Centre circle */}
-            <circle cx="66.5" cy="50" r="11" />
+            <circle cx="52.5" cy="34" r="9.15" />
             {/* Home penalty area */}
-            <rect x="3" y="26" width="24" height="48" />
-            <rect x="3" y="38" width="8" height="24" />
+            <rect x="2" y="13.84" width="16.5" height="40.32" />
+            <rect x="2" y="24.84" width="5.5" height="18.32" />
             {/* Away penalty area */}
-            <rect x="106" y="26" width="24" height="48" />
-            <rect x="122" y="38" width="8" height="24" />
+            <rect x="86.5" y="13.84" width="16.5" height="40.32" />
+            <rect x="97.5" y="24.84" width="5.5" height="18.32" />
             {/* Penalty arcs */}
-            <path d="M 27 41.5 A 11 11 0 0 0 27 58.5" />
-            <path d="M 106 41.5 A 11 11 0 0 1 106 58.5" />
+            <path d="M 18.5 27.4 A 9.15 9.15 0 0 0 18.5 40.6" />
+            <path d="M 86.5 27.4 A 9.15 9.15 0 0 1 86.5 40.6" />
             {/* Corner arcs */}
-            <path d="M 3 6 A 3 3 0 0 0 6 3" />
-            <path d="M 127 3 A 3 3 0 0 0 130 6" />
-            <path d="M 6 97 A 3 3 0 0 0 3 94" />
-            <path d="M 130 94 A 3 3 0 0 0 127 97" />
+            <path d="M 2 3.2 A 1.2 1.2 0 0 0 3.2 2" />
+            <path d="M 101.8 2 A 1.2 1.2 0 0 0 103 3.2" />
+            <path d="M 3.2 66 A 1.2 1.2 0 0 0 2 64.8" />
+            <path d="M 103 64.8 A 1.2 1.2 0 0 0 101.8 66" />
           </g>
 
           {/* Centre + penalty spots */}
           <g fill="rgba(255,255,255,0.5)">
-            <circle cx="66.5" cy="50" r="0.7" />
-            <circle cx="14" cy="50" r="0.7" />
-            <circle cx="119" cy="50" r="0.7" />
+            <circle cx="52.5" cy="34" r="0.42" />
+            <circle cx="13" cy="34" r="0.42" />
+            <circle cx="92" cy="34" r="0.42" />
           </g>
 
           {/* Goals with nets */}
           <g>
-            <rect x="0.4" y="43" width="2.6" height="14" fill="url(#radar-net)" />
-            <rect x="0.4" y="43" width="2.6" height="14" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.4" />
-            <rect x="130" y="43" width="2.6" height="14" fill="url(#radar-net)" />
-            <rect x="130" y="43" width="2.6" height="14" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.4" />
+            <rect x="0.6" y="30.34" width="1.4" height="7.32" fill="url(#radar-net)" />
+            <rect x="0.6" y="30.34" width="1.4" height="7.32" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="0.3" />
+            <rect x="103" y="30.34" width="1.4" height="7.32" fill="url(#radar-net)" />
+            <rect x="103" y="30.34" width="1.4" height="7.32" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="0.3" />
           </g>
         </svg>
 
@@ -634,7 +716,7 @@ export function MatchRadar({
           const init = posRef.current.get(s.key)
           const left = init ? init.x : (s.isHome ? s.fDepth * 0.94 + 0.03 : (1 - s.fDepth) * 0.94 + 0.03)
           const top = init ? init.y : s.fWidth
-          const size = s.isGK ? 24 : 22
+          const size = s.isGK ? 28 : 26
           return (
             <div
               key={s.key}
@@ -668,7 +750,7 @@ export function MatchRadar({
                   style={{
                     background: `radial-gradient(circle at 35% 28%, ${lighten(s.color, 0.28)}, ${s.color} 70%)`,
                     color: s.textColor,
-                    fontSize: 10,
+                    fontSize: 10.5,
                     outline: s.isGK ? "2px solid rgba(255,255,255,0.92)" : "1.5px solid rgba(255,255,255,0.6)",
                     boxShadow: "0 3px 7px rgba(0,0,0,0.6), inset 0 -2px 4px rgba(0,0,0,0.28)",
                   }}
@@ -677,8 +759,8 @@ export function MatchRadar({
                 </span>
               </div>
               <span
-                className="pointer-events-none max-w-[52px] truncate whitespace-nowrap rounded px-1 text-[8px] font-medium leading-[1.3] text-white"
-                style={{ background: "rgba(0,0,0,0.66)", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}
+                className="pointer-events-none max-w-[68px] truncate whitespace-nowrap rounded-md border border-white/10 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white"
+                style={{ background: "rgba(2,8,6,0.78)", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}
               >
                 {s.name.split(" ").slice(-1)[0]}
               </span>
@@ -719,10 +801,11 @@ export function MatchRadar({
         >
           <div className="h-[11px] w-[11px] rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.95),0_0_5px_rgba(255,255,255,1)]" />
         </div>
+        </div>
       </div>
 
       {/* Possession bar */}
-      <div className="w-full shrink-0 space-y-1">
+      <div className="w-full max-w-[980px] shrink-0 space-y-1">
         <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full transition-[width] duration-700 ease-out"
@@ -732,7 +815,7 @@ export function MatchRadar({
         </div>
         <div className="flex items-center justify-between text-[9px] text-white/45">
           <span>{Math.round(homePossession)}% posse</span>
-          <span>Posicionamento tático em tempo real</span>
+          <span className="font-semibold uppercase tracking-[0.14em] text-white/35">Leitura tática ao vivo</span>
           <span>{100 - Math.round(homePossession)}%</span>
         </div>
       </div>

@@ -244,11 +244,9 @@ function enginePlayersToMatchSquad(
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SPEEDS: { id: MatchSpeed; label: string; sublabel: string }[] = [
-  { id: "slow", label: "0.5x", sublabel: "Lento" },
   { id: "normal", label: "1x", sublabel: "Normal" },
-  { id: "fast", label: "2x", sublabel: "Rapido" },
+  { id: "fast", label: "3x", sublabel: "Rapido" },
   { id: "ultra", label: "5x", sublabel: "Ultra" },
-  { id: "hyper", label: "10x", sublabel: "Hyper" },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -272,16 +270,36 @@ function deriveFormation(squad: MatchPlayer[]): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Stat lateral grande - estilo EA FC
-function BigStat({ label, value, side }: { label: string; value: string | number; side: "left" | "right" }) {
-  // Garante que o valor nunca seja NaN ou undefined
-  let displayValue: string | number = value
-  if (typeof value === "number") {
-    displayValue = isNaN(value) || value === undefined || value === null ? 0 : Math.round(value)
-  }
+// Coluna lateral de ESCALAÇÃO com barra de condição — recria a leitura da
+// referência (FIFA26/16.png): os titulares dos dois times ladeando o campo, com
+// a barra de energia que drena ao longo do jogo (mesma fonte da aba Preparo).
+// À direita a linha é espelhada (barra | nome | número), como na referência.
+function SideLineup({ team, squad, side }: { team: Team; squad: MatchPlayer[]; side: "left" | "right" }) {
+  const xi = squad.slice(0, 11)
   return (
-    <div className={cn("flex flex-col", side === "left" ? "items-start" : "items-end")}>
-      <span className="text-[#00ffc8] text-xs font-medium tracking-wider uppercase mb-1">{label}</span>
-      <span className="text-white text-6xl sm:text-7xl lg:text-8xl font-black tabular-nums leading-none">{displayValue}</span>
+    <div className="flex w-full flex-col">
+      <div className={cn("mb-2 flex items-center gap-2 border-b border-white/[0.06] pb-2", side === "right" && "flex-row-reverse")}>
+        <TeamCrest team={team} size="xs" />
+        <span className="truncate text-[11px] font-bold uppercase tracking-wider text-white/70">{team.curto}</span>
+        <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-white/30">Titulares</span>
+      </div>
+      <div className="flex flex-col">
+        {xi.map((p) => {
+          const cond = Math.round(p.stamina ?? 100)
+          return (
+            <div key={p.id} className={cn("flex items-center gap-2 py-[3px]", side === "right" && "flex-row-reverse")}>
+              <span className="w-4 shrink-0 text-center text-[10px] tabular-nums text-white/35">{p.number}</span>
+              <span className={cn("min-w-0 flex-1 truncate text-[11px] text-white", side === "right" && "text-right")}>{p.name}</span>
+              <div className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={cn("h-full rounded-full transition-all", cond > 70 ? "bg-emerald-500" : cond > 40 ? "bg-amber-500" : "bg-red-500")}
+                  style={{ width: `${cond}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -525,7 +543,7 @@ export default function PartidaAoVivoPage() {
   const { addNotification } = useNotifications()
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
-  const { currentMatch, registerUserMatchResult, advanceWeek } = useGameManager()
+  const { currentMatch, seasonCalendar, registerUserMatchResult, advanceWeek } = useGameManager()
   const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions, processarDesempenhoPartida, squadCohesion } = useGameEngine()
   const bonusEntrosamento = Math.round(Math.max(0, ((squadCohesion ?? 60) - 60)) / 8)
   const engineMatchResults = useGameEngine(s => s.matchResults)
@@ -623,6 +641,65 @@ export default function PartidaAoVivoPage() {
   const displayRound = matchCtx.youth ? matchCtx.round : (currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1"))
   const homeKitColors = useMemo(() => getKitColors(homeTeam, matchCtx.homeKit ?? "home"), [homeTeam, matchCtx.homeKit])
   const awayKitColors = useMemo(() => getKitColors(awayTeam, matchCtx.awayKit ?? "away"), [awayTeam, matchCtx.awayKit])
+
+  // Placar agregado de mata-mata. A volta é reconhecida pelo confronto anterior
+  // entre o mesmo par de clubes, dentro da mesma competição e temporada. A
+  // orientação é sempre a do placar atual (mandante atual à esquerda), mesmo
+  // quando ele foi visitante na ida.
+  // A ida é buscada no CALENDÁRIO, não na lista de resultados, porque só o fixture
+  // guarda a FASE do confronto — e a fase é o que separa um confronto de ida e
+  // volta de dois jogos soltos entre os mesmos clubes.
+  //
+  // Filtrando apenas por competição + par de clubes, a fase de grupos vazava para
+  // o mata-mata: quem enfrentou o adversário no grupo e o reencontrava numa
+  // semifinal de JOGO ÚNICO (Paulistão A1: quartas e semi são de um jogo só) via
+  // um "Agregado" que somava o jogo do grupo. Exigindo a MESMA fase, ida e volta
+  // se reconhecem (ambas têm stage "final", "semifinal"…) e o jogo único não
+  // encontra par — que é exatamente o correto.
+  const previousLeg = useMemo(() => {
+    if (
+      !currentMatch ||
+      matchCtx.friendly ||
+      matchCtx.youth ||
+      !currentMatch.stage ||
+      currentMatch.stage === "fase_classificatoria" ||
+      !["cup", "continental", "state"].includes(currentMatch.competitionType)
+    ) return null
+    return seasonCalendar.fixtures
+      .filter(fixture =>
+        fixture.played &&
+        fixture.homeScore != null &&
+        fixture.awayScore != null &&
+        fixture.competition === currentMatch.competition &&
+        fixture.stage === currentMatch.stage &&
+        fixture.week < currentMatch.week &&
+        (
+          (fixture.homeTeam.curto === homeTeam.curto && fixture.awayTeam.curto === awayTeam.curto) ||
+          (fixture.homeTeam.curto === awayTeam.curto && fixture.awayTeam.curto === homeTeam.curto)
+        ),
+      )
+      .sort((a, b) => b.week - a.week)
+      .map(fixture => ({
+        homeTeam: fixture.homeTeam.curto,
+        homeScore: fixture.homeScore ?? 0,
+        awayScore: fixture.awayScore ?? 0,
+      }))[0] ?? null
+  }, [
+    currentMatch,
+    matchCtx.friendly,
+    matchCtx.youth,
+    seasonCalendar.fixtures,
+    homeTeam.curto,
+    awayTeam.curto,
+  ])
+
+  // Gols da IDA já orientados como o placar ATUAL (mandante de hoje à esquerda),
+  // mesmo que hoje o mando esteja invertido. O agregado em si só pode ser somado
+  // depois que `state` existe — ver `aggregateScore`, adiante.
+  const firstLeg = previousLeg ? {
+    home: previousLeg.homeTeam === homeTeam.curto ? previousLeg.homeScore : previousLeg.awayScore,
+    away: previousLeg.homeTeam === awayTeam.curto ? previousLeg.homeScore : previousLeg.awayScore,
+  } : null
 
   // Determina qual lado e o do usuario
   const userTeam = useMemo(() => {
@@ -794,6 +871,35 @@ export default function PartidaAoVivoPage() {
   const sim = useMatchSimulation(config)
   const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty } = sim
 
+  // PLACAR AGREGADO do jogo de volta. Tem que ficar DEPOIS de `state`: enquanto
+  // era calculado logo após `previousLeg`, lá em cima, lia `state` antes da
+  // declaração — no jogo de volta de qualquer confronto de ida e volta o acesso
+  // caía na TDZ e a tela de partida ao vivo quebrava com ReferenceError. Era por
+  // isso que o agregado "não aparecia": a tela nem chegava a renderizar.
+  const aggregateScore = firstLeg ? {
+    home: state.home.goals + firstLeg.home,
+    away: state.away.goals + firstLeg.away,
+    firstLegHome: firstLeg.home,
+    firstLegAway: firstLeg.away,
+  } : null
+
+  // Pulso do ULTIMO evento relevante para o radar REAGIR (chute -> bola voa pro
+  // gol; escanteio -> aglomeracao na area). seq = indice do evento (monotonico),
+  // entao a reacao dispara uma vez por evento novo.
+  const radarEvent = useMemo<
+    { type: "shot" | "goal" | "corner" | "chance"; side: "home" | "away"; seq: number } | undefined
+  >(() => {
+    const evs = state.events
+    for (let i = evs.length - 1; i >= 0; i--) {
+      const e = evs[i]
+      if (e.type === "goal") return { type: "goal", side: e.side, seq: i }
+      if (e.type === "corner") return { type: "corner", side: e.side, seq: i }
+      if (e.type === "shot" || e.type === "shot_on_target" || e.type === "save" || e.type === "post" || e.type === "miss" || e.type === "penalty")
+        return { type: "shot", side: e.side, seq: i }
+    }
+    return undefined
+  }, [state.events])
+
   useEffect(() => {
     // Antes do apito inicial a formação deve sempre refletir a última tática salva.
     if (state.phase === "pre") setLiveFormation(savedFormation ?? "4-3-3")
@@ -887,7 +993,7 @@ export default function PartidaAoVivoPage() {
   const [subsRemaining, setSubsRemaining] = useState(5)
 
   // Tab ativa
-  const [activeTab, setActiveTab] = useState<"pitch" | "fitness" | "ratings" | "stats" | "gameplan" | "narration">("narration")
+  const [activeTab, setActiveTab] = useState<"pitch" | "stats" | "gameplan" | "narration">("narration")
 
   // Estado para animacoes de eventos
   const [currentAnimation, setCurrentAnimation] = useState<{
@@ -1029,10 +1135,10 @@ export default function PartidaAoVivoPage() {
           }
           break
         case "fast_forward":
-          if (speed === "slow") setSpeed("normal")
-          else if (speed === "normal") setSpeed("fast")
+          // Cicla entre as tres velocidades expostas: 1x -> 3x -> 5x -> 1x.
+          if (speed === "normal") setSpeed("fast")
           else if (speed === "fast") setSpeed("ultra")
-          else if (speed === "ultra") setSpeed("hyper")
+          else setSpeed("normal")
           break
         case "substitute":
           if (subsRemaining > 0 && state.phase !== "fulltime") {
@@ -1398,6 +1504,16 @@ export default function PartidaAoVivoPage() {
                   <span className="text-[#00ffc8] text-sm font-bold">{extraTime}&apos;</span>
                 )}
               </div>
+              {aggregateScore && (
+                <div className="mt-2 flex flex-col items-center">
+                  <span className="rounded-full border border-[#00ffc8]/25 bg-[#00ffc8]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.16em] text-[#66ffdc]">
+                    Agregado {aggregateScore.home}–{aggregateScore.away}
+                  </span>
+                  <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/35">
+                    Ida {aggregateScore.firstLegHome}–{aggregateScore.firstLegAway} · jogo de volta
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Time Fora */}
@@ -1412,11 +1528,10 @@ export default function PartidaAoVivoPage() {
         {/* Area Principal - 3 Colunas */}
         <div className="flex-1 min-h-0 flex px-4 sm:px-8 pb-4 gap-4 sm:gap-8">
           
-  {/* Coluna Esquerda - Stats Casa */}
-  <div className="hidden lg:flex flex-col justify-center gap-8 w-48">
-  <BigStat label="Posse" value={state.home?.possession ?? 50} side="left" />
-  <BigStat label="Chutes" value={state.home?.shots ?? 0} side="left" />
-  <BigStat label="No alvo" value={state.home?.shotsOnTarget ?? 0} side="left" />
+  {/* Coluna Esquerda - Escalação da Casa (ref. 16.png). As estatísticas seguem
+      na aba "Estatísticas" do card central. */}
+  <div className="hidden lg:flex flex-col justify-center w-52">
+  <SideLineup team={homeTeam} squad={homeSquad} side="left" />
   </div>
 
           {/* Coluna Central - Conteudo baseado na Tab ativa */}
@@ -1504,6 +1619,7 @@ export default function PartidaAoVivoPage() {
                       homeSquad={homeSquad}
                       awaySquad={awaySquad}
                       ball={state.ball}
+                      event={radarEvent}
                       homePossession={state.home?.possession ?? 50}
                       minute={state.minute}
                       phase={state.phase}
@@ -1512,124 +1628,6 @@ export default function PartidaAoVivoPage() {
                       homeColor={homeKitColors.body}
                       awayColor={awayKitColors.body}
                     />
-                  </div>
-                )}
-
-                {activeTab === "fitness" && (
-                  <div className="space-y-3">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider">{t.match.live.sectionFitness}</h3>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-0">
-                      {/* Time da Casa */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
-                          <TeamCrest team={homeTeam} size="xs" />
-                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{homeTeam.curto}</span>
-                        </div>
-                        {homeSquad.slice(0, 11).map((player) => {
-                          const staminaVal = Math.round(player.stamina ?? 100)
-                          return (
-                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
-                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
-                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
-                              <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden shrink-0">
-                                <div
-                                  className={cn(
-                                    "h-full rounded-full transition-all",
-                                    staminaVal > 70 ? "bg-emerald-500" :
-                                    staminaVal > 40 ? "bg-amber-500" : "bg-red-500"
-                                  )}
-                                  style={{ width: `${staminaVal}%` }}
-                                />
-                              </div>
-                              <span className="text-white/50 text-[10px] w-7 text-right tabular-nums shrink-0">{staminaVal}%</span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {/* Time Visitante */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
-                          <TeamCrest team={awayTeam} size="xs" />
-                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{awayTeam.curto}</span>
-                        </div>
-                        {awaySquad.slice(0, 11).map((player) => {
-                          const staminaVal = Math.round(player.stamina ?? 100)
-                          return (
-                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
-                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
-                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
-                              <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden shrink-0">
-                                <div
-                                  className={cn(
-                                    "h-full rounded-full transition-all",
-                                    staminaVal > 70 ? "bg-emerald-500" :
-                                    staminaVal > 40 ? "bg-amber-500" : "bg-red-500"
-                                  )}
-                                  style={{ width: `${staminaVal}%` }}
-                                />
-                              </div>
-                              <span className="text-white/50 text-[10px] w-7 text-right tabular-nums shrink-0">{staminaVal}%</span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "ratings" && (
-                  <div className="space-y-3">
-                    <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider">{t.match.live.sectionRatings}</h3>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-0">
-                      {/* Time da Casa */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
-                          <TeamCrest team={homeTeam} size="xs" />
-                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{homeTeam.curto}</span>
-                        </div>
-                        {homeSquad.slice(0, 11).map((player) => {
-                          const rating = Math.round(player.rating ?? 70)
-                          return (
-                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
-                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
-                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
-                              <span className={cn(
-                                "text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums shrink-0",
-                                rating >= 80 ? "bg-emerald-500/20 text-emerald-400" :
-                                rating >= 70 ? "bg-amber-500/20 text-amber-400" :
-                                "bg-red-500/20 text-red-400"
-                              )}>
-                                {rating}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {/* Time Visitante */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/[0.06]">
-                          <TeamCrest team={awayTeam} size="xs" />
-                          <span className="text-white/70 text-[11px] font-semibold uppercase tracking-wider">{awayTeam.curto}</span>
-                        </div>
-                        {awaySquad.slice(0, 11).map((player) => {
-                          const rating = Math.round(player.rating ?? 70)
-                          return (
-                            <div key={player.id} className="flex items-center gap-1.5 py-[5px]">
-                              <span className="text-white/30 text-[10px] w-4 tabular-nums shrink-0">{player.number}</span>
-                              <span className="text-white text-[11px] flex-1 truncate min-w-0">{player.name}</span>
-                              <span className={cn(
-                                "text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums shrink-0",
-                                rating >= 80 ? "bg-emerald-500/20 text-emerald-400" :
-                                rating >= 70 ? "bg-amber-500/20 text-amber-400" :
-                                "bg-red-500/20 text-red-400"
-                              )}>
-                                {rating}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
                   </div>
                 )}
 
@@ -1671,6 +1669,7 @@ export default function PartidaAoVivoPage() {
                           homeSquad={homeSquad}
                           awaySquad={awaySquad}
                           ball={state.ball}
+                          event={radarEvent}
                           homePossession={state.home?.possession ?? 50}
                           minute={state.minute}
                           phase={state.phase}
@@ -1816,8 +1815,6 @@ export default function PartidaAoVivoPage() {
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 mr-2">L1</span>
                   <TabButton label="Narração" active={activeTab === "narration"} onClick={() => setActiveTab("narration")} />
                   <TabButton label={t.match.live.tabPitch} active={activeTab === "pitch"} onClick={() => setActiveTab("pitch")} />
-                  <TabButton label={t.match.live.tabFitness} active={activeTab === "fitness"} onClick={() => setActiveTab("fitness")} />
-                  <TabButton label={t.match.live.tabRatings} active={activeTab === "ratings"} onClick={() => setActiveTab("ratings")} />
                   <TabButton label={t.match.live.tabStats} active={activeTab === "stats"} onClick={() => setActiveTab("stats")} />
                   <TabButton label={t.match.live.tabGameplan} active={activeTab === "gameplan"} onClick={() => setActiveTab("gameplan")} />
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/40 ml-2">R1</span>
@@ -1827,8 +1824,8 @@ export default function PartidaAoVivoPage() {
 
           </div>
 
-  {/* Coluna Direita - Stats Fora */}
-  <div className="hidden lg:flex flex-col justify-center gap-6 w-48">
+  {/* Coluna Direita - Escalação do Visitante (espelhada, ref. 16.png) */}
+  <div className="hidden lg:flex flex-col justify-center gap-4 w-52">
   {sideFoul && (
     <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-3 shadow-[0_12px_35px_rgba(0,0,0,.25)]" role="status" aria-live="polite">
       <div className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-300">
@@ -1838,9 +1835,7 @@ export default function PartidaAoVivoPage() {
       <p className="mt-1 text-[10px] font-bold tabular-nums text-white/40">{sideFoul.minute}&apos;</p>
     </div>
   )}
-  <BigStat label="Posse" value={state.away?.possession ?? 50} side="right" />
-  <BigStat label="Chutes" value={state.away?.shots ?? 0} side="right" />
-  <BigStat label="No alvo" value={state.away?.shotsOnTarget ?? 0} side="right" />
+  <SideLineup team={awayTeam} squad={awaySquad} side="right" />
   </div>
         </div>
 

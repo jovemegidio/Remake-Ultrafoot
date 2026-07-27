@@ -516,7 +516,8 @@
    "third": {
     "imageUrl": "/overrides/estudiantes_lp-kit-third.png"
    }
-  }
+  },
+  "logoUrl": "/overrides/estudiantes_lp-logo.png"
  },
  "velez_sarsfield": {
   "kits": {
@@ -1012,5 +1013,287 @@
  },
  "san_lorenzo": {
   "logoUrl": "/overrides/san_lorenzo-logo.png"
+ },
+ "villarreal": {
+  "logoUrl": "/overrides/villarreal-logo.png"
+ },
+ "dep_la_serena": {
+  "logoUrl": "/overrides/dep_la_serena-logo.png"
+ },
+ "ohod_ara": {
+  "logoUrl": "/overrides/ohod_ara-logo.png"
+ },
+ "al_qadsiah": {
+  "logoUrl": "/overrides/al_qadsiah-logo.png"
+ },
+ "wolves": {
+  "logoUrl": "/overrides/wolves-logo.png"
+ },
+ "argentinos_jrs": {
+  "logoUrl": "/overrides/argentinos_jrs-logo.png"
+ },
+ "al_taawoun": {
+  "logoUrl": "/overrides/al_taawoun-logo.png"
+ },
+ "dep_antofagasta": {
+  "logoUrl": "/overrides/dep_antofagasta-logo.png"
+ },
+ "west_ham": {
+  "logoUrl": "/overrides/west_ham-logo.png"
+ },
+ "rayo_vallecano": {
+  "logoUrl": "/overrides/rayo_vallecano-logo.png"
+ },
+ "deportivo_riestra": {
+  "logoUrl": "/overrides/deportivo_riestra-logo.png"
+ },
+ "valladolid": {
+  "logoUrl": "/overrides/valladolid-logo.png"
+ },
+ "aston_villa": {
+  "logoUrl": "/overrides/aston_villa-logo.png"
+ },
+ "sarmiento": {
+  "logoUrl": "/overrides/sarmiento-logo.png"
+ },
+ "al_nassr": {
+  "logoUrl": "/overrides/al_nassr-logo.png"
+ },
+ "aeklarnaca_chi": {
+  "logoUrl": "/overrides/aeklarnaca_chi-logo.png"
+ },
+ "al_hilal": {
+  "logoUrl": "/overrides/al_hilal-logo.png"
+ },
+ "real_madrid": {
+  "logoUrl": "/overrides/real_madrid-logo.png"
+ },
+ "defensa_y_justicia": {
+  "logoUrl": "/overrides/defensa_y_justicia-logo.png"
+ },
+ "crystal_palace": {
+  "logoUrl": "/overrides/crystal_palace-logo.png"
+ },
+ "coquimbo_unido": {
+  "logoUrl": "/overrides/coquimbo_unido-logo.png"
+ },
+ "al_qadisiyah": {
+  "logoUrl": "/overrides/al_qadisiyah-logo.png"
+ },
+ "leganes": {
+  "logoUrl": "/overrides/leganes-logo.png"
+ },
+ "u_de_chile": {
+  "logoUrl": "/overrides/u_de_chile-logo.png"
+ },
+ "damac_fc": {
+  "logoUrl": "/overrides/damac_fc-logo.png"
+ },
+ "al_fayha": {
+  "logoUrl": "/overrides/al_fayha-logo.png"
+ },
+ "nublense": {
+  "logoUrl": "/overrides/nublense-logo.png"
+ },
+ "ohiggins": {
+  "logoUrl": "/overrides/ohiggins-logo.png"
+ },
+ "girona": {
+  "logoUrl": "/overrides/girona-logo.png"
+ },
+ "magallanes_chi": {
+  "logoUrl": "/overrides/magallanes_chi-logo.png"
+ },
+ "abha_club": {
+  "logoUrl": "/overrides/abha_club-logo.png"
+ },
+ "dep_limache": {
+  "logoUrl": "/overrides/dep_limache-logo.png"
+ },
+ "al_ahli_saudi": {
+  "logoUrl": "/overrides/al_ahli_saudi-logo.png"
+ },
+ "al_shabab": {
+  "logoUrl": "/overrides/al_shabab-logo.png"
+ },
+ "al_wehda": {
+  "logoUrl": "/overrides/al_wehda-logo.png"
+ },
+ "audax_italiano": {
+  "logoUrl": "/overrides/audax_italiano-logo.png"
+ },
+ "al_shoalah_ara": {
+  "logoUrl": "/overrides/al_shoalah_ara-logo.png"
+ },
+ "al_hazm": {
+  "logoUrl": "/overrides/al_hazm-logo.png"
+ },
+ "alokhdood_ara": {
+  "logoUrl": "/overrides/alokhdood_ara-logo.png"
+ },
+ "al_raed": {
+  "logoUrl": "/overrides/al_raed-logo.png"
+ },
+ "jeddah_ara": {
+  "logoUrl": "/overrides/jeddah_ara-logo.png"
+ },
+ "real_betis": {
+  "logoUrl": "/overrides/real_betis-logo.png"
+ },
+ "huachipato": {
+  "logoUrl": "/overrides/huachipato-logo.png"
+ },
+ "colo_colo": {
+  "logoUrl": "/overrides/colo_colo-logo.png"
+ },
+ "palestino": {
+  "logoUrl": "/overrides/palestino-logo.png"
+ },
+ "rangers_talca": {
+  "logoUrl": "/overrides/rangers_talca-logo.png"
+ },
+ "neom_ara": {
+  "logoUrl": "/overrides/neom_ara-logo.png"
+ },
+ "sevilla": {
+  "logoUrl": "/overrides/sevilla-logo.png"
+ },
+ "central_cordoba": {
+  "logoUrl": "/overrides/central_cordoba-logo.png"
+ },
+ "barracas_central": {
+  "logoUrl": "/overrides/barracas_central-logo.png"
+ },
+ "najran_ara": {
+  "logoUrl": "/overrides/najran_ara-logo.png"
+ },
+ "atletico_madrid": {
+  "logoUrl": "/overrides/atletico_madrid-logo.png"
+ },
+ "getafe": {
+  "logoUrl": "/overrides/getafe-logo.png"
+ },
+ "celta_vigo": {
+  "logoUrl": "/overrides/celta_vigo-logo.png"
+ },
+ "instituto_acc": {
+  "logoUrl": "/overrides/instituto_acc-logo.png"
+ },
+ "espanyol": {
+  "logoUrl": "/overrides/espanyol-logo.png"
+ },
+ "iberia_chi": {
+  "logoUrl": "/overrides/iberia_chi-logo.png"
+ },
+ "u_catolica_chi": {
+  "logoUrl": "/overrides/u_catolica_chi-logo.png"
+ },
+ "osasuna": {
+  "logoUrl": "/overrides/osasuna-logo.png"
+ },
+ "athletic_bilbao": {
+  "logoUrl": "/overrides/athletic_bilbao-logo.png"
+ },
+ "real_sociedad": {
+  "logoUrl": "/overrides/real_sociedad-logo.png"
+ },
+ "independiente_rivadavia": {
+  "logoUrl": "/overrides/independiente_rivadavia-logo.png"
+ },
+ "leicester": {
+  "logoUrl": "/overrides/leicester-logo.png"
+ },
+ "valencia": {
+  "logoUrl": "/overrides/valencia-logo.png"
+ },
+ "platense": {
+  "logoUrl": "/overrides/platense-logo.png"
+ },
+ "aljabalain_ara": {
+  "logoUrl": "/overrides/aljabalain_ara-logo.png"
+ },
+ "mallorca": {
+  "logoUrl": "/overrides/mallorca-logo.png"
+ },
+ "aldosivi": {
+  "logoUrl": "/overrides/aldosivi-logo.png"
+ },
+ "union_la_calera": {
+  "logoUrl": "/overrides/union_la_calera-logo.png"
+ },
+ "eibar_esp": {
+  "logoUrl": "/overrides/eibar_esp-logo.png"
+ },
+ "al_orobah": {
+  "logoUrl": "/overrides/al_orobah-logo.png"
+ },
+ "escuelamacul_chi": {
+  "logoUrl": "/overrides/escuelamacul_chi-logo.png"
+ },
+ "al_riyadh": {
+  "logoUrl": "/overrides/al_riyadh-logo.png"
+ },
+ "union_santa_fe": {
+  "logoUrl": "/overrides/union_santa_fe-logo.png"
+ },
+ "las_palmas": {
+  "logoUrl": "/overrides/las_palmas-logo.png"
+ },
+ "al_ittihad": {
+  "logoUrl": "/overrides/al_ittihad-logo.png"
+ },
+ "al_ettifaq": {
+  "logoUrl": "/overrides/al_ettifaq-logo.png"
+ },
+ "al_kholood": {
+  "logoUrl": "/overrides/al_kholood-logo.png"
+ },
+ "dep_iquique": {
+  "logoUrl": "/overrides/dep_iquique-logo.png"
+ },
+ "al_fateh": {
+  "logoUrl": "/overrides/al_fateh-logo.png"
+ },
+ "stoke_city": {
+  "logoUrl": "/overrides/stoke_city-logo.png"
+ },
+ "alaves": {
+  "logoUrl": "/overrides/alaves-logo.png"
+ },
+ "chelsea": {
+  "logoUrl": "/overrides/chelsea-logo.png"
+ },
+ "cd_tenerife": {
+  "logoUrl": "/overrides/cd_tenerife-logo.png"
+ },
+ "tenerife_esp": {
+  "logoUrl": "/overrides/tenerife_esp-logo.png"
+ },
+ "hercilioluzsc_bra": {
+  "logoUrl": "/overrides/hercilioluzsc_bra-logo.png"
+ },
+ "Boluspor_tur": {
+  "logoUrl": "/overrides/Boluspor_tur-logo.png"
+ },
+ "bodo_glimt": {
+  "logoUrl": "/overrides/bodo_glimt-logo.png"
+ },
+ "arsenal": {
+  "logoUrl": "/overrides/arsenal-logo.png"
+ },
+ "itabunaba_bra": {
+  "logoUrl": "/overrides/itabunaba_bra-logo.png"
+ },
+ "aimorers_bra": {
+  "logoUrl": "/overrides/aimorers_bra-logo.png"
+ },
+ "caxiasc_bra": {
+  "logoUrl": "/overrides/caxiasc_bra-logo.png"
+ },
+ "cerro_porteno": {
+  "logoUrl": "/overrides/cerro_porteno-logo.png"
+ },
+ "avai_bra": {
+  "logoUrl": "/overrides/avai_bra-logo.png"
  }
 }

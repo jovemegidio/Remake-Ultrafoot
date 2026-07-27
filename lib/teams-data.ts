@@ -7,6 +7,7 @@ import { applyTeamOverride, getTeamOverride } from "@/lib/team-overrides"
 import { getCurrency } from "@/lib/currency"
 import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 import { repairMojibake } from "@/lib/text-normalization"
+import { getNationalKitUrl } from "@/lib/national-assets"
 
 const ULTRAFOOT_RAW_URL = "https://raw.githubusercontent.com/jovemegidio/Ultrafoot/main"
 
@@ -380,6 +381,9 @@ export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third"
   // tiver um kit importado, ele e usado no jogo inteiro no lugar do padrao.
   const custom = getTeamOverride(fileKey)?.kits?.[variant]?.imageUrl
   if (custom) return custom
+  if (fileKey.startsWith("nation_")) {
+    return getNationalKitUrl(fileKey.slice("nation_".length), variant)
+  }
 
   const candidates = [normalizeKitKey(fileKey), normalizeKitKey(teamName), normalizeKitKey(localCamisaMap[fileKey] ?? ""), normalizeKitKey(escudoMap[fileKey] ?? "")].filter(Boolean)
   let imported = candidates.map(key => importedKitMap[key]).find(Boolean)

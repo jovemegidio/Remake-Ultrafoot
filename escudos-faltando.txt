@@ -1,0 +1,331 @@
+ESCUDOS FALTANDO — checklist (gerado 2026-07-26)
+Total de times sem escudo local (placeholder): 248
+Como usar: coloque cada arquivo na pasta Escudos/ com o nome exato abaixo e peca "roda o matcher".
+
+## Chile (2)
+  [ ] Universidad Concepción - CHI.png
+  [ ] Unión San Felipe - CHI.png
+
+## Uruguai (2)
+  [ ] City Torque - URU.png
+  [ ] Juventud - URU.png
+
+## Colombia (5)
+  [ ] Aguilas Doradas - COL.png
+  [ ] Deportivo Pasto - COL.png
+  [ ] Deportivo Pereira - COL.png
+  [ ] Independiente Medellin - COL.png
+  [ ] Millonarios - COL.png
+
+## Alemanha (22)
+  [ ] 1. FC Heidenheim - ALE.png
+  [ ] 1. FC Kaiserslautern - ALE.png
+  [ ] 1. FC Magdeburg - ALE.png
+  [ ] 1. FC Nürnberg - ALE.png
+  [ ] Bayer Leverkusen - ALE.png
+  [ ] Bayern Munich - ALE.png
+  [ ] Borussia Dortmund - ALE.png
+  [ ] Borussia Mönchengladbach - ALE.png
+  [ ] Eintracht Frankfurt - ALE.png
+  [ ] FC Augsburg - ALE.png
+  [ ] FC St. Pauli - ALE.png
+  [ ] Holstein Kiel - ALE.png
+  [ ] Mainz 05 - ALE.png
+  [ ] RB Leipzig - ALE.png
+  [ ] SC Freiburg - ALE.png
+  [ ] SpVgg Greuther Furth - ALE.png
+  [ ] Stuttgart - ALE.png
+  [ ] TSG Hoffenheim - ALE.png
+  [ ] Union Berlin - ALE.png
+  [ ] VfL Bochum - ALE.png
+  [ ] VfL Wolfsburg - ALE.png
+  [ ] Werder Bremen - ALE.png
+
+## Arabia Saudita (7)
+  [ ] Al-Adalah - ARA.png
+  [ ] Al-Afaq - ARA.png
+  [ ] Al-Faisaly Harma - ARA.png
+  [ ] Al-Jalala - ARA.png
+  [ ] Al-Khaleej - ARA.png
+  [ ] Al-Qadisiyah - ARA.png
+  [ ] Ohud - ARA.png
+
+## Azerbaijão (1)
+  [ ] Zira - AZE.png
+
+## Belgica (5)
+  [ ] KAA Gent - BEL.png
+  [ ] Mechelen - BEL.png
+  [ ] OHL Leuven - BEL.png
+  [ ] Westerlo - BEL.png
+  [ ] Zulte Waregem - BEL.png
+
+## Bielorrússia (2)
+  [ ] Torpedo BelAZ - BIE.png
+  [ ] Vitebsk - BIE.png
+
+## Brunei (1)
+  [ ] Wijaya - BRU.png
+
+## Bélgica (17)
+  [ ] Olympia Wijgmaal - BÉL.png
+  [ ] Royal White Star - BÉL.png
+  [ ] SK Beveren - BÉL.png
+  [ ] Sint-Eloois-Winkel - BÉL.png
+  [ ] Sparta Petegem - BÉL.png
+  [ ] Spouwen-Mopertingen - BÉL.png
+  [ ] Sprimont-Comblain - BÉL.png
+  [ ] Tempo Overijse - BÉL.png
+  [ ] Temse - BÉL.png
+  [ ] Tienen - BÉL.png
+  [ ] Torhout 92 - BÉL.png
+  [ ] Tubize - BÉL.png
+  [ ] Wallonia Walhain - BÉL.png
+  [ ] Waremme - BÉL.png
+  [ ] Westhoek - BÉL.png
+  [ ] Woluwe-Zaventem - BÉL.png
+  [ ] Zwarte Leeuw - BÉL.png
+
+## CERAMICA (1)
+  [ ] Ceramica Cleopatra - CER.png
+
+## Canada (1)
+  [ ] Vancouver Whitecaps - CAN.png
+
+## China (17)
+  [ ] Beijing Guoan - CHI.png
+  [ ] Cangzhou Mighty Lions - CHI.png
+  [ ] Changchun Yatai - CHI.png
+  [ ] Chengdu Rongcheng - CHI.png
+  [ ] Dalian Pro - CHI.png
+  [ ] Shanghai Port - CHI.png
+  [ ] Tianjin Jinmen Tiger - CHI.png
+  [ ] Tianjin Teda - CHI.png
+  [ ] Tianjin Tianhai - CHI.png
+  [ ] Wuhan FC - CHI.png
+  [ ] Wuhan Three Towns - CHI.png
+  [ ] Wuhan Zall - CHI.png
+  [ ] Yanbian Funde - CHI.png
+  [ ] Yunnan Lijiang - CHI.png
+  [ ] Zhejiang FC - CHI.png
+  [ ] Zhejiang Yiteng - CHI.png
+  [ ] Zhenjiang Huasa - CHI.png
+
+## Colômbia (2)
+  [ ] Unión Magdalena - COL.png
+  [ ] Valledupar - COL.png
+
+## Coreia do Sul (7)
+  [ ] Daejeon Citizen - COR.png
+  [ ] Gimcheon Sangmu - COR.png
+  [ ] Gwangju FC - COR.png
+  [ ] Incheon United - COR.png
+  [ ] Jeju United - COR.png
+  [ ] Seongnam FC - COR.png
+  [ ] Suwon Samsung Bluewings - COR.png
+
+## Croácia (1)
+  [ ] NK Varazdin - CRO.png
+
+## Emirados Árabes Unidos (1)
+  [ ] Ajman - EMI.png
+
+## Escocia (3)
+  [ ] Celtic - ESC.png
+  [ ] Dundee FC - ESC.png
+  [ ] Kilmarnock FC - ESC.png
+
+## Espanha (8)
+  [ ] AD Ceuta FC - ESP.png
+  [ ] CD Castellón - ESP.png
+  [ ] CD Eldense - ESP.png
+  [ ] CD Tenerife - ESP.png
+  [ ] CE Sabadell FC - ESP.png
+  [ ] FC Barcelona - ESP.png
+  [ ] RC Celta Fortuna - ESP.png
+  [ ] UD Almería - ESP.png
+
+## Estados Unidos (12)
+  [ ] Atlanta United - EST.png
+  [ ] Charlotte FC - EST.png
+  [ ] DC United - EST.png
+  [ ] FC Cincinnati - EST.png
+  [ ] Houston Dynamo - EST.png
+  [ ] Minnesota United - EST.png
+  [ ] Nashville SC - EST.png
+  [ ] New York Red Bulls - EST.png
+  [ ] Orlando City - EST.png
+  [ ] Philadelphia Union - EST.png
+  [ ] Portland Timbers - EST.png
+  [ ] Seattle Sounders - EST.png
+
+## Franca (23)
+  [ ] AS Monaco - FRA.png
+  [ ] AS Nancy-Lorraine - FRA.png
+  [ ] AS Saint-Étienne - FRA.png
+  [ ] Angers - FRA.png
+  [ ] Auxerre - FRA.png
+  [ ] Brest - FRA.png
+  [ ] Clermont Foot 63 - FRA.png
+  [ ] Dijon FCO - FRA.png
+  [ ] FC Metz - FRA.png
+  [ ] FC Nantes - FRA.png
+  [ ] FC Sochaux-Montbéliard - FRA.png
+  [ ] FC Toulouse - FRA.png
+  [ ] LOSC Lille - FRA.png
+  [ ] Le Havre AC - FRA.png
+  [ ] Marseille - FRA.png
+  [ ] Montpellier - FRA.png
+  [ ] OGC Nice - FRA.png
+  [ ] Paris Saint-Germain - FRA.png
+  [ ] RC Lens - FRA.png
+  [ ] Rennes - FRA.png
+  [ ] Stade Lavallois - FRA.png
+  [ ] Stade Reims - FRA.png
+  [ ] Strasbourg - FRA.png
+
+## Gana (1)
+  [ ] West African FA - GAN.png
+
+## Grécia (2)
+  [ ] Volos NFC - GRÉ.png
+  [ ] Xanthi - GRÉ.png
+
+## Holanda (5)
+  [ ] Feyenoord - HOL.png
+  [ ] NEC Nijmegen - HOL.png
+  [ ] RKC Waalwijk - HOL.png
+  [ ] Sparta Rotterdam - HOL.png
+  [ ] Vitesse - HOL.png
+
+## Hungria (1)
+  [ ] Kisvárda - HUN.png
+
+## Indefinido (3)
+  [ ] Saint Andrews - IND.png
+  [ ] Sem Contrato - 20 - IND.png
+  [ ] Trenčín - IND.png
+
+## Inglaterra (6)
+  [ ] Manchester City - ING.png
+  [ ] Manchester United - ING.png
+  [ ] Nottingham Forest - ING.png
+  [ ] Preston North End - ING.png
+  [ ] Southampton - ING.png
+  [ ] West Ham - ING.png
+
+## Irlanda (1)
+  [ ] University College Dublin - IRL.png
+
+## Italia (23)
+  [ ] AC Milan - ITA.png
+  [ ] Atalanta - ITA.png
+  [ ] Bologna - ITA.png
+  [ ] Cagliari - ITA.png
+  [ ] Calcio Padova - ITA.png
+  [ ] Como - ITA.png
+  [ ] Empoli - ITA.png
+  [ ] Empoli FC - ITA.png
+  [ ] Fiorentina - ITA.png
+  [ ] Genoa CFC - ITA.png
+  [ ] Hellas Verona - ITA.png
+  [ ] Inter - ITA.png
+  [ ] Lazio - ITA.png
+  [ ] Lecce - ITA.png
+  [ ] Napoli - ITA.png
+  [ ] Parma - ITA.png
+  [ ] Pisa Sporting Club - ITA.png
+  [ ] Roma - ITA.png
+  [ ] Torino - ITA.png
+  [ ] UC Sampdoria - ITA.png
+  [ ] Udinese - ITA.png
+  [ ] Venezia - ITA.png
+  [ ] Virtus Entella - ITA.png
+
+## Japao (8)
+  [ ] Albirex Niigata - JAP.png
+  [ ] Avispa Fukuoka - JAP.png
+  [ ] Jubilo Iwata - JAP.png
+  [ ] Kashiwa Reysol - JAP.png
+  [ ] Machida Zelvia - JAP.png
+  [ ] Sagan Tosu - JAP.png
+  [ ] Shonan Bellmare - JAP.png
+  [ ] Tokyo Verdy - JAP.png
+
+## Mexico (11)
+  [ ] Atlas - MEX.png
+  [ ] Atlético San Luis - MEX.png
+  [ ] Chivas Guadalajara - MEX.png
+  [ ] Cruz Azul - MEX.png
+  [ ] Monterrey - MEX.png
+  [ ] Necaxa - MEX.png
+  [ ] Pachuca - MEX.png
+  [ ] Pumas UNAM - MEX.png
+  [ ] Querétaro - MEX.png
+  [ ] Santos Laguna - MEX.png
+  [ ] Toluca - MEX.png
+
+## Portugal (12)
+  [ ] CD Santa Clara - POR.png
+  [ ] CF Estrela Amadora - POR.png
+  [ ] Casa Pia AC - POR.png
+  [ ] Estoril Praia - POR.png
+  [ ] FC Arouca - POR.png
+  [ ] FC Famalicão - POR.png
+  [ ] Gil Vicente FC - POR.png
+  [ ] Moreirense FC - POR.png
+  [ ] Nacional - POR.png
+  [ ] SC Farense - POR.png
+  [ ] Sporting CP - POR.png
+  [ ] Vitoria Guimaraes - POR.png
+
+## Russia (1)
+  [ ] Torpedo Moscow - RUS.png
+
+## Rússia (1)
+  [ ] Zenit II - RÚS.png
+
+## Suécia (2)
+  [ ] Umeå FC - SUÉ.png
+  [ ] Värnamo - SUÉ.png
+
+## Suíça (2)
+  [ ] FC Wil 1900 - SUÍ.png
+  [ ] Thun II - SUÍ.png
+
+## Sérvia (2)
+  [ ] Spartak Subotica - SÉR.png
+  [ ] Zemun - SÉR.png
+
+## Turquia (4)
+  [ ] Altınordu FK - TUR.png
+  [ ] Antalyaspor - TUR.png
+  [ ] Balıkesirspor Kulübü - TUR.png
+  [ ] Rizespor - TUR.png
+
+## Zâmbia (1)
+  [ ] Independence Stadium - ZÂM.png
+
+## Brasil (22)
+  [ ] Ananindeua - BRA.png
+  [ ] Atlético de Ibirama - BRA.png
+  [ ] Atlético-PB - BRA.png
+  [ ] Baraúnas - BRA.png
+  [ ] Cachoeiro - BRA.png
+  [ ] Caxias SC - BRA.png
+  [ ] Colatina - BRA.png
+  [ ] Estrela do Norte - BRA.png
+  [ ] Estádio Gui .Augusto Carvalho - BRA.png
+  [ ] Estádio Zequinha Roriz - BRA.png
+  [ ] Flamengo PI - BRA.png
+  [ ] Ipitanga - BRA.png
+  [ ] Jaguaré - BRA.png
+  [ ] Mineiros GO - BRA.png
+  [ ] Pacajus - BRA.png
+  [ ] Palmeira - BRA.png
+  [ ] Pirambu - BRA.png
+  [ ] Porto - PE - BRA.png
+  [ ] Potiguar - BRA.png
+  [ ] Roma Apucarana - BRA.png
+  [ ] Serrano PE - BRA.png
+  [ ] União Bandeirante - BRA.png

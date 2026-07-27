@@ -9,6 +9,7 @@ import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, getContractStatus, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
 import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
+import { getGameDate } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
@@ -29,7 +30,8 @@ import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
 import { berthsForSeason, continentalTitleBerth, type SuperCupBerth } from "@/lib/super-cups"
 import { qualificacaoReal2026 } from "@/lib/qualificacao-2026"
-import { isFifaWindowMonth, windowLabel } from "@/lib/national-windows"
+import { isFifaWindowMonth, windowLabel, cyclePhase, worldCupHosts, worldCupNote } from "@/lib/national-windows"
+import { gerarScorersDaPartida } from "@/lib/competition-scorers"
 import { regionalCupForState } from "@/lib/regional-cups"
 
 const LEAGUE_NAMES: Record<string, string> = {
@@ -62,8 +64,11 @@ interface LeagueCalendarConfig {
 
 const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   // Ligas brasileiras: parte nacional comeca em abril
-  serie_a:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
-  serie_b:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
+  // Brasileirao: abril a DEZEMBRO (9 meses), como na vida real — a ultima rodada
+  // cai no comeco de dezembro. Antes ia so ate novembro (8 meses) e o jogador
+  // reclamava do calendario "sem dezembro".
+  serie_a:        { startMonth: 3,  monthsInSeason: 9,  rounds: 38 },
+  serie_b:        { startMonth: 3,  monthsInSeason: 9,  rounds: 38 },
   serie_c:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
   serie_d:        { startMonth: 3,  monthsInSeason: 8,  rounds: 38 },
   // Estaduais isolados (divisao propria)
@@ -117,6 +122,27 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   j2_league:      { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
   k_league_2:     { startMonth: 1,  monthsInSeason: 11, rounds: 36 },
   china_league_one:{ startMonth: 1, monthsInSeason: 10, rounds: 30 },
+}
+
+// Meses que o calendario deve MOSTRAR, derivados do MESMO LEAGUE_CALENDAR que
+// posiciona os jogos (getRoundMonth). Antes a tela usava listas de regiao
+// escritas a mao que NAO batiam com os meses reais dos jogos — o time argentino
+// via Jul-Mai enquanto os jogos iam de Jan a Dez, e o brasileiro nao via
+// dezembro. Derivar da fonte unica elimina o descompasso: aba e jogo sempre no
+// mesmo mes.
+export function seasonMonthsForDivision(division: string): number[] {
+  const cfg = LEAGUE_CALENDAR[division] ?? { startMonth: 3, monthsInSeason: 8, rounds: 38 }
+  // Europa (e ligas que cruzam o ano, comecando no 2o semestre): arco ago->mai.
+  if (cfg.startMonth >= 6) {
+    const meses: number[] = []
+    for (let i = 0; i < 10; i++) meses.push((cfg.startMonth + i) % 12)
+    return meses
+  }
+  // Brasil e ligas de ANO-CALENDARIO: o futebol vai de JANEIRO a DEZEMBRO —
+  // estaduais no comeco do ano, a liga do meio ao fim, copas/continental e o
+  // Mundial no meio. O jogador pediu ver o ano inteiro; meses sem jogo ficam
+  // vazios, mas o calendario reflete a temporada real completa.
+  return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 }
 
 export const ESTADO_CAMPEONATO: Record<string, string> = {
@@ -189,7 +215,7 @@ function getRoundMonth(round: number, startMonth: number, monthsInSeason: number
 //
 // A pausa e isUserMatch:false + played:true: nao conta como compromisso do
 // clube, entao nao interfere na deteccao de fim de temporada; so cria o buraco.
-export function aplicarPausasFifa(fixtures: Fixture[], userTeam: Team): Fixture[] {
+export function aplicarPausasFifa(fixtures: Fixture[], userTeam: Team, season = 2026): Fixture[] {
   // Mes de cada semana de LIGA — a pausa e do calendario de CLUBES.
   const monthOfWeek = new Map<number, number>()
   for (const f of fixtures) {
@@ -198,32 +224,60 @@ export function aplicarPausasFifa(fixtures: Fixture[], userTeam: Team): Fixture[
   const weeks = [...monthOfWeek.keys()].sort((a, b) => a - b)
   if (weeks.length < 2) return fixtures
 
+  // Em ano de Copa do Mundo, a janela de JUNHO deixa de ser uma data FIFA de 1
+  // semana e vira a pausa do MUNDIAL: ~6 semanas (11/jun a 19/jul), o clube para
+  // de verdade. Era esse o buraco do relato "nao teve a pausa para copa do mundo"
+  // — o codigo so inseria 1 semaninha em junho, imperceptivel. Fora do ano de
+  // Mundial, cada janela FIFA (Mar/Jun/Set/Out/Nov) pausa 1 semana, como antes.
+  const anoDeCopa = cyclePhase(season) === "wc"
+
   // Ponto de pausa: a 1a semana de liga de CADA mes de janela FIFA. Setembro,
   // Outubro e Novembro sao janelas SEPARADAS (cada uma pausa), por isso a condicao
   // e "mudou para um mes FIFA", nao "entrou numa sequencia FIFA". Comeca do 2o
   // para nunca abrir a temporada com uma pausa antes do 1o jogo.
-  const pausas: { week: number; month: number }[] = []
+  const pausas: { week: number; month: number; count: number; label: string; mundial: boolean }[] = []
   let prevMonth = monthOfWeek.get(weeks[0]) ?? -1
   for (let i = 1; i < weeks.length; i++) {
     const m = monthOfWeek.get(weeks[i]) ?? -1
-    if (isFifaWindowMonth(m) && m !== prevMonth) pausas.push({ week: weeks[i], month: m })
+    if (isFifaWindowMonth(m) && m !== prevMonth) {
+      const mundial = anoDeCopa && m === 5 // junho do ano de Copa
+      pausas.push({
+        week: weeks[i], month: m,
+        count: mundial ? 6 : 1,
+        label: mundial ? "Copa do Mundo FIFA" : windowLabel(m),
+        mundial,
+      })
+    }
     prevMonth = m
   }
   if (pausas.length === 0) return fixtures
 
   const out = [...fixtures]
   let breakId = 90000
-  // Do fim para o comeco: cada insercao desloca tudo a partir da semana em +1,
+  // Do fim para o comeco: cada insercao desloca tudo a partir da semana em +count,
   // e as pausas de semanas menores nao sao afetadas pelas de semanas maiores.
   for (const p of [...pausas].sort((a, b) => b.week - a.week)) {
-    for (const f of out) if (f.week >= p.week) f.week += 1
-    out.push({
-      id: breakId++, round: 0, week: p.week,
-      homeTeam: userTeam, awayTeam: userTeam,
-      competition: windowLabel(p.month),
-      played: true, isUserMatch: false, month: p.month,
-      competitionType: "fifa_break",
-    })
+    for (const f of out) if (f.week >= p.week) {
+      f.week += p.count
+      // O MÊS precisa acompanhar a nova semana: sem isto, um jogo de clube
+      // empurrado pela pausa da Copa continuava com month=Junho e AINDA aparecia
+      // em Junho no calendário, ao lado do aviso "clubes pausados" (relato). Os
+      // fifa_break têm mês próprio (Jun/Jul do Mundial) e não são recomputados.
+      if (f.competitionType !== "fifa_break") f.month = getGameDate(season, f.week).getMonth()
+    }
+    for (let k = 0; k < p.count; k++) {
+      // O Mundial atravessa junho->julho: as primeiras semanas ficam em junho (5),
+      // as ultimas em julho (6), para o calendario mostrar o torneio nos dois meses.
+      const mes = p.mundial ? (k < 3 ? 5 : 6) : p.month
+      out.push({
+        id: breakId++, round: 0, week: p.week + k,
+        homeTeam: userTeam, awayTeam: userTeam,
+        competition: p.label,
+        played: true, isUserMatch: false, month: mes,
+        competitionType: "fifa_break",
+        worldCup: p.mundial,
+      })
+    }
   }
   return out
 }
@@ -269,10 +323,31 @@ export function getStateCompetitionRule(userTeamShort: string): CompetitionRegul
   if (!userTeam) return undefined
   const normalized = normalizeCompetitionClub(userTeam.nome)
   const candidates = (STATE_RULE_IDS[userTeam.estado] ?? []).map(id => COMPETITION_REGULATIONS_2026[id]).filter(Boolean)
-  return candidates.find(rule => rule.clubs?.some(name => {
-    const club = normalizeCompetitionClub(name)
-    return club === normalized || club.includes(normalized) || normalized.includes(club)
-  })) ?? candidates[0]
+
+  // DIVISAO do estadual (A1/A2/A3). O nome tem que casar EXATO antes de qualquer
+  // aproximacao. So com substring, o nome curto de um clube da A1 esta contido no
+  // nome longo de outro clube, de outra divisao, e como a busca devolvia a
+  // PRIMEIRA divisao da lista o clube menor era promovido:
+  //   "Portuguesa" (A1)    dentro de "Portuguesa Santista" (A3)
+  //   "Sao Bernardo" (A1)  dentro de "EC Sao Bernardo"     (A3)
+  // Os dois clubes da A3 jogavam o regulamento da A1.
+  const exact = candidates.find(rule =>
+    rule.clubs?.some(name => normalizeCompetitionClub(name) === normalized),
+  )
+  if (exact) return exact
+
+  // Sem casamento exato, vence a aproximacao MAIS ESPECIFICA (maior trecho de
+  // nome em comum) em vez da primeira divisao encontrada.
+  let best: { rule: CompetitionRegulation2026; score: number } | undefined
+  for (const rule of candidates) {
+    for (const name of rule.clubs ?? []) {
+      const club = normalizeCompetitionClub(name)
+      if (!club || !(club.includes(normalized) || normalized.includes(club))) continue
+      const score = Math.min(club.length, normalized.length)
+      if (!best || score > best.score) best = { rule, score }
+    }
+  }
+  return best?.rule ?? candidates[0]
 }
 
 // Retorna TODOS os times do estado que disputam o estadual (minimo 4).
@@ -536,6 +611,10 @@ export function getUserCupPlan(
   superCups: readonly SuperCupBerth[] = [],
   continentalBerth: "primary" | null = null,
   temporada = 0,
+  /** Posição FINAL na liga na temporada ANTERIOR (1 = campeão). Decide a vaga
+   *  continental de forma REALISTA — o campeão SEMPRE entra na principal. 0/undefined
+   *  = desconhecido, cai no fallback por prestígio. */
+  lastLeaguePosition = 0,
 ): CupCompetitionPlan[] {
   const division = String(userTeam.divisao)
   const comps = competitionsByLeague[division as keyof typeof competitionsByLeague] ?? []
@@ -617,11 +696,25 @@ export function getUserCupPlan(
     // Champions) independentemente da posicao na liga — campeao da Sul-Americana
     // sobe para a Libertadores, campeao da Europa League para a Champions.
     else if (continentalBerth === "primary") chosen = continentals[0]
+    // CLASSIFICACAO REAL pela POSICAO FINAL da temporada anterior. O campeao (1o)
+    // SEMPRE entra na principal — era o bug do relato ("fui campeao mas nao fui pra
+    // Libertadores/Champions"), porque a vaga saia do rank de PRESTIGIO (clube
+    // pequeno campeao tinha prestigio baixo e nao classificava). Cortes por
+    // confederacao: CONMEBOL top6 Libertadores / 7-12 Sul-Americana; UEFA e demais
+    // top4 principal / 5-6 secundaria / 7 terciaria.
+    else if (lastLeaguePosition >= 1) {
+      const conmebol = getConfederation(division) === "conmebol"
+      const tier = conmebol
+        ? (lastLeaguePosition <= 6 ? 0 : lastLeaguePosition <= 12 ? 1 : -1)
+        : (lastLeaguePosition <= 4 ? 0 : lastLeaguePosition <= 6 ? 1 : lastLeaguePosition <= 7 ? 2 : -1)
+      if (tier >= 0) chosen = continentals[Math.min(tier, continentals.length - 1)]
+    }
+    // Sem posicao conhecida (1a temporada de um save antigo): fallback por prestigio.
     else if (rank >= 0 && rank < 4) chosen = continentals[0]
     else if (rank >= 0 && rank < 10) chosen = continentals[1] ?? continentals[0]
     else if (continentals.length >= 3) chosen = continentals[2]
     // Times de elite (prestigio alto) garantem ao menos a continental secundaria
-    if (!chosen && userTeam.prestigio >= 75) chosen = continentals[continentals.length - 1]
+    if (!chosen && lastLeaguePosition === 0 && userTeam.prestigio >= 75) chosen = continentals[continentals.length - 1]
     if (chosen) {
       const matchCount = chosen.prestige >= 90 ? 8 : 6
       plans.push({ competition: chosen, competitionType: "continental", matchCount })
@@ -1139,18 +1232,6 @@ export function generateStateChampionshipFixtures(
     return output.sort(compareShort)
   }
 
-  /**
-   * A fase so esta decidida quando TODOS os confrontos dela foram disputados.
-   * Sem isto o calendario montava quartas, semifinal e final de uma vez — e como
-   * `winners()` chuta um vencedor quando o confronto ainda nao aconteceu, a
-   * final aparecia com finalista definido antes de a semi ser jogada.
-   */
-  const faseDecidida = (stageFixtures: Fixture[]): boolean => {
-    if (!stageFixtures.length) return false
-    const hidratada = reconcilePlayedFixtures(stageFixtures, knownResults, season)
-    return hidratada.every(m => m.played && m.homeScore !== undefined && m.awayScore !== undefined)
-  }
-
   let entrants: string[] = []
   for (const stage of rule.knockout) {
     if (stage === "segunda_fase") {
@@ -1175,7 +1256,8 @@ export function generateStateChampionshipFixtures(
         nextWeek++
       }
       fixtures.push(...secondPhaseFixtures)
-      if (!faseDecidida(secondPhaseFixtures)) break
+      // Idem: não interrompe mais a geração; os classificados saem das mini-tabelas
+      // (provisórias até os jogos acontecerem) e se firmam a cada rebuild.
       const hydrated = reconcilePlayedFixtures(secondPhaseFixtures, knownResults, season)
       entrants = groups.flatMap(group => {
         const mini = computeStandingsFromFixtures(hydrated, competition)
@@ -1190,9 +1272,14 @@ export function generateStateChampionshipFixtures(
     if (!entrants.length || entrants.length !== required) entrants = qualify(required)
     const legs = rule.stageRounds?.[stage] ?? rule.knockoutLegs?.[stage] ?? (stage === "final" ? rule.finalLegs : 1) ?? 1
     const stageFixtures = addPairStage(stage, entrants, legs)
-    // A proxima fase so entra no calendario depois que esta terminar. E assim
-    // que o jogador ve a semifinal sem ja ter a final marcada ao lado.
-    if (!faseDecidida(stageFixtures)) break
+    // GERA O BRACKET COMPLETO (relato "estadual travou nas oitavas e a temporada
+    // não saiu disso"): antes um `break` parava de gerar as fases seguintes
+    // enquanto a atual não estivesse 100% decidida — se qualquer confronto (mesmo
+    // CPU) não fechasse, semifinal/final NUNCA eram criadas e o estadual ficava
+    // preso. Agora todas as fases entram no calendário; os participantes vêm de
+    // `winners()` (provisórios enquanto o confronto não acontece) e se atualizam a
+    // cada rebuild conforme os jogos são disputados. A EstadualView mostra sempre a
+    // fase ATUAL (1ª não jogada), então o "finalista provisório" não fica à vista.
     entrants = winners(entrants, stageFixtures)
   }
 
@@ -1237,6 +1324,15 @@ export interface Fixture {
   isUserMatch: boolean
   month: number
   competitionType: "state" | "league" | "cup" | "continental" | "fifa_break"
+  /**
+   * Só em `fifa_break`: esta pausa é a do MUNDIAL (junho de ano de Copa), não uma
+   * data FIFA comum. Antes isso era deduzido comparando `competition` com o texto
+   * "Copa do Mundo FIFA" — o rótulo de EXIBIÇÃO. Qualquer mudança nesse texto
+   * derrubava silenciosamente a Central do Mundial e a pausa virava uma data FIFA
+   * qualquer, que o botão do escritório atravessa direto até o próximo jogo do
+   * clube. A flag é o dado; o rótulo segue sendo só rótulo.
+   */
+  worldCup?: boolean
   stage?: string
   /**
    * Jogo de MEIO DE SEMANA: divide a semana com a rodada de liga, como no
@@ -1417,35 +1513,25 @@ function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, seaso
   const homeScore = Math.floor(Math.random() * 4 * (homeExpectedGoals / 2))
   const awayScore = Math.floor(Math.random() * 4 * (awayExpectedGoals / 2))
   
-  // Gera eventos basicos com nomes reais dos jogadores
+  // Goleadores REAIS da partida, ponderados por posicao e overall, com assistencia
+  // (~62%). Substitui o sorteio uniforme entre atacantes que existia aqui. Os
+  // scorers sao GRAVADOS no resultado para a estatistica ler dado persistido; os
+  // eventos (usados nos modais) saem dos mesmos scorers, com minuto sorteado.
   const homePlayers = getPlayersForTeam(homeTeam)
   const awayPlayers = getPlayersForTeam(awayTeam)
-  const attackers = (players: typeof homePlayers) =>
-    players.filter(p => ["ATA", "MEI", "PE", "PD"].includes(p.pos))
-  const homeAttackers = attackers(homePlayers)
-  const awayAttackers = attackers(awayPlayers)
-  const pickScorer = (list: typeof homePlayers, fallback: string) => {
-    if (!list.length) return fallback
-    return list[Math.floor(Math.random() * list.length)].nome
-  }
-  const events: MatchEvent[] = []
-  for (let i = 0; i < homeScore; i++) {
-    events.push({
-      minute: Math.floor(Math.random() * 90) + 1,
-      type: "goal",
-      playerId: 0,
-      playerName: pickScorer(homeAttackers, homeTeam.curto)
-    })
-  }
-  for (let i = 0; i < awayScore; i++) {
-    events.push({
-      minute: Math.floor(Math.random() * 90) + 1,
-      type: "goal",
-      playerId: 0,
-      playerName: pickScorer(awayAttackers, awayTeam.curto)
-    })
-  }
-  
+  const scorers = gerarScorersDaPartida({
+    homeShort: homeTeam.curto, awayShort: awayTeam.curto,
+    homePlayers, awayPlayers, homeScore, awayScore,
+    seedBase: `${homeTeam.curto}-${awayTeam.curto}-${season}-${week}`,
+  })
+  const events: MatchEvent[] = scorers.map(s => ({
+    minute: Math.floor(Math.random() * 90) + 1,
+    type: "goal" as const,
+    playerId: 0,
+    playerName: s.name,
+    assistPlayerName: s.assist,
+  }))
+
   return {
     week,
     season,
@@ -1454,7 +1540,8 @@ function simulateMatchResult(homeTeam: Team, awayTeam: Team, week: number, seaso
     awayTeam: awayTeam.curto,
     homeScore,
     awayScore,
-    events: events.sort((a, b) => a.minute - b.minute)
+    events: events.sort((a, b) => a.minute - b.minute),
+    scorers,
   }
 }
 
@@ -1661,7 +1748,16 @@ export function useGameManager() {
     let allFixtures: Fixture[] = []
     let stateChampRoundsCount = 0
 
-    if (isBrazilianDivision(division)) {
+    // Quem disputa estadual e decidido SO por getStateChampionshipTeams (que ja
+    // aplica disputaEstadual). Havia aqui um segundo portao, `isBrazilianDivision`,
+    // mais restrito que aquele: clube que existe apenas no POOL (`pool:Brasil`,
+    // ex.: Inter de Limeira) ficava SEM estadual no calendario — mas
+    // getStateChampRounds e a tela de competicoes, que passam so pelo
+    // getStateChampionshipTeams, CONTAVAM o estadual dele. Os dois lados
+    // discordavam: a liga comecava na semana 1 enquanto o resto do jogo
+    // acreditava que havia N rodadas de estadual antes, e o estadual reaparecia
+    // fora de lugar no calendario. Um portao so elimina a divergencia.
+    {
       const stateTeams = getStateChampionshipTeams(userTeamShort)
       if (stateTeams.length >= 4) {
         const stateName = ESTADO_CAMPEONATO[userTeam?.estado ?? ""] ?? "Campeonato Estadual"
@@ -1684,6 +1780,12 @@ export function useGameManager() {
     // Vaga na continental principal por titulo continental do ano anterior
     // (Sul-Americana -> Libertadores, Europa League -> Champions).
     const continentalBerth = continentalTitleBerth(saveState.seasonHistory, userTeamShort, saveState.season)
+    // POSICAO FINAL na LIGA da temporada anterior — decide a vaga continental de
+    // forma realista (campeao -> principal). Entre os registros da temporada
+    // passada do clube, o da LIGA e o que tem mais jogos (a copa tem ~5).
+    const lastLeaguePosition = (saveState.seasonHistory ?? [])
+      .filter(r => r.season === saveState.season - 1 && r.teamCurto === userTeamShort)
+      .sort((a, b) => (b.won + b.drawn + b.lost) - (a.won + a.drawn + a.lost))[0]?.position ?? 0
 
     const leagueTeams = getUserLeagueTeams(userTeamShort, saveState.divisionOverride)
     const competition = LEAGUE_NAMES[division] ?? getLeagueName(userTeamShort)
@@ -1699,7 +1801,7 @@ export function useGameManager() {
       // Um rival da mesma liga ja aparece em ida e volta. Prioriza adversarios externos
       // nas copas para nao criar o relato confuso de tres jogos contra o mesmo clube.
       const cupOpponents = new Set(leagueTeams.filter(t => t.curto !== userTeam.curto).map(t => t.curto))
-      for (const plan of getUserCupPlan(userTeam, superCupBerths, continentalBerth, saveState.season)) {
+      for (const plan of getUserCupPlan(userTeam, superCupBerths, continentalBerth, saveState.season, lastLeaguePosition)) {
         cupMatches.push(...generateUserCupMatches(
           userTeam, plan, saveState.season, cupOpponents,
           gameEngine.matchResults.filter(r => r.season === saveState.season),
@@ -1785,7 +1887,7 @@ export function useGameManager() {
     // entao casar so pela direcao + temporada e seguro.
     // Insere as pausas de data FIFA ANTES de reconciliar/numerar: o calendario
     // de clubes para na janela de selecoes e os jogos seguintes deslizam.
-    if (userTeam) allFixtures = aplicarPausasFifa(allFixtures, userTeam)
+    if (userTeam) allFixtures = aplicarPausasFifa(allFixtures, userTeam, saveState.season)
 
     const seasonNow = saveState.season
     allFixtures = reconcilePlayedFixtures(
@@ -1793,6 +1895,22 @@ export function useGameManager() {
       gameEngine.matchResults,
       seasonNow,
       saveState.completedFixtureKeys ?? [],
+    )
+
+    // Ao assumir um clube no meio da temporada, os compromissos que esse clube
+    // disputou antes da chegada do treinador não podem voltar para a agenda como
+    // se fossem jogos futuros. Isso acontecia sobretudo com clubes de estadual:
+    // aceitar a Inter de Limeira em julho fazia o Paulista de janeiro reaparecer
+    // como "próximo jogo". Os resultados históricos continuam no calendário,
+    // mas todo fixture anterior à semana atual passa a ser tratado como concluído.
+    //
+    // Não gravamos placares inventados aqui: a classificação usa os resultados
+    // reais/simulados do motor. Para a agenda, `played` é a informação necessária
+    // para impedir a repetição do campeonato.
+    allFixtures = allFixtures.map(fixture =>
+      fixture.isUserMatch && !fixture.played && fixture.week < currentWeek
+        ? { ...fixture, played: true }
+        : fixture,
     )
 
     // Encontra rodada atual — total inclui estadual + liga + copas/continentais
@@ -1807,7 +1925,7 @@ export function useGameManager() {
 
     // Proxima partida do usuario (a de menor semana ainda nao jogada)
     const nextUserMatch = allFixtures
-      .filter(f => f.isUserMatch && !f.played)
+      .filter(f => f.isUserMatch && !f.played && f.week >= currentWeek)
       .sort((a, b) => a.week - b.week)[0] || null
 
     // Ultima partida do usuario (a de maior semana ja jogada)
@@ -2060,12 +2178,17 @@ export function useGameManager() {
       // Processa fim de temporada: envelhece jogadores, aposentadorias, jovens da base, reseta standings
       gameEngine.processSeasonEnd(nextSeason, newStandings, currentStandings)
 
+      // O TITULO DA LIGA tambem conta para a reputacao do tecnico
+      // (coachTotalTitles) — mesmo motivo do titulo de copa: e o que abre as
+      // propostas de clube e de selecao. So quando o usuario foi o campeao.
+      const ganhouALiga = champion != null && champion === userShort
       const patch = {
         week: 0, season: nextSeason,
         divisionOverride: nextDivisionOverride,
         clubDivisions: nextClubDivisions,
         divisionMovement,
         completedFixtureKeys: [],
+        ...(ganhouALiga ? { coachTotalTitles: (currentState.coachTotalTitles ?? 0) + 1 } : {}),
         seasonAwards: seasonAwards
           ? [...(currentState.seasonAwards ?? []), seasonAwards]
           : currentState.seasonAwards,
@@ -2076,7 +2199,30 @@ export function useGameManager() {
       saveStateRef.current = { ...currentState, ...patch }
       setSaveState(patch)
 
-      return { newSeason: true, champion }
+      // CERIMONIA DO TITULO DA LIGA. Antes o campeao so era sinalizado quando
+      // `newWeek === seasonEndWeek` (mais abaixo, no caminho newSeason:false), o
+      // que so coincidia com a ultima rodada na Serie A. Nas demais ligas a
+      // temporada fecha aqui por "fixtures completas" e aquele bloco nunca roda —
+      // o jogador vira campeao e nao ve nada (relato: Brasileirao/Libertadores/
+      // Paulista/"outras ligas"). Este bloco roda para TODA liga, entao gravamos
+      // o pending-champion e devolvemos leagueChampion tambem por aqui.
+      let leagueChampion: { competition: string; season: string; stats: { won: number; drawn: number; lost: number; goalsFor: number } } | null = null
+      if (champion && champion === userShort && userStanding && typeof window !== "undefined") {
+        const stats = { won: userStanding.won, drawn: userStanding.drawn, lost: userStanding.lost, goalsFor: userStanding.goalsFor }
+        leagueChampion = {
+          competition: getLeagueName(userShort, divOverride),
+          season: `${currentState.season}/${String(currentState.season + 1).slice(-2)}`,
+          stats,
+        }
+        safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
+          competition: leagueChampion.competition,
+          season: String(currentState.season),
+          type: "league",
+          stats,
+        }))
+      }
+
+      return { newSeason: true, champion, leagueChampion }
     }
 
     // Simula partidas de outros times desta rodada
@@ -2225,6 +2371,39 @@ export function useGameManager() {
       }
     }
     if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)}
+    // RELATÓRIO FINANCEIRO MENSAL na central de notificações (pedido: acompanhar
+    // entradas/saídas e dívidas). Também esclarece a dúvida "como pago as dívidas?"
+    // — a parcela é quitada AUTOMATICAMENTE do caixa todo mês; dá para renegociar
+    // ou amortizar em Finanças.
+    if (newWeek % 4 === 0) {
+      const eng = useGameEngine.getState()
+      const fmt = (v: number) => "R$ " + Math.round(v || 0).toLocaleString("pt-BR")
+      const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+      const mesNome = MESES[getGameDate(currentState.season, newWeek).getMonth()]
+      const sponsorship = (currentState.activeSponsors ?? []).reduce((s, sp) => s + sp.monthlyValue, 0)
+      const rendaMes = (eng.weeklyIncome ?? 0) * 4 + sponsorship
+      const gastoMes = (eng.weeklyExpenses ?? 0) * 4 + (currentState.stadiumPitch?.monthlyMaintenance ?? 0)
+      const saldo = eng.balance ?? 0
+      const resultado = rendaMes - gastoMes
+      const deficit = saldo < 0 || resultado < 0
+      const alerta = deficit
+        ? `\n\n⚠️ ${saldo < 0 ? "Caixa NEGATIVO" : "As saídas superam as entradas"} — corte folha/staff ou aumente a receita para não travar as contratações.`
+        : `\n\n📈 Contas equilibradas.`
+      const linhaDivida = debt?.enabled
+        ? `\n💳 Dívida: ${fmt(debt.principal)} em aberto — parcela ${fmt(debt.monthlyPayment)}/mês é descontada automática do caixa. Renegocie ou amortize em Finanças.`
+        : `\n✅ Sem dívidas ativas.`
+      addNotificationRef.current({
+        type: "system",
+        priority: deficit ? "high" : "low",
+        title: `📊 Relatório financeiro — ${mesNome}`,
+        message:
+          `Saldo em caixa: ${fmt(saldo)}\n\n` +
+          `▸ Entradas: ~${fmt(rendaMes)}/mês (bilheteria, patrocínio, premiações)\n` +
+          `▸ Saídas: ~${fmt(gastoMes)}/mês (salários, staff, manutenção)\n` +
+          `▸ Resultado do mês: ${resultado >= 0 ? "+" : "−"}${fmt(Math.abs(resultado))}` +
+          alerta + linhaDivida,
+      })
+    }
     const scoutingDepartment=currentState.scoutingDepartment?advanceScoutingWeek(currentState.scoutingDepartment,newWeek):undefined
     // As chaves das partidas resolvidas automaticamente entram no save junto com
     // a semana: sem isso elas voltariam a ser candidatas na próxima chamada.
@@ -2337,15 +2516,37 @@ export function useGameManager() {
         // comeco absoluto (semana <= 4) para nao demitir antes de o time jogar.
         const progressoTemporada = Math.min(1, newWeek / Math.max(1, seasonEndWeek))
         if (newWeek > 4 && shouldFireManager(confianca, progressoTemporada)) {
+          // CASO FERNANDO DINIZ: quem acumula clube + SELEÇÃO não fica sem emprego
+          // ao ser demitido do clube — segue no comando da seleção, como na vida
+          // real (Diniz seguiu na Seleção Brasileira após sair do Fluminense).
+          const selecaoAtual = currentState.nationalCareer?.nationalTeamId
+          const selecaoNome = currentState.nationalCareer?.nationalTeamName
+          if (selecaoAtual) {
+            addNotificationRef.current({
+              type: "system",
+              title: "Demitido do clube — você segue na seleção",
+              message: `A diretoria do ${teamNow.nome} encerrou seu ciclo. Mas, como Fernando Diniz após o Fluminense, você continua no comando da ${selecaoNome ?? "seleção"} e assume a seleção em tempo integral.`,
+              priority: "urgent",
+            })
+            if (typeof window !== "undefined") safeLocalSet("ultrafoot-pending-fired", JSON.stringify({ clube: teamNow.nome, season: currentState.season, continuaSelecao: selecaoNome ?? true }))
+            // Sai do clube MAS entra no modo seleção: cai no office da seleção.
+            setSaveState({ selectedTeamShort: null, managingNationalTeamId: selecaoAtual } as Partial<typeof currentState>)
+            if (typeof window !== "undefined") hardNavigate("/")
+            return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
+          }
           addNotificationRef.current({
             type: "system",
             title: "Você foi demitido",
-            message: `A diretoria do ${teamNow.nome} decidiu encerrar seu ciclo após a sequência de resultados. Você está livre no mercado de treinadores.`,
-            priority: "high",
+            message: `A diretoria do ${teamNow.nome} decidiu encerrar seu ciclo após a sequência de resultados. Você está livre no mercado de treinadores — veja as propostas na Área do Treinador.`,
+            priority: "urgent",
           })
-          clearJobOffers()
+          // NAO limpa as ofertas: as propostas de clube ja recebidas continuam
+          // valendo, e a Area do Treinador ainda gera o mercado de desempregado.
+          // Um flag deixa a demissao INEQUIVOCA na proxima tela (antes o aviso
+          // passava batido na simulacao rapida e o jogador "virava" o time de
+          // fallback sem entender o que houve).
+          if (typeof window !== "undefined") safeLocalSet("ultrafoot-pending-fired", JSON.stringify({ clube: teamNow.nome, season: currentState.season }))
           setSaveState({ selectedTeamShort: null } as Partial<typeof currentState>)
-          // Demitido vai para a Area do Treinador, onde as propostas aparecem.
           if (typeof window !== "undefined") hardNavigate("/treinador")
           // Encerra o avanco: sem clube, nao ha ceremonia de campeao a checar.
           return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
@@ -2561,8 +2762,15 @@ export function useGameManager() {
       fanBase,
       // Titulo de copa entra no historico ja aqui (a liga entra no fim da
       // temporada). Sem duplicar: o guard idempotente no topo garante um registro.
+      // Alem do historico, o titulo CONTA para a reputacao do tecnico
+      // (coachTotalTitles) — que e o que as propostas de clube e de selecao leem.
+      // Antes so titulo de selecao incrementava isso, entao ganhar Copa do Brasil/
+      // Libertadores/estadual nao abria porta nenhuma no mercado de tecnicos.
       ...(cupTitleRecord
-        ? { seasonHistory: [...(currentState.seasonHistory ?? []), cupTitleRecord] }
+        ? {
+            seasonHistory: [...(currentState.seasonHistory ?? []), cupTitleRecord],
+            coachTotalTitles: (currentState.coachTotalTitles ?? 0) + 1,
+          }
         : {}),
     }
     saveStateRef.current = { ...currentState, ...patch }
@@ -2714,12 +2922,60 @@ export function useGameManager() {
     [saveState.selectedTeamShort]
   )
 
+  // PAUSA FIFA ATIVA. Na vida real, enquanto a janela de selecoes (data FIFA ou
+  // Copa do Mundo) esta aberta, o campeonato de CLUBES para: o tecnico de clube
+  // nao joga ate a janela fechar. Aqui detectamos que a pausa esta valendo AGORA —
+  // ha um fifa_break entre a semana atual e a proxima partida do clube. Enquanto
+  // isso, a UI bloqueia o "jogar" e mostra a janela (Copa do Mundo para acompanhar).
+  const fifaPause = useMemo(() => {
+    const prox = seasonCalendar.nextUserMatch
+    const limite = prox?.week ?? Number.POSITIVE_INFINITY
+    const breaks = seasonCalendar.fixtures
+      .filter(f => f.competitionType === "fifa_break" && f.week >= saveState.week && f.week < limite)
+      .sort((a, b) => a.week - b.week)
+    if (breaks.length === 0) return null
+    // A flag manda. O casamento pelo rótulo fica como rede para saves gerados
+    // antes de `worldCup` existir; em ano de Copa, uma pausa de junho com várias
+    // semanas só pode ser o Mundial.
+    const isWorldCup = breaks.some(b =>
+      b.worldCup === true ||
+      b.competition === "Copa do Mundo FIFA" ||
+      (cyclePhase(saveState.season) === "wc" && b.month === 5 && breaks.length > 1),
+    )
+    return {
+      active: true,
+      isWorldCup,
+      label: isWorldCup ? "Copa do Mundo FIFA" : (breaks[0].competition ?? "Data FIFA"),
+      // Pais(es)-sede da edicao (2026 EUA/CAN/MEX, 2030 ESP/POR/MAR, 2034 Arabia).
+      hosts: isWorldCup ? worldCupHosts(saveState.season) : "",
+      note: isWorldCup ? worldCupNote(saveState.season) : "",
+      fromWeek: breaks[0].week,
+      untilWeek: breaks[breaks.length - 1].week + 1,
+    }
+  }, [seasonCalendar.fixtures, seasonCalendar.nextUserMatch, saveState.week, saveState.season])
+
+  // Avanca as semanas da janela FIFA de uma vez, ate o clube voltar a ter jogo.
+  const advancePastFifaBreak = useCallback(async () => {
+    let guard = 0
+    while (guard++ < 24) {
+      const fixtures = seasonCalendarRef.current.fixtures
+      const wk = saveStateRef.current.week
+      const prox = seasonCalendarRef.current.nextUserMatch
+      const limite = prox?.week ?? Number.POSITIVE_INFINITY
+      const temBreak = fixtures.some(f => f.competitionType === "fifa_break" && f.week >= wk && f.week < limite)
+      if (!temBreak) break
+      await advanceWeek()
+    }
+  }, [advanceWeek])
+
   return {
     // Estado
     hydrated,
     userTeam,
     userPosition,
     standings,
+    fifaPause,
+    advancePastFifaBreak,
     // Tabela + nome do campeonato que esta sendo disputado (estadual, liga, copa...)
     currentStandings,
     currentCompetition,
