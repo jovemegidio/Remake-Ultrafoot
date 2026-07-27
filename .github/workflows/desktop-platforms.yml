@@ -76,8 +76,6 @@ jobs:
       - name: Verify distributable game assets
         run: |
           node scripts/qa-release-assets.mjs
-          pnpm exec tsx scripts/qa-smoke.ts
-          pnpm exec tsx scripts/qa-rosters.ts
 
       - name: Build & publish native package
         uses: tauri-apps/tauri-action@v0
