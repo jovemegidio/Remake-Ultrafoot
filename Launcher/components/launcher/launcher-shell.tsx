@@ -318,6 +318,26 @@ export function LauncherShell({
     [latest.version],
   )
 
+  // Linux/macOS: baixa e instala automaticamente assim que uma versão desktop
+  // mais nova aparece. O ref impede tentativas repetidas da mesma versão quando
+  // uma falha de rede devolve o estado para "update".
+  const autoUpdateAttemptRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (status !== "update" || install.downloading || !online || !latestVersion) return
+    const url = latest.url ?? game.latestRelease?.downloadUrl
+    if (!url || autoUpdateAttemptRef.current === latestVersion) return
+    autoUpdateAttemptRef.current = latestVersion
+    runInstall(url)
+  }, [
+    status,
+    install.downloading,
+    online,
+    latestVersion,
+    latest.url,
+    game.latestRelease?.downloadUrl,
+    runInstall,
+  ])
+
   const startDownload = useCallback(() => {
     if (install.downloading) return
     if (status === "playable") {
