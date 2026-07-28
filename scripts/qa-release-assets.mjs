@@ -33,7 +33,17 @@ for (const [directory, minimum, label] of requirements) {
   }
 }
 
-try {
+// PRE-REQUISITO DO WINDOWS. O Visual C++ Runtime e o hook do NSIS so existem
+// para o instalador do Windows: no Linux o pacote e AppImage/deb e no macOS e
+// .dmg, nenhum dos dois usa vc_redist nem NSIS.
+//
+// Esta checagem rodava em TODA plataforma e derrubava o workflow "Desktop Linux
+// and macOS" com exit 1 antes de compilar — os dois jobs falhavam sempre, e o
+// jogo nunca era publicado fora do Windows. Localmente passava porque a maquina
+// de build e Windows e tem o arquivo, o que escondia o problema.
+if (process.platform !== "win32") {
+  console.log("Visual C++ Runtime: checagem ignorada (pre-requisito exclusivo do Windows)")
+} else try {
   const config = JSON.parse(await readFile("src-tauri/tauri.conf.json", "utf8"))
   const runtime = "src-tauri/resources/prerequisites/vc_redist.x64.exe"
   const runtimeSize = (await stat(runtime)).size

@@ -680,7 +680,9 @@ export default function SelecaoPage() {
               </div>
             </div>
 
-            {/* Competicao ativa OU lista de competicoes */}
+            {/* Competicao ativa OU lista de competicoes.
+                O id serve de destino para "Competicoes da selecao" no escritorio. */}
+            <div id="competicoes" className="scroll-mt-24" />
             {currentCompetition ? (
               <CompetitionPanel />
             ) : (

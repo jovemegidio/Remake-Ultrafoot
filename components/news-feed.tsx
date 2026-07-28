@@ -70,6 +70,48 @@ export interface NewsItem {
   isReal?: boolean
   /** Link da materia original — so nas reais. */
   link?: string
+  /** Foto REAL publicada pelo feed da materia. Quando ausente, cai na capa local. */
+  imagem?: string
+  /** Card patrocinado — nao e noticia, e publicidade. */
+  isAd?: boolean
+}
+
+// CARD PATROCINADO do carrossel. Fica na 2a posicao (depois das manchetes
+// reais) para nao ser a primeira coisa que o jogador ve ao abrir a tela.
+//
+// A imagem usa a MESMA fonte das capas locais das materias, entao o anuncio
+// nao destoa visualmente nem depende de rede para renderizar. Para trocar a
+// campanha, basta editar este objeto — ou, quando houver campanha remota,
+// alimentar `imagem`/`link` pelo launcher-config.json, que ja e baixado.
+const AD_CARD: NewsItem = {
+  id: "ad-ultrafoot",
+  source: "espn" as keyof typeof NEWS_SOURCES,
+  date: "",
+  type: "announcement",
+  title: "Garagem Comics",
+  description: "Quadrinhos, colecionaveis e cultura pop.",
+  likes: 0,
+  comments: 0,
+  isAd: true,
+  // Arte da campanha empacotada no jogo (public/ads). Nao depende de rede: o
+  // anuncio renderiza igual offline, ao contrario das capas remotas do RSS.
+  imagem: "/ads/garagem-comics.png",
+}
+
+/**
+ * Intercala publicidade no carrossel: 1 noticia, 1 anuncio, 1 noticia...
+ *
+ * Cada insercao recebe um `id` PROPRIO. Reusar o mesmo id em varias posicoes
+ * daria chaves duplicadas no React, que passa a reciclar o card errado ao
+ * navegar o carrossel. O criativo e o mesmo; so a identidade da instancia muda.
+ */
+function intercalarAnuncios(noticias: NewsItem[]): NewsItem[] {
+  const saida: NewsItem[] = []
+  noticias.forEach((noticia, i) => {
+    saida.push(noticia)
+    saida.push({ ...AD_CARD, id: `${AD_CARD.id}-${i}` })
+  })
+  return saida
 }
 
 export function generateDynamicNews(
@@ -362,7 +404,12 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
     // OFFLINE: so a noticia gerada (a da propria carreira). ONLINE: as manchetes
     // REAIS entram na frente, para o jogador acompanhar o futebol de verdade
     // sem sair do jogo — e a noticia da carreira continua logo atras.
-    setNews(inGame)
+    // O anuncio entra JA no estado inicial, nao so quando as manchetes reais
+    // chegam. Antes ele so era inserido dentro do .then() do buscarNoticiasReais:
+    // sem rede — ou com o feed devolvendo vazio — aquele bloco nunca rodava e a
+    // publicidade simplesmente nao aparecia offline. A arte e local
+    // (public/ads), entao o card renderiza igual nos dois casos.
+    setNews(intercalarAnuncios(inGame))
     let vivo = true
     buscarNoticiasReais()
       .then((reais: RealNewsItem[]) => {
@@ -379,8 +426,9 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
           isNew: true,
           isReal: true,
           link: r.link,
+          imagem: r.imagem,
         }))
-        setNews([...comoNoticia, ...inGame])
+        setNews(intercalarAnuncios([...comoNoticia, ...inGame]))
       })
       .catch(() => { /* sem rede: fica so a noticia in-game */ })
     return () => { vivo = false }
@@ -452,8 +500,12 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
         onMouseEnter={() => setIsAutoPlaying(false)}
         onMouseLeave={() => setIsAutoPlaying(true)}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+        {/* Header — oculto no anuncio: fonte, selo verificado e data sao do
+            jornalismo. Exibi-los numa peca paga dava a ela cara de materia. */}
+        <div className={cn(
+          "flex items-center justify-between px-4 py-3 border-b border-white/[0.04]",
+          currentNews.isAd && "hidden",
+        )}>
           <div className="flex items-center gap-3">
             <SourceLogo source={currentNews.source} size="md" />
             <div>
@@ -693,8 +745,11 @@ function NewsContentCard({ news }: { news: NewsItem }) {
 
   const imageCategory = NEWS_TYPE_TO_IMAGE_CATEGORY[news.type] ?? "match"
   const seed = seedFromString(news.id)
-  // Capa local de futebol (estadio/tunel/gramado) escolhida pela categoria da noticia.
-  const aiImageUrl = getNewsImageUrl(imageCategory, seed)
+  // Capa da materia: a FOTO REAL publicada pelo feed tem prioridade; sem ela
+  // (o Google Noticias quase nunca manda), cai na capa local por categoria. O
+  // onError abaixo tambem devolve para a local se a remota falhar em carregar.
+  const capaLocal = getNewsImageUrl(imageCategory, seed)
+  const aiImageUrl = news.imagem ?? capaLocal
 
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
@@ -757,10 +812,10 @@ function NewsContentCard({ news }: { news: NewsItem }) {
             aria-hidden="true"
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-700 ${news.isAd ? "object-contain bg-black" : "object-cover"} ${imgLoaded ? "opacity-100" : "opacity-0"}`}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {!news.isAd && <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />}
         {imgLoaded && aiImageUrl && (
           <div className="absolute top-2 right-2 px-2 py-1 rounded bg-primary/20 border border-primary/30 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-primary" />
@@ -769,18 +824,34 @@ function NewsContentCard({ news }: { news: NewsItem }) {
         )}
       </div>
 
-      <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-        {news.icon || typeIcons[news.type]}
-      </div>
+      {/* Icone de TIPO da noticia — nao existe "tipo" numa peca publicitaria. */}
+      {!news.isAd && (
+        <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+          {news.icon || typeIcons[news.type]}
+        </div>
+      )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+      <div className={cn(
+        "absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent",
+        // A arte do anuncio ja traz titulo, contato e identidade. Sobrepor
+        // etiqueta e texto do feed em cima dela tapava justamente o conteudo.
+        news.isAd && "hidden",
+      )}>
         <div className="flex items-center gap-2 mb-2">
-          <span
-            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-            style={{ backgroundColor: source.color + "20", color: source.color }}
-          >
-            {typeLabels[news.type] ?? "Noticia"}
-          </span>
+          {/* Publicidade e sinalizada SEMPRE. Um anuncio disfarcado de materia
+              engana o jogador e some com a confianca no resto do feed. */}
+          {news.isAd ? (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-400/20 text-amber-300 ring-1 ring-amber-300/40">
+              Patrocinado
+            </span>
+          ) : (
+            <span
+              className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+              style={{ backgroundColor: source.color + "20", color: source.color }}
+            >
+              {typeLabels[news.type] ?? "Noticia"}
+            </span>
+          )}
         </div>
         <h3 className="text-lg font-bold text-white mb-1 line-clamp-2">{news.title}</h3>
         {news.description && (

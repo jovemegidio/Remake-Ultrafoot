@@ -50,9 +50,16 @@ export function NationalOffice() {
   const strength = nationalTeam ? getNationalStrength(nationalTeam) : 0
 
   const tasks = [
+    // Os tres itens apontavam para o MESMO "/selecao": clicar em qualquer um
+    // levava ao mesmo lugar, sem chegar na secao correspondente.
+    //
+    // "Convocacao" segue em /selecao porque a tela de convocacao AINDA NAO
+    // EXISTE — /elenco redireciona para ca no modo selecao e /selecao nao tem
+    // painel de elenco. Mandar para uma ancora inexistente seria pior: daria a
+    // impressao de que o recurso existe e nao abre.
     { href: "/selecao", icon: Users, label: "Convocação", highlight: false },
-    { href: "/selecao", icon: Trophy, label: "Competições da seleção", highlight: false },
-    { href: "/selecao", icon: Swords, label: "Amistosos de preparação", highlight: false },
+    { href: "/selecao#competicoes", icon: Trophy, label: "Competições da seleção", highlight: false },
+    { href: "/amistosos", icon: Swords, label: "Amistosos de preparação", highlight: false },
   ]
 
   const oppName = userNextFixture && nationalTeam
