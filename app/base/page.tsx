@@ -1,16 +1,16 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { Sprout, Star, ArrowUp, AlertTriangle, RefreshCw, Send } from "lucide-react"
+import { Sprout, Star, ArrowUp, AlertTriangle, RefreshCw, Send, ShoppingCart } from "lucide-react"
 import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { SystemMediaPlayer } from "@/components/system-media-player"
 import { Button } from "@/components/ui/button"
 import { useUserTeam, useGameState, type SquadPlayer } from "@/lib/save-system"
 import { formatCurrency } from "@/lib/teams-data"
-import { generateYouthProspects } from "@/lib/youth-academy"
-import { advanceYouthMonth, generateYouthBatch, loanYouth, runTryout } from "@/lib/youth-engine"
+import { generateYouthMarketProspects, generateYouthProspects } from "@/lib/youth-academy"
+import { advanceYouthMonth, loanYouth, runTryout } from "@/lib/youth-engine"
 import {
   capacidadeDaBase, vagasNaBase, evoluirSemana, propostaPorJovem,
   valorDeMercadoJovem, cobrancaDaDiretoria, type JovemBase,
@@ -48,6 +48,37 @@ export default function BasePage() {
   const semanaAtual = useGameEngine(st => st.currentWeek)
   const capacidade = capacidadeDaBase(nivelAcademia)
   const vagas = vagasNaBase(youth.length, nivelAcademia)
+  // BUSCA COM FILTROS, no modelo da central de transferencias.
+  //
+  // Antes o mercado era uma vitrine fixa de 8 promessas: nao dava para procurar
+  // um lateral canhoto de 16 anos com potencial 85. Agora o ciclo gera um pool
+  // grande e a tela filtra em cima dele — quem quer so olhar continua vendo tudo
+  // com os filtros no padrao.
+  const [fPos, setFPos] = useState("todas")
+  const [fIdadeMax, setFIdadeMax] = useState(21)
+  const [fOverallMin, setFOverallMin] = useState(0)
+  const [fPotencialMin, setFPotencialMin] = useState(0)
+  const [fPrecoMax, setFPrecoMax] = useState(0)
+  const [fBusca, setFBusca] = useState("")
+
+  const youthMarketPool = useMemo(() => {
+    const purchased = new Set(state.youthMarketPurchasedIds ?? [])
+    return generateYouthMarketProspects(state.season, state.week ?? 0, 60)
+      .filter(player => !purchased.has(player.id))
+  }, [state.season, state.week, state.youthMarketPurchasedIds])
+
+  const youthMarket = useMemo(() => {
+    const termo = fBusca.trim().toLowerCase()
+    return youthMarketPool.filter(p => {
+      if (fPos !== "todas" && p.position !== fPos) return false
+      if ((p.age ?? 0) > fIdadeMax) return false
+      if ((p.overall ?? 0) < fOverallMin) return false
+      if ((p.potential ?? 0) < fPotencialMin) return false
+      if (fPrecoMax > 0 && (p.value ?? 0) > fPrecoMax) return false
+      if (termo && !p.name.toLowerCase().includes(termo) && !(p.fromTeam ?? "").toLowerCase().includes(termo)) return false
+      return true
+    })
+  }, [youthMarketPool, fPos, fIdadeMax, fOverallMin, fPotencialMin, fPrecoMax, fBusca])
 
   // SEMEIA a base quando vazia.
   //
@@ -62,8 +93,18 @@ export default function BasePage() {
     // "youthPlayers === undefined") cobre os dois casos: a primeira vez de todas, E o
     // inicio de uma temporada nova — quando youthPlayers pode ter ficado [] da anterior.
     if (state.youthSeededSeason !== state.season) {
+      const atuais = state.youthPlayers ?? []
+      // Preserva comprados, legados e atletas em desenvolvimento. A nova geração
+      // só completa o núcleo mínimo da academia; nunca apaga a turma anterior.
+      const quantidadeNova = Math.max(0, Math.min(6, capacidade - atuais.length))
+      const novaGeracao = generateYouthProspects(
+        team.curto,
+        state.season,
+        team.prestigio ?? 60,
+        quantidadeNova,
+      )
       setState({
-        youthPlayers: generateYouthProspects(team.curto, state.season, team.prestigio ?? 60),
+        youthPlayers: [...atuais, ...novaGeracao],
         youthSeededSeason: state.season,
       })
     }
@@ -80,7 +121,11 @@ export default function BasePage() {
   useEffect(() => {
     if (state.youthSeededSeason !== state.season) return // espera semear
     if (state.youthAgedSeason === state.season || youth.length === 0) return
-    const envelhecida = youth.map(p => ({ ...p, age: (p.age ?? 16) + 1 }))
+    // Quem acabou de chegar nesta temporada (nova geração ou compra) não
+    // envelhece no mesmo instante da matrícula.
+    const envelhecida = youth.map(p =>
+      p.seasonSigned === state.season ? p : { ...p, age: (p.age ?? 16) + 1 },
+    )
     const sobem = envelhecida.filter(p => (p.age ?? 0) >= 18)
     const ficam = envelhecida.filter(p => (p.age ?? 0) < 18)
     const promovidos = sobem.map((p, i) => ({
@@ -140,10 +185,19 @@ export default function BasePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [semanaAtual])
 
-  const replacementFor = (player: SquadPlayer): SquadPlayer => {
-    const generated = generateYouthBatch(state.season, 1, team.prestigio ?? 60)[0]
-    return { ...generated, id: `replacement_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, position: player.position, fromTeam: "Nova geração da base" }
-  }
+  // ⚠️ NAO reponha a vaga automaticamente.
+  //
+  // Aqui existia `replacementFor(player)`, que gerava um atleta NOVO de graca
+  // toda vez que um jovem saia por promocao ou emprestimo. Isso era uma torneira
+  // infinita: o jogador promovia/emprestava, a base se reabastecia sozinha, ele
+  // vendia a turma nova, e repetia — dinheiro sem limite, com prospectos
+  // aparecendo "sem ter feito peneira ou sem ter contratado" (relato).
+  //
+  // A base so ganha gente por tres caminhos legitimos, e todos ja existem:
+  //   • a geracao anual da academia (o efeito de semeadura desta pagina);
+  //   • a compra no mercado de juniores / peneira (buyYouth);
+  //   • a captacao dos olheiros.
+  // Sair da base agora ABRE VAGA, que e o comportamento correto.
 
   const promote = (player: SquadPlayer) => {
     if (caixaDoMotor < PROMOTION_FEE) {
@@ -173,7 +227,7 @@ export default function BasePage() {
       // Mantido no save tambem: e daqui que sai a cobranca da diretoria por uso
       // da base e o historico de promovidos.
       squadPlayers: [...(state.squadPlayers ?? []), promoted],
-      youthPlayers: [...youth.filter(p => p.id !== player.id), replacementFor(player)],
+      youthPlayers: youth.filter(p => p.id !== player.id),
       transfers: [...(state.transfers ?? []), {
         id: `youth_promo_${Date.now()}`,
         playerName: player.name,
@@ -284,7 +338,43 @@ export default function BasePage() {
     const club = window.prompt("Clube de destino do empréstimo:")?.trim()
     if (!club) return
     const result = loanYouth(state, player.id, club)
-    setState({ youthPlayers: [...(result.youthPlayers ?? []), replacementFor(player)], updatedAt: result.updatedAt })
+    setState({ youthPlayers: result.youthPlayers ?? [], updatedAt: result.updatedAt })
+  }
+
+  const buyYouth = (player: SquadPlayer) => {
+    if (vagas <= 0) return window.alert("A categoria de base está lotada. Promova, venda ou dispense um jovem antes de contratar.")
+    if (caixaDoMotor < player.value) return window.alert("Saldo insuficiente para comprar este junior.")
+    const texto =
+      `${player.fromTeam} pede ${formatCurrency(player.value)} por ${player.name}, ` +
+      `${player.age} anos (${player.position}).\n\nO atleta irá diretamente para sua categoria de base. Confirmar?`
+    if (!window.confirm(texto)) return
+    if (!gastarDoCaixa(player.value)) return window.alert("Saldo insuficiente para concluir a compra.")
+    const contratado: SquadPlayer = {
+      ...player,
+      id: `youth_bought_${Date.now()}_${player.id}`,
+      fromTeam: player.fromTeam,
+      seasonSigned: state.season,
+    }
+    setState(current => ({
+      youthPlayers: [...(current.youthPlayers ?? []), contratado],
+      youthMarketPurchasedIds: [...(current.youthMarketPurchasedIds ?? []), player.id],
+      transfers: [...(current.transfers ?? []), {
+        id: `youth_buy_${Date.now()}`,
+        playerName: player.name,
+        fromTeam: player.fromTeam ?? "Clube formador",
+        toTeam: team.curto,
+        value: player.value,
+        type: "buy",
+        week: state.currentRound ?? 0,
+        season: state.season,
+      }],
+    }))
+    addNotification({
+      type: "transfer",
+      priority: "medium",
+      title: `${player.name} contratado para a base`,
+      message: `${team.nome} comprou o junior de ${player.fromTeam} por ${formatCurrency(player.value)}.`,
+    })
   }
 
   return (
@@ -443,6 +533,106 @@ export default function BasePage() {
             })}
           </div>
         )}
+
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                <ShoppingCart className="h-5 w-5 text-sky-400" />
+                Mercado de juniores
+              </h2>
+              <p className="mt-1 text-xs text-white/45">
+                Promessas de outros clubes disponíveis para compra direta pela categoria de base. As ofertas mudam a cada quatro semanas.
+              </p>
+            </div>
+            <span className="text-xs text-white/40">
+              {youthMarket.length} de {youthMarketPool.length} {youthMarketPool.length === 1 ? "promessa" : "promessas"}
+            </span>
+          </div>
+
+          {/* Filtros de busca */}
+          <div className="mb-4 grid gap-2 rounded-xl border border-white/5 bg-[#111] p-3 sm:grid-cols-2 xl:grid-cols-6">
+            <input
+              value={fBusca} onChange={e => setFBusca(e.target.value)}
+              placeholder="Nome ou clube" aria-label="Buscar por nome ou clube"
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-sky-400/50"
+            />
+            <select value={fPos} onChange={e => setFPos(e.target.value)} aria-label="Posicao"
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-sky-400/50">
+              <option value="todas">Todas as posições</option>
+              {["GOL","ZAG","LD","LE","VOL","MEI","PD","PE","ATA"].map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/60">
+              Idade ate
+              <input type="number" min={14} max={21} value={fIdadeMax}
+                onChange={e => setFIdadeMax(Number(e.target.value) || 21)}
+                className="w-full bg-transparent text-white outline-none" />
+            </label>
+            <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/60">
+              Overall min
+              <input type="number" min={0} max={99} value={fOverallMin}
+                onChange={e => setFOverallMin(Number(e.target.value) || 0)}
+                className="w-full bg-transparent text-white outline-none" />
+            </label>
+            <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/60">
+              Potencial min
+              <input type="number" min={0} max={99} value={fPotencialMin}
+                onChange={e => setFPotencialMin(Number(e.target.value) || 0)}
+                className="w-full bg-transparent text-white outline-none" />
+            </label>
+            <button
+              onClick={() => { setFPos("todas"); setFIdadeMax(21); setFOverallMin(0); setFPotencialMin(0); setFPrecoMax(0); setFBusca("") }}
+              className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/10"
+            >
+              Limpar filtros
+            </button>
+          </div>
+
+          {youthMarket.length === 0 ? (
+            <div className="rounded-xl border border-white/5 bg-[#141414] p-6 text-center text-sm text-white/45">
+              {youthMarketPool.length === 0
+                ? "Todas as ofertas deste ciclo já foram negociadas. Novos juniores aparecerão no próximo ciclo mensal."
+                : "Nenhuma promessa atende aos filtros. Ajuste os critérios ou limpe os filtros."}
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {youthMarket.map(player => (
+                <div key={player.id} className="rounded-xl border border-sky-400/15 bg-sky-400/[0.04] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold text-white">{player.name}</h3>
+                      <p className="mt-0.5 truncate text-xs text-sky-200/60">{player.fromTeam}</p>
+                    </div>
+                    <span className="rounded bg-white/10 px-2 py-1 text-xs font-bold text-white">{player.position}</span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <div className="text-[9px] uppercase text-white/35">Idade</div>
+                      <div className="font-bold text-white">{player.age}</div>
+                    </div>
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <div className="text-[9px] uppercase text-white/35">Overall</div>
+                      <div className="font-bold text-white">{player.overall}</div>
+                    </div>
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <div className="text-[9px] uppercase text-white/35">Potencial</div>
+                      <div className={cn("font-bold", player.potential >= 85 ? "text-yellow-400" : "text-[#1db954]")}>{player.potential}</div>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => buyYouth(player)}
+                    disabled={vagas <= 0 || caixaDoMotor < player.value}
+                    className="mt-3 w-full bg-sky-400 font-bold text-black hover:bg-sky-300 disabled:opacity-40"
+                  >
+                    <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
+                    Comprar · {formatCurrency(player.value)}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />

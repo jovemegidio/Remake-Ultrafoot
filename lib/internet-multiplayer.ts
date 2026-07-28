@@ -71,6 +71,7 @@ export interface InternetSession {
 
 const INTERNET_SESSION_KEY = "ultrafoot:internet-session"
 const RELAY_OVERRIDE_KEY = "ultrafoot:relay-url"
+const OFFICIAL_RELAY_URL = "https://ultrafoot.72-61-145-52.sslip.io/relay"
 
 function normalizedUrl(value: string): string { return value.trim().replace(/\/+$/, "") }
 
@@ -83,14 +84,33 @@ function normalizedUrl(value: string): string { return value.trim().replace(/\/+
  * o relay respondesse, travando a publicação de builds que nem usavam online.
  * Basta definir a variável para a função voltar a aparecer sozinha.
  */
-export const ONLINE_RELAY_ENABLED = Boolean(normalizedUrl(process.env.NEXT_PUBLIC_ULTRAFOOT_RELAY_URL ?? ""))
+export const ONLINE_RELAY_ENABLED = true
 
 export function configuredRelayUrl(): string {
   if (typeof window !== "undefined") {
     const override = normalizedUrl(localStorage.getItem(RELAY_OVERRIDE_KEY) ?? "")
     if (override) return override
+    // MESMA ORIGEM só vale quando o jogo roda de verdade num servidor web (dev
+    // com `next dev`, ou a versão navegador), onde `/relay` é servido junto.
+    //
+    // ⚠️ No app EMPACOTADO isto disparava indevidamente: a webview do Tauri serve
+    // de `http://tauri.localhost`, cujo protocolo TAMBÉM é "http:". O relay virava
+    // `http://tauri.localhost/relay`, o app pedia a si mesmo, recebia o próprio
+    // HTML e o JSON.parse estourava com
+    //   Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+    // — o erro que aparecia em "Campeonato pela internet". A VPS logo abaixo
+    // nunca era alcançada no jogo instalado.
+    const host = window.location.hostname
+    const appEmpacotado =
+      host === "tauri.localhost" ||
+      host.endsWith(".tauri.localhost") ||
+      typeof (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ !== "undefined"
+    const viaWeb = window.location.protocol === "http:" || window.location.protocol === "https:"
+    if (viaWeb && !appEmpacotado) {
+      return `${window.location.origin}/relay`
+    }
   }
-  return normalizedUrl(process.env.NEXT_PUBLIC_ULTRAFOOT_RELAY_URL ?? "")
+  return normalizedUrl(process.env.NEXT_PUBLIC_ULTRAFOOT_RELAY_URL ?? OFFICIAL_RELAY_URL)
 }
 
 export function setRelayOverride(url: string): void {

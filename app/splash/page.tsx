@@ -69,6 +69,12 @@ export default function SplashPage() {
   const [isExiting, setIsExiting] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
   const [showLoadModal, setShowLoadModal] = useState(false)
+  // Confirmacao de exclusao de save. Substitui o window.confirm nativo, que no
+  // Tauri abre uma caixa do Windows sem relacao com a identidade do jogo.
+  // `um` guarda o save alvo; `todos` limpa a carreira inteira.
+  const [confirmarExclusao, setConfirmarExclusao] = useState<
+    { tipo: "um"; id: string; nome: string } | { tipo: "todos" } | null
+  >(null)
   const [serialKey, setSerialKey] = useState("")
   const [isRegistered, setIsRegistered] = useState(false)
   const [registerError, setRegisterError] = useState("")
@@ -1120,31 +1126,33 @@ export default function SplashPage() {
                   key={save.id}
                   onMouseEnter={() => setSelectedSaveIndex(index)}
                   className={cn(
-                    "relative rounded-xl border transition-all duration-200",
+                    "group relative rounded-xl border transition-all duration-200",
                     selectedSaveIndex === index
                       ? "bg-gradient-to-r from-[#00ffc8]/15 via-[#00c8ff]/8 to-transparent border-[#00ffc8]/40"
                       : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
                   )}
                 >
-                  <button onClick={() => handleLoadSave(save.id)} className="w-full p-4 pr-12 text-left">
+                  <button onClick={() => handleLoadSave(save.id)} className="w-full p-4 pr-14 text-left">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
-                          selectedSaveIndex === index ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/10 text-white/80"
+                          "w-12 h-12 rounded-xl flex items-center justify-center transition-colors ring-1",
+                          selectedSaveIndex === index
+                            ? "bg-[#00ffc8]/15 text-[#00ffc8] ring-[#00ffc8]/30"
+                            : "bg-white/10 text-white/80 ring-white/10"
                         )}>
-                          <span className="text-lg font-bold">{save.teamName.charAt(0)}</span>
+                          <span className="text-xl font-bold">{save.teamName.charAt(0)}</span>
                         </div>
                         <div>
-                          <div className="font-semibold text-white">{save.teamName}</div>
-                          <div className="text-xs text-white/50">{save.competition} - {save.position}</div>
+                          <div className="font-bold text-white leading-tight">{save.teamName}</div>
+                          <div className="mt-0.5 text-xs text-white/45">{save.competition} · {save.position}</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-white/60">{save.season}</div>
+                        <div className="text-sm font-semibold text-white/70 tabular-nums">{save.season}</div>
                         <div className="text-xs text-white/30 flex items-center gap-1 justify-end">
                           <Clock className="h-3 w-3" />
-                          {save.date}
+                          <span className="tabular-nums">{save.date}</span>
                         </div>
                       </div>
                     </div>
@@ -1154,11 +1162,10 @@ export default function SplashPage() {
                     data-acao-modal="apagar-um"
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (!window.confirm(`Apagar o save "${save.teamName}"? Esta ação não pode ser desfeita.`)) return
-                      deleteCareerSave(save.id)
+                      setConfirmarExclusao({ tipo: "um", id: save.id, nome: save.teamName })
                     }}
                     title="Apagar este save"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-red-400/40 transition-colors hover:bg-red-500/15 hover:text-red-400"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2.5 text-red-400/50 opacity-0 transition-all group-hover:opacity-100 focus-visible:opacity-100 hover:bg-red-500/15 hover:text-red-400"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -1180,12 +1187,7 @@ export default function SplashPage() {
             {savedGames.length > 0 && (
               <button
                 data-acao-modal="apagar"
-                onClick={() => {
-                  // Apagar TODOS os saves e irreversivel — confirmacao obrigatoria.
-                  if (!window.confirm("Apagar TODOS os saves? Esta ação não pode ser desfeita.")) return
-                  clearAllGameData()
-                  setShowLoadModal(false)
-                }}
+                onClick={() => setConfirmarExclusao({ tipo: "todos" })}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400/60 hover:text-red-400 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -1260,6 +1262,63 @@ export default function SplashPage() {
                 {cloudSuccess}
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmacao de exclusao — mesmo visual do modal de Carregar Jogo.
+          Apagar save e irreversivel, entao a acao destrutiva nunca e a primeira
+          do teclado: o botao "Cancelar" vem antes e recebe o foco. Quando o alvo
+          e UM save, oferecemos tambem apagar todos, que era o par de opcoes
+          pedido ("todos os saves ou apenas esse?"). */}
+      <Dialog open={confirmarExclusao !== null} onOpenChange={(aberto) => { if (!aberto) setConfirmarExclusao(null) }}>
+        <DialogContent className="bg-gradient-to-br from-[#140a0a] via-[#180909] to-[#0e0606] border-red-500/20 text-white max-w-md">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 to-orange-500 shadow-lg shadow-red-500/25">
+                <Trash2 className="h-5 w-5 text-black" />
+              </div>
+              {confirmarExclusao?.tipo === "todos" ? "Apagar todos os saves" : "Apagar save"}
+            </DialogTitle>
+            <DialogDescription className="text-white/50">
+              {confirmarExclusao?.tipo === "todos"
+                ? "Todas as carreiras salvas serão removidas. Esta ação não pode ser desfeita."
+                : `A carreira "${confirmarExclusao?.tipo === "um" ? confirmarExclusao.nome : ""}" será removida. Esta ação não pode ser desfeita.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-2 pt-4">
+            <button
+              autoFocus
+              onClick={() => setConfirmarExclusao(null)}
+              className="w-full px-4 py-3 rounded-xl bg-white/[0.06] border border-white/15 text-white font-semibold text-sm hover:bg-white/10 transition-colors"
+            >
+              Cancelar
+            </button>
+
+            {confirmarExclusao?.tipo === "um" && (
+              <button
+                onClick={() => {
+                  deleteCareerSave(confirmarExclusao.id)
+                  setConfirmarExclusao(null)
+                }}
+                className="w-full px-4 py-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 font-semibold text-sm hover:bg-red-500/25 transition-colors"
+              >
+                Apagar apenas este save
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                clearAllGameData()
+                setConfirmarExclusao(null)
+                setShowLoadModal(false)
+              }}
+              className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold text-sm shadow-lg shadow-red-600/25 hover:opacity-90 transition-opacity"
+            >
+              Apagar TODOS os saves
+            </button>
           </div>
         </DialogContent>
       </Dialog>

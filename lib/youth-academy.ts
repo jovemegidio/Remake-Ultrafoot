@@ -114,3 +114,87 @@ export function generateYouthProspects(
   // Joia primeiro (maior potencial no topo).
   return out.sort((a, b) => b.potential - a.potential)
 }
+
+const YOUTH_MARKET_CLUBS = [
+  { key: "ajax", name: "Ajax", prestige: 84 },
+  { key: "benfica", name: "Benfica", prestige: 82 },
+  { key: "porto", name: "Porto", prestige: 80 },
+  { key: "palmeiras", name: "Palmeiras", prestige: 83 },
+  { key: "flamengo", name: "Flamengo", prestige: 84 },
+  { key: "santos", name: "Santos", prestige: 79 },
+  { key: "river", name: "River Plate", prestige: 81 },
+  { key: "nacional", name: "Nacional", prestige: 73 },
+] as const
+
+/**
+ * Mercado mensal de atletas de base pertencentes a outros clubes.
+ * A lista é determinística durante quatro semanas para não mudar ao reabrir a tela.
+ */
+export function generateYouthMarketProspects(season: number, week: number, count = 8): SquadPlayer[] {
+  const cycle = Math.floor(Math.max(0, week) / 4)
+  return Array.from({ length: count }, (_, index) => {
+    const club = YOUTH_MARKET_CLUBS[(hash(`${season}:${cycle}:club:${index}`) % YOUTH_MARKET_CLUBS.length)]
+    const generated = generateYouthProspects(
+      `${club.key}_market_${cycle}_${index}`,
+      season,
+      club.prestige,
+      1,
+    )[0]
+    // Clubes cobram mais do que o valor contábil da promessa; joias têm ágio.
+    const premium = generated.potential >= 85 ? 1.65 : generated.potential >= 78 ? 1.3 : 1.05
+    return {
+      ...generated,
+      id: `youth_market_${season}_${cycle}_${club.key}_${index}`,
+      fromTeam: club.name,
+      value: Math.round(generated.value * premium / 50_000) * 50_000,
+    }
+  }).sort((a, b) => b.potential - a.potential)
+}
+
+/**
+ * Cria o sucessor de um atleta aposentado. Nome e posição são herdados; a
+ * qualidade pode ou não guardar relação com a carreira do veterano.
+ */
+export function generateRetirementSuccessor(input: {
+  name: string
+  position: string
+  overall: number
+  potential: number
+  season: number
+  nonce?: string
+}): SquadPlayer {
+  const rnd = mulberry32(hash(`${input.name}:${input.position}:${input.season}:${input.nonce ?? Date.now()}:legado`))
+  const similar = rnd() < 0.45
+  const age = 14 + Math.floor(rnd() * 4)
+  const overall = similar
+    ? Math.max(45, Math.min(70, Math.round(input.overall * 0.68) + Math.floor(rnd() * 7) - 3))
+    : 45 + Math.floor(rnd() * 20)
+  const potential = similar
+    ? Math.max(overall + 5, Math.min(94, input.potential + Math.floor(rnd() * 13) - 6))
+    : Math.max(overall + 5, 65 + Math.floor(rnd() * 28))
+  const base = generateYouthProspects(
+    `legacy_${hash(input.name).toString(36)}`,
+    input.season + Math.floor(rnd() * 1000),
+    Math.max(45, Math.min(90, potential)),
+    1,
+  )[0]
+  const scale = (value?: number) => Math.max(25, Math.min(88, (value ?? overall) + overall - base.overall))
+  return {
+    ...base,
+    id: `legacy_${Date.now()}_${hash(input.name).toString(36)}`,
+    name: input.name,
+    position: input.position,
+    age,
+    overall,
+    potential,
+    value: Math.round((overall * 35_000 + potential * 70_000) / 10_000) * 10_000,
+    pace: scale(base.pace),
+    shooting: scale(base.shooting),
+    passing: scale(base.passing),
+    dribbling: scale(base.dribbling),
+    defending: scale(base.defending),
+    physical: scale(base.physical),
+    fromTeam: "Legado de aposentadoria",
+    seasonSigned: input.season,
+  }
+}

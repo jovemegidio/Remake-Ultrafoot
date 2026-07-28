@@ -10,7 +10,7 @@
 // Sempre ha algo apresentavel, e o time nao fica com um buraco na tela.
 
 import { useEffect, useRef, useState } from "react"
-import { getCamisaUrl, type Team } from "@/lib/teams-data"
+import { getCamisaUrl, isKitVariantAvailable, type Team } from "@/lib/teams-data"
 
 export type KitVariant = "home" | "away" | "third"
 
@@ -108,6 +108,7 @@ export function KitImage({ team, variant }: { team: Team; variant: KitVariant })
     setFailed(true)
   }
 
+  if (!isKitVariantAvailable(team.file_key, variant)) return null
   if (failed || !url) return <DrawnKit team={team} variant={variant} />
   const source = /^(data:|blob:)/i.test(url)
     ? url

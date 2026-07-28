@@ -23,6 +23,7 @@ import {
   Eye,
   EyeOff,
   Briefcase,
+  Trash2,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -40,7 +41,7 @@ const REDE_SECTOR_POSITIONS: Record<string, string[]> = {
 }
 import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-cooldown"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency, formatCurrencyFor } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useRequireClub } from "@/lib/use-require-team"
@@ -1301,6 +1302,21 @@ export default function MercadoPage() {
                           </div>
 
                           <div className="flex shrink-0 items-center gap-2">
+                            <button
+                              type="button"
+                              title="Demitir olheiro"
+                              onClick={() => {
+                                const busca = scout.isSearching ? " A busca atual também será cancelada." : ""
+                                if (!window.confirm(`Demitir ${scout.name}?${busca}`)) return
+                                gameEngine.fireScout(scout.id)
+                                if (expandedScoutId === scout.id) setExpandedScoutId(null)
+                                setMarketNotice(`${scout.name} foi demitido do departamento de olheiros.`)
+                              }}
+                              className="inline-flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/20"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Demitir
+                            </button>
                             {scout.isSearching ? (
                               <button
                                 type="button"
@@ -2366,7 +2382,7 @@ function PlayerListCard({
           <div className="mt-1 flex items-center gap-2 text-[10px] text-white/45">
             <span className="truncate">{player.team.nome}</span>
             <span>|</span>
-            <span className="whitespace-nowrap">{formatCurrency(player.value)}</span>
+            <span className="whitespace-nowrap">{formatCurrencyFor(player.value, player.team?.pais)}</span>
           </div>
         )}
       </div>
@@ -2427,10 +2443,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
         <div className="flex gap-6">
           {/* Left side - Avatar and basic info */}
           <div className="flex flex-col items-center">
-            <div className="relative">
-              <PlayerAvatar name={player.name} teamColor={player.team.cor1} size="xl" />
-              <TeamCrest team={player.team} size="md" className="absolute -bottom-2 -right-2" />
-            </div>
+            <PlayerAvatar name={player.name} teamColor={player.team.cor1} size="xl" />
           </div>
 
           {/* Right side - Details */}
@@ -2547,7 +2560,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
               <h4 className="text-white/50 text-xs font-medium mb-2">Financas</h4>
               <div className="flex items-center justify-between">
                 <span className="text-white/60 text-sm">Multa rescisoria</span>
-                <span className="text-white font-medium">{formatCurrency(player.releaseClause ?? 0)}</span>
+                <span className="text-white font-medium">{formatCurrencyFor(player.releaseClause ?? 0, player.team?.pais)}</span>
               </div>
             </div>
           </div>

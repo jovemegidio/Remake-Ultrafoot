@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { getPlayerPhotoUrl } from "@/lib/player-photos"
-import { memo, useState } from "react"
+import { memo, useEffect, useState } from "react"
 
 export interface PlayerAvatarProps {
   name: string
@@ -137,6 +137,12 @@ function PlayerAvatarBase({
   const [imgFailed, setImgFailed] = useState(false)
 
   const photoUrl = photoUrlProp ?? getPlayerPhotoUrl(name, playerId)
+  // Este componente e reutilizado ao navegar entre atletas. Uma falha no
+  // retrato anterior nao pode condenar a foto valida do proximo selecionado.
+  useEffect(() => {
+    setImgFailed(false)
+  }, [photoUrl])
+
   const hue = hashHue(name)
   const background = teamColor
     ? `linear-gradient(135deg, ${teamColor}66 0%, hsl(${hue} 55% 22%) 100%)`
@@ -160,7 +166,7 @@ function PlayerAvatarBase({
         <img
           src={photoUrl}
           alt={name}
-          className="absolute inset-0 w-full h-full object-cover object-top"
+          className="absolute inset-0 h-full w-full object-contain object-center"
           onError={() => setImgFailed(true)}
         />
       ) : position !== undefined ? (

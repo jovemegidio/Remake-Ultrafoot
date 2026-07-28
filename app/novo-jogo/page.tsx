@@ -13,6 +13,7 @@ import {
   serieDTeams,
   getTeamUniforms,
   getCamisaUrl,
+  isKitVariantAvailable,
   type Divisao,
   type Team,
   type Regiao,
@@ -309,10 +310,13 @@ export default function NovoJogoPage() {
   }
 
   const uniforms = useMemo(() => (selectedTeam ? getTeamUniforms(selectedTeam) : null), [selectedTeam])
-  const uniformVariants = ["home", "away", "third"] as const
-  const activeVariant = uniformVariants[uniformIndex]
+  const uniformVariants = useMemo(
+    () => (["home", "away", "third"] as const).filter(variant => !selectedTeam || isKitVariantAvailable(selectedTeam.file_key, variant)),
+    [selectedTeam],
+  )
+  const activeVariant = uniformVariants[uniformIndex % uniformVariants.length] ?? "home"
   const activeUniform = uniforms ? uniforms[activeVariant] : null
-  const cycleUniform = useCallback(() => setUniformIndex(prev => (prev + 1) % 3), [])
+  const cycleUniform = useCallback(() => setUniformIndex(prev => (prev + 1) % uniformVariants.length), [uniformVariants.length])
 
   const formatCompact = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 2 }).format(v)
@@ -587,13 +591,13 @@ export default function NovoJogoPage() {
               {/* Card Uniforme */}
               <button onClick={cycleUniform} className={cn(cardBase, "flex-1 flex flex-col items-center px-5 py-4 transition-colors hover:border-[#00ffc8]/30")} aria-label="Trocar uniforme">
                 <span className="text-xs text-white/50 tracking-wide">Uniforme</span>
-                <span className="text-base font-black uppercase tracking-wide text-white mb-2">Uniforme {uniformIndex + 1}</span>
+                <span className="text-base font-black uppercase tracking-wide text-white mb-2">Uniforme {(uniformIndex % uniformVariants.length) + 1}</span>
                 <div className="flex-1 flex items-center justify-center w-full px-6">
                   {selectedTeam && !kitError ? (
                     <Image
                       key={`${selectedTeam.file_key}-${activeVariant}-${kitRetryCount}`}
                       src={getCamisaUrl(selectedTeam.file_key, activeVariant, selectedTeam.nome)}
-                      alt={`Uniforme ${uniformIndex + 1} do ${selectedTeam.nome}`}
+                      alt={`Uniforme ${(uniformIndex % uniformVariants.length) + 1} do ${selectedTeam.nome}`}
                       width={150}
                       height={188}
                       className="max-w-[150px] w-full h-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)]"

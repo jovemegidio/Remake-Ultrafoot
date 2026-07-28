@@ -4,7 +4,7 @@
 import { gameAssetUrl, isTauri } from "@/lib/game-asset"
 import { normalizeCountry } from "@/lib/country-normalize"
 import { applyTeamOverride, getTeamOverride } from "@/lib/team-overrides"
-import { getCurrency } from "@/lib/currency"
+import { getCurrency, currencyForCountry } from "@/lib/currency"
 import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 import { repairMojibake } from "@/lib/text-normalization"
 import { getNationalKitUrl } from "@/lib/national-assets"
@@ -379,7 +379,9 @@ export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third"
   // Uniforme importado pelo usuario no editor de clubes tem prioridade — igual ao
   // escudo customizado. Leitura sincrona do cache do persistent-store; se o clube
   // tiver um kit importado, ele e usado no jogo inteiro no lugar do padrao.
-  const custom = getTeamOverride(fileKey)?.kits?.[variant]?.imageUrl
+  const overrideKit = getTeamOverride(fileKey)?.kits?.[variant]
+  if (overrideKit?.disabled) return ""
+  const custom = overrideKit?.imageUrl
   if (custom) return custom
   if (fileKey.startsWith("nation_")) {
     return getNationalKitUrl(fileKey.slice("nation_".length), variant)
@@ -408,6 +410,11 @@ export function getCamisaUrl(fileKey: string, variant: "home" | "away" | "third"
   if (isTauri()) return gameAssetUrl(localPath)
   const [folder, filename] = localPath.replace(/^\//, "").split("/")
   return `${ULTRAFOOT_RAW_URL}/teams/${folder}/${filename}`
+}
+
+/** Variantes marcadas como inexistentes no editor nao aparecem nos seletores do jogo. */
+export function isKitVariantAvailable(fileKey: string, variant: "home" | "away" | "third"): boolean {
+  return getTeamOverride(fileKey)?.kits?.[variant]?.disabled !== true
 }
 
 export function getRemoteCamisaUrl(fileKey: string, variant: "home" | "away" | "third" = "home"): string {
@@ -1420,6 +1427,20 @@ function compactBR(value: number, prefix: string): string {
     return `${neg}${n} mil`
   }
   return `${neg}${prefix}${groupBR(v)}`
+}
+
+/**
+ * Valor formatado na moeda do PAIS da contraparte: negocio no Brasil sai em R$,
+ * negocio com clube de fora sai em US$ com o valor CONVERTIDO pela taxa — nao e
+ * so trocar o simbolo.
+ *
+ * Diferente de formatCurrency, que usa a preferencia GLOBAL do jogador e serve
+ * para o caixa do clube, salarios e demais numeros "do meu mundo". Use este
+ * apenas onde existe uma contraparte estrangeira concreta (mercado, propostas).
+ */
+export function formatCurrencyFor(value: number, pais?: string | null): string {
+  const c = currencyForCountry(pais)
+  return compactBR(value * c.rate, `${c.symbol} `)
 }
 
 export function formatCurrency(value: number): string {

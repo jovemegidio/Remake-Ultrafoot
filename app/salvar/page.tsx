@@ -12,6 +12,7 @@ import { persistGameEngineNow } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
+import { getSavedCloudCode, uploadSave } from "@/lib/cloud-save"
 
 const MESES = [
   "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -59,8 +60,13 @@ export default function SalvarPage() {
     await saveGameStateAndFlush({ ...state, saveName: name, updatedAt: Date.now() })
     setSavedName(name)
     setNaming(false)
-    setSaveFeedback("Jogo salvo com sucesso.")
-    setTimeout(() => setSaveFeedback(""), 2500)
+    const cloud = await uploadSave(getSavedCloudCode() ?? undefined)
+    setSaveFeedback(
+      cloud.success
+        ? `Jogo salvo e sincronizado. Código da nuvem: ${cloud.code}`
+        : `Jogo salvo localmente. Nuvem indisponível: ${cloud.error ?? "erro desconhecido"}`,
+    )
+    setTimeout(() => setSaveFeedback(""), 6000)
   }
 
   const userTeam = useMemo(

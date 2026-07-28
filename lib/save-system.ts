@@ -431,6 +431,8 @@ export interface GameState {
   // Convive com o useGameEngine; estas telas (base/mercado/calendario/partida) leem daqui.
   squadPlayers?: SquadPlayer[]
   youthPlayers?: SquadPlayer[]
+  /** Ofertas do mercado de juniores já compradas no ciclo em que apareceram. */
+  youthMarketPurchasedIds?: string[]
   // Temporada em que a base foi semeada — evita re-gerar prospectos toda visita.
   youthSeededSeason?: number
   // Carimbo (absoluto: season*52 + week) da ÚLTIMA peneira. A peneira acontece a

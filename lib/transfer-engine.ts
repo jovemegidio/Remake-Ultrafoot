@@ -106,9 +106,32 @@ function mapPos(p: string, index = 0): string {
   return BENCH_POSITION_ORDER[Math.abs(index) % BENCH_POSITION_ORDER.length]
 }
 
-function calcMarketValueFromAttrs(overall: number, age: number): number {
+/**
+ * Ligas onde o mercado e inflacionado de verdade. O MESMO overall custa varias
+ * vezes mais num clube da elite europeia do que num sul-americano — e por isso
+ * que trazer um craque de la e caro, nao so dificil.
+ */
+const LIGAS_CARAS: Record<string, number> = {
+  Inglaterra: 2.6, Espanha: 2.1, Alemanha: 2.0, "Itália": 1.9, Italia: 1.9,
+  "França": 1.7, Franca: 1.7, Portugal: 1.4, Holanda: 1.4, "Países Baixos": 1.4,
+  "Bélgica": 1.2, Belgica: 1.2, Turquia: 1.2, "Arábia Saudita": 1.6, "Arabia Saudita": 1.6,
+}
+
+/** Multiplicador de mercado do pais do clube (1.0 = mercado sul-americano). */
+function multiplicadorDeLiga(pais?: string | null): number {
+  return LIGAS_CARAS[(pais ?? "").trim()] ?? 1
+}
+
+function calcMarketValueFromAttrs(overall: number, age: number, pais?: string | null): number {
   const ageM = age < 22 ? 1.4 : age < 26 ? 1.2 : age < 30 ? 1.0 : age < 33 ? 0.7 : 0.4
-  const value = Math.pow(overall / 60, 3) * 5_000_000 * ageM
+  // PREMIO DE ELITE. A curva cubica sozinha e achatada no topo: um camisa 9 de
+  // overall 88 com 32 anos saia por ~11 milhoes, e o relato era exatamente esse
+  // ("Harry Kane 10M e o Flamengo paga os 10M, pronto, levou"). No mercado real
+  // a faixa de cima e desproporcional — os ultimos pontos de overall valem muito
+  // mais que os primeiros. Acima de 78 o valor ganha um fator extra que cresce
+  // com a distancia ate esse piso.
+  const elite = overall > 78 ? Math.pow(1.16, overall - 78) : 1
+  const value = Math.pow(overall / 60, 3) * 5_000_000 * ageM * elite * multiplicadorDeLiga(pais)
   return Math.round(value / 100_000) * 100_000
 }
 
@@ -382,7 +405,7 @@ export function generateDetailedMarketTargets(
                      age < 31 ? Math.floor(rng() * 2) - 1 :
                      Math.floor(rng() * 2) - 3
     const potential = Math.min(99, Math.max(overall, overall + potBonus))
-    const value = calcMarketValueFromAttrs(overall, age)
+    const value = calcMarketValueFromAttrs(overall, age, team.pais)
     const trend: 'up' | 'down' | 'stable' =
       age < 23 ? (rng() < 0.6 ? 'up' : 'stable') :
       age < 28 ? (rng() < 0.4 ? 'stable' : rng() < 0.5 ? 'up' : 'down') :

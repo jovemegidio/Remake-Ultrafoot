@@ -23,17 +23,33 @@ export type Attrs = {
 
 const ATTR_KEYS: (keyof Attrs)[] = ["pace", "shooting", "passing", "dribbling", "defending", "physical"]
 
-/** Normaliza siglas de posicao para uma familia. */
+/**
+ * Normaliza siglas de posicao para uma familia.
+ *
+ * ⚠️ O `default` e ATACANTE, e isso torna o casamento CRITICO para o GOLEIRO.
+ * Antes a comparacao era na string crua: qualquer grafia diferente de "GOL"
+ * exatamente — "gol", "GK", "G", "Goleiro", com espaco em volta — caia no perfil
+ * de centroavante, que pesa finalizacao 0.36 e defesa 0.02. Como goleiro tem
+ * finalizacao ~20, `overallFromAttributes` devolvia um numero muito abaixo do
+ * real e o arqueiro aparecia com overall ridiculo (relato: "o Weverton esta com
+ * o overall bem baixo"). Clubes sem elenco no seed do Transfermarkt — o Gremio e
+ * um deles — tem as posicoes GERADAS, e ai a grafia varia.
+ *
+ * Agora normalizamos (maiuscula, sem acento, sem pontuacao) e aceitamos os
+ * sinonimos de cada familia.
+ */
 function posFamily(position: string): "GOL" | "ZAG" | "LAT" | "VOL" | "MEI" | "EXT" | "ATA" {
-  switch (position) {
-    case "GOL": return "GOL"
-    case "ZAG": return "ZAG"
-    case "LD": case "LE": case "ALD": case "ALE": case "LAT": case "ALA": return "LAT"
-    case "VOL": case "MC": return "VOL"
-    case "MEI": case "MD": case "ME": return "MEI"
-    case "PD": case "PE": return "EXT"
-    default: return "ATA" // ATA, CA, SA
-  }
+  const p = (position ?? "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toUpperCase().replace(/[^A-Z]/g, "")
+
+  if (["GOL", "GK", "G", "GOLEIRO", "POR", "GOALKEEPER", "GUARDAREDES"].includes(p)) return "GOL"
+  if (["ZAG", "ZC", "CB", "DEF", "ZAGUEIRO", "DEFESACENTRAL"].includes(p)) return "ZAG"
+  if (["LD", "LE", "ALD", "ALE", "LAT", "ALA", "RB", "LB", "LATERAL"].includes(p)) return "LAT"
+  if (["VOL", "MC", "CDM", "CM", "VOLANTE"].includes(p)) return "VOL"
+  if (["MEI", "MD", "ME", "CAM", "MEIA"].includes(p)) return "MEI"
+  if (["PD", "PE", "LW", "RW", "EXT", "PONTA"].includes(p)) return "EXT"
+  return "ATA" // ATA, CA, SA, ST, CF...
 }
 
 // Perfil por familia: deslocamento (em pontos) de cada atributo em relacao ao

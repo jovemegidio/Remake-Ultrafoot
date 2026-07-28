@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { persistGameEngineNow, useGameEngine } from "@/lib/game-engine"
 import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { useNotifications } from "@/components/notifications-system"
+import { getSavedCloudCode, uploadSave } from "@/lib/cloud-save"
 
 /** Salva os dois estados da carreira após a quantidade configurada de partidas. */
 export function GameAutosave() {
@@ -46,6 +47,8 @@ export function GameAutosave() {
         persistGameEngineNow()
         const next = { ...state, lastAutoSaveMatchCount: matchCount, updatedAt: Date.now() }
         await saveGameStateAndFlush(next)
+        const cloudCode = getSavedCloudCode()
+        if (cloudCode) await uploadSave(cloudCode)
         notificar.current({
           type: "system",
           title: "Jogo salvo automaticamente",

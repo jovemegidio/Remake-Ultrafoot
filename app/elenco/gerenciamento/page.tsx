@@ -43,6 +43,7 @@ import { useRequireClub } from "@/lib/use-require-team"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
 import { announceOnlineAction } from "@/lib/online-multiplayer"
+import { generateRetirementSuccessor } from "@/lib/youth-academy"
 
 // FORMATIONS agora vive em lib/formations.ts (compartilhado com a Central de Transferencias).
 
@@ -112,7 +113,7 @@ type ViewType = "menu" | "visao_tatica" | "gerenciamento" | "escalacoes"
 export default function ElencoPage() {
   useRequireClub()
   const router = useRouter()
-  const { state } = useGameState()
+  const { state, setState } = useGameState()
   const { addNotification } = useNotifications()
   const engineFormation = useGameEngine(s => s.formation)
   const engineSetFormation = useGameEngine(s => s.setFormation)
@@ -130,6 +131,7 @@ export default function ElencoPage() {
   const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
   const engineSellPlayer = useGameEngine(s => s.sellPlayer)
+  const engineRetirePlayer = useGameEngine(s => s.retirePlayer)
   const engineBalance = useGameEngine(s => s.balance)
   const engineCurrentWeek = useGameEngine(s => s.currentWeek)
   // SITUACAO CONTRATUAL por nome. O elenco desta tela vem do hook de UI e nao
@@ -2037,6 +2039,46 @@ export default function ElencoPage() {
                   </div>
                 )
               })()}
+
+              {selectedPlayer.age >= 32 && (
+                <button
+                  onClick={() => {
+                    const enginePlayer = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+                    if (!enginePlayer) return
+                    const aviso =
+                      `Aposentar ${selectedPlayer.name} aos ${selectedPlayer.age} anos?\n\n` +
+                      "O atleta deixa imediatamente o elenco e a folha salarial. " +
+                      "Um jovem com o mesmo nome e posição entrará na categoria de base, " +
+                      "mas overall e potencial podem ser parecidos ou completamente diferentes."
+                    if (typeof window !== "undefined" && !window.confirm(aviso)) return
+                    const successor = generateRetirementSuccessor({
+                      name: enginePlayer.name,
+                      position: enginePlayer.position,
+                      overall: enginePlayer.overall,
+                      potential: enginePlayer.potential,
+                      season: state.season,
+                      nonce: `${engineCurrentWeek}:${enginePlayer.id}`,
+                    })
+                    if (!engineRetirePlayer(enginePlayer.id)) return
+                    setState(current => ({
+                      youthPlayers: [...(current.youthPlayers ?? []), successor],
+                    }))
+                    setPlayers(current => current.filter(player => player.name !== enginePlayer.name))
+                    setBench(current => current.filter(player => player.name !== enginePlayer.name))
+                    setShowPlayerProfile(false)
+                    addNotification({
+                      type: "system",
+                      priority: "medium",
+                      title: `${enginePlayer.name} encerrou a carreira`,
+                      message: `${successor.name}, ${successor.position}, ${successor.age} anos, entrou na categoria de base como legado do veterano.`,
+                    })
+                  }}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-violet-400/40 bg-violet-400/10 py-2.5 text-xs font-bold text-violet-200 transition-all hover:bg-violet-400/20"
+                >
+                  <Clock className="h-4 w-4" />
+                  Aposentar e gerar sucessor na base
+                </button>
+              )}
 
               {/* Lista de transferíveis: anuncia o atleta ao mercado. Antes não
                   havia como colocar ninguém à venda — só dava para reagir a

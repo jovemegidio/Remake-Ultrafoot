@@ -25,6 +25,8 @@ export interface KitData {
   secondary: string
   pattern: KitPattern
   imageUrl?: string // base64 data URL para imagem customizada
+  /** Quando true, a equipe realmente nao possui esta variante (normalmente a terceira). */
+  disabled?: boolean
 }
 
 export interface TeamOverride {

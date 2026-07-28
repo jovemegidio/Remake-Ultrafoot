@@ -82,11 +82,16 @@ function presenceFor(pathname: string, state: GameState, teamName: string, live:
 
 export function FcHub() {
   const [open, setOpen] = useState(false)
+  const [isNative, setIsNative] = useState(false)
   const [hubTab, setHubTab] = useState("friends")
   const [social, setSocial] = useState<DiscordSocialSnapshot | null>(null)
   const [busy, setBusy] = useState(false)
   const [playtime, setPlaytime] = useState<PlaytimeSnapshot>({ sessionSeconds: 0, totalSeconds: 0, sessionStartedAt: 0 })
   const [livePresence, setLivePresence] = useState<LivePresence | null>(null)
+
+  useEffect(() => {
+    setIsNative("__TAURI_INTERNALS__" in window)
+  }, [])
   const [online, setOnline] = useState<OnlineSession | null>(null)
   const [onlineBusy, setOnlineBusy] = useState(false)
   const [onlineError, setOnlineError] = useState("")
@@ -349,7 +354,7 @@ export function FcHub() {
           </div>
         </div>
         {ONLINE_RELAY_ENABLED && <div id="hub-groups" className="scroll-mt-5 rounded-xl border border-violet-400/30 bg-violet-400/[.06] p-4 backdrop-blur-sm" data-testid="fc-hub-internet">
-          <div className="flex flex-wrap items-center gap-2 text-white"><Wifi className="h-4 w-4 text-violet-300"/><b>Campeonato pela internet</b><span className="ml-auto rounded bg-violet-400/10 px-2 py-0.5 text-[10px] font-bold text-violet-200">20–32 TÉCNICOS</span></div>
+          <div className="flex flex-wrap items-center gap-2 text-white"><Wifi className="h-4 w-4 text-violet-300"/><b>Campeonato pela internet</b><span className="ml-auto rounded bg-violet-400/10 px-2 py-0.5 text-[10px] font-bold text-violet-200">2–32 TÉCNICOS</span></div>
           <p className="mt-2 text-xs leading-relaxed text-white/45">Cada técnico joga de sua própria casa. O relay WSS mantém sala, reconexão, tabela e até 16 partidas simultâneas por rodada; todos precisam da mesma versão e banco.</p>
           {!internet ? <div className="mt-4 space-y-3">
             <input value={relayUrl} onChange={event => setRelayUrl(event.target.value)} placeholder="https://relay.ultrafoot..." aria-label="Endereço do relay público" className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none focus:border-violet-300/60"/>
@@ -381,14 +386,14 @@ export function FcHub() {
           </div> : <div className="mt-4 space-y-3">
             <div className="grid gap-2 sm:grid-cols-3">
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Código</p><button onClick={() => void navigator.clipboard.writeText(internet.room.code)} className="mt-1 flex items-center gap-2 text-base font-black tracking-[.18em] text-violet-200">{internet.room.code}<Copy className="h-3 w-3 text-white/40"/></button></div>
-              <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Participantes</p><p className="mt-1 text-base font-black text-white">{internet.room.participants.length}/{internet.room.maxPlayers}</p><p className="text-[9px] text-white/35">mínimo 20 para iniciar</p></div>
+              <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Participantes</p><p className="mt-1 text-base font-black text-white">{internet.room.participants.length}/{internet.room.maxPlayers}</p><p className="text-[9px] text-white/35">mínimo 2 para iniciar</p></div>
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Conexão</p><p className={`mt-1 text-xs font-black ${internetState === "connected" ? "text-emerald-300" : "text-amber-200"}`}>{internetState === "connected" ? "CONECTADO" : internetState.toUpperCase()}</p></div>
             </div>
             <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">{internet.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-2 rounded-lg bg-black/20 p-2"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === internet.room.hostId ? " · host" : ""}</p><p className="text-[9px] text-white/40">{participant.teamShort}</p></div><span className={`text-[9px] font-black ${participant.ready ? "text-emerald-300" : "text-white/30"}`}>{participant.ready ? "PRONTO" : "AGUARDANDO"}</span></div>)}</div>
             {internet.room.competition && <div className="rounded-lg border border-white/10 bg-black/20 p-3"><div className="flex items-center justify-between"><b className="text-xs text-white">{internet.room.competition.name}</b><span className="text-[10px] text-violet-200">Rodada {internet.room.competition.currentRound}/{internet.room.competition.totalRounds}</span></div><p className="mt-1 text-[9px] text-emerald-300">REGULAMENTO OFICIAL BLOQUEADO · prazo {internet.room.competition.roundDeadlineHours}h</p><div className="mt-2 grid gap-1 sm:grid-cols-2">{internet.room.competition.fixtures.filter(fixture => fixture.round === internet.room.competition?.currentRound).map(fixture => { const home = internet.room.participants.find(item => item.id === fixture.homeId); const away = internet.room.participants.find(item => item.id === fixture.awayId); return <div key={fixture.id} className="flex items-center justify-between rounded bg-white/[.03] px-2 py-1.5 text-[10px] text-white/60"><span className="truncate">{home?.teamShort} × {away?.teamShort}</span><span className="ml-2 font-bold text-white/35">{fixture.status === "live" ? "AO VIVO" : fixture.status === "played" ? `${fixture.homeGoals}–${fixture.awayGoals}` : fixture.status.replaceAll("_", " ").toUpperCase()}</span></div> })}</div></div>}
             <div className="flex flex-wrap gap-2">
               <button onClick={() => internetSocket.current?.send("set_ready", { ready: !internet.room.participants.find(item => item.id === internet.participantId)?.ready })} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-3 py-2.5 text-xs font-black text-black"><ShieldCheck className="h-4 w-4"/>Confirmar decisões</button>
-              {internet.room.hostId === internet.participantId && !internet.room.competition && <button disabled={internet.room.participants.length < 20} onClick={() => internetSocket.current?.send("create_competition", { name: "Liga FC Hub" })} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-300 px-3 py-2.5 text-xs font-black text-black disabled:opacity-35"><Users className="h-4 w-4"/>Montar tabela</button>}
+              {internet.room.hostId === internet.participantId && !internet.room.competition && <button disabled={internet.room.participants.length < 2} onClick={() => internetSocket.current?.send("create_competition", { name: "Liga FC Hub" })} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-300 px-3 py-2.5 text-xs font-black text-black disabled:opacity-35"><Users className="h-4 w-4"/>Montar tabela</button>}
               {internet.room.hostId === internet.participantId && internet.room.competition && !internet.room.competition.finished && <button onClick={() => internetSocket.current?.send("start_round")} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-300 px-3 py-2.5 text-xs font-black text-black"><Play className="h-4 w-4"/>Iniciar rodada</button>}
               {internet.room.hostId !== internet.participantId && !internet.room.participants.find(item => item.id === internet.room.hostId)?.connected && <button onClick={() => internetSocket.current?.send("claim_host")} className="rounded-lg border border-amber-300/30 px-3 py-2.5 text-xs font-bold text-amber-200">Recuperar host</button>}
               <button onClick={closeInternet} className="rounded-lg border border-red-400/25 px-3 py-2.5 text-xs font-bold text-red-300"><LogOut className="h-4 w-4"/></button>
@@ -396,7 +401,7 @@ export function FcHub() {
           </div>}
           {internetError && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-2 text-xs text-red-300">{internetError}</p>}
         </div>}
-        <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/[.04] p-4" data-testid="fc-hub-online">
+        {isNative ? <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/[.04] p-4" data-testid="fc-hub-online">
           <div className="flex items-center gap-2 text-white"><Server className="h-4 w-4 text-cyan-300"/><b>Sala local / LAN</b><span className="ml-auto rounded bg-cyan-400/10 px-2 py-0.5 text-[10px] font-bold text-cyan-200">MESMA REDE</span></div>
           <p className="mt-2 text-xs leading-relaxed text-white/45">O host mantém o save oficial. Escalações, negociações e confirmações trafegam como ações; imagens e atualizações do banco permanecem dados do jogo.</p>
           {!online ? <div className="mt-4 space-y-3">
@@ -428,7 +433,7 @@ export function FcHub() {
           </div>}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] text-white/35"><span className="flex items-center gap-1"><Wifi className="h-3 w-3"/>v{ONLINE_GAME_VERSION}</span><span>dados {GAME_DATA_VERSION}</span><span className="font-mono">hash {GAME_DATA_HASH.slice(0,8)}</span></div>
           {onlineError && <p className="mt-3 rounded-lg border border-red-400/20 bg-red-400/5 p-2 text-xs text-red-300">{onlineError}</p>}
-        </div>
+        </div> : <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/[.03] p-4 text-xs text-white/50"><b className="text-white">Sala local / LAN</b><p className="mt-1">Disponível no aplicativo instalado. No navegador e no mobile, use o campeonato pela internet acima.</p></div>}
         <div id="hub-friends" className="scroll-mt-5 rounded-xl border border-white/10 bg-white/[.03] p-4">
           <div className="flex items-center gap-2 text-white"><Users className="h-4 w-4"/><b>Amigos jogando Ultrafoot</b><span className="ml-auto rounded bg-white/10 px-2 py-0.5 text-xs">{social?.friends.filter(friend => friend.playingUltrafoot).length ?? 0}</span></div>
           {!social?.authenticated && <p className="mt-2 text-sm text-white/45">Conecte sua conta para carregar sua lista real de amigos. Nenhum usuário fictício é exibido.</p>}

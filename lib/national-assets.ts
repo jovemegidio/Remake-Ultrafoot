@@ -28,7 +28,9 @@ export function getNationalCrestUrl(id: string): string {
 
 /** Uniforme da selecao (home/away/third). Mesmo esquema (e formato PNG) do escudo. */
 export function getNationalKitUrl(id: string, variant: "home" | "away" | "third" = "home"): string {
-  const custom = getTeamOverride(`nation_${id}`)?.kits?.[variant]?.imageUrl
+  const kit = getTeamOverride(`nation_${id}`)?.kits?.[variant]
+  if (kit?.disabled) return ""
+  const custom = kit?.imageUrl
   if (custom) return custom
   const rel = `/kits-nations/${id}_${variant}.png`
   if (isTauri()) return gameAssetUrl(rel)

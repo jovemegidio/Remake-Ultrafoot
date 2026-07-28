@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react"
 import { AlertTriangle, Check } from "lucide-react"
-import { type Team } from "@/lib/teams-data"
+import { isKitVariantAvailable, type Team } from "@/lib/teams-data"
 import { TeamCrest } from "@/components/team-crest"
 import { KitImage, type KitVariant } from "@/components/match/kit-image"
 import { cn } from "@/lib/utils"
@@ -52,6 +52,7 @@ function TeamKits({
   dica: string
 }) {
   const cor = team.cor1 || "#ffffff"
+  const variants = VARIANTS.filter(variant => isKitVariantAvailable(team.file_key, variant))
   return (
     <div className="flex min-w-0 flex-col gap-4">
       {/* Cabecalho com escudo e cor do clube: antes so havia o nome em texto, e
@@ -67,8 +68,8 @@ function TeamKits({
       </div>
       <div className="h-0.5 w-full rounded-full" style={{ background: `linear-gradient(90deg, ${cor}, transparent)` }} />
 
-      <div className="grid w-full grid-cols-3 gap-2.5">
-        {VARIANTS.map((v) => {
+      <div className={cn("grid w-full gap-2.5", variants.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
+        {variants.map((v) => {
           const isSel = selected === v
           return (
             <button
@@ -134,6 +135,20 @@ export function UniformSelectorModal({
   onAwayKit: (v: KitVariant) => void
   onClose: () => void
 }) {
+  const homeVariants = useMemo(
+    () => VARIANTS.filter(variant => isKitVariantAvailable(homeTeam.file_key, variant)),
+    [homeTeam.file_key],
+  )
+  const awayVariants = useMemo(
+    () => VARIANTS.filter(variant => isKitVariantAvailable(awayTeam.file_key, variant)),
+    [awayTeam.file_key],
+  )
+
+  useEffect(() => {
+    if (!homeVariants.includes(homeKit)) onHomeKit(homeVariants[0] ?? "home")
+    if (!awayVariants.includes(awayKit)) onAwayKit(awayVariants[0] ?? "home")
+  }, [homeVariants, awayVariants, homeKit, awayKit, onHomeKit, onAwayKit])
+
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -141,17 +156,17 @@ export function UniformSelectorModal({
     }
     // CONTROLE: LB/RB trocam o kit da casa, LT/RT o do visitante, A/B fecham.
     // (O modal foi criado depois do sistema de gamepad e nao respondia ao controle.)
-    const cycle = (cur: KitVariant, dir: 1 | -1): KitVariant => {
-      const i = VARIANTS.indexOf(cur)
-      return VARIANTS[(i + dir + VARIANTS.length) % VARIANTS.length]
+    const cycle = (variants: KitVariant[], cur: KitVariant, dir: 1 | -1): KitVariant => {
+      const i = Math.max(0, variants.indexOf(cur))
+      return variants[(i + dir + variants.length) % variants.length] ?? "home"
     }
     const onPad = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
       switch (button) {
-        case "LB": onHomeKit(cycle(homeKit, -1)); break
-        case "RB": onHomeKit(cycle(homeKit, 1)); break
-        case "LT": onAwayKit(cycle(awayKit, -1)); break
-        case "RT": onAwayKit(cycle(awayKit, 1)); break
+        case "LB": onHomeKit(cycle(homeVariants, homeKit, -1)); break
+        case "RB": onHomeKit(cycle(homeVariants, homeKit, 1)); break
+        case "LT": onAwayKit(cycle(awayVariants, awayKit, -1)); break
+        case "RT": onAwayKit(cycle(awayVariants, awayKit, 1)); break
         case "A":
         case "B": onClose(); break
       }
@@ -162,7 +177,7 @@ export function UniformSelectorModal({
       window.removeEventListener("keydown", onKey)
       window.removeEventListener("gamepad:button", onPad)
     }
-  }, [open, onClose, homeKit, awayKit, onHomeKit, onAwayKit])
+  }, [open, onClose, homeKit, awayKit, homeVariants, awayVariants, onHomeKit, onAwayKit])
 
   const conflito = useMemo(
     () => coresConflitam(corDoUniforme(homeTeam, homeKit), corDoUniforme(awayTeam, awayKit)),

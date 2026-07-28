@@ -70,9 +70,57 @@ async function main() {
     baked++
   }
 
+  // ── UNIFORMES ──────────────────────────────────────────────────────────────
+  //
+  // As camisas editadas NAO ficam em `ultrafoot:kit:*` — elas viajam dentro do
+  // proprio registro de clube, em `ultrafoot:team-override:<file_key>.kits`.
+  // Este script so mesclava `logoUrl`, entao o escudo chegava aos outros
+  // jogadores e o uniforme NAO (relato: "as selecoes estavam com os uniformes
+  // na minha maquina, na web nao"). O bake-user-kits tambem nao pegava: ele le
+  // um export separado, team-overrides-export.json, que so tem o que foi
+  // exportado a mao um dia. Aqui fechamos o buraco na fonte certa.
+  const overrideKeys = Object.keys(raw).filter((k) => k.startsWith("ultrafoot:team-override:"))
+  let uniformes = 0
+
+  const comprimirCamisa = async (dataUrl) => {
+    if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/")) return dataUrl
+    if (dataUrl.startsWith("data:image/svg")) return dataUrl
+    const buf = Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64")
+    try {
+      // 400px: a camisa aparece maior que o escudo nas telas de elenco/partida.
+      const out = await sharp(buf).resize(400, 400, { fit: "inside", withoutEnlargement: true })
+        .png({ compressionLevel: 9 }).toBuffer()
+      return out.length < buf.length ? `data:image/png;base64,${out.toString("base64")}` : dataUrl
+    } catch {
+      return dataUrl
+    }
+  }
+
+  for (const key of overrideKeys) {
+    const fileKey = key.replace("ultrafoot:team-override:", "")
+    let ov = raw[key]
+    if (typeof ov === "string") { try { ov = JSON.parse(ov) } catch { continue } }
+    if (!ov || typeof ov !== "object" || !ov.kits) continue
+
+    const kits = {}
+    for (const [variante, valor] of Object.entries(ov.kits)) {
+      if (!valor) continue
+      // Aceita tanto { imageUrl } quanto a data URI direta.
+      const url = typeof valor === "string" ? valor : valor.imageUrl
+      if (!url) continue
+      const comprimida = await comprimirCamisa(url)
+      kits[variante] = typeof valor === "string" ? comprimida : { ...valor, imageUrl: comprimida }
+    }
+    if (!Object.keys(kits).length) continue
+    // Preserva o que ja existe no seed (inclusive o logoUrl embutido acima).
+    seed[fileKey] = { ...(seed[fileKey] ?? {}), kits: { ...(seed[fileKey]?.kits ?? {}), ...kits } }
+    uniformes++
+  }
+
   await writeFile(SEED, JSON.stringify(seed, null, 2), "utf8")
 
   console.log(`escudos embutidos: ${baked}`)
+  console.log(`clubes/selecoes com uniforme embutido: ${uniformes}`)
   console.log(`tamanho antes:     ${kb(before)}`)
   console.log(`tamanho depois:    ${kb(after)}  (${before ? Math.round((1 - after / before) * 100) : 0}% menor)`)
   console.log(`total de clubes no seed: ${Object.keys(seed).length}`)

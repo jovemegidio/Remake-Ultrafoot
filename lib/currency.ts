@@ -24,6 +24,36 @@ export const CURRENCIES: CurrencyDef[] = [
 const KEY = "ultrafoot:currency"
 let _current: CurrencyDef = CURRENCIES[0] // padrao BRL (igual ao build)
 
+const BRL = CURRENCIES[0]
+const USD = CURRENCIES[1]!
+
+/**
+ * Paises cujo mercado negocia em REAL. Todo o resto negocia em DOLAR.
+ *
+ * O jogo guarda TODO valor em BRL internacionalmente; aqui so escolhemos em que
+ * moeda aquele negocio e apresentado. Negociacao dentro do Brasil sai em R$;
+ * negociacao com clube de fora sai em US$, com o valor convertido pela taxa —
+ * nao e so trocar o simbolo.
+ */
+const PAISES_EM_REAL = new Set(["brasil", "brazil"])
+
+function normalizarPais(pais?: string | null): string {
+  return (pais ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase()
+}
+
+/** Moeda do negocio conforme o pais da contraparte (Brasil = BRL, resto = USD). */
+export function currencyForCountry(pais?: string | null): CurrencyDef {
+  return PAISES_EM_REAL.has(normalizarPais(pais)) ? BRL : USD
+}
+
+/**
+ * Converte um valor guardado em BRL para a moeda daquele pais.
+ * Use junto de `currencyForCountry` para montar o texto.
+ */
+export function convertToCountryCurrency(valorEmBRL: number, pais?: string | null): number {
+  return valorEmBRL * currencyForCountry(pais).rate
+}
+
 export function getCurrency(): CurrencyDef { return _current }
 export function getCurrencyCode(): string { return _current.code }
 

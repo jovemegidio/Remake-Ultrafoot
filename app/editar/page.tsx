@@ -27,6 +27,7 @@ import {
   serieCTeams,
   serieDTeams,
   allPoolTeams,
+  isKitVariantAvailable,
   type Team
 } from "@/lib/teams-data"
 import { allInternationalTeams } from "@/lib/international-teams"
@@ -219,7 +220,11 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
     : getPlayersForTeam(team, { raw: true }).map(player => ({ player, team }))
 
   return sources.map(({ player: p, team: sourceTeam }, i) => {
-    const ov = getPlayerOverride(sourceTeam.file_key, p.nome)
+    // Na seleção, a edição pertence à própria seleção. Antes era gravada na
+    // chave do clube do atleta, alterando o jogador no clube e podendo sumir da
+    // convocação nacional ao recarregar.
+    const overrideKey = nationalTeam ? team.file_key : sourceTeam.file_key
+    const ov = getPlayerOverride(overrideKey, p.nome)
     // Teto rígido de 99 (relato "overall 99+"): overrides/dados antigos podiam
     // trazer valor acima do máximo; aqui o editor nunca mostra além de 99.
     const base = Math.min(99, Math.max(1, ov?.base ?? p.base))
@@ -228,7 +233,7 @@ function generatePlayersForTeam(team: Team | null): EditorPlayer[] {
     return {
       id: i + 1,
       originalName: p.nome,
-      sourceTeamKey: sourceTeam.file_key,
+      sourceTeamKey: overrideKey,
       nome: ov?.nome ?? p.nome,
       posicao: pos,
       // Nacionalidade: edicao manual > real (Transfermarkt) > pais do CLUBE como
@@ -412,6 +417,7 @@ export default function EditarPage() {
       all[fileKey] = { ...(all[fileKey] ?? {}), logoUrl }
     }
     const count = Object.keys(all).length
+    const nationalCount = Object.keys(all).filter(fileKey => fileKey.startsWith("nation_")).length
     if (count === 0) {
       setExportMsg("Nenhuma edicao para exportar.")
       setTimeout(() => setExportMsg(null), 3000)
@@ -423,21 +429,21 @@ export default function EditarPage() {
       const { save } = await import("@tauri-apps/plugin-dialog")
       const { writeTextFile } = await import("@tauri-apps/plugin-fs")
       const filePath = await save({
-        title: "Exportar edicoes de clubes",
-        defaultPath: "team-overrides-export.json",
+        title: "Exportar edicoes de clubes e selecoes",
+        defaultPath: "clubes-selecoes-overrides-export.json",
         filters: [{ name: "JSON", extensions: ["json"] }],
       })
       if (!filePath) return
       await writeTextFile(filePath as string, json)
-      setExportMsg(`${count} clube(s) exportado(s).`)
+      setExportMsg(`${count} equipe(s), incluindo ${nationalCount} seleção(ões), exportadas.`)
     } else {
       const blob = new Blob([json], { type: "application/json" })
       const a = document.createElement("a")
       a.href = URL.createObjectURL(blob)
-      a.download = "team-overrides-export.json"
+      a.download = "clubes-selecoes-overrides-export.json"
       a.click()
       URL.revokeObjectURL(a.href)
-      setExportMsg(`${count} clube(s) exportado(s).`)
+      setExportMsg(`${count} equipe(s), incluindo ${nationalCount} seleção(ões), exportadas.`)
     }
     setTimeout(() => setExportMsg(null), 4000)
   }
@@ -451,7 +457,7 @@ export default function EditarPage() {
         ...prev,
         kits: {
           ...prev.kits,
-          [variant]: { ...(prev.kits?.[variant] ?? {}), imageUrl: dataUrl },
+          [variant]: { ...(prev.kits?.[variant] ?? {}), imageUrl: dataUrl, disabled: false },
         },
       }))
       // Persiste o uniforme importado imediatamente (igual ao escudo), sem depender
@@ -463,7 +469,7 @@ export default function EditarPage() {
           ...stored,
           kits: {
             ...stored.kits,
-            [variant]: { ...(stored.kits?.[variant] ?? {}), imageUrl: dataUrl },
+            [variant]: { ...(stored.kits?.[variant] ?? {}), imageUrl: dataUrl, disabled: false },
           },
         })
         // Limpa eventual erro do thumbnail (o kit padrao pode ter dado 404 antes),
@@ -575,6 +581,32 @@ export default function EditarPage() {
       void flushPersistentStore()
     }
     setHasCustomLogo(false)
+  }
+
+  const setThirdKitDisabled = async (disabled: boolean) => {
+    if (!selectedTeam?.file_key) return
+    const fallback = {
+      primary: selectedTeam.cor1 || "#222222",
+      secondary: selectedTeam.cor2 || "#ffffff",
+      pattern: "solid" as KitPattern,
+    }
+    setEditDraft(prev => ({
+      ...prev,
+      kits: {
+        ...prev.kits,
+        third: { ...fallback, ...prev.kits?.third, disabled, ...(disabled ? { imageUrl: undefined } : {}) },
+      },
+    }))
+    const stored = getTeamOverride(selectedTeam.file_key) ?? {}
+    setTeamOverride(selectedTeam.file_key, {
+      ...stored,
+      kits: {
+        ...stored.kits,
+        third: { ...fallback, ...stored.kits?.third, disabled, ...(disabled ? { imageUrl: undefined } : {}) },
+      },
+    })
+    await flushPersistentStore()
+    setTeamsRevision(value => value + 1)
   }
 
   useEffect(() => {
@@ -716,22 +748,22 @@ export default function EditarPage() {
   ) ?? "/images/stadium-night.png"
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[#050508]">
+    <div className="h-screen flex flex-col overflow-hidden bg-[#05080a] text-white">
       {/* Stadium background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <Image
           src={stadiumBackground}
           alt="Stadium"
           fill
-          className="object-cover opacity-50"
+          className="object-cover opacity-30 saturate-50"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/70 to-[#050508]/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050508]/80 via-transparent to-[#050508]/80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#05080a] via-[#05080a]/85 to-[#07110f]/60" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(0,255,200,0.09),transparent_34%),radial-gradient(circle_at_15%_80%,rgba(0,150,255,0.06),transparent_30%)]" />
       </div>
 
       {/* Header — barra superior com identidade do editor. */}
-      <header className="relative z-10 h-16 flex-shrink-0 bg-black/75 backdrop-blur-xl border-b border-white/[0.08] px-5 flex items-center justify-between">
+      <header className="relative z-10 h-[76px] flex-shrink-0 bg-[#060a0c]/80 backdrop-blur-2xl border-b border-white/[0.08] px-6 flex items-center justify-between">
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/25 to-transparent" />
         <div className="flex items-center gap-4">
           <Link
@@ -745,11 +777,14 @@ export default function EditarPage() {
           <div className="h-6 w-px bg-white/10" />
 
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/10 border border-[#00ffc8]/25">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/5 border border-[#00ffc8]/25 shadow-[0_0_30px_rgba(0,255,200,0.08)]">
               <Shield className="h-5 w-5 text-[#00ffc8]" />
             </div>
             <div className="leading-tight">
-              <h1 className="text-sm font-bold text-white tracking-wide">Editor de Clubes e Seleções</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-bold text-white tracking-tight">Editor de Clubes e Seleções</h1>
+                <span className="rounded-full border border-[#00ffc8]/20 bg-[#00ffc8]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.18em] text-[#00ffc8]">Studio</span>
+              </div>
               <p className="text-[10px] text-white/35 uppercase tracking-[0.18em]">Elencos · Escudos · Uniformes</p>
             </div>
           </div>
@@ -762,12 +797,16 @@ export default function EditarPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      <div className="flex-1 flex gap-3 overflow-hidden relative z-10 p-3">
 
         {/* Left Panel – Teams List */}
-        <aside className="w-64 lg:w-72 flex-shrink-0 flex flex-col bg-black/50 backdrop-blur-sm border-r border-white/[0.06]">
+        <aside className="w-72 lg:w-80 flex-shrink-0 flex flex-col overflow-hidden rounded-2xl bg-[#080d0f]/88 backdrop-blur-xl border border-white/[0.08] shadow-2xl shadow-black/30">
           {/* Search */}
-          <div className="p-3 border-b border-white/[0.06]">
+          <div className="p-4 border-b border-white/[0.06]">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">Diretório de equipes</span>
+              <span className="rounded-md bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/30">{filteredTeams.length}</span>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
               <input
@@ -775,7 +814,7 @@ export default function EditarPage() {
                 value={searchTeam}
                 onChange={(e) => setSearchTeam(e.target.value)}
                 placeholder="Procurar clube ou seleção..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/25 focus:outline-none focus:border-[#00ffc8]/40 focus:ring-1 focus:ring-[#00ffc8]/15 transition-all"
+                className="w-full pl-9 pr-3 py-2.5 text-xs bg-black/25 border border-white/[0.09] rounded-xl text-white placeholder-white/25 focus:outline-none focus:border-[#00ffc8]/40 focus:ring-4 focus:ring-[#00ffc8]/[0.06] transition-all"
               />
             </div>
           </div>
@@ -863,11 +902,11 @@ export default function EditarPage() {
         </aside>
 
         {/* Right Panel – Team Details */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#070b0d]/80 backdrop-blur-xl shadow-2xl shadow-black/30">
           {selectedTeam && (
             <>
               {/* Team Info Header */}
-              <div className="relative flex-shrink-0 border-b border-white/[0.06] overflow-hidden bg-[#07100f]">
+              <div className="relative flex-shrink-0 border-b border-white/[0.07] overflow-hidden bg-gradient-to-r from-[#0a1212] via-[#08100f] to-[#080c0e]">
                 {/* Team color glow */}
                 <div
                   className="pointer-events-none absolute inset-x-0 top-0 h-px"
@@ -878,11 +917,11 @@ export default function EditarPage() {
                   style={{ background: teamColor }}
                 />
 
-                <div className="relative px-6 py-4 flex items-center gap-5">
+                <div className="relative px-7 py-5 flex items-center gap-6">
                   {/* Crest + import button */}
                   <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
                     <div
-                      className="w-14 h-14 flex items-center justify-center rounded-xl border"
+                      className="w-[72px] h-[72px] flex items-center justify-center rounded-2xl border shadow-xl"
                       style={{
                         background: `${teamColor}0d`,
                         borderColor: `${teamColor}25`,
@@ -914,7 +953,7 @@ export default function EditarPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h2 className="text-lg font-bold text-white truncate">{selectedTeam.nome}</h2>
+                      <h2 className="text-2xl font-black tracking-tight text-white truncate">{selectedTeam.nome}</h2>
                       <span
                         className="px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wider border"
                         style={{
@@ -926,7 +965,7 @@ export default function EditarPage() {
                         {formatDivisao(selectedTeam.divisao)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                    <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         {isNationalTeam(selectedTeam)
@@ -944,7 +983,9 @@ export default function EditarPage() {
 
                   {/* Kits */}
                   <div className="hidden lg:flex items-center gap-1.5">
-                    {(["home", "away", "third"] as const).map((variant) => (
+                    {(["home", "away", "third"] as const)
+                      .filter(variant => isKitVariantAvailable(selectedTeam.file_key, variant))
+                      .map((variant) => (
                         <div
                           key={variant}
                           className="w-10 h-12 bg-white/[0.04] rounded-lg flex items-center justify-center p-1 hover:bg-white/[0.08] transition-all cursor-pointer border border-white/[0.06]"
@@ -957,7 +998,7 @@ export default function EditarPage() {
 
                   {/* OVR */}
                   <div className="flex-shrink-0 text-center px-2">
-                    <div className="text-4xl font-black tracking-tight" style={{ color: teamColor }}>
+                    <div className="text-5xl font-black tracking-tighter" style={{ color: teamColor }}>
                       {selectedTeam.prestigio}
                     </div>
                     <div className="text-[9px] text-white/30 font-semibold tracking-widest mt-0.5">OVERALL</div>
@@ -1262,12 +1303,44 @@ export default function EditarPage() {
                         {(["home", "away", "third"] as const).map((variant) => {
                           const labels = { home: "Principal", away: "Alternativo", third: "Terceiro" }
                           const kit = editDraft.kits?.[variant] ?? { primary: selectedTeam.cor1, secondary: selectedTeam.cor2, pattern: "solid" as KitPattern }
+                          const isDisabled = variant === "third" && editDraft.kits?.third?.disabled === true
                           return (
-                            <div key={variant} className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-3 flex flex-col gap-2.5">
-                              <div className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">{labels[variant]}</div>
+                            <div key={variant} className={cn(
+                              "relative overflow-hidden rounded-2xl border p-4 flex flex-col gap-3 transition-all",
+                              isDisabled
+                                ? "border-dashed border-white/10 bg-black/20"
+                                : "border-white/[0.09] bg-gradient-to-b from-white/[0.055] to-white/[0.02] shadow-xl shadow-black/10",
+                            )}>
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <div className="text-[10px] font-bold text-white/70 uppercase tracking-[0.16em]">{labels[variant]}</div>
+                                  <div className="mt-0.5 text-[9px] text-white/25">
+                                    {isDisabled ? "Não utilizado pela equipe" : variant === "home" ? "Uniforme mandante" : variant === "away" ? "Uniforme visitante" : "Uniforme opcional"}
+                                  </div>
+                                </div>
+                                {variant === "third" && (
+                                  <button
+                                    onClick={() => void setThirdKitDisabled(!isDisabled)}
+                                    className={cn(
+                                      "rounded-lg border px-2 py-1 text-[9px] font-semibold transition-all",
+                                      isDisabled
+                                        ? "border-[#00ffc8]/25 bg-[#00ffc8]/10 text-[#00ffc8] hover:bg-[#00ffc8]/15"
+                                        : "border-rose-400/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15",
+                                    )}
+                                  >
+                                    {isDisabled ? "Adicionar" : "Excluir"}
+                                  </button>
+                                )}
+                              </div>
 
                               {/* Kit preview */}
-                              <div className="flex justify-center">
+                              {isDisabled ? (
+                                <div className="flex h-28 flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/20 text-center">
+                                  <Trash2 className="mb-2 h-5 w-5 text-white/20" />
+                                  <span className="text-[10px] font-semibold text-white/35">Sem terceiro uniforme</span>
+                                  <span className="mt-1 max-w-[150px] text-[9px] leading-relaxed text-white/20">Esta opção não aparecerá antes das partidas.</span>
+                                </div>
+                              ) : <div className="flex h-28 items-center justify-center rounded-xl bg-black/20">
                                 {editDraft.kits?.[variant]?.imageUrl ? (
                                   <div className="relative">
                                     <Image
@@ -1308,10 +1381,10 @@ export default function EditarPage() {
                                     />
                                   </div>
                                 )}
-                              </div>
+                              </div>}
 
                               {/* Primary color */}
-                              <div>
+                              {!isDisabled && <div>
                                 <label className="block text-[9px] text-white/30 mb-1">Cor base</label>
                                 <div className="flex items-center gap-1.5">
                                   <input type="color" value={kit.primary}
@@ -1323,10 +1396,10 @@ export default function EditarPage() {
                                   />
                                   <span className="text-[9px] font-mono text-white/30">{kit.primary}</span>
                                 </div>
-                              </div>
+                              </div>}
 
                               {/* Secondary color */}
-                              <div>
+                              {!isDisabled && <div>
                                 <label className="block text-[9px] text-white/30 mb-1">Cor detalhe</label>
                                 <div className="flex items-center gap-1.5">
                                   <input type="color" value={kit.secondary}
@@ -1338,10 +1411,10 @@ export default function EditarPage() {
                                   />
                                   <span className="text-[9px] font-mono text-white/30">{kit.secondary}</span>
                                 </div>
-                              </div>
+                              </div>}
 
                               {/* Pattern */}
-                              <div>
+                              {!isDisabled && <div>
                                 <label className="block text-[9px] text-white/30 mb-1">Padrão</label>
                                 <select
                                   value={kit.pattern}
@@ -1356,16 +1429,16 @@ export default function EditarPage() {
                                   <option value="diagonal">Diagonal</option>
                                   <option value="halves">Bicolor</option>
                                 </select>
-                              </div>
+                              </div>}
 
                               {/* Image upload */}
-                              <button
+                              {!isDisabled && <button
                                 onClick={() => handleKitImageUpload(variant)}
                                 className="flex items-center justify-center gap-1 px-2 py-1.5 text-[9px] bg-white/[0.04] hover:bg-white/[0.08] text-white/40 hover:text-white/70 rounded border border-white/[0.08] transition-all"
                               >
                                 <Upload className="h-2.5 w-2.5" />
                                 Importar imagem
-                              </button>
+                              </button>}
                             </div>
                           )
                         })}

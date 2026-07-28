@@ -30,6 +30,7 @@ import {
   serieATeams,
   getCamisaUrl,
   getTeamUniforms,
+  isKitVariantAvailable,
   type Team,
 } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
@@ -447,8 +448,9 @@ export default function PartidaPage() {
 
   // Gamepad controls
   useEffect(() => {
-    const cycleKit = (current: KitVariant, direction: number): KitVariant => {
-      const kits: KitVariant[] = ["home", "away", "third"]
+    const cycleKit = (team: Team, current: KitVariant, direction: number): KitVariant => {
+      const kits: KitVariant[] = (["home", "away", "third"] as KitVariant[])
+        .filter(variant => isKitVariantAvailable(team.file_key, variant))
       const idx = kits.indexOf(current)
       const newIdx = (idx + direction + kits.length) % kits.length
       return kits[newIdx]
@@ -482,10 +484,10 @@ export default function PartidaPage() {
           setShowSettings(true)
           break
         case "LB":
-          setHomeKit(prev => cycleKit(prev, -1))
+          setHomeKit(prev => cycleKit(homeTeam, prev, -1))
           break
         case "RB":
-          setHomeKit(prev => cycleKit(prev, 1))
+          setHomeKit(prev => cycleKit(homeTeam, prev, 1))
           break
         case "LT":
           // Abre o MODAL de uniformes pelo controle (antes so a tecla Q ou o

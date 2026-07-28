@@ -2011,7 +2011,22 @@ export function useGameManager() {
       seasonEndWeek,
       userFixtures: allUserFixtures,
     })) {
-      const currentStandings = useGameEngine.getState().serieAStandings
+      // Classificacao final REAL da liga do usuario, derivada dos fixtures — a
+      // mesma fonte que a tela mostra.
+      //
+      // Antes isto lia `serieAStandings` do motor, que e montada a partir de
+      // serieATeams. Para QUALQUER clube fora da Serie A a tabela nao continha
+      // sequer o time do usuario: findIndex devolvia -1, userFinalPos virava 0 e
+      // `userFinalOrder` levava a ordem da Serie A para uma piramide de outra
+      // divisao. Resultado: ninguem subia e ninguem caia (relato). A lista do
+      // motor fica como reserva para saves em que os fixtures nao rendam tabela.
+      const leagueNameNow = getLeagueName(userShort, divOverride)
+      const derivedStandings = leagueNameNow
+        ? computeStandingsFromFixtures(seasonCalendarRef.current.fixtures, leagueNameNow)
+        : []
+      const currentStandings = derivedStandings.length
+        ? derivedStandings
+        : useGameEngine.getState().serieAStandings
       const nextSeason = currentState.season + 1
 
       // Determina o campeao ANTES de resetar as standings

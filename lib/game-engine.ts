@@ -1920,6 +1920,8 @@ interface GameEngineState {
   /** Migra contratos de saves antigos para o relogio absoluto (roda uma vez). */
   migrarContratosParaSemanaAbsoluta: () => void
   sellPlayer: (playerId: number) => void
+  /** Aposenta um veterano sem multa nem receita e o remove da folha. */
+  retirePlayer: (playerId: number) => boolean
   /**
    * Sobe um garoto da base ao elenco profissional. NAO passa por buyPlayer de
    * proposito: promocao da base nao e transferencia e nao depende de janela.
@@ -3097,6 +3099,20 @@ export const useGameEngine = create<GameEngineState>()(
           balance: s.balance + player.marketValue,
           weeklyExpenses: s.weeklyExpenses - (player.contract?.salary || 0)
         }))
+      },
+
+      retirePlayer: (playerId) => {
+        const state = get()
+        const player = state.squadPlayers.find(p => p.id === playerId)
+        if (!player || player.age < 32) return false
+        set((s) => ({
+          squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
+          transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
+          loanListedIds: (s.loanListedIds ?? []).filter(id => id !== playerId),
+          transferOffers: s.transferOffers.filter(offer => offer.playerId !== playerId),
+          weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary ?? 0)),
+        }))
+        return true
       },
       
       /**

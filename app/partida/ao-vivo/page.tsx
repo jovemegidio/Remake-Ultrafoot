@@ -1207,6 +1207,11 @@ export default function PartidaAoVivoPage() {
               playerId: 0,
               playerName: e.player || (e.side === "home" ? homeTeam.curto : awayTeam.curto),
             }))
+          // Valor do flag de campeao ANTES de registrar: e a unica forma de saber
+          // se o titulo saiu DESTA partida. Ver a checagem logo abaixo.
+          const championFlagBefore = typeof window !== "undefined"
+            ? localStorage.getItem("ultrafoot-pending-champion")
+            : null
           registerUserMatchResult(
             homeTeam.curto,
             awayTeam.curto,
@@ -1271,10 +1276,16 @@ export default function PartidaAoVivoPage() {
 
           clearMatchContext()
           // Título de mata-mata (estadual/copa) é detectado pelo
-          // registerUserMatchResult acima, que grava o pending-champion. Sem
-          // esta checagem o botão CERIMÔNIA só aparecia para a liga.
-          if (typeof window !== "undefined" && localStorage.getItem("ultrafoot-pending-champion")) {
-            setIsLeagueChampion(true)
+          // registerUserMatchResult acima, que grava o pending-champion.
+          //
+          // Só vale se o flag MUDOU nesta partida. Antes bastava ele EXISTIR — e
+          // ele só é apagado quando o jogador abre /campeao. Quem ganhava um
+          // título e fechava o modal sem entrar na cerimônia ficava com o flag
+          // preso para sempre, e a partir dali TODA partida terminava oferecendo
+          // "cerimônia de campeão" sem ter sido campeão de nada (relato).
+          if (typeof window !== "undefined") {
+            const agora = localStorage.getItem("ultrafoot-pending-champion")
+            if (agora && agora !== championFlagBefore) setIsLeagueChampion(true)
           }
           postMatchAdvance.current = advanceWeek().then(result => {
             if (result && "leagueChampion" in result && result.leagueChampion) {

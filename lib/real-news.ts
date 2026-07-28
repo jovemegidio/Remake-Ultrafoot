@@ -23,6 +23,11 @@ export interface RealNewsItem {
   link: string
   fonte: string
   publicadoEm: number
+  /**
+   * Foto REAL da materia, quando o feed publica uma. Ausente em boa parte dos
+   * itens do Google Noticias — quem consome cai na capa local por categoria.
+   */
+  imagem?: string
 }
 
 const CACHE_KEY = "ultrafoot:real-news"
@@ -53,12 +58,24 @@ function parseRss(xml: string, fonte: string): RealNewsItem[] {
       .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
       .trim()
     if (!titulo) continue
+    // FOTO DA MATERIA. Cada agregador anuncia a imagem de um jeito, e nenhum e
+    // obrigatorio pelo padrao RSS — por isso tentamos as quatro formas comuns,
+    // em ordem de confiabilidade, e por ultimo o primeiro <img> da descricao.
+    // So aceitamos http(s) para nao injetar data: nem caminho relativo quebrado.
+    const imagemBruta =
+      /<media:content[^>]+url=["']([^"']+)["']/i.exec(bloco)?.[1] ??
+      /<media:thumbnail[^>]+url=["']([^"']+)["']/i.exec(bloco)?.[1] ??
+      /<enclosure[^>]+url=["']([^"']+)["'][^>]*type=["']image/i.exec(bloco)?.[1] ??
+      /<enclosure[^>]+type=["']image[^>]+url=["']([^"']+)["']/i.exec(bloco)?.[1] ??
+      /<img[^>]+src=["']([^"']+)["']/i.exec(bloco)?.[1]
+    const imagem = imagemBruta?.trim().replace(/&amp;/g, "&")
     const ts = data ? Date.parse(data) : NaN
     itens.push({
       titulo,
       link: (link ?? "").trim(),
       fonte,
       publicadoEm: Number.isFinite(ts) ? ts : Date.now(),
+      ...(imagem && /^https?:\/\//i.test(imagem) ? { imagem } : {}),
     })
   }
   return itens

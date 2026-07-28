@@ -6,6 +6,7 @@
 import { allTeams, allBrazilianTeams, type Team } from "@/lib/teams-data"
 import { getPlayersForTeam, sortByPosition, type Player } from "@/lib/players-data"
 import { getTeamOverride } from "@/lib/team-overrides"
+import { getPlayerOverride } from "@/lib/player-overrides"
 
 export type Confederation = "CONMEBOL" | "UEFA" | "CONCACAF" | "AFC" | "CAF" | "OFC"
 
@@ -30,6 +31,8 @@ export const NATIONAL_TEAMS: NationalTeam[] = [
   { id: "uruguai", name: "Uruguai", code: "URU", confederation: "CONMEBOL", cor1: "#5cbfeb", cor2: "#ffffff", countryKey: "Uruguai" },
   { id: "colombia", name: "Colombia", code: "COL", confederation: "CONMEBOL", cor1: "#fcd116", cor2: "#003893", countryKey: "Colombia" },
   { id: "chile", name: "Chile", code: "CHI", confederation: "CONMEBOL", cor1: "#d52b1e", cor2: "#0039a6", countryKey: "Chile" },
+  { id: "peru", name: "Peru", code: "PER", confederation: "CONMEBOL", cor1: "#d91023", cor2: "#ffffff", countryKey: "Peru", baselineStrength: 76 },
+  { id: "venezuela", name: "Venezuela", code: "VEN", confederation: "CONMEBOL", cor1: "#8a1538", cor2: "#f4c300", countryKey: "Venezuela", baselineStrength: 76 },
   // UEFA
   { id: "inglaterra", name: "Inglaterra", code: "ENG", confederation: "UEFA", cor1: "#ffffff", cor2: "#cf081f", countryKey: "Inglaterra" },
   { id: "espanha", name: "Espanha", code: "ESP", confederation: "UEFA", cor1: "#c60b1e", cor2: "#ffc400", countryKey: "Espanha" },
@@ -81,6 +84,10 @@ export const NATIONAL_TEAMS: NationalTeam[] = [
   { id: "suica", name: "Suica", code: "SUI", confederation: "UEFA", cor1: "#d52b1e", cor2: "#ffffff", countryKey: "Suica", baselineStrength: 84 },
   { id: "tunisia", name: "Tunisia", code: "TUN", confederation: "CAF", cor1: "#e70013", cor2: "#ffffff", countryKey: "Tunisia", baselineStrength: 78 },
   { id: "uzbequistao", name: "Uzbequistao", code: "UZB", confederation: "AFC", cor1: "#1eb53a", cor2: "#0099b5", countryKey: "Uzbequistao", baselineStrength: 76 },
+  // A CONMEBOL tem 10 federacoes e a Bolivia era a unica ausente — as
+  // Eliminatorias sul-americanas rodavam com 9 seçoes, numero IMPAR, que deixa
+  // uma seleçao de folga por rodada e nao fecha o turno-returno de 18 jogos.
+  { id: "bolivia", name: "Bolivia", code: "BOL", confederation: "CONMEBOL", cor1: "#007934", cor2: "#ffe000", countryKey: "Bolivia", baselineStrength: 70 },
 ]
 
 const NT_BY_ID = new Map(NATIONAL_TEAMS.map(nt => [nt.id, nt]))
@@ -123,14 +130,96 @@ function getClubsForNationalTeam(nt: NationalTeam): Team[] {
   return allTeams.filter(t => t.pais === nt.countryKey)
 }
 
+const NATIONAL_FALLBACK_POSITIONS = [
+  "GOL", "GOL", "GOL",
+  "LD", "LD", "ZAG", "ZAG", "ZAG", "ZAG", "LE", "LE",
+  "VOL", "VOL", "VOL", "MEI", "MEI", "MEI", "MEI",
+  "PD", "PE", "ATA", "ATA", "ATA",
+] as const
+
+const NATIONAL_FIRST_NAMES = [
+  "Alex", "Daniel", "Lucas", "Martin", "David", "Samuel", "Victor", "Nicolas",
+  "Gabriel", "Adam", "Leo", "Marco", "Ivan", "Youssef", "Omar", "Ryan",
+]
+
+/**
+ * Elenco editorial para países sem atletas suficientes nos clubes do banco.
+ * É estável por seleção e fornece 23 pessoas reais para o editor e as partidas,
+ * em vez de uma tela vazia sustentada apenas pelo overall abstrato da seleção.
+ */
+function fallbackNationalPlayers(nt: NationalTeam): Player[] {
+  const strength = NATIONAL_STRENGTH_2026[nt.id] ?? nt.baselineStrength ?? 68
+  let seed = [...nt.id].reduce((sum, char) => (sum * 33 + char.charCodeAt(0)) >>> 0, 5381)
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+    return seed / 4294967296
+  }
+  return NATIONAL_FALLBACK_POSITIONS.map((pos, index) => {
+    const first = NATIONAL_FIRST_NAMES[Math.floor(next() * NATIONAL_FIRST_NAMES.length)]
+    const surname = `${nt.code.charAt(0)}${nt.id.replaceAll("_", "").slice(0, 6)}${index + 1}`
+    const age = 19 + Math.floor(next() * 15)
+    const base = Math.max(55, Math.min(92, strength - 5 + Math.floor(next() * 11)))
+    return {
+      nome: `${first} ${surname}`,
+      pos,
+      idade: age,
+      base,
+      time: nt.name,
+      nac: nt.name,
+    }
+  })
+}
+
+function applyNationalPlayerOverride(nt: NationalTeam, player: Player): Player {
+  const override = getPlayerOverride(nationalTeamFileKey(nt.id), player.nome)
+  if (!override) return player
+  return {
+    ...player,
+    nome: override.nome ?? player.nome,
+    pos: override.pos ?? player.pos,
+    idade: override.idade ?? player.idade,
+    base: Math.max(1, Math.min(99, override.base ?? player.base)),
+    nac: override.nac ?? player.nac,
+    pace: override.pace ?? player.pace,
+    shooting: override.shooting ?? player.shooting,
+    passing: override.passing ?? player.passing,
+    dribbling: override.dribbling ?? player.dribbling,
+    defending: override.defending ?? player.defending,
+    physical: override.physical ?? player.physical,
+    preferredFoot: override.preferredFoot ?? player.preferredFoot,
+    reputation: override.reputation ?? player.reputation,
+    traits: override.traits ?? player.traits,
+  }
+}
+
 /** Jogador e clube de origem, para o editor persistir a alteração no atleta real. */
 export function getNationalPlayerSources(
   nt: NationalTeam,
   opts?: { raw?: boolean },
 ): Array<{ player: Player; team: Team }> {
-  return getClubsForNationalTeam(nt).flatMap(team =>
+  const sources = getClubsForNationalTeam(nt).flatMap(team =>
     getPlayersForTeam(team, opts).map(player => ({ player, team })),
   )
+  if (sources.length < 23) {
+    const virtualTeam = {
+      nome: nt.name,
+      curto: nt.code,
+      pais: nt.name,
+      file_key: nationalTeamFileKey(nt.id),
+    } as Team
+    const complement = fallbackNationalPlayers(nt)
+      .slice(0, 23 - sources.length)
+      .map(player => ({
+      player,
+      team: virtualTeam,
+    }))
+    sources.push(...complement)
+  }
+  if (opts?.raw) return sources
+  return sources.map(source => ({
+    ...source,
+    player: applyNationalPlayerOverride(nt, source.player),
+  }))
 }
 
 // Pool completo de jogadores disponiveis para a selecao
