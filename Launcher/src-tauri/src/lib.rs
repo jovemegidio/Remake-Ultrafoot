@@ -17,11 +17,44 @@ use std::io::{Read, Write};
 use tauri::{AppHandle, Emitter};
 
 const LATEST_JSON_URL: &str =
-    "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json";
+    "https://ultrafoot.72-61-145-52.sslip.io/downloads/latest.json";
 
 // Endpoint estável do PRÓPRIO launcher (release rolling "launcher").
 const LAUNCHER_UPDATE_URL: &str =
+    "https://ultrafoot.72-61-145-52.sslip.io/downloads/launcher.json";
+
+// ─── Reserva no GitHub ───────────────────────────────────────────────────────
+//
+// O servidor próprio é a fonte PRIMÁRIA, mas ele é uma máquina só: se cair,
+// ficar sem disco ou o domínio sslip.io não resolver, NINGUÉM mais recebe
+// atualização — nem do jogo, nem do launcher. O GitHub Releases continua
+// publicado e é a segunda opção: mesma estrutura de JSON, custo zero de
+// manutenção. Só é consultado quando o primário falha.
+const LATEST_JSON_URL_RESERVA: &str =
+    "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json";
+
+const LAUNCHER_UPDATE_URL_RESERVA: &str =
     "https://github.com/jovemegidio/Ultrafoot26/releases/download/launcher/launcher.json";
+
+/// Busca um JSON no endereço primário e, se ele falhar por QUALQUER motivo
+/// (rede, HTTP != 2xx, corpo inválido), tenta o de reserva. O timeout curto no
+/// primário evita que um servidor pendurado segure o launcher até o TCP desistir.
+fn buscar_json_com_reserva(primario: &str, reserva: &str) -> Result<serde_json::Value, String> {
+    let tentar = |url: &str, segundos: u64| -> Result<serde_json::Value, String> {
+        ureq::get(url)
+            .timeout(std::time::Duration::from_secs(segundos))
+            .call()
+            .map_err(|e| format!("{url}: {e}"))?
+            .into_json()
+            .map_err(|e| format!("{url}: JSON inválido: {e}"))
+    };
+    match tentar(primario, 8) {
+        Ok(v) => Ok(v),
+        Err(erro_primario) => tentar(reserva, 15).map_err(|erro_reserva| {
+            format!("servidor e reserva falharam — {erro_primario} | {erro_reserva}")
+        }),
+    }
+}
 
 // Configuração remota do launcher (notícias, banner, redes, status do servidor).
 const LAUNCHER_CONFIG_URL: &str =
@@ -236,11 +269,8 @@ fn fetch_latest() -> Result<LatestInfo, String> {
 
 #[cfg(windows)]
 fn fetch_latest_windows() -> Result<LatestInfo, String> {
-    let body: serde_json::Value = ureq::get(LATEST_JSON_URL)
-        .call()
-        .map_err(|e| format!("falha ao consultar atualizações: {e}"))?
-        .into_json()
-        .map_err(|e| format!("latest.json inválido: {e}"))?;
+    let body: serde_json::Value = buscar_json_com_reserva(LATEST_JSON_URL, LATEST_JSON_URL_RESERVA)
+        .map_err(|e| format!("falha ao consultar atualizações: {e}"))?;
 
     let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
     let notes = body.get("notes").and_then(|v| v.as_str()).unwrap_or_default().to_string();
@@ -647,11 +677,9 @@ fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
     }
     #[cfg(windows)]
     {
-        let body: serde_json::Value = ureq::get(LAUNCHER_UPDATE_URL)
-            .call()
-            .map_err(|e| format!("falha ao consultar atualização do launcher: {e}"))?
-            .into_json()
-            .map_err(|e| format!("launcher.json inválido: {e}"))?;
+        let body: serde_json::Value =
+            buscar_json_com_reserva(LAUNCHER_UPDATE_URL, LAUNCHER_UPDATE_URL_RESERVA)
+                .map_err(|e| format!("falha ao consultar atualização do launcher: {e}"))?;
 
         let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
         let url = body.get("url").and_then(|v| v.as_str()).unwrap_or_default().to_string();

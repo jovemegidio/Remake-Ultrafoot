@@ -1,0 +1,22 @@
+[Unit]
+Description=Ultrafoot FC Hub Relay
+After=network.target
+
+[Service]
+Type=simple
+User=ultrafoot
+Group=ultrafoot
+Environment=PORT=8790
+Environment=DATA_DIR=/var/lib/ultrafoot/relay
+Environment=GAME_VERSION=1.0.191
+ExecStart=/usr/bin/node /opt/ultrafoot/relay/server.mjs
+WorkingDirectory=/opt/ultrafoot/relay
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/ultrafoot
+
+[Install]
+WantedBy=multi-user.target

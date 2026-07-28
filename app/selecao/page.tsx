@@ -1,17 +1,15 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Link from "next/link"
 import {
   Flag,
   Trophy,
-  Shield,
   Check,
   X,
-  Plus,
-  Play,
   Crown,
   Globe,
-  Star,
+  Swords,
   ChevronRight,
   Lock,
   Award,
@@ -23,79 +21,22 @@ import { useTranslation } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { assumirSelecao, voltarAoClube } from "@/lib/career-moves"
-import { periodoLabelPorNome } from "@/lib/competition-dates-2026"
-import { getNationalCrestUrl, getNationalKitUrl } from "@/lib/national-assets"
+import { NationalCrest, NationalKit, strengthTone } from "@/components/national/national-crest"
+import {
+  NationalCompetitionPanel,
+  NationalCompetitionList,
+} from "@/components/national/national-competition-panel"
 import {
   getNationalSquad,
   getNationalStrength,
   getNationalTeamById,
-  getNationalPlayerPool,
-  nationalPlayerKey,
   CONFEDERATION_LABEL,
-  getAllNationalTeams,
   type NationalTeam,
 } from "@/lib/national-teams"
-import { getCompetitionsForConfederation, getCompetitionDef } from "@/lib/national-competitions"
+import { getCompetitionsForConfederation } from "@/lib/national-competitions"
 import type { NationalOffer } from "@/lib/save-system"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
-
-// Tenta o escudo real da selecao (public/escudos/nations/<id>.png, importado pelo
-// usuario); se nao existir, cai no bloco em gradiente com o codigo do pais — a
-// selecao nunca fica sem nada. `id` opcional para nao quebrar chamadas antigas.
-function NationalCrest({ team, size = 48 }: { team: { id?: string; code: string; cor1: string; cor2: string }; size?: number }) {
-  const [erro, setErro] = useState(false)
-  if (team.id && !erro) {
-    return (
-      <img
-        src={getNationalCrestUrl(team.id)}
-        alt={team.code}
-        onError={() => setErro(true)}
-        style={{ width: size, height: size }}
-        className="rounded-lg object-contain"
-      />
-    )
-  }
-  return (
-    <div
-      className="flex items-center justify-center rounded-lg font-bold text-white shadow-inner"
-      style={{
-        width: size,
-        height: size,
-        background: `linear-gradient(135deg, ${team.cor1} 0%, ${team.cor2} 100%)`,
-        fontSize: size * 0.3,
-        textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-      }}
-      aria-hidden
-    >
-      {team.code}
-    </div>
-  )
-}
-
-// Uniforme da selecao (home). Some silenciosamente se o arquivo nao existir —
-// so UEFA e CONCACAF tem kit importado; as demais seguem so com o escudo.
-function NationalKit({ id, size = 56 }: { id: string; size?: number }) {
-  const [erro, setErro] = useState(false)
-  if (erro) return null
-  return (
-    <img
-      src={getNationalKitUrl(id, "home")}
-      alt=""
-      onError={() => setErro(true)}
-      style={{ width: size, height: size }}
-      className="object-contain drop-shadow"
-      aria-hidden
-    />
-  )
-}
-
-function strengthTone(strength: number): string {
-  if (strength >= 85) return "text-[#00ffc8]"
-  if (strength >= 75) return "text-emerald-400"
-  if (strength >= 65) return "text-yellow-400"
-  return "text-white/60"
-}
 
 // ---------------------------------------------------------
 // PROPOSTAS
@@ -195,180 +136,6 @@ function OfferCard({
   )
 }
 
-// ---------------------------------------------------------
-// COMPETICAO ATIVA
-// ---------------------------------------------------------
-function CompetitionPanel() {
-  const { currentCompetition, userNextFixture, nationalTeam, playNextRound, finishCompetition } = useNationalTeam()
-  if (!currentCompetition || !nationalTeam) return null
-
-  const comp = currentCompetition
-  const def = getCompetitionDef(comp.competitionId)
-  const isActive = comp.status === "active"
-  const statusBanner = (() => {
-    switch (comp.status) {
-      case "champion":
-        return { label: comp.lastSummary || "Campeao!", tone: "bg-[#00ffc8]/15 text-[#00ffc8] border-[#00ffc8]/30", icon: Crown }
-      case "qualified":
-        return { label: comp.lastSummary || "Classificado!", tone: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: Check }
-      case "eliminated":
-        return { label: comp.lastSummary || "Eliminado", tone: "bg-red-500/10 text-red-400 border-red-500/20", icon: X }
-      case "finished":
-        return { label: comp.lastSummary || "Encerrada", tone: "bg-white/[0.05] text-white/60 border-white/10", icon: Flag }
-      default:
-        return null
-    }
-  })()
-
-  return (
-    <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] overflow-hidden">
-      {/* Banner com tema da competicao */}
-      <div
-        className="relative h-32 sm:h-36 flex items-end p-5"
-        style={
-          def?.theme
-            ? { backgroundImage: `url(${def.theme})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : undefined
-        }
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c10] via-[#0c0c10]/70 to-[#0c0c10]/20" />
-        <div className="relative flex items-end justify-between w-full gap-3">
-          <div className="flex items-center gap-3">
-            <div
-              className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0 shadow-lg overflow-hidden"
-              style={{ backgroundColor: def?.accent ?? "#00ffc8" }}
-            >
-              {def?.logo ? (
-                <img
-                  src={def.logo || "/placeholder.svg"}
-                  alt={comp.competitionName}
-                  className="h-full w-full object-contain p-1"
-                />
-              ) : (
-                <Trophy className="h-5 w-5 text-white" />
-              )}
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white drop-shadow">{comp.competitionName}</h3>
-              <p className="text-xs text-white/70 drop-shadow">Temporada {comp.season} - {comp.stage}</p>
-              {/* Periodo REAL da competicao (Copa do Mundo 11 jun – 19 jul 2026 etc.). */}
-              {periodoLabelPorNome(comp.competitionName) && (
-                <p className="mt-0.5 text-[11px] text-white/55 drop-shadow">📅 {periodoLabelPorNome(comp.competitionName)}</p>
-              )}
-            </div>
-          </div>
-          {comp.lastSummary && isActive && (
-            <span className="hidden sm:block text-xs text-white/70 max-w-[40%] text-right drop-shadow">{comp.lastSummary}</span>
-          )}
-        </div>
-      </div>
-
-      <div className="p-5 space-y-5">
-
-      {statusBanner && (
-        <div className={cn("flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium", statusBanner.tone)}>
-          <statusBanner.icon className="h-4 w-4 shrink-0" />
-          {statusBanner.label}
-        </div>
-      )}
-
-      {/* Tabela (grupos / liga) */}
-      {comp.currentRound <= comp.totalGroupRounds + 0 && comp.table.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-white/[0.04]">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-white/[0.03] text-white/40 text-[11px] uppercase tracking-wide">
-                <th className="text-left font-medium px-3 py-2">Selecao</th>
-                <th className="text-center font-medium px-2 py-2">J</th>
-                <th className="text-center font-medium px-2 py-2">V</th>
-                <th className="text-center font-medium px-2 py-2">E</th>
-                <th className="text-center font-medium px-2 py-2">D</th>
-                <th className="text-center font-medium px-2 py-2">SG</th>
-                <th className="text-center font-medium px-2 py-2">Pts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comp.table.map((row, idx) => (
-                <tr
-                  key={row.teamId}
-                  className={cn(
-                    "border-t border-white/[0.03]",
-                    row.isUser ? "bg-[#00ffc8]/[0.06]" : idx % 2 ? "bg-white/[0.01]" : "",
-                  )}
-                >
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/30 text-xs w-4">{idx + 1}</span>
-                      <span className={cn("font-medium", row.isUser ? "text-[#00ffc8]" : "text-white/80")}>{row.teamName}</span>
-                    </div>
-                  </td>
-                  <td className="text-center text-white/60 px-2 py-2">{row.played}</td>
-                  <td className="text-center text-white/60 px-2 py-2">{row.won}</td>
-                  <td className="text-center text-white/60 px-2 py-2">{row.drawn}</td>
-                  <td className="text-center text-white/60 px-2 py-2">{row.lost}</td>
-                  <td className="text-center text-white/60 px-2 py-2">{row.gf - row.ga}</td>
-                  <td className="text-center font-semibold text-white px-2 py-2">{row.points}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Jogos do usuario */}
-      <div className="space-y-2">
-        <p className="text-xs text-white/40 uppercase tracking-wide">Seus jogos</p>
-        {comp.fixtures.filter(f => f.isUserMatch).map(f => {
-          const userIsHome = f.homeId === nationalTeam.id
-          const oppName = userIsHome ? f.awayName : f.homeName
-          return (
-            <div
-              key={f.id}
-              className={cn(
-                "flex items-center justify-between rounded-lg border px-3 py-2.5 text-sm",
-                f.played ? "border-white/[0.04] bg-white/[0.02]" : "border-[#00ffc8]/20 bg-[#00ffc8]/[0.04]",
-              )}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-[10px] uppercase tracking-wide text-white/40 w-28 shrink-0">{f.stage}</span>
-                <span className="text-white/80 truncate">vs {oppName}</span>
-                {f.played && f.decidedOnPens && (
-                  <span className="text-[10px] text-yellow-400">(pen)</span>
-                )}
-              </div>
-              {f.played ? (
-                <span className="font-semibold tabular-nums text-white">
-                  {userIsHome ? f.homeScore : f.awayScore} x {userIsHome ? f.awayScore : f.homeScore}
-                </span>
-              ) : (
-                <span className="text-xs text-white/30">a jogar</span>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Acoes */}
-      {isActive && userNextFixture ? (
-        <button
-          onClick={playNextRound}
-          className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#00ffc8] text-[#050508] font-semibold py-3 hover:bg-[#00ffc8]/90 transition-colors"
-        >
-          <Play className="h-4 w-4" /> Jogar proxima partida
-        </button>
-      ) : !isActive ? (
-        <button
-          onClick={finishCompetition}
-          className="w-full flex items-center justify-center gap-2 rounded-lg bg-white/[0.05] text-white/80 font-medium py-3 hover:bg-white/[0.1] transition-colors"
-        >
-          <Flag className="h-4 w-4" /> Encerrar competicao
-        </button>
-      ) : null}
-      </div>
-    </div>
-  )
-}
-
 export default function SelecaoPage() {
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
@@ -393,13 +160,10 @@ export default function SelecaoPage() {
     declineAll,
     leaveNationalTeam,
     startCompetition,
-    playNationalFriendly,
     nationalFriendlies,
   } = useNationalTeam()
 
   const [confirmLeave, setConfirmLeave] = useState(false)
-  const [showPool, setShowPool] = useState(false)
-  const [amistosoOppId, setAmistosoOppId] = useState("")
 
   // MODO SELEÇÃO (Task 2). Aceitar uma proposta passa a funcionar como assumir um
   // clube: além de firmar o contrato (acceptOffer), a seleção vira o "time atual"
@@ -414,7 +178,9 @@ export default function SelecaoPage() {
     if (nationalTeam) assumirSelecao(nationalTeam.id, { setSaveState: patch, navigate: hardNavigate })
   }
 
-  // Convocacao manual: cortes e convocacoes a dedo vem do save.
+  // Convocacao: a gestao completa (cortes, chamadas, criterios) fica na tela
+  // dedicada /selecao/convocacao. Aqui o hub so mostra o resumo do que esta
+  // salvo, para o tecnico saber se mexeu na lista sem precisar abrir.
   const cuts = state.nationalCuts ?? []
   const calls = state.nationalCalls ?? []
 
@@ -423,32 +189,6 @@ export default function SelecaoPage() {
     [nationalTeam, cuts, calls],
   )
   const strength = useMemo(() => (nationalTeam ? getNationalStrength(nationalTeam) : 0), [nationalTeam])
-
-  // Elegiveis fora da convocacao atual — para o tecnico convocar a dedo.
-  const availablePool = useMemo(() => {
-    if (!nationalTeam) return []
-    const inSquad = new Set(squad.map(nationalPlayerKey))
-    return getNationalPlayerPool(nationalTeam)
-      .filter((p) => !inSquad.has(nationalPlayerKey(p)))
-      .sort((a, b) => b.base - a.base)
-      .slice(0, 40)
-  }, [nationalTeam, squad])
-
-  const cutPlayer = (p: { nome: string; time?: string }) => {
-    const key = nationalPlayerKey(p)
-    setState({
-      nationalCuts: [...cuts.filter((k) => k !== key), key],
-      nationalCalls: calls.filter((k) => k !== key),
-    })
-  }
-  const callPlayer = (p: { nome: string; time?: string }) => {
-    const key = nationalPlayerKey(p)
-    setState({
-      nationalCalls: [...calls.filter((k) => k !== key), key],
-      nationalCuts: cuts.filter((k) => k !== key),
-    })
-  }
-  const resetCallups = () => setState({ nationalCuts: [], nationalCalls: [] })
 
   if (!hydrated || !teamHydrated) {
     return (
@@ -600,36 +340,24 @@ export default function SelecaoPage() {
                 </div>
               </div>
 
-              {/* AMISTOSOS de selecao — preparacao antes dos torneios. Simulado
-                  pela forca dos dois lados (como as partidas oficiais de selecao). */}
+              {/* AMISTOSOS: marcar o jogo e o historico completo ficam na tela
+                  dedicada (/selecao/amistosos). Aqui so o retrospecto recente. */}
               <div className="mt-4 border-t border-white/[0.06] pt-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">Amistosos de preparação</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={amistosoOppId}
-                    onChange={e => setAmistosoOppId(e.target.value)}
-                    className="rounded-lg border border-white/10 bg-[#101015] px-3 py-2 text-sm text-white"
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/50">Amistosos de preparação</p>
+                  <Link
+                    href="/selecao/amistosos"
+                    className="ml-auto flex items-center gap-1 rounded-lg bg-[#00ffc8]/10 px-3 py-1 text-[11px] font-semibold text-[#00ffc8] transition-colors hover:bg-[#00ffc8]/20"
                   >
-                    <option value="">Escolher adversário...</option>
-                    {getAllNationalTeams().filter(n => n.id !== nationalTeam.id)
-                      .slice().sort((a, b) => a.name.localeCompare(b.name))
-                      .map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
-                  </select>
-                  <button
-                    onClick={() => { if (amistosoOppId) { playNationalFriendly(amistosoOppId); setAmistosoOppId("") } }}
-                    disabled={!amistosoOppId}
-                    className="rounded-lg bg-[#00ffc8] px-4 py-2 text-sm font-black text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Jogar amistoso
-                  </button>
-                  <span className="text-[11px] text-white/40">Prepara o time antes das competições.</span>
+                    <Swords className="h-3 w-3" /> Marcar amistoso
+                  </Link>
                 </div>
-                {nationalFriendlies.length > 0 && (
+                {nationalFriendlies.length > 0 ? (
                   <div className="mt-3 space-y-1.5">
-                    {nationalFriendlies.map((f, i) => {
+                    {nationalFriendlies.slice(0, 3).map((f, i) => {
                       const r = f.userScore > f.oppScore ? "V" : f.userScore < f.oppScore ? "D" : "E"
                       return (
-                        <div key={i} className="flex items-center gap-3 rounded-lg bg-black/25 px-3 py-2">
+                        <div key={`${f.opponentId}-${i}`} className="flex items-center gap-3 rounded-lg bg-black/25 px-3 py-2">
                           <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded text-[11px] font-black",
                             r === "V" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60")}>{r}</span>
                           <span className="w-14 shrink-0 font-mono text-sm text-white">{f.userScore} x {f.oppScore}</span>
@@ -639,6 +367,10 @@ export default function SelecaoPage() {
                       )
                     })}
                   </div>
+                ) : (
+                  <p className="mt-2 text-[11px] text-white/40">
+                    Nenhum amistoso disputado. Prepare o time antes da janela FIFA.
+                  </p>
                 )}
               </div>
 
@@ -680,150 +412,51 @@ export default function SelecaoPage() {
               </div>
             </div>
 
-            {/* Competicao ativa OU lista de competicoes.
-                O id serve de destino para "Competicoes da selecao" no escritorio. */}
+            {/* Competicao ativa OU lista de competicoes. O id mantem a ancora
+                antiga (/selecao#competicoes) funcionando para saves e links velhos. */}
             <div id="competicoes" className="scroll-mt-24" />
             {currentCompetition ? (
-              <CompetitionPanel />
+              <NationalCompetitionPanel />
             ) : (
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-[#00ffc8]" /> Competicoes disponiveis
-                </h2>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {availableCompetitions.map(comp => {
-                    const done = career.completedThisSeason.includes(comp.id)
-                    return (
-                      <button
-                        key={comp.id}
-                        disabled={done}
-                        onClick={() => startCompetition(comp.id)}
-                        className={cn(
-                          "group relative flex items-center gap-3 rounded-xl border p-4 text-left transition-all overflow-hidden min-h-[88px]",
-                          done
-                            ? "border-white/[0.04] opacity-50 cursor-not-allowed"
-                            : "border-white/[0.06] hover:border-white/20",
-                        )}
-                      >
-                        {/* Fundo tema */}
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            backgroundImage: `url(${comp.theme})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }}
-                          aria-hidden
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#0c0c10] via-[#0c0c10]/85 to-[#0c0c10]/55 group-hover:from-[#0c0c10] group-hover:via-[#0c0c10]/75 transition-colors" />
-                        <div
-                          className="relative h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg overflow-hidden"
-                          style={{ backgroundColor: comp.accent }}
-                        >
-                          {comp.logo ? (
-                            <img
-                              src={comp.logo || "/placeholder.svg"}
-                              alt={comp.name}
-                              className="h-full w-full object-contain p-0.5"
-                            />
-                          ) : comp.kind === "title" ? (
-                            <Crown className="h-5 w-5 text-white" />
-                          ) : (
-                            <Star className="h-5 w-5 text-white" />
-                          )}
-                        </div>
-                        <div className="relative flex-1 min-w-0">
-                          <p className="font-semibold text-white drop-shadow">{comp.name}</p>
-                          <p className="text-xs text-white/60 drop-shadow">
-                            {comp.kind === "title" ? "Titulo" : "Classificatoria"} - Prestigio {comp.prestige}
-                            {done ? " - concluida" : ""}
-                          </p>
-                        </div>
-                        {!done && <ChevronRight className="relative h-4 w-4 text-white/50" />}
-                      </button>
-                    )
-                  })}
+                <div className="flex items-center gap-2">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
+                    <Trophy className="h-5 w-5 text-[#00ffc8]" /> Competicoes disponiveis
+                  </h2>
+                  <Link
+                    href="/selecao/competicoes"
+                    className="ml-auto flex items-center gap-1 rounded-lg bg-white/[0.05] px-3 py-1.5 text-[11px] font-semibold text-white/60 transition-colors hover:bg-white/[0.1] hover:text-white"
+                  >
+                    Tela de competições <ChevronRight className="h-3 w-3" />
+                  </Link>
                 </div>
+                <NationalCompetitionList
+                  competitions={availableCompetitions}
+                  completedThisSeason={career.completedThisSeason}
+                  onStart={startCompetition}
+                />
               </div>
             )}
 
-            {/* Convocacao — agora com corte manual e convocacao a dedo. */}
-            <div className="rounded-xl bg-[#0c0c10] border border-white/[0.06] p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="h-4 w-4 text-[#00ffc8]" />
-                <h2 className="text-sm font-semibold text-white uppercase tracking-wide">Convocacao ({squad.length})</h2>
-                <div className="ml-auto flex items-center gap-2">
-                  {(cuts.length > 0 || calls.length > 0) && (
-                    <button
-                      onClick={resetCallups}
-                      className="rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white/45 transition-colors hover:bg-white/5 hover:text-white/70"
-                    >
-                      Convocação automática
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowPool((v) => !v)}
-                    className="rounded-lg bg-[#00ffc8]/10 px-3 py-1 text-[11px] font-semibold text-[#00ffc8] transition-colors hover:bg-[#00ffc8]/20"
-                  >
-                    {showPool ? "Fechar lista" : "Convocar jogador"}
-                  </button>
-                </div>
+            {/* Convocacao: a gestao completa (cortes, chamadas a dedo, criterios
+                e elegiveis) tem tela propria. O hub mostra so o estado da lista. */}
+            <Link
+              href="/selecao/convocacao"
+              className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5 transition-colors hover:border-[#00ffc8]/30 hover:bg-white/[0.02]"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#00ffc8]/10">
+                <Users className="h-5 w-5 text-[#00ffc8]" />
               </div>
-
-              <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                {squad.map((p, i) => {
-                  const forced = calls.includes(nationalPlayerKey(p))
-                  return (
-                    <div key={`${p.nome}-${i}`} className="group flex items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-2">
-                      <span className="text-[10px] font-medium text-[#00ffc8] w-8 shrink-0">{p.pos}</span>
-                      <span className="text-sm text-white/80 truncate flex-1">
-                        {p.nome}
-                        {forced && <span className="ml-1.5 text-[9px] uppercase text-[#00ffc8]/70">convocado</span>}
-                      </span>
-                      <span className="text-xs text-white/40 tabular-nums">{p.base}</span>
-                      <button
-                        onClick={() => cutPlayer(p)}
-                        title="Cortar da convocação"
-                        className="shrink-0 rounded p-1 text-white/25 transition-colors hover:bg-red-500/15 hover:text-red-300"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )
-                })}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold uppercase tracking-wide text-white">Convocacao ({squad.length})</p>
+                <p className="truncate text-xs text-white/50">
+                  {cuts.length > 0 || calls.length > 0
+                    ? `Lista ajustada por voce — ${cuts.length} corte(s) e ${calls.length} chamada(s).`
+                    : "Lista automatica pelas cotas de setor. Abra para cortar e convocar a dedo."}
+                </p>
               </div>
-
-              {/* Lista de elegiveis para convocar a dedo. */}
-              {showPool && (
-                <div className="mt-4 border-t border-white/[0.06] pt-4">
-                  <div className="mb-2 text-[11px] uppercase tracking-wider text-white/40">
-                    Elegíveis fora da convocação
-                  </div>
-                  <div className="grid max-h-64 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 scrollbar-thin">
-                    {availablePool.map((p, i) => {
-                      const wasCut = cuts.includes(nationalPlayerKey(p))
-                      return (
-                        <div key={`${p.nome}-pool-${i}`} className="flex items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-2">
-                          <span className="text-[10px] font-medium text-white/40 w-8 shrink-0">{p.pos}</span>
-                          <span className="flex-1 truncate text-sm text-white/70">
-                            {p.nome}
-                            {wasCut && <span className="ml-1.5 text-[9px] uppercase text-red-300/60">cortado</span>}
-                          </span>
-                          <span className="text-xs text-white/30 tabular-nums">{p.base}</span>
-                          <button
-                            onClick={() => callPlayer(p)}
-                            title="Convocar"
-                            className="shrink-0 rounded p-1 text-[#00ffc8]/60 transition-colors hover:bg-[#00ffc8]/15 hover:text-[#00ffc8]"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-white/30 transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </div>
         )}
       </main>

@@ -25,23 +25,38 @@ export function useLiveLatest(enabled = true): LiveLatest | null {
   useEffect(() => {
     if (!enabled) return
     let alive = true
-    fetch("https://api.github.com/repos/jovemegidio/Ultrafoot26/releases/latest", {
-      headers: { Accept: "application/vnd.github+json" },
-      cache: "no-store",
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j: { tag_name?: string; assets?: { name: string; size: number; browser_download_url: string }[] } | null) => {
-        if (!alive || !j) return
-        const version = String(j.tag_name ?? "").replace(/^build-/, "").trim()
-        if (!/^\d+\.\d+\.\d+$/.test(version)) return
-        const asset = (j.assets ?? []).find((a) => /_x64-setup\.exe$/i.test(a.name))
-        setLive({
-          version,
-          sizeMb: asset ? Math.round(asset.size / (1024 * 1024)) : 0,
-          downloadUrl: asset?.browser_download_url ?? "",
-        })
-      })
-      .catch(() => { /* offline: mantem o estatico */ })
+
+    // Servidor proprio primeiro, GitHub como RESERVA. O servidor e uma maquina
+    // so: caindo ela, sem esta reserva o launcher ficaria preso na versao
+    // estatica embutida e ninguem veria atualizacao. Os dois publicam o mesmo
+    // formato de latest.json.
+    const FONTES = [
+      "https://ultrafoot.72-61-145-52.sslip.io/downloads/latest.json",
+      "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json",
+    ]
+
+    type Latest = { version?: string; sizeMb?: number; platforms?: Record<string, { url?: string }> }
+
+    void (async () => {
+      for (const url of FONTES) {
+        try {
+          const r = await fetch(url, { cache: "no-store" })
+          if (!r.ok) continue
+          const j = (await r.json()) as Latest | null
+          if (!alive) return
+          const version = String(j?.version ?? "").trim()
+          if (!/^\d+\.\d+\.\d+$/.test(version)) continue
+          setLive({
+            version,
+            sizeMb: Number(j?.sizeMb) || 0,
+            downloadUrl: j?.platforms?.["windows-x86_64"]?.url ?? "",
+          })
+          return
+        } catch { /* tenta a proxima fonte */ }
+      }
+      // Nenhuma fonte respondeu: mantem o dado estatico do build.
+    })()
+
     return () => { alive = false }
   }, [enabled])
 

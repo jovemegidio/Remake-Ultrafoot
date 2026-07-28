@@ -4,11 +4,11 @@
 // NAO conta para a temporada (sem tabela, sem avancar a semana) — e treino. O contexto
 // leva a flag `friendly`, que a tela da partida respeita.
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Search, Swords, ArrowRightLeft, Home, Plane, CalendarDays } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
-import { useUserTeam, useGameState } from "@/lib/save-system"
+import { useUserTeam, useGameState, useManagingNational } from "@/lib/save-system"
 import { allTeams, type Team } from "@/lib/teams-data"
 import { saveMatchContext } from "@/lib/match-context"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -44,6 +44,11 @@ export default function AmistososPage() {
 
   const { team: userTeam } = useUserTeam()
   const { state } = useGameState()
+  // MODO SELEÇÃO: esta tela monta uma partida AO VIVO entre dois clubes do banco.
+  // Com a seleção como time atual não há elenco de clube para carregar — o
+  // amistoso de seleção é simulado e tem tela própria.
+  const { isNational } = useManagingNational()
+  useEffect(() => { if (isNational) hardNavigate("/selecao/amistosos") }, [isNational])
   const [query, setQuery] = useState("")
   const [userIsHome, setUserIsHome] = useState(true)
 

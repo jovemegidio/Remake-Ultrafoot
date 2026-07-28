@@ -1,0 +1,9 @@
+{
+  "name": "@ultrafoot/multiplayer-relay-vps",
+  "version": "1.0.190",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

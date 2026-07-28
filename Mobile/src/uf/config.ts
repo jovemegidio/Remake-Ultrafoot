@@ -3,4 +3,4 @@
 //
 // >>> DEPOIS de publicar o jogo na Vercel, troque a URL abaixo pela sua. <<<
 // Ex.: "https://ultrafoot.vercel.app" ou seu domínio próprio.
-export const GAME_URL = "https://ultrafoot.vercel.app"
+export const GAME_URL = "https://ultrafoot.72-61-145-52.sslip.io"

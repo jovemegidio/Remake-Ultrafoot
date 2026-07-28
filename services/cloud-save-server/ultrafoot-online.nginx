@@ -1,0 +1,53 @@
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name ultrafoot.72-61-145-52.sslip.io 72.61.145.52;
+
+    root /var/www/ultrafoot/current;
+    index index.html;
+
+    client_max_body_size 16m;
+
+    location /downloads/ {
+        alias /var/www/ultrafoot-downloads/;
+        add_header Cache-Control "public, max-age=300";
+    }
+
+    location = /api/cloud-saves/health {
+        proxy_pass http://127.0.0.1:8788/health;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /api/cloud-saves/ {
+        proxy_pass http://127.0.0.1:8788/;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_http_version 1.1;
+        limit_req zone=ultrafoot_api burst=20 nodelay;
+    }
+
+    location /relay/ {
+        proxy_pass http://127.0.0.1:8790/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 75s;
+        proxy_send_timeout 75s;
+        limit_req zone=ultrafoot_api burst=30 nodelay;
+    }
+
+    location / {
+        try_files $uri $uri/ $uri.html /index.html;
+    }
+
+    location ~* \.(?:css|js|mjs|png|jpg|jpeg|webp|svg|ico|woff2?)$ {
+        expires 7d;
+        add_header Cache-Control "public, max-age=604800, immutable";
+        try_files $uri =404;
+    }
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options SAMEORIGIN always;
+}

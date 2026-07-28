@@ -14,6 +14,7 @@ import type { Game, Release, ChangelogEntry, News } from "@/lib/db/schema"
  */
 
 const GITHUB = "https://github.com/jovemegidio/Ultrafoot26/releases/download"
+const VPS_DOWNLOADS = "https://ultrafoot.72-61-145-52.sslip.io/downloads"
 
 /** Monta a URL real do setup.exe seguindo o padrão dos releases publicados. */
 function setupUrl(version: string): string {
@@ -42,6 +43,19 @@ export const GAMES: Game[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: 191,
+    gameId: 1,
+    version: "1.0.191",
+    channel: "stable",
+    title: "FC Hub online, save compartilhado e versão web/mobile",
+    downloadUrl: `${VPS_DOWNLOADS}/Ultrafoot.26_1.0.191_x64-setup.exe`,
+    sizeMb: 520,
+    isLatest: true,
+    isRequired: false,
+    releasedAt: new Date("2026-07-27T00:00:00Z"),
+    createdAt: new Date("2026-07-27T00:00:00Z"),
+  },
+  {
     id: 175,
     gameId: 1,
     version: "1.0.175",
@@ -49,7 +63,7 @@ export const RELEASES: Release[] = [
     title: "Propostas de clube e seleção, demissão clara e Copa do Mundo no calendário",
     downloadUrl: setupUrl("1.0.175"),
     sizeMb: 486,
-    isLatest: true,
+    isLatest: false,
     isRequired: false,
     releasedAt: new Date("2026-07-26T00:00:00Z"),
     createdAt: new Date("2026-07-26T00:00:00Z"),

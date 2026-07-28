@@ -391,7 +391,13 @@ export function useNationalTeam() {
     const userStr = getNationalStrength(nationalTeam, squad)
     const oppStr = getNationalStrength(opponent)
 
-    const rng = makeRng(`${state.managerName}-${nationalTeam.id}-${opponentId}-${state.season}-${state.week}`)
+    // O XP do tecnico entra na semente por ser MONOTONICO (cada amistoso soma 8).
+    // Sem ele, dois amistosos contra o mesmo adversario na MESMA semana davam
+    // exatamente o mesmo placar — a semana nao avanca entre um e outro —, o que
+    // denunciava a simulacao. O historico nao serve para isso: e limitado a 6.
+    const rng = makeRng(
+      `${state.managerName}-${nationalTeam.id}-${opponentId}-${state.season}-${state.week}-${state.coachXP ?? 0}`,
+    )
     // Poisson simples: a diferenca de forca desloca o numero esperado de gols.
     const dif = (userStr - oppStr) / 9
     const golsPoisson = (media: number) => {

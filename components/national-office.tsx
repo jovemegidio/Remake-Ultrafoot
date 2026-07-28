@@ -49,17 +49,14 @@ export function NationalOffice() {
   const club = clubShort ? getTeamByShort(clubShort) : null
   const strength = nationalTeam ? getNationalStrength(nationalTeam) : 0
 
+  // Cada item tem TELA PROPRIA (antes os tres caiam no mesmo /selecao, e
+  // "Amistosos" ia parar na tela de amistosos de CLUBE, que no modo selecao nao
+  // tem elenco para carregar). A gestao do contrato segue na /selecao.
   const tasks = [
-    // Os tres itens apontavam para o MESMO "/selecao": clicar em qualquer um
-    // levava ao mesmo lugar, sem chegar na secao correspondente.
-    //
-    // "Convocacao" segue em /selecao porque a tela de convocacao AINDA NAO
-    // EXISTE — /elenco redireciona para ca no modo selecao e /selecao nao tem
-    // painel de elenco. Mandar para uma ancora inexistente seria pior: daria a
-    // impressao de que o recurso existe e nao abre.
-    { href: "/selecao", icon: Users, label: "Convocação", highlight: false },
-    { href: "/selecao#competicoes", icon: Trophy, label: "Competições da seleção", highlight: false },
-    { href: "/amistosos", icon: Swords, label: "Amistosos de preparação", highlight: false },
+    { href: "/selecao/convocacao", icon: Users, label: "Convocação", highlight: false },
+    { href: "/selecao/competicoes", icon: Trophy, label: "Competições da seleção", highlight: false },
+    { href: "/selecao/amistosos", icon: Swords, label: "Amistosos de preparação", highlight: false },
+    { href: "/selecao", icon: Flag, label: "Contrato e gestão da seleção", highlight: false },
   ]
 
   const oppName = userNextFixture && nationalTeam
@@ -145,7 +142,7 @@ export function NationalOffice() {
                   </div>
                   <h2 className="mt-2 text-lg font-black text-white">Inicie uma competição pela seleção</h2>
                   <p className="mt-1 text-sm text-white/55">Escolha um torneio ou eliminatória na gestão da seleção.</p>
-                  <Link href="/selecao" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#00ffc8] px-5 py-3 text-sm font-black text-black transition-all hover:brightness-110">
+                  <Link href="/selecao/competicoes" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#00ffc8] px-5 py-3 text-sm font-black text-black transition-all hover:brightness-110">
                     <Trophy className="h-4 w-4" /> Ver competições
                   </Link>
                 </div>

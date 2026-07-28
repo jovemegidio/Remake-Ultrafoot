@@ -1,0 +1,11 @@
+{
+  "version": "1.0.191",
+  "notes": "FC Hub online, save compartilhado entre PC, navegador e mobile, além das correções da versão 1.0.191.",
+  "sizeMb": 513,
+  "sha256": "AC8EB44E91B741B5FA9DF403479E4D7B8819DF4942D1D61F7781FC449BDF794E",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://ultrafoot.72-61-145-52.sslip.io/downloads/Ultrafoot.26_1.0.191_x64-setup.exe"
+    }
+  }
+}

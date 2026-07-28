@@ -103,10 +103,11 @@ export default function ElencoHubPage() {
 
   const router = useRouter()
   const { state } = useGameState()
-  // MODO SELEÇÃO: o "elenco" da seleção é a CONVOCAÇÃO, que vive na página da
-  // seleção. Redireciona para lá em vez de mostrar o elenco de clube.
+  // MODO SELEÇÃO: o "elenco" da seleção é a CONVOCAÇÃO — que agora tem tela
+  // própria. Antes isto caia na /selecao (hub) e o usuário ainda tinha de achar
+  // a lista; vai direto para onde se corta e se convoca.
   const { isNational } = useManagingNational()
-  useEffect(() => { if (isNational) hardNavigate("/selecao") }, [isNational])
+  useEffect(() => { if (isNational) hardNavigate("/selecao/convocacao") }, [isNational])
   const playingStyle = useGameEngine((game) => game.teamTactics.playingStyle)
   // Sem time default "BGT": no Tauri o save hidrata assincrono e o primeiro render vinha
   // sem time, mostrando o elenco do RB Bragantino (34 jog, 79 OVR) para qualquer clube.

@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.ultrafoot.bolso",
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#0a0e12",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

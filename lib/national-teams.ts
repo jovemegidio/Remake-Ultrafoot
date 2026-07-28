@@ -228,12 +228,24 @@ export function getNationalPlayerPool(nt: NationalTeam): Player[] {
 }
 
 // Normaliza posicoes para os 4 setores
-function sectorOf(pos: string): "GOL" | "DEF" | "MEI" | "ATA" {
+export type NationalSector = "GOL" | "DEF" | "MEI" | "ATA"
+
+export function nationalSector(pos: string): NationalSector {
   const p = pos.toUpperCase()
   if (p === "GOL") return "GOL"
   if (["ZAG", "LD", "LE", "LAT", "DEF"].includes(p)) return "DEF"
   if (["VOL", "MEI", "MC", "ME", "MD"].includes(p)) return "MEI"
   return "ATA"
+}
+
+/** Tamanho da lista e cota por setor — MESMA regra que a tela de convocacao mostra. */
+export const NATIONAL_SQUAD_SIZE = 23
+export const NATIONAL_SQUAD_QUOTAS: Record<NationalSector, number> = { GOL: 3, DEF: 8, MEI: 7, ATA: 5 }
+export const NATIONAL_SECTOR_LABEL: Record<NationalSector, string> = {
+  GOL: "Goleiros",
+  DEF: "Defensores",
+  MEI: "Meio-campistas",
+  ATA: "Atacantes",
 }
 
 // Monta uma convocacao equilibrada (~23 jogadores) com os melhores de cada setor.
@@ -260,42 +272,42 @@ export function getNationalSquad(
     .filter((p) => !cuts.has(nationalPlayerKey(p)))
     .sort((a, b) => b.base - a.base)
 
-  const quotas: Record<"GOL" | "DEF" | "MEI" | "ATA", number> = { GOL: 3, DEF: 8, MEI: 7, ATA: 5 }
+  const quotas = NATIONAL_SQUAD_QUOTAS
   const picked: Player[] = []
-  const counters = { GOL: 0, DEF: 0, MEI: 0, ATA: 0 }
+  const counters: Record<NationalSector, number> = { GOL: 0, DEF: 0, MEI: 0, ATA: 0 }
   const seen = new Set<string>()
 
-  // 1) Convocados a dedo entram primeiro (respeitando o limite de 23).
+  // 1) Convocados a dedo entram primeiro (respeitando o limite da lista).
   for (const p of pool) {
     if (!calls.has(nationalPlayerKey(p))) continue
     const key = nationalPlayerKey(p)
     if (seen.has(key)) continue
     picked.push(p)
-    counters[sectorOf(p.pos)]++
+    counters[nationalSector(p.pos)]++
     seen.add(key)
-    if (picked.length >= 23) break
+    if (picked.length >= NATIONAL_SQUAD_SIZE) break
   }
 
   // 2) Preenche por cota com os melhores restantes.
   for (const p of pool) {
     const key = nationalPlayerKey(p)
     if (seen.has(key)) continue
-    const sector = sectorOf(p.pos)
+    const sector = nationalSector(p.pos)
     if (counters[sector] >= quotas[sector]) continue
     picked.push(p)
     counters[sector]++
     seen.add(key)
-    if (picked.length >= 23) break
+    if (picked.length >= NATIONAL_SQUAD_SIZE) break
   }
 
   // 3) Completa com os melhores restantes caso falte gente em algum setor
-  if (picked.length < 23) {
+  if (picked.length < NATIONAL_SQUAD_SIZE) {
     for (const p of pool) {
       const key = nationalPlayerKey(p)
       if (seen.has(key)) continue
       picked.push(p)
       seen.add(key)
-      if (picked.length >= 23) break
+      if (picked.length >= NATIONAL_SQUAD_SIZE) break
     }
   }
 
