@@ -2813,6 +2813,28 @@ export function useGameManager() {
     }
   }, [gameEngine, setSaveState])
   
+  /**
+   * Ainda ha partida SUA por disputar nesta semana?
+   *
+   * Existe por causa das copas em MEIO DE SEMANA: elas entram na MESMA semana da
+   * rodada de liga (ver a montagem do calendario), entao uma semana pode ter dois
+   * jogos seus. Ao terminar o primeiro, o jogo chamava `advanceWeek()` sozinho —
+   * a semana virava, e o segundo jogo (quase sempre o de COPA, porque o de liga e
+   * o que aparece como "proxima partida") caia na regra de partida atrasada e era
+   * SIMULADO pelo motor. O jogador perdia jogos de Copa do Brasil/Libertadores
+   * sem nunca ver a tela deles: "tem hora que simula as partidas sem pedir".
+   *
+   * Le o REF, nao o estado do render: `registerUserMatchResult` atualiza o
+   * calendario em memoria no mesmo tick, entao a partida recem-terminada ja
+   * consta como jogada aqui e nao conta como pendente.
+   */
+  const temPartidaPendenteNaSemana = useCallback(() => {
+    const semanaAtual = saveStateRef.current.week
+    return seasonCalendarRef.current.fixtures.some(
+      fixture => fixture.isUserMatch && !fixture.played && fixture.week <= semanaAtual,
+    )
+  }, [])
+
   // Classificacao atual ordenada
   const engineStandings = useMemo(() => {
     return [...gameEngine.serieAStandings].sort((a, b) => {
@@ -2996,6 +3018,7 @@ export function useGameManager() {
     currentCompetition,
     currentCompetitionType,
     seasonCalendar,
+    temPartidaPendenteNaSemana,
     currentWeek: saveState.week,
     currentSeason: saveState.season,
 

@@ -543,7 +543,7 @@ export default function PartidaAoVivoPage() {
   const { addNotification } = useNotifications()
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
-  const { currentMatch, seasonCalendar, registerUserMatchResult, advanceWeek } = useGameManager()
+  const { currentMatch, seasonCalendar, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana } = useGameManager()
   const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions, processarDesempenhoPartida, squadCohesion } = useGameEngine()
   const bonusEntrosamento = Math.round(Math.max(0, ((squadCohesion ?? 60) - 60)) / 8)
   const engineMatchResults = useGameEngine(s => s.matchResults)
@@ -1287,24 +1287,32 @@ export default function PartidaAoVivoPage() {
             const agora = localStorage.getItem("ultrafoot-pending-champion")
             if (agora && agora !== championFlagBefore) setIsLeagueChampion(true)
           }
-          postMatchAdvance.current = advanceWeek().then(result => {
-            if (result && "leagueChampion" in result && result.leagueChampion) {
-              const champ = result.leagueChampion
-              safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
-                competition: champ.competition,
-                season: champ.season,
-                type: "league",
-                stats: champ.stats,
-              }))
-              setIsLeagueChampion(true)
-            }
-          }).catch(() => undefined)
+          // So vira a semana se NAO sobrou jogo seu nela. Com copa em meio de
+          // semana sobra — e avancar aqui fazia o motor simular a copa como
+          // partida atrasada, sem o jogador jogar (relato: "tem hora que simula
+          // as partidas sem pedir").
+          postMatchAdvance.current = temPartidaPendenteNaSemana()
+            ? Promise.resolve()
+            : advanceWeek()
+                .then(result => {
+                  if (result && "leagueChampion" in result && result.leagueChampion) {
+                    const champ = result.leagueChampion
+                    safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
+                      competition: champ.competition,
+                      season: champ.season,
+                      type: "league",
+                      stats: champ.stats,
+                    }))
+                    setIsLeagueChampion(true)
+                  }
+                })
+                .catch(() => undefined)
         }
       }
       const t = setTimeout(() => setShowResult(true), 1200)
       return () => clearTimeout(t)
     }
-  }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek, matchCtx.friendly, matchCtx.youth, savedGame, setSavedGame, userSide])
+  }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, matchCtx.friendly, matchCtx.youth, savedGame, setSavedGame, userSide])
 
   // Stamina drena por minuto.
   // Dois bugs do relato ("até o goleiro cansou kk" + print "5.4000000000012%"):

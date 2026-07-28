@@ -241,7 +241,7 @@ function TeamPanel({
 export default function PartidaPage() {
   const router = useRouter()
   const userTeam = useUserTeam()
-  const { currentMatch, seasonCalendar, standings, league, currentRound, registerUserMatchResult, advanceWeek, fifaPause } = useGameManager()
+  const { currentMatch, seasonCalendar, standings, league, currentRound, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, fifaPause } = useGameManager()
 
   const { connected: gamepadConnected } = useGamepadDetection()
   const [hydrated, setHydrated] = useState(false)
@@ -427,10 +427,13 @@ export default function PartidaPage() {
           goalEvents
         )
         clearMatchContext()
-        void advanceWeek()
+        // So vira a semana se NAO sobrou jogo seu nela. Numa semana com copa em
+        // meio de semana sobra: avancar aqui fazia o motor simular a copa como
+        // partida atrasada, sem o jogador jogar.
+        if (!temPartidaPendenteNaSemana()) void advanceWeek()
       }
     }, 1500)
-  }, [homeTeam, awayTeam, registerUserMatchResult, advanceWeek])
+  }, [homeTeam, awayTeam, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana])
 
   // Save match context before navigation
   useEffect(() => {
