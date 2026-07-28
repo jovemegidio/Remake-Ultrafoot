@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout } from "lucide-react"
+import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
@@ -295,11 +295,30 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     setTimeout(() => setSaved(false), 2000)
   }
 
+  // VOCE tem partida para disputar nesta semana?
+  //
+  // Isto existe porque "avancar" passava POR CIMA do proprio jogo do usuario.
+  // O motor avanca para `currentWeek + 1` e trata como ATRASADA toda partida sua
+  // nao disputada com `week < newWeek` (lib/fixture-catchup.ts) — o que inclui a
+  // da semana corrente. Um clique aqui em vez de "jogar" e o motor simulava a
+  // sua partida, com placar, lesao e estatisticas, e o jogador so descobria pelo
+  // calendario ("veio outra partida com outro time"). A regra do motor esta certa
+  // para o que ficou mesmo para tras; quem nao podia avancar era este botao.
+  const partidaPendenteAgora =
+    seasonCalendar.nextUserMatch != null && seasonCalendar.nextUserMatch.week <= currentWeek
+
   // Avanca com animacao DIA A DIA (imersao) em vez de pular a semana de uma vez.
   // O engine continua avancando por semana: a data corre os 7 dias e so entao a
   // rodada e simulada.
   const handleAdvance = async () => {
     if (advancing) return
+
+    // Com jogo pendente o botao LEVA A PARTIDA em vez de avancar o relogio.
+    if (partidaPendenteAgora) {
+      hardNavigate("/partida")
+      return
+    }
+
     setAdvancing(true)
 
     const start = getGameDate(currentSeason, currentWeek)
@@ -308,10 +327,14 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       await new Promise(resolve => setTimeout(resolve, 95))
     }
 
-    await advanceGameWeek()
+    // O retorno do avanco e a fonte fresca: o `seasonCalendar` deste closure (e o
+    // ref por tras dele) ainda e o de ANTES, porque so se recalculam no proximo
+    // render. Decidir a navegacao por ele mandava o jogador para /partida ate
+    // quando a temporada tinha acabado de fechar.
+    const resultado = await advanceGameWeek()
     setAdvanceDate(null)
     setAdvancing(false)
-    if (seasonCalendar.nextUserMatch) {
+    if (!resultado?.newSeason) {
       hardNavigate("/partida")
     }
   }
@@ -395,17 +418,24 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
         </button>
 
-        {/* Avancar */}
+        {/* Avancar — ou JOGAR, quando a partida da semana ainda e sua para disputar.
+            Trocar o rotulo resolve o mal-entendido na raiz: o jogador clicava
+            "avancar" achando que ia ATE o dia do jogo, e o jogo passava. */}
         <button
           onClick={handleAdvance}
           disabled={advancing}
+          title={partidaPendenteAgora ? "Voce tem partida nesta semana — ir para o jogo" : "Avancar uma semana"}
           className={cn(
             "eafc-btn flex items-center gap-2 px-4 py-2 text-[11px] font-bold tracking-wider uppercase",
             advancing && "opacity-50 cursor-wait",
           )}
         >
-          {advancing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FastForward className="h-4 w-4" />}
-          <span className="hidden sm:inline">Avancar</span>
+          {advancing
+            ? <Loader2 className="h-4 w-4 animate-spin" />
+            : partidaPendenteAgora
+              ? <Play className="h-4 w-4 fill-current" />
+              : <FastForward className="h-4 w-4" />}
+          <span className="hidden sm:inline">{partidaPendenteAgora ? "Jogar" : "Avancar"}</span>
         </button>
 
         {/* O sino abria um drawer que sumia a cada navegação e passava
