@@ -47,6 +47,9 @@ const antes = contarNoSeed()
 try {
   rodar("bake-user-logos.mjs")
   rodar("bake-user-kits.mjs")
+  // Fotos de jogador importadas no editor. Sem esta etapa elas ficavam so na
+  // maquina de quem editou — o elenco "licenciado" nao chegava a ninguem.
+  rodar("bake-user-player-photos.mjs")
   rodar("split-override-assets.mjs")
 } catch (e) {
   // NUNCA derruba o build por causa disto: um bake que falha significa "sem
