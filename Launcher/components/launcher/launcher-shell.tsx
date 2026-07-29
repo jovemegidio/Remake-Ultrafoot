@@ -139,7 +139,13 @@ export function LauncherShell({
     // ABRE JA NO LOGIN, como Epic e EA App fazem. O dialogo segue FECHAVEL de
     // proposito: quem ja tem o jogo instalado continua jogando sem conta. O que
     // a conta destrava e o DOWNLOAD (instalar/atualizar/reparar).
-    if (!s) setShowAuth(true)
+    //
+    // SEM REDE (ou no modo offline) o launcher NAO pede login: nenhum login
+    // funcionaria, e a primeira coisa na tela seria um formulario condenado a
+    // falhar. Offline o launcher abre direto no Jogar, como o jogo faz.
+    const querOffline = typeof window !== "undefined" && localStorage.getItem(MODE_KEY) === "offline"
+    const temRede = typeof navigator === "undefined" || navigator.onLine
+    if (!s && temRede && !querOffline) setShowAuth(true)
   }, [])
   const [autostart, setAutostart] = useState(false)
   const [closeToTray, setCloseToTray] = useState(false)
@@ -180,10 +186,19 @@ export function LauncherShell({
   }, [])
 
   // Troca de modo pelo seletor: a escolha e lembrada entre sessoes.
+  //
+  // Pedir "Online" SEM REDE nao coloca o launcher online — so registra a vontade.
+  // Sem isso, um clique no seletor fazia o launcher se achar conectado e tentar
+  // rede que nao existe: loja girando, chat mudo e botao de instalar morto. O
+  // modo volta sozinho quando a rede volta (o ouvinte de `online` abaixo).
   const changeMode = useCallback((value: LaunchMode) => {
-    setMode(value)
     setForcedOffline(value === "offline")
     if (typeof window !== "undefined") localStorage.setItem(MODE_KEY, value)
+    if (value === "online" && typeof navigator !== "undefined" && !navigator.onLine) {
+      setMode("offline")
+      return
+    }
+    setMode(value)
   }, [])
 
   // Rede caindo/voltando durante a sessao. Quem escolheu offline no seletor
@@ -392,13 +407,16 @@ export function LauncherShell({
       void launchGame(install.path) // abre o jogo instalado
       return
     }
+    // A REDE VEM ANTES DA CONTA: sem rede nao ha login nem download, e abrir o
+    // formulario de login ali seria pedir uma coisa impossivel. O botao ja diz
+    // "sem internet" nesse caso (ver DownloadControl).
+    if (!online) return
     // BAIXAR EXIGE CONTA. Em vez de um botao morto, o clique abre o login: quem
     // ainda nao tem conta cria ali e volta para o download no mesmo fluxo.
     if (!logado) {
       setShowAuth(true)
       return
     }
-    if (!online) return // instalar/atualizar exige rede
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url) return
     runInstall(url)
@@ -408,11 +426,11 @@ export function LauncherShell({
   // Baixa o instalador inteiro, entao passa pelo mesmo porteiro da conta.
   const startRepair = useCallback(() => {
     if (install.downloading) return
+    if (!online) return
     if (!logado) {
       setShowAuth(true)
       return
     }
-    if (!online) return
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url) return
     runInstall(url)
@@ -462,6 +480,7 @@ export function LauncherShell({
       {showAuth && (
         <AuthDialog
           inicial={sessao ? "ativar" : "entrar"}
+          online={online}
           onClose={() => setShowAuth(false)}
           onEntrou={setSessao}
         />
@@ -648,7 +667,7 @@ export function LauncherShell({
             </div>
           )}
 
-          {tab === "loja" && <StorePanel onEntrar={() => setShowAuth(true)} />}
+          {tab === "loja" && <StorePanel online={online} onEntrar={() => setShowAuth(true)} />}
 
           {tab === "news" && <NewsFeed news={effectiveNews} title={`Novidades de ${game.name}`} />}
 
@@ -660,6 +679,7 @@ export function LauncherShell({
               config={config}
               ativado={!!sessao?.ativado}
               ehAdmin={!!sessao?.admin}
+              comRede={online}
               onEntrar={() => setShowAuth(true)}
               onAtivar={() => setShowAuth(true)}
               onOpen={openExternal}

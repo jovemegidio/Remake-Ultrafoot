@@ -1,5 +1,5 @@
 {
-  "version": "1.0.20",
-  "notes": "Baixar o jogo agora pede conta: instalar, atualizar e reparar passam pelo login. Quem ja tem o jogo instalado continua jogando normalmente, inclusive offline. As abas Novidades e Changelog voltaram a mostrar as versoes atuais, e no Linux e no macOS o launcher deixa de baixar o instalador do Windows.",
+  "version": "1.0.21",
+  "notes": "O launcher agora funciona offline de verdade, como o jogo: sem internet ele abre direto no Jogar, nao pede login que nao teria como funcionar e diz o motivo em vez de deixar o botao Instalar morto. Loja e FC Hub avisam que dependem do servidor em vez de ficarem girando, e o seletor Online/Offline nao se declara mais conectado sem rede.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }

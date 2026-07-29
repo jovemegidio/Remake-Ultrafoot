@@ -94,18 +94,22 @@ export function DownloadControl({
           <Play className="h-4 w-4" fill="currentColor" />
           {online ? "Jogar Online" : "Jogar Offline"}
         </Button>
-        <button
-          onClick={onRepair}
-          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          title={
-            logado
-              ? "Reinstala a versão atual por cima, corrigindo arquivos danificados."
-              : "Reparar baixa o jogo de novo — entre na sua conta para usar."
-          }
-        >
-          <Wrench className="h-3.5 w-3.5" />
-          Reparar
-        </button>
+        {/* Reparar baixa o instalador inteiro: offline nem aparece, para nao
+            oferecer o que nao tem como acontecer. */}
+        {online && (
+          <button
+            onClick={onRepair}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            title={
+              logado
+                ? "Reinstala a versão atual por cima, corrigindo arquivos danificados."
+                : "Reparar baixa o jogo de novo — entre na sua conta para usar."
+            }
+          >
+            <Wrench className="h-3.5 w-3.5" />
+            Reparar
+          </button>
+        )}
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {online ? (
             <>
@@ -116,6 +120,26 @@ export function DownloadControl({
               <WifiOff className="h-3.5 w-3.5 text-accent" /> Edição liberada
             </>
           )}
+        </span>
+      </div>
+    )
+  }
+
+  // SEM REDE NAO EXISTE DOWNLOAD. Antes o botao "Instalar" continuava clicavel e
+  // simplesmente nao fazia nada — a pessoa clicava tres, quatro vezes achando que
+  // o launcher travou. Offline ele diz o motivo, como o jogo faz.
+  if (!online && (status === "not-installed" || status === "update")) {
+    const instalar = status === "not-installed"
+    return (
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 px-4 py-3">
+          <WifiOff className="h-4 w-4 shrink-0 text-accent" />
+          <span className="text-sm font-semibold text-foreground">
+            {instalar ? "Sem internet para instalar" : "Sem internet para atualizar"}
+          </span>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          Conecte-se e o launcher {instalar ? "baixa o jogo" : "traz a atualização"} ({formatSize(downloadSizeMb)}).
         </span>
       </div>
     )

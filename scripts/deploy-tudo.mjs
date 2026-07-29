@@ -20,7 +20,11 @@
 //     o servidor devolvia a página do jogo.
 
 import { execFileSync } from "node:child_process"
-import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs"
+import { createHash } from "node:crypto"
+import {
+  readFileSync, writeFileSync, copyFileSync, existsSync, statSync,
+  openSync, readSync, closeSync,
+} from "node:fs"
 import path from "node:path"
 
 const RAIZ = path.resolve(import.meta.dirname, "..")
@@ -93,7 +97,30 @@ function espelharNaVps(nomeNoGithub, destino, hashLocal) {
   rodar("ssh", ["-i", CHAVE, VPS, `cd $(dirname ${destino}) && mv .novo ${path.posix.basename(destino)} && chmod 644 ${path.posix.basename(destino)}`])
 }
 
-const sha = (arquivo) => rodar("sha256sum", [arquivo]).trim().split(/\s+/)[0].replace(/^\*/, "")
+/**
+ * SHA-256 do arquivo, calculado pelo PROPRIO Node.
+ *
+ * Antes isto chamava `sha256sum`, que existe no Git Bash e NAO no PowerShell: o
+ * deploy morria com `spawnSync sha256sum ENOENT` antes de subir qualquer coisa,
+ * dependendo de qual terminal a pessoa abriu. Le em pedacos de 8 MB porque o
+ * instalador do jogo passa de 500 MB e carregar tudo na memoria de uma vez seria
+ * desperdicio.
+ */
+function sha(arquivo) {
+  const h = createHash("sha256")
+  const fd = openSync(arquivo, "r")
+  try {
+    const buf = Buffer.alloc(8 * 1024 * 1024)
+    for (;;) {
+      const lidos = readSync(fd, buf, 0, buf.length, null)
+      if (lidos === 0) break
+      h.update(buf.subarray(0, lidos))
+    }
+  } finally {
+    closeSync(fd)
+  }
+  return h.digest("hex")
+}
 
 // ─── Plano ───────────────────────────────────────────────────────────────────
 
@@ -129,7 +156,9 @@ if (!soJogo) {
 
   passo(`launcher ${VERSAO_LAUNCHER}: binario para o GitHub`)
   const copia = path.join(RAIZ, "Launcher", "Ultrafoot-Launcher-Setup.exe")
-  rodar("cp", [EXE_LAUNCHER, copia])
+  // `cp` e do Git Bash; no PowerShell nao existe. Copia pelo Node e nao depende
+  // de qual terminal a pessoa abriu — mesmo motivo do `sha` acima.
+  copyFileSync(EXE_LAUNCHER, copia)
   rodar("gh", ["release", "upload", "launcher", copia, "--repo", REPO, "--clobber"], { stdio: "inherit" })
 
   passo("launcher: espelhando na VPS")

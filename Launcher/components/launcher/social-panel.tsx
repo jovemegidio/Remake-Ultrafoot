@@ -28,6 +28,7 @@ export function SocialPanel({
   config,
   ativado,
   ehAdmin,
+  comRede = true,
   onEntrar,
   onAtivar,
   onOpen,
@@ -37,6 +38,10 @@ export function SocialPanel({
   serverStatus: ServerStatus | null
   config: LauncherConfig | null
   ativado: boolean
+  /** false = sem rede (ou modo offline). Presenca e chat sao 100% servidor:
+   *  offline a gente PARA de sondar e diz o motivo, em vez de mostrar um saguao
+   *  vazio que parece defeito. */
+  comRede?: boolean
   /** Mostra o atalho do painel de administração. */
   ehAdmin: boolean
   onEntrar: () => void
@@ -57,7 +62,7 @@ export function SocialPanel({
   const fimDoChat = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!sessao) return
+    if (!sessao || !comRede) return
     let vivo = true
     const bater = async () => {
       const r = await baterPresenca()
@@ -68,10 +73,10 @@ export function SocialPanel({
     void bater()
     const t = setInterval(bater, 30_000)
     return () => { vivo = false; clearInterval(t) }
-  }, [sessao])
+  }, [sessao, comRede])
 
   useEffect(() => {
-    if (!sessao) return
+    if (!sessao || !comRede) return
     let vivo = true
     const buscar = async () => {
       const novas = await lerChat(ultimoId.current)
@@ -84,7 +89,7 @@ export function SocialPanel({
     void buscar()
     const t = setInterval(buscar, 5_000)
     return () => { vivo = false; clearInterval(t) }
-  }, [sessao])
+  }, [sessao, comRede])
 
   useEffect(() => {
     fimDoChat.current?.scrollIntoView({ behavior: "smooth", block: "end" })
@@ -176,9 +181,22 @@ export function SocialPanel({
         </div>
       </section>
 
+      {!comRede && (
+        <section className="flex items-start gap-3 rounded-2xl border border-accent/25 bg-accent/[0.07] p-5">
+          <WifiOff className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+          <div>
+            <p className="text-sm font-bold text-foreground">Saguão indisponível offline</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Quem está online e a conversa vêm do servidor. Conecte-se (ou volte para o modo
+              Online no topo) para ver o saguão. Sua conta e o jogo instalado continuam funcionando.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* QUEM ESTA ONLINE + CONVERSA. So aparece com sessao: sem conta nao ha como
           identificar ninguem, e uma lista vazia sem explicacao parece defeito. */}
-      {sessao ? (
+      {sessao && comRede ? (
         <section className="grid gap-4 lg:grid-cols-[240px_1fr]">
           <div className="rounded-2xl border border-border bg-card p-4">
             <p className="mb-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -267,6 +285,8 @@ export function SocialPanel({
           <Users className="h-4 w-4 text-primary" /> FC Hub — modo online
         </h3>
         <div className="flex flex-wrap items-center gap-4">
+          {/* Sem rede a gente NAO sabe se o servidor caiu — nao consultamos. Dizer
+              "fora do ar" nesse caso jogaria a culpa no servidor errado. */}
           <span
             className={cn(
               "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold",
@@ -274,7 +294,7 @@ export function SocialPanel({
             )}
           >
             {online ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-            {online ? "Servidor no ar" : "Servidor fora do ar"}
+            {!comRede ? "Sem internet para verificar" : online ? "Servidor no ar" : "Servidor fora do ar"}
           </span>
           {serverStatus?.game_version && (
             <span className="text-xs text-muted-foreground">

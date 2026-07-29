@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { invoke } from "@tauri-apps/api/core"
-import { X, LogIn, UserPlus, Loader2, KeyRound } from "lucide-react"
+import { X, LogIn, UserPlus, Loader2, KeyRound, WifiOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   cadastrar, entrar, ativar, gerarPkce, urlDoGoogle, entrarComGoogle, type Sessao,
@@ -22,11 +22,14 @@ import {
 /** Classe unica dos campos: repetir a string em cada input ja causou divergencia. */
 const CAMPO = "w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-primary/50"
 
-export function AuthDialog({ onClose, onEntrou, inicial = "entrar" }: {
+export function AuthDialog({ onClose, onEntrou, inicial = "entrar", online = true }: {
   onClose: () => void
   onEntrou: (s: Sessao) => void
   /** "ativar" e para quem JA entrou e so quer informar a chave da compra. */
   inicial?: "entrar" | "cadastrar" | "ativar"
+  /** false = sem rede (ou modo offline). Conta e servico de rede: aqui a gente
+   *  DIZ isso, em vez de deixar a pessoa digitar tudo para falhar no envio. */
+  online?: boolean
 }) {
   const [modo, setModo] = useState<"entrar" | "cadastrar" | "ativar">(inicial)
   const [email, setEmail] = useState("")
@@ -101,9 +104,20 @@ export function AuthDialog({ onClose, onEntrou, inicial = "entrar" }: {
             : "Sua conta guarda compras e progresso. Se você já tem registro nesta máquina, ele é vinculado automaticamente."}
         </p>
 
+        {!online && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-accent/25 bg-accent/10 p-3">
+            <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+            <p className="text-xs leading-snug text-white/70">
+              <span className="font-semibold text-white">Você está offline.</span> Entrar e criar
+              conta precisam de internet. O jogo instalado continua abrindo normalmente — conecte-se
+              quando quiser usar a conta.
+            </p>
+          </div>
+        )}
+
         {modo !== "ativar" && <button
           onClick={comGoogle}
-          disabled={!!ocupado}
+          disabled={!!ocupado || !online}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {ocupado === "google"
@@ -171,7 +185,7 @@ export function AuthDialog({ onClose, onEntrou, inicial = "entrar" }: {
 
         <button
           onClick={submeter}
-          disabled={!!ocupado || (modo === "ativar" ? codigo.length < 10 : !email || !senha)}
+          disabled={!!ocupado || !online || (modo === "ativar" ? codigo.length < 10 : !email || !senha)}
           className={cn(
             "mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all",
             "bg-gradient-to-r from-primary to-[#00c8ff] text-black hover:brightness-110",

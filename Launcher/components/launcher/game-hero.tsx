@@ -27,8 +27,9 @@ export function GameHero({
   const latest = game.latestRelease
   const online = mode === "online"
   // Versao/tamanho REAIS do GitHub em runtime (nunca desatualiza). Cai no estatico
-  // se o fetch falhar (offline).
-  const live = useLiveLatest()
+  // se o fetch falhar (offline). No modo offline nem consulta: era o unico fetch
+  // que continuava saindo com o launcher em offline.
+  const live = useLiveLatest(online)
   const displayVersion = live?.version ?? latest?.version
   const displaySizeMb = live?.sizeMb || game.sizeMb
   const downloadSizeMb = live?.sizeMb || latest?.sizeMb || game.sizeMb

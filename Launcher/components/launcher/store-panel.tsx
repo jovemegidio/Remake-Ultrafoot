@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   ShoppingBag, Check, Loader2, Wallet, Palette, Banknote, LogIn, Info,
-  KeyRound, QrCode, Copy, X, RefreshCw,
+  KeyRound, QrCode, Copy, X, RefreshCw, WifiOff,
 } from "lucide-react"
 import { sessaoSalva } from "@/lib/auth"
 
@@ -65,7 +65,12 @@ const ICONE: Record<string, typeof Palette> = {
   verba: Banknote,
 }
 
-export function StorePanel({ onEntrar }: { onEntrar: () => void }) {
+export function StorePanel({ onEntrar, online = true }: {
+  onEntrar: () => void
+  /** false = sem rede (ou modo offline). A loja é 100% servidor: offline ela diz
+   *  isso, em vez de ficar girando num fetch que não vai voltar. */
+  online?: boolean
+}) {
   const [dados, setDados] = useState<EstadoDaLoja | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [comprando, setComprando] = useState("")
@@ -78,6 +83,7 @@ export function StorePanel({ onEntrar }: { onEntrar: () => void }) {
   const carregar = useCallback(async () => {
     const s = sessaoSalva()
     if (!s) { setCarregando(false); return }
+    if (!online) { setCarregando(false); return }
     try {
       const r = await fetch(`${BASE}/loja`, { headers: { Authorization: `Bearer ${s.token}` } })
       if (r.ok) setDados(await r.json() as EstadoDaLoja)
@@ -87,8 +93,9 @@ export function StorePanel({ onEntrar }: { onEntrar: () => void }) {
     } finally {
       setCarregando(false)
     }
-  }, [])
+  }, [online])
 
+  // Recarrega quando a rede volta: sem isto a loja ficava vazia até trocar de aba.
   useEffect(() => { void carregar() }, [carregar])
 
   /**
@@ -144,6 +151,19 @@ export function StorePanel({ onEntrar }: { onEntrar: () => void }) {
     } finally {
       setComprando("")
     }
+  }
+
+  if (!online) {
+    return (
+      <section className="rounded-2xl border border-border bg-card p-8 text-center">
+        <WifiOff className="mx-auto mb-3 h-7 w-7 text-accent" />
+        <p className="text-base font-semibold text-foreground">Loja indisponível offline</p>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+          O catálogo e o pagamento por Pix vêm do servidor. Conecte-se para comprar — o que
+          você já tem na conta continua valendo no jogo, com ou sem internet.
+        </p>
+      </section>
+    )
   }
 
   if (!temSessao) {
