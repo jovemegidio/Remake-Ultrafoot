@@ -184,3 +184,46 @@
     linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.18) 50%, transparent 50.2%),
     radial-gradient(circle at center, transparent 0 10%, rgba(255,255,255,.15) 10.3% 10.7%, transparent 11%);
 }
+
+/* ─── Personalização (lib/preferencias.ts) ────────────────────────────────── */
+/* As cores vêm por variável inline no <html>; aqui ficam só os efeitos que
+   variável de cor não resolve. */
+
+/* A fonte precisa cascatear de verdade: o layout aplica classes de fonte no
+   body, e sem este seletor a escolha do jogador era ignorada por elas. */
+html[data-uf-tema] body,
+html[data-uf-tema] button,
+html[data-uf-tema] input,
+html[data-uf-tema] textarea {
+  font-family: var(--uf-fonte, inherit);
+}
+
+/* Reduzir animações: pedido de acessibilidade, e também alívio em máquina
+   fraca. Mantemos 1ms em vez de 0 porque transição zerada cancela o evento
+   `transitionend` de que alguns componentes dependem. */
+html[data-uf-animacoes="reduzidas"] *,
+html[data-uf-animacoes="reduzidas"] *::before,
+html[data-uf-animacoes="reduzidas"] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Alto contraste: bordas visíveis e nada de texto apagado. As bordas do tema
+   normal ficam em 6–10% de opacidade — bonito, e ilegível para quem precisa
+   de contraste. */
+html[data-uf-contraste="alto"] {
+  --border: rgba(255, 255, 255, 0.42);
+  --muted-foreground: #d7e2e6;
+}
+html[data-uf-contraste="alto"] .text-white\/30,
+html[data-uf-contraste="alto"] .text-white\/35,
+html[data-uf-contraste="alto"] .text-white\/40,
+html[data-uf-contraste="alto"] .text-white\/45 {
+  color: #cfd9dd !important;
+}
+html[data-uf-contraste="alto"] .launcher-grid,
+html[data-uf-contraste="alto"] .launcher-pitch-lines {
+  display: none;
+}

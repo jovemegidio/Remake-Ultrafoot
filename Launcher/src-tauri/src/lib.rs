@@ -17,11 +17,11 @@ use std::io::{Read, Write};
 use tauri::{AppHandle, Emitter};
 
 const LATEST_JSON_URL: &str =
-    "https://ultrafoot.72-61-145-52.sslip.io/downloads/latest.json";
+    "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json";
 
 // Endpoint estável do PRÓPRIO launcher (release rolling "launcher").
 const LAUNCHER_UPDATE_URL: &str =
-    "https://ultrafoot.72-61-145-52.sslip.io/downloads/launcher.json";
+    "https://ultrafoot.179-198-103-30.sslip.io/downloads/launcher.json";
 
 // ─── Reserva no GitHub ───────────────────────────────────────────────────────
 //
@@ -754,6 +754,179 @@ fn show_main(app: &AppHandle) {
 
 // ─── Entrada do app ──────────────────────────────────────────────────────────
 
+
+// ─── Login com Google (PKCE) ─────────────────────────────────────────────────
+//
+// App DESKTOP nao pode receber o retorno do OAuth numa URL publica: o Google
+// exige um `redirect_uri` que o app controle. O padrao e abrir uma porta EFEMERA
+// em 127.0.0.1, mandar o navegador para o Google e esperar ele voltar nela.
+//
+// Detalhes que evitam problema:
+//   • Porta 0 = o SO escolhe uma livre. Fixar porta quebra se algo ja a usar, e
+//     o Google aceita qualquer porta em http://127.0.0.1 para cliente Desktop.
+//   • O `state` e conferido aqui. Sem essa checagem, um site malicioso poderia
+//     mandar um `code` proprio para a nossa porta e logar o jogador na conta
+//     ERRADA (CSRF de OAuth).
+//   • Timeout: se o usuario fechar o navegador sem concluir, a thread nao pode
+//     ficar presa para sempre segurando a porta.
+/// Pasta neutra que o LAUNCHER e o JOGO enxergam.
+///
+/// Cada app Tauri tem a propria pasta de dados (identificadores diferentes), e
+/// por isso o launcher nao consegue escrever no armazenamento do jogo. Este
+/// diretorio comum e o ponto de encontro dos dois.
+fn pasta_compartilhada() -> Option<std::path::PathBuf> {
+    let base = if cfg!(windows) {
+        std::env::var_os("APPDATA").map(std::path::PathBuf::from)
+    } else if cfg!(target_os = "macos") {
+        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join("Library/Application Support"))
+    } else {
+        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share"))
+    }?;
+    let pasta = base.join("Ultrafoot");
+    std::fs::create_dir_all(&pasta).ok()?;
+    Some(pasta)
+}
+
+/// Deixa a chave de ativacao onde o jogo vai ler ao abrir.
+///
+/// O launcher NAO registra o jogo — so entrega a chave. Quem confere a
+/// assinatura e o proprio jogo, com o segredo dele. Se fosse o launcher a dizer
+/// "esta registrado", bastaria adulterar este arquivo para liberar tudo.
+#[tauri::command]
+fn salvar_ativacao(codigo: String, email: String) -> Result<(), String> {
+    let pasta = pasta_compartilhada().ok_or("nao encontrei a pasta de dados")?;
+    let conteudo = serde_json::json!({
+        "codigo": codigo,
+        "email": email,
+        "origem": "launcher",
+    });
+    std::fs::write(pasta.join("ativacao.json"), conteudo.to_string())
+        .map_err(|e| format!("nao consegui gravar a ativacao: {e}"))
+}
+
+/// Deixa a sessao da conta onde o JOGO consegue ler.
+///
+/// O jogo nao tem tela de login: quem entra e o launcher. Compartilhando a
+/// sessao, o jogo passa a saber de quem e a carreira e consegue catalogar os
+/// saves na conta — que e o que permite recuperar tudo depois de formatar.
+///
+/// O arquivo some no logout (`token` vazio): sessao de quem saiu nao pode ficar
+/// esquecida no disco.
+#[tauri::command]
+fn salvar_sessao(token: String, email: String, nome: String) -> Result<(), String> {
+    let pasta = pasta_compartilhada().ok_or("nao encontrei a pasta de dados")?;
+    let arquivo = pasta.join("sessao.json");
+    if token.is_empty() {
+        let _ = std::fs::remove_file(&arquivo);
+        return Ok(());
+    }
+    let conteudo = serde_json::json!({ "token": token, "email": email, "nome": nome });
+    std::fs::write(&arquivo, conteudo.to_string())
+        .map_err(|e| format!("nao consegui gravar a sessao: {e}"))
+}
+
+#[tauri::command]
+async fn google_login(app: AppHandle, auth_url_base: String, state: String) -> Result<String, String> {
+    use std::io::{BufRead, BufReader, Write as IoWrite};
+    use std::net::TcpListener;
+
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .map_err(|e| format!("nao consegui abrir a porta local: {e}"))?;
+    let porta = listener.local_addr().map_err(|e| e.to_string())?.port();
+    let redirect = format!("http://127.0.0.1:{porta}");
+
+    // O front monta a URL sem o redirect_uri (so ele sabe a porta agora).
+    let url = format!("{auth_url_base}&redirect_uri={}&state={}",
+        urlencoding_simples(&redirect), urlencoding_simples(&state));
+
+    tauri_plugin_opener::open_url(&url, None::<&str>)
+        .map_err(|e| format!("nao consegui abrir o navegador: {e}"))?;
+
+    let resultado = tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        listener.set_nonblocking(false).ok();
+        let limite = std::time::Instant::now() + std::time::Duration::from_secs(300);
+        for fluxo in listener.incoming() {
+            if std::time::Instant::now() > limite {
+                return Err("tempo esgotado aguardando o Google".into());
+            }
+            let mut fluxo = match fluxo { Ok(f) => f, Err(_) => continue };
+            let mut linha = String::new();
+            BufReader::new(&fluxo).read_line(&mut linha).ok();
+
+            // "GET /?code=...&state=... HTTP/1.1"
+            let alvo = linha.split_whitespace().nth(1).unwrap_or("").to_string();
+            let mut code = String::new();
+            let mut state_recebido = String::new();
+            if let Some(q) = alvo.split('?').nth(1) {
+                for par in q.split('&') {
+                    let mut kv = par.splitn(2, '=');
+                    match (kv.next(), kv.next()) {
+                        (Some("code"), Some(v)) => code = desurlencode(v),
+                        (Some("state"), Some(v)) => state_recebido = desurlencode(v),
+                        _ => {}
+                    }
+                }
+            }
+
+            let ok = !code.is_empty() && state_recebido == state;
+            let corpo = if ok {
+                "<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Ultrafoot 26</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(1200px 600px at 50% -10%,#0d2a2a 0%,#060b0e 60%),#060b0e;color:#e6edf0;font:15px/1.6 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif;padding:24px}.cartao{max-width:420px;width:100%;text-align:center;padding:40px 32px;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:rgba(10,18,21,.72);backdrop-filter:blur(12px);box-shadow:0 30px 80px rgba(0,0,0,.5)}.marca{font:800 11px/1 ui-sans-serif,system-ui;letter-spacing:.32em;text-transform:uppercase;color:#48eed6;margin-bottom:26px}.selo{width:60px;height:60px;margin:0 auto 20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:#48eed61f;border:1px solid #48eed640;color:#48eed6}h1{margin:0 0 8px;font-size:21px;letter-spacing:-.01em}p{margin:0;color:#8b9aa1;font-size:14px}.rodape{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#5d6b72}</style></head><body><div class='cartao'><div class='marca'>Ultrafoot 26</div><div class='selo'>&#10003;</div><h1>Tudo certo</h1><p>Sua conta foi conectada. Volte para o Ultrafoot Launcher para continuar.</p><div class='rodape'>Pode fechar esta aba.</div></div></body></html>"
+            } else {
+                "<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Ultrafoot 26</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(1200px 600px at 50% -10%,#0d2a2a 0%,#060b0e 60%),#060b0e;color:#e6edf0;font:15px/1.6 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif;padding:24px}.cartao{max-width:420px;width:100%;text-align:center;padding:40px 32px;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:rgba(10,18,21,.72);backdrop-filter:blur(12px);box-shadow:0 30px 80px rgba(0,0,0,.5)}.marca{font:800 11px/1 ui-sans-serif,system-ui;letter-spacing:.32em;text-transform:uppercase;color:#ff8f8f;margin-bottom:26px}.selo{width:60px;height:60px;margin:0 auto 20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:#ff6b6b1f;border:1px solid #ff6b6b40;color:#ff6b6b}h1{margin:0 0 8px;font-size:21px;letter-spacing:-.01em}p{margin:0;color:#8b9aa1;font-size:14px}.rodape{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#5d6b72}</style></head><body><div class='cartao'><div class='marca'>Ultrafoot 26</div><div class='selo'>!</div><h1>N&atilde;o deu certo</h1><p>N&atilde;o foi poss&iacute;vel concluir a entrada. Tente de novo pelo launcher.</p><div class='rodape'>Pode fechar esta aba.</div></div></body></html>"
+            };
+            let _ = write!(
+                fluxo,
+                "HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: {}
+Connection: close
+
+{}",
+                corpo.len(),
+                corpo
+            );
+            let _ = fluxo.flush();
+
+            if !ok {
+                return Err("resposta do Google invalida (state nao confere)".into());
+            }
+            return Ok(format!("{code}|{redirect}"));
+        }
+        Err("nenhuma resposta recebida".into())
+    })
+    .await
+    .map_err(|e| format!("tarefa interrompida: {e}"))?;
+
+    let _ = app;
+    resultado
+}
+
+/// Codificacao minima de URL — evitamos dependencia nova so para isto.
+fn urlencoding_simples(s: &str) -> String {
+    s.bytes().map(|b| match b {
+        b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => (b as char).to_string(),
+        _ => format!("%{b:02X}"),
+    }).collect()
+}
+
+fn desurlencode(s: &str) -> String {
+    let bytes = s.replace('+', " ").into_bytes();
+    let mut saida = Vec::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            if let Ok(v) = u8::from_str_radix(&String::from_utf8_lossy(&bytes[i + 1..i + 3]), 16) {
+                saida.push(v);
+                i += 3;
+                continue;
+            }
+        }
+        saida.push(bytes[i]);
+        i += 1;
+    }
+    String::from_utf8_lossy(&saida).into_owned()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -810,7 +983,10 @@ pub fn run() {
             check_launcher_update,
             self_update,
             fetch_launcher_config,
-            check_server_status
+            check_server_status,
+            google_login,
+            salvar_ativacao,
+            salvar_sessao
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Ultrafoot Launcher");

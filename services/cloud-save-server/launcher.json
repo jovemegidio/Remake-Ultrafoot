@@ -1,5 +1,5 @@
 {
-  "version": "1.0.11",
-  "notes": "Launcher conectado à distribuição oficial da VPS e preparado para instalar automaticamente a versão 1.0.191.",
-  "url": "https://ultrafoot.72-61-145-52.sslip.io/downloads/Ultrafoot.Launcher_1.0.11_x64-setup.exe"
+  "version": "1.0.15",
+  "notes": "Voce continua logado ao reabrir o launcher. Nova arte na tela inicial, temas e fontes, ajustes de acessibilidade, avatar e a aba FC Hub. No cadastro agora ha telefone e o campo de codigo de ativacao: com a chave da compra o jogo abre com a versao completa, sem pedir registro de novo.",
+  "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }

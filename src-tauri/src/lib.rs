@@ -559,6 +559,39 @@ fn find_launcher_exe() -> Option<std::path::PathBuf> {
 // ─── App entry point ─────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+
+/// Chave de ativacao deixada pelo LAUNCHER, se houver.
+///
+/// O launcher escreve `ativacao.json` numa pasta neutra (APPDATA/Ultrafoot no
+/// Windows): os dois apps tem identificadores diferentes e nao enxergam o
+/// armazenamento um do outro. Aqui so LEMOS o texto — quem confere a assinatura
+/// e o jogo, com o segredo dele. Confiar no arquivo faria de um editor de texto
+/// um gerador de licencas.
+fn pasta_compartilhada_do_launcher() -> Option<std::path::PathBuf> {
+    let base = if cfg!(windows) {
+        std::env::var_os("APPDATA").map(std::path::PathBuf::from)
+    } else if cfg!(target_os = "macos") {
+        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join("Library/Application Support"))
+    } else {
+        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share"))
+    }?;
+    Some(base.join("Ultrafoot"))
+}
+
+#[tauri::command]
+fn ler_ativacao_do_launcher() -> Option<String> {
+    std::fs::read_to_string(pasta_compartilhada_do_launcher()?.join("ativacao.json")).ok()
+}
+
+/// Sessao da conta em que o LAUNCHER entrou.
+///
+/// O jogo nao tem login proprio; e por este arquivo que ele descobre de quem e a
+/// carreira e consegue catalogar os saves na conta certa.
+#[tauri::command]
+fn ler_sessao_do_launcher() -> Option<String> {
+    std::fs::read_to_string(pasta_compartilhada_do_launcher()?.join("sessao.json")).ok()
+}
+
 pub fn run() {
     // Antes de tudo: se o jogo foi aberto direto, abre o launcher e sai.
     #[cfg(desktop)]
@@ -602,6 +635,8 @@ pub fn run() {
             media_play_pause,
             media_next,
             media_previous
+            ,ler_ativacao_do_launcher
+            ,ler_sessao_do_launcher
             ,online_server::online_start_server
             ,online_server::online_stop_server
             ,online_server::online_server_status
@@ -624,6 +659,8 @@ pub fn run() {
             media_play_pause,
             media_next,
             media_previous
+            ,ler_ativacao_do_launcher
+            ,ler_sessao_do_launcher
             ,online_server::online_start_server
             ,online_server::online_stop_server
             ,online_server::online_server_status

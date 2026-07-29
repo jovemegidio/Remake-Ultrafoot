@@ -8,6 +8,7 @@ import { GameHeader } from "@/components/game-header"
 import { SystemMediaPlayer } from "@/components/system-media-player"
 import { Button } from "@/components/ui/button"
 import { useUserTeam, useGameState, type SquadPlayer } from "@/lib/save-system"
+import { flushPersistentStore } from "@/lib/persistent-store"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateYouthMarketProspects, generateYouthProspects } from "@/lib/youth-academy"
 import { advanceYouthMonth, loanYouth, runTryout } from "@/lib/youth-engine"
@@ -23,6 +24,22 @@ import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { useRequireClub } from "@/lib/use-require-team"
 
 const PROMOTION_FEE = 200_000
+
+/**
+ * Forca a gravacao do save em disco AGORA.
+ *
+ * DINHEIRO INFINITO (relato reincidente): o caixa vive no MOTOR e a base vive no
+ * SAVE — dois armazenamentos. `storeSet` atualiza o cache na hora, mas a escrita
+ * no arquivo duravel e enfileirada de forma assincrona. Como navegar no jogo e um
+ * RELOAD COMPLETO, quem vendia a base e trocava de tela em seguida recarregava
+ * antes de a fila esvaziar: o save voltava com os jovens de novo, e o dinheiro
+ * — gravado por outro caminho — permanecia. Vender, sair, voltar, repetir.
+ *
+ * Chamar isto depois de toda operacao que mexe em caixa fecha a janela.
+ */
+function gravarAgora(): void {
+  void flushPersistentStore()
+}
 
 export default function BasePage() {
   useRequireClub()
@@ -178,6 +195,7 @@ export default function BasePage() {
     for (const p of aVender) total += p.vendaPendente!.valor
     receberPorJovem(total)
     setState({ youthPlayers: youth.filter(p => !p.vendaPendente) })
+    gravarAgora()
     for (const p of aVender) {
       addNotification({ type: "transfer", priority: "medium", title: `${p.name} vendido`,
         message: `${p.vendaPendente!.clube} concretizou a compra de ${p.name} por ${formatCurrency(p.vendaPendente!.valor)} na abertura da janela.` })
@@ -320,6 +338,7 @@ export default function BasePage() {
       receberPorJovem(p.valor)
       // Funcional: le a base MAIS NOVA (vender varios seguidos nao "ressuscita" os anteriores).
       setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(x => x.id !== player.id) }))
+      gravarAgora()
       addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
         message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
     } else {
@@ -369,6 +388,9 @@ export default function BasePage() {
         season: state.season,
       }],
     }))
+    // Compra tambem sai do caixa: aqui a corrida e ao contrario — o dinheiro ja
+    // saiu no motor e o junior poderia nao persistir, prejudicando o jogador.
+    gravarAgora()
     addNotification({
       type: "transfer",
       priority: "medium",

@@ -11,6 +11,7 @@ import realSquadsTM from "@/data/seeds/real-squads-tm.json"
 import { getPlayerOverride } from "@/lib/player-overrides"
 import { hasDeparted } from "@/lib/departed-players"
 import { getArrivals, hasAnyArrival } from "@/lib/world-market"
+import { saiuDoClube, chegouAoClube, temTransferencias } from "@/lib/atualizacao-elencos"
 
 const REAL_SQUADS = realSquadsJson as unknown as Record<
   string,
@@ -937,10 +938,34 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
   // transferencia entre clubes da IA: antes so a saida era registrada, entao o
   // atleta sumia do vendedor e nao aparecia em lugar nenhum — o mundo perdia
   // jogadores. Ver [[world-market]]. No modo `raw` (editor) nada disso se aplica.
+  // ATUALIZACAO OFICIAL DE ELENCOS (servidor). Vem ANTES das transferencias da
+  // partida: e o elenco de partida corrigido, nao um movimento do save. Aplica
+  // tambem no modo `raw` — o editor tem de mostrar o elenco ja atualizado, senao
+  // quem edita trabalha em cima de dado velho.
+  const comAtualizacaoOficial = temTransferencias()
+    ? (() => {
+        const ficam = sourceRaw.filter(p => !saiuDoClube(team.nome, p.nome))
+        const chegaram = chegouAoClube(team.nome)
+        if (chegaram.length === 0) return ficam
+        const jaTem = new Set(ficam.map(p => p.nome.toLowerCase()))
+        const novos = chegaram
+          .filter(t => !jaTem.has((t.nome ?? "").toLowerCase()))
+          .map(t => ({
+            nome: t.nome,
+            pos: (t.pos ?? "MEI") as Player["pos"],
+            idade: t.idade ?? 24,
+            base: t.base ?? 70,
+            time: team.nome,
+            nac: t.nac,
+          }))
+        return [...ficam, ...novos]
+      })()
+    : sourceRaw
+
   const source = opts?.raw
-    ? sourceRaw
+    ? comAtualizacaoOficial
     : (() => {
-        const semSaidas = sourceRaw.filter(p => !hasDeparted(team.nome, p.nome))
+        const semSaidas = comAtualizacaoOficial.filter(p => !hasDeparted(team.nome, p.nome))
         if (!hasAnyArrival()) return semSaidas
         const chegadas = getArrivals(team.nome)
         if (chegadas.length === 0) return semSaidas

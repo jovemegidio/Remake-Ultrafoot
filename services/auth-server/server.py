@@ -1,0 +1,712 @@
+#!/usr/bin/env python3
+"""Contas, sessoes e compras do Ultrafoot.
+
+Servico SEPARADO do cloud-save-server de proposito: compra e dado financeiro, e
+uma falha no save nao pode derrubar o que sustenta o acesso pago.
+
+So biblioteca padrao, como o cloud-save-server — nada de pip na VPS.
+
+SEGURANCA, decisoes que nao devem ser afrouxadas sem pensar:
+
+  • Senha passa por scrypt (hashlib.scrypt, stdlib) com salt de 16 bytes por
+    conta. Nunca guardamos a senha, nem algo reversivel a partir dela.
+  • Do token de sessao guardamos apenas o SHA-256. Vazar o banco nao permite
+    assumir sessao de ninguem.
+  • Comparacoes de segredo usam compare_digest (tempo constante) para nao
+    vazar informacao pelo tempo de resposta.
+  • Login errado responde a MESMA mensagem para email inexistente e senha
+    errada — dizer qual dos dois falhou entrega quais emails tem conta.
+  • Limite de tentativas por email+IP, para forca bruta nao ser viavel.
+
+O servico escuta em 127.0.0.1; quem expoe para fora e o nginx, com TLS.
+"""
+
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+import hashlib
+import hmac
+import json
+import os
+import re
+import secrets
+import sqlite3
+import sys
+import time
+import urllib.parse
+import urllib.request
+
+HOST = "127.0.0.1"
+PORT = int(os.environ.get("ULTRAFOOT_AUTH_PORT", "8790"))
+DB_PATH = Path(os.environ.get("ULTRAFOOT_AUTH_DB", "/var/lib/ultrafoot/auth.db"))
+SCHEMA = Path(__file__).with_name("schema.sql")
+
+GOOGLE_CLIENT_ID = os.environ.get("ULTRAFOOT_GOOGLE_CLIENT_ID", "")
+# O Google EXIGE client_secret na troca do codigo mesmo com PKCE (respondia
+# `client_secret is missing`). Ele fica so aqui, em variavel de ambiente do
+# servidor — nunca no launcher, de onde qualquer um extrairia do binario.
+GOOGLE_CLIENT_SECRET = os.environ.get("ULTRAFOOT_GOOGLE_CLIENT_SECRET", "")
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+
+MAX_BODY = 64 * 1024
+SESSAO_DIAS = 30
+TENTATIVAS_MAX = 8
+TENTATIVAS_JANELA = 15 * 60  # segundos
+
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+# ─── Banco ────────────────────────────────────────────────────────────────────
+
+def conectar() -> sqlite3.Connection:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(DB_PATH, timeout=10)
+    con.row_factory = sqlite3.Row
+    con.execute("PRAGMA foreign_keys = ON")
+    return con
+
+
+def iniciar_banco() -> None:
+    with conectar() as con:
+        con.executescript(SCHEMA.read_text(encoding="utf-8"))
+        # Colunas novas em banco que ja existe. `CREATE TABLE IF NOT EXISTS` nao
+        # altera tabela criada antes, entao quem ja tinha conta ficaria sem elas.
+        existentes = {l["name"] for l in con.execute("PRAGMA table_info(contas)")}
+        for coluna, definicao in (
+            ("telefone", "TEXT NOT NULL DEFAULT ''"),
+            ("ativado", "INTEGER NOT NULL DEFAULT 0"),
+            ("licenca_serie", "INTEGER"),
+            ("licenca_lote", "INTEGER"),
+        ):
+            if coluna not in existentes:
+                con.execute(f"ALTER TABLE contas ADD COLUMN {coluna} {definicao}")
+
+
+# ─── Codigo de ativacao ───────────────────────────────────────────────────────
+#
+# MESMO algoritmo de lib/license.ts: base32 Crockford, serie 24 bits + lote 6 +
+# HMAC-SHA256 truncado em 45. Validar aqui tambem permite dizer na hora do
+# cadastro se a chave e boa, e amarrar a chave a UMA conta — o jogo sozinho, por
+# ser offline, nao consegue saber que a mesma chave foi usada em outra maquina.
+
+ALFABETO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+PREFIXO_LICENCA = "UF26"
+LICENCA_SEGREDO = os.environ.get("ULTRAFOOT_LICENSE_SECRET", "")
+REVOGADAS = Path(__file__).with_name("licencas-revogadas.json")
+
+
+def _revogadas() -> set:
+    try:
+        return set(json.loads(REVOGADAS.read_text(encoding="utf-8")))
+    except Exception:
+        return set()
+
+
+def normalizar_codigo(bruto: str) -> str:
+    limpo = re.sub(r"[^0-9A-Z-]", "", (bruto or "").upper())
+    if not limpo.startswith(PREFIXO_LICENCA):
+        return limpo
+    # As trocas do Crockford valem SO para o corpo: aplicadas ao prefixo, o U de
+    # "UF26" viraria V e todo codigo legitimo seria recusado.
+    corpo = limpo[len(PREFIXO_LICENCA):]
+    corpo = corpo.replace("O", "0").replace("I", "1").replace("L", "1").replace("U", "V")
+    return PREFIXO_LICENCA + corpo
+
+
+def _ler_bits(grupos: list, inicio: int, quantos: int) -> int:
+    valor = 0
+    for i in range(quantos):
+        bit = inicio + i
+        g = grupos[bit // 5] if bit // 5 < len(grupos) else 0
+        valor = valor * 2 + ((g >> (4 - bit % 5)) & 1)
+    return valor
+
+
+def validar_codigo_licenca(bruto: str) -> dict | None:
+    """(serie, lote) do codigo, ou None se invalido/revogado."""
+    if not LICENCA_SEGREDO:
+        return None
+    partes = normalizar_codigo(bruto).split("-")
+    if len(partes) != 4 or partes[0] != PREFIXO_LICENCA:
+        return None
+    texto = "".join(partes[1:])
+    if len(texto) != 15:
+        return None
+    grupos = []
+    for ch in texto:
+        i = ALFABETO.find(ch)
+        if i < 0:
+            return None
+        grupos.append(i)
+
+    serie = _ler_bits(grupos, 0, 24)
+    lote = _ler_bits(grupos, 24, 6)
+    mac_recebido = _ler_bits(grupos, 30, 45)
+
+    assinatura = hmac.new(LICENCA_SEGREDO.encode("utf-8"),
+                          f"{serie}:{lote}".encode("utf-8"), hashlib.sha256).digest()
+    alto = int.from_bytes(assinatura[:5], "big")
+    mac_esperado = alto * 32 + (assinatura[5] >> 3)
+
+    if not hmac.compare_digest(str(mac_recebido), str(mac_esperado)):
+        return None
+    if serie in _revogadas():
+        return None
+    return {"serie": serie, "lote": lote, "codigo": normalizar_codigo(bruto)}
+
+
+def ativar_conta(con, conta_id: int, bruto: str) -> str:
+    """Ativa a versao completa. Devolve "" em caso de sucesso, ou o erro."""
+    if not (bruto or "").strip():
+        return ""  # sem codigo = versao simples, nao e erro
+    lic = validar_codigo_licenca(bruto)
+    if not lic:
+        return "codigo de ativacao invalido"
+
+    # UMA chave, UMA conta. Sem isto, um codigo vazado ativaria contas sem limite
+    # e nao haveria como saber qual delas e a legitima.
+    dono = con.execute("SELECT conta_id FROM licencas_migradas WHERE codigo = ?",
+                       (lic["codigo"],)).fetchone()
+    if dono and dono["conta_id"] != conta_id:
+        return "este codigo ja esta vinculado a outra conta"
+    if not dono:
+        con.execute("INSERT INTO licencas_migradas (codigo, conta_id, migrada_em)"
+                    " VALUES (?,?,?)", (lic["codigo"], conta_id, int(time.time())))
+    con.execute("UPDATE contas SET ativado = 1, licenca_serie = ?, licenca_lote = ?"
+                " WHERE id = ?", (lic["serie"], lic["lote"], conta_id))
+    return ""
+
+
+def codigo_da_conta(con, conta_id: int) -> str:
+    """Chave de ativacao da conta, para o launcher repassar ao jogo.
+
+    E o que faz a promessa "ativou uma vez, nao pede registro de novo" valer em
+    QUALQUER maquina onde a pessoa entrar: a conta e que carrega o direito, e o
+    codigo volta so para o dono dele.
+    """
+    linha = con.execute(
+        "SELECT l.codigo FROM licencas_migradas l JOIN contas c ON c.id = l.conta_id"
+        " WHERE l.conta_id = ? AND c.ativado = 1 ORDER BY l.migrada_em DESC LIMIT 1",
+        (conta_id,)).fetchone()
+    return linha["codigo"] if linha else ""
+
+
+# ─── Senha ────────────────────────────────────────────────────────────────────
+#
+# scrypt com n=2**15: cerca de 100ms por verificacao em CPU de VPS. Devagar de
+# proposito — e o que torna forca bruta cara. Se ficar lento demais sob carga,
+# baixe `n`, NUNCA remova o hash.
+
+def hash_senha(senha: str, salt: bytes) -> str:
+    # `maxmem` e OBRIGATORIO aqui. O scrypt precisa de 128*n*r bytes — com
+    # n=2**15 e r=8 dao exatamente 32 MiB, e o limite padrao do OpenSSL e
+    # justamente 32 MiB, entao a chamada estoura com "memory limit exceeded" e
+    # NENHUM registro ou login funciona. Damos folga de 2x.
+    return hashlib.scrypt(
+        senha.encode("utf-8"), salt=salt, n=2**15, r=8, p=1, dklen=32,
+        maxmem=64 * 1024 * 1024,
+    ).hex()
+
+
+def normalizar_email(email: str) -> str:
+    return (email or "").strip().lower()
+
+
+def migrar_licenca(con: sqlite3.Connection, conta_id: int, codigo: str) -> None:
+    """Vincula um codigo serial ja usado na maquina do jogador a esta conta.
+
+    ⚠️ REGRA QUE NAO PODE QUEBRAR: quem ja pagou NAO PODE perder o registro ao
+    criar conta. O launcher envia o codigo que encontrou na maquina e aqui ele
+    passa a pertencer a esta conta.
+
+    O INSERT e idempotente e nao rouba: `codigo` e chave primaria, entao se ele
+    ja estiver vinculado a OUTRA conta o insert e ignorado — o dono original
+    continua dono. Sem isso, alguem poderia digitar o codigo alheio e assumir a
+    licenca.
+    """
+    codigo = (codigo or "").strip().upper()
+    if not codigo:
+        return
+    con.execute(
+        "INSERT OR IGNORE INTO licencas_migradas (codigo, conta_id, migrada_em) VALUES (?,?,?)",
+        (codigo, conta_id, int(time.time())),
+    )
+
+
+# ─── Sessao ───────────────────────────────────────────────────────────────────
+
+def novo_token() -> tuple[str, str]:
+    """Devolve (token_claro, token_hash). O claro so existe nesta resposta."""
+    token = secrets.token_urlsafe(32)
+    return token, hashlib.sha256(token.encode()).hexdigest()
+
+
+def criar_sessao(con: sqlite3.Connection, conta_id: int, dispositivo: str) -> str:
+    token, token_hash = novo_token()
+    agora = int(time.time())
+    con.execute(
+        "INSERT INTO sessoes (token_hash, conta_id, criada_em, expira_em, dispositivo)"
+        " VALUES (?,?,?,?,?)",
+        (token_hash, conta_id, agora, agora + SESSAO_DIAS * 86400, dispositivo[:120]),
+    )
+    con.execute("UPDATE contas SET ultimo_login = ? WHERE id = ?", (agora, conta_id))
+    return token
+
+
+def conta_da_sessao(con: sqlite3.Connection, token: str) -> sqlite3.Row | None:
+    if not token:
+        return None
+    th = hashlib.sha256(token.encode()).hexdigest()
+    linha = con.execute(
+        "SELECT c.* FROM sessoes s JOIN contas c ON c.id = s.conta_id"
+        " WHERE s.token_hash = ? AND s.expira_em > ?",
+        (th, int(time.time())),
+    ).fetchone()
+    if linha and linha["bloqueada"]:
+        return None
+
+    # JANELA DESLIZANTE — "entrou uma vez, continua entrado".
+    #
+    # Com prazo fixo a sessao morria 30 dias depois do login e o jogador tinha de
+    # digitar a senha de novo sem entender por que. Cada uso empurra o prazo para
+    # frente; so quem some por 30 dias inteiros precisa entrar outra vez. O
+    # `expira_em` continua existindo porque uma sessao eterna nao teria como ser
+    # descartada de um aparelho perdido.
+    if linha:
+        agora = int(time.time())
+        novo = agora + SESSAO_DIAS * 86400
+        # Grava so quando falta menos de um dia do que ja esta la: sem isso seria
+        # um UPDATE em toda requisicao, inclusive nas de leitura.
+        con.execute(
+            "UPDATE sessoes SET expira_em = ? WHERE token_hash = ? AND expira_em < ?",
+            (novo, th, novo - 86400),
+        )
+    return linha
+
+
+# ─── Limite de tentativas ─────────────────────────────────────────────────────
+
+def excedeu_tentativas(con: sqlite3.Connection, chave: str) -> bool:
+    corte = int(time.time()) - TENTATIVAS_JANELA
+    con.execute("DELETE FROM tentativas WHERE quando < ?", (corte,))
+    n = con.execute("SELECT COUNT(*) n FROM tentativas WHERE chave = ?", (chave,)).fetchone()["n"]
+    return n >= TENTATIVAS_MAX
+
+
+def registrar_tentativa(con: sqlite3.Connection, chave: str) -> None:
+    con.execute("INSERT INTO tentativas (chave, quando) VALUES (?,?)", (chave, int(time.time())))
+
+
+# ─── Google (PKCE) ────────────────────────────────────────────────────────────
+#
+# O launcher abre o navegador, recebe o `code` num servidor local e manda para
+# ca junto do `code_verifier`. Quem troca o codigo por token e o SERVIDOR — o
+# launcher nunca ve credencial de troca. Cliente Desktop nao usa client_secret
+# no PKCE, por isso ele nao aparece aqui.
+
+def trocar_codigo_google(code: str, verifier: str, redirect_uri: str) -> dict | None:
+    if not GOOGLE_CLIENT_ID:
+        return None
+    campos = {
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "code_verifier": verifier,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+    if GOOGLE_CLIENT_SECRET:
+        campos["client_secret"] = GOOGLE_CLIENT_SECRET
+    dados = urllib.parse.urlencode(campos).encode()
+    try:
+        req = urllib.request.Request(GOOGLE_TOKEN_URL, data=dados,
+                                     headers={"Content-Type": "application/x-www-form-urlencoded"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            token = json.loads(r.read())
+    except Exception as e:
+        # O motivo REAL fica so no log do servidor. Devolver ao cliente entregaria
+        # detalhe de configuracao a quem nao precisa. Sem isto, a falha do Google
+        # some e o unico sintoma e "nao foi possivel validar" — foi o que ocorreu.
+        detalhe = ""
+        try:
+            detalhe = e.read().decode("utf-8", "replace")[:300]  # type: ignore[attr-defined]
+        except Exception:
+            detalhe = repr(e)
+        print(f"[google] troca de codigo falhou: {detalhe}", file=sys.stderr, flush=True)
+        return None
+
+    # O id_token e um JWT assinado pelo Google. Aqui lemos o payload para pegar
+    # sub/email. A CONFIANCA vem de o token ter chegado direto do endpoint do
+    # Google por HTTPS nesta mesma requisicao — nao de dado enviado pelo cliente.
+    id_token = token.get("id_token", "")
+    partes = id_token.split(".")
+    if len(partes) != 3:
+        return None
+    payload = partes[1] + "=" * (-len(partes[1]) % 4)
+    try:
+        info = json.loads(__import__("base64").urlsafe_b64decode(payload))
+    except Exception:
+        return None
+    if info.get("aud") != GOOGLE_CLIENT_ID or not info.get("sub"):
+        return None
+    return info
+
+
+# ─── HTTP ─────────────────────────────────────────────────────────────────────
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "ultrafoot-auth"
+
+    def log_message(self, *_):  # silencia log por requisicao
+        pass
+
+    def _cors(self) -> None:
+        """Cabecalhos de CORS.
+
+        O launcher roda numa WEBVIEW, cuja origem e `tauri.localhost` (ou
+        `http://localhost` em dev) — nunca o dominio deste servidor. Sem estes
+        cabecalhos o navegador bloqueia a chamada ANTES de sair da maquina e o
+        cliente ve apenas "failed to fetch", sem pista do motivo.
+
+        Liberamos qualquer origem porque nao ha cookie nem credencial de
+        navegador em jogo: a autenticacao viaja no header Authorization, que o
+        atacante teria de possuir de antemao. Se um dia usarmos cookies, isto
+        PRECISA virar uma lista fechada de origens.
+        """
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Max-Age", "86400")
+
+    def do_OPTIONS(self):
+        # Preflight: o navegador pergunta antes de mandar POST com JSON.
+        self.send_response(204)
+        self._cors()
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def _responder(self, codigo: int, corpo: dict) -> None:
+        dado = json.dumps(corpo).encode()
+        self.send_response(codigo)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self._cors()
+        self.send_header("Content-Length", str(len(dado)))
+        self.end_headers()
+        self.wfile.write(dado)
+
+    def _corpo(self) -> dict:
+        n = int(self.headers.get("Content-Length") or 0)
+        if n <= 0 or n > MAX_BODY:
+            return {}
+        try:
+            return json.loads(self.rfile.read(n))
+        except Exception:
+            return {}
+
+    def _token(self) -> str:
+        auth = self.headers.get("Authorization") or ""
+        return auth[7:].strip() if auth.startswith("Bearer ") else ""
+
+    def _ip(self) -> str:
+        return self.headers.get("X-Forwarded-For", self.client_address[0]).split(",")[0].strip()
+
+    # ── GET ──
+    def do_GET(self):
+        if self.path == "/health":
+            return self._responder(200, {"ok": True, "service": "ultrafoot-auth"})
+        if self.path == "/saves":
+            with conectar() as con:
+                conta = conta_da_sessao(con, self._token())
+                if not conta:
+                    return self._responder(401, {"erro": "sessao invalida"})
+                linhas = con.execute(
+                    "SELECT codigo, rotulo, criado_em, atualizado_em FROM saves_da_conta"
+                    " WHERE conta_id = ? ORDER BY atualizado_em DESC LIMIT 50",
+                    (conta["id"],)).fetchall()
+                return self._responder(200, {"saves": [dict(l) for l in linhas]})
+        if self.path == "/me":
+            with conectar() as con:
+                conta = conta_da_sessao(con, self._token())
+                if not conta:
+                    return self._responder(401, {"erro": "sessao invalida"})
+                compras = con.execute(
+                    "SELECT produto, valor_cents, moeda, criada_em FROM compras"
+                    " WHERE conta_id = ? AND estorno_de IS NULL ORDER BY criada_em DESC",
+                    (conta["id"],),
+                ).fetchall()
+                return self._responder(200, {
+                    "id": conta["id"], "email": conta["email"], "nome": conta["nome"],
+                    "telefone": conta["telefone"], "ativado": bool(conta["ativado"]),
+                    "codigo_ativacao": codigo_da_conta(con, conta["id"]),
+                    "compras": [dict(c) for c in compras],
+                })
+        return self._responder(404, {"erro": "nao encontrado"})
+
+    # ── POST ──
+    def do_POST(self):
+        rota = self.path.split("?")[0]
+        corpo = self._corpo()
+
+        if rota == "/registrar":
+            return self._registrar(corpo)
+        if rota == "/login":
+            return self._login(corpo)
+        if rota == "/google":
+            return self._google(corpo)
+        if rota == "/saves/registrar":
+            return self._registrar_save(corpo)
+        if rota == "/saves/esquecer":
+            return self._esquecer_save(corpo)
+        if rota == "/ativar":
+            return self._ativar(corpo)
+        if rota.startswith("/admin/"):
+            return self._admin(rota, corpo)
+        if rota == "/sair":
+            with conectar() as con:
+                th = hashlib.sha256(self._token().encode()).hexdigest()
+                con.execute("DELETE FROM sessoes WHERE token_hash = ?", (th,))
+            return self._responder(200, {"ok": True})
+        return self._responder(404, {"erro": "nao encontrado"})
+
+    def _registrar(self, corpo: dict):
+        email = normalizar_email(corpo.get("email", ""))
+        senha = corpo.get("senha") or ""
+        nome = (corpo.get("nome") or "").strip()[:80]
+        telefone = re.sub(r"[^0-9+() -]", "", (corpo.get("telefone") or "").strip())[:24]
+        codigo = (corpo.get("codigo_ativacao") or "").strip()
+        if not EMAIL_RE.match(email):
+            return self._responder(400, {"erro": "email invalido"})
+        if len(senha) < 8:
+            return self._responder(400, {"erro": "a senha precisa de ao menos 8 caracteres"})
+
+        # Um codigo ERRADO nao pode criar a conta e so avisar depois: a pessoa
+        # ficaria com conta sem ativacao e sem entender por que. Conferimos antes.
+        if codigo and not validar_codigo_licenca(codigo):
+            return self._responder(400, {"erro": "codigo de ativacao invalido"})
+
+        salt = secrets.token_bytes(16)
+        with conectar() as con:
+            try:
+                cur = con.execute(
+                    "INSERT INTO contas (email, nome, telefone, senha_hash, senha_salt, criada_em)"
+                    " VALUES (?,?,?,?,?,?)",
+                    (email, nome, telefone, hash_senha(senha, salt), salt.hex(), int(time.time())),
+                )
+            except sqlite3.IntegrityError:
+                # Nao confirmamos que o email existe: so um erro generico.
+                return self._responder(409, {"erro": "nao foi possivel criar a conta"})
+            conta_id = cur.lastrowid
+            erro = ativar_conta(con, conta_id, codigo)
+            if erro:
+                # Desfaz a criacao inteira. O unico erro possivel aqui e "codigo
+                # ja vinculado a outra conta", e criar a conta assim mesmo daria a
+                # impressao de que a chave foi aceita.
+                con.rollback()
+                return self._responder(409, {"erro": erro})
+            migrar_licenca(con, conta_id, corpo.get("codigo_registro", ""))
+            token = criar_sessao(con, conta_id, corpo.get("dispositivo", ""))
+            ativado = bool(con.execute("SELECT ativado FROM contas WHERE id = ?",
+                                       (conta_id,)).fetchone()["ativado"])
+        return self._responder(201, {"token": token, "email": email, "nome": nome,
+                                     "ativado": ativado, "codigo_ativacao": codigo if ativado else ""})
+
+    # ── Catalogo de saves da conta ──
+    #
+    # O save NAO passa por aqui — quem guarda o conteudo e o cloud-save-server.
+    # Este servico so anota "o codigo X e da conta Y", que e o que permite
+    # recuperar tudo depois de uma formatacao.
+    def _registrar_save(self, corpo: dict):
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            codigo = re.sub(r"[^A-F0-9]", "", (corpo.get("codigo") or "").upper())
+            if len(codigo) != 6:
+                return self._responder(400, {"erro": "codigo invalido"})
+            rotulo = (corpo.get("rotulo") or "").strip()[:80]
+            agora = int(time.time())
+
+            dono = con.execute("SELECT conta_id FROM saves_da_conta WHERE codigo = ?",
+                               (codigo,)).fetchone()
+            if dono and dono["conta_id"] != conta["id"]:
+                # Um codigo de 6 hex e adivinhavel por forca bruta; deixar
+                # reivindicar o de outra pessoa entregaria a carreira dela.
+                return self._responder(409, {"erro": "este codigo pertence a outra conta"})
+            if dono:
+                con.execute("UPDATE saves_da_conta SET rotulo = ?, atualizado_em = ?"
+                            " WHERE codigo = ?", (rotulo or "", agora, codigo))
+            else:
+                con.execute("INSERT INTO saves_da_conta (codigo, conta_id, rotulo, criado_em,"
+                            " atualizado_em) VALUES (?,?,?,?,?)",
+                            (codigo, conta["id"], rotulo, agora, agora))
+        return self._responder(200, {"ok": True, "codigo": codigo})
+
+    def _esquecer_save(self, corpo: dict):
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            codigo = re.sub(r"[^A-F0-9]", "", (corpo.get("codigo") or "").upper())
+            # Some so do catalogo. O save continua no cloud-save-server: apagar
+            # de verdade a partir de uma lista e caminho curto para perda de dado.
+            con.execute("DELETE FROM saves_da_conta WHERE codigo = ? AND conta_id = ?",
+                        (codigo, conta["id"]))
+        return self._responder(200, {"ok": True})
+
+    def _ativar(self, corpo: dict):
+        """Ativa a versao completa depois, para quem criou a conta sem codigo."""
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            codigo = (corpo.get("codigo_ativacao") or "").strip()
+            if not codigo:
+                return self._responder(400, {"erro": "informe o codigo de ativacao"})
+            erro = ativar_conta(con, conta["id"], codigo)
+            if erro:
+                return self._responder(400, {"erro": erro})
+        return self._responder(200, {"ok": True, "ativado": True,
+                                     "codigo_ativacao": normalizar_codigo(codigo)})
+
+    def _login(self, corpo: dict):
+        email = normalizar_email(corpo.get("email", ""))
+        senha = corpo.get("senha") or ""
+        chave = f"{email}|{self._ip()}"
+        generico = {"erro": "email ou senha invalidos"}
+
+        with conectar() as con:
+            if excedeu_tentativas(con, chave):
+                return self._responder(429, {"erro": "muitas tentativas; tente em alguns minutos"})
+            conta = con.execute("SELECT * FROM contas WHERE email = ?", (email,)).fetchone()
+
+            # Mesmo sem conta, gastamos tempo parecido: senao o tempo de resposta
+            # revela quais emails existem.
+            salt = bytes.fromhex(conta["senha_salt"]) if conta and conta["senha_salt"] else secrets.token_bytes(16)
+            calculado = hash_senha(senha, salt)
+            guardado = conta["senha_hash"] if conta and conta["senha_hash"] else calculado[::-1]
+
+            if not conta or conta["bloqueada"] or not hmac.compare_digest(calculado, guardado):
+                registrar_tentativa(con, chave)
+                return self._responder(401, generico)
+
+            con.execute("DELETE FROM tentativas WHERE chave = ?", (chave,))
+            migrar_licenca(con, conta["id"], corpo.get("codigo_registro", ""))
+            token = criar_sessao(con, conta["id"], corpo.get("dispositivo", ""))
+            ativado = bool(conta["ativado"])
+            codigo_ativacao = codigo_da_conta(con, conta["id"])
+        return self._responder(200, {"token": token, "email": conta["email"], "nome": conta["nome"],
+                                     "ativado": ativado, "codigo_ativacao": codigo_ativacao})
+
+    # ── Administracao ──
+    #
+    # O admin usa a MESMA sessao de qualquer conta; o que autoriza e a coluna
+    # `admin`. Assim nao existe segunda senha nem token mestre para vazar, e
+    # revogar o acesso e um UPDATE.
+    def _admin(self, rota: str, corpo: dict):
+        with conectar() as con:
+            eu = conta_da_sessao(con, self._token())
+            if not eu or not eu["admin"]:
+                # 404, nao 403: nao confirmamos a existencia da area para quem
+                # nao e admin.
+                return self._responder(404, {"erro": "nao encontrado"})
+
+            if rota == "/admin/contas":
+                termo = f"%{(corpo.get('busca') or '').strip().lower()}%"
+                linhas = con.execute(
+                    "SELECT id, email, nome, telefone, criada_em, ultimo_login, bloqueada,"
+                    "       motivo_bloqueio, bloqueada_em, admin, ativado, licenca_serie,"
+                    "       (google_sub IS NOT NULL) AS via_google,"
+                    "       (SELECT COUNT(*) FROM compras WHERE conta_id = contas.id"
+                    "        AND estorno_de IS NULL) AS compras"
+                    " FROM contas WHERE email LIKE ? OR nome LIKE ?"
+                    " ORDER BY criada_em DESC LIMIT 200",
+                    (termo, termo),
+                ).fetchall()
+                return self._responder(200, {"contas": [dict(l) for l in linhas]})
+
+            alvo_id = corpo.get("conta_id")
+            if not isinstance(alvo_id, int):
+                return self._responder(400, {"erro": "conta_id ausente"})
+            alvo = con.execute("SELECT * FROM contas WHERE id = ?", (alvo_id,)).fetchone()
+            if not alvo:
+                return self._responder(404, {"erro": "conta nao encontrada"})
+
+            if rota == "/admin/banir":
+                # Um admin nao pode se banir nem banir outro admin: isso evita
+                # perder o acesso administrativo por engano ou por briga interna.
+                if alvo["id"] == eu["id"] or alvo["admin"]:
+                    return self._responder(400, {"erro": "nao e possivel banir um administrador"})
+                motivo = (corpo.get("motivo") or "").strip()[:300]
+                if not motivo:
+                    return self._responder(400, {"erro": "informe o motivo do banimento"})
+                agora = int(time.time())
+                con.execute(
+                    "UPDATE contas SET bloqueada = 1, motivo_bloqueio = ?, bloqueada_em = ?"
+                    " WHERE id = ?", (motivo, agora, alvo_id))
+                # Derruba as sessoes abertas: banir sem isso deixaria a pessoa
+                # jogando ate o token expirar, semanas depois.
+                con.execute("DELETE FROM sessoes WHERE conta_id = ?", (alvo_id,))
+                con.execute(
+                    "INSERT INTO admin_log (admin_id, alvo_id, acao, motivo, quando)"
+                    " VALUES (?,?,?,?,?)", (eu["id"], alvo_id, "banir", motivo, agora))
+                return self._responder(200, {"ok": True})
+
+            if rota == "/admin/desbanir":
+                agora = int(time.time())
+                con.execute(
+                    "UPDATE contas SET bloqueada = 0, motivo_bloqueio = '', bloqueada_em = NULL"
+                    " WHERE id = ?", (alvo_id,))
+                con.execute(
+                    "INSERT INTO admin_log (admin_id, alvo_id, acao, motivo, quando)"
+                    " VALUES (?,?,?,?,?)", (eu["id"], alvo_id, "desbanir", "", agora))
+                return self._responder(200, {"ok": True})
+
+            if rota == "/admin/historico":
+                linhas = con.execute(
+                    "SELECT l.acao, l.motivo, l.quando, a.email AS admin_email"
+                    " FROM admin_log l JOIN contas a ON a.id = l.admin_id"
+                    " WHERE l.alvo_id = ? ORDER BY l.quando DESC LIMIT 50", (alvo_id,)).fetchall()
+                return self._responder(200, {"historico": [dict(l) for l in linhas]})
+
+        return self._responder(404, {"erro": "nao encontrado"})
+
+    def _google(self, corpo: dict):
+        info = trocar_codigo_google(
+            corpo.get("code", ""), corpo.get("code_verifier", ""), corpo.get("redirect_uri", ""),
+        )
+        if not info:
+            return self._responder(401, {"erro": "nao foi possivel validar com o Google"})
+
+        sub = info["sub"]
+        email = normalizar_email(info.get("email", ""))
+        nome = (info.get("name") or "").strip()[:80]
+
+        with conectar() as con:
+            conta = con.execute("SELECT * FROM contas WHERE google_sub = ?", (sub,)).fetchone()
+            if not conta and email:
+                # Mesmo email por senha e por Google = MESMA pessoa: vinculamos em
+                # vez de criar conta duplicada, senao as compras ficam divididas.
+                conta = con.execute("SELECT * FROM contas WHERE email = ?", (email,)).fetchone()
+                if conta:
+                    con.execute("UPDATE contas SET google_sub = ? WHERE id = ?", (sub, conta["id"]))
+            if not conta:
+                cur = con.execute(
+                    "INSERT INTO contas (email, nome, google_sub, criada_em) VALUES (?,?,?,?)",
+                    (email or f"{sub}@google.local", nome, sub, int(time.time())),
+                )
+                conta_id = cur.lastrowid
+            else:
+                if conta["bloqueada"]:
+                    return self._responder(403, {"erro": "conta bloqueada"})
+                conta_id = conta["id"]
+            migrar_licenca(con, conta_id, corpo.get("codigo_registro", ""))
+            token = criar_sessao(con, conta_id, corpo.get("dispositivo", ""))
+            linha = con.execute("SELECT ativado FROM contas WHERE id = ?", (conta_id,)).fetchone()
+            ativado = bool(linha["ativado"])
+            codigo_ativacao = codigo_da_conta(con, conta_id)
+        return self._responder(200, {"token": token, "email": email, "nome": nome,
+                                     "ativado": ativado, "codigo_ativacao": codigo_ativacao})
+
+
+if __name__ == "__main__":
+    iniciar_banco()
+    print(f"ultrafoot-auth em http://{HOST}:{PORT} (db: {DB_PATH})")
+    ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()

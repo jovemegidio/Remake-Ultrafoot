@@ -148,3 +148,9 @@ data/seeds/team-overrides.inline-backup.json
 
 # instalador do launcher (artefato de build, staged manualmente)
 src-tauri/resources/launcher/*.exe
+
+# Cache do Python do servidor de contas
+services/auth-server/__pycache__/
+
+# Saida do publicador de elencos (gerada a cada envio)
+data/atualizacoes/.publicado.json

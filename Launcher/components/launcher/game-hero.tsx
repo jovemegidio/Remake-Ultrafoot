@@ -34,13 +34,15 @@ export function GameHero({
     <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#07100f] shadow-[0_28px_90px_rgba(0,0,0,.35)]">
       <div className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/games/ultrafoot.png" alt="" className="h-full w-full scale-[1.03] object-cover object-[center_57%] opacity-75" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#07100f] via-[#07100f]/86 to-[#07100f]/15" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#07100f] via-transparent to-black/20" />
-        <div className="absolute inset-0 opacity-20 launcher-pitch-lines" />
+        {/* A arte tem o tecnico a DIREITA e o gramado a esquerda. O veu era pensado
+            para a arte antiga (clara, assunto ao centro) e nesta apagava o campo
+            inteiro — por isso ele agora e leve e so na faixa do texto. */}
+        <img src="/games/ultrafoot-hero.png" alt="" className="h-full w-full object-cover object-[62%_center]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#05090b] via-[#05090b]/55 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#05090b] via-[#05090b]/45 to-transparent" />
       </div>
 
-      <div className="relative flex min-h-[500px] flex-col justify-end gap-4 p-6 md:p-9">
+      <div className="relative flex min-h-[520px] flex-col justify-end gap-4 p-6 md:p-10">
         <div className="absolute left-7 top-7 flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/70 backdrop-blur-md">
           <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(72,238,214,.9)]" />
           Temporada 2026

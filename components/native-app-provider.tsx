@@ -8,6 +8,7 @@ import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { syncCurrencyFromStore, getCurrencyCode } from "@/lib/currency"
 import type { InGameUpdateOffer } from "@/lib/updater"
+import { baixarAtualizacao } from "@/lib/atualizacao-elencos"
 
 // Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
 // e o que faz o modal reaparecer para quem ja viu a anterior.
@@ -70,6 +71,19 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   // mesmo sem limpeza a leitura via de um storage vazio). O flag agora vive no
   // store durável, e e gravado no momento em que o modal APARECE — fechar o
   // jogo com ele aberto nao faz reaparecer.
+  // ATUALIZACAO DE ELENCOS pelo servidor (estilo EA FC). Roda uma vez por
+  // abertura, depois do store hidratar — antes disso a comparacao de versao
+  // leria vazio e rebaixaria a atualizacao que ja esta na maquina.
+  useEffect(() => {
+    let cancelado = false
+    void initPersistentStore().then(async () => {
+      if (cancelado) return
+      const versao = await baixarAtualizacao()
+      if (versao) console.info(`[elencos] atualizacao oficial ${versao} aplicada`)
+    })
+    return () => { cancelado = true }
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     let timer = 0

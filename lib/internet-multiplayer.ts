@@ -71,7 +71,7 @@ export interface InternetSession {
 
 const INTERNET_SESSION_KEY = "ultrafoot:internet-session"
 const RELAY_OVERRIDE_KEY = "ultrafoot:relay-url"
-const OFFICIAL_RELAY_URL = "https://ultrafoot.72-61-145-52.sslip.io/relay"
+const OFFICIAL_RELAY_URL = "https://ultrafoot.179-198-103-30.sslip.io/relay"
 
 function normalizedUrl(value: string): string { return value.trim().replace(/\/+$/, "") }
 

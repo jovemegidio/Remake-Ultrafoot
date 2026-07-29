@@ -1,5 +1,6 @@
 import { safeLocalSet } from "@/lib/safe-storage"
 import { storeRemove, storeSet } from "@/lib/persistent-store"
+import { catalogarSave } from "@/lib/conta-ultrafoot"
 
 // Sincronizacao de carreira por codigo. Na versao web usa a API da VPS; se a
 // API estiver indisponivel (por exemplo no desktop offline), preserva um
@@ -75,6 +76,29 @@ export function generateCloudCode(): string {
   return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("").toUpperCase()
 }
 
+/**
+ * Rotulo curto para a pessoa reconhecer o save na lista da conta.
+ *
+ * Sem isso a lista vira uma coluna de codigos hexadecimais, e escolher qual
+ * baixar depois de formatar seria adivinhacao.
+ */
+function rotuloDoSave(bundle: CloudBundle): string {
+  try {
+    const cru = bundle.entries["ultrafoot:career-index"] ?? bundle.entries["ultrafoot:save"]
+    if (!cru) return ""
+    const dado = JSON.parse(cru) as unknown
+    const lista = Array.isArray(dado) ? dado : (dado as { careers?: unknown[] })?.careers
+    const primeiro = (Array.isArray(lista) ? lista[0] : dado) as
+      { clube?: string; teamName?: string; time?: string; temporada?: number; season?: number } | undefined
+    const clube = primeiro?.clube ?? primeiro?.teamName ?? primeiro?.time
+    const temporada = primeiro?.temporada ?? primeiro?.season
+    if (clube && temporada) return `${clube} — ${temporada}`
+    if (clube) return String(clube)
+  } catch { /* rotulo e conforto, nao requisito */ }
+  const quantas = Object.keys(bundle.entries).length
+  return quantas ? `${quantas} itens` : ""
+}
+
 /** Envia todas as carreiras atuais para a VPS sob um codigo recuperavel. */
 export async function uploadSave(code?: string): Promise<CloudResult & { code?: string }> {
   if (!hasWindow()) return { success: false, error: "Ambiente sem armazenamento" }
@@ -91,6 +115,10 @@ export async function uploadSave(code?: string): Promise<CloudResult & { code?: 
     if (!response.ok) throw new Error(`Servidor respondeu ${response.status}`)
     safeLocalSet(CLOUD_PREFIX + finalCode, JSON.stringify(bundle))
     safeLocalSet(LAST_CODE_KEY, finalCode)
+    // Anota o codigo na conta do launcher, se houver uma. E o que permite achar
+    // a carreira depois de formatar sem ter decorado o codigo. Nao bloqueia:
+    // o save JA subiu, e uma falha de catalogo nao pode virar erro na tela.
+    void catalogarSave(finalCode, rotuloDoSave(bundle))
     return { success: true, code: finalCode }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Erro ao enviar save" }

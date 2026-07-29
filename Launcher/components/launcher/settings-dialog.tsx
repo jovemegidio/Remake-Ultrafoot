@@ -1,7 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { X, Power, MinusSquare } from "lucide-react"
+import {
+  X, Power, MinusSquare, Palette, Type, Accessibility, UserCircle, Monitor, RotateCcw,
+} from "lucide-react"
+import {
+  TEMAS, FONTES, AVATARES, PADRAO, iniciais,
+  type Preferencias,
+} from "@/lib/preferencias"
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -12,7 +19,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-        checked ? "bg-primary" : "bg-secondary",
+        checked ? "bg-primary" : "bg-secondary border border-border",
       )}
     >
       <span
@@ -25,76 +32,300 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   )
 }
 
+function Linha({ icone: Icone, titulo, descricao, children }: {
+  icone: typeof Power; titulo: string; descricao: string; children: React.ReactNode
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-4 px-5 py-4">
+      <span className="flex items-start gap-3">
+        <Icone className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        <span>
+          <span className="block text-sm font-medium text-foreground">{titulo}</span>
+          <span className="block text-xs text-muted-foreground">{descricao}</span>
+        </span>
+      </span>
+      {children}
+    </label>
+  )
+}
+
+type Aba = "geral" | "aparencia" | "acessibilidade" | "perfil"
+
+const ABAS: { id: Aba; nome: string; icone: typeof Power }[] = [
+  { id: "geral", nome: "Geral", icone: Monitor },
+  { id: "aparencia", nome: "Aparência", icone: Palette },
+  { id: "acessibilidade", nome: "Acessibilidade", icone: Accessibility },
+  { id: "perfil", nome: "Perfil", icone: UserCircle },
+]
+
 export function SettingsDialog({
   autostart,
   closeToTray,
+  prefs,
+  nomeDaConta,
   onAutostart,
   onCloseToTray,
+  onPrefs,
   onClose,
 }: {
   autostart: boolean
   closeToTray: boolean
+  prefs: Preferencias
+  nomeDaConta: string
   onAutostart: (v: boolean) => void
   onCloseToTray: (v: boolean) => void
+  onPrefs: (p: Preferencias) => void
   onClose: () => void
 }) {
+  const [aba, setAba] = useState<Aba>("geral")
+  // Toda mudança é aplicada NA HORA, sem botão "salvar": o jogador precisa ver o
+  // tema no lugar para decidir se gostou. Um preview que não é o resultado final
+  // é o jeito mais fácil de escolher errado.
+  const mudar = (p: Partial<Preferencias>) => onPrefs({ ...prefs, ...p })
+
   return (
     <div
       className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 p-5 backdrop-blur"
       onClick={onClose}
     >
       <section
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        className="flex max-h-[86vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="font-display text-lg font-bold text-foreground">Configurações</h2>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <nav className="flex w-40 shrink-0 flex-col gap-0.5 border-r border-border bg-black/20 p-2">
+          <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            Configurações
+          </p>
+          {ABAS.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setAba(item.id)}
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                aba === item.id
+                  ? "bg-primary/12 text-primary"
+                  : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
+              )}
+            >
+              <item.icone className="h-4 w-4 shrink-0" />
+              {item.nome}
+            </button>
+          ))}
+        </nav>
 
-        <div className="flex flex-col divide-y divide-border">
-          <label className="flex cursor-pointer items-center justify-between gap-4 px-5 py-4">
-            <span className="flex items-start gap-3">
-              <Power className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-              <span>
-                <span className="block text-sm font-medium text-foreground">Iniciar com o Windows</span>
-                <span className="block text-xs text-muted-foreground">
-                  O launcher abre sozinho quando você liga o computador.
-                </span>
-              </span>
-            </span>
-            <Toggle checked={autostart} onChange={onAutostart} />
-          </label>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <h2 className="font-display text-lg font-bold text-foreground">
+              {ABAS.find(a => a.id === aba)?.nome}
+            </h2>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label="Fechar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-          <label className="flex cursor-pointer items-center justify-between gap-4 px-5 py-4">
-            <span className="flex items-start gap-3">
-              <MinusSquare className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-              <span>
-                <span className="block text-sm font-medium text-foreground">
-                  Minimizar para a bandeja ao fechar
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  Ao clicar no X, o launcher continua rodando no ícone ao lado do relógio.
-                </span>
-              </span>
-            </span>
-            <Toggle checked={closeToTray} onChange={onCloseToTray} />
-          </label>
-        </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {aba === "geral" && (
+              <div className="flex flex-col divide-y divide-border">
+                <Linha
+                  icone={Power}
+                  titulo="Iniciar com o Windows"
+                  descricao="O launcher abre sozinho quando você liga o computador."
+                >
+                  <Toggle checked={autostart} onChange={onAutostart} />
+                </Linha>
+                <Linha
+                  icone={MinusSquare}
+                  titulo="Minimizar para a bandeja ao fechar"
+                  descricao="Ao clicar no X, o launcher continua rodando no ícone ao lado do relógio."
+                >
+                  <Toggle checked={closeToTray} onChange={onCloseToTray} />
+                </Linha>
+              </div>
+            )}
 
-        <div className="flex justify-end border-t border-border px-5 py-3">
-          <button
-            onClick={onClose}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            Concluído
-          </button>
+            {aba === "aparencia" && (
+              <div className="space-y-6 p-5">
+                <div>
+                  <h3 className="mb-1 text-sm font-semibold text-foreground">Tema</h3>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Muda as cores do launcher inteiro. O jogo mantém o visual dele.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {TEMAS.map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => mudar({ tema: t.id })}
+                        className={cn(
+                          "overflow-hidden rounded-xl border-2 text-left transition-all",
+                          prefs.tema === t.id
+                            ? "border-primary"
+                            : "border-transparent hover:border-white/15",
+                        )}
+                      >
+                        <span className="flex h-12 items-center gap-1.5 px-3" style={{ background: t.amostra[1] }}>
+                          <span className="h-6 w-6 rounded-full" style={{ background: t.amostra[0] }} />
+                          <span className="h-2 flex-1 rounded-full" style={{ background: t.borda }} />
+                        </span>
+                        <span className="block px-3 py-2 text-xs font-semibold text-foreground">{t.nome}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <Type className="h-4 w-4 text-primary" /> Fonte
+                  </h3>
+                  <div className="mt-2 space-y-1.5">
+                    {FONTES.map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => mudar({ fonte: f.id })}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                          prefs.fonte === f.id
+                            ? "border-primary/50 bg-primary/10"
+                            : "border-border hover:bg-white/[0.04]",
+                        )}
+                      >
+                        <span>
+                          <span className="block text-sm text-foreground" style={{ fontFamily: f.pilha }}>
+                            {f.nome}
+                          </span>
+                          {f.nota && <span className="block text-[11px] text-muted-foreground">{f.nota}</span>}
+                        </span>
+                        <span className="text-xs text-muted-foreground" style={{ fontFamily: f.pilha }}>
+                          Ultrafoot 26
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {aba === "acessibilidade" && (
+              <div className="space-y-5 p-5">
+                <div>
+                  <h3 className="mb-1 text-sm font-semibold text-foreground">Tamanho do texto</h3>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Vale para o launcher todo. Limitado a 140% porque acima disso os botões
+                    começam a se cortar — o que atrapalha mais do que ajuda.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range" min={80} max={140} step={5}
+                      value={prefs.tamanhoTexto}
+                      onChange={e => mudar({ tamanhoTexto: Number(e.target.value) })}
+                      className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-secondary accent-[var(--primary)]"
+                    />
+                    <span className="w-14 text-right font-mono text-sm text-foreground">
+                      {prefs.tamanhoTexto}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-border rounded-xl border border-border">
+                  <Linha
+                    icone={Accessibility}
+                    titulo="Alto contraste"
+                    descricao="Bordas visíveis e textos secundários mais claros."
+                  >
+                    <Toggle checked={prefs.altoContraste} onChange={v => mudar({ altoContraste: v })} />
+                  </Linha>
+                  <Linha
+                    icone={RotateCcw}
+                    titulo="Reduzir animações"
+                    descricao="Corta transições e efeitos. Ajuda em enjoo visual e em máquinas fracas."
+                  >
+                    <Toggle checked={prefs.reduzirAnimacoes} onChange={v => mudar({ reduzirAnimacoes: v })} />
+                  </Linha>
+                </div>
+
+                <button
+                  onClick={() => onPrefs({ ...PADRAO, tema: prefs.tema })}
+                  className="w-full rounded-lg border border-border py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+                >
+                  Restaurar acessibilidade e fonte para o padrão
+                </button>
+              </div>
+            )}
+
+            {aba === "perfil" && (
+              <div className="space-y-5 p-5">
+                <div className="flex items-center gap-4 rounded-xl border border-border p-4">
+                  <span
+                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
+                    style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
+                  >
+                    {prefs.avatar || iniciais(nomeDaConta)}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {nomeDaConta || "Sem conta conectada"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {nomeDaConta
+                        ? "É assim que você aparece no launcher e no FC Hub."
+                        : "Entre na sua conta para o avatar aparecer com o seu nome."}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">Avatar</h3>
+                  <div className="grid grid-cols-7 gap-2">
+                    {AVATARES.map(a => (
+                      <button
+                        key={a || "iniciais"}
+                        onClick={() => mudar({ avatar: a })}
+                        title={a ? undefined : "Usar as iniciais do seu nome"}
+                        className={cn(
+                          "flex h-11 items-center justify-center rounded-lg border text-lg transition-colors",
+                          prefs.avatar === a
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:bg-white/[0.04]",
+                        )}
+                      >
+                        {a || <span className="text-[11px] font-bold text-muted-foreground">AB</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">Cor</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {["#48eed6", "#4ade80", "#7aa2ff", "#ff8a4c", "#f472b6", "#facc15", "#a78bfa", "#f87171"].map(c => (
+                      <button
+                        key={c}
+                        onClick={() => mudar({ corAvatar: c })}
+                        aria-label={`Cor ${c}`}
+                        className={cn(
+                          "h-9 w-9 rounded-full border-2 transition-transform",
+                          prefs.corAvatar === c ? "border-foreground scale-110" : "border-transparent",
+                        )}
+                        style={{ background: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end border-t border-border px-5 py-3">
+            <button
+              onClick={onClose}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Concluído
+            </button>
+          </div>
         </div>
       </section>
     </div>

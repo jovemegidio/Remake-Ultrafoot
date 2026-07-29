@@ -12,6 +12,7 @@
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import bundled from "@/data/seeds/player-overrides.json"
+import { jogadorDoServidor } from "@/lib/atualizacao-elencos"
 
 export interface PlayerOverride {
   nome?: string
@@ -69,14 +70,17 @@ export function playerOverrideKey(fileKey: string, originalName: string): string
 
 export function getPlayerOverride(fileKey: string, originalName: string): PlayerOverride | null {
   const k = playerOverrideKey(fileKey, originalName)
+  // Embutido < servidor < local. Mesma ordem de team-overrides.
+  const servidor = jogadorDoServidor(k)
+  const base = BUNDLED[k] || servidor ? { ...BUNDLED[k], ...servidor } : null
   const raw = typeof window === "undefined" ? null : storeGet(KEY(k))
   if (raw) {
     try {
       const local = JSON.parse(raw) as PlayerOverride
-      return { ...BUNDLED[k], ...local }
-    } catch { /* save corrompido: cai no embutido */ }
+      return { ...base, ...local }
+    } catch { /* save corrompido: cai na base */ }
   }
-  return BUNDLED[k] ?? null
+  return base
 }
 
 export function setPlayerOverride(fileKey: string, originalName: string, ov: PlayerOverride): void {

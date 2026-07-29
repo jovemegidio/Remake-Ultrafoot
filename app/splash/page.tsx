@@ -18,6 +18,7 @@ import { isTauri } from "@/lib/game-asset"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { LegalConsent } from "@/components/legal-consent"
 import { downloadSave, getSavedCloudCode } from "@/lib/cloud-save"
+import { contaLogada, listarSavesDaConta, type SaveDaConta } from "@/lib/conta-ultrafoot"
 import {
   Dialog,
   DialogContent,
@@ -82,6 +83,10 @@ export default function SplashPage() {
   const [selectedSaveIndex, setSelectedSaveIndex] = useState(0)
   // Cloud save
   const [cloudCode, setCloudCode] = useState("")
+  // Saves catalogados NA CONTA (o launcher e quem entra). Sem isso o jogador
+  // precisa lembrar do codigo de cabeca — e quem formatou nao lembra.
+  const [savesDaConta, setSavesDaConta] = useState<SaveDaConta[]>([])
+  const [nomeDaConta, setNomeDaConta] = useState("")
   const [cloudLoading, setCloudLoading] = useState(false)
   const [cloudError, setCloudError] = useState("")
   const [cloudSuccess, setCloudSuccess] = useState("")
@@ -105,7 +110,42 @@ export default function SplashPage() {
     window.addEventListener("ultrafoot:store:ready", aplicar)
     const savedCode = getSavedCloudCode()
     if (savedCode) setCloudCode(savedCode)
+    void ativarPeloLauncher(aplicar)
+    void contaLogada().then(async conta => {
+      if (!conta) return
+      setNomeDaConta(conta.nome || conta.email)
+      setSavesDaConta(await listarSavesDaConta())
+    })
     return () => window.removeEventListener("ultrafoot:store:ready", aplicar)
+  }, [])
+
+  /**
+   * ATIVACAO VINDA DO LAUNCHER — quem informou a chave na conta nao digita de novo.
+   *
+   * O launcher apenas DEPOSITA a chave num arquivo; a validacao continua sendo
+   * feita aqui, com o segredo do jogo. Por isso adulterar o arquivo nao libera
+   * nada: um codigo sem assinatura valida e recusado igual ao digitado a mao.
+   */
+  const ativarPeloLauncher = useCallback(async (aplicar: () => void) => {
+    if (lerRegistro().registrado) return
+    try {
+      const { invoke } = await import("@tauri-apps/api/core")
+      const cru = await invoke<string | null>("ler_ativacao_do_launcher")
+      if (!cru) return
+      const { codigo } = JSON.parse(cru) as { codigo?: string }
+      if (!codigo) return
+      const r = await validarCodigo(codigo, licencasRevogadas)
+      if (!r.valido) return
+      gravarRegistro({
+        registrado: true,
+        serie: r.serie !== undefined ? String(r.serie) : undefined,
+        device: getDeviceId(),
+        dev: !!r.dev,
+      })
+      aplicar()
+    } catch {
+      // Sem Tauri, sem arquivo ou JSON quebrado: segue o fluxo normal de registro.
+    }
   }, [])
 
   // Save real (persistent-store). Como o store carrega do disco de forma async,
@@ -1211,6 +1251,39 @@ export default function SplashPage() {
 
           {/* Seção cloud save */}
           <div className="space-y-2">
+            {/* SAVES DA CONTA — aparece so para quem entrou pelo launcher. Um
+                clique baixa; o campo de codigo continua ali para quem prefere
+                digitar ou recebeu um codigo de outra pessoa. */}
+            {savesDaConta.length > 0 && (
+              <div className="mb-3 rounded-xl border border-[#00ffc8]/20 bg-[#00ffc8]/[0.04] p-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#00ffc8]">
+                  <Cloud className="h-3.5 w-3.5" />
+                  Suas carreiras na nuvem
+                  {nomeDaConta && <span className="font-normal text-white/35">· {nomeDaConta}</span>}
+                </div>
+                <div className="space-y-1.5">
+                  {savesDaConta.slice(0, 5).map(save => (
+                    <button
+                      key={save.codigo}
+                      onClick={() => { setCloudCode(save.codigo); setCloudError(""); setCloudSuccess("") }}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[#00ffc8]/30 hover:bg-black/50"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm text-white">
+                          {save.rotulo || "Carreira salva"}
+                        </span>
+                        <span className="block text-[11px] text-white/35">
+                          {new Date(save.atualizado_em * 1000).toLocaleDateString("pt-BR")}
+                        </span>
+                      </span>
+                      <span className="shrink-0 font-mono text-xs tracking-widest text-[#00ffc8]">
+                        {save.codigo}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <label className="text-sm text-white/60 font-medium">{t.splash.cloudCodeLabel}</label>
             <div className="flex gap-2">
               <input

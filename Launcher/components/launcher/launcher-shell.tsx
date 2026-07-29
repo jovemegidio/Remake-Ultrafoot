@@ -7,6 +7,13 @@ import { NewsFeed } from "./news-feed"
 import { ChangelogView } from "./changelog-view"
 import { SecurityPanel } from "./security-panel"
 import { SettingsDialog } from "./settings-dialog"
+import { AuthDialog } from "./auth-dialog"
+import { SocialPanel } from "./social-panel"
+import { sessaoSalva, sair, revalidar, type Sessao } from "@/lib/auth"
+import {
+  lerPreferencias, gravarPreferencias, aplicarPreferencias, iniciais, PADRAO,
+  type Preferencias,
+} from "@/lib/preferencias"
 import { CommunityBar } from "./community-bar"
 import { cn } from "@/lib/utils"
 import { useLiveLatest } from "@/lib/use-live-latest"
@@ -28,7 +35,7 @@ import {
   type LauncherConfig,
   type ServerStatus,
 } from "@/lib/launcher-bridge"
-import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings } from "lucide-react"
+import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings, User, LogIn, Users} from "lucide-react"
 
 const CLOSE_TO_TRAY_KEY = "ultrafoot-launcher:close-to-tray"
 const MODE_KEY = "ultrafoot-launcher:mode"
@@ -46,7 +53,7 @@ export type InstallState = {
   eta: number
 }
 
-type Tab = "home" | "news" | "changelog" | "security"
+type Tab = "home" | "news" | "social" | "changelog" | "security"
 
 function isNewerVersion(candidate: string, installed: string): boolean {
   const a = candidate.split(".").map(part => Number.parseInt(part, 10) || 0)
@@ -102,6 +109,36 @@ export function LauncherShell({
 
   // Configurações do launcher.
   const [showSettings, setShowSettings] = useState(false)
+  // CONTA. O login e opcional nesta fase (ha jogadores ativos com registro por
+  // codigo serial); a sessao so muda o cabecalho e nunca bloqueia o Jogar.
+  const [sessao, setSessao] = useState<Sessao | null>(null)
+  const [showAuth, setShowAuth] = useState(false)
+  // Preferencias visuais. Aplicadas ANTES do primeiro render util para o
+  // launcher nao piscar no tema padrao antes de trocar para o escolhido.
+  const [prefs, setPrefs] = useState<Preferencias>(PADRAO)
+  useEffect(() => {
+    const p = lerPreferencias()
+    setPrefs(p)
+    aplicarPreferencias(p)
+  }, [])
+  const salvarPrefs = (p: Preferencias) => { setPrefs(p); gravarPreferencias(p) }
+
+  useEffect(() => {
+    const s = sessaoSalva()
+    setSessao(s)
+    // Sessao guardada: confirma com o servidor em segundo plano. Se ele disser
+    // que caiu, ai sim pedimos login — nunca por falha de rede.
+    if (s) {
+      void revalidar().then(atualizada => {
+        setSessao(atualizada)
+        if (!atualizada) setShowAuth(true)
+      })
+    }
+    // ABRE JA NO LOGIN, como Epic e EA App fazem. Mas o dialogo continua
+    // FECHAVEL: ha jogadores ativos, e muitos com registro por codigo serial —
+    // travar o launcher atras da conta deixaria quem ja pagou sem jogar.
+    if (!s) setShowAuth(true)
+  }, [])
   const [autostart, setAutostart] = useState(false)
   const [closeToTray, setCloseToTray] = useState(false)
   const closeToTrayRef = useRef(false)
@@ -361,12 +398,13 @@ export function LauncherShell({
   const tabs: { key: Tab; label: string; icon: typeof Home }[] = [
     { key: "home", label: "Início", icon: Home },
     { key: "news", label: "Novidades", icon: Newspaper },
+    { key: "social", label: "FC Hub", icon: Users },
     { key: "changelog", label: "Changelog", icon: ScrollText },
     { key: "security", label: "Segurança", icon: ShieldCheck },
   ]
 
   return (
-    <div className="launcher-shell relative flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+    <div className="launcher-shell relative flex h-screen w-full overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 opacity-40 launcher-grid" />
       {launcherUpdate && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/95 p-6 backdrop-blur">
@@ -397,27 +435,112 @@ export function LauncherShell({
           </div>
         </div>
       )}
+      {showAuth && (
+        <AuthDialog
+          inicial={sessao ? "ativar" : "entrar"}
+          onClose={() => setShowAuth(false)}
+          onEntrou={setSessao}
+        />
+      )}
       {showSettings && (
         <SettingsDialog
           autostart={autostart}
           closeToTray={closeToTray}
+          prefs={prefs}
+          nomeDaConta={sessao?.nome || sessao?.email || ""}
           onAutostart={toggleAutostart}
           onCloseToTray={toggleCloseToTray}
+          onPrefs={salvarPrefs}
           onClose={() => setShowSettings(false)}
         />
       )}
+      {/* NAVEGACAO LATERAL — padrao de launcher de plataforma (Epic, EA App).
+          As abas horizontais viviam no header e faziam a tela parecer um site;
+          na lateral, o conteudo ganha a largura toda e a navegacao fica fixa. */}
+      <aside className="relative z-20 flex w-[76px] shrink-0 flex-col items-center gap-1 border-r border-white/[0.07] bg-[#070b0d]/95 py-4 backdrop-blur-xl lg:w-[210px] lg:items-stretch lg:px-3">
+        <div className="mb-5 flex items-center gap-2.5 px-1 lg:px-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/games/ultrafoot-logo.png" alt="Ultrafoot 26" className="h-9 w-auto object-contain" />
+          <div className="hidden lg:block">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">Game Center</p>
+          </div>
+        </div>
+
+        {tabs.map((item) => {
+          const active = tab === item.key
+          return (
+            <button
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              title={item.label}
+              className={cn(
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+                "justify-center lg:justify-start",
+                active
+                  ? "bg-primary/12 text-primary"
+                  : "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground",
+              )}
+            >
+              {/* Marcador da aba ativa: leitura imediata mesmo na barra estreita. */}
+              <span className={cn(
+                "absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-primary transition-opacity",
+                active ? "opacity-100" : "opacity-0",
+              )} />
+              <item.icon className="h-[18px] w-[18px] shrink-0" />
+              <span className="hidden lg:inline">{item.label}</span>
+            </button>
+          )
+        })}
+
+        {/* PERFIL NO RODAPE DA LATERAL — e onde EA App e Epic colocam a conta.
+            Fica sempre visivel, sem competir com os botoes de acao do topo. */}
+        <div className="mt-auto w-full">
+          {sessao ? (
+            <button
+              onClick={() => { void sair().then(() => setSessao(null)) }}
+              title={`${sessao.email} — clique para sair`}
+              className="flex w-full items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] p-2 text-left transition-colors hover:bg-white/[0.07] lg:px-2.5"
+            >
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
+              >
+                {prefs.avatar || iniciais(sessao.nome || sessao.email)}
+              </span>
+              <span className="hidden min-w-0 lg:block">
+                <span className="block truncate text-xs font-semibold text-white">
+                  {sessao.nome || sessao.email}
+                </span>
+                <span className="block text-[10px] text-white/35">Sair da conta</span>
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowAuth(true)}
+              className="flex w-full items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/10 p-2 text-left text-primary transition-colors hover:bg-primary/20 lg:px-2.5"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                <LogIn className="h-4 w-4" />
+              </span>
+              <span className="hidden min-w-0 lg:block">
+                <span className="block truncate text-xs font-semibold">Entrar</span>
+                <span className="block text-[10px] text-primary/60">Compras e progresso</span>
+              </span>
+            </button>
+          )}
+          <p className="mt-2 hidden px-1 text-[10px] text-white/20 lg:block">
+            Ultrafoot 26 · v{game.latestRelease?.version ?? ""}
+          </p>
+        </div>
+      </aside>
+
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
       <header className="relative z-10 flex shrink-0 flex-col border-b border-white/[0.07] bg-[#080d0f]/88 px-4 backdrop-blur-xl md:px-6">
         <div className="flex h-16 items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/games/ultrafoot-logo.png"
-              alt="Ultrafoot 26"
-              className="h-11 w-auto object-contain"
-            />
-            <div className="hidden border-l border-white/10 pl-3 sm:block">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/65">Game Center</p>
-              <p className="text-[9px] text-white/30">Gerencie, atualize e jogue</p>
+            <div>
+              <p className="text-sm font-bold text-white">{tabs.find(t => t.key === tab)?.label}</p>
+              <p className="text-[10px] text-white/30">Gerencie, atualize e jogue</p>
             </div>
           </div>
 
@@ -469,32 +592,12 @@ export function LauncherShell({
           </div>
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto pb-2">
-          {tabs.map((item) => {
-            const active = tab === item.key
-            return (
-              <button
-                key={item.key}
-                onClick={() => setTab(item.key)}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all md:px-4",
-                  active
-                    ? "bg-primary/12 text-primary shadow-[inset_0_0_0_1px_rgba(72,238,214,.12)]"
-                    : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </button>
-            )
-          })}
-        </nav>
       </header>
 
       <CommunityBar config={config} serverStatus={serverStatus} onOpen={openExternal} />
 
       <div className="relative z-[1] flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 md:p-6">
+        <div className="mx-auto flex max-w-[1500px] flex-col gap-6 p-4 md:p-6 lg:p-8">
           {tab === "home" && (
             <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
               <GameHero
@@ -511,10 +614,24 @@ export function LauncherShell({
 
           {tab === "news" && <NewsFeed news={effectiveNews} title={`Novidades de ${game.name}`} />}
 
+          {tab === "social" && (
+            <SocialPanel
+              sessao={sessao}
+              prefs={prefs}
+              serverStatus={serverStatus}
+              config={config}
+              ativado={!!sessao?.ativado}
+              onEntrar={() => setShowAuth(true)}
+              onAtivar={() => setShowAuth(true)}
+              onOpen={openExternal}
+            />
+          )}
+
           {tab === "changelog" && <ChangelogView game={game} releases={effectiveReleases} />}
 
           {tab === "security" && <SecurityPanel mode={mode} />}
         </div>
+      </div>
       </div>
     </div>
   )

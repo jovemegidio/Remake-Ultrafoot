@@ -10,6 +10,7 @@ import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
 // Fluxo: edita no editor -> "Exportar edicoes" -> roda scripts/merge-team-overrides.mjs
 // -> as edicoes entram neste arquivo -> o proximo build ja sai com elas.
 import bundledOverrides from "@/data/seeds/team-overrides.json"
+import { timeDoServidor } from "@/lib/atualizacao-elencos"
 
 const KEY = (fileKey: string) => `ultrafoot:team-override:${fileKey}`
 
@@ -57,17 +58,23 @@ export interface TeamOverride {
  * e o seed EMBUTIDO e o fallback — e por ele que as suas edicoes chegam a todo mundo.
  */
 export function getTeamOverride(fileKey: string): TeamOverride | null {
+  // BASE = embutido no build + atualizacao do servidor por cima. E o que faz uma
+  // correcao de escudo/uniforme chegar sem reinstalar o jogo (ver
+  // lib/atualizacao-elencos). O que o JOGADOR editou continua vencendo os dois.
+  const embutido = BUNDLED[fileKey]
+  const servidor = timeDoServidor(fileKey)
+  const base = embutido || servidor
+    ? { ...embutido, ...servidor, kits: { ...embutido?.kits, ...servidor?.kits } }
+    : null
+
   const raw = storeGet(KEY(fileKey))
   if (raw) {
     try {
       const local = JSON.parse(raw) as TeamOverride
-      // Faz merge por cima do embutido: o jogador pode ter mudado so a cor, e o escudo
-      // que voce enviou no build deve continuar valendo.
-      const base = BUNDLED[fileKey]
       return base ? { ...base, ...local, kits: { ...base.kits, ...local.kits } } : local
-    } catch { /* save corrompido: cai no embutido */ }
+    } catch { /* save corrompido: cai na base */ }
   }
-  return BUNDLED[fileKey] ?? null
+  return base
 }
 
 /** Todas as edicoes locais — usado pelo editor para exportar. */
