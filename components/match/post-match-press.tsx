@@ -382,7 +382,7 @@ export function PostMatchPress({
                 <div className="mb-6">
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-white/70">Pergunta {currentQuestionIndex + 1} de {selectedQuestions.length}</span>
-                    <span className="text-[#00ffc8] font-medium">
+                    <span className="text-[var(--brand)] font-medium">
                       {Math.round((currentQuestionIndex / selectedQuestions.length) * 100)}%
                     </span>
                   </div>
@@ -426,7 +426,7 @@ export function PostMatchPress({
                     {/* Pergunta */}
                     <div className="mb-8">
                       <div className="flex items-start gap-3">
-                        <Quote className="h-6 w-6 text-[#00ffc8] flex-shrink-0 mt-1" />
+                        <Quote className="h-6 w-6 text-[var(--brand)] flex-shrink-0 mt-1" />
                         <p className="text-xl md:text-2xl text-white leading-relaxed font-medium">
                           {currentQuestion?.question}
                         </p>
@@ -487,8 +487,8 @@ export function PostMatchPress({
                 className="w-full max-w-2xl"
               >
                 <div className="bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl border border-white/10 p-8 text-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center mx-auto mb-6 border border-[#00ffc8]/30">
-                    <MicOff className="h-10 w-10 text-[#00ffc8]" />
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand)]/5 flex items-center justify-center mx-auto mb-6 border border-[var(--brand)]/30">
+                    <MicOff className="h-10 w-10 text-[var(--brand)]" />
                   </div>
                   
                   <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Coletiva Encerrada</h2>
@@ -534,7 +534,7 @@ export function PostMatchPress({
 
                   <Button 
                     onClick={finishAndReturn} 
-                    className="w-full h-12 text-base font-bold bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:from-[#33ffd4] hover:to-[#33d4ff]"
+                    className="w-full h-12 text-base font-bold bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black hover:from-[#33ffd4] hover:to-[#33d4ff]"
                   >
                     Voltar ao Escritorio
                   </Button>

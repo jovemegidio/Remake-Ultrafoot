@@ -17,6 +17,12 @@ export interface MatchContext {
   // AMISTOSO: quando true, a partida usa os times DESTE contexto (ignora o jogo da rodada)
   // e NAO conta para a temporada (sem tabela, sem avancar semana).
   friendly?: boolean
+  /**
+   * TORNEIO AMISTOSO: identifica de qual jogo do torneio esta partida é, para o
+   * resultado voltar para a tabela quando ela terminar. Sem isto o jogo era
+   * disputado e o placar se perdia — o torneio nunca saía da primeira rodada.
+   */
+  torneio?: { rodada: number; mandanteCurto: string; visitanteCurto: string }
   youth?: boolean
   duration: number // minutos (45, 90)
   weather: "sunny" | "cloudy" | "rain"

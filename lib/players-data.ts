@@ -8,7 +8,7 @@ import importedBF2026 from "@/data/seeds/imported-bf2026.json"
 import realSquadsJson from "@/data/seeds/real-positions.json"
 import { allTeams, type Team } from "@/lib/teams-data"
 import realSquadsTM from "@/data/seeds/real-squads-tm.json"
-import { getPlayerOverride } from "@/lib/player-overrides"
+import { getPlayerOverride, bonusDasCaracteristicas } from "@/lib/player-overrides"
 import { hasDeparted } from "@/lib/departed-players"
 import { getArrivals, hasAnyArrival } from "@/lib/world-market"
 import { saiuDoClube, chegouAoClube, temTransferencias } from "@/lib/atualizacao-elencos"
@@ -989,6 +989,22 @@ function applyPlayerOverrides(fileKey: string, players: Player[]): Player[] {
   return players.map((p) => {
     const ov = getPlayerOverride(fileKey, p.nome)
     if (!ov) return p
+    // AS CARACTERISTICAS VALEM NA PARTIDA. Cada uma soma no atributo que reforca
+    // (Cabeceio -> fisico, Velocidade -> ritmo, e assim por diante). Sem isto
+    // seriam rotulo: o editor prometeria diferenca e o motor jogaria igual.
+    // Aplicado DEPOIS dos atributos editados a mao, para o bonus somar sobre o
+    // valor que o editor mostra.
+    const bonus = bonusDasCaracteristicas(ov.traits)
+    const comBonus = (chave: keyof typeof bonus, atual?: number) => {
+      const ganho = bonus[chave]
+      if (!ganho || atual == null) return {}
+      return { [chave]: Math.min(99, atual + ganho) }
+    }
+    const baseDoAtributo = {
+      pace: ov.pace ?? p.pace, shooting: ov.shooting ?? p.shooting,
+      passing: ov.passing ?? p.passing, dribbling: ov.dribbling ?? p.dribbling,
+      defending: ov.defending ?? p.defending, physical: ov.physical ?? p.physical,
+    }
     return {
       ...p,
       ...(ov.nome ? { nome: ov.nome } : {}),
@@ -1005,6 +1021,12 @@ function applyPlayerOverrides(fileKey: string, players: Player[]): Player[] {
       ...(ov.reputation ? { reputation: ov.reputation } : {}),
       ...(ov.nac ? { nac: ov.nac } : {}),
       ...(ov.traits ? { traits: ov.traits } : {}),
+      ...comBonus("pace", baseDoAtributo.pace),
+      ...comBonus("shooting", baseDoAtributo.shooting),
+      ...comBonus("passing", baseDoAtributo.passing),
+      ...comBonus("dribbling", baseDoAtributo.dribbling),
+      ...comBonus("defending", baseDoAtributo.defending),
+      ...comBonus("physical", baseDoAtributo.physical),
     }
   })
 }

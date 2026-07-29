@@ -201,10 +201,10 @@ export function NotificationToast({ notification, onClose }: { notification: Not
       accentColor: "text-amber-400"
     },
     medium: { 
-      border: "border-l-4 border-l-[#00ffc8] border-t-0 border-r-0 border-b-0", 
+      border: "border-l-4 border-l-[var(--brand)] border-t-0 border-r-0 border-b-0", 
       bg: "bg-[#111111]",
-      iconBg: "bg-[#00ffc8]/10",
-      accentColor: "text-[#00ffc8]"
+      iconBg: "bg-[var(--brand)]/10",
+      accentColor: "text-[var(--brand)]"
     },
     low: { 
       border: "border-l-4 border-l-white/20 border-t-0 border-r-0 border-b-0", 
@@ -324,6 +324,10 @@ export function NotificationToastContainer() {
   const rota = typeof window !== "undefined" ? window.location.pathname : ""
   const foraDaCarreira = ["/splash", "/novo-jogo", "/editar", "/editor", "/sem-clube", "/legal"].some(p => rota.startsWith(p))
   if (!gateState.selectedTeamShort || foraDaCarreira) return null
+  // "Notificacoes / Alertas do jogo", em Configuracoes, so silencia o que SALTA
+  // na tela — a central continua registrando tudo. Antes essa chave nao existia
+  // no save e o interruptor nao fazia nada.
+  if (gateState.notificationsEnabled === false) return null
 
   return (
     <div className="fixed top-16 right-4 z-50 flex flex-col gap-3">
@@ -386,10 +390,10 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#050508]">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-[#00ffc8]" />
+                <Bell className="h-4 w-4 text-[var(--brand)]" />
                 <h2 className="text-sm font-semibold text-white">Notificacoes</h2>
                 {unreadCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-[#00ffc8] text-black text-[10px] font-bold">
+                  <span className="px-1.5 py-0.5 rounded-full bg-[var(--brand)] text-[var(--brand-ink)] text-[10px] font-bold">
                     {unreadCount}
                   </span>
                 )}
@@ -398,7 +402,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
                 {unreadCount > 0 && (
                   <button 
                     onClick={markAllAsRead}
-                    className="text-[10px] text-[#00ffc8] hover:text-[#00c8ff] px-2 py-1 rounded hover:bg-white/5"
+                    className="text-[10px] text-[var(--brand)] hover:text-[var(--brand-2)] px-2 py-1 rounded hover:bg-white/5"
                   >
                     Marcar lidas
                   </button>
@@ -417,15 +421,15 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
             <div className="flex-1 overflow-y-auto">
               {selected ? (
                 <div className="p-5">
-                  <button onClick={() => setSelected(null)} className="mb-5 text-xs font-semibold text-[#00ffc8] hover:text-white">← Todas as notificações</button>
+                  <button onClick={() => setSelected(null)} className="mb-5 text-xs font-semibold text-[var(--brand)] hover:text-white">← Todas as notificações</button>
                   <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-5">
                     <div className="mb-4 flex items-center gap-3">
-                      <div className="rounded-xl bg-[#00ffc8]/15 p-3"><NotificationIcon type={selected.type} priority={selected.priority} /></div>
-                      <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#00ffc8]">Central do clube</p><p className="text-xs text-white/40">{formatTime(selected.timestamp)}</p></div>
+                      <div className="rounded-xl bg-[var(--brand)]/15 p-3"><NotificationIcon type={selected.type} priority={selected.priority} /></div>
+                      <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">Central do clube</p><p className="text-xs text-white/40">{formatTime(selected.timestamp)}</p></div>
                     </div>
                     <h3 className="text-lg font-bold text-white">{selected.title}</h3>
                     <p className="mt-3 whitespace-pre-line text-sm leading-6 text-white/70">{selected.message}</p>
-                    {selected.action && <button onClick={selected.action.onClick} className="mt-5 rounded-lg bg-[#00ffc8] px-4 py-2 text-xs font-bold text-black">{selected.action.label}</button>}
+                    {selected.action && <button onClick={selected.action.onClick} className="mt-5 rounded-lg bg-[var(--brand)] px-4 py-2 text-xs font-bold text-[var(--brand-ink)]">{selected.action.label}</button>}
                   </div>
                 </div>
               ) : notifications.length === 0 ? (
@@ -462,7 +466,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean, onClo
                             {notification.title}
                           </h4>
                           {!notification.read && (
-                            <span className="h-2 w-2 rounded-full bg-[#00ffc8] flex-shrink-0" />
+                            <span className="h-2 w-2 rounded-full bg-[var(--brand)] flex-shrink-0" />
                           )}
                         </div>
                         <p className="text-xs text-white/50 mt-0.5 line-clamp-2">{notification.message}</p>
@@ -509,7 +513,7 @@ export function NotificationBell({ onClick }: { onClick: () => void }) {
     >
       <Bell className="h-5 w-5 text-white/70 hover:text-white" />
       {unreadCount > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-[#00ffc8] text-[10px] font-bold text-black">
+        <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-[var(--brand)] text-[10px] font-bold text-[var(--brand-ink)]">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}

@@ -207,6 +207,26 @@
 :root {
   --game-view-scale: 0.80;
 
+  /* ── COR DO TEMA ESCOLHIDO PELO JOGADOR ────────────────────────────────
+     O jogo inteiro foi escrito com o verde/ciano CHUMBADO nas classes
+     (text-[#00ffc8], border-[#00d4ff]/25, e por aí vai, mais de mil vezes).
+     Trocar de tema em Configurações mudava só o punhado de lugares que usa
+     `primary`, e o jogador via a cor antiga em quase todas as telas.
+
+     Agora aquelas classes apontam para estas duas variáveis, que o
+     ThemeProvider reescreve a cada troca de tema. São HEX de propósito: o
+     valor entra em gradiente, sombra e SVG, onde oklch() nem sempre serve.
+
+     O FUNDO fica de fora — as bases escuras (#050508, #0c0c10, …) continuam
+     chumbadas, que é o pedido: o tema muda o jogo, não o fundo. */
+  --brand: #00ffc8;
+  --brand-2: #00c8ff;
+  /* Tinta LEGIVEL sobre --brand. Os botoes do jogo eram "fundo da marca + texto
+     preto", o que so funcionava porque a marca era clara; em Azul Royal ou Roxo
+     Neon seria preto sobre escuro. O ThemeProvider escolhe preto ou branco pela
+     luminancia do tema. */
+  --brand-ink: #000000;
+
   /* EA FC 26 Premium Dark Theme */
   --background: oklch(0.06 0.015 260);
   --foreground: oklch(0.98 0.005 240);

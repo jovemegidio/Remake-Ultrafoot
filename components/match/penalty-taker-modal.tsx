@@ -242,7 +242,7 @@ export function PenaltyTakerModal({
                     className={cn(
                       "w-full flex items-center gap-4 p-3 rounded-xl transition-all",
                       isSelected 
-                        ? "bg-[#00ffc8]/20 border-2 border-[#00ffc8]" 
+                        ? "bg-[var(--brand)]/20 border-2 border-[var(--brand)]" 
                         : isHovered
                           ? "bg-white/10"
                           : "bg-white/5 border-2 border-transparent",
@@ -252,7 +252,7 @@ export function PenaltyTakerModal({
                     {/* Numero */}
                     <div className={cn(
                       "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg",
-                      isSelected ? "bg-[#00ffc8] text-black" : "bg-white/10 text-white"
+                      isSelected ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/10 text-white"
                     )}>
                       {player.number}
                     </div>
@@ -294,7 +294,7 @@ export function PenaltyTakerModal({
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="w-6 h-6 rounded-full bg-[#00ffc8] flex items-center justify-center"
+                          className="w-6 h-6 rounded-full bg-[var(--brand)] flex items-center justify-center"
                         >
                           <Star className="w-4 h-4 text-black fill-black" />
                         </motion.div>
@@ -332,7 +332,7 @@ export function PenaltyTakerModal({
                   className={cn(
                     "font-bold transition-all",
                     selectedPlayer
-                      ? "bg-[#00ffc8] text-black hover:bg-[#00e6b5]"
+                      ? "bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00e6b5]"
                       : "bg-white/10 text-white/40"
                   )}
                 >

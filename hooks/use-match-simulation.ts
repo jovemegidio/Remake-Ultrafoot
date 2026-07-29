@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import { loadGameState } from "@/lib/save-system"
 import {
   createInitialState,
   startMatch,
@@ -55,9 +56,30 @@ export interface UseMatchSimulation {
   takePenalty: (taker: SquadPlayer | null) => PenaltyOutcome | null
 }
 
+/**
+ * Traduz a escolha da tela de configuracoes para a escala do motor.
+ *
+ * Leitura direta do save (sincrona) em vez do hook: assinar o estado inteiro
+ * aqui faria a tela da partida re-renderizar a cada gravacao de save, e o que
+ * se quer e apenas o valor inicial.
+ */
+function velocidadeInicial(): MatchSpeed {
+  if (typeof window === "undefined") return "normal"
+  try {
+    const escolha = loadGameState().matchSpeed
+    return escolha === "lento" ? "slow" : escolha === "rapido" ? "fast" : "normal"
+  } catch {
+    return "normal"
+  }
+}
+
 export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulation {
   const [state, setState] = useState<MatchState>(() => createInitialState())
-  const [speed, setSpeed] = useState<MatchSpeed>("normal")
+  // A partida COMECA na velocidade escolhida em Configuracoes > Tempo de jogo.
+  // Aquela tela existia com tres botoes que nao faziam nada: o valor morria num
+  // useState local da propria tela. Em campo o jogador continua trocando à
+  // vontade — isto e so o ponto de partida.
+  const [speed, setSpeed] = useState<MatchSpeed>(() => velocidadeInicial())
   const [isRunning, setIsRunning] = useState(false)
   const [activeDecisions, setActiveDecisions] = useState<ActiveDecision[]>([])
 

@@ -121,7 +121,7 @@ export function BenchTalk() {
           {chat.map((f, i) => (
             <div key={i} className={f.autor === "jogador" ? "flex" : "flex justify-end"}>
               <div className={"max-w-[85%] rounded-2xl px-3 py-2 text-sm " +
-                (f.autor === "jogador" ? "bg-white/8 text-white/85" : "bg-[#00ffc8] text-black")}>
+                (f.autor === "jogador" ? "bg-white/8 text-white/85" : "bg-[var(--brand)] text-[var(--brand-ink)]")}>
                 {f.texto}
               </div>
             </div>
@@ -136,7 +136,7 @@ export function BenchTalk() {
         ) : (
           <div className="space-y-2">
             <button onClick={() => responder("promete")}
-              className="w-full rounded-lg bg-[#00ffc8]/15 border border-[#00ffc8]/40 py-2.5 text-sm font-semibold text-[#00ffc8] hover:bg-[#00ffc8]/25 text-left px-3">
+              className="w-full rounded-lg bg-[var(--brand)]/15 border border-[var(--brand)]/40 py-2.5 text-sm font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/25 text-left px-3">
               &quot;Você será titular na próxima partida.&quot; <span className="text-white/40 text-xs">(+moral, vira titular)</span>
             </button>
             <button onClick={() => responder("merece")}

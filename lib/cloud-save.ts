@@ -1,6 +1,8 @@
 import { safeLocalSet } from "@/lib/safe-storage"
 import { storeRemove, storeSet } from "@/lib/persistent-store"
 import { catalogarSave } from "@/lib/conta-ultrafoot"
+import { fetchDoAmbiente } from "@/lib/buscar-json"
+import { isTauri } from "@/lib/game-asset"
 
 // Sincronizacao de carreira por codigo. Na versao web usa a API da VPS; se a
 // API estiver indisponivel (por exemplo no desktop offline), preserva um
@@ -8,7 +10,30 @@ import { catalogarSave } from "@/lib/conta-ultrafoot"
 
 const CLOUD_PREFIX = "ultrafoot:cloud:"
 const LAST_CODE_KEY = "ultrafoot:cloud:last-code"
-const API_BASE = (process.env.NEXT_PUBLIC_CLOUD_SAVE_API || "/api/cloud-saves").replace(/\/$/, "")
+
+const VPS = "https://ultrafoot.179-198-103-30.sslip.io"
+
+/**
+ * Onde mora a API de saves.
+ *
+ * ⚠️ O CAMINHO E `/save`, NAO `/api/cloud-saves`. O nginx da VPS antiga expunha
+ * `/api/cloud-saves/`; o da VPS nova (28/07/2026) expoe `/save/`. Com o caminho
+ * velho a chamada cai no `try_files` da SPA: o GET volta o index.html do jogo
+ * com **200** (e o JSON.parse estoura sem dizer o motivo) e o PUT volta **405**.
+ * Ou seja, salvar na nuvem falhava em silencio na web e no celular.
+ *
+ * Dentro do Tauri a pagina roda em `tauri.localhost`, entao caminho relativo
+ * apontaria para dentro do proprio app e nunca sairia da maquina — la vai a URL
+ * absoluta (o host ja esta na allowlist de src-tauri/capabilities/default.json).
+ * Na web e no WebView do celular a pagina JA vem da VPS: relativo e melhor,
+ * porque continua valendo se o endereco mudar.
+ */
+function baseDaApi(): string {
+  const configurada = process.env.NEXT_PUBLIC_CLOUD_SAVE_API
+  if (configurada) return configurada.replace(/\/$/, "")
+  if (typeof window !== "undefined" && isTauri()) return `${VPS}/save`
+  return "/save"
+}
 
 export interface CloudResult {
   success: boolean
@@ -107,7 +132,8 @@ export async function uploadSave(code?: string): Promise<CloudResult & { code?: 
     if (!Object.keys(bundle.entries).length) return { success: false, error: "Nenhuma carreira salva para enviar" }
     const finalCode = (code?.trim().length === 6 ? code : generateCloudCode()).toUpperCase()
 
-    const response = await fetch(`${API_BASE}/${finalCode}`, {
+    const requisitar = await fetchDoAmbiente()
+    const response = await requisitar(`${baseDaApi()}/${finalCode}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(bundle),
@@ -133,9 +159,17 @@ export async function downloadSave(code: string): Promise<CloudResult> {
 
   try {
     let bundle: CloudBundle | null = null
-    const response = await fetch(`${API_BASE}/${normalized}`, { cache: "no-store" })
+    const requisitar = await fetchDoAmbiente()
+    const response = await requisitar(`${baseDaApi()}/${normalized}`, { cache: "no-store" })
     if (response.status === 404) return { success: false, error: "Codigo nao encontrado (404)" }
     if (!response.ok) throw new Error(`Servidor respondeu ${response.status}`)
+    // Se a rota do save estiver errada, o nginx devolve o index.html do JOGO com
+    // 200 e o JSON.parse estoura com uma mensagem que nao ajuda ninguem. Conferir
+    // o tipo transforma isso num erro que diz o que houve.
+    const tipo = response.headers.get("content-type") || ""
+    if (!tipo.includes("json")) {
+      throw new Error("O servidor nao devolveu um save (endereco da API errado?)")
+    }
     bundle = await response.json() as CloudBundle
     if (!bundle || bundle.version !== 2 || !bundle.entries) throw new Error("Formato de save invalido")
     applyBundle(bundle)

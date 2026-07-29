@@ -364,7 +364,7 @@ export default function PreOfficePage() {
   if (!hydrated || !userTeam) {
     return (
       <div className="h-screen bg-[#050508] flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-2 border-[#00ffc8] border-t-transparent animate-spin" />
+        <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
       </div>
     )
   }

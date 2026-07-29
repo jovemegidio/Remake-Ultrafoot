@@ -118,9 +118,9 @@ export function HubOnlineChat({ clube, situacao }: { clube: string; situacao: st
           {online.map(j => (
             <div
               key={j.conta_id}
-              className={`flex items-center gap-2 rounded-lg p-2 ${j.conta_id === eu ? "bg-[#00ffc8]/[0.08]" : "hover:bg-white/[0.04]"}`}
+              className={`flex items-center gap-2 rounded-lg p-2 ${j.conta_id === eu ? "bg-[var(--brand)]/[0.08]" : "hover:bg-white/[0.04]"}`}
             >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#00ffc8]/15 text-[11px] font-black text-[#00ffc8]">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--brand)]/15 text-[11px] font-black text-[var(--brand)]">
                 {(j.nome || "?").slice(0, 1).toUpperCase()}
               </span>
               <span className="min-w-0">
@@ -148,7 +148,7 @@ export function HubOnlineChat({ clube, situacao }: { clube: string; situacao: st
           )}
           {mensagens.map(m => (
             <div key={m.id} className="text-[12px] leading-snug">
-              <span className={`font-bold ${m.conta_id === eu ? "text-[#00ffc8]" : "text-white/80"}`}>
+              <span className={`font-bold ${m.conta_id === eu ? "text-[var(--brand)]" : "text-white/80"}`}>
                 {m.nome}
               </span>
               <span className="ml-1.5 text-[9px] text-white/25">
@@ -167,12 +167,12 @@ export function HubOnlineChat({ clube, situacao }: { clube: string; situacao: st
             onKeyDown={e => { if (e.key === "Enter") void enviar() }}
             maxLength={300}
             placeholder="Escreva uma mensagem…"
-            className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white placeholder:text-white/25 outline-none focus:border-[#00ffc8]/40"
+            className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white placeholder:text-white/25 outline-none focus:border-[var(--brand)]/40"
           />
           <button
             onClick={() => void enviar()}
             disabled={!texto.trim() || enviando}
-            className="rounded-lg bg-[#00ffc8] px-3 py-2 text-black transition-opacity hover:opacity-90 disabled:opacity-35"
+            className="rounded-lg bg-[var(--brand)] px-3 py-2 text-[var(--brand-ink)] transition-opacity hover:opacity-90 disabled:opacity-35"
             aria-label="Enviar"
           >
             <Send className="h-4 w-4" />

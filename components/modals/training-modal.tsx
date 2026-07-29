@@ -120,8 +120,8 @@ export function TrainingModal({
                   <span className="font-semibold text-white">{player.name}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xl font-bold text-[#ffd700]">{player.overall}</span>
-                    <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
-                    <span className="text-sm text-[#00ffc8]">{player.potential}</span>
+                    <TrendingUp className="h-4 w-4 text-[var(--brand)]" />
+                    <span className="text-sm text-[var(--brand)]">{player.potential}</span>
                   </div>
                 </div>
                 <div className="text-sm text-white/50">{player.position}</div>
@@ -163,8 +163,8 @@ export function TrainingModal({
 
             {/* Training Info */}
             {selectedTraining && (
-              <div className="p-3 rounded-lg bg-[#00ffc8]/10 border border-[#00ffc8]/30">
-                <div className="flex items-center gap-2 text-sm text-[#00ffc8]">
+              <div className="p-3 rounded-lg bg-[var(--brand)]/10 border border-[var(--brand)]/30">
+                <div className="flex items-center gap-2 text-sm text-[var(--brand)]">
                   <Dumbbell className="h-4 w-4" />
                   <span>O jogador treinara {trainingOptions.find(o => o.id === selectedTraining)?.label} por 1 semana</span>
                 </div>
@@ -176,8 +176,8 @@ export function TrainingModal({
         {step === "training" && (
           <div className="py-12 text-center">
             <div className="animate-bounce">
-              <div className="h-16 w-16 mx-auto rounded-full bg-[#00ffc8]/20 flex items-center justify-center mb-4">
-                <Dumbbell className="h-8 w-8 text-[#00ffc8]" />
+              <div className="h-16 w-16 mx-auto rounded-full bg-[var(--brand)]/20 flex items-center justify-center mb-4">
+                <Dumbbell className="h-8 w-8 text-[var(--brand)]" />
               </div>
             </div>
             <div className="text-lg font-medium text-white">Treinando...</div>
@@ -190,17 +190,17 @@ export function TrainingModal({
           <div className="py-8 text-center">
             <div className={cn(
               "h-16 w-16 mx-auto rounded-full flex items-center justify-center mb-4",
-              improvement > 0 ? "bg-[#00ffc8]/20" : "bg-[#ffd700]/20"
+              improvement > 0 ? "bg-[var(--brand)]/20" : "bg-[#ffd700]/20"
             )}>
               {improvement > 0 ? (
-                <TrendingUp className="h-8 w-8 text-[#00ffc8]" />
+                <TrendingUp className="h-8 w-8 text-[var(--brand)]" />
               ) : (
                 <Dumbbell className="h-8 w-8 text-[#ffd700]" />
               )}
             </div>
             <div className={cn(
               "text-lg font-medium",
-              improvement > 0 ? "text-[#00ffc8]" : "text-[#ffd700]"
+              improvement > 0 ? "text-[var(--brand)]" : "text-[#ffd700]"
             )}>
               {improvement > 0 ? "Treino Concluido!" : "Treino Mantido"}
             </div>
@@ -213,8 +213,8 @@ export function TrainingModal({
             {improvement > 0 && selectedTraining && (
               <div className="flex items-center justify-center gap-2 mt-4 text-lg">
                 <span className="text-white/50">{getAttributeValue(selectedTraining)}</span>
-                <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
-                <span className="text-[#00ffc8] font-bold">{getAttributeValue(selectedTraining) + improvement}</span>
+                <TrendingUp className="h-4 w-4 text-[var(--brand)]" />
+                <span className="text-[var(--brand)] font-bold">{getAttributeValue(selectedTraining) + improvement}</span>
               </div>
             )}
           </div>
@@ -229,14 +229,14 @@ export function TrainingModal({
               <Button 
                 onClick={handleStartTraining} 
                 disabled={!selectedTraining}
-                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
+                className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] disabled:opacity-50"
               >
                 Iniciar Treino
               </Button>
             </>
           )}
           {step === "result" && (
-            <Button onClick={handleConfirm} className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]">
+            <Button onClick={handleConfirm} className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]">
               Concluir
             </Button>
           )}

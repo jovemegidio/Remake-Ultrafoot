@@ -21,7 +21,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Eye,
-  Gauge
+  Gauge,
+  X
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,7 @@ import { cn } from "@/lib/utils"
 import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, persistGameEngineNow, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
+import { listarTaticas, salvarTatica, removerTatica, obterTatica, type TaticaSalva } from "@/lib/taticas-salvas"
 import { useRouter } from "next/navigation"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
@@ -134,6 +136,47 @@ export default function TaticasPage() {
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
   
   const { teamTactics, setTeamTactics, playerInstructions, setPlayerInstructions, squadPlayers } = gameEngine
+
+  // ── Táticas salvas (preset do CONJUNTO tático, não da escalação) ──────────
+  const [taticasSalvas, setTaticasSalvas] = useState<TaticaSalva[]>([])
+  const [avisoTatica, setAvisoTatica] = useState<string | null>(null)
+  useEffect(() => { setTaticasSalvas(listarTaticas()) }, [])
+
+  const salvarTaticaAtual = () => {
+    const nome = typeof window === "undefined" ? null : window.prompt("Nome da tática:", `Esquema ${taticasSalvas.length + 1}`)
+    if (!nome?.trim()) return
+    salvarTatica({
+      nome: nome.trim(),
+      // A formação vive na RAIZ do engine, não em teamTactics — errei isto na
+      // primeira escrita e o tipo pegou.
+      formacao: gameEngine.formation ?? "4-3-3",
+      mentalidade: teamTactics.mentality,
+      marcacao: teamTactics.markingStyle,
+      linhaDefesa: teamTactics.defensiveLine,
+      armadilhaImpedimento: teamTactics.offsideTrap,
+      setorAtaque: teamTactics.crossingStyle,
+      ritmo: teamTactics.tempo,
+    })
+    setTaticasSalvas(listarTaticas())
+    setAvisoTatica(`"${nome.trim()}" salva.`)
+    setTimeout(() => setAvisoTatica(null), 3000)
+  }
+
+  const carregarTatica = (id: string) => {
+    const t = obterTatica(id)
+    if (!t) return
+    // Aplica só o que a tática guarda; o resto do esquema fica como está.
+    setTeamTactics({
+      mentality: t.mentalidade as TeamTactics["mentality"],
+      markingStyle: t.marcacao as TeamTactics["markingStyle"],
+      defensiveLine: t.linhaDefesa as TeamTactics["defensiveLine"],
+      offsideTrap: t.armadilhaImpedimento,
+      crossingStyle: t.setorAtaque as TeamTactics["crossingStyle"],
+      tempo: t.ritmo as TeamTactics["tempo"],
+    })
+    setAvisoTatica(`"${t.nome}" aplicada.`)
+    setTimeout(() => setAvisoTatica(null), 3000)
+  }
 
   const tabs: { id: TabType; label: string; icon: typeof Shield }[] = [
     { id: "mentalidade", label: "Mentalidade", icon: Brain },
@@ -246,6 +289,42 @@ export default function TaticasPage() {
               {tab.label}
             </button>
           ))}
+        </div>
+
+        {/* TÁTICAS SALVAS. O jogo já salvava ESCALAÇÃO (os 11 nomes); o conjunto
+            tático — mentalidade, marcação, linha, impedimento — tinha de ser
+            refeito na mão a cada troca de contexto. Aqui vira preset. */}
+        <div className="mb-4 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-white/50">Táticas salvas</span>
+            {taticasSalvas.length === 0 && (
+              <span className="text-xs text-white/30">nenhuma ainda</span>
+            )}
+            {taticasSalvas.map((t) => (
+              <span key={t.id} className="flex items-center gap-1 rounded-full bg-white/5 pl-3 pr-1 py-1">
+                <button
+                  onClick={() => carregarTatica(t.id)}
+                  className="text-xs font-medium text-white hover:text-[var(--brand)]"
+                >
+                  {t.nome}
+                </button>
+                <button
+                  onClick={() => { removerTatica(t.id); setTaticasSalvas(listarTaticas()) }}
+                  aria-label={`Excluir ${t.nome}`}
+                  className="rounded-full p-1 text-white/30 hover:bg-red-500/15 hover:text-red-300"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+            <button
+              onClick={salvarTaticaAtual}
+              className="ml-auto rounded-lg border border-dashed border-white/20 px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white"
+            >
+              Salvar tática atual
+            </button>
+          </div>
+          {avisoTatica && <p className="mt-2 text-xs text-[var(--brand)]">{avisoTatica}</p>}
         </div>
 
         {/* Content */}

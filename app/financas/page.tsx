@@ -27,7 +27,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/teams-data"
 import { useGameState, useUserTeam } from "@/lib/save-system"
-import { debtTransferLimit, renegotiateDebt, amortizeDebt } from "@/lib/debt-engine"
+import { debtTransferLimit, renegotiateDebt, amortizeDebt, financeWithDebt, borrowingCapacity, transfersFrozen } from "@/lib/debt-engine"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
@@ -414,7 +414,7 @@ export default function FinancasPage() {
                     gameEngine.payClubDebt(r.paid)
                     setSaveState({ debt: r.debt })
                   }}
-                  className="rounded-lg border border-[#00ffc8]/30 bg-[#00ffc8]/10 px-3 py-1.5 text-xs font-semibold text-[#00ffc8] hover:bg-[#00ffc8]/20"
+                  className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/20"
                 >Amortizar com o caixa</button>
                 <button onClick={() => setSaveState({debt:renegotiateDebt(saveState.debt!)})} disabled={saveState.debt.renegotiations>=2} className="rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs text-amber-200 disabled:opacity-30">Renegociar empréstimo</button>
               </div>
@@ -422,6 +422,76 @@ export default function FinancasPage() {
             </div>
           </div>
         </section>}
+
+        {/* EMPRÉSTIMO BANCÁRIO — em passos de 500 mil.
+            O bloco de dívida acima só aparece para quem JÁ deve, e não havia
+            nenhum caminho para TOMAR crédito na tela: o clube sem dívida via
+            uma área de finanças sem banco nenhum. Aqui o técnico pega e paga
+            quando quiser, que é o ciclo real de caixa de um clube. */}
+        <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-xs font-bold uppercase tracking-wider text-white/60">Empréstimo bancário</div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div>
+              <div className="text-xs text-white/45">Valor já emprestado</div>
+              <div className="text-lg font-bold text-white">{formatCurrency(saveState.debt?.principal ?? 0)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-white/45">Juros mensais</div>
+              <div className="text-lg font-bold text-white">
+                {/* O que o banco cobra ESTE mês sobre o saldo devedor — o número
+                    que interessa para decidir se vale a pena pegar mais. */}
+                {formatCurrency(Math.round((saveState.debt?.principal ?? 0) * (saveState.debt?.annualInterestRate ?? 0) / 12))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                const PASSO = 500_000
+                const teto = borrowingCapacity(saveState.debt, gameEngine.weeklyIncome ?? 0)
+                if (transfersFrozen(saveState.debt)) {
+                  window.alert("O banco não libera crédito novo: há 3 ou mais parcelas em atraso. Regularize antes.")
+                  return
+                }
+                if (teto < PASSO) {
+                  window.alert(`O banco não aprova mais crédito agora. Teto disponível: ${formatCurrency(teto)}.`)
+                  return
+                }
+                if (!window.confirm(`Tomar ${formatCurrency(PASSO)} emprestados?\n\nO valor entra no caixa e passa a render juros, com a parcela descontada todo mês.`)) return
+                setSaveState({ debt: financeWithDebt(saveState.debt, PASSO) })
+                gameEngine.addClubRevenue(PASSO)
+              }}
+              className="rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-4 py-2 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/20"
+            >Pegar 500 mil</button>
+
+            <button
+              onClick={() => {
+                const PASSO = 500_000
+                const devido = saveState.debt?.principal ?? 0
+                if (devido <= 0) { window.alert("O clube não tem empréstimo em aberto."); return }
+                // Quita só o que ainda deve: pagar 500 mil de uma dívida de
+                // 200 mil não pode tirar 300 mil a mais do caixa.
+                const alvo = Math.min(PASSO, devido)
+                if ((gameEngine.balance ?? 0) < alvo) {
+                  window.alert(`Saldo insuficiente. Você precisa de ${formatCurrency(alvo)} em caixa.`)
+                  return
+                }
+                if (!window.confirm(`Pagar ${formatCurrency(alvo)} do empréstimo agora?`)) return
+                const r = amortizeDebt(saveState.debt!, alvo)
+                gameEngine.payClubDebt(r.paid)
+                setSaveState({ debt: r.debt })
+              }}
+              disabled={!saveState.debt?.principal}
+              className="rounded-lg border border-white/15 px-4 py-2 text-xs font-semibold text-white/75 hover:bg-white/5 disabled:opacity-30"
+            >Pagar 500 mil</button>
+          </div>
+
+          <p className="mt-2 text-[10px] leading-4 text-white/35">
+            Crédito liberado até {formatCurrency(borrowingCapacity(saveState.debt, gameEngine.weeklyIncome ?? 0))} —
+            o teto cai conforme o clube já deve. A parcela é descontada do caixa todo mês.
+          </p>
+        </section>
 
         {wagePercentage >= 100 && (
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
@@ -441,15 +511,15 @@ export default function FinancasPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="stat-card stat-card-teal">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
-              <Wallet className="h-4 w-4 text-[#00ffc8]" />
+              <Wallet className="h-4 w-4 text-[var(--brand)]" />
               {t.finances.currentBalanceHeader}
             </div>
-            <div className="mt-2 text-2xl font-semibold text-[#00ffc8]">
+            <div className="mt-2 text-2xl font-semibold text-[var(--brand)]">
               {formatCurrency(dynamicFinances.balance)}
             </div>
             <div className={cn(
               "mt-1 flex items-center gap-1 text-xs",
-              dynamicFinances.netIncome >= 0 ? "text-[#00ffc8]" : "text-red-400"
+              dynamicFinances.netIncome >= 0 ? "text-[var(--brand)]" : "text-red-400"
             )}>
               {dynamicFinances.netIncome >= 0 ? (
                 <TrendingUp className="h-3 w-3" />
@@ -609,13 +679,13 @@ export default function FinancasPage() {
             {/* Brasileirao */}
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <div className="flex items-center gap-2 mb-3">
-                <Trophy className="h-5 w-5 text-[#00ffc8]" />
+                <Trophy className="h-5 w-5 text-[var(--brand)]" />
                 <span className="text-sm font-medium text-white">{leagueName}</span>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-white/50">{t.finances.champion}</span>
-                  <span className="text-[#00ffc8] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
+                  <span className="text-[var(--brand)] font-medium">{formatCurrency(PRIZE_MONEY.champion)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-white/50">G4 (4o lugar)</span>
@@ -700,7 +770,7 @@ export default function FinancasPage() {
                 <span className={wagePercentage > 90 ? "text-red-400" : "text-white/50"}>
                   {t.finances.usedPercentage(wagePercentage.toFixed(0))}
                 </span>
-                <span className="text-[#00ffc8]">
+                <span className="text-[var(--brand)]">
                   {formatCurrency(Math.max(0, dynamicFinances.wageBudget - dynamicFinances.wageUsed))} {t.finances.availableForHiring}
                 </span>
               </div>
@@ -721,10 +791,10 @@ export default function FinancasPage() {
                   <div key={index} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-3">
                       <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                        tx.type === "income" ? "bg-[#00ffc8]/20" : "bg-red-400/20"
+                        tx.type === "income" ? "bg-[var(--brand)]/20" : "bg-red-400/20"
                       }`}>
                         {tx.type === "income" ? (
-                          <ArrowUpRight className="h-4 w-4 text-[#00ffc8]" />
+                          <ArrowUpRight className="h-4 w-4 text-[var(--brand)]" />
                         ) : (
                           <ArrowDownRight className="h-4 w-4 text-red-400" />
                         )}
@@ -735,7 +805,7 @@ export default function FinancasPage() {
                       </div>
                     </div>
                     <span className={`text-sm font-medium ${
-                      tx.type === "income" ? "text-[#00ffc8]" : "text-red-400"
+                      tx.type === "income" ? "text-[var(--brand)]" : "text-red-400"
                     }`}>
                       {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.value)}
                     </span>
@@ -800,11 +870,11 @@ function TransactionsTab({
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all",
                 isSelected
-                  ? "border-[#00ffc8]/60 bg-[#00ffc8]/[0.07]"
+                  ? "border-[var(--brand)]/60 bg-[var(--brand)]/[0.07]"
                   : "border-white/[0.05] bg-[#0c0c10] hover:border-white/15",
               )}
             >
-              <entry.icon className={cn("h-5 w-5 shrink-0", isSelected ? "text-[#00ffc8]" : "text-white/45")} />
+              <entry.icon className={cn("h-5 w-5 shrink-0", isSelected ? "text-[var(--brand)]" : "text-white/45")} />
               <span className="flex-1 truncate text-sm uppercase tracking-wide text-white/80">{entry.label}</span>
               <span className={cn("shrink-0 text-sm font-bold", entry.value >= 0 ? "text-[#00ff87]" : "text-red-400")}>
                 {entry.value >= 0 ? "+" : "-"}{formatCurrency(Math.abs(entry.value))}
@@ -974,7 +1044,7 @@ function FinanceItem({
             <span className="text-sm text-white">{label}</span>
             {subtitle && <div className="text-[10px] text-white/40">{subtitle}</div>}
           </div>
-          <span className={cn("text-sm font-medium", isIncome ? "text-[#00ffc8]" : "text-red-400")}>
+          <span className={cn("text-sm font-medium", isIncome ? "text-[var(--brand)]" : "text-red-400")}>
             {formatCurrency(value)}
           </span>
         </div>

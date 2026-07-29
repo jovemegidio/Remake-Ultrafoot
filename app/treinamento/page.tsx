@@ -212,7 +212,7 @@ export default function TreinamentoPage() {
 
       {/* Toast de feedback de treinamento */}
       {feedback && (
-        <div className="fixed top-20 right-6 z-50 px-5 py-3 rounded-xl bg-[#00ffc8] text-black font-bold text-sm shadow-2xl animate-in slide-in-from-right-4 duration-300">
+        <div className="fixed top-20 right-6 z-50 px-5 py-3 rounded-xl bg-[var(--brand)] text-[var(--brand-ink)] font-bold text-sm shadow-2xl animate-in slide-in-from-right-4 duration-300">
           {feedback}
         </div>
       )}
@@ -226,7 +226,7 @@ export default function TreinamentoPage() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0c0c10] border border-white/[0.04]">
-              <Dumbbell className="h-4 w-4 text-[#00ffc8]" />
+              <Dumbbell className="h-4 w-4 text-[var(--brand)]" />
               <span className="text-sm text-white/70">{playersInTraining} em treinamento</span>
             </div>
           </div>
@@ -239,7 +239,7 @@ export default function TreinamentoPage() {
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Users className="h-4 w-4 text-[#00ffc8]" />
+                  <Users className="h-4 w-4 text-[var(--brand)]" />
                   ELENCO
                 </div>
                 <select
@@ -329,7 +329,7 @@ export default function TreinamentoPage() {
                     title={reason ?? undefined}
                     className={cn(
                       "w-full flex items-center gap-4 px-5 py-4 text-left transition-colors",
-                      isSelected && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]",
+                      isSelected && "bg-[var(--brand)]/10 border-l-2 border-[var(--brand)]",
                       !isSelected && canPlayerTrain && !isTraining && "hover:bg-white/5",
                       (!canPlayerTrain || isTraining) && "opacity-60"
                     )}
@@ -363,13 +363,13 @@ export default function TreinamentoPage() {
                           <div key={type.id} className="text-center">
                             <div className={cn(
                               "text-[10px] text-white/40 flex items-center justify-center gap-1",
-                              isRecommended && "text-[#00ffc8]"
+                              isRecommended && "text-[var(--brand)]"
                             )}>
                               <Icon className="h-3 w-3" />
                             </div>
                             <div className={cn(
                               "text-sm font-medium",
-                              value >= 80 ? "text-[#00ffc8]" : 
+                              value >= 80 ? "text-[var(--brand)]" : 
                               value >= 70 ? "text-white" : "text-white/60"
                             )}>
                               {value}
@@ -386,7 +386,7 @@ export default function TreinamentoPage() {
                       onClick={(e) => { e.stopPropagation(); setInspectPlayer(player) }}
                       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setInspectPlayer(player) } }}
                       title="Inspecionar jogador"
-                      className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-white/40 hover:text-[#00ffc8] hover:bg-white/5 transition-colors"
+                      className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-white/40 hover:text-[var(--brand)] hover:bg-white/5 transition-colors"
                     >
                       <Eye className="h-4 w-4" />
                     </span>
@@ -412,8 +412,8 @@ export default function TreinamentoPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 justify-end">
-                          <CheckCircle2 className="h-4 w-4 text-[#00ffc8]" />
-                          <span className="text-xs text-[#00ffc8]">Disponivel</span>
+                          <CheckCircle2 className="h-4 w-4 text-[var(--brand)]" />
+                          <span className="text-xs text-[var(--brand)]">Disponivel</span>
                         </div>
                       )}
                     </div>
@@ -428,14 +428,14 @@ export default function TreinamentoPage() {
             {/* Jogador Selecionado */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
-                <Target className="h-4 w-4 text-[#00ffc8]" />
+                <Target className="h-4 w-4 text-[var(--brand)]" />
                 JOGADOR SELECIONADO
               </div>
 
               {selectedPlayer ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center text-xl font-bold text-[#00ffc8]">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand)]/5 flex items-center justify-center text-xl font-bold text-[var(--brand)]">
                       {selectedPlayer.overall}
                     </div>
                     <div>
@@ -480,7 +480,7 @@ export default function TreinamentoPage() {
             {/* Tipos de Treinamento */}
             <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
-                <Dumbbell className="h-4 w-4 text-[#00ffc8]" />
+                <Dumbbell className="h-4 w-4 text-[var(--brand)]" />
                 TIPO DE TREINAMENTO
               </div>
 
@@ -500,7 +500,7 @@ export default function TreinamentoPage() {
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
                         isSelected 
-                          ? "border-[#00ffc8] bg-[#00ffc8]/10" 
+                          ? "border-[var(--brand)] bg-[var(--brand)]/10" 
                           : "border-white/[0.04] hover:border-white/10 hover:bg-white/5",
                         (!selectedPlayer || !canImprove) && "opacity-50 cursor-not-allowed"
                       )}
@@ -531,7 +531,7 @@ export default function TreinamentoPage() {
               className={cn(
                 "w-full py-4 rounded-xl font-semibold text-sm transition-colors",
                 selectedPlayer && selectedTraining
-                  ? "bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+                  ? "bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
                   : "bg-white/5 text-white/30 cursor-not-allowed"
               )}
             >
@@ -547,7 +547,7 @@ export default function TreinamentoPage() {
                 <Brain className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-xs text-white/60">
                   <p className="font-medium text-white/80 mb-1">Como funciona</p>
-                  <p>O treinamento dura 4 semanas. Ao final, o jogador tem <span className="text-[#00ffc8] font-semibold">{trainChancePct}%</span> de chance de melhorar +1 no atributo escolhido, limitado ao seu potencial maximo.</p>
+                  <p>O treinamento dura 4 semanas. Ao final, o jogador tem <span className="text-[var(--brand)] font-semibold">{trainChancePct}%</span> de chance de melhorar +1 no atributo escolhido, limitado ao seu potencial maximo.</p>
                   <p className="mt-1 text-white/40">Centro de Treinamento nivel {trainingLvl}/5 — melhore a estrutura para aumentar a chance (ate 90%).</p>
                 </div>
               </div>
@@ -591,7 +591,7 @@ function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; 
         {/* Cabecalho */}
         <div className="flex items-start justify-between gap-4 p-5 border-b border-white/[0.06]">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center text-2xl font-bold text-[#00ffc8]">
+            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand)]/5 flex items-center justify-center text-2xl font-bold text-[var(--brand)]">
               {player.overall}
             </div>
             <div>

@@ -125,7 +125,7 @@ function OfferCard({
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-[#00ffc8]">
+          <div className="text-lg font-bold text-[var(--brand)]">
             {formatCurrency(offer.offerAmount)}
           </div>
           <div className="text-[10px] text-white/40">
@@ -147,7 +147,7 @@ function OfferCard({
                 <>
                   <span>{player.position}</span>
                   <span>{player.age} anos</span>
-                  <span className="text-[#00ffc8]">OVR {player.overall}</span>
+                  <span className="text-[var(--brand)]">OVR {player.overall}</span>
                 </>
               )}
             </div>
@@ -180,7 +180,7 @@ function OfferCard({
             <div className="flex items-center gap-2 text-sm">
               <TrendingUp className={cn(
                 "h-4 w-4",
-                offer.offerAmount >= player.marketValue ? "text-[#00ffc8]" : "text-red-400"
+                offer.offerAmount >= player.marketValue ? "text-[var(--brand)]" : "text-red-400"
               )} />
               <span className="text-white/60">
                 {offer.offerAmount >= player.marketValue ? "Acima" : "Abaixo"} do valor de mercado
@@ -188,7 +188,7 @@ function OfferCard({
             </div>
             <span className={cn(
               "text-sm font-bold",
-              offer.offerAmount >= player.marketValue ? "text-[#00ffc8]" : "text-red-400"
+              offer.offerAmount >= player.marketValue ? "text-[var(--brand)]" : "text-red-400"
             )}>
               {offer.offerAmount >= player.marketValue ? "+" : "-"}
               {formatCurrency(Math.abs(offer.offerAmount - player.marketValue))}
@@ -210,7 +210,7 @@ function OfferCard({
           <button onClick={()=>{if(!counterOpen){setCounterAmount(Math.max(offer.offerAmount,player?.marketValue??offer.offerAmount));setCounterOpen(true)}else{onCounter(counterAmount,coverage,weeks);setCounterOpen(false)}}} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-amber-400/10 text-amber-300 text-sm font-medium hover:bg-amber-400/20">{counterOpen?"Enviar contraproposta":"Contraproposta"}</button>
           <button
             onClick={onAccept}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#00ffc8] text-black text-sm font-semibold hover:bg-[#00c8ff] transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] text-sm font-semibold hover:bg-[var(--brand-2)] transition-colors"
           >
             <Check className="h-4 w-4" />
             Aceitar
@@ -223,7 +223,7 @@ function OfferCard({
 
 function PastOfferRow({ offer }: { offer: TransferOffer }) {
   const statusConfig = {
-    aceita: { label: "Aceita", color: "text-[#00ffc8]", bg: "bg-[#00ffc8]/10" },
+    aceita: { label: "Aceita", color: "text-[var(--brand)]", bg: "bg-[var(--brand)]/10" },
     rejeitada: { label: "Rejeitada", color: "text-red-400", bg: "bg-red-400/10" },
     expirada: { label: "Expirada", color: "text-yellow-400", bg: "bg-yellow-400/10" },
   }

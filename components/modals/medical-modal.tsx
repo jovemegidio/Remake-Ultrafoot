@@ -271,7 +271,7 @@ export function MedicalModal({
             <Button 
               onClick={handleTreatment}
               disabled={isProcessing}
-              className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+              className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
             >
               {isProcessing ? "Aplicando..." : "Aplicar Tratamento"}
             </Button>

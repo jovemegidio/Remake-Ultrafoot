@@ -127,7 +127,7 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
                           "relative overflow-hidden rounded-2xl border transition-all duration-300",
                           "h-[320px] lg:h-[380px] flex flex-col",
                           isActive
-                            ? "border-[#00ffc8]/70 shadow-[0_0_34px_rgba(0,255,200,0.18)]"
+                            ? "border-[var(--brand)]/70 shadow-[0_0_34px_rgba(0,255,200,0.18)]"
                             : "border-white/[0.07] shadow-[0_18px_40px_rgba(0,0,0,0.5)]",
                         )}
                         style={{
@@ -139,7 +139,7 @@ export function HubScreen({ tagline, cards, primaryActionLabel, primaryActionRou
                         <div className="relative flex flex-col h-full p-6">
                           <div className="text-center mb-4">
                             <h2 className="text-xl font-bold text-white mb-1">{card.title}</h2>
-                            <p className="text-sm font-semibold text-[#00ffc8]">{card.subtitle}</p>
+                            <p className="text-sm font-semibold text-[var(--brand)]">{card.subtitle}</p>
                           </div>
 
                           <div className="flex-1 flex flex-col items-center justify-center px-2">

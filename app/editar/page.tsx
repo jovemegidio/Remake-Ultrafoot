@@ -39,7 +39,8 @@ import {
 } from "@/lib/national-teams"
 import { getNationalCrestUrl } from "@/lib/national-assets"
 import { getPlayersForTeam } from "@/lib/players-data"
-import { getPlayerOverride, setPlayerOverride, defaultPlayerAttributes, reputationBonus } from "@/lib/player-overrides"
+import { getPlayerOverride, setPlayerOverride, defaultPlayerAttributes, reputationBonus,
+  caracteristicasDaPosicao, MAX_CARACTERISTICAS, BONUS_CARACTERISTICA } from "@/lib/player-overrides"
 import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
 import { isTauri } from "@/lib/game-asset"
 import { compressImageDataUrl } from "@/lib/image-utils"
@@ -144,6 +145,32 @@ const PAIS_CODE: Record<string, string> = {
 
 // Clube do pool? (divisao no formato "pool:<pais>")
 import { inferredNationality, normalizeCountry, PAIS_DESCONHECIDO } from "@/lib/country-normalize"
+
+// PAÍSES para os seletores (atleta, clube e técnico).
+//
+// Sai de NATIONAL_TEAMS, que é a lista canônica de seleções do jogo — e não das
+// chaves de PAIS_CODE, que carregam grafias repetidas de propósito ("França" e
+// "Franca", "Holanda" e "Países Baixos") para aceitar o que vem dos seeds.
+//
+// Era campo de TEXTO LIVRE: digitar "Franca" sem cedilha, ou "Holanda" onde o
+// resto do jogo espera "Países Baixos", quebrava em silêncio a bandeira e o
+// vínculo com a seleção. Lista fechada acaba com essa classe de erro.
+const PAISES_ORDENADOS: string[] = Array.from(
+  new Set(NATIONAL_TEAMS.map(n => n.name)),
+).sort((a, b) => a.localeCompare(b, "pt-BR"))
+
+/**
+ * Lado sugerido a partir da posição, para o atleta que ainda não tem o campo.
+ *
+ * LD/PD são direita e LE/PE são esquerda por definição — herdar isso evita
+ * abrir a ficha de um lateral-esquerdo e encontrar "Direita" no seletor. As
+ * demais posições não têm lado implícito e começam no centro.
+ */
+function ladoDaPosicao(posicao: string): "E" | "D" | "C" {
+  if (posicao === "LD" || posicao === "PD") return "D"
+  if (posicao === "LE" || posicao === "PE") return "E"
+  return "C"
+}
 
 const isPoolTeam = (team: Team) => typeof team.divisao === "string" && team.divisao.startsWith("pool:")
 const isNationalTeam = (team: Team | null | undefined) => Boolean(team?.file_key.startsWith("nation_"))
@@ -304,12 +331,12 @@ export default function EditarPage() {
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState(0)
   // Edicao de jogador (nome/posicao/overall) — persiste via player-overrides.
   const [editingPlayer, setEditingPlayer] = useState<EditorPlayer | null>(null)
-  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, nac: "", preferredFoot: "Direita" as "Direita" | "Esquerda" | "Ambidestro", reputation: "normal" as "normal" | "estrela" | "top_mundial", traits: [] as string[], faceDataUrl: "", pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
+  const [pDraft, setPDraft] = useState({ nome: "", posicao: "", overall: 0, idade: 0, nac: "", preferredFoot: "Direita" as "Direita" | "Esquerda" | "Ambidestro", reputation: "normal" as "normal" | "estrela" | "top_mundial", lado: "D" as "E" | "D" | "C", traits: [] as string[], faceDataUrl: "", pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 })
   const openPlayerEdit = (p: EditorPlayer) => {
     setEditingPlayer(p)
     const sourceTeamKey = p.sourceTeamKey ?? selectedTeam?.file_key
     const ov = sourceTeamKey ? getPlayerOverride(sourceTeamKey, p.originalName) : null
-    setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, nac: ov?.nac ?? p.pais ?? "", preferredFoot: ov?.preferredFoot ?? "Direita", reputation: ov?.reputation ?? "normal", traits: ov?.traits ?? [], faceDataUrl: ov?.faceDataUrl ?? "", pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
+    setPDraft({ nome: p.nome, posicao: p.posicao, overall: p.overall, idade: p.idade, nac: ov?.nac ?? p.pais ?? "", preferredFoot: ov?.preferredFoot ?? "Direita", reputation: ov?.reputation ?? "normal", lado: ov?.lado ?? ladoDaPosicao(p.posicao), traits: (ov?.traits ?? []).slice(0, MAX_CARACTERISTICAS), faceDataUrl: ov?.faceDataUrl ?? "", pace: p.pace, shooting: p.shooting, passing: p.passing, dribbling: p.dribbling, defending: p.defending, physical: p.physical })
   }
 
   /** Aplica reputacao recomputando atributos a partir da base, para trocar de
@@ -764,7 +791,7 @@ export default function EditarPage() {
 
       {/* Header — barra superior com identidade do editor. */}
       <header className="relative z-10 h-[76px] flex-shrink-0 bg-[#060a0c]/80 backdrop-blur-2xl border-b border-white/[0.08] px-6 flex items-center justify-between">
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/25 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[var(--brand)]/25 to-transparent" />
         <div className="flex items-center gap-4">
           <Link
             href="/splash?menu=1"
@@ -777,13 +804,13 @@ export default function EditarPage() {
           <div className="h-6 w-px bg-white/10" />
 
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/5 border border-[#00ffc8]/25 shadow-[0_0_30px_rgba(0,255,200,0.08)]">
-              <Shield className="h-5 w-5 text-[#00ffc8]" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand-2)]/5 border border-[var(--brand)]/25 shadow-[0_0_30px_rgba(0,255,200,0.08)]">
+              <Shield className="h-5 w-5 text-[var(--brand)]" />
             </div>
             <div className="leading-tight">
               <div className="flex items-center gap-2">
                 <h1 className="text-base font-bold text-white tracking-tight">Editor de Clubes e Seleções</h1>
-                <span className="rounded-full border border-[#00ffc8]/20 bg-[#00ffc8]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.18em] text-[#00ffc8]">Studio</span>
+                <span className="rounded-full border border-[var(--brand)]/20 bg-[var(--brand)]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.18em] text-[var(--brand)]">Studio</span>
               </div>
               <p className="text-[10px] text-white/35 uppercase tracking-[0.18em]">Elencos · Escudos · Uniformes</p>
             </div>
@@ -814,7 +841,7 @@ export default function EditarPage() {
                 value={searchTeam}
                 onChange={(e) => setSearchTeam(e.target.value)}
                 placeholder="Procurar clube ou seleção..."
-                className="w-full pl-9 pr-3 py-2.5 text-xs bg-black/25 border border-white/[0.09] rounded-xl text-white placeholder-white/25 focus:outline-none focus:border-[#00ffc8]/40 focus:ring-4 focus:ring-[#00ffc8]/[0.06] transition-all"
+                className="w-full pl-9 pr-3 py-2.5 text-xs bg-black/25 border border-white/[0.09] rounded-xl text-white placeholder-white/25 focus:outline-none focus:border-[var(--brand)]/40 focus:ring-4 focus:ring-[var(--brand)]/[0.06] transition-all"
               />
             </div>
           </div>
@@ -852,7 +879,7 @@ export default function EditarPage() {
                           className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 bg-white/[0.015] hover:bg-white/[0.045] border-b border-white/[0.03] transition-colors"
                         >
                           <ChevronDown className={cn("h-3 w-3 shrink-0 text-white/25 transition-transform", subOpen ? "" : "-rotate-90")} />
-                          <span className="flex-1 text-left text-[11px] font-medium text-[#00ffc8]/70 truncate">{sub.label}</span>
+                          <span className="flex-1 text-left text-[11px] font-medium text-[var(--brand)]/70 truncate">{sub.label}</span>
                           <span className="text-[9px] text-white/20 shrink-0">{sub.teams.length}</span>
                         </button>
 
@@ -865,7 +892,7 @@ export default function EditarPage() {
                               className={cn(
                                 "w-full grid grid-cols-[1fr_44px] text-xs border-b border-white/[0.03] transition-all",
                                 isSelected
-                                  ? "bg-white/[0.07] border-l-2 border-l-[#00ffc8]"
+                                  ? "bg-white/[0.07] border-l-2 border-l-[var(--brand)]"
                                   : "hover:bg-white/[0.03]"
                               )}
                             >
@@ -933,7 +960,7 @@ export default function EditarPage() {
                       <button
                         onClick={handleImportLogo}
                         title="Importar logo customizada"
-                        className="flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-medium bg-white/[0.05] hover:bg-[#00ffc8]/15 text-white/40 hover:text-[#00ffc8] rounded border border-white/[0.08] hover:border-[#00ffc8]/30 transition-all"
+                        className="flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-medium bg-white/[0.05] hover:bg-[var(--brand)]/15 text-white/40 hover:text-[var(--brand)] rounded border border-white/[0.08] hover:border-[var(--brand)]/30 transition-all"
                       >
                         <Upload className="h-2.5 w-2.5" />
                         <span>Logo</span>
@@ -1062,7 +1089,7 @@ export default function EditarPage() {
                             className={cn(
                               "w-full grid grid-cols-[1fr_64px_52px_48px_52px_100px_44px] text-xs border-b border-white/[0.04] transition-all",
                               isSelected
-                                ? "bg-white/[0.06] border-l-2 border-l-[#00ffc8]"
+                                ? "bg-white/[0.06] border-l-2 border-l-[var(--brand)]"
                                 : index % 2 === 0
                                   ? "hover:bg-white/[0.03]"
                                   : "bg-white/[0.015] hover:bg-white/[0.035]"
@@ -1127,7 +1154,7 @@ export default function EditarPage() {
                           openPlayerEdit(created)
                         }}
                         disabled={activeTab !== "juniores"}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#00ffc8]/10 hover:bg-[#00ffc8]/20 text-[#00ffc8] rounded-lg transition-all border border-[#00ffc8]/20 disabled:cursor-not-allowed disabled:opacity-35"
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[var(--brand)]/10 hover:bg-[var(--brand)]/20 text-[var(--brand)] rounded-lg transition-all border border-[var(--brand)]/20 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <Plus className="h-3 w-3" />
                         <span className="hidden sm:inline">Adicionar</span>
@@ -1258,6 +1285,60 @@ export default function EditarPage() {
                             className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-white/20 transition-all"
                           />
                         </div>
+                        {/* TÉCNICO. O clube tinha estádio, cores e patrocínio, mas não
+                            tinha treinador — não dava para corrigir o nome de quem
+                            comanda o time nem a nacionalidade dele. */}
+                        <div>
+                          <label className="block text-[10px] text-white/40 mb-1">Nome do técnico</label>
+                          <input
+                            type="text"
+                            value={editDraft.tecnico ?? ""}
+                            placeholder="Ex: Abel Ferreira"
+                            onChange={e => setEditDraft(p => ({ ...p, tecnico: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-white/40 mb-1">País do técnico</label>
+                          <select
+                            value={editDraft.tecnicoPais ?? ""}
+                            onChange={e => setEditDraft(p => ({ ...p, tecnicoPais: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs bg-[#14252a] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-white/20 transition-all"
+                          >
+                            <option value="">— não informado —</option>
+                            {PAISES_ORDENADOS.map(p => <option key={p} value={p}>{p}</option>)}
+                          </select>
+                        </div>
+                        {/* PAÍS DO CLUBE. Sem isto não havia como consertar um clube
+                            importado no país errado — e o país decide bandeira,
+                            competições e a seleção dos atletas da casa. */}
+                        <div>
+                          <label className="block text-[10px] text-white/40 mb-1">País do clube</label>
+                          <select
+                            value={editDraft.pais ?? selectedTeam.pais ?? "Brasil"}
+                            onChange={e => setEditDraft(p => ({ ...p, pais: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs bg-[#14252a] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-white/20 transition-all"
+                          >
+                            {PAISES_ORDENADOS.map(p => <option key={p} value={p}>{p}</option>)}
+                          </select>
+                        </div>
+                        {/* REPUTAÇÃO. Separada do prestígio de propósito: prestígio é a
+                            força do ELENCO, reputação é o alcance da MARCA. Um clube
+                            tradicional pode estar mal montado, e um recém-rico pode ter
+                            time bom sem tradição nenhuma. */}
+                        <div>
+                          <label className="block text-[10px] text-white/40 mb-1">Reputação</label>
+                          <select
+                            value={editDraft.reputacao ?? "nacional"}
+                            onChange={e => setEditDraft(p => ({ ...p, reputacao: e.target.value as NonNullable<TeamOverride["reputacao"]> }))}
+                            className="w-full px-3 py-2 text-xs bg-[#14252a] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:border-white/20 transition-all"
+                          >
+                            <option value="regional">Regional</option>
+                            <option value="nacional">Nacional</option>
+                            <option value="continental">Continental</option>
+                            <option value="mundial">Mundial</option>
+                          </select>
+                        </div>
                         {/* Patrocinador */}
                         <div className="col-span-2">
                           <label className="block text-[10px] text-white/40 mb-1">Patrocinador principal</label>
@@ -1324,7 +1405,7 @@ export default function EditarPage() {
                                     className={cn(
                                       "rounded-lg border px-2 py-1 text-[9px] font-semibold transition-all",
                                       isDisabled
-                                        ? "border-[#00ffc8]/25 bg-[#00ffc8]/10 text-[#00ffc8] hover:bg-[#00ffc8]/15"
+                                        ? "border-[var(--brand)]/25 bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/15"
                                         : "border-rose-400/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15",
                                     )}
                                   >
@@ -1457,7 +1538,7 @@ export default function EditarPage() {
 
                     <div className="flex items-center gap-2">
                       {exportMsg && (
-                        <span className="text-[11px] text-[#00ffc8]">{exportMsg}</span>
+                        <span className="text-[11px] text-[var(--brand)]">{exportMsg}</span>
                       )}
                       {/* As edicoes ficam no save LOCAL — nao chegam aos outros jogadores.
                           Exportar + merge-team-overrides.mjs embute no build. */}
@@ -1516,7 +1597,7 @@ export default function EditarPage() {
                 <input
                   value={pDraft.nome}
                   onChange={(e) => setPDraft((d) => ({ ...d, nome: e.target.value }))}
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:border-[#00ffc8]/50 focus:outline-none"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:border-[var(--brand)]/50 focus:outline-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1560,28 +1641,86 @@ export default function EditarPage() {
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Nacionalidade</label>
-                <input
-                  value={pDraft.nac}
-                  onChange={e => setPDraft(d => ({ ...d, nac: e.target.value }))}
-                  placeholder="Ex: Brasil, Argentina, França..."
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:border-[#00ffc8]/50 focus:outline-none"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Nacionalidade</label>
+                  <select
+                    value={pDraft.nac}
+                    onChange={e => setPDraft(d => ({ ...d, nac: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-[#14252a] px-3 py-2 text-sm text-white focus:border-[var(--brand)]/50 focus:outline-none"
+                  >
+                    <option value="">— não informada —</option>
+                    {/* Nacionalidade que já veio do seed e não está na lista continua
+                        selecionável: trocar para lista não pode APAGAR o que existe. */}
+                    {pDraft.nac && !PAISES_ORDENADOS.includes(pDraft.nac) && (
+                      <option value={pDraft.nac}>{pDraft.nac} (fora da lista)</option>
+                    )}
+                    {PAISES_ORDENADOS.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                {/* LADO. A posição só embute o lado em LD/LE/PD/PE — zagueiro,
+                    volante, meia e atacante ficavam sem, e um canhoto era igual a
+                    um destro no editor. */}
+                <div>
+                  <label className="mb-1 block text-[10px] uppercase tracking-wide text-white/40">Lado</label>
+                  <select
+                    value={pDraft.lado}
+                    onChange={e => setPDraft(d => ({ ...d, lado: e.target.value as typeof d.lado }))}
+                    className="w-full rounded-lg border border-white/10 bg-[#14252a] px-3 py-2 text-sm text-white focus:outline-none"
+                  >
+                    <option value="D">Direita</option>
+                    <option value="E">Esquerda</option>
+                    <option value="C">Centro / indiferente</option>
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-[10px] uppercase tracking-wide text-white/40">Características especiais</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(pDraft.posicao === "GOL"
-                    ? [["defende_penaltis", "Defende pênaltis"], ["sai_do_gol", "Sai bem do gol"], ["reposicao", "Ótima reposição"], ["reflexos", "Reflexos rápidos"]]
-                    : [["finalizador", "Finalizador"], ["driblador", "Driblador"], ["passe_vertical", "Passe vertical"], ["lider", "Liderança"]]
-                  ).map(([id, label]) => (
-                    <button key={id} type="button" onClick={() => setPDraft(d => ({ ...d, traits: d.traits.includes(id) ? d.traits.filter(t => t !== id) : [...d.traits, id] }))} className={cn("rounded-lg border px-3 py-2 text-left text-xs", pDraft.traits.includes(id) ? "border-[#00ffc8]/60 bg-[#00ffc8]/10 text-[#00ffc8]" : "border-white/10 text-white/55")}>
-                      {label}
-                    </button>
-                  ))}
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-[10px] uppercase tracking-wide text-white/40">Características</label>
+                  <span className={cn(
+                    "text-[10px]",
+                    pDraft.traits.length >= MAX_CARACTERISTICAS ? "text-[var(--brand)]" : "text-white/25",
+                  )}>
+                    {pDraft.traits.length} de {MAX_CARACTERISTICAS}
+                  </span>
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {caracteristicasDaPosicao(pDraft.posicao).map(c => {
+                    const marcada = pDraft.traits.includes(c.id)
+                    // Cheio e esta nao marcada: fica desabilitada em vez de sumir —
+                    // esconder opcao faria a lista dancar a cada clique.
+                    const cheio = !marcada && pDraft.traits.length >= MAX_CARACTERISTICAS
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        disabled={cheio}
+                        title={c.descricao}
+                        onClick={() => setPDraft(d => ({
+                          ...d,
+                          traits: d.traits.includes(c.id)
+                            ? d.traits.filter(t => t !== c.id)
+                            : [...d.traits, c.id].slice(0, MAX_CARACTERISTICAS),
+                        }))}
+                        className={cn(
+                          "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
+                          marcada
+                            ? "border-[var(--brand)]/60 bg-[var(--brand)]/10 text-[var(--brand)]"
+                            : cheio
+                              ? "cursor-not-allowed border-white/5 text-white/20"
+                              : "border-white/10 text-white/55 hover:border-white/25",
+                        )}
+                      >
+                        {c.nome}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-2 text-[10px] leading-4 text-white/35">
+                  Cada característica soma +{BONUS_CARACTERISTICA} no atributo que reforça — elas
+                  valem na partida, não são só rótulo.
+                </p>
               </div>
 
               {/* Atributos individuais (valem na partida) */}
@@ -1598,12 +1737,12 @@ export default function EditarPage() {
                     <div key={key} className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-2">
                       <div className="mb-1 flex items-center justify-between">
                         <span className="text-[9px] font-bold text-white/40">{label}</span>
-                        <span className="text-xs font-bold text-[#00ffc8]">{pDraft[key]}</span>
+                        <span className="text-xs font-bold text-[var(--brand)]">{pDraft[key]}</span>
                       </div>
                       <input
                         type="range" min={40} max={99} value={pDraft[key]}
                         onChange={(e) => setPDraft((d) => ({ ...d, [key]: parseInt(e.target.value) || 0 }))}
-                        className="w-full accent-[#00ffc8]"
+                        className="w-full accent-[var(--brand)]"
                       />
                     </div>
                   ))}
@@ -1643,6 +1782,7 @@ export default function EditarPage() {
                         physical: pDraft.physical,
                         preferredFoot: pDraft.preferredFoot,
                         reputation: pDraft.reputation,
+                        lado: pDraft.lado,
                         nac: pDraft.nac.trim() || undefined,
                         traits: pDraft.traits,
                         faceDataUrl,
@@ -1653,7 +1793,7 @@ export default function EditarPage() {
                   }
                   setEditingPlayer(null)
                 }}
-                className="rounded-lg bg-[#00ffc8] px-5 py-2 text-sm font-bold text-[#05231b] hover:bg-[#00e6b5]"
+                className="rounded-lg bg-[var(--brand)] px-5 py-2 text-sm font-bold text-[#05231b] hover:bg-[#00e6b5]"
               >
                 Salvar
               </button>

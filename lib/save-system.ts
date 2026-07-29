@@ -396,6 +396,15 @@ export interface GameState {
   commentaryEnabled: boolean
   commentaryVoice: string
   commentaryVolume: number
+  /**
+   * Volume dos EFEITOS sonoros (0-100). A trilha e do player do sistema; o que
+   * o jogo toca sao apito, torcida e bola na rede (hooks/use-match-sounds).
+   */
+  sfxVolume: number
+  /** Velocidade com que a partida ao vivo COMECA. O jogador ainda troca em campo. */
+  matchSpeed: "lento" | "normal" | "rapido"
+  /** false = sem os avisos que saltam na tela; o histórico continua sendo gravado. */
+  notificationsEnabled: boolean
   /** 0 desativa; os demais valores salvam apos essa quantidade de partidas. */
   autoSaveInterval: 0 | 1 | 3 | 5
   lastAutoSaveMatchCount: number
@@ -449,11 +458,60 @@ export interface GameState {
   youthBoardCheckWeek?: number
   /** Carreira opcional iniciada nas categorias de base. */
   youthCareer?: YouthCareerState
+  /**
+   * Técnicos demitidos pelos OUTROS clubes nesta carreira (lib/mercado-de-tecnicos).
+   * Serve a dois propósitos: virar notícia da rodada e impedir que o mesmo clube
+   * seja "demitido" toda semana — sem esta memória o feed repetiria o mesmo
+   * clube em crise indefinidamente.
+   */
+  demissoesMundo?: { curto: string; season: number; week: number; tecnico: string }[]
+  /**
+   * Lances DO USUÁRIO em leilões (lib/leilao). Só isto precisa ser salvo: quem
+   * está em disputa e quanto a IA ofereceu são derivados da semana, para o leilão
+   * não virar um simulador paralelo do mercado.
+   */
+  lancesEmLeilao?: { chave: string; valor: number; encerraNaSemana: number; season: number }[]
+  /**
+   * Torneio amistoso criado pelo técnico (lib/torneio-amistoso). Fica no save
+   * porque jogar uma partida sai desta tela e volta — sem persistir, a tabela
+   * zerava a cada jogo.
+   */
+  torneioAmistoso?: {
+    nome: string
+    formato: "mata_mata" | "pontos_corridos"
+    participantes: string[]
+    idaEVolta: boolean
+    jogos: {
+      rodada: number
+      mandanteCurto: string
+      visitanteCurto: string
+      golsMandante?: number
+      golsVisitante?: number
+      jogado: boolean
+    }[]
+    campeao?: string | null
+  } | null
+  /** Finalíssima disputada pela seleção do técnico (lib/finalissima). */
+  finalissima?: {
+    temporada: number
+    campeaoSulamericano: string
+    campeaoEuropeu: string
+    golsSulamericano?: number
+    golsEuropeu?: number
+    penaltisSulamericano?: number
+    penaltisEuropeu?: number
+    campeao?: string
+    jogada: boolean
+  } | null
   debt?: ClubDebtState
   scoutingDepartment?: ScoutingDepartmentState
   stadiumPitch?: StadiumPitch
   /** Torcida do clube já movimentada pela carreira (undefined = valor estático do time). */
   fanBase?: number
+  /** Organizadas do clube com o humor acumulado. Semeadas por `organizadasDoClube`. */
+  torcidaOrganizadas?: import("@/lib/torcida").Organizada[]
+  /** Plano do sócio torcedor em vigor (define mensalidade e adesão). */
+  planoDeSocio?: import("@/lib/torcida").PlanoDeSocio
   /** Prêmios individuais apurados ao fim de cada temporada. */
   seasonAwards?: SeasonAwards[]
   sponsorOffers?: SponsorOffer[]
@@ -542,6 +600,9 @@ export const DEFAULT_STATE: GameState = {
   commentaryEnabled: true,
   commentaryVoice: "padrao",
   commentaryVolume: 80,
+  sfxVolume: 80,
+  matchSpeed: "normal",
+  notificationsEnabled: true,
   autoSaveInterval: 1,
   lastAutoSaveMatchCount: 0,
   preOfficeVisitado: false,

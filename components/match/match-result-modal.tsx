@@ -44,7 +44,7 @@ export function MatchResultModal({
       label: "VITORIA",
       subtitle: "Parabens pela conquista!",
       color: "#00ffc8",
-      gradient: "from-[#00ffc8]",
+      gradient: "from-[var(--brand)]",
     },
     draw: {
       label: "EMPATE",
@@ -151,7 +151,7 @@ export function MatchResultModal({
                     />
                     <TeamCrest team={homeTeam} size="xl" />
                     {userSide === "home" && (
-                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[#00ffc8] text-[8px] font-bold text-black">
+                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[var(--brand)] text-[8px] font-bold text-[var(--brand-ink)]">
                         SEU TIME
                       </div>
                     )}
@@ -201,7 +201,7 @@ export function MatchResultModal({
                     />
                     <TeamCrest team={awayTeam} size="xl" />
                     {userSide === "away" && (
-                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[#00ffc8] text-[8px] font-bold text-black">
+                      <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-[var(--brand)] text-[8px] font-bold text-[var(--brand-ink)]">
                         SEU TIME
                       </div>
                     )}
@@ -306,7 +306,7 @@ export function MatchResultModal({
               <Button
                 size="lg"
                 onClick={onClose}
-                className="w-full sm:w-auto bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:opacity-90 font-bold"
+                className="w-full sm:w-auto bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black hover:opacity-90 font-bold"
               >
                 Resultados da rodada
                 <ChevronRight className="ml-2 h-4 w-4" />
@@ -339,17 +339,17 @@ function StatCard({
         <div className="flex items-center gap-2">
           <span className={cn(
             "text-lg sm:text-xl font-bold tabular-nums",
-            homeWin ? "text-[#00ffc8]" : "text-white/60"
+            homeWin ? "text-[var(--brand)]" : "text-white/60"
           )}>
             {home}
           </span>
-          {homeWin && <Zap className="h-3 w-3 text-[#00ffc8]" />}
+          {homeWin && <Zap className="h-3 w-3 text-[var(--brand)]" />}
         </div>
         <div className="flex items-center gap-2">
-          {!homeWin && <Zap className="h-3 w-3 text-[#00ffc8]" />}
+          {!homeWin && <Zap className="h-3 w-3 text-[var(--brand)]" />}
           <span className={cn(
             "text-lg sm:text-xl font-bold tabular-nums",
-            !homeWin ? "text-[#00ffc8]" : "text-white/60"
+            !homeWin ? "text-[var(--brand)]" : "text-white/60"
           )}>
             {away}
           </span>
@@ -360,14 +360,14 @@ function StatCard({
         <div 
           className={cn(
             "h-full transition-all",
-            homeWin ? "bg-[#00ffc8]" : "bg-white/20"
+            homeWin ? "bg-[var(--brand)]" : "bg-white/20"
           )}
           style={{ width: `${typeof home === 'number' && typeof away === 'number' ? (home / (home + away + 0.01)) * 100 : 50}%` }}
         />
         <div 
           className={cn(
             "h-full transition-all",
-            !homeWin ? "bg-[#00ffc8]" : "bg-white/20"
+            !homeWin ? "bg-[var(--brand)]" : "bg-white/20"
           )}
           style={{ width: `${typeof home === 'number' && typeof away === 'number' ? (away / (home + away + 0.01)) * 100 : 50}%` }}
         />

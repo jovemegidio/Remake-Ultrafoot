@@ -34,6 +34,9 @@ import { RandomEvents } from "@/components/random-events"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState, useUserTeam } from "@/lib/save-system"
+import { aplicarPunicao, punicoesSugeridas, rotuloPunicao } from "@/lib/punicoes"
+import { lerTorcida } from "@/lib/pressao-torcida"
+import type { DisciplinePunishment } from "@/lib/game-engine"
 import { useGameEngine } from "@/lib/game-engine"
 
 type TabType = "vestiario" | "reunioes" | "mensagens" | "contratos" | "eventos" | "disciplina"
@@ -146,6 +149,35 @@ export default function CentralPage() {
     [squadPlayers],
   )
 
+  // Leitura da torcida a partir das organizadas do save. Semana entra para a
+  // frase não trocar a cada render.
+  const torcida = useMemo(
+    () => lerTorcida(state.torcidaOrganizadas, state.week ?? 0),
+    [state.torcidaOrganizadas, state.week],
+  )
+
+  // PUNIÇÃO. O botão "Punir" existia e não fazia nada; o catálogo
+  // (DISCIPLINE_PUNISHMENTS) existia e ninguém aplicava. Aqui os dois se
+  // encontram: escolher a punição, ver o efeito e — o que dá peso à decisão —
+  // ouvir a resposta do atleta, que pode se revoltar se a pena for exagerada.
+  const [punindo, setPunindo] = useState<string | null>(null)
+  const [punidos, setPunidos] = useState<Record<string, { rotulo: string; resposta: string; revoltado: boolean }>>({})
+
+  const confirmarPunicao = (nomeAtleta: string, punicao: DisciplinePunishment, gravidade: "leve" | "moderada" | "grave") => {
+    const atleta = (squadPlayers ?? []).find((p) => p.name === nomeAtleta)
+    const salarioSemanal = Math.max(1000, Math.round(atleta?.contract?.salary ?? 40000))
+    const efeito = aplicarPunicao(punicao, gravidade, salarioSemanal)
+    setPunidos((atual) => ({
+      ...atual,
+      [nomeAtleta]: {
+        rotulo: rotuloPunicao(punicao, salarioSemanal),
+        resposta: efeito.resposta,
+        revoltado: efeito.revoltado,
+      },
+    }))
+    setPunindo(null)
+  }
+
   const tabs = [
     { id: "vestiario" as TabType, label: "Vestiario", icon: Heart, count: null },
     { id: "eventos" as TabType, label: "Eventos", icon: Zap, count: 2 },
@@ -194,7 +226,7 @@ export default function CentralPage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap",
                 activeTab === tab.id
-                  ? "bg-[#00ffc8] text-black"
+                  ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                   : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
               )}
             >
@@ -222,6 +254,40 @@ export default function CentralPage() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6"
             >
+              {/* TORCIDA. O número já era calculado (lib/torcida via
+                  use-game-manager) e alimentava o quadro de sócios — mas nunca
+                  aparecia em tela nenhuma. Aqui ele finalmente é visível, ao
+                  lado da moral do elenco, que é o outro medidor de humor. */}
+              <div className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4" style={{ color: torcida.cor }} />
+                    <div>
+                      <div className="text-sm font-medium text-white">
+                        Torcida: <span style={{ color: torcida.cor }}>{torcida.rotulo}</span>
+                      </div>
+                      <div className="text-[11px] italic text-white/40">{torcida.recado}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-lg font-black" style={{ color: torcida.cor }}>{torcida.satisfacao}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-white/35">satisfação</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={cn("text-lg font-black", torcida.pressaoEmCasa >= 0 ? "text-[var(--brand)]" : "text-red-400")}>
+                        {torcida.pressaoEmCasa >= 0 ? "+" : ""}{torcida.pressaoEmCasa}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-wider text-white/35">no estádio</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full transition-all"
+                       style={{ width: `${torcida.satisfacao}%`, backgroundColor: torcida.cor }} />
+                </div>
+              </div>
+
               {/* Team Morale Overview */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="stat-card stat-card-teal">
@@ -306,7 +372,7 @@ export default function CentralPage() {
               <div className="p-4 rounded-xl bg-white/5 border border-white/[0.04]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-white">Reunioes Pendentes</h3>
-                  <Button size="sm" className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] text-xs">
+                  <Button size="sm" className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] text-xs">
                     Agendar Reuniao
                   </Button>
                 </div>
@@ -359,20 +425,20 @@ export default function CentralPage() {
                   {messages.map((msg, idx) => (
                     <div key={idx} className={cn(
                       "flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer",
-                      msg.unread ? "bg-[#00ffc8]/10 hover:bg-[#00ffc8]/15" : "bg-white/[0.03] hover:bg-white/[0.06]"
+                      msg.unread ? "bg-[var(--brand)]/10 hover:bg-[var(--brand)]/15" : "bg-white/[0.03] hover:bg-white/[0.06]"
                     )}>
                       <div className={cn(
                         "h-10 w-10 rounded-lg flex items-center justify-center",
-                        msg.unread ? "bg-[#00ffc8]/20" : "bg-white/10"
+                        msg.unread ? "bg-[var(--brand)]/20" : "bg-white/10"
                       )}>
-                        <Mail className={cn("h-5 w-5", msg.unread ? "text-[#00ffc8]" : "text-white/40")} />
+                        <Mail className={cn("h-5 w-5", msg.unread ? "text-[var(--brand)]" : "text-white/40")} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className={cn("text-sm font-medium", msg.unread ? "text-white" : "text-white/70")}>
                             {msg.from}
                           </span>
-                          {msg.unread && <div className="h-2 w-2 rounded-full bg-[#00ffc8]" />}
+                          {msg.unread && <div className="h-2 w-2 rounded-full bg-[var(--brand)]" />}
                         </div>
                         <div className="text-[11px] text-white/50">{msg.subject}</div>
                       </div>
@@ -405,7 +471,7 @@ export default function CentralPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-white">{contract.name}</span>
                           <span className="text-[10px] text-white/40 px-1.5 py-0.5 rounded bg-white/10">{contract.position}</span>
-                          <span className="text-xs font-bold text-[#00ffc8]">{contract.overall}</span>
+                          <span className="text-xs font-bold text-[var(--brand)]">{contract.overall}</span>
                         </div>
                         <div className="text-[10px] text-white/40">Salario: {contract.salary}/mes</div>
                       </div>
@@ -509,7 +575,7 @@ export default function CentralPage() {
                 </div>
                 {disciplineIssues.length === 0 ? (
                   <div className="p-6 text-center">
-                    <CheckCircle2 className="h-10 w-10 mx-auto text-[#00ffc8]/40 mb-2" />
+                    <CheckCircle2 className="h-10 w-10 mx-auto text-[var(--brand)]/40 mb-2" />
                     <p className="text-sm text-white/50">Nenhum problema disciplinar</p>
                   </div>
                 ) : (
@@ -550,13 +616,25 @@ export default function CentralPage() {
                              "Problema extracampo"} - {issue.date}
                           </div>
                         </div>
-                        {issue.resolved ? (
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-[#00ffc8]" />
-                            <span className="text-xs text-white/50">{issue.punishment}</span>
+                        {punidos[issue.player] ? (
+                          <div className="flex flex-col items-end gap-1 max-w-[46%]">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4 text-[var(--brand)]" />
+                              <span className="text-xs text-white/50">{punidos[issue.player].rotulo}</span>
+                            </div>
+                            <p className={cn(
+                              "text-[10px] leading-4 text-right italic",
+                              punidos[issue.player].revoltado ? "text-red-300" : "text-white/40",
+                            )}>
+                              "{punidos[issue.player].resposta}"
+                            </p>
                           </div>
                         ) : (
-                          <Button size="sm" variant="outline" className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
+                          <Button
+                            size="sm" variant="outline"
+                            onClick={() => setPunindo(issue.player)}
+                            className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                          >
                             <Gavel className="h-3 w-3 mr-1" />
                             Punir
                           </Button>
@@ -570,6 +648,50 @@ export default function CentralPage() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Escolha da punição. As opções variam com a gravidade — punir de leve uma
+          falta grave passa fraqueza; exagerar numa leve gera revolta. */}
+      {punindo && (() => {
+        const caso = disciplineIssues.find((i) => i.player === punindo)
+        const gravidade = (caso?.severity ?? "leve") as "leve" | "moderada" | "grave"
+        const atleta = (squadPlayers ?? []).find((p) => p.name === punindo)
+        const salarioSemanal = Math.max(1000, Math.round(atleta?.contract?.salary ?? 40000))
+        return (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-5 backdrop-blur-md"
+               onClick={() => setPunindo(null)}>
+            <section className="w-full max-w-md overflow-hidden rounded-2xl border border-red-500/25 bg-[#0b1014]"
+                     onClick={(e) => e.stopPropagation()}>
+              <div className="border-b border-white/10 bg-gradient-to-r from-red-500/15 to-transparent px-6 py-5">
+                <p className="text-[11px] font-black uppercase tracking-[.22em] text-red-300">Punição</p>
+                <h2 className="mt-1 text-xl font-black text-white">{punindo}</h2>
+                <p className="mt-1 text-sm text-white/55">
+                  Infração {gravidade} · salário semanal R$ {salarioSemanal.toLocaleString("pt-BR")}
+                </p>
+              </div>
+              <div className="space-y-2 px-6 py-5">
+                {punicoesSugeridas(gravidade).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => confirmarPunicao(punindo, p, gravidade)}
+                    className="flex w-full items-center justify-between rounded-lg bg-white/5 px-4 py-3 text-left text-sm text-white transition-colors hover:bg-white/10"
+                  >
+                    <span>{rotuloPunicao(p, salarioSemanal)}</span>
+                    <Gavel className="h-4 w-4 shrink-0 text-white/30" />
+                  </button>
+                ))}
+                <p className="pt-2 text-xs leading-5 text-white/35">
+                  Punição desproporcional à infração derruba a moral e faz o elenco
+                  ver injustiça — o respeito cai em vez de subir.
+                </p>
+                <button onClick={() => setPunindo(null)}
+                        className="mt-2 w-full rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/15">
+                  Deixar passar
+                </button>
+              </div>
+            </section>
+          </div>
+        )
+      })()}
     </div>
   )
 }

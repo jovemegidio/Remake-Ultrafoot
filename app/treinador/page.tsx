@@ -271,8 +271,8 @@ export default function TreinadorPage() {
         <div className="border-b border-white/[0.06] bg-black/35 px-4 py-4 backdrop-blur-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#00ffc8]/30 bg-[#00ffc8]/10">
-                <UserCircle className="h-8 w-8 text-[#00ffc8]" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--brand)]/30 bg-[var(--brand)]/10">
+                <UserCircle className="h-8 w-8 text-[var(--brand)]" />
               </div>
               <div>
                 <h1 className="text-xl font-black tracking-tight text-white">
@@ -296,7 +296,7 @@ export default function TreinadorPage() {
               </div>
               <div>
                 <p className="text-[10px] uppercase text-white/40">XP</p>
-                <p className="text-sm font-semibold text-[#00ffc8]">{state.coachXP ?? 0}</p>
+                <p className="text-sm font-semibold text-[var(--brand)]">{state.coachXP ?? 0}</p>
               </div>
             </div>
           </div>
@@ -322,7 +322,7 @@ export default function TreinadorPage() {
             return (
           <section className={cn(
             "rounded-xl border p-5",
-            desempregado ? "border-[#00ffc8]/40 bg-[#00ffc8]/[0.06]"
+            desempregado ? "border-[var(--brand)]/40 bg-[var(--brand)]/[0.06]"
               : lista.length > 0 ? "border-[#ffd700]/30 bg-[#ffd700]/[0.05]" : "border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30",
           )}>
             <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
@@ -359,7 +359,7 @@ export default function TreinadorPage() {
                       <p className="text-sm font-semibold text-white">
                         {oferta.clubName}
                         {oferta.kind === "national" && (
-                          <span className="ml-2 rounded bg-[#00ffc8]/15 px-1.5 py-0.5 text-[9px] font-bold text-[#00ffc8]">SELEÇÃO</span>
+                          <span className="ml-2 rounded bg-[var(--brand)]/15 px-1.5 py-0.5 text-[9px] font-bold text-[var(--brand)]">SELEÇÃO</span>
                         )}
                       </p>
                       <p className="text-[11px] leading-4 text-white/45">{oferta.reason}</p>
@@ -367,7 +367,7 @@ export default function TreinadorPage() {
                     <span className="text-[11px] text-white/40">prestígio {oferta.clubPrestige}</span>
                     <button
                       onClick={() => aceitarOferta(oferta)}
-                      className="rounded-lg bg-[#00ffc8] px-3 py-1.5 text-xs font-black text-black hover:brightness-110"
+                      className="rounded-lg bg-[var(--brand)] px-3 py-1.5 text-xs font-black text-[var(--brand-ink)] hover:brightness-110"
                     >
                       Aceitar
                     </button>
@@ -400,24 +400,24 @@ export default function TreinadorPage() {
           {!desempregado && (
           <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
             <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
-              <Users className="h-4 w-4 text-[#00ffc8]" />
+              <Users className="h-4 w-4 text-[var(--brand)]" />
               Entrosamento & Amistosos
-            </h2><span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" /></div>
+            </h2><span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" /></div>
 
             {/* Barra de entrosamento */}
             <div className="mt-3 rounded-lg bg-black/30 p-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/60">Entrosamento do elenco</span>
-                <span className="font-semibold text-white">{entrosamento}/100{bonusEntrosamento > 0 && <span className="ml-1 text-[#00ffc8]">(+{bonusEntrosamento} em campo)</span>}</span>
+                <span className="font-semibold text-white">{entrosamento}/100{bonusEntrosamento > 0 && <span className="ml-1 text-[var(--brand)]">(+{bonusEntrosamento} em campo)</span>}</span>
               </div>
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-gradient-to-r from-[#00ffc8]/70 to-[#00ffc8]" style={{ width: `${entrosamento}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)]/70 to-[var(--brand)]" style={{ width: `${entrosamento}%` }} />
               </div>
               <p className="mt-2 text-[11px] leading-4 text-white/40">Time que joga junto rende mais. Sobe disputando partidas, amistosos e treinando nas datas FIFA.</p>
             </div>
 
             {avisoTreino && (
-              <p className="mt-3 rounded-lg border border-[#00ffc8]/30 bg-[#00ffc8]/10 px-3 py-2 text-xs text-[#00ffc8]">{avisoTreino}</p>
+              <p className="mt-3 rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-2 text-xs text-[var(--brand)]">{avisoTreino}</p>
             )}
 
             {/* Treino na Data FIFA */}
@@ -453,7 +453,7 @@ export default function TreinadorPage() {
                         <p className="truncate text-sm font-semibold text-white">{a.oppNome}</p>
                         <p className="text-[11px] text-white/40">{a.dateLabel} · {a.userIsHome ? "em casa" : "fora"}</p>
                       </div>
-                      <button onClick={() => jogarAmistoso(i)} className="rounded-lg bg-[#00ffc8] px-3 py-1.5 text-xs font-black text-black hover:brightness-110">Jogar</button>
+                      <button onClick={() => jogarAmistoso(i)} className="rounded-lg bg-[var(--brand)] px-3 py-1.5 text-xs font-black text-[var(--brand-ink)] hover:brightness-110">Jogar</button>
                       <button onClick={() => removerAmistoso(i)} className="rounded-lg p-1.5 text-white/30 hover:bg-white/5 hover:text-white/60"><X className="h-4 w-4" /></button>
                     </div>
                   ))}
@@ -492,13 +492,13 @@ export default function TreinadorPage() {
           <section className="mt-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-lg shadow-black/30 p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
-                <ClipboardList className="h-4 w-4 text-[#00ffc8]" />
+                <ClipboardList className="h-4 w-4 text-[var(--brand)]" />
                 Últimos resultados
-              </h2><span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" /></div>
+              </h2><span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" /></div>
               {aproveitamentoRecente !== null && (
                 <span className={cn(
                   "flex items-center gap-1 text-xs font-semibold",
-                  aproveitamentoRecente >= 50 ? "text-[#00ffc8]" : "text-red-400",
+                  aproveitamentoRecente >= 50 ? "text-[var(--brand)]" : "text-red-400",
                 )}>
                   {aproveitamentoRecente >= 50 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                   {aproveitamentoRecente}% de aproveitamento
@@ -514,7 +514,7 @@ export default function TreinadorPage() {
                   <div key={jogo.chave} className="flex items-center gap-3 rounded-lg bg-black/25 px-3 py-2">
                     <span className={cn(
                       "flex h-6 w-6 shrink-0 items-center justify-center rounded text-[11px] font-black",
-                      jogo.resultado === "V" ? "bg-[#00ffc8]/20 text-[#00ffc8]"
+                      jogo.resultado === "V" ? "bg-[var(--brand)]/20 text-[var(--brand)]"
                         : jogo.resultado === "D" ? "bg-red-400/20 text-red-300"
                         : "bg-white/10 text-white/60",
                     )}>
@@ -535,7 +535,7 @@ export default function TreinadorPage() {
             <div className="mb-1 flex items-center gap-3"><h2 className="flex items-center gap-2 text-base font-bold text-white">
               <Trophy className="h-4 w-4 text-[#ffd700]" />
               Carreira
-            </h2><span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" /></div>
+            </h2><span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" /></div>
 
             {!carreira ? (
               <p className="mt-2 text-sm text-white/45">

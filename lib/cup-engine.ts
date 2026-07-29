@@ -5,6 +5,7 @@
 import type { Team } from "@/lib/teams-data"
 import { simulateFullMatch } from "@/lib/match-engine"
 import type { CupMatch, CupBracket } from "@/lib/career-types"
+import { getPlayersForTeam } from "@/lib/players-data"
 
 const CUP_TEAM_COUNT = 16
 const CUP_TOTAL_ROUNDS = 4 // 1=oitavas, 2=quartas, 3=semi, 4=final
@@ -33,23 +34,117 @@ function isTwoLeggedRound(round: number): boolean {
 }
 
 /**
- * Disputa de penaltis. O time mais forte leva uma vantagem SUTIL (frieza/goleiro),
- * nao decisiva — penalti continua sendo loteria, que e o que o torna dramatico.
+ * Disputa usando o elenco real dos dois clubes.
+ *
+ * Devolve o resultado COMPLETO (com as cobranças). A versão anterior devolvia só
+ * `[golsA, golsB]` e as cobranças eram descartadas ali mesmo — por isso não havia
+ * como assistir à disputa de um confronto que não fosse o do usuário.
  */
-function shootout(prestigeA: number, prestigeB: number): [number, number] {
+function shootoutComElenco(a: Team, b: Team): ResultadoPenaltis {
+  return disputarPenaltis(a.prestigio, b.prestigio, batedoresDoClube(a), batedoresDoClube(b))
+}
+
+
+/**
+ * Os cinco batedores do clube, na ordem em que baterao.
+ *
+ * Ate 1.0.205 a disputa saia do PRESTIGIO do clube — quem estava em campo nao
+ * importava. Aqui pegamos o elenco de verdade e ordenamos por finalizacao, que
+ * e como um tecnico escala a fila: os melhores primeiro, porque as primeiras
+ * cobrancas sao as que mais decidem.
+ *
+ * Goleiro fica de fora (ele bateria a quinta na vida real, mas so em caso
+ * extremo — e aqui nunca chegamos a mais de 5 nomes distintos).
+ */
+function batedoresDoClube(time: Team): BatedorPenalti[] {
+  try {
+    return getPlayersForTeam(time)
+      .filter(j => j.pos !== "GOL")
+      .map(j => ({ nome: j.nome, finalizacao: j.shooting ?? j.base }))
+      .sort((a, b) => b.finalizacao - a.finalizacao)
+      .slice(0, 5)
+  } catch {
+    // Clube sem elenco carregado: cai no prestigio, como era antes.
+    return []
+  }
+}
+
+/** Uma cobrança da disputa, para a tela poder narrar chute a chute. */
+export interface CobrancaPenalti {
+  ordem: number
+  lado: "A" | "B"
+  batedor: string
+  converteu: boolean
+  /** true quando a cobrança já não podia mais alterar o resultado. */
+  decisiva: boolean
+}
+
+export interface ResultadoPenaltis {
+  golsA: number
+  golsB: number
+  cobrancas: CobrancaPenalti[]
+}
+
+/** Batedor: só precisamos do nome e da finalização. */
+export interface BatedorPenalti {
+  nome: string
+  finalizacao: number
+}
+
+/**
+ * Disputa de pênaltis.
+ *
+ * MUDANÇA em 1.0.206: antes isto era decidido só pelo PRESTÍGIO DOS CLUBES —
+ * quem estava em campo não importava, e o momento mais tenso do futebol era o
+ * único em que o elenco do jogador não participava. Agora, quando a lista de
+ * batedores é informada, cada cobrança usa a finalização de QUEM BATE, na ordem
+ * escolhida. Sem lista, cai no prestígio como antes (partidas entre times da
+ * IA, onde não há elenco carregado).
+ *
+ * O pênalti continua sendo loteria de propósito: a diferença de qualidade entra
+ * comprimida, como no resto do motor — um batedor excelente converte ~85%, um
+ * ruim ~65%, e não 99% contra 30%.
+ */
+export function disputarPenaltis(
+  prestigeA: number,
+  prestigeB: number,
+  batedoresA?: BatedorPenalti[],
+  batedoresB?: BatedorPenalti[],
+): ResultadoPenaltis {
   const edge = (prestigeA - prestigeB) * 0.002
+  const cobrancas: CobrancaPenalti[] = []
   let a = 0
   let b = 0
-  for (let i = 0; i < 5; i++) {
-    if (Math.random() < 0.75 + edge) a++
-    if (Math.random() < 0.75 - edge) b++
+
+  const chuta = (lado: "A" | "B", indice: number): void => {
+    const lista = lado === "A" ? batedoresA : batedoresB
+    const batedor = lista?.length ? lista[indice % lista.length] : undefined
+    // Sem batedor conhecido: comportamento antigo (prestígio).
+    const base = batedor
+      ? 0.75 + Math.sign(batedor.finalizacao - 70) * Math.pow(Math.abs(batedor.finalizacao - 70), 0.5) * 0.013
+      : 0.75 + (lado === "A" ? edge : -edge)
+    const converteu = Math.random() < Math.max(0.55, Math.min(0.9, base))
+    if (converteu) { if (lado === "A") a++; else b++ }
+    cobrancas.push({
+      ordem: cobrancas.length + 1,
+      lado,
+      batedor: batedor?.nome ?? (lado === "A" ? "Batedor" : "Batedor"),
+      converteu,
+      decisiva: false,
+    })
   }
-  // Morte subita ate desempatar
-  while (a === b) {
-    if (Math.random() < 0.75 + edge) a++
-    if (Math.random() < 0.75 - edge) b++
-  }
-  return [a, b]
+
+  for (let i = 0; i < 5; i++) { chuta("A", i); chuta("B", i) }
+  // Morte súbita até desempatar. O teto de 20 não é regra de futebol: é trava.
+  // Se algum dia a conversão virar determinística (dois batedores de finalização
+  // idêntica com um sorteio viciado), este laço não termina — e travar o jogo no
+  // mata-mata é muito pior que uma disputa longa demais.
+  let extra = 5
+  while (a === b && extra < 20) { chuta("A", extra); chuta("B", extra); extra++ }
+  if (a === b) a++  // desempate forçado no limite; não deve ocorrer em jogo real
+
+  if (cobrancas.length) cobrancas[cobrancas.length - 1].decisiva = true
+  return { golsA: a, golsB: b, cobrancas }
 }
 
 /** Embaralha um array preservando ordem reprodutível via seed. */
@@ -165,7 +260,8 @@ export function simulateCupRound(
     } else if (aggAway > aggHome) {
       winnerCurto = m.awayCurto
     } else {
-      const [ph, pa] = shootout(home.prestigio, away.prestigio)
+      const pen = shootoutComElenco(home, away)
+      const [ph, pa] = [pen.golsA, pen.golsB]
       penaltiesHome = ph
       penaltiesAway = pa
       winnerCurto = ph > pa ? m.homeCurto : m.awayCurto
@@ -262,6 +358,14 @@ export interface TieOutcome {
   aggHome: number
   aggAway: number
   penalties: [number, number] | null
+  /**
+   * Cobrança por cobrança da disputa, quando houve pênaltis.
+   *
+   * O placar agregado 4-3 já existia, mas as cobranças eram CALCULADAS e
+   * jogadas fora — dava para saber quem passou, nunca quem errou. É este dado
+   * que permite ASSISTIR a disputa de um jogo que não é o seu.
+   */
+  cobrancas: CobrancaPenalti[] | null
   winnerCurto: string
 }
 
@@ -291,11 +395,14 @@ export function resolveTieByCurto(
   const aggAway = leg1.awayGoals + (leg2 ? leg2.homeGoals : 0)
 
   let penalties: [number, number] | null = null
+  let cobrancas: CobrancaPenalti[] | null = null
   let winnerCurto: string
   if (aggHome > aggAway) winnerCurto = homeCurto
   else if (aggAway > aggHome) winnerCurto = awayCurto
   else {
-    penalties = shootout(home.prestigio, away.prestigio)
+    const disputa = shootoutComElenco(home, away)
+    penalties = [disputa.golsA, disputa.golsB]
+    cobrancas = disputa.cobrancas
     winnerCurto = penalties[0] > penalties[1] ? homeCurto : awayCurto
   }
 
@@ -307,6 +414,7 @@ export function resolveTieByCurto(
     aggHome,
     aggAway,
     penalties,
+    cobrancas,
     winnerCurto,
   }
 }
@@ -416,7 +524,8 @@ export function simulateLiberRound(
     if (aggHome > aggAway) winnerCurto = m.homeCurto
     else if (aggAway > aggHome) winnerCurto = m.awayCurto
     else {
-      const [ph, pa] = shootout(home.prestigio, away.prestigio)
+      const pen = shootoutComElenco(home, away)
+      const [ph, pa] = [pen.golsA, pen.golsB]
       penaltiesHome = ph
       penaltiesAway = pa
       winnerCurto = ph > pa ? m.homeCurto : m.awayCurto

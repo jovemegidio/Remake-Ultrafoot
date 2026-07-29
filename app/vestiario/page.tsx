@@ -499,9 +499,9 @@ export default function VestiarioPage() {
                             <button
                               key={choice.id}
                               onClick={() => handleConversation(choice.id)}
-                              className="group flex w-full items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-left transition-all hover:border-[#00ffc8]/40 hover:bg-white/[0.08]"
+                              className="group flex w-full items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-left transition-all hover:border-[var(--brand)]/40 hover:bg-white/[0.08]"
                             >
-                              <ChevronRight className="h-4 w-4 shrink-0 text-white/30 transition-colors group-hover:text-[#00ffc8]" />
+                              <ChevronRight className="h-4 w-4 shrink-0 text-white/30 transition-colors group-hover:text-[var(--brand)]" />
                               <span className="text-sm text-white/90">{choice.label}</span>
                             </button>
                           ))}

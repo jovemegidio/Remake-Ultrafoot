@@ -62,7 +62,7 @@ function Campo({
           min={min}
           step={passo}
           onChange={e => onChange(Math.max(min, Number(e.target.value) || min))}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-center text-sm font-semibold text-white outline-none focus:border-[#00ffc8]/60"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-center text-sm font-semibold text-white outline-none focus:border-[var(--brand)]/60"
         />
         <button
           type="button"
@@ -143,7 +143,7 @@ export function ContractNegotiationModal({
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#00ffc8]/70">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--brand)]/70">
               {modo === "renovar" ? "Renovacao de contrato" : "Rescisao de contrato"}
             </div>
             <h2 className="mt-1 text-xl font-black text-white">{player.name}</h2>
@@ -188,7 +188,7 @@ export function ContractNegotiationModal({
                       className={cn(
                         "flex-1 rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-colors",
                         terms.role === p
-                          ? "border-[#00ffc8]/60 bg-[#00ffc8]/10 text-[#00ffc8]"
+                          ? "border-[var(--brand)]/60 bg-[var(--brand)]/10 text-[var(--brand)]"
                           : "border-white/10 text-white/50 hover:border-white/25",
                       )}
                     >
@@ -270,7 +270,7 @@ export function ContractNegotiationModal({
             <button
               onClick={modo === "renovar" ? negociarRenovacao : negociarRescisao}
               disabled={semCaixa || resposta?.verdict === "accepted"}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] px-5 py-2 text-xs font-bold text-black transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] px-5 py-2 text-xs font-bold text-black transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Handshake className="h-3.5 w-3.5" />
               {resposta?.verdict === "accepted" ? "Acordo fechado" : "Enviar proposta"}

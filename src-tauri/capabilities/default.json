@@ -48,6 +48,9 @@
         },
         {
           "url": "https://objects.githubusercontent.com/*"
+        },
+        {
+          "url": "https://ultrafoot.179-198-103-30.sslip.io/*"
         }
       ]
     }

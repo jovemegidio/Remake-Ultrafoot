@@ -271,7 +271,7 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
       {/* Aviso de conexao (3s) — agora com a % de bateria quando o SO a expoe. */}
       {showConnectionToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#00ffc8] text-black shadow-lg">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] shadow-lg">
             <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center">
               <ControllerGlyph type={gamepad.controllerType} className="w-6 h-6" />
             </div>
@@ -293,8 +293,8 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
       {gamepad.connected && (
         <div className="fixed top-3 right-3 z-40 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 backdrop-blur-sm border border-white/10 pointer-events-none">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#00ffc8] opacity-60 animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00ffc8]" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--brand)] opacity-60 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--brand)]" />
           </span>
           <ControllerGlyph type={gamepad.controllerType} className="w-4 h-4 text-white/80" />
           <span className="text-[11px] font-medium text-white/80">
@@ -313,7 +313,7 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
       {/* Focus indicator styles */}
       <style jsx global>{`
         [data-gamepad-focused="true"] {
-          outline: 2px solid #00ffc8 !important;
+          outline: 2px solid var(--brand) !important;
           outline-offset: 2px;
           box-shadow: 0 0 0 4px rgba(29, 185, 84, 0.3);
         }

@@ -121,7 +121,7 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
           "flex items-center gap-2 px-4 py-2 rounded-lg transition-all",
           isAdvancing 
             ? "bg-white/5 text-white/50 cursor-not-allowed" 
-            : "bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+            : "bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
         )}
       >
         {isAdvancing ? (
@@ -155,8 +155,8 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 rounded-full bg-[#00ffc8]/20 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-[#00ffc8]" />
+                <div className="h-10 w-10 rounded-full bg-[var(--brand)]/20 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-[var(--brand)]" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">Semana {state.week}</h3>
@@ -192,7 +192,7 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
 
               <Button
                 onClick={closeEvents}
-                className="w-full bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+                className="w-full bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
               >
                 Continuar
               </Button>
@@ -216,14 +216,14 @@ export function TimeAdvanceButton({ onWeekAdvanced }: TimeAdvanceProps) {
             className="w-full max-w-sm rounded-xl bg-[#0c0c10] border border-white/10 p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="h-12 w-12 rounded-full bg-[#00ffc8]/20 flex items-center justify-center mx-auto mb-4">
-              <Clock className="h-6 w-6 text-[#00ffc8]" />
+            <div className="h-12 w-12 rounded-full bg-[var(--brand)]/20 flex items-center justify-center mx-auto mb-4">
+              <Clock className="h-6 w-6 text-[var(--brand)]" />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">Semana {state.week}</h3>
             <p className="text-sm text-white/50 mb-6">Nenhum evento importante esta semana.</p>
             <Button
               onClick={closeEvents}
-              className="w-full bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+              className="w-full bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
             >
               Continuar
             </Button>
@@ -240,7 +240,7 @@ export function CurrentWeekDisplay() {
   
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-      <Calendar className="h-4 w-4 text-[#00ffc8]" />
+      <Calendar className="h-4 w-4 text-[var(--brand)]" />
       <span className="text-sm text-white/70">
         Semana <span className="font-semibold text-white">{state.week}</span>/48
       </span>

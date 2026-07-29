@@ -191,7 +191,7 @@ export default function HistoricoPage() {
         <div className="flex items-center gap-6">
           <div className="relative">
             <TeamCrest team={userTeam} size="2xl" />
-            <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-[#00ffc8] text-xs font-bold text-[#00ffc8]">
+            <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a1a] border-2 border-[var(--brand)] text-xs font-bold text-[var(--brand)]">
               {userTeam.prestigio}
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function HistoricoPage() {
                 {history.titleCount} títulos
               </span>
               <span className="flex items-center gap-1.5 text-sm text-white/70">
-                <MapPin className="h-4 w-4 text-[#00ffc8]" />
+                <MapPin className="h-4 w-4 text-[var(--brand)]" />
                 {userTeam.cidade}, {userTeam.estado}
               </span>
             </div>
@@ -235,10 +235,10 @@ export default function HistoricoPage() {
 
           <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-4">
             <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider">
-              <Users className="h-4 w-4 text-[#00ffc8]" />
+              <Users className="h-4 w-4 text-[var(--brand)]" />
               TORCIDA
             </div>
-            <div className="mt-2 text-3xl font-bold text-[#00ffc8]">
+            <div className="mt-2 text-3xl font-bold text-[var(--brand)]">
               {(userTeam.torcida / 1000000).toFixed(1)}M
             </div>
             <div className="text-xs text-white/40 mt-1">Torcedores estimados</div>
@@ -280,7 +280,7 @@ export default function HistoricoPage() {
           {/* Legends */}
           <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04] bg-white/[0.02]">
-              <Star className="h-4 w-4 text-[#00ffc8]" />
+              <Star className="h-4 w-4 text-[var(--brand)]" />
               <h2 className="text-xs font-medium text-white tracking-wider">LENDAS DO CLUBE</h2>
             </div>
             <div className="divide-y divide-white/5">
@@ -294,7 +294,7 @@ export default function HistoricoPage() {
                     <div className="text-sm text-white/50">{legend.position} · {legend.years}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-[#00ffc8]">{legend.goals}</div>
+                    <div className="text-xl font-bold text-[var(--brand)]">{legend.goals}</div>
                     <div className="text-[10px] text-white/40 font-medium tracking-wider">GOLS</div>
                   </div>
                 </div>
@@ -328,7 +328,7 @@ export default function HistoricoPage() {
                     <td className="px-5 py-3 text-center">
                       <span className={cn(
                         "inline-flex h-8 w-8 items-center justify-center rounded-lg font-bold",
-                        season.position <= 4 ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
+                        season.position <= 4 ? "bg-[var(--brand)]/20 text-[var(--brand)]" :
                         season.position <= 12 ? "bg-blue-400/20 text-blue-400" :
                         season.position >= 17 ? "bg-red-400/20 text-red-400" :
                         "bg-white/10 text-white/60"

@@ -37,7 +37,7 @@ export const NEWS_SOURCES = {
     name: "Liga",
     logo: "/brand/uf26-logo.png",
     color: "#00ffc8",
-    bgColor: "bg-[#00ffc8]",
+    bgColor: "bg-[var(--brand)]",
   },
   cazeTv: {
     name: "CazeTV",
@@ -599,7 +599,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
             className={cn(
               "rounded-full transition-all",
               i === currentIndex
-                ? "w-5 h-1.5 bg-[#00ffc8]"
+                ? "w-5 h-1.5 bg-[var(--brand)]"
                 : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
             )}
           />

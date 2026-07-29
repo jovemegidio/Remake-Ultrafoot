@@ -28,7 +28,7 @@ export function CtaPill({ children, href, onClick, keyLabel = "enter", icon, cla
     <span
       className={cn(
         "relative inline-flex items-center gap-2.5 rounded-full p-[2px]",
-        "bg-[linear-gradient(110deg,#00ffc8_0%,#00c8ff_45%,#7b5cff_100%)]",
+        "bg-[linear-gradient(110deg,var(--brand)_0%,var(--brand-2)_45%,#7b5cff_100%)]",
         "shadow-[0_0_22px_rgba(0,200,255,0.45)] transition-all duration-200",
         "hover:shadow-[0_0_30px_rgba(0,200,255,0.65)] active:scale-[0.98]",
         className,

@@ -21,7 +21,7 @@ export function NationalCompetitionPanel() {
   const statusBanner = (() => {
     switch (comp.status) {
       case "champion":
-        return { label: comp.lastSummary || "Campeao!", tone: "bg-[#00ffc8]/15 text-[#00ffc8] border-[#00ffc8]/30", icon: Crown }
+        return { label: comp.lastSummary || "Campeao!", tone: "bg-[var(--brand)]/15 text-[var(--brand)] border-[var(--brand)]/30", icon: Crown }
       case "qualified":
         return { label: comp.lastSummary || "Classificado!", tone: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: Check }
       case "eliminated":
@@ -105,13 +105,13 @@ export function NationalCompetitionPanel() {
                     key={row.teamId}
                     className={cn(
                       "border-t border-white/[0.03]",
-                      row.isUser ? "bg-[#00ffc8]/[0.06]" : idx % 2 ? "bg-white/[0.01]" : "",
+                      row.isUser ? "bg-[var(--brand)]/[0.06]" : idx % 2 ? "bg-white/[0.01]" : "",
                     )}
                   >
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="text-white/30 text-xs w-4">{idx + 1}</span>
-                        <span className={cn("font-medium", row.isUser ? "text-[#00ffc8]" : "text-white/80")}>{row.teamName}</span>
+                        <span className={cn("font-medium", row.isUser ? "text-[var(--brand)]" : "text-white/80")}>{row.teamName}</span>
                       </div>
                     </td>
                     <td className="text-center text-white/60 px-2 py-2">{row.played}</td>
@@ -138,7 +138,7 @@ export function NationalCompetitionPanel() {
                 key={f.id}
                 className={cn(
                   "flex items-center justify-between rounded-lg border px-3 py-2.5 text-sm",
-                  f.played ? "border-white/[0.04] bg-white/[0.02]" : "border-[#00ffc8]/20 bg-[#00ffc8]/[0.04]",
+                  f.played ? "border-white/[0.04] bg-white/[0.02]" : "border-[var(--brand)]/20 bg-[var(--brand)]/[0.04]",
                 )}
               >
                 <div className="flex items-center gap-2 min-w-0">
@@ -164,7 +164,7 @@ export function NationalCompetitionPanel() {
         {isActive && userNextFixture ? (
           <button
             onClick={playNextRound}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#00ffc8] text-[#050508] font-semibold py-3 hover:bg-[#00ffc8]/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[var(--brand)] text-[#050508] font-semibold py-3 hover:bg-[var(--brand)]/90 transition-colors"
           >
             <Play className="h-4 w-4" /> Jogar proxima partida
           </button>

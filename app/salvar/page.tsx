@@ -222,7 +222,7 @@ export default function SalvarPage() {
           </button>
 
           {/* Card de save existente */}
-          <div className="flex h-[560px] flex-col rounded-2xl border border-[#00ffc8]/60 bg-black/55 px-8 py-7 shadow-[0_0_34px_rgba(0,255,200,0.12)]">
+          <div className="flex h-[560px] flex-col rounded-2xl border border-[var(--brand)]/60 bg-black/55 px-8 py-7 shadow-[0_0_34px_rgba(0,255,200,0.12)]">
             {/* Titulo com glifo mc */}
             <div className="flex items-center justify-center gap-1.5">
               <span
@@ -235,7 +235,7 @@ export default function SalvarPage() {
                 {savedName.length > 22 ? `${savedName.slice(0, 22)}` : savedName}
               </h2>
             </div>
-            <p className="mt-1.5 text-center text-[13px] font-semibold text-[#00ffc8]">
+            <p className="mt-1.5 text-center text-[13px] font-semibold text-[var(--brand)]">
               Ultima modificacao: {lastModified}
             </p>
 
@@ -276,7 +276,7 @@ export default function SalvarPage() {
           <button
             onClick={() => setNaming(true)}
             className="group relative inline-flex items-center gap-3 rounded-full p-[2px]"
-            style={{ background: "linear-gradient(90deg, #00ffc8 0%, #00c8ff 45%, #8b5cf6 100%)" }}
+            style={{ background: "linear-gradient(90deg, var(--brand) 0%, var(--brand-2) 45%, #8b5cf6 100%)" }}
           >
             <span className="flex items-center gap-3 rounded-full bg-[#0a0d12] px-7 py-3.5 transition-colors group-hover:bg-[#0d1117]">
               <kbd className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-white/15 bg-black/60 px-1.5 font-mono text-[13px] text-white/80">
@@ -293,7 +293,7 @@ export default function SalvarPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black animate-fade-in">
           <div
             className="w-[min(680px,90vw)] rounded-full p-[2px]"
-            style={{ background: "linear-gradient(90deg, #00ffc8 0%, #00c8ff 100%)" }}
+            style={{ background: "linear-gradient(90deg, var(--brand) 0%, var(--brand-2) 100%)" }}
           >
             <div className="rounded-full bg-[#0d1015] px-8 py-5">
               <input
@@ -303,7 +303,7 @@ export default function SalvarPage() {
                 className="w-full bg-transparent text-center text-[26px] font-medium tracking-tight text-white outline-none placeholder:text-white/30"
                 placeholder="Nome do arquivo"
               />
-              <button onClick={commitSave} className="mx-auto mt-4 block rounded-full bg-[#00ffc8] px-7 py-2 text-sm font-black text-black">Salvar jogo</button>
+              <button onClick={commitSave} className="mx-auto mt-4 block rounded-full bg-[var(--brand)] px-7 py-2 text-sm font-black text-[var(--brand-ink)]">Salvar jogo</button>
             </div>
           </div>
         </div>

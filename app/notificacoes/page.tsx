@@ -100,10 +100,10 @@ export default function NotificacoesPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="flex items-center gap-2 text-lg font-bold text-white">
-                <Bell className="h-5 w-5 text-[#00ffc8]" />
+                <Bell className="h-5 w-5 text-[var(--brand)]" />
                 Central de Notificações
                 {unreadCount > 0 && (
-                  <span className="rounded-full bg-[#00ffc8] px-2 py-0.5 text-[10px] font-black text-black">
+                  <span className="rounded-full bg-[var(--brand)] px-2 py-0.5 text-[10px] font-black text-[var(--brand-ink)]">
                     {unreadCount}
                   </span>
                 )}
@@ -147,7 +147,7 @@ export default function NotificacoesPage() {
               onClick={() => { setAba(id); setSelecionada(null) }}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
-                aba === id ? "bg-[#00ffc8]/10 text-[#00ffc8]" : "text-white/45 hover:bg-white/5 hover:text-white/70",
+                aba === id ? "bg-[var(--brand)]/10 text-[var(--brand)]" : "text-white/45 hover:bg-white/5 hover:text-white/70",
               )}
             >
               <Icone className="h-3.5 w-3.5" />
@@ -155,7 +155,7 @@ export default function NotificacoesPage() {
               {contagem > 0 && (
                 <span className={cn(
                   "rounded-full px-1.5 text-[10px] font-black",
-                  aba === id ? "bg-[#00ffc8] text-black" : "bg-white/10 text-white/60",
+                  aba === id ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/10 text-white/60",
                 )}>
                   {contagem}
                 </span>
@@ -193,7 +193,7 @@ export default function NotificacoesPage() {
               </div>
             ) : eventosVestiario.map(ev => (
               <article key={ev.id} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[#00ffc8]/80">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--brand)]/80">
                   <MessagesSquare className="h-3.5 w-3.5" />
                   Vestiário
                 </div>
@@ -204,7 +204,7 @@ export default function NotificacoesPage() {
                     <button
                       key={op.id}
                       onClick={() => responderVestiario(ev.id, op.id)}
-                      className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left text-xs text-white/75 transition-colors hover:border-[#00ffc8]/40 hover:text-white"
+                      className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left text-xs text-white/75 transition-colors hover:border-[var(--brand)]/40 hover:text-white"
                     >
                       <span className="block font-semibold">{op.text}</span>
                       <span className={cn(
@@ -239,7 +239,7 @@ export default function NotificacoesPage() {
                     className={cn(
                       "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all",
                       selecionada?.id === item.id
-                        ? "border-[#00ffc8]/50 bg-[#00ffc8]/[0.07]"
+                        ? "border-[var(--brand)]/50 bg-[var(--brand)]/[0.07]"
                         : item.read
                           ? "border-white/[0.05] bg-[#0c0c10] hover:border-white/15"
                           : "border-white/15 bg-[#101018] hover:border-white/25",
@@ -247,7 +247,7 @@ export default function NotificacoesPage() {
                   >
                     <span className={cn(
                       "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                      item.read ? "bg-white/15" : "bg-[#00ffc8]",
+                      item.read ? "bg-white/15" : "bg-[var(--brand)]",
                     )} />
                     <span className="min-w-0 flex-1">
                       <span className={cn("block truncate text-sm", item.read ? "text-white/70" : "font-semibold text-white")}>
@@ -266,7 +266,7 @@ export default function NotificacoesPage() {
           <div className="overflow-y-auto scrollbar-game">
             {selecionada ? (
               <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-6">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#00ffc8]">Central do clube</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">Central do clube</p>
                 <h2 className="mt-2 text-xl font-bold text-white">{selecionada.title}</h2>
                 <p className="mt-1 text-xs text-white/40">{formatarTempo(selecionada.timestamp)}</p>
                 <p className="mt-4 whitespace-pre-line text-sm leading-6 text-white/75">{selecionada.message}</p>
@@ -277,7 +277,7 @@ export default function NotificacoesPage() {
                       onClick={() => window.dispatchEvent(new CustomEvent("ultrafoot:bench-talk", {
                         detail: { playerId: selecionada.conversation?.playerId },
                       }))}
-                      className="flex items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2.5 text-xs font-black text-black transition hover:brightness-110"
+                      className="flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-xs font-black text-[var(--brand-ink)] transition hover:brightness-110"
                     >
                       <MessageCircle className="h-4 w-4" />
                       Conversar com o atleta
@@ -286,7 +286,7 @@ export default function NotificacoesPage() {
                   {selecionada.action && (
                     <button
                       onClick={selecionada.action.onClick}
-                      className="rounded-lg bg-[#00ffc8] px-4 py-2 text-xs font-bold text-black"
+                      className="rounded-lg bg-[var(--brand)] px-4 py-2 text-xs font-bold text-[var(--brand-ink)]"
                     >
                       {selecionada.action.label}
                     </button>

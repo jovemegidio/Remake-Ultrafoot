@@ -43,17 +43,17 @@ function SidebarNavItem({ icon: Icon, label, href, active, badge }: NavItemDef &
       className={cn(
         "group relative flex h-10 w-full items-center justify-center rounded-lg transition-all duration-200",
         active
-          ? "bg-[#00ffc8]/15 text-[#00ffc8]"
+          ? "bg-[var(--brand)]/15 text-[var(--brand)]"
           : "text-white/40 hover:bg-white/5 hover:text-white/70",
-        focusable.isFocused && !active && "bg-[#00ffc8]/10 text-[#00ffc8] ring-1 ring-[#00ffc8]/30",
+        focusable.isFocused && !active && "bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/30",
       )}
     >
       {/* Active indicator - left bar */}
       {active && (
-        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00ffc8]" />
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--brand)]" />
       )}
       {focusable.isFocused && !active && (
-        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00ffc8]" />
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--brand)]" />
       )}
 
       <Icon className={cn(
@@ -64,7 +64,7 @@ function SidebarNavItem({ icon: Icon, label, href, active, badge }: NavItemDef &
 
       {/* Badge de notificacao */}
       {badge && badge > 0 ? (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00ffc8] px-1 text-[9px] font-bold text-[#050508] shadow-[0_0_8px_rgba(0,255,200,0.6)]">
+        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand)] px-1 text-[9px] font-bold text-[#050508] shadow-[0_0_8px_rgba(0,255,200,0.6)]">
           {badge > 9 ? "9+" : badge}
         </span>
       ) : null}

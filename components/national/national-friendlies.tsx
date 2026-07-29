@@ -106,7 +106,7 @@ export function NationalFriendlies({ nationalTeam }: { nationalTeam: NationalTea
                   <span
                     className={cn(
                       "flex h-6 w-6 shrink-0 items-center justify-center rounded text-[11px] font-black",
-                      r === "V" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60",
+                      r === "V" ? "bg-[var(--brand)]/20 text-[var(--brand)]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60",
                     )}
                   >
                     {r}
@@ -143,7 +143,7 @@ export function NationalFriendlies({ nationalTeam }: { nationalTeam: NationalTea
                 className={cn(
                   "rounded-lg border px-2.5 py-2 text-[11px] font-semibold transition-colors",
                   conf === c
-                    ? "border-[#00ffc8]/40 bg-[#00ffc8]/15 text-[#00ffc8]"
+                    ? "border-[var(--brand)]/40 bg-[var(--brand)]/15 text-[var(--brand)]"
                     : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.07]",
                 )}
                 title={c === "TODAS" ? "Todas as confederações" : CONFEDERATION_LABEL[c]}
@@ -161,7 +161,7 @@ export function NationalFriendlies({ nationalTeam }: { nationalTeam: NationalTea
               <button
                 key={n.id}
                 onClick={() => playNationalFriendly(n.id)}
-                className="group flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 text-left transition-all hover:border-[#00ffc8]/40 hover:bg-white/[0.06]"
+                className="group flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 text-left transition-all hover:border-[var(--brand)]/40 hover:bg-white/[0.06]"
               >
                 <NationalCrest team={n} size={36} />
                 <div className="min-w-0 flex-1">
@@ -169,7 +169,7 @@ export function NationalFriendlies({ nationalTeam }: { nationalTeam: NationalTea
                   <p className="truncate text-[11px] text-white/40">{n.confederation}</p>
                 </div>
                 <span className={cn("shrink-0 text-sm font-bold tabular-nums", strengthTone(forca))}>{forca}</span>
-                <Swords className="h-4 w-4 shrink-0 text-white/20 transition-colors group-hover:text-[#00ffc8]" />
+                <Swords className="h-4 w-4 shrink-0 text-white/20 transition-colors group-hover:text-[var(--brand)]" />
               </button>
             )
           })}

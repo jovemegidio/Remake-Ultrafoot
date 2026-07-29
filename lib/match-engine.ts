@@ -3,6 +3,7 @@
 // sistema de momentum, impacto de cartões vermelhos e fadiga para resultados realistas.
 
 import type { Team } from "@/lib/teams-data"
+import { penalidadeImprovisacao } from "@/lib/formations"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos base
@@ -46,6 +47,12 @@ export type EventType =
   | "fulltime"
   | "var"
   | "injury"
+  // Estes dois existiam na narracao (lib/commentary-engine) e na tatica
+  // (offsideTrap / contra-ataque) mas NUNCA eram gerados pelo motor: o texto
+  // estava pronto e nunca disparava. O jogador ligava a linha de impedimento,
+  // recebia o bonus defensivo e passava 90 minutos sem ver um impedimento.
+  | "offside"
+  | "counter_attack"
 
 export type Side = "home" | "away"
 
@@ -59,6 +66,15 @@ export interface MatchEvent {
   player?: string
   assist?: string
   important?: boolean
+  /**
+   * Só em `red_card`. O motor SEMPRE soube se a expulsão foi por segundo
+   * amarelo ou vermelho direto (era a diferenca entre dois textos), mas isso
+   * morria na string — o pos-jogo recebia um booleano "vermelho" e dava 1 jogo
+   * de suspensao para qualquer caso. Estruturado, o tribunal pode julgar.
+   */
+  motivoExpulsao?: "segundo_amarelo" | "vermelho_direto"
+  /** Só em `red_card` direto: agressao (pena de 4-8) em vez de falta dura. */
+  expulsaoViolenta?: boolean
 }
 
 export interface TeamStats {
@@ -113,7 +129,14 @@ export interface MatchState {
 // Jogador do elenco — nome+pos obrigatórios, atributos opcionais (retrocompat)
 export interface SquadPlayer {
   nome: string
+  /** Posição em que está ESCALADO (o slot da formação). */
   pos: string
+  /**
+   * Posição de ORIGEM do atleta. Quando difere de `pos`, ele está improvisado e
+   * rende menos — ver penalidadeImprovisacao em lib/formations. Ausente = assume
+   * que está na posição natural (comportamento de antes desta versão).
+   */
+  posNatural?: string
   rating?: number
   shooting?: number
   passing?: number
@@ -146,6 +169,13 @@ export interface MatchConfig {
   // poder de ataque; defensivo o contrario. O motor le config ao vivo, entao vale no 2o tempo.
   homeMentality?: "defensivo" | "equilibrado" | "ofensivo"
   awayMentality?: "defensivo" | "equilibrado" | "ofensivo"
+  /**
+   * Linha de impedimento (lib/tactics-engine.offsideTrap). Chega ate aqui para
+   * o motor poder GERAR impedimentos — antes a opcao so alterava um multiplicador
+   * defensivo e o jogador nunca via a consequencia em campo.
+   */
+  homeOffsideTrap?: boolean
+  awayOffsideTrap?: boolean
   /**
    * Lado controlado pelo USUARIO. Quando o penalti sai para este lado, o motor para e
    * espera a escolha do batedor (resolvePendingPenalty). Sem isto, ele cobra sozinho.
@@ -220,6 +250,29 @@ export function createInitialState(): MatchState {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function rnd(): number { return Math.random() }
+
+/**
+ * Converte diferenca de forca em vantagem de chance, com saturacao.
+ *
+ * Por que raiz e nao multiplicacao direta: a relacao entre forca e resultado no
+ * futebol nao e linear. Um time 5 pontos melhor ganha um pouco mais; um time 20
+ * pontos melhor NAO ganha quatro vezes mais — ganha bastante mais, com teto.
+ * O expoente 0,55 mantem quase toda a sensibilidade ate ~10 pontos (onde vive a
+ * maioria dos confrontos) e achata dai para cima.
+ *
+ *   diferenca:   5     10     20     30     40
+ *   antes:    0,010  0,020  0,040  0,060  0,080
+ *   agora:    0,008  0,012  0,018  0,023  0,027
+ *
+ * Medido em 6.000 partidas por faixa — ver relatorio.md, achado 19.
+ */
+function comprimir(diferenca: number): number {
+  return Math.sign(diferenca) * Math.pow(Math.abs(diferenca), 0.50)
+}
+
+function comprimirVantagem(diferenca: number): number {
+  return comprimir(diferenca) * 0.0035
+}
 function nameId(): string { return Math.random().toString(36).slice(2, 9) }
 function pick<T>(arr: readonly T[]): T { return arr[Math.floor(rnd() * arr.length)] }
 
@@ -323,9 +376,18 @@ function deriveStrengths(squad: SquadPlayer[] | undefined, fallback: number): Sq
 
   const byPos = (positions: string[]) => squad.filter(p => positions.includes(p.pos))
 
+  // A PENALIDADE DE IMPROVISAÇÃO entra aqui, no ponto em que o atributo do
+  // atleta vira força de setor. Antes, escalar um centroavante na zaga não tinha
+  // custo nenhum: ele defendia como um zagueiro. Agora rende menos, e quanto
+  // mais distante a função, maior a perda (trocar de lado custa quase nada).
   const avgAttr = (players: SquadPlayer[], attr: keyof SquadPlayer): number => {
     if (players.length === 0) return fallback
-    return players.reduce((s, p) => s + ((p[attr] as number | undefined) ?? fallback), 0) / players.length
+    const soma = players.reduce((s, p) => {
+      const valor = (p[attr] as number | undefined) ?? fallback
+      const fator = p.posNatural ? penalidadeImprovisacao(p.posNatural, p.pos) : 1
+      return s + valor * fator
+    }, 0)
+    return soma / players.length
   }
 
   const attackers = byPos(["ATA", "PE", "PD"])
@@ -469,14 +531,27 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   // Calibrado para ~11-15 chutes por time (jogo realista). Como resolveShot roda
   // no maximo 1x por minuto/time (~90 ticks), a probabilidade base deve ficar
   // proxima de 0.13-0.18, nao acima de 0.35 (senao estoura para 30+ chutes e xG irreal).
+  // Base elevada de 0,075 para 0,083: a medicao de 20.000 partidas deu 1,21 gol
+  // por time contra ~1,35 do futebol real, com cauda fina demais (jogos de 3+
+  // gols em 8,4% contra 11% reais).
   const avg = total / 2
-  const baseShot = Math.min(0.15, 0.075 + (avg - 60) * 0.0022)
+  const baseShot = Math.min(0.16, 0.089 + (avg - 60) * 0.0022)
 
-  // Diferencial ataque vs defesa adversária — peso AUMENTADO para o favoritismo
-  // aparecer de verdade. Antes *0.0010: 20 pts de vantagem mudavam a chance de
-  // chute em so 0.02 (o acaso dominava). Agora um elenco superior cria mais.
-  const homeAttDiff = (homeAttEff - awayDefEff) * 0.0020
-  const awayAttDiff = (awayAttEff - homeDefEff) * 0.0020
+  // Diferencial ataque vs defesa adversária, COMPRIMIDO.
+  //
+  // Historico: o peso era 0.0010 (o acaso dominava), foi dobrado para 0.0020 e
+  // resolveu o favoritismo — mas de forma LINEAR, e ai a conta desandou na outra
+  // ponta. Medindo 6.000 partidas por faixa, 20 pontos de diferenca davam 88,9%
+  // de vitoria para o favorito e placar medio de 2,90 x 0,51. No futebol real
+  // esse confronto fica na casa de 65-70%: zebra faz parte, e e o que da graca a
+  // Copa do Brasil.
+  //
+  // A correcao NAO e baixar o peso (isso mataria o favoritismo de novo) e sim
+  // COMPRIMIR: manter a sensibilidade nas diferencas pequenas, que sao as comuns,
+  // e saturar nas grandes. E a mesma escolha que o Brasfoot documenta no manual
+  // ("um jogador forca 100 e LIGEIRAMENTE melhor do que um forca 95").
+  const homeAttDiff = comprimirVantagem(homeAttEff - awayDefEff)
+  const awayAttDiff = comprimirVantagem(awayAttEff - homeDefEff)
 
   // MEIO-CAMPO cria chances (antes so mexia na posse, um numero cosmetico):
   // dominar o meio gera mais finalizacoes, como na vida real.
@@ -488,8 +563,14 @@ function calcDynamicProbs(config: MatchConfig, state: MatchState): DynamicProbs 
   // ficava mais forte — bola de neve rumo a goleada. Invertido: quem esta na
   // FRENTE recua (cria menos); quem esta ATRAS se lanca (cria mais). E o que os
   // times fazem de verdade — segurar o resultado / partir para o desespero.
+  // ATENUADO. O efeito e real (time na frente recua), mas na intensidade antiga
+  // virava elastico: puxava todo jogo de volta ao empate. Medindo 20.000
+  // partidas entre iguais, davam 31,8% de empate contra ~26% do futebol real —
+  // e, mais revelador, contra ~28% que DUAS POISSON INDEPENDENTES com a mesma
+  // media dariam. Ou seja, o excesso nao era variancia: era acoplamento entre os
+  // dois lados, criado aqui. Reduzido a ~55% da forca anterior.
   const lead = state.home.goals - state.away.goals
-  const homeLeadAdj = lead >= 2 ? -0.03 : lead === 1 ? -0.012 : lead === -1 ? 0.012 : lead <= -2 ? 0.03 : 0
+  const homeLeadAdj = lead >= 2 ? -0.011 : lead === 1 ? -0.004 : lead === -1 ? 0.004 : lead <= -2 ? 0.011 : 0
   const awayLeadAdj = -homeLeadAdj
 
   // Penalidade por time com 10 jogadores
@@ -581,9 +662,15 @@ function computeXG(shooterShooting: number, gkDefending: number, minute: number)
   // Peso do finalizador e do goleiro AUMENTADO: antes (0.0015/0.0013) o acaso
   // dominava e a qualidade individual quase nao aparecia — um artilheiro 90
   // convertia quase igual a um zagueiro. Agora a habilidade pesa de verdade.
+  // COMPRIMIDO, pelo mesmo motivo do comprimirVantagem — e aqui o efeito era
+  // ainda mais forte. Com os pesos lineares antigos, um confronto de 85 contra
+  // 65 dava xG de 0,136 para o forte e 0,024 para o fraco: 5,8x de diferenca so
+  // na conversao. Multiplicado pelos chutes a mais, virava 89% de vitoria.
+  // A qualidade individual continua pesando (que era o objetivo do ajuste
+  // anterior), mas para de escalar sem limite.
   const base = 0.035 + rnd() * 0.085
-  const shooterBonus = (shooterShooting - 70) * 0.0030   // bom chutador aumenta
-  const gkPenalty = (gkDefending - 70) * 0.0026          // bom goleiro reduz
+  const shooterBonus = comprimir(shooterShooting - 70) * 0.0056  // bom chutador aumenta
+  const gkPenalty = comprimir(gkDefending - 70) * 0.0050         // bom goleiro reduz
   const lateBonus = minute >= 85 ? 0.022 : minute >= 78 ? 0.012 : 0
   return Math.max(0.02, Math.min(0.6, base + shooterBonus - gkPenalty + lateBonus))
 }
@@ -753,10 +840,19 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
       state.playerRedCards[cardKey] = true
       if (isHome) state.homeReds += 1
       else state.awayReds += 1
+      // Vermelho direto: ~1/3 e conduta violenta (agressao), o resto e falta
+      // dura/temeraria. E o que separa uma pena de 4-8 jogos de uma de 1-3.
+      const violenta = isStraightRed && rnd() < 0.34
       state.events = [{
         id: nameId(), minute, type: "red_card", side,
-        text: isSecondYellow ? `Segundo amarelo para ${player}. EXPULSO!` : `Cartão VERMELHO para ${player}`,
+        text: isSecondYellow
+          ? `Segundo amarelo para ${player}. EXPULSO!`
+          : violenta
+            ? `Cartão VERMELHO para ${player} — agressão! Vai a julgamento.`
+            : `Cartão VERMELHO para ${player}`,
         player, important: true,
+        motivoExpulsao: isSecondYellow ? "segundo_amarelo" : "vermelho_direto",
+        expulsaoViolenta: violenta,
       }, ...state.events]
       state.flash = { side, type: "card", cardColor: "red" }
       // Vermelho é golpe pesado no momentum
@@ -820,13 +916,83 @@ function resolveFoul(side: Side, state: MatchState, config: MatchConfig, probs: 
 // Geração de eventos por minuto
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Impedimento. Devolve true quando a jogada foi anulada.
+ *
+ * A frequencia sobe quando o time que DEFENDE joga com linha de impedimento
+ * (tactics-engine.offsideTrap). Ate agora essa opcao so dava +2% de solidez
+ * defensiva, um numero invisivel: o jogador ligava e nao via nada acontecer.
+ * ~1,8 impedimentos por jogo na base, ~3 com a armadilha ligada — proximo do
+ * que se ve numa partida de verdade.
+ */
+function marcarImpedimento(side: Side, state: MatchState, config: MatchConfig): boolean {
+  const defensor = side === "home" ? "away" : "home"
+  const armadilha = defensor === "home" ? config.homeOffsideTrap : config.awayOffsideTrap
+  const chance = armadilha ? 0.14 : 0.08
+  if (rnd() >= chance) return false
+
+  const time = side === "home" ? config.homeTeam : config.awayTeam
+  const jogador = pickPlayer(side, config, ["ATA", "MEI"])
+  state.events = [{
+    id: nameId(), minute: state.minute, type: "offside", side,
+    text: `Impedimento de ${jogador} (${time.curto})`,
+    player: jogador,
+  }, ...state.events]
+  return true
+}
+
+/**
+ * Contra-ataque: o time que acabou de defender sai em velocidade.
+ *
+ * Existia como opcao tatica e como texto de narracao, mas o motor nunca gerava
+ * o evento — entao "jogar de contra-ataque" nao tinha efeito observavel. Aqui a
+ * mentalidade defensiva e o que aumenta a chance, que e justamente a troca do
+ * estilo: menos posse, mais perigo quando recupera.
+ */
+function tentarContraAtaque(side: Side, state: MatchState, config: MatchConfig, probs: DynamicProbs): void {
+  const mentalidade = side === "home" ? config.homeMentality : config.awayMentality
+  const chance = mentalidade === "defensivo" ? 0.10 : mentalidade === "ofensivo" ? 0.03 : 0.05
+  if (rnd() >= chance) return
+
+  const time = side === "home" ? config.homeTeam : config.awayTeam
+  const jogador = pickPlayer(side, config, ["ATA", "MEI"])
+  state.events = [{
+    id: nameId(), minute: state.minute, type: "counter_attack", side,
+    text: `Contra-ataque do ${time.curto} puxado por ${jogador}`,
+    player: jogador,
+  }, ...state.events]
+  state.momentum += side === "home" ? 5 : -5
+  // O contra-ataque chega com perigo: vira finalizacao em boa parte das vezes.
+  if (rnd() < 0.55) resolveShot(side, state, config, probs)
+}
+
 function generateMinuteEvents(state: MatchState, config: MatchConfig): void {
   const probs = calcDynamicProbs(config, state)
   const minute = state.minute
 
-  // Finalizações verificadas independentemente para cada time
-  if (rnd() < probs.homeShotChance) resolveShot("home", state, config, probs)
-  if (rnd() < probs.awayShotChance) resolveShot("away", state, config, probs)
+  // Finalizações verificadas independentemente para cada time.
+  // O impedimento entra ANTES: a jogada existia e foi anulada, entao consome a
+  // chance daquele minuto em vez de virar chute.
+  const homeVaiChutar = rnd() < probs.homeShotChance
+  const awayVaiChutar = rnd() < probs.awayShotChance
+
+  if (homeVaiChutar && marcarImpedimento("home", state, config)) {
+    // anulado: nao vira finalizacao
+  } else if (homeVaiChutar) {
+    resolveShot("home", state, config, probs)
+  }
+  if (awayVaiChutar && marcarImpedimento("away", state, config)) {
+    // anulado
+  } else if (awayVaiChutar) {
+    resolveShot("away", state, config, probs)
+  }
+
+  // Contra-ataque: quem defende e recupera a bola sai em velocidade. So faz
+  // sentido quando o time NAO criou a chance neste minuto e o adversario criou.
+  if (homeVaiChutar !== awayVaiChutar) {
+    const ladoContra: Side = homeVaiChutar ? "away" : "home"
+    tentarContraAtaque(ladoContra, state, config, probs)
+  }
 
   // Faltas verificadas independentemente
   if (rnd() < probs.homeFoulChance) resolveFoul("home", state, config, probs)

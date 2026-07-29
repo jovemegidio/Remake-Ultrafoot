@@ -21,6 +21,7 @@ import {
   X,
   Crown,
   CalendarRange,
+  PlayCircle,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -70,7 +71,9 @@ import { useGameEngine } from "@/lib/game-engine"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { gerarEstatisticasCompeticao } from "@/lib/competition-scorers"
 import { getCompetitionLogo } from "@/lib/competition-logo"
-import { resolveTieByCurto } from "@/lib/cup-engine"
+import { resolveTieByCurto, type CobrancaPenalti } from "@/lib/cup-engine"
+// Assistir a disputa de penaltis de qualquer confronto da chave, nao so do seu.
+import { PenaltisAlheiosModal } from "@/components/match/penaltis-alheios-modal"
 import { getCountryCompetitions, getContinentalSpot, getContinentalDivisions } from "@/lib/country-competitions"
 import { useTranslation } from "@/lib/i18n"
 import { getStandingZone, getStandingZones } from "@/lib/standing-zones"
@@ -88,6 +91,13 @@ interface BracketMatch {
   score2Leg2?: number | null
   played: boolean
   winner: string | null
+  /**
+   * Disputa de pênaltis, quando houve. O placar (`penaltis`) já dava para saber
+   * QUEM passou; `cobrancas` é o que permite ASSISTIR — chute a chute, com quem
+   * bateu e quem errou. Antes as cobranças eram calculadas e descartadas.
+   */
+  penaltis?: [number, number] | null
+  cobrancas?: CobrancaPenalti[] | null
 }
 
 interface CompetitionState {
@@ -375,6 +385,8 @@ function useCompetitions(userTeamShort: string, userPosition: number, season: nu
           score2Leg2: outcome.leg2Home,   // gols do visitante do confronto NA VOLTA (em casa)
           played: true,
           winner: outcome.winnerCurto,
+          penaltis: outcome.penalties,
+          cobrancas: outcome.cobrancas,
         }
       })
 
@@ -598,7 +610,7 @@ function CompViewTabs({
           onClick={() => onChange(o.id)}
           className={cn(
             "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-            value === o.id ? "bg-[#00ffc8] text-black" : "text-white/50 hover:text-white/80",
+            value === o.id ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "text-white/50 hover:text-white/80",
           )}
         >
           {o.label}
@@ -645,14 +657,14 @@ function ScorersTable({
             key={`${r.teamShort}-${r.name}-${i}`}
             className={cn(
               "grid grid-cols-[32px_1fr_36px_48px] items-center gap-3 border-b border-white/5 px-4 py-2.5",
-              isUser && "bg-[#00ffc8]/[0.06]",
+              isUser && "bg-[var(--brand)]/[0.06]",
             )}
           >
             <span className={cn("text-sm font-bold tabular-nums", i === 0 ? "text-amber-400" : "text-white/40")}>{i + 1}</span>
             <div className="flex min-w-0 items-center gap-2">
               {team ? <TeamCrest team={team} size="xs" /> : null}
               <div className="min-w-0">
-                <div className={cn("truncate text-sm font-semibold", isUser ? "text-[#00ffc8]" : "text-white")}>{r.name}</div>
+                <div className={cn("truncate text-sm font-semibold", isUser ? "text-[var(--brand)]" : "text-white")}>{r.name}</div>
                 <div className="truncate text-[10px] text-white/40">{r.teamName}</div>
               </div>
             </div>
@@ -836,9 +848,9 @@ export default function CompeticoesPage() {
             : t.competitions.awaiting,
       userPosition: null,
       icon: Trophy,
-      color: compState.copaBrasil.eliminated ? "text-red-400" : "text-[#00ffc8]",
-      bgColor: compState.copaBrasil.eliminated ? "bg-red-400/10" : "bg-[#00ffc8]/10",
-      borderColor: compState.copaBrasil.eliminated ? "border-red-400/30" : "border-[#00ffc8]/30"
+      color: compState.copaBrasil.eliminated ? "text-red-400" : "text-[var(--brand)]",
+      bgColor: compState.copaBrasil.eliminated ? "bg-red-400/10" : "bg-[var(--brand)]/10",
+      borderColor: compState.copaBrasil.eliminated ? "border-red-400/30" : "border-[var(--brand)]/30"
     },
     {
       id: "estadual",
@@ -901,7 +913,7 @@ export default function CompeticoesPage() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0c0c10] border border-white/[0.04]">
-              <Calendar className="h-4 w-4 text-[#00ffc8]" />
+              <Calendar className="h-4 w-4 text-[var(--brand)]" />
               <span className="text-sm text-white/70">{t.competitions.roundProgress(currentWeek)}</span>
             </div>
           </div>
@@ -920,7 +932,7 @@ export default function CompeticoesPage() {
                 className={cn(
                   "rounded-xl bg-[#0c0c10] border p-5 text-left transition-all",
                   isActive 
-                    ? "border-[#00ffc8] ring-1 ring-[#00ffc8]" 
+                    ? "border-[var(--brand)] ring-1 ring-[var(--brand)]" 
                     : "border-white/[0.04] hover:border-white/10"
                 )}
               >
@@ -943,7 +955,7 @@ export default function CompeticoesPage() {
                     </div>
                   )}
                   {comp.userPosition && (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00ffc8]/20 text-sm font-bold text-[#00ffc8]">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand)]/20 text-sm font-bold text-[var(--brand)]">
                       {comp.userPosition}
                     </span>
                   )}
@@ -1094,6 +1106,14 @@ function CopaBracket({
   onSimulate: () => void
 }) {
   const t = useTranslation()
+  // Disputa de pênaltis aberta para assistir (de qualquer confronto da chave).
+  const [disputaAberta, setDisputaAberta] = useState<{
+    clubeA: { curto: string; nome: string }
+    clubeB: { curto: string; nome: string }
+    cobrancas: CobrancaPenalti[]
+    placar: [number, number]
+    vencedorCurto: string
+  } | null>(null)
   const getTeamData = (short: string | null) => {
     if (!short) return null
     return getTeamByShort(short)
@@ -1102,8 +1122,8 @@ function CopaBracket({
   if (!state.drawn) {
     return (
       <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#00ffc8]/10 mx-auto mb-6">
-          <Trophy className="h-10 w-10 text-[#00ffc8]" />
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--brand)]/10 mx-auto mb-6">
+          <Trophy className="h-10 w-10 text-[var(--brand)]" />
         </div>
         <h3 className="text-xl font-semibold text-white mb-2">{t.competitions.copaDoBrasil} 2026</h3>
         <p className="text-sm text-white/50 mb-6">
@@ -1111,7 +1131,7 @@ function CopaBracket({
         </p>
         <button
           onClick={onDraw}
-          className="px-6 py-3 rounded-lg bg-[#00ffc8] text-black font-semibold hover:bg-[#00c8ff] transition-colors inline-flex items-center gap-2"
+          className="px-6 py-3 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] font-semibold hover:bg-[var(--brand-2)] transition-colors inline-flex items-center gap-2"
         >
           <Shuffle className="h-4 w-4" />
           {t.competitions.draw}
@@ -1137,14 +1157,14 @@ function CopaBracket({
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6 overflow-x-auto scrollbar-thin">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-[#00ffc8]" />
+          <Trophy className="h-5 w-5 text-[var(--brand)]" />
           <h3 className="text-lg font-semibold text-white">{t.competitions.copaDoBrasil} 2026 - Mata-mata</h3>
         </div>
 
         {canSimulate && (
           <button
             onClick={onSimulate}
-            className="px-4 py-2 rounded-lg bg-[#00ffc8] text-black font-medium text-sm hover:bg-[#00c8ff] transition-colors inline-flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] font-medium text-sm hover:bg-[var(--brand-2)] transition-colors inline-flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
             {state.eliminated ? "Simular até o campeão" : `${t.competitions.simulate} ${state.currentRound}`}
@@ -1166,7 +1186,7 @@ function CopaBracket({
           <div key={round.name} className="flex-1">
             <div className={cn(
               "text-xs uppercase tracking-wider mb-3 text-center font-medium",
-              round.isCurrent ? "text-[#00ffc8]" : "text-white/40",
+              round.isCurrent ? "text-[var(--brand)]" : "text-white/40",
               round.name === "Final" && "text-[#ffd700]"
             )}>
               {round.name}
@@ -1190,7 +1210,7 @@ function CopaBracket({
                       userLost 
                         ? "bg-red-500/10 border-red-500/30"
                         : userWon
-                          ? "bg-[#00ffc8]/10 border-[#00ffc8]/30"
+                          ? "bg-[var(--brand)]/10 border-[var(--brand)]/30"
                           : isUserMatch 
                             ? "bg-blue-500/10 border-blue-500/30" 
                             : "bg-white/5 border-white/10"
@@ -1201,13 +1221,13 @@ function CopaBracket({
                       <span className={cn(
                         "text-xs flex-1",
                         match.team1 === userTeam.curto && "font-bold text-white",
-                        match.played && match.winner === match.team1 && "text-[#00ffc8]"
+                        match.played && match.winner === match.team1 && "text-[var(--brand)]"
                       )}>
                         {match.team1 || t.competitions.toBeDefined}
                       </span>
                       <span className={cn(
                         "text-sm font-bold tabular-nums",
-                        match.played && match.winner === match.team1 ? "text-[#00ffc8]" : "text-white/50"
+                        match.played && match.winner === match.team1 ? "text-[var(--brand)]" : "text-white/50"
                       )}>
                         {match.score1 ?? "-"}
                       </span>
@@ -1217,17 +1237,37 @@ function CopaBracket({
                       <span className={cn(
                         "text-xs flex-1",
                         match.team2 === userTeam.curto && "font-bold text-white",
-                        match.played && match.winner === match.team2 && "text-[#00ffc8]"
+                        match.played && match.winner === match.team2 && "text-[var(--brand)]"
                       )}>
                         {match.team2 || t.competitions.toBeDefined}
                       </span>
                       <span className={cn(
                         "text-sm font-bold tabular-nums",
-                        match.played && match.winner === match.team2 ? "text-[#00ffc8]" : "text-white/50"
+                        match.played && match.winner === match.team2 ? "text-[var(--brand)]" : "text-white/50"
                       )}>
                         {match.score2 ?? "-"}
                       </span>
                     </div>
+
+                    {/* ASSISTIR AOS PÊNALTIS — inclusive de um confronto que não
+                        é o seu. O placar da disputa já aparecia em silêncio; o
+                        botão abre as cobranças, uma a uma. */}
+                    {match.penaltis && match.cobrancas && match.cobrancas.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setDisputaAberta({
+                          clubeA: { curto: match.team1, nome: getTeamData(match.team1)?.nome ?? match.team1 },
+                          clubeB: { curto: match.team2, nome: getTeamData(match.team2)?.nome ?? match.team2 },
+                          cobrancas: match.cobrancas!,
+                          placar: match.penaltis!,
+                          vencedorCurto: match.winner ?? match.team1,
+                        })}
+                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-white/10 py-1.5 text-[11px] text-white/50 transition-colors hover:border-[var(--brand)]/40 hover:text-white"
+                      >
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        Assistir pênaltis ({match.penaltis[0]}-{match.penaltis[1]})
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -1235,7 +1275,19 @@ function CopaBracket({
           </div>
         ))}
       </div>
-      
+
+      {disputaAberta && (
+        <PenaltisAlheiosModal
+          aberto
+          clubeA={disputaAberta.clubeA}
+          clubeB={disputaAberta.clubeB}
+          cobrancas={disputaAberta.cobrancas}
+          placar={disputaAberta.placar}
+          vencedorCurto={disputaAberta.vencedorCurto}
+          onFechar={() => setDisputaAberta(null)}
+        />
+      )}
+
       {state.eliminated && (
         <div className="mt-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-center">
           <X className="h-6 w-6 text-red-500 mx-auto mb-2" />
@@ -1448,7 +1500,7 @@ function StandingsTable({
               key={row.team.curto}
               className={cn(
                 "grid grid-cols-[40px_1fr_40px_40px_40px_40px_50px_50px_50px_60px_100px] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02]",
-                row.isUser && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]"
+                row.isUser && "bg-[var(--brand)]/10 border-l-2 border-[var(--brand)]"
               )}
             >
               <span
@@ -1475,14 +1527,14 @@ function StandingsTable({
               </div>
 
               <span className="text-center text-sm tabular-nums text-white/70">{row.played}</span>
-              <span className="text-center text-sm tabular-nums text-[#00ffc8]">{row.won}</span>
+              <span className="text-center text-sm tabular-nums text-[var(--brand)]">{row.won}</span>
               <span className="text-center text-sm tabular-nums text-white/50">{row.drawn}</span>
               <span className="text-center text-sm tabular-nums text-red-500">{row.lost}</span>
               <span className="text-center text-sm tabular-nums text-white/70">{row.goalsFor}</span>
               <span className="text-center text-sm tabular-nums text-white/70">{row.goalsAgainst}</span>
               <span className={cn(
                 "text-center text-sm tabular-nums",
-                row.goalDiff > 0 ? "text-[#00ffc8]" :
+                row.goalDiff > 0 ? "text-[var(--brand)]" :
                 row.goalDiff < 0 ? "text-red-500" :
                 "text-white/50"
               )}>
@@ -1496,7 +1548,7 @@ function StandingsTable({
                     key={i}
                     className={cn(
                       "h-5 w-5 rounded text-[10px] font-bold flex items-center justify-center",
-                      result === "W" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
+                      result === "W" ? "bg-[var(--brand)]/20 text-[var(--brand)]" :
                       result === "D" ? "bg-white/10 text-white/50" :
                       result === "L" ? "bg-red-500/20 text-red-500" :
                       "bg-white/5 text-white/20"

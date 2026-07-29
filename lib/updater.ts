@@ -1,4 +1,5 @@
 import { isTauri } from "@/lib/game-asset"
+import { buscarJson } from "@/lib/buscar-json"
 
 export interface InGameUpdateOffer {
   version: string
@@ -14,13 +15,37 @@ export interface InGameUpdateOffer {
  *  2. avisar o jogador, com um diálogo do próprio jogo, que há versão nova e que
  *     ela é instalada pelo launcher.
  *
- * A verificação lê o mesmo latest.json publicado no GitHub. No navegador (fora do
- * Tauri) é no-op.
+ * A verificação lê o latest.json publicado. No navegador (fora do Tauri) é no-op.
  */
 export type UpdateCheckResult = "current" | "available" | "unavailable"
 
-const LATEST_JSON_URL =
+// Dupla primária/reserva, igual à do manifesto de elencos — e nesta ordem de
+// propósito.
+//
+// "releases/latest" do GitHub aponta para a release mais recente do
+// REPOSITÓRIO, não para a última build do jogo. Toda vez que sai uma release do
+// launcher ou dos pacotes de Linux/macOS, ela assume esse lugar — e como essas
+// releases não carregam latest.json, a URL passa a responder 404 e a
+// verificação morre em silêncio. Foi o que aconteceu: hoje "latest" é
+// launcher-desktop-1.0.19 e o latest.json do jogo está em build-1.0.201.
+//
+// A VPS serve sempre o manifesto do JOGO, então é ela que vem primeiro.
+const LATEST_JSON_VPS = "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json"
+const LATEST_JSON_GITHUB =
   "https://github.com/jovemegidio/Ultrafoot26/releases/latest/download/latest.json"
+
+interface LatestJson {
+  version?: string
+  notes?: string
+}
+
+async function lerLatest(): Promise<LatestJson | null> {
+  const dado =
+    (await buscarJson<LatestJson>(LATEST_JSON_VPS, 8000)) ??
+    (await buscarJson<LatestJson>(LATEST_JSON_GITHUB, 12000))
+  // Sem `version` não é manifesto: é página de erro que virou JSON.
+  return dado?.version ? dado : null
+}
 
 /** Compara "1.0.146" > "1.0.145" numericamente, segmento a segmento. */
 function isNewer(latest: string, current: string): boolean {
@@ -35,31 +60,69 @@ function isNewer(latest: string, current: string): boolean {
   return false
 }
 
+export interface VersaoPublicada {
+  /** Versão instalada nesta máquina. */
+  atual: string
+  /** Versão publicada no latest.json. */
+  publicada: string
+  notas: string
+  /** true = a publicada é mais nova que a instalada. */
+  nova: boolean
+}
+
+/**
+ * Consulta a versão publicada e DEVOLVE o resultado, sem diálogo nativo e sem
+ * disparar evento.
+ *
+ * É o que a tela de Atualizações usa: lá o resultado vira uma linha na
+ * interface do próprio jogo. checkForUpdates continua sendo o caminho do boot,
+ * onde a resposta é um aviso e não uma tela.
+ */
+export async function consultarVersaoPublicada(): Promise<VersaoPublicada | null> {
+  if (typeof window === "undefined" || !isTauri()) return null
+  try {
+    const { getVersion } = await import("@tauri-apps/api/app")
+    const atual = await getVersion()
+
+    const data = await lerLatest()
+    if (!data?.version) return null
+    const publicada = String(data.version)
+
+    return {
+      atual,
+      publicada,
+      notas: data.notes ?? "Correções, melhorias de estabilidade e dados atualizados.",
+      nova: isNewer(publicada, atual),
+    }
+  } catch (err) {
+    console.error("[updater] falha ao consultar versão publicada:", err)
+    return null
+  }
+}
+
 export async function checkForUpdates(opts: { silent?: boolean } = {}): Promise<UpdateCheckResult> {
   if (typeof window === "undefined" || !isTauri()) return "unavailable"
 
   try {
-    const { getVersion } = await import("@tauri-apps/api/app")
-    const current = await getVersion()
+    // Mesma consulta da tela de Atualizações — uma fonte só para as duas.
+    const versao = await consultarVersaoPublicada()
+    if (!versao) {
+      if (!opts.silent) {
+        const { message } = await import("@tauri-apps/plugin-dialog")
+        await message("Não foi possível verificar atualizações no momento. Tente novamente mais tarde.", {
+          title: "Atualização",
+          kind: "warning",
+        })
+      }
+      return "unavailable"
+    }
 
-    // http nativo: o webview aplicaria CORS; o plugin faz a requisição no lado nativo.
-    const { fetch } = await import("@tauri-apps/plugin-http")
-    const res = await fetch(LATEST_JSON_URL, { method: "GET" })
-    if (!res.ok) return "unavailable"
-
-    const data = (await res.json()) as { version?: string; notes?: string }
-    const latest = String(data.version ?? "")
-    if (!latest) return "unavailable"
-
-    if (isNewer(latest, current)) {
+    if (versao.nova) {
       // A UI do jogo (NativeAppProvider) mostra o diálogo orientando a atualizar
       // pelo launcher. Isso substitui o antigo download/instalação in-game.
       window.dispatchEvent(
         new CustomEvent<InGameUpdateOffer>("ultrafoot:update-available", {
-          detail: {
-            version: latest,
-            notes: data.notes ?? "Correções, melhorias de estabilidade e dados atualizados.",
-          },
+          detail: { version: versao.publicada, notes: versao.notas },
         }),
       )
       return "available"

@@ -589,7 +589,7 @@ export default function NovoJogoPage() {
             {/* ── Zona 2: Uniforme + Estadio ── */}
             <div className="flex flex-col gap-3 w-full lg:w-[220px] shrink-0">
               {/* Card Uniforme */}
-              <button onClick={cycleUniform} className={cn(cardBase, "flex-1 flex flex-col items-center px-5 py-4 transition-colors hover:border-[#00ffc8]/30")} aria-label="Trocar uniforme">
+              <button onClick={cycleUniform} className={cn(cardBase, "flex-1 flex flex-col items-center px-5 py-4 transition-colors hover:border-[var(--brand)]/30")} aria-label="Trocar uniforme">
                 <span className="text-xs text-white/50 tracking-wide">Uniforme</span>
                 <span className="text-base font-black uppercase tracking-wide text-white mb-2">Uniforme {(uniformIndex % uniformVariants.length) + 1}</span>
                 <div className="flex-1 flex items-center justify-center w-full px-6">
@@ -618,7 +618,7 @@ export default function NovoJogoPage() {
                 <div className="flex items-center gap-2 mt-3">
                   <ChevronLeft className="w-3.5 h-3.5 text-white/30" />
                   {[0, 1, 2].map(i => (
-                    <span key={i} className={cn("w-1.5 h-1.5 rounded-full transition-colors", i === uniformIndex ? "bg-[#00ffc8]" : "bg-white/20")} />
+                    <span key={i} className={cn("w-1.5 h-1.5 rounded-full transition-colors", i === uniformIndex ? "bg-[var(--brand)]" : "bg-white/20")} />
                   ))}
                   <ChevronRight className="w-3.5 h-3.5 text-white/30" />
                 </div>
@@ -629,7 +629,7 @@ export default function NovoJogoPage() {
               <button
                 onClick={() => stadiumPhoto && setShowStadiumPhoto(true)}
                 onMouseEnter={() => stadiumPhoto && setShowStadiumPhoto(true)}
-                className={cn(cardBase, "flex flex-col items-center px-5 py-4 gap-2", stadiumPhoto && "cursor-pointer hover:ring-1 hover:ring-[#00ffc8]/40")}
+                className={cn(cardBase, "flex flex-col items-center px-5 py-4 gap-2", stadiumPhoto && "cursor-pointer hover:ring-1 hover:ring-[var(--brand)]/40")}
               >
                 <span className="text-xs text-white/50 tracking-wide">Nome do estádio</span>
                 <span className="text-sm font-black uppercase tracking-wide text-white text-center text-balance leading-tight">{selectedTeam?.estadio_nome}</span>

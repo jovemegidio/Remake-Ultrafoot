@@ -255,7 +255,7 @@ export function SubstitutionModal({
               <ArrowLeftRight className="h-5 w-5" style={{ color: team.cor1 }} />
             </div>
             <div>
-              <p className="mb-0.5 text-[9px] font-black uppercase tracking-[0.22em] text-[#00ffc8]/70">Central tática</p>
+              <p className="mb-0.5 text-[9px] font-black uppercase tracking-[0.22em] text-[var(--brand)]/70">Central tática</p>
               <h3 className="text-xl font-black tracking-tight text-white">
                 Substituição
               </h3>
@@ -269,7 +269,7 @@ export function SubstitutionModal({
             <div className="hidden items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-white/35 md:flex">
               <span className={cn("rounded-full px-2 py-1", out ? "bg-rose-400/15 text-rose-300" : "bg-white/5")}>1 · Saída</span>
               <ChevronRight className="h-3 w-3" />
-              <span className={cn("rounded-full px-2 py-1", inPlayer ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/5")}>2 · Entrada</span>
+              <span className={cn("rounded-full px-2 py-1", inPlayer ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-white/5")}>2 · Entrada</span>
               <ChevronRight className="h-3 w-3" />
               <span className={cn("rounded-full px-2 py-1", pending.length ? "bg-white/10 text-white/75" : "bg-white/5")}>3 · Confirmar</span>
             </div>
@@ -277,7 +277,7 @@ export function SubstitutionModal({
               className={cn(
                 "rounded-full px-3 py-1 text-[10px] font-bold tracking-wider",
                 subsRemaining > 2
-                  ? "bg-[#00ffc8]/15 text-[#00ffc8]"
+                  ? "bg-[var(--brand)]/15 text-[var(--brand)]"
                   : subsRemaining > 0
                     ? "bg-yellow-400/15 text-yellow-400"
                     : "bg-red-400/15 text-red-400",
@@ -340,7 +340,7 @@ export function SubstitutionModal({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-[11px] font-bold text-white/60 tracking-[0.2em] flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#00ffc8]" />
+                <span className="h-2 w-2 rounded-full bg-[var(--brand)]" />
                 ENTRA EM CAMPO
               </h4>
               <span className="text-[10px] text-white/40 tracking-wider">
@@ -372,7 +372,7 @@ export function SubstitutionModal({
         {/* Footer com preview da substituição */}
         <div className="border-t border-white/[0.06] bg-black/35 px-5 py-3">
           {pending.length > 0 && <div className="mb-3 flex flex-wrap gap-2">
-            {pending.map((change, index) => <button key={`${change.out.id}-${change.inPlayer.id}`} onClick={() => setPending(current => current.filter((_, i) => i !== index))} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[10px] text-white/70 hover:border-red-400/50" title="Remover troca">{change.out.name} → <span className="text-[#00ffc8]">{change.inPlayer.name}</span> ×</button>)}
+            {pending.map((change, index) => <button key={`${change.out.id}-${change.inPlayer.id}`} onClick={() => setPending(current => current.filter((_, i) => i !== index))} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[10px] text-white/70 hover:border-red-400/50" title="Remover troca">{change.out.name} → <span className="text-[var(--brand)]">{change.inPlayer.name}</span> ×</button>)}
           </div>}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -394,12 +394,12 @@ export function SubstitutionModal({
 
               {inPlayer ? (
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00ffc8]/15 text-[#00ffc8] font-bold text-xs flex-shrink-0">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand)]/15 text-[var(--brand)] font-bold text-xs flex-shrink-0">
                     #{inPlayer.number}
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-white truncate">{inPlayer.name}</div>
-                    <div className="text-[10px] text-[#00ffc8]">ENTRA · OVR {inPlayer.rating}</div>
+                    <div className="text-[10px] text-[var(--brand)]">ENTRA · OVR {inPlayer.rating}</div>
                   </div>
                 </div>
               ) : (
@@ -419,14 +419,14 @@ export function SubstitutionModal({
                 onClick={handleAdd}
                 disabled={!canAdd}
                 variant="outline"
-                className="text-xs border-[#00ffc8]/30 bg-transparent text-[#00ffc8] disabled:opacity-30"
+                className="text-xs border-[var(--brand)]/30 bg-transparent text-[var(--brand)] disabled:opacity-30"
               >
                 ADICIONAR À FILA
               </Button>
               <Button
                 onClick={handleConfirm}
                 disabled={!canConfirm}
-                className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-30 font-bold tracking-wide"
+                className="text-xs bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] disabled:opacity-30 font-bold tracking-wide"
               >
                 <Check className="mr-2 h-3.5 w-3.5" />
                 CONFIRMAR {pending.length} {pending.length === 1 ? "TROCA" : "TROCAS"}

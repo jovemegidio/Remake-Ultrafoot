@@ -1,6 +1,18 @@
 "use client"
 
 import { useRef, useCallback, useEffect } from "react"
+import { EVENTO_SFX, ganhoDoVolume } from "@/lib/sfx-volume"
+import { loadGameState } from "@/lib/save-system"
+
+/** Volume salvo, lido de forma sincrona (sem assinar o save: ver o efeito abaixo). */
+function volumeSalvo(): number {
+  if (typeof window === "undefined") return 80
+  try {
+    return loadGameState().sfxVolume ?? 80
+  } catch {
+    return 80
+  }
+}
 
 export type MatchSoundType =
   | "gol"
@@ -16,6 +28,9 @@ export type MatchSoundType =
 export function useMatchSounds() {
   const ctxRef = useRef<AudioContext | null>(null)
   const masterRef = useRef<GainNode | null>(null)
+  // Volume escolhido pelo jogador (0-100). Fica num ref porque o barramento e
+  // criado sob demanda, dentro de callbacks que nao devem depender de render.
+  const volumeRef = useRef<number>(volumeSalvo())
 
   const getCtx = useCallback((): AudioContext | null => {
     if (typeof window === "undefined") return null
@@ -37,7 +52,8 @@ export function useMatchSounds() {
     if (masterRef.current) return masterRef.current
 
     const master = ctx.createGain()
-    master.gain.value = 0.9
+    // Era 0.9 fixo — o slider "Efeitos Sonoros" nao chegava aqui.
+    master.gain.value = ganhoDoVolume(volumeRef.current)
 
     // Compressor para "colar" os elementos e evitar clipping
     const comp = ctx.createDynamicsCompressor()
@@ -73,6 +89,18 @@ export function useMatchSounds() {
 
     masterRef.current = master
     return master
+  }, [])
+
+  // Acompanha o arrasto do slider para dar para calibrar de ouvido em vez de no
+  // escuro. O valor salvo entra na montagem (cada navegacao recarrega a pagina).
+  useEffect(() => {
+    const aoMudar = (e: Event) => {
+      const v = Number((e as CustomEvent<number>).detail)
+      volumeRef.current = v
+      if (masterRef.current) masterRef.current.gain.value = ganhoDoVolume(v)
+    }
+    window.addEventListener(EVENTO_SFX, aoMudar)
+    return () => window.removeEventListener(EVENTO_SFX, aoMudar)
   }, [])
 
   // Buffer de ruido rosa (mais natural que ruido branco)

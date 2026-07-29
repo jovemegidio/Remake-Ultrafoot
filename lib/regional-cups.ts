@@ -31,11 +31,25 @@ export const COPA_VERDE: RegionalCup = {
   matchCount: 4,
 }
 
-const TODAS: readonly RegionalCup[] = [COPA_NORDESTE, COPA_VERDE]
+
+/**
+ * TORNEIO RIO-SAO PAULO. Competicao historica (1933-1966, com retomadas ate
+ * 2002) entre os grandes do RJ e de SP. Entra como copa regional pelo mesmo
+ * mecanismo das outras duas — so que restrita a dois estados, que e exatamente
+ * o que ela era.
+ */
+export const RIO_SAO_PAULO: RegionalCup = {
+  id: "rio_sao_paulo",
+  name: "Torneio Rio-Sao Paulo",
+  states: ["RJ", "SP"],
+  matchCount: 4,
+}
+
+const TODAS: readonly RegionalCup[] = [COPA_NORDESTE, COPA_VERDE, RIO_SAO_PAULO]
 
 /**
  * A copa regional que o clube disputa, pelo estado. `null` para estados fora
- * das duas regiões (SP, RJ, MG, RS, PR, SC, GO) — como na vida real.
+ * das regiões cobertas (MG, RS, PR, SC, GO) — como na vida real.
  */
 export function regionalCupForState(estado: string | undefined | null): RegionalCup | null {
   if (!estado) return null

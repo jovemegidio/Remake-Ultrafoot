@@ -213,7 +213,7 @@ export function GamepadHeaderControls({
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#00ffc8] animate-pulse" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand)] animate-pulse" />
         {controllerIcon}
       </div>
 
@@ -232,7 +232,7 @@ export function GamepadHeaderControls({
                 className={cn(
                   "rounded-full transition-all",
                   i === currentTab 
-                    ? "w-4 h-1.5 bg-[#00ffc8]" 
+                    ? "w-4 h-1.5 bg-[var(--brand)]" 
                     : "w-1.5 h-1.5 bg-white/20"
                 )}
               />

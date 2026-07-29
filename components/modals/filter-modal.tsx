@@ -210,7 +210,7 @@ export function FilterModal({
           </Button>
           <Button 
             onClick={handleApply} 
-            className="flex-1 bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+            className="flex-1 bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
           >
             Aplicar Filtros
           </Button>

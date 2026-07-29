@@ -5,12 +5,13 @@
 // leva a flag `friendly`, que a tela da partida respeita.
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, Swords, ArrowRightLeft, Home, Plane, CalendarDays } from "lucide-react"
+import { Search, Swords, ArrowRightLeft, Home, Plane, CalendarDays, Trophy } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { useUserTeam, useGameState, useManagingNational } from "@/lib/save-system"
 import { allTeams, type Team } from "@/lib/teams-data"
 import { saveMatchContext } from "@/lib/match-context"
+import { TorneioAmistosoPanel } from "@/components/torneio-amistoso-panel"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { cn } from "@/lib/utils"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
@@ -43,7 +44,13 @@ export default function AmistososPage() {
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
 
   const { team: userTeam } = useUserTeam()
-  const { state } = useGameState()
+  const { state, setState } = useGameState()
+  // Dois modos na mesma tela: o amistoso avulso que ja existia e o TORNEIO
+  // criavel. Se ha torneio em andamento, a tela abre nele — e o que o tecnico
+  // veio fazer.
+  const [modo, setModo] = useState<"avulso" | "torneio">(
+    state.torneioAmistoso ? "torneio" : "avulso",
+  )
   // MODO SELEÇÃO: esta tela monta uma partida AO VIVO entre dois clubes do banco.
   // Com a seleção como time atual não há elenco de clube para carregar — o
   // amistoso de seleção é simulado e tem tela própria.
@@ -97,6 +104,55 @@ export default function AmistososPage() {
           </div>
         </div>
 
+        {/* Modo: amistoso avulso ou torneio criavel */}
+        <div className="mb-5 flex items-center gap-2">
+          <button
+            onClick={() => setModo("avulso")}
+            className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-all",
+              modo === "avulso" ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]")}
+          >
+            <Swords className="h-4 w-4" /> Jogo avulso
+          </button>
+          <button
+            onClick={() => setModo("torneio")}
+            className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-all",
+              modo === "torneio" ? "border-primary bg-primary/15 text-primary" : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]")}
+          >
+            <Trophy className="h-4 w-4" /> Torneio
+            {state.torneioAmistoso && <span className="rounded bg-primary/25 px-1.5 text-[10px]">em andamento</span>}
+          </button>
+        </div>
+
+        {modo === "torneio" ? (
+          <TorneioAmistosoPanel
+            torneio={state.torneioAmistoso}
+            clubeDoUsuario={userTeam.curto}
+            onSalvar={(t) => setState({ torneioAmistoso: t })}
+            onJogar={(jogo, nomeDoTorneio, rotulo) => {
+              const souMandante = jogo.mandanteCurto === userTeam.curto
+              saveMatchContext({
+                homeShort: jogo.mandanteCurto,
+                awayShort: jogo.visitanteCurto,
+                homeKit: "home",
+                awayKit: "away",
+                competition: nomeDoTorneio,
+                round: rotulo,
+                // Amistoso: nao conta para a temporada nem avanca a semana. O
+                // marcador `torneio` e o que faz o placar voltar para a tabela.
+                friendly: true,
+                torneio: {
+                  rodada: jogo.rodada,
+                  mandanteCurto: jogo.mandanteCurto,
+                  visitanteCurto: jogo.visitanteCurto,
+                },
+                duration: 90,
+                ...(souMandante ? {} : {}),
+              })
+              hardNavigate("/partida/ao-vivo")
+            }}
+          />
+        ) : (
+        <>
         {/* Mando de campo */}
         <div className="mb-4 flex items-center gap-2">
           <button
@@ -165,6 +221,8 @@ export default function AmistososPage() {
             <p className="col-span-full py-8 text-center text-sm text-white/40">Nenhum adversário encontrado.</p>
           )}
         </div>
+        </>
+        )}
       </main>
     </div>
   )

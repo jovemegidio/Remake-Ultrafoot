@@ -142,7 +142,7 @@ function TeamPanel({
         className={cn(
           "relative w-full cursor-pointer overflow-hidden rounded-2xl transition-all",
           selected
-            ? "border-2 border-[#00ffc8]/70 bg-[linear-gradient(160deg,rgba(22,30,40,0.96)_0%,rgba(10,14,20,0.96)_100%)] shadow-[0_0_38px_rgba(0,255,200,0.16),0_20px_60px_rgba(0,0,0,0.6)]"
+            ? "border-2 border-[var(--brand)]/70 bg-[linear-gradient(160deg,rgba(22,30,40,0.96)_0%,rgba(10,14,20,0.96)_100%)] shadow-[0_0_38px_rgba(0,255,200,0.16),0_20px_60px_rgba(0,0,0,0.6)]"
             : "border border-white/[0.07] bg-[linear-gradient(160deg,rgba(20,26,34,0.85)_0%,rgba(10,14,20,0.9)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.55)]",
         )}
       >
@@ -609,7 +609,7 @@ export default function PartidaPage() {
           <div className="flex flex-col leading-tight">
             <h1 className="text-lg font-black tracking-tight text-white">{matchInfo.competition}</h1>
             <div className="flex items-center gap-2 text-xs font-semibold text-white/55">
-              <span className="uppercase tracking-wider text-[#00ffc8]">{matchInfo.round}</span>
+              <span className="uppercase tracking-wider text-[var(--brand)]">{matchInfo.round}</span>
               {matchInfo.stadium ? (
                 <>
                   <span className="h-3 w-px bg-white/20" />
@@ -722,7 +722,7 @@ export default function PartidaPage() {
             </ul>
             <div className="mt-5 space-y-2">
               <button onClick={corrigirAutomatico}
-                className="w-full rounded-lg bg-[#00ffc8] py-3 text-sm font-bold text-black hover:brightness-110">
+                className="w-full rounded-lg bg-[var(--brand)] py-3 text-sm font-bold text-[var(--brand-ink)] hover:brightness-110">
                 Corrigir automaticamente
                 <span className="block text-[11px] font-medium text-black/60">Substitui pelos melhores reservas aptos e inicia a partida</span>
               </button>

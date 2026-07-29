@@ -34,14 +34,14 @@ interface SubstitutionPanelProps {
 
 function getRatingColor(rating: number): string {
   if (rating >= 85) return "from-[#d4af37] to-[#ffd700]"
-  if (rating >= 80) return "from-[#00ffc8] to-[#2ecc71]"
+  if (rating >= 80) return "from-[var(--brand)] to-[#2ecc71]"
   if (rating >= 75) return "from-[#3498db] to-[#5dade2]"
   if (rating >= 70) return "from-[#9b59b6] to-[#bb6bd9]"
   return "from-[#7f8c8d] to-[#95a5a6]"
 }
 
 function getStaminaColor(stamina: number): string {
-  if (stamina >= 70) return "bg-[#00ffc8]"
+  if (stamina >= 70) return "bg-[var(--brand)]"
   if (stamina >= 40) return "bg-[#f59e0b]"
   return "bg-[#ef4444]"
 }
@@ -93,7 +93,7 @@ export function SubstitutionPanel({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
       <div className="w-full max-w-5xl bg-[#0d0d0d] rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-gradient-to-r from-[#00ffc8]/10 to-transparent">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-gradient-to-r from-[var(--brand)]/10 to-transparent">
           <div className="flex items-center gap-4">
             <TeamCrest team={team} size="md" />
             <div>
@@ -122,11 +122,11 @@ export function SubstitutionPanel({
         <div className="flex items-center justify-center gap-4 py-4 border-b border-white/[0.04]">
           <div className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-lg transition",
-            step === "select-out" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "text-white/40"
+            step === "select-out" ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "text-white/40"
           )}>
             <div className={cn(
               "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-              step === "select-out" ? "bg-[#00ffc8] text-black" : selectedOut ? "bg-[#00ffc8] text-black" : "bg-white/10"
+              step === "select-out" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : selectedOut ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/10"
             )}>
               {selectedOut ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : "1"}
             </div>
@@ -137,11 +137,11 @@ export function SubstitutionPanel({
           
           <div className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-lg transition",
-            step === "select-in" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "text-white/40"
+            step === "select-in" ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "text-white/40"
           )}>
             <div className={cn(
               "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-              step === "select-in" ? "bg-[#00ffc8] text-black" : selectedIn ? "bg-[#00ffc8] text-black" : "bg-white/10"
+              step === "select-in" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : selectedIn ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/10"
             )}>
               {selectedIn ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : "2"}
             </div>
@@ -152,11 +152,11 @@ export function SubstitutionPanel({
           
           <div className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-lg transition",
-            step === "confirm" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "text-white/40"
+            step === "confirm" ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "text-white/40"
           )}>
             <div className={cn(
               "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-              step === "confirm" ? "bg-[#00ffc8] text-black" : "bg-white/10"
+              step === "confirm" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/10"
             )}>
               3
             </div>
@@ -182,7 +182,7 @@ export function SubstitutionPanel({
                       "flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
                       player.redCard
                         ? "opacity-40 cursor-not-allowed border-red-500/50 bg-red-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#00ffc8]/50"
+                        : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-[var(--brand)]/50"
                     )}
                   >
                     <div
@@ -228,7 +228,7 @@ export function SubstitutionPanel({
             <div className="space-y-4">
               <div className="text-center mb-6">
                 <div className="text-sm text-white/60">
-                  <span className="text-[#00ffc8] font-semibold">{selectedOut?.name}</span> sai. Selecione quem entra.
+                  <span className="text-[var(--brand)] font-semibold">{selectedOut?.name}</span> sai. Selecione quem entra.
                 </div>
               </div>
               
@@ -237,7 +237,7 @@ export function SubstitutionPanel({
                   <button
                     key={player.id}
                     onClick={() => handleSelectIn(player)}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#00ffc8]/50 transition-all text-left"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[var(--brand)]/50 transition-all text-left"
                   >
                     <div
                       className="h-12 w-12 rounded-lg flex items-center justify-center text-lg font-bold shadow-lg"
@@ -291,15 +291,15 @@ export function SubstitutionPanel({
 
                 {/* Arrow */}
                 <div className="flex flex-col items-center">
-                  <ArrowLeftRight className="h-10 w-10 text-[#00ffc8]" />
+                  <ArrowLeftRight className="h-10 w-10 text-[var(--brand)]" />
                   <div className="mt-2 text-[10px] text-white/40">{currentMinute}&apos;</div>
                 </div>
 
                 {/* Player In */}
                 <div className="flex flex-col items-center">
-                  <div className="text-[10px] text-[#00ffc8] uppercase tracking-wider mb-2 font-semibold">Entra</div>
+                  <div className="text-[10px] text-[var(--brand)] uppercase tracking-wider mb-2 font-semibold">Entra</div>
                   <div
-                    className="h-20 w-20 rounded-xl flex items-center justify-center text-3xl font-black shadow-lg border-2 border-[#00ffc8]/50"
+                    className="h-20 w-20 rounded-xl flex items-center justify-center text-3xl font-black shadow-lg border-2 border-[var(--brand)]/50"
                     style={{ backgroundColor: team.cor1, color: team.cor2 }}
                   >
                     {selectedIn.number}
@@ -327,7 +327,7 @@ export function SubstitutionPanel({
                 </Button>
                 <Button
                   onClick={handleConfirm}
-                  className="px-8 bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold"
+                  className="px-8 bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] font-bold"
                 >
                   Confirmar Substituicao
                 </Button>

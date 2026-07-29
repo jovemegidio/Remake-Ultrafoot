@@ -283,11 +283,27 @@ export default function BasePage() {
       const faltam = TRYOUT_COOLDOWN - semanasDesdePeneira
       return window.alert(`A próxima peneira só daqui a ${faltam} semana${faltam === 1 ? "" : "s"} (uma a cada ~2 meses).`)
     }
+    // CAPACIDADE: a peneira era a unica porta de entrada que nao olhava as vagas
+    // (comprar no mercado de juniores ja olhava). Dava para estourar o teto da
+    // academia e manter uma fila de garotos maior do que o clube comporta.
+    if (vagas <= 0) {
+      return window.alert(
+        "A categoria de base está lotada. Promova, venda ou dispense alguém antes da próxima peneira.",
+      )
+    }
     const fee = 100_000
     if (caixaDoMotor < fee) return window.alert("Saldo insuficiente para realizar a peneira.")
     if (!gastarDoCaixa(fee)) return window.alert("Saldo insuficiente para realizar a peneira.")
     const intake = runTryout(state, "sub17")
-    setState({ youthPlayers: [...youth, ...intake.players], youthTryoutStamp: stampAtual })
+    // So entra quem cabe. O resto da peneira "nao vingou" — melhor do que
+    // estourar o teto que a propria tela anuncia.
+    const aproveitados = intake.players.slice(0, vagas)
+    setState({ youthPlayers: [...youth, ...aproveitados], youthTryoutStamp: stampAtual })
+    if (aproveitados.length < intake.players.length) {
+      window.alert(
+        `A base tinha ${vagas} vaga(s): ${aproveitados.length} garoto(s) foram aproveitados de ${intake.players.length} avaliados.`,
+      )
+    }
   }
 
   const developMonth = () => {

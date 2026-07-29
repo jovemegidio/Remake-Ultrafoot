@@ -626,7 +626,7 @@ export function MatchRadar({
           aria-label="Posicionamento tático em tempo real"
         >
         <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-white/70 backdrop-blur">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00ffc8]" />
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--brand)]" />
           Ao vivo · {minute}&apos;
         </div>
         <div className="pointer-events-none absolute right-3 top-3 z-20 rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[8px] font-bold tracking-wider text-white/55 backdrop-blur">

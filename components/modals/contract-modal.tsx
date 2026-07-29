@@ -211,13 +211,13 @@ export function ContractModal({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-white/50 uppercase tracking-wider">Valor de Mercado</div>
-                  <div className="text-xl font-bold text-[#00ffc8]">{formatSalary(player.marketValue)}</div>
+                  <div className="text-xl font-bold text-[var(--brand)]">{formatSalary(player.marketValue)}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-white/50 uppercase tracking-wider">Potencial</div>
                   <div className="flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
-                    <span className="text-xl font-bold text-[#00ffc8]">{player.potential}</span>
+                    <TrendingUp className="h-4 w-4 text-[var(--brand)]" />
+                    <span className="text-xl font-bold text-[var(--brand)]">{player.potential}</span>
                   </div>
                 </div>
               </div>
@@ -314,8 +314,8 @@ export function ContractModal({
         {step === "success" && (
           <div className="py-12 text-center">
             <div className="relative">
-              <div className="h-20 w-20 mx-auto rounded-full bg-[#00ffc8]/20 flex items-center justify-center mb-6">
-                <Sparkles className="h-10 w-10 text-[#00ffc8]" />
+              <div className="h-20 w-20 mx-auto rounded-full bg-[var(--brand)]/20 flex items-center justify-center mb-6">
+                <Sparkles className="h-10 w-10 text-[var(--brand)]" />
               </div>
             </div>
             <h3 className="text-xl font-bold text-white mb-2">Contrato Renovado!</h3>
@@ -327,7 +327,7 @@ export function ContractModal({
               }
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10">
-              <DollarSign className="h-4 w-4 text-[#00ffc8]" />
+              <DollarSign className="h-4 w-4 text-[var(--brand)]" />
               <span className="text-white font-semibold">{formatSalary(newSalary)}</span>
               <span className="text-white/50">/semana</span>
             </div>
@@ -346,7 +346,7 @@ export function ContractModal({
               </Button>
               <Button 
                 onClick={() => setStep("negotiate")}
-                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+                className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
               >
                 Renovar Contrato
               </Button>
@@ -364,7 +364,7 @@ export function ContractModal({
               <Button 
                 onClick={handleNegotiate}
                 disabled={!isProposalAcceptable || isNegotiating}
-                className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
+                className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] disabled:opacity-50"
               >
                 {isNegotiating ? "Negociando..." : "Enviar Proposta"}
               </Button>
@@ -373,7 +373,7 @@ export function ContractModal({
           {step === "success" && (
             <Button 
               onClick={handleClose}
-              className="bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+              className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
             >
               Concluir
             </Button>

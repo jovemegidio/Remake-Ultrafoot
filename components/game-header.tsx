@@ -83,7 +83,7 @@ function KeyCap({ label, className }: { label: string; className?: string }) {
 // Barra de "forma" (ultimos resultados) estilo EA FC
 function FormBars({ results }: { results: ("V" | "E" | "D")[] }) {
   const color = (r: string) =>
-    r === "V" ? "bg-[#00ffc8]" : r === "E" ? "bg-white/35" : "bg-red-500/70"
+    r === "V" ? "bg-[var(--brand)]" : r === "E" ? "bg-white/35" : "bg-red-500/70"
   return (
     <div className="hidden md:flex items-center gap-[3px]">
       {results.map((r, i) => (
@@ -398,7 +398,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
       <div className="flex items-center gap-3 shrink-0">
         {/* Info temporada/calendario (data real, nao contador de rodada) */}
         <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
-          <Calendar className="h-3.5 w-3.5 text-[#00ffc8]" />
+          <Calendar className="h-3.5 w-3.5 text-[var(--brand)]" />
           <span className="text-[10px] text-white/45 font-medium">Temporada {currentSeason}</span>
           <span className="text-white/15">|</span>
           <span className="text-[11px] text-white font-semibold">{gameDateLabel}</span>
@@ -411,7 +411,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           aria-label="Salvar jogo"
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-md transition-all",
-            saved ? "text-[#00ffc8] bg-[#00ffc8]/10" : "text-white/45 hover:text-white/80 hover:bg-white/5",
+            saved ? "text-[var(--brand)] bg-[var(--brand)]/10" : "text-white/45 hover:text-white/80 hover:bg-white/5",
             saving && "opacity-50 cursor-wait",
           )}
         >
@@ -473,18 +473,18 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
           {/* Dropdown do tecnico */}
           {showCoachDropdown && (
             <div className="absolute top-full right-0 mt-2 w-80 rounded-xl border border-white/[0.08] bg-[#0a0a0c]/98 shadow-2xl overflow-hidden z-50 animate-fade-in backdrop-blur-xl">
-              <div className="p-5 border-b border-white/[0.04] bg-gradient-to-r from-[#00ffc8]/10 via-transparent to-transparent">
+              <div className="p-5 border-b border-white/[0.04] bg-gradient-to-r from-[var(--brand)]/10 via-transparent to-transparent">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-[#00ffc8]/20 to-[#00c8ff]/10 ring-2 ring-[#00ffc8]/20">
+                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand-2)]/10 ring-2 ring-[var(--brand)]/20">
                     <ManagerAvatar
                       src={state.managerAvatar}
                       className="w-14 h-14"
-                      iconClassName="h-7 w-7 text-[#00ffc8]"
+                      iconClassName="h-7 w-7 text-[var(--brand)]"
                     />
                   </div>
                   <div>
                     <div className="text-sm font-bold text-white">{coachData.nome}</div>
-                    <div className="text-[10px] text-[#00ffc8]/70 uppercase tracking-wider font-medium">{coachData.cargo}</div>
+                    <div className="text-[10px] text-[var(--brand)]/70 uppercase tracking-wider font-medium">{coachData.cargo}</div>
                   </div>
                 </div>
               </div>
@@ -500,8 +500,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                     <div className="text-lg font-bold text-white">{coachData.partidasTotal}</div>
                     <div className="text-[9px] text-white/40 uppercase">Jogos</div>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-[#00ffc8]/10 border border-[#00ffc8]/20">
-                    <div className="text-lg font-bold text-[#00ffc8]">{coachData.vitorias}</div>
+                  <div className="text-center p-3 rounded-lg bg-[var(--brand)]/10 border border-[var(--brand)]/20">
+                    <div className="text-lg font-bold text-[var(--brand)]">{coachData.vitorias}</div>
                     <div className="text-[9px] text-white/40 uppercase">V</div>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-[#ffd700]/10 border border-[#ffd700]/20">
@@ -516,10 +516,10 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-[#00ffc8]" />
+                    <TrendingUp className="h-4 w-4 text-[var(--brand)]" />
                     <span className="text-xs text-white/60">Aproveitamento</span>
                   </div>
-                  <span className="text-sm font-bold text-[#00ffc8]">{coachData.aproveitamento}%</span>
+                  <span className="text-sm font-bold text-[var(--brand)]">{coachData.aproveitamento}%</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
@@ -527,7 +527,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                     <Calendar className="h-4 w-4 text-white/40" />
                     <span className="text-xs text-white/60">Sequencia</span>
                   </div>
-                  <span className="text-sm font-bold text-[#00ffc8]">{coachData.sequencia}</span>
+                  <span className="text-sm font-bold text-[var(--brand)]">{coachData.sequencia}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
@@ -543,7 +543,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                 <Link
                   href="/configuracoes"
                   onClick={(e) => { e.preventDefault(); setShowCoachDropdown(false); hardNavigate("/configuracoes") }}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-[#00ffc8] hover:text-[#00ffdc] transition-colors rounded-lg hover:bg-[#00ffc8]/10"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-semibold text-[var(--brand)] hover:text-[#00ffdc] transition-colors rounded-lg hover:bg-[var(--brand)]/10"
                 >
                   Ver perfil completo
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -595,13 +595,13 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
                     className={cn(
                       "relative flex w-full items-center gap-3 border-l-2 px-3 py-2.5 text-left transition-all",
                       focused
-                        ? "border-l-[#00ffc8] bg-gradient-to-r from-[#00ffc8]/16 to-transparent"
+                        ? "border-l-[var(--brand)] bg-gradient-to-r from-[var(--brand)]/16 to-transparent"
                         : active
-                          ? "border-l-[#00ffc8]/60 bg-white/[0.05]"
+                          ? "border-l-[var(--brand)]/60 bg-white/[0.05]"
                           : "border-l-transparent hover:border-l-white/25 hover:bg-white/[0.035]",
                     )}
                   >
-                    <Icon className={cn("h-4 w-4 shrink-0", focused || active ? "text-[#00ffc8]" : "text-white/50")} />
+                    <Icon className={cn("h-4 w-4 shrink-0", focused || active ? "text-[var(--brand)]" : "text-white/50")} />
                     <span className={cn("text-sm font-semibold", focused || active ? "text-white" : "text-white/55")}>{item.label}</span>
                   </button>
                 )

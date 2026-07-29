@@ -35,7 +35,8 @@ import {
 import { TeamCrest } from "@/components/team-crest"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
+import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
+import { avancarMataMata, campeaoMataMata } from "@/lib/torneio-amistoso"
 import { loadGameState, saveGameStateAndFlush, useGameState, useUserTeam } from "@/lib/save-system"
 import { calcularEfeitoColetiva } from "@/lib/press-effects"
 import { useNotifications } from "@/components/notifications-system"
@@ -324,7 +325,7 @@ function StatBar({ label, homeValue, awayValue, suffix = "" }: {
       </div>
       <div className="flex h-1.5 rounded-full overflow-hidden bg-white/10">
         <div 
-          className="bg-[#00ffc8] transition-all duration-500"
+          className="bg-[var(--brand)] transition-all duration-500"
           style={{ width: `${homePercent}%` }}
         />
         <div 
@@ -356,7 +357,7 @@ function SubstitutionEvent({
         <span className="text-white/50 text-xs">{playerIn}</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <ArrowDownUp className="w-3.5 h-3.5 text-[#00ffc8]" />
+        <ArrowDownUp className="w-3.5 h-3.5 text-[var(--brand)]" />
       </div>
       <span className="text-white/60 text-sm font-bold tabular-nums">{minute}&apos;</span>
     </div>
@@ -406,8 +407,8 @@ function TimelineEvent({ event, homeTeam, awayTeam }: {
         )
       case "substitution":
         return (
-          <div className="w-8 h-8 rounded-full bg-[#00ffc8]/20 flex items-center justify-center flex-shrink-0">
-            <ArrowDownUp className="w-4 h-4 text-[#00ffc8]" />
+          <div className="w-8 h-8 rounded-full bg-[var(--brand)]/20 flex items-center justify-center flex-shrink-0">
+            <ArrowDownUp className="w-4 h-4 text-[var(--brand)]" />
           </div>
         )
       case "penalty":
@@ -454,7 +455,7 @@ function TimelineEvent({ event, homeTeam, awayTeam }: {
       case "substitution":
         return (
           <div className={cn("flex flex-col", isHome ? "items-end" : "items-start")}>
-            <span className="text-[#00ffc8] text-xs font-medium uppercase">Substituição</span>
+            <span className="text-[var(--brand)] text-xs font-medium uppercase">Substituição</span>
             <span className="text-white/90 text-sm">{event.playerOut || "Saiu"}</span>
             <span className="text-white/50 text-xs">{event.playerIn || "Entrou"}</span>
           </div>
@@ -637,8 +638,15 @@ export default function PartidaAoVivoPage() {
     return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
   }, [currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.awayShort, homeTeam.curto])
 
-  const displayCompetition = matchCtx.friendly ? "Amistoso" : (matchCtx.youth ? matchCtx.competition : (currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A"))
-  const displayRound = matchCtx.youth ? matchCtx.round : (currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1"))
+  // TORNEIO AMISTOSO: e amistoso (nao conta para a temporada) mas tem nome
+  // proprio — mostrar "Amistoso" na Final do torneio que o tecnico montou
+  // apagaria justamente o que da sentido ao jogo.
+  const displayCompetition = matchCtx.torneio
+    ? matchCtx.competition
+    : matchCtx.friendly ? "Amistoso" : (matchCtx.youth ? matchCtx.competition : (currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A"))
+  const displayRound = matchCtx.torneio
+    ? matchCtx.round
+    : matchCtx.youth ? matchCtx.round : (currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1"))
   const homeKitColors = useMemo(() => getKitColors(homeTeam, matchCtx.homeKit ?? "home"), [homeTeam, matchCtx.homeKit])
   const awayKitColors = useMemo(() => getKitColors(awayTeam, matchCtx.awayKit ?? "away"), [awayTeam, matchCtx.awayKit])
 
@@ -762,7 +770,12 @@ export default function PartidaAoVivoPage() {
 
   const toSquadPlayer = (p: MatchPlayer) => ({
     nome: p.name,
-    pos: p.position,
+    // `pos` = onde ele ESTA jogando (slot da formacao, quando conhecido);
+    // `posNatural` = onde ele joga de verdade. Quando diferem, o motor aplica a
+    // penalidade de improvisacao — sem estas duas linhas o sistema existiria e
+    // nunca dispararia, que e o defeito que esta versao esta corrigindo.
+    pos: p.formationPosition ?? p.position,
+    posNatural: p.position,
     rating: p.rating,
     stamina: p.stamina,
     shooting: p.shooting,
@@ -859,6 +872,11 @@ export default function PartidaAoVivoPage() {
     // Mentalidade aplicada ao lado do usuario (afeta a simulacao ao vivo).
     homeMentality: userSide === "home" ? userMentality : undefined,
     awayMentality: userSide === "away" ? userMentality : undefined,
+    // Linha de impedimento do usuario. Sem esta ligacao o motor ate sabe gerar
+    // impedimento, mas nunca ficaria sabendo que a armadilha esta armada — que
+    // era exatamente o defeito antigo desta opcao.
+    homeOffsideTrap: userSide === "home" ? teamTactics?.offsideTrap : undefined,
+    awayOffsideTrap: userSide === "away" ? teamTactics?.offsideTrap : undefined,
     // Forcas por setor do lado do usuario — do elenco real + tatica + forma/moral.
     homeAttack: userSide === "home" ? userForces.attack : undefined,
     homeDefense: userSide === "home" ? userForces.defense : undefined,
@@ -1227,7 +1245,7 @@ export default function PartidaAoVivoPage() {
             const porNome = new Map<string, number>()
             for (const p of enginePlayers) porNome.set(p.name.trim().toLowerCase(), p.id)
             const idDe = (nome?: string) => (nome ? porNome.get(nome.trim().toLowerCase()) : undefined)
-            const evJogador: { minute: number; type: "goal" | "assist" | "yellow" | "red" | "injury"; playerId: number; playerName: string; assistPlayerId?: number; assistPlayerName?: string }[] = []
+            const evJogador: { minute: number; type: "goal" | "assist" | "yellow" | "red" | "injury"; playerId: number; playerName: string; assistPlayerId?: number; assistPlayerName?: string; motivoExpulsao?: "segundo_amarelo" | "vermelho_direto"; expulsaoViolenta?: boolean }[] = []
             for (const e of state.events) {
               if (e.side !== meuLado) continue
               const tipo: "goal" | "yellow" | "red" | "injury" | null = e.type === "goal" ? "goal"
@@ -1240,12 +1258,60 @@ export default function PartidaAoVivoPage() {
               evJogador.push({
                 minute: e.minute, type: tipo, playerId: id, playerName: e.player ?? "",
                 assistPlayerId: idDe(e.assist), assistPlayerName: e.assist,
+                // Natureza da expulsao: sem isto o tribunal julgaria toda
+                // expulsao como segundo amarelo (1 jogo), inclusive agressao.
+                motivoExpulsao: e.motivoExpulsao,
+                expulsaoViolenta: e.expulsaoViolenta,
               })
             }
             const golsPro = meuLado === "home" ? state.home.goals : state.away.goals
             const golsContra = meuLado === "home" ? state.away.goals : state.home.goals
-            processarDesempenhoPartida(golsPro, golsContra, evJogador)
+            const vereditos = processarDesempenhoPartida(golsPro, golsContra, evJogador)
+            // TRIBUNAL: a expulsao rende uma noticia com a pena e a multa. Antes
+            // o vermelho custava 1 jogo em silencio — o tecnico nunca sabia.
+            for (const v of vereditos ?? []) {
+              const multa = v.julgamento.multaClube > 0
+                ? ` Multa ao clube: ${formatCurrency(v.julgamento.multaClube)}.`
+                : ""
+              addNotification({
+                type: "news",
+                title: `Tribunal: ${v.playerName} pega ${v.julgamento.jogos} ${v.julgamento.jogos === 1 ? "jogo" : "jogos"}`,
+                message: `${v.julgamento.veredito}${multa}`,
+                priority: v.julgamento.agravada ? "high" : "medium",
+                href: "/elenco",
+              })
+            }
           } catch { /* nota e um extra: nunca deve travar o fim da partida */ }
+
+          // TORNEIO AMISTOSO: grava o placar no jogo correspondente e, no
+          // mata-mata, abre a fase seguinte. Sem isto a partida era disputada e
+          // o resultado se perdia — o torneio nunca passava da primeira rodada.
+          if (matchCtx.torneio) {
+            try {
+              const alvo = matchCtx.torneio
+              const torneio = savedGame.torneioAmistoso
+              if (torneio) {
+                let jogos = torneio.jogos.map(j =>
+                  j.rodada === alvo.rodada
+                    && j.mandanteCurto === alvo.mandanteCurto
+                    && j.visitanteCurto === alvo.visitanteCurto
+                    ? { ...j, golsMandante: state.home.goals, golsVisitante: state.away.goals, jogado: true }
+                    : j,
+                )
+                if (torneio.formato === "mata_mata") {
+                  const proxima = avancarMataMata(jogos)
+                  if (proxima.length > 0) jogos = [...jogos, ...proxima]
+                }
+                setSavedGame({
+                  torneioAmistoso: {
+                    ...torneio,
+                    jogos,
+                    campeao: torneio.formato === "mata_mata" ? campeaoMataMata(jogos) : null,
+                  },
+                })
+              }
+            } catch { /* o torneio e um extra: nao pode travar o fim da partida */ }
+          }
 
           // NOTIFICACOES que nao existiam: resultado da partida e lesoes. Antes
           // os tipos match_end/injury so viviam na demo — nada era disparado.
@@ -1472,7 +1538,7 @@ export default function PartidaAoVivoPage() {
             <div className="px-6 pb-6 flex flex-col items-center gap-3 border-t border-white/[0.04] pt-5">
               <button
                 onClick={start}
-                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-[#00ffc8] text-black font-black text-base hover:bg-[#00e6b5] transition-all shadow-lg shadow-[#00ffc8]/25 active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-[var(--brand)] text-[var(--brand-ink)] font-black text-base hover:bg-[#00e6b5] transition-all shadow-lg shadow-[var(--brand)]/25 active:scale-[0.98]"
               >
                 <Play className="h-5 w-5 fill-current" />
                 INICIAR PARTIDA
@@ -1520,12 +1586,12 @@ export default function PartidaAoVivoPage() {
                    state.minute}&apos;00
                 </span>
                 {extraTime && (
-                  <span className="text-[#00ffc8] text-sm font-bold">{extraTime}&apos;</span>
+                  <span className="text-[var(--brand)] text-sm font-bold">{extraTime}&apos;</span>
                 )}
               </div>
               {aggregateScore && (
                 <div className="mt-2 flex flex-col items-center">
-                  <span className="rounded-full border border-[#00ffc8]/25 bg-[#00ffc8]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.16em] text-[#66ffdc]">
+                  <span className="rounded-full border border-[var(--brand)]/25 bg-[var(--brand)]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.16em] text-[#66ffdc]">
                     Agregado {aggregateScore.home}–{aggregateScore.away}
                   </span>
                   <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/35">
@@ -1655,13 +1721,13 @@ export default function PartidaAoVivoPage() {
                     <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-4">{t.match.live.sectionGameplan}</h3>
 
                     {/* Campo tático e mudança real de formação durante a partida. */}
-                    <div className="rounded-xl border border-[#00ffc8]/20 bg-[#071817]/75 p-3">
+                    <div className="rounded-xl border border-[var(--brand)]/20 bg-[#071817]/75 p-3">
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-xs font-black uppercase tracking-wider text-white">Escalação em campo</p>
                           <p className="mt-0.5 text-[11px] text-white/45">A formação é aplicada imediatamente ao radar e à partida.</p>
                         </div>
-                        <span className="rounded-md bg-[#00ffc8]/15 px-2 py-1 text-sm font-black text-[#00ffc8]">{liveFormation}</span>
+                        <span className="rounded-md bg-[var(--brand)]/15 px-2 py-1 text-sm font-black text-[var(--brand)]">{liveFormation}</span>
                       </div>
                       <div className="mb-3 grid grid-cols-3 gap-1.5 sm:grid-cols-5">
                         {["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2"].map(formation => (
@@ -1672,7 +1738,7 @@ export default function PartidaAoVivoPage() {
                             className={cn(
                               "rounded-md border px-1.5 py-2 text-[11px] font-bold transition-colors",
                               liveFormation === formation
-                                ? "border-[#00ffc8] bg-[#00ffc8]/15 text-[#00ffc8]"
+                                ? "border-[var(--brand)] bg-[var(--brand)]/15 text-[var(--brand)]"
                                 : "border-white/10 bg-black/20 text-white/60 hover:border-white/30 hover:text-white",
                             )}
                           >
@@ -1680,7 +1746,7 @@ export default function PartidaAoVivoPage() {
                           </button>
                         ))}
                       </div>
-                      {liveTacticNotice && <p className="mb-2 text-[11px] font-semibold text-[#00ffc8]" role="status">{liveTacticNotice}</p>}
+                      {liveTacticNotice && <p className="mb-2 text-[11px] font-semibold text-[var(--brand)]" role="status">{liveTacticNotice}</p>}
                       <div className="h-44 overflow-hidden rounded-lg border border-white/10 bg-black/20 sm:h-52">
                         <MatchRadar
                           homeTeam={homeTeam}
@@ -1701,7 +1767,7 @@ export default function PartidaAoVivoPage() {
                     </div>
 
                     {/* Mentalidade AO VIVO do time do usuario — muda a simulacao na hora. */}
-                    <div className="mb-4 rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/[0.04] p-3">
+                    <div className="mb-4 rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/[0.04] p-3">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">Sua mentalidade</span>
                         <span className="text-white/30 text-[10px]">muda em tempo real</span>
@@ -1718,7 +1784,7 @@ export default function PartidaAoVivoPage() {
                             className={cn(
                               "rounded-lg border px-2 py-2 text-center transition-all",
                               userMentality === val
-                                ? "border-[#00ffc8] bg-[#00ffc8]/15 text-[#00ffc8]"
+                                ? "border-[var(--brand)] bg-[var(--brand)]/15 text-[var(--brand)]"
                                 : "border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/[0.06]",
                             )}
                           >
@@ -1785,7 +1851,7 @@ export default function PartidaAoVivoPage() {
                           <TeamCrest team={homeTeam} size="xs" />
                           <span className="text-white text-sm font-medium">{homeTeam.curto}</span>
                         </div>
-                        <div className="text-[#00ffc8] text-lg font-bold">{userSide === "home" ? liveFormation : "4-4-2"}</div>
+                        <div className="text-[var(--brand)] text-lg font-bold">{userSide === "home" ? liveFormation : "4-4-2"}</div>
                         <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
                         <div className="text-white/40 text-xs">Mentalidade: Normal</div>
                       </div>
@@ -1796,7 +1862,7 @@ export default function PartidaAoVivoPage() {
                           <TeamCrest team={awayTeam} size="xs" />
                           <span className="text-white text-sm font-medium">{awayTeam.curto}</span>
                         </div>
-                        <div className="text-[#00ffc8] text-lg font-bold">{userSide === "away" ? liveFormation : "4-4-2"}</div>
+                        <div className="text-[var(--brand)] text-lg font-bold">{userSide === "away" ? liveFormation : "4-4-2"}</div>
                         <div className="text-white/40 text-xs mt-1">Posse: Equilibrado</div>
                         <div className="text-white/40 text-xs">Mentalidade: Normal</div>
                       </div>
@@ -1806,7 +1872,7 @@ export default function PartidaAoVivoPage() {
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-white/40 text-xs uppercase tracking-wider">{t.match.live.substitutions}</span>
-                        <span className="text-[#00ffc8] text-xs font-bold">{t.match.live.subsRemaining(subsRemaining)}</span>
+                        <span className="text-[var(--brand)] text-xs font-bold">{t.match.live.subsRemaining(subsRemaining)}</span>
                       </div>
                       {state.events.filter(e => e.type === "sub" && e.side === "home").length > 0 ? (
                         <div className="space-y-1">
@@ -1867,7 +1933,7 @@ export default function PartidaAoVivoPage() {
                 <Button
                   size="sm"
                   onClick={start}
-                  className="text-xs bg-[#00ffc8] text-black hover:bg-[#00ffc8]/80 font-bold"
+                  className="text-xs bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand)]/80 font-bold"
                 >
                   <Play className="mr-1 h-3.5 w-3.5 fill-current" />
                   INICIAR
@@ -1881,7 +1947,7 @@ export default function PartidaAoVivoPage() {
                       PAUSAR
                     </Button>
                   ) : (
-                    <Button size="sm" onClick={resume} className="text-xs bg-[#00ffc8] text-black hover:bg-[#00ffc8]/80 font-bold">
+                    <Button size="sm" onClick={resume} className="text-xs bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand)]/80 font-bold">
                       <Play className="mr-1 h-3.5 w-3.5 fill-current" />
                       CONTINUAR
                     </Button>
@@ -1908,8 +1974,8 @@ export default function PartidaAoVivoPage() {
                   disabled={subsRemaining <= 0}
                   className="flex items-center gap-2 rounded-md px-2 py-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-35"
                 >
-                  <span className="rounded bg-[#00ffc8]/15 px-2 py-1 text-[10px] font-black text-[#00ffc8]">T</span>
-                  <ArrowDownUp className="h-3.5 w-3.5 text-[#00ffc8]" />
+                  <span className="rounded bg-[var(--brand)]/15 px-2 py-1 text-[10px] font-black text-[var(--brand)]">T</span>
+                  <ArrowDownUp className="h-3.5 w-3.5 text-[var(--brand)]" />
                   <span className="text-sm">Substituir ({subsRemaining})</span>
                 </button>
               )}
@@ -1934,7 +2000,7 @@ export default function PartidaAoVivoPage() {
                   className={cn(
                     "px-2 py-1 text-[10px] font-bold rounded transition",
                     speed === s.id
-                      ? "bg-[#00ffc8] text-black"
+                      ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                       : "bg-white/10 text-white/50 hover:bg-white/20"
                   )}
                 >

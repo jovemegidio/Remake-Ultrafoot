@@ -168,14 +168,14 @@ export default function OlheirosPage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 activeTab === tab.id
-                  ? "bg-[#00ffc8]/20 text-[#00ffc8]"
+                  ? "bg-[var(--brand)]/20 text-[var(--brand)]"
                   : "text-white/50 hover:text-white/80 hover:bg-white/5"
               )}
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
               {tab.id === "descobertos" && discoveredPlayers.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[#00ffc8] text-black text-[10px] font-bold">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[var(--brand)] text-[var(--brand-ink)] text-[10px] font-bold">
                   {discoveredPlayers.length}
                 </span>
               )}
@@ -185,9 +185,9 @@ export default function OlheirosPage() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
-          <section className="mb-4 rounded-xl border border-[#00ffc8]/15 bg-[#00ffc8]/[0.04] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="text-xs font-black uppercase tracking-wider text-[#00ffc8]">Departamento estratégico · {departmentReputationLabel(department.reputation)}</div><p className="mt-1 text-xs text-white/45">Centro de Observação Nv. {department.observationCentreLevel} · Centro de Dados Nv. {department.dataCentreLevel} · custo mensal R$ {department.monthlyCost.toLocaleString("pt-BR")}</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>hireStrategicScout(department.scouts.length<1?"regional":department.scouts.length<3?"national":"continental")} className="rounded-lg bg-[#00ffc8] px-3 py-2 text-[10px] font-bold text-black">Contratar scout por nível</button><button onClick={()=>assignStrategicMission("young")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Missão: jovens 15–20</button><button onClick={()=>assignStrategicMission("expiring")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Fim de contrato</button><button onClick={analyzePerformance} className="rounded-lg border border-violet-400/30 px-3 py-2 text-[10px] text-violet-300">Analisar elenco/adversário</button></div></div>
-            {department.lastAnalysis&&<div className="mt-3 grid gap-2 md:grid-cols-3 text-[11px]"><div className="rounded-lg bg-black/30 p-3"><b className="text-amber-300">Alertas do elenco</b><p className="mt-1 text-white/55">{department.lastAnalysis.squadAlerts.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-red-300">Adversário</b><p className="mt-1 text-white/55">{department.lastAnalysis.opponentStrengths.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-[#00ffc8]">Recomendação</b><p className="mt-1 text-white/55">{department.lastAnalysis.tacticalRecommendations.join(" · ")}</p></div></div>}
+          <section className="mb-4 rounded-xl border border-[var(--brand)]/15 bg-[var(--brand)]/[0.04] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Departamento estratégico · {departmentReputationLabel(department.reputation)}</div><p className="mt-1 text-xs text-white/45">Centro de Observação Nv. {department.observationCentreLevel} · Centro de Dados Nv. {department.dataCentreLevel} · custo mensal R$ {department.monthlyCost.toLocaleString("pt-BR")}</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>hireStrategicScout(department.scouts.length<1?"regional":department.scouts.length<3?"national":"continental")} className="rounded-lg bg-[var(--brand)] px-3 py-2 text-[10px] font-bold text-[var(--brand-ink)]">Contratar scout por nível</button><button onClick={()=>assignStrategicMission("young")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Missão: jovens 15–20</button><button onClick={()=>assignStrategicMission("expiring")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Fim de contrato</button><button onClick={analyzePerformance} className="rounded-lg border border-violet-400/30 px-3 py-2 text-[10px] text-violet-300">Analisar elenco/adversário</button></div></div>
+            {department.lastAnalysis&&<div className="mt-3 grid gap-2 md:grid-cols-3 text-[11px]"><div className="rounded-lg bg-black/30 p-3"><b className="text-amber-300">Alertas do elenco</b><p className="mt-1 text-white/55">{department.lastAnalysis.squadAlerts.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-red-300">Adversário</b><p className="mt-1 text-white/55">{department.lastAnalysis.opponentStrengths.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-[var(--brand)]">Recomendação</b><p className="mt-1 text-white/55">{department.lastAnalysis.tacticalRecommendations.join(" · ")}</p></div></div>}
           </section>
           <AnimatePresence mode="wait">
             {/* Meus Olheiros */}
@@ -213,7 +213,7 @@ export default function OlheirosPage() {
                       <Search className="h-3.5 w-3.5" />
                       Em Busca
                     </div>
-                    <div className="text-2xl font-bold text-[#00ffc8]">{myScouts.filter(s => s.isSearching).length}</div>
+                    <div className="text-2xl font-bold text-[var(--brand)]">{myScouts.filter(s => s.isSearching).length}</div>
                   </div>
                   <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
                     <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
@@ -240,7 +240,7 @@ export default function OlheirosPage() {
                     <Button
                       size="sm"
                       onClick={() => setActiveTab("contratar")}
-                      className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
+                      className="bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)] text-xs"
                     >
                       <Plus className="h-3.5 w-3.5 mr-1" />
                       Contratar Olheiro
@@ -294,13 +294,13 @@ export default function OlheirosPage() {
                             <div className="text-right">
                               {scout.isSearching ? (
                                 <div className="space-y-2">
-                                  <div className="flex items-center gap-2 text-[#00ffc8]">
+                                  <div className="flex items-center gap-2 text-[var(--brand)]">
                                     <Search className="h-4 w-4 animate-pulse" />
                                     <span className="text-sm font-medium">Buscando...</span>
                                   </div>
                                   <div className="w-32 h-2 rounded-full bg-white/10 overflow-hidden">
                                     <motion.div
-                                      className="h-full bg-[#00ffc8]"
+                                      className="h-full bg-[var(--brand)]"
                                       initial={{ width: 0 }}
                                       animate={{ width: `${scout.searchProgress}%` }}
                                       transition={{ duration: 0.5 }}
@@ -328,7 +328,7 @@ export default function OlheirosPage() {
                                   <Button
                                     size="sm"
                                     onClick={() => setSelectedRegion(selectedRegion === scout.id.toString() ? null : scout.id.toString())}
-                                    className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
+                                    className="bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)] text-xs"
                                   >
                                     <Play className="h-3 w-3 mr-1" />
                                     Iniciar Busca
@@ -353,10 +353,10 @@ export default function OlheirosPage() {
                                     <button
                                       key={region.id}
                                       onClick={() => handleStartSearch(scout.id, region.id)}
-                                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/[0.04] hover:border-[#00ffc8]/30 transition-all text-left"
+                                      className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/[0.04] hover:border-[var(--brand)]/30 transition-all text-left"
                                     >
                                       <div className="flex items-center gap-2 mb-1">
-                                        <region.icon className="h-4 w-4 text-[#00ffc8]" />
+                                        <region.icon className="h-4 w-4 text-[var(--brand)]" />
                                         <span className="text-sm font-medium text-white">{region.name}</span>
                                       </div>
                                       <p className="text-[10px] text-white/40 mb-2">{region.description}</p>
@@ -380,7 +380,7 @@ export default function OlheirosPage() {
                           {scout.foundPlayers.length > 0 && (
                             <div className="mt-4 pt-4 border-t border-white/[0.04]">
                               <div className="flex items-center gap-2 text-xs text-white/50 mb-2">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-[#00ffc8]" />
+                                <CheckCircle2 className="h-3.5 w-3.5 text-[var(--brand)]" />
                                 {scout.foundPlayers.length} jogador(es) descoberto(s)
                               </div>
                             </div>
@@ -458,7 +458,7 @@ export default function OlheirosPage() {
                             setSelectedScoutToHire(scout)
                             setShowHireModal(true)
                           }}
-                          className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
+                          className="bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)] text-xs"
                         >
                           <UserPlus className="h-3.5 w-3.5 mr-1" />
                           Contratar
@@ -504,8 +504,8 @@ export default function OlheirosPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="relative">
-                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center">
-                                <span className="text-xl font-black text-[#00ffc8]">
+                              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand)]/5 flex items-center justify-center">
+                                <span className="text-xl font-black text-[var(--brand)]">
                                   {player.revealedAttributes ? player.overall : "?"}
                                 </span>
                               </div>
@@ -553,7 +553,7 @@ export default function OlheirosPage() {
                               )}
                               <Button
                                 size="sm"
-                                className="bg-[#00ffc8] hover:bg-[#00c8ff] text-black text-xs"
+                                className="bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)] text-xs"
                               >
                                 <Target className="h-3.5 w-3.5 mr-1" />
                                 Negociar
@@ -576,7 +576,7 @@ export default function OlheirosPage() {
                                 <p className="text-[10px] text-white/40">{attr.label}</p>
                                 <p className={cn(
                                   "text-sm font-bold",
-                                  attr.value >= 80 ? "text-[#00ffc8]" :
+                                  attr.value >= 80 ? "text-[var(--brand)]" :
                                   attr.value >= 70 ? "text-amber-400" :
                                   attr.value >= 60 ? "text-white" : "text-white/50"
                                 )}>
@@ -671,7 +671,7 @@ export default function OlheirosPage() {
                 </Button>
                 <Button
                   onClick={() => handleHireScout(selectedScoutToHire)}
-                  className="flex-1 bg-[#00ffc8] hover:bg-[#00c8ff] text-black"
+                  className="flex-1 bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)]"
                 >
                   Confirmar Contratacao
                 </Button>

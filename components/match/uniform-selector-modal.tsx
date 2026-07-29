@@ -198,7 +198,7 @@ export function UniformSelectorModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 shrink-0 text-center">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#00ffc8]/70">Pre-jogo</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--brand)]/70">Pre-jogo</div>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-white">Uniformes</h2>
           <p className="mt-0.5 text-xs text-white/35">Escolha o uniforme de cada equipe</p>
         </div>
@@ -241,7 +241,7 @@ export function UniformSelectorModal({
         <div className="mt-5 flex shrink-0 flex-col items-center gap-2.5">
           <button
             onClick={onClose}
-            className="rounded-xl bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] px-10 py-2.5 text-sm font-bold text-black shadow-lg shadow-[#00ffc8]/15 transition-all hover:brightness-110"
+            className="rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] px-10 py-2.5 text-sm font-bold text-black shadow-lg shadow-[var(--brand)]/15 transition-all hover:brightness-110"
           >
             Confirmar
           </button>

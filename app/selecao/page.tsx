@@ -103,7 +103,7 @@ function OfferCard({
       </div>
 
       {negotiating && (
-        <div className="rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/[0.03] p-3 space-y-3">
+        <div className="rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/[0.03] p-3 space-y-3">
           <label className="block text-xs text-white/60">Salário pretendido
             <input type="number" step={5000} min={baseSalary} value={salary} onChange={e => setSalary(Number(e.target.value))} className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white" />
           </label>
@@ -120,7 +120,7 @@ function OfferCard({
       <div className="flex gap-2 mt-1">
         <button
           onClick={onAccept}
-          className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-[#00ffc8] text-[#050508] font-semibold text-sm py-2.5 hover:bg-[#00ffc8]/90 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-[var(--brand)] text-[#050508] font-semibold text-sm py-2.5 hover:bg-[var(--brand)]/90 transition-colors"
         >
           <Check className="h-4 w-4" /> Aceitar
         </button>
@@ -193,7 +193,7 @@ export default function SelecaoPage() {
   if (!hydrated || !teamHydrated) {
     return (
       <div className="h-screen bg-[#050508] flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-2 border-[#00ffc8] border-t-transparent animate-spin" />
+        <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -204,8 +204,8 @@ export default function SelecaoPage() {
 
       <main className="flex-1 p-4 overflow-y-auto scrollbar-premium space-y-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-[#00ffc8]/10 flex items-center justify-center">
-            <Flag className="h-5 w-5 text-[#00ffc8]" />
+          <div className="h-10 w-10 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center">
+            <Flag className="h-5 w-5 text-[var(--brand)]" />
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-white tracking-tight">Selecao Nacional</h1>
@@ -224,7 +224,7 @@ export default function SelecaoPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <Award className="h-5 w-5 text-[#00ffc8]" /> Propostas recebidas
+                    <Award className="h-5 w-5 text-[var(--brand)]" /> Propostas recebidas
                   </h2>
                   <button
                     onClick={declineAll}
@@ -267,7 +267,7 @@ export default function SelecaoPage() {
                   </div>
                   <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
                     <div
-                      className="h-full bg-[#00ffc8] transition-all"
+                      className="h-full bg-[var(--brand)] transition-all"
                       style={{ width: `${Math.min(100, (coachScore / minScoreForOffers) * 100)}%` }}
                     />
                   </div>
@@ -282,7 +282,7 @@ export default function SelecaoPage() {
           <div className="space-y-4">
             {/* Seletor de modo: comandar a seleção como time pleno (office próprio)
                 ou voltar ao clube. Espelha o seletor do office da seleção. */}
-            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#00ffc8]/25 bg-[#00ffc8]/[0.05] p-3">
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand)]/[0.05] p-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-white">
                   {isNational ? "Você está no comando da seleção" : "Assuma a seleção como seu time"}
@@ -303,7 +303,7 @@ export default function SelecaoPage() {
               ) : (
                 <button
                   onClick={entrarNoModoSelecao}
-                  className="flex shrink-0 items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2 text-xs font-black text-black transition hover:brightness-110"
+                  className="flex shrink-0 items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-xs font-black text-[var(--brand-ink)] transition hover:brightness-110"
                 >
                   Entrar no modo seleção
                 </button>
@@ -347,7 +347,7 @@ export default function SelecaoPage() {
                   <p className="text-xs font-semibold uppercase tracking-wider text-white/50">Amistosos de preparação</p>
                   <Link
                     href="/selecao/amistosos"
-                    className="ml-auto flex items-center gap-1 rounded-lg bg-[#00ffc8]/10 px-3 py-1 text-[11px] font-semibold text-[#00ffc8] transition-colors hover:bg-[#00ffc8]/20"
+                    className="ml-auto flex items-center gap-1 rounded-lg bg-[var(--brand)]/10 px-3 py-1 text-[11px] font-semibold text-[var(--brand)] transition-colors hover:bg-[var(--brand)]/20"
                   >
                     <Swords className="h-3 w-3" /> Marcar amistoso
                   </Link>
@@ -359,7 +359,7 @@ export default function SelecaoPage() {
                       return (
                         <div key={`${f.opponentId}-${i}`} className="flex items-center gap-3 rounded-lg bg-black/25 px-3 py-2">
                           <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded text-[11px] font-black",
-                            r === "V" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60")}>{r}</span>
+                            r === "V" ? "bg-[var(--brand)]/20 text-[var(--brand)]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60")}>{r}</span>
                           <span className="w-14 shrink-0 font-mono text-sm text-white">{f.userScore} x {f.oppScore}</span>
                           <span className="min-w-0 flex-1 truncate text-sm text-white/70">{f.opponentName}</span>
                           <span className="shrink-0 text-[10px] text-white/30">Amistoso</span>
@@ -377,7 +377,7 @@ export default function SelecaoPage() {
               {career.titles.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {career.titles.map((titulo, i) => (
-                    <span key={i} className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-[#00ffc8]/10 text-[#00ffc8] border border-[#00ffc8]/20">
+                    <span key={i} className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-[var(--brand)]/10 text-[var(--brand)] border border-[var(--brand)]/20">
                       <Crown className="h-3 w-3" /> {titulo.competition} {titulo.season}
                     </span>
                   ))}
@@ -421,7 +421,7 @@ export default function SelecaoPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-                    <Trophy className="h-5 w-5 text-[#00ffc8]" /> Competicoes disponiveis
+                    <Trophy className="h-5 w-5 text-[var(--brand)]" /> Competicoes disponiveis
                   </h2>
                   <Link
                     href="/selecao/competicoes"
@@ -442,10 +442,10 @@ export default function SelecaoPage() {
                 e elegiveis) tem tela propria. O hub mostra so o estado da lista. */}
             <Link
               href="/selecao/convocacao"
-              className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5 transition-colors hover:border-[#00ffc8]/30 hover:bg-white/[0.02]"
+              className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5 transition-colors hover:border-[var(--brand)]/30 hover:bg-white/[0.02]"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#00ffc8]/10">
-                <Users className="h-5 w-5 text-[#00ffc8]" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand)]/10">
+                <Users className="h-5 w-5 text-[var(--brand)]" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold uppercase tracking-wide text-white">Convocacao ({squad.length})</p>

@@ -17,7 +17,12 @@ import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor } from "@/lib/club-economy"
 import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@/lib/player-attributes"
+// Modulo puro (sem imports proprios): entra aqui sem risco de ciclo. Serve para
+// o promovido da base chegar ao elenco valendo o MESMO que valia na base.
+import { valorDeMercadoJovem } from "@/lib/youth-academy-rules"
 import { recordWorldTransfer } from "@/lib/world-market"
+// Modulo puro (sem imports): a expulsao vira julgamento em vez de 1 jogo fixo.
+import { julgar, inferirInfracao, type JulgamentoTribunal } from "@/lib/tribunal"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -1163,6 +1168,16 @@ export interface MatchEvent {
   playerName: string
   assistPlayerId?: number
   assistPlayerName?: string
+  /** Só em `red`: natureza da expulsao, para o tribunal julgar (lib/tribunal). */
+  motivoExpulsao?: "segundo_amarelo" | "vermelho_direto"
+  expulsaoViolenta?: boolean
+}
+
+/** Expulsao julgada no pos-jogo (lib/tribunal), pronta para virar noticia. */
+export interface VeredictoDaPartida {
+  playerId: number
+  playerName: string
+  julgamento: JulgamentoTribunal
 }
 
 export interface StandingsEntry {
@@ -1921,7 +1936,8 @@ interface GameEngineState {
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   /** Migra contratos de saves antigos para o relogio absoluto (roda uma vez). */
   migrarContratosParaSemanaAbsoluta: () => void
-  sellPlayer: (playerId: number) => void
+  /** `valor` = o que a compradora ofereceu; sem ele, o valor de mercado cheio. */
+  sellPlayer: (playerId: number, valor?: number) => void
   /** Aposenta um veterano sem multa nem receita e o remove da folha. */
   retirePlayer: (playerId: number) => boolean
   /**
@@ -1954,7 +1970,11 @@ interface GameEngineState {
   returnFromNationalTeam: (playerId: number) => void
   getPlayerById: (playerId: number) => Player | undefined
   updatePlayerStats: (playerId: number, stats: Partial<PlayerStats>) => void
-  processarDesempenhoPartida: (golsPro: number, golsContra: number, events: MatchEvent[]) => void
+  /**
+   * Devolve os julgamentos do tribunal desta partida, para a tela noticiar. Era
+   * `void`; quem nao usa o retorno segue funcionando igual.
+   */
+  processarDesempenhoPartida: (golsPro: number, golsContra: number, events: MatchEvent[]) => VeredictoDaPartida[]
   /** Ajusta o entrosamento (squadCohesion, 0-100). Amistoso e treino na data FIFA alimentam. */
   adjustSquadCohesion: (delta: number) => void
   rolarLesaoSimulada: (qtdJogos: number) => void
@@ -3067,7 +3087,24 @@ export const useGameEngine = create<GameEngineState>()(
             signedWeek: state.currentWeek,
             signedSeason: state.currentSeason,
           },
-          marketValue: Math.round(base * base * 900),
+          // ⚠️ NAO usar aqui a formula de profissional (`overall² * 900`).
+          //
+          // O garoto valia uma coisa na base (`valorDeMercadoJovem`, que pesa a
+          // habilidade ATUAL e da um premio modesto pela promessa) e chegava ao
+          // elenco valendo outra, bem maior — a formula de atleta pronto. Com o
+          // "Vender agora" do elenco pagando o marketValue INTEGRAL, na hora, sem
+          // sorteio de interesse e sem esperar a janela, promover virou o caminho
+          // curto para imprimir dinheiro: medido em 200 mil simulacoes, render o
+          // garoto pelo elenco pagava 2,6x o que a base pagava, e uma peneira de
+          // R$ 100 mil devolvia ~R$ 6,3 milhoes.
+          //
+          // Usando a MESMA conta da base, promover para revender vira PREJUIZO
+          // (paga-se a taxa de promocao e o preco nao muda). Promover para USAR o
+          // atleta — que e o ponto da categoria de base — segue valendo a pena.
+          marketValue: valorDeMercadoJovem({
+            id: "", name: jovem.name, position: jovem.position,
+            age: jovem.age, overall: jovem.overall, potential: jovem.potential,
+          }),
           isStarter: false,
           isLoanedIn: false,
           joinedClubWeek: state.currentWeek,
@@ -3129,15 +3166,29 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
 
-      sellPlayer: (playerId) => {
+      /**
+       * Vende um atleta do elenco.
+       *
+       * `valor` e o que a compradora ofereceu de fato. Sem ele cai no valor de
+       * mercado, que era o comportamento antigo — a venda pagava sempre o preco
+       * cheio, e a tela nem negociava. Quem chama e que faz o sorteio de
+       * interesse e a checagem de janela.
+       */
+      sellPlayer: (playerId, valor) => {
         const state = get()
         const player = state.squadPlayers.find(p => p.id === playerId)
         if (!player) return
-        
+
+        const recebido = typeof valor === "number" && valor > 0 ? valor : player.marketValue
         set((s) => ({
           squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
-          balance: s.balance + player.marketValue,
-          weeklyExpenses: s.weeklyExpenses - (player.contract?.salary || 0)
+          // Sai tambem das listas: atleta vendido nao pode continuar anunciado
+          // nem recebendo sondagem de quem ja nao o tem.
+          transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
+          loanListedIds: (s.loanListedIds ?? []).filter(id => id !== playerId),
+          transferOffers: s.transferOffers.filter(offer => offer.playerId !== playerId),
+          balance: s.balance + recebido,
+          weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary || 0)),
         }))
       },
 
@@ -3782,6 +3833,10 @@ export const useGameEngine = create<GameEngineState>()(
        * de uma partida do usuario, com os eventos (gols, cartoes) da peleja.
        */
       processarDesempenhoPartida: (golsPro, golsContra, events) => {
+        // Vereditos do tribunal desta partida. Preenchido dentro do `set` (onde
+        // os jogadores sao percorridos) e devolvido para a TELA poder noticiar —
+        // o engine nao tem acesso ao sistema de notificacoes.
+        const vereditos: VeredictoDaPartida[] = []
         const resultado: "win" | "draw" | "loss" =
           golsPro > golsContra ? "win" : golsPro === golsContra ? "draw" : "loss"
         const contrib = contribuicoesPorJogador(events)
@@ -3827,8 +3882,17 @@ export const useGameEngine = create<GameEngineState>()(
             })
             if (nota > melhorNota) { melhorNota = nota; melhorId = p.id }
 
+            // TRIBUNAL: a expulsao vai a julgamento em vez de valer 1 jogo fixo.
+            // Segundo amarelo continua 1; falta dura da 1-3; agressao, 4-8.
+            const julgamento = c.vermelho
+              ? julgar(inferirInfracao(
+                  c.motivoExpulsao ?? "segundo_amarelo",
+                  c.expulsaoViolenta ?? false,
+                ))
+              : null
+            if (julgamento) vereditos.push({ playerId: p.id, playerName: p.name, julgamento })
             const { suspender, amarelosRestantes } = suspensaoPorCartoes(
-              p.seasonYellows ?? 0, c.amarelos, c.vermelho,
+              p.seasonYellows ?? 0, c.amarelos, c.vermelho, julgamento?.jogos ?? 1,
             )
             // Forma e moral reagem a nota: >=7.5 sobe, <6.0 cai.
             const deltaForma = nota >= 7.5 ? 4 : nota >= 7 ? 2 : nota < 6 ? -4 : 0
@@ -3878,8 +3942,11 @@ export const useGameEngine = create<GameEngineState>()(
           // teto. Vitoria constroi mais que derrota.
           const ganhoEntrosamento = resultado === "win" ? 3 : resultado === "draw" ? 2 : 1
           const novoEntrosamento = Math.max(0, Math.min(100, (s.squadCohesion ?? 60) + ganhoEntrosamento))
+          // Multa do tribunal sai do caixa do clube (o julgamento pune os dois).
+          const multas = vereditos.reduce((soma, v) => soma + v.julgamento.multaClube, 0)
           return {
             squadCohesion: novoEntrosamento,
+            ...(multas > 0 ? { balance: Math.round((s.balance ?? 0) - multas) } : {}),
             squadPlayers: comNota.map(p =>
               p.id === melhorId
                 ? { ...p, seasonStats: { ...p.seasonStats, manOfTheMatch: (p.seasonStats.manOfTheMatch ?? 0) + 1 } }
@@ -3887,6 +3954,7 @@ export const useGameEngine = create<GameEngineState>()(
             ),
           }
         })
+        return vereditos
       },
 
       // Entrosamento por FORA da partida oficial: amistoso e treino na data FIFA.

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback, useEffect } from "react"
+import { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import {
   ChevronLeft,
@@ -10,6 +10,7 @@ import {
   Star,
   FastForward,
   Play,
+  Square,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -108,6 +109,14 @@ export default function CalendarioPage() {
   // ser chamado em sequencia com seguranca).
   const [simDate, setSimDate] = useState<Date | null>(null)
   const [simProgress, setSimProgress] = useState(0)
+  // PARADA DA SIMULAÇÃO.
+  //
+  // Em `ref`, não em estado: o laço roda dentro de um `useCallback` que capturou
+  // o valor de quando começou. Com `useState`, a leitura lá dentro seria sempre
+  // `false` e o botão não faria nada — o clássico closure velho. A `ref` é a
+  // mesma caixa do começo ao fim.
+  const pedidoDeParar = useRef(false)
+  const [parando, setParando] = useState(false)
 
   // Fila de partidas pendentes — usada so para EXIBIR quantas serao simuladas.
   // (advanceWeek avanca UMA SEMANA por chamada; com copas em meio de semana, a
@@ -129,6 +138,8 @@ export default function CalendarioPage() {
   const simulateUntilMatch = useCallback(
     async (target: Fixture) => {
       if (isSimulating) return
+      pedidoDeParar.current = false
+      setParando(false)
       setIsSimulating(true)
 
       // Semanas REAIS ate o alvo (target.week - semana atual). O indice na fila
@@ -154,7 +165,7 @@ export default function CalendarioPage() {
       let advanced = 0
       let falhou = false
       try {
-        for (let d = 1; d <= totalDays && !falhou; d++) {
+        for (let d = 1; d <= totalDays && !falhou && !pedidoDeParar.current; d++) {
           setSimDate(new Date(start.getTime() + d * 86_400_000))
           setSimProgress(Math.round((d / totalDays) * 100))
 
@@ -169,13 +180,30 @@ export default function CalendarioPage() {
           }
           await new Promise(r => setTimeout(r, delay))
         }
-        while (advanced < weeks && !falhou) {
+        // O "recupera o que faltou" também precisa parar: sem isto, apertar
+        // Parar no dia 3 de 200 ainda avançaria todas as semanas restantes de
+        // uma vez — o oposto do que a pessoa pediu.
+        while (advanced < weeks && !falhou && !pedidoDeParar.current) {
           try { await advanceWeek(); advanced++ }
           catch (e) { console.error("[calendario] falha ao avançar a semana:", e); falhou = true }
         }
       } finally {
         setIsSimulating(false)
         setSimProgress(0)
+        setParando(false)
+      }
+
+      if (pedidoDeParar.current) {
+        pedidoDeParar.current = false
+        addNotification({
+          type: "system", priority: "medium",
+          title: "Simulação interrompida",
+          message: advanced > 0
+            ? `Você parou depois de avançar ${advanced} ${advanced === 1 ? "semana" : "semanas"}. `
+              + "O que já passou continua valendo — dá para seguir daqui quando quiser."
+            : "Nada foi avançado: você parou antes da primeira semana virar.",
+        })
+        return
       }
 
       if (falhou) {
@@ -190,6 +218,20 @@ export default function CalendarioPage() {
     },
     [advanceWeek, currentWeek, currentSeason, isSimulating, addNotification],
   )
+
+  // Esc para a simulação. É o gesto que a pessoa tenta primeiro numa tela cheia
+  // que tomou conta do jogo; sem isto, o Esc não faz nada e parece travado.
+  useEffect(() => {
+    if (!isSimulating) return
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      e.preventDefault()
+      pedidoDeParar.current = true
+      setParando(true)
+    }
+    window.addEventListener("keydown", aoTeclar)
+    return () => window.removeEventListener("keydown", aoTeclar)
+  }, [isSimulating])
 
   // Dias do calendario
   const calendarDays = useMemo(() => {
@@ -312,7 +354,7 @@ export default function CalendarioPage() {
   {/* Overlay de simulacao DIA A DIA (imersao: a data corre dia por dia ate a partida) */}
   {isSimulating && simDate && (
     <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/88 backdrop-blur-sm">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-[#00ffc8]">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-[var(--brand)]">
         Simulando dias
       </div>
       <div className="mt-4 text-7xl font-black tabular-nums leading-none text-white">
@@ -326,11 +368,29 @@ export default function CalendarioPage() {
       </div>
       <div className="mt-8 h-1.5 w-72 overflow-hidden rounded-full bg-white/10">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] transition-[width] duration-100"
+          className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] transition-[width] duration-100"
           style={{ width: `${simProgress}%` }}
         />
       </div>
       <div className="mt-3 text-xs text-white/35">{simProgress}%</div>
+
+      {/* PARAR. A simulação corre sozinha até a partida-alvo; sem saída, quem
+          escolheu a data errada assiste meses passarem sem poder intervir.
+          O aviso é explícito porque a parada NÃO desfaz o que já passou —
+          descobrir isso depois de parar seria pior do que não ter o botão. */}
+      <button
+        onClick={() => { pedidoDeParar.current = true; setParando(true) }}
+        disabled={parando}
+        className="mt-9 flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-2.5 text-sm font-semibold text-white/80 transition-colors hover:border-white/30 hover:bg-white/[0.12] hover:text-white disabled:opacity-50"
+      >
+        <Square className="h-3.5 w-3.5" />
+        {parando ? "Parando…" : "Parar simulação"}
+      </button>
+      <p className="mt-2.5 text-[11px] text-white/30">
+        {parando
+          ? "Terminando o dia atual…"
+          : "Esc para parar. Os dias que já passaram continuam valendo."}
+      </p>
     </div>
   )}
 
@@ -520,7 +580,7 @@ export default function CalendarioPage() {
               disabled={isSimulating}
               className={cn(
                 "mb-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all",
-                "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black hover:brightness-110",
+                "bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black hover:brightness-110",
                 "disabled:cursor-not-allowed disabled:opacity-60",
               )}
             >
@@ -575,7 +635,7 @@ export default function CalendarioPage() {
             <div className="border-t border-white/10 pt-4 mt-4">
               {mundialNoMes ? (
                 <>
-                  <div className="text-[#00ffc8] text-xs font-bold mb-1">🏆 Copa do Mundo FIFA</div>
+                  <div className="text-[var(--brand)] text-xs font-bold mb-1">🏆 Copa do Mundo FIFA</div>
                   <div className="text-white/60 text-xs leading-snug">
                     O Mundial toma junho e julho. O campeonato de clubes está pausado enquanto as seleções disputam o torneio.
                   </div>
@@ -608,9 +668,9 @@ export default function CalendarioPage() {
                 mes. Antes so havia o card de clube (vazio na pausa) e o jogador
                 achava que "a Copa nao aparecia". Agora ela toma a tela. */}
             {mundialNoMes && (
-              <div className="flex items-center justify-center gap-2 border-b border-[#00ffc8]/25 bg-[#00ffc8]/[0.10] px-4 py-2 text-center">
-                <Trophy className="h-4 w-4 text-[#00ffc8]" />
-                <span className="text-xs font-bold uppercase tracking-wide text-[#00ffc8]">Copa do Mundo FIFA em andamento</span>
+              <div className="flex items-center justify-center gap-2 border-b border-[var(--brand)]/25 bg-[var(--brand)]/[0.10] px-4 py-2 text-center">
+                <Trophy className="h-4 w-4 text-[var(--brand)]" />
+                <span className="text-xs font-bold uppercase tracking-wide text-[var(--brand)]">Copa do Mundo FIFA em andamento</span>
                 <span className="text-[11px] text-white/55">· clubes pausados</span>
               </div>
             )}

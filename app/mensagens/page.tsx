@@ -254,7 +254,7 @@ export default function MensagensPage() {
       <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto">
-        {sponsorOffers.filter(offer=>offer.status!=="rejected").length>0&&<section className="mb-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4"><h2 className="font-bold text-amber-200">Propostas comerciais recebidas</h2><p className="mt-1 text-xs text-white/45">Os contratos aceitos entram na receita mensal do clube.</p><div className="mt-3 grid gap-3 lg:grid-cols-3">{sponsorOffers.filter(offer=>offer.status!=="rejected").map(offer=><div key={offer.sponsor.id} className="rounded-lg bg-black/30 p-3"><div className="flex justify-between gap-2"><b>{offer.sponsor.name}</b><span className="text-[#00ffc8]">R$ {offer.sponsor.monthlyValue.toLocaleString("pt-BR")}/mês</span></div><p className="mt-1 text-[11px] text-white/45">{offer.durationSeasons} temporada(s) · bônus por título R$ {(offer.sponsor.bonuses.titleBonus??0).toLocaleString("pt-BR")}</p>{offer.message&&<p className="mt-2 text-xs text-amber-200">{offer.message}</p>}{counteringSponsor===offer.sponsor.id&&<div className="mt-2 grid grid-cols-2 gap-2"><input type="number" value={counterMonthly} onChange={e=>setCounterMonthly(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/><input type="number" min={1} max={5} value={counterDuration} onChange={e=>setCounterDuration(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/></div>}<div className="mt-3 flex gap-2"><button onClick={()=>acceptSponsor(offer.sponsor.id)} className="flex-1 rounded bg-[#00ffc8] px-2 py-1.5 text-xs font-bold text-black">Aceitar</button><button onClick={()=>{if(counteringSponsor===offer.sponsor.id)counterSponsor(offer.sponsor.id);else{setCounteringSponsor(offer.sponsor.id);setCounterMonthly(Math.round(offer.sponsor.monthlyValue*1.1));setCounterDuration(offer.durationSeasons)}}} className="flex-1 rounded bg-amber-400/15 px-2 py-1.5 text-xs text-amber-200">{counteringSponsor===offer.sponsor.id?"Enviar":"Contraproposta"}</button></div></div>)}</div></section>}
+        {sponsorOffers.filter(offer=>offer.status!=="rejected").length>0&&<section className="mb-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4"><h2 className="font-bold text-amber-200">Propostas comerciais recebidas</h2><p className="mt-1 text-xs text-white/45">Os contratos aceitos entram na receita mensal do clube.</p><div className="mt-3 grid gap-3 lg:grid-cols-3">{sponsorOffers.filter(offer=>offer.status!=="rejected").map(offer=><div key={offer.sponsor.id} className="rounded-lg bg-black/30 p-3"><div className="flex justify-between gap-2"><b>{offer.sponsor.name}</b><span className="text-[var(--brand)]">R$ {offer.sponsor.monthlyValue.toLocaleString("pt-BR")}/mês</span></div><p className="mt-1 text-[11px] text-white/45">{offer.durationSeasons} temporada(s) · bônus por título R$ {(offer.sponsor.bonuses.titleBonus??0).toLocaleString("pt-BR")}</p>{offer.message&&<p className="mt-2 text-xs text-amber-200">{offer.message}</p>}{counteringSponsor===offer.sponsor.id&&<div className="mt-2 grid grid-cols-2 gap-2"><input type="number" value={counterMonthly} onChange={e=>setCounterMonthly(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/><input type="number" min={1} max={5} value={counterDuration} onChange={e=>setCounterDuration(Number(e.target.value))} className="rounded bg-white/10 p-2 text-xs"/></div>}<div className="mt-3 flex gap-2"><button onClick={()=>acceptSponsor(offer.sponsor.id)} className="flex-1 rounded bg-[var(--brand)] px-2 py-1.5 text-xs font-bold text-[var(--brand-ink)]">Aceitar</button><button onClick={()=>{if(counteringSponsor===offer.sponsor.id)counterSponsor(offer.sponsor.id);else{setCounteringSponsor(offer.sponsor.id);setCounterMonthly(Math.round(offer.sponsor.monthlyValue*1.1));setCounterDuration(offer.durationSeasons)}}} className="flex-1 rounded bg-amber-400/15 px-2 py-1.5 text-xs text-amber-200">{counteringSponsor===offer.sponsor.id?"Enviar":"Contraproposta"}</button></div></div>)}</div></section>}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Message List */}
           <section className="lg:col-span-1 space-y-4">
@@ -296,7 +296,7 @@ export default function MensagensPage() {
                 <TabsTrigger value="unread" className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-2 py-1.5">
                   Nao lidas
                   {unreadCount > 0 && (
-                    <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#00ffc8] text-[8px] text-black font-bold">
+                    <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand)] text-[8px] text-[var(--brand-ink)] font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -337,9 +337,9 @@ export default function MensagensPage() {
                     className={cn(
                       "w-full rounded-xl border p-4 text-left transition-all",
                       selectedMessage?.id === message.id 
-                        ? "border-[#00ffc8] bg-[#00ffc8]/5" 
+                        ? "border-[var(--brand)] bg-[var(--brand)]/5" 
                         : "border-white/[0.04] bg-[#0c0c10] hover:border-white/10",
-                      !message.read && "bg-[#00ffc8]/5"
+                      !message.read && "bg-[var(--brand)]/5"
                     )}
                   >
                     <div className="flex items-start gap-3">
@@ -347,7 +347,7 @@ export default function MensagensPage() {
                         "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
                         message.category === "diretoria" ? "bg-yellow-400/20 text-yellow-400" :
                         message.category === "staff" ? "bg-blue-400/20 text-blue-400" :
-                        message.category === "mercado" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
+                        message.category === "mercado" ? "bg-[var(--brand)]/20 text-[var(--brand)]" :
                         "bg-purple-400/20 text-purple-400"
                       )}>
                         <message.icon className="h-5 w-5" />
@@ -362,7 +362,7 @@ export default function MensagensPage() {
                           </span>
                           <div className="flex items-center gap-1 shrink-0">
                             {message.starred && <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />}
-                            {!message.read && <span className="h-2 w-2 rounded-full bg-[#00ffc8]" />}
+                            {!message.read && <span className="h-2 w-2 rounded-full bg-[var(--brand)]" />}
                           </div>
                         </div>
                         <div className={cn(
@@ -398,7 +398,7 @@ export default function MensagensPage() {
                       "h-12 w-12 rounded-lg flex items-center justify-center",
                       selectedMessage.category === "diretoria" ? "bg-yellow-400/20 text-yellow-400" :
                       selectedMessage.category === "staff" ? "bg-blue-400/20 text-blue-400" :
-                      selectedMessage.category === "mercado" ? "bg-[#00ffc8]/20 text-[#00ffc8]" :
+                      selectedMessage.category === "mercado" ? "bg-[var(--brand)]/20 text-[var(--brand)]" :
                       "bg-purple-400/20 text-purple-400"
                     )}>
                       <selectedMessage.icon className="h-6 w-6" />
@@ -427,7 +427,7 @@ export default function MensagensPage() {
                         variant="ghost" 
                         size="icon" 
                         onClick={() => handleUnarchive(selectedMessage.id)}
-                        className="h-8 w-8 text-white/50 hover:text-[#00ffc8] hover:bg-white/5"
+                        className="h-8 w-8 text-white/50 hover:text-[var(--brand)] hover:bg-white/5"
                         title="Desarquivar"
                       >
                         <ArchiveRestore className="h-4 w-4" />
@@ -467,7 +467,7 @@ export default function MensagensPage() {
                   <div className="mt-8 pt-6 border-t border-white/[0.04] flex items-center gap-3">
                     <Button 
                       onClick={handleReply}
-                      className="text-xs bg-[#00ffc8] text-black hover:bg-[#00c8ff]"
+                      className="text-xs bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
                     >
                       <Reply className="mr-2 h-4 w-4" />
                       Responder
@@ -508,8 +508,8 @@ export default function MensagensPage() {
           
           {replySent ? (
             <div className="py-8 text-center">
-              <div className="h-16 w-16 mx-auto rounded-full bg-[#00ffc8]/20 flex items-center justify-center mb-4">
-                <Send className="h-8 w-8 text-[#00ffc8]" />
+              <div className="h-16 w-16 mx-auto rounded-full bg-[var(--brand)]/20 flex items-center justify-center mb-4">
+                <Send className="h-8 w-8 text-[var(--brand)]" />
               </div>
               <p className="text-white/70">Sua resposta foi enviada com sucesso!</p>
             </div>
@@ -541,7 +541,7 @@ export default function MensagensPage() {
                 <Button 
                   onClick={handleSendReply}
                   disabled={!replyText.trim()}
-                  className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] disabled:opacity-50"
+                  className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] disabled:opacity-50"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   Enviar

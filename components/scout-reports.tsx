@@ -112,7 +112,7 @@ export function ScoutReports() {
         </div>
         <button
           onClick={() => setShowHireModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00ffc8] text-black text-sm font-semibold hover:bg-[#00c8ff] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] text-sm font-semibold hover:bg-[var(--brand-2)] transition-colors"
         >
           <User className="h-4 w-4" />
           Contratar Olheiro
@@ -142,7 +142,7 @@ export function ScoutReports() {
             </p>
             <button
               onClick={() => setShowHireModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00ffc8] text-black text-sm font-semibold hover:bg-[#00c8ff] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] text-sm font-semibold hover:bg-[var(--brand-2)] transition-colors"
             >
               <User className="h-4 w-4" />
               Contratar Primeiro Olheiro
@@ -216,7 +216,7 @@ export function ScoutReports() {
                         <div className="text-sm font-medium text-white">{formatCurrency(scout.salary)}/sem</div>
                         <button
                           onClick={() => handleHireScout(scout)}
-                          className="mt-1 text-xs text-[#00ffc8] hover:underline"
+                          className="mt-1 text-xs text-[var(--brand)] hover:underline"
                         >
                           Contratar
                         </button>
@@ -280,7 +280,7 @@ function ScoutCard({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-white/50">Buscando em {scout.searchTarget}</span>
-              <span className="text-[#00ffc8]">{scout.searchProgress}%</span>
+              <span className="text-[var(--brand)]">{scout.searchProgress}%</span>
             </div>
             <Progress value={scout.searchProgress} className="h-1.5" />
             <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ function ScoutCard({
             ) : (
               <button
                 onClick={() => setShowRegions(true)}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#00ffc8] text-black text-xs font-semibold hover:bg-[#00c8ff] transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] text-xs font-semibold hover:bg-[var(--brand-2)] transition-colors"
               >
                 <Search className="h-3.5 w-3.5" />
                 Iniciar Busca
@@ -335,7 +335,7 @@ function ScoutCard({
         {scout.foundPlayers && scout.foundPlayers.length > 0 && (
           <div className="mt-3 pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs">
             <span className="text-white/50">Jogadores descobertos</span>
-            <span className="font-medium text-[#00ffc8]">{scout.foundPlayers.length}</span>
+            <span className="font-medium text-[var(--brand)]">{scout.foundPlayers.length}</span>
           </div>
         )}
       </div>
@@ -364,7 +364,7 @@ function DiscoveredPlayerRow({ player }: { player: ScoutedPlayer }) {
       
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <div className="text-lg font-bold text-[#00ffc8]">{player.overall}</div>
+          <div className="text-lg font-bold text-[var(--brand)]">{player.overall}</div>
           <div className="text-[10px] text-white/40">OVR</div>
         </div>
         <div className="text-center">

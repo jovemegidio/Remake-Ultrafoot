@@ -213,7 +213,7 @@ export default function ContratosPage() {
           {/* Filtros */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
             <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-              <FileText className="h-4 w-4 text-[#00ffc8]" />
+              <FileText className="h-4 w-4 text-[var(--brand)]" />
               CONTRATOS DO ELENCO
             </div>
             <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function ContratosPage() {
                   <div>
                     <span className={cn(
                       "px-2 py-1 rounded text-[10px] font-medium",
-                      status === "ok" && "bg-[#00ffc8]/20 text-[#00ffc8]",
+                      status === "ok" && "bg-[var(--brand)]/20 text-[var(--brand)]",
                       status === "expiring" && "bg-[#ffd700]/20 text-[#ffd700]",
                       status === "expired" && "bg-red-500/20 text-red-500"
                     )}>
@@ -329,7 +329,7 @@ export default function ContratosPage() {
                   <div>
                     <button
                       onClick={() => handleOpenRenewal(player)}
-                      className="px-3 py-1.5 rounded bg-[#00ffc8] text-black text-xs font-medium hover:bg-[#00c8ff] transition-colors"
+                      className="px-3 py-1.5 rounded bg-[var(--brand)] text-[var(--brand-ink)] text-xs font-medium hover:bg-[var(--brand-2)] transition-colors"
                     >
                       Renovar
                     </button>
@@ -349,7 +349,7 @@ export default function ContratosPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
-                <Handshake className="h-5 w-5 text-[#00ffc8]" />
+                <Handshake className="h-5 w-5 text-[var(--brand)]" />
                 <span className="font-semibold text-white">Renovacao de Contrato</span>
               </div>
               <button
@@ -364,7 +364,7 @@ export default function ContratosPage() {
             <div className="p-6 space-y-6">
               {/* Info do jogador */}
               <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#00ffc8]/20 to-[#00ffc8]/5 flex items-center justify-center text-xl font-bold text-[#00ffc8]">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand)]/5 flex items-center justify-center text-xl font-bold text-[var(--brand)]">
                   {selectedPlayer.overall}
                 </div>
                 <div>
@@ -391,7 +391,7 @@ export default function ContratosPage() {
                         onChange={(e) => setProposedSalary(Number(e.target.value))}
                         className="flex-1"
                       />
-                      <span className="text-lg font-bold text-[#00ffc8] min-w-[120px] text-right">
+                      <span className="text-lg font-bold text-[var(--brand)] min-w-[120px] text-right">
                         {formatCurrency(proposedSalary)}
                       </span>
                     </div>
@@ -422,7 +422,7 @@ export default function ContratosPage() {
                           className={cn(
                             "py-3 rounded-lg text-sm font-medium transition-colors",
                             proposedYears === years
-                              ? "bg-[#00ffc8] text-black"
+                              ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                               : "bg-white/5 text-white/70 hover:bg-white/10"
                           )}
                         >
@@ -438,7 +438,7 @@ export default function ContratosPage() {
                       <span className="text-white/60">Chance de aceitar</span>
                       <span className={cn(
                         "font-bold",
-                        calculateAcceptChance() >= 70 ? "text-[#00ffc8]" :
+                        calculateAcceptChance() >= 70 ? "text-[var(--brand)]" :
                         calculateAcceptChance() >= 40 ? "text-[#ffd700]" : "text-red-500"
                       )}>
                         {calculateAcceptChance()}%
@@ -460,10 +460,10 @@ export default function ContratosPage() {
 
               {negotiationStatus === "accepted" && (
                 <div className="text-center py-8">
-                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-[#00ffc8]/20 flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-[#00ffc8]" />
+                  <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-[var(--brand)]/20 flex items-center justify-center">
+                    <CheckCircle2 className="h-6 w-6 text-[var(--brand)]" />
                   </div>
-                  <div className="text-[#00ffc8] font-semibold text-lg">Contrato Renovado!</div>
+                  <div className="text-[var(--brand)] font-semibold text-lg">Contrato Renovado!</div>
                   <div className="text-white/50 text-sm mt-2">
                     {selectedPlayer.name} assinou por mais {proposedYears} {proposedYears === 1 ? "ano" : "anos"}
                   </div>
@@ -495,7 +495,7 @@ export default function ContratosPage() {
                   </button>
                   <button
                     onClick={handleSubmitProposal}
-                    className="px-6 py-2 rounded-lg bg-[#00ffc8] text-black font-semibold hover:bg-[#00c8ff] transition-colors"
+                    className="px-6 py-2 rounded-lg bg-[var(--brand)] text-[var(--brand-ink)] font-semibold hover:bg-[var(--brand-2)] transition-colors"
                   >
                     Enviar Proposta
                   </button>

@@ -17,6 +17,8 @@ import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, type FaseCopa, type Pl
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldFireManager } from "@/lib/board-engine"
+// As vagas de generateJobOffers vinham do nada: agora os outros clubes demitem.
+import { demissoesDaRodada, manchete, tecnicoDoClube } from "@/lib/mercado-de-tecnicos"
 import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
 import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
@@ -33,6 +35,10 @@ import { qualificacaoReal2026 } from "@/lib/qualificacao-2026"
 import { isFifaWindowMonth, windowLabel, cyclePhase, worldCupHosts, worldCupNote } from "@/lib/national-windows"
 import { gerarScorersDaPartida } from "@/lib/competition-scorers"
 import { regionalCupForState } from "@/lib/regional-cups"
+import {
+  humorDasOrganizadas, organizadasDoClube, quadroDeSocios, satisfacaoDaTorcida,
+  torcidaAposTemporada, type ConquistaDaTemporada,
+} from "@/lib/torcida"
 
 const LEAGUE_NAMES: Record<string, string> = {
   serie_a: "Brasileirao Serie A",
@@ -2197,8 +2203,43 @@ export function useGameManager() {
       // (coachTotalTitles) — mesmo motivo do titulo de copa: e o que abre as
       // propostas de clube e de selecao. So quando o usuario foi o campeao.
       const ganhouALiga = champion != null && champion === userShort
+
+      // ─── A TORCIDA SENTE A TEMPORADA ───────────────────────────────────────
+      //
+      // Antes SO jogo em casa mexia na torcida (fanBaseGrowth), e pouco: dava
+      // para ganhar a liga e a massa nao mudar de tamanho. Aqui entram os feitos
+      // da temporada — que e o que faz uma carreira longa ter efeito visivel.
+      const conquistas: ConquistaDaTemporada[] = []
+      if (ganhouALiga) conquistas.push("titulo_nacional")
+      if (divisionMovement?.season === nextSeason) {
+        if (divisionMovement.movement === "promoted") conquistas.push("acesso")
+        else if (divisionMovement.movement === "relegated") conquistas.push("rebaixamento")
+      }
+      // Sem titulo e na metade de baixo: temporada esquecivel, torcedor de
+      // ocasiao se afasta.
+      if (!conquistas.length && userFinalPos > sortedForChampion.length / 2) {
+        conquistas.push("temporada_fraca")
+      }
+
+      const torcidaAntes = currentState.fanBase
+        ?? userTeamStatic?.torcida
+        ?? 50_000
+      const { torcida: torcidaDepois } = torcidaAposTemporada(torcidaAntes, conquistas)
+      const organizadasDepois = humorDasOrganizadas(
+        currentState.torcidaOrganizadas?.length
+          ? currentState.torcidaOrganizadas
+          : organizadasDoClube(userShort, torcidaAntes),
+        {
+          vitorias: userStanding?.won ?? 0,
+          derrotas: userStanding?.lost ?? 0,
+          conquistas,
+        },
+      )
+
       const patch = {
         week: 0, season: nextSeason,
+        fanBase: torcidaDepois,
+        torcidaOrganizadas: organizadasDepois,
         divisionOverride: nextDivisionOverride,
         clubDivisions: nextClubDivisions,
         divisionMovement,
@@ -2385,7 +2426,26 @@ export function useGameManager() {
         })
       }
     }
-    if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)}
+    if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)
+      // SÓCIO TORCEDOR. Entra no mesmo ciclo mensal do patrocínio. Existia um
+      // `calculateFanRevenue` no game-engine sem nenhum chamador: nenhum real
+      // pingava no caixa por sócio. Agora pinga, e o valor ACOMPANHA a carreira
+      // — torcida maior e mais satisfeita = quadro social maior.
+      // `userTeamStatic` e do bloco de fim de temporada; aqui a busca e propria.
+      const torcidaAgora = currentState.fanBase ?? getTeamByShort(userShort)?.torcida ?? 50_000
+      const organizadasAgora = currentState.torcidaOrganizadas?.length
+        ? currentState.torcidaOrganizadas
+        : organizadasDoClube(userShort, torcidaAgora)
+      const quadro = quadroDeSocios({
+        torcida: torcidaAgora,
+        satisfacao: satisfacaoDaTorcida(organizadasAgora),
+        plano: currentState.planoDeSocio ?? "padrao",
+        // `clubInfrastructure` ainda nao tem chave de marketing; quando tiver,
+        // ela entra aqui sozinha. Ate la vale o nivel medio.
+        nivelMarketing: useGameEngine.getState().clubInfrastructure?.marketing ?? 2,
+      })
+      if (quadro.receitaMensal > 0) gameEngine.addClubRevenue(quadro.receitaMensal)
+    }
     // RELATÓRIO FINANCEIRO MENSAL na central de notificações (pedido: acompanhar
     // entradas/saídas e dívidas). Também esclarece a dúvida "como pago as dívidas?"
     // — a parcela é quitada AUTOMATICAMENTE do caixa todo mês; dá para renegociar
@@ -2521,6 +2581,67 @@ export function useGameManager() {
           },
         )
         if (ofertas.length) addJobOffers(ofertas, st.season, newWeek)
+
+        // ── DEMISSOES NO RESTO DO MUNDO ──────────────────────────────────────
+        //
+        // As vagas acima saiam do NADA: generateJobOffers escolhia clubes por
+        // prestigio, sem ninguem nunca ter sido demitido em lugar nenhum. Agora
+        // os outros clubes tambem caem, por campanha ruim, e isso vira noticia.
+        //
+        // A tabela do usuario e a unica que o jogo simula em detalhe, entao a
+        // berlinda sai dela — os clubes que ele enfrenta, que sao os que ele
+        // reconhece na noticia.
+        const jaDemitidos = st.demissoesMundo ?? []
+        const trocasDe = (curto: string) =>
+          jaDemitidos.filter(d => d.curto === curto).length
+        const naBerlinda = tabela
+          .map((linha, i) => {
+            const time = getTeamByShort(linha.teamShort)
+            if (!time || linha.teamShort === shortNow) return null
+            // Sem clube demitido na MESMA temporada: uma queda por ano por clube
+            // ja e mais rotatividade do que o futebol tem.
+            if (jaDemitidos.some(d => d.curto === linha.teamShort && d.season === st.season)) return null
+            const recentes = [...useGameEngine.getState().matchResults]
+              .filter(r => r.homeTeam === linha.teamShort || r.awayTeam === linha.teamShort)
+              .slice(-5)
+            const vitorias = recentes.filter(r => {
+              const casa = r.homeTeam === linha.teamShort
+              return (casa ? r.homeScore : r.awayScore) > (casa ? r.awayScore : r.homeScore)
+            }).length
+            // Expectativa a partir do prestigio: quanto maior, mais alto se
+            // espera chegar. Prestigio 90 espera ~2o; prestigio 60, ~14o.
+            const prest = time.prestigio ?? 60
+            const expectativa = Math.max(1, Math.round(tabela.length - (prest - 50) * 0.36))
+            return {
+              curto: linha.teamShort,
+              nome: time.nome,
+              tecnico: tecnicoDoClube(linha.teamShort, trocasDe(linha.teamShort)),
+              posicao: i + 1,
+              totalTimes: tabela.length,
+              vitoriasRecentes: vitorias,
+              expectativa,
+            }
+          })
+          .filter((c): c is NonNullable<typeof c> => c !== null)
+
+        const quedas = newWeek > 6 ? demissoesDaRodada(naBerlinda) : []
+        if (quedas.length) {
+          for (const q of quedas) {
+            addNotificationRef.current({
+              type: "news",
+              title: `${q.clubeNome} troca de técnico`,
+              message: manchete(q),
+              priority: "low",
+              href: "/treinador",
+            })
+          }
+          setSaveState({
+            demissoesMundo: [
+              ...jaDemitidos,
+              ...quedas.map(q => ({ curto: q.clubeCurto, season: st.season, week: newWeek, tecnico: q.tecnico })),
+            ].slice(-120), // memoria suficiente para varias temporadas
+          } as Partial<typeof currentState>)
+        }
 
         // ── DEMISSAO PELA DIRETORIA ──────────────────────────────────────────
         //

@@ -202,7 +202,7 @@ export default function EstatisticasPage() {
                   )}
                 >
                   {c.label}
-                  {active && <span className="absolute -bottom-[13px] left-0 right-0 h-0.5 bg-[#00ffc8]" />}
+                  {active && <span className="absolute -bottom-[13px] left-0 right-0 h-0.5 bg-[var(--brand)]" />}
                 </button>
               )
             })}
@@ -348,7 +348,7 @@ function LeaderboardTable({
   data, 
   columns,
   primaryColumn,
-  primaryColor = "text-[#00ffc8]"
+  primaryColor = "text-[var(--brand)]"
 }: { 
   title: string;
   data: { pos: number; name: string; team: string; isUser?: boolean; [key: string]: string | number | boolean | undefined }[];
@@ -382,7 +382,7 @@ function LeaderboardTable({
               key={row.pos}
               className={cn(
                 "grid grid-cols-[40px_1fr_60px_repeat(3,60px)] gap-2 px-4 py-3 items-center transition-colors hover:bg-white/[0.02]",
-                row.isUser && "bg-[#00ffc8]/10 border-l-2 border-[#00ffc8]"
+                row.isUser && "bg-[var(--brand)]/10 border-l-2 border-[var(--brand)]"
               )}
             >
               <span className={cn(
@@ -441,7 +441,7 @@ function SquadStatsTable({
   return (
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
-        <Users className="h-4 w-4 text-[#00ffc8]" />
+        <Users className="h-4 w-4 text-[var(--brand)]" />
         <span className="font-semibold text-white">Estatisticas do Elenco</span>
       </div>
 
@@ -471,13 +471,13 @@ function SquadStatsTable({
             <span className="text-sm text-white font-medium">{player.name}</span>
             <span className="text-center text-xs text-white/50">{player.position}</span>
             <span className="text-center text-sm text-white/70 tabular-nums">{player.matches}</span>
-            <span className="text-center text-sm text-[#00ffc8] tabular-nums font-semibold">{player.goals}</span>
+            <span className="text-center text-sm text-[var(--brand)] tabular-nums font-semibold">{player.goals}</span>
             <span className="text-center text-sm text-blue-400 tabular-nums">{player.assists}</span>
             <span className="text-center text-sm text-[#ffd700] tabular-nums">{player.yellows}</span>
             <span className="text-center text-sm text-red-500 tabular-nums">{player.reds}</span>
             <span className={cn(
               "text-center text-sm font-bold tabular-nums",
-              player.rating >= 7.5 ? "text-[#00ffc8]" :
+              player.rating >= 7.5 ? "text-[var(--brand)]" :
               player.rating >= 7.0 ? "text-lime-400" :
               player.rating >= 6.5 ? "text-[#ffd700]" : "text-orange-500"
             )}>

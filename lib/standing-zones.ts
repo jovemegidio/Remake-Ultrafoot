@@ -2,6 +2,8 @@
 // Cada zona cobre um intervalo de posicoes e define cor e rotulo para destacar
 // as linhas na tabela de classificacao.
 
+import { FORMATOS, zonaDePlayoff } from "@/lib/formato-de-liga"
+
 export interface StandingZone {
   id: string
   label: string
@@ -61,7 +63,12 @@ const DIVISION_ZONES: Record<string, ZoneTemplate[]> = {
   ligue_1:        [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
   saudi_pro:      [{ id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true }],
   // Segundas divisoes: 3 sobem para a elite (sem rebaixamento no jogo — sao a base).
-  championship:     [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
+  //
+  // Championship e a excecao e estava ERRADO aqui: sao 2 vagas DIRETAS e a
+  // terceira sai do playoff entre 3o e 6o. Marcar "Acesso 1-3" dava ao 3o
+  // colocado um acesso que ele nao tem, e colidia com a zona de playoff que
+  // lib/formato-de-liga define — colisao que fazia o playoff nao aparecer.
+  championship:     [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 2 }],
   la_liga_2:        [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
   serie_b_ita:      [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
   bundesliga_2:     [{ id: "promotion", label: "Acesso", color: C.promotion, from: 1, count: 3 }],
@@ -75,6 +82,28 @@ const DEFAULT_ZONES: ZoneTemplate[] = [
   { id: "continental", label: "Competicao Continental", color: C.sudamericana, from: 5, count: 2 },
   { id: "relegation", label: "Rebaixamento", color: C.relegation, from: 0, count: 3, fromBottom: true },
 ]
+
+/**
+ * Divisao -> formato em lib/formato-de-liga.
+ *
+ * NAO substitui os templates acima: eles descrevem coisas que o formato nao
+ * modela (Libertadores, Pre-Libertadores, Sul-Americana). O formato entra para
+ * COMPLEMENTAR o que falta aqui — hoje, a zona de PLAYOFF de acesso, que o
+ * Championship tem na vida real (3o ao 6o disputam a terceira vaga) e que esta
+ * tabela simplesmente nao mostrava.
+ *
+ * Duas fontes de verdade para a mesma informacao seria o mesmo defeito que o
+ * leilao teve com o valor de mercado; por isso o formato so ACRESCENTA.
+ */
+const DIVISAO_PARA_FORMATO: Record<string, string> = {
+  serie_a: "brasileirao_a",
+  serie_b: "brasileirao_b",
+  serie_c: "brasileirao_c",
+  serie_d: "brasileirao_d",
+  premier_league: "premier_league",
+  championship: "championship",
+  la_liga: "la_liga",
+}
 
 /**
  * Retorna as zonas de classificacao concretas para uma divisao,
@@ -96,6 +125,22 @@ export function getStandingZones(division: string, totalTeams: number): Standing
     }
     if (from > totalTeams || to < 1 || from > to) continue
     zones.push({ id: tpl.id, label: tpl.label, color: tpl.color, from, to })
+  }
+
+  // Playoff de acesso, quando o formato da liga define um. Entra depois para
+  // nao competir com as zonas acima; e recusado se colidir com alguma delas —
+  // uma posicao pintada por duas zonas confundiria mais do que informaria.
+  const formato = FORMATOS[DIVISAO_PARA_FORMATO[division] ?? ""]
+  if (formato && formato.vagasPorPlayoff > 0) {
+    const posicoes = zonaDePlayoff(formato).filter((p) => p <= totalTeams)
+    if (posicoes.length > 0) {
+      const de = Math.min(...posicoes)
+      const ate = Math.max(...posicoes)
+      const colide = zones.some((z) => de <= z.to && ate >= z.from)
+      if (!colide) {
+        zones.push({ id: "playoff", label: "Playoff de Acesso", color: C.playoff, from: de, to: ate })
+      }
+    }
   }
 
   return zones

@@ -138,6 +138,7 @@ export const ptBR = {
       settings: "Configuracoes",
       profile: "Perfil",
       online: "Configuracoes\nonline",
+      updates: "Atualizacoes",
       gameTime: "Tempo de jogo",
       lineups: "Escalacoes",
       createPlayer: "Criar\natleta",

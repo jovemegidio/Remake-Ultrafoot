@@ -139,9 +139,9 @@ export function NegotiationModal({
   const clausulaAtingida = releaseClause != null && releaseClause > 0 && offer >= releaseClause
 
   const getOfferStatus = () => {
-    if (clausulaAtingida) return { label: "Cláusula paga", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 100 }
-    if (offerPercentage >= 110) return { label: "Excelente", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 95 }
-    if (offerPercentage >= 100) return { label: "Justa", color: "text-[#00ffc8]", bgColor: "bg-[#00ffc8]", chance: 75 }
+    if (clausulaAtingida) return { label: "Cláusula paga", color: "text-[var(--brand)]", bgColor: "bg-[var(--brand)]", chance: 100 }
+    if (offerPercentage >= 110) return { label: "Excelente", color: "text-[var(--brand)]", bgColor: "bg-[var(--brand)]", chance: 95 }
+    if (offerPercentage >= 100) return { label: "Justa", color: "text-[var(--brand)]", bgColor: "bg-[var(--brand)]", chance: 75 }
     if (offerPercentage >= 90) return { label: "Razoavel", color: "text-[#ffd700]", bgColor: "bg-[#ffd700]", chance: 50 }
     if (offerPercentage >= 80) return { label: "Baixa", color: "text-orange-500", bgColor: "bg-orange-500", chance: 25 }
     return { label: "Insultuosa", color: "text-red-500", bgColor: "bg-red-500", chance: 5 }
@@ -402,7 +402,7 @@ export function NegotiationModal({
             {/* Offer Status */}
             <div className={cn(
               "flex items-center gap-3 p-4 rounded-xl border transition-all",
-              status.chance >= 75 ? "bg-[#00ffc8]/10 border-[#00ffc8]/30" :
+              status.chance >= 75 ? "bg-[var(--brand)]/10 border-[var(--brand)]/30" :
               status.chance >= 50 ? "bg-[#ffd700]/10 border-[#ffd700]/30" :
               status.chance >= 25 ? "bg-orange-500/10 border-orange-500/30" :
               "bg-red-500/10 border-red-500/30"
@@ -425,7 +425,7 @@ export function NegotiationModal({
                 "flex items-start gap-3 p-3 rounded-xl border text-xs",
                 relationship.kind === "rival"
                   ? "bg-red-500/10 border-red-500/30 text-red-300"
-                  : "bg-[#00ffc8]/10 border-[#00ffc8]/30 text-[#00ffc8]",
+                  : "bg-[var(--brand)]/10 border-[var(--brand)]/30 text-[var(--brand)]",
               )}>
                 <div className="mt-0.5 shrink-0">
                   {relationship.kind === "rival"
@@ -461,13 +461,13 @@ export function NegotiationModal({
                       className={cn(
                         "rounded-xl border p-3 text-left transition-all",
                         role === r
-                          ? "border-[#00ffc8] bg-[#00ffc8]/10"
+                          ? "border-[var(--brand)] bg-[var(--brand)]/10"
                           : "border-white/10 bg-white/[0.03] hover:border-white/25"
                       )}
                     >
                       <div className={cn(
                         "text-xs font-bold",
-                        role === r ? "text-[#00ffc8]" : "text-white/80"
+                        role === r ? "text-[var(--brand)]" : "text-white/80"
                       )}>
                         {ROLE_LABEL[r]}
                       </div>
@@ -488,8 +488,8 @@ export function NegotiationModal({
         {step === "terms" && agentDemands && (
           <div className="space-y-4 py-2">
             <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00ffc8]/15">
-                <Handshake className="h-5 w-5 text-[#00ffc8]" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand)]/15">
+                <Handshake className="h-5 w-5 text-[var(--brand)]" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-white">Agente de {player.name}</div>
@@ -570,7 +570,7 @@ export function NegotiationModal({
                     className={cn(
                       "rounded-lg border py-2 text-xs font-bold transition-all",
                       contractYears === y
-                        ? "border-[#00ffc8] bg-[#00ffc8]/10 text-[#00ffc8]"
+                        ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]"
                         : "border-white/10 bg-white/[0.03] text-white/60 hover:border-white/25"
                     )}
                   >
@@ -595,7 +595,7 @@ export function NegotiationModal({
                     className={cn(
                       "rounded-lg border px-2 py-2 text-[11px] font-bold transition-all",
                       role === r
-                        ? "border-[#00ffc8] bg-[#00ffc8]/10 text-[#00ffc8]"
+                        ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]"
                         : "border-white/10 bg-white/[0.03] text-white/60 hover:border-white/25"
                     )}
                   >
@@ -609,7 +609,7 @@ export function NegotiationModal({
             </div>
 
             {agentRounds > 0 && (
-              <div className="rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/5 px-3 py-2 text-center text-[11px] text-[#00ffc8]/80">
+              <div className="rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/5 px-3 py-2 text-center text-[11px] text-[var(--brand)]/80">
                 Sua contraproposta · rodada {agentRounds + 1}. Ajuste salário, luvas,
                 duração ou papel e envie novamente ao agente.
               </div>
@@ -666,12 +666,12 @@ export function NegotiationModal({
                 <>
                   {/* Success sparkles */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className="absolute -top-4 -left-4 h-6 w-6 text-[#00ffc8] animate-pulse" />
+                    <Sparkles className="absolute -top-4 -left-4 h-6 w-6 text-[var(--brand)] animate-pulse" />
                     <Sparkles className="absolute -top-2 right-0 h-4 w-4 text-[#ffd700] animate-pulse" style={{ animationDelay: "200ms" }} />
-                    <Sparkles className="absolute bottom-0 -left-2 h-5 w-5 text-[#00ffc8] animate-pulse" style={{ animationDelay: "400ms" }} />
+                    <Sparkles className="absolute bottom-0 -left-2 h-5 w-5 text-[var(--brand)] animate-pulse" style={{ animationDelay: "400ms" }} />
                   </div>
                   
-                  <div className="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-[#00ffc8] to-[#00ffc8]/60 flex items-center justify-center shadow-lg shadow-[#00ffc8]/30 animate-in zoom-in-50 duration-500">
+                  <div className="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-[var(--brand)] to-[var(--brand)]/60 flex items-center justify-center shadow-lg shadow-[var(--brand)]/30 animate-in zoom-in-50 duration-500">
                     <Check className="h-10 w-10 text-white" strokeWidth={3} />
                   </div>
                 </>
@@ -684,7 +684,7 @@ export function NegotiationModal({
             
             <div className={cn(
               "text-2xl font-bold mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300",
-              accepted ? "text-[#00ffc8]" : "text-red-500"
+              accepted ? "text-[var(--brand)]" : "text-red-500"
             )} style={{ animationDelay: "200ms" }}>
               {accepted
                 ? "Proposta Aceita!"
@@ -696,7 +696,7 @@ export function NegotiationModal({
             {/* Quando o CLUBE aceita mas o JOGADOR recusa, deixamos isso explicito:
                 dinheiro resolveu a parte do clube, mas nao convenceu o atleta. */}
             {rejectedBy === "player" && (
-              <div className="mx-4 mt-4 rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/5 px-3 py-2 text-xs text-[#00ffc8]/80">
+              <div className="mx-4 mt-4 rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/5 px-3 py-2 text-xs text-[var(--brand)]/80">
                 O {player.team?.nome ?? "clube"} <strong>aceitou</strong> os {formatCurrency(offer)} — mas o acordo pessoal falhou.
               </div>
             )}
@@ -725,9 +725,9 @@ export function NegotiationModal({
                       <div className="text-[10px] text-white/40">{player.team?.nome}</div>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-[#00ffc8]" />
+                  <ArrowRight className="h-5 w-5 text-[var(--brand)]" />
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-[#00ffc8]">Seu Clube</div>
+                    <div className="text-sm font-semibold text-[var(--brand)]">Seu Clube</div>
                     <div className="text-[10px] text-white/40">{isLoan ? "Emprestimo" : "Contratado"}</div>
                   </div>
                 </div>
@@ -742,7 +742,7 @@ export function NegotiationModal({
               <Button variant="outline" onClick={handleClose} className="border-white/10 text-white/70 hover:bg-white/5">
                 Cancelar
               </Button>
-              <Button onClick={handleSubmitOffer} className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-semibold gap-2">
+              <Button onClick={handleSubmitOffer} className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] font-semibold gap-2">
                 <Handshake className="h-4 w-4" />
                 Enviar Proposta
               </Button>
@@ -753,7 +753,7 @@ export function NegotiationModal({
               <Button variant="outline" onClick={handleClose} className="border-white/10 text-white/70 hover:bg-white/5">
                 Desistir
               </Button>
-              <Button onClick={handleSubmitTerms} className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-semibold gap-2">
+              <Button onClick={handleSubmitTerms} className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] font-semibold gap-2">
                 <Handshake className="h-4 w-4" />
                 {agentResponse?.verdict === "counter" ? "Enviar contraproposta" : "Propor ao agente"}
               </Button>
@@ -765,7 +765,7 @@ export function NegotiationModal({
               className={cn(
                 "w-full font-semibold",
                 accepted 
-                  ? "bg-[#00ffc8] text-black hover:bg-[#00c8ff]" 
+                  ? "bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]" 
                   : "bg-white/10 text-white hover:bg-white/20"
               )}
             >

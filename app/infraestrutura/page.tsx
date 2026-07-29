@@ -253,7 +253,7 @@ export default function InfraestruturaPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-[#00ffc8]" />
+                <Building2 className="h-5 w-5 text-[var(--brand)]" />
                 Infraestrutura do Clube
               </h1>
               <p className="text-xs text-white/50 mt-0.5">Gerencie e evolua as instalacoes do {userTeam?.nome || "seu clube"}</p>
@@ -267,7 +267,7 @@ export default function InfraestruturaPage() {
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-white/40 uppercase">Saldo Disponivel</p>
-                <p className="text-sm font-semibold text-[#00ffc8]">
+                <p className="text-sm font-semibold text-[var(--brand)]">
                   R$ {balance.toLocaleString("pt-BR")}
                 </p>
               </div>
@@ -290,7 +290,7 @@ export default function InfraestruturaPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/35 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-[#00ffc8]">Estádio do clube</p>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--brand)]">Estádio do clube</p>
                 <h2 className="text-xl font-black text-white drop-shadow">{userTeam?.estadio_nome || "Estádio"}</h2>
               </div>
               <div className="text-right">
@@ -302,11 +302,11 @@ export default function InfraestruturaPage() {
         )}
 
         {/* Bilheteria — preço do ingresso e projeção de renda por jogo em casa. */}
-        <section className="mx-4 mt-4 rounded-xl border border-[#00ffc8]/20 bg-[#00ffc8]/5 p-4">
+        <section className="mx-4 mt-4 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand)]/5 p-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 className="font-bold text-white flex items-center gap-2">
-                <Users className="h-4 w-4 text-[#00ffc8]" />
+                <Users className="h-4 w-4 text-[var(--brand)]" />
                 Bilheteria
               </h2>
               <p className="mt-1 text-xs text-white/45">
@@ -317,7 +317,7 @@ export default function InfraestruturaPage() {
               <div className="rounded bg-black/25 p-2 text-white/55">Capacidade <b className="block text-white">{capacity.toLocaleString("pt-BR")}</b></div>
               <div className="rounded bg-black/25 p-2 text-white/55">Público médio <b className="block text-white">{matchdayProjection.attendance.toLocaleString("pt-BR")}</b></div>
               <div className="rounded bg-black/25 p-2 text-white/55">Ingresso <b className="block text-white">R$ {matchdayProjection.ticketPrice.toLocaleString("pt-BR")}</b></div>
-              <div className="rounded bg-black/25 p-2 text-white/55">Renda por jogo <b className="block text-[#00ffc8]">R$ {matchdayProjection.revenue.toLocaleString("pt-BR")}</b></div>
+              <div className="rounded bg-black/25 p-2 text-white/55">Renda por jogo <b className="block text-[var(--brand)]">R$ {matchdayProjection.revenue.toLocaleString("pt-BR")}</b></div>
             </div>
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -330,11 +330,11 @@ export default function InfraestruturaPage() {
                   className={cn(
                     "rounded-lg border p-3 text-left transition-all",
                     ticketTier === tier
-                      ? "border-[#00ffc8]/60 bg-[#00ffc8]/10"
+                      ? "border-[var(--brand)]/60 bg-[var(--brand)]/10"
                       : "border-white/[0.06] bg-black/25 hover:border-white/20",
                   )}
                 >
-                  <span className={cn("text-sm font-semibold", ticketTier === tier ? "text-[#00ffc8]" : "text-white")}>{info.label}</span>
+                  <span className={cn("text-sm font-semibold", ticketTier === tier ? "text-[var(--brand)]" : "text-white")}>{info.label}</span>
                   <span className="mt-1 block text-[11px] leading-4 text-white/45">{info.description}</span>
                 </button>
               )
@@ -357,7 +357,7 @@ export default function InfraestruturaPage() {
                 {capacity.toLocaleString("pt-BR")}
               </div>
               {nextCapacityGain > 0 && (
-                <div className="mt-0.5 text-[10px] text-[#00ffc8]">+{nextCapacityGain.toLocaleString("pt-BR")} na próxima obra</div>
+                <div className="mt-0.5 text-[10px] text-[var(--brand)]">+{nextCapacityGain.toLocaleString("pt-BR")} na próxima obra</div>
               )}
             </div>
             <div className="p-4 rounded-xl bg-[#111] border border-white/[0.04]">
@@ -365,7 +365,7 @@ export default function InfraestruturaPage() {
                 <TrendingUp className="h-3.5 w-3.5" />
                 Nivel Medio
               </div>
-              <div className="text-2xl font-bold text-[#00ffc8]">
+              <div className="text-2xl font-bold text-[var(--brand)]">
                 {(Object.values(infrastructure).reduce((a, b) => a + b, 0) / Object.keys(infrastructure).length).toFixed(1)}
               </div>
             </div>
@@ -408,7 +408,7 @@ export default function InfraestruturaPage() {
                     isUpgrading 
                       ? "bg-amber-500/10 border-amber-500/30" 
                       : isMaxLevel
-                      ? "bg-[#00ffc8]/10 border-[#00ffc8]/30"
+                      ? "bg-[var(--brand)]/10 border-[var(--brand)]/30"
                       : "bg-[#111] border-white/[0.04] hover:border-white/20"
                   )}
                 >
@@ -425,7 +425,7 @@ export default function InfraestruturaPage() {
                           key={i}
                           className={cn(
                             "w-2 h-2 rounded-full",
-                            i < currentLevel ? "bg-[#00ffc8]" : "bg-white/10"
+                            i < currentLevel ? "bg-[var(--brand)]" : "bg-white/10"
                           )}
                         />
                       ))}
@@ -446,7 +446,7 @@ export default function InfraestruturaPage() {
                           {isUpgrading.weeksLeft} sem
                         </span>
                       ) : isMaxLevel ? (
-                        <span className="text-[10px] text-[#00ffc8] flex items-center gap-1">
+                        <span className="text-[10px] text-[var(--brand)] flex items-center gap-1">
                           <Check className="h-3 w-3" />
                           MAX
                         </span>
@@ -505,7 +505,7 @@ export default function InfraestruturaPage() {
                         key={i}
                         className={cn(
                           "w-3 h-3 rounded-full",
-                          i < infrastructure[selectedArea] ? "bg-[#00ffc8]" : "bg-white/10"
+                          i < infrastructure[selectedArea] ? "bg-[var(--brand)]" : "bg-white/10"
                         )}
                       />
                     ))}
@@ -517,7 +517,7 @@ export default function InfraestruturaPage() {
                 <div className="mt-2 space-y-1">
                   {selectedAreaData.levels[infrastructure[selectedArea] - 1]?.benefits.map((benefit, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs text-white/60">
-                      <Check className="h-3 w-3 text-[#00ffc8]" />
+                      <Check className="h-3 w-3 text-[var(--brand)]" />
                       {benefit}
                     </div>
                   ))}
@@ -526,10 +526,10 @@ export default function InfraestruturaPage() {
 
               {/* Proximo nivel */}
               {infrastructure[selectedArea] < 5 && (
-                <div className="p-4 rounded-xl border border-[#00ffc8]/30 bg-[#00ffc8]/5 mb-6">
+                <div className="p-4 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-[#00ffc8]">Proximo Nivel</span>
-                    <span className="text-sm font-semibold text-[#00ffc8]">
+                    <span className="text-sm text-[var(--brand)]">Proximo Nivel</span>
+                    <span className="text-sm font-semibold text-[var(--brand)]">
                       R$ {selectedAreaData.levels[infrastructure[selectedArea]]?.cost.toLocaleString("pt-BR")}
                     </span>
                   </div>
@@ -538,14 +538,14 @@ export default function InfraestruturaPage() {
                   </h4>
                   <div className="mt-2 space-y-1">
                     {selectedAreaData.levels[infrastructure[selectedArea]]?.benefits.map((benefit, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-[#00ffc8]">
+                      <div key={i} className="flex items-center gap-2 text-xs text-[var(--brand)]">
                         <ArrowUp className="h-3 w-3" />
                         {benefit}
                       </div>
                     ))}
                   </div>
                   {selectedArea === "stadium" && (
-                    <div className="mt-2 flex items-center gap-2 text-xs text-[#00ffc8]">
+                    <div className="mt-2 flex items-center gap-2 text-xs text-[var(--brand)]">
                       <Users className="h-3 w-3" />
                       +{capacityGainForNextLevel(userTeam?.estadio_cap ?? 30000, infrastructure.stadium ?? 2).toLocaleString("pt-BR")} lugares — mais renda de bilheteria por jogo
                     </div>
@@ -569,7 +569,7 @@ export default function InfraestruturaPage() {
                   <Button
                     onClick={() => handleUpgrade(selectedArea)}
                     disabled={balance < (selectedAreaData.levels[infrastructure[selectedArea]]?.cost || 0)}
-                    className="flex-1 bg-[#00ffc8] hover:bg-[#00c8ff] text-black disabled:opacity-50"
+                    className="flex-1 bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)] disabled:opacity-50"
                   >
                     <ArrowUp className="h-4 w-4 mr-2" />
                     Evoluir

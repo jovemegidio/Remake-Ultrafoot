@@ -322,17 +322,17 @@ export function FcHub() {
   return <div className="fixed inset-0 z-[9998] bg-[#020407]/30 p-3 backdrop-blur-[2px] sm:p-5" onClick={() => setOpen(false)}>
     <aside className="mx-auto flex h-full w-full max-w-[1240px] flex-col overflow-hidden rounded-xl border border-white/[12%] bg-[#071017]/[.58] shadow-[0_30px_120px_rgba(0,0,0,.48)] backdrop-blur-xl" onClick={e => e.stopPropagation()}>
       <header className="flex items-center justify-between border-b border-white/[0.10] bg-black/[.10] px-6 py-4">
-        <div className="flex items-center gap-3"><div className="grid h-8 w-8 place-items-center rounded-full border border-[#00ffc8]/35 bg-[#00ffc8]/10 text-[10px] font-black text-[#00ffc8]">UF</div><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-white/35">Ultrafoot Connect</p><h2 className="text-lg font-bold text-white">FC Hub Social</h2></div></div>
+        <div className="flex items-center gap-3"><div className="grid h-8 w-8 place-items-center rounded-full border border-[var(--brand)]/35 bg-[var(--brand)]/10 text-[10px] font-black text-[var(--brand)]">UF</div><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-white/35">Ultrafoot Connect</p><h2 className="text-lg font-bold text-white">FC Hub Social</h2></div></div>
         <div className="flex items-center gap-3"><span className="hidden text-[10px] text-white/35 sm:block">{onlineFriends.length} online · sessão {formatDuration(playtime.sessionSeconds)}</span><button onClick={() => setOpen(false)} className="rounded-md border border-white/10 p-2 text-white/50 hover:bg-white/10"><X className="h-4 w-4" /></button></div>
       </header>
       <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/[0.10] bg-black/[.08] px-5 py-2 scrollbar-none">
-        {hubTabs.map(tab => { const Icon = tab.icon; const active = hubTab === tab.id; return <button key={tab.id} onClick={() => goToSection(tab.id, tab.target)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-[11px] font-semibold transition-colors ${active ? "border-[#00ffc8] text-white" : "border-transparent text-white/40 hover:text-white/70"}`}><Icon className="h-3.5 w-3.5"/>{tab.label}</button> })}
+        {hubTabs.map(tab => { const Icon = tab.icon; const active = hubTab === tab.id; return <button key={tab.id} onClick={() => goToSection(tab.id, tab.target)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-[11px] font-semibold transition-colors ${active ? "border-[var(--brand)] text-white" : "border-transparent text-white/40 hover:text-white/70"}`}><Icon className="h-3.5 w-3.5"/>{tab.label}</button> })}
       </nav>
       <section className="grid min-h-0 flex-1 lg:grid-cols-[260px_1fr]">
         <aside className="hidden min-h-0 overflow-y-auto border-r border-white/[0.10] bg-black/[.10] p-4 lg:block">
           <p className="mb-3 text-[9px] font-black uppercase tracking-[.18em] text-white/30">Online · {onlineFriends.length}</p>
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2.5 rounded-lg bg-[#00ffc8]/7 p-2"><div className="grid h-8 w-8 place-items-center rounded-full bg-[#00ffc8]/15 text-xs font-black text-[#00ffc8]">{(state.managerName || "T").slice(0,1)}</div><div className="min-w-0"><p className="truncate text-xs font-bold text-white">{state.managerName || "Técnico"}</p><p className="truncate text-[9px] text-emerald-300">No {team.nome}</p></div></div>
+            <div className="flex items-center gap-2.5 rounded-lg bg-[var(--brand)]/7 p-2"><div className="grid h-8 w-8 place-items-center rounded-full bg-[var(--brand)]/15 text-xs font-black text-[var(--brand)]">{(state.managerName || "T").slice(0,1)}</div><div className="min-w-0"><p className="truncate text-xs font-bold text-white">{state.managerName || "Técnico"}</p><p className="truncate text-[9px] text-emerald-300">No {team.nome}</p></div></div>
             {onlineFriends.map(friend => <div key={friend.id} className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-white/[0.04]"><img src={friend.avatarUrl} alt="" className="h-8 w-8 rounded-full"/><div className="min-w-0"><p className="truncate text-xs font-semibold text-white/80">{friend.displayName}</p><p className="text-[9px] text-emerald-300">● Jogando Ultrafoot</p></div></div>)}
           </div>
           <p className="mb-2 mt-6 text-[9px] font-black uppercase tracking-[.18em] text-white/25">Offline · {offlineFriends.length}</p>
@@ -350,7 +350,7 @@ export function FcHub() {
           />
         </div>
 
-        <div id="hub-profile" className="scroll-mt-5 rounded-xl border border-[#00ffc8]/25 bg-[#00ffc8]/[.07] p-4 backdrop-blur-sm">
+        <div id="hub-profile" className="scroll-mt-5 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand)]/[.07] p-4 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             {social?.user?.avatarUrl ? <img src={social.user.avatarUrl} alt="" className="h-11 w-11 rounded-full" /> : <div className="grid h-11 w-11 place-items-center rounded-full bg-[#5865F2]/20 text-[#8d96ff]"><MessageCircle /></div>}
             <div className="min-w-0"><p className="truncate text-sm font-bold text-white">{social?.user?.displayName || social?.detectedName || state.managerName || "Técnico"}</p><p className="text-xs text-white/50">Jogando com {team.nome}</p></div>
@@ -452,10 +452,10 @@ export function FcHub() {
           <div className="mt-3 space-y-2">{social?.friends.filter(friend => friend.playingUltrafoot).map(friend => <div key={friend.id} className="flex items-center gap-3 rounded-lg bg-black/20 p-2"><img src={friend.avatarUrl} alt="" className="h-9 w-9 rounded-full"/><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{friend.displayName}</p><p className="text-xs text-emerald-400">● Jogando Ultrafoot</p></div></div>)}</div>
         </div>
         <div id="hub-club" className="scroll-mt-5 rounded-xl border border-white/10 bg-white/[.03] p-4">
-          <div className="flex items-center gap-2 text-white"><Clock3 className="h-4 w-4 text-[#00ffc8]"/><b>Tempo de jogo</b></div>
+          <div className="flex items-center gap-2 text-white"><Clock3 className="h-4 w-4 text-[var(--brand)]"/><b>Tempo de jogo</b></div>
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-black/25 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Sessão atual</p><p className="mt-1 text-lg font-black text-white">{formatDuration(playtime.sessionSeconds)}</p></div>
-            <div className="rounded-lg bg-black/25 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Tempo total</p><p className="mt-1 text-lg font-black text-[#00ffc8]">{formatDuration(playtime.totalSeconds)}</p></div>
+            <div className="rounded-lg bg-black/25 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Tempo total</p><p className="mt-1 text-lg font-black text-[var(--brand)]">{formatDuration(playtime.totalSeconds)}</p></div>
           </div>
           <p className="mt-3 flex items-center gap-2 text-xs text-white/45"><CalendarDays className="h-3.5 w-3.5"/>Temporada {state.season} · Semana {state.week + 1}</p>
         </div>

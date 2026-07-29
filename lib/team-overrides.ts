@@ -42,6 +42,16 @@ export interface TeamOverride {
   estadio_nome?: string
   estadio_cap?: number
   patrocinador?: string
+  /** Técnico do clube e a nacionalidade dele — não existiam no editor. */
+  tecnico?: string
+  tecnicoPais?: string
+  /** País do clube. Sem isto não dava para corrigir um clube importado no país errado. */
+  pais?: string
+  /**
+   * Alcance da torcida e da marca. Separado do `prestigio` (que é a força do
+   * elenco): um clube pode ser tradicional e estar mal montado, e vice-versa.
+   */
+  reputacao?: "regional" | "nacional" | "continental" | "mundial"
   // Escudo custom (data URL). O escudo é guardado no armazenamento global (ultrafoot:logo:*),
   // mas viaja no seed embutido POR AQUI para chegar aos outros jogadores. getCustomLogoUrl
   // (team-crest) usa este campo como fallback quando o jogador nao tem escudo proprio.

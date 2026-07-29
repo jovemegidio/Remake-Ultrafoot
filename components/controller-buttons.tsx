@@ -616,7 +616,7 @@ export function HeaderControls({ controller, className, forceVisible }: HeaderCo
       <ControllerButton button="LB" controller={activeController} size="xs" showLabel={false} />
       <div className="flex items-center gap-1">
         <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-        <div className="w-1.5 h-1.5 rounded-full bg-[#00ffc8]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />
         <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
       </div>
       <ControllerButton button="RB" controller={activeController} size="xs" showLabel={false} />
@@ -689,7 +689,7 @@ export function ControllerStatus({ connected, controllerType, className }: Contr
     <div className={cn("flex items-center gap-2", className)}>
       <div className={cn(
         "w-2 h-2 rounded-full animate-pulse",
-        "bg-[#00ffc8]"
+        "bg-[var(--brand)]"
       )} />
       <div className="w-4 h-4 flex items-center justify-center">
         {controllerType === "playstation" ? (

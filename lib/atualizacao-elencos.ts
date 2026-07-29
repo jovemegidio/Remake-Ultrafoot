@@ -17,8 +17,16 @@
 //
 // O download é sempre BEST-EFFORT: sem internet, o jogo abre com o que já tem.
 // Nada aqui pode bloquear o boot.
+//
+// E nada aqui conecta sem AUTORIZAÇÃO. O jogador aceita uma vez (o convite do
+// primeiro boot, ou a tela Personalizar > Atualizações) e pode revogar quando
+// quiser; enquanto não aceitar, este arquivo não faz uma requisição sequer. Os
+// canais ligados/desligados vivem em lib/atualizacoes-preferencias e são
+// consultados em cada leitura aqui embaixo.
 
 import { storeGet, storeSet } from "@/lib/persistent-store"
+import { buscarJson } from "@/lib/buscar-json"
+import { canalAtivo, podeConectar } from "@/lib/atualizacoes-preferencias"
 import type { TeamOverride } from "@/lib/team-overrides"
 import type { PlayerOverride } from "@/lib/player-overrides"
 
@@ -87,32 +95,34 @@ export function versaoAtualizacao(): number {
 }
 
 async function buscar(url: string, ms: number): Promise<AtualizacaoElencos | null> {
-  const controle = new AbortController()
-  const alarme = setTimeout(() => controle.abort(), ms)
-  try {
-    const r = await fetch(url, { signal: controle.signal, cache: "no-store" })
-    if (!r.ok) return null
-    const dado = (await r.json()) as AtualizacaoElencos
-    // Um HTML de página de erro parseia como texto e viraria "atualização"
-    // válida com versão indefinida — daí a checagem de tipo.
-    return typeof dado?.versao === "number" ? dado : null
-  } catch {
-    return null
-  } finally {
-    clearTimeout(alarme)
-  }
+  // buscarJson usa o http NATIVO dentro do Tauri. Com o fetch da webview esta
+  // busca era barrada por CORS (o nginx da VPS não manda
+  // Access-Control-Allow-Origin em /atualizacoes/), e sobrava só a reserva.
+  const dado = await buscarJson<AtualizacaoElencos>(url, ms)
+  // Um HTML de página de erro parseia como texto e viraria "atualização"
+  // válida com versão indefinida — daí a checagem de tipo.
+  return typeof dado?.versao === "number" ? dado : null
 }
 
 /**
- * Procura atualização e guarda se for mais nova. Chamado no boot.
+ * Le o que o servidor publicou SEM gravar nada.
  *
- * Devolve a versão aplicada (0 = nada novo), para a interface avisar o jogador.
+ * É a metade "conferir" da atualização: a tela de Atualizações mostra o que
+ * chegaria — versão, notas e quantos clubes/atletas — e só grava depois que o
+ * jogador manda aplicar. Devolve null sem consentimento ou sem rede.
  */
-export async function baixarAtualizacao(): Promise<number> {
+export async function consultarServidor(): Promise<AtualizacaoElencos | null> {
+  if (typeof window === "undefined" || !podeConectar()) return null
+  return (await buscar(URL_PRIMARIA, 6000)) ?? (await buscar(URL_RESERVA, 12000))
+}
+
+/**
+ * Grava uma atualização já baixada. A trava de versão vive aqui: nunca
+ * aceitamos algo mais velho do que a máquina já tem.
+ */
+export function aplicarAtualizacao(nova: AtualizacaoElencos): number {
   if (typeof window === "undefined") return 0
-  const atual = getAtualizacao()
-  const nova = (await buscar(URL_PRIMARIA, 6000)) ?? (await buscar(URL_RESERVA, 12000))
-  if (!nova || nova.versao <= atual.versao) return 0
+  if (!nova || nova.versao <= getAtualizacao().versao) return 0
 
   storeSet(CHAVE, JSON.stringify(nova))
   cache = nova
@@ -122,13 +132,82 @@ export async function baixarAtualizacao(): Promise<number> {
   return nova.versao
 }
 
+/**
+ * Procura atualização e guarda se for mais nova. Chamado no boot.
+ *
+ * Devolve a versão aplicada (0 = nada novo), para a interface avisar o jogador.
+ *
+ * SEM CONSENTIMENTO NÃO CONECTA — e não há parâmetro para contornar isso. A
+ * tela de Atualizações pede a autorização ANTES de chamar qualquer coisa daqui,
+ * então quando esta função roda o jogador já disse sim.
+ */
+export async function baixarAtualizacao(): Promise<number> {
+  if (typeof window === "undefined") return 0
+  const nova = await consultarServidor()
+  if (!nova) return 0
+  return aplicarAtualizacao(nova)
+}
+
+/** Quanto conteúdo há em cada seção — o que a tela mostra como "o que vem aí". */
+export interface ResumoAtualizacao {
+  clubes: number
+  jogadores: number
+  transferencias: number
+  competicoes: number
+}
+
+export function resumir(a: AtualizacaoElencos | null): ResumoAtualizacao {
+  return {
+    clubes: Object.keys(a?.times ?? {}).length,
+    jogadores: Object.keys(a?.jogadores ?? {}).length,
+    transferencias: (a?.transferencias ?? []).length,
+    competicoes: Object.keys(a?.ligas ?? {}).length,
+  }
+}
+
+/**
+ * As seções que cada canal consome. Usado para dizer, por canal, se o que está
+ * no servidor é diferente do que já está na máquina.
+ *
+ * O manifesto é um só e tem uma só `versao` — sem isto, uma publicação que
+ * mexeu apenas em escudos apareceria como "elencos: atualização disponível" e
+ * aplicá-la não mudaria atleta nenhum.
+ */
+function secaoDoCanal(a: AtualizacaoElencos | null, canal: "elencos" | "times"): string {
+  if (!a) return ""
+  return canal === "elencos"
+    ? JSON.stringify({ j: a.jogadores ?? {}, t: a.transferencias ?? [] })
+    : JSON.stringify({ t: a.times ?? {}, l: a.ligas ?? {} })
+}
+
+/**
+ * true = este canal traz conteúdo diferente do que já está gravado E o pacote
+ * pode mesmo ser aplicado.
+ *
+ * A trava de versão entra aqui também de propósito: sem ela, um pacote com
+ * `versao` igual ou menor e conteúdo diferente (rollback no servidor) apareceria
+ * como "atualização disponível", e o botão de aplicar seria recusado por
+ * aplicarAtualizacao — um botão que não faz nada, para sempre. Só oferecemos o
+ * que dá para instalar.
+ */
+export function canalTemNovidade(servidor: AtualizacaoElencos | null, canal: "elencos" | "times"): boolean {
+  if (!servidor || servidor.versao <= getAtualizacao().versao) return false
+  return secaoDoCanal(servidor, canal) !== secaoDoCanal(getAtualizacao(), canal)
+}
+
 // ─── Consultas usadas pelas camadas de override ──────────────────────────────
 
+// Cada consulta passa pelo canal correspondente: desligar "times" em
+// Atualizações faz o jogo voltar a enxergar o escudo/uniforme do build sem
+// apagar nada do que ja foi baixado — religar devolve tudo na hora.
+
 export function timeDoServidor(fileKey: string): TeamOverride | null {
+  if (!canalAtivo("times")) return null
   return getAtualizacao().times?.[fileKey] ?? null
 }
 
 export function jogadorDoServidor(chave: string): PlayerOverride | null {
+  if (!canalAtivo("elencos")) return null
   return getAtualizacao().jogadores?.[chave] ?? null
 }
 
@@ -163,6 +242,7 @@ function indexar() {
 
 /** true = este atleta saiu deste clube na atualização oficial. */
 export function saiuDoClube(nomeClube: string, nomeAtleta: string): boolean {
+  if (!canalAtivo("elencos")) return false
   const i = indexar()
   if (i.saidas.size === 0) return false
   return i.saidas.get((nomeClube ?? "").toLowerCase())?.has((nomeAtleta ?? "").toLowerCase()) ?? false
@@ -170,17 +250,20 @@ export function saiuDoClube(nomeClube: string, nomeAtleta: string): boolean {
 
 /** Atletas que CHEGARAM a este clube na atualização oficial. */
 export function chegouAoClube(nomeClube: string): TransferenciaOficial[] {
+  if (!canalAtivo("elencos")) return []
   const i = indexar()
   if (i.chegadas.size === 0) return []
   return i.chegadas.get((nomeClube ?? "").toLowerCase()) ?? []
 }
 
 export function temTransferencias(): boolean {
+  if (!canalAtivo("elencos")) return false
   const i = indexar()
   return i.saidas.size > 0 || i.chegadas.size > 0
 }
 
 /** Participantes corrigidos de uma competição, se a atualização trouxer. */
 export function clubesDaLigaNoServidor(competicao: string): string[] | null {
+  if (!canalAtivo("times")) return null
   return getAtualizacao().ligas?.[competicao]?.clubes ?? null
 }

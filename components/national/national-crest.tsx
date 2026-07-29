@@ -61,7 +61,7 @@ export function NationalKit({ id, size = 56 }: { id: string; size?: number }) {
 }
 
 export function strengthTone(strength: number): string {
-  if (strength >= 85) return "text-[#00ffc8]"
+  if (strength >= 85) return "text-[var(--brand)]"
   if (strength >= 75) return "text-emerald-400"
   if (strength >= 65) return "text-yellow-400"
   return "text-white/60"

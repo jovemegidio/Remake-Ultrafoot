@@ -12,9 +12,12 @@ import {
 } from "@/components/national/national-competition-panel"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { getCompetitionDef } from "@/lib/national-competitions"
+import { FinalissimaCard } from "@/components/national/finalissima-card"
+import { useGameState } from "@/lib/save-system"
 
 function Conteudo() {
   const { career, availableCompetitions, currentCompetition, startCompetition } = useNationalTeam()
+  const { state, setState } = useGameState()
 
   const concluidas = career.completedThisSeason
     .map(id => getCompetitionDef(id))
@@ -27,7 +30,7 @@ function Conteudo() {
       ) : (
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-            <Trophy className="h-5 w-5 text-[#00ffc8]" /> Competições disponíveis
+            <Trophy className="h-5 w-5 text-[var(--brand)]" /> Competições disponíveis
           </h2>
           <NationalCompetitionList
             competitions={availableCompetitions}
@@ -36,6 +39,16 @@ function Conteudo() {
           />
         </section>
       )}
+
+      {/* FINALISSIMA: so aparece para o campeao continental vigente. O proprio
+          componente decide se ha jogo — nao ha card vazio. */}
+      <FinalissimaCard
+        selecaoId={career.nationalTeamId}
+        temporada={state.season ?? 2026}
+        titulos={career.titles}
+        disputa={state.finalissima}
+        onSalvar={(d) => setState({ finalissima: d })}
+      />
 
       {concluidas.length > 0 && (
         <section className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-5">
@@ -64,7 +77,7 @@ function Conteudo() {
             {career.titles.map((titulo, i) => (
               <span
                 key={`${titulo.competition}-${titulo.season}-${i}`}
-                className="flex items-center gap-1 rounded-md border border-[#00ffc8]/20 bg-[#00ffc8]/10 px-2 py-1 text-[11px] text-[#00ffc8]"
+                className="flex items-center gap-1 rounded-md border border-[var(--brand)]/20 bg-[var(--brand)]/10 px-2 py-1 text-[11px] text-[var(--brand)]"
               >
                 <Crown className="h-3 w-3" /> {titulo.competition} {titulo.season}
               </span>

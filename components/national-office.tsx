@@ -76,9 +76,9 @@ export function NationalOffice() {
 
         <main className="flex-1 p-4 overflow-y-auto space-y-4">
           {/* Seletor clube ↔ seleção */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#00ffc8]/25 bg-[#00ffc8]/[0.05] p-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#00ffc8]/15">
-              <Flag className="h-5 w-5 text-[#00ffc8]" />
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand)]/[0.05] p-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand)]/15">
+              <Flag className="h-5 w-5 text-[var(--brand)]" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white">Modo seleção — {nation.nome}</p>
@@ -114,7 +114,7 @@ export function NationalOffice() {
                 <TeamCrest team={nation} size="xl" />
                 <div>
                   <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white">{nation.nome}</h1>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#00ffc8]">
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">
                     {nationalTeam ? CONFEDERATION_LABEL[nationalTeam.confederation] : "Seleção nacional"}
                   </p>
                 </div>
@@ -122,15 +122,15 @@ export function NationalOffice() {
 
               {/* Próximo compromisso */}
               {currentCompetition && userNextFixture ? (
-                <div className="mt-6 rounded-2xl border border-[#00ffc8]/20 bg-gradient-to-b from-[#00ffc8]/[0.07] to-transparent p-5">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#00ffc8]">
+                <div className="mt-6 rounded-2xl border border-[var(--brand)]/20 bg-gradient-to-b from-[var(--brand)]/[0.07] to-transparent p-5">
+                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[var(--brand)]">
                     <Trophy className="h-3.5 w-3.5" /> {currentCompetition.competitionName}
                   </div>
                   <h2 className="mt-2 text-xl font-black text-white">{userNextFixture.stage} · vs {oppName}</h2>
                   <p className="mt-1 text-sm text-white/55">Temporada {currentCompetition.season}</p>
                   <button
                     onClick={playNextRound}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#00ffc8] px-5 py-3 text-sm font-black text-black transition-all hover:brightness-110"
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-black text-[var(--brand-ink)] transition-all hover:brightness-110"
                   >
                     <Play className="h-4 w-4 fill-current" /> Jogar próxima partida
                   </button>
@@ -138,11 +138,11 @@ export function NationalOffice() {
               ) : availableCompetitions.length > 0 ? (
                 <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-white/50">
-                    <Globe className="h-3.5 w-3.5 text-[#00ffc8]" /> Sem competição em disputa
+                    <Globe className="h-3.5 w-3.5 text-[var(--brand)]" /> Sem competição em disputa
                   </div>
                   <h2 className="mt-2 text-lg font-black text-white">Inicie uma competição pela seleção</h2>
                   <p className="mt-1 text-sm text-white/55">Escolha um torneio ou eliminatória na gestão da seleção.</p>
-                  <Link href="/selecao/competicoes" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#00ffc8] px-5 py-3 text-sm font-black text-black transition-all hover:brightness-110">
+                  <Link href="/selecao/competicoes" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-black text-[var(--brand-ink)] transition-all hover:brightness-110">
                     <Trophy className="h-4 w-4" /> Ver competições
                   </Link>
                 </div>
@@ -168,7 +168,7 @@ export function NationalOffice() {
             <div className="space-y-5">
               <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
                 <div className="mb-4 flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Flag className="h-4 w-4 text-[#00ffc8]" /> Retrospecto
+                  <Flag className="h-4 w-4 text-[var(--brand)]" /> Retrospecto
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
@@ -180,7 +180,7 @@ export function NationalOffice() {
                     <p className="text-[10px] uppercase tracking-wide text-white/40">V-E-D</p>
                   </div>
                   <div>
-                    <p className="text-xl font-bold tabular-nums text-[#00ffc8]">{strength}</p>
+                    <p className="text-xl font-bold tabular-nums text-[var(--brand)]">{strength}</p>
                     <p className="text-[10px] uppercase tracking-wide text-white/40">Força</p>
                   </div>
                 </div>
@@ -193,7 +193,7 @@ export function NationalOffice() {
                 {career.titles.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {career.titles.map((titulo, i) => (
-                      <span key={i} className="flex items-center gap-1 rounded-md border border-[#00ffc8]/20 bg-[#00ffc8]/10 px-2 py-1 text-[11px] text-[#00ffc8]">
+                      <span key={i} className="flex items-center gap-1 rounded-md border border-[var(--brand)]/20 bg-[var(--brand)]/10 px-2 py-1 text-[11px] text-[var(--brand)]">
                         <Crown className="h-3 w-3" /> {titulo.competition} {titulo.season}
                       </span>
                     ))}
@@ -206,7 +206,7 @@ export function NationalOffice() {
               {nationalFriendlies.length > 0 && (
                 <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
                   <div className="mb-3 flex items-center gap-2 text-xs font-medium text-white/60">
-                    <Swords className="h-4 w-4 text-[#00ffc8]" /> Últimos amistosos
+                    <Swords className="h-4 w-4 text-[var(--brand)]" /> Últimos amistosos
                   </div>
                   <div className="space-y-1.5">
                     {nationalFriendlies.slice(-3).reverse().map((f, i) => {
@@ -214,7 +214,7 @@ export function NationalOffice() {
                       return (
                         <div key={i} className="flex items-center gap-3 rounded-lg bg-black/25 px-3 py-2">
                           <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded text-[11px] font-black",
-                            r === "V" ? "bg-[#00ffc8]/20 text-[#00ffc8]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60")}>{r}</span>
+                            r === "V" ? "bg-[var(--brand)]/20 text-[var(--brand)]" : r === "D" ? "bg-red-400/20 text-red-300" : "bg-white/10 text-white/60")}>{r}</span>
                           <span className="w-14 shrink-0 font-mono text-sm text-white">{f.userScore} x {f.oppScore}</span>
                           <span className="min-w-0 flex-1 truncate text-sm text-white/70">{f.opponentName}</span>
                         </div>

@@ -127,7 +127,7 @@ export function LivePitch({
                   className={cn(
                     "h-full transition-all",
                     player.stamina > 70
-                      ? "bg-[#00ffc8]"
+                      ? "bg-[var(--brand)]"
                       : player.stamina > 40
                         ? "bg-yellow-400"
                         : "bg-red-400",

@@ -216,7 +216,7 @@ export default function DashboardPage() {
     return (
       <div className="h-screen bg-[#050508] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-[#00ffc8] border-t-transparent animate-spin" />
+          <div className="w-12 h-12 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
           <span className="text-white/40 text-sm">{t.common.loading}</span>
         </div>
       </div>
@@ -356,10 +356,10 @@ export default function DashboardPage() {
         {!hasNationalTeam && nationalOffers.length > 0 && (
           <Link
             href="/selecao"
-            className="group flex items-center gap-4 rounded-xl border border-[#00ffc8]/30 bg-[#00ffc8]/[0.06] p-4 transition-colors hover:bg-[#00ffc8]/[0.1]"
+            className="group flex items-center gap-4 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/[0.06] p-4 transition-colors hover:bg-[var(--brand)]/[0.1]"
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#00ffc8]/15">
-              <Flag className="h-5 w-5 text-[#00ffc8]" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[var(--brand)]/15">
+              <Flag className="h-5 w-5 text-[var(--brand)]" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-white">
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                 Voce recebeu uma proposta para comandar uma selecao nacional. Toque para ver os detalhes.
               </p>
             </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-[#00ffc8] transition-transform group-hover:translate-x-1" />
+            <ChevronRight className="h-5 w-5 shrink-0 text-[var(--brand)] transition-transform group-hover:translate-x-1" />
           </Link>
         )}
 
@@ -380,12 +380,12 @@ export default function DashboardPage() {
           <div className={cn(
             "flex items-center gap-4 rounded-xl border p-4",
             saveState.divisionMovement.movement === "promoted"
-              ? "border-[#00ffc8]/30 bg-[#00ffc8]/[0.06]"
+              ? "border-[var(--brand)]/30 bg-[var(--brand)]/[0.06]"
               : "border-red-500/30 bg-red-500/[0.06]"
           )}>
             <div className={cn(
               "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
-              saveState.divisionMovement.movement === "promoted" ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-red-500/15 text-red-300"
+              saveState.divisionMovement.movement === "promoted" ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-red-500/15 text-red-300"
             )}>
               {saveState.divisionMovement.movement === "promoted" ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
             </div>
@@ -491,8 +491,8 @@ export default function DashboardPage() {
                     {fixtureDateHeadline(round, next?.month)}
                   </h1>
                   <div className="mt-3 flex items-center gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#00ffc8]">Rodada {round}</span>
-                    <span className="h-px flex-1 bg-gradient-to-r from-[#00ffc8]/40 to-transparent" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">Rodada {round}</span>
+                    <span className="h-px flex-1 bg-gradient-to-r from-[var(--brand)]/40 to-transparent" />
                   </div>
 
                   {/* PAUSA FIFA / COPA DO MUNDO: o campeonato de clubes esta parado.
@@ -566,11 +566,11 @@ export default function DashboardPage() {
                         className={cn(
                           "group flex items-center gap-3 px-4 py-3.5 transition-colors",
                           task.highlight
-                            ? "rounded-lg border border-[#00ffc8]/40 bg-[#00ffc8]/[0.06] hover:bg-[#00ffc8]/[0.1]"
+                            ? "rounded-lg border border-[var(--brand)]/40 bg-[var(--brand)]/[0.06] hover:bg-[var(--brand)]/[0.1]"
                             : "border-b border-white/[0.06] hover:bg-white/5"
                         )}
                       >
-                        <task.icon className={cn("h-5 w-5 shrink-0", task.highlight ? "text-[#00ffc8]" : "text-white/50")} />
+                        <task.icon className={cn("h-5 w-5 shrink-0", task.highlight ? "text-[var(--brand)]" : "text-white/50")} />
                         <span className="flex-1 text-sm font-medium text-white">{task.label}</span>
                         <ChevronRight className="h-4 w-4 text-white/30 transition-transform group-hover:translate-x-0.5" />
                       </Link>
@@ -629,10 +629,10 @@ export default function DashboardPage() {
               <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                    <Calendar className="h-4 w-4 text-[#00ffc8]" />
+                    <Calendar className="h-4 w-4 text-[var(--brand)]" />
                     {t.dashboard.nextMatches}
                   </div>
-                  <Link href="/calendario" className="text-xs text-[#00ffc8] hover:text-[#00c8ff] transition-colors">
+                  <Link href="/calendario" className="text-xs text-[var(--brand)] hover:text-[var(--brand-2)] transition-colors">
                     {t.common.viewAll} <ChevronRight className="inline h-3 w-3 ml-0.5" />
                   </Link>
                 </div>
@@ -695,12 +695,12 @@ export default function DashboardPage() {
             <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
                 <div className="flex items-center gap-2 text-xs font-medium text-white/60">
-                  <Flag className="h-4 w-4 text-[#00ffc8]" />
+                  <Flag className="h-4 w-4 text-[var(--brand)]" />
                   <span>Diretoria</span>
                 </div>
                 <span className={cn(
                   "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                  careerStatus === "safe" && "bg-[#00ffc8]/15 text-[#00ffc8]",
+                  careerStatus === "safe" && "bg-[var(--brand)]/15 text-[var(--brand)]",
                   careerStatus === "warning" && "bg-yellow-500/15 text-yellow-400",
                   careerStatus === "critical" && "bg-red-500/15 text-red-400",
                 )}>
@@ -714,7 +714,7 @@ export default function DashboardPage() {
                     <span className="text-white/40">Confianca da diretoria</span>
                     <span className={cn(
                       "font-bold tabular-nums",
-                      careerStatus === "safe" && "text-[#00ffc8]",
+                      careerStatus === "safe" && "text-[var(--brand)]",
                       careerStatus === "warning" && "text-yellow-400",
                       careerStatus === "critical" && "text-red-400",
                     )}>{boardConfidence}%</span>
@@ -723,7 +723,7 @@ export default function DashboardPage() {
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",
-                        careerStatus === "safe" && "bg-[#00ffc8]",
+                        careerStatus === "safe" && "bg-[var(--brand)]",
                         careerStatus === "warning" && "bg-yellow-400",
                         careerStatus === "critical" && "bg-red-500",
                       )}
@@ -739,7 +739,7 @@ export default function DashboardPage() {
                         key={i}
                         className={cn(
                           "flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold",
-                          r === "V" && "bg-[#00ffc8]/20 text-[#00ffc8]",
+                          r === "V" && "bg-[var(--brand)]/20 text-[var(--brand)]",
                           r === "E" && "bg-white/10 text-white/50",
                           r === "D" && "bg-red-500/20 text-red-400",
                         )}
@@ -759,7 +759,7 @@ export default function DashboardPage() {
                   <Trophy className="h-4 w-4 shrink-0 text-[#ffd700]" />
                   <span className="shrink-0">{t.dashboard.standings}</span>
                   {currentCompetition && (
-                    <span className="truncate text-[10px] uppercase tracking-wider text-[#00ffc8]/80">
+                    <span className="truncate text-[10px] uppercase tracking-wider text-[var(--brand)]/80">
                       · {currentCompetition}
                     </span>
                   )}
@@ -781,7 +781,7 @@ export default function DashboardPage() {
                         s.teamShort === userTeam.curto && "bg-primary/10 border-l-2 border-primary"
                       )}
                     >
-                      <span className={cn("text-xs font-medium", position <= 4 ? "text-[#00ffc8]" : position >= 17 ? "text-red-500" : "text-white/50")}>{position}</span>
+                      <span className={cn("text-xs font-medium", position <= 4 ? "text-[var(--brand)]" : position >= 17 ? "text-red-500" : "text-white/50")}>{position}</span>
                       <div className="flex items-center gap-2 min-w-0">
                         {standingTeam && <TeamCrest team={standingTeam} size="xs" />}
                         <span className="truncate text-xs text-white">{standingTeam?.curto ?? s.teamShort}</span>
@@ -802,18 +802,18 @@ export default function DashboardPage() {
             {/* Financas */}
             <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-white/60 mb-4">
-                <CircleDollarSign className="h-4 w-4 text-[#00ffc8]" />
+                <CircleDollarSign className="h-4 w-4 text-[var(--brand)]" />
                 {t.dashboard.finances}
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">{t.dashboard.currentBalance}</span>
-                  <span className="text-lg font-bold text-[#00ffc8]">{formatCurrency(balance)}</span>
+                  <span className="text-lg font-bold text-[var(--brand)]">{formatCurrency(balance)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">{t.finances.weeklyIncome}</span>
                   <span className="text-sm font-medium text-white flex items-center gap-1">
-                    <ArrowUpRight className="h-3 w-3 text-[#00ffc8]" />
+                    <ArrowUpRight className="h-3 w-3 text-[var(--brand)]" />
                     {formatCurrency(weeklyIncome)}
                   </span>
                 </div>
@@ -880,7 +880,7 @@ function GoalCard({ title, description, progress, status, tone }: {
   return (
     <div className="rounded-lg bg-white/5 p-4 border border-white/[0.04]">
       <div className="flex items-center justify-between mb-2">
-        <span className={cn("text-[10px] font-medium tracking-wider uppercase", tone === "success" ? "text-[#00ffc8]" : "text-primary")}>{title}</span>
+        <span className={cn("text-[10px] font-medium tracking-wider uppercase", tone === "success" ? "text-[var(--brand)]" : "text-primary")}>{title}</span>
         <span className="text-[10px] text-white/40">{status}</span>
       </div>
       <div className="text-sm font-medium text-white mb-3">{description}</div>
@@ -904,15 +904,15 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
 
   return (
     <div className={cn(
-      "flex items-center gap-4 border-l-2 border-[#00ffc8]/60 bg-[#00ffc8]/[0.035] px-5 py-3",
-      isNext && "bg-[#00ffc8]/10",
+      "flex items-center gap-4 border-l-2 border-[var(--brand)]/60 bg-[var(--brand)]/[0.035] px-5 py-3",
+      isNext && "bg-[var(--brand)]/10",
     )}>
       <div className="w-20 text-xs">
         <div className="text-white/80">Rod. {fixture.round}</div>
         <div className="text-[10px] text-white/45">{fixtureDateLine(fixture.round, fixture.month)}</div>
         <div className={cn("text-[10px] font-medium", fixture.played ? (
           fixture.homeScore !== undefined && fixture.awayScore !== undefined
-            ? (isHome ? fixture.homeScore > fixture.awayScore! : fixture.awayScore! > fixture.homeScore) ? "text-[#00ffc8]"
+            ? (isHome ? fixture.homeScore > fixture.awayScore! : fixture.awayScore! > fixture.homeScore) ? "text-[var(--brand)]"
               : (isHome ? fixture.homeScore < fixture.awayScore! : fixture.awayScore! < fixture.homeScore) ? "text-red-400"
               : "text-white/50"
             : "text-white/50"
@@ -935,14 +935,14 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
         <TeamCrest team={fixture.awayTeam} size="sm" />
       </div>
 
-      <span className={cn("px-2 py-0.5 rounded text-[10px] font-medium", isHome ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "bg-white/10 text-white/60")}>
+      <span className={cn("px-2 py-0.5 rounded text-[10px] font-medium", isHome ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "bg-white/10 text-white/60")}>
         {isHome ? homeLabel : awayLabel}
       </span>
 
-      <span className="hidden rounded bg-[#00ffc8]/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#00ffc8] sm:inline">Meu clube</span>
+      <span className="hidden rounded bg-[var(--brand)]/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[var(--brand)] sm:inline">Meu clube</span>
 
       {isNext && !fixture.played && (
-        <span className="px-2 py-0.5 rounded bg-[#00ffc8] text-black text-[10px] font-semibold">{nextLabel}</span>
+        <span className="px-2 py-0.5 rounded bg-[var(--brand)] text-[var(--brand-ink)] text-[10px] font-semibold">{nextLabel}</span>
       )}
     </div>
   )

@@ -1,7 +1,21 @@
 "use client"
 
-import { safeLocalSet } from "@/lib/safe-storage"
+import { safeLocalGet } from "@/lib/safe-storage"
+import { initPersistentStore, storeGet, storeSet } from "@/lib/persistent-store"
 import { createContext, useContext, useEffect, useState } from "react"
+
+// PERSISTENCIA DO TEMA — por que nao e mais localStorage puro.
+//
+// O tema era gravado em "ultrafoot-theme", com HIFEN. O persistent-store so
+// promove para o arquivo duravel as chaves que comecam com "ultrafoot:" (dois
+// pontos), entao esta ficava de fora — e o WebView2 limpa o localStorage na
+// atualizacao do jogo. Resultado: quem escolhia Roxo Neon voltava para o ciano
+// padrao a cada versao nova, sem explicacao. As chaves antigas continuam sendo
+// lidas uma ultima vez, para ninguem perder a escolha nesta troca.
+const CHAVE_TEMA = "ultrafoot:theme"
+const CHAVE_CORES = "ultrafoot:team-colors"
+const CHAVE_TEMA_ANTIGA = "ultrafoot-theme"
+const CHAVE_CORES_ANTIGA = "ultrafoot-team-colors"
 
 type ThemeColor = "cyan" | "green" | "red" | "blue" | "orange" | "purple" | "gold" | "team"
 
@@ -95,6 +109,23 @@ function hexToOklch(hex: string): string {
   return `oklch(${(l * 0.7 + 0.3).toFixed(2)} ${c.toFixed(2)} ${Math.round(h)})`
 }
 
+/**
+ * Preto ou branco, o que ler melhor por cima da cor do tema.
+ *
+ * Luminancia relativa (a mesma conta da WCAG, sem a correcao gama — basta para
+ * separar tema claro de tema escuro). Cores claras (dourado, ciano) pedem tinta
+ * preta; escuras (roxo, azul) pedem branca.
+ */
+function tintaLegivel(hex: string): string {
+  const limpo = hex.replace("#", "")
+  if (limpo.length < 6) return "#000000"
+  const r = parseInt(limpo.substring(0, 2), 16) / 255
+  const g = parseInt(limpo.substring(2, 4), 16) / 255
+  const b = parseInt(limpo.substring(4, 6), 16) / 255
+  const luminancia = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return luminancia > 0.45 ? "#000000" : "#ffffff"
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeColor>("cyan")
   const [teamColors, setTeamColors] = useState<{ primary: string; secondary: string } | null>(null)
@@ -102,42 +133,62 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true)
-    const saved = localStorage.getItem("ultrafoot-theme") as ThemeColor | null
-    if (saved) setThemeState(saved)
-    const savedTeamColors = localStorage.getItem("ultrafoot-team-colors")
-    if (savedTeamColors) setTeamColors(JSON.parse(savedTeamColors))
+    // Roda de novo quando o store termina de ler o disco: a primeira passada
+    // acontece antes da hidratacao e leria vazio.
+    const carregar = () => {
+      const salvo = (storeGet(CHAVE_TEMA) ?? safeLocalGet(CHAVE_TEMA_ANTIGA)) as ThemeColor | null
+      if (salvo) setThemeState(salvo)
+      const cores = storeGet(CHAVE_CORES) ?? safeLocalGet(CHAVE_CORES_ANTIGA)
+      if (cores) {
+        try { setTeamColors(JSON.parse(cores)) } catch { /* valor corrompido: mantem o padrao */ }
+      }
+    }
+    carregar()
+    void initPersistentStore().then(carregar)
+    window.addEventListener("ultrafoot:store:ready", carregar)
+    return () => window.removeEventListener("ultrafoot:store:ready", carregar)
   }, [])
 
   const setTheme = (newTheme: ThemeColor) => {
     setThemeState(newTheme)
-    if (mounted) safeLocalSet("ultrafoot-theme", newTheme)
+    if (mounted) storeSet(CHAVE_TEMA, newTheme)
   }
 
   useEffect(() => {
     if (!mounted) return
     const root = document.documentElement
     
-    if (theme === "team" && teamColors) {
-      const primaryOklch = hexToOklch(teamColors.primary)
-      const accentOklch = hexToOklch(teamColors.secondary)
+    // --brand/--brand-2 sao o que faz o tema valer no JOGO INTEIRO: as telas
+    // usam a cor da marca em classe arbitraria (text-[var(--brand)]), nao so
+    // via `primary`. Sem estas duas linhas, trocar de tema mudava meia duzia de
+    // botoes e o resto continuava verde-agua.
+    const aplicar = (primaryHex: string, accentHex: string, primaryOklch: string, accentOklch: string) => {
       root.style.setProperty("--primary", primaryOklch)
       root.style.setProperty("--ring", primaryOklch)
       root.style.setProperty("--accent", accentOklch)
       root.style.setProperty("--sidebar-primary", primaryOklch)
       root.style.setProperty("--sidebar-ring", primaryOklch)
+      root.style.setProperty("--brand", primaryHex)
+      root.style.setProperty("--brand-2", accentHex)
+      root.style.setProperty("--brand-ink", tintaLegivel(primaryHex))
+    }
+
+    if (theme === "team" && teamColors) {
+      aplicar(
+        teamColors.primary,
+        teamColors.secondary,
+        hexToOklch(teamColors.primary),
+        hexToOklch(teamColors.secondary),
+      )
     } else if (theme !== "team") {
       const config = themePresets[theme]
-      root.style.setProperty("--primary", config.primaryOklch)
-      root.style.setProperty("--ring", config.primaryOklch)
-      root.style.setProperty("--accent", config.accentOklch)
-      root.style.setProperty("--sidebar-primary", config.primaryOklch)
-      root.style.setProperty("--sidebar-ring", config.primaryOklch)
+      aplicar(config.primary, config.accent, config.primaryOklch, config.accentOklch)
     }
   }, [theme, teamColors, mounted])
 
   useEffect(() => {
     if (!mounted || !teamColors) return
-    safeLocalSet("ultrafoot-team-colors", JSON.stringify(teamColors))
+    storeSet(CHAVE_CORES, JSON.stringify(teamColors))
   }, [teamColors, mounted])
 
   const config = theme === "team" 

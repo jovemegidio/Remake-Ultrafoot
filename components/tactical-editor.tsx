@@ -149,7 +149,7 @@ const DEFAULT_BENCH = [
 // Rating color helper
 function getRatingColor(rating: number): string {
   if (rating >= 85) return "from-[#d4af37] to-[#ffd700]" // Gold
-  if (rating >= 80) return "from-[#00ffc8] to-[#2ecc71]" // Green
+  if (rating >= 80) return "from-[var(--brand)] to-[#2ecc71]" // Green
   if (rating >= 75) return "from-[#3498db] to-[#5dade2]" // Blue
   if (rating >= 70) return "from-[#9b59b6] to-[#bb6bd9]" // Purple
   return "from-[#7f8c8d] to-[#95a5a6]" // Gray
@@ -297,7 +297,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
               className={cn(
                 "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
                 activeTab === tab
-                  ? "bg-[#00ffc8] text-black"
+                  ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               )}
             >
@@ -319,7 +319,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
           <Button
             size="sm"
             onClick={handleSave}
-            className="bg-[#00ffc8] text-black hover:bg-[#00c8ff] font-bold"
+            className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] font-bold"
           >
             <Save className="mr-1 h-3.5 w-3.5" />
             Confirmar
@@ -346,7 +346,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
               </button>
               <button
                 onClick={() => setShowFormationMenu(!showFormationMenu)}
-                className="flex-1 mx-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#00ffc8]/20 to-[#00ffc8]/10 border border-[#00ffc8]/30 text-xl font-black text-white hover:from-[#00ffc8]/30 hover:to-[#00ffc8]/20 transition"
+                className="flex-1 mx-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[var(--brand)]/20 to-[var(--brand)]/10 border border-[var(--brand)]/30 text-xl font-black text-white hover:from-[var(--brand)]/30 hover:to-[var(--brand)]/20 transition"
               >
                 {formation}
               </button>
@@ -367,7 +367,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                     className={cn(
                       "w-full px-4 py-3 text-sm text-left transition flex items-center justify-between",
                       f === formation 
-                        ? "bg-[#00ffc8] text-black font-semibold" 
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)] font-semibold" 
                         : "text-white/70 hover:bg-white/5"
                     )}
                   >
@@ -386,7 +386,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
             <div className="p-3 pb-0">
               <div className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-2 flex items-center justify-between">
                 <span>Titulares</span>
-                <span className="text-[#00ffc8]">11/11</span>
+                <span className="text-[var(--brand)]">11/11</span>
               </div>
               <div className="space-y-1">
                 {players.map(p => (
@@ -396,7 +396,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all",
                       selectedPlayer === p.id 
-                        ? "bg-[#00ffc8]/20 border border-[#00ffc8]/50" 
+                        ? "bg-[var(--brand)]/20 border border-[var(--brand)]/50" 
                         : "hover:bg-white/5 border border-transparent"
                     )}
                   >
@@ -414,7 +414,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-white/40 font-medium">{p.position}</span>
                         {selectedPlayer === p.id && (
-                          <span className="text-[9px] bg-[#00ffc8]/30 text-[#00ffc8] px-1.5 rounded">
+                          <span className="text-[9px] bg-[var(--brand)]/30 text-[var(--brand)] px-1.5 rounded">
                             SELECIONADO
                           </span>
                         )}
@@ -489,7 +489,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Baixa", "Media", "Alta"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Media" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Media" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -500,7 +500,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Pressao Alta", "Equilibrada", "Recuada"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Equilibrada" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Equilibrada" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -521,7 +521,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Curto", "Misto", "Direto"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Misto" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Misto" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -532,7 +532,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                       {["Lento", "Normal", "Rapido"].map(opt => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                          opt === "Normal" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          opt === "Normal" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -550,7 +550,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   {["Ultra Def.", "Defensivo", "Equilibrado", "Ofensivo", "Ultra Ofen."].map(opt => (
                     <button key={opt} className={cn(
                       "flex-1 px-3 py-2.5 rounded-lg text-xs font-medium transition-all",
-                      opt === "Equilibrado" ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                      opt === "Equilibrado" ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                     )}>{opt}</button>
                   ))}
                 </div>
@@ -561,15 +561,15 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                 <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
                   <h3 className="text-sm font-bold text-white mb-4">Largura Defensiva</h3>
                   <div className="flex items-center gap-4">
-                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#00ffc8]" />
-                    <span className="text-xl font-bold text-[#00ffc8] w-8">5</span>
+                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[var(--brand)]" />
+                    <span className="text-xl font-bold text-[var(--brand)] w-8">5</span>
                   </div>
                 </div>
                 <div className="p-5 rounded-xl bg-[#111111] border border-white/10">
                   <h3 className="text-sm font-bold text-white mb-4">Profundidade</h3>
                   <div className="flex items-center gap-4">
-                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[#00ffc8]" />
-                    <span className="text-xl font-bold text-[#00ffc8] w-8">5</span>
+                    <input type="range" min="1" max="10" defaultValue="5" className="flex-1 accent-[var(--brand)]" />
+                    <span className="text-xl font-bold text-[var(--brand)] w-8">5</span>
                   </div>
                 </div>
               </div>
@@ -598,7 +598,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   ].map(item => (
                     <div key={item.role} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                       <span className="text-xs text-white/60">{item.role}</span>
-                      <span className="text-xs font-bold text-[#00ffc8]">{item.player}</span>
+                      <span className="text-xs font-bold text-[var(--brand)]">{item.player}</span>
                     </div>
                   ))}
                 </div>
@@ -620,7 +620,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                         <div className="text-sm font-medium text-white">{player.name}</div>
                         <div className="text-[10px] text-white/40">{player.position}</div>
                       </div>
-                      <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ffc8] cursor-pointer">
+                      <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[var(--brand)] cursor-pointer">
                         <option>Equilibrado</option>
                         <option>Ofensivo</option>
                         <option>Defensivo</option>
@@ -642,7 +642,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   ].map(item => (
                     <div key={item.label} className="space-y-2">
                       <label className="text-xs text-white/50 block">{item.label}</label>
-                      <select className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#00ffc8] cursor-pointer">
+                      <select className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--brand)] cursor-pointer">
                         {item.options.map(opt => (
                           <option key={opt}>{opt}</option>
                         ))}
@@ -734,14 +734,14 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
               >
                 {/* Selection glow */}
                 {selectedPlayer === p.id && (
-                  <div className="absolute inset-0 -m-3 rounded-full bg-[#00ffc8]/30 blur-md animate-pulse" />
+                  <div className="absolute inset-0 -m-3 rounded-full bg-[var(--brand)]/30 blur-md animate-pulse" />
                 )}
                 
                 {/* Player circle */}
                 <div
                   className={cn(
                     "relative h-12 w-12 rounded-full flex flex-col items-center justify-center shadow-xl border-[3px] transition-transform",
-                    selectedPlayer === p.id ? "border-[#00ffc8]" : "border-white/[0.04]0"
+                    selectedPlayer === p.id ? "border-[var(--brand)]" : "border-white/[0.04]0"
                   )}
                   style={{
                     backgroundColor: team.cor1,
@@ -756,7 +756,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   <div className={cn(
                     "px-2 py-1 rounded-md text-[11px] font-semibold text-center shadow-lg",
                     selectedPlayer === p.id
-                      ? "bg-[#00ffc8] text-black"
+                      ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                       : "bg-black/80 text-white"
                   )}>
                     {p.name}
@@ -834,7 +834,7 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                     </div>
                     <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                       <div 
-                        className="h-full rounded-full bg-gradient-to-r from-[#00ffc8] to-[#2ecc71]"
+                        className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-[#2ecc71]"
                         style={{ width: `${stat.value}%` }}
                       />
                     </div>

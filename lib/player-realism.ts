@@ -65,6 +65,12 @@ export interface ContribJogador {
   assistencias: number
   amarelos: number
   vermelho: boolean
+  /**
+   * Natureza da expulsao, quando houve. Sem isto o pos-jogo so sabia "foi
+   * expulso" e aplicava 1 jogo para tudo — de segundo amarelo a agressao.
+   */
+  motivoExpulsao?: "segundo_amarelo" | "vermelho_direto"
+  expulsaoViolenta?: boolean
 }
 
 /** Extrai a contribuicao de cada atleta (por id) a partir dos eventos da partida. */
@@ -84,7 +90,12 @@ export function contribuicoesPorJogador(events: MatchEvent[]): Map<number, Contr
     } else if (e.type === "yellow") {
       get(e.playerId).amarelos++
     } else if (e.type === "red") {
-      get(e.playerId).vermelho = true
+      const c = get(e.playerId)
+      c.vermelho = true
+      // Save antigo (ou simulacao interna) nao traz o motivo: assume o caso
+      // comum, segundo amarelo, que mantem a pena de 1 jogo de antes.
+      c.motivoExpulsao = e.motivoExpulsao ?? "segundo_amarelo"
+      c.expulsaoViolenta = e.expulsaoViolenta ?? false
     }
   }
   return mapa
@@ -150,18 +161,23 @@ export function pontosDoRotulo(label: MoralLabel): number {
 // ─── CARTOES → SUSPENSAO ──────────────────────────────────────────────────────
 
 /**
- * Suspensao apos a partida. Vermelho = 1 jogo na hora. A cada 5 amarelos
- * acumulados na temporada, +1 jogo (e o contador reduz 5). Devolve a suspensao a
- * aplicar e os amarelos que sobram.
+ * Suspensao apos a partida. A cada 5 amarelos acumulados na temporada, +1 jogo
+ * (e o contador reduz 5). Devolve a suspensao a aplicar e os amarelos que sobram.
+ *
+ * `jogosPorExpulsao` e quanto o vermelho custa. O default 1 e o comportamento
+ * historico; quem julga no tribunal (lib/tribunal) passa a pena de verdade, que
+ * vai de 1 (segundo amarelo) a 8 (agressao agravada). Esta funcao NAO importa o
+ * tribunal de proposito — ela e pura e o julgamento tem sorteio.
  */
 export function suspensaoPorCartoes(
   amarelosAcumulados: number,
   amarelosNaPartida: number,
   vermelho: boolean,
+  jogosPorExpulsao = 1,
 ): { suspender: number; amarelosRestantes: number } {
   let total = amarelosAcumulados + amarelosNaPartida
   let suspender = 0
   while (total >= 5) { suspender += 1; total -= 5 }
-  if (vermelho) suspender += 1
+  if (vermelho) suspender += Math.max(1, Math.round(jogosPorExpulsao))
   return { suspender, amarelosRestantes: total }
 }

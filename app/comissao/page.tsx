@@ -61,7 +61,7 @@ export default function ComissaoPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="flex items-center gap-2 text-lg font-bold text-white">
-                <Briefcase className="h-5 w-5 text-[#00ffc8]" />
+                <Briefcase className="h-5 w-5 text-[var(--brand)]" />
                 Comissão Técnica
               </h1>
               <p className="mt-0.5 text-xs text-white/50">
@@ -75,7 +75,7 @@ export default function ComissaoPage() {
               </div>
               <div>
                 <p className="text-[10px] uppercase text-white/40">Caixa</p>
-                <p className="text-sm font-semibold text-[#00ffc8]">{formatCurrency(balance)}</p>
+                <p className="text-sm font-semibold text-[var(--brand)]">{formatCurrency(balance)}</p>
               </div>
             </div>
           </div>
@@ -89,7 +89,7 @@ export default function ComissaoPage() {
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-[#111] p-4">
               <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><TrendingUp className="h-3.5 w-3.5" />Competência média</div>
-              <div className="text-2xl font-bold text-[#00ffc8]">{competenciaMedia || "—"}</div>
+              <div className="text-2xl font-bold text-[var(--brand)]">{competenciaMedia || "—"}</div>
             </div>
             <div className="rounded-xl border border-white/[0.04] bg-[#111] p-4">
               <div className="mb-1 flex items-center gap-2 text-xs text-white/50"><ShieldAlert className="h-3.5 w-3.5" />Risco de problema</div>
@@ -110,7 +110,7 @@ export default function ComissaoPage() {
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-sm font-bold text-white">{STAFF_ROLE_LABELS[cargo]}</h3>
                     {membro && (
-                      <span className="shrink-0 rounded bg-[#00ffc8]/15 px-2 py-0.5 text-xs font-black text-[#00ffc8]">
+                      <span className="shrink-0 rounded bg-[var(--brand)]/15 px-2 py-0.5 text-xs font-black text-[var(--brand)]">
                         {membro.competence}
                       </span>
                     )}
@@ -144,7 +144,7 @@ export default function ComissaoPage() {
                         className={cn(
                           "mt-3 w-full rounded-lg border py-2 text-xs font-bold transition-all",
                           vaga === cargo
-                            ? "border-[#00ffc8]/60 bg-[#00ffc8]/10 text-[#00ffc8]"
+                            ? "border-[var(--brand)]/60 bg-[var(--brand)]/10 text-[var(--brand)]"
                             : "border-white/15 text-white/70 hover:border-white/30 hover:text-white",
                         )}
                       >
@@ -173,7 +173,7 @@ export default function ComissaoPage() {
                                     }}
                                     className={cn(
                                       "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold",
-                                      podePagar ? "bg-[#00ffc8] text-black hover:bg-[#00e0b4]" : "cursor-not-allowed bg-white/5 text-white/25",
+                                      podePagar ? "bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[#00e0b4]" : "cursor-not-allowed bg-white/5 text-white/25",
                                     )}
                                   >
                                     <Check className="mr-1 inline h-3 w-3" />Contratar

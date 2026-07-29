@@ -9,6 +9,13 @@ import { accessibilityStore } from "@/lib/accessibility-store"
 import { syncCurrencyFromStore, getCurrencyCode } from "@/lib/currency"
 import type { InGameUpdateOffer } from "@/lib/updater"
 import { baixarAtualizacao } from "@/lib/atualizacao-elencos"
+import {
+  canalAtivo,
+  getAtualizacaoAutomatica,
+  getConsentimento,
+  podeConectar,
+} from "@/lib/atualizacoes-preferencias"
+import { DialogoConsentimentoAtualizacoes } from "@/components/dialogo-consentimento-atualizacoes"
 
 // Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
 // e o que faz o modal reaparecer para quem ja viu a anterior.
@@ -21,6 +28,8 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   const [showQuitConfirm, setShowQuitConfirm] = useState(false)
   const [updateOffer, setUpdateOffer] = useState<InGameUpdateOffer | null>(null)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
+  // Convite para conectar. So aparece para quem nunca respondeu.
+  const [pedirConsentimento, setPedirConsentimento] = useState(false)
 
   useEffect(() => {
     const bridge = window as Window & {
@@ -74,10 +83,20 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   // ATUALIZACAO DE ELENCOS pelo servidor (estilo EA FC). Roda uma vez por
   // abertura, depois do store hidratar — antes disso a comparacao de versao
   // leria vazio e rebaixaria a atualizacao que ja esta na maquina.
+  //
+  // E, agora, SO DEPOIS DE AUTORIZADO. Antes esta busca saia no boot sem
+  // perguntar nada; na primeira execucao o jogo passa a convidar o jogador e
+  // fica offline enquanto ele nao responder.
   useEffect(() => {
     let cancelado = false
     void initPersistentStore().then(async () => {
       if (cancelado) return
+      const consentimento = getConsentimento()
+      if (consentimento === "nao-perguntado") {
+        setPedirConsentimento(true)
+        return
+      }
+      if (consentimento !== "aceito" || !getAtualizacaoAutomatica()) return
       const versao = await baixarAtualizacao()
       if (versao) console.info(`[elencos] atualizacao oficial ${versao} aplicada`)
     })
@@ -282,8 +301,15 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
 
     // Verifica atualizações silenciosamente alguns segundos após o boot,
     // sem bloquear a splash. No navegador (fora do Tauri) é no-op.
+    //
+    // Passa pelo consentimento como o resto: sem autorizacao, nem a versao
+    // publicada e consultada. O initPersistentStore aqui garante que a
+    // preferencia ja foi lida do disco antes da decisao.
     const updateTimer = window.setTimeout(() => {
-      void import("@/lib/updater").then((m) => m.checkForUpdates({ silent: true }))
+      void initPersistentStore().then(() => {
+        if (!podeConectar() || !getAtualizacaoAutomatica() || !canalAtivo("jogo")) return
+        void import("@/lib/updater").then((m) => m.checkForUpdates({ silent: true }))
+      })
     }, 5000)
 
     return () => {
@@ -312,6 +338,22 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           storeSet(WHATS_NEW_KEY, WHATS_NEW_VERSION)
           setShowWhatsNew(false)
         }} />
+      )}
+      {/* Espera o "o que ha de novo" sair da frente: dois modais empilhados no
+          primeiro boot competiriam pelo Enter. */}
+      {pedirConsentimento && !showWhatsNew && (
+        <DialogoConsentimentoAtualizacoes
+          onDecidir={(aceitou) => {
+            setPedirConsentimento(false)
+            if (!aceitou) return
+            void baixarAtualizacao().then((versao) => {
+              if (versao) console.info(`[elencos] atualizacao oficial ${versao} aplicada`)
+            })
+            if (canalAtivo("jogo")) {
+              void import("@/lib/updater").then((m) => m.checkForUpdates({ silent: true }))
+            }
+          }}
+        />
       )}
     </>
   )
@@ -359,10 +401,10 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
       <section className="w-full max-w-3xl overflow-hidden border border-white/[0.08] bg-gradient-to-br from-[#171724]/98 via-[#11121c]/98 to-[#090b11]/98 shadow-[0_35px_120px_rgba(0,0,0,.75)]">
         <div className="grid min-h-[380px] md:grid-cols-[1.45fr_.75fr]">
           <div className="flex flex-col px-8 py-8 md:px-10">
-            <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#00ffc8]">{current.eyebrow}</p>
+            <p className="text-[10px] font-black uppercase tracking-[.22em] text-[var(--brand)]">{current.eyebrow}</p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-white">{current.title}</h2>
             <p className="mt-5 max-w-xl text-sm leading-6 text-white/62">{current.body}</p>
-            <div className="mt-6 space-y-2">{current.bullets.map(item => <div key={item} className="flex items-center gap-3 text-xs text-white/72"><span className="h-1.5 w-1.5 rounded-full bg-[#00ffc8]"/>{item}</div>)}</div>
+            <div className="mt-6 space-y-2">{current.bullets.map(item => <div key={item} className="flex items-center gap-3 text-xs text-white/72"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand)]"/>{item}</div>)}</div>
             <div className="mt-auto flex items-center gap-3 pt-8">
               <button disabled={page === 0} onClick={() => setPage(value => value - 1)} className="grid h-8 w-8 place-items-center rounded-full border border-white/10 text-white/50 disabled:opacity-25">‹</button>
               <span className="text-[10px] font-bold text-white/35">{page + 1} de {pages.length}</span>
@@ -376,7 +418,7 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex items-center justify-between border-t border-white/[0.07] px-8 py-4">
           <span className="text-[10px] text-white/30">Enter/A avança · Esc fecha após concluir</span>
-          <button onClick={page < pages.length - 1 ? () => setPage(value => value + 1) : onClose} className="rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[#00ffc8] px-7 py-2.5 text-xs font-black text-white shadow-[0_0_25px_rgba(0,255,200,.22)]">{page < pages.length - 1 ? "Avançar" : "Entrar no jogo"}</button>
+          <button onClick={page < pages.length - 1 ? () => setPage(value => value + 1) : onClose} className="rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[var(--brand)] px-7 py-2.5 text-xs font-black text-white shadow-[0_0_25px_rgba(0,255,200,.22)]">{page < pages.length - 1 ? "Avançar" : "Entrar no jogo"}</button>
         </div>
       </section>
     </div>
@@ -386,21 +428,21 @@ function WhatsNewDialog({ onClose }: { onClose: () => void }) {
 function InGameUpdateDialog({ offer, onLater }: { offer: InGameUpdateOffer; onLater: () => void }) {
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-5 backdrop-blur-md">
-      <section className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#00ffc8]/25 bg-[#0b1014] shadow-[0_24px_90px_rgba(0,255,200,.16)]">
-        <div className="border-b border-white/10 bg-gradient-to-r from-[#00ffc8]/15 to-cyan-500/5 px-6 py-5">
-          <p className="text-[11px] font-black uppercase tracking-[.22em] text-[#00ffc8]">Atualização do jogo</p>
+      <section className="w-full max-w-lg overflow-hidden rounded-2xl border border-[var(--brand)]/25 bg-[#0b1014] shadow-[0_24px_90px_rgba(0,255,200,.16)]">
+        <div className="border-b border-white/10 bg-gradient-to-r from-[var(--brand)]/15 to-cyan-500/5 px-6 py-5">
+          <p className="text-[11px] font-black uppercase tracking-[.22em] text-[var(--brand)]">Atualização do jogo</p>
           <h2 className="mt-1 text-2xl font-black text-white">Ultrafoot 26 v{offer.version}</h2>
           <p className="mt-1 text-sm text-white/55">Uma nova versão está disponível.</p>
         </div>
         <div className="px-6 py-5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-white/50">Novidades</h3>
           <p className="mt-2 max-h-36 overflow-y-auto whitespace-pre-line text-sm leading-6 text-white/75">{offer.notes}</p>
-          <div className="mt-5 rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/5 p-4 text-sm leading-6 text-white/80">
+          <div className="mt-5 rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/5 p-4 text-sm leading-6 text-white/80">
             Para atualizar, feche o Ultrafoot 26 e abra o <strong className="text-white">Ultrafoot Launcher</strong>.
             Ele baixa e instala a nova versão automaticamente — não é mais preciso atualizar por dentro do jogo.
           </div>
           <div className="mt-6 flex justify-end gap-3">
-            <button onClick={onLater} className="rounded-lg bg-[#00ffc8] px-5 py-2.5 text-sm font-black text-black hover:bg-[#4dffda]">Entendi</button>
+            <button onClick={onLater} className="rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-black text-[var(--brand-ink)] hover:bg-[#4dffda]">Entendi</button>
           </div>
         </div>
       </section>
@@ -447,13 +489,13 @@ function QuitConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onCo
         onClick={(e) => e.stopPropagation()}
       >
         <div className="pointer-events-none absolute bottom-[-34px] left-1/2 -translate-x-1/2 text-[150px] font-black text-white/[0.025]">⚙</div>
-        <p className="text-[10px] font-black uppercase tracking-[.24em] text-[#00ffc8]">Confirmação</p>
+        <p className="text-[10px] font-black uppercase tracking-[.24em] text-[var(--brand)]">Confirmação</p>
         <h2 className="relative mt-3 text-2xl font-black leading-tight text-white">Tem certeza de que deseja sair do Ultrafoot 26?</h2>
         <p className="relative mx-auto mt-3 max-w-sm text-xs leading-5 text-white/45">Seu progresso atual será gravado antes do encerramento.</p>
         <div className="relative mx-auto mt-7 flex w-44 flex-col gap-2">
           <button
             onClick={onConfirm}
-            className="rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[#00ffc8] px-5 py-2.5 text-sm font-black text-white shadow-[0_0_22px_rgba(0,255,200,.25)]"
+            className="rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-[var(--brand)] px-5 py-2.5 text-sm font-black text-white shadow-[0_0_22px_rgba(0,255,200,.25)]"
           >
             Sim <span className="text-white/60">(Enter)</span>
           </button>

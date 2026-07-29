@@ -519,16 +519,16 @@ export default function SplashPage() {
         const next = LANGUAGE_COUNTRIES[(languageIndex + 1) % LANGUAGE_COUNTRIES.length]
         return <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#050508] px-5">
           <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-gradient-to-br from-[#102925] to-[#0b0c10] p-7 text-center shadow-2xl">
-            <Globe className="mx-auto h-11 w-11 text-[#00ffc8]" />
-            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#00ffc8]">Ultrafoot 26</p>
+            <Globe className="mx-auto h-11 w-11 text-[var(--brand)]" />
+            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--brand)]">Ultrafoot 26</p>
             <h1 className="mt-2 text-2xl font-black text-white">Escolha o idioma</h1>
             <p className="mt-2 text-sm text-white/50">Você poderá alterá-lo depois nas configurações.</p>
             <div className="mt-6 flex items-center justify-center gap-3">
-              <button onClick={() => moveLanguage(-1)} aria-label="País anterior" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[#00ffc8] hover:text-[#00ffc8]">‹</button>
+              <button onClick={() => moveLanguage(-1)} aria-label="País anterior" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[var(--brand)] hover:text-[var(--brand)]">‹</button>
               <button onClick={() => moveLanguage(-1)} className="hidden w-24 rounded-xl border border-white/10 bg-white/[0.03] p-2 opacity-45 transition hover:opacity-80 sm:block"><Image src={`/flags/${previous.flag}.png`} alt={previous.country} width={48} height={32} className="mx-auto h-8 w-12 object-cover" /><span className="mt-2 block truncate text-[10px] text-white">{previous.code}</span></button>
-              <button onClick={() => selectLanguage()} className="w-44 rounded-2xl border-2 border-[#00ffc8] bg-[#00ffc8]/10 px-4 py-4 shadow-[0_0_26px_rgba(0,255,200,.16)] transition hover:bg-[#00ffc8]/20"><Image src={`/flags/${current.flag}.png`} alt={`Bandeira de ${current.country}`} width={96} height={64} className="mx-auto h-14 w-24 rounded object-cover shadow" /><span className="mt-3 block text-lg font-black text-white">{current.language}</span><span className="mt-1 block text-xs text-[#00ffc8]">{current.country}</span></button>
+              <button onClick={() => selectLanguage()} className="w-44 rounded-2xl border-2 border-[var(--brand)] bg-[var(--brand)]/10 px-4 py-4 shadow-[0_0_26px_rgba(0,255,200,.16)] transition hover:bg-[var(--brand)]/20"><Image src={`/flags/${current.flag}.png`} alt={`Bandeira de ${current.country}`} width={96} height={64} className="mx-auto h-14 w-24 rounded object-cover shadow" /><span className="mt-3 block text-lg font-black text-white">{current.language}</span><span className="mt-1 block text-xs text-[var(--brand)]">{current.country}</span></button>
               <button onClick={() => moveLanguage(1)} className="hidden w-24 rounded-xl border border-white/10 bg-white/[0.03] p-2 opacity-45 transition hover:opacity-80 sm:block"><Image src={`/flags/${next.flag}.png`} alt={next.country} width={48} height={32} className="mx-auto h-8 w-12 object-cover" /><span className="mt-2 block truncate text-[10px] text-white">{next.code}</span></button>
-              <button onClick={() => moveLanguage(1)} aria-label="Próximo país" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[#00ffc8] hover:text-[#00ffc8]">›</button>
+              <button onClick={() => moveLanguage(1)} aria-label="Próximo país" className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-6 text-xl text-white/70 hover:border-[var(--brand)] hover:text-[var(--brand)]">›</button>
             </div>
             <p className="mt-5 text-[11px] text-white/40">← / → ou direcional para trocar país · Enter / A para confirmar</p>
           </div>
@@ -777,7 +777,7 @@ export default function SplashPage() {
                   className="h-full rounded-full transition-all duration-150 ease-out relative overflow-hidden"
                   style={{ 
                     width: `${loadingProgress}%`,
-                    background: "linear-gradient(90deg, #00ffc8 0%, #00c8ff 50%, #00ffc8 100%)",
+                    background: "linear-gradient(90deg, var(--brand) 0%, var(--brand-2) 50%, var(--brand) 100%)",
                     boxShadow: "0 0 20px rgba(0, 255, 200, 0.5), 0 0 40px rgba(0, 255, 200, 0.3)",
                   }}
                 >
@@ -974,7 +974,7 @@ export default function SplashPage() {
                     className={cn(
                       "group relative flex items-center gap-3.5 rounded-xl border px-3.5 py-3 text-left transition-all duration-200 overflow-hidden",
                       isSelected
-                        ? "border-[#00ffc8]/35"
+                        ? "border-[var(--brand)]/35"
                         : "border-transparent hover:border-white/10 hover:bg-white/[0.03]"
                     )}
                     style={{
@@ -988,14 +988,14 @@ export default function SplashPage() {
                     <span
                       className={cn(
                         "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full transition-all duration-300",
-                        isSelected ? "h-9 bg-gradient-to-b from-[#00ffc8] to-[#00c8ff]" : "h-0 bg-transparent"
+                        isSelected ? "h-9 bg-gradient-to-b from-[var(--brand)] to-[var(--brand-2)]" : "h-0 bg-transparent"
                       )}
                     />
 
                     {/* Icone */}
                     <div className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 [&>svg]:h-5 [&>svg]:w-5",
-                      isSelected ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-white/[0.05] text-white/45 group-hover:text-white/70"
+                      isSelected ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-white/[0.05] text-white/45 group-hover:text-white/70"
                     )}>
                       {option.icon}
                     </div>
@@ -1011,7 +1011,7 @@ export default function SplashPage() {
                     {/* Chevron do item selecionado */}
                     <ChevronRight className={cn(
                       "h-4 w-4 shrink-0 transition-all duration-200",
-                      isSelected ? "text-[#00ffc8] opacity-100 translate-x-0" : "text-white/0 opacity-0 -translate-x-2"
+                      isSelected ? "text-[var(--brand)] opacity-100 translate-x-0" : "text-white/0 opacity-0 -translate-x-2"
                     )} />
                   </button>
                 )
@@ -1038,7 +1038,7 @@ export default function SplashPage() {
               Navegar
             </span>
             <span className="flex items-center gap-2 text-white/45 text-[11px] font-medium">
-              <kbd className="flex h-5 min-w-5 items-center justify-center rounded border border-[#00ffc8]/30 bg-[#00ffc8]/10 px-1 text-[10px] text-[#00ffc8]">↵</kbd>
+              <kbd className="flex h-5 min-w-5 items-center justify-center rounded border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-1 text-[10px] text-[var(--brand)]">↵</kbd>
               Selecionar
             </span>
           </div>
@@ -1049,14 +1049,14 @@ export default function SplashPage() {
       {/* Modal de Registro */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
         <DialogContent 
-          className="bg-gradient-to-br from-[#0a1414] via-[#091018] to-[#060b0e] border-[#00ffc8]/15 text-white max-w-md"
+          className="bg-gradient-to-br from-[#0a1414] via-[#091018] to-[#060b0e] border-[var(--brand)]/15 text-white max-w-md"
           showCloseButton={!isValidating}
         >
           {/* Glow teal sutil no topo, alinhado a identidade do jogo */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/40 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--brand)]/40 to-transparent" />
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#00ffc8] to-[#00c8ff] shadow-lg shadow-[#00ffc8]/25">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--brand)] to-[var(--brand-2)] shadow-lg shadow-[var(--brand)]/25">
                 <Key className="h-5 w-5 text-black" />
               </div>
               {t.splash.registerTitle}
@@ -1085,7 +1085,7 @@ export default function SplashPage() {
                   "w-full px-4 py-3 bg-black/40 border rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 transition-all duration-300 font-mono tracking-wider",
                   registerError 
                     ? "border-red-500/50 focus:ring-red-500/30" 
-                    : "border-white/10 focus:ring-[#00ffc8]/30 focus:border-[#00ffc8]/40"
+                    : "border-white/10 focus:ring-[var(--brand)]/30 focus:border-[var(--brand)]/40"
                 )}
               />
               
@@ -1108,7 +1108,7 @@ export default function SplashPage() {
                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                   : !serialKey.trim() || isValidating
                     ? "bg-white/5 text-white/30 cursor-not-allowed"
-                    : "bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black shadow-lg shadow-[#00ffc8]/25 hover:opacity-90 hover:scale-[1.02]"
+                    : "bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black shadow-lg shadow-[var(--brand)]/25 hover:opacity-90 hover:scale-[1.02]"
               )}
             >
               {isValidating ? (
@@ -1137,13 +1137,13 @@ export default function SplashPage() {
       {/* Modal de Carregar Jogo */}
       <Dialog open={showLoadModal} onOpenChange={setShowLoadModal}>
         <DialogContent 
-          className="bg-gradient-to-br from-[#0a1414] via-[#091018] to-[#060b0e] border-[#00ffc8]/15 text-white max-w-lg"
+          className="bg-gradient-to-br from-[#0a1414] via-[#091018] to-[#060b0e] border-[var(--brand)]/15 text-white max-w-lg"
         >
           {/* Glow teal sutil no topo, alinhado a identidade do jogo */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00ffc8]/40 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--brand)]/40 to-transparent" />
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#00ffc8] to-[#00c8ff] shadow-lg shadow-[#00ffc8]/25">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--brand)] to-[var(--brand-2)] shadow-lg shadow-[var(--brand)]/25">
                 <Save className="h-5 w-5 text-black" />
               </div>
               {t.splash.loadTitle}
@@ -1168,7 +1168,7 @@ export default function SplashPage() {
                   className={cn(
                     "group relative rounded-xl border transition-all duration-200",
                     selectedSaveIndex === index
-                      ? "bg-gradient-to-r from-[#00ffc8]/15 via-[#00c8ff]/8 to-transparent border-[#00ffc8]/40"
+                      ? "bg-gradient-to-r from-[var(--brand)]/15 via-[var(--brand-2)]/8 to-transparent border-[var(--brand)]/40"
                       : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20"
                   )}
                 >
@@ -1178,7 +1178,7 @@ export default function SplashPage() {
                         <div className={cn(
                           "w-12 h-12 rounded-xl flex items-center justify-center transition-colors ring-1",
                           selectedSaveIndex === index
-                            ? "bg-[#00ffc8]/15 text-[#00ffc8] ring-[#00ffc8]/30"
+                            ? "bg-[var(--brand)]/15 text-[var(--brand)] ring-[var(--brand)]/30"
                             : "bg-white/10 text-white/80 ring-white/10"
                         )}>
                           <span className="text-xl font-bold">{save.teamName.charAt(0)}</span>
@@ -1219,7 +1219,7 @@ export default function SplashPage() {
             <button
               data-acao-modal="pasta"
               onClick={() => { void openSavesFolder() }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/40 hover:text-[#00ffc8] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/40 hover:text-[var(--brand)] transition-colors"
             >
               <FolderOpen className="h-3.5 w-3.5" />
               Abrir pasta de saves
@@ -1255,8 +1255,8 @@ export default function SplashPage() {
                 clique baixa; o campo de codigo continua ali para quem prefere
                 digitar ou recebeu um codigo de outra pessoa. */}
             {savesDaConta.length > 0 && (
-              <div className="mb-3 rounded-xl border border-[#00ffc8]/20 bg-[#00ffc8]/[0.04] p-3">
-                <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#00ffc8]">
+              <div className="mb-3 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand)]/[0.04] p-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--brand)]">
                   <Cloud className="h-3.5 w-3.5" />
                   Suas carreiras na nuvem
                   {nomeDaConta && <span className="font-normal text-white/35">· {nomeDaConta}</span>}
@@ -1266,7 +1266,7 @@ export default function SplashPage() {
                     <button
                       key={save.codigo}
                       onClick={() => { setCloudCode(save.codigo); setCloudError(""); setCloudSuccess("") }}
-                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[#00ffc8]/30 hover:bg-black/50"
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[var(--brand)]/30 hover:bg-black/50"
                     >
                       <span className="min-w-0">
                         <span className="block truncate text-sm text-white">
@@ -1276,7 +1276,7 @@ export default function SplashPage() {
                           {new Date(save.atualizado_em * 1000).toLocaleDateString("pt-BR")}
                         </span>
                       </span>
-                      <span className="shrink-0 font-mono text-xs tracking-widest text-[#00ffc8]">
+                      <span className="shrink-0 font-mono text-xs tracking-widest text-[var(--brand)]">
                         {save.codigo}
                       </span>
                     </button>
@@ -1298,7 +1298,7 @@ export default function SplashPage() {
                 placeholder={t.splash.cloudCodePlaceholder}
                 maxLength={6}
                 disabled={cloudLoading}
-                className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#00ffc8]/30 focus:border-[#00ffc8]/40 font-mono tracking-[0.3em] uppercase transition-all"
+                className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/30 focus:border-[var(--brand)]/40 font-mono tracking-[0.3em] uppercase transition-all"
               />
               {cloudSaveReady ? (
                 <button
@@ -1315,7 +1315,7 @@ export default function SplashPage() {
                 <button
                   onClick={handleCloudDownload}
                   disabled={cloudCode.length !== 6 || cloudLoading}
-                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black font-semibold text-sm shadow-lg shadow-[#00ffc8]/25 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-opacity"
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black font-semibold text-sm shadow-lg shadow-[var(--brand)]/25 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2 hover:opacity-90 transition-opacity"
                 >
                   {cloudLoading
                     ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

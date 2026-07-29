@@ -42,7 +42,7 @@ export function NationalPageShell({
   if (!hydrated || !teamHydrated || !nationalTeam) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#050508]">
-        <div className="h-12 w-12 animate-spin rounded-full border-2 border-[#00ffc8] border-t-transparent" />
+        <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--brand)] border-t-transparent" />
       </div>
     )
   }
@@ -63,7 +63,7 @@ export function NationalPageShell({
           <NationalCrest team={nationalTeam} size={44} />
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-white">
-              <Icon className="h-5 w-5 text-[#00ffc8]" /> {title}
+              <Icon className="h-5 w-5 text-[var(--brand)]" /> {title}
             </h1>
             <p className="truncate text-sm text-white/50">
               {nationalTeam.name} · {CONFEDERATION_LABEL[nationalTeam.confederation]} — {subtitle}

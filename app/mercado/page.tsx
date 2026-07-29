@@ -64,6 +64,7 @@ import { getLeagueLogo } from "@/lib/league-logos"
 import { playerSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import { canAffordTransfer, financeWithDebt, borrowingCapacity } from "@/lib/debt-engine"
+import { LeiloesPanel } from "@/components/leiloes-panel"
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -77,7 +78,7 @@ function normalizeClubShort(nome?: string): string {
     .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
     .split(" ").filter(w => w && !SIGLA_CLUBE_MERCADO.has(w)).join(" ")
 }
-type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "enviadas" | "recebidas"
+type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "leiloes" | "enviadas" | "recebidas"
 type SentProposalStatus = "aceita" | "rejeitada"
 
 function scoutedLeadToMarketPlayer(lead: import("@/lib/game-engine").ScoutedLead): Player {
@@ -140,7 +141,7 @@ interface SentTransferProposal {
   week: number
 }
 
-const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "enviadas", "recebidas"]
+const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "leiloes", "enviadas", "recebidas"]
 
 // Rótulo amigável para a divisão/liga crua do banco (ex.: "serie_a" -> "Série A").
 function divisaoLabel(d?: string): string {
@@ -393,6 +394,35 @@ export default function MercadoPage() {
     () => generateDetailedMarketTargets(userTeam?.curto ?? "", undefined, gameEngine.currentSeason, userTeam?.nome),
     [userTeam?.curto, userTeam?.nome, gameEngine.currentSeason],
   )
+
+  // CONCORRENTES NO LEILAO — os clubes que podem cobrir o seu lance. Saem do
+  // proprio catalogo do mercado (nao de uma lista inventada): cada clube que tem
+  // atleta na vitrine e um comprador em potencial, com o caixa e a forca de
+  // elenco estimados pelo prestigio, que e o que o resto do jogo tambem usa.
+  const candidatosDeLeilao = useMemo(() => {
+    const porClube = new Map<string, { curto: string; nome: string; prestigio: number; caixa: number; forcaElenco: number }>()
+    const meuCurto = (userTeam?.curto ?? "").toUpperCase()
+    for (const alvo of transferTargets) {
+      const curto = alvo.team?.curto ?? ""
+      if (!curto || curto.toUpperCase() === meuCurto || porClube.has(curto)) continue
+      const prestigio = alvo.team?.prestigio ?? 60
+      porClube.set(curto, {
+        curto,
+        nome: alvo.team.nome,
+        prestigio,
+        // Caixa ancorado nos numeros do PROPRIO jogo (CLUB_TEMPLATES em
+        // game-engine): prestigio 90 -> ~80 mi (Flamengo), 75 -> ~25 mi (Bahia).
+        // A primeira versao usava prestigio³ e dava 7,5 mi para um clube de
+        // prestigio 55 — com isso 24 de 40 clubes nao podiam dar lance em
+        // ninguem e 43% dos leiloes abriam vazios.
+        caixa: Math.max(1_000_000, Math.round(Math.pow(Math.max(50, prestigio) - 50, 2) * 50_000)),
+        forcaElenco: Math.round(48 + prestigio * 0.38),
+      })
+    }
+    // Só os 40 mais fortes entram: a disputa é entre quem realmente pagaria, e
+    // percorrer milhares de clubes por leilão travaria a tela.
+    return Array.from(porClube.values()).sort((a, b) => b.prestigio - a.prestigio).slice(0, 40)
+  }, [transferTargets, userTeam?.curto])
 
   // Opções reais e encadeadas: país -> liga -> time. Nacionalidade e País/Região
   // exibem somente nomes de países (nunca siglas de estado/arquivo).
@@ -889,6 +919,13 @@ export default function MercadoPage() {
                   </TabsTrigger>
                   <span className="text-white/20">|</span>
                   <TabsTrigger
+                    value="leiloes"
+                    className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
+                  >
+                    Leilões
+                  </TabsTrigger>
+                  <span className="text-white/20">|</span>
+                  <TabsTrigger
                     value="enviadas"
                     className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
                   >
@@ -914,12 +951,12 @@ export default function MercadoPage() {
           </div>
 
           {marketNotice && (
-            <div className="mb-4 flex items-center justify-between rounded-lg border border-[#00ffc8]/20 bg-[#00ffc8]/10 px-4 py-2 text-sm text-[#00ffc8]">
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-[var(--brand)]/20 bg-[var(--brand)]/10 px-4 py-2 text-sm text-[var(--brand)]">
               <span>{marketNotice}</span>
               <button
                 type="button"
                 onClick={() => setMarketNotice(null)}
-                className="rounded p-1 text-[#00ffc8]/70 hover:bg-white/10 hover:text-[#00ffc8]"
+                className="rounded p-1 text-[var(--brand)]/70 hover:bg-white/10 hover:text-[var(--brand)]"
                 aria-label="Fechar aviso"
               >
                 <X className="h-4 w-4" />
@@ -1035,7 +1072,7 @@ export default function MercadoPage() {
                     <div className="font-semibold text-white text-base">{t.market.role}</div>
                     <div className={cn(
                       "text-2xl font-black",
-                      selectedPosition === "Tudo" ? "text-white/40" : "text-[#00ffc8]"
+                      selectedPosition === "Tudo" ? "text-white/40" : "text-[var(--brand)]"
                     )}>
                       {selectedPosition === "Tudo" ? t.market.any : selectedPosition}
                     </div>
@@ -1262,7 +1299,7 @@ export default function MercadoPage() {
                   </div>
                   <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                     <p className="text-xs text-white/40">Em busca</p>
-                    <p className="mt-1 text-2xl font-bold text-[#00ffc8]">{hiredScouts.filter((scout) => scout.isSearching).length}</p>
+                    <p className="mt-1 text-2xl font-bold text-[var(--brand)]">{hiredScouts.filter((scout) => scout.isSearching).length}</p>
                   </div>
                   <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
                     <p className="text-xs text-white/40">Relatorios</p>
@@ -1330,7 +1367,7 @@ export default function MercadoPage() {
                               <button
                                 type="button"
                                 onClick={() => setExpandedScoutId(expandedScoutId === scout.id ? null : scout.id)}
-                                className="inline-flex items-center gap-2 rounded-lg bg-[#00ffc8] px-3 py-2 text-xs font-semibold text-black hover:bg-[#00c8ff]"
+                                className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
                               >
                                 <Play className="h-3.5 w-3.5" />
                                 Iniciar busca
@@ -1385,7 +1422,7 @@ export default function MercadoPage() {
                                 key={region.id}
                                 type="button"
                                 onClick={() => handleStartScoutSearch(scout.id, region.id)}
-                                className="rounded-lg border border-white/[0.04] bg-white/[0.03] p-3 text-left hover:border-[#00ffc8]/40 hover:bg-[#00ffc8]/10"
+                                className="rounded-lg border border-white/[0.04] bg-white/[0.03] p-3 text-left hover:border-[var(--brand)]/40 hover:bg-[var(--brand)]/10"
                               >
                                 <p className="text-sm font-semibold text-white">{region.name}</p>
                                 <p className="mt-1 text-[10px] text-white/40">{region.weeksToComplete} sem.</p>
@@ -1420,7 +1457,7 @@ export default function MercadoPage() {
                           <button
                             type="button"
                             onClick={() => handleHireScout(scout)}
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-[#00ffc8] hover:text-black"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-[var(--brand)] hover:text-[var(--brand-ink)]"
                           >
                             <UserPlus className="h-3.5 w-3.5" />
                             Contratar
@@ -1452,7 +1489,7 @@ export default function MercadoPage() {
                               <p className="text-xs text-white/45">{lead.position} - {lead.age} anos - {lead.nationality}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-lg font-bold text-[#00ffc8]">{lead.revealedAttributes ? lead.overall : "?"}</p>
+                              <p className="text-lg font-bold text-[var(--brand)]">{lead.revealedAttributes ? lead.overall : "?"}</p>
                               <p className="text-[10px] text-white/35">OVR</p>
                             </div>
                           </div>
@@ -1466,7 +1503,7 @@ export default function MercadoPage() {
                                   type="button"
                                   onClick={() => gameEngine.revealScoutedLead(lead.id)}
                                   disabled={gameEngine.balance < 50000}
-                                  className="inline-flex items-center gap-1 rounded bg-[#00ffc8]/15 px-2 py-1 text-[10px] font-semibold text-[#00ffc8] hover:bg-[#00ffc8]/25 disabled:opacity-40"
+                                  className="inline-flex items-center gap-1 rounded bg-[var(--brand)]/15 px-2 py-1 text-[10px] font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/25 disabled:opacity-40"
                                 >
                                   <Eye className="h-3 w-3" />
                                   Revelar
@@ -1584,7 +1621,7 @@ export default function MercadoPage() {
                     <div>
                       <h3 className="text-white font-semibold truncate">Padrao {userTeam?.curto || "TIME"}...</h3>
                       <span className="text-white/60 text-sm">{centralFormation}</span>
-                      <span className="text-[#00ffc8] text-sm ml-2">ABERTO</span>
+                      <span className="text-[var(--brand)] text-sm ml-2">ABERTO</span>
                     </div>
                     <span className="p-1 rounded transition-colors group-hover:bg-white/10">
                       <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
@@ -1615,7 +1652,7 @@ export default function MercadoPage() {
                       />
                     ))}
                   </div>
-                  <div className="flex items-center gap-2 mt-3 text-[#00ffc8] text-xs">
+                  <div className="flex items-center gap-2 mt-3 text-[var(--brand)] text-xs">
                     <Check className="w-4 h-4" />
                     <span>Abrir rede mundial</span>
                   </div>
@@ -1628,7 +1665,7 @@ export default function MercadoPage() {
                   <div>
                     <h2 className="text-white text-2xl font-bold">Padrao {userTeam?.nome?.toUpperCase() || "TIME"}</h2>
                     <span className="text-white/60">{centralFormation}</span>
-                    <span className="text-[#00ffc8] ml-2">ABERTO</span>
+                    <span className="text-[var(--brand)] ml-2">ABERTO</span>
                   </div>
                   <TeamCrest team={userTeam} size="lg" />
                 </div>
@@ -1705,6 +1742,46 @@ export default function MercadoPage() {
             </div>
           </TabsContent>
 
+          {/* LEILOES — varios clubes disputando o mesmo atleta. O painel decide
+              QUEM leva e a QUE PRECO; a compra em si passa pela negociacao
+              normal (abaixo), para nao duplicar teto de divida/folha. */}
+          <TabsContent value="leiloes" className="mt-0">
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-white font-semibold">Leilões</span>
+              <span className="text-white/20">|</span>
+              <span className="text-white/40">Atletas disputados por mais de um clube</span>
+            </div>
+            <LeiloesPanel
+              pool={transferTargets}
+              semana={gameEngine.currentWeek}
+              season={gameEngine.currentSeason}
+              saldo={gameEngine.balance}
+              candidatos={candidatosDeLeilao}
+              lancesSalvos={careerState.lancesEmLeilao ?? []}
+              clubeDoUsuario={{
+                curto: userTeam?.curto ?? "",
+                nome: userTeam?.nome ?? "Seu clube",
+                prestigio: userTeam?.prestigio ?? 60,
+              }}
+              onLance={(lance) => {
+                // Um lance por atleta: cobrir SUBSTITUI o anterior, senao o save
+                // acumularia varios lances do mesmo clube no mesmo leilao.
+                const outros = (careerState.lancesEmLeilao ?? []).filter(
+                  l => !(l.chave === lance.chave && l.season === lance.season),
+                )
+                setCareerState({ lancesEmLeilao: [...outros, lance].slice(-40) })
+              }}
+              onNegociar={(nomeDoAtleta, valor) => {
+                const alvo = transferTargets.find(p => p.name === nomeDoAtleta)
+                if (!alvo) return
+                setSelectedPlayer(alvo)
+                setNegotiationType("buy")
+                setNegotiationOpen(true)
+                setMarketNotice(`Leilão vencido por ${formatCurrency(valor)} — feche o contrato com ${nomeDoAtleta}.`)
+              }}
+            />
+          </TabsContent>
+
           {/* Propostas Enviadas Tab */}
           <TabsContent value="enviadas" className="mt-0">
             <div className="flex items-center gap-4 mb-6">
@@ -1729,7 +1806,7 @@ export default function MercadoPage() {
                   </div>
                   <div className="rounded-lg bg-white/[0.04] p-4">
                     <p className="text-xs text-white/40">Aceitas</p>
-                    <p className="mt-1 text-2xl font-bold text-[#00ffc8]">{sentProposals.filter((proposal) => proposal.status === "aceita").length}</p>
+                    <p className="mt-1 text-2xl font-bold text-[var(--brand)]">{sentProposals.filter((proposal) => proposal.status === "aceita").length}</p>
                   </div>
                 </div>
                 <p className="mt-6 text-sm text-white/50 leading-relaxed">
@@ -1739,7 +1816,7 @@ export default function MercadoPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("buscar")}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2 text-sm font-semibold text-black hover:bg-[#00c8ff]"
+                    className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
                   >
                     <Search className="h-4 w-4" />
                     Buscar atletas
@@ -1773,7 +1850,7 @@ export default function MercadoPage() {
                       <div key={proposal.id} className="flex items-center gap-4 px-5 py-4">
                         <div className={cn(
                           "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                          proposal.status === "aceita" ? "bg-[#00ffc8]/15 text-[#00ffc8]" : "bg-red-500/15 text-red-300"
+                          proposal.status === "aceita" ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-red-500/15 text-red-300"
                         )}>
                           {proposal.status === "aceita" ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
                         </div>
@@ -1785,7 +1862,7 @@ export default function MercadoPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-white">{formatCurrency(proposal.amount)}</p>
-                          <p className={cn("text-[10px] uppercase", proposal.status === "aceita" ? "text-[#00ffc8]" : "text-red-300")}>
+                          <p className={cn("text-[10px] uppercase", proposal.status === "aceita" ? "text-[var(--brand)]" : "text-red-300")}>
                             {proposal.status === "aceita" ? "Aceita" : "Rejeitada"}
                           </p>
                         </div>
@@ -1847,7 +1924,7 @@ export default function MercadoPage() {
                 <button
                   type="button"
                   onClick={handleGenerateReceivedOffer}
-                  className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#00ffc8] px-4 py-2 text-sm font-semibold text-black hover:bg-[#00c8ff]"
+                  className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
                 >
                   <Clock className="h-4 w-4" />
                   Atualizar interesse
@@ -2045,7 +2122,7 @@ function ReceivedOfferCard({
           </p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-bold text-[#00ffc8]">{formatCurrency(offer.offerAmount)}</p>
+          <p className="text-lg font-bold text-[var(--brand)]">{formatCurrency(offer.offerAmount)}</p>
           <p className="text-[10px] text-white/40">Expira em {expiresIn} sem.</p>
         </div>
       </div>
@@ -2102,7 +2179,7 @@ function ReceivedOfferCard({
             type="button"
             onClick={onAccept}
             disabled={!player}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#00ffc8] py-2.5 text-sm font-semibold text-black hover:bg-[#00c8ff] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--brand)] py-2.5 text-sm font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-2)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Check className="h-4 w-4" />
             Aceitar
@@ -2117,7 +2194,7 @@ function PastReceivedOfferRow({ offer }: { offer: TransferOffer }) {
   const statusLabel = offer.status === "aceita" ? "Aceita" : offer.status === "rejeitada" ? "Rejeitada" : "Expirada"
   const statusClass =
     offer.status === "aceita"
-      ? "text-[#00ffc8] bg-[#00ffc8]/10"
+      ? "text-[var(--brand)] bg-[var(--brand)]/10"
       : offer.status === "rejeitada"
         ? "text-red-300 bg-red-500/10"
         : "text-[#ffd700] bg-[#ffd700]/10"
@@ -2250,7 +2327,7 @@ function FilterDropdownCard({
               <Image src={leagueLogo} alt={value} fill className="object-contain" sizes="48px" />
             </div>
           ) : icon}
-          <span className={cn("text-sm font-medium text-center px-2 truncate max-w-full", active ? "text-[#00ffc8]" : "text-white/50")}>
+          <span className={cn("text-sm font-medium text-center px-2 truncate max-w-full", active ? "text-[var(--brand)]" : "text-white/50")}>
             {value}
           </span>
         </div>
@@ -2267,7 +2344,7 @@ function FilterDropdownCard({
               onClick={() => { onSelect(opt); setOpen(false) }}
               className={cn(
                 "block w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
-                opt === value ? "bg-primary/15 text-[#00ffc8] font-semibold" : "text-white/70",
+                opt === value ? "bg-primary/15 text-[var(--brand)] font-semibold" : "text-white/70",
               )}
             >
               {opt}
@@ -2280,14 +2357,14 @@ function FilterDropdownCard({
                 onClick={() => { onSelect("Qualquer"); setOpen(false) }}
                 className={cn(
                   "block w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
-                  value === "Qualquer" ? "bg-primary/15 text-[#00ffc8] font-semibold" : "text-white/70",
+                  value === "Qualquer" ? "bg-primary/15 text-[var(--brand)] font-semibold" : "text-white/70",
                 )}
               >
                 Qualquer
               </button>
               {groups.map((group) => (
                 <div key={group.label} className="border-t border-white/[0.06] py-1">
-                  <p className="sticky top-0 bg-[#0c0c12] px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#00ffc8]/80">
+                  <p className="sticky top-0 bg-[#0c0c12] px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brand)]/80">
                     {group.label}
                   </p>
                   {group.options.map((opt) => (
@@ -2297,7 +2374,7 @@ function FilterDropdownCard({
                       onClick={() => { onSelect(opt); setOpen(false) }}
                       className={cn(
                         "block w-full px-5 py-2 text-left text-sm transition-colors hover:bg-white/10",
-                        opt === value ? "bg-primary/15 text-[#00ffc8] font-semibold" : "text-white/70",
+                        opt === value ? "bg-primary/15 text-[var(--brand)] font-semibold" : "text-white/70",
                       )}
                     >
                       {opt}

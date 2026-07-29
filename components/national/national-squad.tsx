@@ -43,7 +43,7 @@ function criterioDaChamada(
   ctx: { calls: Set<string>; melhorDaPosicao: Set<string>; titulares: Set<string> },
 ): { label: string; tone: string } | null {
   const key = nationalPlayerKey(p)
-  if (ctx.calls.has(key)) return { label: "Escolha do técnico", tone: "bg-[#00ffc8]/15 text-[#00ffc8]" }
+  if (ctx.calls.has(key)) return { label: "Escolha do técnico", tone: "bg-[var(--brand)]/15 text-[var(--brand)]" }
   if (ctx.melhorDaPosicao.has(key)) return { label: "Melhor da posição", tone: "bg-amber-400/15 text-amber-300" }
   if (ctx.titulares.has(key)) return { label: "Titular", tone: "bg-white/10 text-white/70" }
   if (p.idade <= 21) return { label: "Jovem", tone: "bg-sky-400/15 text-sky-300" }
@@ -155,7 +155,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
           <div>
             <p className="text-[10px] uppercase tracking-wide text-white/40">Força da lista</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold tabular-nums text-[#00ffc8]">{forcaAtual}</p>
+              <p className="text-2xl font-bold tabular-nums text-[var(--brand)]">{forcaAtual}</p>
               {delta !== 0 && (
                 <span
                   className={cn(
@@ -251,7 +251,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
           return (
             <div key={s} className="rounded-xl border border-white/[0.06] bg-[#0c0c10] p-4">
               <div className="mb-3 flex items-center gap-2">
-                <Users className="h-3.5 w-3.5 text-[#00ffc8]" />
+                <Users className="h-3.5 w-3.5 text-[var(--brand)]" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60">
                   {NATIONAL_SECTOR_LABEL[s]}
                 </h3>
@@ -323,7 +323,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
                 className={cn(
                   "rounded-lg border px-2.5 py-2 text-[11px] font-semibold transition-colors",
                   filtro === f
-                    ? "border-[#00ffc8]/40 bg-[#00ffc8]/15 text-[#00ffc8]"
+                    ? "border-[var(--brand)]/40 bg-[var(--brand)]/15 text-[var(--brand)]"
                     : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.07]",
                 )}
               >
@@ -360,7 +360,7 @@ export function NationalSquadManager({ nationalTeam }: { nationalTeam: NationalT
                   onClick={() => convocar(p)}
                   title={cortado ? `Desfazer o corte de ${p.nome}` : `Convocar ${p.nome}`}
                   aria-label={cortado ? `Desfazer o corte de ${p.nome}` : `Convocar ${p.nome}`}
-                  className="shrink-0 rounded p-1 text-[#00ffc8]/60 transition-colors hover:bg-[#00ffc8]/15 hover:text-[#00ffc8]"
+                  className="shrink-0 rounded p-1 text-[var(--brand)]/60 transition-colors hover:bg-[var(--brand)]/15 hover:text-[var(--brand)]"
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </button>

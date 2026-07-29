@@ -134,7 +134,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               !isAnimating && "animate-slide-in"
             )}
           >
-            <div className="flex items-center gap-2 text-[#00ffc8] text-xs font-bold tracking-wider">
+            <div className="flex items-center gap-2 text-[var(--brand)] text-xs font-bold tracking-wider">
               <Calendar className="h-3.5 w-3.5" />
               {getDayName(currentMatch.date)}, RODADA {currentMatch.matchday || currentIndex + 1}
             </div>
@@ -186,7 +186,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
                 {currentMatch.competition}
               </span>
               {currentIndex === 0 && (
-                <span className="text-[10px] text-[#00ffc8] font-semibold">
+                <span className="text-[10px] text-[var(--brand)] font-semibold">
                   Proxima
                 </span>
               )}
@@ -200,7 +200,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               <div className="relative">
                 {currentMatch.home && <TeamCrest team={currentMatch.home} size="xl" />}
                 {currentMatch.home?.curto === userTeam?.curto && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#00ffc8] flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center">
                     <span className="text-[7px] font-bold text-black">YOU</span>
                   </div>
                 )}
@@ -211,7 +211,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
                 </div>
                 <div className="text-[9px] text-white/40 uppercase tracking-wider">Mandante</div>
                 {currentMatch.home?.curto === userTeam?.curto && (
-                  <div className="text-[8px] text-[#00ffc8] font-bold uppercase tracking-wider">Seu time</div>
+                  <div className="text-[8px] text-[var(--brand)] font-bold uppercase tracking-wider">Seu time</div>
                 )}
               </div>
             </div>
@@ -226,7 +226,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
               <div className="relative">
                 {currentMatch.away && <TeamCrest team={currentMatch.away} size="xl" />}
                 {currentMatch.away?.curto === userTeam?.curto && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#00ffc8] flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center">
                     <span className="text-[7px] font-bold text-black">YOU</span>
                   </div>
                 )}
@@ -237,7 +237,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
                 </div>
                 <div className="text-[9px] text-white/40 uppercase tracking-wider">Visitante</div>
                 {currentMatch.away?.curto === userTeam?.curto && (
-                  <div className="text-[8px] text-[#00ffc8] font-bold uppercase tracking-wider">Seu time</div>
+                  <div className="text-[8px] text-[var(--brand)] font-bold uppercase tracking-wider">Seu time</div>
                 )}
               </div>
             </div>
@@ -257,14 +257,14 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
       <div className="flex items-center gap-3 px-4 pb-4">
         <Link 
           href="/partida" 
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] text-black text-sm font-bold hover:from-[#33ffd4] hover:to-[#33d4ff] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(0,255,200,0.3)]"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black text-sm font-bold hover:from-[#33ffd4] hover:to-[#33d4ff] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(0,255,200,0.3)]"
         >
           <Play className="h-4 w-4 fill-current" />
           <span>Jogar Partida</span>
         </Link>
         <Link 
           href="/partida/ao-vivo?simulate=true" 
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg border-2 border-white/20 bg-white/5 text-white text-sm font-medium hover:border-[#00ffc8]/50 hover:bg-white/10 hover:text-[#00ffc8] transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg border-2 border-white/20 bg-white/5 text-white text-sm font-medium hover:border-[var(--brand)]/50 hover:bg-white/10 hover:text-[var(--brand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           <Monitor className="h-4 w-4" />
           <span>Simular</span>

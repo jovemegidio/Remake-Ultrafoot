@@ -30,8 +30,19 @@ import {
   HelpCircle,
   Keyboard,
   DollarSign,
+  RefreshCw,
   X, Building2 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
+import { AtualizacoesPanel } from "@/components/atualizacoes-panel"
+import { DialogoConsentimentoAtualizacoes } from "@/components/dialogo-consentimento-atualizacoes"
+import {
+  EVENTO_PREFERENCIAS,
+  getAtualizacaoAutomatica,
+  getConsentimento,
+  setAtualizacaoAutomatica,
+  setConsentimento,
+} from "@/lib/atualizacoes-preferencias"
+import { anunciarSfx } from "@/lib/sfx-volume"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useGameEngine } from "@/lib/game-engine"
@@ -55,12 +66,14 @@ import { CONTROL_MAPPINGS, ACTION_LABELS, type GameContext, type GameAction } fr
 import { useTranslation } from "@/lib/i18n"
 import { applyPerformanceProfile, PERFORMANCE_STORAGE_KEY, type PerformanceProfile } from "@/components/performance-profile"
 
-type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "tempo" | "escalacoes" | "musica" | "creditos" | "tutorial" | "infraestrutura"
+type ViewType = "menu" | "configuracoes" | "perfil" | "online" | "atualizacoes" | "tempo" | "escalacoes" | "musica" | "creditos" | "tutorial" | "infraestrutura"
 
 const menuCards = [
   { id: "configuracoes" as ViewType, title: "Configuracoes", icon: Settings, row: 0 },
   { id: "perfil" as ViewType, title: "Perfil", icon: User, row: 0 },
   { id: "online" as ViewType, title: "Configuracoes\nonline", icon: Globe, row: 0 },
+  // ATUALIZACOES: elencos, times e versao do jogo — sempre com consentimento.
+  { id: "atualizacoes" as ViewType, title: "Atualizacoes", icon: RefreshCw, row: 1 },
   { id: "tempo" as ViewType, title: "Tempo de jogo", icon: Clock, row: 0 },
   { id: "escalacoes" as ViewType, title: "Escalacoes", icon: Grid2X2, row: 1 },
   { id: "musica" as ViewType, title: "Musica", icon: Music, row: 1 },
@@ -97,6 +110,7 @@ export default function ConfiguracoesPage() {
     configuracoes: t.settings.cards.settings,
     perfil: t.settings.cards.profile,
     online: t.settings.cards.online,
+    atualizacoes: t.settings.cards.updates,
     tempo: t.settings.cards.gameTime,
     escalacoes: t.settings.cards.lineups,
     musica: t.settings.cards.music,
@@ -106,6 +120,17 @@ export default function ConfiguracoesPage() {
 
   const [currentView, setCurrentView] = useState<ViewType>("menu")
   const [selectedCardIndex, setSelectedCardIndex] = useState(0)
+
+  // Abrir um cartao passa SO por aqui.
+  //
+  // Infraestrutura nao e uma view interna: e uma tela propria. O clique do mouse
+  // ja tratava disso, mas teclado e controle chamavam setCurrentView direto — e o
+  // cartao caia no `default` do switch, mostrando "em desenvolvimento". Com o
+  // desvio centralizado, os tres caminhos abrem a mesma coisa.
+  const abrirCard = (id: ViewType) => {
+    if (id === "infraestrutura") hardNavigate("/infraestrutura")
+    else setCurrentView(id)
+  }
 
   // Gamepad support
   const router = useRouter()
@@ -121,7 +146,7 @@ export default function ConfiguracoesPage() {
       else if (btn === 'DPAD_LEFT') setSelectedCardIndex(prev => Math.max(prev - 1, 0))
       else if (btn === 'DPAD_DOWN') setSelectedCardIndex(prev => Math.min(prev + 3, menuCards.length - 1))
       else if (btn === 'DPAD_UP') setSelectedCardIndex(prev => Math.max(prev - 3, 0))
-      else if (btn === 'A') setCurrentView(menuCards[selectedCardIndex].id)
+      else if (btn === 'A') abrirCard(menuCards[selectedCardIndex].id)
       else if (btn === 'B') router.back()
     }
     window.addEventListener('gamepad:button', handler)
@@ -130,7 +155,11 @@ export default function ConfiguracoesPage() {
   // Inicia com o volume REAL do player (antes era fixo em 70 e desconectado).
   // musicVolume saiu: a trilha embutida foi removida e o volume da musica agora e do
   // proprio Spotify/player do sistema. Aqui so restam os efeitos sonoros (sfxVolume).
-  const [sfxVolume, setSfxVolume] = useState([80])
+  // Estes quatro seguem o mesmo padrao do idioma e da moeda: gravam NA HORA.
+  // Antes o volume dos efeitos e a velocidade de partida nao eram gravados em
+  // lugar nenhum — mexer neles nao mudava nada no jogo e o valor voltava ao
+  // padrao na proxima abertura.
+  const [sfxVolume, setSfxVolume] = useState([state.sfxVolume ?? 80])
   const [commentaryEnabled, setCommentaryEnabled] = useState(state.commentaryEnabled ?? true)
   const [commentaryVoice, setCommentaryVoice] = useState(state.commentaryVoice ?? "padrao")
   const [commentaryVolume, setCommentaryVolume] = useState([state.commentaryVolume ?? 80])
@@ -142,10 +171,10 @@ export default function ConfiguracoesPage() {
   )
 
   const [autoSaveInterval, setAutoSaveInterval] = useState<0 | 1 | 3 | 5>(state.autoSaveInterval ?? 1)
-  const [notifications, setNotifications] = useState(true)
+  const [notifications, setNotifications] = useState(state.notificationsEnabled ?? true)
   const [fullscreen, setFullscreenState] = useState(false)
   useEffect(() => { setFullscreenState(isFullscreenEnabled()) }, [])
-  const [matchSpeed, setMatchSpeed] = useState("normal")
+  const [matchSpeed, setMatchSpeed] = useState<"lento" | "normal" | "rapido">(state.matchSpeed ?? "normal")
   const [performanceProfile, setPerformanceProfile] = useState<PerformanceProfile>("balanced")
   useEffect(() => {
     const stored = localStorage.getItem(PERFORMANCE_STORAGE_KEY)
@@ -193,6 +222,21 @@ export default function ConfiguracoesPage() {
   
   // Controller state
   const [controllerType, setControllerType] = useState<"auto" | "xbox" | "playstation">(state.controllerType || "auto")
+
+  // Conexao com o servidor (mesma preferencia da tela de Atualizacoes). Lida so
+  // depois de montar: o store e do cliente e esta tela e pre-renderizada.
+  const [conectadoAoServidor, setConectadoAoServidor] = useState(false)
+  const [autoAtualizar, setAutoAtualizar] = useState(true)
+  const [pedirConsentimentoOnline, setPedirConsentimentoOnline] = useState(false)
+  useEffect(() => {
+    const ler = () => {
+      setConectadoAoServidor(getConsentimento() === "aceito")
+      setAutoAtualizar(getAtualizacaoAutomatica())
+    }
+    ler()
+    window.addEventListener(EVENTO_PREFERENCIAS, ler)
+    return () => window.removeEventListener(EVENTO_PREFERENCIAS, ler)
+  }, [])
   
   useEffect(() => {
     if (state.selectedUniform) setSelectedUniform(state.selectedUniform)
@@ -201,6 +245,9 @@ export default function ConfiguracoesPage() {
     if (state.managers) setManagers(state.managers)
     if (state.controllerType) setControllerType(state.controllerType)
     if (state.autoSaveInterval !== undefined) setAutoSaveInterval(state.autoSaveInterval)
+    if (state.sfxVolume !== undefined) setSfxVolume([state.sfxVolume])
+    if (state.matchSpeed) setMatchSpeed(state.matchSpeed)
+    if (state.notificationsEnabled !== undefined) setNotifications(state.notificationsEnabled)
   }, [state])
 
   useEffect(() => { setCurrencyCode(getCurrencyCode()) }, [])
@@ -214,7 +261,7 @@ export default function ConfiguracoesPage() {
   const handleSaveSettings = async () => {
     setSaving(true)
     await new Promise(resolve => setTimeout(resolve, 500))
-    setState({ selectedUniform, language, multiplayerEnabled, managers, controllerType, commentaryEnabled, commentaryVoice, commentaryVolume: commentaryVolume[0], autoSaveInterval })
+    setState({ selectedUniform, language, multiplayerEnabled, managers, controllerType, commentaryEnabled, commentaryVoice, commentaryVolume: commentaryVolume[0], autoSaveInterval, sfxVolume: sfxVolume[0], matchSpeed, notificationsEnabled: notifications })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -234,6 +281,13 @@ export default function ConfiguracoesPage() {
     setCommentaryEnabled(true)
     setCommentaryVoice("padrao")
     setCommentaryVolume([80])
+    // Restaurar tem que GRAVAR. Antes so mexia no estado da tela: quem clicava
+    // e saia sem salvar via tudo voltar ao que era.
+    setState({
+      sfxVolume: 80, autoSaveInterval: 1, notificationsEnabled: true, matchSpeed: "normal",
+      selectedUniform: "home", language: "pt-BR", multiplayerEnabled: false, managers: [],
+      controllerType: "auto", commentaryEnabled: true, commentaryVoice: "padrao", commentaryVolume: 80,
+    })
   }
 
   // Keyboard navigation for menu
@@ -249,7 +303,7 @@ export default function ConfiguracoesPage() {
       } else if (e.key === "ArrowUp") {
         setSelectedCardIndex(prev => Math.max(prev - 3, 0))
       } else if (e.key === "Enter" || e.key === " ") {
-        setCurrentView(menuCards[selectedCardIndex].id)
+        abrirCard(menuCards[selectedCardIndex].id)
       }
     }
     window.addEventListener("keydown", handleKeyDown)
@@ -263,8 +317,12 @@ export default function ConfiguracoesPage() {
         <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
           <GameHeader team={userTeam} />
           
-          {/* pb-24: espaco para a barra de acoes/player nao cobrir a ultima linha */}
-          <main className="flex-1 p-4 pb-24 overflow-y-auto">
+          {/* pb-24: espaco para a barra de acoes/player nao cobrir a ultima linha.
+              overflow-x-hidden: `overflow-y-auto` sozinho faz o overflow-x COMPUTAR
+              como `auto` (regra do CSS: se um eixo nao e `visible`, o outro vira
+              auto) — era dai que vinha a barra de rolagem lateral, ainda mais com
+              o zoom 0.8 do jogo, onde 100vw nao bate com a largura real. */}
+          <main className="flex-1 p-4 pb-24 overflow-y-auto overflow-x-hidden">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-xl md:text-2xl font-semibold text-white/70">{t.settings.customize}</h1>
@@ -285,7 +343,7 @@ export default function ConfiguracoesPage() {
                     key={card.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => card.id === "infraestrutura" ? hardNavigate("/infraestrutura") : setCurrentView(card.id)}
+                    onClick={() => abrirCard(card.id)}
                     onMouseEnter={() => setSelectedCardIndex(index)}
                     className={cn(
                       // Antes era aspect-square: com 3 colunas os cards ficavam ~285px de
@@ -293,14 +351,14 @@ export default function ConfiguracoesPage() {
                       "relative flex flex-col justify-between p-4 md:p-5 rounded-lg text-left overflow-hidden transition-all min-h-[130px] md:min-h-[150px]",
                       "bg-gradient-to-br from-[#0d2a35] via-[#0a2028] to-[#061318]",
                       isSelected 
-                        ? "shadow-lg shadow-[#00d4ff]/30" 
+                        ? "shadow-lg shadow-[var(--brand-2)]/30" 
                         : "hover:brightness-110"
                     )}
                     style={{
-                      borderLeft: isSelected ? "3px solid #00d4ff" : "2px solid rgba(0, 180, 200, 0.4)",
-                      borderBottom: isSelected ? "3px solid #00d4ff" : "2px solid rgba(0, 180, 200, 0.4)",
-                      borderTop: isSelected ? "2px solid #00d4ff" : "1px solid rgba(255, 255, 255, 0.05)",
-                      borderRight: isSelected ? "2px solid #00d4ff" : "1px solid rgba(255, 255, 255, 0.05)",
+                      borderLeft: isSelected ? "3px solid var(--brand-2)" : "2px solid rgba(0, 180, 200, 0.4)",
+                      borderBottom: isSelected ? "3px solid var(--brand-2)" : "2px solid rgba(0, 180, 200, 0.4)",
+                      borderTop: isSelected ? "2px solid var(--brand-2)" : "1px solid rgba(255, 255, 255, 0.05)",
+                      borderRight: isSelected ? "2px solid var(--brand-2)" : "1px solid rgba(255, 255, 255, 0.05)",
                     }}
                   >
                     <h2 className="text-sm md:text-base font-semibold text-white whitespace-pre-line leading-tight">
@@ -438,7 +496,7 @@ export default function ConfiguracoesPage() {
                   { key: "focusHighlight", label: "Realce de foco", desc: "Contorno forte no item selecionado (teclado/controle)" },
                   { key: "underlineLinks", label: "Sublinhar acoes", desc: "Sublinha links e botoes clicaveis" },
                 ] as const).map((opt) => (
-                  <div key={opt.key} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div key={opt.key} className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5 [&>div]:min-w-0">
                     <div>
                       <div className="text-sm text-white">{opt.label}</div>
                       <div className="text-xs text-white/40">{opt.desc}</div>
@@ -505,14 +563,17 @@ export default function ConfiguracoesPage() {
                     <option value={5}>A cada 5 jogos</option>
                   </select>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5 [&>div]:min-w-0">
                   <div>
                     <div className="text-sm text-white">{t.settings.notifications}</div>
                     <div className="text-xs text-white/40">{t.settings.notificationsDesc}</div>
                   </div>
-                  <Switch checked={notifications} onCheckedChange={setNotifications} />
+                  <Switch
+                    checked={notifications}
+                    onCheckedChange={(v) => { setNotifications(v); setState({ notificationsEnabled: v }) }}
+                  />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5 [&>div]:min-w-0">
                   <div>
                     <div className="text-sm text-white">Tela cheia</div>
                     <div className="text-xs text-white/40">Alternar entre janela e tela cheia (tecla F11).</div>
@@ -645,10 +706,10 @@ export default function ConfiguracoesPage() {
                   { value: "lento", label: t.settings.slow },
                   { value: "normal", label: t.settings.normal },
                   { value: "rapido", label: t.settings.fast },
-                ]).map(({ value, label }) => (
+                ] as const).map(({ value, label }) => (
                   <button
                     key={value}
-                    onClick={() => setMatchSpeed(value)}
+                    onClick={() => { setMatchSpeed(value); setState({ matchSpeed: value }) }}
                     className={cn(
                       "p-3 rounded-lg border text-sm font-medium transition-all capitalize",
                       matchSpeed === value ? "border-primary bg-primary/10 text-white" : "border-white/10 bg-white/5 text-white/60 hover:border-white/20"
@@ -676,15 +737,23 @@ export default function ConfiguracoesPage() {
                     <span className="text-sm text-white/60">{t.settings.soundEffects}</span>
                     <span className="text-sm text-white">{sfxVolume[0]}%</span>
                   </div>
-                  <Slider value={sfxVolume} onValueChange={setSfxVolume} max={100} />
+                  {/* onValueCommit grava so quando o dedo solta: gravar a cada
+                      pixel arrastado escreveria no save dezenas de vezes por
+                      segundo. O som reage na hora pelo evento. */}
+                  <Slider
+                    value={sfxVolume}
+                    onValueChange={(v) => { setSfxVolume(v); anunciarSfx(v[0]) }}
+                    onValueCommit={(v) => setState({ sfxVolume: v[0] })}
+                    max={100}
+                  />
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-white/5 p-3">
                   <div><div className="text-sm text-white">Narração durante as partidas</div><div className="text-xs text-white/40">Ativa ou desativa as vozes do jogo</div></div>
-                  <Switch checked={commentaryEnabled} onCheckedChange={setCommentaryEnabled} />
+                  <Switch checked={commentaryEnabled} onCheckedChange={(v) => { setCommentaryEnabled(v); setState({ commentaryEnabled: v }) }} />
                 </div>
                 {commentaryEnabled && <>
-                  <div><label className="mb-2 block text-sm text-white/60">Narrador</label><select value={commentaryVoice} onChange={e => setCommentaryVoice(e.target.value)} className="w-full rounded-lg border border-white/10 bg-[#101015] p-3 text-sm text-white">{commentaryVoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div>
-                  <div><div className="mb-2 flex justify-between"><span className="text-sm text-white/60">Volume da narração</span><span className="text-sm text-white">{commentaryVolume[0]}%</span></div><Slider value={commentaryVolume} onValueChange={setCommentaryVolume} max={100} /></div>
+                  <div><label className="mb-2 block text-sm text-white/60">Narrador</label><select value={commentaryVoice} onChange={e => { setCommentaryVoice(e.target.value); setState({ commentaryVoice: e.target.value }) }} className="w-full rounded-lg border border-white/10 bg-[#101015] p-3 text-sm text-white">{commentaryVoices.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div>
+                  <div><div className="mb-2 flex justify-between"><span className="text-sm text-white/60">Volume da narração</span><span className="text-sm text-white">{commentaryVolume[0]}%</span></div><Slider value={commentaryVolume} onValueChange={setCommentaryVolume} onValueCommit={(v) => setState({ commentaryVolume: v[0] })} max={100} /></div>
                 </>}
               </div>
             </div>
@@ -711,6 +780,9 @@ export default function ConfiguracoesPage() {
           </div>
         )
         
+      case "atualizacoes":
+        return <AtualizacoesPanel />
+
       case "online":
         return (
           <div className="space-y-6">
@@ -719,33 +791,69 @@ export default function ConfiguracoesPage() {
                 <Globe className="h-4 w-4 text-primary" />
                 {t.settings.onlineConfig}
               </h3>
+              {/* As TRES chaves aqui eram enfeite: nenhuma tinha `checked` nem
+                  `onCheckedChange`, entao clicar nelas nao mudava nada e o estado
+                  nem sobrevivia a sair da tela. Cada uma agora manda em algo real. */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
                   <div>
                     <div className="text-sm text-white">{t.settings.onlineMode}</div>
                     <div className="text-xs text-white/40">{t.settings.onlineModeDesc}</div>
                   </div>
-                  <Switch />
+                  {/* "Conectar a servidores" E o consentimento de rede: desligar
+                      aqui e o mesmo que desconectar na tela de Atualizacoes. */}
+                  <Switch
+                    checked={conectadoAoServidor}
+                    onCheckedChange={(v) => {
+                      if (v) setPedirConsentimentoOnline(true)
+                      else { setConsentimento("recusado"); setConectadoAoServidor(false) }
+                    }}
+                  />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
                   <div>
                     <div className="text-sm text-white">{t.settings.autoUpdates}</div>
                     <div className="text-xs text-white/40">{t.settings.autoUpdatesDesc}</div>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={conectadoAoServidor && autoAtualizar}
+                    disabled={!conectadoAoServidor}
+                    onCheckedChange={(v) => { setAutoAtualizar(v); setAtualizacaoAutomatica(v) }}
+                  />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
                   <div>
                     <div className="text-sm text-white">{t.settings.onlineMatches}</div>
                     <div className="text-xs text-white/40">{t.settings.onlineMatchesDesc}</div>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={multiplayerEnabled}
+                    onCheckedChange={(v) => { setMultiplayerEnabled(v); setState({ multiplayerEnabled: v }) }}
+                  />
                 </div>
+                <button
+                  onClick={() => setCurrentView("atualizacoes")}
+                  className="flex w-full items-center justify-between rounded-lg border border-white/10 p-3 text-left transition-colors hover:bg-white/5"
+                >
+                  <div>
+                    <div className="text-sm text-white">Central de atualizações</div>
+                    <div className="text-xs text-white/40">Elencos, times e versão do jogo</div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-white/40" />
+                </button>
               </div>
+              {pedirConsentimentoOnline && (
+                <DialogoConsentimentoAtualizacoes
+                  onDecidir={(aceitou) => {
+                    setPedirConsentimentoOnline(false)
+                    setConectadoAoServidor(aceitou)
+                  }}
+                />
+              )}
             </div>
           </div>
         )
-        
+
       case "escalacoes":
         return (
           <div className="space-y-6">
@@ -811,7 +919,7 @@ export default function ConfiguracoesPage() {
                 Salvar escalação atual
               </Button>
               {lineupMsg && (
-                <p className="text-center text-xs text-[#00ffc8]">{lineupMsg}</p>
+                <p className="text-center text-xs text-[var(--brand)]">{lineupMsg}</p>
               )}
             </div>
           </div>
@@ -1310,32 +1418,36 @@ export default function ConfiguracoesPage() {
       <div className="h-screen md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508] flex flex-col overflow-hidden">
         <GameHeader team={userTeam} />
 
-        <main className="flex-1 p-4 overflow-y-auto space-y-4">
+        {/* pb-24 + overflow-x-hidden: mesma correcao do menu — a rolagem lateral
+            nascia do proprio `overflow-y-auto`, e a barra de acoes cobria o fim
+            da lista nas telas mais longas (acessibilidade, perfil). */}
+        <main className="flex-1 p-4 pb-24 overflow-y-auto overflow-x-hidden space-y-4">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => setCurrentView("menu")} className="text-white/60 hover:text-white">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => setCurrentView("menu")} className="shrink-0 text-white/60 hover:text-white">
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 {t.common.back}
               </Button>
-              <h1 className="text-xl font-semibold text-white capitalize">
+              <h1 className="truncate text-xl font-semibold text-white capitalize">
                 {(cardTitles[currentView] ?? menuCards.find(c => c.id === currentView)?.title ?? t.settings.cards.settings).replace("\n", " ")}
               </h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleRestoreDefaults} className="text-xs bg-transparent border-white/10 text-white/70 hover:bg-white/5">
                 <RotateCcw className="mr-2 h-3.5 w-3.5" />
                 {t.common.restore}
               </Button>
-              <Button size="sm" onClick={handleSaveSettings} disabled={saving} className={cn("text-xs transition-all", saved ? "bg-[#00ffc8]/20 text-[#00ffc8]" : "bg-[#00ffc8] text-black hover:bg-[#00c8ff]")}>
+              <Button size="sm" onClick={handleSaveSettings} disabled={saving} className={cn("text-xs transition-all", saved ? "bg-[var(--brand)]/20 text-[var(--brand)]" : "bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)]")}>
                 {saving ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="mr-2 h-3.5 w-3.5" /> : <Save className="mr-2 h-3.5 w-3.5" />}
                 {saved ? t.common.saved : t.common.save}
               </Button>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="max-w-2xl">
+          {/* Content. w-full + min-w-0: sem isto um filho largo (um <select>, uma
+              linha de botoes) estica o container e volta a rolagem lateral. */}
+          <div className="w-full min-w-0 max-w-3xl">
             {renderDetailView()}
           </div>
         </main>

@@ -42,7 +42,7 @@ export function PageTabs({ tabs, className }: PageTabsProps) {
           >
             {tab.label}
             {active && (
-              <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[#00ffc8]" />
+              <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[var(--brand)]" />
             )}
           </Link>
         )

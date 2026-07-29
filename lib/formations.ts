@@ -328,3 +328,50 @@ export function capGoalkeepers<T>(ordered: T[], getPos: (p: T) => string): T[] {
   }
   return [...kept, ...surplusGks]
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPROVISAÇÃO DE POSIÇÃO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Penalidade por escalar o atleta fora da posição de origem.
+ *
+ * Até 1.0.205 a improvisação existia só no ENCAIXE (COMPATIBLE_POSITIONS decidia
+ * quem cobria qual slot) e não tinha NENHUMA consequência: um centroavante na
+ * zaga defendia igual a um zagueiro. Escalar deixava de ser decisão.
+ *
+ * A escala segue a distinção que o futebol faz — e que o Brasfoot documenta:
+ * trocar de LADO custa pouco (um lateral-esquerdo joga bem na direita), trocar
+ * de FUNÇÃO custa caro, e o gol não se improvisa.
+ *
+ * Devolve o multiplicador aplicado aos atributos (1 = sem perda).
+ */
+export function penalidadeImprovisacao(posicaoAtleta: string, slot: string): number {
+  const de = normalizePosition(posicaoAtleta)
+  const para = normalizePosition(slot)
+  if (de === para) return 1
+
+  // Goleiro é caso à parte nos dois sentidos: ninguém improvisa no gol, e tirar
+  // o goleiro da meta é pior ainda.
+  if (para === "GOL" || de === "GOL") return 0.55
+
+  if (MESMO_SETOR_OUTRO_LADO[de]?.includes(para)) return 0.94  // só trocou de lado
+  const compativel = COMPATIBLE_POSITIONS[para] ?? []
+  const indice = compativel.indexOf(de)
+  if (indice === 0) return 0.90   // primeira alternativa natural
+  if (indice > 0) return 0.85     // alternativa mais distante
+  return 0.76                     // função sem parentesco (atacante na zaga)
+}
+
+/** Pares que são a MESMA função em lados opostos — troca barata. */
+const MESMO_SETOR_OUTRO_LADO: Record<string, string[]> = {
+  LD: ["LE"], LE: ["LD"],
+  PD: ["PE"], PE: ["PD"],
+  MD: ["ME"], ME: ["MD"],
+  ALD: ["ALE"], ALE: ["ALD"],
+}
+
+/** true quando o atleta está fora da posição — para a tela avisar. */
+export function estaImprovisado(posicaoAtleta: string, slot: string): boolean {
+  return normalizePosition(posicaoAtleta) !== normalizePosition(slot)
+}

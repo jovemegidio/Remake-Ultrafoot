@@ -140,6 +140,7 @@ export const enUS: Translations = {
       settings: "Settings",
       profile: "Profile",
       online: "Online\nSettings",
+      updates: "Updates",
       gameTime: "Game time",
       lineups: "Lineups",
       createPlayer: "Create\nplayer",

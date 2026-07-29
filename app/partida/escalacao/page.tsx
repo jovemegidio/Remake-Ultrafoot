@@ -659,7 +659,7 @@ export default function PartidaEscalacaoPage() {
                     <div className={cn(
                       "px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
                       selectedPlayerId === player.id
-                        ? "bg-[#00ffc8] text-black"
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                         : "bg-black/60 text-white/90"
                     )}>
                       {player.name.split(" ").pop()}
@@ -667,7 +667,7 @@ export default function PartidaEscalacaoPage() {
                     
                     <div className="relative">
                       {player.potential > player.overall + 3 && (
-                        <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[#00ffc8] flex items-center justify-center z-10">
+                        <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[var(--brand)] flex items-center justify-center z-10">
                           <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
                         </div>
                       )}
@@ -679,7 +679,7 @@ export default function PartidaEscalacaoPage() {
                         className={cn(
                           "border-2 transition-all",
                           selectedPlayerId === player.id
-                            ? "border-[#00ffc8] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
+                            ? "border-[var(--brand)] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
                             : "border-white/30"
                         )}
                       />
@@ -687,7 +687,7 @@ export default function PartidaEscalacaoPage() {
                       <div className={cn(
                         "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
                         "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
-                        selectedPlayerId === player.id ? "border-[#00ffc8]" : "border-white/30"
+                        selectedPlayerId === player.id ? "border-[var(--brand)]" : "border-white/30"
                       )}>
                         <span className={getOverallColor(player.overall)}>{player.overall}</span>
                       </div>
@@ -796,7 +796,7 @@ export default function PartidaEscalacaoPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 min-w-[80px] md:min-w-[100px] text-center rounded-lg bg-[#00ffc8]/20 border border-[#00ffc8]/30">
+            <div className="px-3 md:px-4 py-1.5 md:py-2 min-w-[80px] md:min-w-[100px] text-center rounded-lg bg-[var(--brand)]/20 border border-[var(--brand)]/30">
               <span className="text-base md:text-lg font-black text-white">{formation}</span>
             </div>
             <button 
@@ -887,14 +887,14 @@ export default function PartidaEscalacaoPage() {
                   className={cn(
                     "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing group z-10",
                     selectedPlayerId === player.id && "z-20",
-                    dragOverTarget === player.id && "ring-2 ring-[#00ffc8] ring-offset-2 ring-offset-transparent rounded-full"
+                    dragOverTarget === player.id && "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-transparent rounded-full"
                   )}
                 >
                   {/* Player name tag */}
                   <div className={cn(
                     "px-1.5 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
                     selectedPlayerId === player.id
-                      ? "bg-[#00ffc8] text-black"
+                      ? "bg-[var(--brand)] text-[var(--brand-ink)]"
                       : "bg-black/60 text-white/90 group-hover:bg-black/80"
                   )}>
                     {player.name.split(" ").pop()}
@@ -909,7 +909,7 @@ export default function PartidaEscalacaoPage() {
                       className={cn(
                         "border-2 transition-all",
                         selectedPlayerId === player.id
-                          ? "border-[#00ffc8] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
+                          ? "border-[var(--brand)] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
                           : "border-white/30 group-hover:border-white/60"
                       )}
                     />
@@ -918,14 +918,14 @@ export default function PartidaEscalacaoPage() {
                     <div className={cn(
                       "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
                       "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
-                      selectedPlayerId === player.id ? "border-[#00ffc8]" : "border-white/30"
+                      selectedPlayerId === player.id ? "border-[var(--brand)]" : "border-white/30"
                     )}>
                       <span className={getOverallColor(player.overall)}>{player.overall}</span>
                     </div>
                     
                     {/* Potential indicator */}
                     {player.potential > player.overall + 3 && (
-                      <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[#00ffc8] flex items-center justify-center">
+                      <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[var(--brand)] flex items-center justify-center">
                         <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
                       </div>
                     )}
@@ -940,8 +940,8 @@ export default function PartidaEscalacaoPage() {
               >
                 <span>{ballInstruction === "sem_bola" ? "Sem a bola" : "Com a bola"}</span>
                 <span className="text-white/40">|</span>
-                <span className="text-[#00ffc8]">Trocar instrucao</span>
-                <ChevronRight className="h-3 w-3 text-[#00ffc8]" />
+                <span className="text-[var(--brand)]">Trocar instrucao</span>
+                <ChevronRight className="h-3 w-3 text-[var(--brand)]" />
               </button>
             </div>
             
@@ -974,9 +974,9 @@ export default function PartidaEscalacaoPage() {
                         className={cn(
                           "flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
                           selectedPlayerId === player.id
-                            ? "bg-[#00ffc8]/15 ring-1 ring-[#00ffc8]/40"
+                            ? "bg-[var(--brand)]/15 ring-1 ring-[var(--brand)]/40"
                             : "bg-white/[0.03] hover:bg-white/[0.06]",
-                          dragOverTarget === player.id && "ring-2 ring-[#00ffc8]"
+                          dragOverTarget === player.id && "ring-2 ring-[var(--brand)]"
                         )}
                       >
                         <div className="relative mb-1">
@@ -986,13 +986,13 @@ export default function PartidaEscalacaoPage() {
                             size="xs"
                             className={cn(
                               "border-2 transition-colors",
-                              selectedPlayerId === player.id ? "border-[#00ffc8]/60" : "border-white/10"
+                              selectedPlayerId === player.id ? "border-[var(--brand)]/60" : "border-white/10"
                             )}
                           />
                           <div className={cn(
                             "absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-black",
                             "bg-[#1a1a1a] border",
-                            selectedPlayerId === player.id ? "border-[#00ffc8]/50" : "border-white/20"
+                            selectedPlayerId === player.id ? "border-[var(--brand)]/50" : "border-white/20"
                           )}>
                             <span className={getOverallColor(player.overall)}>{player.overall}</span>
                           </div>
@@ -1030,7 +1030,7 @@ export default function PartidaEscalacaoPage() {
                           {[t.squad.low, t.squad.medium, t.squad.high].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1041,7 +1041,7 @@ export default function PartidaEscalacaoPage() {
                           {[t.squad.pressure, t.squad.balanced, t.squad.withdrawn].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1062,7 +1062,7 @@ export default function PartidaEscalacaoPage() {
                           {[t.squad.short, t.squad.mixed, t.squad.direct].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1073,7 +1073,7 @@ export default function PartidaEscalacaoPage() {
                           {[t.squad.slow, t.squad.normal, t.squad.fast].map((opt, i) => (
                             <button key={opt} className={cn(
                               "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                              i === 1 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                              i === 1 ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                             )}>{opt}</button>
                           ))}
                         </div>
@@ -1091,7 +1091,7 @@ export default function PartidaEscalacaoPage() {
                       {[t.squad.ultraDefensive, t.squad.defensive, t.squad.balanced2, t.squad.offensive, t.squad.ultraOffensive].map((opt, i) => (
                         <button key={opt} className={cn(
                           "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                          i === 2 ? "bg-[#00ffc8] text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          i === 2 ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-white/5 text-white/60 hover:bg-white/10"
                         )}>{opt}</button>
                       ))}
                     </div>
@@ -1115,19 +1115,19 @@ export default function PartidaEscalacaoPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.cornerKicker}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Eric Ramires</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">Eric Ramires</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.freeKickKicker}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Lincoln</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">Lincoln</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.penaltyKicker}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Eduardo Sasha</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">Eduardo Sasha</span>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <span className="text-xs text-white/70">{t.squad.captain}</span>
-                        <span className="text-xs font-medium text-[#00ffc8]">Pedro Henrique</span>
+                        <span className="text-xs font-medium text-[var(--brand)]">Pedro Henrique</span>
                       </div>
                     </div>
                   </div>
@@ -1143,7 +1143,7 @@ export default function PartidaEscalacaoPage() {
                             <div className="text-sm font-medium text-white">{player.name}</div>
                             <div className="text-[10px] text-white/40">{player.position}</div>
                           </div>
-                          <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ffc8]">
+                          <select className="bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[var(--brand)]">
                             <option>{player.function}</option>
                             <option>Equilibrado</option>
                             <option>Ofensivo</option>
@@ -1191,11 +1191,11 @@ export default function PartidaEscalacaoPage() {
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[11px] text-white/50 font-medium">{t.squad.energy}</span>
-                  <span className="text-sm font-bold text-[#00ffc8]">{selectedPlayer.energy}%</span>
+                  <span className="text-sm font-bold text-[var(--brand)]">{selectedPlayer.energy}%</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                   <motion.div 
-                    className="h-full bg-gradient-to-r from-[#00ffc8] to-[#00c8ff] rounded-full"
+                    className="h-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${selectedPlayer.energy}%` }}
                     transition={{ duration: 0.5 }}
@@ -1262,7 +1262,7 @@ export default function PartidaEscalacaoPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowSubstitutionModal(true)}
-                  className="w-full h-10 border-white/10 text-white/70 hover:text-white hover:bg-[#00ffc8]/10 hover:border-[#00ffc8]/30 text-xs mb-2"
+                  className="w-full h-10 border-white/10 text-white/70 hover:text-white hover:bg-[var(--brand)]/10 hover:border-[var(--brand)]/30 text-xs mb-2"
                 >
                   <ArrowLeftRight className="h-4 w-4 mr-2" />
                   Substituir

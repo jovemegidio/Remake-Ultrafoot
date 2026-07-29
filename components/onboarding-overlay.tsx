@@ -71,7 +71,7 @@ export function OnboardingOverlay({ teamName }: { teamName?: string }) {
             <X className="h-4 w-4" />
           </button>
 
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#00ffc8]/15 text-[#00ffc8] ring-1 ring-[#00ffc8]/30">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--brand)]/15 text-[var(--brand)] ring-1 ring-[var(--brand)]/30">
             {slide.icon}
           </div>
           <h2 className="mb-2 text-xl font-bold text-white">{slide.title}</h2>
@@ -79,7 +79,7 @@ export function OnboardingOverlay({ teamName }: { teamName?: string }) {
 
           <div className="mb-5 flex items-center justify-center gap-1.5">
             {slides.map((_, idx) => (
-              <span key={idx} className={cn("h-1.5 rounded-full transition-all", idx === i ? "w-5 bg-[#00ffc8]" : "w-1.5 bg-white/20")} />
+              <span key={idx} className={cn("h-1.5 rounded-full transition-all", idx === i ? "w-5 bg-[var(--brand)]" : "w-1.5 bg-white/20")} />
             ))}
           </div>
 
@@ -89,7 +89,7 @@ export function OnboardingOverlay({ teamName }: { teamName?: string }) {
               {i > 0 && (
                 <button onClick={() => setI(i - 1)} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:bg-white/10">Voltar</button>
               )}
-              <button onClick={next} className="rounded-lg bg-[#00ffc8] px-5 py-2 text-sm font-bold text-[#05231b] transition-colors hover:bg-[#00e6b5]">
+              <button onClick={next} className="rounded-lg bg-[var(--brand)] px-5 py-2 text-sm font-bold text-[#05231b] transition-colors hover:bg-[#00e6b5]">
                 {i < slides.length - 1 ? "Próximo" : "Começar"}
               </button>
             </div>
