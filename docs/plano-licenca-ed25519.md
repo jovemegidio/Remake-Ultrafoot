@@ -1,8 +1,8 @@
 # Plano — Separação do segredo de licença (Ed25519 + ativação online)
 
-Status: **em execução** — etapas 1, 2, 3 e 5 implementadas (ver tabela em §6).
-O que falta para o corte: rodar a reemissão na VPS, o launcher trocar a chave
-sozinho (etapa 7) e só então remover o segredo antigo.
+Status: **em execução** — todo o código está pronto (etapas 1–8; ver tabela em §6).
+O que falta é operacional e **não é código**: levar a chave privada para a VPS,
+rodar a reemissão lá, publicar a v1.0.202 e só então mergear o branch da etapa 6.
 Decisões tomadas: formato **B** (chave curta + ativação online) e migração por
 **corte imediato com reemissão automática para contas**.
 
@@ -297,12 +297,18 @@ continuam verificando com a pública antiga. **Nenhum comprador é afetado.**
 | 1 | Gerar par Ed25519; privada na VPS via env, pública commitada | ✅ código; **falta levar a privada para a VPS** | — |
 | 2 | `licenca.py` + tabela `licencas` + rotas | ✅ feito | 1 |
 | 3 | Verificação offline — `src-tauri/src/licenca.rs` (Rust, não TS) | ✅ feito | 1 |
-| 4 | Testes: forja rejeitada, replay entre máquinas, revogação, offline pós-ativação | ⚠️ parcial — falta o teste offline pós-ativação | 2, 3 |
+| 4 | Testes: forja rejeitada, replay entre máquinas, revogação, offline pós-ativação | ✅ feito (`pnpm qa:licenca`) | 2, 3 |
 | 5 | `reemitir-licencas.py` e execução na VPS | ✅ script pronto; **falta rodar na VPS** | 2 |
-| 6 | Remover `preparar-env-licenca.mjs`, `SEGREDO` e o `prebuild` | ❌ | 3, 5 |
-| 7 | Launcher: troca automática da chave antiga | ❌ | 5 |
-| 8 | Build v1.0.202 + verificar que o segredo sumiu do bundle | ❌ | 6, 7 |
-| 9 | Aposentar `ULTRAFOOT_LICENSE_SECRET` da VPS | ❌ | 8 |
+| 6 | Remover `preparar-env-licenca.mjs`, `SEGREDO` e o `prebuild` | ✅ pronto no branch `chore/licenca-etapa-6-corte-hmac`; **NÃO mergear antes da 5 rodar** | 3, 5 |
+| 7 | Launcher: troca automática da chave antiga | ✅ feito (`migrarSePreciso()`) | 5 |
+| 8 | Build v1.0.202 + verificar que o segredo sumiu do bundle | ⏳ verificador pronto (`pnpm qa:bundle-sem-segredo`); a build depende da 6 | 6, 7 |
+| 9 | Aposentar `ULTRAFOOT_LICENSE_SECRET` da VPS | ❌ ação na VPS | 8 |
+
+**Por que a 8 não pode ser feita antes da 6:** a build sairia do branch principal,
+que ainda tem o `SEGREDO` — ou seja, um binário com o segredo dentro, exatamente
+o que a etapa existe para eliminar. Bumpar a versão para 1.0.202 aqui também
+marcaria como "release do corte" uma build sem o corte. A versão segue em
+**1.0.201** de propósito.
 
 Etapas 2 e 3 são paralelizáveis. **A etapa 6 não pode vir antes da 5** — remover
 o segredo antes de reemitir deixaria os compradores atuais sem caminho.
@@ -313,14 +319,44 @@ o segredo antes de reemitir deixaria os compradores atuais sem caminho.
 
 Estender `scripts/qa-licenca.ts`:
 
-- [ ] Certificado forjado (assinatura aleatória) → **rejeitado**
-- [ ] Certificado válido de OUTRA máquina → **rejeitado** (device confere)
-- [ ] Chave revogada no servidor → ativação **recusada**
-- [ ] Após ativar, **sem rede**: jogo reconhece registro
-- [ ] Chave no formato antigo → mensagem de transição, **não** "inválido"
-- [ ] `/licenca/ativar` sob força bruta → rate limit dispara
-- [ ] Ativar a mesma chave duas vezes na mesma máquina → idempotente
-- [ ] `grep` no bundle: `ULTRAFOOT_LICENSE_SECRET` **ausente**
+Implementados em `scripts/qa-licenca-ed25519.ts` (`pnpm qa:licenca`), nos testes
+de `src-tauri/src/licenca.rs` e no verificador de bundle:
+
+- [x] Certificado forjado (assinatura aleatória) → **rejeitado**
+- [x] Certificado válido de OUTRA máquina → **rejeitado** (device confere)
+- [x] Chave revogada no servidor → ativação **recusada**
+- [x] Após ativar, **sem rede**: jogo reconhece registro
+- [x] Chave no formato antigo → mensagem de transição, **não** "inválido"
+      (`mensagemDeErro("formato-antigo")`)
+- [x] `/licenca/ativar` sob força bruta → rate limit dispara (429)
+- [x] Ativar a mesma chave duas vezes na mesma máquina → idempotente
+- [x] Bundle sem o segredo → `pnpm qa:bundle-sem-segredo`, **roda depois do build**
+
+Extras que os testes cobrem e não estavam nesta lista: adulterar um campo do
+payload invalida a assinatura; reescrever o `device` dentro do certificado
+também; a chave pública do jogo corresponde à privada do servidor (lida do
+`licenca.rs`, não copiada); e os fluxos de conta reescritos (registro, login,
+Google, compra) continuam vinculando licença corretamente.
+
+### Sobre o `grep` que este plano pedia
+
+A versão original dizia:
+
+```bash
+grep -r "ULTRAFOOT_LICENSE_SECRET" out/ .next/    # deve não retornar nada
+```
+
+Esse comando **passa quando não devia**, por dois motivos:
+
+1. O Next substitui `process.env.NEXT_PUBLIC_*` pelo **valor**. O nome da
+   variável não sobra no bundle — sai junto. Procurar o nome pode devolver vazio
+   com o segredo ali, em texto puro.
+2. Rodado antes do build, devolve vazio também. "Nenhum resultado" fica
+   indistinguível de "não verifiquei nada".
+
+`scripts/verificar-bundle-sem-segredo.mjs` procura o **valor** (além do nome) e
+**falha** quando não há saída de build para inspecionar, em vez de aprovar no
+silêncio.
 
 ---
 
