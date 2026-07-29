@@ -1897,6 +1897,8 @@ interface GameEngineState {
   balance: number
   weeklyIncome: number
   weeklyExpenses: number
+  /** Recibos das vendas de jovens ja creditadas (ver receberPorJovem). */
+  vendasDeJovensPagas?: string[]
   transferBudget: number
   wageBudget: number
 
@@ -1932,7 +1934,7 @@ interface GameEngineState {
     pace?: number; shooting?: number; passing?: number; dribbling?: number; defending?: number; physical?: number
   }, taxa: number) => boolean
   /** Entrada de caixa da venda de um atleta da base. */
-  receberPorJovem: (valor: number) => void
+  receberPorJovem: (valor: number, vendaId?: string) => void
   ajustarMoralJogador: (playerId: number, degraus: number) => void
   /** "wage_budget" = recusado pela diretoria por estourar o teto salarial. */
   buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
@@ -2408,6 +2410,21 @@ const FIFA_DATES_2026 = [10, 11, 22, 23, 36, 37, 40, 41] // Marco, Junho, Setemb
 // ============================================
 // STORE ZUSTAND
 // ============================================
+
+/**
+ * FOLHA SALARIAL REAL — somada do elenco, nunca acumulada.
+ *
+ * `weeklyExpenses` era um total mantido a mao, somado na contratacao e subtraido
+ * na venda em uma duzia de lugares. Bastava um caminho esquecer de subtrair (a
+ * reposicao de fim de temporada, por exemplo, adicionava atletas sem somar
+ * salario) para o numero descolar do elenco de vez — e ele so descola para cima.
+ *
+ * Derivar da lista nao pode divergir: se o atleta esta no elenco, o salario dele
+ * conta; se saiu, nao conta. Sem estado para sincronizar.
+ */
+export function folhaSemanal(jogadores: readonly { contract?: { salary?: number } | null }[]): number {
+  return jogadores.reduce((total, j) => total + (j.contract?.salary ?? 0), 0)
+}
 
 export const useGameEngine = create<GameEngineState>()(
   persist(
@@ -3070,9 +3087,32 @@ export const useGameEngine = create<GameEngineState>()(
         return true
       },
 
-      receberPorJovem: (valor) => {
+      /**
+       * Credita a venda de um jovem UMA VEZ SO.
+       *
+       * O dinheiro mora aqui (motor) e a lista de jovens mora no save — dois
+       * armazenamentos diferentes. Se o save nao chegasse ao disco antes de uma
+       * navegacao (que recarrega a pagina inteira), o jovem "voltava" e a venda
+       * era paga de novo. Ja tentei consertar isso pelo lado do save duas vezes;
+       * nao resolve, porque a corrida e entre os DOIS armazenamentos.
+       *
+       * Guardando o recibo NO MESMO lugar do dinheiro, pagar duas vezes deixa de
+       * ser possivel: se o saldo foi creditado, o recibo foi junto, no mesmo
+       * `set`. Nao existe estado intermediario.
+       */
+      receberPorJovem: (valor, vendaId) => {
         if (!Number.isFinite(valor) || valor <= 0) return
-        set((s) => ({ balance: s.balance + valor }))
+        const recibo = vendaId ? String(vendaId) : ""
+        set((s) => {
+          const pagos = s.vendasDeJovensPagas ?? []
+          if (recibo && pagos.includes(recibo)) return s  // ja foi pago
+          return {
+            balance: s.balance + valor,
+            // Guarda so os ultimos recibos: o objetivo e barrar o pagamento
+            // repetido de uma venda recente, nao manter historico eterno.
+            vendasDeJovensPagas: recibo ? [...pagos, recibo].slice(-400) : pagos,
+          }
+        })
       },
 
       /** Move a moral de um atleta N degraus (+ melhora, - piora). Usado pela
@@ -3184,13 +3224,31 @@ export const useGameEngine = create<GameEngineState>()(
         return joinsNow ? "joined" : "pending"
       },
 
+      // ⚠️ GASTO AVULSO NAO ENTRA NA DESPESA SEMANAL.
+      //
+      // Estes tres somavam o valor de UMA compra em `weeklyExpenses` (ou
+      // `weeklyIncome`), que sao valores RECORRENTES — descontados toda semana.
+      // Pagar uma divida de 5 milhoes uma vez passava a custar 5 milhoes POR
+      // SEMANA, para sempre. Era a maior parte do "gasto que nao bate com a
+      // realidade" relatado: a despesa so subia, nunca voltava.
+      //
+      // O caixa e debitado/creditado normalmente; o recorrente fica intocado.
       payClubDebt: (amount) => {
-        const available=Math.max(0,get().balance),paid=Math.min(Math.max(0,amount),available)
-        if(paid>0)set(state=>({balance:state.balance-paid,weeklyExpenses:state.weeklyExpenses+paid}))
+        const available = Math.max(0, get().balance)
+        const paid = Math.min(Math.max(0, amount), available)
+        if (paid > 0) set(state => ({ balance: state.balance - paid }))
         return paid
       },
-      spendClubFunds:(amount)=>{const value=Math.max(0,amount);if(get().balance<value)return false;set(state=>({balance:state.balance-value,weeklyExpenses:state.weeklyExpenses+value}));return true},
-      addClubRevenue:(amount)=>{const value=Math.max(0,amount);if(value>0)set(state=>({balance:state.balance+value,weeklyIncome:state.weeklyIncome+value}))},
+      spendClubFunds: (amount) => {
+        const value = Math.max(0, amount)
+        if (get().balance < value) return false
+        set(state => ({ balance: state.balance - value }))
+        return true
+      },
+      addClubRevenue: (amount) => {
+        const value = Math.max(0, amount)
+        if (value > 0) set(state => ({ balance: state.balance + value }))
+      },
       
       loanPlayer: (player, weeks, salary) => {
         const state = get()
@@ -5257,8 +5315,29 @@ export const useGameEngine = create<GameEngineState>()(
           }
           const region = REGIONS_BY_LEVEL[Math.min(5, youthAcadLevel)]
           const FALLBACK_POSITIONS = ["GOL","ZAG","ZAG","LAT","LAT","VOL","VOL","MEI","MEI","ATA","PD","PE"]
-          const MIN_SQUAD = 18
-          const needed = Math.max(retiredPositions.length, Math.max(0, MIN_SQUAD - playersWithMarketUpdate.length))
+          // ⚠️ IMPRESSORA DE DINHEIRO — leia antes de mexer.
+          //
+          // Isto reenchia o elenco ate 18 DE GRACA no fim de cada temporada. O
+          // ciclo era: vender o elenco inteiro, avancar a temporada, receber 18
+          // atletas do nada, vender tudo de novo. Dinheiro infinito, e tambem o
+          // "do nada aparecem jogadores aleatorios no time" que o jogador
+          // relatou. As duas correcoes anteriores da base nao pegaram porque o
+          // vazamento nunca esteve na tela da base — estava aqui.
+          //
+          // O que continua valendo: repor quem SE APOSENTOU. Isso e reposicao,
+          // nao criacao de valor — o atleta saiu do elenco.
+          //
+          // O que muda: quem VENDEU o elenco nao ganha elenco novo. Sobra so uma
+          // rede de seguranca para o save nao virar injogavel (sem 11 atletas nao
+          // da nem para escalar), e esses emergenciais valem ZERO no mercado, de
+          // modo que revende-los nao rende nada.
+          const MINIMO_PARA_JOGAR = 11
+          const reposicaoDeAposentados = retiredPositions.length
+          const emergenciais = Math.max(
+            0,
+            MINIMO_PARA_JOGAR - (playersWithMarketUpdate.length + reposicaoDeAposentados),
+          )
+          const needed = reposicaoDeAposentados + emergenciais
           const baseMin = 55 + youthAcadLevel * 3 + coordBonus
           const baseRange = 10 + youthAcadLevel * 2
           const potentialBonus = youthAcadLevel * 3 + coordBonus
@@ -5298,7 +5377,10 @@ export const useGameEngine = create<GameEngineState>()(
               training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
               nationalTeam: null,
               calledUp: false,
-              marketValue: base * 80000,
+              // Emergencial (indice alem da reposicao de aposentados) nao tem valor
+              // de mercado: ele existe so para o time conseguir entrar em campo.
+              // Com valor, a rede de seguranca voltaria a ser impressora.
+              marketValue: i < reposicaoDeAposentados ? base * 80000 : 0,
               joinedClubWeek: 0,
               joinedClubSeason: nextSeason,
               isLoanedIn: false,
@@ -5306,8 +5388,16 @@ export const useGameEngine = create<GameEngineState>()(
             }
           })
 
+          // A folha tem de acompanhar o elenco. Aposentado saindo sem devolver
+          // salario e reposicao entrando sem cobrar faziam `weeklyExpenses`
+          // descolar do elenco a cada temporada — sempre para mais, e sem volta.
+          // Ajustamos pela DIFERENCA exata entre a folha nova e a antiga.
+          const elencoNovo = [...playersWithMarketUpdate, ...youthPlayers]
+          const ajusteDaFolha = folhaSemanal(elencoNovo) - folhaSemanal(s.squadPlayers)
+
           return {
-            squadPlayers: [...playersWithMarketUpdate, ...youthPlayers],
+            squadPlayers: elencoNovo,
+            weeklyExpenses: Math.max(0, s.weeklyExpenses + ajusteDaFolha),
             serieAStandings: newStandings,
             lastSeasonStandings,
             currentWeek: 0,

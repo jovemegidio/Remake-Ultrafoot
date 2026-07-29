@@ -191,10 +191,12 @@ export default function BasePage() {
     if (!isTransferWindowOpen(semanaAtual)) return
     const aVender = youth.filter(p => p.vendaPendente)
     if (aVender.length === 0) return
-    let total = 0
-    for (const p of aVender) total += p.vendaPendente!.valor
-    receberPorJovem(total)
-    setState({ youthPlayers: youth.filter(p => !p.vendaPendente) })
+    // Um recibo POR JOVEM, e nao um credito unico: se a lista mudar entre duas
+    // execucoes, cada venda continua sendo paga exatamente uma vez.
+    for (const p of aVender) receberPorJovem(p.vendaPendente!.valor, `jovem:${p.id}`)
+    // Funcional: ler a lista mais nova evita que uma leitura velha ressuscite
+    // jovens ja vendidos.
+    setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(p => !p.vendaPendente) }))
     gravarAgora()
     for (const p of aVender) {
       addNotification({ type: "transfer", priority: "medium", title: `${p.name} vendido`,
@@ -335,7 +337,7 @@ export default function BasePage() {
     if (typeof window !== "undefined" && !window.confirm(texto)) return
 
     if (janelaAberta) {
-      receberPorJovem(p.valor)
+      receberPorJovem(p.valor, `jovem:${player.id}`)
       // Funcional: le a base MAIS NOVA (vender varios seguidos nao "ressuscita" os anteriores).
       setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(x => x.id !== player.id) }))
       gravarAgora()
