@@ -204,8 +204,15 @@ def codigo_da_conta(con, conta_id: int) -> str:
 #
 # `preco_cents` em centavos e inteiro: dinheiro em ponto flutuante acumula erro.
 #
-# ⚠️ SO EXISTEM ITENS QUE O JOGO/LAUNCHER REALMENTE ENTREGAM HOJE. Vender algo
-# que ainda nao funciona e cobrar por promessa.
+# ⚠️ SO ENTRA AQUI O QUE O PRODUTO REALMENTE ENTREGA.
+#
+# Isto ja falhou uma vez: o catalogo tinha "temas exclusivos" e "verba extra"
+# que NAO faziam nada. Os 20 temas ja sao livres para todo mundo no launcher, e
+# nenhuma parte do jogo lia a verba comprada — a compra so gravava uma linha no
+# extrato. Foram removidos.
+#
+# Antes de adicionar item novo, responda: onde esta o codigo que ENTREGA isso?
+# Se a resposta for "vou fazer depois", o item nao entra.
 CATALOGO = [
     # PRIMEIRO ITEM: o registro do jogo. E o que a pessoa vem comprar; deixar
     # tema na frente de licenca inverte a prioridade da vitrine.
@@ -213,21 +220,6 @@ CATALOGO = [
      "descricao": "Libera a versao completa do jogo, para sempre, em qualquer computador "
                   "onde voce entrar na sua conta. A chave e emitida na hora do pagamento.",
      "preco_cents": 3000, "carga": {}},
-    {"id": "tema_ouro", "nome": "Tema Ouro", "tipo": "tema_launcher",
-     "descricao": "Fundo dourado exclusivo para o launcher.", "preco_cents": 490,
-     "carga": {"tema": "ouro"}},
-    {"id": "tema_meia_noite", "nome": "Tema Meia-noite", "tipo": "tema_launcher",
-     "descricao": "Azul profundo, para quem joga de madrugada.", "preco_cents": 490,
-     "carga": {"tema": "meia-noite"}},
-    {"id": "tema_vinho", "nome": "Tema Vinho", "tipo": "tema_launcher",
-     "descricao": "Bordo escuro com destaque em rosa.", "preco_cents": 490,
-     "carga": {"tema": "vinho"}},
-    {"id": "verba_5m", "nome": "Verba extra — 5 milhoes", "tipo": "verba",
-     "descricao": "Entra no caixa do clube na proxima vez que voce abrir o jogo.",
-     "preco_cents": 990, "carga": {"valor": 5_000_000}},
-    {"id": "verba_20m", "nome": "Verba extra — 20 milhoes", "tipo": "verba",
-     "descricao": "Reforco de caixa para uma janela cheia.",
-     "preco_cents": 2990, "carga": {"valor": 20_000_000}},
 ]
 
 CATALOGO_POR_ID = {item["id"]: item for item in CATALOGO}
