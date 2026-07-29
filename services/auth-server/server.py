@@ -212,7 +212,7 @@ CATALOGO = [
     {"id": "registro", "nome": "Registro do Ultrafoot 26", "tipo": "registro",
      "descricao": "Libera a versao completa do jogo, para sempre, em qualquer computador "
                   "onde voce entrar na sua conta. A chave e emitida na hora do pagamento.",
-     "preco_cents": 4990, "carga": {}},
+     "preco_cents": 3000, "carga": {}},
     {"id": "tema_ouro", "nome": "Tema Ouro", "tipo": "tema_launcher",
      "descricao": "Fundo dourado exclusivo para o launcher.", "preco_cents": 490,
      "carga": {"tema": "ouro"}},
