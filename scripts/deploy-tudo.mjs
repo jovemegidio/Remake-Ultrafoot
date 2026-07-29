@@ -250,13 +250,39 @@ rodar("node", ["scripts/publicar-launcher-config.mjs", "--publicar"], { cwd: RAI
 
 passo("Linux e macOS: disparando a CI")
 const ramo = rodar("git", ["rev-parse", "--abbrev-ref", "HEAD"]).trim()
-const sujo = rodar("git", ["status", "--porcelain", "--untracked-files=no"]).trim()
-if (sujo) {
-  console.log("  ATENCAO: ha alteracoes nao commitadas. A CI compila o COMMIT, nao o disco:")
-  for (const linha of sujo.split("\n").slice(0, 10)) console.log(`    ${linha}`)
+
+/**
+ * O disparo da CI so vale se o que ela vai compilar JA ESTA COMMITADO.
+ *
+ * Em 29/07/26 a 1.0.21 do launcher subiu para o Windows e a CI foi disparada no
+ * mesmo comando — mas o commit ainda nao existia, e Linux/macOS receberam pacotes
+ * com o codigo da 1.0.20. O aviso de "alteracoes nao commitadas" existia e nao
+ * impediu nada. Agora a gente NAO dispara e diz o que fazer.
+ *
+ * A checagem e por CAMINHO, e nao pela arvore toda: neste repositorio quase
+ * sempre ha trabalho do jogo em andamento, e olhar o `git status` inteiro faria
+ * o launcher deixar de publicar por causa de arquivo que a CI dele nem le.
+ */
+function dispararSeCommitado(workflow, caminhos, oQue) {
+  const sujo = rodar("git", ["status", "--porcelain", "--untracked-files=no", "--", ...caminhos]).trim()
+  if (sujo) {
+    console.log(`  NAO disparei ${oQue}: ha alteracao nao commitada no que a CI compila.`)
+    for (const linha of sujo.split("\n").slice(0, 10)) console.log(`    ${linha}`)
+    console.log(`  Commite e rode:  gh workflow run ${workflow} --ref ${ramo}`)
+    return false
+  }
+  rodar("gh", ["workflow", "run", workflow, "--ref", ramo], { stdio: "inherit" })
+  console.log(`  ${oQue} disparado — acompanhe com: gh run list --limit 4`)
+  return true
 }
-if (!soLauncher) rodar("gh", ["workflow", "run", "desktop-platforms.yml", "--ref", ramo], { stdio: "inherit" })
-if (!soJogo) rodar("gh", ["workflow", "run", "launcher-platforms.yml", "--ref", ramo], { stdio: "inherit" })
-console.log("  disparado — acompanhe com: gh run list --limit 4")
+
+if (!soLauncher) {
+  dispararSeCommitado("desktop-platforms.yml",
+    ["app", "components", "lib", "data", "hooks", "public", "src-tauri", "package.json"],
+    "jogo (Linux/macOS)")
+}
+if (!soJogo) {
+  dispararSeCommitado("launcher-platforms.yml", ["Launcher"], "launcher (Linux/macOS)")
+}
 
 console.log("\nDEPLOY CONCLUIDO.")
