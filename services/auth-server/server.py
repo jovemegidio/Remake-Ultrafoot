@@ -35,6 +35,11 @@ import time
 import urllib.parse
 import urllib.request
 
+# Emissao/ativacao Ed25519. Modulo IRMAO, no mesmo diretorio — o import falharia
+# se o servico fosse iniciado de outra pasta, entao garantimos o caminho.
+sys.path.insert(0, str(Path(__file__).parent))
+import licenca  # noqa: E402
+
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("ULTRAFOOT_AUTH_PORT", "8790"))
 DB_PATH = Path(os.environ.get("ULTRAFOOT_AUTH_DB", "/var/lib/ultrafoot/auth.db"))
@@ -670,6 +675,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._esquecer_save(corpo)
         if rota == "/ativar":
             return self._ativar(corpo)
+        if rota == "/licenca/ativar":
+            return self._licenca_ativar(corpo)
+        if rota == "/licenca/minha":
+            return self._licenca_minha(corpo)
         if rota.startswith("/admin/"):
             return self._admin(rota, corpo)
         if rota == "/sair":
@@ -799,6 +808,19 @@ class Handler(BaseHTTPRequestHandler):
 
         if item and item["tipo"] == "registro":
             emitir_codigo_para(con, pedido["conta_id"])
+            # Emite TAMBEM no esquema novo, para quem compra a partir de agora ja
+            # sair com licenca Ed25519 e a reemissao (etapa 5) nao ter de
+            # alcanca-lo. Os dois convivem ate o corte da v1.0.202.
+            #
+            # Falhar aqui NAO pode derrubar a entrega: o pagamento ja aconteceu.
+            # Se a chave privada nao estiver configurada na VPS, o comprador leva
+            # a chave antiga — que ainda vale — e a nova sai na reemissao.
+            if licenca.disponivel():
+                try:
+                    licenca.emitir(con, pedido["conta_id"])
+                except Exception as e:  # pragma: no cover - defesa de entrega
+                    print(f"[licenca] falha ao emitir para conta {pedido['conta_id']}: {e}",
+                          file=sys.stderr)
         elif item and item["tipo"] in ("tema_launcher", "verba"):
             # Estes ja sao itens de catalogo: registramos a compra do mesmo jeito
             # que a compra por saldo, para o extrato ficar unico.
@@ -1053,6 +1075,72 @@ class Handler(BaseHTTPRequestHandler):
         return self._responder(200, {"token": token, "email": conta["email"], "nome": conta["nome"],
                                      "ativado": ativado, "codigo_ativacao": codigo_ativacao})
 
+    # ── Licenca Ed25519 ──
+    #
+    # Fluxo novo (docs/plano-licenca-ed25519.md): o codigo vendido e um
+    # identificador ALEATORIO conferido na tabela `licencas`; o servidor devolve
+    # um certificado assinado com a chave privada, e o jogo confere OFFLINE com a
+    # publica embutida no binario (src-tauri/src/licenca.rs).
+    #
+    # Convive de proposito com o esquema HMAC antigo: enquanto a reemissao
+    # (etapa 5 do plano) nao rodar, quem comprou com chave antiga ainda depende
+    # dela. Remover o esquema velho antes disso deixaria esses compradores sem
+    # caminho de migracao.
+
+    def _licenca_ativar(self, corpo: dict):
+        """Primeira ativacao: confere o codigo no banco e assina o certificado.
+
+        SEM SESSAO de proposito — quem comprou fora do launcher precisa ativar
+        sem ter conta. A protecao e o proprio identificador aleatorio (2^75) mais
+        o rate limit abaixo.
+        """
+        codigo = (corpo.get("codigo") or "").strip()
+        device = (corpo.get("device") or "").strip()
+        if not codigo or not device:
+            return self._responder(400, {"erro": "codigo e device sao obrigatorios"})
+
+        with conectar() as con:
+            # RATE LIMIT OBRIGATORIO (§3.4 do plano). Sem ele esta rota vira
+            # oraculo de forca bruta contra o espaco de chaves: da para testar
+            # codigos a vontade e descobrir quais existem.
+            #
+            # A chave e o IP, e nao o codigo: limitar por codigo nao segura nada,
+            # porque o atacante troca de codigo a cada tentativa — e ainda
+            # deixaria ele travar a ativacao de um comprador legitimo de fora.
+            chave = f"licenca:{self._ip()}"
+            if excedeu_tentativas(con, chave):
+                return self._responder(429, {"erro": "muitas tentativas; tente de novo em 15 minutos"})
+
+            certificado, erro = licenca.ativar(con, codigo, device)
+            if erro:
+                # A tentativa so conta quando FALHA. Ativacao legitima repetida
+                # (reinstalar o jogo) nao pode consumir a cota de ninguem.
+                registrar_tentativa(con, chave)
+                # 503 quando o servidor nao tem a chave configurada: e falha
+                # NOSSA, nao codigo errado do jogador, e o launcher precisa
+                # distinguir para nao acusar o comprador.
+                if not licenca.disponivel():
+                    return self._responder(503, {"erro": erro})
+                return self._responder(400, {"erro": erro})
+
+            con.execute("DELETE FROM tentativas WHERE chave = ?", (chave,))
+            return self._responder(200, {"certificado": certificado})
+
+    def _licenca_minha(self, corpo: dict):
+        """Licenca da conta — recuperacao depois de formatar a maquina.
+
+        Aqui EXIGE sessao: e a rota que devolve o codigo de quem ja comprou.
+        Sem sessao, saber um email bastaria para levar a chave alheia.
+        """
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            codigo = licenca.da_conta(con, conta["id"])
+            if not codigo:
+                return self._responder(404, {"erro": "nenhuma licenca para esta conta"})
+            return self._responder(200, {"codigo": codigo})
+
     # ── Administracao ──
     #
     # O admin usa a MESMA sessao de qualquer conta; o que autoriza e a coluna
@@ -1079,6 +1167,49 @@ class Handler(BaseHTTPRequestHandler):
                     (termo, termo),
                 ).fetchall()
                 return self._responder(200, {"contas": [dict(l) for l in linhas]})
+
+            # Estas duas agem sobre um CODIGO, nao sobre uma conta — precisam vir
+            # antes da exigencia de `conta_id` logo abaixo. Chave vendida fora do
+            # launcher pode nem ter conta vinculada.
+            if rota == "/admin/revogar-licenca":
+                codigo = (corpo.get("codigo") or "").strip()
+                motivo = (corpo.get("motivo") or "").strip()[:300]
+                if not codigo:
+                    return self._responder(400, {"erro": "codigo ausente"})
+                if not motivo:
+                    # Revogacao sem motivo registrado vira mistério no suporte
+                    # meses depois: ninguem lembra por que a chave foi cortada.
+                    return self._responder(400, {"erro": "informe o motivo da revogacao"})
+                alvo = con.execute("SELECT conta_id FROM licencas WHERE codigo = ?",
+                                   (licenca.normalizar(codigo),)).fetchone()
+                if not alvo:
+                    return self._responder(404, {"erro": "licenca nao encontrada"})
+                licenca.revogar(con, codigo, motivo)
+                con.execute(
+                    "INSERT INTO admin_log (admin_id, alvo_id, acao, motivo, quando)"
+                    " VALUES (?,?,?,?,?)",
+                    (eu["id"], alvo["conta_id"], "revogar-licenca", f"{codigo}: {motivo}",
+                     int(time.time())))
+                # A revogacao vale da PROXIMA ativacao em diante. Quem ja ativou
+                # segue com o certificado local valendo offline — cortar isso
+                # exigiria consultar o servidor a cada partida, quebrando a
+                # promessa de jogar sem internet.
+                return self._responder(200, {"ok": True, "ativacoes_futuras_bloqueadas": True})
+
+            if rota == "/admin/soltar-device":
+                codigo = (corpo.get("codigo") or "").strip()
+                if not codigo:
+                    return self._responder(400, {"erro": "codigo ausente"})
+                alvo = con.execute("SELECT conta_id FROM licencas WHERE codigo = ?",
+                                   (licenca.normalizar(codigo),)).fetchone()
+                if not alvo:
+                    return self._responder(404, {"erro": "licenca nao encontrada"})
+                licenca.soltar_device(con, codigo)
+                con.execute(
+                    "INSERT INTO admin_log (admin_id, alvo_id, acao, motivo, quando)"
+                    " VALUES (?,?,?,?,?)",
+                    (eu["id"], alvo["conta_id"], "soltar-device", codigo, int(time.time())))
+                return self._responder(200, {"ok": True})
 
             alvo_id = corpo.get("conta_id")
             if not isinstance(alvo_id, int):

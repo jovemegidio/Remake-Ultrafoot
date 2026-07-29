@@ -217,3 +217,31 @@ CREATE TABLE IF NOT EXISTS series_emitidas (
   conta_id      INTEGER NOT NULL REFERENCES contas(id),
   quando        INTEGER NOT NULL
 );
+
+-- ─── Licenças Ed25519 ────────────────────────────────────────────────────────
+--
+-- Substitui o esquema de HMAC, em que o MESMO segredo assinava a chave vendida
+-- e ia dentro do jogo para conferi-la — quem o extraísse do bundle emitia
+-- licença à vontade.
+--
+-- Aqui o `codigo` é um identificador ALEATÓRIO, não um dado assinado: a verdade
+-- sobre "esta chave vale" mora nesta tabela, não na matemática. Não há como
+-- forjar um código, nem com a chave privada na mão, porque ele precisa EXISTIR
+-- aqui. A assinatura Ed25519 entra depois, no certificado que o servidor
+-- devolve para o jogo conferir offline.
+CREATE TABLE IF NOT EXISTS licencas (
+  codigo           TEXT    PRIMARY KEY,          -- UF26-ABCDE-FGHIJ-KLMNO
+  conta_id         INTEGER REFERENCES contas(id),
+  serie            INTEGER NOT NULL,             -- para cruzar no suporte
+  emitida_em       INTEGER NOT NULL,
+  -- NULL até a primeira ativação. Depois, amarra a licença a UMA máquina: sem
+  -- isso um código vazado registraria o jogo em quantos PCs quisessem.
+  device           TEXT,
+  ativada_em       INTEGER,
+  -- Diferente da lista embutida no build, a revogação aqui vale IMEDIATAMENTE
+  -- na próxima ativação, sem esperar a próxima versão publicada.
+  revogada         INTEGER NOT NULL DEFAULT 0,
+  motivo_revogacao TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_licencas_conta ON licencas(conta_id);

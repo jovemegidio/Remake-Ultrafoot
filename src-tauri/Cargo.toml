@@ -31,6 +31,13 @@ tauri-plugin-process = "2"
 tauri-plugin-http = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Verificacao da licenca no lado NATIVO. Nao usamos o Ed25519 do Web Crypto
+# porque ele so saiu do flag no Chrome 137 e o jogo roda na WebView2 instalada
+# na maquina do jogador — em Windows desatualizado a verificacao falharia e o
+# COMPRADOR LEGITIMO perderia o registro. Aqui e o mesmo binario para todos.
+# `default-features = false` evita puxar rand/getrandom: so verificamos, nunca
+# assinamos (assinar e exclusividade do servidor, com a chave privada).
+ed25519-dalek = { version = "2", default-features = false }
 discord-rich-presence = "0.2"
 tiny_http = "0.12"
 ureq = { version = "2.12", default-features = false, features = ["json"] }

@@ -7,6 +7,7 @@ use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::sync::Mutex;
 use tauri::Manager;
 
+mod licenca;
 mod online_server;
 
 /// Decodifica percent-encoding (%20, %EF%BC%82...) do caminho da URI.
@@ -637,6 +638,7 @@ pub fn run() {
             media_previous
             ,ler_ativacao_do_launcher
             ,ler_sessao_do_launcher
+            ,licenca::verificar_licenca
             ,online_server::online_start_server
             ,online_server::online_stop_server
             ,online_server::online_server_status
@@ -661,6 +663,7 @@ pub fn run() {
             media_previous
             ,ler_ativacao_do_launcher
             ,ler_sessao_do_launcher
+            ,licenca::verificar_licenca
             ,online_server::online_start_server
             ,online_server::online_stop_server
             ,online_server::online_server_status
