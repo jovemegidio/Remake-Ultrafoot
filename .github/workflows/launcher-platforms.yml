@@ -66,16 +66,25 @@ jobs:
           releaseDraft: false
           prerelease: false
 
-      # NAO ROUBAR O "LATEST" DO JOGO.
+      # O "LATEST" DO GITHUB TEM DE APONTAR PARA O RELEASE DO JOGO.
       #
-      # O auto-updater do jogo le releases/latest/download/latest.json. O GitHub
-      # marca como "latest" o release nao-prerelease mais recente — entao este
-      # build de Linux/macOS passava na frente do release do Windows e o endpoint
-      # do updater virava 404: TODO MUNDO parava de receber atualizacao, em
-      # silencio. Foi exatamente o que aconteceu com a 1.0.200.
-      - name: Nao marcar como latest
+      # O auto-updater le releases/latest/download/latest.json. Só esse release
+      # tem esse arquivo — em qualquer outro, o endpoint vira 404 e TODO MUNDO
+      # para de receber atualizacao, em silencio.
+      #
+      # A primeira tentativa foi `--latest=false` neste release. Nao resolve:
+      # isso apenas passa o titulo para o PROXIMO release recente, que continua
+      # nao sendo o do jogo. Aconteceu de novo na 1.0.19.
+      #
+      # O que resolve e AFIRMAR o alvo certo: repinar o release do jogo depois de
+      # publicar. `if: always()` porque um alvo da matriz que falha nao pode
+      # deixar o latest errado.
+      - name: Manter o release do jogo como latest
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release edit "launcher-desktop-${{ steps.ver.outputs.version }}" --latest=false --repo "$GITHUB_REPOSITORY" || true
+          VERSAO_JOGO=$(node -p "require('./package.json').version")
+          gh release edit "build-$VERSAO_JOGO" --latest --repo "$GITHUB_REPOSITORY" || true
+          echo "latest agora: $(gh api repos/$GITHUB_REPOSITORY/releases/latest -q .tag_name)"
