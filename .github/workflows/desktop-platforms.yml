@@ -108,3 +108,17 @@ jobs:
             src-tauri/target/**/release/bundle/**/*.dmg
             src-tauri/target/**/release/bundle/**/*.app.tar.gz
           if-no-files-found: error
+
+      # NAO ROUBAR O "LATEST" DO JOGO.
+      #
+      # O auto-updater do jogo le releases/latest/download/latest.json. O GitHub
+      # marca como "latest" o release nao-prerelease mais recente — entao este
+      # build de Linux/macOS passava na frente do release do Windows e o endpoint
+      # do updater virava 404: TODO MUNDO parava de receber atualizacao, em
+      # silencio. Foi exatamente o que aconteceu com a 1.0.200.
+      - name: Nao marcar como latest
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "desktop-${{ steps.gamever.outputs.version }}" --latest=false --repo "$GITHUB_REPOSITORY" || true
