@@ -1,6 +1,9 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Space_Grotesk } from 'next/font/google'
+// As 20 fontes escolhíveis: as variáveis precisam existir no <body> para a
+// preferência do jogador poder apontar para qualquer uma delas.
+import { CLASSES_DE_FONTE } from '@/lib/fontes'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -36,7 +39,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`dark bg-background ${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable}`}
     >
-      <body className="font-sans antialiased">
+      <body className={`font-sans antialiased ${CLASSES_DE_FONTE}`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

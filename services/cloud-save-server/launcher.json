@@ -1,5 +1,5 @@
 {
-  "version": "1.0.15",
-  "notes": "Voce continua logado ao reabrir o launcher. Nova arte na tela inicial, temas e fontes, ajustes de acessibilidade, avatar e a aba FC Hub. No cadastro agora ha telefone e o campo de codigo de ativacao: com a chave da compra o jogo abre com a versao completa, sem pedir registro de novo.",
+  "version": "1.0.16",
+  "notes": "20 temas e 20 fontes para deixar o launcher com a sua cara, foto no avatar, alto contraste, texto maior e opcao de reduzir animacoes. A aba FC Hub mostra sua conta e o estado do servidor online. Voce continua logado ao reabrir, e no cadastro ha telefone e o campo de codigo de ativacao.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }

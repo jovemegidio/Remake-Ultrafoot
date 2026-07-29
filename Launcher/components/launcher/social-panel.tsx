@@ -47,12 +47,21 @@ export function SocialPanel({
       {/* Cartao do jogador */}
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex items-center gap-4 p-5">
-          <span
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-2xl font-bold"
-            style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
-          >
-            {prefs.avatar || iniciais(sessao?.nome || sessao?.email || "")}
-          </span>
+          {prefs.fotoAvatar ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={prefs.fotoAvatar} alt=""
+              className="h-16 w-16 shrink-0 rounded-full object-cover"
+              style={{ boxShadow: `0 0 0 2px ${prefs.corAvatar}` }}
+            />
+          ) : (
+            <span
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-2xl font-bold"
+              style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
+            >
+              {prefs.avatar || iniciais(sessao?.nome || sessao?.email || "")}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-bold text-foreground">
               {sessao ? (sessao.nome || sessao.email) : "Você ainda não entrou"}

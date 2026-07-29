@@ -501,12 +501,21 @@ export function LauncherShell({
               title={`${sessao.email} — clique para sair`}
               className="flex w-full items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] p-2 text-left transition-colors hover:bg-white/[0.07] lg:px-2.5"
             >
-              <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
-              >
-                {prefs.avatar || iniciais(sessao.nome || sessao.email)}
-              </span>
+              {prefs.fotoAvatar ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={prefs.fotoAvatar} alt=""
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                  style={{ boxShadow: `0 0 0 1.5px ${prefs.corAvatar}` }}
+                />
+              ) : (
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                  style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
+                >
+                  {prefs.avatar || iniciais(sessao.nome || sessao.email)}
+                </span>
+              )}
               <span className="hidden min-w-0 lg:block">
                 <span className="block truncate text-xs font-semibold text-white">
                   {sessao.nome || sessao.email}

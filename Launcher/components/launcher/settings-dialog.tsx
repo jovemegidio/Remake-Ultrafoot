@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   X, Power, MinusSquare, Palette, Type, Accessibility, UserCircle, Monitor, RotateCcw,
+  Upload, Trash2,
 } from "lucide-react"
 import {
-  TEMAS, FONTES, AVATARES, PADRAO, iniciais,
+  TEMAS, FONTES, AVATARES, PADRAO, iniciais, fotoParaAvatar,
   type Preferencias,
 } from "@/lib/preferencias"
 
@@ -51,6 +52,10 @@ function Linha({ icone: Icone, titulo, descricao, children }: {
 
 type Aba = "geral" | "aparencia" | "acessibilidade" | "perfil"
 
+// Os textos precisam bater EXATAMENTE com `grupo` em lib/fontes.ts — com acento
+// e tudo. Sem isso o filtro não casa e o grupo some da lista sem erro nenhum.
+const GRUPOS_DE_FONTE = ["Interface", "Esportiva", "Serifada", "Monoespaçada", "Acessível"] as const
+
 const ABAS: { id: Aba; nome: string; icone: typeof Power }[] = [
   { id: "geral", nome: "Geral", icone: Monitor },
   { id: "aparencia", nome: "Aparência", icone: Palette },
@@ -78,6 +83,8 @@ export function SettingsDialog({
   onClose: () => void
 }) {
   const [aba, setAba] = useState<Aba>("geral")
+  const arquivoRef = useRef<HTMLInputElement>(null)
+  const [erroFoto, setErroFoto] = useState("")
   // Toda mudança é aplicada NA HORA, sem botão "salvar": o jogador precisa ver o
   // tema no lugar para decidir se gostou. Um preview que não é o resultado final
   // é o jeito mais fácil de escolher errado.
@@ -154,7 +161,7 @@ export function SettingsDialog({
                   <p className="mb-3 text-xs text-muted-foreground">
                     Muda as cores do launcher inteiro. O jogo mantém o visual dele.
                   </p>
-                  <div className="grid grid-cols-3 gap-2.5">
+                  <div className="grid max-h-64 grid-cols-3 gap-2.5 overflow-y-auto pr-1">
                     {TEMAS.map(t => (
                       <button
                         key={t.id}
@@ -180,29 +187,45 @@ export function SettingsDialog({
                   <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-foreground">
                     <Type className="h-4 w-4 text-primary" /> Fonte
                   </h3>
-                  <div className="mt-2 space-y-1.5">
-                    {FONTES.map(f => (
-                      <button
-                        key={f.id}
-                        onClick={() => mudar({ fonte: f.id })}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
-                          prefs.fonte === f.id
-                            ? "border-primary/50 bg-primary/10"
-                            : "border-border hover:bg-white/[0.04]",
-                        )}
-                      >
-                        <span>
-                          <span className="block text-sm text-foreground" style={{ fontFamily: f.pilha }}>
-                            {f.nome}
-                          </span>
-                          {f.nota && <span className="block text-[11px] text-muted-foreground">{f.nota}</span>}
-                        </span>
-                        <span className="text-xs text-muted-foreground" style={{ fontFamily: f.pilha }}>
-                          Ultrafoot 26
-                        </span>
-                      </button>
-                    ))}
+                  {/* Agrupadas por uso: com 21 opcoes numa lista corrida, escolher vira
+                      rolagem cega. O nome de cada fonte e desenhado NELA mesma — e o
+                      unico jeito de decidir sem experimentar uma por uma. */}
+                  <div className="mt-2 max-h-72 space-y-3 overflow-y-auto pr-1">
+                    {GRUPOS_DE_FONTE.map(grupo => {
+                      const doGrupo = FONTES.filter(f => f.grupo === grupo)
+                      if (!doGrupo.length) return null
+                      return (
+                        <div key={grupo}>
+                          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                            {grupo}
+                          </p>
+                          <div className="space-y-1.5">
+                            {doGrupo.map(f => (
+                              <button
+                                key={f.id}
+                                onClick={() => mudar({ fonte: f.id })}
+                                className={cn(
+                                  "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                                  prefs.fonte === f.id
+                                    ? "border-primary/50 bg-primary/10"
+                                    : "border-border hover:bg-white/[0.04]",
+                                )}
+                              >
+                                <span className="min-w-0">
+                                  <span className="block truncate text-sm text-foreground" style={{ fontFamily: f.pilha }}>
+                                    {f.nome}
+                                  </span>
+                                  {f.nota && <span className="block text-[11px] text-muted-foreground">{f.nota}</span>}
+                                </span>
+                                <span className="shrink-0 text-xs text-muted-foreground" style={{ fontFamily: f.pilha }}>
+                                  Ultrafoot 26
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -258,12 +281,21 @@ export function SettingsDialog({
             {aba === "perfil" && (
               <div className="space-y-5 p-5">
                 <div className="flex items-center gap-4 rounded-xl border border-border p-4">
-                  <span
-                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
-                    style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
-                  >
-                    {prefs.avatar || iniciais(nomeDaConta)}
-                  </span>
+                  {prefs.fotoAvatar ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={prefs.fotoAvatar} alt="Seu avatar"
+                      className="h-14 w-14 shrink-0 rounded-full object-cover"
+                      style={{ boxShadow: `0 0 0 2px ${prefs.corAvatar}` }}
+                    />
+                  ) : (
+                    <span
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
+                      style={{ background: `${prefs.corAvatar}22`, color: prefs.corAvatar }}
+                    >
+                      {prefs.avatar || iniciais(nomeDaConta)}
+                    </span>
+                  )}
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-foreground">
                       {nomeDaConta || "Sem conta conectada"}
@@ -277,7 +309,51 @@ export function SettingsDialog({
                 </div>
 
                 <div>
-                  <h3 className="mb-2 text-sm font-semibold text-foreground">Avatar</h3>
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">Sua foto</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={arquivoRef} type="file" accept="image/*" className="hidden"
+                      onChange={async e => {
+                        const f = e.target.files?.[0]
+                        e.target.value = ""
+                        if (!f) return
+                        setErroFoto("")
+                        try {
+                          mudar({ fotoAvatar: await fotoParaAvatar(f) })
+                        } catch (err) {
+                          setErroFoto(err instanceof Error ? err.message : "nao deu para usar esta imagem")
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => arquivoRef.current?.click()}
+                      className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-white/[0.05]"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Escolher foto
+                    </button>
+                    {prefs.fotoAvatar && (
+                      <button
+                        onClick={() => mudar({ fotoAvatar: "" })}
+                        className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-white/[0.05] hover:text-foreground"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Remover
+                      </button>
+                    )}
+                  </div>
+                  {erroFoto && <p className="mt-1.5 text-[11px] text-red-400">{erroFoto}</p>}
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    A foto e recortada no centro e reduzida para 160px. Ela fica na sua maquina —
+                    nao vai para o servidor.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">
+                    Ou um simbolo
+                    {prefs.fotoAvatar && (
+                      <span className="ml-1 font-normal text-muted-foreground">(a foto esta em uso)</span>
+                    )}
+                  </h3>
                   <div className="grid grid-cols-7 gap-2">
                     {AVATARES.map(a => (
                       <button

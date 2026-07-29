@@ -26,6 +26,7 @@ import {
   submitOnlineAction,
   type OnlineSession,
 } from "@/lib/online-multiplayer"
+import { HubOnlineChat } from "@/components/hub-online-chat"
 import {
   checkRelayHealth,
   configuredRelayUrl,
@@ -339,6 +340,16 @@ export function FcHub() {
           {!social?.authenticated && <button onClick={login} disabled={busy || !social?.available} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#5865F2] py-2.5 text-[10px] font-black text-white disabled:opacity-40"><UserPlus className="h-3.5 w-3.5"/>Conectar Discord</button>}
         </aside>
         <div className="min-h-0 space-y-4 overflow-y-auto bg-black/[.04] p-5 lg:p-6">
+        {/* PRESENCA E CHAT DA CONTA. Vem antes do bloco do Discord porque e o
+            que responde "tem alguem online?" — a pergunta que faz alguem abrir
+            o FC Hub. O bloco do Discord segue abaixo, para quem usa. */}
+        <div id="hub-online" className="scroll-mt-5">
+          <HubOnlineChat
+            clube={team.nome}
+            situacao={state.nationalCareer?.nationalTeamName ? "Comandando selecao" : "Em carreira"}
+          />
+        </div>
+
         <div id="hub-profile" className="scroll-mt-5 rounded-xl border border-[#00ffc8]/25 bg-[#00ffc8]/[.07] p-4 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             {social?.user?.avatarUrl ? <img src={social.user.avatarUrl} alt="" className="h-11 w-11 rounded-full" /> : <div className="grid h-11 w-11 place-items-center rounded-full bg-[#5865F2]/20 text-[#8d96ff]"><MessageCircle /></div>}

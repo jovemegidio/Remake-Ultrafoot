@@ -52,6 +52,12 @@ SESSAO_DIAS = 30
 TENTATIVAS_MAX = 8
 TENTATIVAS_JANELA = 15 * 60  # segundos
 
+# Presenca: 90s cobre com folga uma batida a cada 30s, inclusive com rede ruim.
+# Menos que isso e o jogador pisca entre online e offline na lista dos outros.
+PRESENCA_JANELA = 90
+CHAT_INTERVALO = 2      # segundos entre mensagens da mesma conta
+CHAT_LIMITE = 300       # mensagens guardadas no total
+
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
@@ -412,6 +418,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             return self._responder(200, {"ok": True, "service": "ultrafoot-auth"})
+        if self.path.split("?")[0] == "/hub/chat":
+            return self._chat_ler()
         if self.path == "/saves":
             with conectar() as con:
                 conta = conta_da_sessao(con, self._token())
@@ -451,6 +459,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._login(corpo)
         if rota == "/google":
             return self._google(corpo)
+        if rota == "/hub/presenca":
+            return self._presenca(corpo)
+        if rota == "/hub/chat":
+            return self._chat_enviar(corpo)
         if rota == "/saves/registrar":
             return self._registrar_save(corpo)
         if rota == "/saves/esquecer":
@@ -507,6 +519,85 @@ class Handler(BaseHTTPRequestHandler):
                                        (conta_id,)).fetchone()["ativado"])
         return self._responder(201, {"token": token, "email": email, "nome": nome,
                                      "ativado": ativado, "codigo_ativacao": codigo if ativado else ""})
+
+    # ── FC Hub: presenca e chat ──
+    #
+    # Quem esta online sai da tabela `presenca`, alimentada por batida do proprio
+    # jogo. Nao existe rota de "sair": fechar o jogo no tapa nunca a chamaria, e
+    # a lista ficaria cheia de fantasma. Some sozinho quem para de bater.
+    def _presenca(self, corpo: dict):
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            agora = int(time.time())
+            nome = (corpo.get("nome") or conta["nome"] or conta["email"].split("@")[0])[:40]
+            clube = (corpo.get("clube") or "")[:40]
+            situacao = (corpo.get("situacao") or "")[:60]
+            con.execute(
+                "INSERT INTO presenca (conta_id, nome, clube, situacao, visto_em)"
+                " VALUES (?,?,?,?,?)"
+                " ON CONFLICT(conta_id) DO UPDATE SET nome=excluded.nome, clube=excluded.clube,"
+                " situacao=excluded.situacao, visto_em=excluded.visto_em",
+                (conta["id"], nome, clube, situacao, agora))
+
+            corte = agora - PRESENCA_JANELA
+            # Limpa o que envelheceu aqui mesmo: sem isso a tabela so cresce e a
+            # consulta abaixo teria de filtrar uma lista cada vez maior.
+            con.execute("DELETE FROM presenca WHERE visto_em < ?", (agora - 3600,))
+            linhas = con.execute(
+                "SELECT p.conta_id, p.nome, p.clube, p.situacao, p.visto_em"
+                " FROM presenca p JOIN contas c ON c.id = p.conta_id"
+                " WHERE p.visto_em >= ? AND c.bloqueada = 0"
+                " ORDER BY p.visto_em DESC LIMIT 200",
+                (corte,)).fetchall()
+        return self._responder(200, {
+            "eu": conta["id"],
+            "online": [dict(l) for l in linhas],
+        })
+
+    def _chat_enviar(self, corpo: dict):
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            texto = (corpo.get("texto") or "").strip()[:300]
+            if not texto:
+                return self._responder(400, {"erro": "mensagem vazia"})
+            agora = int(time.time())
+
+            # Um intervalo minimo entre mensagens da MESMA conta. Sem isso, uma
+            # pessoa sozinha empurra o chat inteiro para fora da tela.
+            ultima = con.execute(
+                "SELECT quando FROM chat WHERE conta_id = ? ORDER BY id DESC LIMIT 1",
+                (conta["id"],)).fetchone()
+            if ultima and agora - ultima["quando"] < CHAT_INTERVALO:
+                return self._responder(429, {"erro": "espere um instante antes de enviar de novo"})
+
+            nome = (conta["nome"] or conta["email"].split("@")[0])[:40]
+            con.execute("INSERT INTO chat (conta_id, nome, texto, quando) VALUES (?,?,?,?)",
+                        (conta["id"], nome, texto, agora))
+            # Mantem so as ultimas mensagens: e conversa de saguao, nao arquivo.
+            con.execute(
+                "DELETE FROM chat WHERE id <= (SELECT MAX(id) - ? FROM chat)",
+                (CHAT_LIMITE,))
+        return self._responder(201, {"ok": True})
+
+    def _chat_ler(self):
+        parametros = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
+        try:
+            desde = int(parametros.get("desde", ["0"])[0])
+        except ValueError:
+            desde = 0
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            linhas = con.execute(
+                "SELECT id, conta_id, nome, texto, quando FROM chat WHERE id > ?"
+                " ORDER BY id DESC LIMIT 60", (desde,)).fetchall()
+        # Devolvemos em ordem cronologica: quem consome so anexa no fim da lista.
+        return self._responder(200, {"mensagens": [dict(l) for l in reversed(linhas)]})
 
     # ── Catalogo de saves da conta ──
     #

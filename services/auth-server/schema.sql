@@ -127,3 +127,35 @@ CREATE TABLE IF NOT EXISTS saves_da_conta (
 );
 
 CREATE INDEX IF NOT EXISTS idx_saves_conta ON saves_da_conta(conta_id, atualizado_em DESC);
+
+-- ─── Presença e chat do FC Hub ───────────────────────────────────────────────
+--
+-- Quem está online sai DAQUI, não do Discord. Antes a lista de "jogadores
+-- online" era a lista de amigos do Discord que estavam jogando — ou seja, ficava
+-- vazia para quem não usa Discord, que é a maioria.
+--
+-- Uma linha por conta (o id é a chave): presença é estado atual, não histórico.
+-- Quem está online é quem foi visto nos últimos segundos; não existe "sair",
+-- porque fechar o jogo no tapa nunca dispararia esse aviso.
+CREATE TABLE IF NOT EXISTS presenca (
+  conta_id  INTEGER PRIMARY KEY REFERENCES contas(id),
+  nome      TEXT    NOT NULL DEFAULT '',
+  clube     TEXT    NOT NULL DEFAULT '',
+  situacao  TEXT    NOT NULL DEFAULT '',
+  visto_em  INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_presenca_visto ON presenca(visto_em DESC);
+
+-- Chat público do FC Hub. Guardamos pouco de propósito: é conversa de saguão,
+-- não histórico que alguém vá querer consultar meses depois. O servidor apaga o
+-- que passa do limite para o banco não crescer sem fim.
+CREATE TABLE IF NOT EXISTS chat (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  conta_id  INTEGER NOT NULL REFERENCES contas(id),
+  nome      TEXT    NOT NULL DEFAULT '',
+  texto     TEXT    NOT NULL,
+  quando    INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_id ON chat(id DESC);

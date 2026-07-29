@@ -93,3 +93,68 @@ export async function listarSavesDaConta(): Promise<SaveDaConta[]> {
 export async function esquecerSaveDaConta(codigo: string): Promise<void> {
   await chamar("/saves/esquecer", { codigo })
 }
+
+// ─── FC Hub: quem está online e o chat ───────────────────────────────────────
+//
+// A lista de "jogadores online" saía dos amigos do Discord — ou seja, ficava
+// vazia para quem não usa Discord. Agora sai da própria conta do Ultrafoot.
+
+export interface JogadorOnline {
+  conta_id: number
+  nome: string
+  clube: string
+  situacao: string
+  visto_em: number
+}
+
+export interface MensagemDoChat {
+  id: number
+  conta_id: number
+  nome: string
+  texto: string
+  quando: number
+}
+
+/**
+ * Avisa que este jogador está online e devolve quem mais está.
+ *
+ * Não existe "sair": fechar o jogo no tapa nunca avisaria, e a lista encheria de
+ * fantasma. Quem para de bater some sozinho depois de 90 segundos.
+ */
+export async function baterPresenca(dados: { nome?: string; clube?: string; situacao?: string }):
+  Promise<{ eu: number; online: JogadorOnline[] } | null> {
+  return chamar<{ eu: number; online: JogadorOnline[] }>("/hub/presenca", dados)
+}
+
+export async function enviarMensagem(texto: string): Promise<string> {
+  const conta = await contaLogada()
+  if (!conta) return "entre na sua conta para conversar"
+  try {
+    const r = await fetch(`${BASE}/hub/chat`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${conta.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ texto }),
+    })
+    if (r.ok) return ""
+    const d = await r.json().catch(() => ({})) as { erro?: string }
+    return d.erro || "não foi possível enviar"
+  } catch {
+    return "sem conexão com o servidor"
+  }
+}
+
+/** Mensagens novas desde a última lida. `desde: 0` traz as mais recentes. */
+export async function lerChat(desde: number): Promise<MensagemDoChat[]> {
+  const conta = await contaLogada()
+  if (!conta) return []
+  try {
+    const r = await fetch(`${BASE}/hub/chat?desde=${desde}`, {
+      headers: { Authorization: `Bearer ${conta.token}` },
+    })
+    if (!r.ok) return []
+    const d = await r.json() as { mensagens: MensagemDoChat[] }
+    return d.mensagens ?? []
+  } catch {
+    return []
+  }
+}
