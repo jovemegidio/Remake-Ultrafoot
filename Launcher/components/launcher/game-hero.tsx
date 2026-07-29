@@ -12,6 +12,7 @@ export function GameHero({
   status,
   install,
   mode,
+  logado,
   onDownload,
   onRepair,
 }: {
@@ -19,6 +20,7 @@ export function GameHero({
   status: GameStatus
   install: InstallState
   mode: LaunchMode
+  logado: boolean
   onDownload: () => void
   onRepair: () => void
 }) {
@@ -102,6 +104,7 @@ export function GameHero({
             status={status}
             install={install}
             mode={mode}
+            logado={logado}
             downloadSizeMb={downloadSizeMb}
             onDownload={onDownload}
             onRepair={onRepair}

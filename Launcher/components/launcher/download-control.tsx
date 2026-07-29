@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { formatSize } from "@/lib/format"
 import type { GameStatus, InstallState, LaunchMode } from "./launcher-shell"
-import { Download, Play, RefreshCw, Loader2, Wifi, WifiOff, Wrench } from "lucide-react"
+import { Download, Play, RefreshCw, Loader2, Wifi, WifiOff, Wrench, LogIn } from "lucide-react"
 
 function formatSpeed(bytesPerSec: number): string {
   if (!bytesPerSec || bytesPerSec <= 0) return ""
@@ -25,6 +25,7 @@ export function DownloadControl({
   status,
   install,
   mode,
+  logado,
   downloadSizeMb,
   onDownload,
   onRepair,
@@ -33,6 +34,8 @@ export function DownloadControl({
   status: GameStatus
   install: InstallState
   mode: LaunchMode
+  /** Sem conta o download fica travado — ver `startDownload` em launcher-shell. */
+  logado: boolean
   downloadSizeMb: number | null | undefined
   onDownload: () => void
   onRepair: () => void
@@ -94,7 +97,11 @@ export function DownloadControl({
         <button
           onClick={onRepair}
           className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          title="Reinstala a versão atual por cima, corrigindo arquivos danificados."
+          title={
+            logado
+              ? "Reinstala a versão atual por cima, corrigindo arquivos danificados."
+              : "Reparar baixa o jogo de novo — entre na sua conta para usar."
+          }
         >
           <Wrench className="h-3.5 w-3.5" />
           Reparar
@@ -122,11 +129,15 @@ export function DownloadControl({
           onClick={onDownload}
           className="gap-2 bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
         >
-          <RefreshCw className="h-4 w-4" />
-          Atualizar
+          {logado ? <RefreshCw className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+          {logado ? "Atualizar" : "Entrar para atualizar"}
         </Button>
         <span className="text-xs text-muted-foreground">
-          Download da atualização: {formatSize(downloadSizeMb)}
+          {logado ? (
+            <>Download da atualização: {formatSize(downloadSizeMb)}</>
+          ) : (
+            <>Baixar exige conta — o jogo instalado continua abrindo normalmente.</>
+          )}
         </span>
       </div>
     )
@@ -139,10 +150,16 @@ export function DownloadControl({
         onClick={onDownload}
         className="gap-2 font-semibold"
       >
-        <Download className="h-4 w-4" />
-        Instalar
+        {logado ? <Download className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+        {logado ? "Instalar" : "Entrar para instalar"}
       </Button>
-      <span className="text-xs text-muted-foreground">Tamanho: {formatSize(downloadSizeMb)}</span>
+      <span className="text-xs text-muted-foreground">
+        {logado ? (
+          <>Tamanho: {formatSize(downloadSizeMb)}</>
+        ) : (
+          <>Crie sua conta ou entre para baixar o jogo · {formatSize(downloadSizeMb)}</>
+        )}
+      </span>
     </div>
   )
 }

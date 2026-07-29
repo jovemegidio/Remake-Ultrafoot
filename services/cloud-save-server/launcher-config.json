@@ -1,0 +1,254 @@
+{
+  "announcement": {
+    "text": "Conta Ultrafoot: ative uma vez e jogue em qualquer computador. Windows, Linux e macOS.",
+    "level": "info"
+  },
+  "social": {
+    "discord": "https://discord.gg/SJdHyQssEd"
+  },
+  "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
+  "news": [
+    {
+      "title": "Conta Ultrafoot: chave, saves e FC Hub",
+      "category": "Novidades",
+      "body": "Ativou uma vez, vale em qualquer computador: a chave passa a ficar na conta. Os saves são catalogados nela — dá para recuperar a carreira depois de formatar o PC — e o FC Hub mostra quem está online, com chat.",
+      "date": "2026-07-29",
+      "pinned": true
+    },
+    {
+      "title": "Loja dentro do launcher, com Pix",
+      "category": "Novidades",
+      "body": "O registro do jogo agora é vendido no próprio launcher, por Pix. Pagamento confirmado, chave emitida na hora e a conta já abre ativada.",
+      "date": "2026-07-29"
+    },
+    {
+      "title": "Fim do dinheiro infinito da base",
+      "category": "Correção",
+      "body": "A categoria de base reenchia o elenco até 18 atletas de graça no fim de cada temporada, o que também fazia aparecer jogador aleatório no time. Agora só repõe quem se aposentou. A folha salarial, que só subia, também foi corrigida.",
+      "date": "2026-07-29"
+    },
+    {
+      "title": "Elencos e times atualizados sem reinstalar",
+      "category": "Atualização",
+      "body": "A Central de Atualizações traz elencos e times novos direto para o jogo instalado — e só baixa quando você autoriza.",
+      "date": "2026-07-29"
+    },
+    {
+      "title": "Sua partida não é mais simulada sozinha",
+      "category": "Correção",
+      "body": "Avançar no calendário simulava a sua própria partida, e a partida de meio de semana da copa fazia o mesmo. Os dois casos foram corrigidos.",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Modo seleção: convocação, competições e amistosos",
+      "category": "Novidades",
+      "body": "Assumindo uma seleção, você ganha as telas de convocação, o calendário de competições e a marcação de amistosos.",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Ultrafoot 26 agora em Linux e macOS",
+      "category": "Lançamento",
+      "body": "Além do Windows, o jogo passa a ser publicado para Linux (AppImage) e macOS (universal, Apple Silicon e Intel).",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Uniformes e fotos do editor chegam a todos",
+      "category": "Atualização",
+      "body": "Escudos, uniformes e fotos de jogador editados agora viajam no build: o que você licencia aparece para todo mundo, inclusive na versão web.",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Campeonato pela internet funcionando",
+      "category": "Correção",
+      "body": "O jogo consultava a si mesmo em vez do servidor e falhava ao criar sala. Corrigido — dá para jogar campeonato online de novo.",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Acesso, rebaixamento e cerimônia de campeão",
+      "category": "Correção",
+      "body": "Clubes voltam a subir e cair de divisão, e a cerimônia de campeão só aparece quando há título de verdade.",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Goleiros e mercado corrigidos",
+      "category": "Correção",
+      "body": "Goleiros eram avaliados como atacantes e apareciam com overall muito abaixo do real. Craques europeus também deixam de sair por preço de banana.",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Mercado de juniores com busca e filtros",
+      "category": "Novidade",
+      "body": "A base ganhou busca por nome, posição, idade, overall e potencial — e acabou o dinheiro infinito ao vender promessas.",
+      "date": "2026-07-28"
+    },
+    {
+      "title": "Propostas de clube e seleção reformuladas",
+      "category": "Atualização",
+      "body": "Voltaram as sondagens de outros clubes e os convites de seleção; a demissão agora é clara e a Copa do Mundo aparece no calendário.",
+      "date": "2026-07-26"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.201",
+      "date": "2026-07-29",
+      "title": "Economia da base e folha salarial",
+      "latest": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Fim do dinheiro infinito da categoria de base: o elenco era reenchido até 18 atletas de graça no fim da temporada, o que também fazia aparecer jogador aleatório no time. Agora só repõe quem se aposentou."
+        },
+        {
+          "type": "fixed",
+          "text": "Folha salarial que só subia: um gasto avulso (quitar dívida, obra) virava despesa semanal para sempre."
+        }
+      ]
+    },
+    {
+      "version": "1.0.200",
+      "date": "2026-07-29",
+      "title": "Conta Ultrafoot: ativação, saves e elencos",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Ativação por chave na conta — ativou uma vez, vale em qualquer computador."
+        },
+        {
+          "type": "added",
+          "text": "Saves catalogados na conta: a carreira volta depois de formatar o PC."
+        },
+        {
+          "type": "added",
+          "text": "Central de Atualizações: elencos e times novos sem reinstalar, e só quando você autoriza."
+        }
+      ]
+    },
+    {
+      "version": "1.0.198",
+      "date": "2026-07-28",
+      "title": "Calendário e copas",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "A partida de meio de semana da copa não é mais simulada sozinha."
+        },
+        {
+          "type": "fixed",
+          "text": "Avançar no calendário não simula mais a sua própria partida."
+        }
+      ]
+    },
+    {
+      "version": "1.0.196",
+      "date": "2026-07-28",
+      "title": "O editor viaja no build",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Escudos, uniformes e fotos editados aparecem para todos os jogadores, inclusive na versão web."
+        }
+      ]
+    },
+    {
+      "version": "1.0.195",
+      "date": "2026-07-28",
+      "title": "Modo seleção",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Telas de convocação, competições e amistosos da seleção."
+        }
+      ]
+    },
+    {
+      "version": "1.0.188",
+      "date": "2026-07-27",
+      "title": "Linux e macOS",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Publicação para Linux (AppImage e .deb) e macOS (universal, Apple Silicon e Intel)."
+        },
+        {
+          "type": "added",
+          "text": "Atualização automática também no Linux e no macOS."
+        }
+      ]
+    },
+    {
+      "version": "1.0.175",
+      "date": "2026-07-26",
+      "title": "Propostas, demissão e Copa do Mundo no calendário",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Propostas de outros clubes voltam a aparecer — grandes quando você vai bem, menores quando tropeça."
+        },
+        {
+          "type": "fixed",
+          "text": "Convites de seleção acessíveis: fracas sondam técnicos modestos, fortes exigem currículo."
+        },
+        {
+          "type": "changed",
+          "text": "Demissão com aviso claro na Área do Treinador — sem mais cair no Botafogo sem entender."
+        },
+        {
+          "type": "added",
+          "text": "Copa do Mundo em destaque no calendário de junho/julho."
+        },
+        {
+          "type": "fixed",
+          "text": "Escudos importados pelo usuário passam a vencer o mapa padrão."
+        }
+      ]
+    },
+    {
+      "version": "1.0.150",
+      "date": "2026-07-24",
+      "title": "Brasões e uniformes das seleções",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Brasões e uniformes das seleções nacionais."
+        },
+        {
+          "type": "added",
+          "text": "Liga Argentina completa (30 clubes)."
+        },
+        {
+          "type": "fixed",
+          "text": "Correções da auditoria e códigos de país normalizados."
+        }
+      ]
+    },
+    {
+      "version": "1.0.145",
+      "date": "2026-07-23",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Datas reais da Copa do Mundo e das competições continentais de 2026."
+        },
+        {
+          "type": "changed",
+          "text": "Ligas europeias e estaduais ajustados às datas informadas."
+        }
+      ]
+    },
+    {
+      "version": "1.0.144",
+      "date": "2026-07-21",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Até 3 amistosos na Área do Treinador."
+        },
+        {
+          "type": "added",
+          "text": "Treino de entrosamento na data FIFA."
+        }
+      ]
+    }
+  ]
+}

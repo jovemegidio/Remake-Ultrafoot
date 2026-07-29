@@ -108,6 +108,19 @@ if (!publicar) {
   process.exit(0)
 }
 
+// ANTES DE SUBIR QUALQUER COISA: as abas Novidades e Changelog do launcher saem
+// do launcher-config.json, que ninguem lembrava de atualizar — o jogo chegou na
+// 1.0.201 com o launcher anunciando a 1.0.175. Reprovar aqui custa um commit;
+// reprovar depois deixaria o binario no ar e a novidade velha.
+if (!soLauncher) {
+  passo("conferindo as novidades do launcher")
+  rodar("node", ["scripts/publicar-launcher-config.mjs"], {
+    cwd: RAIZ,
+    stdio: "inherit",
+    env: { ...process.env, EXIGIR_VERSAO: VERSAO_JOGO },
+  })
+}
+
 // ─── Launcher ────────────────────────────────────────────────────────────────
 
 if (!soJogo) {
@@ -192,6 +205,13 @@ if (!soLauncher) {
   if (vps !== VERSAO_JOGO) throw new Error(`jogo nao confere na VPS: ${vps}, esperado ${VERSAO_JOGO}`)
   console.log(`  ok — jogo ${VERSAO_JOGO} publicado (${tamanhoMb} MB)`)
 }
+
+// ─── Novidades do launcher ───────────────────────────────────────────────────
+//
+// Sempre, nas duas modalidades: e o unico canal em que o jogador LE o que mudou.
+
+passo("launcher: novidades e changelog")
+rodar("node", ["scripts/publicar-launcher-config.mjs", "--publicar"], { cwd: RAIZ, stdio: "inherit" })
 
 // ─── Linux e macOS ───────────────────────────────────────────────────────────
 //

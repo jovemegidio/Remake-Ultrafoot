@@ -5,7 +5,13 @@ import { useEffect, useState } from "react"
 export interface LiveLatest {
   version: string
   sizeMb: number
+  /** Vazio fora do Windows — ver o comentario no `setLive`. */
   downloadUrl: string
+}
+
+function ehWindows(): boolean {
+  if (typeof navigator === "undefined") return true
+  return /Windows/i.test(navigator.userAgent)
 }
 
 /**
@@ -49,7 +55,11 @@ export function useLiveLatest(enabled = true): LiveLatest | null {
           setLive({
             version,
             sizeMb: Number(j?.sizeMb) || 0,
-            downloadUrl: j?.platforms?.["windows-x86_64"]?.url ?? "",
+            // A URL do latest.json e SO DO WINDOWS. Linux e macOS baixam do
+            // release `desktop-*` (.AppImage/.dmg), e quem resolve isso e o
+            // comando Rust `fetch_latest`. Entregar a URL daqui fora do Windows
+            // fazia o Linux baixar um .exe e salva-lo como AppImage.
+            downloadUrl: ehWindows() ? j?.platforms?.["windows-x86_64"]?.url ?? "" : "",
           })
           return
         } catch { /* tenta a proxima fonte */ }

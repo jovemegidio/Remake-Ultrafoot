@@ -110,8 +110,9 @@ export function LauncherShell({
 
   // Configurações do launcher.
   const [showSettings, setShowSettings] = useState(false)
-  // CONTA. O login e opcional nesta fase (ha jogadores ativos com registro por
-  // codigo serial); a sessao so muda o cabecalho e nunca bloqueia o Jogar.
+  // CONTA. BAIXAR o jogo exige conta (instalar, atualizar e reparar); JOGAR nao.
+  // A separacao e proposital: ha jogadores ativos com registro por codigo serial,
+  // e travar o Jogar deixaria quem ja pagou sem abrir o que ja esta instalado.
   const [sessao, setSessao] = useState<Sessao | null>(null)
   const [showAuth, setShowAuth] = useState(false)
   // Preferencias visuais. Aplicadas ANTES do primeiro render util para o
@@ -135,9 +136,9 @@ export function LauncherShell({
         if (!atualizada) setShowAuth(true)
       })
     }
-    // ABRE JA NO LOGIN, como Epic e EA App fazem. Mas o dialogo continua
-    // FECHAVEL: ha jogadores ativos, e muitos com registro por codigo serial —
-    // travar o launcher atras da conta deixaria quem ja pagou sem jogar.
+    // ABRE JA NO LOGIN, como Epic e EA App fazem. O dialogo segue FECHAVEL de
+    // proposito: quem ja tem o jogo instalado continua jogando sem conta. O que
+    // a conta destrava e o DOWNLOAD (instalar/atualizar/reparar).
     if (!s) setShowAuth(true)
   }, [])
   const [autostart, setAutostart] = useState(false)
@@ -199,6 +200,8 @@ export function LauncherShell({
   }, [forcedOffline])
 
   const online = mode === "online"
+  // Porteiro do download: sem sessao, nada e baixado (ver startDownload).
+  const logado = !!sessao
 
   // Config remota (comunidade): notícias, banner, redes e status do servidor.
   const [config, setConfig] = useState<LauncherConfig | null>(null)
@@ -311,7 +314,10 @@ export function LauncherShell({
   // versao estatica). Sempre que resolve, atualiza a versao/URL reais.
   const live = useLiveLatest(online)
   useEffect(() => {
-    if (live?.version) setLatest({ version: live.version, url: live.downloadUrl || null })
+    // Fora do Windows o `live` nao traz URL (o pacote do SO vem do release
+    // desktop-*, resolvido pelo Rust): preserva a que o `fetchLatest` ja achou
+    // em vez de zera-la, senao o download cairia na URL estatica do Windows.
+    if (live?.version) setLatest(prev => ({ version: live.version, url: live.downloadUrl || prev.url }))
   }, [live])
 
   const latestVersion = latest.version
@@ -361,12 +367,16 @@ export function LauncherShell({
   // uma falha de rede devolve o estado para "update".
   const autoUpdateAttemptRef = useRef<string | null>(null)
   useEffect(() => {
+    // Atualizacao tambem e download: sem conta nao roda sozinha. Quem entrar
+    // depois dispara esta tentativa na hora, porque `logado` esta nas deps.
+    if (!logado) return
     if (status !== "update" || install.downloading || !online || !latestVersion) return
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url || autoUpdateAttemptRef.current === latestVersion) return
     autoUpdateAttemptRef.current = latestVersion
     runInstall(url)
   }, [
+    logado,
     status,
     install.downloading,
     online,
@@ -382,19 +392,31 @@ export function LauncherShell({
       void launchGame(install.path) // abre o jogo instalado
       return
     }
+    // BAIXAR EXIGE CONTA. Em vez de um botao morto, o clique abre o login: quem
+    // ainda nao tem conta cria ali e volta para o download no mesmo fluxo.
+    if (!logado) {
+      setShowAuth(true)
+      return
+    }
     if (!online) return // instalar/atualizar exige rede
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url) return
     runInstall(url)
-  }, [install.downloading, install.path, status, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
+  }, [install.downloading, install.path, status, logado, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
   // Reparar: reinstala a versão atual por cima, corrigindo arquivos danificados.
+  // Baixa o instalador inteiro, entao passa pelo mesmo porteiro da conta.
   const startRepair = useCallback(() => {
-    if (install.downloading || !online) return
+    if (install.downloading) return
+    if (!logado) {
+      setShowAuth(true)
+      return
+    }
+    if (!online) return
     const url = latest.url ?? game.latestRelease?.downloadUrl
     if (!url) return
     runInstall(url)
-  }, [install.downloading, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
+  }, [install.downloading, logado, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
   const tabs: { key: Tab; label: string; icon: typeof Home }[] = [
     { key: "home", label: "Início", icon: Home },
@@ -618,6 +640,7 @@ export function LauncherShell({
                 status={status}
                 install={install}
                 mode={mode}
+                logado={logado}
                 onDownload={startDownload}
                 onRepair={startRepair}
               />

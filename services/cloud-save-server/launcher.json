@@ -1,5 +1,5 @@
 {
-  "version": "1.0.19",
-  "notes": "A loja agora vende o REGISTRO do jogo, pago por Pix pelo Asaas: a chave e emitida na hora que o pagamento e confirmado e a conta ja abre ativada em qualquer computador. Temas exclusivos e verba extra continuam saindo do saldo da carteira.",
+  "version": "1.0.20",
+  "notes": "Baixar o jogo agora pede conta: instalar, atualizar e reparar passam pelo login. Quem ja tem o jogo instalado continua jogando normalmente, inclusive offline. As abas Novidades e Changelog voltaram a mostrar as versoes atuais, e no Linux e no macOS o launcher deixa de baixar o instalador do Windows.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }

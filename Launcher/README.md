@@ -19,6 +19,23 @@ jogador — em **modo silencioso** — sem precisar atualizar por dentro do jogo
 
 O botão único mostra **Instalar** / **Atualizar** / **Jogar** conforme o estado real.
 
+### Uma instância por vez
+
+O launcher tem várias portas de entrada — atalho na área de trabalho, "iniciar com
+o Windows", ícone na bandeja — e ainda é reaberto pelo instalador do jogo. Abrir a
+segunda **não** cria outro processo: o `tauri-plugin-single-instance` avisa o que já
+está aberto, e ele traz a janela de volta e dá foco (`show_main`).
+
+Por que isso importa: fechar no X apenas esconde a janela, então era fácil abrir
+"mais um" sem perceber, e **dois launchers baixando a mesma atualização gravam no
+mesmo arquivo temporário** — um corrompe o download do outro. É o mesmo tipo de
+falha que já derrubou o auto-update antes (ver o bug do `%TEMP%` mais abaixo).
+
+O plugin é registrado **primeiro**, antes de qualquer outro: ele decide se este
+processo continua vivo, e isso tem de valer antes de a bandeja ou o autostart
+reservarem recurso. O auto-update não é afetado — `self_update` chama `app.exit(0)`
+antes de o `.bat` esperar os 2 s e reabrir o executável.
+
 ---
 
 ## Pré-requisitos (uma vez por máquina)
@@ -100,7 +117,15 @@ Na próxima abertura, todos os launchers instalados detectam a nova versão e se
 ### Config remota (notícias, banner, redes, status do servidor)
 O launcher lê, ao abrir, um **`launcher-config.json`** do release `launcher`
 (`.../releases/download/launcher/launcher-config.json`). Edite esse arquivo e
-**todos os launchers atualizam na hora, sem rebuild**. Campos (todos opcionais):
+**todos os launchers atualizam na hora, sem rebuild**.
+
+A fonte é **`services/cloud-save-server/launcher-config.json`**, no repositório —
+não edite o arquivo direto no release. Ele era mantido só lá, à mão, e envelheceu
+sozinho: o jogo chegou à 1.0.201 com o launcher anunciando a 1.0.175 como última
+versão. Hoje o `deploy-tudo.mjs` publica esse arquivo junto e **reprova o deploy**
+cujo changelog não fale da versão que está subindo.
+
+Campos (todos opcionais):
 
 ```json
 {
@@ -125,7 +150,8 @@ O launcher lê, ao abrir, um **`launcher-config.json`** do release `launcher`
 
 Para atualizar só a config (sem tocar no launcher):
 ```bash
-gh release upload launcher launcher-config.json --repo jovemegidio/Ultrafoot26 --clobber
+node scripts/publicar-launcher-config.mjs              # confere e mostra o que subiria
+node scripts/publicar-launcher-config.mjs --publicar   # sobe e confere no ar
 ```
 
 ### Assinatura (Authenticode / SmartScreen)

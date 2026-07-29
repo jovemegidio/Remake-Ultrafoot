@@ -11,10 +11,10 @@ import {
 /**
  * Login e cadastro do launcher.
  *
- * ⚠️ NESTA FASE O LOGIN E OPCIONAL. Ha jogadores ativos, muitos com registro por
- * codigo serial; exigir conta agora faria o jogo parar de abrir para quem ja
- * pagou. Por isso este dialogo pode ser FECHADO a qualquer momento e nunca
- * bloqueia o botao Jogar.
+ * ⚠️ A CONTA E OBRIGATORIA PARA BAIXAR o jogo — instalar, atualizar e reparar
+ * passam por aqui. Jogar nao: ha jogadores ativos, muitos com registro por
+ * codigo serial, e exigir conta para abrir faria o jogo parar para quem ja
+ * pagou. Por isso este dialogo continua FECHAVEL a qualquer momento.
  *
  * O registro existente e migrado sozinho: lib/auth.ts le o codigo da maquina e
  * o envia junto; o servidor vincula a conta e impede que outra pessoa o use.

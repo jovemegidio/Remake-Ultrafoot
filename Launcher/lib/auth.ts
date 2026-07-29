@@ -2,9 +2,9 @@
 
 // Cliente de contas do launcher: cadastro, login por senha e login com Google.
 //
-// ⚠️ NESTA FASE O LOGIN E OPCIONAL. Ha jogadores ativos e com REGISTRO por codigo
-// serial; exigir conta de uma vez faria o jogo parar de abrir para quem ja pagou.
-// O launcher mostra a area de conta, mas nunca bloqueia o botao Jogar.
+// ⚠️ A CONTA E OBRIGATORIA PARA BAIXAR o jogo (instalar, atualizar e reparar),
+// e NAO para jogar: ha jogadores ativos e com REGISTRO por codigo serial, e
+// travar o botao Jogar faria o jogo parar de abrir para quem ja pagou.
 //
 // O registro antigo NAO SE PERDE: `codigoRegistroLocal()` le o codigo que ja
 // esta na maquina e o envia no cadastro/login. O servidor vincula esse codigo a

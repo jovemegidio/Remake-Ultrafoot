@@ -930,6 +930,26 @@ fn desurlencode(s: &str) -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // UMA INSTANCIA POR VEZ — e o PRIMEIRO plugin de proposito: ele decide se
+        // este processo continua vivo, e essa decisao tem de vir antes de
+        // qualquer outro plugin reservar recurso (bandeja, autostart, janela).
+        //
+        // O launcher acumula tres portas de entrada — atalho na area de trabalho,
+        // "iniciar com o Windows" e o icone na bandeja — e ainda e reaberto pelo
+        // instalador do jogo. Sem trava, cada uma abria um processo novo, e dois
+        // launchers baixando a mesma atualizacao gravam no MESMO arquivo temporario:
+        // um corrompe o download do outro.
+        //
+        // Fechar no X so ESCONDE a janela (vai para a bandeja). Por isso a segunda
+        // abertura nao pode simplesmente morrer calada: quem clicou espera ver o
+        // launcher. `show_main` traz a janela de volta e da foco nela.
+        //
+        // O auto-update nao e afetado: `self_update` chama `app.exit(0)` antes de o
+        // .bat esperar os 2s e reabrir o executavel — o processo antigo ja morreu
+        // quando o novo sobe.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main(app);
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,

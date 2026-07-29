@@ -1,6 +1,6 @@
 [package]
 name = "ultrafoot-launcher"
-version = "1.0.19"
+version = "1.0.20"
 description = "Ultrafoot Launcher — baixa, instala e atualiza o Ultrafoot 26"
 authors = ["Ultrafoot Studio"]
 license = ""
@@ -19,6 +19,9 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
 # Iniciar o launcher junto com o Windows (opcional, controlado nas Configurações).
 tauri-plugin-autostart = "2"
+# Uma instancia por vez. Ver o comentario em `run()`: sem isto, "iniciar com o
+# Windows" + atalho + bandeja abrem tres launchers que brigam pelo mesmo download.
+tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # HTTP nativo (com TLS) para baixar latest.json e o setup.exe do GitHub.
