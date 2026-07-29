@@ -189,3 +189,31 @@ CREATE TABLE IF NOT EXISTS creditos (
 );
 
 CREATE INDEX IF NOT EXISTS idx_creditos_conta ON creditos(conta_id, quando DESC);
+
+-- ─── Pedidos e séries emitidas ───────────────────────────────────────────────
+--
+-- Um pedido é criado ANTES do pagamento e só entrega o produto quando o Asaas
+-- confirma pelo webhook. Sem essa tabela, o webhook chegaria sem saber a qual
+-- conta e a qual produto o pagamento se refere.
+CREATE TABLE IF NOT EXISTS pedidos (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  conta_id    INTEGER NOT NULL REFERENCES contas(id),
+  produto     TEXT    NOT NULL,
+  valor_cents INTEGER NOT NULL,
+  -- id da cobrança no Asaas; é por ele que o webhook encontra o pedido.
+  asaas_id    TEXT UNIQUE,
+  status      TEXT    NOT NULL DEFAULT 'pendente',
+  criado_em   INTEGER NOT NULL,
+  entregue_em INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_pedidos_conta ON pedidos(conta_id, criado_em DESC);
+
+-- Séries de licença emitidas PELO SERVIDOR (lote 9). Existe para a numeração
+-- nunca repetir: duas séries iguais geram o mesmo código, e o segundo comprador
+-- receberia uma chave já vinculada a outra conta.
+CREATE TABLE IF NOT EXISTS series_emitidas (
+  serie_emitida INTEGER PRIMARY KEY,
+  conta_id      INTEGER NOT NULL REFERENCES contas(id),
+  quando        INTEGER NOT NULL
+);

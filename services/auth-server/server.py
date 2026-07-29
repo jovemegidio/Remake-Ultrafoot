@@ -82,6 +82,7 @@ def iniciar_banco() -> None:
             ("ativado", "INTEGER NOT NULL DEFAULT 0"),
             ("licenca_serie", "INTEGER"),
             ("licenca_lote", "INTEGER"),
+            ("asaas_cliente", "TEXT"),
         ):
             if coluna not in existentes:
                 con.execute(f"ALTER TABLE contas ADD COLUMN {coluna} {definicao}")
@@ -206,6 +207,12 @@ def codigo_da_conta(con, conta_id: int) -> str:
 # ⚠️ SO EXISTEM ITENS QUE O JOGO/LAUNCHER REALMENTE ENTREGAM HOJE. Vender algo
 # que ainda nao funciona e cobrar por promessa.
 CATALOGO = [
+    # PRIMEIRO ITEM: o registro do jogo. E o que a pessoa vem comprar; deixar
+    # tema na frente de licenca inverte a prioridade da vitrine.
+    {"id": "registro", "nome": "Registro do Ultrafoot 26", "tipo": "registro",
+     "descricao": "Libera a versao completa do jogo, para sempre, em qualquer computador "
+                  "onde voce entrar na sua conta. A chave e emitida na hora do pagamento.",
+     "preco_cents": 4990, "carga": {}},
     {"id": "tema_ouro", "nome": "Tema Ouro", "tipo": "tema_launcher",
      "descricao": "Fundo dourado exclusivo para o launcher.", "preco_cents": 490,
      "carga": {"tema": "ouro"}},
@@ -250,6 +257,121 @@ def creditar(con, conta_id: int, valor_cents: int, origem: str, id_externo: str 
                 " atualizado_em = excluded.atualizado_em",
                 (conta_id, valor_cents, agora))
     return True
+
+
+# ─── Emissao de chave de registro ─────────────────────────────────────────────
+#
+# O servidor CONSEGUE emitir chaves porque tem o mesmo segredo que as valida.
+# E o que permite vender o registro na loja e entregar na hora, sem ninguem
+# despachar codigo a mao.
+#
+# ⚠️ LOTE RESERVADO. O codigo carrega serie (24 bits) + lote (6 bits). O lote 0 e
+# o codigo mestre de desenvolvimento e os lotes 1..8 sao os que voce ja emitiu a
+# mao pelo scripts/gerar-codigos.mjs (planilha em ~/.ultrafoot-keys). A venda
+# online usa o LOTE 9, exclusivo, e uma contagem propria de serie. Sem essa
+# separacao, duas vendas poderiam gerar o MESMO codigo — uma pela planilha,
+# outra pelo servidor — e o segundo comprador levaria uma chave ja vinculada.
+LOTE_DA_LOJA = 9
+
+
+def _escrever_bits(grupos: list, inicio: int, quantos: int, valor: int) -> None:
+    for i in range(quantos):
+        bit = inicio + i
+        indice = bit // 5
+        deslocamento = 4 - (bit % 5)
+        if (valor >> (quantos - 1 - i)) & 1:
+            grupos[indice] |= 1 << deslocamento
+
+
+def montar_codigo(serie: int, lote: int) -> str:
+    """Inverso de validar_codigo_licenca. Mesmo formato de lib/license.ts."""
+    assinatura = hmac.new(LICENCA_SEGREDO.encode("utf-8"),
+                          f"{serie}:{lote}".encode("utf-8"), hashlib.sha256).digest()
+    mac = int.from_bytes(assinatura[:5], "big") * 32 + (assinatura[5] >> 3)
+    grupos = [0] * 15
+    _escrever_bits(grupos, 0, 24, serie)
+    _escrever_bits(grupos, 24, 6, lote)
+    _escrever_bits(grupos, 30, 45, mac)
+    texto = "".join(ALFABETO[g] for g in grupos)
+    return f"{PREFIXO_LICENCA}-{texto[0:5]}-{texto[5:10]}-{texto[10:15]}"
+
+
+def emitir_codigo_para(con, conta_id: int) -> str:
+    """Emite (ou reaproveita) a chave de registro desta conta.
+
+    Reaproveitar importa: se a pessoa comprar de novo por engano, ou se a
+    entrega for repetida por um webhook duplicado, ela precisa continuar com A
+    MESMA chave — duas chaves para a mesma conta viram suporte no dia seguinte.
+    """
+    ja = con.execute(
+        "SELECT codigo FROM licencas_migradas WHERE conta_id = ? ORDER BY migrada_em LIMIT 1",
+        (conta_id,)).fetchone()
+    if ja:
+        return ja["codigo"]
+
+    linha = con.execute("SELECT MAX(serie_emitida) AS ultima FROM series_emitidas").fetchone()
+    serie = int(linha["ultima"] or 0) + 1
+    con.execute("INSERT INTO series_emitidas (serie_emitida, conta_id, quando) VALUES (?,?,?)",
+                (serie, conta_id, int(time.time())))
+    codigo = montar_codigo(serie, LOTE_DA_LOJA)
+    ativar_conta(con, conta_id, codigo)
+    return codigo
+
+
+# ─── Asaas (pagamento) ────────────────────────────────────────────────────────
+#
+# O token da API fica SO no servidor. Nunca no launcher: com ele se emite
+# cobranca e se consulta cliente da conta inteira.
+#
+# A entrega NAO acontece quando o cliente diz que pagou — acontece quando o ASAAS
+# avisa, pelo webhook. Confiar no cliente aqui e entregar produto de graca para
+# quem souber chamar a rota.
+
+ASAAS_TOKEN = os.environ.get("ULTRAFOOT_ASAAS_TOKEN", "")
+# Sandbox enquanto nao houver conta de producao. Trocar por
+# https://api.asaas.com/v3 quando for cobrar de verdade.
+ASAAS_BASE = os.environ.get("ULTRAFOOT_ASAAS_BASE", "https://api-sandbox.asaas.com/v3")
+# Segredo combinado com o Asaas no cadastro do webhook. Sem ele, qualquer um que
+# descubra a URL "confirma" pagamentos e leva produto sem pagar.
+ASAAS_WEBHOOK_TOKEN = os.environ.get("ULTRAFOOT_ASAAS_WEBHOOK_TOKEN", "")
+
+
+def asaas(rota: str, corpo: dict | None = None, metodo: str = "GET") -> dict | None:
+    if not ASAAS_TOKEN:
+        return None
+    dados = json.dumps(corpo).encode() if corpo is not None else None
+    req = urllib.request.Request(f"{ASAAS_BASE}{rota}", data=dados, method=metodo)
+    req.add_header("access_token", ASAAS_TOKEN)
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read())
+    except Exception as e:
+        detalhe = ""
+        try:
+            detalhe = e.read().decode("utf-8", "replace")[:300]  # type: ignore[attr-defined]
+        except Exception:
+            detalhe = repr(e)
+        print(f"[asaas] {metodo} {rota} falhou: {detalhe}", file=sys.stderr, flush=True)
+        return None
+
+
+def cliente_asaas(con, conta) -> str | None:
+    """Id do cliente no Asaas, criando na primeira compra."""
+    if conta["asaas_cliente"]:
+        return conta["asaas_cliente"]
+    criado = asaas("/customers", {
+        "name": conta["nome"] or conta["email"].split("@")[0],
+        "email": conta["email"],
+        # `externalReference` deixa o painel do Asaas apontar de volta para a
+        # conta certa — sem isso, conciliar pagamento com jogador vira garimpo.
+        "externalReference": f"conta:{conta['id']}",
+        **({"mobilePhone": re.sub(r"[^0-9]", "", conta["telefone"])} if conta["telefone"] else {}),
+    }, "POST")
+    if not criado or not criado.get("id"):
+        return None
+    con.execute("UPDATE contas SET asaas_cliente = ? WHERE id = ?", (criado["id"], conta["id"]))
+    return criado["id"]
 
 
 # ─── Senha ────────────────────────────────────────────────────────────────────
@@ -483,10 +605,17 @@ class Handler(BaseHTTPRequestHandler):
                     "SELECT produto, valor_cents, criada_em FROM compras"
                     " WHERE conta_id = ? AND estorno_de IS NULL ORDER BY criada_em DESC",
                     (conta["id"],)).fetchall()
+                pendentes = con.execute(
+                    "SELECT id, produto, valor_cents, criado_em FROM pedidos"
+                    " WHERE conta_id = ? AND status = 'pendente' ORDER BY criado_em DESC LIMIT 5",
+                    (conta["id"],)).fetchall()
                 return self._responder(200, {
                     "catalogo": CATALOGO,
                     "saldo_cents": saldo_da_conta(con, conta["id"]),
                     "meus_itens": [dict(m) for m in meus],
+                    "pedidos_pendentes": [dict(p) for p in pendentes],
+                    "ativado": bool(conta["ativado"]),
+                    "pagamento_ligado": bool(ASAAS_TOKEN),
                 })
         if self.path.split("?")[0] == "/hub/chat":
             return self._chat_ler()
@@ -533,6 +662,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._login(corpo)
         if rota == "/google":
             return self._google(corpo)
+        if rota == "/loja/pagar":
+            return self._pagar(corpo)
+        if rota == "/asaas/webhook":
+            return self._webhook_asaas(corpo)
         if rota == "/loja/comprar":
             return self._comprar(corpo)
         if rota == "/hub/presenca":
@@ -595,6 +728,131 @@ class Handler(BaseHTTPRequestHandler):
                                        (conta_id,)).fetchone()["ativado"])
         return self._responder(201, {"token": token, "email": email, "nome": nome,
                                      "ativado": ativado, "codigo_ativacao": codigo if ativado else ""})
+
+    def _pagar(self, corpo: dict):
+        """Cria a cobranca Pix no Asaas e devolve o QR/link para o jogador.
+
+        NAO entrega nada aqui. A entrega acontece no webhook, quando o Asaas
+        confirma o recebimento — confiar no cliente dizer "paguei" e entregar de
+        graca para quem souber chamar a rota.
+        """
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+            if not ASAAS_TOKEN:
+                return self._responder(503, {
+                    "erro": "o pagamento ainda nao esta configurado neste servidor",
+                })
+
+            item = CATALOGO_POR_ID.get(corpo.get("produto") or "")
+            if not item:
+                return self._responder(404, {"erro": "item nao encontrado"})
+            if item["id"] == "registro" and conta["ativado"]:
+                return self._responder(409, {"erro": "sua conta ja esta registrada"})
+
+            cliente = cliente_asaas(con, conta)
+            if not cliente:
+                return self._responder(502, {"erro": "nao consegui falar com o Asaas agora"})
+
+            agora = int(time.time())
+            cur = con.execute(
+                "INSERT INTO pedidos (conta_id, produto, valor_cents, status, criado_em)"
+                " VALUES (?,?,?,?,?)",
+                (conta["id"], item["id"], item["preco_cents"], "pendente", agora))
+            pedido_id = cur.lastrowid
+
+            cobranca = asaas("/payments", {
+                "customer": cliente,
+                "billingType": corpo.get("forma") if corpo.get("forma") in
+                    ("PIX", "BOLETO", "CREDIT_CARD", "UNDEFINED") else "PIX",
+                "value": round(item["preco_cents"] / 100, 2),
+                # Vencimento hoje: Pix nao espera, e boleto com prazo longo deixa
+                # pedido pendente ocupando a fila por dias.
+                "dueDate": time.strftime("%Y-%m-%d", time.gmtime(agora + 86400)),
+                "description": f"Ultrafoot 26 — {item['nome']}",
+                # Amarra a cobranca ao PEDIDO, nao a conta: e o pedido que diz
+                # qual produto entregar quando o webhook chegar.
+                "externalReference": f"pedido:{pedido_id}",
+            }, "POST")
+
+            if not cobranca or not cobranca.get("id"):
+                con.execute("UPDATE pedidos SET status = 'falhou' WHERE id = ?", (pedido_id,))
+                return self._responder(502, {"erro": "nao consegui gerar a cobranca"})
+
+            con.execute("UPDATE pedidos SET asaas_id = ? WHERE id = ?",
+                        (cobranca["id"], pedido_id))
+
+            pix = asaas(f"/payments/{cobranca['id']}/pixQrCode") or {}
+        return self._responder(201, {
+            "pedido": pedido_id,
+            "cobranca": cobranca["id"],
+            "link": cobranca.get("invoiceUrl"),
+            "pix_copia_e_cola": pix.get("payload"),
+            "pix_qr_base64": pix.get("encodedImage"),
+            "valor_cents": item["preco_cents"],
+        })
+
+    def _entregar_pedido(self, con, pedido) -> None:
+        """Entrega o produto de um pedido pago. Idempotente de proposito.
+
+        O Asaas reenvia webhook quando nao recebe 200 — sem essa protecao, uma
+        falha de rede vira registro emitido duas vezes ou saldo creditado em
+        dobro.
+        """
+        if pedido["status"] == "entregue":
+            return
+        item = CATALOGO_POR_ID.get(pedido["produto"])
+        agora = int(time.time())
+
+        if item and item["tipo"] == "registro":
+            emitir_codigo_para(con, pedido["conta_id"])
+        elif item and item["tipo"] in ("tema_launcher", "verba"):
+            # Estes ja sao itens de catalogo: registramos a compra do mesmo jeito
+            # que a compra por saldo, para o extrato ficar unico.
+            con.execute("INSERT INTO compras (conta_id, produto, valor_cents, moeda, criada_em)"
+                        " VALUES (?,?,?,?,?)",
+                        (pedido["conta_id"], pedido["produto"], pedido["valor_cents"], "BRL", agora))
+        else:
+            # Produto desconhecido (catalogo mudou depois do pedido): credita o
+            # valor na carteira em vez de sumir com o dinheiro do jogador.
+            creditar(con, pedido["conta_id"], pedido["valor_cents"],
+                     f"pedido {pedido['id']} sem produto", f"pedido:{pedido['id']}")
+
+        con.execute("UPDATE pedidos SET status = 'entregue', entregue_em = ? WHERE id = ?",
+                    (agora, pedido["id"]))
+
+    def _webhook_asaas(self, corpo: dict):
+        """Confirmacao de pagamento vinda do Asaas.
+
+        A autenticacao e o token combinado no cadastro do webhook. Sem ele,
+        qualquer um que descubra a URL "confirma" pagamentos e leva produto de
+        graca — por isso a rota recusa quando o token nao esta configurado, em
+        vez de aceitar tudo.
+        """
+        enviado = self.headers.get("asaas-access-token", "")
+        if not ASAAS_WEBHOOK_TOKEN or not hmac.compare_digest(enviado, ASAAS_WEBHOOK_TOKEN):
+            return self._responder(401, {"erro": "nao autorizado"})
+
+        evento = corpo.get("event") or ""
+        pagamento = corpo.get("payment") or {}
+        asaas_id = pagamento.get("id") or ""
+
+        # Só estes dois significam dinheiro na conta. `PAYMENT_CREATED` e afins
+        # chegam antes de qualquer pagamento acontecer.
+        if evento not in ("PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"):
+            return self._responder(200, {"ok": True, "ignorado": evento})
+
+        with conectar() as con:
+            pedido = con.execute("SELECT * FROM pedidos WHERE asaas_id = ?", (asaas_id,)).fetchone()
+            if not pedido:
+                # 200 de proposito: sem o pedido nao ha o que fazer, e devolver
+                # erro faria o Asaas reenviar para sempre.
+                print(f"[asaas] webhook sem pedido correspondente: {asaas_id}",
+                      file=sys.stderr, flush=True)
+                return self._responder(200, {"ok": True, "sem_pedido": True})
+            self._entregar_pedido(con, pedido)
+        return self._responder(200, {"ok": True})
 
     def _comprar(self, corpo: dict):
         """Compra um item da loja gastando o saldo da carteira.

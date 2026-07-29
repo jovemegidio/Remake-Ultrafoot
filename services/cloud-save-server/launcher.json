@@ -1,5 +1,5 @@
 {
-  "version": "1.0.17",
-  "notes": "A aba FC Hub agora mostra de verdade quem esta online e tem conversa entre os tecnicos. A troca de fonte passou a funcionar, o estado do servidor online voltou a aparecer e a versao no rodape e a real. Quem e administrador ganha o atalho do painel de contas.",
+  "version": "1.0.19",
+  "notes": "A loja agora vende o REGISTRO do jogo, pago por Pix pelo Asaas: a chave e emitida na hora que o pagamento e confirmado e a conta ja abre ativada em qualquer computador. Temas exclusivos e verba extra continuam saindo do saldo da carteira.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }
