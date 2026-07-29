@@ -443,6 +443,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._responder(200, {
                     "id": conta["id"], "email": conta["email"], "nome": conta["nome"],
                     "telefone": conta["telefone"], "ativado": bool(conta["ativado"]),
+                    # O launcher usa isto so para MOSTRAR o atalho do painel. Quem
+                    # autoriza de verdade continua sendo o servidor, em cada rota
+                    # /admin/*: esconder o botao nunca foi controle de acesso.
+                    "admin": bool(conta["admin"]),
                     "codigo_ativacao": codigo_da_conta(con, conta["id"]),
                     "compras": [dict(c) for c in compras],
                 })

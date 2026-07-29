@@ -23,6 +23,8 @@ export interface Sessao {
   ativado?: boolean
   /** Chave de ativacao da conta, repassada ao jogo (ver `entregarAtivacaoAoJogo`). */
   codigoAtivacao?: string
+  /** Só para MOSTRAR o atalho do painel; a autorização real é do servidor. */
+  admin?: boolean
 }
 
 export function sessaoSalva(): Sessao | null {
@@ -180,13 +182,16 @@ export async function revalidar(): Promise<Sessao | null> {
       return null
     }
     if (!r.ok) return atual
-    const d = await r.json() as { nome?: string; email?: string; ativado?: boolean; codigo_ativacao?: string }
+    const d = await r.json() as {
+      nome?: string; email?: string; ativado?: boolean; codigo_ativacao?: string; admin?: boolean
+    }
     const s: Sessao = {
       ...atual,
       nome: d.nome ?? atual.nome,
       email: d.email ?? atual.email,
       ativado: !!d.ativado,
       codigoAtivacao: d.codigo_ativacao || atual.codigoAtivacao || "",
+      admin: !!d.admin,
     }
     guardarSessao(s)
     await entregarAtivacaoAoJogo(s)

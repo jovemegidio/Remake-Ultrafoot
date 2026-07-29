@@ -158,8 +158,21 @@ export function aplicarPreferencias(p: Preferencias): void {
   raiz.style.setProperty("--muted-foreground", claro ? "#5b686e" : "#8b9aa1")
   raiz.style.setProperty("--accent-foreground", tema.sobrePrimaria)
 
+  // A FONTE ENTRA PELA VARIAVEL QUE O TAILWIND JA USA.
+  //
+  // Antes isto dependia de uma regra CSS nova (`html[data-uf-tema] body`) vencer
+  // a classe `.font-sans` do body na cascata. Especificidade dizia que venceria,
+  // e na pratica a fonte nao trocava. Sobrescrever `--font-geist-sans` — a
+  // variavel que `.font-sans{font-family:var(--font-geist-sans)}` ja le — nao
+  // depende de cascata nenhuma: e o mesmo truque usado nas cores do tema.
+  //
+  // `--font-space-grotesk` (classe `font-display`, usada nos titulos) acompanha,
+  // senao trocar a fonte mudaria o corpo do texto e deixaria os titulos com a
+  // fonte antiga. `--font-geist-mono` fica de fora de proposito: codigo, versao e
+  // placar precisam de largura fixa.
+  raiz.style.setProperty("--font-geist-sans", fonte.pilha)
+  raiz.style.setProperty("--font-space-grotesk", fonte.pilha)
   raiz.style.setProperty("--uf-fonte", fonte.pilha)
-  raiz.style.fontFamily = fonte.pilha
 
   // O tamanho vira `font-size` da raiz; tudo que usa rem acompanha. Limitado a
   // 80–140% porque fora disso o layout do launcher quebra de verdade — texto

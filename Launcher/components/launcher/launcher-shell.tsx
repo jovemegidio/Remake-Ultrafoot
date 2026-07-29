@@ -537,8 +537,10 @@ export function LauncherShell({
               </span>
             </button>
           )}
+          {/* Versao REAL publicada, nao a do dado estatico do build — o rodape
+              mostrava 1.0.191 com a 1.0.200 no ar. */}
           <p className="mt-2 hidden px-1 text-[10px] text-white/20 lg:block">
-            Ultrafoot 26 · v{game.latestRelease?.version ?? ""}
+            Ultrafoot 26 · v{live?.version ?? latest.version ?? game.latestRelease?.version ?? ""}
           </p>
         </div>
       </aside>
@@ -630,6 +632,7 @@ export function LauncherShell({
               serverStatus={serverStatus}
               config={config}
               ativado={!!sessao?.ativado}
+              ehAdmin={!!sessao?.admin}
               onEntrar={() => setShowAuth(true)}
               onAtivar={() => setShowAuth(true)}
               onOpen={openExternal}

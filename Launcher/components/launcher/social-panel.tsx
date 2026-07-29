@@ -1,10 +1,18 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
-import { Users, Wifi, WifiOff, MessageCircle, ExternalLink, KeyRound, LogIn, ShieldCheck } from "lucide-react"
+import {
+  Users, Wifi, WifiOff, MessageCircle, ExternalLink, KeyRound, LogIn, ShieldCheck,
+  Send, ShieldAlert,
+} from "lucide-react"
 import type { LauncherConfig, ServerStatus } from "@/lib/launcher-bridge"
 import type { Sessao } from "@/lib/auth"
 import { iniciais, type Preferencias } from "@/lib/preferencias"
+import {
+  baterPresenca, lerChat, enviarMensagem,
+  type JogadorOnline, type MensagemDoChat,
+} from "@/lib/hub"
 
 /**
  * FC HUB — a aba social do launcher.
@@ -19,6 +27,7 @@ export function SocialPanel({
   serverStatus,
   config,
   ativado,
+  ehAdmin,
   onEntrar,
   onAtivar,
   onOpen,
@@ -28,10 +37,76 @@ export function SocialPanel({
   serverStatus: ServerStatus | null
   config: LauncherConfig | null
   ativado: boolean
+  /** Mostra o atalho do painel de administração. */
+  ehAdmin: boolean
   onEntrar: () => void
   onAtivar: () => void
   onOpen: (url: string) => void
 }) {
+  // PRESENCA E CHAT. Batida a cada 30s (a janela do servidor e 90s, entao ha
+  // folga de sobra para rede ruim) e conversa buscada a cada 5s. Sondagem, e nao
+  // WebSocket, de proposito: o servidor de contas e HTTP simples, sem dependencia
+  // externa, e um saguao nao precisa de tempo real ao segundo.
+  const [naSala, setNaSala] = useState<JogadorOnline[]>([])
+  const [eu, setEu] = useState(0)
+  const [mensagens, setMensagens] = useState<MensagemDoChat[]>([])
+  const [texto, setTexto] = useState("")
+  const [erroChat, setErroChat] = useState("")
+  const [enviando, setEnviando] = useState(false)
+  const ultimoId = useRef(0)
+  const fimDoChat = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!sessao) return
+    let vivo = true
+    const bater = async () => {
+      const r = await baterPresenca()
+      if (!vivo || !r) return
+      setEu(r.eu)
+      setNaSala(r.online)
+    }
+    void bater()
+    const t = setInterval(bater, 30_000)
+    return () => { vivo = false; clearInterval(t) }
+  }, [sessao])
+
+  useEffect(() => {
+    if (!sessao) return
+    let vivo = true
+    const buscar = async () => {
+      const novas = await lerChat(ultimoId.current)
+      if (!vivo || novas.length === 0) return
+      ultimoId.current = novas[novas.length - 1].id
+      // Corta o historico na tela: conversa longa acumulando vira milhares de
+      // nos no DOM e o painel comeca a travar.
+      setMensagens(antes => [...antes, ...novas].slice(-120))
+    }
+    void buscar()
+    const t = setInterval(buscar, 5_000)
+    return () => { vivo = false; clearInterval(t) }
+  }, [sessao])
+
+  useEffect(() => {
+    fimDoChat.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [mensagens.length])
+
+  const mandar = async () => {
+    const limpo = texto.trim()
+    if (!limpo || enviando) return
+    setEnviando(true)
+    const problema = await enviarMensagem(limpo)
+    setErroChat(problema)
+    if (!problema) {
+      setTexto("")
+      const novas = await lerChat(ultimoId.current)
+      if (novas.length) {
+        ultimoId.current = novas[novas.length - 1].id
+        setMensagens(antes => [...antes, ...novas].slice(-120))
+      }
+    }
+    setEnviando(false)
+  }
+
   const online = serverStatus?.online ?? false
   const social = config?.social
 
@@ -101,6 +176,91 @@ export function SocialPanel({
         </div>
       </section>
 
+      {/* QUEM ESTA ONLINE + CONVERSA. So aparece com sessao: sem conta nao ha como
+          identificar ninguem, e uma lista vazia sem explicacao parece defeito. */}
+      {sessao ? (
+        <section className="grid gap-4 lg:grid-cols-[240px_1fr]">
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="mb-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              <Users className="h-3.5 w-3.5" /> Online · {naSala.length}
+            </p>
+            <div className="max-h-72 space-y-1 overflow-y-auto">
+              {naSala.length === 0 && (
+                <p className="px-1 py-2 text-xs text-muted-foreground">
+                  Ninguém mais por aqui agora.
+                </p>
+              )}
+              {naSala.map(j => (
+                <div
+                  key={j.conta_id}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg p-2",
+                    j.conta_id === eu ? "bg-primary/10" : "hover:bg-white/[0.04]",
+                  )}
+                >
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                    {(j.nome || "?").slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-semibold text-foreground">
+                      {j.nome}
+                      {j.conta_id === eu && <span className="text-muted-foreground"> (você)</span>}
+                    </span>
+                    <span className="block truncate text-[10px] text-primary/70">
+                      {j.clube || j.situacao || "No Ultrafoot"}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex min-h-[280px] flex-col rounded-2xl border border-border bg-card">
+            <p className="flex items-center gap-1.5 border-b border-border px-4 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              <MessageCircle className="h-3.5 w-3.5" /> Conversa
+            </p>
+            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-4">
+              {mensagens.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Nenhuma mensagem ainda. Diga oi — quem estiver online vai ver.
+                </p>
+              )}
+              {mensagens.map(m => (
+                <div key={m.id} className="text-[13px] leading-snug">
+                  <span className={cn("font-bold", m.conta_id === eu ? "text-primary" : "text-foreground")}>
+                    {m.nome}
+                  </span>
+                  <span className="ml-1.5 text-[10px] text-muted-foreground">
+                    {new Date(m.quando * 1000).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <p className="text-muted-foreground">{m.texto}</p>
+                </div>
+              ))}
+              <div ref={fimDoChat} />
+            </div>
+            {erroChat && <p className="px-4 pb-1 text-xs text-red-400">{erroChat}</p>}
+            <div className="flex gap-2 border-t border-border p-3">
+              <input
+                value={texto}
+                onChange={e => setTexto(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") void mandar() }}
+                maxLength={300}
+                placeholder="Escreva uma mensagem…"
+                className="flex-1 rounded-lg border border-border bg-black/25 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
+              />
+              <button
+                onClick={() => void mandar()}
+                disabled={!texto.trim() || enviando}
+                className="rounded-lg bg-primary px-3 py-2 text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-35"
+                aria-label="Enviar"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {/* Estado do FC Hub */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
@@ -129,6 +289,26 @@ export function SocialPanel({
           ela mudar, atualize antes de entrar numa sala.
         </p>
       </section>
+
+      {/* PAINEL DE ADMINISTRACAO. Aparece so para quem e admin — e antes disto o
+          endereco nao existia em lugar nenhum da interface, entao a pagina
+          existia e ninguem tinha como chegar nela. */}
+      {ehAdmin && (
+        <section className="rounded-2xl border border-primary/25 bg-primary/[0.05] p-5">
+          <h3 className="mb-1 flex items-center gap-2 text-sm font-bold text-foreground">
+            <ShieldAlert className="h-4 w-4 text-primary" /> Administração
+          </h3>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Gerenciar contas, banir e consultar o histórico. Entre com este mesmo e-mail e senha.
+          </p>
+          <button
+            onClick={() => onOpen("https://ultrafoot.179-198-103-30.sslip.io/painel/")}
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
+          >
+            <ExternalLink className="h-4 w-4" /> Abrir o painel
+          </button>
+        </section>
+      )}
 
       {/* Comunidade */}
       <section className="rounded-2xl border border-border bg-card p-5">

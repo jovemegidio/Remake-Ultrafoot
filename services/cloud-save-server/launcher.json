@@ -1,5 +1,5 @@
 {
-  "version": "1.0.16",
-  "notes": "20 temas e 20 fontes para deixar o launcher com a sua cara, foto no avatar, alto contraste, texto maior e opcao de reduzir animacoes. A aba FC Hub mostra sua conta e o estado do servidor online. Voce continua logado ao reabrir, e no cadastro ha telefone e o campo de codigo de ativacao.",
+  "version": "1.0.17",
+  "notes": "A aba FC Hub agora mostra de verdade quem esta online e tem conversa entre os tecnicos. A troca de fonte passou a funcionar, o estado do servidor online voltou a aparecer e a versao no rodape e a real. Quem e administrador ganha o atalho do painel de contas.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }
