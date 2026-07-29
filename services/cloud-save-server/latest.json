@@ -1,12 +1,12 @@
 {
-  "version": "1.0.200",
-  "notes": "FC Hub de verdade: veja quem esta online e converse no chat, tudo pela sua conta. Se voce informou o codigo de ativacao no launcher, o jogo abre ativado sem pedir registro. Seus saves na nuvem ficam catalogados na conta — depois de formatar, a lista aparece pronta na tela de carregar. E os elencos passam a receber correcoes pelo servidor, sem reinstalar o jogo.",
+  "version": "1.0.201",
+  "notes": "Corrige o dinheiro infinito da categoria de base: o jogo reenchia o elenco ate 18 atletas de graca no fim de cada temporada, o que tambem fazia aparecerem jogadores aleatorios no time. Agora so repoe quem se aposentou. Corrige tambem a folha salarial, que so subia: um gasto avulso (pagar divida, obras) virava despesa semanal para sempre.",
   "sizeMb": 523,
-  "sha256": "2DBC00FBB83FD202E7BB1C90F2123208D2D27C71FA2542FFE66EA684989ABD32",
+  "sha256": "0E662D5B1ECD76E35AB2740FA09F9347B2648EA972867B7C1A1F16E6CE5EB520",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRU9GV3UyaEZyaGNGZy9xaE9vcWlSQnJJaGdpUDNDZ2tKYytDemY1T3BmUVRIQVI1UkxJeEJGSnZjQVhnaC96VWtyM1hzdFhZZnE5WXBGRy9BZmErZ2dZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1MzEwMjgyCWZpbGU6VWx0cmFmb290LjI2XzEuMC4yMDBfeDY0LXNldHVwLmV4ZQpKWmdPeEh3Qlc2Q0o3bmZrc1Z6bkptNVRCSEJpVjh6VW1FelJtM3BaRlR6WFF6UGxSVDhQcDhIRFl3bERTcVFTU3FCWWNDQVZMY0NXWVhTWGZScytBZz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.200_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRURGQzRmbGswZEdVakg1cGNvcnpxUFFXazRvc2Y2U3Zabmx6cmVhTGpLQVg3VE1uRFlkdGFZbHR1ZjkwSlZIU2wzT0NwWFlSNHpiRUc5YjdUSEpua0FzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1MzI1MzE3CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yMDFfeDY0LXNldHVwLmV4ZQpmcGZOTHZyRWl5Y0VVM2l6K2hZQktSSWtYSElCUlZVZGlDbEYxT2x6anVKU3FWTmJySFZWZVRXMzhzRlZrZ1RQK2xaZG9ubVVFY2hUVmNFdWZGMnVDZz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.201_x64-setup.exe"
     }
   }
 }
