@@ -299,19 +299,41 @@ continuam verificando com a pública antiga. **Nenhum comprador é afetado.**
 | 3 | Verificação offline — `src-tauri/src/licenca.rs` (Rust, não TS) | ✅ feito | 1 |
 | 4 | Testes: forja rejeitada, replay entre máquinas, revogação, offline pós-ativação | ✅ feito (`pnpm qa:licenca`) | 2, 3 |
 | 5 | `reemitir-licencas.py` e execução na VPS | ✅ script pronto; **falta rodar na VPS** | 2 |
-| 6 | Remover `preparar-env-licenca.mjs`, `SEGREDO` e o `prebuild` | ✅ pronto no branch `chore/licenca-etapa-6-corte-hmac`; **NÃO mergear antes da 5 rodar** | 3, 5 |
+| 6 | Remover `preparar-env-licenca.mjs`, `SEGREDO` e o `prebuild` | ✅ **aplicado NESTE branch** | 3, 5 |
 | 7 | Launcher: troca automática da chave antiga | ✅ feito (`migrarSePreciso()`) | 5 |
-| 8 | Build v1.0.202 + verificar que o segredo sumiu do bundle | ⏳ verificador pronto (`pnpm qa:bundle-sem-segredo`); a build depende da 6 | 6, 7 |
+| 8 | Build do corte + verificar que o segredo sumiu do bundle | ⏳ verificador pronto (`pnpm qa:bundle-sem-segredo`); falta gerar a build | 6, 7 |
 | 9 | Aposentar `ULTRAFOOT_LICENSE_SECRET` da VPS | ❌ ação na VPS | 8 |
 
-**Por que a 8 não pode ser feita antes da 6:** a build sairia do branch principal,
-que ainda tem o `SEGREDO` — ou seja, um binário com o segredo dentro, exatamente
-o que a etapa existe para eliminar. Bumpar a versão para 1.0.202 aqui também
-marcaria como "release do corte" uma build sem o corte. A versão segue em
-**1.0.201** de propósito.
+**Você está no branch do corte.** A etapa 6 está aplicada aqui, e é daqui que a
+build do corte deve sair — no `feat/launcher-desktop` o `SEGREDO` ainda existe, e
+a build de lá sairia com ele dentro, exatamente o que a etapa 8 existe para
+impedir.
+
+O **bump de versão ainda não foi feito**. A versão acompanha o
+`feat/launcher-desktop` (hoje **1.0.211**) e só deve subir quando a reemissão já
+tiver rodado na VPS — antes disso, uma release marcada como "do corte" quebraria
+quem ainda depende da chave antiga. O plano falava em "v1.0.202" quando foi
+escrito; o número real será o próximo disponível na época do corte.
 
 Etapas 2 e 3 são paralelizáveis. **A etapa 6 não pode vir antes da 5** — remover
 o segredo antes de reemitir deixaria os compradores atuais sem caminho.
+
+### Como aplicar a etapa 6, quando chegar a hora
+
+O corte está pronto no branch `chore/licenca-etapa-6-corte-hmac`, **não mergeado
+de propósito**. A ordem obrigatória:
+
+1. Privada na VPS (etapa 1) — `scp` + `chmod 600` + systemd
+2. Subir o auth-server novo uma vez (aplica o schema, cria a coluna `ativado`)
+3. `python3 reemitir-licencas.py` e conferir a simulação
+4. `python3 reemitir-licencas.py --executar`
+5. Publicar a v1.0.202 **com a etapa 7** e confirmar que a migração silenciosa
+   está funcionando para quem tem chave antiga
+6. **Só então** mergear `chore/licenca-etapa-6-corte-hmac`
+7. Etapa 9: remover `ULTRAFOOT_LICENSE_SECRET` do systemd da VPS
+
+Mergear o branch antes do passo 4 tira a validação da chave antiga enquanto a
+nova ainda não existe — o comprador legítimo vira "versão não registrada".
 
 ---
 

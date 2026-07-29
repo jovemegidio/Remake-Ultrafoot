@@ -100,91 +100,69 @@ def iniciar_banco() -> None:
 # cadastro se a chave e boa, e amarrar a chave a UMA conta — o jogo sozinho, por
 # ser offline, nao consegue saber que a mesma chave foi usada em outra maquina.
 
-ALFABETO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 PREFIXO_LICENCA = "UF26"
-LICENCA_SEGREDO = os.environ.get("ULTRAFOOT_LICENSE_SECRET", "")
-REVOGADAS = Path(__file__).with_name("licencas-revogadas.json")
+
+# ETAPA 6 (docs/plano-licenca-ed25519.md): o HMAC saiu daqui.
+#
+# `LICENCA_SEGREDO`, `validar_codigo_licenca()`, `montar_codigo()` e a lista
+# `licencas-revogadas.json` foram removidos. O segredo era simetrico: o MESMO
+# valor que emitia licenca precisava ir dentro do jogo para conferi-la offline, e
+# `NEXT_PUBLIC_*` o deixava em texto puro no bundle.
+#
+# Agora a validade de um codigo se resolve na tabela `licencas` (modulo
+# `licenca.py`), e a revogacao vale na proxima ativacao em vez de depender de uma
+# lista embutida na build.
+#
+# `normalizar` mora em licenca.py — um lugar so, para as trocas do Crockford nao
+# divergirem entre os dois arquivos.
+normalizar_codigo = licenca.normalizar
 
 
-def _revogadas() -> set:
-    try:
-        return set(json.loads(REVOGADAS.read_text(encoding="utf-8")))
-    except Exception:
-        return set()
+def formato_de_codigo(bruto: str) -> bool:
+    """So o FORMATO — nao diz se o codigo vale.
 
-
-def normalizar_codigo(bruto: str) -> str:
-    limpo = re.sub(r"[^0-9A-Z-]", "", (bruto or "").upper())
-    if not limpo.startswith(PREFIXO_LICENCA):
-        return limpo
-    # As trocas do Crockford valem SO para o corpo: aplicadas ao prefixo, o U de
-    # "UF26" viraria V e todo codigo legitimo seria recusado.
-    corpo = limpo[len(PREFIXO_LICENCA):]
-    corpo = corpo.replace("O", "0").replace("I", "1").replace("L", "1").replace("U", "V")
-    return PREFIXO_LICENCA + corpo
-
-
-def _ler_bits(grupos: list, inicio: int, quantos: int) -> int:
-    valor = 0
-    for i in range(quantos):
-        bit = inicio + i
-        g = grupos[bit // 5] if bit // 5 < len(grupos) else 0
-        valor = valor * 2 + ((g >> (4 - bit % 5)) & 1)
-    return valor
-
-
-def validar_codigo_licenca(bruto: str) -> dict | None:
-    """(serie, lote) do codigo, ou None se invalido/revogado."""
-    if not LICENCA_SEGREDO:
-        return None
+    Serve para recusar lixo antes de ir ao banco. Quem decide a validade e a
+    tabela `licencas`; nao existe mais nada aqui capaz de afirmar que uma chave
+    e boa a partir do proprio texto dela.
+    """
     partes = normalizar_codigo(bruto).split("-")
     if len(partes) != 4 or partes[0] != PREFIXO_LICENCA:
-        return None
-    texto = "".join(partes[1:])
-    if len(texto) != 15:
-        return None
-    grupos = []
-    for ch in texto:
-        i = ALFABETO.find(ch)
-        if i < 0:
-            return None
-        grupos.append(i)
-
-    serie = _ler_bits(grupos, 0, 24)
-    lote = _ler_bits(grupos, 24, 6)
-    mac_recebido = _ler_bits(grupos, 30, 45)
-
-    assinatura = hmac.new(LICENCA_SEGREDO.encode("utf-8"),
-                          f"{serie}:{lote}".encode("utf-8"), hashlib.sha256).digest()
-    alto = int.from_bytes(assinatura[:5], "big")
-    mac_esperado = alto * 32 + (assinatura[5] >> 3)
-
-    if not hmac.compare_digest(str(mac_recebido), str(mac_esperado)):
-        return None
-    if serie in _revogadas():
-        return None
-    return {"serie": serie, "lote": lote, "codigo": normalizar_codigo(bruto)}
+        return False
+    corpo = "".join(partes[1:])
+    return len(corpo) == 15 and all(ch in licenca.ALFABETO for ch in corpo)
 
 
 def ativar_conta(con, conta_id: int, bruto: str) -> str:
-    """Ativa a versao completa. Devolve "" em caso de sucesso, ou o erro."""
+    """Vincula a licenca a esta conta. Devolve "" em caso de sucesso, ou o erro.
+
+    ETAPA 6: antes isto conferia o HMAC do codigo. Agora consulta a tabela
+    `licencas` — a chave precisa EXISTIR lá, o que torna impossivel forjar mesmo
+    com a privada na mao (a verdade mora no banco, nao na matematica).
+    """
     if not (bruto or "").strip():
         return ""  # sem codigo = versao simples, nao e erro
-    lic = validar_codigo_licenca(bruto)
-    if not lic:
+
+    codigo = normalizar_codigo(bruto)
+    if not formato_de_codigo(codigo):
         return "codigo de ativacao invalido"
+
+    linha = con.execute("SELECT conta_id, serie, revogada FROM licencas WHERE codigo = ?",
+                        (codigo,)).fetchone()
+    if not linha:
+        return "codigo de ativacao invalido"
+    if linha["revogada"]:
+        return "este codigo foi cancelado; fale com o suporte"
 
     # UMA chave, UMA conta. Sem isto, um codigo vazado ativaria contas sem limite
     # e nao haveria como saber qual delas e a legitima.
-    dono = con.execute("SELECT conta_id FROM licencas_migradas WHERE codigo = ?",
-                       (lic["codigo"],)).fetchone()
-    if dono and dono["conta_id"] != conta_id:
+    if linha["conta_id"] and linha["conta_id"] != conta_id:
         return "este codigo ja esta vinculado a outra conta"
-    if not dono:
-        con.execute("INSERT INTO licencas_migradas (codigo, conta_id, migrada_em)"
-                    " VALUES (?,?,?)", (lic["codigo"], conta_id, int(time.time())))
-    con.execute("UPDATE contas SET ativado = 1, licenca_serie = ?, licenca_lote = ?"
-                " WHERE id = ?", (lic["serie"], lic["lote"], conta_id))
+    if not linha["conta_id"]:
+        # Chave vendida fora do launcher: o primeiro a vincular vira dono.
+        con.execute("UPDATE licencas SET conta_id = ? WHERE codigo = ?", (conta_id, codigo))
+
+    con.execute("UPDATE contas SET ativado = 1, licenca_serie = ? WHERE id = ?",
+                (linha["serie"], conta_id))
     return ""
 
 
@@ -195,11 +173,7 @@ def codigo_da_conta(con, conta_id: int) -> str:
     QUALQUER maquina onde a pessoa entrar: a conta e que carrega o direito, e o
     codigo volta so para o dono dele.
     """
-    linha = con.execute(
-        "SELECT l.codigo FROM licencas_migradas l JOIN contas c ON c.id = l.conta_id"
-        " WHERE l.conta_id = ? AND c.ativado = 1 ORDER BY l.migrada_em DESC LIMIT 1",
-        (conta_id,)).fetchone()
-    return linha["codigo"] if linha else ""
+    return licenca.da_conta(con, conta_id)
 
 
 # ─── Loja ─────────────────────────────────────────────────────────────────────
@@ -262,35 +236,11 @@ def creditar(con, conta_id: int, valor_cents: int, origem: str, id_externo: str 
 # E o que permite vender o registro na loja e entregar na hora, sem ninguem
 # despachar codigo a mao.
 #
-# ⚠️ LOTE RESERVADO. O codigo carrega serie (24 bits) + lote (6 bits). O lote 0 e
-# o codigo mestre de desenvolvimento e os lotes 1..8 sao os que voce ja emitiu a
-# mao pelo scripts/gerar-codigos.mjs (planilha em ~/.ultrafoot-keys). A venda
-# online usa o LOTE 9, exclusivo, e uma contagem propria de serie. Sem essa
-# separacao, duas vendas poderiam gerar o MESMO codigo — uma pela planilha,
-# outra pelo servidor — e o segundo comprador levaria uma chave ja vinculada.
-LOTE_DA_LOJA = 9
-
-
-def _escrever_bits(grupos: list, inicio: int, quantos: int, valor: int) -> None:
-    for i in range(quantos):
-        bit = inicio + i
-        indice = bit // 5
-        deslocamento = 4 - (bit % 5)
-        if (valor >> (quantos - 1 - i)) & 1:
-            grupos[indice] |= 1 << deslocamento
-
-
-def montar_codigo(serie: int, lote: int) -> str:
-    """Inverso de validar_codigo_licenca. Mesmo formato de lib/license.ts."""
-    assinatura = hmac.new(LICENCA_SEGREDO.encode("utf-8"),
-                          f"{serie}:{lote}".encode("utf-8"), hashlib.sha256).digest()
-    mac = int.from_bytes(assinatura[:5], "big") * 32 + (assinatura[5] >> 3)
-    grupos = [0] * 15
-    _escrever_bits(grupos, 0, 24, serie)
-    _escrever_bits(grupos, 24, 6, lote)
-    _escrever_bits(grupos, 30, 45, mac)
-    texto = "".join(ALFABETO[g] for g in grupos)
-    return f"{PREFIXO_LICENCA}-{texto[0:5]}-{texto[5:10]}-{texto[10:15]}"
+# ETAPA 6: o esquema de serie+lote saiu junto com o HMAC. Nao existe mais "lote
+# reservado" a proteger — o codigo passou a ser um identificador ALEATORIO de 75
+# bits sorteado com `secrets`, entao duas emissoes nunca colidem por construcao,
+# venham de onde vierem. `montar_codigo()` e `series_emitidas` deixaram de
+# existir; quem emite e `licenca.emitir()`.
 
 
 def emitir_codigo_para(con, conta_id: int) -> str:
@@ -299,18 +249,9 @@ def emitir_codigo_para(con, conta_id: int) -> str:
     Reaproveitar importa: se a pessoa comprar de novo por engano, ou se a
     entrega for repetida por um webhook duplicado, ela precisa continuar com A
     MESMA chave — duas chaves para a mesma conta viram suporte no dia seguinte.
+    A idempotencia agora mora em `licenca.emitir()`.
     """
-    ja = con.execute(
-        "SELECT codigo FROM licencas_migradas WHERE conta_id = ? ORDER BY migrada_em LIMIT 1",
-        (conta_id,)).fetchone()
-    if ja:
-        return ja["codigo"]
-
-    linha = con.execute("SELECT MAX(serie_emitida) AS ultima FROM series_emitidas").fetchone()
-    serie = int(linha["ultima"] or 0) + 1
-    con.execute("INSERT INTO series_emitidas (serie_emitida, conta_id, quando) VALUES (?,?,?)",
-                (serie, conta_id, int(time.time())))
-    codigo = montar_codigo(serie, LOTE_DA_LOJA)
+    codigo = licenca.emitir(con, conta_id)
     ativar_conta(con, conta_id, codigo)
     return codigo
 
@@ -403,6 +344,12 @@ def migrar_licenca(con: sqlite3.Connection, conta_id: int, codigo: str) -> None:
     ja estiver vinculado a OUTRA conta o insert e ignorado — o dono original
     continua dono. Sem isso, alguem poderia digitar o codigo alheio e assumir a
     licenca.
+
+    ETAPA 6: `licencas_migradas` e a tabela do esquema ANTIGO e continua aqui de
+    proposito. E o registro de quem tinha chave HMAC na maquina — a materia-prima
+    da reemissao (`reemitir-licencas.py`) e a rede de protecao do suporte para
+    quem comprou e nunca criou conta. Apagar isto perderia o historico de vendas
+    que ainda nao migrou.
     """
     codigo = (codigo or "").strip().upper()
     if not codigo:
@@ -701,7 +648,11 @@ class Handler(BaseHTTPRequestHandler):
 
         # Um codigo ERRADO nao pode criar a conta e so avisar depois: a pessoa
         # ficaria com conta sem ativacao e sem entender por que. Conferimos antes.
-        if codigo and not validar_codigo_licenca(codigo):
+        #
+        # So o FORMATO aqui: a validade sai do banco, dentro de `ativar_conta`, e
+        # repetir a consulta antes do INSERT seria ida a mais ao banco sem ganho
+        # (o rollback logo abaixo ja cobre o codigo que nao existe).
+        if codigo and not formato_de_codigo(codigo):
             return self._responder(400, {"erro": "codigo de ativacao invalido"})
 
         salt = secrets.token_bytes(16)
@@ -807,20 +758,19 @@ class Handler(BaseHTTPRequestHandler):
         agora = int(time.time())
 
         if item and item["tipo"] == "registro":
-            emitir_codigo_para(con, pedido["conta_id"])
-            # Emite TAMBEM no esquema novo, para quem compra a partir de agora ja
-            # sair com licenca Ed25519 e a reemissao (etapa 5) nao ter de
-            # alcanca-lo. Os dois convivem ate o corte da v1.0.202.
+            # ETAPA 6: emissao unica agora — `emitir_codigo_para` delega a
+            # `licenca.emitir`. A emissao dupla (HMAC + Ed25519) existia so para a
+            # transicao e saiu junto com o esquema antigo.
             #
             # Falhar aqui NAO pode derrubar a entrega: o pagamento ja aconteceu.
-            # Se a chave privada nao estiver configurada na VPS, o comprador leva
-            # a chave antiga — que ainda vale — e a nova sai na reemissao.
-            if licenca.disponivel():
-                try:
-                    licenca.emitir(con, pedido["conta_id"])
-                except Exception as e:  # pragma: no cover - defesa de entrega
-                    print(f"[licenca] falha ao emitir para conta {pedido['conta_id']}: {e}",
-                          file=sys.stderr)
+            # O pedido fica como pago-e-nao-entregue e o webhook do Asaas tenta de
+            # novo; sumir com o dinheiro do jogador seria pior.
+            try:
+                emitir_codigo_para(con, pedido["conta_id"])
+            except Exception as e:  # pragma: no cover - defesa de entrega
+                print(f"[licenca] falha ao emitir para conta {pedido['conta_id']}: {e}",
+                      file=sys.stderr)
+                return
         elif item and item["tipo"] in ("tema_launcher", "verba"):
             # Estes ja sao itens de catalogo: registramos a compra do mesmo jeito
             # que a compra por saldo, para o extrato ficar unico.

@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
-import { mensagemDeErro, normalizarCodigo, validarCodigo } from "@/lib/license"
-import { ativarOnline, migrarSePreciso, pareceFormatoDeCodigo } from "@/lib/licenca-certificado"
+import { formatoValido, mensagemDeErro, normalizarCodigo } from "@/lib/license"
+import { ativarOnline, migrarSePreciso } from "@/lib/licenca-certificado"
 import { getDeviceId } from "@/lib/device-id"
 import { lerRegistro, gravarRegistro } from "@/lib/registration"
-import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Globe, Save, FileEdit, X, Key, CheckCircle2, AlertCircle, Clock, Trash2, LogOut, Download, Cloud, ChevronRight, FolderOpen } from "lucide-react"
@@ -139,9 +138,10 @@ export default function SplashPage() {
   /**
    * ATIVACAO VINDA DO LAUNCHER — quem informou a chave na conta nao digita de novo.
    *
-   * O launcher apenas DEPOSITA a chave num arquivo; a validacao continua sendo
-   * feita aqui, com o segredo do jogo. Por isso adulterar o arquivo nao libera
-   * nada: um codigo sem assinatura valida e recusado igual ao digitado a mao.
+   * O launcher apenas DEPOSITA a chave num arquivo. Adulterar esse arquivo nao
+   * libera nada, e agora por um motivo mais forte do que antes: quem confere e o
+   * SERVIDOR, contra a tabela `licencas`. Antes a conferencia era local, com o
+   * segredo embutido no proprio jogo — ou seja, do lado que o pirata controla.
    */
   const ativarPeloLauncher = useCallback(async (aplicar: () => void) => {
     if (lerRegistro().registrado) return
@@ -150,15 +150,10 @@ export default function SplashPage() {
       const cru = await invoke<string | null>("ler_ativacao_do_launcher")
       if (!cru) return
       const { codigo } = JSON.parse(cru) as { codigo?: string }
-      if (!codigo) return
-      const r = await validarCodigo(codigo, licencasRevogadas)
-      if (!r.valido) return
-      gravarRegistro({
-        registrado: true,
-        serie: r.serie !== undefined ? String(r.serie) : undefined,
-        device: getDeviceId(),
-        dev: !!r.dev,
-      })
+      if (!codigo || !formatoValido(codigo)) return
+      const r = await ativarOnline(normalizarCodigo(codigo))
+      if (!r.ok) return
+      gravarRegistro({ registrado: true, device: getDeviceId() })
       aplicar()
     } catch {
       // Sem Tauri, sem arquivo ou JSON quebrado: segue o fluxo normal de registro.
@@ -353,61 +348,32 @@ export default function SplashPage() {
     // piscar entre "validando" e o resultado.
     await delay(600)
 
-    // Guardado para o caso de os DOIS esquemas recusarem: a mensagem do servidor
-    // ("ja esta em uso em outro computador", "indisponivel") explica melhor do
-    // que o "codigo invalido" generico do esquema antigo.
-    let erroDoEsquemaNovo: string | undefined
-
-    // ESQUEMA NOVO PRIMEIRO (Ed25519). O codigo digitado e conferido no
-    // servidor, que devolve um certificado assinado para o jogo guardar.
-    //
-    // Os dois formatos sao IDENTICOS na tela (UF26-XXXXX-XXXXX-XXXXX), entao nao
-    // da para saber qual e qual olhando o texto: quem decide e o servidor. Por
-    // isso tentamos o novo e, se ele nao reconhecer, caimos no antigo — que
-    // continua valendo ate o corte da v1.0.202.
-    if (pareceFormatoDeCodigo(serialKey)) {
-      const novo = await ativarOnline(normalizarCodigo(serialKey))
-      if (novo.ok) {
-        gravarRegistro({ registrado: true, device: getDeviceId() })
-        setIsRegistered(true)
-        setIsValidating(false)
-        setTimeout(() => setShowRegisterModal(false), 2000)
-        return
-      }
-      erroDoEsquemaNovo = novo.erro
+    // ETAPA 6: caminho UNICO agora. O esquema HMAC saiu — nao existe mais nada
+    // no cliente capaz de afirmar que uma chave vale. Quem decide e o servidor,
+    // e o que ele devolve e um certificado assinado que o Rust confere.
+    if (!formatoValido(serialKey)) {
+      setRegisterError(mensagemDeErro("formato"))
+      setIsValidating(false)
+      return
     }
 
-    const r = await validarCodigo(serialKey, licencasRevogadas)
-    if (r.valido) {
-      // UM CODIGO POR MAQUINA (pedido). Se esta instalacao ja foi registrada com
-      // OUTRO codigo, recusa — sem isso a mesma maquina cadastraria varios
-      // codigos. O codigo MASTER (dev) e isento: o time testa em varias maquinas
-      // e alterna com codigos de venda para reproduzir o que o comprador ve.
-      const serieAtual = lerRegistro().serie
-      if (!r.dev && serieAtual && r.serie !== undefined && serieAtual !== String(r.serie)) {
-        setRegisterError("Esta máquina já foi registrada com outro código.")
-        setIsValidating(false)
-        return
-      }
-      // Grava no armazenamento DURAVEL (+ espelho no localStorage). E por isso
-      // que atualizar o jogo nao desregistra mais: a fonte de verdade e o mesmo
-      // arquivo que guarda os saves.
-      gravarRegistro({
-        registrado: true,
-        serie: r.serie !== undefined ? String(r.serie) : undefined,
-        device: getDeviceId(),
-        dev: !!r.dev,
-      })
+    const r = await ativarOnline(normalizarCodigo(serialKey))
+    if (r.ok) {
+      // UM CODIGO POR MAQUINA continua valendo, mas agora e o SERVIDOR que
+      // aplica a regra (coluna `device` da tabela `licencas`): a checagem que
+      // ficava aqui dependia do proprio cliente, que e justamente quem o
+      // pirata controla.
+      gravarRegistro({ registrado: true, device: getDeviceId() })
       setIsRegistered(true)
       setIsValidating(false)
       setTimeout(() => {
         setShowRegisterModal(false)
       }, 2000)
     } else {
-      // Os DOIS esquemas recusaram. Quando o servidor deu um motivo concreto
-      // ("ja em uso em outro computador", "servidor indisponivel"), ele explica
-      // melhor do que o generico — quem pagou merece saber o que fazer.
-      setRegisterError(erroDoEsquemaNovo ?? mensagemDeErro(r.motivo))
+      // A mensagem vem do servidor quando ele deu um motivo concreto ("ja em uso
+      // em outro computador", "cancelado", "indisponivel"). Quem pagou merece
+      // saber o que fazer, em vez de um "invalido" generico.
+      setRegisterError(r.erro ?? mensagemDeErro("formato"))
       setIsValidating(false)
     }
   }, [serialKey])

@@ -13,7 +13,7 @@
 // é exatamente o que o jogo aceita?
 
 import { execFileSync } from "node:child_process"
-import { readFileSync, mkdtempSync } from "node:fs"
+import { readFileSync, mkdtempSync, existsSync } from "node:fs"
 import { createPublicKey, verify as verificarAssinatura } from "node:crypto"
 import { tmpdir } from "node:os"
 import path from "node:path"
@@ -181,17 +181,39 @@ print("REATIVOU=" + str(bool(c1) and bool(c2)))
   checar(saidaIdem.includes("REATIVOU=True"), "reativar na MESMA máquina funciona (reinstalar o jogo)")
   checar(saidaIdem.includes("IGUAL_CODIGO=True"), "emitir duas vezes devolve a MESMA chave")
 
-  // ── §7: o segredo antigo sumiu do bundle? ──────────────────────────────────
+  // ── §7: o segredo antigo sumiu do código? ──────────────────────────────────
   //
-  // Só vale depois da etapa 6. Enquanto o `SEGREDO` existir em lib/license.ts, o
-  // esquema antigo continua de pé de propósito — e é isso que este aviso diz,
-  // para o teste não parecer que passou quando na verdade nem rodou.
+  // O teste que fecha a etapa 6. Não basta ter parado de USAR o segredo: ele não
+  // pode mais existir no código, senão o `prebuild` volta a injetá-lo no bundle
+  // numa refatoração distraída e o buraco reabre sem ninguém notar.
   const licenseTs = readFileSync(path.join(RAIZ, "lib", "license.ts"), "utf8")
-  if (licenseTs.includes("NEXT_PUBLIC_ULTRAFOOT_LICENSE_SECRET")) {
-    console.log("\n  PENDENTE (etapa 6): lib/license.ts ainda lê NEXT_PUBLIC_ULTRAFOOT_LICENSE_SECRET.")
-    console.log("  Isso é esperado até a reemissão rodar na VPS — remover antes deixaria")
-    console.log("  os compradores atuais sem caminho de migração (§6 do plano).")
+  checar(!licenseTs.includes("NEXT_PUBLIC_ULTRAFOOT_LICENSE_SECRET"),
+    "lib/license.ts não lê mais o segredo de emissão")
+  // Procura CÓDIGO, não a palavra: o cabeçalho do arquivo cita "HMAC" ao
+  // explicar o que saiu e por quê, e essa explicação é justamente o que impede
+  // alguém de reintroduzir o esquema por não saber que ele existiu.
+  const semComentarios = licenseTs
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n").filter(l => !l.trim().startsWith("//")).join("\n")
+  checar(!/crypto\.subtle|createHmac|\bhmac\s*\(/i.test(semComentarios),
+    "lib/license.ts não tem mais código de assinatura")
+
+  const pkg = readFileSync(path.join(RAIZ, "package.json"), "utf8")
+  checar(!pkg.includes("preparar-env-licenca"),
+    "o prebuild não injeta mais o segredo")
+
+  for (const morto of ["scripts/preparar-env-licenca.mjs", "scripts/gerar-codigos.mjs"]) {
+    checar(!existsSync(path.join(RAIZ, morto)), `${morto} foi removido`)
   }
+
+  const serverPy = readFileSync(path.join(AUTH, "server.py"), "utf8")
+  checar(!serverPy.includes('os.environ.get("ULTRAFOOT_LICENSE_SECRET"'),
+    "server.py não lê mais ULTRAFOOT_LICENSE_SECRET")
+
+  // O `licencas_migradas` PRECISA continuar existindo: é o histórico de quem
+  // tinha chave antiga, matéria-prima da reemissão e rede do suporte.
+  checar(serverPy.includes("licencas_migradas"),
+    "licencas_migradas preservado (histórico da migração)")
 
   console.log(falhas === 0 ? "\nTUDO OK" : `\n${falhas} FALHA(S)`)
   process.exit(falhas === 0 ? 0 : 1)

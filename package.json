@@ -48,7 +48,7 @@
     "build:qa": "cross-env TAURI_BUILD=1 npm run build",
     "qa:modal": "node scripts/qa-modal-keyboard.mjs",
     "qa:navigation": "tsx scripts/qa-navigation.ts",
-    "prebuild": "node scripts/preparar-env-licenca.mjs && node scripts/embutir-edicoes.mjs"
+    "prebuild": "node scripts/embutir-edicoes.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
