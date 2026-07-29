@@ -47,6 +47,14 @@ export interface Tema {
   fundo: string
   superficie: string
   borda: string
+  /**
+   * FUNDO da janela — o que de fato dá cara ao tema.
+   *
+   * É CSS puro (gradientes e padrões), não imagem: o launcher precisa funcionar
+   * offline e sem inflar o instalador com 20 fotos. Vinte gradientes bem feitos
+   * pesam zero e trocam na hora.
+   */
+  fundoCss: string
   /** Amostra mostrada no seletor. */
   amostra: [string, string]
 }
@@ -57,48 +65,68 @@ export const TEMAS: Tema[] = [
   // Tailwind ja consome. `sobrePrimaria` existe para o texto DENTRO do botao
   // continuar legivel: destaque claro pede texto escuro, e vice-versa.
   { id: "ultrafoot", nome: "Ultrafoot", primaria: "#48eed6", sobrePrimaria: "#04110f",
-    fundo: "#060b0e", superficie: "#0d1417", borda: "#1b262b", amostra: ["#48eed6", "#060b0e"] },
+    fundo: "#060b0e", superficie: "#0d1417", borda: "#1b262b",
+    fundoCss: "radial-gradient(1200px 700px at 15% -10%, #0e3b39 0%, transparent 60%), radial-gradient(900px 600px at 95% 10%, #0a2f4a 0%, transparent 55%), linear-gradient(160deg, #060b0e 0%, #04080a 100%)", amostra: ["#48eed6", "#060b0e"] },
   { id: "gramado", nome: "Gramado", primaria: "#4ade80", sobrePrimaria: "#04120a",
-    fundo: "#060d09", superficie: "#0d1712", borda: "#1c2a22", amostra: ["#4ade80", "#060d09"] },
+    fundo: "#060d09", superficie: "#0d1712", borda: "#1c2a22",
+    fundoCss: "repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 60px, transparent 60px 120px), radial-gradient(1000px 600px at 50% -15%, #0d3a1e 0%, transparent 60%), linear-gradient(180deg, #071009 0%, #040806 100%)", amostra: ["#4ade80", "#060d09"] },
   { id: "noturno", nome: "Noturno", primaria: "#7aa2ff", sobrePrimaria: "#050a18",
-    fundo: "#05070d", superficie: "#0d1119", borda: "#1a2030", amostra: ["#7aa2ff", "#05070d"] },
+    fundo: "#05070d", superficie: "#0d1119", borda: "#1a2030",
+    fundoCss: "radial-gradient(900px 700px at 80% -10%, #16224a 0%, transparent 60%), radial-gradient(700px 500px at 10% 30%, #101a38 0%, transparent 55%), linear-gradient(180deg, #05070d 0%, #03050a 100%)", amostra: ["#7aa2ff", "#05070d"] },
   { id: "brasa", nome: "Brasa", primaria: "#ff8a4c", sobrePrimaria: "#160801",
-    fundo: "#0c0705", superficie: "#171010", borda: "#2a1c17", amostra: ["#ff8a4c", "#0c0705"] },
+    fundo: "#0c0705", superficie: "#171010", borda: "#2a1c17",
+    fundoCss: "radial-gradient(900px 600px at 20% -10%, #4a1c07 0%, transparent 58%), radial-gradient(700px 500px at 90% 20%, #3a1204 0%, transparent 55%), linear-gradient(170deg, #0c0705 0%, #070403 100%)", amostra: ["#ff8a4c", "#0c0705"] },
   { id: "vinho", nome: "Vinho", primaria: "#f472b6", sobrePrimaria: "#1a0510",
-    fundo: "#0b060a", superficie: "#160f14", borda: "#2a1a24", amostra: ["#f472b6", "#0b060a"] },
+    fundo: "#0b060a", superficie: "#160f14", borda: "#2a1a24",
+    fundoCss: "radial-gradient(950px 650px at 25% -10%, #3d0f2b 0%, transparent 60%), radial-gradient(700px 500px at 85% 15%, #2a0a1e 0%, transparent 55%), linear-gradient(175deg, #0b060a 0%, #070307 100%)", amostra: ["#f472b6", "#0b060a"] },
   { id: "ouro", nome: "Ouro", primaria: "#facc15", sobrePrimaria: "#171003",
-    fundo: "#0b0904", superficie: "#16120a", borda: "#2b2413", amostra: ["#facc15", "#0b0904"] },
+    fundo: "#0b0904", superficie: "#16120a", borda: "#2b2413",
+    fundoCss: "radial-gradient(900px 600px at 30% -12%, #3d2f06 0%, transparent 58%), radial-gradient(700px 500px at 88% 18%, #2b2104 0%, transparent 55%), linear-gradient(170deg, #0b0904 0%, #070602 100%)", amostra: ["#facc15", "#0b0904"] },
   { id: "ceu", nome: "Céu", primaria: "#38bdf8", sobrePrimaria: "#04121b",
-    fundo: "#050a0f", superficie: "#0c141b", borda: "#18262f", amostra: ["#38bdf8", "#050a0f"] },
+    fundo: "#050a0f", superficie: "#0c141b", borda: "#18262f",
+    fundoCss: "radial-gradient(1000px 650px at 18% -10%, #06344c 0%, transparent 60%), radial-gradient(800px 550px at 92% 12%, #052a3d 0%, transparent 55%), linear-gradient(165deg, #050a0f 0%, #03070a 100%)", amostra: ["#38bdf8", "#050a0f"] },
   { id: "ametista", nome: "Ametista", primaria: "#a78bfa", sobrePrimaria: "#0f0820",
-    fundo: "#08060e", superficie: "#120e1c", borda: "#231c33", amostra: ["#a78bfa", "#08060e"] },
+    fundo: "#08060e", superficie: "#120e1c", borda: "#231c33",
+    fundoCss: "radial-gradient(950px 650px at 22% -12%, #2b1a52 0%, transparent 60%), radial-gradient(750px 520px at 88% 16%, #1e1340 0%, transparent 55%), linear-gradient(172deg, #08060e 0%, #050409 100%)", amostra: ["#a78bfa", "#08060e"] },
   { id: "rubi", nome: "Rubi", primaria: "#f87171", sobrePrimaria: "#180505",
-    fundo: "#0b0606", superficie: "#170e0e", borda: "#2b1919", amostra: ["#f87171", "#0b0606"] },
+    fundo: "#0b0606", superficie: "#170e0e", borda: "#2b1919",
+    fundoCss: "radial-gradient(900px 620px at 24% -10%, #4a1414 0%, transparent 58%), radial-gradient(720px 500px at 90% 18%, #340d0d 0%, transparent 55%), linear-gradient(168deg, #0b0606 0%, #070303 100%)", amostra: ["#f87171", "#0b0606"] },
   { id: "esmeralda", nome: "Esmeralda", primaria: "#34d399", sobrePrimaria: "#03130d",
-    fundo: "#050c0a", superficie: "#0c1613", borda: "#182924", amostra: ["#34d399", "#050c0a"] },
+    fundo: "#050c0a", superficie: "#0c1613", borda: "#182924",
+    fundoCss: "radial-gradient(980px 660px at 20% -12%, #06402e 0%, transparent 60%), radial-gradient(760px 520px at 90% 14%, #042f22 0%, transparent 55%), linear-gradient(170deg, #050c0a 0%, #030706 100%)", amostra: ["#34d399", "#050c0a"] },
   { id: "grafite", nome: "Grafite", primaria: "#cbd5e1", sobrePrimaria: "#0f1318",
-    fundo: "#0a0c0e", superficie: "#14181c", borda: "#262c33", amostra: ["#cbd5e1", "#0a0c0e"] },
+    fundo: "#0a0c0e", superficie: "#14181c", borda: "#262c33",
+    fundoCss: "radial-gradient(1000px 700px at 50% -20%, #1c2229 0%, transparent 62%), linear-gradient(180deg, #0a0c0e 0%, #060809 100%)", amostra: ["#cbd5e1", "#0a0c0e"] },
   { id: "cafe", nome: "Café", primaria: "#d6a06a", sobrePrimaria: "#1a1006",
-    fundo: "#0b0806", superficie: "#16110c", borda: "#2a2016", amostra: ["#d6a06a", "#0b0806"] },
+    fundo: "#0b0806", superficie: "#16110c", borda: "#2a2016",
+    fundoCss: "radial-gradient(900px 620px at 26% -10%, #3a2612 0%, transparent 58%), radial-gradient(720px 500px at 88% 16%, #2a1b0d 0%, transparent 55%), linear-gradient(170deg, #0b0806 0%, #070504 100%)", amostra: ["#d6a06a", "#0b0806"] },
   { id: "oceano", nome: "Oceano", primaria: "#22d3ee", sobrePrimaria: "#03141a",
-    fundo: "#040c10", superficie: "#0a171d", borda: "#152b34", amostra: ["#22d3ee", "#040c10"] },
+    fundo: "#040c10", superficie: "#0a171d", borda: "#152b34",
+    fundoCss: "radial-gradient(1050px 700px at 16% -12%, #063947 0%, transparent 60%), radial-gradient(820px 560px at 94% 14%, #042b36 0%, transparent 55%), linear-gradient(166deg, #040c10 0%, #02080b 100%)", amostra: ["#22d3ee", "#040c10"] },
   { id: "lima", nome: "Lima", primaria: "#a3e635", sobrePrimaria: "#0e1503",
-    fundo: "#070b04", superficie: "#10160b", borda: "#1f2a13", amostra: ["#a3e635", "#070b04"] },
+    fundo: "#070b04", superficie: "#10160b", borda: "#1f2a13",
+    fundoCss: "radial-gradient(950px 640px at 22% -12%, #2c4008 0%, transparent 58%), radial-gradient(740px 520px at 90% 16%, #1f2f05 0%, transparent 55%), linear-gradient(170deg, #070b04 0%, #040703 100%)", amostra: ["#a3e635", "#070b04"] },
   { id: "coral", nome: "Coral", primaria: "#fb7185", sobrePrimaria: "#1a0509",
-    fundo: "#0b0608", superficie: "#170e11", borda: "#2b191e", amostra: ["#fb7185", "#0b0608"] },
+    fundo: "#0b0608", superficie: "#170e11", borda: "#2b191e",
+    fundoCss: "radial-gradient(920px 630px at 24% -10%, #4a1725 0%, transparent 58%), radial-gradient(730px 510px at 90% 16%, #35101a 0%, transparent 55%), linear-gradient(170deg, #0b0608 0%, #070405 100%)", amostra: ["#fb7185", "#0b0608"] },
   { id: "meia-noite", nome: "Meia-noite", primaria: "#818cf8", sobrePrimaria: "#070a1c",
-    fundo: "#04050c", superficie: "#0b0d18", borda: "#171b2c", amostra: ["#818cf8", "#04050c"] },
+    fundo: "#04050c", superficie: "#0b0d18", borda: "#171b2c",
+    fundoCss: "radial-gradient(1100px 750px at 70% -18%, #1a2050 0%, transparent 60%), radial-gradient(800px 560px at 12% 25%, #131838 0%, transparent 55%), linear-gradient(180deg, #04050c 0%, #020308 100%)", amostra: ["#818cf8", "#04050c"] },
   { id: "areia", nome: "Areia", primaria: "#0f766e", sobrePrimaria: "#ffffff",
-    fundo: "#f3f1ea", superficie: "#ffffff", borda: "#ddd8cb", amostra: ["#0f766e", "#f3f1ea"] },
+    fundo: "#f3f1ea", superficie: "#ffffff", borda: "#ddd8cb",
+    fundoCss: "radial-gradient(1000px 650px at 20% -12%, #e7e0cf 0%, transparent 60%), radial-gradient(800px 560px at 92% 10%, #dcefe9 0%, transparent 55%), linear-gradient(170deg, #f3f1ea 0%, #eae6dc 100%)", amostra: ["#0f766e", "#f3f1ea"] },
   { id: "claro", nome: "Claro", primaria: "#0e9f8a", sobrePrimaria: "#ffffff",
-    fundo: "#f4f6f7", superficie: "#ffffff", borda: "#d8dee1", amostra: ["#0e9f8a", "#f4f6f7"] },
+    fundo: "#f4f6f7", superficie: "#ffffff", borda: "#d8dee1",
+    fundoCss: "radial-gradient(1000px 650px at 18% -12%, #dff3ef 0%, transparent 60%), radial-gradient(820px 560px at 92% 10%, #e4eef2 0%, transparent 55%), linear-gradient(170deg, #f4f6f7 0%, #e9edef 100%)", amostra: ["#0e9f8a", "#f4f6f7"] },
   { id: "papel", nome: "Papel", primaria: "#b45309", sobrePrimaria: "#ffffff",
-    fundo: "#faf7f2", superficie: "#ffffff", borda: "#e5ddd0", amostra: ["#b45309", "#faf7f2"] },
+    fundo: "#faf7f2", superficie: "#ffffff", borda: "#e5ddd0",
+    fundoCss: "repeating-linear-gradient(0deg, rgba(0,0,0,.012) 0 2px, transparent 2px 4px), radial-gradient(900px 600px at 25% -10%, #f6ecdd 0%, transparent 60%), linear-gradient(170deg, #faf7f2 0%, #f1ebe1 100%)", amostra: ["#b45309", "#faf7f2"] },
   // Contraste maximo: preto puro com branco. Nao e enfeite — e o unico tema que
   // atende quem precisa de contraste extremo, e por isso fica na lista de temas
   // e nao escondido na acessibilidade.
   { id: "contraste", nome: "Contraste máximo", primaria: "#ffffff", sobrePrimaria: "#000000",
-    fundo: "#000000", superficie: "#0a0a0a", borda: "#ffffff", amostra: ["#ffffff", "#000000"] },
+    fundo: "#000000", superficie: "#0a0a0a", borda: "#ffffff",
+    fundoCss: "#000000", amostra: ["#ffffff", "#000000"] },
 ]
 
 // As fontes moram em lib/fontes.ts porque precisam de `next/font/google`, que só
@@ -129,6 +157,12 @@ export function gravarPreferencias(p: Preferencias): void {
 /** Escreve as preferências como variáveis CSS na raiz do documento. */
 export function aplicarPreferencias(p: Preferencias): void {
   if (typeof document === "undefined") return
+  // Se o <body> ainda nao existe, reaplica quando existir: a parte da fonte
+  // depende dele, e aplicar so as cores deixaria a fonte silenciosamente errada.
+  if (!document.body) {
+    document.addEventListener("DOMContentLoaded", () => aplicarPreferencias(p), { once: true })
+    return
+  }
   const raiz = document.documentElement
   const tema = TEMAS.find(t => t.id === p.tema) ?? TEMAS[0]
   const fonte = LISTA_DE_FONTES.find(f => f.id === p.fonte) ?? LISTA_DE_FONTES[0]
@@ -158,21 +192,31 @@ export function aplicarPreferencias(p: Preferencias): void {
   raiz.style.setProperty("--muted-foreground", claro ? "#5b686e" : "#8b9aa1")
   raiz.style.setProperty("--accent-foreground", tema.sobrePrimaria)
 
-  // A FONTE ENTRA PELA VARIAVEL QUE O TAILWIND JA USA.
+  // ⚠️ A FONTE PRECISA SER APLICADA NO <body>, NAO NO <html>.
   //
-  // Antes isto dependia de uma regra CSS nova (`html[data-uf-tema] body`) vencer
-  // a classe `.font-sans` do body na cascata. Especificidade dizia que venceria,
-  // e na pratica a fonte nao trocava. Sobrescrever `--font-geist-sans` — a
-  // variavel que `.font-sans{font-family:var(--font-geist-sans)}` ja le — nao
-  // depende de cascata nenhuma: e o mesmo truque usado nas cores do tema.
+  // Duas tentativas falharam antes por causa disto, e so um teste de navegador
+  // de verdade (scripts/qa-preferencias.mjs) mostrou o porque:
   //
-  // `--font-space-grotesk` (classe `font-display`, usada nos titulos) acompanha,
-  // senao trocar a fonte mudaria o corpo do texto e deixaria os titulos com a
-  // fonte antiga. `--font-geist-mono` fica de fora de proposito: codigo, versao e
-  // placar precisam de largura fixa.
-  raiz.style.setProperty("--font-geist-sans", fonte.pilha)
-  raiz.style.setProperty("--font-space-grotesk", fonte.pilha)
-  raiz.style.setProperty("--uf-fonte", fonte.pilha)
+  // as variaveis das fontes (`--f-playfair`, `--f-inter`, …) sao criadas pelo
+  // `next/font` atraves de CLASSES QUE FICAM NO <body>. Escrevendo
+  // `--font-geist-sans: var(--f-playfair), serif` no <html>, `--f-playfair` NAO
+  // EXISTE ali — a declaracao inteira vira invalida e a variavel resolve para
+  // VAZIO. O `.font-sans{font-family:var(--font-geist-sans)}` do body entao nao
+  // resolve nada e o texto cai na fonte de sistema do preflight. Foi exatamente
+  // o que medi: `--f-playfair` definida no body, `--font-geist-sans` vazia no
+  // html, e o body renderizando Segoe UI.
+  //
+  // No body as duas coisas coexistem. E `style.fontFamily` (inline) vence a
+  // classe `.font-sans` sem depender de especificidade.
+  const corpo = document.body
+  if (corpo) {
+    corpo.style.fontFamily = fonte.pilha
+    corpo.style.setProperty("--uf-fonte", fonte.pilha)
+    // Titulos usam `font-display` (`var(--font-space-grotesk)`). Sem isto,
+    // trocar a fonte mudaria o texto e deixaria os titulos com a antiga.
+    // `--font-geist-mono` fica de fora: versao e placar precisam de largura fixa.
+    corpo.style.setProperty("--font-space-grotesk", fonte.pilha)
+  }
 
   // O tamanho vira `font-size` da raiz; tudo que usa rem acompanha. Limitado a
   // 80–140% porque fora disso o layout do launcher quebra de verdade — texto
@@ -180,6 +224,9 @@ export function aplicarPreferencias(p: Preferencias): void {
   const escala = Math.min(140, Math.max(80, p.tamanhoTexto))
   raiz.style.fontSize = `${(16 * escala) / 100}px`
 
+  // O FUNDO e o que faz o tema parecer um tema. So trocar a cor de destaque
+  // deixava as 20 opcoes quase identicas — que foi a reclamacao.
+  raiz.style.setProperty("--uf-fundo", tema.fundoCss)
   raiz.dataset.ufTema = tema.id
   raiz.dataset.ufContraste = p.altoContraste ? "alto" : ""
   raiz.dataset.ufAnimacoes = p.reduzirAnimacoes ? "reduzidas" : ""

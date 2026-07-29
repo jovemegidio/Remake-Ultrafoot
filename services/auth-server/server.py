@@ -196,6 +196,62 @@ def codigo_da_conta(con, conta_id: int) -> str:
     return linha["codigo"] if linha else ""
 
 
+# ─── Loja ─────────────────────────────────────────────────────────────────────
+#
+# O catalogo mora no SERVIDOR, nao no launcher. Assim da para corrigir preco ou
+# tirar um item do ar sem publicar versao nova para todo mundo.
+#
+# `preco_cents` em centavos e inteiro: dinheiro em ponto flutuante acumula erro.
+#
+# ⚠️ SO EXISTEM ITENS QUE O JOGO/LAUNCHER REALMENTE ENTREGAM HOJE. Vender algo
+# que ainda nao funciona e cobrar por promessa.
+CATALOGO = [
+    {"id": "tema_ouro", "nome": "Tema Ouro", "tipo": "tema_launcher",
+     "descricao": "Fundo dourado exclusivo para o launcher.", "preco_cents": 490,
+     "carga": {"tema": "ouro"}},
+    {"id": "tema_meia_noite", "nome": "Tema Meia-noite", "tipo": "tema_launcher",
+     "descricao": "Azul profundo, para quem joga de madrugada.", "preco_cents": 490,
+     "carga": {"tema": "meia-noite"}},
+    {"id": "tema_vinho", "nome": "Tema Vinho", "tipo": "tema_launcher",
+     "descricao": "Bordo escuro com destaque em rosa.", "preco_cents": 490,
+     "carga": {"tema": "vinho"}},
+    {"id": "verba_5m", "nome": "Verba extra — 5 milhoes", "tipo": "verba",
+     "descricao": "Entra no caixa do clube na proxima vez que voce abrir o jogo.",
+     "preco_cents": 990, "carga": {"valor": 5_000_000}},
+    {"id": "verba_20m", "nome": "Verba extra — 20 milhoes", "tipo": "verba",
+     "descricao": "Reforco de caixa para uma janela cheia.",
+     "preco_cents": 2990, "carga": {"valor": 20_000_000}},
+]
+
+CATALOGO_POR_ID = {item["id"]: item for item in CATALOGO}
+
+
+def saldo_da_conta(con, conta_id: int) -> int:
+    linha = con.execute("SELECT saldo_cents FROM carteira WHERE conta_id = ?",
+                        (conta_id,)).fetchone()
+    return int(linha["saldo_cents"]) if linha else 0
+
+
+def creditar(con, conta_id: int, valor_cents: int, origem: str, id_externo: str = "") -> bool:
+    """Credita a carteira. Devolve False se este `id_externo` ja foi creditado."""
+    if valor_cents <= 0:
+        return False
+    agora = int(time.time())
+    if id_externo:
+        ja = con.execute("SELECT 1 FROM creditos WHERE id_externo = ?", (id_externo,)).fetchone()
+        if ja:
+            return False
+    con.execute("INSERT INTO creditos (conta_id, valor_cents, origem, quando, id_externo)"
+                " VALUES (?,?,?,?,?)",
+                (conta_id, valor_cents, origem[:80], agora, id_externo or None))
+    con.execute("INSERT INTO carteira (conta_id, saldo_cents, atualizado_em) VALUES (?,?,?)"
+                " ON CONFLICT(conta_id) DO UPDATE SET"
+                " saldo_cents = saldo_cents + excluded.saldo_cents,"
+                " atualizado_em = excluded.atualizado_em",
+                (conta_id, valor_cents, agora))
+    return True
+
+
 # ─── Senha ────────────────────────────────────────────────────────────────────
 #
 # scrypt com n=2**15: cerca de 100ms por verificacao em CPU de VPS. Devagar de
@@ -418,6 +474,20 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             return self._responder(200, {"ok": True, "service": "ultrafoot-auth"})
+        if self.path == "/loja":
+            with conectar() as con:
+                conta = conta_da_sessao(con, self._token())
+                if not conta:
+                    return self._responder(401, {"erro": "sessao invalida"})
+                meus = con.execute(
+                    "SELECT produto, valor_cents, criada_em FROM compras"
+                    " WHERE conta_id = ? AND estorno_de IS NULL ORDER BY criada_em DESC",
+                    (conta["id"],)).fetchall()
+                return self._responder(200, {
+                    "catalogo": CATALOGO,
+                    "saldo_cents": saldo_da_conta(con, conta["id"]),
+                    "meus_itens": [dict(m) for m in meus],
+                })
         if self.path.split("?")[0] == "/hub/chat":
             return self._chat_ler()
         if self.path == "/saves":
@@ -463,6 +533,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._login(corpo)
         if rota == "/google":
             return self._google(corpo)
+        if rota == "/loja/comprar":
+            return self._comprar(corpo)
         if rota == "/hub/presenca":
             return self._presenca(corpo)
         if rota == "/hub/chat":
@@ -523,6 +595,47 @@ class Handler(BaseHTTPRequestHandler):
                                        (conta_id,)).fetchone()["ativado"])
         return self._responder(201, {"token": token, "email": email, "nome": nome,
                                      "ativado": ativado, "codigo_ativacao": codigo if ativado else ""})
+
+    def _comprar(self, corpo: dict):
+        """Compra um item da loja gastando o saldo da carteira.
+
+        Saldo conferido e debitado na MESMA transacao da compra: separar as duas
+        coisas abriria a janela classica de gastar o mesmo saldo duas vezes com
+        dois cliques rapidos.
+        """
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+
+            item = CATALOGO_POR_ID.get(corpo.get("produto") or "")
+            if not item:
+                return self._responder(404, {"erro": "item nao encontrado"})
+
+            # Item de tema e permanente: comprar de novo so tiraria dinheiro.
+            if item["tipo"] == "tema_launcher":
+                ja_tem = con.execute(
+                    "SELECT 1 FROM compras WHERE conta_id = ? AND produto = ? AND estorno_de IS NULL",
+                    (conta["id"], item["id"])).fetchone()
+                if ja_tem:
+                    return self._responder(409, {"erro": "voce ja tem este item"})
+
+            saldo = saldo_da_conta(con, conta["id"])
+            if saldo < item["preco_cents"]:
+                return self._responder(402, {
+                    "erro": "saldo insuficiente",
+                    "saldo_cents": saldo,
+                    "preco_cents": item["preco_cents"],
+                })
+
+            agora = int(time.time())
+            con.execute("UPDATE carteira SET saldo_cents = saldo_cents - ?, atualizado_em = ?"
+                        " WHERE conta_id = ?", (item["preco_cents"], agora, conta["id"]))
+            con.execute("INSERT INTO compras (conta_id, produto, valor_cents, moeda, criada_em)"
+                        " VALUES (?,?,?,?,?)",
+                        (conta["id"], item["id"], item["preco_cents"], "BRL", agora))
+            novo_saldo = saldo_da_conta(con, conta["id"])
+        return self._responder(201, {"ok": True, "produto": item["id"], "saldo_cents": novo_saldo})
 
     # ── FC Hub: presenca e chat ──
     #
@@ -753,6 +866,20 @@ class Handler(BaseHTTPRequestHandler):
                     "INSERT INTO admin_log (admin_id, alvo_id, acao, motivo, quando)"
                     " VALUES (?,?,?,?,?)", (eu["id"], alvo_id, "desbanir", "", agora))
                 return self._responder(200, {"ok": True})
+
+            if rota == "/admin/creditar":
+                # ⚠️ ENQUANTO NAO HA MEIO DE PAGAMENTO, e por aqui que entra
+                # saldo. Fica restrito a admin e registrado, para o extrato nunca
+                # ter credito sem origem.
+                valor = corpo.get("valor_cents")
+                if not isinstance(valor, int) or valor <= 0:
+                    return self._responder(400, {"erro": "valor_cents invalido"})
+                creditar(con, alvo_id, valor, (corpo.get("motivo") or "credito manual"),
+                         corpo.get("id_externo") or "")
+                con.execute("INSERT INTO admin_log (admin_id, alvo_id, acao, motivo, quando)"
+                            " VALUES (?,?,?,?,?)",
+                            (eu["id"], alvo_id, "creditar", f"{valor} centavos", int(time.time())))
+                return self._responder(200, {"ok": True, "saldo_cents": saldo_da_conta(con, alvo_id)})
 
             if rota == "/admin/historico":
                 linhas = con.execute(

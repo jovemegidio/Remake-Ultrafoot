@@ -227,3 +227,12 @@ html[data-uf-contraste="alto"] .launcher-grid,
 html[data-uf-contraste="alto"] .launcher-pitch-lines {
   display: none;
 }
+
+/* FUNDO DO TEMA.
+   Vai no <body> com `background-attachment: fixed` para nao rolar junto com o
+   conteudo — fundo que rola faz a janela inteira parecer tremida. */
+html[data-uf-tema] body,
+html[data-uf-tema] .launcher-shell {
+  background: var(--uf-fundo, var(--background));
+  background-attachment: fixed;
+}

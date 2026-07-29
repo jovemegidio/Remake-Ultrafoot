@@ -159,3 +159,33 @@ CREATE TABLE IF NOT EXISTS chat (
 );
 
 CREATE INDEX IF NOT EXISTS idx_chat_id ON chat(id DESC);
+
+-- ─── Carteira da loja ────────────────────────────────────────────────────────
+--
+-- Saldo em CENTAVOS, inteiro. Dinheiro em ponto flutuante acumula erro de
+-- arredondamento e um dia alguem perde credito por causa disso.
+--
+-- O saldo fica numa tabela propria, e nao calculado a partir de `compras`, para
+-- a checagem de "tem saldo?" ser uma leitura direta — recomputar o extrato
+-- inteiro a cada compra fica lento e abre janela para gastar duas vezes.
+CREATE TABLE IF NOT EXISTS carteira (
+  conta_id      INTEGER PRIMARY KEY REFERENCES contas(id),
+  saldo_cents   INTEGER NOT NULL DEFAULT 0,
+  atualizado_em INTEGER NOT NULL
+);
+
+-- Entradas de credito (recarga, brinde, estorno). Fica separado de `compras`
+-- porque compra e saida: misturar os dois num extrato so torna impossivel
+-- responder "quanto foi creditado" sem interpretar sinal.
+CREATE TABLE IF NOT EXISTS creditos (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  conta_id    INTEGER NOT NULL REFERENCES contas(id),
+  valor_cents INTEGER NOT NULL,
+  origem      TEXT    NOT NULL DEFAULT '',
+  quando      INTEGER NOT NULL,
+  -- Idempotencia: o mesmo pedido de recarga nao pode creditar duas vezes se a
+  -- resposta se perder e o cliente repetir.
+  id_externo  TEXT UNIQUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_creditos_conta ON creditos(conta_id, quando DESC);

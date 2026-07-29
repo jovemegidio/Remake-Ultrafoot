@@ -9,6 +9,7 @@ import { SecurityPanel } from "./security-panel"
 import { SettingsDialog } from "./settings-dialog"
 import { AuthDialog } from "./auth-dialog"
 import { SocialPanel } from "./social-panel"
+import { StorePanel } from "./store-panel"
 import { sessaoSalva, sair, revalidar, type Sessao } from "@/lib/auth"
 import {
   lerPreferencias, gravarPreferencias, aplicarPreferencias, iniciais, PADRAO,
@@ -35,7 +36,7 @@ import {
   type LauncherConfig,
   type ServerStatus,
 } from "@/lib/launcher-bridge"
-import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings, User, LogIn, Users} from "lucide-react"
+import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings, User, LogIn, Users, ShoppingBag} from "lucide-react"
 
 const CLOSE_TO_TRAY_KEY = "ultrafoot-launcher:close-to-tray"
 const MODE_KEY = "ultrafoot-launcher:mode"
@@ -53,7 +54,7 @@ export type InstallState = {
   eta: number
 }
 
-type Tab = "home" | "news" | "social" | "changelog" | "security"
+type Tab = "home" | "loja" | "news" | "social" | "changelog" | "security"
 
 function isNewerVersion(candidate: string, installed: string): boolean {
   const a = candidate.split(".").map(part => Number.parseInt(part, 10) || 0)
@@ -397,6 +398,7 @@ export function LauncherShell({
 
   const tabs: { key: Tab; label: string; icon: typeof Home }[] = [
     { key: "home", label: "Início", icon: Home },
+    { key: "loja", label: "Loja", icon: ShoppingBag },
     { key: "news", label: "Novidades", icon: Newspaper },
     { key: "social", label: "FC Hub", icon: Users },
     { key: "changelog", label: "Changelog", icon: ScrollText },
@@ -622,6 +624,8 @@ export function LauncherShell({
               <NewsFeed news={effectiveNews.slice(0, 4)} title="Últimas novidades" compact />
             </div>
           )}
+
+          {tab === "loja" && <StorePanel onEntrar={() => setShowAuth(true)} />}
 
           {tab === "news" && <NewsFeed news={effectiveNews} title={`Novidades de ${game.name}`} />}
 

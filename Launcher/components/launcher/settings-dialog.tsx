@@ -173,8 +173,10 @@ export function SettingsDialog({
                             : "border-transparent hover:border-white/15",
                         )}
                       >
-                        <span className="flex h-12 items-center gap-1.5 px-3" style={{ background: t.amostra[1] }}>
-                          <span className="h-6 w-6 rounded-full" style={{ background: t.amostra[0] }} />
+                        {/* A amostra mostra o FUNDO real do tema, nao um retangulo
+                            de cor: e o fundo que diferencia um tema do outro. */}
+                        <span className="flex h-14 items-center gap-1.5 px-3" style={{ background: t.fundoCss }}>
+                          <span className="h-6 w-6 rounded-full" style={{ background: t.primaria }} />
                           <span className="h-2 flex-1 rounded-full" style={{ background: t.borda }} />
                         </span>
                         <span className="block px-3 py-2 text-xs font-semibold text-foreground">{t.nome}</span>

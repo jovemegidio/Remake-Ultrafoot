@@ -63,6 +63,10 @@ export interface OpcaoDeFonte {
 }
 
 export const FONTES: OpcaoDeFonte[] = [
+  // A pilha do padrao NAO pode referenciar `--font-geist-sans` se essa mesma
+  // variavel for o alvo da escrita: custom property que se referencia e invalida
+  // e resolve para vazio. Hoje escrevemos em `font-family`, entao esta seguro —
+  // mas a referencia fica documentada para nao virar armadilha de novo.
   { id: "padrao", nome: "Padrão do Ultrafoot", grupo: "Interface",
     pilha: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif" },
   { id: "inter", nome: "Inter", grupo: "Interface", pilha: "var(--f-inter), sans-serif",
