@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
-import { mensagemDeErro, validarCodigo } from "@/lib/license"
+import { mensagemDeErro, normalizarCodigo, validarCodigo } from "@/lib/license"
+import { ativarOnline, migrarSePreciso, pareceFormatoDeCodigo } from "@/lib/licenca-certificado"
 import { getDeviceId } from "@/lib/device-id"
 import { lerRegistro, gravarRegistro } from "@/lib/registration"
 import { BENEFICIOS } from "@/lib/beneficios"
@@ -114,6 +115,22 @@ export default function SplashPage() {
     const savedCode = getSavedCloudCode()
     if (savedCode) setCloudCode(savedCode)
     void ativarPeloLauncher(aplicar)
+
+    // MIGRACAO SILENCIOSA PARA Ed25519 (etapa 7 do plano).
+    //
+    // Quem tem chave do esquema antigo recebe a nova sozinho: o modulo busca em
+    // /licenca/minha e ativa. O jogador abre o jogo e continua registrado, sem
+    // digitar nada.
+    //
+    // Best-effort de proposito — falhar aqui NAO desregistra ninguem. Sem conta
+    // ou sem rede, o registro antigo segue valendo ate o corte da v1.0.202, e o
+    // jogo continua nao travando de qualquer jeito.
+    void migrarSePreciso().then(migrou => {
+      if (migrou) {
+        gravarRegistro({ registrado: true, device: getDeviceId() })
+        setIsRegistered(true)
+      }
+    })
     void contaLogada().then(async conta => {
       if (!conta) return
       setNomeDaConta(conta.nome || conta.email)
@@ -376,6 +393,30 @@ export default function SplashPage() {
     // piscar entre "validando" e o resultado.
     await delay(600)
 
+    // Guardado para o caso de os DOIS esquemas recusarem: a mensagem do servidor
+    // ("ja esta em uso em outro computador", "indisponivel") explica melhor do
+    // que o "codigo invalido" generico do esquema antigo.
+    let erroDoEsquemaNovo: string | undefined
+
+    // ESQUEMA NOVO PRIMEIRO (Ed25519). O codigo digitado e conferido no
+    // servidor, que devolve um certificado assinado para o jogo guardar.
+    //
+    // Os dois formatos sao IDENTICOS na tela (UF26-XXXXX-XXXXX-XXXXX), entao nao
+    // da para saber qual e qual olhando o texto: quem decide e o servidor. Por
+    // isso tentamos o novo e, se ele nao reconhecer, caimos no antigo — que
+    // continua valendo ate o corte da v1.0.202.
+    if (pareceFormatoDeCodigo(serialKey)) {
+      const novo = await ativarOnline(normalizarCodigo(serialKey))
+      if (novo.ok) {
+        gravarRegistro({ registrado: true, device: getDeviceId() })
+        setIsRegistered(true)
+        setIsValidating(false)
+        setTimeout(() => setShowRegisterModal(false), 2000)
+        return
+      }
+      erroDoEsquemaNovo = novo.erro
+    }
+
     const r = await validarCodigo(serialKey, licencasRevogadas)
     if (r.valido) {
       // UM CODIGO POR MAQUINA (pedido). Se esta instalacao ja foi registrada com
@@ -403,7 +444,10 @@ export default function SplashPage() {
         setShowRegisterModal(false)
       }, 2000)
     } else {
-      setRegisterError(mensagemDeErro(r.motivo))
+      // Os DOIS esquemas recusaram. Quando o servidor deu um motivo concreto
+      // ("ja em uso em outro computador", "servidor indisponivel"), ele explica
+      // melhor do que o generico — quem pagou merece saber o que fazer.
+      setRegisterError(erroDoEsquemaNovo ?? mensagemDeErro(r.motivo))
       setIsValidating(false)
     }
   }, [serialKey])
