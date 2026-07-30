@@ -5,6 +5,7 @@ import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
 import { mensagemDeErro, validarCodigo } from "@/lib/license"
 import { getDeviceId } from "@/lib/device-id"
 import { lerRegistro, gravarRegistro } from "@/lib/registration"
+import { BENEFICIOS } from "@/lib/beneficios"
 import licencasRevogadas from "@/data/seeds/licencas-revogadas.json"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -41,7 +42,7 @@ type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
 // Fundo FIXO da tela principal (pedido do usuário 26/07/26): estádio escuro com
 // gramado. Substitui o carrossel de prints com vinheta pesada.
-const MAIN_MENU_BG = "/images/main-menu-bg.png"
+const MAIN_MENU_BG = "/images/main-menu-bg.webp"
 
 /** Marca que a abertura institucional ja foi exibida — a partir dai o jogo abre curto. */
 const INTRO_VISTA = "ultrafoot:intro-vista"
@@ -208,8 +209,21 @@ export default function SplashPage() {
     let vivo = true
 
     const sequence = async () => {
+      const parametros = typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams()
+
+      // ?registrar=1 — veio de uma tela de recurso extra ("Registrar o jogo").
+      // Cai no menu JA com o campo do codigo aberto; obrigar a pessoa a caçar o
+      // item no menu depois de clicar em registrar seria um convite pela metade.
+      if (parametros.get("registrar") === "1") {
+        setPhase("main-menu")
+        setShowRegisterModal(true)
+        return
+      }
+
       // Se vier com ?menu=1 (ex: ao pressionar Voltar de outra tela), pula direto pro menu
-      if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("menu") === "1") {
+      if (parametros.get("menu") === "1") {
         setPhase("main-menu")
         return
       }
@@ -371,6 +385,12 @@ export default function SplashPage() {
   // Handler para baixar save da nuvem
   const handleCloudDownload = useCallback(async () => {
     if (cloudCode.length !== 6) return
+    // Recuperar da nuvem e o outro lado do save na nuvem: extra de quem
+    // registrou (lib/beneficios.ts). O save LOCAL continua livre para todos.
+    if (!lerRegistro().registrado) {
+      setCloudError("Recuperar da nuvem é um extra de quem registrou o jogo. Use o código no menu Registrar.")
+      return
+    }
     setCloudLoading(true)
     setCloudError("")
     setCloudSuccess("")
@@ -1125,6 +1145,26 @@ export default function SplashPage() {
                 t.splash.activate
               )}
             </button>
+
+            {/* O QUE O CODIGO LIBERA. O modal pedia a chave sem nunca dizer o
+                que vinha em troca — registrar parecia burocracia. A lista sai de
+                lib/beneficios.ts, a mesma que as telas bloqueadas mostram. */}
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-white/35">
+                {isRegistered ? "Liberado para você" : "O que o código libera"}
+              </p>
+              <ul className="space-y-1.5">
+                {BENEFICIOS.map(b => (
+                  <li key={b.id} className="flex items-start gap-2 text-xs text-white/50">
+                    <CheckCircle2 className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", isRegistered ? "text-emerald-400" : "text-[var(--brand)]/60")} />
+                    <span><span className="text-white/75">{b.titulo}</span> — {b.descricao}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-[11px] text-white/30">
+                Sem o código o jogo continua completo: carreira, competições e todos os modos.
+              </p>
+            </div>
 
             {/* Dica */}
             <p className="text-center text-white/30 text-xs">

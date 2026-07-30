@@ -421,6 +421,13 @@ export interface GameState {
   coachCrisisCount: number   // quantas crises resolvidas (gatilho de habilidades)
   coachWinStreak: number     // sequencia atual de vitorias
   coachTotalTitles: number
+  // ── Reuniões com a diretoria (lib/conversa-diretoria.ts) ────────────────
+  /** Quantas vezes você pediu algo nesta temporada — a paciência do conselho acaba. */
+  pedidosADiretoria?: number
+  /** Ajuste acumulado de confiança que veio das reuniões (soma ao cálculo do motor). */
+  boardConfidenceBonus?: number
+  /** Meta renegociada na reunião (posição), quando o conselho cedeu. */
+  metaDaDiretoria?: number
   // Legado entre carreiras (Roguelike)
   coachLegacy: CoachLegacy
   // Selecao nacional
@@ -634,6 +641,8 @@ export const DEFAULT_STATE: GameState = {
   coachCrisisCount: 0,
   coachWinStreak: 0,
   coachTotalTitles: 0,
+  pedidosADiretoria: 0,
+  boardConfidenceBonus: 0,
   // Legado
   coachLegacy: DEFAULT_COACH_LEGACY,
   // Selecao nacional

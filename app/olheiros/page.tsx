@@ -155,10 +155,10 @@ export default function OlheirosPage() {
   ]
 
   return (
-    <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    <div className="flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
       <GameHeader team={userTeam ?? undefined} />
 
-      <main className="h-[calc(100vh-48px-56px)] flex flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         {/* Tabs */}
         <div className="flex items-center gap-1 px-4 py-3 border-b border-white/[0.04] bg-[#0d0d0d]">
           {tabs.map((tab) => (

@@ -254,19 +254,19 @@ export default function TreinadorPage() {
   }, [amistosos, adjustSquadCohesion, setState, userTeam.curto])
 
   return (
-    <div className="relative h-screen overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
       {/* Mesmo pano de fundo do escritório (pedido: visual profissional igual
           ao office/pre-office): crossfade das fotos + véu para leitura. */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
-        <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
+        <Image src="/images/office-bg-1.webp" alt="" fill priority unoptimized className="office-bg-a object-cover" />
+        <Image src="/images/office-bg-2.webp" alt="" fill unoptimized className="office-bg-b object-cover" />
         <div className="absolute inset-0 bg-[#050508]/72" />
       </div>
 
       <div className="relative z-10">
       <GameHeader team={userTeam} />
 
-      <main className="flex h-[calc(100vh-48px-56px)] flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         {/* Hero do técnico — identidade em destaque, como o cabeçalho do office */}
         <div className="border-b border-white/[0.06] bg-black/35 px-4 py-4 backdrop-blur-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">

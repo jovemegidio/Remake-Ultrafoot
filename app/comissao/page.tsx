@@ -53,10 +53,10 @@ export default function ComissaoPage() {
   const risco = staffMembers.filter(m => m.problemChance >= 0.15).length
 
   return (
-    <div className="h-screen overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
       <GameHeader team={userTeam ?? undefined} />
 
-      <main className="flex h-[calc(100vh-48px-56px)] flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         <div className="border-b border-white/[0.04] bg-[#0d0d0d] px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

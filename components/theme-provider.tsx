@@ -93,6 +93,47 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
  * separar tema claro de tema escuro). Cores claras (dourado, ciano) pedem tinta
  * preta; escuras (roxo, azul) pedem branca.
  */
+/**
+ * Clareia a cor até ela ser LEGÍVEL COMO TEXTO no fundo escuro do jogo.
+ *
+ * BUG que isto corrige (relato: "toda area que contem escrita"): o tema "Cores do
+ * Time" joga a cor do clube direto em `--brand`, e meia tela usa
+ * `text-[var(--brand)]` — valores em destaque, potencial do atleta, rótulos. Num
+ * clube de cor preta ou muito escura, esse texto virava invisível sobre o fundo
+ * `#050508`. O `tintaLegivel` cuidava do caso contrário (texto SOBRE a marca) e
+ * ninguém cuidava deste.
+ *
+ * Preserva o MATIZ — a identidade do clube continua lá — e sobe só a
+ * luminosidade até passar do piso. Cores já claras não são tocadas.
+ */
+function clarearParaLerNoEscuro(hex: string): string {
+  const limpo = hex.replace("#", "")
+  if (limpo.length < 6) return hex
+  let r = parseInt(limpo.substring(0, 2), 16)
+  let g = parseInt(limpo.substring(2, 4), 16)
+  let b = parseInt(limpo.substring(4, 6), 16)
+
+  const luminancia = (rr: number, gg: number, bb: number) =>
+    (0.2126 * rr + 0.7152 * gg + 0.0722 * bb) / 255
+
+  // 0.38 é o piso: abaixo disso o texto compete com o fundo #050508. Testado no
+  // extremo (preto puro), que sai como um cinza claro em vez de invisível.
+  const PISO = 0.38
+  if (luminancia(r, g, b) >= PISO) return hex
+
+  // Preto puro não tem matiz para preservar: vira cinza claro neutro.
+  if (r === 0 && g === 0 && b === 0) return "#b4b4b4"
+
+  // Sobe todos os canais na mesma proporção, o que mantém o matiz.
+  for (let i = 0; i < 40 && luminancia(r, g, b) < PISO; i++) {
+    r = Math.min(255, Math.round(r * 1.12) + 6)
+    g = Math.min(255, Math.round(g * 1.12) + 6)
+    b = Math.min(255, Math.round(b * 1.12) + 6)
+  }
+  const hx = (v: number) => v.toString(16).padStart(2, "0")
+  return `#${hx(r)}${hx(g)}${hx(b)}`
+}
+
 function tintaLegivel(hex: string): string {
   const limpo = hex.replace("#", "")
   if (limpo.length < 6) return "#000000"
@@ -166,14 +207,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
      * coisa acabam discordando.
      */
     const aplicar = (primaryHex: string, accentHex: string) => {
-      root.style.setProperty("--primary", primaryHex)
-      root.style.setProperty("--ring", primaryHex)
-      root.style.setProperty("--accent", accentHex)
-      root.style.setProperty("--sidebar-primary", primaryHex)
-      root.style.setProperty("--sidebar-ring", primaryHex)
-      root.style.setProperty("--brand", primaryHex)
-      root.style.setProperty("--brand-2", accentHex)
-      root.style.setProperty("--brand-ink", tintaLegivel(primaryHex))
+      // `--brand` e usada nas DUAS pontas: como fundo de botao (com --brand-ink
+      // por cima) e como COR DE TEXTO em meia tela (`text-[var(--brand)]`). Um
+      // clube de cor preta zerava a segunda ponta — o texto sumia no fundo
+      // #050508. Clareamos para o uso legivel; o matiz do clube e preservado.
+      const marca = clarearParaLerNoEscuro(primaryHex)
+      const marca2 = clarearParaLerNoEscuro(accentHex)
+      root.style.setProperty("--primary", marca)
+      root.style.setProperty("--ring", marca)
+      root.style.setProperty("--accent", marca2)
+      root.style.setProperty("--sidebar-primary", marca)
+      root.style.setProperty("--sidebar-ring", marca)
+      root.style.setProperty("--brand", marca)
+      root.style.setProperty("--brand-2", marca2)
+      // A tinta e calculada sobre a cor JA clareada — senao um clube escuro
+      // clareado para cinza continuaria recebendo tinta branca, ilegivel.
+      root.style.setProperty("--brand-ink", tintaLegivel(marca))
     }
 
     if (theme === "team" && teamColors) {

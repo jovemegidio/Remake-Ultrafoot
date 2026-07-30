@@ -4,11 +4,11 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout } from "lucide-react"
+import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
+import { podeSalvarCarreira, saveGameStateAndFlush, useGameState, useManagingNational } from "@/lib/save-system"
 import { persistGameEngineNow } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { clearJobOffers } from "@/lib/career-moves"
@@ -100,6 +100,10 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const { advanceWeek: advanceGameWeek, currentWeek, currentSeason, seasonCalendar } = useGameManager()
   const userTeam = team || getTeamByShort(state.selectedTeamShort || "BGT") || serieATeams[0]
   const routeMeta = getRouteMeta(pathname)
+  // Dirigindo uma selecao o menu perde os itens de clube (mercado, financas,
+  // juniores...) e recebe os da selecao. Ver buildNavMenuItems.
+  const { isNational } = useManagingNational()
+  const navMenuItems = useMemo(() => buildNavMenuItems(isNational), [isNational])
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -178,7 +182,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     if (!showNavMenu) return
     const onPad = (e: Event) => {
       const { button } = (e as CustomEvent<{ button: string }>).detail
-      const last = NAV_MENU_ITEMS.length - 1
+      const last = navMenuItems.length - 1
       // O menu e uma grade de 3 colunas (sm:grid-cols-3).
       const COLS = 3
       switch (button) {
@@ -191,7 +195,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
         case "DPAD_DOWN":
           setNavMenuIndex((i) => Math.min(last, i + COLS)); break
         case "A": {
-          const item = NAV_MENU_ITEMS[navMenuIndex]
+          const item = navMenuItems[navMenuIndex]
           if (item) { setShowNavMenu(false); hardNavigate(item.href) }
           break
         }
@@ -202,16 +206,16 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
     }
     window.addEventListener("gamepad:button", onPad)
     return () => window.removeEventListener("gamepad:button", onPad)
-  }, [showNavMenu, navMenuIndex])
+  }, [showNavMenu, navMenuIndex, navMenuItems])
 
   // Ao abrir o menu, comeca no item da secao atual (nao sempre no primeiro).
   useEffect(() => {
     if (!showNavMenu) return
-    const current = NAV_MENU_ITEMS.findIndex(
+    const current = navMenuItems.findIndex(
       (item) => item.href !== "/" && pathname.startsWith(item.href),
     )
     setNavMenuIndex(current >= 0 ? current : 0)
-  }, [showNavMenu, pathname])
+  }, [showNavMenu, pathname, navMenuItems])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -321,10 +325,14 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
 
     setAdvancing(true)
 
+    // A data corre os 7 dias antes de a rodada ser simulada. Eram 95ms por dia =
+    // 665ms de espera PURA em cada avanco de semana — a acao mais repetida do
+    // jogo. Em 32ms a data ainda corre visivelmente (dois quadros por dia) e o
+    // avanco responde na hora.
     const start = getGameDate(currentSeason, currentWeek)
     for (let d = 1; d <= 7; d++) {
       setAdvanceDate(new Date(start.getTime() + d * 86_400_000))
-      await new Promise(resolve => setTimeout(resolve, 95))
+      await new Promise(resolve => setTimeout(resolve, 32))
     }
 
     // O retorno do avanco e a fonte fresca: o `seasonCalendar` deste closure (e o
@@ -582,7 +590,7 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-              {NAV_MENU_ITEMS.map((item, i) => {
+              {navMenuItems.map((item, i) => {
                 const Icon = item.icon
                 const active = pathname.startsWith(item.href) && item.href !== "/"
                 // Item sob o cursor do CONTROLE (no mouse, o hover ja indica).
@@ -686,19 +694,42 @@ function ResignConfirmDialog({ teamName, onCancel, onConfirm }: { teamName: stri
 }
 
 // Paginas do menu de navegacao rapida (tecla W).
-const NAV_MENU_ITEMS: { label: string; href: string; icon: typeof Save }[] = [
+//
+// `clubOnly` marca o que SO existe dirigindo um clube. Comandando uma selecao
+// (managingNationalTeamId setado) nao ha mercado, caixa nem categoria de base
+// para gerir — esses itens levavam a telas que ou redirecionam ou mostram os
+// dados do clube que ficou por baixo. Em vez de esconder na mao em cada tela,
+// o menu deixa de oferece-los e ganha os itens da SELECAO.
+type NavMenuItem = { label: string; href: string; icon: typeof Save; clubOnly?: boolean }
+
+const NAV_MENU_ITEMS: NavMenuItem[] = [
   { label: "Escritorio", href: "/", icon: Trophy },
   { label: "Area do Treinador", href: "/treinador", icon: User },
   { label: "Notificacoes", href: "/notificacoes", icon: Bell },
-  { label: "Elenco", href: "/elenco", icon: User },
-  { label: "Juniores", href: "/base", icon: Sprout },
-  { label: "Taticas", href: "/elenco/taticas", icon: Settings },
-  { label: "Mercado", href: "/mercado", icon: TrendingUp },
-  { label: "Calendario", href: "/calendario", icon: Calendar },
+  { label: "Elenco", href: "/elenco", icon: User, clubOnly: true },
+  { label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
+  { label: "Taticas", href: "/elenco/taticas", icon: Settings, clubOnly: true },
+  { label: "Mercado", href: "/mercado", icon: TrendingUp, clubOnly: true },
+  { label: "Calendario", href: "/calendario", icon: Calendar, clubOnly: true },
   // Competicoes e Classificacao apontavam para a MESMA rota — eram duas
   // entradas para a mesma tela. Viraram uma so.
-  { label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy },
-  { label: "Financas", href: "/financas", icon: TrendingUp },
-  { label: "Treinamento", href: "/treinamento", icon: User },
+  { label: "Competicoes e Classificacao", href: "/competicoes", icon: Trophy, clubOnly: true },
+  { label: "Financas", href: "/financas", icon: TrendingUp, clubOnly: true },
+  { label: "Treinamento", href: "/treinamento", icon: User, clubOnly: true },
   { label: "Configuracoes", href: "/configuracoes", icon: Settings },
 ]
+
+// Itens que substituem os de clube no modo selecao (entram antes de Configuracoes).
+const NAV_MENU_NATIONAL_ITEMS: NavMenuItem[] = [
+  { label: "Convocacao", href: "/selecao/convocacao", icon: User },
+  { label: "Competicoes da selecao", href: "/selecao/competicoes", icon: Trophy },
+  { label: "Amistosos de preparacao", href: "/selecao/amistosos", icon: Swords },
+  { label: "Contrato e gestao", href: "/selecao", icon: Flag },
+]
+
+function buildNavMenuItems(isNational: boolean): NavMenuItem[] {
+  if (!isNational) return NAV_MENU_ITEMS
+  const comuns = NAV_MENU_ITEMS.filter(i => !i.clubOnly)
+  const ultimo = comuns.pop()! // Configuracoes fica no fim
+  return [...comuns, ...NAV_MENU_NATIONAL_ITEMS, ultimo]
+}

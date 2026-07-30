@@ -349,6 +349,14 @@
   }
 }
 
+/* ⚠️ ARMADILHA DO `vh` SOB ZOOM — leia antes de escrever qualquer altura.
+   O jogo inteiro roda dentro de `body { zoom: var(--game-view-scale) }` (0.8 por
+   padrão). O `zoom` encolhe o que é desenhado, mas a unidade `vh` continua
+   medindo a janela SEM escala. Resultado: `h-[72vh]` ocupa 72% de 100vh e
+   depois encolhe 20% — vira 57% da tela de verdade, e sobra uma FAIXA MORTA
+   embaixo (foi exatamente o relato de "espaço vazio" em várias telas).
+   As classes abaixo corrigem `h-screen` e companhia. Para QUALQUER outra
+   altura: use flex (`min-h-0 flex-1`), nunca um número em vh. */
 @layer utilities {
   .h-screen {
     height: calc(100vh / var(--game-view-scale)) !important;
@@ -1123,8 +1131,16 @@ html[data-performance="economy"] *::after {
    compositor a reler o que ja foi desenhado atras de cada painel. A lista
    antiga parava no -xl e deixava passar -2xl/-3xl e os valores arbitrarios
    (backdrop-blur-[6px]), que sao os mais pesados. O seletor de atributo pega
-   todos de uma vez. */
-html[data-performance="economy"] [class*="backdrop-blur"] {
+   todos de uma vez.
+
+   AGORA VALE TAMBEM NO PERFIL PADRAO ("balanced"). Sao 119 usos de
+   backdrop-blur espalhados pelo jogo, e cada painel de vidro custa uma releitura
+   do fundo a cada quadro — era a principal fonte de engasgo em telas cheias
+   (mercado, elenco, calendario). Os paineis ja tem cor de fundo propria
+   (bg-[#0c0c10]/75 e afins), entao sem o desfoque eles continuam legiveis: perde
+   o vidro fosco, ganha fluidez. Vidro fosco de verdade so no perfil "quality". */
+html[data-performance="economy"] [class*="backdrop-blur"],
+html[data-performance="balanced"] [class*="backdrop-blur"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }

@@ -349,7 +349,7 @@ export default function CalendarioPage() {
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
 
   return (
-  <div className="h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 relative bg-[#050508]">
+  <div className="relative flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
 
   {/* Overlay de simulacao DIA A DIA (imersao: a data corre dia por dia ate a partida) */}
   {isSimulating && simDate && (
@@ -481,7 +481,7 @@ export default function CalendarioPage() {
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 flex h-[calc(100vh-48px-56px)] p-6 gap-6">
+      <div className="relative z-10 flex min-h-0 flex-1 p-6 gap-6">
         {/* Left Panel - Match Info (EA FC Style) */}
         <aside className="w-56 flex-shrink-0 flex flex-col">
           {/* Current Date - Large */}

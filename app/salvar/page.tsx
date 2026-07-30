@@ -13,6 +13,7 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { getSavedCloudCode, uploadSave } from "@/lib/cloud-save"
+import { useJogoRegistrado } from "@/lib/beneficios"
 
 const MESES = [
   "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
@@ -34,6 +35,7 @@ export default function SalvarPage() {
 
   const { state, hydrated } = useGameState()
   const { seasonCalendar } = useGameManager()
+  const { registrado } = useJogoRegistrado()
 
   const [tab, setTab] = useState<Tab>("principais")
   const [naming, setNaming] = useState(false)
@@ -60,6 +62,16 @@ export default function SalvarPage() {
     await saveGameStateAndFlush({ ...state, saveName: name, updatedAt: Date.now() })
     setSavedName(name)
     setNaming(false)
+
+    // SALVAR LOCAL É DE TODO MUNDO; a CÓPIA NA NUVEM é extra de quem registrou
+    // (lib/beneficios.ts). Ninguém perde progresso por não ter código — o save
+    // em disco já aconteceu na linha acima.
+    if (!registrado) {
+      setSaveFeedback("Jogo salvo. A cópia na nuvem é um extra de quem registrou o jogo.")
+      setTimeout(() => setSaveFeedback(""), 6000)
+      return
+    }
+
     const cloud = await uploadSave(getSavedCloudCode() ?? undefined)
     setSaveFeedback(
       cloud.success

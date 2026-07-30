@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useJogoRegistrado } from "@/lib/beneficios"
+import { AvisoDeRegistro } from "@/components/registro-necessario"
 import {
   Search,
   ArrowLeft,
@@ -325,6 +327,8 @@ export default function EditarPage() {
     window.addEventListener("gamepad:button", handler)
     return () => window.removeEventListener("gamepad:button", handler)
   }, [])
+
+  const { registrado, hidratado: registroHidratado } = useJogoRegistrado()
 
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(allTeams[0])
   const [searchTeam, setSearchTeam] = useState("")
@@ -773,6 +777,21 @@ export default function EditarPage() {
     selectedTeam?.nome,
     editDraft.estadio_nome ?? selectedTeam?.estadio_nome,
   ) ?? "/images/stadium-night.png"
+
+  // EDITOR = extra de quem registrou (ver lib/beneficios.ts). O convite fica
+  // DEPOIS de todos os hooks, nunca antes: um return condicional no meio da
+  // lista de hooks muda a contagem entre renders e derruba a tela com o erro
+  // #310 do React — foi assim que o escritorio quebrou uma vez.
+  if (registroHidratado && !registrado) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-[#05080a] p-6">
+        <AvisoDeRegistro id="editor" className="max-w-xl" />
+        <Link href="/splash?menu=1" className="mt-5 text-sm text-white/40 transition-colors hover:text-white/70">
+          Voltar ao menu
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#05080a] text-white">

@@ -14,7 +14,6 @@ import {
   Star,
   AlertCircle,
   Globe,
-  Clock,
   Check,
   X,
   UserPlus,
@@ -30,7 +29,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { NegotiationModal } from "@/components/modals/negotiation-modal"
 import { getGameDate } from "@/lib/game-date"
-import { getFormationSlots, normalizePosition } from "@/lib/formations"
+import { normalizePosition } from "@/lib/formations"
 import { inferredNationality } from "@/lib/country-normalize"
 
 /** Setores da aba "Rede Mundial" — cada botão cobre todas as posições do setor. */
@@ -65,6 +64,8 @@ import { playerSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import { canAffordTransfer, financeWithDebt, borrowingCapacity } from "@/lib/debt-engine"
 import { MercadoJunioresPanel } from "@/components/mercado-juniores-panel"
+import { CentralDeTransferencias } from "@/components/mercado/central-de-transferencias"
+import { RedeMundial } from "@/components/mercado/rede-mundial"
 import { agenteDoJovem, comissaoEmReais, responderOferta } from "@/lib/agente-do-jovem"
 import { generateYouthMarketProspects } from "@/lib/youth-academy"
 import { capacidadeDaBase, vagasNaBase } from "@/lib/youth-academy-rules"
@@ -363,42 +364,9 @@ export default function MercadoPage() {
     [gameEngine.currentSeason, gameEngine.currentWeek],
   )
 
-  // Formacao REAL do usuario (o engine e a fonte; a tela mostrava "4-3-3" fixo).
-  const centralFormation = gameEngine.formation ?? "4-3-3"
-
-  /**
-   * 11 titular REAL, posicionado pela formacao REAL — para o campo da Central de
-   * Transferencias, que ate aqui era um 4-3-3 desenhado a mao com overalls inventados.
-   *
-   * Preferimos quem o usuario marcou como titular; se o engine ainda nao tem escalacao,
-   * caimos nos 11 melhores do elenco (dado real, so nao escolhido por ele).
-   */
-  const centralStartingXI = useMemo(() => {
-    const slots = getFormationSlots(centralFormation)
-    const squad = gameEngine.squadPlayers ?? []
-
-    const starters = squad.filter((p) => p.isStarter)
-    const chosen = (starters.length >= 11 ? starters : [...squad].sort((a, b) => b.overall - a.overall))
-      .slice(0, 11)
-
-    // Encaixa cada titular no slot da mesma posicao; o que sobrar preenche na ordem.
-    const pool = [...chosen]
-    return slots.map((slot) => {
-      const exact = pool.findIndex((p) => p.position === slot.pos)
-      const idx = exact !== -1 ? exact : 0
-      const player = pool.splice(idx, 1)[0]
-      return { ...slot, player }
-    })
-  }, [centralFormation, gameEngine.squadPlayers])
-
-  // Resumo do elenco para os chips do cabecalho da Central (dado real).
-  const centralStats = useMemo(() => {
-    const squad = gameEngine.squadPlayers ?? []
-    const xi = centralStartingXI.map((s) => s.player).filter(Boolean) as EnginePlayer[]
-    const avg = xi.length ? Math.round(xi.reduce((s, p) => s + p.overall, 0) / xi.length) : 0
-    const value = squad.reduce((s, p) => s + (p.marketValue || 0), 0)
-    return { avg, count: squad.length, value }
-  }, [gameEngine.squadPlayers, centralStartingXI])
+  // O 11 titular desenhado no campinho saiu junto com a antiga aba "Central de
+  // Transferencias" (que era um planejador de elenco). Escalacao e formacao se
+  // gerenciam em Elenco/Taticas, que e onde elas mudam de verdade.
 
   // Catálogo completo: todos os atletas de todos os clubes importados, estáveis
   // dentro da temporada. A versão anterior passava `60` e, por isso, filtros de
@@ -525,12 +493,28 @@ export default function MercadoPage() {
   }, [transferTargets, nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter,
       filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
   
+  /**
+   * O jogador PROCUROU alguma coisa? Nome digitado ou qualquer filtro fora do
+   * padrão. Enquanto for false, a aba Buscar não lista ninguém — mostrar o
+   * catálogo inteiro por padrão não é resultado de busca (pedido).
+   */
+  const buscaAtiva =
+    searchQuery.trim() !== "" || nameFilter.trim() !== "" || selectedPosition !== "Tudo" ||
+    minAge > 16 || maxAge < 35 || filterNationality !== "Qualquer" ||
+    filterCountry !== "Qualquer" || filterLeague !== "Qualquer" ||
+    filterTeam !== "Qualquer" || filterStatus !== "Qualquer"
+
   // Auto-select first player when filtered results change
   useEffect(() => {
-    if (filteredPlayers.length > 0 && !selectedPlayer) {
+    if (buscaAtiva && filteredPlayers.length > 0 && !selectedPlayer) {
       setSelectedPlayer(filteredPlayers[0])
     }
-  }, [filteredPlayers, selectedPlayer])
+    // Limpou a busca: solta a ficha junto, senão o atleta da busca anterior fica
+    // preso na tela sem lista nenhuma ao lado. Com o modal ABERTO não mexe: o
+    // leilão vencido chega por aqui (setSelectedPlayer + abre a negociação) sem
+    // busca nenhuma ativa, e limpar a seleção fecharia a mesa na cara do jogador.
+    if (!buscaAtiva && selectedPlayer && !negotiationOpen) setSelectedPlayer(null)
+  }, [buscaAtiva, filteredPlayers, selectedPlayer, negotiationOpen])
 
   // Gamepad support
   useEffect(() => {
@@ -555,7 +539,9 @@ export default function MercadoPage() {
         return
       }
 
-      if (activeTab === "rede") {
+      // A lista de atletas com ficha mora na aba BUSCAR agora (a Rede virou a
+      // tela de sem clube / fim de contrato, com botoes proprios).
+      if (activeTab === "buscar") {
         if (button === "DPad_Up" || button === "DPad_Down") {
           const cur = selectedPlayer ? filteredPlayers.findIndex(p => p.id === selectedPlayer.id) : -1
           const next = button === "DPad_Up" ? Math.max(0, cur - 1) : Math.min(filteredPlayers.length - 1, cur + 1)
@@ -565,8 +551,6 @@ export default function MercadoPage() {
         if (button === "A") { handleNegotiate("buy"); return }
         if (button === "X") { handleNegotiate("loan"); return }
       }
-
-      if (activeTab === "buscar" && button === "A") { handleSearch(); return }
     }
 
     window.addEventListener("gamepad:button", handler)
@@ -737,8 +721,40 @@ export default function MercadoPage() {
     setNegotiationOpen(true)
   }
 
+  // "Buscar" aplica o filtro por nome NA PROPRIA ABA (a lista completa agora
+  // fica logo abaixo dos filtros). Antes trocava para a aba "rede", que hoje
+  // mostra outra coisa: sem clube / fim de contrato.
   const handleSearch = () => {
-    setActiveTab("rede")
+    setNameFilter(searchQuery)
+  }
+
+  /**
+   * ATLETA SEM CLUBE: assina direto, sem taxa de transferencia e sem mesa com o
+   * clube vendedor — nao existe clube para negociar. O motor ja sabe tratar esse
+   * caso (`buyPlayer(..., isFreeAgent = true)` entra no elenco na hora, mesmo com
+   * a janela fechada); o que faltava era a tela oferecer o caminho.
+   * A diretoria ainda pode vetar pelo TETO DA FOLHA — salario continua sendo
+   * custo, e e o unico custo aqui.
+   */
+  const handleContratarLivre = (player: Player) => {
+    const divisaoUsuario = String(careerState.divisionOverride ?? userTeam.divisao ?? "serie_a")
+    const salario = playerSalaryWeekly(player.overall, divisaoUsuario)
+    const fimContrato = absoluteWeek(gameEngine.currentSeason, gameEngine.currentWeek) + 52 * 3
+    const enginePlayer = marketPlayerToEnginePlayer(player, divisaoUsuario, salario, fimContrato)
+    const resultado = gameEngine.buyPlayer(enginePlayer, 0, true)
+    if (resultado === "wage_budget") {
+      setMarketNotice("A diretoria vetou: o salário deste atleta estoura o teto da folha. Livre de graça ainda pesa na folha.")
+      return
+    }
+    if (resultado === "failed") {
+      setMarketNotice("Não foi possível assinar com este atleta.")
+      return
+    }
+    // Ele estava fora do mercado a partir de agora (o catalogo consulta departed).
+    if (player.team?.nome) markDeparted(player.team.nome, player.name)
+    setMarketNotice(
+      `${player.name} assinou sem custo de transferência — salário de ${formatCurrency(salario)}/semana.`,
+    )
   }
 
   const handleHireScout = (scoutData: typeof AVAILABLE_SCOUTS[number]) => {
@@ -948,17 +964,18 @@ export default function MercadoPage() {
   }
 
   return (
-    <div className="relative h-screen overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
+    <div className="relative flex h-screen flex-col overflow-hidden md:pl-0 pl-0 pb-20 md:pb-0 bg-[#050508]">
       {/* Background stadium image */}
       {/* Sem md:ml-16: reservava 64px para uma sidebar inexistente e deixava uma
           faixa sem fundo na esquerda a partir do breakpoint md. */}
       <div className="absolute inset-0 pointer-events-none">
         <Image
-          src="/images/market-transfer-background.png"
+          src="/images/mercado-bg.webp"
           alt=""
           fill
           className="object-cover object-center"
           priority
+          unoptimized
         />
         {/* Base dark overlay */}
         <div className="absolute inset-0 bg-black/40" />
@@ -980,19 +997,25 @@ export default function MercadoPage() {
         Agora o main e uma coluna flex e o conteudo da aba cresce com flex-1: sobra
         exatamente zero, em qualquer altura de janela.
       */}
-      <main className="relative z-10 flex h-[calc(100vh-48px)] flex-col overflow-hidden p-4">
+      {/*
+        A FAIXA MORTA NO PE DA TELA, TERCEIRA VEZ.
+        O `h-[calc(100vh-48px)]` continuava sendo um palpite: o GameHeader tem 64px
+        (h-16), nao 48 — sobrava/faltava altura conforme a janela. Agora a PAGINA e
+        a coluna flex (o div de fora) e o main so cresce no espaco que restou:
+        `min-h-0 flex-1`. Nao existe mais numero chumbado para errar.
+      */}
+      <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as MarketTab)}
           className="flex min-h-0 flex-1 flex-col"
         >
-          {/* EA FC Style Header Navigation */}
+          {/* EA FC Style Header Navigation.
+              Saíram daqui (pedido): o rótulo "[w] Transferencias" à esquerda —
+              repetia a trilha que o próprio GameHeader já mostra em cima — e o
+              texto "Filtros de Busca" à direita, que era só legenda decorativa,
+              sem clique nenhum. */}
           <div className="flex shrink-0 items-center gap-4 mb-6 min-w-0">
-            <div className="flex shrink-0 items-center gap-2 text-white/50 text-sm">
-              <span className="text-xs border border-white/20 rounded px-1.5 py-0.5">w</span>
-              <span>Transferencias</span>
-            </div>
-
             <div className="relative min-w-0 flex-1">
               <div className="overflow-x-auto pr-10 scrollbar-thin">
                 <TabsList className="min-w-max bg-transparent border-0 p-0 h-auto gap-6">
@@ -1051,9 +1074,6 @@ export default function MercadoPage() {
               </div>
             </div>
 
-            <div className="hidden xl:flex shrink-0 items-center gap-4">
-              <span className="text-sm text-white/40">{t.market.searchFilters}</span>
-            </div>
           </div>
 
           {marketNotice && (
@@ -1071,7 +1091,7 @@ export default function MercadoPage() {
           )}
 
           {/* Search Filters Tab */}
-          <TabsContent value="buscar" className="mt-0 flex min-h-0 flex-1 flex-col">
+          <TabsContent value="buscar" className="scrollbar-thin mt-0 flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
             {/* Search Input */}
             <div className="mb-6 flex gap-4">
               <div className="flex-1 relative">
@@ -1115,42 +1135,8 @@ export default function MercadoPage() {
               </button>
             </div>
             
-            {/* Preview de resultados: aparece com busca por nome OU com qualquer filtro
-                ativo (posicao/idade). Antes so surgia com 2+ letras, entao filtrar por
-                posicao sozinho nao mostrava nada — parecia que o filtro nao funcionava. */}
-            {(searchQuery.length >= 2 || selectedPosition !== "Tudo" || minAge > 16 || maxAge < 35 ||
-              filterNationality !== "Qualquer" || filterCountry !== "Qualquer" || filterLeague !== "Qualquer" ||
-              filterTeam !== "Qualquer" || filterStatus !== "Qualquer") && filteredPlayers.length > 0 && (
-              <div className="mb-6 p-4 rounded-xl bg-[#1a1a1a] border border-white/10">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-white/60">{t.market.playersFound(filteredPlayers.length)}</span>
-                  <button
-                    onClick={handleSearch}
-                    className="text-xs text-primary hover:text-primary/80 transition-colors"
-                  >
-                    {t.market.viewInNetwork}
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {filteredPlayers.slice(0, 8).map((player) => (
-                    <button
-                      key={player.id}
-                      onClick={() => handlePlayerSelect(player)}
-                      className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-left group"
-                    >
-                      <PlayerAvatar name={player.name} teamColor={player.team.cor1} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-white truncate group-hover:text-primary transition-colors">
-                          {player.name}
-                        </div>
-                        <div className="text-[10px] text-white/40">{player.position} - {player.age} anos</div>
-                      </div>
-                      <span className="text-sm font-bold text-[#ffd700]">{player.overall}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* O antigo "preview de 8 atletas" saiu: a lista completa esta logo
+                abaixo dos filtros, nesta mesma aba. */}
 
             <div className="grid grid-cols-4 gap-4">
               {/* First Row */}
@@ -1264,89 +1250,60 @@ export default function MercadoPage() {
               />
             </div>
 
-            {/* Bottom Controls */}
-            <div className="flex items-center justify-between mt-8">
-              <div className="flex items-center gap-6 text-xs text-white/50">
-                <div className="flex items-center gap-2">
-                  <span className="border border-white/30 rounded px-1.5 py-0.5">Enter</span>
-                  <span>Selecionar Filtro</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="border border-white/30 rounded px-1.5 py-0.5">Esc</span>
-                  <span>Limpar Filtros</span>
-                </div>
+            {/*
+              RESULTADO DA BUSCA — a lista completa mora AQUI agora.
+              Antes esta aba mostrava so uma amostra de 8 atletas e um botao
+              "ver na rede", e a lista de verdade (com ficha e negociacao) ficava
+              na aba Rede Mundial. Como a Rede virou a tela de quem esta sem
+              clube / em fim de contrato (pedido), o catalogo inteiro passa a ser
+              o resultado desta busca — que e exatamente o nome da aba.
+            */}
+            {/* SÓ APARECE QUANDO SE PROCURA (pedido). Despejar os 64.808 atletas
+                do catálogo assim que a tela abre não é uma busca — é uma lista
+                telefônica, e ainda empurrava os filtros para fora da tela. Sem
+                busca nem filtro, o lugar mostra o convite abaixo. */}
+            {!buscaAtiva ? (
+              <div className="mt-6 flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[#0c0c10]/70 p-8 text-center backdrop-blur-sm">
+                <Search className="h-12 w-12 text-white/10" />
+                <h3 className="mt-4 text-lg text-white/55">Procure um atleta</h3>
+                <p className="mt-2 max-w-md text-sm text-white/35">
+                  Digite um nome acima ou use os filtros (posição, idade, país, liga, time…).
+                  O catálogo tem {transferTargets.length.toLocaleString("pt-BR")} atletas — os
+                  resultados aparecem aqui.
+                </p>
               </div>
-              <button 
-                onClick={handleSearch}
-                className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-              >
-                {t.market.startSearch}
-              </button>
-            </div>
-          </TabsContent>
-
-          {/* Transfer Network Tab */}
-          <TabsContent value="rede" className="mt-0 flex min-h-0 flex-1 flex-col">
-            {/* Position Filters */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center gap-1 text-xs text-white/40">
-                <span className="border border-white/20 rounded px-1 py-0.5">x</span>
-                <span className="border border-white/20 rounded px-1 py-0.5 ml-1">c</span>
-              </div>
-              {/* "Detalhes" não é posição: era passado como filtro e derrubava a
-                  lista para zero atletas. Agora alterna a densidade das linhas. */}
-              <button
-                onClick={() => setRedeDetailed(value => !value)}
-                className={cn("text-sm transition-colors", redeDetailed ? "text-white" : "text-white/40 hover:text-white/60")}
-              >
-                Detalhes
-              </button>
-              {["Tudo", "Ata", "Mei", "Def"].map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setPositionFilter(filter)}
-                  className={cn(
-                    "text-sm transition-colors",
-                    positionFilter === filter ? "text-white" : "text-white/40 hover:text-white/60",
-                  )}
-                >
-                  {filter}
-                </button>
-              ))}
-
-              <div className="ml-auto flex items-center gap-3">
-                <TeamCrest team={userTeam} size="sm" />
-                <span className="text-white font-medium">{userTeam.nome}</span>
-                <div className="flex gap-0.5">
-                  <div className="w-12 h-1 bg-green-500 rounded-full" />
-                  <div className="w-12 h-1 bg-green-500 rounded-full" />
-                  <div className="w-12 h-1 bg-green-500/50 rounded-full" />
-                </div>
-                <Star className="h-4 w-4 text-[#ffd700]" />
-              </div>
-            </div>
-
-            <div className="grid min-h-0 flex-1 grid-cols-2 gap-6">
-              {/* Player List */}
-              <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin">
+            ) : (
+            /* 72vh e cada coluna com rolagem PROPRIA: a lista e a ficha ficam
+               inteiras na tela em vez de obrigar a rolar a pagina toda (e a
+               ficha nao "foge" para cima enquanto se procura na lista). */
+            <div className="mt-6 grid h-[560px] grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="scrollbar-thin space-y-4 overflow-y-auto pr-1">
                 <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#0c0c10]/95 px-3 py-2 backdrop-blur-sm">
                   <span className="text-xs text-white/45">
                     {filteredPlayers.length.toLocaleString("pt-BR")} atletas · página {marketPage + 1} de {marketPageCount}
                   </span>
-                  <div className="flex gap-2">
-                    <button type="button" disabled={marketPage === 0} onClick={() => setMarketPage(page => Math.max(0, page - 1))} className="rounded bg-white/10 p-1.5 text-white disabled:opacity-25" aria-label="Página anterior">
-                      <ChevronLeft className="h-4 w-4" />
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setRedeDetailed(value => !value)}
+                      className={cn("text-xs transition-colors", redeDetailed ? "text-white" : "text-white/40 hover:text-white/60")}
+                    >
+                      Detalhes
                     </button>
-                    <button type="button" disabled={marketPage + 1 >= marketPageCount} onClick={() => setMarketPage(page => Math.min(marketPageCount - 1, page + 1))} className="rounded bg-white/10 p-1.5 text-white disabled:opacity-25" aria-label="Próxima página">
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    <div className="flex gap-2">
+                      <button type="button" disabled={marketPage === 0} onClick={() => setMarketPage(page => Math.max(0, page - 1))} className="rounded bg-white/10 p-1.5 text-white disabled:opacity-25" aria-label="Página anterior">
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button type="button" disabled={marketPage + 1 >= marketPageCount} onClick={() => setMarketPage(page => Math.min(marketPageCount - 1, page + 1))} className="rounded bg-white/10 p-1.5 text-white disabled:opacity-25" aria-label="Próxima página">
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {Object.entries(groupedPlayers).map(([group, players]) => (
                   players.length > 0 && (
-                    <div key={group} className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-white font-semibold">{group}</h3>
+                    <div key={group} className="rounded-xl border border-white/[0.06] bg-[#0c0c10]/75 p-4 backdrop-blur-sm">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="font-semibold text-white">{group}</h3>
                         <span className="text-xs text-white/40">{t.market.readyToPlay}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -1363,12 +1320,19 @@ export default function MercadoPage() {
                     </div>
                   )
                 ))}
+                {filteredPlayers.length === 0 && (
+                  <div className="rounded-xl border border-white/[0.06] bg-[#0c0c10]/75 p-8 text-center backdrop-blur-sm">
+                    <p className="text-white/50">Nenhum atleta com esses filtros.</p>
+                    <button onClick={clearAllFilters} className="mt-3 text-sm text-[var(--brand)] hover:underline">
+                      Limpar filtros
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Player Details Panel */}
-              <div className="overflow-y-auto pr-1 scrollbar-thin">
+              <div className="scrollbar-thin overflow-y-auto pr-1">
                 {selectedPlayer ? (
-                    <PlayerDetailsPanel
+                  <PlayerDetailsPanel
                     player={selectedPlayer}
                     onNegotiate={handleNegotiate}
                     onPrev={detailNav.prev}
@@ -1378,14 +1342,39 @@ export default function MercadoPage() {
                     irPara={detailNav.irPara}
                   />
                 ) : (
-                  <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-8 h-full flex flex-col items-center justify-center text-center">
-                    <User className="h-20 w-20 text-white/10 mb-4" />
-                    <h3 className="text-white/40 text-lg">{t.market.selectPlayer}</h3>
-                    <p className="text-white/30 text-sm mt-2">{t.market.clickForDetails}</p>
+                  <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[#0c0c10]/75 p-8 text-center backdrop-blur-sm">
+                    <User className="mb-4 h-20 w-20 text-white/10" />
+                    <h3 className="text-lg text-white/40">{t.market.selectPlayer}</h3>
+                    <p className="mt-2 text-sm text-white/30">{t.market.clickForDetails}</p>
                   </div>
                 )}
               </div>
             </div>
+            )}
+
+            {/* Rodape de atalhos */}
+            <div className="mt-6 flex items-center gap-6 pb-4 text-xs text-white/50">
+              <div className="flex items-center gap-2">
+                <span className="rounded border border-white/30 px-1.5 py-0.5">Enter</span>
+                <span>Aplicar busca por nome</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded border border-white/30 px-1.5 py-0.5">Esc</span>
+                <span>Limpar Filtros</span>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* REDE MUNDIAL — sem clube / fim de contrato, contratar ou observar.
+              Era uma segunda vitrine do catalogo inteiro, igual a aba Buscar. */}
+          <TabsContent value="rede" className="mt-0 flex min-h-0 flex-1 flex-col">
+            <RedeMundial
+              catalogo={transferTargets}
+              userTeam={userTeam}
+              temporada={gameEngine.currentSeason}
+              onNegociar={(player, tipo) => handleNegotiate(tipo, player)}
+              onContratarLivre={handleContratarLivre}
+            />
           </TabsContent>
 
           {/* Scouts Tab */}
@@ -1648,204 +1637,15 @@ export default function MercadoPage() {
             </div>
           </TabsContent>
 
-          {/* Central de Transferencias Tab */}
+          {/* CENTRAL DE TRANSFERENCIAS — acompanhar o mercado dos OUTROS clubes.
+              Era um planejador do proprio 11 titular (campinho com a formacao),
+              que ja existe em Elenco/Taticas. Ver components/mercado/. */}
           <TabsContent value="central" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* Cabecalho da Central — titulo claro + chips com o resumo REAL do elenco. */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
-                  <ArrowLeftRight className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold leading-tight text-white">Central de Transferências</h2>
-                  <p className="text-sm text-white/50">Sua base de operações no mercado</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {[
-                  { icon: <Shield className="h-3.5 w-3.5" />, label: "Formação", value: centralFormation },
-                  { icon: <Star className="h-3.5 w-3.5" />, label: "Média XI", value: String(centralStats.avg) },
-                  { icon: <User className="h-3.5 w-3.5" />, label: "Elenco", value: String(centralStats.count) },
-                  { icon: <Trophy className="h-3.5 w-3.5" />, label: "Valor", value: formatCurrency(centralStats.value) },
-                ].map((c) => (
-                  <div key={c.label} className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5">
-                    <span className="text-primary/80">{c.icon}</span>
-                    <div className="leading-none">
-                      <div className="text-[10px] uppercase tracking-wide text-white/40">{c.label}</div>
-                      <div className="text-sm font-bold text-white">{c.value}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid h-[calc(100%-76px)] grid-cols-[minmax(320px,0.8fr)_minmax(460px,1.2fr)] gap-4 pb-12">
-              {/* Left Column - Actions and Saved Lists */}
-              <div className="grid min-h-0 grid-rows-[auto_1fr] gap-4">
-                {/* Action Cards Row */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Buscar atletas */}
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("buscar")}
-                    className="group relative flex h-36 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/25 transition-colors group-hover:bg-primary/25">
-                      <Search className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">Buscar atletas</h3>
-                      <p className="text-sm text-white/45">Explore o mercado mundial</p>
-                    </div>
-                    <ChevronRight className="absolute right-4 top-5 h-5 w-5 text-white/20 transition-transform group-hover:translate-x-1 group-hover:text-primary" />
-                  </button>
-
-                  {/* Meus olheiros */}
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("olheiros")}
-                    className="group relative flex h-36 flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12262b] to-[#0b1416] p-5 text-left transition-all hover:border-primary/40"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-400/15 ring-1 ring-amber-400/25 transition-colors group-hover:bg-amber-400/25">
-                      <Eye className="h-6 w-6 text-amber-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">Meus olheiros</h3>
-                      <p className="text-sm text-white/45">Relatórios e alvos</p>
-                    </div>
-                    <ChevronRight className="absolute right-4 top-5 h-5 w-5 text-white/20 transition-transform group-hover:translate-x-1 group-hover:text-amber-400" />
-                  </button>
-                </div>
-
-                {/* Saved List Card */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("rede")}
-                  className="relative h-full min-h-0 w-full rounded-xl p-4 text-left transition-all overflow-hidden bg-gradient-to-br from-[#1c2b2f] via-[#162224] to-[#0d1618] border border-primary hover:border-primary group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-white font-semibold truncate">Padrao {userTeam?.curto || "TIME"}...</h3>
-                      <span className="text-white/60 text-sm">{centralFormation}</span>
-                      <span className="text-[var(--brand)] text-sm ml-2">ABERTO</span>
-                    </div>
-                    <span className="p-1 rounded transition-colors group-hover:bg-white/10">
-                      <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="12" cy="5" r="1" />
-                        <circle cx="12" cy="19" r="1" />
-                      </svg>
-                    </span>
-                  </div>
-                  {/* Mini field preview */}
-                  <div
-                    className="mt-3 h-[calc(100%-112px)] min-h-24 rounded-lg relative overflow-hidden"
-                    style={{ background: "radial-gradient(120% 120% at 50% 0%, #1c5a3a, #0f3722 80%)" }}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 border border-white/20 rounded-full" />
-                    </div>
-                    {/* Bolinhas na formacao REAL (antes eram 11 posicoes fixas no HTML). */}
-                    {centralStartingXI.map((slot, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                          slot.pos === "GOL" ? "bg-yellow-400" : "bg-blue-400",
-                        )}
-                        style={{ left: `${slot.x}%`, top: `${(slot.y / 133) * 100}%` }}
-                        title={slot.player?.name ?? slot.pos}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2 mt-3 text-[var(--brand)] text-xs">
-                    <Check className="w-4 h-4" />
-                    <span>Abrir rede mundial</span>
-                  </div>
-                </button>
-              </div>
-
-              {/* Right Column - Big Field Preview */}
-              <div className="min-h-0 rounded-xl p-5 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-white text-2xl font-bold">Padrao {userTeam?.nome?.toUpperCase() || "TIME"}</h2>
-                    <span className="text-white/60">{centralFormation}</span>
-                    <span className="text-[var(--brand)] ml-2">ABERTO</span>
-                  </div>
-                  <TeamCrest team={userTeam} size="lg" />
-                </div>
-
-                {/* Big Field */}
-                <div
-                  className="relative w-full h-[calc(100%-80px)] rounded-xl overflow-hidden"
-                  style={{
-                    // Mesma turfa rica do Gerenciamento (direcao visual aprovada).
-                    background:
-                      "radial-gradient(120% 90% at 50% -6%, #1c5a3a 0%, #164a31 44%, #0f3722 78%, #0a2718 100%)",
-                    boxShadow: "inset 0 0 50px rgba(0,0,0,0.5)",
-                  }}
-                >
-                  {/* Refletores nos cantos */}
-                  <div
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background:
-                        "radial-gradient(60% 55% at 15% 8%, rgba(255,255,235,0.09), transparent 70%)," +
-                        "radial-gradient(60% 55% at 85% 8%, rgba(255,255,235,0.09), transparent 70%)",
-                    }}
-                  />
-                  {/* Field lines */}
-                  <div className="absolute inset-4 border-2 border-white/30 rounded-lg" />
-                  <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white/30" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/30 rounded-full" />
-                  {/* Penalty areas */}
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-40 h-16 border-2 border-white/30 border-t-0" />
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-40 h-16 border-2 border-white/30 border-b-0" />
-
-                  {/* 11 TITULAR REAL.
-                      Antes eram 11 <div> chumbados no HTML (overalls 81/78/80/84...,
-                      rotulos "ZAG"/"MC"), um 4-3-3 fixo que nao tinha relacao nenhuma com
-                      o elenco nem com a formacao do usuario. Agora vem do engine. */}
-                  {centralStartingXI.map((slot, i) => (
-                    <div
-                      key={i}
-                      className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
-                      style={{ left: `${slot.x}%`, top: `${(slot.y / 133) * 100}%` }}
-                    >
-                      <div className={cn(
-                        "flex h-12 w-10 items-center justify-center rounded-t-full text-xs font-bold",
-                        slot.pos === "GOL"
-                          ? "bg-gradient-to-b from-yellow-400 to-yellow-600 text-black"
-                          : "bg-gradient-to-b from-blue-400 to-blue-600 text-white",
-                      )}>
-                        {slot.player?.overall ?? "-"}
-                      </div>
-                      <span className="mt-1 max-w-[72px] truncate text-[10px] text-white">
-                        {slot.player?.name ?? slot.pos}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Actions Bar */}
-            <div className="fixed bottom-0 left-0 md:left-16 right-0 bg-gradient-to-t from-[#050508] via-[#050508]/95 to-transparent py-4 px-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-white/10 rounded px-2 py-1 text-white/60">Esc</span>
-                    <span className="text-white/60 text-sm">Voltar</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-white/10 rounded px-2 py-1 text-white/60">q</span>
-                    <span className="text-white/60 text-sm">Procurar atletas</span>
-                  </div>
-                </div>
-                <TeamCrest team={userTeam} size="sm" />
-              </div>
-            </div>
+            <CentralDeTransferencias
+              userTeam={userTeam}
+              temporada={gameEngine.currentSeason}
+              semana={gameEngine.currentWeek}
+            />
           </TabsContent>
 
           {/* MERCADO DE JUNIORES — saiu do pe da tela da Categoria de Base e
@@ -2095,6 +1895,14 @@ export default function MercadoPage() {
         player={selectedPlayer}
         type={negotiationType}
         team={userTeam}
+        // O QUE O CLUBE PODE GASTAR DE VERDADE: caixa + crédito que o banco
+        // cobre, menos o congelamento por dívida em atraso. A mesa deixava
+        // propor 100 mi com 20 mi no caixa e só reprovava no fim.
+        tetoDeGastos={
+          canAffordTransfer(careerState.debt, gameEngine.balance, 0).ok
+            ? gameEngine.balance + borrowingCapacity(careerState.debt, gameEngine.weeklyIncome ?? 0)
+            : 0
+        }
         onConfirm={(fee, salarioSemanal) => {
           if (!selectedPlayer) return
           const divisaoUsuario = String(careerState.divisionOverride ?? userTeam.divisao ?? "serie_a")
@@ -2502,7 +2310,14 @@ function PlayerListCard({
   /** Modo "Detalhes": mostra overall, valor e clube direto na linha. */
   detailed?: boolean
 }) {
-  const isNew = player.scoutProgress && player.scoutProgress < 100
+  // O "0" QUE APARECIA EM TODA LINHA DO MERCADO.
+  //
+  // Era isto: `player.scoutProgress && ...` com scoutProgress = 0 devolve o
+  // NUMERO 0 (nao false), e o React imprime 0 na tela. Como o catalogo inteiro
+  // nasce com scoutProgress 0, cada atleta ganhava um "0" solto ao lado do nome
+  // — e o mesmo acontecia no cabecalho da ficha ("0 NAO OBSERVADO").
+  // "Novo" = relatorio em andamento, ou seja progresso ENTRE 0 e 100.
+  const isNew = (player.scoutProgress ?? 0) > 0 && (player.scoutProgress ?? 0) < 100
 
   return (
     <button
@@ -2565,7 +2380,18 @@ function PlayerListCard({
 
       {/* Team Crest */}
       <div className="flex flex-col items-end gap-1">
-        {detailed && <span className="text-sm font-black text-white">{player.overall}</span>}
+        {/* OVERALL SEMPRE VISIVEL. Ficava escondido atras do botao "Detalhes":
+            uma lista de mercado sem o overall obriga a clicar atleta por atleta
+            para saber quem presta. */}
+        <span className={cn(
+          "rounded px-1.5 py-0.5 text-[11px] font-black tabular-nums",
+          player.overall >= 85 ? "bg-[var(--brand)]/15 text-[var(--brand)]"
+            : player.overall >= 75 ? "bg-emerald-400/15 text-emerald-300"
+            : player.overall >= 65 ? "bg-amber-400/15 text-amber-300"
+            : "bg-white/10 text-white/60",
+        )}>
+          {Math.min(99, player.overall)}
+        </span>
         <TeamCrest team={player.team} size="xs" />
         {selected && (
           <div className="flex items-center justify-center w-5 h-5 rounded border border-white/20 text-[10px] text-white/50">
@@ -2580,8 +2406,12 @@ function PlayerListCard({
 // Player Details Panel Component
 function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, total = 0, irPara }: { player: Player, onNegotiate: (type: "buy" | "loan") => void, onPrev?: () => void, onNext?: () => void, indice?: number, total?: number, irPara?: (i: number) => void }) {
   const t = useTranslation()
-  const isNew = player.scoutProgress && player.scoutProgress < 100
+  // Mesmo cuidado do card da lista: `0 && ...` imprime "0" na tela (era o "0"
+  // colado em "NAO OBSERVADO" no print).
+  const isNew = (player.scoutProgress ?? 0) > 0 && (player.scoutProgress ?? 0) < 100
   const isNotScouted = !player.scoutedBy
+  /** Teto dos atributos do jogo. Sem ele a ficha mostrava "Ritmo 94 - 102". */
+  const ate99 = (v: number) => Math.min(99, Math.round(v))
 
   return (
     <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] overflow-hidden">
@@ -2640,12 +2470,14 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
 
             {/* Stats row */}
             <div className="flex items-center gap-4 mt-3 text-sm">
+              {/* Era so "Potencial" sobre dois numeros — ninguem sabia que o
+                  primeiro e o overall de HOJE e o segundo o teto. */}
               <div>
-                <span className="text-white/50">Potencial</span>
+                <span className="text-white/50">Overall / potencial</span>
                 <div className="flex items-center gap-1">
-                  <span className="text-primary font-bold">{player.overall}</span>
+                  <span className="text-primary font-bold">{ate99(player.overall)}</span>
                   <span className="text-white/30">-</span>
-                  <span className="text-primary font-bold">{player.potential}</span>
+                  <span className="text-primary/70 font-bold">{ate99(player.potential)}</span>
                 </div>
               </div>
               <div>
@@ -2683,23 +2515,35 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
           <div>
             <h4 className="text-white/50 text-xs font-medium mb-3">Resumo</h4>
             <div className="space-y-2">
+              {/* Atual e TETO do atributo. O teto passava de 100 ("Ritmo 94 -
+                  102") porque somava um bonus fixo sem limite nenhum; agora
+                  respeita o 99 do jogo. Quando o atleta ja esta no teto, nao
+                  mostra faixa nenhuma — "99 - 99" nao informa nada. */}
               {[
-                { label: "Ritmo", value: player.stats.pace, potential: player.stats.pace + 8 },
-                { label: "Finalizacao", value: player.stats.shooting, potential: player.stats.shooting + 10 },
-                { label: "Passe", value: player.stats.passing, potential: player.stats.passing + 11 },
-                { label: "Conducao", value: player.stats.dribbling, potential: player.stats.dribbling + 10 },
-                { label: "Defesa", value: player.stats.defense, potential: player.stats.defense + 10 },
-                { label: "Fisico", value: player.stats.physical, potential: player.stats.physical + 10 },
-              ].map((stat) => (
-                <div key={stat.label} className="flex items-center justify-between">
-                  <span className="text-white/60 text-sm">{stat.label}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-primary font-medium">{stat.value}</span>
-                    <span className="text-white/30">-</span>
-                    <span className="text-primary font-medium">{stat.potential}</span>
+                { label: "Ritmo", value: player.stats.pace, bonus: 8 },
+                { label: "Finalizacao", value: player.stats.shooting, bonus: 10 },
+                { label: "Passe", value: player.stats.passing, bonus: 11 },
+                { label: "Conducao", value: player.stats.dribbling, bonus: 10 },
+                { label: "Defesa", value: player.stats.defense, bonus: 10 },
+                { label: "Fisico", value: player.stats.physical, bonus: 10 },
+              ].map((stat) => {
+                const atual = ate99(stat.value)
+                const teto = ate99(stat.value + stat.bonus)
+                return (
+                  <div key={stat.label} className="flex items-center justify-between">
+                    <span className="text-white/60 text-sm">{stat.label}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-primary font-medium">{atual}</span>
+                      {teto > atual && (
+                        <>
+                          <span className="text-white/30">-</span>
+                          <span className="text-primary/70 font-medium">{teto}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { ptBR, type Translations } from "./translations/pt-BR"
 import { enUS } from "./translations/en-US"
 import { esES } from "./translations/es-ES"
+import { itIT } from "./translations/it-IT"
 import { storeGet, initPersistentStore } from "@/lib/persistent-store"
 
 // ⚠️ BUG CORRIGIDO (2026-07-20): este arquivo lia SEMPRE "ultrafoot:save" — a
@@ -19,13 +20,44 @@ function saveKey(): string {
   return careerId ? `ultrafoot:save:${careerId}` : LEGACY_KEY
 }
 
-const map: Record<string, Translations> = {
-  "pt-BR": ptBR,
-  "pt-PT": ptBR,
-  "en-US": enUS,
-  "en-GB": enUS,
-  "es-ES": esES,
-  "es-MX": esES,
+/**
+ * REGISTRO DE IDIOMAS — a lista única.
+ *
+ * A tela de Configurações montava a lista de idiomas à mão, num array separado
+ * (`languageOptions`). Duas listas para a mesma coisa é como um idioma acaba
+ * oferecido sem existir, ou existindo sem ser oferecido. Agora a tela lê DAQUI:
+ * acrescentar um idioma é escrever o arquivo de tradução e somar uma linha.
+ *
+ * `variantes` são códigos que caem no mesmo arquivo (pt-PT usa o pt-BR, es-MX
+ * usa o es-ES). "Castelhano" é o próprio es-ES; "mandarim" é o chinês (zh);
+ * "austríaco" é alemão (de) — por isso os três não viram arquivos separados.
+ */
+export interface IdiomaRegistrado {
+  id: string
+  /** Nome do idioma NO PRÓPRIO idioma — é assim que se escolhe idioma. */
+  label: string
+  /** Sigla mostrada no seletor. */
+  flag: string
+  textos: Translations
+  variantes?: string[]
+  /** Escrita da direita para a esquerda (árabe, hebraico). */
+  rtl?: boolean
+}
+
+export const IDIOMAS: IdiomaRegistrado[] = [
+  { id: "pt-BR", label: "Português", flag: "BR", textos: ptBR, variantes: ["pt-PT"] },
+  { id: "en-US", label: "English", flag: "US", textos: enUS, variantes: ["en-GB"] },
+  { id: "es-ES", label: "Español", flag: "ES", textos: esES, variantes: ["es-MX"] },
+  { id: "it-IT", label: "Italiano", flag: "IT", textos: itIT },
+]
+
+const map: Record<string, Translations> = Object.fromEntries(
+  IDIOMAS.flatMap(i => [[i.id, i.textos] as const, ...(i.variantes ?? []).map(v => [v, i.textos] as const)]),
+)
+
+/** O idioma escolhido escreve da direita para a esquerda? */
+export function idiomaEhRtl(id: string): boolean {
+  return IDIOMAS.find(i => i.id === id || i.variantes?.includes(id))?.rtl ?? false
 }
 
 // O idioma vive dentro do save (GameState.language), que agora fica no

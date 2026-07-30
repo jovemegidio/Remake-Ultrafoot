@@ -375,27 +375,28 @@ export default function PreOfficePage() {
       <div className="absolute inset-0 bg-[#050508]" />
       {/* Mesmos fundos do escritorio (/), com o crossfade suave — a pedido do usuario. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
-        <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
+        <Image src="/images/office-bg-1.webp" alt="" fill priority unoptimized className="office-bg-a object-cover" />
+        <Image src="/images/office-bg-2.webp" alt="" fill unoptimized className="office-bg-b object-cover" />
       </div>
-      {/* Brilho radial para profundidade. Em DIA DE FINAL o escritorio fica
-          tematico: o verde padrao da lugar ao dourado de decisao (pedido). */}
-      <div className="absolute inset-0" style={{
-        background: faseDaPartida(nextUserMatch)?.isFinal
-          ? "radial-gradient(ellipse 95% 75% at 50% 15%, rgba(255,199,0,0.22) 0%, rgba(255,140,0,0.08) 38%, transparent 65%)"
-          : "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.12) 0%, transparent 60%)"
-      }} />
+      {/* Em DIA DE FINAL o pre-office fica tematico (dourado de decisao). Fora
+          disso NAO ha mais brilho radial: era mais uma camada por cima da arte. */}
+      {faseDaPartida(nextUserMatch)?.isFinal && (
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 95% 75% at 50% 15%, rgba(255,199,0,0.16) 0%, rgba(255,140,0,0.06) 38%, transparent 65%)"
+        }} />
+      )}
       {/* Moldura dourada sutil emoldurando a tela na final. */}
       {faseDaPartida(nextUserMatch)?.isFinal && (
         <div className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-[#ffd700]/25" />
       )}
-      {/* Camadas de escurecimento para legibilidade do conteudo */}
-      <div className="absolute inset-0 bg-[#050508]/78" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#050b07] via-[#050b07]/70 to-[#050b07]/40" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050b07] via-transparent to-[#050b07]/60" />
-      <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse 120% 100% at 50% 50%, transparent 35%, rgba(0,0,0,0.55) 100%)"
-      }} />
+      {/*
+        VINHETA NO MINIMO (pedido). Eram QUATRO camadas empilhadas sobre a arte:
+        preto a 78%, um gradiente lateral, um vertical e ainda um vignette radial
+        de 55% nas bordas — o cenario quase nao aparecia, e cada camada e uma
+        superficie a mais para o compositor desenhar a cada frame.
+        Ficou uma so: o veu escuro que da contraste ao texto.
+      */}
+      <div className="absolute inset-0 bg-[#050508]/45" />
 
 
       <main className="relative z-10 flex-1 overflow-hidden flex flex-col">

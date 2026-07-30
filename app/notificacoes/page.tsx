@@ -10,6 +10,9 @@ import { detectEvents, respondToEvent, type DressingRoomEvent } from "@/lib/dres
 import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 import { Bell, Building2, CheckCheck, MessageCircle, MessagesSquare, Trash2, Users } from "lucide-react"
+import { ConversaDiretoria } from "@/components/conversa-diretoria"
+import { computeBoardConfidence } from "@/lib/board-engine"
+import { useGameEngine } from "@/lib/game-engine"
 
 type Aba = "notificacoes" | "diretoria" | "atletas"
 
@@ -27,6 +30,10 @@ export default function NotificacoesPage() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotifications()
   const [selecionada, setSelecionada] = useState<Notification | null>(null)
   const [aba, setAba] = useState<Aba>("notificacoes")
+  // Reuniao com a diretoria (lib/conversa-diretoria.ts).
+  const [reuniaoAberta, setReuniaoAberta] = useState(false)
+  const engineBalance = useGameEngine(s => s.balance)
+  const engineAddRevenue = useGameEngine(s => s.addClubRevenue)
   const { state: saveState, replaceState } = useGameState()
   const { standings, currentWeek } = useGameManager()
 
@@ -82,6 +89,48 @@ export default function NotificacoesPage() {
     return () => window.removeEventListener("gamepad:button", handler)
   }, [router, selecionada])
 
+  /** O que a diretoria SABE ao sentar com você — nada disso é inventado na hora. */
+  const estadoDaDiretoria = useMemo(() => {
+    // calcSeasonObjective lê `divisao` (e faz .toLowerCase() nela). Passar só
+    // curto/nome/prestígio derrubava o prerender do build com "Cannot read
+    // properties of undefined" — o objeto precisa vir completo.
+    const objetivo = calcSeasonObjective({
+      curto: userTeam.curto,
+      nome: userTeam.nome,
+      prestigio: userTeam.prestigio ?? 60,
+      divisao: String(saveState.divisionOverride ?? userTeam.divisao ?? "serie_a"),
+    } as Parameters<typeof calcSeasonObjective>[0])
+    const posicao = Math.max(0, standings.findIndex(s => s.teamShort === userTeam.curto) + 1)
+    const totalUser = standings.length || 20
+    const confianca = computeBoardConfidence({
+      currentPosition: posicao > 0 ? posicao : objetivo.targetPosition,
+      objective: objetivo,
+      recentForm: [],
+      seasonProgress: Math.min(1, Math.max(0, currentWeek / 38)),
+    })
+    return {
+      confianca,
+      posicao: posicao > 0 ? posicao : objetivo.targetPosition,
+      metaPosicao: objetivo.targetPosition,
+      caixa: engineBalance,
+      prestigio: userTeam.prestigio ?? 60,
+      // Cada pedido atendido nesta temporada cansa a diretoria — o save guarda.
+      pedidosNaTemporada: saveState.pedidosADiretoria ?? 0,
+    }
+  }, [userTeam, standings, currentWeek, engineBalance, saveState.pedidosADiretoria])
+
+  /** Aplica no save o que a reunião decidiu. */
+  const aplicarDesfechoDaReuniao = (d: { confiancaDelta: number; verbaLiberada?: number; novaMeta?: number }) => {
+    if (d.verbaLiberada && d.verbaLiberada > 0) engineAddRevenue(d.verbaLiberada)
+    replaceState({
+      ...saveState,
+      pedidosADiretoria: (saveState.pedidosADiretoria ?? 0) + 1,
+      boardConfidenceBonus: (saveState.boardConfidenceBonus ?? 0) + d.confiancaDelta,
+      ...(d.novaMeta ? { metaDaDiretoria: d.novaMeta } : {}),
+      updatedAt: Date.now(),
+    })
+  }
+
   const formatarTempo = (data: Date) => {
     const mins = Math.floor((Date.now() - data.getTime()) / 60000)
     if (mins < 1) return "Agora"
@@ -92,10 +141,10 @@ export default function NotificacoesPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#050508] pb-20 md:pb-0">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
       <GameHeader team={userTeam} />
 
-      <main className="flex h-[calc(100vh-48px-56px)] flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         <div className="border-b border-white/[0.04] bg-[#0d0d0d] px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -307,11 +356,19 @@ export default function NotificacoesPage() {
                     mao e igual para todo mundo. Diretoria e atletas agora sao
                     abas desta propria tela, com conteudo da sua carreira. */}
                 <div className="flex flex-wrap justify-center gap-2">
+                  {/* Antes só trocava de aba (lista de recados). Agora ABRE a
+                      reunião: assunto, tom da resposta e consequência real. */}
+                  <button
+                    onClick={() => setReuniaoAberta(true)}
+                    className="flex items-center gap-2 rounded-lg border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-3 py-2 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/20"
+                  >
+                    <Building2 className="h-3.5 w-3.5" />Falar com a diretoria
+                  </button>
                   <button
                     onClick={() => setAba("diretoria")}
                     className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:text-white"
                   >
-                    <Building2 className="h-3.5 w-3.5" />Diretoria
+                    <Building2 className="h-3.5 w-3.5" />Recados da diretoria
                   </button>
                   <button
                     onClick={() => setAba("atletas")}
@@ -326,6 +383,16 @@ export default function NotificacoesPage() {
         </div>
         )}
       </main>
+
+      {/* REUNIÃO COM A DIRETORIA. O desfecho vale de verdade: confiança do
+          conselho, verba extra no caixa e meta renegociada ficam no save. */}
+      <ConversaDiretoria
+        aberto={reuniaoAberta}
+        onFechar={() => setReuniaoAberta(false)}
+        clube={userTeam.nome}
+        estado={estadoDaDiretoria}
+        onDesfecho={aplicarDesfechoDaReuniao}
+      />
     </div>
   )
 }

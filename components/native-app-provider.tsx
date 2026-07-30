@@ -9,6 +9,7 @@ import { accessibilityStore } from "@/lib/accessibility-store"
 import { syncCurrencyFromStore, getCurrencyCode } from "@/lib/currency"
 import type { InGameUpdateOffer } from "@/lib/updater"
 import { baixarAtualizacao } from "@/lib/atualizacao-elencos"
+import { jogoRegistrado } from "@/lib/beneficios"
 import {
   canalAtivo,
   getAtualizacaoAutomatica,
@@ -97,6 +98,10 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
         return
       }
       if (consentimento !== "aceito" || !getAtualizacaoAutomatica()) return
+      // Atualizacao de elencos e um extra de quem registrou (lib/beneficios.ts).
+      // A leitura acontece DEPOIS do initPersistentStore, entao o registro ja
+      // esta em memoria — nao ha risco de negar a quem registrou.
+      if (!jogoRegistrado()) return
       const versao = await baixarAtualizacao()
       if (versao) console.info(`[elencos] atualizacao oficial ${versao} aplicada`)
     })

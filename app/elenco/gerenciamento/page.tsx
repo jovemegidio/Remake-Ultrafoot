@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   ChevronLeft, 
@@ -32,9 +33,10 @@ import { PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
+import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
 import { artilheiros, cartoes } from "@/lib/leaderboards"
 import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI } from "@/lib/formations"
-import { formatCurrency, getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { formatCurrency, getCamisaUrl, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { absoluteWeek, CONTRACT_EPOCH_SEASON, defaultRoleForPosition, getContractStatus, isTransferWindowOpen, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
@@ -129,6 +131,8 @@ export default function ElencoPage() {
   const loanListedIds = useGameEngine(s => s.loanListedIds)
   const transferListedIds = useGameEngine(s => s.transferListedIds)
   const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
+  const engineDevolverEmprestimo = useGameEngine(s => s.devolverEmprestimo)
+  const engineRenovarEmprestimo = useGameEngine(s => s.renovarEmprestimo)
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
   const engineSellPlayer = useGameEngine(s => s.sellPlayer)
   const engineRetirePlayer = useGameEngine(s => s.retirePlayer)
@@ -186,6 +190,11 @@ export default function ElencoPage() {
   const formation = engineFormation ?? "4-3-3"
   const setFormation = engineSetFormation
   const [selectedPlayerId, setSelectedPlayerId] = useState<number>(1)
+  // Banco de reservas fechado por padrao — ele so aparece quando o tecnico pede
+  // (pedido). Com 23 reservas aberto de cara, o campo ficava espremido.
+  const [bancoAberto, setBancoAberto] = useState(false)
+  // Mesa de renovacao do emprestimo (atleta que chegou emprestado).
+  const [renovacaoAberta, setRenovacaoAberta] = useState(false)
   const [draggingPlayer, setDraggingPlayer] = useState<number | null>(null)
   const [dragOverTarget, setDragOverTarget] = useState<number | null>(null)
   const [playerPositions, setPlayerPositions] = useState<Record<number, { x: number; y: number }>>({})
@@ -314,6 +323,18 @@ export default function ElencoPage() {
   const selectedPlayer = useMemo(() => {
     return [...players, ...bench].find(p => p.id === selectedPlayerId) || players[0]
   }, [selectedPlayerId, players, bench])
+
+  /**
+   * O atleta selecionado chegou POR EMPRÉSTIMO? Devolve o registro do motor
+   * (que é quem tem `isLoanedIn`, `parentClub` e a data-limite) — a tela usa
+   * isso para trocar vender/anunciar por devolver/renovar. A ponte é pelo NOME,
+   * como no resto da página: os ids divergem para atletas importados.
+   */
+  const emprestimoDoSelecionado = useMemo(() => {
+    if (!selectedPlayer) return null
+    const ep = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+    return ep?.isLoanedIn ? ep : null
+  }, [selectedPlayer, engineSquadPlayers])
   
   const formationKeys = Object.keys(FORMATIONS)
   const currentFormationIndex = formationKeys.indexOf(formation)
@@ -331,14 +352,17 @@ export default function ElencoPage() {
     return PLAYER_ROLE_INFO[role]?.name ?? "Equilibrado"
   }, [enginePlayerInstructions])
 
-  const focusLabelFor = useCallback((player: { id: number }) => {
-    const instructions = enginePlayerInstructions?.[player.id]
-    if (!instructions) return "Equilibrado"
-    if (instructions.getForward) return "Ataque"
-    if (instructions.holdPosition) return "Defesa"
-    if (instructions.roaming === "liberdade_total") return "Livre"
-    return "Equilibrado"
-  }, [enginePlayerInstructions])
+  /** Camisa 1 do clube — a arte que os onze vestem na prancheta. */
+  const camisaDoCampo = useMemo(
+    () => getCamisaUrl(userTeam.file_key, "home", userTeam.nome),
+    [userTeam.file_key, userTeam.nome],
+  )
+
+  /** Número do atleta no elenco do motor (undefined quando o save não tem). */
+  const numeroDaCamisa = useCallback(
+    (playerId: number) => engineSquadPlayers.find(p => p.id === playerId)?.shirtNumber,
+    [engineSquadPlayers],
+  )
 
   // Força por setor da Visão Tática. Os quatro campos eram rótulos fixos com "ND"
   // chumbado — nenhum dado do elenco chegava ali.
@@ -1306,38 +1330,57 @@ export default function ElencoPage() {
                     dragOverTarget === player.id && "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-transparent rounded-full"
                   )}
                 >
-                  {/* Card de função (nome / função / foco / posição), no lugar do
-                      antigo círculo de avatar — layout da referência do dossiê. */}
-                  <div
-                    className={cn(
-                      "relative w-[76px] md:w-[92px] overflow-hidden rounded-md text-center shadow-[0_4px_10px_rgba(0,0,0,0.55)] transition-all",
-                      selectedPlayerId === player.id
-                        ? "ring-2 ring-[var(--brand)]"
-                        : "ring-1 ring-white/15 group-hover:ring-white/40",
-                    )}
-                  >
-                    <div className="bg-gradient-to-b from-[#2b3446]/95 to-[#1b2130]/95 px-1 pb-1 pt-1.5 backdrop-blur-[2px]">
-                      <div className="truncate text-[9px] font-bold leading-tight text-white md:text-[10px]">
-                        {player.name.split(" ").pop()}
-                      </div>
-                      <div className="truncate text-[8px] leading-tight text-[var(--brand)] md:text-[9px]">
-                        {roleLabelFor(player)}
-                      </div>
-                      <div className="truncate text-[8px] leading-tight text-white/45 md:text-[9px]">
-                        {focusLabelFor(player)}
-                      </div>
-                    </div>
-                    {/* Faixa da posição, com o overall à direita */}
+                  {/* A CAMISA no lugar do retângulo (pedido). O card cinza dava
+                      a mesma cara para os onze e escondia o campo; a camisa do
+                      clube, com o número do atleta, se lê de relance e é o que
+                      todo jogo de futebol usa na prancheta. Nome, função e
+                      overall continuam logo abaixo — só saiu a caixa. */}
+                  <div className="relative flex flex-col items-center">
                     <div
                       className={cn(
-                        "flex items-center justify-between px-1.5 py-0.5 text-[8px] font-bold md:text-[9px]",
-                        selectedPlayerId === player.id ? "bg-[var(--brand)] text-[var(--brand-ink)]" : "bg-[#0d1220]/95 text-white/75",
+                        "relative h-[42px] w-[42px] md:h-[52px] md:w-[52px] transition-all",
+                        selectedPlayerId === player.id && "drop-shadow-[0_0_10px_var(--brand)]",
                       )}
                     >
-                      <span>{normalizePosition(player.position)}</span>
-                      <span className={selectedPlayerId === player.id ? "text-black" : getOverallColor(player.overall)}>
-                        {player.overall}
+                      <Image
+                        src={camisaDoCampo}
+                        alt=""
+                        fill
+                        unoptimized
+                        className="object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
+                      />
+                      {/* Número da camisa, centrado no peito. Sem número no save
+                          (elenco importado), cai na sigla da posição. */}
+                      <span className="absolute inset-0 flex items-center justify-center pt-[15%] text-[11px] font-black text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] md:text-[13px]">
+                        {numeroDaCamisa(player.id) ?? normalizePosition(player.position)}
                       </span>
+                    </div>
+
+                    <div
+                      className={cn(
+                        "mt-0.5 max-w-[86px] rounded px-1.5 py-[1px] text-center transition-colors",
+                        selectedPlayerId === player.id ? "bg-[var(--brand)]" : "bg-black/55",
+                      )}
+                    >
+                      <div className={cn(
+                        "truncate text-[9px] font-bold leading-tight md:text-[10px]",
+                        selectedPlayerId === player.id ? "text-[var(--brand-ink)]" : "text-white",
+                      )}>
+                        {player.name.split(" ").pop()}
+                      </div>
+                      <div className="flex items-center justify-center gap-1 text-[8px] leading-tight md:text-[9px]">
+                        <span className={selectedPlayerId === player.id ? "text-black/70" : "text-white/50"}>
+                          {normalizePosition(player.position)}
+                        </span>
+                        <span className={selectedPlayerId === player.id ? "font-bold text-black" : getOverallColor(player.overall)}>
+                          {player.overall}
+                        </span>
+                      </div>
+                      {/* A função só no selecionado: com onze rótulos o campo
+                          virava um mural de texto. */}
+                      {selectedPlayerId === player.id && (
+                        <div className="truncate text-[8px] leading-tight text-black/70">{roleLabelFor(player)}</div>
+                      )}
                     </div>
 
                     {/* Potential indicator */}
@@ -1383,18 +1426,37 @@ export default function ElencoPage() {
               </button>
             </div>
             
-            {/* Banco de reservas.
-                max-h-[46vh] e nao 30vh: com 15 reservas em 7 colunas sao TRES
-                fileiras, e 30vh so mostrava duas e um pedaco da terceira — o
-                scroll existia mas a fileira cortada nao parecia alcancavel.
-                Agora o painel cresce ate metade da tela e o campo cede o resto. */}
-            <div className="mt-2 flex max-h-[46vh] min-h-0 flex-shrink-0 flex-col rounded-xl border border-white/[0.04] bg-[#111111] p-3">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-semibold text-white/80 uppercase tracking-wider">{t.squad.reserves} ({bench.length})</h3>
-                <span className="text-[10px] text-white/40">{t.squad.dragToSubstitute}</span>
-              </div>
+            {/* Banco de reservas — FECHADO por padrao (pedido).
+                Aberto, ele comia metade da tela e o campo ficava espremido: com
+                23 reservas em 7 colunas sao quatro fileiras que quase ninguem
+                olha o tempo todo. Agora e uma barra que se abre quando o tecnico
+                QUER o banco (substituir, ver quem esta lesionado) e devolve a
+                altura para o campo assim que fecha.
+                max-h-[46vh] quando aberto: com quatro fileiras, menos que isso
+                deixava a ultima sempre pela metade. */}
+            <div className={cn(
+              "mt-2 flex min-h-0 flex-shrink-0 flex-col rounded-xl border border-white/[0.04] bg-[#111111] p-3",
+              bancoAberto && "max-h-[340px]",
+            )}>
+              <button
+                type="button"
+                onClick={() => setBancoAberto(v => !v)}
+                aria-expanded={bancoAberto}
+                className="flex items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-white/[0.04]"
+              >
+                <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white/80">
+                  <ChevronRight className={cn("h-3.5 w-3.5 text-[var(--brand)] transition-transform", bancoAberto && "rotate-90")} />
+                  {t.squad.reserves} ({bench.length})
+                </h3>
+                <span className="text-[10px] text-white/40">
+                  {bancoAberto ? t.squad.dragToSubstitute : "Clique para abrir o banco"}
+                </span>
+              </button>
+
+              {bancoAberto && (
+              <>
               {/* Legenda das cores de status — para o técnico ler o elenco de relance. */}
-              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-white/45">
+              <div className="mb-2 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-white/45">
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500 ring-1 ring-black/40" /> Lesão / contrato vencido</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400 ring-1 ring-black/40" /> Empréstimo</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400 ring-1 ring-black/40" /> Contrato a vencer</span>
@@ -1469,6 +1531,8 @@ export default function ElencoPage() {
                   })}
                 </div>
               </div>
+              </>
+              )}
             </div>
             </>
             )}
@@ -2080,6 +2144,46 @@ export default function ElencoPage() {
                 </button>
               )}
 
+              {/* ATLETA EMPRESTADO: o passe não é seu.
+                  Vender ou anunciar quem chegou por empréstimo era uma brecha
+                  real (pegar craque emprestado e revender no mesmo mercado).
+                  Aqui ele ganha as DUAS ações que fazem sentido — devolver
+                  agora, ou sentar com o dono para renovar. Ver lib/emprestimos.ts. */}
+              {emprestimoDoSelecionado ? (
+                <div className="mt-4 space-y-2 rounded-lg border border-sky-400/30 bg-sky-400/[0.06] p-3">
+                  <p className="text-[11px] leading-4 text-sky-100/80">
+                    <span className="font-bold">Atleta emprestado.</span> O passe pertence ao clube de
+                    origem — ele não pode ser vendido nem anunciado. O vínculo vai até a semana{" "}
+                    {emprestimoDoSelecionado.loanEndWeek ?? "—"}.
+                  </p>
+                  <button
+                    onClick={() => setRenovacaoAberta(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-sky-400/50 bg-sky-400/10 py-2.5 text-xs font-bold text-sky-200 transition-all hover:bg-sky-400/20"
+                  >
+                    <ArrowLeftRight className="h-4 w-4" />
+                    Negociar renovação do empréstimo
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!window.confirm(
+                        `Devolver ${selectedPlayer.name} ao clube de origem agora?\n\n` +
+                        `Ele sai do elenco imediatamente e o empréstimo é encerrado.`,
+                      )) return
+                      if (engineDevolverEmprestimo(selectedPlayer.id)) {
+                        addNotification({
+                          type: "transfer", priority: "medium",
+                          title: `${selectedPlayer.name} voltou ao clube de origem`,
+                          message: "O empréstimo foi encerrado antes do prazo.",
+                        })
+                      }
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 py-2.5 text-xs font-bold text-white/70 transition-all hover:border-red-400/40 hover:text-red-300"
+                  >
+                    Devolver ao clube de origem
+                  </button>
+                </div>
+              ) : (
+              <>
               {/* Lista de transferíveis: anuncia o atleta ao mercado. Antes não
                   havia como colocar ninguém à venda — só dava para reagir a
                   sondagens que a IA fizesse por conta própria. */}
@@ -2223,6 +2327,8 @@ export default function ElencoPage() {
                   </div>
                 )
               })()}
+              </>
+              )}
 
               {/* Rescisão: não havia como dispensar ninguém. Um atleta caro que o
                   mercado não quisesse ficava travado no elenco consumindo folha
@@ -2369,6 +2475,35 @@ export default function ElencoPage() {
             />
           )
         })()}
+
+        {/* Mesa de renovação do empréstimo. Ver lib/emprestimos.ts: o clube dono
+            avalia quanto o atleta JOGOU — quem deixou o garoto no banco paga
+            mais caro, e às vezes não renova de jeito nenhum. */}
+        {renovacaoAberta && emprestimoDoSelecionado && (
+          <RenovacaoEmprestimoModal
+            aberto
+            onFechar={() => setRenovacaoAberta(false)}
+            nome={emprestimoDoSelecionado.name}
+            clubeDono={emprestimoDoSelecionado.parentClub ?? "clube de origem"}
+            contexto={{
+              overall: emprestimoDoSelecionado.overall,
+              idade: emprestimoDoSelecionado.age,
+              salarioSemanal: emprestimoDoSelecionado.contract?.salary ?? 40_000,
+              jogos: emprestimoDoSelecionado.seasonStats?.matchesPlayed ?? 0,
+              semanasNoClube: Math.max(1, engineCurrentWeek - (emprestimoDoSelecionado.joinedClubWeek ?? 0)),
+              prestigioDono: userTeam.prestigio ?? 60,
+            }}
+            onAcordo={termos => {
+              engineRenovarEmprestimo(emprestimoDoSelecionado.id, termos.semanas)
+              addNotification({
+                type: "transfer", priority: "medium",
+                title: `Empréstimo de ${emprestimoDoSelecionado.name} renovado`,
+                message: `Mais ${termos.semanas} semanas, com ${formatCurrency(termos.taxa)} de taxa.`,
+              })
+              setRenovacaoAberta(false)
+            }}
+          />
+        )}
 
         {showTutorials && (
           <motion.div

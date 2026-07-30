@@ -33,7 +33,9 @@ import {
   RefreshCw,
   X, Building2 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
+import { IDIOMAS } from "@/lib/i18n"
 import { AtualizacoesPanel } from "@/components/atualizacoes-panel"
+import { SeloRegistrado } from "@/components/registro-necessario"
 import { DialogoConsentimentoAtualizacoes } from "@/components/dialogo-consentimento-atualizacoes"
 import {
   EVENTO_PREFERENCIAS,
@@ -84,14 +86,10 @@ const menuCards = [
   { id: "infraestrutura" as ViewType, title: "Infraestrutura", icon: Building2, row: 2 },
 ]
 
-const languageOptions = [
-  { id: "pt-BR", label: "Portugues (Brasil)", flag: "BR" },
-  { id: "pt-PT", label: "Português (Portugal)", flag: "PT" },
-  { id: "en-US", label: "English (United States)", flag: "US" },
-  { id: "en-GB", label: "English (United Kingdom)", flag: "GB" },
-  { id: "es-ES", label: "Espanol", flag: "ES" },
-  { id: "es-MX", label: "Español (México)", flag: "MX" },
-]
+// A lista de idiomas vem do REGISTRO (lib/i18n): era mantida aqui à mão, em
+// paralelo ao mapa de traduções — duas listas para a mesma coisa. Agora um
+// idioma novo aparece no seletor no momento em que o arquivo dele existe.
+const languageOptions = IDIOMAS.map(i => ({ id: i.id, label: i.label, flag: i.flag }))
 
 const commentaryVoices = [
   ["padrao", "Padrão"], ["andre-hening", "André Hening"], ["cleber-machado", "Cléber Machado"],
@@ -327,6 +325,8 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-xl md:text-2xl font-semibold text-white/70">{t.settings.customize}</h1>
               <div className="flex items-center gap-2 text-white/50 text-sm">
+                {/* Selo de jogo registrado — some sozinho para quem nao registrou. */}
+                <SeloRegistrado />
                 <span>{state.managerName || "Tecnico"}</span>
                 <span className="text-white/30">|</span>
                 <span>{userTeam.nome}</span>

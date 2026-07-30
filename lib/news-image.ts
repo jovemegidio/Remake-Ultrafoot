@@ -20,10 +20,10 @@ export function seedFromString(input: string): number {
 }
 
 // Acervo local (public/images/*). Todas embutidas no frontend, entao carregam offline.
-const STADIUM = "/images/stadium-bg.png"
+const STADIUM = "/images/stadium-bg.webp"
 const STADIUM_NIGHT = "/images/stadium-night.png"
 const TUNNEL = "/images/stadium-tunnel.png"
-const PITCH = "/images/field-bg.png"
+const PITCH = "/images/field-bg.webp"
 const LEAGUES = "/images/leagues-ultrafoot.jpg"
 
 // Capas por categoria de noticia. Varias opcoes = variedade sem perder o contexto.

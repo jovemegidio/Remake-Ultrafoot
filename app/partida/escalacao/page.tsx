@@ -730,7 +730,7 @@ export default function PartidaEscalacaoPage() {
 
   // Gerenciamento view (main view)
   return (
-    <div className="h-screen overflow-hidden pl-16 bg-[#050508]">
+    <div className="flex h-screen flex-col overflow-hidden pl-16 bg-[#050508]">
       <GameHeader team={userTeam} />
       
       {/* Match notification toast - only shows during actual match simulations */}
@@ -757,7 +757,7 @@ export default function PartidaEscalacaoPage() {
         )}
       </AnimatePresence>
 
-      <main className="h-[calc(100vh-48px-56px)] flex flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         {/* Sub-header with tabs */}
         <div className="flex flex-col md:flex-row md:items-center justify-between px-3 md:px-6 py-2 md:py-3 border-b border-white/10 bg-[#0d0d0d] gap-2 md:gap-0">
           <div className="flex items-center gap-3 md:gap-6">

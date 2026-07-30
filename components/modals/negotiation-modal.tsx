@@ -47,6 +47,12 @@ interface NegotiationModalProps {
   player: Player | null
   type: "buy" | "sell" | "loan"
   team?: Team
+  /**
+   * Teto REAL de gasto do clube: caixa + crédito disponível. Sem ele a mesa
+   * deixava propor 100 mi com 20 mi no caixa. Opcional para não quebrar quem
+   * abre o modal noutro contexto (venda, por exemplo).
+   */
+  tetoDeGastos?: number
   onConfirm?: (offer: number, salaryWeekly?: number) => void
   onNegotiationResult?: (result: {
     player: Player
@@ -64,6 +70,7 @@ export function NegotiationModal({
   player,
   type,
   team,
+  tetoDeGastos,
   onConfirm,
   onNegotiationResult,
 }: NegotiationModalProps) {
@@ -89,7 +96,9 @@ export function NegotiationModal({
   // Reset state when modal opens
   useEffect(() => {
     if (open && player) {
-      setOffer(player.value)
+      // A mesa abre no valor de mercado, mas nunca acima do que o clube pode
+      // pagar — senão o slider já nascia fora do teto.
+      setOffer(Math.min(player.value, tetoDeGastos ?? Number.POSITIVE_INFINITY))
       setStep("offer")
       setAccepted(false)
       setResponseProgress(0)
@@ -109,12 +118,24 @@ export function NegotiationModal({
   const loanMonthlyRate = 0.02 // 2% of value per month
   const loanMonths = 12
   
-  const minOffer = isLoan 
+  const minOffer = isLoan
     ? Math.floor(player.value * loanMonthlyRate * 6) // 6 months minimum
     : Math.floor(player.value * 0.5)
-  const maxOffer = isLoan
+  // ── VOCÊ SÓ OFERECE O QUE PODE PAGAR ─────────────────────────────────────
+  //
+  // Relato: "tenho 20 mi em caixa e estou fazendo proposta por um jogador de
+  // 100 mi". A mesa era um slider de 50% a 150% do valor do atleta, sem olhar
+  // uma vez sequer para o caixa — a conta só aparecia no fim, quando a compra
+  // falhava. Agora o TETO da proposta é o que o clube tem de verdade: caixa +
+  // crédito que o banco cobre (`tetoDeGastos`, calculado por quem abre o modal
+  // com canAffordTransfer/borrowingCapacity).
+  const tetoDeMercado = isLoan
     ? Math.floor(player.value * loanMonthlyRate * 24) // 24 months maximum
     : Math.floor(player.value * 1.5)
+  const tetoDoCaixa = tetoDeGastos ?? Number.POSITIVE_INFINITY
+  const maxOffer = Math.max(0, Math.min(tetoDeMercado, tetoDoCaixa))
+  /** O caixa (e o crédito) não alcançam nem o mínimo que o clube vendedor ouviria. */
+  const semDinheiro = maxOffer < minOffer
   // ── CRAQUE CUSTA CARO E CUSTA A SAIR ─────────────────────────────────────
   //
   // Antes o overall nao pesava na negociacao: um centroavante 90 e um reserva 70
@@ -397,7 +418,31 @@ export function NegotiationModal({
                 <span className="text-white/20">|</span>
                 <span>{formatCurrency(maxOffer)}</span>
               </div>
+              {/* Por que o slider para aqui. Sem esta linha o teto parecia
+                  arbitrário — e era justamente a dúvida do relato. */}
+              {tetoDeGastos != null && tetoDeMercado > tetoDoCaixa && (
+                <p className="text-[11px] text-amber-300/80">
+                  Teto de {formatCurrency(tetoDoCaixa)}: é o que o clube tem em caixa mais o crédito
+                  que o banco cobre. {player.name.split(" ").slice(-1)[0]} vale {formatCurrency(player.value)}.
+                </p>
+              )}
             </div>
+
+            {/* Nem o mínimo o caixa alcança: a mesa nem abre. Antes dava para
+                montar a proposta inteira e só descobrir na hora de fechar. */}
+            {semDinheiro && (
+              <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-semibold">Fora do alcance do clube</p>
+                  <p className="mt-1 text-xs text-red-200/75">
+                    O {player.team?.nome ?? "clube"} não ouviria menos de {formatCurrency(minOffer)}, e o
+                    seu teto hoje é {formatCurrency(tetoDoCaixa)}. Venda alguém, quite dívida ou espere
+                    a receita entrar.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Offer Status */}
             <div className={cn(
@@ -742,7 +787,11 @@ export function NegotiationModal({
               <Button variant="outline" onClick={handleClose} className="border-white/10 text-white/70 hover:bg-white/5">
                 Cancelar
               </Button>
-              <Button onClick={handleSubmitOffer} className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] font-semibold gap-2">
+              <Button
+                onClick={handleSubmitOffer}
+                disabled={semDinheiro}
+                className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] font-semibold gap-2 disabled:opacity-40"
+              >
                 <Handshake className="h-4 w-4" />
                 Enviar Proposta
               </Button>

@@ -7,7 +7,7 @@ import { safeLocalSet } from "@/lib/safe-storage"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
-import { useGameEngine, getContractStatus, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
+import { useGameEngine, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
 import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
 import { getGameDate } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
@@ -2407,6 +2407,28 @@ export function useGameManager() {
 
     // Avanca game engine
     gameEngine.advanceWeek()
+
+    // MERCADO DO MUNDO, SEMANA A SEMANA. Antes a IA so negociava na virada da
+    // temporada — a Central de Transferencias ficava um ano parada e o mercado
+    // nao parecia vivo. Aqui saem 2 negocios por quinzena, e SO com a janela
+    // aberta (mesma regra do jogador, isTransferWindowOpen). Quinzenal e barato
+    // de proposito: cada negocio consulta o elenco do vendedor.
+    if (isTransferWindowOpen(newWeek) && newWeek % 2 === 0) {
+      try {
+        simulateWorldTransferWindow({
+          clubes: allTeams.map(t => ({ nome: t.nome, curto: t.curto, prestigio: t.prestigio ?? 60, divisao: String(t.divisao) })),
+          squadOf: (curto) => {
+            const t = getTeamByShort(curto)
+            return t ? getPlayersForTeam(t).map(p => ({ nome: p.nome, pos: String(p.pos), idade: p.idade, base: p.base, nac: p.nac })) : []
+          },
+          clubeDoUsuario: userShort,
+          temporada: currentState.season,
+          semana: newWeek,
+          quantidade: 2,
+          rotulo: "semana",
+        })
+      } catch { /* o mercado do mundo e um extra: nunca derruba o avanco da semana */ }
+    }
 
     // Update ref immediately so the next loop iteration sees the incremented week
     let debt=currentState.debt

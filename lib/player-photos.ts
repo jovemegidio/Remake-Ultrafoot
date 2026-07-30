@@ -133,7 +133,11 @@ export function getPlayerPhotoUrl(name: string, playerId?: string): string | und
   // baixada; remota como reserva.
   const ft = getTmFotoMap().get(normalizePlayerKey(name)) ?? fotoPorSobrenome(name)
   if (!ft) return undefined
-  return TM_LOCAL.has(ft) ? gameAssetUrl(`/jogadores/${ft}.jpg`) : `${TM_PORTRAIT}${ft}.jpg`
+  // O `ft` traz a EXTENSAO quando nao e jpg ("275412-1771071867.png"): o TM serve
+  // boa parte das fotos como png, e cravar ".jpg" aqui dava 404 nelas. Token sem
+  // ponto continua sendo jpg, que e o formato da maioria e o que ja estava gravado.
+  const arquivo = ft.includes(".") ? ft : `${ft}.jpg`
+  return TM_LOCAL.has(ft) ? gameAssetUrl(`/jogadores/${arquivo}`) : `${TM_PORTRAIT}${arquivo}`
 }
 
 export function setPlayerPhotoOverride(name: string, dataUrl: string): void {

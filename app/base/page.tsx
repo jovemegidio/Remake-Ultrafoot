@@ -481,14 +481,14 @@ export default function BasePage() {
     // pb-28 livra a ultima linha de cards da barra fixa de acoes (h-11).
     <div className="relative h-screen overflow-hidden pl-[72px]">
       <div className="fixed inset-0 bg-[#050508]" />
+      {/* Fundo PROPRIO da categoria de base (arte pedida pelo usuario), no lugar
+          do fundo do escritorio. Uma imagem so, sem crossfade: e uma tela de
+          consulta, nao precisa de animacao de fundo rodando a toda hora. */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="office-bg-a object-cover" />
-        <Image src="/images/office-bg-2.png" alt="" fill unoptimized className="office-bg-b object-cover" />
+        <Image src="/images/juniores-bg.webp" alt="" fill priority unoptimized className="object-cover" />
       </div>
-      <div className="pointer-events-none fixed inset-0" style={{
-        background: "radial-gradient(ellipse 90% 70% at 50% 20%, rgba(34,197,94,0.14) 0%, transparent 60%)",
-      }} />
-      <div className="pointer-events-none fixed inset-0 bg-black/60" />
+      {/* Escurecimento so o suficiente para o texto ler — a vinheta pesada saiu. */}
+      <div className="pointer-events-none fixed inset-0 bg-[#050508]/62" />
 
       <div className="relative z-10 flex h-full flex-col">
       <GameSidebar />
@@ -629,25 +629,7 @@ export default function BasePage() {
           </div>
         )}
 
-        {/* O MERCADO DE JUNIORES MUDOU DE LUGAR (pedido): virou aba do Mercado,
-            no formato lista+ficha de Buscar Atletas. Aqui fica so o atalho — manter
-            duas vitrines do mesmo pool acabaria com as duas discordando. */}
-        <section>
-          <button
-            type="button"
-            onClick={() => hardNavigate("/mercado?aba=juniores")}
-            className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-all hover:border-sky-400/40 hover:bg-white/[0.06]"
-          >
-            <ShoppingCart className="h-5 w-5 shrink-0 text-sky-400" />
-            <span className="min-w-0 flex-1">
-              <span className="block font-semibold text-white">Mercado de juniores</span>
-              <span className="block text-xs text-white/45">
-                Promessas de outros clubes para a sua base — agora no Mercado, com busca e filtros.
-              </span>
-            </span>
-            <span className="shrink-0 text-sm text-white/35">abrir &rsaquo;</span>
-          </button>
-        </section>
+
 
         <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />

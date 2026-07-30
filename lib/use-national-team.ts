@@ -410,14 +410,25 @@ export function useNationalTeam() {
     const oppScore = golsPoisson(1.35 - dif * 0.55)
 
     const prev = state.nationalFriendlies ?? []
+    // O amistoso E um jogo dirigido: entra no RETROSPECTO da carreira na selecao
+    // (jogos/V-E-D). Sem isto o painel "Retrospecto" do escritorio ficava 0-0-0
+    // para sempre enquanto nao houvesse competicao em disputa — parecia quebrado.
+    const prevCareer = state.nationalCareer ?? DEFAULT_NATIONAL_CAREER
     setState({
       nationalFriendlies: [
         { opponentId, opponentName: opponent.name, userScore, oppScore, season: state.season },
         ...prev,
       ].slice(0, 6),
+      nationalCareer: {
+        ...prevCareer,
+        matchesPlayed: prevCareer.matchesPlayed + 1,
+        wins: prevCareer.wins + (userScore > oppScore ? 1 : 0),
+        draws: prevCareer.draws + (userScore === oppScore ? 1 : 0),
+        losses: prevCareer.losses + (userScore < oppScore ? 1 : 0),
+      },
       coachXP: (state.coachXP ?? 0) + 8, // preparo/entrosamento da selecao
     } as Parameters<typeof setState>[0])
-  }, [nationalTeam, state.nationalCuts, state.nationalCalls, state.managerName, state.season, state.week, state.nationalFriendlies, state.coachXP, setState])
+  }, [nationalTeam, state.nationalCuts, state.nationalCalls, state.managerName, state.season, state.week, state.nationalFriendlies, state.nationalCareer, state.coachXP, setState])
 
   // Encerra a competicao atual (apos terminada) e libera para iniciar outra
   const finishCompetition = useCallback(() => {

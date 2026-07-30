@@ -50,6 +50,8 @@ import {
 } from "@/lib/international-teams"
 import { getLeagueLogo } from "@/lib/league-logos"
 import { useGameManager } from "@/lib/use-game-manager"
+import { listCareerSaves } from "@/lib/save-system"
+import { LIMITE_SAVES_SEM_REGISTRO, ROTA_DE_REGISTRO, useJogoRegistrado } from "@/lib/beneficios"
 import { createYouthCareer } from "@/lib/youth-career-engine"
 import { createClubDebt, type DebtPreset } from "@/lib/debt-engine"
 import { createScoutingDepartment } from "@/lib/scout-engine"
@@ -238,6 +240,8 @@ const STADIUM_BG = "/images/pre-jogo/in-game-7.png"
 
 export default function NovoJogoPage() {
   const { initializeNewGame } = useGameManager()
+  const { registrado } = useJogoRegistrado()
+  const [limiteDeSaves, setLimiteDeSaves] = useState(false)
   const { setTheme, setTeamColors } = useTheme()
 
   const [countryIndex, setCountryIndex] = useState(0)
@@ -327,6 +331,14 @@ export default function NovoJogoPage() {
       setNameError(true)
       // foca o input para o usuario digitar o nome
       nameInputRef.current?.focus()
+      return
+    }
+    // TETO DE CARREIRAS SEM REGISTRO (lib/beneficios.ts). Note o que isto NAO
+    // faz: nao interrompe carreira nenhuma, nao apaga save e nao aparece no meio
+    // do jogo. So diz, ANTES de comecar mais uma, que o slot acabou — e apagar
+    // uma carreira antiga libera o espaco na hora.
+    if (!registrado && listCareerSaves().length >= LIMITE_SAVES_SEM_REGISTRO) {
+      setLimiteDeSaves(true)
       return
     }
     // Marcador pequeno e sincrono para recuperar a navegacao no WebView caso o
@@ -804,6 +816,50 @@ export default function NovoJogoPage() {
           </div>
         </footer>
       </div>
+
+      {/* Teto de carreiras de quem não registrou. Aparece ANTES de comecar mais
+          uma — nunca no meio de carreira nenhuma — e sai daqui por dois caminhos:
+          apagar uma antiga (Carregar jogo) ou registrar. */}
+      {limiteDeSaves && (
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/75 p-6" onClick={() => setLimiteDeSaves(false)}>
+          <div
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0c0c14] p-6 text-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold text-white">
+              Você já tem {LIMITE_SAVES_SEM_REGISTRO} carreiras salvas
+            </h2>
+            <p className="mt-2 text-sm text-white/60">
+              Sem registro o jogo guarda {LIMITE_SAVES_SEM_REGISTRO} carreiras ao mesmo tempo. Apague uma antiga
+              para abrir espaço, ou registre o jogo e tenha quantas quiser — junto com save na
+              nuvem, FC Hub, editor de equipes e a Central de Atualizações.
+            </p>
+            <p className="mt-2 text-xs text-white/35">
+              Nenhuma carreira sua é apagada ou interrompida por isso.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <button
+                onClick={() => hardNavigate(ROTA_DE_REGISTRO)}
+                className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-black text-[var(--brand-ink)] transition-all hover:brightness-110"
+              >
+                Registrar o jogo
+              </button>
+              <button
+                onClick={() => hardNavigate("/splash?menu=1")}
+                className="rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+              >
+                Gerenciar carreiras
+              </button>
+              <button
+                onClick={() => setLimiteDeSaves(false)}
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white/50 transition-colors hover:text-white"
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

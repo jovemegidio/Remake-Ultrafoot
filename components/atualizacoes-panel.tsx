@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { DialogoConsentimentoAtualizacoes } from "@/components/dialogo-consentimento-atualizacoes"
+import { useJogoRegistrado } from "@/lib/beneficios"
+import { AvisoDeRegistro } from "@/components/registro-necessario"
 import {
   aplicarDados,
   TITULOS,
@@ -62,6 +64,7 @@ const SELO: Record<EstadoCanal, { texto: string; classe: string }> = {
 }
 
 export function AtualizacoesPanel() {
+  const { registrado, hidratado: registroHidratado } = useJogoRegistrado()
   // O estado das preferencias e lido SO depois de montar: o store e do cliente e
   // o export estatico renderiza esta tela no build. Comecar pelo padrao e
   // corrigir no efeito e o mesmo caminho usado pela moeda e pela tela cheia.
@@ -134,6 +137,14 @@ export function AtualizacoesPanel() {
 
   const itens: ItemAtualizacao[] = relatorio?.itens ?? []
   const conectado = consentimento === "aceito"
+
+  // CENTRAL DE ATUALIZACOES = extra de quem registrou (lib/beneficios.ts). Baixar
+  // elenco novo do servidor e servico continuo, mantido por quem comprou o jogo.
+  // O convite fica DEPOIS dos hooks — return condicional antes deles quebra a
+  // ordem entre renders.
+  if (registroHidratado && !registrado) {
+    return <AvisoDeRegistro id="atualizacoes" />
+  }
 
   return (
     <div className="space-y-6">

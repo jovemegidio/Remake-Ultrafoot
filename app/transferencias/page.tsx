@@ -58,7 +58,7 @@ export default function TransferenciasHubPage() {
       cards={cards}
       primaryActionLabel="Entrar em buscar atletas"
       primaryActionRoute="/mercado"
-      backgroundImage="/images/market-transfer-background.png"
+      backgroundImage="/images/market-transfer-background.webp"
     />
   )
 }

@@ -2082,6 +2082,10 @@ interface GameEngineState {
   /** Atletas listados para EMPRÉSTIMO: a IA passa a fazer ofertas de empréstimo. */
   loanListedIds: number[]
   toggleLoanListed: (playerId: number) => void
+  /** Devolve AGORA o atleta emprestado ao clube de origem. */
+  devolverEmprestimo: (playerId: number) => boolean
+  /** Estende o emprestimo por mais N semanas (acordo ja fechado com o dono). */
+  renovarEmprestimo: (playerId: number, semanas: number, salarioSemanal?: number) => boolean
 
   // Processar fim de temporada (envelhecimento, aposentadoria, jovens da base)
   processSeasonEnd: (nextSeason: number, newStandings: StandingsEntry[], lastSeasonStandings: StandingsEntry[]) => void
@@ -2696,6 +2700,21 @@ export const useGameEngine = create<GameEngineState>()(
               seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
             }))
           if (arrivedPlayers.length) updatedPlayers.push(...arrivedPlayers)
+
+          // ---- EMPRESTIMO QUE VENCEU: o atleta VOLTA para casa ----
+          //
+          // `loanEndWeek` era gravado na chegada e nunca mais consultado: quem
+          // vinha por emprestimo ficava no elenco para sempre, de graca. Agora a
+          // data vale — sem renovacao (ver lib/emprestimos.ts), ele sai.
+          const emprestimosVencidos = updatedPlayers.filter(
+            p => p.isLoanedIn && p.loanEndWeek != null && p.loanEndWeek <= newWeek,
+          )
+          if (emprestimosVencidos.length > 0) {
+            const idsQueVoltaram = new Set(emprestimosVencidos.map(p => p.id))
+            for (let i = updatedPlayers.length - 1; i >= 0; i--) {
+              if (idsQueVoltaram.has(updatedPlayers[i].id)) updatedPlayers.splice(i, 1)
+            }
+          }
 
           // ---- STATUS EFFECTS: processar duracao e curas por tempo ----
           const playersAfterEffects = seasonPlayers.map(player => {
@@ -3436,7 +3455,15 @@ export const useGameEngine = create<GameEngineState>()(
         setPieceTakers: { ...s.setPieceTakers, [tipo]: playerName ?? undefined },
       })),
 
+      // ATLETA EMPRESTADO NAO SE VENDE NEM SE EMPRESTA DE NOVO.
+      //
+      // Ele nao e seu: o passe pertence ao clube de origem. Vender ou repassar
+      // por emprestimo quem chegou emprestado era uma brecha real — dava para
+      // pegar um craque por emprestimo e vende-lo no mesmo mercado. O que se
+      // pode fazer com ele esta em `lib/emprestimos.ts`: devolver antes da hora
+      // ou negociar a renovacao com o clube dono.
       toggleTransferListed: (playerId) => set((s) => {
+        if (s.squadPlayers.find(p => p.id === playerId)?.isLoanedIn) return {}
         const current = s.transferListedIds ?? []
         return current.includes(playerId)
           ? { transferListedIds: current.filter(id => id !== playerId) }
@@ -3444,11 +3471,44 @@ export const useGameEngine = create<GameEngineState>()(
       }),
 
       toggleLoanListed: (playerId) => set((s) => {
+        if (s.squadPlayers.find(p => p.id === playerId)?.isLoanedIn) return {}
         const current = s.loanListedIds ?? []
         return current.includes(playerId)
           ? { loanListedIds: current.filter(id => id !== playerId) }
           : { loanListedIds: [...current, playerId] }
       }),
+
+      /**
+       * DEVOLVER AGORA ao clube de origem (rescindir o emprestimo).
+       * O atleta sai do elenco na hora; nao ha multa porque quem devolve antes
+       * esta abrindo mao do resto do vinculo — o custo e nao ter mais o jogador.
+       */
+      devolverEmprestimo: (playerId) => {
+        const alvo = get().squadPlayers.find(p => p.id === playerId)
+        if (!alvo?.isLoanedIn) return false
+        set((s) => ({
+          squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
+          transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
+          loanListedIds: (s.loanListedIds ?? []).filter(id => id !== playerId),
+        }))
+        return true
+      },
+
+      /** Estende o vinculo de emprestimo por mais N semanas (acordo fechado). */
+      renovarEmprestimo: (playerId, semanas, salarioSemanal) => {
+        const alvo = get().squadPlayers.find(p => p.id === playerId)
+        if (!alvo?.isLoanedIn) return false
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p => p.id !== playerId ? p : {
+            ...p,
+            loanEndWeek: Math.max(p.loanEndWeek ?? s.currentWeek, s.currentWeek) + semanas,
+            contract: p.contract
+              ? { ...p.contract, salary: salarioSemanal ?? p.contract.salary, endDate: (p.loanEndWeek ?? s.currentWeek) + semanas }
+              : p.contract,
+          }),
+        }))
+        return true
+      },
 
       // Mudanca de POSICAO pelo modal do gerenciamento (ATA->MEI, MEI->VOL...).
       // A FUNCAO dentro da posicao (falso 9, segundo atacante) vive em

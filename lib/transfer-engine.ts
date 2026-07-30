@@ -4,6 +4,7 @@
 
 import type { GameState } from "@/lib/save-system"
 import { repairMojibake } from "@/lib/text-normalization"
+import { clubeCuradoPorNome, siglaExibivel } from "@/lib/club-identity"
 import type { SquadPlayer } from "@/lib/save-system"
 import type { MarketTarget, IncomingOffer } from "@/lib/career-types"
 import importedBF from "@/data/seeds/imported-bf2026.json"
@@ -328,23 +329,32 @@ function deriveStats(position: string, overall: number, rng: () => number) {
 }
 
 function toMarketTeamInfo(t: BfTeamRaw): MarketTeamInfo {
+  const nome = repairMojibake(t.nome)
+  // Mesmo clube do catalogo curado? Entao a IDENTIDADE vem dele: sigla de
+  // verdade (MUN, e nao "MACHESTE"), file_key do catalogo — que e a chave do
+  // escudo do jogo E do escudo importado no editor de equipes — e as cores
+  // oficiais. Sem isto o mercado mostrava o escudo generico desenhado mesmo
+  // para quem tinha arte importada. Ver lib/club-identity.ts.
+  const curado = clubeCuradoPorNome(nome)
   return {
-    nome: repairMojibake(t.nome),
-    curto: t.curto,
-    cidade: "",
-    estado: "",
-    cor1: t.cor1 ?? "#888888",
-    cor2: t.cor2 ?? "#222222",
+    nome,
+    // Fora do catalogo, deriva a sigla do NOME (o `curto` do pool e o fileKey
+    // cortado em 8: FENIXXUR, QUEENSPA, ALVORADO...).
+    curto: curado?.curto ?? siglaExibivel(t.curto, nome),
+    cidade: curado?.cidade ?? "",
+    estado: curado?.estado ?? "",
+    cor1: curado?.cor1 ?? t.cor1 ?? "#888888",
+    cor2: curado?.cor2 ?? t.cor2 ?? "#222222",
     prestigio: t.prestigio ?? 70,
     torcida: 0,
     estadio_cap: 30000,
     saldo: t.saldo ?? 0,
-    file_key: t.fileKey ?? t.curto.toLowerCase(),
-    estadio_nome: t.estadio ?? "",
+    file_key: curado?.file_key ?? t.fileKey ?? t.curto.toLowerCase(),
+    estadio_nome: t.estadio ?? curado?.estadio_nome ?? "",
     patrocinador: "",
-    escudo_url: t.escudo ?? "",
+    escudo_url: curado?.escudo_url ?? t.escudo ?? "",
     divisao: t.divisao ?? "serie_a",
-    pais: normalizedCountry(t.pais, t.fileKey),
+    pais: normalizedCountry(t.pais, t.fileKey) ?? curado?.pais,
     liga: t.liga ?? t.divisao ?? "Liga nacional",
   }
 }
@@ -353,12 +363,25 @@ function toMarketTeamInfo(t: BfTeamRaw): MarketTeamInfo {
  * Vitrine do mercado: alvos completos gerados do banco real (2.900+ clubes),
  * com atributos derivados por posição. Determinístico por temporada.
  */
+/**
+ * Cache do catalogo INTEIRO (count indefinido), por clube+temporada.
+ *
+ * Gerar o catalogo percorre ~53 mil atletas montando atributos derivados. A tela
+ * do mercado ja memoriza o resultado, mas qualquer outro consumidor na mesma
+ * sessao (ou um segundo render do React) pagava a conta de novo. Uma entrada so:
+ * quando a chave muda, a antiga e descartada — nao acumula memoria.
+ */
+let _catalogoCache: { chave: string; alvos: DetailedMarketTarget[] } | null = null
+
 export function generateDetailedMarketTargets(
   userTeamCurto: string,
   count?: number,
   season = 0,
   userTeamNome?: string,
 ): DetailedMarketTarget[] {
+  const chaveCache = count === undefined ? `${userTeamCurto}|${userTeamNome ?? ""}|${season}` : null
+  if (chaveCache && _catalogoCache?.chave === chaveCache) return _catalogoCache.alvos
+
   const rng = mulberry32(hashSeed(`${userTeamCurto}-${season}-mercado`))
 
   // Excluir o proprio clube por CURTO nao basta: o catalogo BF usa outra tabela
@@ -442,7 +465,9 @@ export function generateDetailedMarketTargets(
   }
 
   // Ordena por overall desc para a vitrine abrir com os destaques
-  return result.sort((a, b) => b.overall - a.overall)
+  result.sort((a, b) => b.overall - a.overall)
+  if (chaveCache) _catalogoCache = { chave: chaveCache, alvos: result }
+  return result
 }
 
 /**
@@ -470,13 +495,18 @@ export function generateIncomingOffer(
   const offer = Math.round(baseValue * (0.70 + Math.random() * 0.40))
   const reservation = Math.round(baseValue * (0.95 + Math.random() * 0.35))
 
+  // A sigla e as cores passam pela mesma identidade do mercado — a oferta que
+  // chegava dizia "MACHESTE" no lugar de "MUN".
+  const buyerNome = repairMojibake(buyer.nome)
+  const buyerCurado = clubeCuradoPorNome(buyerNome)
+
   return {
     id: `offer_${season}_${round}_${Math.random().toString(36).slice(2, 8)}`,
     playerId: target.id,
     playerName: target.name,
-    fromTeamCurto: buyer.curto,
-    fromTeamNome: buyer.nome,
-    fromTeamCor1: buyer.cor1 ?? '#888888',
+    fromTeamCurto: buyerCurado?.curto ?? siglaExibivel(buyer.curto, buyerNome),
+    fromTeamNome: buyerNome,
+    fromTeamCor1: buyerCurado?.cor1 ?? buyer.cor1 ?? '#888888',
     value: offer,
     reservationPrice: reservation,
     status: 'pending',

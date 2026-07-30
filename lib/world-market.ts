@@ -93,6 +93,8 @@ export function recordWorldTransfer(
 export function reloadWorldMarket(): void {
   cache = null
   cacheCareerId = null
+  logCache = null
+  logCareerId = null
 }
 
 // ── Janela de transferencias do mundo ──────────────────────────────────────
@@ -102,6 +104,49 @@ export interface WorldTransferNews {
   de: string
   para: string
   valor: number
+  /** Posicao e idade viajam na noticia para a Central mostrar sem consultar elenco. */
+  pos?: string
+  idade?: number
+  base?: number
+  temporada?: number
+  semana?: number
+}
+
+// ── DIARIO DO MERCADO (o que alimenta a Central de Transferencias) ──────────
+//
+// A janela da IA existia e ja mexia nos elencos, mas o resultado morria numa
+// notificacao: nao havia onde ACOMPANHAR quem contratou quem. Este diario e a
+// fonte da Central de Transferencias — fica no save da carreira, em ordem
+// cronologica inversa, com teto para nao crescer sem fim.
+
+const LOG_KEY = () => getCareerScopedKey("ultrafoot:world-transfer-log")
+const LOG_MAX = 400
+
+let logCache: WorldTransferNews[] | null = null
+let logCareerId: string | null = null
+
+/** Diario do mercado mundial, do negocio mais recente para o mais antigo. */
+export function getWorldTransferLog(): WorldTransferNews[] {
+  const atual = getActiveCareerId()
+  if (logCache && logCareerId === atual) return logCache
+  logCareerId = atual
+  try {
+    const raw = storeGet(LOG_KEY())
+    const parsed = raw ? JSON.parse(raw) : []
+    logCache = Array.isArray(parsed) ? (parsed as WorldTransferNews[]) : []
+  } catch {
+    logCache = []
+  }
+  return logCache
+}
+
+/** Acrescenta negocios ao diario (os mais novos primeiro). */
+export function appendWorldTransferLog(noticias: WorldTransferNews[]): void {
+  if (noticias.length === 0) return
+  const atual = [...noticias, ...getWorldTransferLog()].slice(0, LOG_MAX)
+  logCache = atual
+  logCareerId = getActiveCareerId()
+  storeSet(LOG_KEY(), JSON.stringify(atual))
 }
 
 interface ClubeParaMercado {
@@ -133,9 +178,14 @@ export function simulateWorldTransferWindow(params: {
   temporada: number
   /** Quantos negocios tentar nesta janela. */
   quantidade?: number
+  /** Semana do jogo, quando o negocio acontece DURANTE a temporada. */
+  semana?: number
+  /** Diferencia as sementes entre a virada de temporada e cada semana. */
+  rotulo?: string
 }): WorldTransferNews[] {
-  const { clubes, squadOf, clubeDoUsuario, temporada } = params
+  const { clubes, squadOf, clubeDoUsuario, temporada, semana } = params
   const quantidade = params.quantidade ?? 14
+  const rotulo = params.rotulo ?? "virada"
   const noticias: WorldTransferNews[] = []
 
   // So clubes com alguma expressao entram no mercado do mundo (evita ruido de
@@ -147,14 +197,14 @@ export function simulateWorldTransferWindow(params: {
 
   const jaMovido = new Set<string>()
   for (let i = 0; i < quantidade; i++) {
-    const semente = hash(`${temporada}:${i}`)
+    const semente = hash(`${rotulo}:${temporada}:${semana ?? 0}:${i}`)
     // Comprador: sorteado entre os de MAIOR prestigio (metade de cima).
     const topo = elegiveis.slice(0, Math.max(2, Math.floor(elegiveis.length / 2)))
     const comprador = topo[semente % topo.length]
     // Vendedor: alguem de prestigio MENOR que o comprador.
     const menores = elegiveis.filter(c => c.prestigio < comprador.prestigio - 3)
     if (menores.length === 0) continue
-    const vendedor = menores[hash(`v${temporada}:${i}`) % menores.length]
+    const vendedor = menores[hash(`v${rotulo}${temporada}:${semana ?? 0}:${i}`) % menores.length]
 
     const elenco = squadOf(vendedor.curto)
     if (elenco.length < 14) continue // nao esvazia elenco curto
@@ -164,7 +214,7 @@ export function simulateWorldTransferWindow(params: {
       .slice(0, 6)
       .filter(p => !jaMovido.has(`${norm(vendedor.nome)}::${norm(p.nome)}`))
     if (alvos.length === 0) continue
-    const alvo = alvos[hash(`a${temporada}:${i}`) % alvos.length]
+    const alvo = alvos[hash(`a${rotulo}${temporada}:${semana ?? 0}:${i}`) % alvos.length]
 
     // O comprador so leva quem agrega (nao compra pior do que ja tem em media).
     if (alvo.base < comprador.prestigio - 18) continue
@@ -177,7 +227,10 @@ export function simulateWorldTransferWindow(params: {
     noticias.push({
       atleta: alvo.nome, de: vendedor.nome, para: comprador.nome,
       valor: Math.round(Math.pow(alvo.base / 60, 3) * 4_000_000),
+      pos: alvo.pos, idade: alvo.idade, base: alvo.base, temporada, semana,
     })
   }
+  // O diario e a fonte da Central de Transferencias.
+  appendWorldTransferLog(noticias)
   return noticias
 }

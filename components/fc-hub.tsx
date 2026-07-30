@@ -27,6 +27,8 @@ import {
   type OnlineSession,
 } from "@/lib/online-multiplayer"
 import { HubOnlineChat } from "@/components/hub-online-chat"
+import { useJogoRegistrado } from "@/lib/beneficios"
+import { AvisoDeRegistro } from "@/components/registro-necessario"
 import {
   checkRelayHealth,
   configuredRelayUrl,
@@ -82,6 +84,7 @@ function presenceFor(pathname: string, state: GameState, teamName: string, live:
 }
 
 export function FcHub() {
+  const { registrado, hidratado: registroHidratado } = useJogoRegistrado()
   const [open, setOpen] = useState(false)
   const [isNative, setIsNative] = useState(false)
   const [hubTab, setHubTab] = useState("friends")
@@ -303,6 +306,20 @@ export function FcHub() {
   }
 
   if (!open) return null
+
+  // FC HUB = extra de quem registrou (lib/beneficios.ts). O hub e a unica parte
+  // do jogo que depende de servidor e de identidade — e o beneficio mais direto
+  // de ter comprado. Abre o mesmo convite das outras telas, dentro do overlay.
+  if (registroHidratado && !registrado) {
+    return (
+      <div className="fixed inset-0 z-[9998] grid place-items-center bg-[#020407]/70 p-5" onClick={() => setOpen(false)}>
+        <div onClick={e => e.stopPropagation()} className="w-full max-w-xl">
+          <AvisoDeRegistro id="hub" />
+        </div>
+      </div>
+    )
+  }
+
   const hubTabs = [
     { id: "friends", label: "Amigos", icon: Users, target: "hub-friends" },
     { id: "groups", label: "Grupo", icon: Users, target: "hub-groups" },

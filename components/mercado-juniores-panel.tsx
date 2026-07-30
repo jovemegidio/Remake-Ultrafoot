@@ -14,7 +14,7 @@
 import { useMemo, useState } from "react"
 import { Search, ShoppingCart, Sprout, Users, Briefcase } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
-import { formatCurrency } from "@/lib/teams-data"
+import { formatCurrency, getTeamByName } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 import type { SquadPlayer } from "@/lib/save-system"
 import {
@@ -67,6 +67,11 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
   const agente = useMemo(
     () => (alvo ? agenteDoJovem(alvo.id, alvo.potential ?? 70) : null),
     [alvo],
+  )
+  // Clube formador resolvido pelo NOME (e o que o prospecto guarda).
+  const clubeFormador = useMemo(
+    () => (alvo?.fromTeam ? getTeamByName(alvo.fromTeam) : undefined),
+    [alvo?.fromTeam],
   )
   const comissao = alvo && agente ? comissaoEmReais(alvo.value ?? 0, agente) : 0
   // O caixa precisa cobrir o pedido do clube MAIS a comissão.
@@ -177,7 +182,14 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
                     {alvo.position} · {alvo.age} anos · potencial <span className="text-[var(--brand)]">{alvo.potential}</span>
                   </p>
                 </div>
-                {alvo.fromTeam && <TeamCrest teamShort={alvo.fromTeam} size="md" />}
+                {/* ESCUDO DO CLUBE FORMADOR. `fromTeam` e o NOME ("Palmeiras"), e o
+                    TeamCrest espera a SIGLA — passando o nome ele nao acha nada e
+                    desenha o placeholder de iniciais ("Pal"), que foi o relato.
+                    Resolvemos o Team pelo nome e passamos o objeto, que e o
+                    caminho que carrega file_key e escudo importado. */}
+                {clubeFormador
+                  ? <TeamCrest team={clubeFormador} size="md" />
+                  : alvo.fromTeam ? <TeamCrest teamShort={alvo.fromTeam} size="md" /> : null}
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2">

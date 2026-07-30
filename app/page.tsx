@@ -330,7 +330,7 @@ export default function DashboardPage() {
       {/* Fundo do escritorio: dois fundos alternando com crossfade suave */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <Image
-          src="/images/office-bg-1.png"
+          src="/images/office-bg-1.webp"
           alt=""
           fill
           priority
@@ -338,14 +338,17 @@ export default function DashboardPage() {
           className="office-bg-a object-cover"
         />
         <Image
-          src="/images/office-bg-2.png"
+          src="/images/office-bg-2.webp"
           alt=""
           fill
           unoptimized
           className="office-bg-b object-cover"
         />
-        {/* Escurecimento para leitura — reduzido (era /82) para o escritorio aparecer mais. */}
-        <div className="absolute inset-0 bg-[#050508]/68" />
+        {/* VINHETA NO MINIMO (pedido): sobra apenas o veu escuro que o texto
+            branco precisa para ter contraste. Era /82, depois /68; agora /42 —
+            abaixo disso os cartoes do escritorio comecam a perder legibilidade
+            sobre as partes claras da arte. */}
+        <div className="absolute inset-0 bg-[#050508]/42" />
       </div>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">

@@ -67,7 +67,7 @@ export function NationalOffice() {
     <div className="relative h-screen pb-20 md:pb-12 bg-[#050508] flex flex-col overflow-hidden">
       {/* Mesmo fundo do escritório do clube, para a estrutura ser a mesma. */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <Image src="/images/office-bg-1.png" alt="" fill priority unoptimized className="object-cover" />
+        <Image src="/images/office-bg-1.webp" alt="" fill priority unoptimized className="object-cover" />
         <div className="absolute inset-0 bg-[#050508]/72" />
       </div>
 
@@ -209,7 +209,11 @@ export function NationalOffice() {
                     <Swords className="h-4 w-4 text-[var(--brand)]" /> Últimos amistosos
                   </div>
                   <div className="space-y-1.5">
-                    {nationalFriendlies.slice(-3).reverse().map((f, i) => {
+                    {/* O save guarda os amistosos do MAIS NOVO para o mais velho
+                        (`[novo, ...prev]`). O `slice(-3).reverse()` que estava aqui
+                        mostrava justamente os TRES MAIS ANTIGOS — o resultado que
+                        acabava de sair nunca aparecia. */}
+                    {nationalFriendlies.slice(0, 3).map((f, i) => {
                       const r = f.userScore > f.oppScore ? "V" : f.userScore < f.oppScore ? "D" : "E"
                       return (
                         <div key={i} className="flex items-center gap-3 rounded-lg bg-black/25 px-3 py-2">

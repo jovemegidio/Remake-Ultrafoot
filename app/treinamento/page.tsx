@@ -305,8 +305,13 @@ export default function TreinamentoPage() {
               </div>
             </div>
 
-            {/* Lista */}
-            <div className="divide-y divide-white/5 max-h-[72vh] overflow-y-auto">
+            {/* Lista.
+                Tinha `max-h-[72vh] overflow-y-auto` — e era daí que vinha a
+                faixa morta no pé desta tela. Sob o `zoom` do jogo (body {zoom:
+                var(--game-view-scale)}), `vh` continua medindo a janela SEM
+                escala: 72vh viram ~57% da tela de verdade. A lista parava alta e
+                sobrava um vazio embaixo. Quem rola aqui é o <main>. */}
+            <div className="divide-y divide-white/5">
               {filteredPlayers.map(player => {
                 const isSelected = selectedPlayer?.id === player.id
                 const isTraining = !!player.training.currentFocus
