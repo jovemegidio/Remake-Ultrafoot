@@ -27,6 +27,7 @@ import {
   type OnlineSession,
 } from "@/lib/online-multiplayer"
 import { HubOnlineChat } from "@/components/hub-online-chat"
+import { HubCampeonato } from "@/components/hub-campeonato"
 import { useJogoRegistrado } from "@/lib/beneficios"
 import { AvisoDeRegistro } from "@/components/registro-necessario"
 import {
@@ -112,6 +113,11 @@ export function FcHub() {
   const [roundDeadline, setRoundDeadline] = useState<24 | 48 | 72 | 168>(72)
   const [allowSpectators, setAllowSpectators] = useState(true)
   const internetSocket = useRef<InternetRoomSocket | null>(null)
+  // Espelho em ESTADO do socket. O ref sozinho não re-renderiza: o painel do
+  // campeonato montava com `socket = null` e os botões de enviar placar nasciam
+  // desabilitados até algum outro render acontecer por acaso.
+  const [socketAtivo, setSocketAtivo] = useState<InternetRoomSocket | null>(null)
+  const [entrarComoEspectador, setEntrarComoEspectador] = useState(false)
   const { state } = useGameState()
   const { team } = useUserTeam()
   const pathname = usePathname()
@@ -132,7 +138,11 @@ export function FcHub() {
       onError: setInternetError,
     })
     internetSocket.current = socket
-    return () => { socket.close(); if (internetSocket.current === socket) internetSocket.current = null }
+    setSocketAtivo(socket)
+    return () => {
+      socket.close()
+      if (internetSocket.current === socket) { internetSocket.current = null; setSocketAtivo(null) }
+    }
   }, [internet?.relayUrl, internet?.participantId, internet?.sessionToken, internet?.room.code])
 
   // Tempo real de jogo, acumulado entre sessões. Conta somente enquanto a janela
@@ -408,7 +418,41 @@ export function FcHub() {
                 const leagueNames: Record<string, string> = { brasileirao_a: "Brasileirão Série A", brasileirao_b: "Brasileirão Série B", premier_league: "Premier League", la_liga: "La Liga", serie_a_ita: "Serie A", bundesliga: "Bundesliga", ligue_1: "Ligue 1", champions: "Champions League" }
                 return createInternetRoom({ managerName: state.managerName || "Técnico", teamShort: state.selectedTeamShort || team.curto, maxPlayers: 32, mode: "tournament", leagueSettings: { leagueId: onlineLeague, leagueName: leagueNames[onlineLeague] ?? "Liga FC Hub", matchSpeed: onlineSpeed, roundDeadlineHours: roundDeadline, allowSpectators } })
               })} className="flex items-center justify-center gap-2 rounded-lg bg-violet-300 py-2.5 text-xs font-black text-black disabled:opacity-35">{internetBusy ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <Power className="h-4 w-4"/>}Criar campeonato</button>
-              <div className="flex gap-2"><input value={internetJoinCode} onChange={event => setInternetJoinCode(event.target.value.toUpperCase())} maxLength={8} placeholder="CÓDIGO" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-center text-xs font-black tracking-[.18em] text-white outline-none focus:border-violet-300/60"/><button disabled={internetBusy || !relayUrl || internetJoinCode.length < 6 || !state.selectedTeamShort} onClick={() => void runInternet(() => joinInternetRoom({ code: internetJoinCode, managerName: state.managerName || "Técnico", teamShort: state.selectedTeamShort || team.curto }))} className="rounded-lg border border-violet-300/35 px-4 py-2 text-xs font-bold text-violet-200 disabled:opacity-35">Entrar</button></div>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    value={internetJoinCode}
+                    onChange={event => setInternetJoinCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                    maxLength={8}
+                    placeholder="CÓDIGO"
+                    aria-label="Código do campeonato"
+                    className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-center text-xs font-black tracking-[.18em] text-white outline-none focus:border-violet-300/60"
+                  />
+                  <button
+                    disabled={internetBusy || !relayUrl || internetJoinCode.length < 6 || (!entrarComoEspectador && !state.selectedTeamShort)}
+                    onClick={() => void runInternet(() => joinInternetRoom({
+                      code: internetJoinCode,
+                      managerName: state.managerName || "Técnico",
+                      teamShort: state.selectedTeamShort || team.curto,
+                      spectator: entrarComoEspectador,
+                    }))}
+                    className="rounded-lg border border-violet-300/35 px-4 py-2 text-xs font-bold text-violet-200 disabled:opacity-35"
+                  >
+                    {entrarComoEspectador ? "Assistir" : "Entrar"}
+                  </button>
+                </div>
+                {/* ASSISTIR: entra sem ocupar vaga e sem escolher clube — e pode
+                    entrar com o campeonato já em andamento, que é o caso de uso
+                    (ver a final de uma liga da qual você não participa). */}
+                <label className="flex items-center gap-2 text-[10px] text-white/50">
+                  <input type="checkbox" checked={entrarComoEspectador} onChange={e => setEntrarComoEspectador(e.target.checked)} />
+                  Entrar apenas como espectador (não ocupa vaga e funciona com o campeonato já começado)
+                </label>
+                <p className="text-[10px] text-white/30">
+                  O código tem 8 caracteres e é gerado por quem cria o campeonato. Peça a ele e cole aqui —
+                  quem entra escolhe o próprio clube, e dois técnicos não podem pegar o mesmo.
+                </p>
+              </div>
             </div>
             {!relayUrl && <p className="rounded-lg border border-amber-300/20 bg-amber-300/5 p-2 text-[11px] text-amber-200">O relay público ainda precisa ser implantado com domínio e TLS antes desta função poder ser liberada aos jogadores.</p>}
           </div> : <div className="mt-4 space-y-3">
@@ -418,7 +462,13 @@ export function FcHub() {
               <div className="rounded-lg bg-black/25 p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-white/35">Conexão</p><p className={`mt-1 text-xs font-black ${internetState === "connected" ? "text-emerald-300" : "text-amber-200"}`}>{internetState === "connected" ? "CONECTADO" : internetState.toUpperCase()}</p></div>
             </div>
             <div className="grid max-h-44 gap-2 overflow-y-auto sm:grid-cols-2">{internet.room.participants.map(participant => <div key={participant.id} className="flex items-center gap-2 rounded-lg bg-black/20 p-2"><span className={`h-2 w-2 rounded-full ${participant.connected ? "bg-emerald-400" : "bg-white/20"}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-white">{participant.managerName}{participant.id === internet.room.hostId ? " · host" : ""}</p><p className="text-[9px] text-white/40">{participant.teamShort}</p></div><span className={`text-[9px] font-black ${participant.ready ? "text-emerald-300" : "text-white/30"}`}>{participant.ready ? "PRONTO" : "AGUARDANDO"}</span></div>)}</div>
-            {internet.room.competition && <div className="rounded-lg border border-white/10 bg-black/20 p-3"><div className="flex items-center justify-between"><b className="text-xs text-white">{internet.room.competition.name}</b><span className="text-[10px] text-violet-200">Rodada {internet.room.competition.currentRound}/{internet.room.competition.totalRounds}</span></div><p className="mt-1 text-[9px] text-emerald-300">REGULAMENTO OFICIAL BLOQUEADO · prazo {internet.room.competition.roundDeadlineHours}h</p><div className="mt-2 grid gap-1 sm:grid-cols-2">{internet.room.competition.fixtures.filter(fixture => fixture.round === internet.room.competition?.currentRound).map(fixture => { const home = internet.room.participants.find(item => item.id === fixture.homeId); const away = internet.room.participants.find(item => item.id === fixture.awayId); return <div key={fixture.id} className="flex items-center justify-between rounded bg-white/[.03] px-2 py-1.5 text-[10px] text-white/60"><span className="truncate">{home?.teamShort} × {away?.teamShort}</span><span className="ml-2 font-bold text-white/35">{fixture.status === "live" ? "AO VIVO" : fixture.status === "played" ? `${fixture.homeGoals}–${fixture.awayGoals}` : fixture.status.replaceAll("_", " ").toUpperCase()}</span></div> })}</div></div>}
+            {internet.room.competition && (
+              <HubCampeonato
+                room={internet.room}
+                participantId={internet.participantId}
+                socket={socketAtivo}
+              />
+            )}
             <div className="flex flex-wrap gap-2">
               <button onClick={() => internetSocket.current?.send("set_ready", { ready: !internet.room.participants.find(item => item.id === internet.participantId)?.ready })} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-3 py-2.5 text-xs font-black text-black"><ShieldCheck className="h-4 w-4"/>Confirmar decisões</button>
               {internet.room.hostId === internet.participantId && !internet.room.competition && <button disabled={internet.room.participants.length < 2} onClick={() => internetSocket.current?.send("create_competition", { name: "Liga FC Hub" })} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-300 px-3 py-2.5 text-xs font-black text-black disabled:opacity-35"><Users className="h-4 w-4"/>Montar tabela</button>}

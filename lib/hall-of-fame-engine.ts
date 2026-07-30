@@ -37,12 +37,35 @@ export interface ClubTenure {
   endReason: "fired" | "resigned" | "contract_ended" | "still_active"
 }
 
-/** Constrói stats da carreira a partir do save. */
-export function buildCareerStats(history: SeasonRecord[]): ManagerCareerStats {
+/**
+ * Constrói stats da carreira a partir do save.
+ *
+ * `passagens` (opcional) diz COMO cada ciclo terminou. Sem ela, `endReason` cai
+ * em "contract_ended" para todo mundo — que era o comportamento antigo e o
+ * motivo de o histórico jamais registrar uma demissão: o campo existia, mas
+ * ninguém nunca gravou nada nele. Ver `encerrarPassagem` em lib/career-moves.
+ */
+export function buildCareerStats(
+  history: SeasonRecord[],
+  passagens: { teamCurto: string; endReason: "fired" | "resigned"; season: number }[] = [],
+): ManagerCareerStats {
+  // A saída MAIS RECENTE de cada clube manda: quem voltou a um clube e saiu de
+  // novo tem o último desfecho como o desfecho da passagem exibida.
+  const saidaPorClube = new Map<string, "fired" | "resigned">()
+  for (const p of [...passagens].sort((a, b) => a.season - b.season)) {
+    saidaPorClube.set(p.teamCurto, p.endReason)
+  }
+  return buildCareerStatsInterno(history, saidaPorClube)
+}
+
+function buildCareerStatsInterno(
+  history: SeasonRecord[],
+  saidaPorClube: Map<string, "fired" | "resigned">,
+): ManagerCareerStats {
   const matches=history.reduce((n,s)=>n+s.won+s.drawn+s.lost,0), wins=history.reduce((n,s)=>n+s.won,0), draws=history.reduce((n,s)=>n+s.drawn,0), losses=history.reduce((n,s)=>n+s.lost,0)
   const trophies=history.filter(s=>s.champion === s.teamCurto || s.position === 1).map(s=>({competition:s.competition,season:s.season,clubCurto:s.teamCurto,clubNome:s.teamNome}))
   const clubs = new Map<string,ClubTenure>()
-  for(const s of history){ const c=clubs.get(s.teamCurto)??{clubCurto:s.teamCurto,clubNome:s.teamNome,fromSeason:s.season,toSeason:s.season,matches:0,wins:0,trophies:0,endReason:"contract_ended" as const}; c.fromSeason=Math.min(c.fromSeason,s.season);c.toSeason=Math.max(c.toSeason,s.season);c.matches+=s.won+s.drawn+s.lost;c.wins+=s.won;c.trophies+=s.position===1?1:0;clubs.set(s.teamCurto,c) }
+  for(const s of history){ const c=clubs.get(s.teamCurto)??{clubCurto:s.teamCurto,clubNome:s.teamNome,fromSeason:s.season,toSeason:s.season,matches:0,wins:0,trophies:0,endReason:"contract_ended" as ClubTenure["endReason"]}; c.fromSeason=Math.min(c.fromSeason,s.season);c.toSeason=Math.max(c.toSeason,s.season);c.matches+=s.won+s.drawn+s.lost;c.wins+=s.won;c.trophies+=s.position===1?1:0;c.endReason=saidaPorClube.get(s.teamCurto)??c.endReason;clubs.set(s.teamCurto,c) }
   const reputation=Math.min(100,Math.round(trophies.length*12+(matches? wins/matches*35:0)+history.filter(s=>s.promoted).length*5))
   return {managerName:history.at(-1)?.managerName??"Técnico",startedAt:history[0]?.season??new Date().getFullYear(),totalSeasons:new Set(history.map(s=>s.season)).size,totalMatches:matches,totalWins:wins,totalDraws:draws,totalLosses:losses,winRate:matches?Math.round(wins/matches*1000)/10:0,totalPoints:wins*3+draws,trophies,clubs:[...clubs.values()],reputation,rankingPosition:rankInHistory({reputation,totalSeasons:history.length,totalMatches:matches,totalWins:wins,totalDraws:draws,totalLosses:losses,winRate:matches?wins/matches*100:0,totalPoints:wins*3+draws,trophies,clubs:[...clubs.values()],managerName:history.at(-1)?.managerName??"Técnico",startedAt:history[0]?.season??2026,rankingPosition:0}).position}
 }

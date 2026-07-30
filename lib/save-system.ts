@@ -576,6 +576,14 @@ export interface GameState {
   // Quando o tecnico assumiu o clube ATUAL. Trava a troca de clube no meio da
   // temporada (ver podeTrocarDeClube em career-moves).
   contratadoEm?: { season: number; week: number }
+  /**
+   * COMO cada passagem por um clube terminou (pediu demissao / foi demitido).
+   *
+   * Sem isto o hall da fama chumbava "contract_ended" para todos os ciclos — dava
+   * para ser demitido dez vezes e o historico dizer que os dez contratos apenas
+   * chegaram ao fim. Ver `encerrarPassagem` em lib/career-moves.
+   */
+  passagens?: import("@/lib/career-moves").PassagemPorClube[]
   // Aviso a mostrar no office apos subir/cair (limpo depois de exibido).
   divisionMovement?: { movement: "promoted" | "relegated"; message: string; season: number }
   // Convocacao manual da selecao: jogadores CORTADOS e CONVOCADOS a dedo pelo tecnico

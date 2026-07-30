@@ -129,6 +129,203 @@ export function dificuldadeDeEmprestimo(ctx: ContextoDeEmprestimo): DificuldadeD
   }
 }
 
+// ── EMPRÉSTIMO NOVO: A MESA DE TERMOS (1.0.228) ──────────────────────────────
+//
+// Até aqui o empréstimo tinha UMA etapa: taxa + cobertura salarial, e fechava.
+// Não havia salário, não havia duração (26 semanas cravadas no código), não
+// havia opção de compra e o dono não pedia nada em troca. Comprar tinha três
+// etapas de negociação; emprestar tinha meia.
+//
+// Agora o empréstimo tem a mesa que faltava. E o que o dono cobra NÃO é só
+// dinheiro: emprestar existe para o atleta JOGAR, então ele exige minutagem —
+// a mesma régua que a renovação (`aproveitamentoDoEmprestimo`) usa depois para
+// decidir se renova. Quem promete banco não leva o garoto.
+
+/** O que o clube dono exige numa mesa de empréstimo novo. */
+export interface ExigenciasDoDono {
+  /** Duração que serve ao dono, em semanas. */
+  semanasIdeais: number
+  /** Fatia mínima do salário que você assume (%). */
+  coberturaMinima: number
+  /** % das partidas que ele exige que o atleta jogue. */
+  minutosMinimos: number
+  /** O dono aceita vender no fim? (jovem de projeto costuma não ter opção.) */
+  aceitaOpcaoDeCompra: boolean
+  /** Piso da opção de compra, quando ele aceita uma. */
+  opcaoDeCompraMinima: number
+}
+
+/** A proposta que VOCÊ leva à mesa do dono. */
+export interface TermosNovoEmprestimo {
+  semanas: number
+  taxa: number
+  coberturaSalarial: number
+  /** % das partidas que você promete ao atleta. */
+  minutosPrometidos: number
+  /** Valor da opção de compra ao fim (0 = sem opção). */
+  opcaoDeCompra: number
+}
+
+export type VereditoDoDono = "aceito" | "contraproposta" | "recusado"
+
+export interface RespostaDaMesaDeEmprestimo {
+  veredito: VereditoDoDono
+  /** Frase do dono, em português. */
+  recado: string
+  /** Presente em "contraproposta": o que ele exige para fechar. */
+  contraproposta?: TermosNovoEmprestimo
+  /** 0-100 — o quanto a proposta agradou (para a barra da tela). */
+  satisfacao: number
+}
+
+/**
+ * O que o dono pede de saída num empréstimo novo.
+ *
+ * Sai da mesma `emprestabilidade` que define a taxa: quem ele quer tirar da
+ * folha é flexível; quem ele solta a contragosto exige tudo — folha inteira,
+ * titularidade garantida e nenhuma opção de compra.
+ */
+export function exigenciasDoDono(ctx: ContextoDeEmprestimo): ExigenciasDoDono {
+  const solta = emprestabilidade(ctx)
+  const jovem = ctx.idade <= 22
+
+  return {
+    // Garoto para rodar vai por temporada inteira; veterano/reserva aceita meia.
+    semanasIdeais: jovem ? 39 : 26,
+    coberturaMinima: solta >= 0.7 ? 50 : solta >= 0.45 ? 75 : 100,
+    // O ponto do empréstimo. Garoto tem de jogar; veterano encostado, nem tanto.
+    minutosMinimos: jovem ? 70 : solta >= 0.7 ? 50 : 40,
+    // Ninguém coloca opção de compra na joia da base; no encostado, o dono adora.
+    aceitaOpcaoDeCompra: !(jovem && ctx.overall >= 72),
+    opcaoDeCompraMinima: Math.round((ctx.valor * (jovem ? 1.4 : 0.9)) / 100_000) * 100_000,
+  }
+}
+
+/**
+ * O dono responde à sua proposta de empréstimo.
+ *
+ * Regra da mesa: minutagem e cobertura são ELIMINATÓRIAS (não há dinheiro que
+ * compre "ele fica no banco"); taxa e opção de compra são negociáveis. `rodada`
+ * conta quantas vezes você já respondeu — na terceira ele encerra, como na
+ * renovação.
+ */
+export function avaliarPropostaDeEmprestimo(
+  termos: TermosNovoEmprestimo,
+  exigencias: ExigenciasDoDono,
+  dificuldade: DificuldadeDoEmprestimo,
+  rodada: number,
+  nomeDoAtleta: string,
+): RespostaDaMesaDeEmprestimo {
+  if (dificuldade.recusaDireta) {
+    return { veredito: "recusado", satisfacao: 0, recado: dificuldade.motivo }
+  }
+
+  // ── Minutagem: o motivo de existir o empréstimo ──────────────────────────
+  if (termos.minutosPrometidos < exigencias.minutosMinimos) {
+    if (rodada >= 2) {
+      return {
+        veredito: "recusado",
+        satisfacao: 0,
+        recado: `Não vamos mandar ${nomeDoAtleta} para ficar no banco. Conversa encerrada.`,
+      }
+    }
+    return {
+      veredito: "contraproposta",
+      satisfacao: 15,
+      contraproposta: { ...termos, minutosPrometidos: exigencias.minutosMinimos },
+      recado: `${nomeDoAtleta} sai para JOGAR. Garanta pelo menos ${exigencias.minutosMinimos}% das partidas ` +
+        `ou levamos o atleta para outro clube.`,
+    }
+  }
+
+  // ── Opção de compra: ele pode simplesmente não aceitar ───────────────────
+  if (termos.opcaoDeCompra > 0 && !exigencias.aceitaOpcaoDeCompra) {
+    return {
+      veredito: "contraproposta",
+      satisfacao: 30,
+      contraproposta: { ...termos, opcaoDeCompra: 0 },
+      recado: `${nomeDoAtleta} é projeto da casa. Empréstimo sim, opção de compra não.`,
+    }
+  }
+  if (termos.opcaoDeCompra > 0 && termos.opcaoDeCompra < exigencias.opcaoDeCompraMinima) {
+    return {
+      veredito: "contraproposta",
+      satisfacao: 35,
+      contraproposta: { ...termos, opcaoDeCompra: exigencias.opcaoDeCompraMinima },
+      recado: `Se há opção de compra, ela vale o que o atleta vale. Abaixo de ` +
+        `${Math.round(exigencias.opcaoDeCompraMinima / 1_000_000)} milhões não assinamos.`,
+    }
+  }
+
+  // ── O pacote financeiro ──────────────────────────────────────────────────
+  // Taxa e cobertura entram juntas: quem cobre a folha inteira pode pagar menos
+  // de taxa, e vice-versa. Foi o que sempre faltou — as duas eram checadas em
+  // separado e uma não compensava a outra.
+  const taxaRatio = dificuldade.taxaJusta > 0 ? termos.taxa / dificuldade.taxaJusta : 1
+  const coberturaExtra = (termos.coberturaSalarial - exigencias.coberturaMinima) / 100
+  const duracaoGap = Math.abs(termos.semanas - exigencias.semanasIdeais) / exigencias.semanasIdeais
+
+  let satisfacao =
+    50 +
+    (taxaRatio - 1) * 60 +
+    coberturaExtra * 45 +
+    (termos.opcaoDeCompra > 0 ? 8 : 0) -   // opção de compra agrada quem quer se livrar da folha
+    duracaoGap * 25
+
+  // Cobertura abaixo do mínimo é grave, mas aqui ainda dá para comprar com taxa.
+  if (termos.coberturaSalarial < exigencias.coberturaMinima) {
+    satisfacao -= (exigencias.coberturaMinima - termos.coberturaSalarial) * 1.1
+  }
+
+  satisfacao = Math.max(0, Math.min(100, satisfacao))
+
+  // A tolerância cai a cada rodada — igual à renovação.
+  const corte = rodada === 0 ? 55 : rodada === 1 ? 62 : 70
+  if (satisfacao >= corte) {
+    return {
+      veredito: "aceito",
+      satisfacao: Math.round(satisfacao),
+      recado: `Fechado. ${nomeDoAtleta} é seu por ${termos.semanas} semanas — queremos ele jogando.`,
+    }
+  }
+
+  if (rodada >= 2) {
+    return {
+      veredito: "recusado",
+      satisfacao: Math.round(satisfacao),
+      recado: "Não chegamos a um acordo. O atleta fica.",
+    }
+  }
+
+  // Contraproposta: ele pede o que falta, cedendo uma parte da diferença.
+  const cedeu = 0.2
+  const taxaAlvo = Math.max(termos.taxa, dificuldade.taxaJusta * (1 - cedeu))
+  const contraproposta: TermosNovoEmprestimo = {
+    semanas: exigencias.semanasIdeais,
+    taxa: Math.min(
+      dificuldade.taxaMaxima,
+      Math.round(taxaAlvo / 50_000) * 50_000,
+    ),
+    coberturaSalarial: Math.max(termos.coberturaSalarial, exigencias.coberturaMinima),
+    minutosPrometidos: Math.max(termos.minutosPrometidos, exigencias.minutosMinimos),
+    opcaoDeCompra: termos.opcaoDeCompra,
+  }
+
+  const faltas: string[] = []
+  if (contraproposta.taxa > termos.taxa) faltas.push("a taxa está abaixo do que pedimos")
+  if (contraproposta.coberturaSalarial > termos.coberturaSalarial) faltas.push("você precisa assumir mais da folha")
+  if (contraproposta.semanas !== termos.semanas) faltas.push("a duração não serve ao nosso planejamento")
+
+  return {
+    veredito: "contraproposta",
+    satisfacao: Math.round(satisfacao),
+    contraproposta,
+    recado: faltas.length
+      ? `Assim não fecha: ${faltas.join(", ")}. Ajuste e voltamos a conversar.`
+      : "Estamos perto, mas ainda não é o suficiente.",
+  }
+}
+
 export type PosturaDoDono = "tranquilo" | "exigente" | "quer_de_volta"
 
 export interface TermosDeEmprestimo {

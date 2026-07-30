@@ -20,6 +20,7 @@ import { useVersaoDoJogo } from "@/lib/versao-do-jogo"
 import { isTauri } from "@/lib/game-asset"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { LegalConsent } from "@/components/legal-consent"
+import { MenuBackground } from "@/components/menu-background"
 import { downloadSave, getSavedCloudCode } from "@/lib/cloud-save"
 import { contaLogada, listarSavesDaConta, type SaveDaConta } from "@/lib/conta-ultrafoot"
 import {
@@ -42,9 +43,11 @@ type SplashPhase =
 
 type MenuOption = "novo-jogo" | "editar" | "carregar" | "registrar" | "sair"
 
-// Fundo FIXO da tela principal (pedido do usuário 26/07/26): estádio escuro com
-// gramado. Substitui o carrossel de prints com vinheta pesada.
-const MAIN_MENU_BG = "/images/main-menu-bg.webp"
+// O fundo da tela principal virou um CARROSSEL com crossfade (ver
+// components/menu-background). Antes era o carrossel de PRINTS do jogo com
+// vinheta pesada; em 26/07/26 virou o estádio fixo (`main-menu-bg.webp`) para
+// tirar o peso e a sujeira; agora volta a alternar, mas com arte feita para ser
+// fundo e sem o escurecimento que apagava a imagem.
 
 /** Marca que a abertura institucional ja foi exibida — a partir dai o jogo abre curto. */
 const INTRO_VISTA = "ultrafoot:intro-vista"
@@ -951,23 +954,12 @@ export default function SplashPage() {
         phase === "main-menu" ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
 
-        {/* Fundo FIXO (tela principal.png): estádio escuro com gramado. Vinheta
-            reduzida ao MÍNIMO — o fundo aparece quase limpo. Só um leve reforço
-            à esquerda (legibilidade dos botões) e um rodapé sutil para a barra
-            de dicas. Sem o escurecimento pesado de tela cheia que havia antes. */}
+        {/* Fundo em CARROSSEL com crossfade suave (pedido): as seis artes de
+            `Tela/`, alternando a cada 9s com 2,2s de passagem. Substituiu o fundo
+            fixo do estádio. A vinheta continua no mínimo — só o reforço à esquerda,
+            sob os botões, e o rodapé da barra de dicas. Ver components/menu-background. */}
         <div className="absolute inset-0 overflow-hidden">
-          <Image
-            src={MAIN_MENU_BG}
-            alt=""
-            fill
-            className="object-cover"
-            style={{
-              transform: phase === "main-menu" ? "scale(1.04)" : "scale(1)",
-              transition: "transform 16s ease-out",
-            }}
-            priority
-            unoptimized
-          />
+          <MenuBackground ativo={phase === "main-menu"} className="absolute inset-0" />
           {/* Vinheta mínima só à esquerda, sob os botões. */}
           <div
             className="absolute inset-0"

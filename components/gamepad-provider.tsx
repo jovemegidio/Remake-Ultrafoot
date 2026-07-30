@@ -4,6 +4,7 @@ import { createContext, useContext, useCallback, useEffect, useRef, useState, ty
 import { useGamepadNavigation, type GamepadState, type GamepadButtonName } from "@/hooks/use-gamepad"
 import { useRouter, usePathname } from "next/navigation"
 import { ControllerTypeContext } from "@/components/controller-buttons"
+import { GamepadModalBridge } from "@/components/gamepad-modal-bridge"
 import { useGameState } from "@/lib/save-system"
 
 interface GamepadContextType {
@@ -267,7 +268,11 @@ export function GamepadProvider({ children }: { children: ReactNode }) {
         controllerType: gamepad.controllerType,
       }}>
         {children}
-      
+
+      {/* A/B/D-pad dentro de qualquer modal. Sem isto o controle abria o modal
+          e nao conseguia confirmar nem fechar — ver gamepad-modal-bridge. */}
+      <GamepadModalBridge />
+
       {/* Aviso de conexao (3s) — agora com a % de bateria quando o SO a expoe. */}
       {showConnectionToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">

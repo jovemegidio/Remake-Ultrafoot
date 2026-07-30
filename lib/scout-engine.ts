@@ -15,6 +15,23 @@ export interface ScoutingDepartmentState{scouts:DepartmentScout[];missions:Scout
 export function createScoutingDepartment():ScoutingDepartmentState{return{scouts:[],missions:[],reports:[],observationCentreLevel:1,dataCentreLevel:1,reputation:0,monthlyCost:0}}
 export function departmentReputationLabel(value:number):string{return value>=90?"Referência Mundial":value>=70?"Referência Continental":value>=45?"Referência Nacional":value>=20?"Estruturado":"Amador"}
 export function hireDepartmentScout(state:ScoutingDepartmentState,scout:DepartmentScout):ScoutingDepartmentState{const scouts=[...state.scouts,scout];return{...state,scouts,monthlyCost:scouts.reduce((n,s)=>n+s.monthlySalary,0)}}
+/**
+ * Demite um scout do departamento estratégico.
+ *
+ * Existia `hireDepartmentScout` e nada para desfazer: dava para contratar sem
+ * limite e o custo mensal só subia — não havia como enxugar o departamento.
+ * A missão em andamento é CANCELADA (sem o scout não há quem observe) e os
+ * relatórios já entregues permanecem: o que foi observado, foi observado.
+ */
+export function fireDepartmentScout(state:ScoutingDepartmentState,scoutId:string):ScoutingDepartmentState{
+  const alvo=state.scouts.find(s=>s.id===scoutId)
+  if(!alvo)return state
+  const scouts=state.scouts.filter(s=>s.id!==scoutId)
+  const missions=state.missions.map(m=>m.scoutId===scoutId&&m.status==="active"?{...m,status:"cancelled" as const}:m)
+  return{...state,scouts,missions,monthlyCost:scouts.reduce((n,s)=>n+s.monthlySalary,0)}
+}
+/** Custo da rescisão de um scout do departamento: um mês de salário. */
+export function departmentScoutSeverance(scout:DepartmentScout):number{return Math.round(scout.monthlySalary)}
 export function createScoutMission(state:ScoutingDepartmentState,mission:ScoutMission):ScoutingDepartmentState{return{...state,missions:[...state.missions,mission],scouts:state.scouts.map(s=>s.id===mission.scoutId?{...s,missionId:mission.id}:s)}}
 export function advanceScoutingWeek(state:ScoutingDepartmentState,currentWeek:number):ScoutingDepartmentState{const next=structuredClone(state);for(const m of next.missions.filter(x=>x.status==="active")){m.progressWeeks++;const scout=next.scouts.find(s=>s.id===m.scoutId);if(!scout)continue;const speed=next.observationCentreLevel>=4?2:1;const stage:ReportStage=m.progressWeeks*speed>=m.durationWeeks?"complete":m.progressWeeks*speed>=Math.ceil(m.durationWeeks/2)?"partial":"initial";if(m.progressWeeks===1||stage!=="initial"||m.progressWeeks>=m.durationWeeks){const report=makeReport(`${m.id}:${m.progressWeeks}`,scout.name,regionOf(m.region),currentWeek,undefined,stage,m.progressWeeks,scout.attributes);next.reports=next.reports.filter(r=>r.playerId!==report.playerId).concat(report)}if(stage==="complete"){m.status="complete";scout.missionId=undefined;next.reputation=Math.min(100,next.reputation+2)}}return next}
 export function generatePerformanceAnalysis(week:number,dataLevel:number):PerformanceAnalysis{return{week,squadAlerts:["Monitore a fadiga dos laterais","Queda de intensidade após os 70 minutos"].slice(0,Math.max(1,dataLevel-1)),opponentStrengths:["Transição rápida pelos lados","Bolas paradas ofensivas"].slice(0,Math.ceil(dataLevel/2)),opponentWeaknesses:["Espaço entre zaga e volantes","Dificuldade sob pressão alta"].slice(0,Math.ceil(dataLevel/2)),tacticalRecommendations:["Pressionar a saída nos primeiros 20 minutos",dataLevel>=3?"Atacar o corredor entre lateral e zagueiro":"Manter bloco compacto" ]}}

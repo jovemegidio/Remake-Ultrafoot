@@ -19,6 +19,10 @@ interface PendingChampion {
   competition: string
   season: string
   type: "league" | "cup"
+  /** Como o título de mata-mata veio. Ausente em saves anteriores à 1.0.228. */
+  decidedBy?: "penaltis" | "agregado" | "jogo_unico"
+  /** Quantos jogos teve a final (1 ou 2). */
+  legs?: number
   stats: { won: number; drawn: number; lost: number; goalsFor: number } | null
 }
 
@@ -209,6 +213,16 @@ export default function CampeaoPage() {
           <Medal className="h-4 w-4 text-yellow-400" />
           <span className="text-sm sm:text-base font-bold uppercase tracking-[0.2em] text-white/85">{competitionName}</span>
         </div>
+        {/* COMO O TÍTULO VEIO. Uma final de ida e volta decidida no agregado ou
+            uma decisão nos pênaltis é a história da conquista — e antes o
+            jogador não tinha como saber por que foi campeão perdendo a volta. */}
+        {champion?.decidedBy && champion.decidedBy !== "jogo_unico" && (
+          <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-yellow-300/70">
+            {champion.decidedBy === "penaltis"
+              ? "Decidido nos pênaltis"
+              : `Título no agregado · final de ${champion.legs ?? 2} jogos`}
+          </p>
+        )}
 
         {/* Palco: troféu majestoso sobre pedestal com reflexo. */}
         <div

@@ -41,8 +41,8 @@ import { hardNavigate } from "@/lib/hard-navigation"
 import {
   listJobOffers,
   removeJobOffer,
-  clearJobOffers,
   assumirClube,
+  encerrarPassagem,
   podeTrocarDeClube,
   type PendingJobOffer,
 } from "@/lib/career-moves"
@@ -292,12 +292,23 @@ export default function DashboardPage() {
   }
 
   /**
-   * Pedir demissao — a feature nao existia (so o TIPO `endReason: "resigned"` no hall da
-   * fama). O tecnico ficava preso no clube, sem saida voluntaria.
+   * Pedir demissao.
+   *
+   * Fazia so `setSaveState({ selectedTeamShort: null })`. Duas promessas da
+   * propria tela ficavam sem cumprir: "registra a passagem no seu historico"
+   * (nada era gravado — ver `encerrarPassagem`) e a saida limpa do clube (o
+   * motor seguia com o elenco e o mercado do time que voce acabou de deixar).
    */
   const handleResign = () => {
-    clearJobOffers()
-    setState({ selectedTeamShort: null })
+    encerrarPassagem("resigned", {
+      teamCurto: userTeam.curto,
+      teamNome: userTeam.nome,
+      season: saveState.season,
+      week: saveState.week,
+      passagensAtuais: saveState.passagens,
+      setSaveState: (patch) => setState(patch as Parameters<typeof setState>[0]),
+      limparClubeNoMotor: () => useGameEngine.getState().limparClubeAtual(),
+    })
     hardNavigate("/treinador")
   }
 

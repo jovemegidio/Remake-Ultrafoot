@@ -20,7 +20,7 @@ import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldF
 import { DIVISOES_SEM_REGISTRO, jogoRegistrado } from "@/lib/beneficios"
 // As vagas de generateJobOffers vinham do nada: agora os outros clubes demitem.
 import { demissoesDaRodada, manchete, tecnicoDoClube } from "@/lib/mercado-de-tecnicos"
-import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
+import { addJobOffers, clearJobOffers, encerrarPassagem } from "@/lib/career-moves"
 import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
 import { resolveDivisionChange, evolvePyramids, type PyramidClub } from "@/lib/league-pyramid"
@@ -2829,7 +2829,16 @@ export function useGameManager() {
             })
             if (typeof window !== "undefined") safeLocalSet("ultrafoot-pending-fired", JSON.stringify({ clube: teamNow.nome, season: currentState.season, continuaSelecao: selecaoNome ?? true }))
             // Sai do clube MAS entra no modo seleção: cai no office da seleção.
-            setSaveState({ selectedTeamShort: null, managingNationalTeamId: selecaoAtual } as Partial<typeof currentState>)
+            // A passagem é registrada como "fired" mesmo aqui — ele foi demitido
+            // do clube; seguir na seleção não apaga isso do histórico.
+            encerrarPassagem("fired", {
+              teamCurto: userShort, teamNome: teamNow.nome,
+              season: currentState.season, week: newWeek,
+              passagensAtuais: currentState.passagens,
+              setSaveState: (patch) => setSaveState(patch as Partial<typeof currentState>),
+              limparClubeNoMotor: () => useGameEngine.getState().limparClubeAtual(),
+              patchExtra: { managingNationalTeamId: selecaoAtual },
+            })
             if (typeof window !== "undefined") hardNavigate("/")
             return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
           }
@@ -2845,7 +2854,18 @@ export function useGameManager() {
           // passava batido na simulacao rapida e o jogador "virava" o time de
           // fallback sem entender o que houve).
           if (typeof window !== "undefined") safeLocalSet("ultrafoot-pending-fired", JSON.stringify({ clube: teamNow.nome, season: currentState.season }))
-          setSaveState({ selectedTeamShort: null } as Partial<typeof currentState>)
+          // Registra a passagem como DEMISSÃO e limpa o clube do motor. Antes só
+          // zerava `selectedTeamShort`: o histórico não guardava que você tinha
+          // sido demitido, e o elenco/mercado do clube antigo continuavam ativos
+          // enquanto você procurava emprego. `encerrarPassagem` NÃO limpa as
+          // ofertas de clube aqui — é justamente agora que elas servem.
+          encerrarPassagem("fired", {
+            teamCurto: userShort, teamNome: teamNow.nome,
+            season: currentState.season, week: newWeek,
+            passagensAtuais: currentState.passagens,
+            setSaveState: (patch) => setSaveState(patch as Partial<typeof currentState>),
+            limparClubeNoMotor: () => useGameEngine.getState().limparClubeAtual(),
+          })
           if (typeof window !== "undefined") hardNavigate("/treinador")
           // Encerra o avanco: sem clube, nao ha ceremonia de campeao a checar.
           return { newSeason: false, simulatedMatches: roundFixtures.length, nextUserMatch: seasonCalendarRef.current.nextUserMatch, leagueChampion: null }
@@ -2971,7 +2991,7 @@ export function useGameManager() {
     // lia o seasonHistory, que so tinha a liga. Aqui o titulo passa a existir.
     let cupTitleRecord: import("@/lib/career-types").SeasonRecord | null = null
     let cupPrize = 0
-    if (won && !isLeagueMatch && typeof window !== "undefined") {
+    if (!isLeagueMatch && typeof window !== "undefined") {
       // A partida precisa ser a FINAL. "Nao restam partidas no calendario" nao
       // basta mais: as fases de mata-mata agora so entram DEPOIS da classificacao,
       // entao logo apos vencer as quartas nao ha semifinal agendada ainda — e o
@@ -2981,11 +3001,57 @@ export function useGameManager() {
         f.isUserMatch && !f.played && f.competition === competitionName &&
         getCalendarFixtureKey(f, currentState.season) !== fixtureKey,
       ).length
-      if (ehFinal && restantes === 0) {
+
+      // ── QUEM É O CAMPEÃO: O AGREGADO, NÃO O ÚLTIMO JOGO ──────────────────
+      //
+      // DOIS BUGS que isto corrige, os dois no mesmo `if (won && ...)` antigo:
+      //
+      //  1. FINAL DE IDA E VOLTA. Recopa, Copa do Nordeste e a Copa Verde
+      //     decidem em dois jogos (`confronto("final", 2)` em cup-bracket).
+      //     O título saía de `won` — o placar da PARTIDA. Quem vencia a ida por
+      //     3x0 e perdia a volta por 1x0 era campeão no agregado e NÃO ganhava
+      //     nada; quem perdia a ida por 4x0 e vencia a volta por 1x0 era
+      //     coroado campeão.
+      //  2. FINAL EMPATADA. Mata-mata não termina em empate, mas `won` era
+      //     falso num 1x1 — a final acabava sem campeão nenhum, a cerimônia
+      //     não disparava e a competição ficava sem vencedor no histórico.
+      //     Agora o empate no agregado vai aos pênaltis, decididos pelo mesmo
+      //     `passouNoConfronto` que já resolve as outras fases (determinístico:
+      //     recarregar a tela não muda o resultado).
+      const fixturesDaFinal = seasonCalendarRef.current.fixtures.filter(f =>
+        f.isUserMatch && f.competition === competitionName &&
+        String(f.stage ?? "").toLowerCase() === "final",
+      )
+      const jogosDaFinal = Math.max(1, fixturesDaFinal.length)
+      const idsDaFinal = new Set(fixturesDaFinal.map(f => f.id))
+      const placaresDaFinal: PlacarDaCopa[] = useGameEngine.getState().matchResults
+        .filter(r => r.season === currentState.season && r.competition === competitionName &&
+          (r.fixtureId != null ? idsDaFinal.has(r.fixtureId) : false) &&
+          (r.homeTeam === userShort || r.awayTeam === userShort))
+        .sort((a, b) => a.week - b.week)
+        .map(r => r.homeTeam === userShort
+          ? { golsPro: r.homeScore, golsContra: r.awayScore }
+          : { golsPro: r.awayScore, golsContra: r.homeScore })
+
+      const campeao = ehFinal
+        ? passouNoConfronto(
+            placaresDaFinal,
+            jogosDaFinal,
+            `final:${competitionName}:${currentState.season}:${userShort}`,
+          )
+        : null
+      const decidiuNosPenaltis = campeao != null && placaresDaFinal.length >= jogosDaFinal &&
+        placaresDaFinal.reduce((s, p) => s + p.golsPro, 0) === placaresDaFinal.reduce((s, p) => s + p.golsContra, 0)
+
+      if (ehFinal && restantes === 0 && campeao === true) {
         safeLocalSet("ultrafoot-pending-champion", JSON.stringify({
           competition: competitionName,
           season: String(currentState.season),
           type: "cup",
+          // A cerimônia agora sabe DIZER como o título veio. Um agregado virado
+          // na volta ou uma decisão nos pênaltis é a história da conquista.
+          decidedBy: decidiuNosPenaltis ? "penaltis" : jogosDaFinal > 1 ? "agregado" : "jogo_unico",
+          legs: jogosDaFinal,
           stats: null,
         }))
         // Um registro de copa no seasonHistory: posicao 1 e champion = usuario.

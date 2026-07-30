@@ -491,7 +491,36 @@ export default function PreOfficePage() {
                   )}
                 </div>
 
-                <div className="space-y-2">
+              {/*
+                VINHETA LOCAL DA LISTA DE TAREFAS.
+
+                Os cartoes sao quase transparentes (`from-white/[0.03] to-transparent`)
+                de proposito — a arte do escritorio precisa aparecer. Só que
+                justamente ATRÁS desta lista o cenário tem as mesas e as cadeiras,
+                que é a região de maior ruído da imagem: o texto branco caía em
+                cima de bordas claras e o bloco inteiro ficava difícil de ler.
+
+                A saída é uma vinheta escura SÓ aqui, em vez de escurecer a tela
+                toda (o véu global já está no mínimo, `/45`, e subi-lo apagaria o
+                cenário que o usuário quis ver). O gradiente é radial e termina em
+                alfa 0: ele não desenha uma caixa em volta da lista — some antes
+                de chegar na borda. `-inset` faz a sombra nascer um pouco fora dos
+                cartões, senão o contorno do próprio bloco marcaria o limite.
+
+                Sem `backdrop-blur` de propósito: ele está fora do perfil padrão
+                por custo de composição (ver a nota de performance dos fundos).
+              */}
+              <div className="relative">
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-x-4 -inset-y-3"
+                  style={{
+                    background:
+                      "radial-gradient(115% 95% at 50% 50%, rgba(5,5,8,0.74) 0%, rgba(5,5,8,0.60) 52%, rgba(5,5,8,0.28) 80%, rgba(5,5,8,0) 100%)",
+                  }}
+                />
+
+                <div className="relative space-y-2">
                   {realTasks.map((task, index) => {
                     const Icon = task.icon
                     const isSelected = index === selectedTask
@@ -536,6 +565,7 @@ export default function PreOfficePage() {
                       </motion.button>
                     )
                   })}
+                </div>
                 </div>
 
                 {/* Botoes */}

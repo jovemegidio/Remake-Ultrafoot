@@ -100,8 +100,11 @@ export default function TreinadorPage() {
 
   const carreira = useMemo(() => {
     const historico = state.seasonHistory ?? []
-    return historico.length > 0 ? buildCareerStats(historico) : null
-  }, [state.seasonHistory])
+    // `passagens` diz COMO cada ciclo terminou. Sem passá-lo, o hall da fama
+    // volta a chumbar "contract_ended" em toda passagem — e uma carreira cheia
+    // de demissões apareceria como uma sequência de contratos cumpridos.
+    return historico.length > 0 ? buildCareerStats(historico, state.passagens ?? []) : null
+  }, [state.seasonHistory, state.passagens])
   const ranking = useMemo(() => (carreira ? rankInHistory(carreira) : null), [carreira])
 
   // ── ESTADO SEM CLUBE ──────────────────────────────────────────────────────

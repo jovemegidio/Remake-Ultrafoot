@@ -1945,14 +1945,23 @@ export default function MercadoPage() {
             ? gameEngine.balance + borrowingCapacity(careerState.debt, gameEngine.weeklyIncome ?? 0)
             : 0
         }
-        onConfirm={(fee, salarioSemanal) => {
+        onConfirm={(fee, salarioSemanal, loan) => {
           if (!selectedPlayer) return
           const divisaoUsuario = String(careerState.divisionOverride ?? userTeam.divisao ?? "serie_a")
           // Contrato de 3 anos a partir de AGORA, em semana absoluta.
           const fimContrato = absoluteWeek(gameEngine.currentSeason, gameEngine.currentWeek) + 52 * 3
           const enginePlayer = marketPlayerToEnginePlayer(selectedPlayer, divisaoUsuario, salarioSemanal, fimContrato)
           if (negotiationType === "loan") {
-            const result = gameEngine.loanPlayer(enginePlayer, 26, Math.round(fee / 26))
+            // DURAÇÃO E SALÁRIO ACERTADOS NA MESA. Antes eram 26 semanas cravadas
+            // e `taxa/26` de salário — a negociação de empréstimo não chegava aqui.
+            const semanas = loan?.semanas ?? 26
+            const salarioDoEmprestimo = loan?.salarioSemanal ?? Math.round(fee / Math.max(1, semanas))
+            const result = gameEngine.loanPlayer(enginePlayer, semanas, salarioDoEmprestimo, loan?.taxa ?? fee)
+            if (result === "no_cash") {
+              setMarketNotice(`Caixa insuficiente para a taxa de ${formatCurrency(loan?.taxa ?? fee)} do empréstimo.`)
+              setActiveTab("enviadas")
+              return
+            }
             // Empréstimo tira o atleta do clube de origem durante o vínculo, senão
             // ele jogaria contra você defendendo o próprio time enquanto está no seu.
             if ((result === "joined" || result === "pending") && selectedPlayer.team?.nome) {
@@ -1960,7 +1969,9 @@ export default function MercadoPage() {
             }
             setMarketNotice(result === "pending"
               ? `${selectedPlayer.name} assinou e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
-              : result === "joined" ? `${selectedPlayer.name} chegou por emprestimo.` : "Não foi possível concluir o empréstimo.")
+              : result === "joined"
+                ? `${selectedPlayer.name} chegou por empréstimo${loan ? ` (${loan.semanas} semanas, ${loan.coberturaSalarial}% do salário por sua conta)` : ""}.`
+                : "Não foi possível concluir o empréstimo.")
           } else {
             // DIVIDA: a compra respeita o teto por endividamento e o congelamento
             // por inadimplencia. Antes o limite so era exibido em /financas — nada

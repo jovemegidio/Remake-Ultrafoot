@@ -7,6 +7,16 @@ import { WebSocketServer, WebSocket } from "ws"
 const PORT = Number(process.env.PORT || 8790)
 const DATA_DIR = process.env.DATA_DIR || "/var/lib/ultrafoot/relay"
 const GAME_VERSION = process.env.GAME_VERSION || "1.0.191"
+// VERSÕES DE PROTOCOLO ACEITAS.
+//
+// Era uma só, comparada com `!==`: publicar o jogo sem republicar o relay no
+// mesmo minuto derrubava o multiplayer de todo mundo que atualizasse. Agora é
+// uma LISTA — na virada de protocolo a versão antiga fica aqui por pelo menos
+// uma release e ninguém é expulso no meio de um campeonato.
+const ALLOWED_GAME_VERSIONS = new Set(
+  (process.env.ALLOWED_GAME_VERSIONS || GAME_VERSION).split(",").map(v => v.trim()).filter(Boolean),
+)
+const versaoAceita = v => ALLOWED_GAME_VERSIONS.has(String(v))
 const DB_FILE = path.join(DATA_DIR, "rooms.json")
 const rooms = new Map()
 const sockets = new Map()
@@ -105,7 +115,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "POST" && url.pathname === "/v1/rooms") {
     const input = await body(req).catch(() => null)
     if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
-    if (input.gameVersion !== GAME_VERSION) return json(res, 409, { ok: false, error: "unsupported_game_version", requiredVersion: GAME_VERSION })
+    if (!versaoAceita(input.gameVersion)) return json(res, 409, { ok: false, error: "unsupported_game_version", requiredVersion: GAME_VERSION })
     let roomCode = code()
     while (rooms.has(roomCode)) roomCode = code()
     const now = Date.now(), id = crypto.randomUUID(), sessionToken = token()
@@ -138,17 +148,29 @@ const server = http.createServer(async (req, res) => {
   if (match[2] === "join" && req.method === "POST") {
     const input = await body(req).catch(() => null)
     if (!input) return json(res, 400, { ok: false, error: "invalid_json" })
-    if (input.gameVersion !== room.gameVersion) return json(res, 409, { ok: false, error: "version_mismatch", requiredVersion: room.gameVersion })
+    if (!versaoAceita(input.gameVersion)) return json(res, 409, { ok: false, error: "version_mismatch", requiredVersion: room.gameVersion })
     if (input.dataVersion !== room.dataVersion || input.dataHash !== room.dataHash) return json(res, 409, { ok: false, error: "data_mismatch" })
     if (input.participantId && input.sessionToken) {
       const found = participant(room, input.participantId, input.sessionToken)
       return found ? json(res, 200, { ok: true, participantId: found.id, sessionToken: found.token, room: publicRoom(room), reconnected: true }) : json(res, 401, { ok: false, error: "invalid_reconnect_credentials" })
     }
-    if (room.competition) return json(res, 409, { ok: false, error: "competition_already_started" })
-    if (room.participants.length >= room.maxPlayers) return json(res, 409, { ok: false, error: "room_full" })
-    if (room.participants.some(item => item.teamShort.toLowerCase() === String(input.teamShort).trim().toLowerCase())) return json(res, 409, { ok: false, error: "team_already_selected" })
+    // ── ESPECTADOR ─────────────────────────────────────────────────────────
+    // "Permitir espectadores" era uma caixa de seleção que não fazia nada: o
+    // campo viajava até o relay e morria ali. Agora quem entra como espectador
+    // acompanha a sala sem ocupar vaga, sem escolher clube e sem entrar na
+    // tabela — e pode entrar com o campeonato JÁ EM ANDAMENTO, que é o caso de
+    // uso inteiro (assistir a final de um campeonato alheio).
+    const querAssistir = Boolean(input.spectator)
+    if (querAssistir && !room.leagueSettings?.allowSpectators) {
+      return json(res, 403, { ok: false, error: "spectators_disabled" })
+    }
+    if (!querAssistir) {
+      if (room.competition) return json(res, 409, { ok: false, error: "competition_already_started" })
+      if (room.participants.length >= room.maxPlayers) return json(res, 409, { ok: false, error: "room_full" })
+      if (room.participants.some(item => item.teamShort.toLowerCase() === String(input.teamShort).trim().toLowerCase())) return json(res, 409, { ok: false, error: "team_already_selected" })
+    }
     const now = Date.now(), id = crypto.randomUUID(), sessionToken = token()
-    room.participants.push({ id, managerName: String(input.managerName || "Técnico").slice(0, 48), teamShort: String(input.teamShort || "").slice(0, 16), ready: false, connected: false, joinedAt: now, lastSeen: now, token: sessionToken })
+    room.participants.push({ id, managerName: String(input.managerName || "Técnico").slice(0, 48), teamShort: querAssistir ? "" : String(input.teamShort || "").slice(0, 16), spectator: querAssistir, ready: false, connected: false, joinedAt: now, lastSeen: now, token: sessionToken })
     persist(); broadcast(room, "room_updated", publicRoom(room))
     return json(res, 201, { ok: true, participantId: id, sessionToken, room: publicRoom(room) })
   }
@@ -185,18 +207,45 @@ wss.on("connection", ws => {
     if (input.type === "set_ready") actor.ready = Boolean(input.payload?.ready)
     else if (input.type === "create_competition") {
       if (!host) return error("host_only")
-      if (room.participants.length < 2) return error("minimum_2_players")
+      // Espectador não joga: não conta para o mínimo nem entra no chaveamento.
+      const tecnicos = room.participants.filter(item => !item.spectator)
+      if (tecnicos.length < 2) return error("minimum_2_players")
       if (room.competition) return error("competition_exists")
-      const schedule = roundRobin(room.participants.map(item => item.id)), settings = room.leagueSettings
-      room.competition = { id: crypto.randomUUID(), name: settings.leagueName, format: "league", createdAt: now, currentRound: 1, totalRounds: schedule.totalRounds, fixtures: schedule.fixtures, standings: standings(room.participants.map(item => item.id), []), finished: false, leagueId: settings.leagueId, officialRulesLocked: true, matchSpeed: settings.matchSpeed, roundDeadlineHours: settings.roundDeadlineHours, allowSpectators: settings.allowSpectators }
+      const schedule = roundRobin(tecnicos.map(item => item.id)), settings = room.leagueSettings
+      room.competition = { id: crypto.randomUUID(), name: settings.leagueName, format: "league", createdAt: now, currentRound: 1, totalRounds: schedule.totalRounds, fixtures: schedule.fixtures, standings: standings(tecnicos.map(item => item.id), []), finished: false, leagueId: settings.leagueId, officialRulesLocked: true, matchSpeed: settings.matchSpeed, roundDeadlineHours: settings.roundDeadlineHours, allowSpectators: settings.allowSpectators }
     } else if (input.type === "start_round") {
       if (!host || !room.competition) return error("host_only_or_no_competition")
       const fixtures = room.competition.fixtures.filter(item => item.round === room.competition.currentRound)
       const involved = new Set(fixtures.flatMap(item => [item.homeId, item.awayId]))
-      if (room.participants.some(item => involved.has(item.id) && !item.ready)) return error("players_not_ready")
+      if (room.participants.some(item => involved.has(item.id) && !item.spectator && !item.ready)) return error("players_not_ready")
       fixtures.forEach(item => { if (item.status === "scheduled") item.status = "live" })
       room.participants.forEach(item => item.ready = false)
-      broadcast(room, "round_started", { round: room.competition.currentRound, fixtures })
+      // PRAZO DA RODADA — o campo `roundDeadlineHours` existia desde sempre e
+      // NUNCA foi usado: a sala escolhia "48 horas" e nada acontecia às 48h
+      // porque ninguém marcava quando a rodada começou. Sem este carimbo, um
+      // técnico que sumia congelava o campeonato inteiro para sempre.
+      room.competition.roundStartedAt = now
+      room.competition.roundDeadlineAt = now + room.competition.roundDeadlineHours * 3_600_000
+      broadcast(room, "round_started", { round: room.competition.currentRound, fixtures, deadlineAt: room.competition.roundDeadlineAt })
+    } else if (input.type === "expire_round") {
+      // RODADA VENCIDA: quem não jogou perde por W.O. (3x0), como em qualquer
+      // liga online. Só vale DEPOIS do prazo — antes disso o host não pode
+      // simplesmente decretar o resultado dos outros.
+      if (!host || !room.competition) return error("host_only_or_no_competition")
+      if (!room.competition.roundDeadlineAt || now < room.competition.roundDeadlineAt) return error("deadline_not_reached")
+      const pendentes = room.competition.fixtures.filter(item =>
+        item.round === room.competition.currentRound && item.status !== "played")
+      for (const fixture of pendentes) {
+        // Quem enviou resultado não leva W.O.; quem ficou calado, sim.
+        const mandanteEnviou = fixture.submissions?.some(s => s.participantId === fixture.homeId)
+        const visitanteEnviou = fixture.submissions?.some(s => s.participantId === fixture.awayId)
+        if (mandanteEnviou && !visitanteEnviou) { fixture.homeGoals = 3; fixture.awayGoals = 0 }
+        else if (visitanteEnviou && !mandanteEnviou) { fixture.homeGoals = 0; fixture.awayGoals = 3 }
+        else { fixture.homeGoals = 0; fixture.awayGoals = 0 }
+        fixture.status = "played"
+        fixture.walkover = true
+      }
+      broadcast(room, "round_expired", { round: room.competition.currentRound, count: pendentes.length })
     } else if (input.type === "submit_result") {
       const fixture = room.competition?.fixtures.find(item => item.id === input.payload?.fixtureId)
       if (!fixture || ![fixture.homeId, fixture.awayId].includes(actor.id)) return error("invalid_fixture")
@@ -219,13 +268,26 @@ wss.on("connection", ws => {
       room.sequence++; room.commands.push({ sequence: room.sequence, participantId: actor.id, commandType: String(input.payload?.commandType || "unknown").slice(0, 64), payload: input.payload?.payload, createdAt: now })
       if (room.commands.length > 2000) room.commands.splice(0, 500)
     } else if (input.type === "advance_career") {
-      if (!host || room.participants.some(item => !item.ready)) return error("host_only_or_players_not_ready")
+      if (!host || room.participants.some(item => !item.spectator && !item.ready)) return error("host_only_or_players_not_ready")
       room.sharedRound++; room.participants.forEach(item => item.ready = false)
     } else return error("unknown_message")
     if (room.competition) {
-      room.competition.standings = standings(room.participants.map(item => item.id), room.competition.fixtures)
+      room.competition.standings = standings(room.participants.filter(item => !item.spectator).map(item => item.id), room.competition.fixtures)
       const complete = room.competition.fixtures.filter(item => item.round === room.competition.currentRound).every(item => item.status === "played")
-      if (complete) room.competition.currentRound >= room.competition.totalRounds ? room.competition.finished = true : room.competition.currentRound++
+      if (complete) {
+        if (room.competition.currentRound >= room.competition.totalRounds) {
+          room.competition.finished = true
+          // CAMPEÃO: a competição terminava e ninguém era declarado vencedor —
+          // a tabela só parava de andar. Agora o líder final fica registrado.
+          room.competition.championId = room.competition.standings[0]?.participantId ?? null
+          broadcast(room, "competition_finished", { championId: room.competition.championId, standings: room.competition.standings })
+        } else {
+          room.competition.currentRound++
+          // Rodada nova ainda não começou: o prazo só volta a correr no start_round.
+          room.competition.roundStartedAt = null
+          room.competition.roundDeadlineAt = null
+        }
+      }
     }
     persist(); broadcast(room, "room_updated", publicRoom(room))
     ws.send(JSON.stringify({ type: "ack", requestId: input.requestId, sentAt: now }))

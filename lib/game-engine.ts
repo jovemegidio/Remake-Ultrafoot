@@ -2007,6 +2007,14 @@ interface GameEngineState {
    * instalar a 1.0.223 — uma punicao por atualizar.
    */
   semearEntrosamentoDoHistorico: () => void
+  /**
+   * SAIU DO CLUBE (demissao ou pedido de demissao): zera o que era do emprego
+   * anterior. Sem isto o tecnico sem clube continuava com o elenco, a tabela e
+   * o mercado do clube que acabou de deixar — e a ponte de notificacoes seguia
+   * avisando de proposta por atleta que ja nao era dele. Ver `encerrarPassagem`
+   * em lib/career-moves.
+   */
+  limparClubeAtual: () => void
   /** `valor` = o que a compradora ofereceu; sem ele, o valor de mercado cheio. */
   sellPlayer: (playerId: number, valor?: number) => void
   /** Aposenta um veterano sem multa nem receita e o remove da folha. */
@@ -2028,11 +2036,19 @@ interface GameEngineState {
   payClubDebt: (amount: number) => number
   spendClubFunds: (amount: number) => boolean
   addClubRevenue: (amount: number) => void
-  loanPlayer: (player: Player, weeks: number, salary: number) => "joined" | "pending" | "failed"
+  /** Debita do caixa. Contrapartida de `addClubRevenue` (que só soma). */
+  addClubExpense: (amount: number) => void
+  /**
+   * `fee` = taxa paga ao clube dono pelo período (0 = empréstimo gratuito).
+   * Sem ela a taxa negociada era apenas um número na tela: o empréstimo não
+   * tirava um centavo do caixa, por mais caro que fosse o acordo.
+   */
+  loanPlayer: (player: Player, weeks: number, salary: number, fee?: number) => "joined" | "pending" | "failed" | "no_cash"
   hireScout: (scout: Scout) => void
   startScoutSearch: (scoutId: number, region: string, weeksToComplete?: number, searchCost?: number, criteria?: ScoutCriteria | null) => void
   stopScoutSearch: (scoutId: number) => void
-  fireScout: (scoutId: number) => void
+  /** Demite o olheiro e devolve o custo da rescisão cobrado do caixa. */
+  fireScout: (scoutId: number) => number
   simulateOtherMatches: () => void
   drawCopaBracket: () => void
   updateStandings: (result: MatchResult) => void
@@ -3246,6 +3262,26 @@ export const useGameEngine = create<GameEngineState>()(
        * plausivel a partir de agora (jovem e craque assinam mais longo). Roda
        * uma unica vez por carreira.
        */
+      limparClubeAtual: () => {
+        set({
+          myTeamShort: "",
+          squadPlayers: [],
+          // Mercado: propostas e sondagens sao do clube que ficou para tras.
+          transferOffers: [],
+          marketInterests: [],
+          pendingIncomingTransfers: [],
+          transferListedIds: [],
+          loanListedIds: [],
+          // Tabela e resultados do emprego anterior nao valem para o proximo.
+          serieAStandings: [],
+          // Entrosamento e minutos JUNTOS: um elenco novo comeca do zero.
+          entrosamentoPares: {},
+          fadigaCronica: {},
+          squadCohesion: PISO_ENTROSAMENTO,
+          ultimoTreino: null,
+        })
+      },
+
       semearEntrosamentoDoHistorico: () => {
         const s = get()
         if (s.entrosamentoSemeado) return
@@ -3532,12 +3568,27 @@ export const useGameEngine = create<GameEngineState>()(
         const value = Math.max(0, amount)
         if (value > 0) set(state => ({ balance: state.balance + value }))
       },
+
+      /**
+       * Contrapartida de `addClubRevenue`. Existia só o lado da receita, e como
+       * ele trava em `Math.max(0, ...)` não dava para debitar nada por ele —
+       * cada tela que precisava cobrar algo inventava o próprio jeito ou
+       * simplesmente não cobrava (foi o caso da rescisão de olheiro).
+       */
+      addClubExpense: (amount) => {
+        const value = Math.max(0, amount)
+        if (value > 0) set(state => ({ balance: state.balance - value }))
+      },
       
-      loanPlayer: (player, weeks, salary) => {
+      loanPlayer: (player, weeks, salary, fee = 0) => {
         const state = get()
         const normalizedName = player.name.trim().toLocaleLowerCase("pt-BR")
         if (state.squadPlayers.some(p => p.name.trim().toLocaleLowerCase("pt-BR") === normalizedName) || state.pendingIncomingTransfers.some(p => p.player.name.trim().toLocaleLowerCase("pt-BR") === normalizedName)) return "failed"
-        
+        // A TAXA SAI DO CAIXA. Antes o empréstimo era de graça: o valor acertado
+        // com o dono nunca era cobrado, então emprestar craque não custava nada.
+        const taxa = Math.max(0, Math.round(fee))
+        if (taxa > state.balance) return "no_cash"
+
         const loanedPlayer: Player = {
           ...player,
           id: Date.now(),
@@ -3551,12 +3602,13 @@ export const useGameEngine = create<GameEngineState>()(
         
         const joinsNow = isTransferWindowOpen(state.currentWeek)
         set((s) => ({
+          balance: s.balance - taxa,
           squadPlayers: joinsNow ? [...s.squadPlayers, loanedPlayer] : s.squadPlayers,
           pendingIncomingTransfers: joinsNow ? s.pendingIncomingTransfers : [...s.pendingIncomingTransfers, {
             id: `incoming-loan-${state.currentSeason}-${state.currentWeek}-${loanedPlayer.id}`,
             player: loanedPlayer,
             kind: "emprestimo" as const,
-            fee: 0,
+            fee: taxa,
             agreedWeek: state.currentWeek,
             agreedSeason: state.currentSeason,
             loanWeeks: weeks,
@@ -3604,14 +3656,33 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
 
+      /**
+       * Demite um olheiro.
+       *
+       * DUAS COISAS QUE FALTAVAM (1.0.228):
+       *
+       *  1. RESCISÃO CUSTA. Demitir era de graça — dava para contratar os oito
+       *     olheiros, disparar as buscas e demitir todo mundo antes da folha
+       *     rodar. Agora sai o equivalente a 4 semanas de salário, como qualquer
+       *     rescisão do jogo.
+       *  2. A BUSCA EM ANDAMENTO MORRE COM ELE. O olheiro saía do elenco mas a
+       *     busca continuava no save (`isSearching` num registro que não existe
+       *     mais); o dinheiro da expedição ficava pago e nada era entregue.
+       *     Quem demite no meio da busca perde o que investiu — e é avisado
+       *     disso na tela antes de confirmar.
+       *
+       * Devolve o custo cobrado (0 quando o olheiro não existe).
+       */
       fireScout: (scoutId) => {
-        set((s) => {
-          const scout = s.scouts.find(sc => sc.id === scoutId)
-          return {
-            scouts: s.scouts.filter(sc => sc.id !== scoutId),
-            weeklyExpenses: s.weeklyExpenses - (scout?.salary ?? 0),
-          }
-        })
+        const scout = get().scouts.find(sc => sc.id === scoutId)
+        if (!scout) return 0
+        const rescisao = Math.round(scout.salary * 4)
+        set((s) => ({
+          scouts: s.scouts.filter(sc => sc.id !== scoutId),
+          weeklyExpenses: Math.max(0, s.weeklyExpenses - scout.salary),
+          balance: s.balance - rescisao,
+        }))
+        return rescisao
       },
 
       resolveRandomEvent: (eventId, choiceId) => {

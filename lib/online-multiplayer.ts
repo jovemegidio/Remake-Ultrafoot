@@ -3,11 +3,28 @@ import { NATIONAL_COMPETITIONS } from "@/lib/national-competitions"
 import { YOUTH_COMPETITION_FORMATS_2026 } from "@/lib/youth-career-engine"
 
 export const ONLINE_GAME_VERSION = "1.0.191"
-// O relay valida `gameVersion` contra ALLOWED_GAME_VERSION e devolve 409
-// (unsupported_game_version) quando não bate. Ficar preso em 1.0.96 enquanto o
-// relay foi implantado em 1.0.98 quebrou a criação/entrada em salas em produção.
-// Cliente, relay (services/multiplayer-relay/wrangler.jsonc) e o preflight do
-// release precisam andar juntos — este valor acompanha a versão da build.
+
+/**
+ * VERSÃO DO PROTOCOLO — e por que ela NÃO é a versão da build.
+ *
+ * O relay compara `gameVersion` com o que ele aceita e devolve 409
+ * (unsupported_game_version) quando não bate. A regra anterior era "este valor
+ * acompanha a versão da build", e ela é uma armadilha: toda publicação do jogo
+ * exigia republicar o relay no mesmo minuto, senão TODO MUNDO que atualizasse
+ * perdia o multiplayer até a VPS ser mexida. Foi o que já aconteceu (1.0.96 ×
+ * 1.0.98) e é o motivo de este número estar congelado em 1.0.191 desde então —
+ * na prática ninguém ousou mexer.
+ *
+ * A regra correta: o protocolo só muda quando o FORMATO DA CONVERSA muda
+ * (mensagem nova, campo obrigatório novo, semântica diferente). Publicar
+ * 1.0.228 não muda nada disso, então o número fica. Jogadores em builds
+ * diferentes continuam podendo jogar juntos — o que precisa bater é o BANCO
+ * (`GAME_DATA_VERSION`/`GAME_DATA_HASH`), e esse sim é checado separadamente.
+ *
+ * Ao mudar aqui, mude também ALLOWED_GAME_VERSIONS no relay
+ * (services/multiplayer-relay-vps/server.mjs) mantendo a versão antiga na lista
+ * por pelo menos uma release, para não expulsar quem ainda não atualizou.
+ */
 export const ONLINE_PROTOCOL_VERSION = "1.0.191"
 export const GAME_DATA_VERSION = "2026.07.18"
 

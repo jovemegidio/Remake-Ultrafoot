@@ -16,6 +16,7 @@ import {
   type Preferencias,
 } from "@/lib/preferencias"
 import { CommunityBar } from "./community-bar"
+import { ligarAtalhosDeTelaCheia } from "@/lib/tela-cheia"
 import { cn } from "@/lib/utils"
 import { useLiveLatest } from "@/lib/use-live-latest"
 import {
@@ -123,6 +124,11 @@ export function LauncherShell({
     setPrefs(p)
     aplicarPreferencias(p)
   }, [])
+
+  // TELA CHEIA: o launcher abre em fullscreen, e nela o Tauri esconde a barra de
+  // título — some o X. Como esta janela não tem controles próprios, os atalhos
+  // são a única saída; sem eles o jogador fica preso. Ver lib/tela-cheia.ts.
+  useEffect(() => ligarAtalhosDeTelaCheia(), [])
   const salvarPrefs = (p: Preferencias) => { setPrefs(p); gravarPreferencias(p) }
 
   useEffect(() => {

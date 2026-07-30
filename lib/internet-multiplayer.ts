@@ -7,6 +7,8 @@ export interface InternetParticipant {
   id: string
   managerName: string
   teamShort: string
+  /** Entrou só para assistir: não ocupa vaga, não joga, não entra na tabela. */
+  spectator?: boolean
   ready: boolean
   connected: boolean
   joinedAt: number
@@ -21,6 +23,10 @@ export interface InternetFixture {
   status: "scheduled" | "live" | "awaiting_confirmation" | "disputed" | "played"
   homeGoals?: number
   awayGoals?: number
+  /** Quem já mandou o placar — é o que diferencia "aguardando" de "divergente". */
+  submissions?: Array<{ participantId: string; homeGoals: number; awayGoals: number; at: number }>
+  /** Resultado decretado por prazo vencido (W.O.). */
+  walkover?: boolean
 }
 
 export interface InternetCompetition {
@@ -37,6 +43,11 @@ export interface InternetCompetition {
   matchSpeed: "normal" | "rapida"
   roundDeadlineHours: 24 | 48 | 72 | 168
   allowSpectators: boolean
+  /** Quando a rodada atual começou e quando ela vence (epoch ms). */
+  roundStartedAt?: number | null
+  roundDeadlineAt?: number | null
+  /** Definido ao fim da última rodada — o líder da tabela final. */
+  championId?: string | null
 }
 
 export interface InternetLeagueSettings {
@@ -141,6 +152,11 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
       team_already_selected: "Este clube já foi escolhido por outro técnico.",
       rate_limited: "Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.",
       payload_too_large: "A solicitação enviada é maior que o permitido pelo serviço.",
+      spectators_disabled: "Esta sala não aceita espectadores.",
+      deadline_not_reached: "O prazo da rodada ainda não venceu.",
+      invalid_fixture: "Esta partida não é sua ou não existe mais.",
+      host_only: "Só o organizador do campeonato pode fazer isso.",
+      players_not_ready: "Nem todos os técnicos confirmaram as decisões.",
     }
     throw new Error(errors[data.error ?? ""] ?? data.error ?? `Falha HTTP ${response.status}`)
   }
@@ -160,11 +176,11 @@ export async function createInternetRoom(input: { managerName: string; teamShort
   persist(session); return session
 }
 
-export async function joinInternetRoom(input: { code: string; managerName: string; teamShort: string }): Promise<InternetSession> {
+export async function joinInternetRoom(input: { code: string; managerName: string; teamShort: string; spectator?: boolean }): Promise<InternetSession> {
   const relayUrl = configuredRelayUrl()
   if (!relayUrl) throw new Error("O relay público ainda não foi implantado/configurado.")
   const code = input.code.trim().toUpperCase()
-  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${relayUrl}/v1/rooms/${code}/join`, { method: "POST", body: JSON.stringify({ managerName: input.managerName, teamShort: input.teamShort, gameVersion: ONLINE_PROTOCOL_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH }) })
+  const response = await request<{ ok: true; participantId: string; sessionToken: string; room: InternetRoom }>(`${relayUrl}/v1/rooms/${code}/join`, { method: "POST", body: JSON.stringify({ managerName: input.managerName, teamShort: input.teamShort, spectator: Boolean(input.spectator), gameVersion: ONLINE_PROTOCOL_VERSION, dataVersion: GAME_DATA_VERSION, dataHash: GAME_DATA_HASH }) })
   const session = { relayUrl, participantId: response.participantId, sessionToken: response.sessionToken, room: response.room }
   persist(session); return session
 }

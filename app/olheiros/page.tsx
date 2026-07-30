@@ -31,11 +31,12 @@ import {
   AlertCircle,
   X,
   Landmark,
-  Compass
+  Compass,
+  UserMinus
 } from "lucide-react"
 import type { Scout } from "@/lib/game-engine"
 import { useGameState } from "@/lib/save-system"
-import { createScoutingDepartment, createScoutMission, departmentReputationLabel, generatePerformanceAnalysis, hireDepartmentScout, type ScoutMissionType, type ScoutTier } from "@/lib/scout-engine"
+import { createScoutingDepartment, createScoutMission, departmentReputationLabel, departmentScoutSeverance, fireDepartmentScout, generatePerformanceAnalysis, hireDepartmentScout, type ScoutMissionType, type ScoutTier } from "@/lib/scout-engine"
 
 // Regioes disponiveis para scouting
 const SCOUTING_REGIONS = [
@@ -108,6 +109,10 @@ export default function OlheirosPage() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
   const [showHireModal, setShowHireModal] = useState(false)
   const [selectedScoutToHire, setSelectedScoutToHire] = useState<typeof AVAILABLE_SCOUTS[0] | null>(null)
+  // DEMISSÃO: `gameEngine.fireScout` existia desde sempre e NENHUMA tela o
+  // chamava — não havia como dispensar um olheiro. Contratar era definitivo.
+  const [scoutParaDemitir, setScoutParaDemitir] = useState<Scout | null>(null)
+  const [avisoOlheiros, setAvisoOlheiros] = useState("")
 
   // Olheiros contratados e talentos descobertos vem do game-engine (persistidos no save),
   // nao mais de uma lista fixa. Comecam vazios: voce contrata olheiros e os envia buscar.
@@ -135,6 +140,30 @@ export default function OlheirosPage() {
 
   const handleStopSearch = (scoutId: number) => {
     gameEngine.stopScoutSearch(scoutId)
+  }
+
+  /** Confirma a demissão: paga a rescisão e tira o olheiro da folha. */
+  const confirmarDemissao = () => {
+    const alvo = scoutParaDemitir
+    if (!alvo) return
+    // Busca em andamento morre com ele — encerra antes para não deixar a
+    // expedição órfã no save.
+    if (alvo.isSearching) gameEngine.stopScoutSearch(alvo.id)
+    const custo = gameEngine.fireScout(alvo.id)
+    setScoutParaDemitir(null)
+    setAvisoOlheiros(
+      `${alvo.name} foi demitido. Rescisão de R$ ${custo.toLocaleString("pt-BR")} paga` +
+      `${alvo.isSearching ? " e a busca em andamento foi cancelada" : ""}.`,
+    )
+  }
+
+  const demitirScoutEstrategico = (scoutId: string) => {
+    const alvo = department.scouts.find(s => s.id === scoutId)
+    if (!alvo) return
+    const custo = departmentScoutSeverance(alvo)
+    gameEngine.addClubExpense(custo)
+    setSaveState({ scoutingDepartment: fireDepartmentScout(department, scoutId) })
+    setAvisoOlheiros(`${alvo.name} saiu do departamento. Rescisão de R$ ${custo.toLocaleString("pt-BR")}.`)
   }
 
   const hireStrategicScout = (tier:ScoutTier) => {
@@ -187,6 +216,36 @@ export default function OlheirosPage() {
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
           <section className="mb-4 rounded-xl border border-[var(--brand)]/15 bg-[var(--brand)]/[0.04] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="text-xs font-black uppercase tracking-wider text-[var(--brand)]">Departamento estratégico · {departmentReputationLabel(department.reputation)}</div><p className="mt-1 text-xs text-white/45">Centro de Observação Nv. {department.observationCentreLevel} · Centro de Dados Nv. {department.dataCentreLevel} · custo mensal R$ {department.monthlyCost.toLocaleString("pt-BR")}</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>hireStrategicScout(department.scouts.length<1?"regional":department.scouts.length<3?"national":"continental")} className="rounded-lg bg-[var(--brand)] px-3 py-2 text-[10px] font-bold text-[var(--brand-ink)]">Contratar scout por nível</button><button onClick={()=>assignStrategicMission("young")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Missão: jovens 15–20</button><button onClick={()=>assignStrategicMission("expiring")} disabled={!department.scouts.some(s=>!s.missionId)} className="rounded-lg border border-white/15 px-3 py-2 text-[10px] text-white disabled:opacity-30">Fim de contrato</button><button onClick={analyzePerformance} className="rounded-lg border border-violet-400/30 px-3 py-2 text-[10px] text-violet-300">Analisar elenco/adversário</button></div></div>
+            {/* QUEM ESTÁ NO DEPARTAMENTO — e como tirar alguém dele.
+                Antes só existia o botão de contratar: os scouts contratados por
+                nível não apareciam em lugar nenhum e o custo mensal só subia. */}
+            {department.scouts.length > 0 && (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {department.scouts.map(s => (
+                  <div key={s.id} className="flex items-center gap-2 rounded-lg bg-black/30 p-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-white">{s.name}</p>
+                      <p className="text-[10px] text-white/40">
+                        {s.tier.replace("_", " ")} · R$ {s.monthlySalary.toLocaleString("pt-BR")}/mês
+                        {s.missionId ? " · em missão" : " · livre"}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => demitirScoutEstrategico(s.id)}
+                      title={`Demitir ${s.name} (rescisão de R$ ${departmentScoutSeverance(s).toLocaleString("pt-BR")})`}
+                      className="shrink-0 rounded-md border border-red-500/30 p-1.5 text-red-400 transition-colors hover:bg-red-500/10"
+                    >
+                      <UserMinus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {avisoOlheiros && (
+              <p className="mt-3 rounded-lg border border-[var(--brand)]/25 bg-[var(--brand)]/[0.06] px-3 py-2 text-[11px] text-[var(--brand)]">
+                {avisoOlheiros}
+              </p>
+            )}
             {department.lastAnalysis&&<div className="mt-3 grid gap-2 md:grid-cols-3 text-[11px]"><div className="rounded-lg bg-black/30 p-3"><b className="text-amber-300">Alertas do elenco</b><p className="mt-1 text-white/55">{department.lastAnalysis.squadAlerts.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-red-300">Adversário</b><p className="mt-1 text-white/55">{department.lastAnalysis.opponentStrengths.join(" · ")}</p></div><div className="rounded-lg bg-black/30 p-3"><b className="text-[var(--brand)]">Recomendação</b><p className="mt-1 text-white/55">{department.lastAnalysis.tacticalRecommendations.join(" · ")}</p></div></div>}
           </section>
           <AnimatePresence mode="wait">
@@ -309,15 +368,26 @@ export default function OlheirosPage() {
                                   <p className="text-[10px] text-white/40">
                                     {scout.weeksToComplete} semana(s) restante(s)
                                   </p>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleStopSearch(scout.id)}
-                                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
-                                  >
-                                    <Pause className="h-3 w-3 mr-1" />
-                                    Parar
-                                  </Button>
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleStopSearch(scout.id)}
+                                      className="border-white/15 text-white/60 hover:bg-white/5 text-xs"
+                                    >
+                                      <Pause className="h-3 w-3 mr-1" />
+                                      Parar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setScoutParaDemitir(scout)}
+                                      className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                                    >
+                                      <UserMinus className="h-3 w-3 mr-1" />
+                                      Demitir
+                                    </Button>
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="space-y-2">
@@ -325,14 +395,25 @@ export default function OlheirosPage() {
                                     <Clock className="h-4 w-4" />
                                     <span className="text-sm">Disponivel</span>
                                   </div>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => setSelectedRegion(selectedRegion === scout.id.toString() ? null : scout.id.toString())}
-                                    className="bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)] text-xs"
-                                  >
-                                    <Play className="h-3 w-3 mr-1" />
-                                    Iniciar Busca
-                                  </Button>
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => setSelectedRegion(selectedRegion === scout.id.toString() ? null : scout.id.toString())}
+                                      className="bg-[var(--brand)] hover:bg-[var(--brand-2)] text-[var(--brand-ink)] text-xs"
+                                    >
+                                      <Play className="h-3 w-3 mr-1" />
+                                      Iniciar Busca
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setScoutParaDemitir(scout)}
+                                      className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                                    >
+                                      <UserMinus className="h-3 w-3 mr-1" />
+                                      Demitir
+                                    </Button>
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -595,6 +676,88 @@ export default function OlheirosPage() {
           </AnimatePresence>
         </div>
       </main>
+
+      {/* Modal de DEMISSÃO — a rescisão é dinheiro saindo do caixa e pode
+          cancelar uma busca já paga, então nunca acontece em um clique só. */}
+      <AnimatePresence>
+        {scoutParaDemitir && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={() => setScoutParaDemitir(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md mx-4 p-6 rounded-2xl bg-[#1a1a1a] border border-red-500/20"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white">Demitir olheiro</h3>
+                <button
+                  onClick={() => setScoutParaDemitir(null)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <p className="text-sm text-white/60">
+                <span className="font-semibold text-white">{scoutParaDemitir.name}</span> sai da folha
+                imediatamente. A rescisão equivale a 4 semanas de salário.
+              </p>
+
+              <div className="mt-4 space-y-2 rounded-xl bg-white/5 p-4 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/50">Salário semanal</span>
+                  <span className="text-white">R$ {scoutParaDemitir.salary.toLocaleString("pt-BR")}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/50">Rescisão</span>
+                  <span className="font-semibold text-red-300">
+                    R$ {(scoutParaDemitir.salary * 4).toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/50">Economia semanal</span>
+                  <span className="text-[var(--brand)]">
+                    R$ {scoutParaDemitir.salary.toLocaleString("pt-BR")}
+                  </span>
+                </div>
+              </div>
+
+              {scoutParaDemitir.isSearching && (
+                <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                  <p className="text-xs leading-snug text-amber-200">
+                    Ele está no meio de uma busca. Demitir agora cancela a expedição e o
+                    valor já investido nela não volta.
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-6 flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setScoutParaDemitir(null)}
+                  className="flex-1 border-white/10 text-white/70"
+                >
+                  Manter
+                </Button>
+                <Button
+                  onClick={confirmarDemissao}
+                  className="flex-1 bg-red-500 text-white hover:bg-red-500/90"
+                >
+                  Confirmar demissão
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal de contratacao */}
       <AnimatePresence>

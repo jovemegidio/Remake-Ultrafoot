@@ -130,6 +130,86 @@ export function assumirClube(
   deps.navigate("/")
 }
 
+// ─── FIM DE PASSAGEM: pedir demissão ou ser demitido ────────────────────────
+
+/** Como a passagem por um clube terminou. */
+export type MotivoDeSaida = "resigned" | "fired"
+
+/**
+ * Uma passagem do técnico por um clube, do jeito que ela fica no save.
+ *
+ * Isto NÃO existia. O tipo `endReason` vivia só no hall da fama
+ * (lib/hall-of-fame-engine), e `buildCareerStats` chumbava `"contract_ended"`
+ * para todo mundo — ou seja: dava para ser demitido dez vezes e o histórico
+ * dizia que os dez ciclos "terminaram o contrato". A própria tela do Escritório
+ * prometia "registra a passagem no seu histórico" e nada era gravado.
+ */
+export interface PassagemPorClube {
+  teamCurto: string
+  teamNome: string
+  endReason: MotivoDeSaida
+  season: number
+  week: number
+}
+
+/**
+ * ENCERRA a passagem pelo clube atual — o caminho único de "pedir demissão" e
+ * "ser demitido".
+ *
+ * Os dois caminhos faziam apenas `setSaveState({ selectedTeamShort: null })`, e
+ * isso deixava duas pontas soltas:
+ *
+ *   1. A PASSAGEM NÃO ERA REGISTRADA. Ver `PassagemPorClube` acima.
+ *   2. O MOTOR CONTINUAVA NO CLUBE ANTIGO. `squadPlayers`, `myTeamShort`,
+ *      propostas e sondagens ficavam carregados. Quem saía do clube continuava
+ *      vendo o elenco antigo, e o mercado seguia mandando proposta por atleta
+ *      que já não era seu — a ponte de notificações não tem como saber que você
+ *      foi embora. O reinit só acontecia ao ASSUMIR outro clube; no meio do
+ *      caminho (a Área do Treinador, onde se escolhe o próximo emprego) o estado
+ *      era do emprego anterior.
+ *
+ * `limparOfertas` é falso na demissão de propósito: as propostas de clube que já
+ * tinham chegado continuam valendo para quem foi demitido — é justamente quando
+ * elas importam. Quem pede demissão abre mão delas.
+ */
+export function encerrarPassagem(
+  motivo: MotivoDeSaida,
+  deps: {
+    teamCurto: string
+    teamNome: string
+    season: number
+    week: number
+    passagensAtuais?: PassagemPorClube[]
+    setSaveState: (patch: Record<string, unknown>) => void
+    /** Zera o estado de clube no motor (elenco, mercado, tabela). */
+    limparClubeNoMotor?: () => void
+    /** Campos extras a gravar junto (ex.: entrar no modo seleção). */
+    patchExtra?: Record<string, unknown>
+  },
+): void {
+  const passagem: PassagemPorClube = {
+    teamCurto: deps.teamCurto,
+    teamNome: deps.teamNome,
+    endReason: motivo,
+    season: deps.season,
+    week: deps.week,
+  }
+
+  if (motivo === "resigned") clearJobOffers()
+
+  deps.setSaveState({
+    selectedTeamShort: null,
+    // Guarda as últimas 40: o histórico de um técnico longevo não precisa de mais
+    // que isso, e o save não pode crescer sem limite.
+    passagens: [...(deps.passagensAtuais ?? []), passagem].slice(-40),
+    // O cooldown de troca de clube é do emprego que acabou.
+    contratadoEm: undefined,
+    ...(deps.patchExtra ?? {}),
+  })
+
+  deps.limparClubeNoMotor?.()
+}
+
 /**
  * MODO SELEÇÃO (Task 2). Assumir/alternar para a SELEÇÃO como time ativo. Ao
  * contrário de trocar de CLUBE, aqui NÃO recarregamos o motor nem zeramos

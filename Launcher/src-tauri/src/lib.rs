@@ -65,6 +65,122 @@ const LAUNCHER_CONFIG_URL: &str =
 const RELEASES_API_URL: &str =
     "https://api.github.com/repos/jovemegidio/Ultrafoot26/releases?per_page=30";
 
+// ─── DESCOBERTA DE ENDEREÇOS ─────────────────────────────────────────────────
+//
+// O PROBLEMA QUE ISTO RESOLVE — e é o pedido "o launcher não pode precisar ser
+// atualizado a cada versão do jogo":
+//
+// A versão do JOGO já vem de runtime (latest.json), então publicar 1.0.229 não
+// exige launcher novo. O que ainda exigia era mudar de ENDEREÇO: as URLs acima
+// são constantes COMPILADAS no executável. A VPS já morreu uma vez e mudou de
+// IP; quando isso acontece, o launcher instalado passa a apontar para um lugar
+// que não existe mais e não há como consertá-lo remotamente — ele não consegue
+// nem baixar a própria atualização, porque o endereço da atualização é
+// justamente um dos que quebraram. Vira tijolo, e a única saída é cada jogador
+// reinstalar o launcher na mão.
+//
+// A saída é o launcher perguntar ONDE ficam as coisas, em vez de saber de cor:
+//
+//   1. endpoints.json na pasta compartilhada (%APPDATA%/Ultrafoot). Permite
+//      consertar UM jogador por suporte, sem build nova.
+//   2. Ponteiro remoto no GitHub RAW, no branch padrão. É o endereço mais
+//      estável que temos: não depende de release, não depende da VPS, e o
+//      conteúdo é editável com um commit. Se a VPS trocar de IP amanhã, edita-se
+//      este arquivo e TODOS os launchers já instalados passam a achar o novo
+//      servidor sozinhos.
+//   3. As constantes compiladas, como último recurso — é o que sempre foi.
+//
+// O resultado da descoberta é gravado em cache no disco: depois da primeira vez
+// o launcher funciona offline e não paga o custo da consulta a cada abertura.
+const ENDPOINTS_POINTER_URL: &str =
+    "https://raw.githubusercontent.com/jovemegidio/Ultrafoot26/main/public/endpoints.json";
+
+#[derive(Clone)]
+struct Endpoints {
+    latest: String,
+    latest_reserva: String,
+    launcher: String,
+    launcher_reserva: String,
+    config: String,
+    #[allow(dead_code)]
+    releases_api: String,
+}
+
+impl Default for Endpoints {
+    fn default() -> Self {
+        Self {
+            latest: LATEST_JSON_URL.into(),
+            latest_reserva: LATEST_JSON_URL_RESERVA.into(),
+            launcher: LAUNCHER_UPDATE_URL.into(),
+            launcher_reserva: LAUNCHER_UPDATE_URL_RESERVA.into(),
+            config: LAUNCHER_CONFIG_URL.into(),
+            #[cfg(not(windows))]
+            releases_api: RELEASES_API_URL.into(),
+            #[cfg(windows)]
+            releases_api: String::new(),
+        }
+    }
+}
+
+fn caminho_cache_endpoints() -> Option<std::path::PathBuf> {
+    pasta_compartilhada().map(|p| p.join("endpoints.json"))
+}
+
+/// Sobrepõe o padrão com o que vier no JSON, campo a campo. Um arquivo com uma
+/// chave só muda uma coisa e mantém o resto — importante para o suporte poder
+/// corrigir um endereço sem precisar reescrever todos.
+fn aplicar_endpoints(base: &mut Endpoints, valor: &serde_json::Value) {
+    let mut pegar = |chave: &str, destino: &mut String| {
+        if let Some(v) = valor.get(chave).and_then(|x| x.as_str()) {
+            let v = v.trim();
+            if v.starts_with("https://") {
+                *destino = v.to_string();
+            }
+        }
+    };
+    pegar("latest", &mut base.latest);
+    pegar("latestReserva", &mut base.latest_reserva);
+    pegar("launcher", &mut base.launcher);
+    pegar("launcherReserva", &mut base.launcher_reserva);
+    pegar("config", &mut base.config);
+    pegar("releasesApi", &mut base.releases_api);
+}
+
+static ENDPOINTS: std::sync::OnceLock<Endpoints> = std::sync::OnceLock::new();
+
+fn endpoints() -> &'static Endpoints {
+    ENDPOINTS.get_or_init(|| {
+        let mut resolvidos = Endpoints::default();
+
+        // 1) Cache/override local. Vale também como memória offline da última
+        //    descoberta bem-sucedida.
+        if let Some(caminho) = caminho_cache_endpoints() {
+            if let Ok(texto) = std::fs::read_to_string(&caminho) {
+                if let Ok(v) = serde_json::from_str::<serde_json::Value>(&texto) {
+                    aplicar_endpoints(&mut resolvidos, &v);
+                }
+            }
+        }
+
+        // 2) Ponteiro remoto. Timeout curto: se ele não responder, seguimos com
+        //    o que já temos — descoberta nunca pode atrasar a abertura do app.
+        if let Ok(resposta) = ureq::get(ENDPOINTS_POINTER_URL)
+            .timeout(std::time::Duration::from_secs(5))
+            .call()
+        {
+            if let Ok(v) = resposta.into_json::<serde_json::Value>() {
+                aplicar_endpoints(&mut resolvidos, &v);
+                // Grava o cache para a próxima abertura (inclusive offline).
+                if let Some(caminho) = caminho_cache_endpoints() {
+                    let _ = std::fs::write(&caminho, v.to_string());
+                }
+            }
+        }
+
+        resolvidos
+    })
+}
+
 #[derive(Serialize, Clone, Default)]
 struct InstalledGame {
     installed: bool,
@@ -269,7 +385,8 @@ fn fetch_latest() -> Result<LatestInfo, String> {
 
 #[cfg(windows)]
 fn fetch_latest_windows() -> Result<LatestInfo, String> {
-    let body: serde_json::Value = buscar_json_com_reserva(LATEST_JSON_URL, LATEST_JSON_URL_RESERVA)
+    let alvo = endpoints();
+    let body: serde_json::Value = buscar_json_com_reserva(&alvo.latest, &alvo.latest_reserva)
         .map_err(|e| format!("falha ao consultar atualizações: {e}"))?;
 
     let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
@@ -291,7 +408,7 @@ fn fetch_latest_windows() -> Result<LatestInfo, String> {
 /// Linux/macOS: acha o release "desktop-*" mais recente e o asset com a extensão.
 #[cfg(not(windows))]
 fn fetch_latest_desktop(ext: &str) -> Result<LatestInfo, String> {
-    let releases: serde_json::Value = ureq::get(RELEASES_API_URL)
+    let releases: serde_json::Value = ureq::get(&endpoints().releases_api)
         .set("User-Agent", "UltrafootLauncher")
         .call()
         .map_err(|e| format!("falha ao consultar releases: {e}"))?
@@ -677,8 +794,9 @@ fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
     }
     #[cfg(windows)]
     {
+        let alvo = endpoints();
         let body: serde_json::Value =
-            buscar_json_com_reserva(LAUNCHER_UPDATE_URL, LAUNCHER_UPDATE_URL_RESERVA)
+            buscar_json_com_reserva(&alvo.launcher, &alvo.launcher_reserva)
                 .map_err(|e| format!("falha ao consultar atualização do launcher: {e}"))?;
 
         let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
@@ -714,7 +832,8 @@ struct ServerStatus {
 
 #[tauri::command]
 fn fetch_launcher_config() -> Result<serde_json::Value, String> {
-    ureq::get(LAUNCHER_CONFIG_URL)
+    ureq::get(&endpoints().config)
+        .timeout(std::time::Duration::from_secs(8))
         .call()
         .map_err(|e| format!("falha ao buscar a configuração: {e}"))?
         .into_json()
@@ -956,6 +1075,17 @@ pub fn run() {
             None,
         ))
         .setup(|app| {
+            // DESCOBERTA DE ENDEREÇOS FORA DA THREAD DA UI.
+            //
+            // `endpoints()` faz uma consulta de rede na PRIMEIRA chamada, e no
+            // Tauri os comandos síncronos rodam na thread principal — resolver
+            // no primeiro `fetch_latest` seguraria a janela por até 5 s. Aqui
+            // ela é aquecida em paralelo, logo na abertura: quando a UI pedir,
+            // o OnceLock já está preenchido e a chamada é instantânea.
+            std::thread::spawn(|| {
+                let _ = endpoints();
+            });
+
             use tauri::menu::{MenuBuilder, MenuItemBuilder};
             use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
             use tauri::Manager;
