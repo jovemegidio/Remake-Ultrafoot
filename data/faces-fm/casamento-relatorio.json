@@ -1,0 +1,561 @@
+{
+ "casados": 67,
+ "semRosto": 1772,
+ "semJogador": 114,
+ "ambiguos": [
+  {
+   "fmId": "321081",
+   "nome": "Fred",
+   "clube": "For",
+   "candidatos": [
+    "Fred (Fenerbahçe)",
+    "Fred (Mortágua)"
+   ]
+  },
+  {
+   "fmId": "2111991",
+   "nome": "Rafael",
+   "clube": "Spo",
+   "candidatos": [
+    "Rafael (São Paulo)",
+    "Rafael (Porto Velho)",
+    "Rafael (Vasco-AC)"
+   ]
+  },
+  {
+   "fmId": "3300224",
+   "nome": "Pedrinho",
+   "clube": "Vdg",
+   "candidatos": [
+    "Pedrinho (Azuriz)",
+    "Pedrinho (Potyguar)",
+    "Pedrinho (Sergipe)",
+    "Pedrinho (Dorense)",
+    "Pedrinho (Cascavel)",
+    "Pedrinho (Maringá)",
+    "Pedrinho (São Joseense)",
+    "Pedrinho (Wydad Casablanca)",
+    "Pedrinho (Goiás)",
+    "Pedrinho (São Bernardo)",
+    "Pedrinho (Feirense)",
+    "Pedrinho (AD Oliveirense)",
+    "Pedrinho (Maccabi Netanya)",
+    "Pedrinho (Vasco-AC)",
+    "Pedrinho (Iguatu)",
+    "Pedrinho (Penedense)",
+    "Pedrinho (Porto Vitória )",
+    "Pedrinho (Sobradinho)",
+    "Pedrinho (Ulsan Hyundai)",
+    "Pedrinho (Shakhtar Donetsk)",
+    "Pedrinho (Batman Petrolspor)"
+   ]
+  },
+  {
+   "fmId": "19023829",
+   "nome": "Fagner",
+   "clube": "Cec",
+   "candidatos": [
+    "Fagner (Cruzeiro)",
+    "Fagner (Goiatuba)"
+   ]
+  },
+  {
+   "fmId": "19055591",
+   "nome": "Richard",
+   "clube": "Cea",
+   "candidatos": [
+    "Richard (Internacional)",
+    "Richard (Ji-Paraná)",
+    "Richard (Ituano)"
+   ]
+  },
+  {
+   "fmId": "19073564",
+   "nome": "Lucas Moura",
+   "clube": "Spo",
+   "candidatos": [
+    "Lucas Moura (AVS Futebol SAD)",
+    "Lucas Moura (São Paulo)"
+   ]
+  },
+  {
+   "fmId": "19196768",
+   "nome": "Rui Costa",
+   "clube": "Spo",
+   "candidatos": [
+    "Rui Costa (Farense)",
+    "Rui Costa (AD Oliveirense)"
+   ]
+  },
+  {
+   "fmId": "19202502",
+   "nome": "Luciano",
+   "clube": "Spo",
+   "candidatos": [
+    "Luciano (Cianorte)",
+    "Luciano (São Paulo)"
+   ]
+  },
+  {
+   "fmId": "19290872",
+   "nome": "Igor Gomes",
+   "clube": "Atm",
+   "candidatos": [
+    "Igor Gomes (Shabab Al-Ahli)",
+    "Igor Gomes (Atlético-MG)",
+    "Igor Gomes (Falcon FC )",
+    "Igor Gomes (Gurupi)"
+   ]
+  },
+  {
+   "fmId": "19302476",
+   "nome": "Paulinho",
+   "clube": "Sep",
+   "candidatos": [
+    "Paulinho (Deportivo Toluca)",
+    "Paulinho (Maringá)",
+    "Paulinho (Primavera-SP)",
+    "Paulinho (Vasco da Gama)",
+    "Paulinho (Fortaleza)",
+    "Paulinho (Botafogo)",
+    "Paulinho (Palmeiras)",
+    "Paulinho (São Paulo)",
+    "Paulinho  (Hebei China Fortune)",
+    "Paulinho (Manauara)",
+    "Paulinho (Marcílio Dias)",
+    "Paulinho (América-RN)",
+    "Paulinho (Betim)",
+    "Paulinho (Tuna Luso)",
+    "Paulinho (Valadares Gaia)"
+   ]
+  },
+  {
+   "fmId": "19350687",
+   "nome": "Matheuzinho",
+   "clube": "Cor",
+   "candidatos": [
+    "Matheuzinho  (Cruzeiro - AL)",
+    "Matheuzinho (Ceilândia)",
+    "Matheuzinho (Vitória)",
+    "Matheuzinho (Corinthians)",
+    "Matheuzinho (Coruripe)",
+    "Matheuzinho (Capital-DF)",
+    "Matheuzinho (Barra-SC)"
+   ]
+  },
+  {
+   "fmId": "19354891",
+   "nome": "Denilson",
+   "clube": "Mfc",
+   "candidatos": [
+    "Denílson (Retrô)",
+    "Denilson (Mirassol)",
+    "Denilson (Rio Negro-RR )",
+    "Denilson (Atlético Roraima )",
+    "Denilson (Independente-AP )",
+    "Denilson (Ferroviária)",
+    "Denilson (Ferroviária)"
+   ]
+  },
+  {
+   "fmId": "19367739",
+   "nome": "Lucas Oliveira",
+   "clube": "Mfc",
+   "candidatos": [
+    "Lucas Oliveira (Mirassol)",
+    "Lucas Oliveira (Capital-DF)"
+   ]
+  },
+  {
+   "fmId": "19380038",
+   "nome": "Adson",
+   "clube": "Vdg",
+   "candidatos": [
+    "Adson (Vasco da Gama)",
+    "Adson (Cabofriense)",
+    "Adson (Ivinhema)",
+    "Adson (Fluminense-PI)"
+   ]
+  },
+  {
+   "fmId": "19403840",
+   "nome": "Micael",
+   "clube": "Sep",
+   "candidatos": [
+    "Micael (Inter Miami)",
+    "Micael (São José-SP)",
+    "Micael (Aimoré)"
+   ]
+  },
+  {
+   "fmId": "19411236",
+   "nome": "Adriano",
+   "clube": "Spt",
+   "candidatos": [
+    "Adriano (Madureira)",
+    "Adriano (Ji-Paraná)",
+    "Adriano (Galvez)",
+    "Adriano (Coruripe)",
+    "Adriano (Costa Rica-MS)"
+   ]
+  },
+  {
+   "fmId": "19411614",
+   "nome": "Carlos Alberto",
+   "clube": "Spt",
+   "candidatos": [
+    "Carlos Alberto (Friburguense)",
+    "Carlos Alberto (Caxias SC)",
+    "Carlos Alberto (Itabuna)",
+    "Carlos Alberto (RWD Molenbeek)",
+    "Carlos Alberto (Olaria)",
+    "Carlos Alberto (Marília)"
+   ]
+  },
+  {
+   "fmId": "83111507",
+   "nome": "Joao Silva",
+   "clube": "Spt",
+   "candidatos": [
+    "João Silva (Trapani)",
+    "João Silva (Oliveirense)"
+   ]
+  },
+  {
+   "fmId": "83219468",
+   "nome": "Gustavo Coutinho",
+   "clube": "Spt",
+   "candidatos": [
+    "Gustavo Coutinho (Atlético-GO)",
+    "Gustavo Coutinho (Sport)",
+    "Gustavo Coutinho (Salgueiros)"
+   ]
+  },
+  {
+   "fmId": "2000062966",
+   "nome": "Kaique",
+   "clube": "Sep",
+   "candidatos": [
+    "Kaique (Fluminense de Feira)",
+    "Kaique (Nova Mutum)",
+    "Kaique (Águia de Marabá)"
+   ]
+  },
+  {
+   "fmId": "2000086175",
+   "nome": "Kaiki",
+   "clube": "Cec",
+   "candidatos": [
+    "Kaiki (Como)",
+    "Kaiki (Aimoré)"
+   ]
+  },
+  {
+   "fmId": "2000091022",
+   "nome": "Marcos Paulo",
+   "clube": "Juv",
+   "candidatos": [
+    "Marcos Paulo (Castanhal)",
+    "Marcos Paulo (Trem)",
+    "Marcos Paulo (Juventude)",
+    "Marcos Paulo (Juventude)",
+    "Marcos Paulo (Académica Coimbra)",
+    "Marcos Paulo (Inter de Santa Maria)",
+    "Marcos Paulo (Chapada)",
+    "Marcos Paulo (Confiança)",
+    "Marcos Paulo (Araguaína)",
+    "Marcos Paulo (RWD Molenbeek)"
+   ]
+  },
+  {
+   "fmId": "2000094268",
+   "nome": "Nathan",
+   "clube": "Bra",
+   "candidatos": [
+    "Nathan (Juventude)",
+    "Nathan (Capital-TO)",
+    "Nathan (Sousa)",
+    "Nathan (Uberlândia)"
+   ]
+  },
+  {
+   "fmId": "2000125585",
+   "nome": "Marcelinho",
+   "clube": "Bra",
+   "candidatos": [
+    "Marcelinho (Maricá)",
+    "Marcelinho (Americano)",
+    "Marcelinho (Democrata GV)",
+    "Marcelinho (Remo)",
+    "Marcelinho (Piauí)",
+    "Marcelinho (Vitória-ES)",
+    "Marcelinho (Real Noroeste)",
+    "Marcelinho (Barra-SC)",
+    "Marcelinho (Al-Dhafra FC)",
+    "Marcelinho (Santo André)",
+    "Marcelinho (Beira-Mar)"
+   ]
+  },
+  {
+   "fmId": "2000151009",
+   "nome": "Mario Henrique",
+   "clube": "Vit",
+   "candidatos": [
+    "Mário Henrique (Inter de Limeira)",
+    "Mário Henrique (Aparecidense)"
+   ]
+  },
+  {
+   "fmId": "2000161825",
+   "nome": "Ryan",
+   "clube": "Cor",
+   "candidatos": [
+    "Ryan (ARUC)",
+    "Ryan (Potyguar)",
+    "Ryan (Real Brasília)",
+    "Ryan (Boa Esporte)",
+    "Ryan (Fortaleza)",
+    "Ryan (Vila Nova)",
+    "Ryan (Colatina)",
+    "Ryan (Penedense)",
+    "Ryan (Nacional-AM)",
+    "Ryan (Real Noroeste)",
+    "Ryan (Andraus)",
+    "Ryan (Joinville)",
+    "Ryan (Olaria)"
+   ]
+  },
+  {
+   "fmId": "2000170757",
+   "nome": "Cadu",
+   "clube": "Atm",
+   "candidatos": [
+    "Cadu (Goiás)",
+    "Cadu (Toledo)",
+    "Cadu (Parintins)",
+    "Cadu (Confiança)"
+   ]
+  },
+  {
+   "fmId": "2000214126",
+   "nome": "Luciano",
+   "clube": "Spo",
+   "candidatos": [
+    "Luciano (Cianorte)",
+    "Luciano (São Paulo)"
+   ]
+  },
+  {
+   "fmId": "2000214127",
+   "nome": "Paulinho",
+   "clube": "Spo",
+   "candidatos": [
+    "Paulinho (Deportivo Toluca)",
+    "Paulinho (Maringá)",
+    "Paulinho (Primavera-SP)",
+    "Paulinho (Vasco da Gama)",
+    "Paulinho (Fortaleza)",
+    "Paulinho (Botafogo)",
+    "Paulinho (Palmeiras)",
+    "Paulinho (São Paulo)",
+    "Paulinho  (Hebei China Fortune)",
+    "Paulinho (Manauara)",
+    "Paulinho (Marcílio Dias)",
+    "Paulinho (América-RN)",
+    "Paulinho (Betim)",
+    "Paulinho (Tuna Luso)",
+    "Paulinho (Valadares Gaia)"
+   ]
+  },
+  {
+   "fmId": "2000221613",
+   "nome": "Figueiredo",
+   "clube": "Sep",
+   "candidatos": [
+    "Figueiredo (Alverca)",
+    "Figueiredo (Coruxo)"
+   ]
+  },
+  {
+   "fmId": "2000246648",
+   "nome": "Abner",
+   "clube": "Juv",
+   "candidatos": [
+    "Abner (Riga)",
+    "Abner (Retrô)"
+   ]
+  },
+  {
+   "fmId": "2000256321",
+   "nome": "Jefinho",
+   "clube": "Gre",
+   "candidatos": [
+    "Jefinho (Ferroviário)",
+    "Jefinho (Paulista)"
+   ]
+  },
+  {
+   "fmId": "2000264287",
+   "nome": "Otavio",
+   "clube": "San",
+   "candidatos": [
+    "Otávio (Guaraí)",
+    "Otávio (Estrela Amadora)",
+    "Otávio (Avaí)",
+    "Otávio (Fluminense)",
+    "Otávio (Paris FC)",
+    "Otávio (Pombal )",
+    "Otávio (Gurupi)"
+   ]
+  },
+  {
+   "fmId": "2000264443",
+   "nome": "Erick",
+   "clube": "Spt",
+   "candidatos": [
+    "Erick (Humaitá)",
+    "Erick (Bahia)",
+    "Erick (Botafogo-PB)",
+    "Erick (Vitória)",
+    "Erick (São João Ver)",
+    "Erick (Coruripe)",
+    "Erick (Capital-DF)"
+   ]
+  },
+  {
+   "fmId": "2000272456",
+   "nome": "Lucca",
+   "clube": "Spo",
+   "candidatos": [
+    "Lucca (Caldense)",
+    "Lucca (Oratório)",
+    "Lucca (Guarani)",
+    "Lucca (Ceará)",
+    "Lucca (São Paulo)"
+   ]
+  },
+  {
+   "fmId": "2000273163",
+   "nome": "Gustavo",
+   "clube": "Int",
+   "candidatos": [
+    "Gustavo (Amapá)",
+    "Gustavo (Coritiba)",
+    "Gustavo (Botafogo-PB)",
+    "Gustavo (Colatina)",
+    "Gustavo (Força e Luz)",
+    "Gustavo (Globo FC)",
+    "Gustavo (Penedense)",
+    "Gustavo (Mixto)"
+   ]
+  },
+  {
+   "fmId": "2000273198",
+   "nome": "Leo",
+   "clube": "Juv",
+   "candidatos": [
+    "Léo (Atlético-GO)",
+    "Léo (Náutico)",
+    "Léo (Colatina)",
+    "Léo (Caucaia)"
+   ]
+  },
+  {
+   "fmId": "2000367506",
+   "nome": "Riquelme",
+   "clube": "Bra",
+   "candidatos": [
+    "Riquelme (Nacional-PB)",
+    "Riquelme (Dorense)",
+    "Riquelme (Vasco da Gama)",
+    "Riquelme (Grêmio)",
+    "Riquelme (Fluminense)",
+    "Riquelme (Sertãozinho)",
+    "Riquelme (Penedense)"
+   ]
+  },
+  {
+   "fmId": "2000378992",
+   "nome": "Tete",
+   "clube": "Spo",
+   "candidatos": [
+    "Tetê (Grêmio)",
+    "Tetê (São Paulo)",
+    "Tetê (Barra-SC)"
+   ]
+  },
+  {
+   "fmId": "2000429442",
+   "nome": "Robson",
+   "clube": "Sep",
+   "candidatos": [
+    "Robson (Grêmio Novorizontino)",
+    "Robson (Colatina)",
+    "Robson (Guaporé)",
+    "Robson (Serra)"
+   ]
+  },
+  {
+   "fmId": "2000440228",
+   "nome": "Vitor",
+   "clube": "Vit",
+   "candidatos": [
+    "Vitor (Velo Clube)",
+    "Vitor (Galícia)",
+    "Vitor (Genus)",
+    "Vitor (Jaguar)"
+   ]
+  },
+  {
+   "fmId": "2000505469",
+   "nome": "Riquelme",
+   "clube": "Atm",
+   "candidatos": [
+    "Riquelme (Nacional-PB)",
+    "Riquelme (Dorense)",
+    "Riquelme (Vasco da Gama)",
+    "Riquelme (Grêmio)",
+    "Riquelme (Fluminense)",
+    "Riquelme (Sertãozinho)",
+    "Riquelme (Penedense)"
+   ]
+  },
+  {
+   "fmId": "2000515138",
+   "nome": "Dudu",
+   "clube": "Spo",
+   "candidatos": [
+    "Dudu (Murici)",
+    "Dudu (Hercílio Luz)",
+    "Dudu (Potyguar)",
+    "Dudu (Dorense)",
+    "Dudu (Rio Branco-AC)",
+    "Dudu (Oratório)",
+    "Dudu (IAPE)",
+    "Dudu (São Gonçalo )",
+    "Dudu (Pouso Alegre)",
+    "Dudu (Estrela Amadora)",
+    "Dudu (Vila Nova)",
+    "Dudu (Vitória)",
+    "Dudu (Galvez)",
+    "Dudu (Piauí)",
+    "Dudu (Globo FC)",
+    "Dudu (Penedense)",
+    "Dudu (Águia Negra)",
+    "Dudu (Rio Branco-ES )",
+    "Dudu (Chiangrai United)",
+    "Dudu (Kitchee)"
+   ]
+  },
+  {
+   "fmId": "2000519235",
+   "nome": "Kaique",
+   "clube": "Vit",
+   "candidatos": [
+    "Kaique (Fluminense de Feira)",
+    "Kaique (Nova Mutum)",
+    "Kaique (Águia de Marabá)"
+   ]
+  }
+ ]
+}

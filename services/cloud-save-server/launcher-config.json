@@ -9,11 +9,17 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "Contratar da base virou negociacao",
+      "category": "Novidade",
+      "body": "Cada promessa do mercado de juniores tem um empresario, com nome e temperamento proprios. A comissao vem por fora do que o clube pede, e o Tubarao vai contrapropor. Os leiloes tambem foram arrumados: a tela rola, o valor do lance aparece formatado e o mesmo atleta nao abre duas disputas.",
+      "date": "2026-07-30",
+      "pinned": true
+    },
+    {
       "title": "A base nao devolve mais quem voce vendeu",
       "category": "Correção",
       "body": "Quem vendia ou dispensava um junior via os mesmos garotos de volta ao reabrir a tela — o gerador de promessas e deterministico e nada registrava quem havia saido. Corrigido. O Mercado de Juniores tambem mudou de lugar: agora e uma aba do Mercado, com busca e filtros como em Buscar Atletas.",
-      "date": "2026-07-30",
-      "pinned": true
+      "date": "2026-07-30"
     },
     {
       "title": "Leilão, torneio próprio e tribunal",
@@ -102,10 +108,41 @@
   ],
   "changelog": [
     {
+      "version": "1.0.211",
+      "date": "2026-07-30",
+      "title": "Empresario na base, leiloes arrumados e o tema valendo de verdade",
+      "latest": true,
+      "changes": [
+        {
+          "type": "added",
+          "text": "O junior agora tem EMPRESARIO. A comissao dele (5% a 19%) entra por fora do valor pedido pelo clube, e ele pode recusar ou contrapropor. O perfil vai de Razoavel a Tubarao e escala com o potencial do garoto: promessa grande atrai empresario grande. O agente e sempre o mesmo para cada atleta — reabrir a tela nao sorteia um mais camarada."
+        },
+        {
+          "type": "fixed",
+          "text": "A tela de Leiloes nao rolava: quem tinha mais de tres disputas nao conseguia ver as de baixo."
+        },
+        {
+          "type": "fixed",
+          "text": "O campo de lance mostrava o numero cru (22475111). Agora tem separador de milhar."
+        },
+        {
+          "type": "fixed",
+          "text": "O mesmo atleta abria dois leiloes lado a lado, e cobrir um nao mexia no outro."
+        },
+        {
+          "type": "fixed",
+          "text": "O tema escolhido pintava o jogo com DUAS cores ao mesmo tempo: cada tema guardava a cor duas vezes, em formatos diferentes, e os dois valores discordavam — em Azul Royal e Dourado a diferenca chegava a 40 graus de matiz. Agora ha um valor so."
+        },
+        {
+          "type": "fixed",
+          "text": "Barras de rolagem, brilho do placar e o anel de foco de acessibilidade ficavam verde-agua em qualquer tema. Agora seguem a cor escolhida."
+        }
+      ]
+    },
+    {
       "version": "1.0.210",
       "date": "2026-07-30",
       "title": "Juniores no Mercado, sondagens de verdade e a base que nao ressuscita",
-      "latest": true,
       "changes": [
         {
           "type": "fixed",

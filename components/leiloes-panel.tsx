@@ -59,11 +59,17 @@ export function contarLeiloesAbertos(
 ): number {
   let total = 0
   const encerra = semanaDeEncerramento(semana)
+  // Deduplica pela mesma chave que o painel usa — se as duas contas divergirem, a
+  // tela dira "1 leilao" e mostrara dois, ou vice-versa.
+  const vistos = new Set<string>()
   for (const alvo of pool) {
     if (!alvo.team?.nome) continue
     if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana)) continue
+    const chave = chaveLeilao(alvo.name, alvo.team.nome)
+    if (vistos.has(chave)) continue
+    vistos.add(chave)
     const base: LeilaoAberto = {
-      id: chaveLeilao(alvo.name, alvo.team.nome),
+      id: chave,
       jogadorNome: alvo.name,
       jogadorOverall: alvo.overall,
       jogadorIdade: alvo.age,
@@ -112,10 +118,17 @@ export function LeiloesPanel({
   const leiloes = useMemo<LeilaoNaTela[]>(() => {
     const encerra = semanaDeEncerramento(semana)
     const abertos: LeilaoNaTela[] = []
+    // O CATALOGO PODE TRAZER O MESMO ATLETA DUAS VEZES (relato com print: James
+    // Tarkowski, do Everton, abriu dois leiloes lado a lado). Como a chave do
+    // leilao e clube+nome, os dois eram o MESMO leilao aparecendo em dobro — e
+    // cobrir um nao mexia no outro. A chave tambem serve para deduplicar.
+    const vistos = new Set<string>()
     for (const alvo of pool) {
       if (!alvo.team?.nome) continue
       if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana)) continue
       const chave = chaveLeilao(alvo.name, alvo.team.nome)
+      if (vistos.has(chave)) continue
+      vistos.add(chave)
       const base: LeilaoAberto = {
         id: chave,
         jogadorNome: alvo.name,
@@ -271,13 +284,22 @@ export function LeiloesPanel({
                   <span className="text-xs uppercase tracking-wide text-white/40">
                     Seu lance (mínimo {formatCurrency(minimo)})
                   </span>
+                  {/*
+                    VALOR FORMATADO. Era `type="number"`, e o navegador mostra o
+                    numero cru: o campo exibia "22475111" e nao havia como saber se
+                    aquilo eram 2 milhoes ou 22. Agora e texto com separador de
+                    milhar (pt-BR) e o valor real fica no estado, nao na string.
+                  */}
                   <input
-                    type="number"
-                    step={100000}
-                    min={minimo}
-                    value={valorNoCampo}
-                    onChange={(e) => setRascunho(r => ({ ...r, [item.leilao.id]: Number(e.target.value) }))}
-                    className="w-48 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[var(--brand)]/50"
+                    type="text"
+                    inputMode="numeric"
+                    value={valorNoCampo.toLocaleString("pt-BR")}
+                    onChange={(e) => {
+                      // Aceita so digito: o usuario pode apagar/colar com pontos.
+                      const digitos = e.target.value.replace(/\D/g, "")
+                      setRascunho(r => ({ ...r, [item.leilao.id]: digitos ? Number(digitos) : 0 }))
+                    }}
+                    className="w-48 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-right text-sm tabular-nums text-white outline-none focus:border-[var(--brand)]/50"
                   />
                 </label>
                 <button

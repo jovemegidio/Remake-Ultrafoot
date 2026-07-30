@@ -88,9 +88,13 @@ export default function LeiloesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508]">
+    // ROLAGEM: `html`/`body` tem `overflow: hidden` no globals.css (o jogo e uma
+    // janela fixa, nao uma pagina web). Com `min-h-screen` a lista de leiloes era
+    // simplesmente CORTADA no pe da tela — nao havia como ver o quarto leilao.
+    // O padrao do jogo e h-screen + container interno rolavel.
+    <div className="flex h-screen flex-col overflow-hidden bg-[#050508]">
       <GameHeader team={userTeam} />
-      <main className="mx-auto max-w-5xl p-4 md:p-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto p-4 scrollbar-thin md:p-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--brand)]/15 ring-1 ring-[var(--brand)]/30">

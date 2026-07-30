@@ -1,0 +1,7990 @@
+{
+ "106987": {
+  "nome": "Cesar Sampaio",
+  "clube": "San"
+ },
+ "117585": {
+  "nome": "Edu Batista",
+  "clube": "Cea"
+ },
+ "223637": {
+  "nome": "Riquelme",
+  "clube": "Vdg"
+ },
+ "301895": {
+  "nome": "Inaldo Freire",
+  "clube": "Spt"
+ },
+ "302364": {
+  "nome": "Milton Cruz",
+  "clube": "Spo"
+ },
+ "302566": {
+  "nome": "Adilson Batista",
+  "clube": "Cec"
+ },
+ "302604": {
+  "nome": "Paulo Angioni",
+  "clube": "Flu"
+ },
+ "302782": {
+  "nome": "Camilo Resende",
+  "clube": "Fla"
+ },
+ "302784": {
+  "nome": "Bruno Lazaroni",
+  "clube": "Vdg"
+ },
+ "302814": {
+  "nome": "Zetti",
+  "clube": "Spo"
+ },
+ "303204": {
+  "nome": "Fabio",
+  "clube": "Flu"
+ },
+ "303223": {
+  "nome": "Flavio Tenius",
+  "clube": "Flu"
+ },
+ "303481": {
+  "nome": "Paulo Paixao",
+  "clube": "Spo"
+ },
+ "303508": {
+  "nome": "Emerson Ferretti",
+  "clube": "Bah"
+ },
+ "303620": {
+  "nome": "Roberval Davino",
+  "clube": "Mfc"
+ },
+ "304149": {
+  "nome": "Marcelo Mendes",
+  "clube": "Mfc"
+ },
+ "304400": {
+  "nome": "Nelson Simoes",
+  "clube": "Bah"
+ },
+ "304527": {
+  "nome": "Alexandre Silva",
+  "clube": "Spt"
+ },
+ "305280": {
+  "nome": "Rodrigo Chagas",
+  "clube": "Vit"
+ },
+ "305497": {
+  "nome": "Franca Junior",
+  "clube": "Vdg"
+ },
+ "305715": {
+  "nome": "Tite",
+  "clube": "Cec"
+ },
+ "305832": {
+  "nome": "Donizete",
+  "clube": "Int"
+ },
+ "306987": {
+  "nome": "Leomir De Souza",
+  "clube": "Int"
+ },
+ "306996": {
+  "nome": "File",
+  "clube": "Flu"
+ },
+ "308630": {
+  "nome": "Marcio",
+  "clube": "Spo"
+ },
+ "308648": {
+  "nome": "Flavio De Oliveira",
+  "clube": "Mfc"
+ },
+ "308948": {
+  "nome": "Renato Gaucho",
+  "clube": "Vdg"
+ },
+ "311045": {
+  "nome": "Marcelo Boeck",
+  "clube": "For"
+ },
+ "311209": {
+  "nome": "Jose Sanchez",
+  "clube": "Spo"
+ },
+ "311415": {
+  "nome": "Andre Carvalho",
+  "clube": "Flu"
+ },
+ "312057": {
+  "nome": "Anderson Batatais",
+  "clube": "Cea"
+ },
+ "315099": {
+  "nome": "Renan Bloise",
+  "clube": "Cor"
+ },
+ "315180": {
+  "nome": "Marcelo Lomba",
+  "clube": "Sep"
+ },
+ "315809": {
+  "nome": "Vinicius Bergantin",
+  "clube": "Cec"
+ },
+ "315944": {
+  "nome": "Celso Rezende",
+  "clube": "Cor"
+ },
+ "315981": {
+  "nome": "Gilberto Lima",
+  "clube": "Spt"
+ },
+ "316290": {
+  "nome": "Luciano Gusso",
+  "clube": "Vdg"
+ },
+ "316295": {
+  "nome": "Rodrigo Bruns",
+  "clube": "Bra"
+ },
+ "316405": {
+  "nome": "Joao Paulo Daniel",
+  "clube": "Atm"
+ },
+ "316560": {
+  "nome": "Rodrigo Lasmar",
+  "clube": "Atm"
+ },
+ "316588": {
+  "nome": "Julio Cesar",
+  "clube": "Bra"
+ },
+ "316700": {
+  "nome": "Roger Silva",
+  "clube": "Spt"
+ },
+ "316769": {
+  "nome": "Anderson Marques",
+  "clube": "Bra"
+ },
+ "317214": {
+  "nome": "Joilson Amorim",
+  "clube": "Cec"
+ },
+ "317709": {
+  "nome": "Gerson Ramos",
+  "clube": "Juv"
+ },
+ "317983": {
+  "nome": "Leonardo Martins",
+  "clube": "Int"
+ },
+ "318735": {
+  "nome": "Joao Goulart",
+  "clube": "Int"
+ },
+ "320556": {
+  "nome": "Danilo Fernandes",
+  "clube": "Bah"
+ },
+ "320767": {
+  "nome": "Leo Matos",
+  "clube": "Vdg"
+ },
+ "320895": {
+  "nome": "Italo Rodrigues",
+  "clube": "Spt"
+ },
+ "321081": {
+  "nome": "Fred",
+  "clube": "For"
+ },
+ "707816": {
+  "nome": "Adailton Bolzan",
+  "clube": "Spo"
+ },
+ "728219": {
+  "nome": "Jose Barros",
+  "clube": "Fla"
+ },
+ "741490": {
+  "nome": "Alfredo Almeida",
+  "clube": "Fla"
+ },
+ "764877": {
+  "nome": "Alemao",
+  "clube": "Bot"
+ },
+ "785673": {
+  "nome": "Mauro Silva",
+  "clube": "Cor"
+ },
+ "950290": {
+  "nome": "Pablo De Muner",
+  "clube": "Bot"
+ },
+ "956671": {
+  "nome": "Leandro Diaz",
+  "clube": "Atm"
+ },
+ "965629": {
+  "nome": "Alan Sanchez",
+  "clube": "Atm"
+ },
+ "2100065": {
+  "nome": "Marcelo Salles",
+  "clube": "Vdg"
+ },
+ "2104853": {
+  "nome": "Rogerio Maia",
+  "clube": "San"
+ },
+ "2105510": {
+  "nome": "Hulk",
+  "clube": "Atm"
+ },
+ "2108821": {
+  "nome": "Robertinho",
+  "clube": "Cec"
+ },
+ "2110283": {
+  "nome": "Thiago Eler",
+  "clube": "Fla"
+ },
+ "2110905": {
+  "nome": "Rever",
+  "clube": "Bra"
+ },
+ "2111311": {
+  "nome": "Geraldo Meira",
+  "clube": "Bah"
+ },
+ "2111538": {
+  "nome": "Marcelo Carpes",
+  "clube": "Cor"
+ },
+ "2111881": {
+  "nome": "Eduardo Abdo",
+  "clube": "Spt"
+ },
+ "2111991": {
+  "nome": "Rafael",
+  "clube": "Spo"
+ },
+ "2112655": {
+  "nome": "Johnes Santos",
+  "clube": "Fla"
+ },
+ "2112701": {
+  "nome": "Eduardo Coimbra",
+  "clube": "Fla"
+ },
+ "2113302": {
+  "nome": "Gilmey Aimbere",
+  "clube": "Sep"
+ },
+ "2113548": {
+  "nome": "Willian Lanes De Lima",
+  "clube": "Atm"
+ },
+ "2114059": {
+  "nome": "Thiago Teixeira",
+  "clube": "Bah"
+ },
+ "2114198": {
+  "nome": "Glay Maranhao",
+  "clube": "For"
+ },
+ "2114450": {
+  "nome": "Giulio Cesare Lopes Ferriello",
+  "clube": "Cor"
+ },
+ "2114787": {
+  "nome": "Luiz Rosan",
+  "clube": "San"
+ },
+ "2115099": {
+  "nome": "Sergio Coelho",
+  "clube": "Atm"
+ },
+ "2115104": {
+  "nome": "Marcelo Luchesi",
+  "clube": "Atm"
+ },
+ "2115221": {
+  "nome": "Rainer Oliveira",
+  "clube": "Mfc"
+ },
+ "2115243": {
+  "nome": "Bruno Barros",
+  "clube": "For"
+ },
+ "2115539": {
+  "nome": "Ivan Baitello",
+  "clube": "Mfc"
+ },
+ "3100532": {
+  "nome": "Luis Zubeldia",
+  "clube": "Flu"
+ },
+ "3100549": {
+  "nome": "Gaston Liendo",
+  "clube": "San"
+ },
+ "3100561": {
+  "nome": "Juan Pablo Vojvoda",
+  "clube": "San"
+ },
+ "3100646": {
+  "nome": "Maximiliano Cuberas",
+  "clube": "Flu"
+ },
+ "3100797": {
+  "nome": "Eduardo Dominguez",
+  "clube": "Atm"
+ },
+ "3300005": {
+  "nome": "Felipe Maestro",
+  "clube": "Vdg"
+ },
+ "3300169": {
+  "nome": "Fabinho Soldado",
+  "clube": "Int"
+ },
+ "3300172": {
+  "nome": "Vagner Mancini",
+  "clube": "Bra"
+ },
+ "3300174": {
+  "nome": "Ailton Ferraz",
+  "clube": "Flu"
+ },
+ "3300195": {
+  "nome": "Felipao",
+  "clube": "Gre"
+ },
+ "3300224": {
+  "nome": "Pedrinho",
+  "clube": "Vdg"
+ },
+ "3300244": {
+  "nome": "Marcio Goiano",
+  "clube": "Spt"
+ },
+ "3300264": {
+  "nome": "Humberto Flores",
+  "clube": "Gre"
+ },
+ "3300291": {
+  "nome": "Fernando Rech",
+  "clube": "Int"
+ },
+ "3300407": {
+  "nome": "Marcao",
+  "clube": "Flu"
+ },
+ "3300479": {
+  "nome": "Abel Braga",
+  "clube": "Int"
+ },
+ "3300564": {
+  "nome": "Leonardo Silva",
+  "clube": "Atm"
+ },
+ "3300948": {
+  "nome": "Mauro",
+  "clube": "San"
+ },
+ "3300977": {
+  "nome": "Rogerio Ceni",
+  "clube": "Bah"
+ },
+ "3301263": {
+  "nome": "Hernani",
+  "clube": "Atm"
+ },
+ "3301286": {
+  "nome": "Celio Silva",
+  "clube": "Cor"
+ },
+ "3301292": {
+  "nome": "Roger Machado",
+  "clube": "Spo"
+ },
+ "3301331": {
+  "nome": "Bosco",
+  "clube": "For"
+ },
+ "3301354": {
+  "nome": "Marquinhos Chedid",
+  "clube": "Bra"
+ },
+ "3301365": {
+  "nome": "Erivelton",
+  "clube": "Gre"
+ },
+ "3301499": {
+  "nome": "Fabio Noronha",
+  "clube": "Bot"
+ },
+ "3301537": {
+  "nome": "Paulo Musse",
+  "clube": "Vit"
+ },
+ "4100640": {
+  "nome": "Vitor Castanheira",
+  "clube": "Sep"
+ },
+ "4101966": {
+  "nome": "Abel Ferreira",
+  "clube": "Sep"
+ },
+ "5660812": {
+  "nome": "Nahuel Martinez",
+  "clube": "San"
+ },
+ "6900027": {
+  "nome": "Edgar",
+  "clube": "Atm"
+ },
+ "6900056": {
+  "nome": "Mozart Santos",
+  "clube": "Cea"
+ },
+ "6900137": {
+  "nome": "Marcio Goiano",
+  "clube": "For"
+ },
+ "6900563": {
+  "nome": "Walmir Cruz",
+  "clube": "Cor"
+ },
+ "6900573": {
+  "nome": "Ricardo Guimaraes",
+  "clube": "Atm"
+ },
+ "7001437": {
+  "nome": "Luis Castro",
+  "clube": "Gre"
+ },
+ "7100150": {
+  "nome": "Cadu",
+  "clube": "Flu"
+ },
+ "8825612": {
+  "nome": "Fabio Mahseredjian",
+  "clube": "Cec"
+ },
+ "8826753": {
+  "nome": "Luisinho Quintanilha",
+  "clube": "Vdg"
+ },
+ "8827212": {
+  "nome": "Esteban Conde",
+  "clube": "Int"
+ },
+ "8827227": {
+  "nome": "Paulo Pezzolano",
+  "clube": "Int"
+ },
+ "8830371": {
+  "nome": "Dorival Junior",
+  "clube": "Cor"
+ },
+ "8832818": {
+  "nome": "Fred Manhaes",
+  "clube": "Vdg"
+ },
+ "8832889": {
+  "nome": "Willian",
+  "clube": "Gre"
+ },
+ "8832934": {
+  "nome": "Antonio Dall Pizzol",
+  "clube": "Juv"
+ },
+ "8832939": {
+  "nome": "Ricardo Finger",
+  "clube": "Juv"
+ },
+ "8832954": {
+  "nome": "Ricardinho",
+  "clube": "Cea"
+ },
+ "8833080": {
+  "nome": "Weberson",
+  "clube": "Bah"
+ },
+ "8833533": {
+  "nome": "Rafinha",
+  "clube": "Spo"
+ },
+ "8833553": {
+  "nome": "Cassio",
+  "clube": "Cec"
+ },
+ "8833659": {
+  "nome": "Elio Carravetta",
+  "clube": "Int"
+ },
+ "8835113": {
+  "nome": "Alex Lessa",
+  "clube": "Juv"
+ },
+ "8835136": {
+  "nome": "Rogerio Dias",
+  "clube": "Gre"
+ },
+ "8870003": {
+  "nome": "Leonardo Jardim",
+  "clube": "Fla"
+ },
+ "8875109": {
+  "nome": "Antonio Vieira",
+  "clube": "Fla"
+ },
+ "13129531": {
+  "nome": "Bastos",
+  "clube": "Bot"
+ },
+ "14000758": {
+  "nome": "Gabriel Mercado",
+  "clube": "Int"
+ },
+ "14003037": {
+  "nome": "German Cano",
+  "clube": "Flu"
+ },
+ "14003598": {
+  "nome": "Joel Carli",
+  "clube": "Bot"
+ },
+ "14003958": {
+  "nome": "Alejandro Escobar",
+  "clube": "Flu"
+ },
+ "14022722": {
+  "nome": "Santiago Piccinini",
+  "clube": "San"
+ },
+ "14023268": {
+  "nome": "Lucas Mugni",
+  "clube": "Mfc"
+ },
+ "14023376": {
+  "nome": "Walter Kannemann",
+  "clube": "Gre"
+ },
+ "14031418": {
+  "nome": "Luciano Acosta",
+  "clube": "Flu"
+ },
+ "14034934": {
+  "nome": "Jonathan Calleri",
+  "clube": "Spo"
+ },
+ "14042683": {
+  "nome": "Joaquin Correa",
+  "clube": "Bot"
+ },
+ "14043602": {
+  "nome": "Luis Azpiazu",
+  "clube": "San"
+ },
+ "14047196": {
+  "nome": "Lucas Romero",
+  "clube": "Cec"
+ },
+ "14048046": {
+  "nome": "Emanuel Britez",
+  "clube": "For"
+ },
+ "14063401": {
+  "nome": "Lucas Villalba",
+  "clube": "Cec"
+ },
+ "14076367": {
+  "nome": "Alexander Barboza",
+  "clube": "Bot"
+ },
+ "14077425": {
+  "nome": "Tomas Pochettino",
+  "clube": "For"
+ },
+ "14079839": {
+  "nome": "Fabrizio Angileri",
+  "clube": "Cor"
+ },
+ "14080599": {
+  "nome": "Tomas Cardona",
+  "clube": "For"
+ },
+ "14083972": {
+  "nome": "Cristian Pavon",
+  "clube": "Gre"
+ },
+ "14101872": {
+  "nome": "Agustin Rossi",
+  "clube": "Fla"
+ },
+ "14110845": {
+  "nome": "Emmanuel Martinez",
+  "clube": "Vit"
+ },
+ "14124640": {
+  "nome": "Dario Herrera",
+  "clube": "Bot"
+ },
+ "14150244": {
+  "nome": "Claudio Spinelli",
+  "clube": "Vdg"
+ },
+ "14160022": {
+  "nome": "Eros Mancuso",
+  "clube": "For"
+ },
+ "14172026": {
+  "nome": "Gonzalo Escobar",
+  "clube": "San"
+ },
+ "14177869": {
+  "nome": "Adonis Frias",
+  "clube": "San"
+ },
+ "14178597": {
+  "nome": "Tomas Cuello",
+  "clube": "Atm"
+ },
+ "14181373": {
+  "nome": "Fausto Vera",
+  "clube": "Atm"
+ },
+ "14183203": {
+  "nome": "Benjamin Rollheiser",
+  "clube": "San"
+ },
+ "14184324": {
+  "nome": "Enzo Diaz",
+  "clube": "Spo"
+ },
+ "14185004": {
+  "nome": "Alan Franco",
+  "clube": "Spo"
+ },
+ "14185468": {
+  "nome": "Nahuel Ferraresi",
+  "clube": "Spo"
+ },
+ "14199379": {
+  "nome": "Martin Anselmi",
+  "clube": "Bot"
+ },
+ "14201730": {
+  "nome": "Alvaro Barreal",
+  "clube": "San"
+ },
+ "14204629": {
+  "nome": "Juan Pablo Freytes",
+  "clube": "Flu"
+ },
+ "14204638": {
+  "nome": "Juan Sforza",
+  "clube": "Vdg"
+ },
+ "14208032": {
+  "nome": "Rodrigo Garro",
+  "clube": "Cor"
+ },
+ "14210611": {
+  "nome": "Bruno Olivetto",
+  "clube": "Atm"
+ },
+ "14210719": {
+  "nome": "Fabricio Dominguez",
+  "clube": "Spt"
+ },
+ "14217260": {
+  "nome": "Alexandro Bernabei",
+  "clube": "Int"
+ },
+ "14219093": {
+  "nome": "Santiago Ramos Mingo",
+  "clube": "Bah"
+ },
+ "14221703": {
+  "nome": "Lautaro Diaz",
+  "clube": "San"
+ },
+ "14223205": {
+  "nome": "Rodrigo Castillo",
+  "clube": "Flu"
+ },
+ "14223258": {
+  "nome": "Rodrigo Villagra",
+  "clube": "Int"
+ },
+ "14223283": {
+  "nome": "Imanol Machuca",
+  "clube": "For"
+ },
+ "14241925": {
+  "nome": "Cristian Medina",
+  "clube": "Bot"
+ },
+ "14242680": {
+  "nome": "Juan Ignacio Nardoni",
+  "clube": "Gre"
+ },
+ "14243011": {
+  "nome": "Juan Miritello",
+  "clube": "For"
+ },
+ "14247637": {
+  "nome": "Braian Aguirre",
+  "clube": "Int"
+ },
+ "16097159": {
+  "nome": "Andre Ramalho",
+  "clube": "Cor"
+ },
+ "18073840": {
+  "nome": "Wanderson",
+  "clube": "Cec"
+ },
+ "18101803": {
+  "nome": "Francis Amuzu",
+  "clube": "Gre"
+ },
+ "19000251": {
+  "nome": "Douglas Rodrigues Dos Santos",
+  "clube": "Flu"
+ },
+ "19000764": {
+  "nome": "Raony",
+  "clube": "Cor"
+ },
+ "19003589": {
+  "nome": "Denis",
+  "clube": "Spt"
+ },
+ "19003703": {
+  "nome": "Paulinho",
+  "clube": "Mfc"
+ },
+ "19004700": {
+  "nome": "Eures Soncini Facci",
+  "clube": "Cor"
+ },
+ "19004704": {
+  "nome": "Ze Mario Campeiz",
+  "clube": "Bah"
+ },
+ "19010936": {
+  "nome": "Adriano Titton Garcia",
+  "clube": "Spt"
+ },
+ "19011663": {
+  "nome": "Joao Paulo Sampaio",
+  "clube": "Sep"
+ },
+ "19011676": {
+  "nome": "Mario Silva",
+  "clube": "Vit"
+ },
+ "19012140": {
+  "nome": "Alan Kardec",
+  "clube": "Juv"
+ },
+ "19013365": {
+  "nome": "Clauber Rocha",
+  "clube": "Vdg"
+ },
+ "19014340": {
+  "nome": "Marcos Rocha",
+  "clube": "Gre"
+ },
+ "19014353": {
+  "nome": "Sergio Alves",
+  "clube": "Fla"
+ },
+ "19016044": {
+  "nome": "Leonardo Reis",
+  "clube": "Bot"
+ },
+ "19016090": {
+  "nome": "Thiago Carpini",
+  "clube": "For"
+ },
+ "19016432": {
+  "nome": "Ugo Casagrande",
+  "clube": "Spo"
+ },
+ "19017956": {
+  "nome": "Rodrigo Henriques",
+  "clube": "Flu"
+ },
+ "19018500": {
+  "nome": "Felipe Ximenes",
+  "clube": "Spt"
+ },
+ "19019038": {
+  "nome": "Osvaldo",
+  "clube": "Vit"
+ },
+ "19019039": {
+  "nome": "Sergio Papellin",
+  "clube": "Vit"
+ },
+ "19019274": {
+  "nome": "Felipe Canavan",
+  "clube": "Flu"
+ },
+ "19020037": {
+  "nome": "Luciano Capelli",
+  "clube": "Fla"
+ },
+ "19020045": {
+  "nome": "Felipe Fernandes Matos",
+  "clube": "Gre"
+ },
+ "19020080": {
+  "nome": "Ricardo Galotti",
+  "clube": "Cor"
+ },
+ "19020576": {
+  "nome": "Ibere Vieira Medrado",
+  "clube": "Vit"
+ },
+ "19021185": {
+  "nome": "Alexandre Mendes",
+  "clube": "Vdg"
+ },
+ "19021819": {
+  "nome": "Leiva Duarte",
+  "clube": "Flu"
+ },
+ "19021902": {
+  "nome": "Itamar Ferreira",
+  "clube": "Vit"
+ },
+ "19023520": {
+  "nome": "Dunda",
+  "clube": "Sep"
+ },
+ "19023829": {
+  "nome": "Fagner",
+  "clube": "Cec"
+ },
+ "19024412": {
+  "nome": "Neymar",
+  "clube": "San"
+ },
+ "19028048": {
+  "nome": "Hudson",
+  "clube": "Spt"
+ },
+ "19028171": {
+  "nome": "Ganso",
+  "clube": "Flu"
+ },
+ "19028921": {
+  "nome": "Everton Ribeiro",
+  "clube": "Bah"
+ },
+ "19030161": {
+  "nome": "Cesar Del Roy",
+  "clube": "Sep"
+ },
+ "19030933": {
+  "nome": "Neto",
+  "clube": "Bot"
+ },
+ "19034024": {
+  "nome": "Edevaldo De Freitas",
+  "clube": "Flu"
+ },
+ "19034419": {
+  "nome": "William Mardoch",
+  "clube": "Cea"
+ },
+ "19034668": {
+  "nome": "Thales Damasceno",
+  "clube": "Sep"
+ },
+ "19034819": {
+  "nome": "Weverton",
+  "clube": "Gre"
+ },
+ "19034828": {
+  "nome": "Ze Augusto",
+  "clube": "Cor"
+ },
+ "19035586": {
+  "nome": "Edson Antonio Ermenegildo",
+  "clube": "Mfc"
+ },
+ "19038414": {
+  "nome": "Rainier Alves",
+  "clube": "Cea"
+ },
+ "19038787": {
+  "nome": "Angelo Alves",
+  "clube": "Sep"
+ },
+ "19041660": {
+  "nome": "Walter",
+  "clube": "Mfc"
+ },
+ "19042423": {
+  "nome": "Reverson Pimentel",
+  "clube": "Cor"
+ },
+ "19045164": {
+  "nome": "Everson",
+  "clube": "Atm"
+ },
+ "19046384": {
+  "nome": "Andrey Lopes",
+  "clube": "Sep"
+ },
+ "19046456": {
+  "nome": "Henrique Goncalves Valente",
+  "clube": "Gre"
+ },
+ "19050327": {
+  "nome": "Emilio Faro",
+  "clube": "Vit"
+ },
+ "19051958": {
+  "nome": "James Freitas",
+  "clube": "Spo"
+ },
+ "19051992": {
+  "nome": "Marcal",
+  "clube": "Bot"
+ },
+ "19052745": {
+  "nome": "Alan Ruschel",
+  "clube": "Juv"
+ },
+ "19052922": {
+  "nome": "Rafael Toloi",
+  "clube": "Spo"
+ },
+ "19054347": {
+  "nome": "Tiago Volpi",
+  "clube": "Bra"
+ },
+ "19055591": {
+  "nome": "Richard",
+  "clube": "Cea"
+ },
+ "19057932": {
+  "nome": "Igor Alves",
+  "clube": "Fla"
+ },
+ "19058671": {
+  "nome": "Dudu",
+  "clube": "Atm"
+ },
+ "19060670": {
+  "nome": "Marinho",
+  "clube": "Vit"
+ },
+ "19061839": {
+  "nome": "Guilherme Lyra",
+  "clube": "Cor"
+ },
+ "19066845": {
+  "nome": "Allan Neiva",
+  "clube": "Flu"
+ },
+ "19067093": {
+  "nome": "Alex Sandro",
+  "clube": "Fla"
+ },
+ "19069036": {
+  "nome": "Rodrigo Santana",
+  "clube": "Sep"
+ },
+ "19069105": {
+  "nome": "Gustavo Pires",
+  "clube": "Cea"
+ },
+ "19069108": {
+  "nome": "Roger Gouveia",
+  "clube": "For"
+ },
+ "19069111": {
+  "nome": "Alvaro Augusto",
+  "clube": "For"
+ },
+ "19071202": {
+  "nome": "Marco Antonio Alves Azizi",
+  "clube": "Flu"
+ },
+ "19071305": {
+  "nome": "Francesco Garcia Barletta",
+  "clube": "Gre"
+ },
+ "19073564": {
+  "nome": "Lucas Moura",
+  "clube": "Spo"
+ },
+ "19073567": {
+  "nome": "Willian Arao",
+  "clube": "San"
+ },
+ "19073905": {
+  "nome": "Diogo Thomaz",
+  "clube": "Bah"
+ },
+ "19074364": {
+  "nome": "Sergio Helt",
+  "clube": "Gre"
+ },
+ "19081798": {
+  "nome": "Willian Jose",
+  "clube": "Bah"
+ },
+ "19082123": {
+  "nome": "Rodrigo Zogaib",
+  "clube": "San"
+ },
+ "19082550": {
+  "nome": "Joao Ricardo",
+  "clube": "For"
+ },
+ "19084046": {
+  "nome": "Otaviano Oliveira",
+  "clube": "Atm"
+ },
+ "19084056": {
+  "nome": "Alan Patrick",
+  "clube": "Int"
+ },
+ "19084205": {
+  "nome": "Laniyan Neves",
+  "clube": "Fla"
+ },
+ "19084856": {
+  "nome": "Matheus Bachi",
+  "clube": "Cec"
+ },
+ "19084921": {
+  "nome": "Anderson Barros",
+  "clube": "Sep"
+ },
+ "19088262": {
+  "nome": "Lucas Sasha",
+  "clube": "For"
+ },
+ "19089313": {
+  "nome": "Eduardo Sasha",
+  "clube": "Bra"
+ },
+ "19090193": {
+  "nome": "Flavio Vignoli",
+  "clube": "Flu"
+ },
+ "19090354": {
+  "nome": "Edenilson",
+  "clube": "Bot"
+ },
+ "19090895": {
+  "nome": "Tiquinho Soares",
+  "clube": "San"
+ },
+ "19095200": {
+  "nome": "Eduardo",
+  "clube": "Mfc"
+ },
+ "19097438": {
+  "nome": "Ricardo Seguins",
+  "clube": "Atm"
+ },
+ "19099575": {
+  "nome": "Danilo",
+  "clube": "Fla"
+ },
+ "19100038": {
+  "nome": "Samuel Xavier",
+  "clube": "Flu"
+ },
+ "19101228": {
+  "nome": "Allan",
+  "clube": "Bot"
+ },
+ "19102937": {
+  "nome": "Joao Schmidt",
+  "clube": "San"
+ },
+ "19105713": {
+  "nome": "Felipe Anderson",
+  "clube": "Sep"
+ },
+ "19108263": {
+  "nome": "Thomazella",
+  "clube": "Mfc"
+ },
+ "19110310": {
+  "nome": "Diego Cerri",
+  "clube": "Bra"
+ },
+ "19112560": {
+  "nome": "Everaldo",
+  "clube": "Flu"
+ },
+ "19115181": {
+  "nome": "Valdir Junior",
+  "clube": "Vit"
+ },
+ "19116347": {
+  "nome": "Marco Biasotto",
+  "clube": "Spo"
+ },
+ "19116348": {
+  "nome": "Juninho Chicchinato",
+  "clube": "Bra"
+ },
+ "19116356": {
+  "nome": "Marco Aurelio Schiavo",
+  "clube": "Sep"
+ },
+ "19117279": {
+  "nome": "Denis Iwamura",
+  "clube": "Cea"
+ },
+ "19118664": {
+  "nome": "Ricardo Correa",
+  "clube": "Flu"
+ },
+ "19118847": {
+  "nome": "Erasmo Damiani",
+  "clube": "Cor"
+ },
+ "19119371": {
+  "nome": "Chico Kim",
+  "clube": "Mfc"
+ },
+ "19122782": {
+  "nome": "Gabriel Vasconcelos",
+  "clube": "Vit"
+ },
+ "19123805": {
+  "nome": "Fred Pozzebon",
+  "clube": "Bra"
+ },
+ "19124175": {
+  "nome": "Gabriel Bussinger",
+  "clube": "Vdg"
+ },
+ "19124877": {
+  "nome": "Jomar Ottoni",
+  "clube": "Cec"
+ },
+ "19126379": {
+  "nome": "Vina",
+  "clube": "Cea"
+ },
+ "19127830": {
+  "nome": "Gabriel Paulista",
+  "clube": "Cor"
+ },
+ "19138124": {
+  "nome": "Michel Youssef Muniz Domingos",
+  "clube": "Cor"
+ },
+ "19139020": {
+  "nome": "Gustavo Scarpa",
+  "clube": "Atm"
+ },
+ "19139837": {
+  "nome": "Bruno Henrique",
+  "clube": "Int"
+ },
+ "19144097": {
+  "nome": "Vitor Hugo",
+  "clube": "Atm"
+ },
+ "19144799": {
+  "nome": "Sergio Passarinho",
+  "clube": "Sep"
+ },
+ "19144893": {
+  "nome": "Diogo Barbosa",
+  "clube": "For"
+ },
+ "19144991": {
+  "nome": "Pedro Henrique",
+  "clube": "Cea"
+ },
+ "19145484": {
+  "nome": "Luiz Otavio",
+  "clube": "Cea"
+ },
+ "19146324": {
+  "nome": "Lucas Silvestre",
+  "clube": "Cor"
+ },
+ "19146326": {
+  "nome": "Guilherme Fialho",
+  "clube": "Atm"
+ },
+ "19147094": {
+  "nome": "Gabriel Pinho",
+  "clube": "Flu"
+ },
+ "19147663": {
+  "nome": "Jair Ventura",
+  "clube": "Vit"
+ },
+ "19148968": {
+  "nome": "Santos",
+  "clube": "For"
+ },
+ "19149016": {
+  "nome": "Wendell",
+  "clube": "Spo"
+ },
+ "19150585": {
+  "nome": "Juarez Fischer",
+  "clube": "Sep"
+ },
+ "19152048": {
+  "nome": "Bernard",
+  "clube": "Atm"
+ },
+ "19152765": {
+  "nome": "Joao Paulo Sanches",
+  "clube": "Cea"
+ },
+ "19152766": {
+  "nome": "Rafael Tamarindo",
+  "clube": "Mfc"
+ },
+ "19152912": {
+  "nome": "Mayke",
+  "clube": "San"
+ },
+ "19152917": {
+  "nome": "Lucas Silva",
+  "clube": "Cec"
+ },
+ "19153477": {
+  "nome": "Gabriel Pires",
+  "clube": "Mfc"
+ },
+ "19154441": {
+  "nome": "Gabriel",
+  "clube": "Bra"
+ },
+ "19161180": {
+  "nome": "Neris",
+  "clube": "Vit"
+ },
+ "19162450": {
+  "nome": "Vitinho",
+  "clube": "Cor"
+ },
+ "19162646": {
+  "nome": "Reinaldo",
+  "clube": "Mfc"
+ },
+ "19162830": {
+  "nome": "Alex Telles",
+  "clube": "Bot"
+ },
+ "19163428": {
+  "nome": "Ruan Carneiro",
+  "clube": "Juv"
+ },
+ "19163540": {
+  "nome": "Doria",
+  "clube": "Spo"
+ },
+ "19165275": {
+  "nome": "Richardson",
+  "clube": "Cea"
+ },
+ "19167419": {
+  "nome": "Alex Santana",
+  "clube": "Cor"
+ },
+ "19167576": {
+  "nome": "Gustavo Henrique",
+  "clube": "Cor"
+ },
+ "19168488": {
+  "nome": "Danilo Minutti",
+  "clube": "Atm"
+ },
+ "19171250": {
+  "nome": "Ze Rafael",
+  "clube": "San"
+ },
+ "19171411": {
+  "nome": "Gilberto",
+  "clube": "Bah"
+ },
+ "19171782": {
+  "nome": "Daniel Borges",
+  "clube": "Mfc"
+ },
+ "19172116": {
+  "nome": "Alex Muralha",
+  "clube": "Mfc"
+ },
+ "19172123": {
+  "nome": "Leandro Franco",
+  "clube": "Vdg"
+ },
+ "19172378": {
+  "nome": "Lucas Crispim",
+  "clube": "For"
+ },
+ "19173184": {
+  "nome": "Vinicius Silvestre",
+  "clube": "For"
+ },
+ "19174987": {
+  "nome": "Bruno Ferreira",
+  "clube": "Cea"
+ },
+ "19174999": {
+  "nome": "Rene",
+  "clube": "Flu"
+ },
+ "19175014": {
+  "nome": "Thiago Mendes",
+  "clube": "Vdg"
+ },
+ "19178711": {
+  "nome": "Alexandre Mattos",
+  "clube": "San"
+ },
+ "19180100": {
+  "nome": "Rogerio Godoy",
+  "clube": "Sep"
+ },
+ "19180830": {
+  "nome": "Vacaria",
+  "clube": "Juv"
+ },
+ "19184263": {
+  "nome": "Walace",
+  "clube": "Cec"
+ },
+ "19184434": {
+  "nome": "Carlos Coronel",
+  "clube": "Spo"
+ },
+ "19185741": {
+  "nome": "Thiago Santi",
+  "clube": "Bra"
+ },
+ "19186031": {
+  "nome": "Mauricio Albuquerque",
+  "clube": "Flu"
+ },
+ "19186032": {
+  "nome": "Daniel Felix",
+  "clube": "Vdg"
+ },
+ "19187378": {
+  "nome": "Cleber Dos Santos",
+  "clube": "Vit"
+ },
+ "19187379": {
+  "nome": "Diego Pereira",
+  "clube": "Int"
+ },
+ "19187380": {
+  "nome": "Marcio Torres",
+  "clube": "Fla"
+ },
+ "19189152": {
+  "nome": "Marcelo Veiga",
+  "clube": "Flu"
+ },
+ "19189685": {
+  "nome": "Alisson",
+  "clube": "Spo"
+ },
+ "19189746": {
+  "nome": "Marcos Felipe",
+  "clube": "Bah"
+ },
+ "19190120": {
+  "nome": "Jair",
+  "clube": "Vdg"
+ },
+ "19190175": {
+  "nome": "Camutanga",
+  "clube": "Vit"
+ },
+ "19190583": {
+  "nome": "Gabriel Blos",
+  "clube": "Gre"
+ },
+ "19191363": {
+  "nome": "Celio Lucio",
+  "clube": "Cec"
+ },
+ "19192027": {
+  "nome": "Anibal Rouxinol",
+  "clube": "Flu"
+ },
+ "19192160": {
+  "nome": "Alex Kuhn",
+  "clube": "Bot"
+ },
+ "19193050": {
+  "nome": "Yago Felipe",
+  "clube": "Spt"
+ },
+ "19193798": {
+  "nome": "Igor Rabello",
+  "clube": "Flu"
+ },
+ "19194171": {
+  "nome": "Patrick",
+  "clube": "San"
+ },
+ "19196768": {
+  "nome": "Rui Costa",
+  "clube": "Spo"
+ },
+ "19197056": {
+  "nome": "Ze Roberto",
+  "clube": "Spt"
+ },
+ "19197057": {
+  "nome": "Rai Ramos",
+  "clube": "Juv"
+ },
+ "19201676": {
+  "nome": "Marcelo Gondo",
+  "clube": "Sep"
+ },
+ "19202192": {
+  "nome": "Gustavo Nicoline",
+  "clube": "San"
+ },
+ "19202502": {
+  "nome": "Luciano",
+  "clube": "Spo"
+ },
+ "19202746": {
+  "nome": "Marlon Freitas",
+  "clube": "Sep"
+ },
+ "19210609": {
+  "nome": "Georgemy",
+  "clube": "Mfc"
+ },
+ "19212066": {
+  "nome": "Dodi",
+  "clube": "Gre"
+ },
+ "19212659": {
+  "nome": "Joao Pedro",
+  "clube": "Gre"
+ },
+ "19212670": {
+  "nome": "Rafael Costa",
+  "clube": "Sep"
+ },
+ "19212672": {
+  "nome": "Thiago Maldonado",
+  "clube": "Sep"
+ },
+ "19213297": {
+  "nome": "Renato Kayser",
+  "clube": "Vit"
+ },
+ "19214473": {
+  "nome": "Fernando Simone",
+  "clube": "Flu"
+ },
+ "19215476": {
+  "nome": "Luan Peres",
+  "clube": "San"
+ },
+ "19215572": {
+  "nome": "Luiz Araujo",
+  "clube": "Fla"
+ },
+ "19216899": {
+  "nome": "Willian Machado",
+  "clube": "Mfc"
+ },
+ "19217413": {
+  "nome": "Gerson",
+  "clube": "Cec"
+ },
+ "19218382": {
+  "nome": "Michel Gazola",
+  "clube": "Spo"
+ },
+ "19219085": {
+  "nome": "Vagner Cavalcante",
+  "clube": "Bra"
+ },
+ "19219389": {
+  "nome": "Messias",
+  "clube": "Juv"
+ },
+ "19219732": {
+  "nome": "Thiago Maia",
+  "clube": "Int"
+ },
+ "19219840": {
+  "nome": "Leo Pereira",
+  "clube": "Fla"
+ },
+ "19219843": {
+  "nome": "Leo Jardim",
+  "clube": "Vdg"
+ },
+ "19219855": {
+  "nome": "Keno",
+  "clube": "Flu"
+ },
+ "19220270": {
+  "nome": "Daniel Fuzato",
+  "clube": "Vdg"
+ },
+ "19220698": {
+  "nome": "Carlos Eduardo",
+  "clube": "Mfc"
+ },
+ "19221567": {
+  "nome": "Maycon",
+  "clube": "Atm"
+ },
+ "19222422": {
+  "nome": "Sanchez",
+  "clube": "Cea"
+ },
+ "19222444": {
+  "nome": "Marcelo Benevenuto",
+  "clube": "Spt"
+ },
+ "19223056": {
+  "nome": "Marcos Galgaro",
+  "clube": "Juv"
+ },
+ "19223424": {
+  "nome": "Marcelo Vilhena",
+  "clube": "Atm"
+ },
+ "19224383": {
+  "nome": "Daniel Goncalves",
+  "clube": "Sep"
+ },
+ "19224455": {
+  "nome": "Mauricio Barbieri",
+  "clube": "Juv"
+ },
+ "19225761": {
+  "nome": "Clayson",
+  "clube": "Spt"
+ },
+ "19225861": {
+  "nome": "Fabricio Bruno",
+  "clube": "Cec"
+ },
+ "19225946": {
+  "nome": "William",
+  "clube": "Cec"
+ },
+ "19225958": {
+  "nome": "Eder",
+  "clube": "Cea"
+ },
+ "19226436": {
+  "nome": "Matheus Rossetto",
+  "clube": "For"
+ },
+ "19226437": {
+  "nome": "Otavio",
+  "clube": "Flu"
+ },
+ "19226741": {
+  "nome": "Lucas Paqueta",
+  "clube": "Fla"
+ },
+ "19226751": {
+  "nome": "Ronaldo",
+  "clube": "Int"
+ },
+ "19227020": {
+  "nome": "Alex Silva",
+  "clube": "Cea"
+ },
+ "19227023": {
+  "nome": "Danielzinho",
+  "clube": "Spo"
+ },
+ "19228286": {
+  "nome": "Giovanni Bruno Sala Ramirez",
+  "clube": "Gre"
+ },
+ "19230758": {
+  "nome": "Alex Rites",
+  "clube": "Flu"
+ },
+ "19231041": {
+  "nome": "Joao Paulo",
+  "clube": "San"
+ },
+ "19232508": {
+  "nome": "Guilherme Arana",
+  "clube": "Flu"
+ },
+ "19232517": {
+  "nome": "Pedro Henrique",
+  "clube": "Bra"
+ },
+ "19232616": {
+  "nome": "Ze Ivaldo",
+  "clube": "San"
+ },
+ "19233146": {
+  "nome": "Everton Cebolinha",
+  "clube": "Fla"
+ },
+ "19233485": {
+  "nome": "Juninho",
+  "clube": "Int"
+ },
+ "19233491": {
+  "nome": "Raphael Veiga",
+  "clube": "Sep"
+ },
+ "19235600": {
+  "nome": "Iury Castilho",
+  "clube": "Spt"
+ },
+ "19236273": {
+  "nome": "Lyanco",
+  "clube": "Atm"
+ },
+ "19237947": {
+  "nome": "Matheus Pereira",
+  "clube": "Cor"
+ },
+ "19239021": {
+  "nome": "Mario Bittencourt",
+  "clube": "Flu"
+ },
+ "19239596": {
+  "nome": "Cleiton",
+  "clube": "Bra"
+ },
+ "19239601": {
+  "nome": "Bruno Tabata",
+  "clube": "Int"
+ },
+ "19242476": {
+  "nome": "Carlos Vinicius",
+  "clube": "Gre"
+ },
+ "19245067": {
+  "nome": "Ze Marcos",
+  "clube": "Spt"
+ },
+ "19245597": {
+  "nome": "Matheuzinho",
+  "clube": "Vit"
+ },
+ "19245683": {
+  "nome": "Shaylon",
+  "clube": "Mfc"
+ },
+ "19246302": {
+  "nome": "Roberto Schimdt Tupinamba Fernandes De Sa",
+  "clube": "Fla"
+ },
+ "19246308": {
+  "nome": "Gabriel Batista De Oliveira",
+  "clube": "Flu"
+ },
+ "19246772": {
+  "nome": "Thaciano",
+  "clube": "San"
+ },
+ "19249423": {
+  "nome": "Marcelo Gimenez Da Silva",
+  "clube": "Bra"
+ },
+ "19249424": {
+  "nome": "Pablo Fernandez",
+  "clube": "Int"
+ },
+ "19249507": {
+  "nome": "Ronaldo",
+  "clube": "Bah"
+ },
+ "19249510": {
+  "nome": "David",
+  "clube": "Vdg"
+ },
+ "19249631": {
+  "nome": "Lucas Verissimo",
+  "clube": "San"
+ },
+ "19249721": {
+  "nome": "Pepe",
+  "clube": "Vit"
+ },
+ "19249770": {
+  "nome": "Neto Moura",
+  "clube": "Mfc"
+ },
+ "19249790": {
+  "nome": "Rony",
+  "clube": "San"
+ },
+ "19250013": {
+  "nome": "Hayner",
+  "clube": "San"
+ },
+ "19250086": {
+  "nome": "Marcos Antonio Cezar",
+  "clube": "Bot"
+ },
+ "19250321": {
+  "nome": "Tche Tche",
+  "clube": "Vdg"
+ },
+ "19250588": {
+  "nome": "Rodrigo Sam",
+  "clube": "Juv"
+ },
+ "19250978": {
+  "nome": "Matheus Fernandes",
+  "clube": "Bra"
+ },
+ "19251466": {
+  "nome": "Yuri Lara",
+  "clube": "Mfc"
+ },
+ "19255930": {
+  "nome": "Lucas Ramon",
+  "clube": "Spo"
+ },
+ "19256342": {
+  "nome": "Carlos Eugenio De Alvarenga Cintra Junior",
+  "clube": "Flu"
+ },
+ "19258642": {
+  "nome": "Bruno Henrique",
+  "clube": "Fla"
+ },
+ "19258902": {
+  "nome": "Andre Luis",
+  "clube": "Mfc"
+ },
+ "19258926": {
+  "nome": "Sabino",
+  "clube": "Spo"
+ },
+ "19258929": {
+  "nome": "Igor Vinicius",
+  "clube": "San"
+ },
+ "19259027": {
+  "nome": "Renan Lodi",
+  "clube": "Atm"
+ },
+ "19259406": {
+  "nome": "Lucas Itaberaba",
+  "clube": "Bra"
+ },
+ "19259411": {
+  "nome": "Ramon",
+  "clube": "Spt"
+ },
+ "19259566": {
+  "nome": "Pedro",
+  "clube": "Fla"
+ },
+ "19259597": {
+  "nome": "Lima",
+  "clube": "Flu"
+ },
+ "19259600": {
+  "nome": "Arthur",
+  "clube": "Gre"
+ },
+ "19260137": {
+  "nome": "Fabio Azevedo",
+  "clube": "Bot"
+ },
+ "19260138": {
+  "nome": "Guilherme Bianchi",
+  "clube": "Bot"
+ },
+ "19260884": {
+  "nome": "Allan",
+  "clube": "Cor"
+ },
+ "19260885": {
+  "nome": "Leo Ortiz",
+  "clube": "Fla"
+ },
+ "19261284": {
+  "nome": "Artur",
+  "clube": "Bot"
+ },
+ "19261512": {
+  "nome": "Paulinho",
+  "clube": "Int"
+ },
+ "19261641": {
+  "nome": "Keiller",
+  "clube": "Int"
+ },
+ "19261651": {
+  "nome": "Rodrigues",
+  "clube": "Mfc"
+ },
+ "19261679": {
+  "nome": "Caio Paulista",
+  "clube": "Sep"
+ },
+ "19262917": {
+  "nome": "Jose Dos Santos Dourado Neto",
+  "clube": "Bah"
+ },
+ "19263853": {
+  "nome": "Nonato",
+  "clube": "Flu"
+ },
+ "19263862": {
+  "nome": "Matheus Henrique",
+  "clube": "Cec"
+ },
+ "19264141": {
+  "nome": "Pedro Campos",
+  "clube": "Spo"
+ },
+ "19264442": {
+  "nome": "Everton Galdino",
+  "clube": "Mfc"
+ },
+ "19264778": {
+  "nome": "Gabriel Taliari",
+  "clube": "Juv"
+ },
+ "19264972": {
+  "nome": "Andre Silva",
+  "clube": "Spo"
+ },
+ "19266403": {
+  "nome": "Arthur Cabral",
+  "clube": "Bot"
+ },
+ "19266494": {
+  "nome": "Guga",
+  "clube": "Flu"
+ },
+ "19266625": {
+  "nome": "Marlon",
+  "clube": "Gre"
+ },
+ "19266630": {
+  "nome": "Denis Rafael Faria Da Silva",
+  "clube": "Bra"
+ },
+ "19266742": {
+  "nome": "Vinicius Ponzio",
+  "clube": "Sep"
+ },
+ "19270228": {
+  "nome": "Hugo Moura",
+  "clube": "Vdg"
+ },
+ "19270232": {
+  "nome": "Hugo Souza",
+  "clube": "Cor"
+ },
+ "19270251": {
+  "nome": "Carlinhos",
+  "clube": "Fla"
+ },
+ "19270810": {
+  "nome": "Caique Goncalves",
+  "clube": "Vit"
+ },
+ "19270995": {
+  "nome": "Luiz Otavio",
+  "clube": "Cea"
+ },
+ "19271927": {
+  "nome": "Jose Aldo",
+  "clube": "Mfc"
+ },
+ "19273472": {
+  "nome": "Vitinho",
+  "clube": "Bot"
+ },
+ "19273581": {
+  "nome": "David Duarte",
+  "clube": "Bah"
+ },
+ "19274259": {
+  "nome": "Lucas Mineiro",
+  "clube": "Juv"
+ },
+ "19278016": {
+  "nome": "Igor Carius",
+  "clube": "Mfc"
+ },
+ "19278774": {
+  "nome": "Raul Steffens",
+  "clube": "Bot"
+ },
+ "19279085": {
+  "nome": "Clicio Alves Do Nascimento",
+  "clube": "Vit"
+ },
+ "19280849": {
+  "nome": "Bruno Rodrigues",
+  "clube": "Sep"
+ },
+ "19284037": {
+  "nome": "Ayrton Lucas",
+  "clube": "Fla"
+ },
+ "19284049": {
+  "nome": "Matheusinho",
+  "clube": "Cea"
+ },
+ "19285373": {
+  "nome": "Marcao Pirassununga",
+  "clube": "Sep"
+ },
+ "19285374": {
+  "nome": "Jorge Santos",
+  "clube": "Sep"
+ },
+ "19285375": {
+  "nome": "Douglas Gramani",
+  "clube": "Sep"
+ },
+ "19287055": {
+  "nome": "Luiz Fernando",
+  "clube": "For"
+ },
+ "19287778": {
+  "nome": "Iago Borduchi",
+  "clube": "Bah"
+ },
+ "19290866": {
+  "nome": "Alex Nascimento",
+  "clube": "San"
+ },
+ "19290872": {
+  "nome": "Igor Gomes",
+  "clube": "Atm"
+ },
+ "19290874": {
+  "nome": "Luan",
+  "clube": "Spo"
+ },
+ "19290878": {
+  "nome": "Thiago Couto",
+  "clube": "Spt"
+ },
+ "19293335": {
+  "nome": "Guilherme Dias",
+  "clube": "Sep"
+ },
+ "19293337": {
+  "nome": "Carlos Guilherme Dorileo Leite Filho",
+  "clube": "Bra"
+ },
+ "19293339": {
+  "nome": "Gilberto Cunha",
+  "clube": "Sep"
+ },
+ "19293344": {
+  "nome": "Matheus Bahia",
+  "clube": "Int"
+ },
+ "19294377": {
+  "nome": "Walace Espada Da Silva",
+  "clube": "Cec"
+ },
+ "19294666": {
+  "nome": "Fabio Lima",
+  "clube": "Juv"
+ },
+ "19296892": {
+  "nome": "Alerrandro",
+  "clube": "Int"
+ },
+ "19299385": {
+  "nome": "Lucas Goncalves",
+  "clube": "Atm"
+ },
+ "19299608": {
+  "nome": "Douglas Sartor",
+  "clube": "Atm"
+ },
+ "19301564": {
+  "nome": "Safira",
+  "clube": "Juv"
+ },
+ "19301645": {
+  "nome": "Gabriel Novaes",
+  "clube": "Bra"
+ },
+ "19301692": {
+  "nome": "Cristian De Oliveira Medeiros",
+  "clube": "Bra"
+ },
+ "19302476": {
+  "nome": "Paulinho",
+  "clube": "Sep"
+ },
+ "19302798": {
+  "nome": "Fernando",
+  "clube": "Bra"
+ },
+ "19302917": {
+  "nome": "Brenner",
+  "clube": "Vdg"
+ },
+ "19303796": {
+  "nome": "Roberto Farias",
+  "clube": "Cea"
+ },
+ "19303821": {
+  "nome": "Vitao",
+  "clube": "Fla"
+ },
+ "19304048": {
+  "nome": "Jandrei",
+  "clube": "Spo"
+ },
+ "19304699": {
+  "nome": "Paulo Jose Oliveira Justo De Almeida",
+  "clube": "San"
+ },
+ "19305263": {
+  "nome": "Charles",
+  "clube": "Cor"
+ },
+ "19305272": {
+  "nome": "Machado",
+  "clube": "Vit"
+ },
+ "19305767": {
+  "nome": "Hugo",
+  "clube": "Cor"
+ },
+ "19306798": {
+  "nome": "Alesson",
+  "clube": "Mfc"
+ },
+ "19306931": {
+  "nome": "Clayton Sampaio",
+  "clube": "Int"
+ },
+ "19306936": {
+  "nome": "Ze Gabriel",
+  "clube": "Spt"
+ },
+ "19306946": {
+  "nome": "Rodrigo Nestor",
+  "clube": "Bah"
+ },
+ "19307359": {
+  "nome": "Kanu",
+  "clube": "Bah"
+ },
+ "19310565": {
+  "nome": "Roberto Chiari",
+  "clube": "Atm"
+ },
+ "19310571": {
+  "nome": "Daniel Penha",
+  "clube": "Atm"
+ },
+ "19310639": {
+  "nome": "Bruno Pivetti",
+  "clube": "Fla"
+ },
+ "19310729": {
+  "nome": "Paulo Henrique",
+  "clube": "Vdg"
+ },
+ "19311298": {
+  "nome": "Alcino Rodrigues",
+  "clube": "Cea"
+ },
+ "19311388": {
+  "nome": "Luiz Andrade",
+  "clube": "Cea"
+ },
+ "19311395": {
+  "nome": "Juninho Capixaba",
+  "clube": "Bra"
+ },
+ "19311540": {
+  "nome": "Duda Varjao",
+  "clube": "Bah"
+ },
+ "19311817": {
+  "nome": "Charles Hembert",
+  "clube": "Bah"
+ },
+ "19312374": {
+  "nome": "Luiz Novack",
+  "clube": "Bot"
+ },
+ "19312829": {
+  "nome": "Mailton",
+  "clube": "Spo"
+ },
+ "19313979": {
+  "nome": "Yuri Salenave Ribeiro",
+  "clube": "Int"
+ },
+ "19315294": {
+  "nome": "Odorico Roman",
+  "clube": "Gre"
+ },
+ "19316116": {
+  "nome": "Ingrael Guedes Do Amaral",
+  "clube": "Gre"
+ },
+ "19316120": {
+  "nome": "Enzo Fernandes Lodovici",
+  "clube": "Gre"
+ },
+ "19316239": {
+  "nome": "Vinicius Bispo",
+  "clube": "Bot"
+ },
+ "19317997": {
+  "nome": "Marco Salgado",
+  "clube": "Flu"
+ },
+ "19318586": {
+  "nome": "Diego Almeida",
+  "clube": "Vit"
+ },
+ "19319819": {
+  "nome": "Roberto Ribas",
+  "clube": "Spo"
+ },
+ "19320119": {
+  "nome": "Lucas Arcanjo",
+  "clube": "Vit"
+ },
+ "19320146": {
+  "nome": "Octavio Ohl",
+  "clube": "Spo"
+ },
+ "19320148": {
+  "nome": "Luis Felipe Batista",
+  "clube": "Bra"
+ },
+ "19320153": {
+  "nome": "Bruno Nestlehner",
+  "clube": "Spo"
+ },
+ "19320156": {
+  "nome": "Marcelo Francisco",
+  "clube": "Sep"
+ },
+ "19320258": {
+  "nome": "Samuel Lino",
+  "clube": "Fla"
+ },
+ "19322643": {
+  "nome": "Alfie Assis",
+  "clube": "Bot"
+ },
+ "19323764": {
+  "nome": "Fernandinho",
+  "clube": "Cea"
+ },
+ "19324930": {
+  "nome": "Erick",
+  "clube": "Vit"
+ },
+ "19325045": {
+  "nome": "Emerson Royal",
+  "clube": "Fla"
+ },
+ "19325873": {
+  "nome": "Eduardo",
+  "clube": "Bra"
+ },
+ "19326227": {
+  "nome": "Rodrigo Rodrigues",
+  "clube": "Mfc"
+ },
+ "19326424": {
+  "nome": "Yuri Alberto",
+  "clube": "Cor"
+ },
+ "19326809": {
+  "nome": "Fernando Oliveira",
+  "clube": "Bra"
+ },
+ "19327547": {
+  "nome": "Gustavo Shiroma",
+  "clube": "Cec"
+ },
+ "19327981": {
+  "nome": "Mayk",
+  "clube": "Gre"
+ },
+ "19328100": {
+  "nome": "Jean Lucas",
+  "clube": "Bah"
+ },
+ "19333767": {
+  "nome": "Gabriel Menino",
+  "clube": "San"
+ },
+ "19333774": {
+  "nome": "Roberto Torrecilhas",
+  "clube": "Sep"
+ },
+ "19335351": {
+  "nome": "Yuri Sena",
+  "clube": "Vit"
+ },
+ "19335470": {
+  "nome": "Wellington Rato",
+  "clube": "Vit"
+ },
+ "19335518": {
+  "nome": "Leo Porto",
+  "clube": "For"
+ },
+ "19335628": {
+  "nome": "Patrick De Paula",
+  "clube": "Bot"
+ },
+ "19335675": {
+  "nome": "Anderson Borges Goncalves",
+  "clube": "Cor"
+ },
+ "19335891": {
+  "nome": "Andre Felipe Venancio",
+  "clube": "Mfc"
+ },
+ "19337928": {
+  "nome": "Vitinho",
+  "clube": "Int"
+ },
+ "19337932": {
+  "nome": "Leo Linck",
+  "clube": "Bot"
+ },
+ "19337942": {
+  "nome": "Marcos Antonio",
+  "clube": "Spo"
+ },
+ "19337951": {
+  "nome": "Christian",
+  "clube": "Cec"
+ },
+ "19337991": {
+  "nome": "Richard",
+  "clube": "Int"
+ },
+ "19338194": {
+  "nome": "Juan Alano",
+  "clube": "Cea"
+ },
+ "19338228": {
+  "nome": "Gabriel Brazao",
+  "clube": "San"
+ },
+ "19339282": {
+  "nome": "Baralhas",
+  "clube": "Vit"
+ },
+ "19339547": {
+  "nome": "Rafael Daltro",
+  "clube": "Vit"
+ },
+ "19339608": {
+  "nome": "Pedro Henrique",
+  "clube": "Vit"
+ },
+ "19340168": {
+  "nome": "Dennys Dilettoso",
+  "clube": "Bot"
+ },
+ "19340768": {
+  "nome": "Magrao",
+  "clube": "For"
+ },
+ "19340771": {
+  "nome": "Luan Candido",
+  "clube": "Bra"
+ },
+ "19341367": {
+  "nome": "Luis Vinicius Castelo Branco Mourao Filho",
+  "clube": "For"
+ },
+ "19343486": {
+  "nome": "Marcelo Cunha Da Paz",
+  "clube": "Cor"
+ },
+ "19343489": {
+  "nome": "Henrique Bittencourt",
+  "clube": "For"
+ },
+ "19344740": {
+  "nome": "Erisson Matias",
+  "clube": "For"
+ },
+ "19345483": {
+  "nome": "Adriano Lima Alves",
+  "clube": "For"
+ },
+ "19345973": {
+  "nome": "Vitor Eudes",
+  "clube": "Flu"
+ },
+ "19347269": {
+  "nome": "Matheus Cunha",
+  "clube": "Cec"
+ },
+ "19347271": {
+  "nome": "Vitinho",
+  "clube": "For"
+ },
+ "19347767": {
+  "nome": "Luis Gustavo De Araujo",
+  "clube": "Juv"
+ },
+ "19347768": {
+  "nome": "Roberto Oliveira",
+  "clube": "Gre"
+ },
+ "19347969": {
+  "nome": "Augusto Moura De Oliveira",
+  "clube": "Bot"
+ },
+ "19348055": {
+  "nome": "Marcelo Cortes",
+  "clube": "Vit"
+ },
+ "19348165": {
+  "nome": "Vitor Ferraz",
+  "clube": "Bah"
+ },
+ "19348494": {
+  "nome": "Ronald",
+  "clube": "Vit"
+ },
+ "19348577": {
+  "nome": "Wagner Leonardo",
+  "clube": "Gre"
+ },
+ "19348684": {
+  "nome": "Rodrigo Perez",
+  "clube": "Spt"
+ },
+ "19348685": {
+  "nome": "Leandro Duda",
+  "clube": "Spt"
+ },
+ "19348822": {
+  "nome": "Carlos Miguel",
+  "clube": "Sep"
+ },
+ "19348859": {
+  "nome": "Tete",
+  "clube": "Gre"
+ },
+ "19348862": {
+  "nome": "Kaio Jorge",
+  "clube": "Cec"
+ },
+ "19348924": {
+  "nome": "Rodrigo Alencar",
+  "clube": "Sep"
+ },
+ "19350363": {
+  "nome": "Erick",
+  "clube": "Bah"
+ },
+ "19350600": {
+  "nome": "Wendel Silva",
+  "clube": "Cea"
+ },
+ "19350602": {
+  "nome": "Ramon",
+  "clube": "Int"
+ },
+ "19350648": {
+  "nome": "Ronald",
+  "clube": "Cea"
+ },
+ "19350684": {
+  "nome": "Bruno Fuchs",
+  "clube": "Sep"
+ },
+ "19350687": {
+  "nome": "Matheuzinho",
+  "clube": "Cor"
+ },
+ "19350725": {
+  "nome": "Caca",
+  "clube": "Cor"
+ },
+ "19350726": {
+  "nome": "Edu",
+  "clube": "Vit"
+ },
+ "19350768": {
+  "nome": "Rodrigo",
+  "clube": "For"
+ },
+ "19350770": {
+  "nome": "Eric Ramires",
+  "clube": "Bra"
+ },
+ "19351380": {
+  "nome": "Lucas Gazal",
+  "clube": "For"
+ },
+ "19351927": {
+  "nome": "Joao Lucas",
+  "clube": "Gre"
+ },
+ "19351947": {
+  "nome": "Joao Victor",
+  "clube": "Mfc"
+ },
+ "19352200": {
+  "nome": "Brenno",
+  "clube": "For"
+ },
+ "19352206": {
+  "nome": "Ruan Tressoldi",
+  "clube": "Atm"
+ },
+ "19352285": {
+  "nome": "Anderson Da Silveira Dorneles",
+  "clube": "Gre"
+ },
+ "19352592": {
+  "nome": "Pablo Roberto",
+  "clube": "For"
+ },
+ "19354619": {
+  "nome": "Marcos Paulo",
+  "clube": "Juv"
+ },
+ "19354867": {
+  "nome": "Estephano Djian",
+  "clube": "For"
+ },
+ "19354888": {
+  "nome": "Reinier",
+  "clube": "Atm"
+ },
+ "19354891": {
+  "nome": "Denilson",
+  "clube": "Mfc"
+ },
+ "19355039": {
+  "nome": "Fabri",
+  "clube": "Vit"
+ },
+ "19355315": {
+  "nome": "Igor Formiga",
+  "clube": "Mfc"
+ },
+ "19356408": {
+  "nome": "Guilherme Dalcin Dilda",
+  "clube": "Sep"
+ },
+ "19357955": {
+  "nome": "Ignacio",
+  "clube": "Flu"
+ },
+ "19358051": {
+  "nome": "Negueba",
+  "clube": "Mfc"
+ },
+ "19358101": {
+  "nome": "Matheus Donelli",
+  "clube": "Cor"
+ },
+ "19358112": {
+  "nome": "Nathan Fogaca",
+  "clube": "Mfc"
+ },
+ "19360351": {
+  "nome": "Caio Alexandre",
+  "clube": "Bah"
+ },
+ "19361337": {
+  "nome": "Fabricio Ferreira Da Silva",
+  "clube": "Bra"
+ },
+ "19362908": {
+  "nome": "Joao Paulo Gomes Lacerda",
+  "clube": "Cec"
+ },
+ "19362985": {
+  "nome": "Lucas Silva",
+  "clube": "Vit"
+ },
+ "19362992": {
+  "nome": "Riccieli",
+  "clube": "Vit"
+ },
+ "19363040": {
+  "nome": "Edson Augusto Sanguinete",
+  "clube": "Sep"
+ },
+ "19363102": {
+  "nome": "Joao Pedro",
+  "clube": "Vit"
+ },
+ "19363221": {
+  "nome": "Calebe",
+  "clube": "For"
+ },
+ "19363227": {
+  "nome": "Gustavo Maia",
+  "clube": "Spt"
+ },
+ "19364443": {
+  "nome": "Fernando",
+  "clube": "Cea"
+ },
+ "19364486": {
+  "nome": "Claudinho",
+  "clube": "Vit"
+ },
+ "19364882": {
+  "nome": "Antonio Luiz Fernandes Macedo",
+  "clube": "Vit"
+ },
+ "19366623": {
+  "nome": "Luiz Mandaca",
+  "clube": "Juv"
+ },
+ "19366935": {
+  "nome": "Junior Santos",
+  "clube": "Atm"
+ },
+ "19367261": {
+  "nome": "Luiz Filipe",
+  "clube": "Mfc"
+ },
+ "19367262": {
+  "nome": "Rodrigo Barreiros",
+  "clube": "Atm"
+ },
+ "19367270": {
+  "nome": "Guilherme Da Costa",
+  "clube": "Cor"
+ },
+ "19367739": {
+  "nome": "Lucas Oliveira",
+  "clube": "Mfc"
+ },
+ "19368081": {
+  "nome": "Sandry",
+  "clube": "San"
+ },
+ "19369351": {
+  "nome": "Khellven",
+  "clube": "Sep"
+ },
+ "19370048": {
+  "nome": "Andrew",
+  "clube": "Fla"
+ },
+ "19371033": {
+  "nome": "Lucas Freitas",
+  "clube": "Vdg"
+ },
+ "19371111": {
+  "nome": "Jonas Pires",
+  "clube": "Cec"
+ },
+ "19371113": {
+  "nome": "Nikolas Trevizo",
+  "clube": "Mfc"
+ },
+ "19371559": {
+  "nome": "Willean Lepo",
+  "clube": "Vit"
+ },
+ "19371573": {
+  "nome": "Dudu Miraima",
+  "clube": "Vit"
+ },
+ "19371900": {
+  "nome": "Rogerio Abreu",
+  "clube": "Sep"
+ },
+ "19371901": {
+  "nome": "Guilherme Camargo",
+  "clube": "Sep"
+ },
+ "19371902": {
+  "nome": "Danilo",
+  "clube": "Bot"
+ },
+ "19371980": {
+  "nome": "Josue Romero",
+  "clube": "For"
+ },
+ "19372220": {
+  "nome": "Pierre",
+  "clube": "For"
+ },
+ "19372413": {
+  "nome": "Lucas Oliveira",
+  "clube": "Gre"
+ },
+ "19372415": {
+  "nome": "Antonio Cruz",
+  "clube": "Gre"
+ },
+ "19375642": {
+  "nome": "Young",
+  "clube": "Spo"
+ },
+ "19375656": {
+  "nome": "Pablo Maia",
+  "clube": "Spo"
+ },
+ "19376696": {
+  "nome": "Gustavo Da Silva Caldeira",
+  "clube": "Vdg"
+ },
+ "19376884": {
+  "nome": "Bruno Gomes",
+  "clube": "Int"
+ },
+ "19376885": {
+  "nome": "Marcelo Pitaluga",
+  "clube": "Flu"
+ },
+ "19377147": {
+  "nome": "Rodrigo Ramos",
+  "clube": "Cec"
+ },
+ "19377228": {
+  "nome": "Nathan Santos",
+  "clube": "San"
+ },
+ "19377973": {
+  "nome": "Camilo",
+  "clube": "Gre"
+ },
+ "19377986": {
+  "nome": "Fabinho",
+  "clube": "Bra"
+ },
+ "19377987": {
+  "nome": "Paulo Roberto Buosi",
+  "clube": "Sep"
+ },
+ "19379602": {
+  "nome": "Luiz Alencar",
+  "clube": "Int"
+ },
+ "19380037": {
+  "nome": "Lucas Piton",
+  "clube": "Vdg"
+ },
+ "19380038": {
+  "nome": "Adson",
+  "clube": "Vdg"
+ },
+ "19380082": {
+  "nome": "Romulo",
+  "clube": "Sep"
+ },
+ "19380337": {
+  "nome": "Fabricio",
+  "clube": "Bra"
+ },
+ "19380348": {
+  "nome": "Gabriel Eloi",
+  "clube": "Cec"
+ },
+ "19380368": {
+  "nome": "Ricardo Amadeu",
+  "clube": "Vit"
+ },
+ "19380455": {
+  "nome": "Mauricio",
+  "clube": "Sep"
+ },
+ "19380697": {
+  "nome": "Bruno Spindel",
+  "clube": "Cec"
+ },
+ "19381250": {
+  "nome": "Adriel",
+  "clube": "Gre"
+ },
+ "19381977": {
+  "nome": "Enio",
+  "clube": "Juv"
+ },
+ "19382011": {
+  "nome": "Rafael Guanaes",
+  "clube": "Mfc"
+ },
+ "19382111": {
+  "nome": "Dudu",
+  "clube": "Vit"
+ },
+ "19382114": {
+  "nome": "Youssef Couto Kanaan",
+  "clube": "Int"
+ },
+ "19382229": {
+  "nome": "Vasyl Saciura",
+  "clube": "Int"
+ },
+ "19382491": {
+  "nome": "Chico",
+  "clube": "Spt"
+ },
+ "19382495": {
+  "nome": "Marlon Douglas",
+  "clube": "Spt"
+ },
+ "19382548": {
+  "nome": "Gabriel Grando",
+  "clube": "Gre"
+ },
+ "19382560": {
+  "nome": "Paulo Timm",
+  "clube": "Gre"
+ },
+ "19382563": {
+  "nome": "Paulo Augusto Da Silva Rabaldo",
+  "clube": "Gre"
+ },
+ "19382876": {
+  "nome": "Pedro Pontin",
+  "clube": "Sep"
+ },
+ "19383039": {
+  "nome": "Moises",
+  "clube": "San"
+ },
+ "19383253": {
+  "nome": "Natanael",
+  "clube": "Atm"
+ },
+ "19384379": {
+  "nome": "Patryck Lanza",
+  "clube": "Spo"
+ },
+ "19386117": {
+  "nome": "Vinicius Zanocelo",
+  "clube": "Cea"
+ },
+ "19386120": {
+  "nome": "Matheus Alexandre",
+  "clube": "Spt"
+ },
+ "19386619": {
+  "nome": "Davi Gabriel",
+  "clube": "Spt"
+ },
+ "19386907": {
+  "nome": "Vinicius Castellassi",
+  "clube": "Bra"
+ },
+ "19387017": {
+  "nome": "Lucas Freire",
+  "clube": "Cea"
+ },
+ "19387533": {
+  "nome": "Gustavo Alves Correa",
+  "clube": "Juv"
+ },
+ "19387678": {
+  "nome": "Mauricio Xavier Mandracio",
+  "clube": "Int"
+ },
+ "19387681": {
+  "nome": "Ferreira",
+  "clube": "Spo"
+ },
+ "19388028": {
+  "nome": "Paulo Bracks",
+  "clube": "Atm"
+ },
+ "19388106": {
+  "nome": "Matheus Bidu",
+  "clube": "Cor"
+ },
+ "19388634": {
+  "nome": "Gustavo Kaschel",
+  "clube": "Sep"
+ },
+ "19388971": {
+  "nome": "Joao Manoel Almeida De Oliveira",
+  "clube": "Juv"
+ },
+ "19389644": {
+  "nome": "Chrystian Barletta",
+  "clube": "Spt"
+ },
+ "19390536": {
+  "nome": "Allanzinho",
+  "clube": "For"
+ },
+ "19390539": {
+  "nome": "Matheus Araujo",
+  "clube": "Cea"
+ },
+ "19390626": {
+  "nome": "Elias Manoel",
+  "clube": "Bot"
+ },
+ "19393074": {
+  "nome": "Welliton Matheus",
+  "clube": "For"
+ },
+ "19393080": {
+  "nome": "Cristiano",
+  "clube": "Bra"
+ },
+ "19393598": {
+  "nome": "Marquinhos",
+  "clube": "Cec"
+ },
+ "19394975": {
+  "nome": "Luan Freitas",
+  "clube": "For"
+ },
+ "19398956": {
+  "nome": "Pedro Jatene Carneiro",
+  "clube": "Spo"
+ },
+ "19398958": {
+  "nome": "Naves",
+  "clube": "Sep"
+ },
+ "19398966": {
+  "nome": "Vanderlan",
+  "clube": "Bra"
+ },
+ "19398969": {
+  "nome": "Miqueias",
+  "clube": "Bah"
+ },
+ "19399114": {
+  "nome": "Diogenes",
+  "clube": "San"
+ },
+ "19400558": {
+  "nome": "Juliano Spineti",
+  "clube": "Flu"
+ },
+ "19400559": {
+  "nome": "John Kennedy",
+  "clube": "Flu"
+ },
+ "19400560": {
+  "nome": "Matheus Martins",
+  "clube": "Bot"
+ },
+ "19400947": {
+  "nome": "Josmiro De Goes Dos Santos Sobrinho",
+  "clube": "Flu"
+ },
+ "19402635": {
+  "nome": "Thiago Melo",
+  "clube": "Atm"
+ },
+ "19403840": {
+  "nome": "Micael",
+  "clube": "Sep"
+ },
+ "19404650": {
+  "nome": "Matheus Nascimento",
+  "clube": "Bot"
+ },
+ "19404758": {
+  "nome": "Halls",
+  "clube": "Spt"
+ },
+ "19406070": {
+  "nome": "Praxedes",
+  "clube": "Bra"
+ },
+ "19406135": {
+  "nome": "Martinelli",
+  "clube": "Flu"
+ },
+ "19406148": {
+  "nome": "Luiz Eduardo Baptista",
+  "clube": "Fla"
+ },
+ "19407442": {
+  "nome": "Bruninho",
+  "clube": "Bra"
+ },
+ "19408255": {
+  "nome": "Kayky",
+  "clube": "Int"
+ },
+ "19408285": {
+  "nome": "Luciano Juba",
+  "clube": "Bah"
+ },
+ "19408288": {
+  "nome": "Rodrigo Dias",
+  "clube": "Vdg"
+ },
+ "19408857": {
+  "nome": "Luiz Fernando Dos Santos",
+  "clube": "Cor"
+ },
+ "19408873": {
+  "nome": "Gilson",
+  "clube": "Bot"
+ },
+ "19408960": {
+  "nome": "Pedro Rocha",
+  "clube": "Juv"
+ },
+ "19408996": {
+  "nome": "Ian Luccas",
+  "clube": "Cec"
+ },
+ "19409015": {
+  "nome": "Caetano",
+  "clube": "Bra"
+ },
+ "19409041": {
+  "nome": "Lucas Lima",
+  "clube": "Cea"
+ },
+ "19409145": {
+  "nome": "Lucca Prior",
+  "clube": "For"
+ },
+ "19409291": {
+  "nome": "Max Alves",
+  "clube": "Spt"
+ },
+ "19409404": {
+  "nome": "Ademir",
+  "clube": "Bah"
+ },
+ "19409450": {
+  "nome": "Nata Felipe",
+  "clube": "Juv"
+ },
+ "19409769": {
+  "nome": "Lucas Barbosa",
+  "clube": "Bra"
+ },
+ "19410496": {
+  "nome": "Rafael Grazioli",
+  "clube": "Spo"
+ },
+ "19410805": {
+  "nome": "Fintelman",
+  "clube": "Vit"
+ },
+ "19411236": {
+  "nome": "Adriano",
+  "clube": "Spt"
+ },
+ "19411536": {
+  "nome": "Henrique Vianna",
+  "clube": "Flu"
+ },
+ "19411614": {
+  "nome": "Carlos Alberto",
+  "clube": "Spt"
+ },
+ "19411615": {
+  "nome": "Kawe",
+  "clube": "Bra"
+ },
+ "23289648": {
+  "nome": "Holf Flugel",
+  "clube": "Flu"
+ },
+ "23348639": {
+  "nome": "Gabriel Skinner",
+  "clube": "Fla"
+ },
+ "23381607": {
+  "nome": "Felipe Osorio Marques",
+  "clube": "Gre"
+ },
+ "27013113": {
+  "nome": "Martin Braithwaite",
+  "clube": "Gre"
+ },
+ "28047560": {
+  "nome": "Jesse Lingard",
+  "clube": "Cor"
+ },
+ "28085588": {
+  "nome": "Andreas Pereira",
+  "clube": "Sep"
+ },
+ "28086745": {
+  "nome": "Lucas Evangelista",
+  "clube": "Sep"
+ },
+ "28110305": {
+  "nome": "Benjamin Garre",
+  "clube": "Vdg"
+ },
+ "28113826": {
+  "nome": "Carlos Eduardo Santoro",
+  "clube": "Bah"
+ },
+ "29188479": {
+  "nome": "Billal Brahimi",
+  "clube": "San"
+ },
+ "30035404": {
+  "nome": "Gabriel Barbosa",
+  "clube": "San"
+ },
+ "31041605": {
+  "nome": "Gabriel Pinheiro",
+  "clube": "Juv"
+ },
+ "37018928": {
+  "nome": "Zakaria Labyad",
+  "clube": "Cor"
+ },
+ "37024470": {
+  "nome": "Memphis Depay",
+  "clube": "Cor"
+ },
+ "43036641": {
+  "nome": "Jorginho",
+  "clube": "Fla"
+ },
+ "45006664": {
+  "nome": "Ricardo Henriques Pinto",
+  "clube": "Flu"
+ },
+ "51069231": {
+  "nome": "Chico Da Costa",
+  "clube": "Cec"
+ },
+ "55012099": {
+  "nome": "Sergio Oliveira",
+  "clube": "Spt"
+ },
+ "55012984": {
+  "nome": "Cedric Soares",
+  "clube": "Spo"
+ },
+ "55022465": {
+  "nome": "Tobias Figueiredo",
+  "clube": "For"
+ },
+ "55028212": {
+  "nome": "Admar Lopes",
+  "clube": "Vdg"
+ },
+ "55035122": {
+  "nome": "Pedro Mane",
+  "clube": "Gre"
+ },
+ "55038359": {
+  "nome": "Jose Boto",
+  "clube": "Fla"
+ },
+ "55058939": {
+  "nome": "Daniel Correia",
+  "clube": "Gre"
+ },
+ "55060173": {
+  "nome": "Victor Luis",
+  "clube": "Mfc"
+ },
+ "55067831": {
+  "nome": "Joao Martins",
+  "clube": "Sep"
+ },
+ "55070266": {
+  "nome": "Rafael Ramos",
+  "clube": "Cea"
+ },
+ "55070289": {
+  "nome": "Matheus Pereira",
+  "clube": "Cec"
+ },
+ "55083804": {
+  "nome": "Lucas Cunha",
+  "clube": "Bra"
+ },
+ "67103336": {
+  "nome": "Saul",
+  "clube": "Fla"
+ },
+ "67201633": {
+  "nome": "Aitor Cantalapiedra",
+  "clube": "Vit"
+ },
+ "67259832": {
+  "nome": "Kike Saverio",
+  "clube": "Vit"
+ },
+ "67264011": {
+  "nome": "Chris Ramos",
+  "clube": "Bot"
+ },
+ "75030706": {
+  "nome": "Erick Pulgar",
+  "clube": "Fla"
+ },
+ "75032824": {
+  "nome": "Benjamin Kuscevic",
+  "clube": "For"
+ },
+ "75054809": {
+  "nome": "Gonzalo Tapia",
+  "clube": "Spo"
+ },
+ "75055397": {
+  "nome": "Alexander Aravena",
+  "clube": "Gre"
+ },
+ "76038736": {
+  "nome": "Rafael Santos Borre",
+  "clube": "Int"
+ },
+ "76040842": {
+  "nome": "Gabriel Fuentes",
+  "clube": "For"
+ },
+ "76040911": {
+  "nome": "Jorge Carrascal",
+  "clube": "Fla"
+ },
+ "76043519": {
+  "nome": "Mateo Cassierra",
+  "clube": "Atm"
+ },
+ "76047118": {
+  "nome": "Yeison Guzman",
+  "clube": "For"
+ },
+ "76047308": {
+  "nome": "Julian Millan",
+  "clube": "Flu"
+ },
+ "76047347": {
+  "nome": "Luis Sinisterra",
+  "clube": "Cec"
+ },
+ "76047487": {
+  "nome": "Carlos Cuesta",
+  "clube": "Vdg"
+ },
+ "76050433": {
+  "nome": "Jose Enamorado",
+  "clube": "Gre"
+ },
+ "76053760": {
+  "nome": "Jhon Arias",
+  "clube": "Sep"
+ },
+ "76053940": {
+  "nome": "Johan Carbonero",
+  "clube": "Int"
+ },
+ "76057670": {
+  "nome": "Marino Hinestroza",
+  "clube": "Vdg"
+ },
+ "76062954": {
+  "nome": "Santiago Moreno",
+  "clube": "Flu"
+ },
+ "77012583": {
+  "nome": "Andre Carrillo",
+  "clube": "Cor"
+ },
+ "77058584": {
+  "nome": "Erick Noriega",
+  "clube": "Gre"
+ },
+ "78044524": {
+  "nome": "Guillermo Varela",
+  "clube": "Fla"
+ },
+ "78048433": {
+  "nome": "Renzo Lopez",
+  "clube": "Vit"
+ },
+ "78059800": {
+  "nome": "Giorgian De Arrascaeta",
+  "clube": "Fla"
+ },
+ "78062244": {
+  "nome": "Carlos De Pena",
+  "clube": "Spt"
+ },
+ "78063165": {
+  "nome": "Sergio Rochet",
+  "clube": "Int"
+ },
+ "78064511": {
+  "nome": "David Terans",
+  "clube": "Flu"
+ },
+ "78064929": {
+  "nome": "Manuel Castro",
+  "clube": "Juv"
+ },
+ "78074391": {
+  "nome": "Felipe Carballo",
+  "clube": "Gre"
+ },
+ "78077014": {
+  "nome": "Joaquin Piquerez",
+  "clube": "Sep"
+ },
+ "78078127": {
+  "nome": "Matias Filippini",
+  "clube": "Int"
+ },
+ "78079054": {
+  "nome": "Agustin Santanna",
+  "clube": "Bra"
+ },
+ "78079444": {
+  "nome": "Nicolas De La Cruz",
+  "clube": "Fla"
+ },
+ "78081551": {
+  "nome": "Jose Luis Rodriguez",
+  "clube": "Vdg"
+ },
+ "78081848": {
+  "nome": "Matias Vina",
+  "clube": "Fla"
+ },
+ "78082187": {
+  "nome": "Michel Araujo",
+  "clube": "Bah"
+ },
+ "78084523": {
+  "nome": "Agustin Canobbio",
+  "clube": "Flu"
+ },
+ "78087743": {
+  "nome": "Gonzalo Alvarez",
+  "clube": "Int"
+ },
+ "78088243": {
+  "nome": "Alan Rodriguez",
+  "clube": "Int"
+ },
+ "78088631": {
+  "nome": "Santiago Rodriguez",
+  "clube": "Bot"
+ },
+ "78091915": {
+  "nome": "Christian Oliva",
+  "clube": "San"
+ },
+ "78093909": {
+  "nome": "Ignacio Laquintana",
+  "clube": "Bra"
+ },
+ "78094325": {
+  "nome": "Diego Bottaioli",
+  "clube": "Bot"
+ },
+ "78094472": {
+  "nome": "Nicolas Acevedo",
+  "clube": "Bah"
+ },
+ "78094563": {
+  "nome": "Matias Arezo",
+  "clube": "Gre"
+ },
+ "78095755": {
+  "nome": "Emiliano Martinez",
+  "clube": "Sep"
+ },
+ "78097775": {
+  "nome": "Alan Saldivia",
+  "clube": "Vdg"
+ },
+ "78097898": {
+  "nome": "Cristian Olivera",
+  "clube": "Gre"
+ },
+ "78099060": {
+  "nome": "Pedro Milans",
+  "clube": "Cor"
+ },
+ "78102041": {
+  "nome": "Guzman Rodriguez",
+  "clube": "Bra"
+ },
+ "78102818": {
+  "nome": "Thiago Borbas",
+  "clube": "Bra"
+ },
+ "79010306": {
+  "nome": "Gustavo Gomez",
+  "clube": "Sep"
+ },
+ "79013838": {
+  "nome": "Fabian Balbuena",
+  "clube": "Gre"
+ },
+ "79024221": {
+  "nome": "Junior Alonso",
+  "clube": "Atm"
+ },
+ "79029254": {
+  "nome": "Mathias Villasanti",
+  "clube": "Gre"
+ },
+ "79030409": {
+  "nome": "Antonio Galeano",
+  "clube": "Mfc"
+ },
+ "79031724": {
+  "nome": "Alexis Duarte",
+  "clube": "San"
+ },
+ "79033532": {
+  "nome": "Isidro Pitta",
+  "clube": "Bra"
+ },
+ "79033967": {
+  "nome": "Gustavo Caballero",
+  "clube": "San"
+ },
+ "79034973": {
+  "nome": "Matias Segovia",
+  "clube": "Bot"
+ },
+ "79035287": {
+  "nome": "Fabrizio Peralta",
+  "clube": "Cec"
+ },
+ "83111507": {
+  "nome": "Joao Silva",
+  "clube": "Spt"
+ },
+ "83111513": {
+  "nome": "Nuno Moreira",
+  "clube": "Vdg"
+ },
+ "83141301": {
+  "nome": "Hernani Ribeiro",
+  "clube": "Sep"
+ },
+ "83168101": {
+  "nome": "Ruben Ismael",
+  "clube": "Vit"
+ },
+ "83208229": {
+  "nome": "Kaio Pantaleao",
+  "clube": "Bot"
+ },
+ "83212491": {
+  "nome": "Pedro Raul",
+  "clube": "Cor"
+ },
+ "83219468": {
+  "nome": "Gustavo Coutinho",
+  "clube": "Spt"
+ },
+ "83254095": {
+  "nome": "Tiago Costa",
+  "clube": "Sep"
+ },
+ "83261113": {
+  "nome": "Jamerson",
+  "clube": "Vit"
+ },
+ "83278923": {
+  "nome": "Kevin Serna",
+  "clube": "Flu"
+ },
+ "83282795": {
+  "nome": "Nuno Cerdeira",
+  "clube": "Gre"
+ },
+ "83313464": {
+  "nome": "Joao Neto",
+  "clube": "Bra"
+ },
+ "83320244": {
+  "nome": "Joaquim Jorge Pinto",
+  "clube": "Cec"
+ },
+ "83335583": {
+  "nome": "Loide Augusto",
+  "clube": "Vdg"
+ },
+ "83335593": {
+  "nome": "Gabriel Xavier",
+  "clube": "Bah"
+ },
+ "84117337": {
+  "nome": "Diogo Dias",
+  "clube": "Fla"
+ },
+ "84127350": {
+  "nome": "Vitor Severino",
+  "clube": "Gre"
+ },
+ "84127532": {
+  "nome": "Carlos Martinho",
+  "clube": "Sep"
+ },
+ "86000589": {
+  "nome": "Tomas Rincon",
+  "clube": "San"
+ },
+ "86011987": {
+  "nome": "Robert Arboleda",
+  "clube": "Spo"
+ },
+ "86016866": {
+  "nome": "Carlos Gruezo",
+  "clube": "Flu"
+ },
+ "86016868": {
+  "nome": "Lucas Vivas",
+  "clube": "Flu"
+ },
+ "86039716": {
+  "nome": "Jefferson Savarino",
+  "clube": "Flu"
+ },
+ "86040729": {
+  "nome": "Yeferson Soteldo",
+  "clube": "Flu"
+ },
+ "86057914": {
+  "nome": "Felix Torres",
+  "clube": "Int"
+ },
+ "86066841": {
+  "nome": "Alan Franco",
+  "clube": "Atm"
+ },
+ "86066845": {
+  "nome": "Angelo Preciado",
+  "clube": "Atm"
+ },
+ "86066846": {
+  "nome": "Gonzalo Plata",
+  "clube": "Fla"
+ },
+ "86067902": {
+  "nome": "Diego Palacios",
+  "clube": "Cor"
+ },
+ "86078361": {
+  "nome": "Jose Hurtado",
+  "clube": "Bra"
+ },
+ "89050126": {
+  "nome": "Nuno Batista",
+  "clube": "Gre"
+ },
+ "89066556": {
+  "nome": "Sebastian Burrows",
+  "clube": "Bah"
+ },
+ "90077792": {
+  "nome": "Ricardo Lomba",
+  "clube": "Fla"
+ },
+ "91119875": {
+  "nome": "Cauly",
+  "clube": "Spo"
+ },
+ "95040312": {
+  "nome": "Murilo",
+  "clube": "Sep"
+ },
+ "95075163": {
+  "nome": "Roberto Braga",
+  "clube": "For"
+ },
+ "1394630998": {
+  "nome": "Wesley Carvalho",
+  "clube": "Cec"
+ },
+ "2000005737": {
+  "nome": "Marcio William",
+  "clube": "Vit"
+ },
+ "2000005748": {
+  "nome": "Daniel De Brito",
+  "clube": "Vdg"
+ },
+ "2000005750": {
+  "nome": "Lucas Pareto",
+  "clube": "Cor"
+ },
+ "2000005752": {
+  "nome": "Pedro Menezes",
+  "clube": "Fla"
+ },
+ "2000005754": {
+  "nome": "Lucas Albuquerque",
+  "clube": "Vdg"
+ },
+ "2000005764": {
+  "nome": "Rodrigo Tostes",
+  "clube": "Fla"
+ },
+ "2000005783": {
+  "nome": "Rafael Rech",
+  "clube": "Juv"
+ },
+ "2000006191": {
+  "nome": "Eduardo Calcada",
+  "clube": "Vdg"
+ },
+ "2000007668": {
+  "nome": "Luis Piedrahita",
+  "clube": "Bot"
+ },
+ "2000009326": {
+  "nome": "Thiago Simoes Miyasato",
+  "clube": "Bra"
+ },
+ "2000012086": {
+  "nome": "Joao Marcelo",
+  "clube": "Cor"
+ },
+ "2000015034": {
+  "nome": "Andrey Quintino",
+  "clube": "San"
+ },
+ "2000015116": {
+  "nome": "Romulo",
+  "clube": "Atm"
+ },
+ "2000015865": {
+  "nome": "Frederico Cascardo",
+  "clube": "Cec"
+ },
+ "2000015874": {
+  "nome": "Bernardo Lima",
+  "clube": "For"
+ },
+ "2000016290": {
+  "nome": "Marcos Gontijo",
+  "clube": "Cea"
+ },
+ "2000017278": {
+  "nome": "Ramon Sosa",
+  "clube": "Sep"
+ },
+ "2000018045": {
+  "nome": "Miguel Monsalve",
+  "clube": "Gre"
+ },
+ "2000020158": {
+  "nome": "Arthur Peixoto",
+  "clube": "Fla"
+ },
+ "2000020492": {
+  "nome": "Anthoni",
+  "clube": "Int"
+ },
+ "2000021000": {
+  "nome": "Edson Carioca",
+  "clube": "Mfc"
+ },
+ "2000022861": {
+  "nome": "Joao Marcelo",
+  "clube": "Cec"
+ },
+ "2000022936": {
+  "nome": "Diego Hernandez",
+  "clube": "Bot"
+ },
+ "2000027008": {
+  "nome": "Guilherme",
+  "clube": "Bra"
+ },
+ "2000028409": {
+  "nome": "Raniele",
+  "clube": "Cor"
+ },
+ "2000029408": {
+  "nome": "Gabriel Delfim",
+  "clube": "Atm"
+ },
+ "2000030824": {
+  "nome": "Janderson Bessa",
+  "clube": "Cea"
+ },
+ "2000031431": {
+  "nome": "Arthur Sousa",
+  "clube": "Bra"
+ },
+ "2000032198": {
+  "nome": "Luciano",
+  "clube": "Spt"
+ },
+ "2000032325": {
+  "nome": "Victor Hugo",
+  "clube": "Bra"
+ },
+ "2000034893": {
+  "nome": "Andre Henrique",
+  "clube": "Gre"
+ },
+ "2000035202": {
+  "nome": "Jemmes",
+  "clube": "Flu"
+ },
+ "2000041525": {
+  "nome": "Ricardo Cesar",
+  "clube": "Spo"
+ },
+ "2000044144": {
+  "nome": "Mateo Sanabria",
+  "clube": "Bah"
+ },
+ "2000044526": {
+  "nome": "Jose Manuel Lopez",
+  "clube": "Sep"
+ },
+ "2000044680": {
+  "nome": "Agustin Giay",
+  "clube": "Sep"
+ },
+ "2000045373": {
+  "nome": "Sergio Campolina",
+  "clube": "Cec"
+ },
+ "2000045379": {
+  "nome": "Brunno Noce",
+  "clube": "Bot"
+ },
+ "2000045380": {
+  "nome": "Antonio Almeida",
+  "clube": "Atm"
+ },
+ "2000045429": {
+  "nome": "Murilo Silva Tanganeli",
+  "clube": "Cec"
+ },
+ "2000045677": {
+  "nome": "Iarley Barros",
+  "clube": "For"
+ },
+ "2000046842": {
+  "nome": "Lucas Drubscky",
+  "clube": "Cea"
+ },
+ "2000048407": {
+  "nome": "Leo Naldi",
+  "clube": "Vit"
+ },
+ "2000048774": {
+  "nome": "Alan Minda",
+  "clube": "Atm"
+ },
+ "2000048789": {
+  "nome": "Felipinho",
+  "clube": "Spt"
+ },
+ "2000050581": {
+  "nome": "Luis Hoenen",
+  "clube": "Spo"
+ },
+ "2000050657": {
+  "nome": "Victor Hugo",
+  "clube": "Atm"
+ },
+ "2000051680": {
+  "nome": "Jose Maria Herrera",
+  "clube": "Bra"
+ },
+ "2000052034": {
+  "nome": "William Batista",
+  "clube": "Cor"
+ },
+ "2000052804": {
+  "nome": "Newton",
+  "clube": "Bot"
+ },
+ "2000053834": {
+  "nome": "Rwan Cruz",
+  "clube": "Bot"
+ },
+ "2000060885": {
+  "nome": "Paulo Baya",
+  "clube": "For"
+ },
+ "2000061876": {
+  "nome": "Michel",
+  "clube": "Sep"
+ },
+ "2000061944": {
+  "nome": "Bruno Frota Presotto",
+  "clube": "Sep"
+ },
+ "2000061948": {
+  "nome": "Pedro Henrique Avila De Salles",
+  "clube": "Spo"
+ },
+ "2000062966": {
+  "nome": "Kaique",
+  "clube": "Sep"
+ },
+ "2000064048": {
+  "nome": "Thiago Beltrame",
+  "clube": "Gre"
+ },
+ "2000064082": {
+  "nome": "Cuiabano",
+  "clube": "Vdg"
+ },
+ "2000064779": {
+  "nome": "Matheus Curopos Frasson Sylvestre",
+  "clube": "Vdg"
+ },
+ "2000067374": {
+  "nome": "Durcesio Mello",
+  "clube": "Bot"
+ },
+ "2000067952": {
+  "nome": "Yago",
+  "clube": "Flu"
+ },
+ "2000068889": {
+  "nome": "Marcio Puglia",
+  "clube": "Fla"
+ },
+ "2000068896": {
+  "nome": "Leandro Costa Barros",
+  "clube": "For"
+ },
+ "2000071099": {
+  "nome": "Ronald",
+  "clube": "Gre"
+ },
+ "2000071599": {
+  "nome": "Alessandro Barcellos",
+  "clube": "Int"
+ },
+ "2000072571": {
+  "nome": "Lucas Justen",
+  "clube": "Flu"
+ },
+ "2000073487": {
+  "nome": "Lucas Andre",
+  "clube": "Spt"
+ },
+ "2000075954": {
+  "nome": "Leo Aragao",
+  "clube": "Cec"
+ },
+ "2000076467": {
+  "nome": "Mateo Ponte",
+  "clube": "Bot"
+ },
+ "2000079323": {
+  "nome": "Jefte",
+  "clube": "Sep"
+ },
+ "2000079325": {
+  "nome": "Joao Neto",
+  "clube": "Flu"
+ },
+ "2000079351": {
+  "nome": "Fabiano Ribeiro",
+  "clube": "Flu"
+ },
+ "2000079353": {
+  "nome": "Davi Schuindt",
+  "clube": "Flu"
+ },
+ "2000083066": {
+  "nome": "Matheus Frigo Furtado",
+  "clube": "Spo"
+ },
+ "2000083129": {
+  "nome": "Gustavo Martins",
+  "clube": "Gre"
+ },
+ "2000084501": {
+  "nome": "Alexsander",
+  "clube": "Atm"
+ },
+ "2000084596": {
+  "nome": "Damian Bobadilla",
+  "clube": "Spo"
+ },
+ "2000085002": {
+  "nome": "Victor Gabriel",
+  "clube": "Int"
+ },
+ "2000085193": {
+  "nome": "Sandro Gomes",
+  "clube": "Fla"
+ },
+ "2000085805": {
+  "nome": "Jp Galvao",
+  "clube": "Bot"
+ },
+ "2000086175": {
+  "nome": "Kaiki",
+  "clube": "Cec"
+ },
+ "2000086336": {
+  "nome": "Caio Garcia",
+  "clube": "Fla"
+ },
+ "2000086446": {
+  "nome": "Nathan Fernandes",
+  "clube": "Bot"
+ },
+ "2000087042": {
+  "nome": "Luiz Carlos De Azevedo",
+  "clube": "Atm"
+ },
+ "2000087223": {
+  "nome": "Lucas Villalba",
+  "clube": "Bot"
+ },
+ "2000087710": {
+  "nome": "Biel Fonseca",
+  "clube": "Spt"
+ },
+ "2000088460": {
+  "nome": "Miguel Terceros",
+  "clube": "San"
+ },
+ "2000088465": {
+  "nome": "Lucca",
+  "clube": "Cea"
+ },
+ "2000088563": {
+  "nome": "Ignacio Sosa",
+  "clube": "Bra"
+ },
+ "2000090213": {
+  "nome": "Facundo Bernal",
+  "clube": "Flu"
+ },
+ "2000090813": {
+  "nome": "Vinicius Castro",
+  "clube": "Atm"
+ },
+ "2000090814": {
+  "nome": "Haroldo Aleixo",
+  "clube": "Atm"
+ },
+ "2000090823": {
+  "nome": "Matheus Franca",
+  "clube": "Vdg"
+ },
+ "2000091022": {
+  "nome": "Marcos Paulo",
+  "clube": "Juv"
+ },
+ "2000091502": {
+  "nome": "Vinicinho",
+  "clube": "Bra"
+ },
+ "2000091753": {
+  "nome": "Cassio Acosta",
+  "clube": "For"
+ },
+ "2000091965": {
+  "nome": "Estevao",
+  "clube": "Int"
+ },
+ "2000094147": {
+  "nome": "Joaquin Lavega",
+  "clube": "Flu"
+ },
+ "2000094268": {
+  "nome": "Nathan",
+  "clube": "Bra"
+ },
+ "2000094935": {
+  "nome": "Michele Aline Kanitz",
+  "clube": "Int"
+ },
+ "2000095783": {
+  "nome": "Vitor Roque",
+  "clube": "Sep"
+ },
+ "2000096925": {
+  "nome": "Victon Miller",
+  "clube": "Vit"
+ },
+ "2000100102": {
+  "nome": "Dyogo Alves",
+  "clube": "Fla"
+ },
+ "2000101501": {
+  "nome": "Dieguinho",
+  "clube": "Cea"
+ },
+ "2000102923": {
+  "nome": "Maneca Tanajura",
+  "clube": "Vit"
+ },
+ "2000106325": {
+  "nome": "Matheus Steinmetz Coelho",
+  "clube": "Spo"
+ },
+ "2000109525": {
+  "nome": "Leo Mana",
+  "clube": "Cor"
+ },
+ "2000109527": {
+  "nome": "Kaue",
+  "clube": "Cor"
+ },
+ "2000109732": {
+  "nome": "Tulio Flores",
+  "clube": "San"
+ },
+ "2000109747": {
+  "nome": "Renato Marques",
+  "clube": "Mfc"
+ },
+ "2000109749": {
+  "nome": "Rodriguinho",
+  "clube": "For"
+ },
+ "2000109798": {
+  "nome": "Pedrao",
+  "clube": "Cec"
+ },
+ "2000110493": {
+  "nome": "Marcelo Grimaldi",
+  "clube": "Bot"
+ },
+ "2000110496": {
+  "nome": "Emerson Santana",
+  "clube": "For"
+ },
+ "2000110501": {
+  "nome": "Kelmo Bonatto",
+  "clube": "For"
+ },
+ "2000110505": {
+  "nome": "Guto Albuquerque",
+  "clube": "For"
+ },
+ "2000110760": {
+  "nome": "Negrucci",
+  "clube": "Spo"
+ },
+ "2000110771": {
+  "nome": "Kaue Canela",
+  "clube": "For"
+ },
+ "2000110784": {
+  "nome": "Mateus Manso",
+  "clube": "Spo"
+ },
+ "2000110786": {
+  "nome": "Matheus Belem",
+  "clube": "Spo"
+ },
+ "2000111102": {
+  "nome": "Ythallo",
+  "clube": "Bot"
+ },
+ "2000112097": {
+  "nome": "Athos Thawan",
+  "clube": "Gre"
+ },
+ "2000115080": {
+  "nome": "Werik Popo",
+  "clube": "Bra"
+ },
+ "2000117762": {
+  "nome": "Kayky Almeida",
+  "clube": "Flu"
+ },
+ "2000118012": {
+  "nome": "Rodrigo Saar",
+  "clube": "Bot"
+ },
+ "2000118015": {
+  "nome": "Eduester Lopes",
+  "clube": "Bah"
+ },
+ "2000118059": {
+  "nome": "Mario Jorge",
+  "clube": "Int"
+ },
+ "2000118650": {
+  "nome": "Jeffinho",
+  "clube": "Bot"
+ },
+ "2000119588": {
+  "nome": "Douglas Neso",
+  "clube": "Spt"
+ },
+ "2000123119": {
+  "nome": "Julio",
+  "clube": "Cea"
+ },
+ "2000123508": {
+  "nome": "Felipe Coimbra",
+  "clube": "Bra"
+ },
+ "2000125272": {
+  "nome": "Gustavo Prado",
+  "clube": "Int"
+ },
+ "2000125296": {
+  "nome": "Patrick",
+  "clube": "Atm"
+ },
+ "2000125496": {
+  "nome": "Caio Maia",
+  "clube": "Atm"
+ },
+ "2000125580": {
+  "nome": "Joao Fernandes",
+  "clube": "San"
+ },
+ "2000125585": {
+  "nome": "Marcelinho",
+  "clube": "Bra"
+ },
+ "2000125595": {
+  "nome": "Vitinho",
+  "clube": "Cec"
+ },
+ "2000128168": {
+  "nome": "Mairon Rodrigues",
+  "clube": "Spo"
+ },
+ "2000128772": {
+  "nome": "Mateus Carvalho",
+  "clube": "Vdg"
+ },
+ "2000132673": {
+  "nome": "Gustavo Marques",
+  "clube": "Bra"
+ },
+ "2000134278": {
+  "nome": "Joao Marcos",
+  "clube": "Cor"
+ },
+ "2000134280": {
+  "nome": "Arthur Souza De Vito",
+  "clube": "Fla"
+ },
+ "2000135306": {
+  "nome": "Nathan Camargo",
+  "clube": "Bra"
+ },
+ "2000135310": {
+  "nome": "Gustavo Reis",
+  "clube": "Bra"
+ },
+ "2000136136": {
+  "nome": "Diego Fernandes",
+  "clube": "Atm"
+ },
+ "2000136297": {
+  "nome": "Robert Renan",
+  "clube": "Vdg"
+ },
+ "2000137880": {
+  "nome": "Japa",
+  "clube": "Cec"
+ },
+ "2000139248": {
+  "nome": "Joao Moreira",
+  "clube": "Spo"
+ },
+ "2000139467": {
+  "nome": "Jose Breno",
+  "clube": "Vit"
+ },
+ "2000139477": {
+  "nome": "Robert Santos",
+  "clube": "Atm"
+ },
+ "2000141091": {
+  "nome": "Rodriguinho",
+  "clube": "Bra"
+ },
+ "2000141229": {
+  "nome": "Pedro Sotero",
+  "clube": "Cor"
+ },
+ "2000141600": {
+  "nome": "Rodrigo Atencio",
+  "clube": "Spt"
+ },
+ "2000142442": {
+  "nome": "Rodrigo Salvador",
+  "clube": "Bra"
+ },
+ "2000143441": {
+  "nome": "Erick Pulga",
+  "clube": "Bah"
+ },
+ "2000143809": {
+  "nome": "Lyncon",
+  "clube": "Vdg"
+ },
+ "2000144084": {
+  "nome": "Gilberto Junior Santos",
+  "clube": "Atm"
+ },
+ "2000144978": {
+  "nome": "Felipe Marques",
+  "clube": "Cec"
+ },
+ "2000144982": {
+  "nome": "Claudio De Andrade",
+  "clube": "Bra"
+ },
+ "2000144983": {
+  "nome": "Henrique Americo",
+  "clube": "Cec"
+ },
+ "2000144991": {
+  "nome": "Mairon Cesar",
+  "clube": "Cec"
+ },
+ "2000145151": {
+  "nome": "Gustavo Somavilla",
+  "clube": "Spo"
+ },
+ "2000147395": {
+  "nome": "Alison Henry",
+  "clube": "Cea"
+ },
+ "2000147604": {
+  "nome": "Adrian Vaccarini",
+  "clube": "Atm"
+ },
+ "2000148108": {
+  "nome": "Moises Campos",
+  "clube": "Cor"
+ },
+ "2000148134": {
+  "nome": "Igor Cotrim",
+  "clube": "Flu"
+ },
+ "2000148337": {
+  "nome": "Douglas Bazolli",
+  "clube": "San"
+ },
+ "2000148368": {
+  "nome": "Anderson Ferreira",
+  "clube": "For"
+ },
+ "2000148372": {
+  "nome": "Hercules",
+  "clube": "Flu"
+ },
+ "2000148702": {
+  "nome": "Lucas Andrino",
+  "clube": "Juv"
+ },
+ "2000148761": {
+  "nome": "Andres Gomez",
+  "clube": "Vdg"
+ },
+ "2000149221": {
+  "nome": "Betinho",
+  "clube": "Mfc"
+ },
+ "2000151009": {
+  "nome": "Mario Henrique",
+  "clube": "Vit"
+ },
+ "2000153029": {
+  "nome": "Fabio Mota",
+  "clube": "Vit"
+ },
+ "2000154650": {
+  "nome": "Leila Pereira",
+  "clube": "Sep"
+ },
+ "2000154738": {
+  "nome": "Sidney Rodrigues",
+  "clube": "Sep"
+ },
+ "2000154740": {
+  "nome": "Michael De Paula",
+  "clube": "Cor"
+ },
+ "2000155477": {
+  "nome": "Marcelo Ajul",
+  "clube": "Spt"
+ },
+ "2000155489": {
+  "nome": "Henry Mosquera",
+  "clube": "Bra"
+ },
+ "2000155523": {
+  "nome": "Andriy Fedchenkov",
+  "clube": "Fla"
+ },
+ "2000157044": {
+  "nome": "Rai",
+  "clube": "Juv"
+ },
+ "2000157062": {
+  "nome": "Kawan",
+  "clube": "Bot"
+ },
+ "2000157242": {
+  "nome": "Pedro Martins",
+  "clube": "For"
+ },
+ "2000157410": {
+  "nome": "Wallace Yan",
+  "clube": "Fla"
+ },
+ "2000157429": {
+  "nome": "Gustavinho",
+  "clube": "Bra"
+ },
+ "2000157963": {
+  "nome": "Marcelo Arouca",
+  "clube": "Vdg"
+ },
+ "2000157966": {
+  "nome": "Alexandre Cosme",
+  "clube": "Atm"
+ },
+ "2000157968": {
+  "nome": "Lucas Vergne",
+  "clube": "Vdg"
+ },
+ "2000157972": {
+  "nome": "Thiago Hildebrandt",
+  "clube": "Vdg"
+ },
+ "2000157983": {
+  "nome": "Ricardo Do Carmo Bastos",
+  "clube": "Vdg"
+ },
+ "2000157987": {
+  "nome": "Aldo Jose Carvalho Barreto De Mattos",
+  "clube": "Vdg"
+ },
+ "2000157999": {
+  "nome": "Andre Martins",
+  "clube": "Cea"
+ },
+ "2000158097": {
+  "nome": "Antonio Garcia",
+  "clube": "Flu"
+ },
+ "2000158102": {
+  "nome": "Saulo Garcia",
+  "clube": "Flu"
+ },
+ "2000158108": {
+  "nome": "Ricardo Olivero",
+  "clube": "Flu"
+ },
+ "2000158419": {
+  "nome": "Andre Biondi",
+  "clube": "Atm"
+ },
+ "2000158423": {
+  "nome": "Thales Lopasso",
+  "clube": "Vit"
+ },
+ "2000158496": {
+  "nome": "Jonathan Jesus",
+  "clube": "Cec"
+ },
+ "2000158537": {
+  "nome": "Marcelo Matos",
+  "clube": "Fla"
+ },
+ "2000158726": {
+  "nome": "Lucas Mallet",
+  "clube": "Fla"
+ },
+ "2000159401": {
+  "nome": "Wesley Santos",
+  "clube": "Mfc"
+ },
+ "2000159813": {
+  "nome": "Henrique Letti",
+  "clube": "Gre"
+ },
+ "2000159964": {
+  "nome": "Johan Rojas",
+  "clube": "Vdg"
+ },
+ "2000160265": {
+  "nome": "Jhonnatha",
+  "clube": "For"
+ },
+ "2000161825": {
+  "nome": "Ryan",
+  "clube": "Cor"
+ },
+ "2000161829": {
+  "nome": "Breno Bidon",
+  "clube": "Cor"
+ },
+ "2000163248": {
+  "nome": "Rodrigo De Carvalho",
+  "clube": "Vit"
+ },
+ "2000163418": {
+  "nome": "Ze Henrique",
+  "clube": "Juv"
+ },
+ "2000163492": {
+  "nome": "Lucas Pereira De Andrade",
+  "clube": "Sep"
+ },
+ "2000163496": {
+  "nome": "William Santos",
+  "clube": "Bot"
+ },
+ "2000164115": {
+  "nome": "Rennato Bennata",
+  "clube": "Cea"
+ },
+ "2000164399": {
+  "nome": "Lele",
+  "clube": "Flu"
+ },
+ "2000164418": {
+  "nome": "Evertton Araujo",
+  "clube": "Fla"
+ },
+ "2000164935": {
+  "nome": "John Textor",
+  "clube": "Bot"
+ },
+ "2000165918": {
+  "nome": "Vitor Andre",
+  "clube": "Sep"
+ },
+ "2000166135": {
+  "nome": "Alessandro Brito",
+  "clube": "Bot"
+ },
+ "2000166169": {
+  "nome": "Tomas Perez",
+  "clube": "Atm"
+ },
+ "2000166477": {
+  "nome": "Andre Junior",
+  "clube": "Bra"
+ },
+ "2000167474": {
+  "nome": "Roberto Afonseca Junior",
+  "clube": "Atm"
+ },
+ "2000167478": {
+  "nome": "Guilherme Silva",
+  "clube": "Cec"
+ },
+ "2000169216": {
+  "nome": "Bill",
+  "clube": "Fla"
+ },
+ "2000170179": {
+  "nome": "Jordan Barrera",
+  "clube": "Bot"
+ },
+ "2000170757": {
+  "nome": "Cadu",
+  "clube": "Atm"
+ },
+ "2000172615": {
+  "nome": "Nicola Profeta",
+  "clube": "San"
+ },
+ "2000177707": {
+  "nome": "Juan Sebastian Palacios",
+  "clube": "Flu"
+ },
+ "2000182394": {
+  "nome": "Joelson Clemente",
+  "clube": "Mfc"
+ },
+ "2000183741": {
+  "nome": "Weliton",
+  "clube": "Juv"
+ },
+ "2000185061": {
+  "nome": "Gui Meira",
+  "clube": "Cec"
+ },
+ "2000188763": {
+  "nome": "Alvaro Montoro",
+  "clube": "Bot"
+ },
+ "2000192476": {
+  "nome": "Bahia",
+  "clube": "Cor"
+ },
+ "2000192810": {
+  "nome": "Patrick Passos",
+  "clube": "Bot"
+ },
+ "2000193200": {
+  "nome": "Enzo Monteiro",
+  "clube": "San"
+ },
+ "2000193222": {
+  "nome": "Nicolas",
+  "clube": "Spo"
+ },
+ "2000193512": {
+  "nome": "Ruben Lezcano",
+  "clube": "Flu"
+ },
+ "2000194811": {
+  "nome": "Leonel Perez",
+  "clube": "Gre"
+ },
+ "2000197765": {
+  "nome": "Filipe Gabriel",
+  "clube": "Bra"
+ },
+ "2000197766": {
+  "nome": "Dija",
+  "clube": "Bra"
+ },
+ "2000202590": {
+  "nome": "Adriano Bispo",
+  "clube": "Cea"
+ },
+ "2000202623": {
+  "nome": "Luisao",
+  "clube": "San"
+ },
+ "2000204085": {
+  "nome": "Joao Vitor",
+  "clube": "Cor"
+ },
+ "2000204242": {
+  "nome": "Isac",
+  "clube": "Spo"
+ },
+ "2000205369": {
+  "nome": "Kaua Brasilia",
+  "clube": "Flu"
+ },
+ "2000205667": {
+  "nome": "Enzo Boer",
+  "clube": "San"
+ },
+ "2000206422": {
+  "nome": "Maik",
+  "clube": "Spo"
+ },
+ "2000206445": {
+  "nome": "Raphael Gogoni",
+  "clube": "Spo"
+ },
+ "2000206844": {
+  "nome": "Bernardo",
+  "clube": "San"
+ },
+ "2000206863": {
+  "nome": "Gabriel Bontempo",
+  "clube": "San"
+ },
+ "2000206870": {
+  "nome": "Gustavo Henrique",
+  "clube": "San"
+ },
+ "2000206879": {
+  "nome": "Hyan",
+  "clube": "San"
+ },
+ "2000206937": {
+  "nome": "Rodrigo Falcao",
+  "clube": "San"
+ },
+ "2000207203": {
+  "nome": "Kenay",
+  "clube": "San"
+ },
+ "2000207206": {
+  "nome": "Kevyson",
+  "clube": "San"
+ },
+ "2000207226": {
+  "nome": "Orlando Neto",
+  "clube": "Spt"
+ },
+ "2000207233": {
+  "nome": "Samuel",
+  "clube": "Atm"
+ },
+ "2000207459": {
+  "nome": "Felipe Laurindo",
+  "clube": "San"
+ },
+ "2000208313": {
+  "nome": "Renato",
+  "clube": "Cor"
+ },
+ "2000208317": {
+  "nome": "Gustavo Henrique",
+  "clube": "Bra"
+ },
+ "2000208346": {
+  "nome": "Kayke",
+  "clube": "Cor"
+ },
+ "2000208421": {
+  "nome": "Leo Agostinho",
+  "clube": "Cor"
+ },
+ "2000208429": {
+  "nome": "Felipe Longo",
+  "clube": "Cor"
+ },
+ "2000208450": {
+  "nome": "Joao Pedro",
+  "clube": "Cor"
+ },
+ "2000208694": {
+  "nome": "William Magiezi",
+  "clube": "For"
+ },
+ "2000208699": {
+  "nome": "Yago",
+  "clube": "Cor"
+ },
+ "2000208899": {
+  "nome": "Diego Tarzia",
+  "clube": "Vit"
+ },
+ "2000209008": {
+  "nome": "Matheus Pedro",
+  "clube": "Flu"
+ },
+ "2000210537": {
+  "nome": "Felipe Preis",
+  "clube": "Spo"
+ },
+ "2000210805": {
+  "nome": "Alexandre",
+  "clube": "Bra"
+ },
+ "2000210808": {
+  "nome": "Gabriel Abdias",
+  "clube": "Bot"
+ },
+ "2000212612": {
+  "nome": "Mateusinho",
+  "clube": "Vit"
+ },
+ "2000213003": {
+  "nome": "Kauan Toledo",
+  "clube": "Bot"
+ },
+ "2000214126": {
+  "nome": "Luciano",
+  "clube": "Spo"
+ },
+ "2000214127": {
+  "nome": "Paulinho",
+  "clube": "Spo"
+ },
+ "2000217701": {
+  "nome": "Lawan",
+  "clube": "Vit"
+ },
+ "2000217705": {
+  "nome": "Vitinho",
+  "clube": "Bah"
+ },
+ "2000218038": {
+  "nome": "Gabriel Lopes",
+  "clube": "Bra"
+ },
+ "2000218103": {
+  "nome": "Rickelme",
+  "clube": "Spo"
+ },
+ "2000218474": {
+  "nome": "Rodrigo Cezar",
+  "clube": "San"
+ },
+ "2000218543": {
+  "nome": "Guilherme Batista",
+  "clube": "Spo"
+ },
+ "2000218551": {
+  "nome": "Phillipe Gabriel",
+  "clube": "Vdg"
+ },
+ "2000218553": {
+  "nome": "Bernardo Valim",
+  "clube": "Bot"
+ },
+ "2000218555": {
+  "nome": "Jp Chermont",
+  "clube": "San"
+ },
+ "2000218638": {
+  "nome": "Matheus Ferreira",
+  "clube": "Spo"
+ },
+ "2000218834": {
+  "nome": "Paulinho",
+  "clube": "For"
+ },
+ "2000218862": {
+  "nome": "Lucas Eduardo",
+  "clube": "Vdg"
+ },
+ "2000218896": {
+  "nome": "Pablo",
+  "clube": "Vdg"
+ },
+ "2000218934": {
+  "nome": "Ray",
+  "clube": "Juv"
+ },
+ "2000218959": {
+  "nome": "Gb",
+  "clube": "For"
+ },
+ "2000218963": {
+  "nome": "Guilherme Estrella",
+  "clube": "Vdg"
+ },
+ "2000218966": {
+  "nome": "Allan Vitor",
+  "clube": "Vdg"
+ },
+ "2000218977": {
+  "nome": "Jp",
+  "clube": "Vdg"
+ },
+ "2000219162": {
+  "nome": "Gabriel Justino",
+  "clube": "Bot"
+ },
+ "2000219167": {
+  "nome": "Fabiano",
+  "clube": "Sep"
+ },
+ "2000219252": {
+  "nome": "Lucyo",
+  "clube": "Bot"
+ },
+ "2000219322": {
+  "nome": "Luiz Gustavo",
+  "clube": "Bah"
+ },
+ "2000219342": {
+  "nome": "Melk",
+  "clube": "Cea"
+ },
+ "2000219347": {
+  "nome": "Andre",
+  "clube": "Vdg"
+ },
+ "2000219458": {
+  "nome": "Igor Toledo",
+  "clube": "Atm"
+ },
+ "2000219476": {
+  "nome": "Gustavo Cintra",
+  "clube": "Flu"
+ },
+ "2000219495": {
+  "nome": "Vitor Manoel",
+  "clube": "Cor"
+ },
+ "2000219519": {
+  "nome": "Agner",
+  "clube": "Flu"
+ },
+ "2000219524": {
+  "nome": "Luis Fernando",
+  "clube": "Flu"
+ },
+ "2000219528": {
+  "nome": "Dohmann",
+  "clube": "Flu"
+ },
+ "2000219535": {
+  "nome": "Joao Lourenco",
+  "clube": "Flu"
+ },
+ "2000219543": {
+  "nome": "Joao Loiola",
+  "clube": "Flu"
+ },
+ "2000219547": {
+  "nome": "Janderson",
+  "clube": "Flu"
+ },
+ "2000219590": {
+  "nome": "Enzo",
+  "clube": "Flu"
+ },
+ "2000219592": {
+  "nome": "Marlon",
+  "clube": "Flu"
+ },
+ "2000219596": {
+  "nome": "Daniel Pinheiro",
+  "clube": "Flu"
+ },
+ "2000219665": {
+  "nome": "Fabinho",
+  "clube": "For"
+ },
+ "2000220154": {
+  "nome": "Rafael Porfirio",
+  "clube": "Bot"
+ },
+ "2000220366": {
+  "nome": "Freitas",
+  "clube": "Flu"
+ },
+ "2000220505": {
+  "nome": "Jhonny",
+  "clube": "Flu"
+ },
+ "2000220972": {
+  "nome": "Victor Broglio Soraggi",
+  "clube": "Sep"
+ },
+ "2000221003": {
+  "nome": "Guilherme Madureira Martins Da Silva",
+  "clube": "Sep"
+ },
+ "2000221004": {
+  "nome": "Wallace Clemente Pessoa",
+  "clube": "Bra"
+ },
+ "2000221411": {
+  "nome": "Allan",
+  "clube": "Sep"
+ },
+ "2000221612": {
+  "nome": "Cesar",
+  "clube": "For"
+ },
+ "2000221613": {
+  "nome": "Figueiredo",
+  "clube": "Sep"
+ },
+ "2000222756": {
+  "nome": "Caio Gilli",
+  "clube": "For"
+ },
+ "2000223472": {
+  "nome": "Marcos Victor",
+  "clube": "Bah"
+ },
+ "2000226718": {
+  "nome": "Filipe Dias Duarte",
+  "clube": "Bah"
+ },
+ "2000227264": {
+  "nome": "Joao Dalla Corte",
+  "clube": "Int"
+ },
+ "2000227269": {
+  "nome": "Vitor Gabriel",
+  "clube": "Atm"
+ },
+ "2000229210": {
+  "nome": "Lenin",
+  "clube": "For"
+ },
+ "2000229212": {
+  "nome": "Lucas Yan",
+  "clube": "San"
+ },
+ "2000229237": {
+  "nome": "Ryan Felipe",
+  "clube": "Atm"
+ },
+ "2000230119": {
+  "nome": "Ivan Roman",
+  "clube": "Atm"
+ },
+ "2000230402": {
+  "nome": "Tomas Roco",
+  "clube": "For"
+ },
+ "2000231428": {
+  "nome": "Pablo",
+  "clube": "Cea"
+ },
+ "2000231497": {
+  "nome": "Jhoan Hernandez",
+  "clube": "Bot"
+ },
+ "2000231502": {
+  "nome": "Leandro Del Giudice Macagnan",
+  "clube": "Bah"
+ },
+ "2000231504": {
+  "nome": "Diogo Missena Perpetuo",
+  "clube": "Bah"
+ },
+ "2000231505": {
+  "nome": "Leandro Serafim Da Silva",
+  "clube": "Cor"
+ },
+ "2000231600": {
+  "nome": "Athyrson",
+  "clube": "Atm"
+ },
+ "2000232771": {
+  "nome": "Leonardo Galbes",
+  "clube": "Bah"
+ },
+ "2000233713": {
+  "nome": "Pedro Martins",
+  "clube": "Spt"
+ },
+ "2000233762": {
+  "nome": "Ricardo Pagani",
+  "clube": "Fla"
+ },
+ "2000235678": {
+  "nome": "Guilherme Moura",
+  "clube": "For"
+ },
+ "2000238718": {
+  "nome": "Cristhian Loor",
+  "clube": "Bot"
+ },
+ "2000238729": {
+  "nome": "Keny Arroyo",
+  "clube": "Cec"
+ },
+ "2000238751": {
+  "nome": "Jairo Reyes",
+  "clube": "For"
+ },
+ "2000238766": {
+  "nome": "Neto Pereira",
+  "clube": "Vdg"
+ },
+ "2000239484": {
+  "nome": "Daniel Troiano",
+  "clube": "For"
+ },
+ "2000239562": {
+  "nome": "Daniel Sales",
+  "clube": "Fla"
+ },
+ "2000239907": {
+  "nome": "Leo Ducci",
+  "clube": "Bra"
+ },
+ "2000240625": {
+  "nome": "Caua Lucca",
+  "clube": "Spo"
+ },
+ "2000240634": {
+  "nome": "Filipe Dias",
+  "clube": "Juv"
+ },
+ "2000240912": {
+  "nome": "Alix Vinicius",
+  "clube": "Bra"
+ },
+ "2000241159": {
+  "nome": "Roman Gomez",
+  "clube": "Bah"
+ },
+ "2000241678": {
+  "nome": "Lorran",
+  "clube": "Fla"
+ },
+ "2000243117": {
+  "nome": "Otavio",
+  "clube": "Cec"
+ },
+ "2000243132": {
+  "nome": "Rhuan Gabriel",
+  "clube": "Cec"
+ },
+ "2000243133": {
+  "nome": "Ruan Indio",
+  "clube": "Cec"
+ },
+ "2000243377": {
+  "nome": "Kauan",
+  "clube": "For"
+ },
+ "2000245698": {
+  "nome": "Vinicius Lago",
+  "clube": "Bra"
+ },
+ "2000245921": {
+  "nome": "Kaio Cesar",
+  "clube": "Cor"
+ },
+ "2000246368": {
+  "nome": "Aranha",
+  "clube": "Sep"
+ },
+ "2000246371": {
+  "nome": "David Kaua",
+  "clube": "Atm"
+ },
+ "2000246376": {
+  "nome": "Gilberto",
+  "clube": "Sep"
+ },
+ "2000246648": {
+  "nome": "Abner",
+  "clube": "Juv"
+ },
+ "2000246650": {
+  "nome": "Clebio",
+  "clube": "Juv"
+ },
+ "2000248677": {
+  "nome": "Rayan Lucas",
+  "clube": "Fla"
+ },
+ "2000248821": {
+  "nome": "Cauan Barros",
+  "clube": "Vdg"
+ },
+ "2000251097": {
+  "nome": "Fernando Gabriel",
+  "clube": "Cea"
+ },
+ "2000253051": {
+  "nome": "Iba Ly",
+  "clube": "Spo"
+ },
+ "2000255804": {
+  "nome": "Ze Guilherme",
+  "clube": "Bah"
+ },
+ "2000255823": {
+  "nome": "Viery",
+  "clube": "Gre"
+ },
+ "2000256285": {
+  "nome": "Luiz Eduardo",
+  "clube": "Juv"
+ },
+ "2000256316": {
+  "nome": "Caio Araujo",
+  "clube": "San"
+ },
+ "2000256321": {
+  "nome": "Jefinho",
+  "clube": "Gre"
+ },
+ "2000257120": {
+  "nome": "Vini Oliveira",
+  "clube": "Bra"
+ },
+ "2000262295": {
+  "nome": "Gustavo Ramalho",
+  "clube": "Flu"
+ },
+ "2000262853": {
+  "nome": "Paulo Vitor",
+  "clube": "Atm"
+ },
+ "2000263056": {
+  "nome": "Fabio Matheus",
+  "clube": "Spt"
+ },
+ "2000263547": {
+  "nome": "Isack",
+  "clube": "Flu"
+ },
+ "2000263566": {
+  "nome": "Ryan Francisco",
+  "clube": "Spo"
+ },
+ "2000263996": {
+  "nome": "Riquelme Fillipi",
+  "clube": "Sep"
+ },
+ "2000263998": {
+  "nome": "Benedetti",
+  "clube": "Sep"
+ },
+ "2000264133": {
+  "nome": "Wanyson",
+  "clube": "Vdg"
+ },
+ "2000264136": {
+  "nome": "Riquelme Avellar",
+  "clube": "Vdg"
+ },
+ "2000264137": {
+  "nome": "Gustavo",
+  "clube": "Vdg"
+ },
+ "2000264142": {
+  "nome": "Lukas Zuccarello",
+  "clube": "Vdg"
+ },
+ "2000264287": {
+  "nome": "Otavio",
+  "clube": "San"
+ },
+ "2000264295": {
+  "nome": "Rodrigo Bellao",
+  "clube": "Bot"
+ },
+ "2000264338": {
+  "nome": "Micael",
+  "clube": "Spt"
+ },
+ "2000264339": {
+  "nome": "Fernandinho",
+  "clube": "Spt"
+ },
+ "2000264443": {
+  "nome": "Erick",
+  "clube": "Spt"
+ },
+ "2000264527": {
+  "nome": "Francisco",
+  "clube": "Bra"
+ },
+ "2000264530": {
+  "nome": "Adriel",
+  "clube": "Spt"
+ },
+ "2000264531": {
+  "nome": "Dedezinho",
+  "clube": "Spt"
+ },
+ "2000264546": {
+  "nome": "Tiago Lima",
+  "clube": "Spt"
+ },
+ "2000264550": {
+  "nome": "Sidney",
+  "clube": "Bah"
+ },
+ "2000264997": {
+  "nome": "Matheus Reis",
+  "clube": "Flu"
+ },
+ "2000268509": {
+  "nome": "Martin Frattini",
+  "clube": "Atm"
+ },
+ "2000270177": {
+  "nome": "Kevyn",
+  "clube": "Bra"
+ },
+ "2000270178": {
+  "nome": "Rafael Lima",
+  "clube": "Bra"
+ },
+ "2000270218": {
+  "nome": "Yuri Leles",
+  "clube": "Bra"
+ },
+ "2000270802": {
+  "nome": "Pedro Cobra",
+  "clube": "Atm"
+ },
+ "2000270856": {
+  "nome": "Lucas Souza",
+  "clube": "Atm"
+ },
+ "2000270858": {
+  "nome": "Kawe",
+  "clube": "Atm"
+ },
+ "2000270859": {
+  "nome": "Iseppe",
+  "clube": "Atm"
+ },
+ "2000270861": {
+  "nome": "Louback",
+  "clube": "Atm"
+ },
+ "2000271678": {
+  "nome": "Alejandro Villarreal",
+  "clube": "San"
+ },
+ "2000271982": {
+  "nome": "Murilo",
+  "clube": "Cec"
+ },
+ "2000272159": {
+  "nome": "Rubens",
+  "clube": "Bra"
+ },
+ "2000272195": {
+  "nome": "Joao Pedro",
+  "clube": "Spo"
+ },
+ "2000272196": {
+  "nome": "Igor Felisberto",
+  "clube": "Spo"
+ },
+ "2000272207": {
+  "nome": "Allan Barcellos",
+  "clube": "Spo"
+ },
+ "2000272348": {
+  "nome": "Halerrandrio",
+  "clube": "Sep"
+ },
+ "2000272373": {
+  "nome": "Gabriel Rocha",
+  "clube": "Cea"
+ },
+ "2000272456": {
+  "nome": "Lucca",
+  "clube": "Spo"
+ },
+ "2000272485": {
+  "nome": "Victor",
+  "clube": "Bah"
+ },
+ "2000272486": {
+  "nome": "Wictor Gabriel",
+  "clube": "Juv"
+ },
+ "2000272488": {
+  "nome": "Daniel",
+  "clube": "Bah"
+ },
+ "2000272489": {
+  "nome": "Wendel Passos",
+  "clube": "Bah"
+ },
+ "2000272491": {
+  "nome": "Roger Gabriel",
+  "clube": "Bah"
+ },
+ "2000272493": {
+  "nome": "Paulo Souto",
+  "clube": "For"
+ },
+ "2000272495": {
+  "nome": "Nicolas",
+  "clube": "Cec"
+ },
+ "2000272497": {
+  "nome": "Gustavo Ulguim",
+  "clube": "Int"
+ },
+ "2000272618": {
+  "nome": "Jackson",
+  "clube": "San"
+ },
+ "2000272620": {
+  "nome": "Mateus Xavier",
+  "clube": "San"
+ },
+ "2000272626": {
+  "nome": "Murillo",
+  "clube": "San"
+ },
+ "2000272636": {
+  "nome": "Joao Ananias",
+  "clube": "San"
+ },
+ "2000272645": {
+  "nome": "Kaiquy",
+  "clube": "Cec"
+ },
+ "2000272649": {
+  "nome": "Kaique Kenji",
+  "clube": "Cec"
+ },
+ "2000272658": {
+  "nome": "Marcelo",
+  "clube": "Cec"
+ },
+ "2000272661": {
+  "nome": "Denis Palmeira",
+  "clube": "San"
+ },
+ "2000272715": {
+  "nome": "Gabriel Carioca",
+  "clube": "Bah"
+ },
+ "2000272721": {
+  "nome": "Joao Andrade",
+  "clube": "Bah"
+ },
+ "2000272756": {
+  "nome": "Vinicius Marques",
+  "clube": "San"
+ },
+ "2000272757": {
+  "nome": "Nelcirio Franchin",
+  "clube": "Vdg"
+ },
+ "2000273035": {
+  "nome": "Kayke",
+  "clube": "For"
+ },
+ "2000273157": {
+  "nome": "Luis Felipy",
+  "clube": "Int"
+ },
+ "2000273163": {
+  "nome": "Gustavo",
+  "clube": "Int"
+ },
+ "2000273190": {
+  "nome": "Pedro Icaro Marques Benevenuto",
+  "clube": "Cea"
+ },
+ "2000273198": {
+  "nome": "Leo",
+  "clube": "Juv"
+ },
+ "2000273206": {
+  "nome": "Enzo",
+  "clube": "Cea"
+ },
+ "2000273209": {
+  "nome": "Vinicius Uchella",
+  "clube": "Cea"
+ },
+ "2000273217": {
+  "nome": "Brian Souza",
+  "clube": "Cea"
+ },
+ "2000273219": {
+  "nome": "Bruninho",
+  "clube": "Cea"
+ },
+ "2000273220": {
+  "nome": "Luquinhas",
+  "clube": "Juv"
+ },
+ "2000273226": {
+  "nome": "Adriano",
+  "clube": "Bot"
+ },
+ "2000273232": {
+  "nome": "Huguinho",
+  "clube": "Bot"
+ },
+ "2000273237": {
+  "nome": "Philipe Tuelo",
+  "clube": "Flu"
+ },
+ "2000273238": {
+  "nome": "Leonann",
+  "clube": "Flu"
+ },
+ "2000273239": {
+  "nome": "Julio Fidelis",
+  "clube": "Flu"
+ },
+ "2000273241": {
+  "nome": "Antonio Carlos",
+  "clube": "Flu"
+ },
+ "2000273244": {
+  "nome": "Gabriel Gorgulho",
+  "clube": "Flu"
+ },
+ "2000273258": {
+  "nome": "Kelwin",
+  "clube": "Flu"
+ },
+ "2000273260": {
+  "nome": "Keven Samuel",
+  "clube": "Flu"
+ },
+ "2000273263": {
+  "nome": "Riquelmy",
+  "clube": "Flu"
+ },
+ "2000273266": {
+  "nome": "Riquelme Felipe",
+  "clube": "Flu"
+ },
+ "2000273267": {
+  "nome": "Kaua Velon",
+  "clube": "Flu"
+ },
+ "2000273902": {
+  "nome": "Andre",
+  "clube": "Cor"
+ },
+ "2000273905": {
+  "nome": "Pellegrin",
+  "clube": "Cor"
+ },
+ "2000273911": {
+  "nome": "Matheus",
+  "clube": "Cor"
+ },
+ "2000273913": {
+  "nome": "Gui Negao",
+  "clube": "Cor"
+ },
+ "2000273963": {
+  "nome": "Henrique Menke",
+  "clube": "Int"
+ },
+ "2000273982": {
+  "nome": "Carlos Eduardo",
+  "clube": "Int"
+ },
+ "2000273984": {
+  "nome": "Bernardo Jacob",
+  "clube": "Int"
+ },
+ "2000273986": {
+  "nome": "Allex",
+  "clube": "Int"
+ },
+ "2000273996": {
+  "nome": "Rodriguinho",
+  "clube": "Int"
+ },
+ "2000274035": {
+  "nome": "Martins",
+  "clube": "Cea"
+ },
+ "2000274039": {
+  "nome": "Ivan Henrique",
+  "clube": "Vit"
+ },
+ "2000274048": {
+  "nome": "Joao Gabriel",
+  "clube": "Cea"
+ },
+ "2000274054": {
+  "nome": "Yuri Alves",
+  "clube": "Bra"
+ },
+ "2000274122": {
+  "nome": "Yarlen",
+  "clube": "Bot"
+ },
+ "2000274221": {
+  "nome": "Michel Cavalcante",
+  "clube": "Sep"
+ },
+ "2000274233": {
+  "nome": "Arthur Barbosa",
+  "clube": "For"
+ },
+ "2000274298": {
+  "nome": "Wallace Davi",
+  "clube": "Bot"
+ },
+ "2000274324": {
+  "nome": "Luquinha",
+  "clube": "For"
+ },
+ "2000274392": {
+  "nome": "Gustavo Zago",
+  "clube": "Cec"
+ },
+ "2000274534": {
+  "nome": "Gabriel Amaral",
+  "clube": "Cea"
+ },
+ "2000275673": {
+  "nome": "Guilherme Nogueira",
+  "clube": "Sep"
+ },
+ "2000275720": {
+  "nome": "Leonardo Pellegrini",
+  "clube": "Cec"
+ },
+ "2000275746": {
+  "nome": "Matheus Baraka",
+  "clube": "Spt"
+ },
+ "2000275766": {
+  "nome": "Patrick Jorge",
+  "clube": "Spt"
+ },
+ "2000276118": {
+  "nome": "Kaua",
+  "clube": "Cor"
+ },
+ "2000276147": {
+  "nome": "Beto",
+  "clube": "Juv"
+ },
+ "2000276354": {
+  "nome": "Joao Alencar",
+  "clube": "San"
+ },
+ "2000276361": {
+  "nome": "Pedro Hian",
+  "clube": "San"
+ },
+ "2000276631": {
+  "nome": "Kauan",
+  "clube": "Int"
+ },
+ "2000276675": {
+  "nome": "Gladston Stwart",
+  "clube": "Bot"
+ },
+ "2000276826": {
+  "nome": "Gabriel Caipira",
+  "clube": "Cor"
+ },
+ "2000277571": {
+  "nome": "Da Mata",
+  "clube": "Fla"
+ },
+ "2000277603": {
+  "nome": "Lucas Camilo",
+  "clube": "Bot"
+ },
+ "2000277653": {
+  "nome": "Riquelme",
+  "clube": "Gre"
+ },
+ "2000277658": {
+  "nome": "Joao Victor",
+  "clube": "Gre"
+ },
+ "2000277682": {
+  "nome": "Fredi",
+  "clube": "Bah"
+ },
+ "2000277686": {
+  "nome": "Artur Junior",
+  "clube": "Gre"
+ },
+ "2000277687": {
+  "nome": "Nata Barbosa",
+  "clube": "Atm"
+ },
+ "2000277720": {
+  "nome": "Joao Alves",
+  "clube": "San"
+ },
+ "2000278031": {
+  "nome": "Murilo Picorelli",
+  "clube": "Mfc"
+ },
+ "2000278091": {
+  "nome": "Emerson Galego",
+  "clube": "Juv"
+ },
+ "2000278137": {
+  "nome": "Kaua Barbosa",
+  "clube": "Int"
+ },
+ "2000278151": {
+  "nome": "Enzo Pereira",
+  "clube": "Bra"
+ },
+ "2000278621": {
+  "nome": "Pablo",
+  "clube": "Vit"
+ },
+ "2000278896": {
+  "nome": "Rhyan",
+  "clube": "Bot"
+ },
+ "2000279443": {
+  "nome": "Leo Indio",
+  "clube": "Juv"
+ },
+ "2000280442": {
+  "nome": "Pedro Gabriel",
+  "clube": "Gre"
+ },
+ "2000280653": {
+  "nome": "Andre Raul Rocha",
+  "clube": "Bra"
+ },
+ "2000280695": {
+  "nome": "Hugo Leonardo",
+  "clube": "Spo"
+ },
+ "2000281083": {
+  "nome": "Italo",
+  "clube": "Flu"
+ },
+ "2000281124": {
+  "nome": "Riquelme",
+  "clube": "Cea"
+ },
+ "2000281188": {
+  "nome": "Zortea",
+  "clube": "Gre"
+ },
+ "2000281495": {
+  "nome": "Felipe Gabriel",
+  "clube": "Spt"
+ },
+ "2000281515": {
+  "nome": "Fabio Pizzamiglio",
+  "clube": "Juv"
+ },
+ "2000282839": {
+  "nome": "Rubens Menin",
+  "clube": "Atm"
+ },
+ "2000283259": {
+  "nome": "Henrique Aguiar",
+  "clube": "Int"
+ },
+ "2000284190": {
+  "nome": "Well",
+  "clube": "Spo"
+ },
+ "2000284777": {
+  "nome": "Sergio Palacios",
+  "clube": "Bra"
+ },
+ "2000285441": {
+  "nome": "Stanley Osei",
+  "clube": "Cea"
+ },
+ "2000285884": {
+  "nome": "Luiz Felipe",
+  "clube": "Int"
+ },
+ "2000289085": {
+  "nome": "Caique Takada",
+  "clube": "Spo"
+ },
+ "2000290679": {
+  "nome": "Djhordney",
+  "clube": "Spo"
+ },
+ "2000291902": {
+  "nome": "Luis Gustavo",
+  "clube": "Atm"
+ },
+ "2000292092": {
+  "nome": "Breno Vereza",
+  "clube": "Vdg"
+ },
+ "2000292896": {
+  "nome": "Kauan Lindes",
+  "clube": "Bot"
+ },
+ "2000293238": {
+  "nome": "Felipe Oliveira",
+  "clube": "Spo"
+ },
+ "2000293243": {
+  "nome": "Guilherme Reis",
+  "clube": "Spo"
+ },
+ "2000293250": {
+  "nome": "Diego Santos",
+  "clube": "San"
+ },
+ "2000293257": {
+  "nome": "Everton",
+  "clube": "San"
+ },
+ "2000295427": {
+  "nome": "Neiser Villarreal",
+  "clube": "Cec"
+ },
+ "2000295691": {
+  "nome": "Leonardo Forti",
+  "clube": "Mfc"
+ },
+ "2000296034": {
+  "nome": "Miguel",
+  "clube": "Juv"
+ },
+ "2000296036": {
+  "nome": "Gehring",
+  "clube": "Juv"
+ },
+ "2000298962": {
+  "nome": "Luis Osorio",
+  "clube": "Spo"
+ },
+ "2000299569": {
+  "nome": "Joao Marcelo",
+  "clube": "Atm"
+ },
+ "2000301180": {
+  "nome": "Rodrigo Aragonez",
+  "clube": "Bot"
+ },
+ "2000301368": {
+  "nome": "Rafael Coutinho",
+  "clube": "Sep"
+ },
+ "2000301750": {
+  "nome": "Leonardo Rezende",
+  "clube": "Sep"
+ },
+ "2000304729": {
+  "nome": "Thierry Henry",
+  "clube": "Spo"
+ },
+ "2000306255": {
+  "nome": "Mariana Weschenfelder",
+  "clube": "Bah"
+ },
+ "2000308415": {
+  "nome": "Luiz Eduardo",
+  "clube": "Cor"
+ },
+ "2000308455": {
+  "nome": "Davi Barbosa",
+  "clube": "Vit"
+ },
+ "2000308464": {
+  "nome": "Edenilson",
+  "clube": "Vit"
+ },
+ "2000308471": {
+  "nome": "Riquelme",
+  "clube": "Vit"
+ },
+ "2000308483": {
+  "nome": "Luis Miguel",
+  "clube": "Vit"
+ },
+ "2000308517": {
+  "nome": "Andrei",
+  "clube": "Vit"
+ },
+ "2000311886": {
+  "nome": "Leo Jance",
+  "clube": "Flu"
+ },
+ "2000315060": {
+  "nome": "Marcos Marczwski",
+  "clube": "Int"
+ },
+ "2000315113": {
+  "nome": "Marcelo Teixeira",
+  "clube": "Bah"
+ },
+ "2000315290": {
+  "nome": "Luighi",
+  "clube": "Sep"
+ },
+ "2000318435": {
+  "nome": "Luis Paulo",
+  "clube": "Cor"
+ },
+ "2000319297": {
+  "nome": "Paulo Riveros",
+  "clube": "For"
+ },
+ "2000319798": {
+  "nome": "Caio Suassuna",
+  "clube": "Bah"
+ },
+ "2000319811": {
+  "nome": "Danilo",
+  "clube": "Cec"
+ },
+ "2000319820": {
+  "nome": "Dudu",
+  "clube": "Bra"
+ },
+ "2000319999": {
+  "nome": "Marcelo Teixeira",
+  "clube": "San"
+ },
+ "2000320659": {
+  "nome": "Nikolas Roselli De Souza",
+  "clube": "Sep"
+ },
+ "2000320687": {
+  "nome": "Robert",
+  "clube": "Atm"
+ },
+ "2000320795": {
+  "nome": "Jhonata Ventura",
+  "clube": "Fla"
+ },
+ "2000321708": {
+  "nome": "Guilherme Ziliotto Berlitz",
+  "clube": "Gre"
+ },
+ "2000323406": {
+  "nome": "Ze Phelipe",
+  "clube": "Atm"
+ },
+ "2000323661": {
+  "nome": "Kauan Guilherme",
+  "clube": "Atm"
+ },
+ "2000323662": {
+  "nome": "Maykon Jesus",
+  "clube": "Atm"
+ },
+ "2000323663": {
+  "nome": "Marcao",
+  "clube": "Vdg"
+ },
+ "2000323730": {
+  "nome": "Kaua Branco",
+  "clube": "Bot"
+ },
+ "2000323738": {
+  "nome": "Luiz Fernando",
+  "clube": "Mfc"
+ },
+ "2000323755": {
+  "nome": "Gabriel Moreira",
+  "clube": "Mfc"
+ },
+ "2000323771": {
+  "nome": "Joao Vitor Scavacini Possebon",
+  "clube": "Mfc"
+ },
+ "2000324795": {
+  "nome": "Igao",
+  "clube": "Spo"
+ },
+ "2000325039": {
+  "nome": "Ze Neto",
+  "clube": "Cea"
+ },
+ "2000325159": {
+  "nome": "Wisley",
+  "clube": "Vdg"
+ },
+ "2000325378": {
+  "nome": "Juan Manuel Potes",
+  "clube": "Spo"
+ },
+ "2000326134": {
+  "nome": "Marcio Andre De Brito",
+  "clube": "Atm"
+ },
+ "2000326277": {
+  "nome": "Jardiel",
+  "clube": "Gre"
+ },
+ "2000326893": {
+  "nome": "Ygor",
+  "clube": "Gre"
+ },
+ "2000327504": {
+  "nome": "Joao Teixeira",
+  "clube": "Atm"
+ },
+ "2000327733": {
+  "nome": "Sorriso",
+  "clube": "Sep"
+ },
+ "2000328930": {
+  "nome": "Lucyan",
+  "clube": "Spo"
+ },
+ "2000328935": {
+  "nome": "Felipe Teresa",
+  "clube": "Sep"
+ },
+ "2000329679": {
+  "nome": "Arthur",
+  "clube": "Sep"
+ },
+ "2000331301": {
+  "nome": "Erick Bele",
+  "clube": "Sep"
+ },
+ "2000331308": {
+  "nome": "Wesley Lima",
+  "clube": "Sep"
+ },
+ "2000331311": {
+  "nome": "Felipe Goto",
+  "clube": "Sep"
+ },
+ "2000331314": {
+  "nome": "Luiz Sa",
+  "clube": "Sep"
+ },
+ "2000331317": {
+  "nome": "Kidani",
+  "clube": "Sep"
+ },
+ "2000333143": {
+  "nome": "Pinna",
+  "clube": "For"
+ },
+ "2000335143": {
+  "nome": "Dodo",
+  "clube": "Bah"
+ },
+ "2000335144": {
+  "nome": "Gerald",
+  "clube": "Bah"
+ },
+ "2000335155": {
+  "nome": "Pedrinho",
+  "clube": "Bah"
+ },
+ "2000335494": {
+  "nome": "Kaua Ziegler",
+  "clube": "Cea"
+ },
+ "2000335651": {
+  "nome": "Alexsandro",
+  "clube": "Gre"
+ },
+ "2000335686": {
+  "nome": "Cauan Farias",
+  "clube": "Vit"
+ },
+ "2000335694": {
+  "nome": "Eric",
+  "clube": "Atm"
+ },
+ "2000335699": {
+  "nome": "Ezequiel",
+  "clube": "Vit"
+ },
+ "2000335720": {
+  "nome": "Marcos Cabrobo",
+  "clube": "Vit"
+ },
+ "2000335737": {
+  "nome": "Paulo Roberto",
+  "clube": "Vit"
+ },
+ "2000336213": {
+  "nome": "Ronaldo Gontijo",
+  "clube": "Cec"
+ },
+ "2000337194": {
+  "nome": "Renato Gheller",
+  "clube": "Spt"
+ },
+ "2000337350": {
+  "nome": "Guilherme Gomes",
+  "clube": "Fla"
+ },
+ "2000337351": {
+  "nome": "Luis Aucelio",
+  "clube": "Vit"
+ },
+ "2000345808": {
+  "nome": "Joao Victor",
+  "clube": "Fla"
+ },
+ "2000346781": {
+  "nome": "Yago Candido",
+  "clube": "Cor"
+ },
+ "2000347597": {
+  "nome": "Lidson Potsch",
+  "clube": "Cec"
+ },
+ "2000350747": {
+  "nome": "Joaquim Horn",
+  "clube": "Juv"
+ },
+ "2000350797": {
+  "nome": "Bernardo",
+  "clube": "Juv"
+ },
+ "2000351881": {
+  "nome": "Larson",
+  "clube": "Sep"
+ },
+ "2000352159": {
+  "nome": "Leonardo Coelho De Oliveira",
+  "clube": "Bot"
+ },
+ "2000353025": {
+  "nome": "Breno Cordeiro",
+  "clube": "Flu"
+ },
+ "2000353032": {
+  "nome": "Gutte",
+  "clube": "Atm"
+ },
+ "2000357475": {
+  "nome": "Rodrigo Gueti",
+  "clube": "Sep"
+ },
+ "2000357638": {
+  "nome": "Bruninho",
+  "clube": "For"
+ },
+ "2000358789": {
+  "nome": "Tevis",
+  "clube": "Cec"
+ },
+ "2000358794": {
+  "nome": "Kelvin",
+  "clube": "Cec"
+ },
+ "2000358799": {
+  "nome": "Bruno Alves",
+  "clube": "Cec"
+ },
+ "2000359373": {
+  "nome": "Matheus Carvalho",
+  "clube": "Sep"
+ },
+ "2000359378": {
+  "nome": "Gabriel Cavalcanti",
+  "clube": "Sep"
+ },
+ "2000361602": {
+  "nome": "Pedro Lourenco De Oliveira",
+  "clube": "Cec"
+ },
+ "2000364240": {
+  "nome": "Diego Favarin",
+  "clube": "Juv"
+ },
+ "2000365562": {
+  "nome": "Pedro Moreira",
+  "clube": "Atm"
+ },
+ "2000365595": {
+  "nome": "Kaua Pascini",
+  "clube": "Atm"
+ },
+ "2000365610": {
+  "nome": "Locio",
+  "clube": "Vdg"
+ },
+ "2000365685": {
+  "nome": "Rafael Cesar",
+  "clube": "Atm"
+ },
+ "2000365689": {
+  "nome": "Matheus Dupin",
+  "clube": "Atm"
+ },
+ "2000365690": {
+  "nome": "Bruno Leite",
+  "clube": "Atm"
+ },
+ "2000365691": {
+  "nome": "Renato De Paula",
+  "clube": "Atm"
+ },
+ "2000365765": {
+  "nome": "Lincoln Rodrigues",
+  "clube": "Atm"
+ },
+ "2000365856": {
+  "nome": "Marvin Avila",
+  "clube": "Spo"
+ },
+ "2000366093": {
+  "nome": "Mauro Jarodich",
+  "clube": "Int"
+ },
+ "2000366429": {
+  "nome": "Denner",
+  "clube": "Cor"
+ },
+ "2000367309": {
+  "nome": "Lucien Souza",
+  "clube": "Cor"
+ },
+ "2000367506": {
+  "nome": "Riquelme",
+  "clube": "Bra"
+ },
+ "2000369810": {
+  "nome": "Juninho",
+  "clube": "Bot"
+ },
+ "2000370089": {
+  "nome": "Weimar Vivas",
+  "clube": "Bra"
+ },
+ "2000371848": {
+  "nome": "Jorge",
+  "clube": "Cea"
+ },
+ "2000372620": {
+  "nome": "Pablo Lucio",
+  "clube": "Fla"
+ },
+ "2000372627": {
+  "nome": "Joshua",
+  "clube": "Fla"
+ },
+ "2000372630": {
+  "nome": "Douglas Telles",
+  "clube": "Fla"
+ },
+ "2000372637": {
+  "nome": "Wanderson",
+  "clube": "Atm"
+ },
+ "2000372640": {
+  "nome": "Ryan Roberto",
+  "clube": "Fla"
+ },
+ "2000373829": {
+  "nome": "Leo Nannetti",
+  "clube": "Fla"
+ },
+ "2000375144": {
+  "nome": "Jaja",
+  "clube": "For"
+ },
+ "2000375320": {
+  "nome": "Victor Curiel Passeri",
+  "clube": "Bra"
+ },
+ "2000375321": {
+  "nome": "Stephan Miralhas",
+  "clube": "Bra"
+ },
+ "2000375324": {
+  "nome": "Mauricio Marinho",
+  "clube": "Bra"
+ },
+ "2000375326": {
+  "nome": "Daniel Leiva",
+  "clube": "Bra"
+ },
+ "2000375329": {
+  "nome": "Rafael Lopes",
+  "clube": "Bra"
+ },
+ "2000375330": {
+  "nome": "Fura",
+  "clube": "Bra"
+ },
+ "2000376963": {
+  "nome": "Antonio Marcos",
+  "clube": "Sep"
+ },
+ "2000377974": {
+  "nome": "Matheus Lima",
+  "clube": "Bot"
+ },
+ "2000377976": {
+  "nome": "Felipe Januario",
+  "clube": "Bot"
+ },
+ "2000377980": {
+  "nome": "Marquinhos",
+  "clube": "Bot"
+ },
+ "2000377999": {
+  "nome": "Kaique Pereira",
+  "clube": "Bot"
+ },
+ "2000378011": {
+  "nome": "Caua Zappelini",
+  "clube": "Bot"
+ },
+ "2000378017": {
+  "nome": "Waldemir",
+  "clube": "Vit"
+ },
+ "2000378018": {
+  "nome": "Caio Jeronimo",
+  "clube": "For"
+ },
+ "2000378194": {
+  "nome": "Ricardo Perlingeiro",
+  "clube": "Fla"
+ },
+ "2000378227": {
+  "nome": "Ryan",
+  "clube": "Bra"
+ },
+ "2000378233": {
+  "nome": "Danillo",
+  "clube": "Bot"
+ },
+ "2000378235": {
+  "nome": "Arthur Theodoro",
+  "clube": "Bra"
+ },
+ "2000378246": {
+  "nome": "Chrystian",
+  "clube": "Bra"
+ },
+ "2000378249": {
+  "nome": "Luis Gustavo",
+  "clube": "Bra"
+ },
+ "2000378256": {
+  "nome": "Jhuan",
+  "clube": "Bra"
+ },
+ "2000378258": {
+  "nome": "Juliano Viana",
+  "clube": "Sep"
+ },
+ "2000378265": {
+  "nome": "Jacare",
+  "clube": "Bra"
+ },
+ "2000378282": {
+  "nome": "Marco Anthonio",
+  "clube": "Juv"
+ },
+ "2000378911": {
+  "nome": "Pierry",
+  "clube": "San"
+ },
+ "2000378914": {
+  "nome": "Joao Disaro",
+  "clube": "Cor"
+ },
+ "2000378919": {
+  "nome": "Lucas Assis",
+  "clube": "Cea"
+ },
+ "2000378949": {
+  "nome": "Arthur Jampa",
+  "clube": "Bah"
+ },
+ "2000378961": {
+  "nome": "Felipe Kisner",
+  "clube": "Bah"
+ },
+ "2000378966": {
+  "nome": "Dell",
+  "clube": "Bah"
+ },
+ "2000378972": {
+  "nome": "Joao Nazari",
+  "clube": "Spo"
+ },
+ "2000378974": {
+  "nome": "Pedro Ferreira",
+  "clube": "Spo"
+ },
+ "2000378982": {
+  "nome": "Hugo Galdino",
+  "clube": "Spo"
+ },
+ "2000378983": {
+  "nome": "Cuiabano",
+  "clube": "Spo"
+ },
+ "2000378984": {
+  "nome": "Samuel",
+  "clube": "Spo"
+ },
+ "2000378988": {
+  "nome": "Nicolas",
+  "clube": "Spo"
+ },
+ "2000378991": {
+  "nome": "Polin",
+  "clube": "Spo"
+ },
+ "2000378992": {
+  "nome": "Tete",
+  "clube": "Spo"
+ },
+ "2000379453": {
+  "nome": "Kaua Rocha",
+  "clube": "For"
+ },
+ "2000379454": {
+  "nome": "Bryan",
+  "clube": "For"
+ },
+ "2000379460": {
+  "nome": "Juan Fidelis",
+  "clube": "For"
+ },
+ "2000379461": {
+  "nome": "Kauan",
+  "clube": "For"
+ },
+ "2000379462": {
+  "nome": "Caio Wesley",
+  "clube": "For"
+ },
+ "2000379463": {
+  "nome": "Filipe Sirio",
+  "clube": "Int"
+ },
+ "2000379520": {
+  "nome": "Esley",
+  "clube": "Int"
+ },
+ "2000379522": {
+  "nome": "Lazaro",
+  "clube": "Int"
+ },
+ "2000379526": {
+  "nome": "Joao Galindo",
+  "clube": "Int"
+ },
+ "2000379528": {
+  "nome": "Guilherme Barbosa",
+  "clube": "Fla"
+ },
+ "2000379530": {
+  "nome": "Gabriel Vinicius",
+  "clube": "Int"
+ },
+ "2000379531": {
+  "nome": "Eduardo",
+  "clube": "Int"
+ },
+ "2000379662": {
+  "nome": "Estevan",
+  "clube": "Atm"
+ },
+ "2000379663": {
+  "nome": "Vitao",
+  "clube": "Atm"
+ },
+ "2000379889": {
+  "nome": "Yann Neves",
+  "clube": "Atm"
+ },
+ "2000379890": {
+  "nome": "Kaua Rodrigo",
+  "clube": "Atm"
+ },
+ "2000379894": {
+  "nome": "Gustavo Felix",
+  "clube": "Flu"
+ },
+ "2000379895": {
+  "nome": "Gabriel Renan",
+  "clube": "Flu"
+ },
+ "2000379897": {
+  "nome": "Rodrigo Bringel",
+  "clube": "Flu"
+ },
+ "2000379899": {
+  "nome": "Vagno",
+  "clube": "Flu"
+ },
+ "2000379905": {
+  "nome": "Oliver",
+  "clube": "Flu"
+ },
+ "2000379917": {
+  "nome": "Wesley Nata",
+  "clube": "Flu"
+ },
+ "2000379923": {
+  "nome": "Lorenzo",
+  "clube": "Cor"
+ },
+ "2000379925": {
+  "nome": "Pedro Paulo",
+  "clube": "Cor"
+ },
+ "2000379964": {
+  "nome": "Vitinho",
+  "clube": "Cor"
+ },
+ "2000379966": {
+  "nome": "Guilherme Caragua",
+  "clube": "Cor"
+ },
+ "2000379967": {
+  "nome": "Rodriguinho",
+  "clube": "Cor"
+ },
+ "2000379968": {
+  "nome": "Molina",
+  "clube": "Cor"
+ },
+ "2000379971": {
+  "nome": "Araujo",
+  "clube": "Cor"
+ },
+ "2000379974": {
+  "nome": "Joao Pedro",
+  "clube": "San"
+ },
+ "2000379975": {
+  "nome": "Lucas Arruda",
+  "clube": "San"
+ },
+ "2000379976": {
+  "nome": "Ryan Gabriel",
+  "clube": "San"
+ },
+ "2000379979": {
+  "nome": "Vinicius Lira",
+  "clube": "San"
+ },
+ "2000379985": {
+  "nome": "Guilherme Cruz",
+  "clube": "San"
+ },
+ "2000379990": {
+  "nome": "Antonny",
+  "clube": "San"
+ },
+ "2000379995": {
+  "nome": "Pedro Bezerra",
+  "clube": "Spo"
+ },
+ "2000379996": {
+  "nome": "Kaio Borges",
+  "clube": "Flu"
+ },
+ "2000380013": {
+  "nome": "Lucca",
+  "clube": "Juv"
+ },
+ "2000380014": {
+  "nome": "Assis",
+  "clube": "San"
+ },
+ "2000380015": {
+  "nome": "Pradella",
+  "clube": "San"
+ },
+ "2000380016": {
+  "nome": "Rafa Gonzaga",
+  "clube": "San"
+ },
+ "2000380140": {
+  "nome": "Raykkonen",
+  "clube": "Int"
+ },
+ "2000380149": {
+  "nome": "Mateus Jorge",
+  "clube": "Cea"
+ },
+ "2000380165": {
+  "nome": "Bernardo",
+  "clube": "Cea"
+ },
+ "2000380228": {
+  "nome": "Victor Alemao",
+  "clube": "Vdg"
+ },
+ "2000380230": {
+  "nome": "Bruno Andre",
+  "clube": "Vdg"
+ },
+ "2000380233": {
+  "nome": "Kaio Junior",
+  "clube": "Fla"
+ },
+ "2000380236": {
+  "nome": "Juninho",
+  "clube": "Vdg"
+ },
+ "2000380237": {
+  "nome": "Ramon Rique",
+  "clube": "Vdg"
+ },
+ "2000380239": {
+  "nome": "Bruno Lopes",
+  "clube": "Vdg"
+ },
+ "2000380240": {
+  "nome": "Diego Ahmed",
+  "clube": "Int"
+ },
+ "2000380524": {
+  "nome": "Marcelo Torrez",
+  "clube": "San"
+ },
+ "2000381024": {
+  "nome": "Matheusinho",
+  "clube": "Bot"
+ },
+ "2000381036": {
+  "nome": "Kaua Cruz",
+  "clube": "Bot"
+ },
+ "2000381875": {
+  "nome": "Gustavo",
+  "clube": "Cec"
+ },
+ "2000381882": {
+  "nome": "Kaio Santos",
+  "clube": "Spo"
+ },
+ "2000382044": {
+  "nome": "Ruan Pablo",
+  "clube": "Bah"
+ },
+ "2000382655": {
+  "nome": "Djalma Abreu",
+  "clube": "Vit"
+ },
+ "2000384208": {
+  "nome": "Akiles",
+  "clube": "Cec"
+ },
+ "2000385385": {
+  "nome": "Gabriel Mec",
+  "clube": "Gre"
+ },
+ "2000385608": {
+  "nome": "Yago Noal",
+  "clube": "Int"
+ },
+ "2000385683": {
+  "nome": "Davi Lucas",
+  "clube": "Bra"
+ },
+ "2000385704": {
+  "nome": "Enrico",
+  "clube": "Bra"
+ },
+ "2000385929": {
+  "nome": "Pedro Kaua",
+  "clube": "Int"
+ },
+ "2000387869": {
+  "nome": "Caique",
+  "clube": "Juv"
+ },
+ "2000391425": {
+  "nome": "Kaiky",
+  "clube": "Bot"
+ },
+ "2000393122": {
+  "nome": "Pedro Monteiro",
+  "clube": "Bah"
+ },
+ "2000393126": {
+  "nome": "Filipe Lourenco",
+  "clube": "Cea"
+ },
+ "2000393432": {
+  "nome": "Joao Lima",
+  "clube": "For"
+ },
+ "2000393847": {
+  "nome": "Victor Gabriel",
+  "clube": "Sep"
+ },
+ "2000394213": {
+  "nome": "Rafael Juwer",
+  "clube": "Cor"
+ },
+ "2000396334": {
+  "nome": "Benjamin",
+  "clube": "Int"
+ },
+ "2000403384": {
+  "nome": "Victor Jesus",
+  "clube": "Int"
+ },
+ "2000403408": {
+  "nome": "Kaua Prates",
+  "clube": "Cec"
+ },
+ "2000403419": {
+  "nome": "Pedro Assis",
+  "clube": "San"
+ },
+ "2000403425": {
+  "nome": "Rayan Lelis",
+  "clube": "Cec"
+ },
+ "2000403448": {
+  "nome": "Janderson",
+  "clube": "Cec"
+ },
+ "2000404710": {
+  "nome": "Vitor Hugo",
+  "clube": "Cec"
+ },
+ "2000404723": {
+  "nome": "Ivanilson",
+  "clube": "Cec"
+ },
+ "2000408340": {
+  "nome": "Juan Gabriel",
+  "clube": "Sep"
+ },
+ "2000408343": {
+  "nome": "Luiz Fernando",
+  "clube": "Sep"
+ },
+ "2000408356": {
+  "nome": "Luis Pacheco",
+  "clube": "Sep"
+ },
+ "2000408373": {
+  "nome": "Guilherme Ximenez Nadaleto",
+  "clube": "Sep"
+ },
+ "2000410805": {
+  "nome": "Alexis Vargas",
+  "clube": "Atm"
+ },
+ "2000416941": {
+  "nome": "Bruno Gorgatte",
+  "clube": "Cor"
+ },
+ "2000416944": {
+  "nome": "Lucas Filgueiras Freitas",
+  "clube": "Sep"
+ },
+ "2000417192": {
+  "nome": "Indio",
+  "clube": "Atm"
+ },
+ "2000417672": {
+  "nome": "Gui Silveira",
+  "clube": "Cea"
+ },
+ "2000417767": {
+  "nome": "Pedro Padula",
+  "clube": "San"
+ },
+ "2000417769": {
+  "nome": "Robinho Junior",
+  "clube": "San"
+ },
+ "2000420965": {
+  "nome": "Kgomotso Madiba",
+  "clube": "Flu"
+ },
+ "2000421065": {
+  "nome": "Dieguinho",
+  "clube": "Spt"
+ },
+ "2000424634": {
+  "nome": "Rodrigo Goncalves Monginho",
+  "clube": "Cea"
+ },
+ "2000425680": {
+  "nome": "Vitor Saad",
+  "clube": "Fla"
+ },
+ "2000427315": {
+  "nome": "Davi Goes",
+  "clube": "Juv"
+ },
+ "2000427620": {
+  "nome": "Francisco Egberto Oliveira Dos Santos",
+  "clube": "For"
+ },
+ "2000429442": {
+  "nome": "Robson",
+  "clube": "Sep"
+ },
+ "2000430155": {
+  "nome": "Andre Lucas",
+  "clube": "Sep"
+ },
+ "2000430159": {
+  "nome": "Luis Arthur",
+  "clube": "Sep"
+ },
+ "2000430197": {
+  "nome": "Tassio Dias Rodrigues",
+  "clube": "Sep"
+ },
+ "2000433301": {
+  "nome": "Felipe Sitonio",
+  "clube": "Spt"
+ },
+ "2000437296": {
+  "nome": "Emanuel",
+  "clube": "Vdg"
+ },
+ "2000437927": {
+  "nome": "Kauan Gabriel",
+  "clube": "For"
+ },
+ "2000438586": {
+  "nome": "Assef",
+  "clube": "Atm"
+ },
+ "2000438905": {
+  "nome": "Andre Mello",
+  "clube": "Spo"
+ },
+ "2000439846": {
+  "nome": "Hugo",
+  "clube": "Sep"
+ },
+ "2000440037": {
+  "nome": "Luis Eduardo",
+  "clube": "Gre"
+ },
+ "2000440048": {
+  "nome": "Tiago Augusto",
+  "clube": "Gre"
+ },
+ "2000440205": {
+  "nome": "Emerson Buiu",
+  "clube": "Vit"
+ },
+ "2000440208": {
+  "nome": "Kauan",
+  "clube": "Vit"
+ },
+ "2000440215": {
+  "nome": "Gean",
+  "clube": "Vit"
+ },
+ "2000440218": {
+  "nome": "Lucas Lohan",
+  "clube": "Vit"
+ },
+ "2000440221": {
+  "nome": "Hiago",
+  "clube": "Vit"
+ },
+ "2000440224": {
+  "nome": "Francisco",
+  "clube": "Vit"
+ },
+ "2000440226": {
+  "nome": "Rodrigo",
+  "clube": "Vit"
+ },
+ "2000440227": {
+  "nome": "Italo",
+  "clube": "Vit"
+ },
+ "2000440228": {
+  "nome": "Vitor",
+  "clube": "Vit"
+ },
+ "2000441263": {
+  "nome": "Ernest",
+  "clube": "Fla"
+ },
+ "2000441842": {
+  "nome": "Guima",
+  "clube": "Vdg"
+ },
+ "2000442650": {
+  "nome": "Iuri Jean",
+  "clube": "Bah"
+ },
+ "2000442654": {
+  "nome": "Diego Santos",
+  "clube": "Bah"
+ },
+ "2000442660": {
+  "nome": "Saymon",
+  "clube": "Bah"
+ },
+ "2000442664": {
+  "nome": "Izaque Belchior",
+  "clube": "Cea"
+ },
+ "2000442763": {
+  "nome": "Davi Gomes",
+  "clube": "Bra"
+ },
+ "2000442940": {
+  "nome": "Rafael Bastos",
+  "clube": "Vit"
+ },
+ "2000443174": {
+  "nome": "Fernando Sassaki",
+  "clube": "Fla"
+ },
+ "2000443437": {
+  "nome": "Guilherme Brito",
+  "clube": "Spo"
+ },
+ "2000443495": {
+  "nome": "Germano",
+  "clube": "Fla"
+ },
+ "2000443497": {
+  "nome": "Gusttavo",
+  "clube": "Fla"
+ },
+ "2000443501": {
+  "nome": "Johnny",
+  "clube": "Fla"
+ },
+ "2000443527": {
+  "nome": "Pedro Fachinetti",
+  "clube": "Atm"
+ },
+ "2000443530": {
+  "nome": "Lemos",
+  "clube": "Atm"
+ },
+ "2000443534": {
+  "nome": "Christian Oliveira",
+  "clube": "Cor"
+ },
+ "2000443855": {
+  "nome": "Flavio Willeman",
+  "clube": "Fla"
+ },
+ "2000443873": {
+  "nome": "Fabio Palmer",
+  "clube": "Fla"
+ },
+ "2000443874": {
+  "nome": "Luiz Henrique",
+  "clube": "Spt"
+ },
+ "2000443910": {
+  "nome": "Ramon Barros",
+  "clube": "Spt"
+ },
+ "2000443913": {
+  "nome": "Ze Lucas",
+  "clube": "Spt"
+ },
+ "2000443917": {
+  "nome": "Jefinho",
+  "clube": "Spt"
+ },
+ "2000444823": {
+  "nome": "Giulio",
+  "clube": "Cea"
+ },
+ "2000444830": {
+  "nome": "Ramon Riquelme",
+  "clube": "Sep"
+ },
+ "2000445118": {
+  "nome": "Edinardo Abreu",
+  "clube": "For"
+ },
+ "2000445190": {
+  "nome": "Ygor Vianna",
+  "clube": "Bot"
+ },
+ "2000445193": {
+  "nome": "Ricardo Herrera",
+  "clube": "Bot"
+ },
+ "2000447962": {
+  "nome": "Luccas Ramon",
+  "clube": "Sep"
+ },
+ "2000448618": {
+  "nome": "Cainan Santos",
+  "clube": "Spo"
+ },
+ "2000448825": {
+  "nome": "Nicolas Begliardi",
+  "clube": "Juv"
+ },
+ "2000449100": {
+  "nome": "Matheus Menezes",
+  "clube": "Spo"
+ },
+ "2000449859": {
+  "nome": "Michael Fashanu",
+  "clube": "For"
+ },
+ "2000449860": {
+  "nome": "Naara",
+  "clube": "Flu"
+ },
+ "2000450081": {
+  "nome": "Gustavo Santana",
+  "clube": "Spo"
+ },
+ "2000451540": {
+  "nome": "Rafael Vaz",
+  "clube": "For"
+ },
+ "2000452821": {
+  "nome": "Pablo",
+  "clube": "Int"
+ },
+ "2000452991": {
+  "nome": "Alexsandro Faisca",
+  "clube": "Vit"
+ },
+ "2000453312": {
+  "nome": "Fellype Gabryel",
+  "clube": "For"
+ },
+ "2000454177": {
+  "nome": "Andre Maranhao Praciano",
+  "clube": "Cea"
+ },
+ "2000454179": {
+  "nome": "Isaque Silva",
+  "clube": "Cec"
+ },
+ "2000454183": {
+  "nome": "Valter Filho",
+  "clube": "Cea"
+ },
+ "2000454699": {
+  "nome": "Kaua Moraes",
+  "clube": "Cec"
+ },
+ "2000455818": {
+  "nome": "Kadu Santos",
+  "clube": "Bot"
+ },
+ "2000456127": {
+  "nome": "Rui Cesar",
+  "clube": "Bah"
+ },
+ "2000456279": {
+  "nome": "Diego Perez",
+  "clube": "Atm"
+ },
+ "2000456348": {
+  "nome": "Lysander Lucas",
+  "clube": "Spo"
+ },
+ "2000456709": {
+  "nome": "Matheus Melo",
+  "clube": "Int"
+ },
+ "2000456722": {
+  "nome": "Joao Trevisol",
+  "clube": "Juv"
+ },
+ "2000457214": {
+  "nome": "Ivan Molina",
+  "clube": "Bot"
+ },
+ "2000459964": {
+  "nome": "Caua Soares",
+  "clube": "Atm"
+ },
+ "2000460060": {
+  "nome": "Angelo",
+  "clube": "Spo"
+ },
+ "2000460061": {
+  "nome": "Gustavo Miranda",
+  "clube": "Spo"
+ },
+ "2000460963": {
+  "nome": "Fabio Pacobahyba",
+  "clube": "Fla"
+ },
+ "2000460965": {
+  "nome": "Douglas Barbosa",
+  "clube": "Fla"
+ },
+ "2000460990": {
+  "nome": "Mamady Cisse",
+  "clube": "Atm"
+ },
+ "2000462019": {
+  "nome": "Kaue Azevedo",
+  "clube": "Cea"
+ },
+ "2000462605": {
+  "nome": "Jackson Boeira Rodrigues",
+  "clube": "Juv"
+ },
+ "2000463014": {
+  "nome": "Arthur Ryan",
+  "clube": "Flu"
+ },
+ "2000463016": {
+  "nome": "Peter",
+  "clube": "Flu"
+ },
+ "2000463017": {
+  "nome": "Ruan Sales",
+  "clube": "Flu"
+ },
+ "2000463018": {
+  "nome": "Dieguinho",
+  "clube": "For"
+ },
+ "2000463019": {
+  "nome": "Joao Vitor",
+  "clube": "For"
+ },
+ "2000463020": {
+  "nome": "Genilson",
+  "clube": "For"
+ },
+ "2000463021": {
+  "nome": "Enzo Richard",
+  "clube": "For"
+ },
+ "2000463302": {
+  "nome": "Brenno Cavalcanti Lucena",
+  "clube": "Spt"
+ },
+ "2000463742": {
+  "nome": "Pedro Paulo",
+  "clube": "Bot"
+ },
+ "2000463749": {
+  "nome": "Lucas Melim",
+  "clube": "Vdg"
+ },
+ "2000463751": {
+  "nome": "Leo Felix",
+  "clube": "Vdg"
+ },
+ "2000463753": {
+  "nome": "Luis Felipe",
+  "clube": "Vdg"
+ },
+ "2000463754": {
+  "nome": "Medina",
+  "clube": "Vdg"
+ },
+ "2000463755": {
+  "nome": "Davi Gomes",
+  "clube": "Vdg"
+ },
+ "2000466534": {
+  "nome": "Arthur Alecrim De Paula Lopes",
+  "clube": "Spt"
+ },
+ "2000467809": {
+  "nome": "Fabricio",
+  "clube": "Atm"
+ },
+ "2000468503": {
+  "nome": "Junior Bezerra",
+  "clube": "Fla"
+ },
+ "2000468508": {
+  "nome": "Bruno Da Silva Brum",
+  "clube": "Fla"
+ },
+ "2000468513": {
+  "nome": "Mauricio Dos Santos Soares",
+  "clube": "Fla"
+ },
+ "2000468514": {
+  "nome": "Andre Lima Mattos",
+  "clube": "Fla"
+ },
+ "2000468515": {
+  "nome": "Vinicius Sousa",
+  "clube": "Fla"
+ },
+ "2000468516": {
+  "nome": "Diego Pereira Cabral Cruz",
+  "clube": "Fla"
+ },
+ "2000469127": {
+  "nome": "Ryan Gomez",
+  "clube": "Gre"
+ },
+ "2000470349": {
+  "nome": "Marco Polo",
+  "clube": "Spt"
+ },
+ "2000470352": {
+  "nome": "Mosquito",
+  "clube": "Atm"
+ },
+ "2000471951": {
+  "nome": "Derick",
+  "clube": "Sep"
+ },
+ "2000473805": {
+  "nome": "Kaio",
+  "clube": "Atm"
+ },
+ "2000475591": {
+  "nome": "Lucas Gomes De Oliveira",
+  "clube": "Spt"
+ },
+ "2000475982": {
+  "nome": "Gabriel Veneno",
+  "clube": "Atm"
+ },
+ "2000479536": {
+  "nome": "William Lopes",
+  "clube": "Flu"
+ },
+ "2000479538": {
+  "nome": "Adalberto",
+  "clube": "Flu"
+ },
+ "2000480666": {
+  "nome": "Kaue Furquim",
+  "clube": "Bah"
+ },
+ "2000480667": {
+  "nome": "Diego Da Cruz Lopes",
+  "clube": "Cor"
+ },
+ "2000481532": {
+  "nome": "Andrey Fernandes",
+  "clube": "Vdg"
+ },
+ "2000481538": {
+  "nome": "Euder",
+  "clube": "Vdg"
+ },
+ "2000481543": {
+  "nome": "Lucas De Andrade",
+  "clube": "Vdg"
+ },
+ "2000481549": {
+  "nome": "Diego Minete",
+  "clube": "Vdg"
+ },
+ "2000482325": {
+  "nome": "Kadir Barria",
+  "clube": "Bot"
+ },
+ "2000482384": {
+  "nome": "Lucca Caramico",
+  "clube": "Cor"
+ },
+ "2000482386": {
+  "nome": "Pietro",
+  "clube": "Cor"
+ },
+ "2000482532": {
+  "nome": "Walace Falcao",
+  "clube": "Vdg"
+ },
+ "2000482536": {
+  "nome": "Arthur Henrique",
+  "clube": "Flu"
+ },
+ "2000483905": {
+  "nome": "Antonio Augusto Duarte Baptista",
+  "clube": "Cec"
+ },
+ "2000484167": {
+  "nome": "Diego Reyes",
+  "clube": "Fla"
+ },
+ "2000484168": {
+  "nome": "Matthew Diaz",
+  "clube": "Spo"
+ },
+ "2000484177": {
+  "nome": "Jose Lucas De Figueiredo Macorin",
+  "clube": "Sep"
+ },
+ "2000484230": {
+  "nome": "Nicollas",
+  "clube": "Cor"
+ },
+ "2000484237": {
+  "nome": "Benjamin",
+  "clube": "Gre"
+ },
+ "2000484241": {
+  "nome": "Gustavo Milani",
+  "clube": "Cor"
+ },
+ "2000484252": {
+  "nome": "Guilherme Amorim",
+  "clube": "Cor"
+ },
+ "2000484266": {
+  "nome": "Joao Borne",
+  "clube": "Gre"
+ },
+ "2000484269": {
+  "nome": "Harlley",
+  "clube": "Gre"
+ },
+ "2000484280": {
+  "nome": "Richard Wendel",
+  "clube": "Flu"
+ },
+ "2000484766": {
+  "nome": "Guilherme Pires",
+  "clube": "Spo"
+ },
+ "2000485012": {
+  "nome": "Gabriel Pessanha Chagas",
+  "clube": "Bah"
+ },
+ "2000485017": {
+  "nome": "Guilherme Lira",
+  "clube": "Sep"
+ },
+ "2000485019": {
+  "nome": "Matheus Gomes",
+  "clube": "Sep"
+ },
+ "2000485023": {
+  "nome": "Thiago",
+  "clube": "Sep"
+ },
+ "2000485025": {
+  "nome": "Isaac Nicolas",
+  "clube": "Sep"
+ },
+ "2000486864": {
+  "nome": "Rodrigo Mira",
+  "clube": "Bot"
+ },
+ "2000487286": {
+  "nome": "William Belo De Brito",
+  "clube": "Mfc"
+ },
+ "2000487308": {
+  "nome": "Dudu",
+  "clube": "Cec"
+ },
+ "2000487363": {
+  "nome": "Roger",
+  "clube": "Gre"
+ },
+ "2000487365": {
+  "nome": "Vitao",
+  "clube": "Gre"
+ },
+ "2000487371": {
+  "nome": "Vitor Ramon",
+  "clube": "Gre"
+ },
+ "2000487374": {
+  "nome": "Danillo Gabriel",
+  "clube": "Gre"
+ },
+ "2000488744": {
+  "nome": "Felipe Pedreira",
+  "clube": "Flu"
+ },
+ "2000488838": {
+  "nome": "Andrej Nikolic",
+  "clube": "Cec"
+ },
+ "2000488877": {
+  "nome": "Joao Grando",
+  "clube": "San"
+ },
+ "2000488891": {
+  "nome": "Nadson",
+  "clube": "San"
+ },
+ "2000488948": {
+  "nome": "David Nogueira",
+  "clube": "San"
+ },
+ "2000488984": {
+  "nome": "Caue",
+  "clube": "Bra"
+ },
+ "2000489201": {
+  "nome": "Pietro Tavares",
+  "clube": "Cec"
+ },
+ "2000490472": {
+  "nome": "Omar Stabile",
+  "clube": "Cor"
+ },
+ "2000490699": {
+  "nome": "Julio Ricardo Mazali Narusevicius",
+  "clube": "Bra"
+ },
+ "2000490707": {
+  "nome": "Lyan",
+  "clube": "Bah"
+ },
+ "2000490712": {
+  "nome": "Anthony",
+  "clube": "Bah"
+ },
+ "2000491091": {
+  "nome": "Joao Paulo Silva",
+  "clube": "Cea"
+ },
+ "2000491092": {
+  "nome": "Hudson Ferreira",
+  "clube": "Cea"
+ },
+ "2000491161": {
+  "nome": "Vinicius Fabri",
+  "clube": "San"
+ },
+ "2000491166": {
+  "nome": "Benicio",
+  "clube": "San"
+ },
+ "2000491167": {
+  "nome": "Leandro Mateus Pagoto Spigolon",
+  "clube": "Cor"
+ },
+ "2000491168": {
+  "nome": "Samuel Pierri",
+  "clube": "San"
+ },
+ "2000491191": {
+  "nome": "Miguel Caldas",
+  "clube": "Bot"
+ },
+ "2000491203": {
+  "nome": "Samuel Alves",
+  "clube": "Bot"
+ },
+ "2000491208": {
+  "nome": "Arthur Novaes",
+  "clube": "Bot"
+ },
+ "2000491534": {
+  "nome": "Gabriel Valerio Do Nascimento",
+  "clube": "Bot"
+ },
+ "2000491660": {
+  "nome": "Caio Valle",
+  "clube": "Bot"
+ },
+ "2000491960": {
+  "nome": "Rodrigo Morandi",
+  "clube": "Atm"
+ },
+ "2000491985": {
+  "nome": "Gabriel Menegon",
+  "clube": "Gre"
+ },
+ "2000491986": {
+  "nome": "Adrielson",
+  "clube": "Gre"
+ },
+ "2000492522": {
+  "nome": "Renan La Salvia",
+  "clube": "Spo"
+ },
+ "2000492531": {
+  "nome": "Carlos Eduardo",
+  "clube": "Spo"
+ },
+ "2000492534": {
+  "nome": "Brenno Junqueira",
+  "clube": "Spo"
+ },
+ "2000492536": {
+  "nome": "Guilherme Lino",
+  "clube": "Spo"
+ },
+ "2000492646": {
+  "nome": "Guilherme Costa",
+  "clube": "Bra"
+ },
+ "2000492906": {
+  "nome": "Luiz Fernando",
+  "clube": "Spo"
+ },
+ "2000493111": {
+  "nome": "Samuel Pires",
+  "clube": "Spt"
+ },
+ "2000493311": {
+  "nome": "Xavier",
+  "clube": "Atm"
+ },
+ "2000493889": {
+  "nome": "Joel Nkwocha",
+  "clube": "Spt"
+ },
+ "2000494027": {
+  "nome": "Thiago Pegoretti",
+  "clube": "Int"
+ },
+ "2000494034": {
+  "nome": "Andre Kruger",
+  "clube": "Int"
+ },
+ "2000494131": {
+  "nome": "Eduardo Danillo Iung",
+  "clube": "Vdg"
+ },
+ "2000494132": {
+  "nome": "Sarah Ramos",
+  "clube": "Vdg"
+ },
+ "2000494427": {
+  "nome": "Robson Alex",
+  "clube": "Spt"
+ },
+ "2000494551": {
+  "nome": "Edgar Gonzalez",
+  "clube": "Bra"
+ },
+ "2000494582": {
+  "nome": "Joao Madeira",
+  "clube": "Bra"
+ },
+ "2000494591": {
+  "nome": "Caique",
+  "clube": "Bra"
+ },
+ "2000494604": {
+  "nome": "Marquinhos",
+  "clube": "Bra"
+ },
+ "2000494727": {
+  "nome": "Marcelo Morais Amancio",
+  "clube": "San"
+ },
+ "2000494733": {
+  "nome": "Felipe Silveira Lopes",
+  "clube": "San"
+ },
+ "2000494739": {
+  "nome": "Fernando Santana Ziskind",
+  "clube": "San"
+ },
+ "2000494741": {
+  "nome": "Alexandre Galvao",
+  "clube": "San"
+ },
+ "2000494919": {
+  "nome": "Henrique Teixeira",
+  "clube": "Atm"
+ },
+ "2000495992": {
+  "nome": "Dudu",
+  "clube": "Cec"
+ },
+ "2000495995": {
+  "nome": "Felipe Morais",
+  "clube": "Cec"
+ },
+ "2000495996": {
+  "nome": "Pedrinho",
+  "clube": "Spt"
+ },
+ "2000496052": {
+  "nome": "Otavio Gabriel",
+  "clube": "Cec"
+ },
+ "2000496415": {
+  "nome": "Rafael Barros",
+  "clube": "Atm"
+ },
+ "2000497901": {
+  "nome": "Diego Esser",
+  "clube": "Int"
+ },
+ "2000498736": {
+  "nome": "Joao Kempes",
+  "clube": "Int"
+ },
+ "2000498938": {
+  "nome": "Lorenzo Vaghetti",
+  "clube": "Int"
+ },
+ "2000498941": {
+  "nome": "Kauan Alves",
+  "clube": "Int"
+ },
+ "2000498947": {
+  "nome": "Gabriel Lara",
+  "clube": "Int"
+ },
+ "2000498949": {
+  "nome": "Jhonatan Almeida",
+  "clube": "Int"
+ },
+ "2000498958": {
+  "nome": "Kaua Costa",
+  "clube": "Juv"
+ },
+ "2000498960": {
+  "nome": "Kaynan",
+  "clube": "Juv"
+ },
+ "2000498961": {
+  "nome": "Matheus Henrique",
+  "clube": "Juv"
+ },
+ "2000498965": {
+  "nome": "Sasso",
+  "clube": "Juv"
+ },
+ "2000498968": {
+  "nome": "Borges",
+  "clube": "Juv"
+ },
+ "2000498969": {
+  "nome": "Gabriel Altino",
+  "clube": "Juv"
+ },
+ "2000498971": {
+  "nome": "Kaue Lima",
+  "clube": "Juv"
+ },
+ "2000498976": {
+  "nome": "Carlos Junior",
+  "clube": "Juv"
+ },
+ "2000498978": {
+  "nome": "Yarlei",
+  "clube": "Juv"
+ },
+ "2000498979": {
+  "nome": "Pedro Souza",
+  "clube": "Juv"
+ },
+ "2000498980": {
+  "nome": "Luisinho",
+  "clube": "Juv"
+ },
+ "2000499596": {
+  "nome": "Diego Menegassi",
+  "clube": "Juv"
+ },
+ "2000500680": {
+  "nome": "Lucas Saraiva",
+  "clube": "For"
+ },
+ "2000500749": {
+  "nome": "Vinicius Monteiro Do Vale Leal",
+  "clube": "Spt"
+ },
+ "2000501174": {
+  "nome": "David Martins",
+  "clube": "Bah"
+ },
+ "2000501176": {
+  "nome": "Ruan Victor",
+  "clube": "Bah"
+ },
+ "2000501178": {
+  "nome": "Fernando",
+  "clube": "Bah"
+ },
+ "2000501181": {
+  "nome": "Victor Hugo",
+  "clube": "Bah"
+ },
+ "2000501192": {
+  "nome": "Luis Fabiano",
+  "clube": "Vit"
+ },
+ "2000501195": {
+  "nome": "Wanderson",
+  "clube": "Vit"
+ },
+ "2000501196": {
+  "nome": "Marcos Vinicius",
+  "clube": "Vit"
+ },
+ "2000501198": {
+  "nome": "Messias",
+  "clube": "Vit"
+ },
+ "2000501199": {
+  "nome": "Joao Marques",
+  "clube": "Vit"
+ },
+ "2000501203": {
+  "nome": "Airton",
+  "clube": "Vit"
+ },
+ "2000501207": {
+  "nome": "Guilherme",
+  "clube": "Vit"
+ },
+ "2000501208": {
+  "nome": "Gil",
+  "clube": "Vit"
+ },
+ "2000501210": {
+  "nome": "Kauan Vitor",
+  "clube": "Vit"
+ },
+ "2000503227": {
+  "nome": "Lorenzzo",
+  "clube": "Vdg"
+ },
+ "2000503806": {
+  "nome": "Iago Machado",
+  "clube": "Cor"
+ },
+ "2000503816": {
+  "nome": "Cristian",
+  "clube": "Cor"
+ },
+ "2000503823": {
+  "nome": "Kaio Vinicius",
+  "clube": "Cor"
+ },
+ "2000503830": {
+  "nome": "Kawe",
+  "clube": "Cor"
+ },
+ "2000504200": {
+  "nome": "Paulinho",
+  "clube": "Bra"
+ },
+ "2000505469": {
+  "nome": "Riquelme",
+  "clube": "Atm"
+ },
+ "2000507508": {
+  "nome": "Crisleison Santos",
+  "clube": "Cor"
+ },
+ "2000510252": {
+  "nome": "Arthur Do Vale",
+  "clube": "San"
+ },
+ "2000510261": {
+  "nome": "Vinicius Rocha",
+  "clube": "San"
+ },
+ "2000510960": {
+  "nome": "Bruce Alves",
+  "clube": "Spt"
+ },
+ "2000511024": {
+  "nome": "Lipao",
+  "clube": "Spt"
+ },
+ "2000511032": {
+  "nome": "Arthur Maron",
+  "clube": "Spt"
+ },
+ "2000513081": {
+  "nome": "Luiz Peu",
+  "clube": "Atm"
+ },
+ "2000515138": {
+  "nome": "Dudu",
+  "clube": "Spo"
+ },
+ "2000516837": {
+  "nome": "Dyllan Bustamante",
+  "clube": "Bah"
+ },
+ "2000517004": {
+  "nome": "Jacare",
+  "clube": "Cor"
+ },
+ "2000517936": {
+  "nome": "Denis Moreira",
+  "clube": "Atm"
+ },
+ "2000517938": {
+  "nome": "Arnaldo Junior",
+  "clube": "Atm"
+ },
+ "2000518159": {
+  "nome": "Andre Velloso",
+  "clube": "Atm"
+ },
+ "2000518241": {
+  "nome": "Anthonny",
+  "clube": "Spo"
+ },
+ "2000518242": {
+  "nome": "Riquelme",
+  "clube": "Bot"
+ },
+ "2000518252": {
+  "nome": "Joao Scatolin",
+  "clube": "Juv"
+ },
+ "2000519038": {
+  "nome": "Gustavo Zabarelli",
+  "clube": "Spo"
+ },
+ "2000519047": {
+  "nome": "Henrique Bell",
+  "clube": "Spo"
+ },
+ "2000519055": {
+  "nome": "Joao Lucas",
+  "clube": "Bah"
+ },
+ "2000519057": {
+  "nome": "Rafael Monteiro",
+  "clube": "Bra"
+ },
+ "2000519066": {
+  "nome": "Vitor Lamounier",
+  "clube": "Cec"
+ },
+ "2000519068": {
+  "nome": "Ricardo",
+  "clube": "Cec"
+ },
+ "2000519080": {
+  "nome": "Luan Francisco",
+  "clube": "Cec"
+ },
+ "2000519081": {
+  "nome": "Miguel Antonio",
+  "clube": "Cec"
+ },
+ "2000519235": {
+  "nome": "Kaique",
+  "clube": "Vit"
+ },
+ "2000519253": {
+  "nome": "Drogba",
+  "clube": "Juv"
+ },
+ "2000519455": {
+  "nome": "Lucca",
+  "clube": "Gre"
+ },
+ "2000520222": {
+  "nome": "Joao Costa",
+  "clube": "Spo"
+ },
+ "2000520240": {
+  "nome": "Alisson Santana",
+  "clube": "Spo"
+ },
+ "2000520244": {
+  "nome": "Guilherme Calci",
+  "clube": "Spo"
+ },
+ "2000520398": {
+  "nome": "Nycollas",
+  "clube": "Cec"
+ },
+ "2000520438": {
+  "nome": "Vinicius Bacchi",
+  "clube": "Mfc"
+ },
+ "2000520449": {
+  "nome": "Gabriel Rodrigues",
+  "clube": "Mfc"
+ },
+ "2000520452": {
+  "nome": "Gabriel Schemes",
+  "clube": "Mfc"
+ },
+ "2000520514": {
+  "nome": "Victor Hugo",
+  "clube": "Spt"
+ },
+ "2000520516": {
+  "nome": "Kaua Manoel",
+  "clube": "Spt"
+ },
+ "2000520517": {
+  "nome": "Rafinha",
+  "clube": "Spt"
+ },
+ "2000520518": {
+  "nome": "Felype Gabriel",
+  "clube": "Spt"
+ },
+ "2000520574": {
+  "nome": "Lucas Vieira",
+  "clube": "Fla"
+ },
+ "2000520575": {
+  "nome": "Yago Melo",
+  "clube": "Cor"
+ },
+ "2000520676": {
+  "nome": "Ruan Yago",
+  "clube": "Sep"
+ },
+ "2000520685": {
+  "nome": "Camargo",
+  "clube": "Fla"
+ },
+ "2000520994": {
+  "nome": "Murillo",
+  "clube": "Atm"
+ },
+ "2000521530": {
+  "nome": "Heittor",
+  "clube": "Sep"
+ },
+ "2000521531": {
+  "nome": "Kauan Lima",
+  "clube": "Sep"
+ },
+ "2000521532": {
+  "nome": "Thiago Pimenta",
+  "clube": "Sep"
+ },
+ "2000521536": {
+  "nome": "Joao Paulo",
+  "clube": "Sep"
+ },
+ "2000521651": {
+  "nome": "Josmar",
+  "clube": "Fla"
+ },
+ "2000521845": {
+  "nome": "Marcos Paulo",
+  "clube": "Flu"
+ },
+ "2000522302": {
+  "nome": "Joao Vitor Couto",
+  "clube": "Fla"
+ },
+ "2000523420": {
+  "nome": "Denis Marfo",
+  "clube": "Int"
+ },
+ "2000523583": {
+  "nome": "Hilton Lutfi",
+  "clube": "Spo"
+ },
+ "2000523584": {
+  "nome": "Danilo Prado",
+  "clube": "Spo"
+ },
+ "2000523585": {
+  "nome": "Gilvan Arruda",
+  "clube": "Spo"
+ },
+ "2000523587": {
+  "nome": "Davi Pena",
+  "clube": "Spo"
+ },
+ "2000523589": {
+  "nome": "Kaua Edmar",
+  "clube": "Spo"
+ },
+ "2000523947": {
+  "nome": "Pepe Fermino",
+  "clube": "San"
+ },
+ "2000524076": {
+  "nome": "Luiz Fernando",
+  "clube": "Cor"
+ },
+ "2000524504": {
+  "nome": "Italo Silva",
+  "clube": "Vdg"
+ },
+ "2000524839": {
+  "nome": "Pedrinho",
+  "clube": "Atm"
+ },
+ "2000525100": {
+  "nome": "Alan Santos",
+  "clube": "Fla"
+ },
+ "2000525101": {
+  "nome": "David Viana",
+  "clube": "Fla"
+ },
+ "2000525102": {
+  "nome": "Kaio Nobrega",
+  "clube": "Fla"
+ },
+ "2000525288": {
+  "nome": "Marcao",
+  "clube": "Flu"
+ },
+ "2000525453": {
+  "nome": "Kauan Dias",
+  "clube": "Int"
+ },
+ "2000525846": {
+  "nome": "Jhefinho",
+  "clube": "Fla"
+ },
+ "2000525849": {
+  "nome": "Victor Hugo",
+  "clube": "Fla"
+ },
+ "2000525854": {
+  "nome": "Walace Inacio",
+  "clube": "Fla"
+ },
+ "2000525855": {
+  "nome": "Pedro Pinho",
+  "clube": "Fla"
+ },
+ "2000525856": {
+  "nome": "Gabriel Werneck",
+  "clube": "Fla"
+ },
+ "2000527014": {
+  "nome": "Luis Saboia",
+  "clube": "Sep"
+ },
+ "2000527123": {
+  "nome": "Wadson",
+  "clube": "Juv"
+ },
+ "2000527128": {
+  "nome": "Luan Carillo",
+  "clube": "Spo"
+ },
+ "2000527175": {
+  "nome": "Harry Massis",
+  "clube": "Spo"
+ },
+ "2000527644": {
+  "nome": "Jose Rolim Machado",
+  "clube": "For"
+ },
+ "2000527986": {
+  "nome": "Elias Franzoi Eberle",
+  "clube": "Juv"
+ },
+ "2000529231": {
+  "nome": "Lucas Grillo Santa Rosa",
+  "clube": "Bah"
+ },
+ "2000529301": {
+  "nome": "Schaffer",
+  "clube": "Juv"
+ },
+ "2000529504": {
+  "nome": "Cristian Costa",
+  "clube": "Bot"
+ },
+ "2000529566": {
+  "nome": "Ramires",
+  "clube": "Fla"
+ },
+ "2000529708": {
+  "nome": "Amil Henrique Ferreira Marques Lopes",
+  "clube": "Cor"
+ },
+ "2000529754": {
+  "nome": "Nathalia Arnosti",
+  "clube": "Cec"
+ },
+ "2000529955": {
+  "nome": "Mattheus Montenegro",
+  "clube": "Flu"
+ },
+ "2000529966": {
+  "nome": "Fernando Garcia Holderbaum",
+  "clube": "Gre"
+ },
+ "2000529987": {
+  "nome": "Ricardo Sobrinho",
+  "clube": "Int"
+ },
+ "2000530217": {
+  "nome": "Isaac Leocadio",
+  "clube": "Sep"
+ },
+ "2000530316": {
+  "nome": "Samuel Rodrigues",
+  "clube": "Atm"
+ },
+ "2000530318": {
+  "nome": "Alexsandro",
+  "clube": "Atm"
+ },
+ "2000530319": {
+  "nome": "Mathias",
+  "clube": "Atm"
+ },
+ "2000530443": {
+  "nome": "Igor Phillip Dos Santos Gloria",
+  "clube": "Spo"
+ },
+ "2000530492": {
+  "nome": "Saulo Matos",
+  "clube": "Vdg"
+ },
+ "2000530497": {
+  "nome": "Italo De Jesus Ferreira",
+  "clube": "Vit"
+ },
+ "2000530755": {
+  "nome": "Joao Soato",
+  "clube": "Spo"
+ },
+ "2000530758": {
+  "nome": "Nicolas Pereira",
+  "clube": "Spo"
+ },
+ "2000531339": {
+  "nome": "Juan Sayago",
+  "clube": "Fla"
+ },
+ "2000531495": {
+  "nome": "Kone Mohamed",
+  "clube": "Sep"
+ },
+ "2000532780": {
+  "nome": "Favela",
+  "clube": "Cor"
+ },
+ "2000532781": {
+  "nome": "Guilherme Pires",
+  "clube": "Cor"
+ },
+ "2000533103": {
+  "nome": "Anderson Pato",
+  "clube": "Vit"
+ },
+ "2000533851": {
+  "nome": "Kevem Vitor",
+  "clube": "Spo"
+ },
+ "2000533853": {
+  "nome": "Victor Noe",
+  "clube": "Spo"
+ },
+ "2000533855": {
+  "nome": "Joao Victor",
+  "clube": "Spo"
+ },
+ "2000533941": {
+  "nome": "Italo Lucas",
+  "clube": "Spt"
+ },
+ "2000533967": {
+  "nome": "Nathan Borges",
+  "clube": "Gre"
+ },
+ "2000533968": {
+  "nome": "David Brendo",
+  "clube": "Gre"
+ }
+}

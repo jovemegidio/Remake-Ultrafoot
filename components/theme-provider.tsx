@@ -23,59 +23,43 @@ interface ThemeConfig {
   name: string
   primary: string
   accent: string
-  primaryOklch: string
-  accentOklch: string
 }
 
 const themePresets: Record<Exclude<ThemeColor, "team">, ThemeConfig> = {
   cyan: {
     name: "EA FC Cyan",
     primary: "#00d4ff",
-    accent: "#a3ff12",
-    primaryOklch: "oklch(0.78 0.18 195)",
-    accentOklch: "oklch(0.85 0.22 140)"
+    accent: "#a3ff12"
   },
   green: {
     name: "Spotify Green",
     primary: "#00ffc8",
-    accent: "#00c8ff",
-    primaryOklch: "oklch(0.65 0.20 145)",
-    accentOklch: "oklch(0.75 0.22 140)"
+    accent: "#00c8ff"
   },
   red: {
     name: "Vermelho Classico",
     primary: "#e53935",
-    accent: "#ff6659",
-    primaryOklch: "oklch(0.55 0.22 25)",
-    accentOklch: "oklch(0.65 0.20 30)"
+    accent: "#ff6659"
   },
   blue: {
     name: "Azul Royal",
     primary: "#1976d2",
-    accent: "#42a5f5",
-    primaryOklch: "oklch(0.55 0.18 250)",
-    accentOklch: "oklch(0.65 0.16 245)"
+    accent: "#42a5f5"
   },
   orange: {
     name: "Laranja Vibrante",
     primary: "#ff9100",
-    accent: "#ffab40",
-    primaryOklch: "oklch(0.75 0.20 65)",
-    accentOklch: "oklch(0.80 0.18 70)"
+    accent: "#ffab40"
   },
   purple: {
     name: "Roxo Neon",
     primary: "#9c27b0",
-    accent: "#ce93d8",
-    primaryOklch: "oklch(0.50 0.22 310)",
-    accentOklch: "oklch(0.70 0.15 315)"
+    accent: "#ce93d8"
   },
   gold: {
     name: "Dourado Premium",
     primary: "#ffc107",
-    accent: "#ffeb3b",
-    primaryOklch: "oklch(0.80 0.18 85)",
-    accentOklch: "oklch(0.90 0.16 95)"
+    accent: "#ffeb3b"
   }
 }
 
@@ -90,24 +74,17 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-function hexToOklch(hex: string): string {
-  hex = hex.replace('#', '')
-  const r = parseInt(hex.substring(0, 2), 16) / 255
-  const g = parseInt(hex.substring(2, 4), 16) / 255
-  const b = parseInt(hex.substring(4, 6), 16) / 255
-  const l = 0.2126 * r + 0.7152 * g + 0.0722 * b
-  const max = Math.max(r, g, b)
-  const min = Math.min(r, g, b)
-  const c = (max - min) * 0.4
-  let h = 0
-  if (max !== min) {
-    if (max === r) h = ((g - b) / (max - min)) * 60
-    else if (max === g) h = (2 + (b - r) / (max - min)) * 60
-    else h = (4 + (r - g) / (max - min)) * 60
-    if (h < 0) h += 360
-  }
-  return `oklch(${(l * 0.7 + 0.3).toFixed(2)} ${c.toFixed(2)} ${Math.round(h)})`
-}
+// hexToOklch FOI REMOVIDA (1.0.211).
+//
+// Ela convertia o hex do tema para oklch por aproximacao, e errava feio: o croma
+// saia de `(max-min) * 0.4` — 0.40 para qualquer cor saturada, contra ~0.15 do
+// valor real de #00d4ff. Fora do gamut, o navegador satura na forca. A matiz
+// tambem escorregava (medido: ate 40 graus em azul e dourado).
+//
+// Os tokens (--primary/--ring/--accent) aceitam hex, e ninguem faz aritmetica
+// oklch sobre eles. Se alguem precisar de oklch de verdade aqui, use uma
+// conversao correta (via CIE XYZ), nao esta.
+
 
 /**
  * Preto ou branco, o que ler melhor por cima da cor do tema.
@@ -162,27 +139,48 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // usam a cor da marca em classe arbitraria (text-[var(--brand)]), nao so
     // via `primary`. Sem estas duas linhas, trocar de tema mudava meia duzia de
     // botoes e o resto continuava verde-agua.
-    const aplicar = (primaryHex: string, accentHex: string, primaryOklch: string, accentOklch: string) => {
-      root.style.setProperty("--primary", primaryOklch)
-      root.style.setProperty("--ring", primaryOklch)
-      root.style.setProperty("--accent", accentOklch)
-      root.style.setProperty("--sidebar-primary", primaryOklch)
-      root.style.setProperty("--sidebar-ring", primaryOklch)
+    /**
+     * UMA FONTE DE VERDADE: o HEX.
+     *
+     * Antes esta funcao recebia o oklch PRONTO, escrito a mao em cada preset, e
+     * os dois nao descreviam a mesma cor. No tema "green" o hex era #00ffc8
+     * (verde-agua, matiz ~168) e o oklch era `oklch(0.65 0.20 145)` — verde de
+     * verdade. Resultado: os componentes que leem `--primary`/`--accent` (botoes,
+     * anel de foco, sidebar) pintavam de UMA cor e as telas que usam
+     * `var(--brand)` pintavam de OUTRA, no mesmo tema. O usuario via o jogo com
+     * duas cores brigando e chamava de "tema errado".
+     *
+     * Agora todos os tokens recebem O MESMO HEX. Nao ha conversao no meio.
+     *
+     * Por que NAO converter para oklch: `hexToOklch` e uma aproximacao grosseira
+     * — o croma sai de `(max-min) * 0.4`, o que da 0.40 para qualquer cor
+     * saturada, quando o valor real de #00d4ff fica perto de 0.15. Fora do gamut,
+     * o navegador satura na forca e o botao sai mais berrante que a cor escolhida.
+     * Medido nos sete temas: a divergencia de matiz chegava a 40 graus (azul e
+     * dourado), e o croma errava por quase 3x.
+     *
+     * `--primary`/`--ring`/`--accent` aceitam qualquer cor CSS valida, e ninguem
+     * faz aritmetica oklch sobre eles (conferido no globals.css). Hex e exato.
+     *
+     * E a mesma licao das duas escalas de valor: dois numeros descrevendo a mesma
+     * coisa acabam discordando.
+     */
+    const aplicar = (primaryHex: string, accentHex: string) => {
+      root.style.setProperty("--primary", primaryHex)
+      root.style.setProperty("--ring", primaryHex)
+      root.style.setProperty("--accent", accentHex)
+      root.style.setProperty("--sidebar-primary", primaryHex)
+      root.style.setProperty("--sidebar-ring", primaryHex)
       root.style.setProperty("--brand", primaryHex)
       root.style.setProperty("--brand-2", accentHex)
       root.style.setProperty("--brand-ink", tintaLegivel(primaryHex))
     }
 
     if (theme === "team" && teamColors) {
-      aplicar(
-        teamColors.primary,
-        teamColors.secondary,
-        hexToOklch(teamColors.primary),
-        hexToOklch(teamColors.secondary),
-      )
+      aplicar(teamColors.primary, teamColors.secondary)
     } else if (theme !== "team") {
       const config = themePresets[theme]
-      aplicar(config.primary, config.accent, config.primaryOklch, config.accentOklch)
+      aplicar(config.primary, config.accent)
     }
   }, [theme, teamColors, mounted])
 
@@ -193,7 +191,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const config = theme === "team" 
     ? teamColors 
-      ? { name: "Cores do Time", primary: teamColors.primary, accent: teamColors.secondary, primaryOklch: hexToOklch(teamColors.primary), accentOklch: hexToOklch(teamColors.secondary) }
+      ? { name: "Cores do Time", primary: teamColors.primary, accent: teamColors.secondary }
       : null
     : themePresets[theme]
 

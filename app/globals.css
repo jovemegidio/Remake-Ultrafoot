@@ -72,7 +72,7 @@
 /* Scrollbar estilo EA FC Premium - com glow */
 .scrollbar-game {
   scrollbar-width: thin;
-  scrollbar-color: #00ffc8 rgba(0, 0, 0, 0.3);
+  scrollbar-color: var(--brand) rgba(0, 0, 0, 0.3);
 }
 
 .scrollbar-game::-webkit-scrollbar {
@@ -87,7 +87,7 @@
 }
 
 .scrollbar-game::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #00ffc8 0%, #00c8ff 100%);
+  background: linear-gradient(180deg, var(--brand) 0%, var(--brand-2) 100%);
   border-radius: 8px;
   box-shadow: 0 0 6px rgba(0, 255, 200, 0.4);
 }
@@ -118,7 +118,7 @@
 }
 
 .scrollbar-horizontal::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, #00ffc8 0%, #00c8ff 100%);
+  background: linear-gradient(90deg, var(--brand) 0%, var(--brand-2) 100%);
   border-radius: 8px;
   box-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
 }
@@ -131,7 +131,7 @@
 /* Scrollbar premium - maior e mais visivel */
 .scrollbar-premium {
   scrollbar-width: auto;
-  scrollbar-color: #00ffc8 rgba(0, 0, 0, 0.4);
+  scrollbar-color: var(--brand) rgba(0, 0, 0, 0.4);
 }
 
 .scrollbar-premium::-webkit-scrollbar {
@@ -146,7 +146,7 @@
 }
 
 .scrollbar-premium::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #00ffc8 0%, #00b8a9 50%, #00c8ff 100%);
+  background: linear-gradient(180deg, var(--brand) 0%, color-mix(in oklch, var(--brand) 60%, var(--brand-2)) 50%, var(--brand-2) 100%);
   border-radius: 10px;
   border: 1px solid rgba(0, 255, 200, 0.2);
   box-shadow: 
@@ -471,7 +471,7 @@
   /* EA FC Button Primary */
   .eafc-btn {
     @apply relative overflow-hidden px-6 py-3 font-semibold text-sm rounded-lg transition-all duration-200;
-    background: linear-gradient(135deg, #00ffc8 0%, #00c8ff 55%, #6c8cff 100%);
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 55%, #6c8cff 100%);
     color: #000;
   }
 
@@ -575,7 +575,7 @@
 
   /* Gradient text - EA FC Teal/Lime */
   .gradient-text-primary {
-    background: linear-gradient(135deg, #00ffc8, #00ff88);
+    background: linear-gradient(135deg, var(--brand), color-mix(in oklch, var(--brand) 70%, #00ff88));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -590,7 +590,7 @@
 
   /* Stat bar gradient */
   .stat-bar {
-    background: linear-gradient(90deg, #00ffc8, #00ff88);
+    background: linear-gradient(90deg, var(--brand), color-mix(in oklch, var(--brand) 70%, #00ff88));
   }
 
   /* Overall rating colors */
@@ -709,7 +709,7 @@
   /* Score flash */
   @keyframes score-flash {
     0%, 100% { text-shadow: 0 0 0 transparent; }
-    50% { text-shadow: 0 0 30px #00ffc8, 0 0 60px #00ffc8; }
+    50% { text-shadow: 0 0 30px var(--brand), 0 0 60px var(--brand); }
   }
   .animate-score-flash {
     animation: score-flash 0.5s ease-in-out 3;
@@ -1099,7 +1099,7 @@ html[data-performance-mode] video { display: none !important; }
 
 /* Foco visivel: essencial para teclado e controle. */
 html[data-a11y-focus] *:focus-visible {
-  outline: 3px solid #00ffc8 !important;
+  outline: 3px solid var(--brand) !important;
   outline-offset: 2px !important;
   border-radius: 4px;
 }

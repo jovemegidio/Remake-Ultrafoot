@@ -65,6 +65,7 @@ import { playerSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import { canAffordTransfer, financeWithDebt, borrowingCapacity } from "@/lib/debt-engine"
 import { MercadoJunioresPanel } from "@/components/mercado-juniores-panel"
+import { agenteDoJovem, comissaoEmReais, responderOferta } from "@/lib/agente-do-jovem"
 import { generateYouthMarketProspects } from "@/lib/youth-academy"
 import { capacidadeDaBase, vagasNaBase } from "@/lib/youth-academy-rules"
 import { flushPersistentStore } from "@/lib/persistent-store"
@@ -863,19 +864,53 @@ export default function MercadoPage() {
       setMarketNotice("A categoria de base está lotada. Promova, venda ou dispense um jovem antes de contratar.")
       return
     }
-    const preco = jovem.value ?? 0
-    if (gameEngine.balance < preco) {
-      setMarketNotice("Saldo insuficiente para contratar este júnior.")
+    const pedidoDoClube = jovem.value ?? 0
+
+    // ─── NEGOCIACAO COM O AGENTE ──────────────────────────────────────────────
+    //
+    // Antes bastava ter caixa e clicar. Agora o empresario entra: a comissao vem
+    // POR FORA do pedido do clube e ele pode recusar ou contrapropor. E na base
+    // que o agente manda — o clube libera, e ele trava.
+    const agente = agenteDoJovem(jovem.id, jovem.potential ?? 70)
+    let ofertaAoClube = pedidoDoClube
+    let resposta = responderOferta(pedidoDoClube, ofertaAoClube, agente, jovem.name)
+
+    if (resposta.desfecho === "recusa") {
+      setMarketNotice(resposta.fala)
+      return
+    }
+    if (resposta.desfecho === "contraproposta" && resposta.contra != null) {
+      const aceita = typeof window !== "undefined" && window.confirm(
+        `${resposta.fala}\n\nAceitar a contraproposta?`,
+      )
+      if (!aceita) {
+        setMarketNotice(`Negociação por ${jovem.name} encerrada sem acordo.`)
+        return
+      }
+      ofertaAoClube = resposta.contra
+      resposta = responderOferta(pedidoDoClube, ofertaAoClube, agente, jovem.name)
+    }
+
+    const total = resposta.totalAPagar ?? (ofertaAoClube + comissaoEmReais(ofertaAoClube, agente))
+    if (gameEngine.balance < total) {
+      setMarketNotice(
+        `Saldo insuficiente: ${jovem.name} sai por ${formatCurrency(total)} ` +
+        `(${formatCurrency(ofertaAoClube)} ao clube + ${formatCurrency(total - ofertaAoClube)} de comissão do empresário).`,
+      )
       return
     }
     if (typeof window !== "undefined" && !window.confirm(
-      `${jovem.fromTeam ?? "O clube formador"} pede ${formatCurrency(preco)} por ${jovem.name}, ` +
-      `${jovem.age} anos (${jovem.position}).\n\nO atleta vai direto para a sua categoria de base. Confirmar?`,
+      `${resposta.fala}\n\n` +
+      `Ao clube: ${formatCurrency(ofertaAoClube)}\n` +
+      `Comissão de ${agente.nome}: ${formatCurrency(total - ofertaAoClube)}\n` +
+      `TOTAL: ${formatCurrency(total)}\n\n` +
+      `${jovem.name}, ${jovem.age} anos (${jovem.position}), vai para a sua categoria de base. Confirmar?`,
     )) return
-    if (!gameEngine.spendClubFunds(preco)) {
+    if (!gameEngine.spendClubFunds(total)) {
       setMarketNotice("Saldo insuficiente para concluir a compra.")
       return
     }
+    const preco = total
     setCareerState(current => ({
       youthPlayers: [...(current.youthPlayers ?? []), {
         ...jovem,

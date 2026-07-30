@@ -12,11 +12,14 @@
 // categoria de base, não no elenco profissional.
 
 import { useMemo, useState } from "react"
-import { Search, ShoppingCart, Sprout, Users } from "lucide-react"
+import { Search, ShoppingCart, Sprout, Users, Briefcase } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { formatCurrency } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 import type { SquadPlayer } from "@/lib/save-system"
+import {
+  agenteDoJovem, comissaoEmReais, ROTULO_PERFIL, DESCRICAO_PERFIL,
+} from "@/lib/agente-do-jovem"
 
 const POSICOES = ["todas", "GOL", "ZAG", "LD", "LE", "VOL", "MEI", "PD", "PE", "ATA"] as const
 
@@ -59,7 +62,16 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
     return filtrados[0] ?? null
   }, [selecionado, filtrados])
 
-  const podeComprar = alvo != null && vagas > 0 && saldo >= (alvo.value ?? 0)
+  // Agente do atleta em foco. Determinístico pelo id: reabrir a tela não sorteia
+  // um empresário mais camarada.
+  const agente = useMemo(
+    () => (alvo ? agenteDoJovem(alvo.id, alvo.potential ?? 70) : null),
+    [alvo],
+  )
+  const comissao = alvo && agente ? comissaoEmReais(alvo.value ?? 0, agente) : 0
+  // O caixa precisa cobrir o pedido do clube MAIS a comissão.
+  const custoTotal = (alvo?.value ?? 0) + comissao
+  const podeComprar = alvo != null && vagas > 0 && saldo >= custoTotal
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -179,9 +191,34 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
 
               <div className="mt-4 space-y-1.5 rounded-lg border border-white/[0.06] bg-black/20 p-3 text-sm">
                 <Linha rotulo="Clube formador" valor={alvo.fromTeam ?? "—"} />
-                <Linha rotulo="Pedido" valor={formatCurrency(alvo.value ?? 0)} destaque />
+                <Linha rotulo="Pedido do clube" valor={formatCurrency(alvo.value ?? 0)} destaque />
                 <Linha rotulo="Margem de evolução" valor={`+${Math.max(0, (alvo.potential ?? 0) - (alvo.overall ?? 0))}`} />
               </div>
+
+              {/* AGENTE — a compra deixou de ser um botão. A comissão entra POR
+                  FORA do pedido do clube, como no futebol de verdade, e é isso
+                  que faz a conta doer mais do que o valor anunciado. */}
+              {agente && (
+                <div className="mt-3 rounded-lg border border-white/[0.06] bg-black/20 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-white/40">
+                      <Briefcase className="h-3.5 w-3.5" /> Empresário
+                    </span>
+                    <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                      agente.perfil === "tubarao" ? "bg-red-500/15 text-red-300"
+                        : agente.perfil === "duro" ? "bg-amber-500/15 text-amber-300"
+                          : "bg-[var(--brand)]/15 text-[var(--brand)]")}>
+                      {ROTULO_PERFIL[agente.perfil]}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-sm font-medium text-white/85">{agente.nome}</p>
+                  <p className="text-[11px] text-white/40">{DESCRICAO_PERFIL[agente.perfil]}</p>
+                  <div className="mt-2 space-y-1 border-t border-white/[0.06] pt-2 text-sm">
+                    <Linha rotulo={`Comissão (${(agente.comissao * 100).toFixed(0)}%)`} valor={formatCurrency(comissao)} />
+                    <Linha rotulo="Custo total" valor={formatCurrency((alvo.value ?? 0) + comissao)} destaque />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="button"
@@ -197,12 +234,12 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
                 <ShoppingCart className="h-4 w-4" />
                 {vagas <= 0
                   ? "Categoria de base lotada"
-                  : saldo < (alvo.value ?? 0)
-                    ? "Saldo insuficiente"
-                    : `Contratar por ${formatCurrency(alvo.value ?? 0)}`}
+                  : saldo < custoTotal
+                    ? `Saldo insuficiente (faltam ${formatCurrency(custoTotal - saldo)})`
+                    : `Negociar — ${formatCurrency(custoTotal)} no total`}
               </button>
               <p className="mt-2 text-[11px] text-white/35">
-                O atleta entra na categoria de base, não no elenco profissional.
+                O empresário pode pedir mais. O atleta entra na base, não no elenco profissional.
               </p>
             </>
           )}
