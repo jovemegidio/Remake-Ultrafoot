@@ -19,6 +19,7 @@
 
 import { useEffect, useRef } from "react"
 import { hardNavigate } from "@/lib/hard-navigation"
+import { dialogoAberto } from "@/components/gamepad-modal-bridge"
 
 export interface OpcoesTelaGamepad {
   /** O que "voltar" (B) faz nesta tela. Padrao: volta ao escritorio. */
@@ -30,6 +31,13 @@ export interface OpcoesTelaGamepad {
   aoNavegar?: (direcao: "up" | "down" | "left" | "right") => void
   /** Confirmar (A) — normalmente abrir o item em foco. */
   aoConfirmar?: () => void
+  /**
+   * Acao secundaria (X). Na tabela oficial o X e "ver detalhes/estatisticas" —
+   * as telas que tem um "ver ficha" devem ligar aqui.
+   */
+  aoDetalhes?: () => void
+  /** Rolagem rapida da lista (LT/RT). Sem isso listas longas so andam item a item. */
+  aoRolar?: (direcao: "up" | "down") => void
   /** Desliga o hook (ex.: modal aberto cuida do proprio input). */
   quando?: boolean
 }
@@ -44,6 +52,11 @@ export function useTelaGamepad(opcoes: OpcoesTelaGamepad = {}): void {
     const onBotao = (e: Event) => {
       const o = ref.current
       if (o.quando === false) return
+      // MODAL ABERTO MANDA. Quem cuida do input aí é a GamepadModalBridge; sem
+      // esta guarda o B fechava o modal E voltava de tela no mesmo aperto —
+      // exatamente o "voltou em dobro" que obrigava cada tela a lembrar de
+      // passar `quando: false`. Agora é automático para todas.
+      if (dialogoAberto()) return
       const { button } = (e as CustomEvent<{ button: string }>).detail ?? {}
       switch (button) {
         case "B":
@@ -60,6 +73,19 @@ export function useTelaGamepad(opcoes: OpcoesTelaGamepad = {}): void {
           break
         case "RB":
           o.aoAbaProxima?.()
+          break
+        case "X":
+          o.aoDetalhes?.()
+          break
+        case "LT":
+          // Sem fallback para navegar: em lista longa o gatilho tem de rolar de
+          // verdade. Quem nao define `aoRolar` cai no passo simples do D-pad.
+          if (o.aoRolar) o.aoRolar("up")
+          else o.aoNavegar?.("up")
+          break
+        case "RT":
+          if (o.aoRolar) o.aoRolar("down")
+          else o.aoNavegar?.("down")
           break
         case "DPAD_UP": o.aoNavegar?.("up"); break
         case "DPAD_DOWN": o.aoNavegar?.("down"); break

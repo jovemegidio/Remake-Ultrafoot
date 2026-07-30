@@ -172,6 +172,58 @@
       ]
     },
     {
+      "version": "1.0.228",
+      "date": "2026-07-30",
+      "latest": false,
+      "title": "Multa rescisoria no mercado, emprestimo que se negocia, olheiro que se demite e o campeonato online funcionando de ponta a ponta",
+      "changes": [
+        {
+          "type": "added",
+          "text": "PAGAR A MULTA RESCISORIA. Agora da para quitar a clausula na mesa com o clube, antes de sentar com o atleta: quem paga a multa nao ouve 'nao' do clube, nem de rival. Isto nunca tinha funcionado de verdade — o valor da proposta parava em 150% do valor do atleta e a multa quase sempre custa mais que isso, entao o botao existia no papel e a clausula era um numero decorativo na ficha. Depois de quitada, o atleta ainda decide se quer o projeto e o agente ainda negocia salario, luvas e papel."
+        },
+        {
+          "type": "added",
+          "text": "EMPRESTIMO VIROU NEGOCIACAO. Antes era um clique: taxa e pronto, com 26 semanas cravadas no codigo e um salario inventado a partir da taxa. Agora tem mesa com o clube dono — duracao, quanto da folha voce assume, opcao de compra e, principalmente, MINUTAGEM: emprestar existe para o atleta jogar, e prometer banco derruba a conversa por mais dinheiro que se ofereca. O dono contrapropoe em ate tres rodadas."
+        },
+        {
+          "type": "fixed",
+          "text": "A TAXA DO EMPRESTIMO NAO SAIA DO CAIXA. Emprestar era literalmente de graca: o valor acertado com o dono nunca era cobrado. Agora sai, e o salario que entra na folha e o do ATLETA, na fatia que voce assumiu."
+        },
+        {
+          "type": "fixed",
+          "text": "DEMITIR OLHEIRO. Nao existia — contratar era definitivo e o custo semanal so subia. A demissao esta na tela do olheiro e na do departamento estrategico, com rescisao de quatro semanas e aviso de que a busca em andamento e cancelada junto."
+        },
+        {
+          "type": "fixed",
+          "text": "FINAL DE IDA E VOLTA ERA DECIDIDA PELO JOGO DA VOLTA. Quem vencia a ida por 3x0 e perdia a volta por 1x0 era campeao no agregado e nao ganhava nada; quem levava 4x0 na ida e vencia por 1x0 era coroado. E final empatada nao dava campeao nenhum. Agora vale o agregado, e empate vai aos penaltis."
+        },
+        {
+          "type": "fixed",
+          "text": "CONTROLE DE PLAYSTATION COM OS BOTOES TROCADOS. Ligado por Bluetooth sem DS4Windows, o DualShock/DualSense chega em DirectInput: X virava quadrado, bola virava X e o direcional simplesmente nao existia (ele vem por um eixo, nao por botoes). O jogo agora reconhece esse formato e o analogico direito parou de ler o gatilho como eixo vertical."
+        },
+        {
+          "type": "added",
+          "text": "MODAL NO CONTROLE. Dava para ABRIR uma janela de negociacao ou confirmacao com o controle e nao dava para fechar nem confirmar — tinha de largar o controle e pegar o mouse. Agora A confirma, B fecha e o direcional anda entre os botoes, em qualquer modal do jogo."
+        },
+        {
+          "type": "fixed",
+          "text": "CAMPEONATO ONLINE TRAVAVA NA PRIMEIRA RODADA. O servidor sempre soube receber placar, mas nenhum cliente mandava: dava para criar a liga e nunca termina-la. Agora ha o envio do placar com confirmacao dos dois lados, tabela de classificacao, prazo de rodada valendo de verdade, W.O. para quem sumiu e arbitragem do organizador quando os dois placares nao batem."
+        },
+        {
+          "type": "added",
+          "text": "ESPECTADOR NO CAMPEONATO ONLINE. A opcao 'permitir espectadores' era uma caixa de selecao que nao fazia nada. Agora quem entra so para assistir nao ocupa vaga, nao escolhe clube e pode entrar com o campeonato ja em andamento."
+        },
+        {
+          "type": "fixed",
+          "text": "ATUALIZAR O JOGO DERRUBAVA O ONLINE DE TODOS. A versao do multiplayer estava amarrada a versao da build: publicar o jogo sem republicar o servidor no mesmo minuto expulsava quem atualizasse. Agora sao coisas separadas, e o servidor aceita mais de uma versao ao mesmo tempo — ninguem e expulso no meio de um campeonato."
+        },
+        {
+          "type": "improved",
+          "text": "O LAUNCHER NAO PRECISA MAIS SER ATUALIZADO. Os enderecos dos servidores eram fixos dentro do programa: se a VPS trocasse de IP, o launcher instalado virava tijolo e nem conseguia baixar a propria correcao. Agora ele descobre os enderecos ao abrir e guarda uma copia para funcionar offline — mudar de servidor no futuro nao exige que ninguem reinstale nada."
+        }
+      ]
+    },
+    {
       "version": "1.0.226",
       "date": "2026-07-30",
       "title": "Escudo das selecoes no Mundial, a camisa certa no radar e o calendario em ordem",
@@ -200,7 +252,8 @@
           "type": "improved",
           "text": "Ultrafoot de Bolso (Android) 1.0.1: a tela gira (o jogo tem layout largo e estava travado em retrato), o botao voltar no menu principal pede confirmacao antes de fechar o app, e voltar do segundo plano recupera o jogo sozinho quando o Android encerrou a WebView."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.225",
@@ -227,7 +280,8 @@
           "type": "improved",
           "text": "A prancheta do elenco pode ficar horizontal sem gravar a formacao de lado."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.218",
@@ -290,7 +344,8 @@
           "type": "improved",
           "text": "Quem registrou o jogo ganha extras: save na nuvem, FC Hub, editor de equipes, Central de Atualizacoes e carreiras ilimitadas. Sem registro o jogo continua completo — nada trava no meio."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.211",
@@ -321,7 +376,8 @@
           "type": "fixed",
           "text": "Barras de rolagem, brilho do placar e o anel de foco de acessibilidade ficavam verde-agua em qualquer tema. Agora seguem a cor escolhida."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.210",
@@ -356,7 +412,8 @@
           "type": "fixed",
           "text": "Faixa morta no pe das telas do Mercado: a altura era calculada por subtracao chumbada e o palpite errava — sobrava espaco vazio em telas grandes e cortava conteudo nas menores."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.209",
@@ -399,7 +456,8 @@
           "type": "fixed",
           "text": "Championship marcava três acessos diretos quando são dois, mais o playoff do 3º ao 6º — que a tabela nunca mostrava."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.201",
@@ -414,7 +472,8 @@
           "type": "fixed",
           "text": "Folha salarial que só subia: um gasto avulso (quitar dívida, obra) virava despesa semanal para sempre."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.200",
@@ -433,7 +492,8 @@
           "type": "added",
           "text": "Central de Atualizações: elencos e times novos sem reinstalar, e só quando você autoriza."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.198",
@@ -448,7 +508,8 @@
           "type": "fixed",
           "text": "Avançar no calendário não simula mais a sua própria partida."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.196",
@@ -459,7 +520,8 @@
           "type": "added",
           "text": "Escudos, uniformes e fotos editados aparecem para todos os jogadores, inclusive na versão web."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.195",
@@ -470,7 +532,8 @@
           "type": "added",
           "text": "Telas de convocação, competições e amistosos da seleção."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.188",
@@ -485,7 +548,8 @@
           "type": "added",
           "text": "Atualização automática também no Linux e no macOS."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.175",
@@ -512,7 +576,8 @@
           "type": "fixed",
           "text": "Escudos importados pelo usuário passam a vencer o mapa padrão."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.150",
@@ -531,7 +596,8 @@
           "type": "fixed",
           "text": "Correções da auditoria e códigos de país normalizados."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.145",
@@ -545,7 +611,8 @@
           "type": "changed",
           "text": "Ligas europeias e estaduais ajustados às datas informadas."
         }
-      ]
+      ],
+      "latest": false
     },
     {
       "version": "1.0.144",
@@ -559,7 +626,8 @@
           "type": "added",
           "text": "Treino de entrosamento na data FIFA."
         }
-      ]
+      ],
+      "latest": false
     }
   ]
 }

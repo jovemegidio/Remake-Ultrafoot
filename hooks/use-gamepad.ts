@@ -27,6 +27,66 @@ export const GAMEPAD_BUTTONS = {
 
 export type GamepadButtonName = keyof typeof GAMEPAD_BUTTONS
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTROLE QUE NÃO FALA "STANDARD"
+//
+// A tabela acima é o *Standard Gamepad* do W3C, e ela só vale quando o
+// navegador diz `gamepad.mapping === "standard"`. Xbox no Windows sempre cai
+// aí (XInput). DualShock 4 / DualSense, NÃO: ligados por Bluetooth sem
+// DS4Windows/Steam, a webview os entrega em DirectInput cru, com
+// `mapping: ""` e uma ordem de botões DIFERENTE:
+//
+//   índice 0 = □ (não ✕),  1 = ✕,  2 = ○,  3 = △
+//   e o D-PAD NÃO É BOTÃO — é um "hat switch" no eixo 9.
+//
+// Lendo pela tabela padrão, ✕ (confirmar) virava □, ○ (voltar) virava ✕ e o
+// D-pad simplesmente não existia. Era o "meu controle de PlayStation não
+// funciona direito": os botões faziam a ação errada e a navegação estava morta.
+//
+// O hat switch devolve um valor de -1 a 1 em oito posições; a tabela abaixo
+// traduz cada faixa para as direções.
+const DIRECTINPUT_PS_BUTTONS: Record<GamepadButtonName, number> = {
+  X: 0, A: 1, B: 2, Y: 3,
+  LB: 4, RB: 5, LT: 6, RT: 7,
+  SELECT: 8, START: 9, L3: 10, R3: 11, HOME: 12,
+  // Sem botão de D-pad: vêm do hat switch (ver `direcoesDoHat`).
+  DPAD_UP: -1, DPAD_DOWN: -1, DPAD_LEFT: -1, DPAD_RIGHT: -1,
+}
+
+/** Direções ativas de um hat switch (eixo 9 do DirectInput). */
+function direcoesDoHat(valor: number | undefined): Partial<Record<GamepadButtonName, boolean>> {
+  // Em repouso o eixo fica em ~1.28 (fora da faixa) ou exatamente 0 em alguns
+  // drivers — só interpretamos dentro do intervalo válido.
+  if (typeof valor !== "number" || valor > 1.05 || valor < -1.05) return {}
+  const graus = Math.round(((valor + 1) / 2) * 360)
+  const perto = (alvo: number) => Math.abs(((graus - alvo + 540) % 360) - 180) < 68
+  return {
+    DPAD_UP: perto(0),
+    DPAD_RIGHT: perto(90),
+    DPAD_DOWN: perto(180),
+    DPAD_LEFT: perto(270),
+  }
+}
+
+/**
+ * Índices de botão a usar para ESTE controle, e se o D-pad vem do hat switch.
+ *
+ * Regra: `mapping === "standard"` é sempre confiável — é o navegador dizendo
+ * que já normalizou. Fora dele, controle Sony usa a tabela DirectInput.
+ */
+function resolverLayout(gamepad: Gamepad): { botoes: Record<GamepadButtonName, number>; usaHat: boolean } {
+  if (gamepad.mapping === "standard") return { botoes: { ...GAMEPAD_BUTTONS }, usaHat: false }
+  if (detectControllerType(gamepad.id) === "playstation") {
+    return { botoes: DIRECTINPUT_PS_BUTTONS, usaHat: gamepad.axes.length > 9 }
+  }
+  // Genérico sem mapping: a ordem padrão é o melhor palpite, mas se não houver
+  // botões de D-pad e existir um eixo 9, ele quase certamente é o hat.
+  return {
+    botoes: { ...GAMEPAD_BUTTONS },
+    usaHat: gamepad.buttons.length < 13 && gamepad.axes.length > 9,
+  }
+}
+
 export interface GamepadState {
   connected: boolean
   controllerType: "xbox" | "playstation" | "generic"
@@ -143,12 +203,16 @@ export function useGamepad(options: UseGamepadOptions = {}) {
 
       // Bordas dos botoes: DISPARA sempre, mesmo sem re-render (e o que as telas
       // ouvem, via evento gamepad:button).
+      const { botoes, usaHat } = resolverLayout(gamepad)
+      const hat = usaHat ? direcoesDoHat(gamepad.axes[9]) : {}
+
       const newButtons = {} as Record<GamepadButtonName, boolean>
       let algumMudou = false
-      for (const [name, index] of Object.entries(GAMEPAD_BUTTONS)) {
-        const button = gamepad.buttons[index]
-        const isPressed = button ? (typeof button === "object" ? button.pressed : button > 0.5) : false
-        newButtons[name as GamepadButtonName] = isPressed
+      for (const [name, index] of Object.entries(botoes)) {
+        const nome = name as GamepadButtonName
+        const button = index >= 0 ? gamepad.buttons[index] : undefined
+        const isPressed = hat[nome] ?? (button ? (typeof button === "object" ? button.pressed : button > 0.5) : false)
+        newButtons[nome] = isPressed
         const wasPressed = previousButtonsRef.current[name as GamepadButtonName]
         if (isPressed !== wasPressed) algumMudou = true
         if (isPressed && !wasPressed) {
@@ -161,7 +225,12 @@ export function useGamepad(options: UseGamepadOptions = {}) {
       previousButtonsRef.current = newButtons
 
       const leftStick = { x: applyDeadzone(gamepad.axes[0] || 0), y: applyDeadzone(gamepad.axes[1] || 0) }
-      const rightStick = { x: applyDeadzone(gamepad.axes[2] || 0), y: applyDeadzone(gamepad.axes[3] || 0) }
+      // Mesmo problema dos botões no DirectInput: o analógico DIREITO não fica
+      // em (2,3). No DS4 cru os eixos 3 e 4 são os gatilhos e o Y direito vai
+      // para o eixo 5 — ler (2,3) devolvia a pressão do L2 como "eixo vertical".
+      const rightStick = usaHat && gamepad.axes.length > 5
+        ? { x: applyDeadzone(gamepad.axes[2] || 0), y: applyDeadzone(gamepad.axes[5] || 0) }
+        : { x: applyDeadzone(gamepad.axes[2] || 0), y: applyDeadzone(gamepad.axes[3] || 0) }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rawBattery = (gamepad as any).battery
