@@ -176,6 +176,33 @@
       ]
     },
     {
+      "version": "1.0.225",
+      "date": "2026-07-30",
+      "title": "O que ficou pronto entre a 1.0.218 e agora e nunca tinha chegado ate voce",
+      "changes": [
+        {
+          "type": "added",
+          "text": "AMISTOSO VIROU JOGO DE VERDADE no calendario: marcado na Area do Treinador, ele aparece no dia dele (com cara propria, tracejada), e jogavel e guarda o placar. Antes vivia solto num botao perdido. Ele nunca ocupa semana com compromisso oficial e nunca segura o fim da temporada."
+        },
+        {
+          "type": "added",
+          "text": "TREINO COM CARGA, FADIGA E RISCO DE LESAO. Apertar a semana rende mais e cansa mais; o entrosamento deixou de ser um contador e passou a ser MINUTOS JUNTOS — partida, amistoso, treino coletivo e semana de data FIFA alimentam a mesma conta, entao a dupla de zaga que joga junto se entende melhor."
+        },
+        {
+          "type": "fixed",
+          "text": "O CLUBE GRANDE QUE MANDAVA 13 MILHOES POR UM RESERVA. O preco saia do valor de mercado sem perguntar se o atleta jogaria ali. Agora o papel previsto no elenco (estrela, titular, rotacao, reserva) manda no teto da proposta, e reserva e recusa direta."
+        },
+        {
+          "type": "added",
+          "text": "Conversa com o atleta, dialogos do jogo e a versao instalada visivel na tela."
+        },
+        {
+          "type": "improved",
+          "text": "A prancheta do elenco pode ficar horizontal sem gravar a formacao de lado."
+        }
+      ]
+    },
+    {
       "version": "1.0.218",
       "date": "2026-07-30",
       "title": "Reuniao com a diretoria, mercado que respeita o caixa e a camisa no campo",

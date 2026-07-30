@@ -1,12 +1,12 @@
 {
-  "version": "1.0.218",
-  "notes": "Ultrafoot 26 v1.0.218 - Reuniao com a diretoria, mercado que respeita o caixa, camisa no campo, emprestimo com renovacao negociada, fim do espaco vazio nas telas e italiano.",
-  "sizeMb": 531,
-  "sha256": "0037F1DBE58D505AEF004828873C9625D44D18B8FD33C9786561A2CFAAE9D17D",
+  "version": "1.0.226",
+  "notes": "Escudo das selecoes no Mundial, a cor da camisa que voce escolhe pintando o radar da partida, e o calendario em ordem cronologica — a final da Copa do Brasil nao aparece mais antes de jogos anteriores a ela, e dois jogos no mesmo dia nao escondem um ao outro. Vem junto o trabalho das 1.0.219 a 1.0.225, que nunca tinha chegado ate voce: amistoso jogavel no calendario, treino com carga e risco de lesao, entrosamento por minutos juntos em campo e o mercado que respeita o papel do atleta no elenco.",
+  "sizeMb": 565,
+  "sha256": "0EDAFCEACB8BBD8BEF41BD8891A19C8D7AB59E140648433F20FFB63BA6E507B2",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRVArb3M2NGV6R0sycWlOZUl1bFZIYU94RVJiZmhwc29DSnkzUHdrNHpPOEpNcGNsVUF4bVRGUW5BNWJncUg4MnA0UmZ6SW9BK0hqT1RGYlRLOFZseXdnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NDI3MDU4CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yMThfeDY0LXNldHVwLmV4ZQpDMXRac1JKbHl0UVU3YXFuU2xzZ2VCcExWSFplamY1VmtIYWtYMHdzZ20wTkxaTU1yeTdWV2o5R0x2ZDZQcldPYitrSjNCWno2M2J4VlZTM1JHbGJDUT09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.218_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUhCT093K2JyVVpGNWlCQjZua2RTeHJ1NEdWWHdFZEN0U2FidmNnZHc2R2ZtSW01eUtNbjBtY05aWERpUWgxR0ZxQ0VTdTBMR1hlNm1KS3pEUkJqNVF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NDQ4MjU4CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yMjZfeDY0LXNldHVwLmV4ZQovY3IzY2hxa0UzSVF5QVNyWHZjZHdZakQ2WEZXdEhPUDUzL3IrbnFQdzhjQlpVdFJWVlczRzBSNGRja1lWWWR5UnZDNlliTDZYaUlCcjcrRTl5UmhBdz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.226_x64-setup.exe"
     }
   }
 }
