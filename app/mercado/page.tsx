@@ -43,7 +43,7 @@ import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-cooldown"
 import { formatCurrency, formatCurrencyFor } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
-import { useGameState, useUserTeam } from "@/lib/save-system"
+import { useGameState, useUserTeam, type SquadPlayer } from "@/lib/save-system"
 import { useRequireClub } from "@/lib/use-require-team"
 import { markDeparted, hasDeparted } from "@/lib/departed-players"
 import { useNotifications } from "@/components/notifications-system"
@@ -64,7 +64,10 @@ import { getLeagueLogo } from "@/lib/league-logos"
 import { playerSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import { canAffordTransfer, financeWithDebt, borrowingCapacity } from "@/lib/debt-engine"
-import { LeiloesPanel } from "@/components/leiloes-panel"
+import { MercadoJunioresPanel } from "@/components/mercado-juniores-panel"
+import { generateYouthMarketProspects } from "@/lib/youth-academy"
+import { capacidadeDaBase, vagasNaBase } from "@/lib/youth-academy-rules"
+import { flushPersistentStore } from "@/lib/persistent-store"
 
 // Alvos de transferência dinâmicos — gerados do banco real (2.900+ clubes)
 // via generateDetailedMarketTargets. Determinístico por temporada.
@@ -78,7 +81,7 @@ function normalizeClubShort(nome?: string): string {
     .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
     .split(" ").filter(w => w && !SIGLA_CLUBE_MERCADO.has(w)).join(" ")
 }
-type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "leiloes" | "enviadas" | "recebidas"
+type MarketTab = "buscar" | "rede" | "olheiros" | "central" | "juniores" | "enviadas" | "recebidas"
 type SentProposalStatus = "aceita" | "rejeitada"
 
 function scoutedLeadToMarketPlayer(lead: import("@/lib/game-engine").ScoutedLead): Player {
@@ -141,7 +144,7 @@ interface SentTransferProposal {
   week: number
 }
 
-const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "leiloes", "enviadas", "recebidas"]
+const MARKET_TABS: MarketTab[] = ["buscar", "rede", "olheiros", "central", "juniores", "enviadas", "recebidas"]
 
 // Rótulo amigável para a divisão/liga crua do banco (ex.: "serie_a" -> "Série A").
 function divisaoLabel(d?: string): string {
@@ -261,6 +264,15 @@ export default function MercadoPage() {
   useDiscordActivity("No mercado de transferências", userTeam?.nome ?? "Sem clube")
 
   const [activeTab, setActiveTab] = useState<MarketTab>("buscar")
+
+  // ?aba=juniores — quem chega da Categoria de Base cai direto na aba certa.
+  // Lido no cliente (e nao via useSearchParams) porque esta tela e export estatico
+  // e a navegacao do jogo e um reload completo.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const pedida = new URLSearchParams(window.location.search).get("aba")
+    if (pedida && (MARKET_TABS as string[]).includes(pedida)) setActiveTab(pedida as MarketTab)
+  }, [])
   const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [negotiationOpen, setNegotiationOpen] = useState(false)
@@ -395,34 +407,25 @@ export default function MercadoPage() {
     [userTeam?.curto, userTeam?.nome, gameEngine.currentSeason],
   )
 
-  // CONCORRENTES NO LEILAO — os clubes que podem cobrir o seu lance. Saem do
-  // proprio catalogo do mercado (nao de uma lista inventada): cada clube que tem
-  // atleta na vitrine e um comprador em potencial, com o caixa e a forca de
-  // elenco estimados pelo prestigio, que e o que o resto do jogo tambem usa.
-  const candidatosDeLeilao = useMemo(() => {
-    const porClube = new Map<string, { curto: string; nome: string; prestigio: number; caixa: number; forcaElenco: number }>()
-    const meuCurto = (userTeam?.curto ?? "").toUpperCase()
-    for (const alvo of transferTargets) {
-      const curto = alvo.team?.curto ?? ""
-      if (!curto || curto.toUpperCase() === meuCurto || porClube.has(curto)) continue
-      const prestigio = alvo.team?.prestigio ?? 60
-      porClube.set(curto, {
-        curto,
-        nome: alvo.team.nome,
-        prestigio,
-        // Caixa ancorado nos numeros do PROPRIO jogo (CLUB_TEMPLATES em
-        // game-engine): prestigio 90 -> ~80 mi (Flamengo), 75 -> ~25 mi (Bahia).
-        // A primeira versao usava prestigio³ e dava 7,5 mi para um clube de
-        // prestigio 55 — com isso 24 de 40 clubes nao podiam dar lance em
-        // ninguem e 43% dos leiloes abriam vazios.
-        caixa: Math.max(1_000_000, Math.round(Math.pow(Math.max(50, prestigio) - 50, 2) * 50_000)),
-        forcaElenco: Math.round(48 + prestigio * 0.38),
-      })
+  // LEILAO VENCIDO em /leiloes: a tela de leiloes NAO conclui a transferencia —
+  // ela manda o vencedor para ca, onde a negociacao normal ja trata teto de
+  // divida, teto de folha e a baixa no clube de origem. Este efeito e a outra
+  // ponta do recado; o campo e limpo para nao reabrir o modal a cada visita.
+  useEffect(() => {
+    const vencido = careerState.leilaoVencido
+    if (!vencido) return
+    const alvo = transferTargets.find(p => p.name === vencido.jogador)
+    setCareerState({ leilaoVencido: null })
+    if (!alvo) {
+      setMarketNotice(`Não encontrei ${vencido.jogador} no mercado para fechar o contrato do leilão.`)
+      return
     }
-    // Só os 40 mais fortes entram: a disputa é entre quem realmente pagaria, e
-    // percorrer milhares de clubes por leilão travaria a tela.
-    return Array.from(porClube.values()).sort((a, b) => b.prestigio - a.prestigio).slice(0, 40)
-  }, [transferTargets, userTeam?.curto])
+    setSelectedPlayer(alvo)
+    setNegotiationType("buy")
+    setNegotiationOpen(true)
+    setMarketNotice(`Leilão vencido por ${formatCurrency(vencido.valor)} — feche o contrato com ${vencido.jogador}.`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [careerState.leilaoVencido, transferTargets])
 
   // Opções reais e encadeadas: país -> liga -> time. Nacionalidade e País/Região
   // exibem somente nomes de países (nunca siglas de estado/arquivo).
@@ -837,16 +840,70 @@ export default function MercadoPage() {
     ].slice(0, 12))
   }
 
-  const handleGenerateReceivedOffer = () => {
-    const before = useGameEngine.getState().transferOffers.length
-    gameEngine.generateAIOffers(userTeam?.curto)
-    const after = useGameEngine.getState().transferOffers.length
-    setMarketNotice(
-      after > before
-        ? "Um clube enviou uma nova proposta."
-        : "Nenhum clube apresentou proposta nesta rodada."
-    )
+  // ─── MERCADO DE JUNIORES ────────────────────────────────────────────────────
+  //
+  // Mesmas fontes que a tela da base usava: o pool deterministico do ciclo, menos
+  // quem ja foi comprado. A capacidade vem do nivel da academia (motor), nao do save.
+  const nivelAcademia = useGameEngine(st => st.clubInfrastructure?.youthAcademyLevel) ?? 1
+  const juniorescNaBase = (careerState.youthPlayers ?? []).length
+  const prospectosJuniores = useMemo(() => {
+    const comprados = new Set(careerState.youthMarketPurchasedIds ?? [])
+    return generateYouthMarketProspects(gameEngine.currentSeason, careerState.week ?? 0, 60)
+      .filter(p => !comprados.has(p.id))
+  }, [gameEngine.currentSeason, careerState.week, careerState.youthMarketPurchasedIds])
+
+  /**
+   * Compra de junior. Copia fiel do `buyYouth` da tela da base — mesmas travas de
+   * vaga e de caixa, mesmo registro em `youthMarketPurchasedIds` (que e o que
+   * impede a promessa de reaparecer no pool) e mesma gravacao imediata.
+   */
+  const comprarJunior = (jovem: SquadPlayer) => {
+    const vagasLivres = vagasNaBase(juniorescNaBase, nivelAcademia)
+    if (vagasLivres <= 0) {
+      setMarketNotice("A categoria de base está lotada. Promova, venda ou dispense um jovem antes de contratar.")
+      return
+    }
+    const preco = jovem.value ?? 0
+    if (gameEngine.balance < preco) {
+      setMarketNotice("Saldo insuficiente para contratar este júnior.")
+      return
+    }
+    if (typeof window !== "undefined" && !window.confirm(
+      `${jovem.fromTeam ?? "O clube formador"} pede ${formatCurrency(preco)} por ${jovem.name}, ` +
+      `${jovem.age} anos (${jovem.position}).\n\nO atleta vai direto para a sua categoria de base. Confirmar?`,
+    )) return
+    if (!gameEngine.spendClubFunds(preco)) {
+      setMarketNotice("Saldo insuficiente para concluir a compra.")
+      return
+    }
+    setCareerState(current => ({
+      youthPlayers: [...(current.youthPlayers ?? []), {
+        ...jovem,
+        id: `youth_bought_${Date.now()}_${jovem.id}`,
+        seasonSigned: gameEngine.currentSeason,
+      }],
+      youthMarketPurchasedIds: [...(current.youthMarketPurchasedIds ?? []), jovem.id],
+      transfers: [...(current.transfers ?? []), {
+        id: `youth_buy_${Date.now()}`,
+        playerName: jovem.name,
+        fromTeam: jovem.fromTeam ?? "Clube formador",
+        toTeam: userTeam?.curto ?? "",
+        value: preco,
+        type: "buy" as const,
+        week: careerState.currentRound ?? 0,
+        season: gameEngine.currentSeason,
+      }],
+    }))
+    // O dinheiro JA saiu no motor: se o junior nao persistisse, o prejuizo seria
+    // do jogador. Grava agora, como a tela da base faz.
+    void flushPersistentStore()
+    setMarketNotice(`${jovem.name} chegou à categoria de base por ${formatCurrency(preco)}.`)
   }
+
+  // AQUI FICAVA `handleGenerateReceivedOffer`, que gerava proposta sob demanda.
+  // Removido: a mesma funcao ja roda a cada avanco de semana, e um botao que
+  // fabrica interesse pelo atleta que VOCE quer vender e o contrario de uma
+  // sondagem. Ver o painel da aba "Propostas Recebidas".
 
   // O mercado depende de save/localStorage. Renderizar os dados persistidos no primeiro
   // frame do cliente, enquanto o HTML estatico foi gerado sem save, causava hydration
@@ -878,10 +935,24 @@ export default function MercadoPage() {
 
       <GameHeader team={userTeam} />
 
-      <main className="relative z-10 p-4 h-[calc(100vh-48px)] overflow-hidden">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as MarketTab)}>
+      {/*
+        ALTURA POR FLEX, NAO POR SUBTRACAO CHUMBADA.
+        Antes: `main` tinha h-[calc(100vh-48px)] e cada aba um h-[calc(100vh-220px)]
+        proprio. Os 172px de diferenca eram um palpite sobre quanto o cabecalho e a
+        barra de abas ocupam — e o palpite errava, deixando uma FAIXA MORTA no pe
+        da tela (relato com print). Errava para os dois lados: numa janela menor a
+        mesma conta cortava conteudo.
+        Agora o main e uma coluna flex e o conteudo da aba cresce com flex-1: sobra
+        exatamente zero, em qualquer altura de janela.
+      */}
+      <main className="relative z-10 flex h-[calc(100vh-48px)] flex-col overflow-hidden p-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as MarketTab)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
           {/* EA FC Style Header Navigation */}
-          <div className="flex items-center gap-4 mb-8 min-w-0">
+          <div className="flex shrink-0 items-center gap-4 mb-6 min-w-0">
             <div className="flex shrink-0 items-center gap-2 text-white/50 text-sm">
               <span className="text-xs border border-white/20 rounded px-1.5 py-0.5">w</span>
               <span>Transferencias</span>
@@ -919,10 +990,10 @@ export default function MercadoPage() {
                   </TabsTrigger>
                   <span className="text-white/20">|</span>
                   <TabsTrigger
-                    value="leiloes"
+                    value="juniores"
                     className="bg-transparent border-0 px-0 py-0 text-base data-[state=active]:text-white data-[state=active]:bg-transparent text-white/40 hover:text-white/60"
                   >
-                    Leilões
+                    Mercado de Juniores
                   </TabsTrigger>
                   <span className="text-white/20">|</span>
                   <TabsTrigger
@@ -965,7 +1036,7 @@ export default function MercadoPage() {
           )}
 
           {/* Search Filters Tab */}
-          <TabsContent value="buscar" className="mt-0">
+          <TabsContent value="buscar" className="mt-0 flex min-h-0 flex-1 flex-col">
             {/* Search Input */}
             <div className="mb-6 flex gap-4">
               <div className="flex-1 relative">
@@ -1180,7 +1251,7 @@ export default function MercadoPage() {
           </TabsContent>
 
           {/* Transfer Network Tab */}
-          <TabsContent value="rede" className="mt-0">
+          <TabsContent value="rede" className="mt-0 flex min-h-0 flex-1 flex-col">
             {/* Position Filters */}
             <div className="flex items-center gap-4 mb-6">
               <div className="flex items-center gap-1 text-xs text-white/40">
@@ -1220,7 +1291,7 @@ export default function MercadoPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-180px)]">
+            <div className="grid min-h-0 flex-1 grid-cols-2 gap-6">
               {/* Player List */}
               <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin">
                 <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#0c0c10]/95 px-3 py-2 backdrop-blur-sm">
@@ -1283,14 +1354,14 @@ export default function MercadoPage() {
           </TabsContent>
 
           {/* Scouts Tab */}
-          <TabsContent value="olheiros" className="mt-0">
+          <TabsContent value="olheiros" className="mt-0 flex min-h-0 flex-1 flex-col">
             <div className="flex items-center gap-4 mb-6">
               <span className="text-white font-semibold">{t.market.scouts}</span>
               <span className="text-white/20">|</span>
               <span className="text-white/40">Contrate, envie e acompanhe relatorios</span>
             </div>
 
-            <div className="grid grid-cols-12 gap-4 h-[calc(100vh-220px)] overflow-hidden">
+            <div className="grid min-h-0 flex-1 grid-cols-12 gap-4 overflow-hidden">
               <div className="col-span-12 xl:col-span-7 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-xl bg-[#0c0c10]/75 backdrop-blur-sm border border-white/[0.06] p-4">
@@ -1543,7 +1614,7 @@ export default function MercadoPage() {
           </TabsContent>
 
           {/* Central de Transferencias Tab */}
-          <TabsContent value="central" className="mt-0 h-[calc(100vh-116px)] overflow-hidden">
+          <TabsContent value="central" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
             {/* Cabecalho da Central — titulo claro + chips com o resumo REAL do elenco. */}
             <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -1742,55 +1813,35 @@ export default function MercadoPage() {
             </div>
           </TabsContent>
 
-          {/* LEILOES — varios clubes disputando o mesmo atleta. O painel decide
-              QUEM leva e a QUE PRECO; a compra em si passa pela negociacao
-              normal (abaixo), para nao duplicar teto de divida/folha. */}
-          <TabsContent value="leiloes" className="mt-0">
-            <div className="flex items-center gap-4 mb-6">
-              <span className="text-white font-semibold">Leilões</span>
+          {/* MERCADO DE JUNIORES — saiu do pe da tela da Categoria de Base e
+              passou a ser aba daqui, no formato lista+ficha de Buscar Atletas
+              (pedido). A compra e a MESMA da base: sai do caixa do motor, respeita
+              a vaga na academia e o garoto entra na base, nao no profissional. */}
+          <TabsContent value="juniores" className="mt-0 flex min-h-0 flex-1 flex-col">
+            <div className="mb-4 flex shrink-0 items-center gap-4">
+              <span className="font-semibold text-white">Mercado de Juniores</span>
               <span className="text-white/20">|</span>
-              <span className="text-white/40">Atletas disputados por mais de um clube</span>
+              <span className="text-white/40">Promessas de outros clubes para a sua categoria de base</span>
             </div>
-            <LeiloesPanel
-              pool={transferTargets}
-              semana={gameEngine.currentWeek}
-              season={gameEngine.currentSeason}
+            <MercadoJunioresPanel
+              prospectos={prospectosJuniores}
+              vagas={vagasNaBase(juniorescNaBase, nivelAcademia)}
+              capacidade={capacidadeDaBase(nivelAcademia)}
+              naBase={juniorescNaBase}
               saldo={gameEngine.balance}
-              candidatos={candidatosDeLeilao}
-              lancesSalvos={careerState.lancesEmLeilao ?? []}
-              clubeDoUsuario={{
-                curto: userTeam?.curto ?? "",
-                nome: userTeam?.nome ?? "Seu clube",
-                prestigio: userTeam?.prestigio ?? 60,
-              }}
-              onLance={(lance) => {
-                // Um lance por atleta: cobrir SUBSTITUI o anterior, senao o save
-                // acumularia varios lances do mesmo clube no mesmo leilao.
-                const outros = (careerState.lancesEmLeilao ?? []).filter(
-                  l => !(l.chave === lance.chave && l.season === lance.season),
-                )
-                setCareerState({ lancesEmLeilao: [...outros, lance].slice(-40) })
-              }}
-              onNegociar={(nomeDoAtleta, valor) => {
-                const alvo = transferTargets.find(p => p.name === nomeDoAtleta)
-                if (!alvo) return
-                setSelectedPlayer(alvo)
-                setNegotiationType("buy")
-                setNegotiationOpen(true)
-                setMarketNotice(`Leilão vencido por ${formatCurrency(valor)} — feche o contrato com ${nomeDoAtleta}.`)
-              }}
+              onComprar={comprarJunior}
             />
           </TabsContent>
 
           {/* Propostas Enviadas Tab */}
-          <TabsContent value="enviadas" className="mt-0">
+          <TabsContent value="enviadas" className="mt-0 flex min-h-0 flex-1 flex-col">
             <div className="flex items-center gap-4 mb-6">
               <span className="text-white font-semibold">Propostas Enviadas</span>
               <span className="text-white/20">|</span>
               <span className="text-white/40">Negociacoes em andamento</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
+            <div className="grid min-h-0 flex-1 grid-cols-2 gap-6">
               <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1832,20 +1883,20 @@ export default function MercadoPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/[0.04] px-5 py-4">
+              <div className="flex min-h-0 flex-col rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
+                <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-5 py-4">
                   <h3 className="text-sm font-semibold text-white">Historico enviado</h3>
                   <span className="text-xs text-white/35">{sentProposals.length} registros</span>
                 </div>
 
                 {sentProposals.length === 0 ? (
-                  <div className="flex h-[calc(100%-57px)] flex-col items-center justify-center p-8 text-center">
+                  <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
                     <ArrowLeftRight className="mb-4 h-12 w-12 text-white/20" />
                     <p className="text-white/60">Voce nao fez nenhuma proposta ainda.</p>
                     <p className="mt-2 text-sm text-white/40">Escolha um jogador na Rede Mundial e negocie compra ou emprestimo.</p>
                   </div>
                 ) : (
-                  <div className="max-h-[calc(100vh-280px)] overflow-y-auto divide-y divide-white/[0.04] scrollbar-thin">
+                  <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-white/[0.04] scrollbar-thin">
                     {sentProposals.map((proposal) => (
                       <div key={proposal.id} className="flex items-center gap-4 px-5 py-4">
                         <div className={cn(
@@ -1892,14 +1943,14 @@ export default function MercadoPage() {
           </TabsContent>
 
           {/* Propostas Recebidas Tab */}
-          <TabsContent value="recebidas" className="mt-0">
+          <TabsContent value="recebidas" className="mt-0 flex min-h-0 flex-1 flex-col">
             <div className="flex items-center gap-4 mb-6">
               <span className="text-white font-semibold">Propostas Recebidas</span>
               <span className="text-white/20">|</span>
               <span className="text-white/40">Ofertas de outros clubes</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-220px)]">
+            <div className="grid min-h-0 flex-1 grid-cols-2 gap-6">
               <div className="rounded-xl p-6 bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08]">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1921,30 +1972,43 @@ export default function MercadoPage() {
                 <p className="mt-6 text-sm text-white/50 leading-relaxed">
                   Aceitar uma proposta de compra remove o jogador do elenco e atualiza saldo, verba de transferencia e folha salarial.
                 </p>
-                <button
-                  type="button"
-                  onClick={handleGenerateReceivedOffer}
-                  className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand-ink)] hover:bg-[var(--brand-2)]"
-                >
-                  <Clock className="h-4 w-4" />
-                  Atualizar interesse
-                </button>
+                {/*
+                  O BOTAO "Atualizar interesse" SAIU (relato: "ela nao e valida").
+                  Ele chamava generateAIOffers sob demanda — e a mesma funcao ja roda
+                  a cada avanco de semana. Dava para ficar clicando ate sair oferta
+                  pelo atleta que se quisesse vender, o que e o oposto de sondagem:
+                  quem decide se ha interesse e o outro clube, nao o vendedor.
+                  No lugar, a tela EXPLICA o que de fato atrai proposta.
+                */}
+                <div className="mt-6 rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/40">O que atrai sondagem</p>
+                  <ul className="mt-2 space-y-1.5 text-sm text-white/55">
+                    <li>• Atleta na <span className="text-white/80">lista de transferíveis</span> — é o anúncio ao mercado</li>
+                    <li>• Bom momento: forma acima do overall</li>
+                    <li>• Jovem de potencial alto</li>
+                    <li>• <span className="text-white/80">Contrato perto do fim</span> — dá para levar barato</li>
+                    <li>• Atleta insatisfeito no clube</li>
+                  </ul>
+                  <p className="mt-3 text-xs text-white/35">
+                    As propostas chegam ao AVANÇAR a semana, e muito mais durante a janela.
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/[0.04] px-5 py-4">
+              <div className="flex min-h-0 flex-col rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
+                <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-5 py-4">
                   <h3 className="text-sm font-semibold text-white">Caixa de ofertas</h3>
                   <span className="text-xs text-white/35">{gameEngine.transferOffers.length} total</span>
                 </div>
 
                 {pendingReceivedOffers.length === 0 && pastReceivedOffers.length === 0 ? (
-                  <div className="flex h-[calc(100%-57px)] flex-col items-center justify-center p-8 text-center">
+                  <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-8 text-center">
                     <ArrowLeftRight className="mb-4 h-12 w-12 text-white/20" />
                     <p className="text-white/60">Voce nao recebeu nenhuma proposta.</p>
                     <p className="mt-2 text-sm text-white/40">Avance semanas ou use Atualizar interesse para simular movimentacao do mercado.</p>
                   </div>
                 ) : (
-                  <div className="max-h-[calc(100vh-280px)] overflow-y-auto p-4 scrollbar-thin">
+                  <div className="min-h-0 flex-1 overflow-y-auto p-4 scrollbar-thin">
                     {pendingReceivedOffers.length > 0 && (
                       <div className="space-y-3">
                         {pendingReceivedOffers.map((offer) => (

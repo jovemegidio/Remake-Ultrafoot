@@ -41,6 +41,26 @@ function gravarAgora(): void {
   void flushPersistentStore()
 }
 
+/**
+ * Acrescenta ids ao registro de quem JA SAIU da base, sem duplicar.
+ *
+ * Por que existe: `generateYouthProspects` e DETERMINISTICO (semente =
+ * `hash("CLUBE:TEMPORADA:base")`), entao devolve sempre os mesmos garotos com os
+ * mesmos ids. Sem este registro, qualquer nova semeadura ressuscitava quem o
+ * tecnico acabou de vender ou dispensar — era o relato "vendi e eles voltaram".
+ *
+ * Vale para vender, dispensar e promover. NAO vale para emprestimo: ali o jovem
+ * volta de proposito.
+ *
+ * Fica fora do componente porque nao depende de nada dele — evita tambem
+ * depender da ordem em que os hooks sao declarados.
+ */
+function registrarSaida(anteriores: string[] | undefined, ids: string[]): string[] {
+  const antes = anteriores ?? []
+  const novos = ids.filter(id => !antes.includes(id))
+  return novos.length > 0 ? [...antes, ...novos] : antes
+}
+
 export default function BasePage() {
   useRequireClub()
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
@@ -120,8 +140,19 @@ export default function BasePage() {
         team.prestigio ?? 60,
         quantidadeNova,
       )
+      // QUEM SAIU NAO VOLTA. `generateYouthProspects` e deterministico
+      // (semente = clube + temporada), entao ele devolve SEMPRE os mesmos
+      // garotos, com os mesmos ids — inclusive os que o tecnico acabou de
+      // vender ou dispensar. Era exatamente esse o relato: vender e, ao
+      // reabrir a tela, ver os mesmos de volta.
+      //
+      // Tambem filtra quem ja esta na base para o caso de a semeadura rodar
+      // duas vezes (recarregar a tela no meio de uma gravacao pendente).
+      const jaSairam = new Set(state.youthDeparted ?? [])
+      const jaEstao = new Set(atuais.map(p => p.id))
+      const admitidos = novaGeracao.filter(p => !jaSairam.has(p.id) && !jaEstao.has(p.id))
       setState({
-        youthPlayers: [...atuais, ...novaGeracao],
+        youthPlayers: [...atuais, ...admitidos],
         youthSeededSeason: state.season,
       })
     }
@@ -155,6 +186,10 @@ export default function BasePage() {
       youthPlayers: ficam,
       squadPlayers: promovidos.length ? [...(state.squadPlayers ?? []), ...promovidos] : state.squadPlayers,
       youthAgedSeason: state.season,
+      // Quem subiu aos 18 tambem sai da base para sempre. Sem isto a semeadura
+      // da temporada seguinte devolveria o mesmo garoto, que passaria a existir
+      // no profissional E na base ao mesmo tempo.
+      youthDeparted: registrarSaida(state.youthDeparted, sobem.map(p => p.id)),
     })
     if (promovidos.length) {
       addNotification({
@@ -196,7 +231,13 @@ export default function BasePage() {
     for (const p of aVender) receberPorJovem(p.vendaPendente!.valor, `jovem:${p.id}`)
     // Funcional: ler a lista mais nova evita que uma leitura velha ressuscite
     // jovens ja vendidos.
-    setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(p => !p.vendaPendente) }))
+    setState(s => {
+      const saindo = (s.youthPlayers ?? []).filter(p => p.vendaPendente)
+      return {
+        youthPlayers: (s.youthPlayers ?? []).filter(p => !p.vendaPendente),
+        youthDeparted: registrarSaida(s.youthDeparted, saindo.map(p => p.id)),
+      }
+    })
     gravarAgora()
     for (const p of aVender) {
       addNotification({ type: "transfer", priority: "medium", title: `${p.name} vendido`,
@@ -248,6 +289,9 @@ export default function BasePage() {
       // da base e o historico de promovidos.
       squadPlayers: [...(state.squadPlayers ?? []), promoted],
       youthPlayers: youth.filter(p => p.id !== player.id),
+      // Promovido tambem NAO volta: senao ele existiria duas vezes, no elenco
+      // profissional e na base, na proxima semeadura.
+      youthDeparted: registrarSaida(state.youthDeparted, [player.id]),
       transfers: [...(state.transfers ?? []), {
         id: `youth_promo_${Date.now()}`,
         playerName: player.name,
@@ -267,7 +311,15 @@ export default function BasePage() {
     // apertando dispensar ate sair um bom (relato do jogador) — cada clique era
     // um novo sorteio. Agora a vaga apenas abre; para preencher, use a peneira
     // (paga) ou espere a proxima temporada semear a base.
-    setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(p => p.id !== player.id) }))
+    setState(s => ({
+      youthPlayers: (s.youthPlayers ?? []).filter(p => p.id !== player.id),
+      youthDeparted: registrarSaida(s.youthDeparted, [player.id]),
+    }))
+    // GRAVA AGORA. Vender ja fazia isto; dispensar nao, e por isso caia na mesma
+    // corrida descrita no topo deste arquivo: navegar e um RELOAD COMPLETO, e
+    // quem dispensava e trocava de tela antes da fila de escrita esvaziar
+    // recarregava o save com o garoto de volta.
+    gravarAgora()
   }
 
   // Carimbo absoluto (semanas desde o marco) da semana atual e da última peneira.
@@ -355,7 +407,10 @@ export default function BasePage() {
     if (janelaAberta) {
       receberPorJovem(p.valor, `jovem:${player.id}`)
       // Funcional: le a base MAIS NOVA (vender varios seguidos nao "ressuscita" os anteriores).
-      setState(s => ({ youthPlayers: (s.youthPlayers ?? []).filter(x => x.id !== player.id) }))
+      setState(s => ({
+        youthPlayers: (s.youthPlayers ?? []).filter(x => x.id !== player.id),
+        youthDeparted: registrarSaida(s.youthDeparted, [player.id]),
+      }))
       gravarAgora()
       addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
         message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
@@ -574,104 +629,24 @@ export default function BasePage() {
           </div>
         )}
 
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="flex items-center gap-2 text-xl font-bold text-white">
-                <ShoppingCart className="h-5 w-5 text-sky-400" />
-                Mercado de juniores
-              </h2>
-              <p className="mt-1 text-xs text-white/45">
-                Promessas de outros clubes disponíveis para compra direta pela categoria de base. As ofertas mudam a cada quatro semanas.
-              </p>
-            </div>
-            <span className="text-xs text-white/40">
-              {youthMarket.length} de {youthMarketPool.length} {youthMarketPool.length === 1 ? "promessa" : "promessas"}
+        {/* O MERCADO DE JUNIORES MUDOU DE LUGAR (pedido): virou aba do Mercado,
+            no formato lista+ficha de Buscar Atletas. Aqui fica so o atalho — manter
+            duas vitrines do mesmo pool acabaria com as duas discordando. */}
+        <section>
+          <button
+            type="button"
+            onClick={() => hardNavigate("/mercado?aba=juniores")}
+            className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-all hover:border-sky-400/40 hover:bg-white/[0.06]"
+          >
+            <ShoppingCart className="h-5 w-5 shrink-0 text-sky-400" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold text-white">Mercado de juniores</span>
+              <span className="block text-xs text-white/45">
+                Promessas de outros clubes para a sua base — agora no Mercado, com busca e filtros.
+              </span>
             </span>
-          </div>
-
-          {/* Filtros de busca */}
-          <div className="mb-4 grid gap-2 rounded-xl border border-white/5 bg-[#111] p-3 sm:grid-cols-2 xl:grid-cols-6">
-            <input
-              value={fBusca} onChange={e => setFBusca(e.target.value)}
-              placeholder="Nome ou clube" aria-label="Buscar por nome ou clube"
-              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-sky-400/50"
-            />
-            <select value={fPos} onChange={e => setFPos(e.target.value)} aria-label="Posicao"
-              className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-sky-400/50">
-              <option value="todas">Todas as posições</option>
-              {["GOL","ZAG","LD","LE","VOL","MEI","PD","PE","ATA"].map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/60">
-              Idade ate
-              <input type="number" min={14} max={21} value={fIdadeMax}
-                onChange={e => setFIdadeMax(Number(e.target.value) || 21)}
-                className="w-full bg-transparent text-white outline-none" />
-            </label>
-            <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/60">
-              Overall min
-              <input type="number" min={0} max={99} value={fOverallMin}
-                onChange={e => setFOverallMin(Number(e.target.value) || 0)}
-                className="w-full bg-transparent text-white outline-none" />
-            </label>
-            <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/60">
-              Potencial min
-              <input type="number" min={0} max={99} value={fPotencialMin}
-                onChange={e => setFPotencialMin(Number(e.target.value) || 0)}
-                className="w-full bg-transparent text-white outline-none" />
-            </label>
-            <button
-              onClick={() => { setFPos("todas"); setFIdadeMax(21); setFOverallMin(0); setFPotencialMin(0); setFPrecoMax(0); setFBusca("") }}
-              className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/10"
-            >
-              Limpar filtros
-            </button>
-          </div>
-
-          {youthMarket.length === 0 ? (
-            <div className="rounded-xl border border-white/5 bg-[#141414] p-6 text-center text-sm text-white/45">
-              {youthMarketPool.length === 0
-                ? "Todas as ofertas deste ciclo já foram negociadas. Novos juniores aparecerão no próximo ciclo mensal."
-                : "Nenhuma promessa atende aos filtros. Ajuste os critérios ou limpe os filtros."}
-            </div>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {youthMarket.map(player => (
-                <div key={player.id} className="rounded-xl border border-sky-400/15 bg-sky-400/[0.04] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="truncate font-semibold text-white">{player.name}</h3>
-                      <p className="mt-0.5 truncate text-xs text-sky-200/60">{player.fromTeam}</p>
-                    </div>
-                    <span className="rounded bg-white/10 px-2 py-1 text-xs font-bold text-white">{player.position}</span>
-                  </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-lg bg-black/20 p-2">
-                      <div className="text-[9px] uppercase text-white/35">Idade</div>
-                      <div className="font-bold text-white">{player.age}</div>
-                    </div>
-                    <div className="rounded-lg bg-black/20 p-2">
-                      <div className="text-[9px] uppercase text-white/35">Overall</div>
-                      <div className="font-bold text-white">{player.overall}</div>
-                    </div>
-                    <div className="rounded-lg bg-black/20 p-2">
-                      <div className="text-[9px] uppercase text-white/35">Potencial</div>
-                      <div className={cn("font-bold", player.potential >= 85 ? "text-yellow-400" : "text-[#1db954]")}>{player.potential}</div>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => buyYouth(player)}
-                    disabled={vagas <= 0 || caixaDoMotor < player.value}
-                    className="mt-3 w-full bg-sky-400 font-bold text-black hover:bg-sky-300 disabled:opacity-40"
-                  >
-                    <ShoppingCart className="mr-1.5 h-3.5 w-3.5" />
-                    Comprar · {formatCurrency(player.value)}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+            <span className="shrink-0 text-sm text-white/35">abrir &rsaquo;</span>
+          </button>
         </section>
 
         <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 flex items-start gap-3">

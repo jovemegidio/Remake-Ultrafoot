@@ -44,6 +44,40 @@ export interface LanceSalvo {
   season: number
 }
 
+/**
+ * Quantos leilões válidos existem nesta semana.
+ *
+ * Aplica as MESMAS regras do painel — inclusive a de descartar disputa sem
+ * nenhum interessado da IA. Existe para a tela de leilões saber se deve aparecer
+ * sem reimplementar o critério: duas respostas diferentes para "isto é um
+ * leilão?" seria o mesmo defeito das duas escalas de valor.
+ */
+export function contarLeiloesAbertos(
+  pool: AlvoDeLeilao[],
+  candidatos: { curto: string; nome: string; prestigio: number; caixa: number; forcaElenco: number }[],
+  semana: number,
+): number {
+  let total = 0
+  const encerra = semanaDeEncerramento(semana)
+  for (const alvo of pool) {
+    if (!alvo.team?.nome) continue
+    if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana)) continue
+    const base: LeilaoAberto = {
+      id: chaveLeilao(alvo.name, alvo.team.nome),
+      jogadorNome: alvo.name,
+      jogadorOverall: alvo.overall,
+      jogadorIdade: alvo.age,
+      clubeVendedorCurto: alvo.team.curto ?? "",
+      clubeVendedorNome: alvo.team.nome,
+      valorMinimo: valorMinimoDe(alvo.overall, alvo.age, alvo.potential),
+      encerraNaSemana: encerra,
+      lances: [],
+    }
+    if (lancesDaIA(base, candidatos, semana).length > 0) total++
+  }
+  return total
+}
+
 interface Props {
   /** Catálogo do mercado — o mesmo da aba Buscar. */
   pool: AlvoDeLeilao[]

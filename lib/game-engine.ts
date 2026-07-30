@@ -2970,8 +2970,13 @@ export const useGameEngine = create<GameEngineState>()(
           }
         }
 
-        // Gera novas ofertas da IA
-        get().generateAIOffers()
+        // Gera novas ofertas da IA.
+        //
+        // Passa o clube do usuario EXPLICITAMENTE: sem isto a funcao caia em
+        // `state.myTeamShort`, e quando esse campo esta vazio o proprio clube do
+        // tecnico entrava na lista de pretendentes — o relato "recebo proposta do
+        // Sao Paulo por jogador do Sao Paulo".
+        get().generateAIOffers(get().myTeamShort)
       },
       
       trainPlayer: (playerId, attribute) => {
@@ -3538,7 +3543,13 @@ export const useGameEngine = create<GameEngineState>()(
         })
         if (marketable.length === 0) return
 
-        // Interesse por jogador cresce com overall/forma; janela ativa gera mais ofertas
+        // JANELA DE TRANSFERENCIAS. O comentario antigo aqui dizia que "janela
+        // ativa gera mais ofertas", mas a funcao NUNCA olhou a janela: chovia
+        // proposta em qualquer semana do ano. Fora da janela o que existe e
+        // sondagem — acontece, mas e bem mais raro.
+        const janelaAberta = isTransferWindowOpen(state.currentWeek)
+        const fatorJanela = janelaAberta ? 1 : 0.22
+
         const newOffers: TransferOffer[] = []
         const pendingIds = new Set(
           state.transferOffers.filter(o => o.status === "pendente").map(o => o.playerId)
@@ -3547,12 +3558,26 @@ export const useGameEngine = create<GameEngineState>()(
         for (const player of marketable) {
           // No máximo 1 oferta pendente por jogador; frequência escala com atratividade
           if (pendingIds.has(player.id)) continue
-          const attractiveness = (player.overall - 70) * 0.012
+          // CONTRATO PERTO DO FIM atrai mais: o comprador sabe que leva barato — e
+          // se chegar ao fim, de graca. E o motivo real pelo qual clube europeu
+          // sonda brasileiro no ultimo ano de vinculo.
+          // `endDate` e semana ABSOLUTA (a mesma escala de getContractStatus).
+          const semanasDeContrato = player.contract
+            ? player.contract.endDate - absoluteWeek(state.currentSeason, state.currentWeek)
+            : 52
+          const fimDeContrato = semanasDeContrato <= 26 ? 0.22 : semanasDeContrato <= 52 ? 0.10 : 0
+          // INSATISFACAO: atleta infeliz pede para sair, e isso vaza para o mercado.
+          const moral = player.moralePoints ?? 55
+          const insatisfacao = moral <= 25 ? 0.20 : moral <= 40 ? 0.10 : 0
+
+          const attractiveness = ((player.overall - 70) * 0.012
             + (player.potential - player.overall) * 0.008
             + Math.max(0, player.form - player.overall) * 0.01
             // Estar na lista multiplica o interesse: o clube está anunciando o atleta.
             + (listed.has(player.id) ? 0.35 : 0)
-          if (Math.random() > Math.max(0.03, Math.min(0.7, attractiveness))) continue
+            + fimDeContrato
+            + insatisfacao) * fatorJanela
+          if (Math.random() > Math.max(0.02, Math.min(0.7, attractiveness))) continue
 
           // Clubes candidatos avaliados pela própria IA (perfil + orçamento)
           const interested = AI_TEAMS

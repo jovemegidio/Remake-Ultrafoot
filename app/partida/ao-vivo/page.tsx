@@ -2133,7 +2133,15 @@ export default function PartidaAoVivoPage() {
         try { sessionStorage.removeItem("ultrafoot:inbox-gate-shown") } catch { /* ignora */ }
         // Pos-partida vai ao PRE-OFFICE (pedido), nao ao escritorio direto: e
         // la que ficam o resumo da rodada, as tarefas e o proximo compromisso.
-        hardNavigate(matchCtx.youth ? "/base/carreira" : "/pre-office")
+        //
+        // EXCECAO: os LEILOES entram ANTES do pre-office (pedido). Um leilao tem
+        // prazo de tres semanas; enquanto ele vivia numa aba do Mercado, o
+        // tecnico perdia o alvo sem nunca ter sido avisado.
+        //
+        // Quem decide se ha disputa e a PROPRIA tela de leiloes: descobrir isso
+        // aqui exigiria gerar o catalogo inteiro do mercado no fim da partida.
+        // Sem leilao aberto, ela segue sozinha para o pre-office.
+        hardNavigate(matchCtx.youth ? "/base/carreira" : "/leiloes")
       }}
     />
   )}

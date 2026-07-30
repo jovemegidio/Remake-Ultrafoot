@@ -9,11 +9,23 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "A base nao devolve mais quem voce vendeu",
+      "category": "Correção",
+      "body": "Quem vendia ou dispensava um junior via os mesmos garotos de volta ao reabrir a tela — o gerador de promessas e deterministico e nada registrava quem havia saido. Corrigido. O Mercado de Juniores tambem mudou de lugar: agora e uma aba do Mercado, com busca e filtros como em Buscar Atletas.",
+      "date": "2026-07-30",
+      "pinned": true
+    },
+    {
+      "title": "Leilão, torneio próprio e tribunal",
+      "category": "Atualização",
+      "body": "Agora dá para brigar por um reforço contra outros clubes num leilão, montar seu próprio torneio de pré-temporada e ver a expulsão do seu jogador ir a julgamento — onde uma agressão custa de 4 a 8 jogos, não um. Também dá para assistir aos pênaltis dos outros confrontos da copa, chute a chute.",
+      "date": "2026-07-29"
+    },
+    {
       "title": "Conta Ultrafoot: chave, saves e FC Hub",
       "category": "Novidades",
       "body": "Ativou uma vez, vale em qualquer computador: a chave passa a ficar na conta. Os saves são catalogados nela — dá para recuperar a carreira depois de formatar o PC — e o FC Hub mostra quem está online, com chat.",
-      "date": "2026-07-29",
-      "pinned": true
+      "date": "2026-07-29"
     },
     {
       "title": "Loja dentro do launcher, com Pix",
@@ -90,10 +102,88 @@
   ],
   "changelog": [
     {
+      "version": "1.0.210",
+      "date": "2026-07-30",
+      "title": "Juniores no Mercado, sondagens de verdade e a base que nao ressuscita",
+      "latest": true,
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "Junior vendido ou dispensado VOLTAVA para a base ao reabrir a tela. O gerador de promessas e deterministico (mesmo clube e temporada devolvem os mesmos garotos, com os mesmos ids) e nao havia registro de quem saiu. Agora sair da base e definitivo, como no elenco profissional."
+        },
+        {
+          "type": "fixed",
+          "text": "Dispensar um junior nao gravava o save na hora: trocar de tela em seguida trazia o garoto de volta."
+        },
+        {
+          "type": "changed",
+          "text": "O Mercado de Juniores saiu do pe da tela da Categoria de Base e virou aba do Mercado, no mesmo formato de Buscar Atletas — com lista, ficha do atleta e filtros por posicao, idade, overall, potencial e preco."
+        },
+        {
+          "type": "changed",
+          "text": "Os leiloes saem da aba do Mercado e passam a aparecer depois da partida, no caminho do escritorio. Um leilao dura tres semanas: escondido numa aba, dava para perder o alvo sem nunca ter sido avisado."
+        },
+        {
+          "type": "fixed",
+          "text": "Propostas recebidas: o botao \"Atualizar interesse\" foi removido. Ele fabricava oferta a cada clique pelo atleta que voce quisesse vender — o contrario de uma sondagem. As propostas chegam ao avancar a semana."
+        },
+        {
+          "type": "fixed",
+          "text": "As sondagens ficaram realistas: fora da janela de transferencias sao bem mais raras, contrato perto do fim atrai muito mais interesse (da para levar barato) e atleta insatisfeito tambem. Antes chovia proposta em qualquer semana do ano."
+        },
+        {
+          "type": "fixed",
+          "text": "Faixa morta no pe das telas do Mercado: a altura era calculada por subtracao chumbada e o palpite errava — sobrava espaco vazio em telas grandes e cortava conteudo nas menores."
+        }
+      ]
+    },
+    {
+      "version": "1.0.209",
+      "date": "2026-07-29",
+      "title": "Nove sistemas que o motor tinha e a tela não mostrava",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Leilão de jogador: vários clubes disputam o mesmo alvo, e o maior lance não ganha sozinho — o atleta também pesa o projeto e o tamanho do clube."
+        },
+        {
+          "type": "added",
+          "text": "Torneio amistoso criável: convide de 2 a 16 clubes, escolha pontos corridos (com ida e volta, se quiser) ou mata-mata, e dispute com tabela e avanço de fase até o campeão."
+        },
+        {
+          "type": "added",
+          "text": "Tribunal desportivo: a expulsão vai a julgamento em vez de custar sempre um jogo. Segundo amarelo dá 1 jogo, falta dura de 1 a 3, agressão de 4 a 8 — e o clube paga multa."
+        },
+        {
+          "type": "added",
+          "text": "Os outros clubes também demitem: campanha ruim tira o técnico do rival, e isso vira notícia da rodada. As vagas que apareciam do nada agora têm causa."
+        },
+        {
+          "type": "added",
+          "text": "Assistir à disputa de pênaltis de outros jogos, cobrança por cobrança, com quem bateu e quem perdeu a decisiva."
+        },
+        {
+          "type": "added",
+          "text": "Finalíssima: campeão da Copa América contra o campeão da Eurocopa, em campo neutro."
+        },
+        {
+          "type": "added",
+          "text": "Confiança da torcida na Central: o número já era calculado e alimentava o quadro de sócios, mas não aparecia em tela nenhuma."
+        },
+        {
+          "type": "added",
+          "text": "Presets de tática: salve o conjunto tático e volte a ele em um clique."
+        },
+        {
+          "type": "fixed",
+          "text": "Championship marcava três acessos diretos quando são dois, mais o playoff do 3º ao 6º — que a tabela nunca mostrava."
+        }
+      ]
+    },
+    {
       "version": "1.0.201",
       "date": "2026-07-29",
       "title": "Economia da base e folha salarial",
-      "latest": true,
       "changes": [
         {
           "type": "fixed",

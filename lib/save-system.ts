@@ -442,6 +442,20 @@ export interface GameState {
   youthPlayers?: SquadPlayer[]
   /** Ofertas do mercado de juniores já compradas no ciclo em que apareceram. */
   youthMarketPurchasedIds?: string[]
+  /**
+   * Jovens que JÁ SAÍRAM da base (vendidos, dispensados ou promovidos).
+   *
+   * BUG que isto corrige (relato: "vendi os juniores e ao voltar eles aparecem
+   * de novo"): `generateYouthProspects` é DETERMINÍSTICO — a semente é
+   * `hash("CLUBE:TEMPORADA:base")`, então o mesmo clube na mesma temporada
+   * sempre devolve os mesmos garotos, com os mesmos ids. Sem um registro de
+   * quem saiu, qualquer nova semeadura ressuscitava exatamente quem foi vendido.
+   *
+   * É o mesmo papel que `lib/departed-players.ts` cumpre para os profissionais.
+   * Aqui mora no save (e não num módulo à parte) porque a base já vive no save:
+   * não há o risco de ciclo de import que obrigou a separar o outro.
+   */
+  youthDeparted?: string[]
   // Temporada em que a base foi semeada — evita re-gerar prospectos toda visita.
   youthSeededSeason?: number
   // Carimbo (absoluto: season*52 + week) da ÚLTIMA peneira. A peneira acontece a
@@ -471,6 +485,14 @@ export interface GameState {
    * não virar um simulador paralelo do mercado.
    */
   lancesEmLeilao?: { chave: string; valor: number; encerraNaSemana: number; season: number }[]
+  /**
+   * Leilão que o técnico VENCEU e ainda não fechou contrato.
+   *
+   * A tela de leilões não conclui a transferência — ela manda o vencedor para a
+   * negociação normal do Mercado, que já trata teto de dívida, teto de folha e a
+   * baixa no clube de origem. Este campo é o recado entre as duas telas.
+   */
+  leilaoVencido?: { jogador: string; valor: number; season: number } | null
   /**
    * Torneio amistoso criado pelo técnico (lib/torneio-amistoso). Fica no save
    * porque jogar uma partida sai desta tela e volta — sem persistir, a tabela
