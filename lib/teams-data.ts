@@ -1283,6 +1283,58 @@ const _MESMO_CLUBE: Record<string, string> = {
   sanmartinsj: "sanmartinsj",
 }
 
+// ── IDENTIDADE DO CLUBE (para o filtro de copias) ────────────────────────────
+//
+// O filtro por file_key/nome exato deixava passar a mesma equipe escrita de dois
+// jeitos: "Eibar" e "SD Eibar", "Celta Vigo" e "Celta de Vigo", "Stuttgart" e
+// "VfB Stuttgart" — copias visiveis lado a lado no editor.
+//
+// A chave de identidade tira o que NAO identifica o clube: conectores em
+// qualquer posicao e as siglas societarias (FC, SD, VfB, US...) quando estao no
+// COMECO ou no FIM do nome, que e onde elas aparecem de verdade.
+//
+// O que fica de fora da lista de propósito: `sport`, `atletico`, `athletic`,
+// `sporting`, `sportivo`, `ce`, `ca`, `aa`, `ad`. Essas palavras SAO o nome de
+// alguns clubes (Sport, Atlético-CE) ou uma sigla de estado brasileiro — apagá-las
+// juntaria clubes diferentes, que e o erro caro: some elenco de verdade.
+const _CONECTORES = new Set(["de", "do", "da", "dos", "das", "del", "della", "di", "du", "la", "le", "les", "los", "el", "of", "the", "and", "e", "y"])
+const _AFIXOS = new Set([
+  "fc", "cf", "sc", "afc", "cd", "ud", "sd", "rc", "rcd", "cp", "cs", "csd", "ec",
+  "sk", "fk", "nk", "bk", "if", "ff", "sv", "vfb", "vfl", "tsv", "fsv", "msv", "ksc",
+  "bsc", "tsg", "spvgg", "ssc", "ss", "as", "us", "kv", "vv", "rk",
+  "club", "clube", "futebol", "football", "futbol", "fussball", "calcio", "fotbal",
+])
+
+/** Nome -> chave de identidade. Vazia/curta demais devolve o nome normalizado. */
+const _identidade = (nome: string): string => {
+  const palavras = (nome || "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ").trim().split(" ")
+    .filter(p => p && !_CONECTORES.has(p))
+  // Afixos so caem nas pontas (e "1" de "1. FC Koln", que e ordinal, nao nome).
+  while (palavras.length > 1 && (_AFIXOS.has(palavras[0]) || palavras[0] === "1")) palavras.shift()
+  while (palavras.length > 1 && (_AFIXOS.has(palavras[palavras.length - 1]) || palavras[palavras.length - 1] === "1")) palavras.pop()
+  const chave = palavras.join("")
+  return chave.length >= 3 ? chave : _normKey(nome)
+}
+
+/** Identidade + pais: o mesmo nome em paises diferentes continua sendo dois clubes. */
+const _identidadeComPais = (nome: string, pais: string) =>
+  `${normalizeCountry(pais) || "?"}|${_identidade(nome)}`
+
+// Os clubes brasileiros curados nao tem `pais` — so `estado` (a UF). normalizeCountry
+// resolve UF -> Brasil, entao o fallback para `estado` faz o curado cair no MESMO
+// pais do clube do pool; sem isso a peneira nunca via as copias brasileiras.
+const _curatedIdentities = new Set<string>()
+for (const t of allTeams) _curatedIdentities.add(_identidadeComPais(t.nome, t.pais ?? t.estado ?? ""))
+
+/**
+ * Linhas do banco importado que NAO sao clube. "Sem Contrato - 18/19/20" e um
+ * balde de jogadores livres do arquivo de origem; no editor aparecia como tres
+ * "clubes" iguais, sem pais e sem escudo.
+ */
+const _naoEhClube = (nome: string) => /^sem\s*contrato/i.test(nome.trim())
+
 interface PoolTeamRaw {
   nome?: string; curto?: string; cor1?: string; cor2?: string; prestigio?: number
   saldo?: number; fileKey?: string; estadio?: string; escudo?: string
@@ -1292,15 +1344,22 @@ interface PoolTeamRaw {
 const _seenPoolTeams = new Set<string>()
 export const allPoolTeams: Team[] = (((importedBF2026 as { teams?: PoolTeamRaw[] }).teams) ?? [])
   .filter((t) => {
+    const nome = repairMojibake(String(t.nome ?? ""))
     const fk = _normKey(String(t.fileKey ?? ""))
-    const nm = _normKey(repairMojibake(String(t.nome ?? "")))
+    const nm = _normKey(nome)
     const unique = `${nm}:${String(t.pais ?? "")}`
     const raiz = _semSufixoDePais(fk)
     const apelido = _MESMO_CLUBE[raiz]
-    if (!fk || _curatedKeys.has(fk) || _curatedKeys.has(nm) || _seenPoolTeams.has(unique)) return false
+    if (!fk || _naoEhClube(nome)) return false
+    if (_curatedKeys.has(fk) || _curatedKeys.has(nm) || _seenPoolTeams.has(unique)) return false
     if (_curatedStems.has(raiz)) return false
     if (apelido && _curatedKeys.has(apelido)) return false
+    // Ultima peneira: mesma identidade (sem sigla societaria) no mesmo pais.
+    // Pega tanto a copia de um curado quanto a copia de outro clube do pool.
+    const identidade = _identidadeComPais(nome, String(t.pais ?? ""))
+    if (_curatedIdentities.has(identidade) || _seenPoolTeams.has(identidade)) return false
     _seenPoolTeams.add(unique)
+    _seenPoolTeams.add(identidade)
     return true
   })
   .map((t): Team => ({

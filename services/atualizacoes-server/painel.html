@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultrafoot — Atualizações</title>
+<style>
+  :root { color-scheme: dark; --brand:#00ffc8; --brand2:#00c8ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#07080c; color:#e9edf2; font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif; }
+  header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid #1b2029; background:#0b0e14; position:sticky; top:0; z-index:5; flex-wrap:wrap; }
+  header h1 { font-size:15px; margin:0; letter-spacing:.14em; text-transform:uppercase; color:var(--brand); }
+  header .sep { flex:1; }
+  main { padding:20px; max-width:1100px; margin:0 auto; }
+  .cartao { background:#0d1017; border:1px solid #1b2029; border-radius:12px; padding:18px; margin-bottom:18px; }
+  .cartao h2 { margin:0 0 14px; font-size:13px; text-transform:uppercase; letter-spacing:.12em; color:#93a2b5; }
+  label { display:block; font-size:12px; color:#93a2b5; margin:10px 0 4px; }
+  input, select, textarea { width:100%; padding:9px 10px; border-radius:8px; border:1px solid #263043; background:#0a0d13; color:#e9edf2; font:inherit; }
+  input[type=file] { padding:6px; }
+  button { padding:9px 16px; border-radius:8px; border:0; background:var(--brand); color:#00120d; font-weight:700; cursor:pointer; font:inherit; }
+  button.leve { background:#1b2029; color:#cbd5e1; font-weight:600; }
+  button.perigo { background:#3b1220; color:#ff9aa8; }
+  button:disabled { opacity:.45; cursor:default; }
+  .linha { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+  .botoes { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .fraco { color:#7b8798; font-size:12px; }
+  .erro { color:#ff9aa8; font-size:13px; min-height:18px; }
+  .ok { color:var(--brand); font-size:13px; min-height:18px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid #161c26; font-size:13px; }
+  th { color:#7b8798; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+  tr.sel { background:#101826; }
+  .escudo { width:30px; height:30px; object-fit:contain; background:#11151d; border-radius:6px; }
+  .kit { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .kit > div { border:1px solid #1b2029; border-radius:10px; padding:10px; }
+  .kit img { width:100%; height:70px; object-fit:contain; background:#11151d; border-radius:6px; }
+  .pilha { display:flex; align-items:center; gap:12px; }
+  .metricas { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; }
+  .metrica { background:#0a0d13; border:1px solid #1b2029; border-radius:10px; padding:10px; }
+  .metrica b { display:block; font-size:20px; color:var(--brand); }
+  .metrica span { font-size:11px; color:#7b8798; text-transform:uppercase; letter-spacing:.08em; }
+  .oculto { display:none !important; }
+  .aba { background:none; color:#7b8798; border-bottom:2px solid transparent; border-radius:0; padding:8px 4px; font-weight:600; }
+  .aba.ativa { color:var(--brand); border-bottom-color:var(--brand); }
+  .abas { display:flex; gap:18px; border-bottom:1px solid #1b2029; margin-bottom:16px; }
+</style>
+</head>
+<body>
+
+<div id="tela-login">
+  <main style="max-width:380px;margin-top:12vh">
+    <div class="cartao">
+      <h2>Atualizações do Ultrafoot</h2>
+      <p class="fraco">Entre com a mesma conta do jogo. É preciso ser administrador.</p>
+      <label for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="username">
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password">
+      <div class="botoes"><button id="btn-entrar">Entrar</button></div>
+      <p class="erro" id="erro-login"></p>
+    </div>
+  </main>
+</div>
+
+<div id="tela-app" class="oculto">
+  <header>
+    <h1>Atualizações</h1>
+    <span class="fraco" id="quem"></span>
+    <span class="sep"></span>
+    <span class="fraco" id="versao-atual"></span>
+    <button class="leve" id="btn-sair">Sair</button>
+  </header>
+
+  <main>
+    <div class="cartao">
+      <h2>Situação</h2>
+      <div class="metricas" id="metricas"></div>
+      <label for="notas">Notas desta publicação (aparecem para o jogador)</label>
+      <textarea id="notas" rows="2" placeholder="Ex.: janela de transferências fechada, escudos do Brasileirão atualizados"></textarea>
+      <div class="botoes">
+        <button id="btn-previa" class="leve">Ver prévia</button>
+        <button id="btn-publicar">Publicar para os jogadores</button>
+      </div>
+      <p class="ok" id="msg-publicar"></p>
+    </div>
+
+    <div class="abas">
+      <button class="aba ativa" data-aba="clubes">Clubes</button>
+      <button class="aba" data-aba="transferencias">Transferências</button>
+    </div>
+
+    <div id="aba-clubes">
+      <div class="cartao">
+        <h2>Clubes</h2>
+        <div class="pilha">
+          <input id="busca" placeholder="Buscar por nome ou file_key…">
+          <button class="leve" id="btn-novo">Novo clube</button>
+        </div>
+        <table style="margin-top:12px">
+          <thead><tr><th></th><th>Clube</th><th>file_key</th><th>Cores</th><th></th></tr></thead>
+          <tbody id="lista-clubes"></tbody>
+        </table>
+      </div>
+
+      <div class="cartao oculto" id="editor">
+        <h2 id="editor-titulo">Editar clube</h2>
+        <div class="linha">
+          <div><label for="f-file_key">file_key (a chave que o jogo usa)</label><input id="f-file_key"></div>
+          <div><label for="f-nome">Nome de exibição</label><input id="f-nome"></div>
+          <div><label for="f-curto">Sigla</label><input id="f-curto" maxlength="4"></div>
+        </div>
+        <div class="linha">
+          <div><label for="f-nome_oficial">Nome oficial</label><input id="f-nome_oficial"></div>
+          <div><label for="f-cor1">Cor 1</label><input id="f-cor1" placeholder="#000000"></div>
+          <div><label for="f-cor2">Cor 2</label><input id="f-cor2" placeholder="#ffffff"></div>
+        </div>
+        <div class="linha">
+          <div><label for="f-estadio_nome">Estádio</label><input id="f-estadio_nome"></div>
+          <div><label for="f-estadio_cap">Capacidade</label><input id="f-estadio_cap" type="number"></div>
+          <div><label for="f-prestigio">Prestígio (0-100)</label><input id="f-prestigio" type="number"></div>
+        </div>
+
+        <label>Escudo</label>
+        <div class="pilha">
+          <img id="prev-escudo" class="escudo" alt="">
+          <input id="f-escudo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+        </div>
+
+        <label>Uniformes</label>
+        <div class="kit" id="kits"></div>
+
+        <div class="botoes">
+          <button id="btn-salvar">Salvar clube</button>
+          <button class="leve" id="btn-cancelar">Fechar</button>
+          <button class="perigo" id="btn-remover">Remover</button>
+        </div>
+        <p class="erro" id="erro-editor"></p>
+      </div>
+    </div>
+
+    <div id="aba-transferencias" class="oculto">
+      <div class="cartao">
+        <h2>Nova transferência</h2>
+        <div class="linha">
+          <div><label for="t-nome">Atleta</label><input id="t-nome"></div>
+          <div><label for="t-de">Saiu de (nome do clube)</label><input id="t-de"></div>
+          <div><label for="t-para">Chegou em</label><input id="t-para"></div>
+        </div>
+        <div class="linha">
+          <div><label for="t-pos">Posição</label><input id="t-pos" placeholder="ATA, MEI, ZAG…"></div>
+          <div><label for="t-idade">Idade</label><input id="t-idade" type="number"></div>
+          <div><label for="t-base">Overall</label><input id="t-base" type="number"></div>
+          <div><label for="t-nac">Nacionalidade</label><input id="t-nac"></div>
+        </div>
+        <div class="botoes"><button id="btn-transf">Adicionar</button></div>
+        <p class="erro" id="erro-transf"></p>
+        <p class="fraco">Deixar “saiu de” vazio = chegada de fora do jogo. Deixar “chegou em” vazio = saiu do futebol coberto pelo jogo.</p>
+        <table style="margin-top:12px">
+          <thead><tr><th>Atleta</th><th>De</th><th>Para</th><th></th></tr></thead>
+          <tbody id="lista-transf"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Mesma origem serve painel e API: caminho relativo evita cravar o IP aqui.
+const BASE = "/atualizacoes"
+const AUTH = "/auth"
+const CHAVE = "ultrafoot-atualizacoes:token"
+
+const $ = (id) => document.getElementById(id)
+const token = () => sessionStorage.getItem(CHAVE) || ""
+
+async function api(rota, corpo, metodo) {
+  const r = await fetch(BASE + rota, {
+    method: metodo || (corpo ? "POST" : "GET"),
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token() },
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  })
+  const dado = await r.json().catch(() => ({}))
+  if (!r.ok) {
+    // 404 aqui quase sempre e "voce nao e admin": o servidor esconde a area de
+    // proposito, entao traduzimos para algo que faca sentido para quem le.
+    if (r.status === 404) throw new Error(dado.erro === "nao encontrado"
+      ? "esta conta não tem permissão de administrador" : (dado.erro || "não encontrado"))
+    throw new Error(dado.erro || "falha na requisição")
+  }
+  return dado
+}
+
+/** Arquivo -> data URL. O servidor recebe base64 e grava como arquivo por sha. */
+const lerArquivo = (input) => new Promise((ok) => {
+  const f = input.files && input.files[0]
+  if (!f) return ok(null)
+  const fr = new FileReader()
+  fr.onload = () => ok(String(fr.result))
+  fr.onerror = () => ok(null)
+  fr.readAsDataURL(f)
+})
+
+// ─── Login ───────────────────────────────────────────────────────────────────
+async function entrar() {
+  $("erro-login").textContent = ""
+  $("btn-entrar").disabled = true
+  try {
+    const r = await fetch(AUTH + "/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: $("email").value.trim(), senha: $("senha").value }),
+    })
+    const d = await r.json().catch(() => ({}))
+    if (!r.ok || !d.token) throw new Error(d.erro || "não foi possível entrar")
+    sessionStorage.setItem(CHAVE, d.token)
+    await abrirApp(d.email || $("email").value.trim())
+  } catch (e) {
+    $("erro-login").textContent = e.message
+  } finally {
+    $("btn-entrar").disabled = false
+  }
+}
+
+async function abrirApp(email) {
+  $("tela-login").classList.add("oculto")
+  $("tela-app").classList.remove("oculto")
+  $("quem").textContent = email || ""
+  await Promise.all([carregarResumo(), carregarClubes()])
+}
+
+// ─── Resumo ──────────────────────────────────────────────────────────────────
+async function carregarResumo() {
+  const r = await api("/admin/resumo")
+  $("versao-atual").textContent = "versão publicada: " + r.versao_publicada
+  const m = [
+    ["Clubes", r.clubes], ["Atletas", r.jogadores], ["Transferências", r.transferencias],
+    ["Competições", r.ligas], ["Imagens", r.imagens], ["Rascunhos", r.clubes_rascunho],
+  ]
+  $("metricas").innerHTML = m.map(([k, v]) => `<div class="metrica"><b>${v}</b><span>${k}</span></div>`).join("")
+}
+
+// ─── Clubes ──────────────────────────────────────────────────────────────────
+let clubeAtual = null
+
+async function carregarClubes() {
+  const busca = encodeURIComponent($("busca").value.trim())
+  const r = await api("/admin/clubes?busca=" + busca)
+  $("lista-clubes").innerHTML = r.itens.map((c) => `
+    <tr data-fk="${c.file_key}">
+      <td>${c.escudo ? `<img class="escudo" src="${c.escudo}" alt="">` : ""}</td>
+      <td>${c.nome || "<span class=fraco>sem nome</span>"} ${c.rascunho ? '<span class="fraco">(rascunho)</span>' : ""}</td>
+      <td class="fraco">${c.file_key}</td>
+      <td><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${c.cor1 || "#333"}"></span>
+          <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${c.cor2 || "#333"}"></span></td>
+      <td><button class="leve" data-abrir="${c.file_key}">Editar</button></td>
+    </tr>`).join("") || `<tr><td colspan="5" class="fraco">Nenhum clube ainda. Use “Novo clube”.</td></tr>`
+  document.querySelectorAll("[data-abrir]").forEach((b) =>
+    b.addEventListener("click", () => abrirClube(b.dataset.abrir)))
+}
+
+function desenharKits(kits) {
+  const nomes = { home: "Casa", away: "Fora", third: "Terceiro" }
+  $("kits").innerHTML = ["home", "away", "third"].map((v) => {
+    const k = kits[v] || {}
+    return `<div>
+      <div class="fraco" style="margin-bottom:6px">${nomes[v]}</div>
+      <img id="prev-kit-${v}" src="${k.url || ""}" alt="">
+      <input id="f-kit-${v}" type="file" accept="image/png,image/jpeg,image/webp" style="margin-top:8px">
+      <label for="f-kit-${v}-p">Cor principal</label><input id="f-kit-${v}-p" value="${k.primary || ""}">
+      <label for="f-kit-${v}-s">Cor secundária</label><input id="f-kit-${v}-s" value="${k.secondary || ""}">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <input type="checkbox" id="f-kit-${v}-x" ${k.disabled ? "checked" : ""} style="width:auto"> não existe
+      </label>
+    </div>`
+  }).join("")
+}
+
+async function abrirClube(fk) {
+  $("erro-editor").textContent = ""
+  const r = await api("/admin/clube/" + encodeURIComponent(fk))
+  clubeAtual = r.clube
+  $("editor").classList.remove("oculto")
+  $("editor-titulo").textContent = "Editar — " + (r.clube.nome || fk)
+  for (const campo of ["file_key", "nome", "nome_oficial", "curto", "cor1", "cor2",
+                       "estadio_nome", "estadio_cap", "prestigio"]) {
+    $("f-" + campo).value = r.clube[campo] ?? ""
+  }
+  $("prev-escudo").src = r.escudo || ""
+  $("f-escudo").value = ""
+  desenharKits(r.kits || {})
+  $("editor").scrollIntoView({ behavior: "smooth", block: "start" })
+}
+
+function novoClube() {
+  clubeAtual = null
+  $("erro-editor").textContent = ""
+  $("editor").classList.remove("oculto")
+  $("editor-titulo").textContent = "Novo clube"
+  for (const campo of ["file_key", "nome", "nome_oficial", "curto", "cor1", "cor2",
+                       "estadio_nome", "estadio_cap", "prestigio"]) $("f-" + campo).value = ""
+  $("prev-escudo").src = ""
+  $("f-escudo").value = ""
+  desenharKits({})
+}
+
+async function salvarClube() {
+  $("erro-editor").textContent = ""
+  $("btn-salvar").disabled = true
+  try {
+    const corpo = {
+      file_key: $("f-file_key").value.trim(),
+      nome: $("f-nome").value.trim() || null,
+      nome_oficial: $("f-nome_oficial").value.trim() || null,
+      curto: $("f-curto").value.trim() || null,
+      cor1: $("f-cor1").value.trim() || null,
+      cor2: $("f-cor2").value.trim() || null,
+      estadio_nome: $("f-estadio_nome").value.trim() || null,
+      estadio_cap: Number($("f-estadio_cap").value) || null,
+      prestigio: Number($("f-prestigio").value) || null,
+      kits: {},
+    }
+    const escudo = await lerArquivo($("f-escudo"))
+    if (escudo) corpo.escudo_data = escudo
+    for (const v of ["home", "away", "third"]) {
+      const k = {
+        primary: $(`f-kit-${v}-p`).value.trim() || null,
+        secondary: $(`f-kit-${v}-s`).value.trim() || null,
+        disabled: $(`f-kit-${v}-x`).checked,
+      }
+      const img = await lerArquivo($(`f-kit-${v}`))
+      if (img) k.data = img
+      corpo.kits[v] = k
+    }
+    const r = await api("/admin/clube/salvar", corpo)
+    if (r.escudo) $("prev-escudo").src = r.escudo
+    await Promise.all([carregarClubes(), carregarResumo()])
+    $("erro-editor").textContent = ""
+    $("msg-publicar").textContent = "Clube salvo. Lembre de publicar para os jogadores receberem."
+  } catch (e) {
+    $("erro-editor").textContent = e.message
+  } finally {
+    $("btn-salvar").disabled = false
+  }
+}
+
+async function removerClube() {
+  const fk = $("f-file_key").value.trim()
+  if (!fk || !confirm(`Remover ${fk} do banco de atualizações?`)) return
+  await api("/admin/clube/remover", { file_key: fk })
+  $("editor").classList.add("oculto")
+  await Promise.all([carregarClubes(), carregarResumo()])
+}
+
+// ─── Transferências ──────────────────────────────────────────────────────────
+async function listarTransf() {
+  const r = await api("/admin/transferencias", {})
+  $("lista-transf").innerHTML = r.itens.map((t) => `
+    <tr><td>${t.nome}</td><td class="fraco">${t.de || "—"}</td><td class="fraco">${t.para || "—"}</td>
+    <td><button class="leve" data-del="${t.id}">Remover</button></td></tr>`).join("")
+    || `<tr><td colspan="4" class="fraco">Nenhuma transferência.</td></tr>`
+  document.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+    await api("/admin/transferencia/remover", { id: Number(b.dataset.del) })
+    await Promise.all([listarTransf(), carregarResumo()])
+  }))
+}
+
+async function addTransf() {
+  $("erro-transf").textContent = ""
+  try {
+    await api("/admin/transferencia/salvar", {
+      nome: $("t-nome").value.trim(), de: $("t-de").value.trim() || null,
+      para: $("t-para").value.trim() || null, pos: $("t-pos").value.trim() || null,
+      idade: Number($("t-idade").value) || null, base: Number($("t-base").value) || null,
+      nac: $("t-nac").value.trim() || null,
+    })
+    for (const c of ["nome", "de", "para", "pos", "idade", "base", "nac"]) $("t-" + c).value = ""
+    await Promise.all([listarTransf(), carregarResumo()])
+  } catch (e) { $("erro-transf").textContent = e.message }
+}
+
+// ─── Publicar ────────────────────────────────────────────────────────────────
+async function previa() {
+  $("msg-publicar").textContent = "…"
+  const r = await api("/admin/previa", { notas: $("notas").value })
+  $("msg-publicar").textContent =
+    `Prévia da versão ${r.versao}: ${r.clubes} clubes, ${r.jogadores} atletas, ` +
+    `${r.transferencias} transferências, ${r.ligas} competições — ${(r.bytes / 1024).toFixed(1)} KB.`
+}
+
+async function publicar() {
+  if (!confirm("Publicar agora? Todo jogador com atualizações ligadas vai receber.")) return
+  $("btn-publicar").disabled = true
+  try {
+    const r = await api("/admin/publicar", { notas: $("notas").value })
+    $("msg-publicar").textContent =
+      `Publicado: versão ${r.versao} (${r.clubes} clubes, ${r.transferencias} transferências, ` +
+      `${(r.bytes / 1024).toFixed(1)} KB).`
+    await carregarResumo()
+  } catch (e) {
+    $("msg-publicar").textContent = "Falhou: " + e.message
+  } finally {
+    $("btn-publicar").disabled = false
+  }
+}
+
+// ─── Ligação ─────────────────────────────────────────────────────────────────
+$("btn-entrar").addEventListener("click", entrar)
+$("senha").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar() })
+$("btn-sair").addEventListener("click", () => { sessionStorage.removeItem(CHAVE); location.reload() })
+$("busca").addEventListener("input", () => carregarClubes())
+$("btn-novo").addEventListener("click", novoClube)
+$("btn-salvar").addEventListener("click", salvarClube)
+$("btn-remover").addEventListener("click", removerClube)
+$("btn-cancelar").addEventListener("click", () => $("editor").classList.add("oculto"))
+$("btn-previa").addEventListener("click", () => previa().catch((e) => $("msg-publicar").textContent = e.message))
+$("btn-publicar").addEventListener("click", publicar)
+$("btn-transf").addEventListener("click", addTransf)
+document.querySelectorAll(".aba").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".aba").forEach((x) => x.classList.toggle("ativa", x === b))
+  $("aba-clubes").classList.toggle("oculto", b.dataset.aba !== "clubes")
+  $("aba-transferencias").classList.toggle("oculto", b.dataset.aba !== "transferencias")
+  if (b.dataset.aba === "transferencias") listarTransf()
+}))
+
+// Sessao guardada: entra direto. sessionStorage de proposito — fechar a aba
+// encerra o acesso administrativo.
+if (token()) abrirApp("").catch(() => sessionStorage.removeItem(CHAVE))
+</script>
+</body>
+</html>

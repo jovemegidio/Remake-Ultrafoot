@@ -18,6 +18,12 @@ export interface MatchContext {
   // e NAO conta para a temporada (sem tabela, sem avancar semana).
   friendly?: boolean
   /**
+   * AMISTOSO DO CALENDARIO: semana do jogo-treino marcado na Area do Treinador.
+   * E o que liga o placar de volta ao `amistososAgendados` do save — sem isto o
+   * amistoso seria disputado e ficaria pendente na agenda para sempre.
+   */
+  amistosoSemana?: number
+  /**
    * TORNEIO AMISTOSO: identifica de qual jogo do torneio esta partida é, para o
    * resultado voltar para a tabela quando ela terminar. Sem isto o jogo era
    * disputado e o placar se perdia — o torneio nunca saía da primeira rodada.

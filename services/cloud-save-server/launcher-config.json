@@ -9,109 +9,239 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "A camisa que voce escolhe pinta o campinho",
+      "category": "Novidade",
+      "body": "A cor dos jogadores no radar da partida agora sai da ARTE do uniforme marcado no pre-jogo, e nao das duas cores cadastradas do clube. E o Mundial ganhou os escudos das selecoes no placar de cada jogo.",
+      "date": "2026-07-30",
+      "pinned": false
+    },
+    {
+      "title": "O calendario voltou a fazer sentido",
+      "category": "Correção",
+      "body": "Os jogos de copa entravam no calendario com o dia tirado do numero do confronto, nao da semana: a final da Copa do Brasil aparecia no comeco do mes, antes de rodadas anteriores a ela — e quem tinha acabado de ganhar a semifinal nao via mais jogo nenhum pela frente. Quando dois jogos caiam no mesmo dia, um deles simplesmente nao era desenhado. Agora cada mes fica em ordem, com um dia por jogo.",
+      "date": "2026-07-30",
+      "pinned": true
+    },
+    {
+      "title": "Agora da para sentar com a diretoria",
+      "category": "Novidade",
+      "body": "Peca verba, renegocie a meta ou cobre respaldo — e escolha o tom. O conselho responde olhando a sua campanha e o caixa do clube, e o que ficar decidido vale no save. No elenco, atleta emprestado ganhou regra de verdade: devolver ou renovar, negociando com o dono do passe.",
+      "date": "2026-07-30",
+      "pinned": false
+    },
+    {
       "title": "Contratar da base virou negociacao",
       "category": "Novidade",
       "body": "Cada promessa do mercado de juniores tem um empresario, com nome e temperamento proprios. A comissao vem por fora do que o clube pede, e o Tubarao vai contrapropor. Os leiloes tambem foram arrumados: a tela rola, o valor do lance aparece formatado e o mesmo atleta nao abre duas disputas.",
       "date": "2026-07-30",
-      "pinned": true
+      "pinned": false
     },
     {
       "title": "A base nao devolve mais quem voce vendeu",
       "category": "Correção",
       "body": "Quem vendia ou dispensava um junior via os mesmos garotos de volta ao reabrir a tela — o gerador de promessas e deterministico e nada registrava quem havia saido. Corrigido. O Mercado de Juniores tambem mudou de lugar: agora e uma aba do Mercado, com busca e filtros como em Buscar Atletas.",
-      "date": "2026-07-30"
+      "date": "2026-07-30",
+      "pinned": false
     },
     {
       "title": "Leilão, torneio próprio e tribunal",
       "category": "Atualização",
       "body": "Agora dá para brigar por um reforço contra outros clubes num leilão, montar seu próprio torneio de pré-temporada e ver a expulsão do seu jogador ir a julgamento — onde uma agressão custa de 4 a 8 jogos, não um. Também dá para assistir aos pênaltis dos outros confrontos da copa, chute a chute.",
-      "date": "2026-07-29"
+      "date": "2026-07-29",
+      "pinned": false
     },
     {
       "title": "Conta Ultrafoot: chave, saves e FC Hub",
       "category": "Novidades",
       "body": "Ativou uma vez, vale em qualquer computador: a chave passa a ficar na conta. Os saves são catalogados nela — dá para recuperar a carreira depois de formatar o PC — e o FC Hub mostra quem está online, com chat.",
-      "date": "2026-07-29"
+      "date": "2026-07-29",
+      "pinned": false
     },
     {
       "title": "Loja dentro do launcher, com Pix",
       "category": "Novidades",
       "body": "O registro do jogo agora é vendido no próprio launcher, por Pix. Pagamento confirmado, chave emitida na hora e a conta já abre ativada.",
-      "date": "2026-07-29"
+      "date": "2026-07-29",
+      "pinned": false
     },
     {
       "title": "Fim do dinheiro infinito da base",
       "category": "Correção",
       "body": "A categoria de base reenchia o elenco até 18 atletas de graça no fim de cada temporada, o que também fazia aparecer jogador aleatório no time. Agora só repõe quem se aposentou. A folha salarial, que só subia, também foi corrigida.",
-      "date": "2026-07-29"
+      "date": "2026-07-29",
+      "pinned": false
     },
     {
       "title": "Elencos e times atualizados sem reinstalar",
       "category": "Atualização",
       "body": "A Central de Atualizações traz elencos e times novos direto para o jogo instalado — e só baixa quando você autoriza.",
-      "date": "2026-07-29"
+      "date": "2026-07-29",
+      "pinned": false
     },
     {
       "title": "Sua partida não é mais simulada sozinha",
       "category": "Correção",
       "body": "Avançar no calendário simulava a sua própria partida, e a partida de meio de semana da copa fazia o mesmo. Os dois casos foram corrigidos.",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Modo seleção: convocação, competições e amistosos",
       "category": "Novidades",
       "body": "Assumindo uma seleção, você ganha as telas de convocação, o calendário de competições e a marcação de amistosos.",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Ultrafoot 26 agora em Linux e macOS",
       "category": "Lançamento",
       "body": "Além do Windows, o jogo passa a ser publicado para Linux (AppImage) e macOS (universal, Apple Silicon e Intel).",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Uniformes e fotos do editor chegam a todos",
       "category": "Atualização",
       "body": "Escudos, uniformes e fotos de jogador editados agora viajam no build: o que você licencia aparece para todo mundo, inclusive na versão web.",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Campeonato pela internet funcionando",
       "category": "Correção",
       "body": "O jogo consultava a si mesmo em vez do servidor e falhava ao criar sala. Corrigido — dá para jogar campeonato online de novo.",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Acesso, rebaixamento e cerimônia de campeão",
       "category": "Correção",
       "body": "Clubes voltam a subir e cair de divisão, e a cerimônia de campeão só aparece quando há título de verdade.",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Goleiros e mercado corrigidos",
       "category": "Correção",
       "body": "Goleiros eram avaliados como atacantes e apareciam com overall muito abaixo do real. Craques europeus também deixam de sair por preço de banana.",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Mercado de juniores com busca e filtros",
       "category": "Novidade",
       "body": "A base ganhou busca por nome, posição, idade, overall e potencial — e acabou o dinheiro infinito ao vender promessas.",
-      "date": "2026-07-28"
+      "date": "2026-07-28",
+      "pinned": false
     },
     {
       "title": "Propostas de clube e seleção reformuladas",
       "category": "Atualização",
       "body": "Voltaram as sondagens de outros clubes e os convites de seleção; a demissão agora é clara e a Copa do Mundo aparece no calendário.",
-      "date": "2026-07-26"
+      "date": "2026-07-26",
+      "pinned": false
     }
   ],
   "changelog": [
     {
+      "version": "1.0.226",
+      "date": "2026-07-30",
+      "latest": true,
+      "title": "Escudo das selecoes no Mundial, a camisa certa no radar e o calendario em ordem",
+      "changes": [
+        {
+          "type": "added",
+          "text": "CENTRAL DO MUNDIAL COM ESCUDO: cada jogo da Copa do Mundo agora mostra o brasao das duas selecoes ao lado do placar, e nao so o nome escrito. Os escudos ja existiam no jogo (as telas de selecao usavam); so nao chegavam ali."
+        },
+        {
+          "type": "added",
+          "text": "A COR DA CAMISA QUE VOCE ESCOLHEU vale no radar da partida. A cor sai da ARTE do uniforme marcado no pre-jogo: escolheu o terceiro uniforme vermelho do Fluminense, os jogadores ficam vermelhos no campinho. Antes o radar so sabia as duas cores cadastradas do clube — terceiro uniforme era sempre quase-preto e visitante branco virava outra coisa."
+        },
+        {
+          "type": "improved",
+          "text": "O aviso de \"cores parecidas\" no pre-jogo passou a comparar as camisas de verdade, e o anel do uniforme selecionado usa a cor com que a equipe entra em campo."
+        },
+        {
+          "type": "fixed",
+          "text": "O CALENDARIO EMBARALHAVA OS JOGOS DE COPA. O dia de cada card saia do numero do confronto no chaveamento, e nao da semana em que o jogo acontece: num Flamengo campeao, a FINAL da Copa do Brasil (semana 34) era desenhada em 14 de agosto, ANTES da rodada da liga da semana 32, em 22 de agosto. Quem acabava de ganhar a semifinal olhava para a frente do mes e nao via jogo nenhum — o proximo compromisso estava desenhado para tras. Agora os jogos do mes ficam em ordem cronologica."
+        },
+        {
+          "type": "fixed",
+          "text": "Dois jogos seus no mesmo dia do mes: a celula do calendario so desenha um, e o outro sumia da tela. Acontecia principalmente em janeiro, onde o estadual do comeco do ano dividia espaco com as rodadas que a pausa da Copa do Mundo empurrou para depois de 31 de dezembro. Cada jogo tem o seu dia, e a sobra da liga fica em dezembro."
+        },
+        {
+          "type": "improved",
+          "text": "Ultrafoot de Bolso (Android) 1.0.1: a tela gira (o jogo tem layout largo e estava travado em retrato), o botao voltar no menu principal pede confirmacao antes de fechar o app, e voltar do segundo plano recupera o jogo sozinho quando o Android encerrou a WebView."
+        }
+      ]
+    },
+    {
+      "version": "1.0.218",
+      "date": "2026-07-30",
+      "title": "Reuniao com a diretoria, mercado que respeita o caixa e a camisa no campo",
+      "changes": [
+        {
+          "type": "added",
+          "text": "REUNIAO COM A DIRETORIA: escolha o assunto (verba, meta, pressao, elenco) e o tom da resposta. O conselho responde olhando a sua campanha, o caixa e quantas vezes voce ja pediu algo na temporada — e o desfecho vale: verba no caixa, meta renegociada, confianca que sobe ou desce."
+        },
+        {
+          "type": "added",
+          "text": "EMPRESTIMO COM REGRA DE VERDADE: quem chegou emprestado nao pode mais ser vendido nem anunciado (o passe nao e seu). Agora da para devolver ao clube de origem ou sentar para renovar, com contraproposta. O dono cobra pelo quanto o atleta JOGOU: garoto que ficou no banco sai mais caro. Sem acordo, o vinculo acaba na data e ele volta para casa."
+        },
+        {
+          "type": "added",
+          "text": "Central de Transferencias virou o acompanhamento das contratacoes dos OUTROS clubes, negocio por negocio; a Rede Mundial virou a tela de quem esta sem clube ou em fim de contrato, com contratar e observar."
+        },
+        {
+          "type": "added",
+          "text": "A camisa do clube, com o numero do atleta, no lugar do retangulo cinza na prancheta do elenco."
+        },
+        {
+          "type": "added",
+          "text": "Italiano. O seletor de idiomas agora le de um registro unico — os proximos idiomas entram sem mexer no jogo."
+        },
+        {
+          "type": "fixed",
+          "text": "PROPOSTA MAIOR QUE O CAIXA: dava para propor 100 milhoes tendo 20 no banco, e a conta so aparecia no fim. O teto da mesa agora e caixa + credito, e a razao aparece escrita."
+        },
+        {
+          "type": "fixed",
+          "text": "O ESPACO VAZIO no pe de sete telas (Notificacoes, Infraestrutura, Olheiros, Escalacao, Comissao, Treinador, Calendario e Treinamento). A altura era calculada em vh, que ignora o zoom do jogo — sobravam quase 200 pixels mortos."
+        },
+        {
+          "type": "fixed",
+          "text": "O 0 solto ao lado de cada atleta no mercado, e os atributos que passavam de 100 (Ritmo 94-102)."
+        },
+        {
+          "type": "fixed",
+          "text": "62 clubes com nome, tecnico e estadio TROCADOS entre si no banco de dados: o Liverpool se chamava Anfield, o Leeds se chamava Elland Road. Alem de feio, isso impedia esses clubes de acharem o proprio elenco."
+        },
+        {
+          "type": "fixed",
+          "text": "A sigla dos clubes vinha do nome do arquivo cortado em 8 letras: os dois Manchester apareciam como MACHESTE. Agora vale a sigla do catalogo, e com ela volta o escudo importado no editor."
+        },
+        {
+          "type": "fixed",
+          "text": "Emprestimo nao terminava nunca: a data de fim era gravada e jamais consultada."
+        },
+        {
+          "type": "fixed",
+          "text": "No modo selecao o menu nao oferece mais Mercado, Financas e Juniores — nao ha o que gerir. Amistoso da selecao agora conta no retrospecto."
+        },
+        {
+          "type": "improved",
+          "text": "Jogo mais rapido: os fundos de tela sairam de 22,9 MB de PNG para 1,9 MB, o desfoque de vidro saiu do perfil padrao e o avanco de semana ficou tres vezes mais rapido."
+        },
+        {
+          "type": "improved",
+          "text": "Quem registrou o jogo ganha extras: save na nuvem, FC Hub, editor de equipes, Central de Atualizacoes e carreiras ilimitadas. Sem registro o jogo continua completo — nada trava no meio."
+        }
+      ]
+    },
+    {
       "version": "1.0.211",
       "date": "2026-07-30",
       "title": "Empresario na base, leiloes arrumados e o tema valendo de verdade",
-      "latest": true,
       "changes": [
         {
           "type": "added",

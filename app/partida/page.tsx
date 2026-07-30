@@ -33,9 +33,10 @@ import {
   isKitVariantAvailable,
   type Team,
 } from "@/lib/teams-data"
-import { useUserTeam } from "@/lib/save-system"
+import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
 import { clearMatchContext, saveMatchContext } from "@/lib/match-context"
+import { concluirAmistoso, ehAmistoso } from "@/lib/amistosos-calendario"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { simulateFullMatch, type MatchEvent as SimEvent, type MatchState } from "@/lib/match-engine"
 import { useGameEngine, type MatchEvent as EngineEvent, type Player } from "@/lib/game-engine"
@@ -246,6 +247,21 @@ export default function PartidaPage() {
   const { connected: gamepadConnected } = useGamepadDetection()
   const [hydrated, setHydrated] = useState(false)
 
+  // AMISTOSO DO CALENDARIO. As refs existem porque `handleQuickSim` resolve o
+  // resultado dentro de um setTimeout: ler o estado direto ali pegaria o valor
+  // de quando o callback foi criado (o classico closure velho que ja mordeu esta
+  // tela antes).
+  const { state: saveAtual, setState: setSaveState } = useGameState()
+  const saveRef = useRef(saveAtual)
+  saveRef.current = saveAtual
+  const amistosoRef = useRef<number | null>(null)
+  const registrarAmistosoNoEntrosamento = useCallback(() => {
+    // Amistoso e entrosamento pela MESMA porta da partida oficial: minutos
+    // jogados juntos. Vale menos que um jogo de verdade (nao ha a mesma pressao),
+    // por isso 70 e nao 90. Ver lib/treino-e-entrosamento.ts.
+    useGameEngine.getState().registrarMinutosJuntos(70)
+  }, [])
+
   // Blindagem da pausa FIFA: se o campeonato de clubes esta parado (data FIFA /
   // Copa do Mundo), nao ha jogo de clube para disputar — volta ao escritorio, onde
   // o painel da janela mostra a Copa e o botao de avancar. Sem isto, o link direto
@@ -419,6 +435,22 @@ export default function PartidaPage() {
             playerName: e.player || (e.side === "home" ? homeTeam.curto : awayTeam.curto),
           }))
 
+        // AMISTOSO simulado rapido: NAO vai para a tabela, nao vira a semana e
+        // nao entra nas estatisticas. So marca o jogo-treino como disputado (com
+        // o placar) e credita o entrosamento dos minutos jogados juntos.
+        if (amistosoRef.current != null) {
+          const usuarioEmCasa = homeTeam.curto === (userTeam.team?.curto ?? "")
+          const golsPro = usuarioEmCasa ? result.home.goals : result.away.goals
+          const golsContra = usuarioEmCasa ? result.away.goals : result.home.goals
+          const atualizados = concluirAmistoso(
+            saveRef.current.amistososAgendados ?? [], amistosoRef.current, golsPro, golsContra,
+          )
+          if (atualizados) setSaveState({ amistososAgendados: atualizados } as Parameters<typeof setSaveState>[0])
+          registrarAmistosoNoEntrosamento()
+          clearMatchContext()
+          return
+        }
+
         registerUserMatchResult(
           homeTeam.curto,
           awayTeam.curto,
@@ -433,9 +465,18 @@ export default function PartidaPage() {
         if (!temPartidaPendenteNaSemana()) void advanceWeek()
       }
     }, 1500)
-  }, [homeTeam, awayTeam, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana])
+  }, [homeTeam, awayTeam, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, setSaveState, userTeam.team?.curto, registrarAmistosoNoEntrosamento])
 
   // Save match context before navigation
+  //
+  // AMISTOSO: quando a próxima partida do calendário é um jogo-treino marcado na
+  // Área do Treinador, o contexto precisa dizer isso. Sem `friendly: true` o
+  // ao-vivo registraria o placar como partida oficial — tabela, estatística e
+  // avanço de semana — e o amistoso deixaria de ser amistoso. `amistosoSemana`
+  // identifica QUAL dos três marcados é este, para o resultado voltar ao save.
+  const fixtureAtual = currentMatch ?? nextFixture
+  const amistosoDoCalendario = fixtureAtual && ehAmistoso(fixtureAtual) ? fixtureAtual : null
+  amistosoRef.current = amistosoDoCalendario?.week ?? null
   useEffect(() => {
     if (homeTeam && awayTeam) {
       saveMatchContext({
@@ -445,9 +486,11 @@ export default function PartidaPage() {
         awayKit,
         competition: matchInfo.competition,
         round: matchInfo.round,
+        friendly: amistosoDoCalendario ? true : undefined,
+        amistosoSemana: amistosoDoCalendario?.week,
       })
     }
-  }, [homeTeam, awayTeam, homeKit, awayKit, matchInfo])
+  }, [homeTeam, awayTeam, homeKit, awayKit, matchInfo, amistosoDoCalendario])
 
   // Gamepad controls
   useEffect(() => {

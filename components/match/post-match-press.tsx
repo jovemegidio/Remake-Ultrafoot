@@ -179,8 +179,297 @@ const POST_MATCH_QUESTIONS: PressQuestion[] = [
       { text: "Temos alguns jogadores no limite, vamos monitorar.", tone: "neutro", impact: -1 },
       { text: "O calendario e cruel, e impossivel nao ter problemas.", tone: "negativo", impact: -2 }
     ]
+  },
+
+  // ── AMPLIAÇÃO DA COLETIVA (1.0.224) ────────────────────────────────────────
+  //
+  // Eram 9 perguntas no total e a coletiva sorteava UMA genérica por entrevista:
+  // em duas ou três partidas você já tinha visto tudo, e a sala virava clique
+  // automático. O banco abaixo leva o total a 40 e a entrevista passa a sortear
+  // várias — assunto novo por semanas, e respostas que não se repetem.
+  {
+    id: 10, condition: "win",
+    question: "O time venceu controlando o jogo do inicio ao fim. Foi o plano?",
+    options: [
+      { text: "Foi exatamente o que treinamos a semana toda.", tone: "positivo", impact: 4 },
+      { text: "Parte saiu como planejamos, parte foi merito dos jogadores.", tone: "neutro", impact: 2 },
+      { text: "Nenhum plano sobrevive aos 90 minutos, eles resolveram.", tone: "neutro", impact: 1 }
+    ]
+  },
+  {
+    id: 11, condition: "win",
+    question: "O senhor comemorou pouco no apito final. Por que?",
+    options: [
+      { text: "Comemoro no fim da temporada. Hoje foi mais um passo.", tone: "neutro", impact: 2 },
+      { text: "Comemorei por dentro, o grupo merece.", tone: "positivo", impact: 3 },
+      { text: "Ainda vi coisas que me incomodaram, mesmo ganhando.", tone: "agressivo", impact: -1 }
+    ]
+  },
+  {
+    id: 12, condition: "win",
+    question: "Ja da para sonhar com algo grande nesta temporada?",
+    options: [
+      { text: "Quem trabalha assim tem o direito de sonhar. Vamos brigar.", tone: "positivo", impact: 4 },
+      { text: "Sonhar e de graca, mas o trabalho e diario.", tone: "neutro", impact: 1 },
+      { text: "Falar em titulo agora seria desrespeito com os adversarios.", tone: "neutro", impact: 0 }
+    ]
+  },
+  {
+    id: 13, condition: "win",
+    question: "A vitoria tira a pressao de cima do senhor?",
+    options: [
+      { text: "Pressao faz parte, ganhando ou perdendo. Nao mudou nada.", tone: "neutro", impact: 1 },
+      { text: "Ajuda o ambiente, e ambiente bom rende resultado.", tone: "positivo", impact: 3 },
+      { text: "Nunca senti pressao nenhuma, sinceramente.", tone: "agressivo", impact: -2 }
+    ]
+  },
+  {
+    id: 14, condition: "win",
+    question: "O banco de reservas decidiu de novo. E um trunfo do time?",
+    options: [
+      { text: "Nao tenho titulares e reservas, tenho um elenco.", tone: "positivo", impact: 5 },
+      { text: "Quem entra sabe o que fazer, isso e trabalho de semana.", tone: "neutro", impact: 2 },
+      { text: "Precisamos resolver antes, sem depender de substituicao.", tone: "negativo", impact: -2 }
+    ]
+  },
+  {
+    id: 15, condition: "loss",
+    question: "Essa e mais uma atuacao ruim seguida. O senhor esta preocupado?",
+    options: [
+      { text: "Preocupado sim, e por isso mesmo vamos trabalhar dobrado.", tone: "neutro", impact: 0 },
+      { text: "Preocupacao existe, mas confianca no grupo tambem.", tone: "positivo", impact: 2 },
+      { text: "Preocupado com quem nao correu hoje. Isso vai mudar.", tone: "agressivo", impact: -4 }
+    ]
+  },
+  {
+    id: 16, condition: "loss",
+    question: "O senhor sente que ainda tem o apoio da diretoria?",
+    options: [
+      { text: "Tenho conversas diarias com eles e sinto o respaldo.", tone: "positivo", impact: 2 },
+      { text: "Isso e pergunta para a diretoria, nao para mim.", tone: "neutro", impact: 0 },
+      { text: "Quem tem que responder por resultado sou eu. E vou responder.", tone: "neutro", impact: 1 }
+    ]
+  },
+  {
+    id: 17, condition: "loss",
+    question: "Faltou atitude ou faltou qualidade hoje?",
+    options: [
+      { text: "Atitude nao faltou. Qualidade a gente busca no mercado e no treino.", tone: "neutro", impact: 1 },
+      { text: "Faltaram as duas coisas, e isso e responsabilidade minha.", tone: "negativo", impact: -1 },
+      { text: "Faltou vontade. Nao vou proteger ninguem hoje.", tone: "agressivo", impact: -6 }
+    ]
+  },
+  {
+    id: 18, condition: "loss",
+    question: "O senhor errou na escalacao?",
+    options: [
+      { text: "Escalei quem estava melhor. Erro na escalacao e sempre meu.", tone: "neutro", impact: 1 },
+      { text: "Assumo. A escolha nao funcionou e eu vou corrigir.", tone: "negativo", impact: 0 },
+      { text: "A escalacao estava certa. O problema foi dentro de campo.", tone: "agressivo", impact: -5 }
+    ]
+  },
+  {
+    id: 19, condition: "loss",
+    question: "O time levou o gol logo depois de marcar. E questao mental?",
+    options: [
+      { text: "E concentracao, e a gente treina isso todo dia.", tone: "neutro", impact: 0 },
+      { text: "E um time jovem aprendendo a segurar o jogo.", tone: "positivo", impact: 1 },
+      { text: "E amadorismo, e nao dá para aceitar nesse nivel.", tone: "agressivo", impact: -4 }
+    ]
+  },
+  {
+    id: 20, condition: "draw",
+    question: "O time se contentou com o empate no segundo tempo?",
+    options: [
+      { text: "De jeito nenhum, fomos buscar ate o fim.", tone: "positivo", impact: 2 },
+      { text: "Faltou forca para atacar mais, e verdade.", tone: "neutro", impact: 0 },
+      { text: "Recuamos demais e isso me incomodou.", tone: "negativo", impact: -2 }
+    ]
+  },
+  {
+    id: 21, condition: "draw",
+    question: "Empatar fora de casa e sempre bom resultado?",
+    options: [
+      { text: "Depende do jogo. Hoje da para levar com tranquilidade.", tone: "neutro", impact: 1 },
+      { text: "Quem quer crescer nao comemora empate.", tone: "agressivo", impact: -1 },
+      { text: "Somar sempre ajuda, o campeonato e longo.", tone: "positivo", impact: 2 }
+    ]
+  },
+  {
+    id: 22, condition: "draw",
+    question: "O que faltou para converter as chances criadas?",
+    options: [
+      { text: "Faltou o ultimo passe, mas criamos e isso e bom sinal.", tone: "positivo", impact: 2 },
+      { text: "Faltou frieza. Vamos treinar finalizacao.", tone: "neutro", impact: 0 },
+      { text: "Faltou quem resolvesse. Precisamos de mais no ataque.", tone: "negativo", impact: -3 }
+    ]
+  },
+  {
+    id: 23, condition: "any",
+    question: "O senhor pretende pedir reforcos para a diretoria?",
+    options: [
+      { text: "Vou trabalhar com o elenco que tenho, e ele e bom.", tone: "positivo", impact: 3 },
+      { text: "Conversamos internamente, isso fica entre nos.", tone: "neutro", impact: 0 },
+      { text: "Sem reforco, fica dificil competir. E publico.", tone: "agressivo", impact: -3 }
+    ]
+  },
+  {
+    id: 24, condition: "any",
+    question: "Como esta o clima no vestiario?",
+    options: [
+      { text: "Excelente. Esse grupo se respeita e trabalha junto.", tone: "positivo", impact: 4 },
+      { text: "Normal, como em qualquer clube grande.", tone: "neutro", impact: 0 },
+      { text: "Nao vou falar de vestiario aqui, isso resolve-se la dentro.", tone: "neutro", impact: 1 }
+    ]
+  },
+  {
+    id: 25, condition: "any",
+    question: "O calendario apertado preocupa para a sequencia?",
+    options: [
+      { text: "Vamos rodar o elenco. Tenho confianca em todos.", tone: "positivo", impact: 3 },
+      { text: "Preocupa, mas e igual para todo mundo.", tone: "neutro", impact: 0 },
+      { text: "Esse calendario e desumano, alguem precisa discutir isso.", tone: "agressivo", impact: -2 }
+    ]
+  },
+  {
+    id: 26, condition: "any",
+    question: "O proximo adversario vem de uma sequencia forte. Como encara?",
+    options: [
+      { text: "Respeitamos, mas jogamos para ganhar em qualquer campo.", tone: "positivo", impact: 3 },
+      { text: "Vamos estudar e montar o jogo em cima do que eles fazem.", tone: "neutro", impact: 1 },
+      { text: "Se a gente jogar o nosso jogo, o problema e deles.", tone: "agressivo", impact: 0 }
+    ]
+  },
+  {
+    id: 27, condition: "any",
+    question: "O senhor mudou o esquema durante a partida. O que buscava?",
+    options: [
+      { text: "Precisava de mais gente perto da area e o ajuste funcionou.", tone: "positivo", impact: 2 },
+      { text: "O jogo pedia, e a leitura foi essa.", tone: "neutro", impact: 1 },
+      { text: "Mudei porque o que estava em campo nao me atendia.", tone: "agressivo", impact: -2 }
+    ]
+  },
+  {
+    id: 28, condition: "any",
+    question: "Ha espaco para os garotos da base nesta temporada?",
+    options: [
+      { text: "Quem treina bem joga, tenha 18 ou 34 anos.", tone: "positivo", impact: 4 },
+      { text: "Vamos com calma, queimar etapa nao ajuda ninguem.", tone: "neutro", impact: 1 },
+      { text: "A base ainda nao entrega o nivel que precisamos.", tone: "negativo", impact: -3 }
+    ]
+  },
+  {
+    id: 29, condition: "any",
+    question: "A tabela ja preocupa neste momento da temporada?",
+    options: [
+      { text: "Olho para o nosso desempenho, a tabela vem como consequencia.", tone: "neutro", impact: 1 },
+      { text: "Estamos onde merecemos estar. Vamos subir com trabalho.", tone: "positivo", impact: 2 },
+      { text: "Preocupa sim, e ninguem aqui esta confortavel.", tone: "negativo", impact: -2 }
+    ]
+  },
+  {
+    id: 30, condition: "any",
+    question: "O gramado e a estrutura influenciaram no resultado?",
+    options: [
+      { text: "Nao uso isso como argumento, joga-se com o que tem.", tone: "positivo", impact: 2 },
+      { text: "Atrapalha os dois lados igualmente.", tone: "neutro", impact: 0 },
+      { text: "As condicoes foram pessimas e alguem tem que falar.", tone: "agressivo", impact: -3 }
+    ]
+  },
+  {
+    id: 31, condition: "any",
+    question: "Como o senhor avalia o proprio trabalho ate aqui?",
+    options: [
+      { text: "Estamos construindo algo solido, vejo evolucao clara.", tone: "positivo", impact: 3 },
+      { text: "Da para melhorar muito, e e isso que me move.", tone: "neutro", impact: 1 },
+      { text: "Quem avalia meu trabalho e a diretoria e a torcida.", tone: "neutro", impact: 0 }
+    ]
+  },
+  {
+    id: 32, condition: "any",
+    question: "Houve reclamacao dos jogadores sobre a arbitragem. O senhor concorda?",
+    options: [
+      { text: "Eles reclamaram no calor do jogo. Nao vou alimentar isso.", tone: "neutro", impact: 1 },
+      { text: "Vi o lance, prefiro rever com calma antes de opinar.", tone: "neutro", impact: 0 },
+      { text: "Concordo, e nao e a primeira vez que isso acontece conosco.", tone: "agressivo", impact: -4 }
+    ]
+  },
+  {
+    id: 33, condition: "any",
+    question: "A torcida cantou o nome do senhor. Isso pesa?",
+    options: [
+      { text: "Pesa e emociona. Eles sao o motivo de tudo isso.", tone: "positivo", impact: 4 },
+      { text: "Agradeco, mas amanha e outro dia e outro jogo.", tone: "neutro", impact: 1 },
+      { text: "Prefiro que cantem o nome dos jogadores.", tone: "positivo", impact: 3 }
+    ]
+  },
+  {
+    id: 34, condition: "any",
+    question: "Existe algum atleta pedindo para sair do clube?",
+    options: [
+      { text: "Ninguem me procurou. Todos estao focados aqui.", tone: "positivo", impact: 2 },
+      { text: "Se houver, sera resolvido internamente.", tone: "neutro", impact: 0 },
+      { text: "Quem nao quiser ficar, pode procurar a diretoria amanha.", tone: "agressivo", impact: -4 }
+    ]
+  },
+  {
+    id: 35, condition: "any",
+    question: "O senhor mudaria alguma coisa se pudesse recomecar essa partida?",
+    options: [
+      { text: "Mudaria pouca coisa. O plano estava correto.", tone: "neutro", impact: 1 },
+      { text: "Mudaria a postura inicial, demoramos a entrar no jogo.", tone: "negativo", impact: -1 },
+      { text: "Mudaria dois ou tres nomes. Fica a licao.", tone: "agressivo", impact: -3 }
+    ]
+  },
+  {
+    id: 36, condition: "win",
+    question: "Essa vitoria foi a resposta as criticas da semana?",
+    options: [
+      { text: "Nao respondemos a critica, respondemos ao nosso trabalho.", tone: "positivo", impact: 3 },
+      { text: "Critica faz parte. Ganhamos e seguimos.", tone: "neutro", impact: 1 },
+      { text: "Espero que agora falem menos do nosso trabalho.", tone: "agressivo", impact: -2 }
+    ]
+  },
+  {
+    id: 37, condition: "loss",
+    question: "O senhor teme pelo proprio cargo depois deste resultado?",
+    options: [
+      { text: "Trabalho pensando no proximo jogo, nao no meu cargo.", tone: "neutro", impact: 1 },
+      { text: "Se a diretoria entender que e hora, e uma decisao deles.", tone: "negativo", impact: -1 },
+      { text: "Nao vou entregar nada. Vou virar isso pelo avesso.", tone: "positivo", impact: 2 }
+    ]
+  },
+  {
+    id: 38, condition: "draw",
+    question: "O empate atrapalha o objetivo tracado no inicio da temporada?",
+    options: [
+      { text: "Nao muda nada. O objetivo continua de pe.", tone: "positivo", impact: 2 },
+      { text: "Encurta a margem de erro, e a gente sabe disso.", tone: "neutro", impact: 0 },
+      { text: "Nesse ritmo, o objetivo fica muito dificil.", tone: "negativo", impact: -3 }
+    ]
+  },
+  {
+    id: 39, condition: "any",
+    question: "Um recado para a torcida antes do proximo jogo?",
+    options: [
+      { text: "Que venham. Com eles do nosso lado, o time cresce.", tone: "positivo", impact: 4 },
+      { text: "Que continuem apoiando, no bom e no ruim.", tone: "neutro", impact: 2 },
+      { text: "Que cobrem. Cobranca faz parte de clube grande.", tone: "neutro", impact: 1 }
+    ]
+  },
+  {
+    id: 40, condition: "any",
+    question: "O senhor esta satisfeito com o volume fisico do time?",
+    options: [
+      { text: "Estamos bem, a preparacao esta no caminho certo.", tone: "positivo", impact: 2 },
+      { text: "Da para melhorar, e vamos ajustar as cargas.", tone: "neutro", impact: 0 },
+      { text: "Nao. Caimos demais e isso tem que mudar rapido.", tone: "negativo", impact: -3 }
+    ]
   }
 ]
+
+/** Quantas perguntas a coletiva faz. Eram 3 no total; agora a sala tem tamanho de sala. */
+const PERGUNTAS_POR_COLETIVA = 7
 
 interface PostMatchPressProps {
   isOpen: boolean
@@ -239,17 +528,19 @@ export function PostMatchPress({
   // das genéricas porque é o que o jornalista perguntaria primeiro — e são elas
   // que geram repercussão individual no vestiário.
   const perguntasDeAtleta = useMemo(
-    () => perguntasSobreAtletas(atletasDaPartida ?? [], matchResult === "win", 2),
+    () => perguntasSobreAtletas(atletasDaPartida ?? [], matchResult === "win", 3),
     [atletasDaPartida, matchResult],
   )
 
-  // Completa com perguntas genéricas do resultado até 3 no total.
+  // Completa com perguntas genéricas do resultado até PERGUNTAS_POR_COLETIVA.
+  // As do RESULTADO vêm primeiro no sorteio: numa derrota, a sala pergunta da
+  // derrota antes de perguntar do gramado.
   const selectedQuestions = useMemo(() => {
-    const matchQuestions = POST_MATCH_QUESTIONS.filter(
-      q => q.condition === matchResult || q.condition === "any"
-    )
-    const shuffled = [...matchQuestions].sort(() => Math.random() - 0.5)
-    const genericas: PressQuestion[] = shuffled.slice(0, Math.max(1, 3 - perguntasDeAtleta.length))
+    const doResultado = POST_MATCH_QUESTIONS.filter(q => q.condition === matchResult)
+    const gerais = POST_MATCH_QUESTIONS.filter(q => q.condition === "any")
+    const embaralhar = (qs: PressQuestion[]) => [...qs].sort(() => Math.random() - 0.5)
+    const genericas: PressQuestion[] = [...embaralhar(doResultado), ...embaralhar(gerais)]
+      .slice(0, Math.max(1, PERGUNTAS_POR_COLETIVA - perguntasDeAtleta.length))
     // As de atleta viram o mesmo formato de PressQuestion, guardando o alvo.
     const deAtleta: PressQuestion[] = perguntasDeAtleta.map((p, i) => ({
       id: 1000 + i,

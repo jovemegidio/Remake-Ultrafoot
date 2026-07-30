@@ -21,25 +21,17 @@ import { getTeamByShort } from "@/lib/teams-data"
 import { useUserTeam } from "@/lib/save-system"
 import { GameHeader } from "@/components/game-header"
 import { useGameManager, seasonMonthsForDivision, type Fixture } from "@/lib/use-game-manager"
+import { diaDaPartida, ehAmistoso } from "@/lib/amistosos-calendario"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { getGameDate } from "@/lib/game-date"
 import { cn } from "@/lib/utils"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useNotifications } from "@/components/notifications-system"
 
-function roundToDay(round: number): number {
-  const daysInRound = [1, 5, 8, 12, 15, 19, 22, 26, 29]
-  return daysInRound[(round - 1) % 9] || 15
-}
-
-/**
- * Dia do jogo no calendario. Copa e jogo de MEIO DE SEMANA: cai depois da
- * rodada de liga daquela semana. Sem o deslocamento os dois cairiam na mesma
- * celula e o calendario mostraria so um deles.
- */
-function diaDaPartida(fixture: { round: number; midweek?: boolean }): number {
-  return roundToDay(fixture.round) + (fixture.midweek ? 2 : 0)
-}
+// `roundToDay`/`diaDaPartida` moraram aqui até a 1.0.222. Foram para
+// lib/amistosos-calendario porque o amistoso precisa saber em que dia os jogos
+// oficiais já caem para não abrir seu card em cima de um deles — e duas cópias
+// da mesma regra em arquivos diferentes envelhecem em uma só.
 
 // Os meses visiveis agora vem de seasonMonthsForDivision (derivado do
 // LEAGUE_CALENDAR), garantindo que a aba do mes casa com o mes real dos jogos.
@@ -128,11 +120,14 @@ export default function CalendarioPage() {
     [seasonCalendar.fixtures],
   )
 
-  /** Quantas partidas serao simuladas antes da selecionada; null se ela nao esta na fila. */
+  /** Quantas partidas serao simuladas antes da selecionada; null se ela nao esta na fila.
+   *  Amistoso nao entra na contagem: ele nunca e simulado pelo motor — se a data
+   *  passar sem o jogo, ele e cancelado (ver lib/amistosos-calendario). */
   const partidasAntesDoAlvo = useMemo(() => {
     if (!selectedFixture) return null
     const i = filaPendentes.findIndex(f => f.id === selectedFixture.id)
-    return i < 0 ? null : i
+    if (i < 0) return null
+    return filaPendentes.slice(0, i).filter(f => !ehAmistoso(f)).length
   }, [filaPendentes, selectedFixture])
 
   const simulateUntilMatch = useCallback(
@@ -325,8 +320,9 @@ export default function CalendarioPage() {
 
   useEffect(() => {
     if (nextUserMatch) {
-      const day = roundToDay(nextUserMatch.round)
-      setSelectedDay(day)
+      // diaDaPartida (e nao roundToDay) porque o amistoso tem dia proprio e
+      // round 0 — roundToDay o jogaria para o dia 15 de qualquer mes.
+      setSelectedDay(diaDaPartida(nextUserMatch))
       // Navega para o mes da proxima partida
       setCurrentMonth(nextUserMatch.month)
     }
@@ -342,7 +338,7 @@ export default function CalendarioPage() {
 
   // Data atual formatada usando month do fixture
   const matchMonth = nextUserMatch ? nextUserMatch.month : seasonMonths[0]
-  const matchDay = nextUserMatch ? roundToDay(nextUserMatch.round) : 15
+  const matchDay = nextUserMatch ? diaDaPartida(nextUserMatch) : 15
   const matchDate = new Date(2026, matchMonth, matchDay)
   const dayOfWeek = WEEKDAY_NAMES[matchDate.getDay()]
   const dayNum = matchDate.getDate()
@@ -685,7 +681,13 @@ export default function CalendarioPage() {
                 // Mata-mata precisa saltar aos olhos no calendario: uma final nao pode
                 // ter o mesmo cartao de uma rodada qualquer de pontos corridos.
                 const fase = faseDaPartida(item.fixture)
-                const cores = fase?.isFinal
+                // Amistoso tem cara PROPRIA (cinza, tracejado): a pessoa precisa
+                // distinguir de relance o jogo-treino do compromisso oficial —
+                // era exatamente por nao aparecer aqui que ele parecia inexistente.
+                const amistoso = ehAmistoso(item.fixture)
+                const cores = amistoso
+                  ? { fundo: "rgba(255,255,255,0.14)", borda: "rgba(255,255,255,0.45)", texto: "#e6e6e6" }
+                  : fase?.isFinal
                   ? { fundo: "rgba(255, 196, 0, 0.38)", borda: "rgba(255, 196, 0, 0.85)", texto: "#ffe08a" }
                   : fase?.isKnockout
                     ? { fundo: "rgba(190, 120, 255, 0.32)", borda: "rgba(190, 120, 255, 0.7)", texto: "#dcbcff" }
@@ -727,6 +729,7 @@ export default function CalendarioPage() {
                           height: 32,
                           backgroundColor: cores.fundo,
                           borderColor: cores.borda,
+                          borderStyle: amistoso ? "dashed" : "solid",
                           boxShadow: fase?.isFinal ? "0 0 12px rgba(255,196,0,0.45)" : undefined,
                         }}
                       >
@@ -740,13 +743,17 @@ export default function CalendarioPage() {
                               lineHeight: "10px",
                             }}
                           >
-                            {fase?.isKnockout ? fase.label : isHome ? "Casa" : "Fora"}
+                            {amistoso ? "Amistoso" : fase?.isKnockout ? fase.label : isHome ? "Casa" : "Fora"}
                           </div>
                           <div
                             className="font-bold text-white/60 uppercase"
                             style={{ fontSize: 8, lineHeight: "9px" }}
                           >
-                            {fase?.isKnockout
+                            {amistoso
+                              ? (item.fixture?.played
+                                  ? `${item.fixture.homeScore ?? 0}x${item.fixture.awayScore ?? 0}`
+                                  : isHome ? "Casa" : "Fora")
+                              : fase?.isKnockout
                               ? (isHome ? "Casa" : "Fora")
                               : item.fixture?.competition === "Brasileirao Serie A" ? "Liga" : "Copa"}
                           </div>

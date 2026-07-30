@@ -14,22 +14,17 @@ import { allTeams, type Team } from "@/lib/teams-data"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { saveMatchContext } from "@/lib/match-context"
 import { isFifaWindowMonth, windowLabel } from "@/lib/national-windows"
+import { rotuloDaSemana, semanasLivresParaAmistoso } from "@/lib/amistosos-calendario"
+import { PISO_ENTROSAMENTO } from "@/lib/treino-e-entrosamento"
 import { TeamCrest } from "@/components/team-crest"
 import { cn } from "@/lib/utils"
 import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle, Swords, Home, Plane, Dumbbell, Users, X } from "lucide-react"
 
-const MESES_CURTO = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-const DIAS_CURTO = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
-/** Próximos sábados a partir da semana atual da carreira (mesma base de app/amistosos). */
-function proximosSabados(season: number, week: number, quantas = 6): string[] {
-  const base = new Date(season, 0, 1 + Math.max(0, week - 1) * 7)
-  const ateSabado = (6 - base.getDay() + 7) % 7
-  const primeiro = new Date(base.getTime() + ateSabado * 86400000)
-  return Array.from({ length: quantas }, (_, i) => {
-    const d = new Date(primeiro.getTime() + i * 7 * 86400000)
-    return `${DIAS_CURTO[d.getDay()]}, ${d.getDate()} ${MESES_CURTO[d.getMonth()]}`
-  })
-}
+// `proximosSabados` saiu daqui na 1.0.223: ele oferecia SEIS sábados seguidos,
+// sem olhar o calendário — metade caía em cima de rodada de liga ou de jogo de
+// copa. Agora as datas vêm de `semanasLivresParaAmistoso`, que só oferece semana
+// em que o clube não tem compromisso, e o rótulo vem de `rotuloDaSemana`, que usa
+// exatamente o mesmo relógio do calendário.
 const MAX_AMISTOSOS = 3
 
 /**
@@ -43,11 +38,10 @@ export default function TreinadorPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
   const { state, setState } = useGameState()
-  const { currentSeason, currentMatch } = useGameManager()
+  const { currentSeason, currentMatch, seasonCalendar } = useGameManager()
   const matchResults = useGameEngine(s => s.matchResults)
   const initializeGame = useGameEngine(s => s.initializeGame)
   const squadCohesion = useGameEngine(s => s.squadCohesion)
-  const adjustSquadCohesion = useGameEngine(s => s.adjustSquadCohesion)
 
   // Aceitar a proposta AQUI (antes so dava para recusar; aceitar exigia ir ao
   // Escritorio). Mesma troca de emprego, pela funcao compartilhada.
@@ -179,9 +173,11 @@ export default function TreinadorPage() {
 
   // ── ENTROSAMENTO, AMISTOSOS E DATA FIFA ───────────────────────────────────
   // O entrosamento (squadCohesion, 0-100) vira ate +5 de forca em campo — a
-  // mesma conta do ao-vivo (bonusEntrosamento). Amistoso e treino na data FIFA
-  // sao os jeitos de subi-lo FORA da partida oficial.
-  const entrosamento = squadCohesion ?? 60
+  // mesma conta do ao-vivo (bonusEntrosamento). Desde a 1.0.223 ele nao e mais um
+  // contador que sobe por botao: e a leitura de quantos MINUTOS o onze atual ja
+  // jogou junto (lib/treino-e-entrosamento). Amistoso e treino na data FIFA
+  // continuam ajudando — creditando minutos, como tudo o mais.
+  const entrosamento = squadCohesion ?? PISO_ENTROSAMENTO
   const bonusEntrosamento = Math.round(Math.max(0, (entrosamento - 60)) / 8)
 
   // Data FIFA: quando o mes da proxima partida e janela FIFA, o clube esta parado
@@ -197,16 +193,37 @@ export default function TreinadorPage() {
 
   const treinarNaDataFifa = useCallback(() => {
     if (!emDataFifa || jaTreinouDataFifa) return
-    adjustSquadCohesion(5)
+    // Semana INTEIRA de trabalho com o grupo, sem jogo no meio: vale mais que o
+    // treino coletivo de uma semana normal, e menos que uma partida. Entra pela
+    // mesma porta de todo o resto — minutos em campo juntos.
+    const antes = useGameEngine.getState().squadCohesion ?? PISO_ENTROSAMENTO
+    useGameEngine.getState().registrarMinutosJuntos(120)
+    const depois = useGameEngine.getState().squadCohesion ?? antes
     setState({ dataFifaTreinada: janelaFifaKey } as Parameters<typeof setState>[0])
-    setAvisoTreino("Semana de treino aproveitada: +5 de entrosamento. O time joga mais junto na volta.")
-  }, [emDataFifa, jaTreinouDataFifa, adjustSquadCohesion, setState, janelaFifaKey])
+    setAvisoTreino(
+      depois > antes
+        ? `Semana de treino aproveitada: entrosamento ${antes} → ${depois}. O time joga mais junto na volta.`
+        : "Semana de treino aproveitada. Este onze já se conhece de cor — o ganho agora vem de jogo, não de treino.",
+    )
+  }, [emDataFifa, jaTreinouDataFifa, setState, janelaFifaKey])
 
   // Amistosos marcados (max 3).
-  const amistosos = state.amistososAgendados ?? []
+  //
+  // A DATA deixou de ser um rótulo solto (1.0.223): agora é uma SEMANA de
+  // verdade, escolhida entre as que o clube tem livres — sem compromisso
+  // oficial e sem outro amistoso. É isso que permite o jogo-treino virar um
+  // fixture no calendário sem colidir com a rodada. Semana de pausa FIFA entra
+  // na lista de propósito: é quando os clubes jogam amistoso na vida real.
+  // Em useMemo para a lista não trocar de identidade a cada render — ela é
+  // dependência da busca de semanas livres e dos callbacks de agendar/jogar.
+  const amistosos = useMemo(() => state.amistososAgendados ?? [], [state.amistososAgendados])
+  const semanasLivres = useMemo(
+    () => semanasLivresParaAmistoso(seasonCalendar.fixtures, state.week ?? 0, amistosos),
+    [seasonCalendar.fixtures, state.week, amistosos],
+  )
   const datasAmistoso = useMemo(
-    () => proximosSabados(state.season ?? 2026, state.week ?? 1),
-    [state.season, state.week],
+    () => semanasLivres.map(w => rotuloDaSemana(state.season ?? 2026, w)),
+    [semanasLivres, state.season],
   )
   const [oppBusca, setOppBusca] = useState("")
   const [dataIdx, setDataIdx] = useState(0)
@@ -222,24 +239,35 @@ export default function TreinadorPage() {
 
   const agendarAmistoso = useCallback((opp: Team) => {
     if (amistosos.length >= MAX_AMISTOSOS) return
+    const week = semanasLivres[dataIdx]
+    if (week == null) return
     setState({
       amistososAgendados: [...amistosos, {
-        oppShort: opp.curto, oppNome: opp.nome, dateLabel: datasAmistoso[dataIdx] ?? "Pré-temporada", userIsHome: emCasa,
+        oppShort: opp.curto, oppNome: opp.nome,
+        dateLabel: datasAmistoso[dataIdx] ?? rotuloDaSemana(state.season ?? 2026, week),
+        userIsHome: emCasa, week,
       }],
     } as Parameters<typeof setState>[0])
     setOppBusca("")
-  }, [amistosos, setState, datasAmistoso, dataIdx, emCasa])
+    setDataIdx(0)
+  }, [amistosos, setState, datasAmistoso, semanasLivres, dataIdx, emCasa, state.season])
 
   const removerAmistoso = useCallback((i: number) => {
     setState({ amistososAgendados: amistosos.filter((_, idx) => idx !== i) } as Parameters<typeof setState>[0])
   }, [amistosos, setState])
 
+  /**
+   * Jogar o amistoso AGORA, sem esperar a data chegar.
+   *
+   * O atalho continua existindo (era o único jeito de disputar o jogo-treino
+   * até a 1.0.222), mas agora ele não apaga o amistoso da agenda: marca como
+   * disputado quando a partida terminar — quem faz isso é o ao-vivo, pelo
+   * `amistosoSemana` do contexto. Assim o resultado aparece no dia dele no
+   * calendário em vez de o jogo simplesmente sumir.
+   */
   const jogarAmistoso = useCallback((i: number) => {
     const a = amistosos[i]
     if (!a) return
-    // Amistoso constroi entrosamento (nao conta pra temporada). +4 por jogo.
-    adjustSquadCohesion(4)
-    setState({ amistososAgendados: amistosos.filter((_, idx) => idx !== i) } as Parameters<typeof setState>[0])
     saveMatchContext({
       homeShort: a.userIsHome ? userTeam.curto : a.oppShort,
       awayShort: a.userIsHome ? a.oppShort : userTeam.curto,
@@ -248,10 +276,11 @@ export default function TreinadorPage() {
       competition: "Amistoso",
       round: `Amistoso · ${a.dateLabel}`,
       friendly: true,
+      amistosoSemana: a.week,
       duration: 90,
     })
     hardNavigate("/partida/ao-vivo")
-  }, [amistosos, adjustSquadCohesion, setState, userTeam.curto])
+  }, [amistosos, userTeam.curto])
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-[#050508] pb-20 md:pb-0">
@@ -413,7 +442,11 @@ export default function TreinadorPage() {
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)]/70 to-[var(--brand)]" style={{ width: `${entrosamento}%` }} />
               </div>
-              <p className="mt-2 text-[11px] leading-4 text-white/40">Time que joga junto rende mais. Sobe disputando partidas, amistosos e treinando nas datas FIFA.</p>
+              <p className="mt-2 text-[11px] leading-4 text-white/40">
+                É o total de <span className="text-white/70">minutos que este onze já jogou junto</span>, dupla a dupla —
+                não um contador que sobe sozinho. Partida oficial, amistoso e treino coletivo alimentam a mesma conta;
+                trocar meio time na janela derruba o número.
+              </p>
             </div>
 
             {avisoTreino && (
@@ -434,7 +467,7 @@ export default function TreinadorPage() {
                   className={cn("rounded-lg px-3 py-1.5 text-xs font-black transition-all",
                     jaTreinouDataFifa ? "cursor-not-allowed bg-white/10 text-white/40" : "bg-amber-300 text-black hover:brightness-110")}
                 >
-                  {jaTreinouDataFifa ? "Já treinado" : "Treinar (+5)"}
+                  {jaTreinouDataFifa ? "Já treinado" : "Treinar a semana"}
                 </button>
               </div>
             )}
@@ -451,9 +484,20 @@ export default function TreinadorPage() {
                       <span className="text-[10px] text-white/40">{a.userIsHome ? <Home className="h-3.5 w-3.5" /> : <Plane className="h-3.5 w-3.5" />}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-white">{a.oppNome}</p>
-                        <p className="text-[11px] text-white/40">{a.dateLabel} · {a.userIsHome ? "em casa" : "fora"}</p>
+                        <p className="text-[11px] text-white/40">
+                          {a.dateLabel} · {a.userIsHome ? "em casa" : "fora"}
+                          {/* A semana é o que faz o amistoso existir no calendário —
+                              dizer isso aqui evita a pergunta "marquei, e agora?". */}
+                          {a.week != null && !a.jogado && <span className="text-white/25"> · consta no calendário</span>}
+                        </p>
                       </div>
-                      <button onClick={() => jogarAmistoso(i)} className="rounded-lg bg-[var(--brand)] px-3 py-1.5 text-xs font-black text-[var(--brand-ink)] hover:brightness-110">Jogar</button>
+                      {a.jogado ? (
+                        <span className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-black text-white/70">
+                          {a.golsPro ?? 0} × {a.golsContra ?? 0}
+                        </span>
+                      ) : (
+                        <button onClick={() => jogarAmistoso(i)} className="rounded-lg bg-[var(--brand)] px-3 py-1.5 text-xs font-black text-[var(--brand-ink)] hover:brightness-110">Jogar</button>
+                      )}
                       <button onClick={() => removerAmistoso(i)} className="rounded-lg p-1.5 text-white/30 hover:bg-white/5 hover:text-white/60"><X className="h-4 w-4" /></button>
                     </div>
                   ))}
@@ -461,7 +505,14 @@ export default function TreinadorPage() {
               )}
 
               {/* Marcar novo amistoso */}
-              {amistosos.length < MAX_AMISTOSOS ? (
+              {amistosos.length >= MAX_AMISTOSOS ? (
+                <p className="text-[11px] text-white/40">Limite de {MAX_AMISTOSOS} amistosos atingido. Jogue ou remova um para marcar outro.</p>
+              ) : datasAmistoso.length === 0 ? (
+                <p className="text-[11px] text-white/40">
+                  Nenhuma semana livre à frente: a agenda do clube está cheia. Um amistoso só entra em
+                  semana sem compromisso — inclusive nas pausas de data FIFA.
+                </p>
+              ) : (
                 <div className="rounded-lg border border-white/10 bg-black/20 p-3">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <button onClick={() => setEmCasa(true)} className={cn("flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold", emCasa ? "border-primary bg-primary/15 text-primary" : "border-white/10 text-white/50")}><Home className="h-3.5 w-3.5" /> Casa</button>
@@ -481,8 +532,6 @@ export default function TreinadorPage() {
                     ))}
                   </div>
                 </div>
-              ) : (
-                <p className="text-[11px] text-white/40">Limite de {MAX_AMISTOSOS} amistosos atingido. Jogue ou remova um para marcar outro.</p>
               )}
             </div>
           </section>

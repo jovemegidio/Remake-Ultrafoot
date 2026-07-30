@@ -3,7 +3,29 @@
 import { useMemo, useState } from "react"
 import { ChevronRight, Globe2, Trophy, X } from "lucide-react"
 import { buildWorldCupSpectator } from "@/lib/world-cup-spectator"
+import { getNationalTeamById } from "@/lib/national-teams"
+import { NationalCrest } from "@/components/national/national-crest"
 import { cn } from "@/lib/utils"
+
+/**
+ * Brasao da selecao no placar do Mundial.
+ *
+ * Ate aqui a Central do Mundial era so TEXTO: "Brasil 2 x 0 Escocia". Os escudos
+ * das selecoes ja existiam (public/escudos/nations/<id>.png, resolvidos por
+ * getNationalCrestUrl) e eram usados nas telas de selecao — so nao chegavam
+ * nesta. NationalCrest cai sozinho num bloco com as cores do pais quando o
+ * arquivo nao existe (Peru, Venezuela e Bolivia ainda nao tem PNG), entao
+ * nenhuma partida fica com um quadrado quebrado.
+ */
+function Brasao({ id, code }: { id: string; code: string }) {
+  const nt = getNationalTeamById(id)
+  return (
+    <NationalCrest
+      team={{ id, code, cor1: nt?.cor1 ?? "#1b2733", cor2: nt?.cor2 ?? "#0b1219" }}
+      size={26}
+    />
+  )
+}
 
 interface WorldCupCenterProps {
   open: boolean
@@ -112,16 +134,22 @@ export function WorldCupCenter({
                     {match.penalties ? <span>Pênaltis {match.penalties[0]}–{match.penalties[1]}</span> : <span>Encerrado</span>}
                   </div>
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                    <div className="text-right">
-                      <p className="truncate text-sm font-bold text-white">{match.home}</p>
-                      <p className="text-[10px] font-black text-white/30">{match.homeCode}</p>
+                    <div className="flex min-w-0 items-center justify-end gap-2">
+                      <div className="min-w-0 text-right">
+                        <p className="truncate text-sm font-bold text-white">{match.home}</p>
+                        <p className="text-[10px] font-black text-white/30">{match.homeCode}</p>
+                      </div>
+                      <Brasao id={match.homeId} code={match.homeCode} />
                     </div>
                     <div className="rounded-lg bg-black/45 px-3 py-1.5 font-mono text-lg font-black text-white">
                       {match.homeScore}<span className="px-1.5 text-white/25">:</span>{match.awayScore}
                     </div>
-                    <div>
-                      <p className="truncate text-sm font-bold text-white">{match.away}</p>
-                      <p className="text-[10px] font-black text-white/30">{match.awayCode}</p>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Brasao id={match.awayId} code={match.awayCode} />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-white">{match.away}</p>
+                        <p className="text-[10px] font-black text-white/30">{match.awayCode}</p>
+                      </div>
                     </div>
                   </div>
                 </div>

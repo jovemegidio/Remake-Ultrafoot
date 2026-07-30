@@ -5,22 +5,11 @@ import { AlertTriangle, Check } from "lucide-react"
 import { isKitVariantAvailable, type Team } from "@/lib/teams-data"
 import { TeamCrest } from "@/components/team-crest"
 import { KitImage, type KitVariant } from "@/components/match/kit-image"
+import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
 import { cn } from "@/lib/utils"
 
 const VARIANTS: KitVariant[] = ["home", "away", "third"]
 const LABEL: Record<KitVariant, string> = { home: "Casa", away: "Visitante", third: "Terceiro" }
-
-/**
- * Cor dominante estimada de cada uniforme.
- *
- * APROXIMACAO ASSUMIDA: o clube guarda so duas cores (cor1/cor2), nao uma cor
- * por camisa. Casa usa a primeira, visitante e terceiro usam a segunda. Serve
- * para AVISAR sobre cores parecidas, nunca para impedir a escolha — se a
- * estimativa errar, o jogador decide do mesmo jeito.
- */
-function corDoUniforme(team: Team, v: KitVariant): string {
-  return (v === "home" ? team.cor1 : team.cor2) || team.cor1 || "#888888"
-}
 
 function paraRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "")
@@ -51,7 +40,10 @@ function TeamKits({
   lado: "casa" | "visitante"
   dica: string
 }) {
-  const cor = team.cor1 || "#ffffff"
+  // Cor da camisa MARCADA (lida da arte), nao a cor1 fixa do clube: o anel de
+  // selecao e a barrinha do cabecalho passam a dizer com que cor a equipe entra
+  // em campo — a mesma que o radar usa na partida.
+  const cor = useCorDoUniforme(team, selected)
   const variants = VARIANTS.filter(variant => isKitVariantAvailable(team.file_key, variant))
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -179,10 +171,13 @@ export function UniformSelectorModal({
     }
   }, [open, onClose, homeKit, awayKit, homeVariants, awayVariants, onHomeKit, onAwayKit])
 
-  const conflito = useMemo(
-    () => coresConflitam(corDoUniforme(homeTeam, homeKit), corDoUniforme(awayTeam, awayKit)),
-    [homeTeam, awayTeam, homeKit, awayKit],
-  )
+  // O aviso agora compara as cores REAIS das duas camisas marcadas (lidas da
+  // arte). Antes ele comparava cor1/cor2 do clube: dois times de terceiro
+  // uniforme davam sempre "conflito" (os dois viravam a mesma estimativa) e um
+  // visitante branco contra um mandante branco nao acusava nada.
+  const corCasa = useCorDoUniforme(homeTeam, homeKit)
+  const corFora = useCorDoUniforme(awayTeam, awayKit)
+  const conflito = useMemo(() => coresConflitam(corCasa, corFora), [corCasa, corFora])
 
   if (!open) return null
 

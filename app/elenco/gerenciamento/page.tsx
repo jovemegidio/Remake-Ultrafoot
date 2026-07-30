@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Star,
   Zap,
+  ArrowUpRight,
   Heart,
   Gauge,
   Shield,
@@ -26,23 +27,26 @@ import {
   Gamepad2,
   Save,
   Check,
+  RectangleHorizontal,
+  RectangleVertical,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
-import { PlayerAvatarCircle } from "@/components/player-avatar"
+import { PlayerAvatar, PlayerAvatarCircle } from "@/components/player-avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
 import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
 import { artilheiros, cartoes } from "@/lib/leaderboards"
 import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI } from "@/lib/formations"
-import { formatCurrency, getCamisaUrl, getTeamByShort, serieATeams } from "@/lib/teams-data"
+import { formatCurrency, getCamisaUrl, isKitVariantAvailable, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { absoluteWeek, CONTRACT_EPOCH_SEASON, defaultRoleForPosition, getContractStatus, isTransferWindowOpen, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
 import { useUserRoster } from "@/lib/use-user-roster"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useNotifications } from "@/components/notifications-system"
+import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { useTranslation } from "@/lib/i18n"
 import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { generateRetirementSuccessor } from "@/lib/youth-academy"
@@ -110,6 +114,106 @@ function getStarRating(fintas: number) {
 
 // buildElencoPlayers agora vive em lib/use-user-roster.ts (compartilhado com a Escalacao).
 
+/**
+ * CARTA DO ATLETA — o card da prancheta HORIZONTAL, no estilo EA FC.
+ *
+ * Só existe na horizontal por um motivo prático: em pé, o campo é estreito e
+ * onze retratos de 40px viram onze borrões indistinguíveis — a camisa com o
+ * número se lê melhor. Deitado sobra largura, e aí o rosto passa a ser a forma
+ * mais rápida de achar um atleta no meio dos onze.
+ *
+ * A foto vem de `getPlayerPhotoUrl` (PlayerAvatar), a mesma do resto do jogo;
+ * quem não tem retrato cai na silhueta por posição, nunca num quadrado vazio.
+ * As cores do clube pintam a moldura, então a carta muda de time para time.
+ */
+function CartaDeJogador({
+  nome, posicao, overall, numero, cor1, cor2, selecionado, funcao, promessa, pills, emTreino,
+}: {
+  nome: string
+  posicao: string
+  overall: number
+  numero?: number
+  cor1: string
+  cor2: string
+  selecionado: boolean
+  funcao: string | null
+  promessa: boolean
+  pills: { key: string; label: string; cls: string }[]
+  emTreino?: boolean
+}) {
+  return (
+    <div className="relative flex flex-col items-center">
+      <div
+        className={cn(
+          "relative w-[62px] overflow-hidden rounded-lg border transition-all md:w-[74px]",
+          selecionado
+            ? "border-[var(--brand)] shadow-[0_0_14px_var(--brand)]"
+            : "border-white/25 shadow-[0_4px_10px_rgba(0,0,0,0.55)]",
+        )}
+        style={{ background: `linear-gradient(160deg, ${cor1} 0%, ${cor2} 78%)` }}
+      >
+        {/* Brilho diagonal — o acabamento que faz a carta parecer carta. */}
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.28)_0%,transparent_38%,transparent_62%,rgba(0,0,0,0.30)_100%)]" />
+
+        {/* Overall e posição, na coluna da esquerda, como no card do EA FC. */}
+        <div className="absolute left-1 top-1 z-10 flex flex-col items-center leading-none">
+          <span className="text-[13px] font-black text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] md:text-[15px]">
+            {overall}
+          </span>
+          <span className="text-[7px] font-bold uppercase tracking-wide text-white/80 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)] md:text-[8px]">
+            {posicao}
+          </span>
+        </div>
+
+        {numero != null && (
+          <span className="absolute right-1 top-1 z-10 text-[9px] font-black text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]">
+            {numero}
+          </span>
+        )}
+
+        <PlayerAvatar
+          name={nome}
+          position={posicao}
+          size="lg"
+          className="mx-auto mt-3 h-[42px] w-[52px] rounded-none border-0 bg-transparent md:h-[50px] md:w-[62px]"
+        />
+
+        {/* Faixa do nome — sobrenome, que é como o atleta é chamado. */}
+        <div className="relative border-t border-white/20 bg-black/45 px-1 py-[2px] text-center">
+          <div className="truncate text-[8px] font-black uppercase tracking-wide text-white md:text-[9px]">
+            {nome.split(" ").pop()}
+          </div>
+        </div>
+      </div>
+
+      {promessa && (
+        <div className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--brand)]">
+          <TrendingUp className="h-2 w-2 text-black" />
+        </div>
+      )}
+
+      {/* Lesão / contrato / empréstimo / treino: o mesmo aviso da prancheta em pé. */}
+      {pills.length > 0 ? (
+        <div className="absolute inset-x-0 -top-2 mx-auto flex w-fit flex-col items-center gap-0.5">
+          {pills.map(p => (
+            <div key={p.key} className={cn("rounded px-1 text-[7px] font-black leading-tight", p.cls)}>{p.label}</div>
+          ))}
+        </div>
+      ) : emTreino ? (
+        <div className="absolute inset-x-0 -top-2 mx-auto w-fit rounded bg-amber-400 px-1 text-[7px] font-black text-black">
+          TREINO
+        </div>
+      ) : null}
+
+      {funcao && (
+        <div className="mt-0.5 max-w-[80px] truncate rounded bg-[var(--brand)] px-1.5 text-[8px] font-bold leading-tight text-[var(--brand-ink)]">
+          {funcao}
+        </div>
+      )}
+    </div>
+  )
+}
+
 type ViewType = "menu" | "visao_tatica" | "gerenciamento" | "escalacoes"
 
 export default function ElencoPage() {
@@ -133,6 +237,8 @@ export default function ElencoPage() {
   const engineToggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const engineDevolverEmprestimo = useGameEngine(s => s.devolverEmprestimo)
   const engineRenovarEmprestimo = useGameEngine(s => s.renovarEmprestimo)
+  const movimentos = useGameEngine(s => s.tacticalPlayerMovements)
+  const setMovimentos = useGameEngine(s => s.setTacticalPlayerMovements)
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
   const engineSellPlayer = useGameEngine(s => s.sellPlayer)
   const engineRetirePlayer = useGameEngine(s => s.retirePlayer)
@@ -193,6 +299,13 @@ export default function ElencoPage() {
   // Banco de reservas fechado por padrao — ele so aparece quando o tecnico pede
   // (pedido). Com 23 reservas aberto de cara, o campo ficava espremido.
   const [bancoAberto, setBancoAberto] = useState(false)
+  /**
+   * MODO MOVIMENTAÇÃO: com ele ligado, arrastar um atleta desenha a SETA do
+   * deslocamento dele (para onde vai com a bola) em vez de mudar a posição
+   * base. A seta não é enfeite — o motor a traduz em avançar/segurar/abrir/
+   * fechar (ver setTacticalPlayerMovements no game-engine).
+   */
+  const [modoMovimento, setModoMovimento] = useState(false)
   // Mesa de renovacao do emprestimo (atleta que chegou emprestado).
   const [renovacaoAberta, setRenovacaoAberta] = useState(false)
   const [draggingPlayer, setDraggingPlayer] = useState<number | null>(null)
@@ -352,16 +465,47 @@ export default function ElencoPage() {
     return PLAYER_ROLE_INFO[role]?.name ?? "Equilibrado"
   }, [enginePlayerInstructions])
 
-  /** Camisa 1 do clube — a arte que os onze vestem na prancheta. */
+  /**
+   * UNIFORME DA PRANCHETA (casa / fora / terceiro).
+   * A escolha fica no save da carreira — a prancheta abre no mesmo uniforme da
+   * última vez, e é a mesma preferência que a tela de partida usa.
+   */
+  const uniformeDoCampo = (state.selectedUniform as "home" | "away" | "third") ?? "home"
+  const uniformesDisponiveis = useMemo(
+    () => (["home", "away", "third"] as const).filter(v => isKitVariantAvailable(userTeam.file_key, v)),
+    [userTeam.file_key],
+  )
   const camisaDoCampo = useMemo(
-    () => getCamisaUrl(userTeam.file_key, "home", userTeam.nome),
-    [userTeam.file_key, userTeam.nome],
+    () => getCamisaUrl(userTeam.file_key, uniformeDoCampo, userTeam.nome),
+    [userTeam.file_key, userTeam.nome, uniformeDoCampo],
   )
 
   /** Número do atleta no elenco do motor (undefined quando o save não tem). */
   const numeroDaCamisa = useCallback(
     (playerId: number) => engineSquadPlayers.find(p => p.id === playerId)?.shirtNumber,
     [engineSquadPlayers],
+  )
+
+  /**
+   * ORIENTAÇÃO DA PRANCHETA — vertical (camisas) ou HORIZONTAL (cartas com foto).
+   *
+   * As coordenadas táticas (`x`, `y` em `positionedPlayers`) continuam SEMPRE no
+   * eixo vertical: é assim que elas são gravadas no save, é assim que a partida
+   * as lê, e converter o dado ao virar a tela quebraria toda a formação salva.
+   * A rotação é só de APRESENTAÇÃO — dois conversores, um em cada sentido.
+   *
+   * Campo vertical: y=0 é o ataque (topo), y=100 é o próprio gol.
+   * Campo horizontal: o próprio gol fica à ESQUERDA e o ataque à DIREITA, que é
+   * como todo jogo de futebol desenha a prancheta deitada.
+   */
+  const campoHorizontal = Boolean(state.campoHorizontal)
+  const paraTela = useCallback(
+    (p: { x: number; y: number }) => (campoHorizontal ? { left: 100 - p.y, top: p.x } : { left: p.x, top: p.y }),
+    [campoHorizontal],
+  )
+  const paraCampo = useCallback(
+    (left: number, top: number) => (campoHorizontal ? { x: top, y: 100 - left } : { x: left, y: top }),
+    [campoHorizontal],
   )
 
   // Força por setor da Visão Tática. Os quatro campos eram rótulos fixos com "ND"
@@ -632,13 +776,35 @@ export default function ElencoPage() {
     if (!pitchRef.current || !playerId) return
     
     const rect = pitchRef.current.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
-    
+    // O ponteiro cai numa posição de TELA; as coordenadas táticas continuam no
+    // eixo vertical. Sem esta conversão, arrastar na prancheta horizontal
+    // gravaria a formação girada 90° — e a partida escalaria o time de lado.
+    const { x, y } = paraCampo(
+      ((e.clientX - rect.left) / rect.width) * 100,
+      ((e.clientY - rect.top) / rect.height) * 100,
+    )
+
     // Clamp to field bounds
     const clampedX = Math.max(5, Math.min(95, x))
     const clampedY = Math.max(5, Math.min(95, y))
     
+    // MODO MOVIMENTAÇÃO: o arrasto não muda onde o atleta FICA, e sim para onde
+    // ele VAI. Larga-se o ponteiro no destino e a seta nasce dali.
+    if (modoMovimento) {
+      const alvo = positionedPlayers.find(p => p.id === playerId)
+      if (alvo) {
+        const distancia = Math.hypot(clampedX - alvo.x, clampedY - alvo.y)
+        const novos = { ...movimentos }
+        // Solto quase em cima de si mesmo = apagar a seta.
+        if (distancia < 4) delete novos[alvo.name]
+        else novos[alvo.name] = { x: clampedX, y: clampedY }
+        setMovimentos(novos)
+      }
+      setDraggingPlayer(null)
+      setDragOverTarget(null)
+      return
+    }
+
     // Check if player is from bench
     const benchPlayer = bench.find(p => p.id === playerId)
     if (benchPlayer) {
@@ -670,7 +836,7 @@ export default function ElencoPage() {
 
     setDraggingPlayer(null)
     setDragOverTarget(null)
-  }, [bench, positionedPlayers, pinSlotsAndSwap])
+  }, [bench, positionedPlayers, pinSlotsAndSwap, modoMovimento, movimentos, setMovimentos, paraCampo])
   
   const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
     e.preventDefault()
@@ -1221,6 +1387,69 @@ export default function ElencoPage() {
               <Zap className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Auto-escalar</span>
             </button>
+
+            {/* MODO MOVIMENTAÇÃO — ligado, o arrasto desenha a seta do
+                deslocamento em vez de mudar a posição base. */}
+            <button
+              onClick={() => setModoMovimento(v => !v)}
+              title={modoMovimento
+                ? "Arraste um atleta para marcar PARA ONDE ele se desloca. Solte em cima dele para apagar a seta."
+                : "Marcar a movimentação dos atletas"}
+              className={cn(
+                "ml-1 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition md:text-xs",
+                modoMovimento
+                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-ink)]"
+                  : "border-white/15 text-white/70 hover:border-white/30 hover:text-white",
+              )}
+            >
+              <ArrowUpRight className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Movimentação</span>
+            </button>
+
+            {/* ORIENTAÇÃO DA PRANCHETA — em pé (camisas) ou deitada (cartas com
+                foto, estilo EA FC). As duas coisas andam juntas de propósito:
+                é a largura do campo deitado que dá espaço para a carta. */}
+            <button
+              onClick={() => setState({ campoHorizontal: !campoHorizontal })}
+              title={campoHorizontal
+                ? "Voltar à prancheta em pé, com as camisas do clube"
+                : "Campo deitado, com os onze em cartas de foto"}
+              className={cn(
+                "ml-1 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition md:text-xs",
+                campoHorizontal
+                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-ink)]"
+                  : "border-white/15 text-white/70 hover:border-white/30 hover:text-white",
+              )}
+            >
+              {campoHorizontal
+                ? <RectangleHorizontal className="h-3.5 w-3.5" />
+                : <RectangleVertical className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{campoHorizontal ? "Cartas" : "Camisas"}</span>
+            </button>
+
+            {/* TROCAR O UNIFORME da prancheta (casa / fora / terceiro). Agora que
+                os onze vestem a camisa do clube, dá para ver como o time fica
+                com cada uma — e a escolha é a MESMA do save, então vale também
+                para a partida. Só aparecem as variantes que o clube tem arte. */}
+            {uniformesDisponiveis.length > 1 && (
+              <div className="ml-1 flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/[0.04] p-0.5">
+                {uniformesDisponiveis.map(v => (
+                  <button
+                    key={v}
+                    onClick={() => setState({ selectedUniform: v })}
+                    title={v === "home" ? "Uniforme 1 (casa)" : v === "away" ? "Uniforme 2 (fora)" : "Uniforme 3"}
+                    className={cn(
+                      "rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors md:text-[11px]",
+                      uniformeDoCampo === v
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                        : "text-white/50 hover:bg-white/10 hover:text-white/80",
+                    )}
+                  >
+                    {v === "home" ? "Casa" : v === "away" ? "Fora" : "3º"}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1242,7 +1471,13 @@ export default function ElencoPage() {
               onDrop={handleDropOnPitch}
               // min-h-0: o campo pode encolher para o painel de reservas caber. Com
               // min-h-[350px] ele se recusava a ceder em telas baixas e o banco sumia.
-              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-0 w-full max-w-[560px] mx-auto"
+              className={cn(
+                "relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-0 w-full mx-auto",
+                // Deitado o campo precisa de LARGURA, não de altura: o teto de
+                // 560px foi calibrado para a prancheta em pé e espremeria as
+                // cartas numa faixa estreita no meio da tela.
+                campoHorizontal ? "max-w-[1100px]" : "max-w-[560px]",
+              )}
               style={{
                 // Prancheta tática em azul-marinho, como a referência do dossiê:
                 // os cards de função ficam legíveis por cima, o que o verde vivo
@@ -1271,7 +1506,37 @@ export default function ElencoPage() {
                 }}
               />
               
-              {/* Pitch markings */}
+              {/* Pitch markings.
+                  Duas versões, e não uma girada por CSS: com `preserveAspectRatio="none"`
+                  o campo é esticado para preencher o contêiner, então rotacionar o SVG
+                  deixaria as linhas com espessuras diferentes na horizontal e na
+                  vertical — círculo central virando elipse achatada. */}
+              {campoHorizontal ? (
+                <svg viewBox="0 0 133 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+                  <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.3" fill="none">
+                    {/* Campo exterior */}
+                    <rect x="3" y="3" width="127" height="94" rx="1" />
+                    {/* Linha do meio */}
+                    <line x1="66.5" y1="3" x2="66.5" y2="97" />
+                    {/* Circulo central */}
+                    <circle cx="66.5" cy="50" r="12" />
+                    <circle cx="66.5" cy="50" r="0.8" fill="rgba(255,255,255,0.35)" />
+                    {/* Area grande - direita (ataque) */}
+                    <rect x="110" y="20" width="20" height="60" />
+                    <rect x="122" y="32" width="8" height="36" />
+                    <circle cx="117" cy="50" r="0.8" fill="rgba(255,255,255,0.35)" />
+                    <path d="M 110 35 Q 103 50 110 65" />
+                    {/* Area grande - esquerda (defesa) */}
+                    <rect x="3" y="20" width="20" height="60" />
+                    <rect x="3" y="32" width="8" height="36" />
+                    <circle cx="16" cy="50" r="0.8" fill="rgba(255,255,255,0.35)" />
+                    <path d="M 23 35 Q 30 50 23 65" />
+                    {/* Gols */}
+                    <rect x="130" y="40" width="3" height="20" strokeWidth="0.4" />
+                    <rect x="0" y="40" width="3" height="20" strokeWidth="0.4" />
+                  </g>
+                </svg>
+              ) : (
               <svg viewBox="0 0 100 133" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
                 <g stroke="rgba(255,255,255,0.35)" strokeWidth="0.3" fill="none">
                   {/* Campo exterior */}
@@ -1303,9 +1568,55 @@ export default function ElencoPage() {
                   <rect x="40" y="130" width="20" height="3" strokeWidth="0.4" />
                 </g>
               </svg>
+              )}
+
+              {/* SETAS DE MOVIMENTAÇÃO.
+                  Uma por atleta que tem destino marcado: sai da posição base e
+                  aponta para onde ele vai com a bola. Fica ATRÁS das camisas
+                  (z menor) para não atrapalhar o arrasto. */}
+              {Object.keys(movimentos).length > 0 && (
+                <svg
+                  className="pointer-events-none absolute inset-0 h-full w-full"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <marker id="ponta-mov" viewBox="0 0 10 10" refX="8" refY="5"
+                      markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--brand)" />
+                    </marker>
+                  </defs>
+                  {positionedPlayers.map(p => {
+                    const destino = movimentos[p.name]
+                    if (!destino) return null
+                    // As setas vivem no mesmo sistema de coordenadas das cartas:
+                    // sem converter, elas apontariam para o lado errado na
+                    // prancheta deitada.
+                    const de = paraTela(p)
+                    const ate = paraTela(destino)
+                    return (
+                      <line
+                        key={p.id}
+                        x1={de.left} y1={de.top} x2={ate.left} y2={ate.top}
+                        stroke="var(--brand)" strokeWidth="0.6" strokeOpacity="0.75"
+                        strokeDasharray="2.4 1.6" markerEnd="url(#ponta-mov)"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    )
+                  })}
+                </svg>
+              )}
 
               {/* Players on pitch */}
-              {positionedPlayers.map((player) => (
+              {positionedPlayers.map((player) => {
+                // Quem tem seta VAI E VOLTA devagar entre a base e o destino:
+                // é o movimento acontecendo, não um desenho parado. Ida de 2,6s,
+                // volta igual, com uma pausa curta — leitura calma, sem piscar.
+                const destino = movimentos[player.name]
+                const temMovimento = Boolean(destino)
+                const pos = paraTela(player)
+                const posDestino = destino ? paraTela(destino) : null
+                return (
                 <motion.div
                   key={player.id}
                   draggable
@@ -1315,13 +1626,20 @@ export default function ElencoPage() {
                   onDrop={(e) => handleDropOnPlayer(e as unknown as React.DragEvent, player.id)}
                   onDragEnd={handleDragEnd}
                   initial={false}
-                  animate={{ 
-                    left: `${player.x}%`, 
-                    top: `${player.y}%`,
+                  animate={temMovimento && draggingPlayer !== player.id && posDestino ? {
+                    left: [`${pos.left}%`, `${posDestino.left}%`, `${pos.left}%`],
+                    top: [`${pos.top}%`, `${posDestino.top}%`, `${pos.top}%`],
+                    scale: selectedPlayerId === player.id ? 1.05 : 1,
+                    opacity: 1,
+                  } : {
+                    left: `${pos.left}%`,
+                    top: `${pos.top}%`,
                     scale: draggingPlayer === player.id ? 1.1 : dragOverTarget === player.id ? 1.15 : selectedPlayerId === player.id ? 1.05 : 1,
                     opacity: draggingPlayer === player.id ? 0.7 : 1,
                   }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  transition={temMovimento && draggingPlayer !== player.id
+                    ? { duration: 5.2, times: [0, 0.5, 1], repeat: Infinity, repeatDelay: 0.6, ease: "easeInOut" }
+                    : { type: "spring", stiffness: 400, damping: 30 }}
                   onClick={() => setSelectedPlayerId(player.id)}
                     onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
                   className={cn(
@@ -1330,11 +1648,26 @@ export default function ElencoPage() {
                     dragOverTarget === player.id && "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-transparent rounded-full"
                   )}
                 >
-                  {/* A CAMISA no lugar do retângulo (pedido). O card cinza dava
-                      a mesma cara para os onze e escondia o campo; a camisa do
-                      clube, com o número do atleta, se lê de relance e é o que
-                      todo jogo de futebol usa na prancheta. Nome, função e
-                      overall continuam logo abaixo — só saiu a caixa. */}
+                  {/* PRANCHETA HORIZONTAL: carta com a FOTO do atleta, no estilo
+                      EA FC. Na vertical a camisa do clube é a leitura certa (é o
+                      que todo jogo usa em pé, e onze rostos minúsculos não se
+                      distinguem). Deitado sobra largura, e a carta com foto,
+                      overall e posição é o que a pessoa reconhece de relance. */}
+                  {campoHorizontal ? (
+                    <CartaDeJogador
+                      nome={player.name}
+                      posicao={normalizePosition(player.position)}
+                      overall={player.overall}
+                      numero={numeroDaCamisa(player.id)}
+                      cor1={userTeam.cor1}
+                      cor2={userTeam.cor2}
+                      selecionado={selectedPlayerId === player.id}
+                      funcao={selectedPlayerId === player.id ? roleLabelFor(player) : null}
+                      promessa={player.potential > player.overall + 3}
+                      pills={badgesStatus(player.name)}
+                      emTreino={statusFor(player.name).training}
+                    />
+                  ) : (
                   <div className="relative flex flex-col items-center">
                     <div
                       className={cn(
@@ -1411,9 +1744,11 @@ export default function ElencoPage() {
                       )
                     })()}
                   </div>
+                  )}
                 </motion.div>
-              ))}
-              
+                )
+              })}
+
               {/* Tactical instruction overlay */}
               <button 
                 onClick={() => setBallInstruction(prev => prev === "sem_bola" ? "com_bola" : "sem_bola")}
@@ -2104,17 +2439,26 @@ export default function ElencoPage() {
                 )
               })()}
 
-              {selectedPlayer.age >= 32 && (
+              {/* APOSENTAR — só para atleta que é SEU.
+                  Aposentar um emprestado encerrava a carreira de um jogador cujo
+                  passe pertence a outro clube (e ainda gerava um "sucessor" na
+                  SUA base a partir dele). É o mesmo princípio que já barra vender
+                  e anunciar quem chegou por empréstimo. */}
+              {selectedPlayer.age >= 32 && !emprestimoDoSelecionado && (
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const enginePlayer = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
                     if (!enginePlayer) return
-                    const aviso =
-                      `Aposentar ${selectedPlayer.name} aos ${selectedPlayer.age} anos?\n\n` +
-                      "O atleta deixa imediatamente o elenco e a folha salarial. " +
-                      "Um jovem com o mesmo nome e posição entrará na categoria de base, " +
-                      "mas overall e potencial podem ser parecidos ou completamente diferentes."
-                    if (typeof window !== "undefined" && !window.confirm(aviso)) return
+                    const confirmado = await confirmarNoJogo({
+                      titulo: `Aposentar ${selectedPlayer.name} aos ${selectedPlayer.age} anos?`,
+                      mensagem:
+                        "O atleta deixa imediatamente o elenco e a folha salarial. " +
+                        "Um jovem com o mesmo nome e posição entrará na categoria de base, " +
+                        "mas overall e potencial podem ser parecidos ou completamente diferentes.",
+                      tom: "alerta",
+                      confirmar: "Aposentar",
+                    })
+                    if (!confirmado) return
                     const successor = generateRetirementSuccessor({
                       name: enginePlayer.name,
                       position: enginePlayer.position,
@@ -2164,11 +2508,14 @@ export default function ElencoPage() {
                     Negociar renovação do empréstimo
                   </button>
                   <button
-                    onClick={() => {
-                      if (!window.confirm(
-                        `Devolver ${selectedPlayer.name} ao clube de origem agora?\n\n` +
-                        `Ele sai do elenco imediatamente e o empréstimo é encerrado.`,
-                      )) return
+                    onClick={async () => {
+                      const confirmado = await confirmarNoJogo({
+                        titulo: `Devolver ${selectedPlayer.name} ao clube de origem agora?`,
+                        mensagem: "Ele sai do elenco imediatamente e o empréstimo é encerrado.",
+                        tom: "alerta",
+                        confirmar: "Devolver",
+                      })
+                      if (!confirmado) return
                       if (engineDevolverEmprestimo(selectedPlayer.id)) {
                         addNotification({
                           type: "transfer", priority: "medium",
@@ -2212,7 +2559,7 @@ export default function ElencoPage() {
                   persiste no save). Antes o perfil so "listava" — o relato "diz que
                   vendeu mas o jogador nao sai" era justamente isso: nao havia venda. */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   const eng = engineSquadPlayers.find(p => p.id === selectedPlayer.id)
                   const valor = eng?.marketValue ?? 0
 
@@ -2221,9 +2568,11 @@ export default function ElencoPage() {
                   // porta que o garoto promovido virava dinheiro em qualquer
                   // semana do ano.
                   if (!isTransferWindowOpen(engineCurrentWeek)) {
-                    window.alert(
-                      `A janela de transferências está FECHADA.\n\n${selectedPlayer.name} só pode ser negociado quando ela reabrir.`,
-                    )
+                    await avisarNoJogo({
+                      titulo: "A janela de transferências está fechada",
+                      mensagem: `${selectedPlayer.name} só pode ser negociado quando ela reabrir.`,
+                      tom: "alerta",
+                    })
                     return
                   }
 
@@ -2233,9 +2582,10 @@ export default function ElencoPage() {
                   // um botao de sacar dinheiro do elenco a qualquer momento.
                   const interesse = Math.max(0.15, Math.min(0.9, (valor - 300_000) / 8_000_000))
                   if (Math.random() > interesse) {
-                    window.alert(
-                      `Nenhum clube fez proposta por ${selectedPlayer.name} agora.\n\nColoque-o na lista de transferíveis para atrair sondagens e tente de novo mais adiante.`,
-                    )
+                    await avisarNoJogo({
+                      titulo: `Ninguém fez proposta por ${selectedPlayer.name}`,
+                      mensagem: "Coloque-o na lista de transferíveis para atrair sondagens e tente de novo mais adiante.",
+                    })
                     return
                   }
 
@@ -2246,12 +2596,16 @@ export default function ElencoPage() {
                   const oferta = Math.round((valor * (0.65 + Math.random() * 0.5)) / 10_000) * 10_000
                   const clube = ["Benfica", "Ajax", "Porto", "Palmeiras", "Flamengo", "Sevilla", "Wolves"][Math.floor(Math.random() * 7)]
                   const abaixo = oferta < valor * 0.9
-                  const texto =
-                    `${clube} oferece R$ ${oferta.toLocaleString("pt-BR")} por ${selectedPlayer.name}.\n` +
-                    `Valor de mercado: R$ ${valor.toLocaleString("pt-BR")}` +
-                    (abaixo ? "\n\nA proposta está ABAIXO do valor do atleta." : "") +
-                    "\n\nConfirmar a VENDA? O atleta sai do elenco e o valor entra no caixa."
-                  if (typeof window !== "undefined" && !window.confirm(texto)) return
+                  const confirmado = await confirmarNoJogo({
+                    titulo: `${clube} oferece R$ ${oferta.toLocaleString("pt-BR")} por ${selectedPlayer.name}`,
+                    mensagem:
+                      `Valor de mercado: R$ ${valor.toLocaleString("pt-BR")}` +
+                      (abaixo ? "\n\nA proposta está ABAIXO do valor do atleta." : "") +
+                      "\n\nConfirmar a venda? O atleta sai do elenco e o valor entra no caixa.",
+                    tom: abaixo ? "perigo" : "alerta",
+                    confirmar: "Vender",
+                  })
+                  if (!confirmado) return
                   engineSellPlayer(selectedPlayer.id, oferta)
                   setShowPlayerProfile(false)
                 }}

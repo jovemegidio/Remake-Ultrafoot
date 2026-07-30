@@ -26,6 +26,7 @@ import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
 import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/teams-data"
+import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { debtTransferLimit, renegotiateDebt, amortizeDebt, financeWithDebt, borrowingCapacity, transfersFrozen } from "@/lib/debt-engine"
 import { useRequireClub } from "@/lib/use-require-team"
@@ -406,10 +407,22 @@ export default function FinancasPage() {
               <div className="mt-2 flex flex-wrap justify-end gap-2">
                 {/* AMORTIZAR: paga a dívida com o caixa AGORA (resposta ao "como pago as dívidas"). */}
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const alvo = Math.min(gameEngine.balance ?? 0, saveState.debt!.principal)
-                    if (alvo < 10_000) { window.alert("Saldo insuficiente para amortizar a dívida agora."); return }
-                    if (!window.confirm(`Amortizar ${formatCurrency(alvo)} da dívida com o caixa agora?`)) return
+                    if (alvo < 10_000) {
+                      await avisarNoJogo({
+                        titulo: "Saldo insuficiente",
+                        mensagem: "Não há caixa para amortizar a dívida agora.",
+                        tom: "alerta",
+                      })
+                      return
+                    }
+                    const confirmado = await confirmarNoJogo({
+                      titulo: `Amortizar ${formatCurrency(alvo)} da dívida?`,
+                      mensagem: "O valor sai do caixa agora e abate o saldo devedor.",
+                      confirmar: "Amortizar",
+                    })
+                    if (!confirmado) return
                     const r = amortizeDebt(saveState.debt!, alvo)
                     gameEngine.payClubDebt(r.paid)
                     setSaveState({ debt: r.debt })
@@ -447,18 +460,31 @@ export default function FinancasPage() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             <button
-              onClick={() => {
+              onClick={async () => {
                 const PASSO = 500_000
                 const teto = borrowingCapacity(saveState.debt, gameEngine.weeklyIncome ?? 0)
                 if (transfersFrozen(saveState.debt)) {
-                  window.alert("O banco não libera crédito novo: há 3 ou mais parcelas em atraso. Regularize antes.")
+                  await avisarNoJogo({
+                    titulo: "O banco não libera crédito novo",
+                    mensagem: "Há 3 ou mais parcelas em atraso. Regularize antes de tomar mais crédito.",
+                    tom: "perigo",
+                  })
                   return
                 }
                 if (teto < PASSO) {
-                  window.alert(`O banco não aprova mais crédito agora. Teto disponível: ${formatCurrency(teto)}.`)
+                  await avisarNoJogo({
+                    titulo: "O banco não aprova mais crédito agora",
+                    mensagem: `Teto disponível: ${formatCurrency(teto)}.`,
+                    tom: "alerta",
+                  })
                   return
                 }
-                if (!window.confirm(`Tomar ${formatCurrency(PASSO)} emprestados?\n\nO valor entra no caixa e passa a render juros, com a parcela descontada todo mês.`)) return
+                const confirmado = await confirmarNoJogo({
+                  titulo: `Tomar ${formatCurrency(PASSO)} emprestados?`,
+                  mensagem: "O valor entra no caixa e passa a render juros, com a parcela descontada todo mês.",
+                  confirmar: "Tomar crédito",
+                })
+                if (!confirmado) return
                 setSaveState({ debt: financeWithDebt(saveState.debt, PASSO) })
                 gameEngine.addClubRevenue(PASSO)
               }}
@@ -466,18 +492,30 @@ export default function FinancasPage() {
             >Pegar 500 mil</button>
 
             <button
-              onClick={() => {
+              onClick={async () => {
                 const PASSO = 500_000
                 const devido = saveState.debt?.principal ?? 0
-                if (devido <= 0) { window.alert("O clube não tem empréstimo em aberto."); return }
+                if (devido <= 0) {
+                  await avisarNoJogo({ titulo: "Nada a pagar", mensagem: "O clube não tem empréstimo em aberto." })
+                  return
+                }
                 // Quita só o que ainda deve: pagar 500 mil de uma dívida de
                 // 200 mil não pode tirar 300 mil a mais do caixa.
                 const alvo = Math.min(PASSO, devido)
                 if ((gameEngine.balance ?? 0) < alvo) {
-                  window.alert(`Saldo insuficiente. Você precisa de ${formatCurrency(alvo)} em caixa.`)
+                  await avisarNoJogo({
+                    titulo: "Saldo insuficiente",
+                    mensagem: `Você precisa de ${formatCurrency(alvo)} em caixa para esta parcela.`,
+                    tom: "alerta",
+                  })
                   return
                 }
-                if (!window.confirm(`Pagar ${formatCurrency(alvo)} do empréstimo agora?`)) return
+                const confirmado = await confirmarNoJogo({
+                  titulo: `Pagar ${formatCurrency(alvo)} do empréstimo agora?`,
+                  mensagem: "O valor sai do caixa e abate o saldo devedor com o banco.",
+                  confirmar: "Pagar",
+                })
+                if (!confirmado) return
                 const r = amortizeDebt(saveState.debt!, alvo)
                 gameEngine.payClubDebt(r.paid)
                 setSaveState({ debt: r.debt })

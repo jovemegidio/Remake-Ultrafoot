@@ -31,8 +31,13 @@ export function TransferOffers() {
       .reverse()
   }, [gameEngine.transferOffers])
   
+  // A recusa do ATLETA (projeto/minutos, ver lib/mercado-realista) precisa
+  // aparecer: sem isto a proposta some da lista e o jogador segue no elenco sem
+  // que ninguém entenda o que houve.
+  const [recusaDoAtleta, setRecusaDoAtleta] = useState<string | null>(null)
   const handleResponse = (offerId: number, accept: boolean) => {
-    gameEngine.respondToOffer(offerId, accept)
+    const r = gameEngine.respondToOffer(offerId, accept)
+    setRecusaDoAtleta(!r.ok && r.motivo ? r.motivo : null)
   }
   
   if (pendingOffers.length === 0 && pastOffers.length === 0) {
@@ -52,6 +57,13 @@ export function TransferOffers() {
   
   return (
     <div className="space-y-6">
+      {recusaDoAtleta && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-400/30 bg-amber-400/[0.08] px-3 py-2.5">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+          <p className="text-xs text-amber-100/90">{recusaDoAtleta}</p>
+        </div>
+      )}
+
       {/* Ofertas Pendentes */}
       {pendingOffers.length > 0 && (
         <div>

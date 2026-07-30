@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 
+import { readFileSync } from 'node:fs'
+
+// A VERSAO exibida no jogo sai daqui, do package.json, e nao de uma constante
+// escrita a mao: uma constante paralela envelhece em silencio e o rodape passa a
+// mentir a versao para quem instalou. Publicar continua sendo bumpar
+// package.json + src-tauri/tauri.conf.json, como sempre foi.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+
 // O app e empacotado como build estatico para o Tauri (`output: 'export'` +
 // `trailingSlash: true`). Porem, essa combinacao conflita com o proxy do
 // preview (Vercel / v0), que serve um build de PRODUCAO e entra em loop de
@@ -13,6 +21,9 @@
 const isTauriBuild = Boolean(process.env.TAURI_ENV_PLATFORM) || process.env.TAURI_BUILD === '1'
 
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_VERSAO_DO_JOGO: pkg.version,
+  },
   ...(isTauriBuild
     ? {
         output: 'export',

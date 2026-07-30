@@ -107,8 +107,25 @@ writeFileSync(saida, corpo)
 // GitHub primeiro: é a reserva, e ficar com a reserva à frente por alguns
 // segundos é inofensivo. O contrário — VPS nova e reserva velha — faz quem cai
 // no fallback receber dado desatualizado.
+// O `#elencos.json` no fim NÃO é enfeite: o gh nomeia o asset pelo nome do
+// ARQUIVO, e o arquivo local é `.publicado.json`. O ponto inicial vira
+// "default." na normalização do GitHub, então o asset saía como
+// `default.publicado.json` — e a URL de reserva do cliente
+// (…/download/elencos/elencos.json) respondia 404. A reserva ficou morta desde
+// a primeira publicação, calada, porque nada aqui conferia o lado do GitHub.
 console.log("\nEnviando para o GitHub…")
-execFileSync("gh", ["release", "upload", TAG, saida, "--repo", REPO, "--clobber"], { stdio: "inherit" })
+execFileSync("gh", ["release", "upload", TAG, `${saida}#elencos.json`, "--repo", REPO, "--clobber"], { stdio: "inherit" })
+
+// Conferência do GitHub pelo CORPO, mesma regra da VPS: um 404 aqui é o canal
+// de reserva inteiro fora do ar sem ninguém perceber.
+const URL_GITHUB = `https://github.com/${REPO}/releases/download/${TAG}/elencos.json`
+const reserva = execFileSync("curl", ["-sL", "--max-time", "20", `${URL_GITHUB}?cb=${Date.now()}`], { encoding: "utf-8" })
+let versaoReserva = 0
+try { versaoReserva = JSON.parse(reserva)?.versao ?? 0 } catch { /* veio HTML/404 */ }
+if (versaoReserva !== atualizacao.versao) {
+  console.error(`\nFALHOU: a reserva do GitHub responde ${versaoReserva || "(nao e JSON)"} em vez de ${atualizacao.versao}.`)
+  process.exit(1)
+}
 
 console.log("Enviando para a VPS…")
 const chave = process.env.ULTRAFOOT_VPS_KEY

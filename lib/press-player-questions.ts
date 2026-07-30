@@ -62,6 +62,27 @@ export function perguntasSobreAtletas(
     })
   }
 
+  // Quem foi BEM sem marcar. Sem esta faixa, a coletiva só falava de artilheiro
+  // e de quem foi mal — e com mais perguntas por entrevista (1.0.224) as duas
+  // categorias se repetiam na mesma sala.
+  if (out.length < limite) {
+    const bons = atletas
+      .filter(a => a.gols === 0 && (a.nota ?? 0) >= 7.2)
+      .sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0))
+    for (const a of bons.slice(0, limite - out.length)) {
+      out.push({
+        id: `atuacao-${a.nome}`,
+        atleta: a.nome,
+        pergunta: `${a.nome} não marcou, mas foi um dos melhores em campo. O senhor concorda?`,
+        opcoes: [
+          { texto: `${a.nome} foi decisivo do jeito dele. Jogo não é só gol.`, tom: "elogio", moralDelta: 7 },
+          { texto: "Cumpriu a função que pedimos, como os outros cumpriram.", tom: "neutro", moralDelta: 1 },
+          { texto: "Jogou bem, mas nessa posição eu cobro números.", tom: "cobranca", moralDelta: -6 },
+        ],
+      })
+    }
+  }
+
   // Sem gols, ou sobrando espaço: pergunta sobre quem foi pior em campo.
   if (out.length < limite) {
     const piores = atletas

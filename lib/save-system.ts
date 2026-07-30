@@ -383,6 +383,13 @@ export interface GameState {
   week: number
   language: string
   selectedUniform: "home" | "away" | "third"
+  /**
+   * Prancheta do gerenciamento na HORIZONTAL, com os onze em cartas de foto no
+   * estilo EA FC (em vez da camisa do clube na vertical). Fica no save porque é
+   * preferência de leitura do técnico: quem gosta de uma não quer reescolher a
+   * cada abertura. Ver app/elenco/gerenciamento.
+   */
+  campoHorizontal?: boolean
   createdAt: number
   updatedAt: number
   // Multiplayer
@@ -428,6 +435,18 @@ export interface GameState {
   boardConfidenceBonus?: number
   /** Meta renegociada na reunião (posição), quando o conselho cedeu. */
   metaDaDiretoria?: number
+  // ── Conversa com o atleta (lib/conversa-atleta.ts) ──────────────────────
+  /**
+   * PROMESSAS DE TITULARIDADE em aberto, por id de atleta.
+   *
+   * É o que transforma a conversa em compromisso: ao prometer, guardamos quantas
+   * partidas o TIME e o ATLETA tinham. Se o time joga e ele continua fora, a
+   * promessa foi quebrada — a moral cai e a sua palavra passa a valer menos nas
+   * próximas conversas (`promessasQuebradas`).
+   */
+  promessasAoAtleta?: Record<string, { semana: number; jogosDoTime: number; jogosDoAtleta: number }>
+  /** Quantas promessas de titularidade você já deixou de cumprir nesta carreira. */
+  promessasQuebradas?: number
   // Legado entre carreiras (Roguelike)
   coachLegacy: CoachLegacy
   // Selecao nacional
@@ -562,9 +581,11 @@ export interface GameState {
   // Convocacao manual da selecao: jogadores CORTADOS e CONVOCADOS a dedo pelo tecnico
   // (chaves nome__clube). Vazio = convocacao 100% automatica.
   nationalCuts?: string[]
-  // Amistosos marcados na Area do Treinador (maximo 3). Cada um jogado da
-  // entrosamento. Ver app/treinador.
-  amistososAgendados?: { oppShort: string; oppNome: string; dateLabel: string; userIsHome: boolean }[]
+  // Amistosos marcados na Area do Treinador (maximo 3). Desde a 1.0.223 cada um
+  // carrega a SEMANA em que acontece e vira um fixture de verdade no calendario
+  // (ver lib/amistosos-calendario.ts). `week` e opcional so por causa dos saves
+  // antigos, que sao migrados na primeira abertura.
+  amistososAgendados?: import("@/lib/amistosos-calendario").AmistosoAgendado[]
   // Chave (season-mes) da ultima janela FIFA em que o tecnico treinou o
   // entrosamento — impede treinar a mesma data FIFA duas vezes.
   dataFifaTreinada?: string

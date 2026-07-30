@@ -65,10 +65,18 @@ export function MarketNotificationsBridge() {
     for (const i of marketInterests ?? []) {
       if (seenInterests.current.has(i.id)) continue
       seenInterests.current.add(i.id)
+      // A sondagem agora DIZ POR QUÊ (1.0.223): que papel o atleta teria lá, o
+      // que o clube viu no próprio elenco e se ele tem caixa para transformar
+      // isso em proposta. Antes era só "está de olho" — um aviso que não mudava
+      // decisão nenhuma. Campos opcionais: save antigo cai no texto de sempre.
+      const detalhe = i.papel
+        ? ` Chegaria como ${i.papel}.${i.motivo ? ` ${i.motivo}` : ""}`
+        : " Uma proposta pode chegar em breve."
+      const caixa = i.temCaixa === false ? " Hoje eles não têm caixa para bancar." : ""
       notificar.current({
         type: "transfer", priority: "medium",
         title: `Sondagem por ${i.playerName}`,
-        message: `${i.club} está de olho em ${i.playerName}. Uma proposta pode chegar em breve.`,
+        message: `${i.club} está de olho em ${i.playerName}.${detalhe}${caixa}`,
       })
     }
   }, [marketInterests])

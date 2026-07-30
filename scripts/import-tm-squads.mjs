@@ -27,7 +27,10 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 // Versão do parser. Clube gravado com versão anterior é rebaixado e refeito —
 // foi assim que a v1 (que só lia o grupo grosso) foi descartada sem eu ter de
 // apagar o cache na mão.
-const PARSER_V = 2
+// v3 (30/07/2026): o parser passa a extrair a FOTO do atleta, que sempre estava
+// na mesma pagina e vinha sendo ignorada. Subir a versao faz o script reprocessar
+// os clubes ja baixados em vez de deixar metade do acervo sem retrato.
+const PARSER_V = 3
 
 /**
  * Transfermarkt PT-BR -> códigos do jogo.
@@ -116,6 +119,27 @@ function limparNome(s) {
  * pelo texto exibido nunca casava, e o único candidato que ainda escrevia
  * "München" era o time SUB-17. O slug (`fc-bayern-munchen`) não é traduzido.
  */
+/**
+ * Palavras que IDENTIFICAM o clube: 4+ letras e nada de genérico.
+ *
+ * "Salzburg" identifica; "Sport", "FC" e "Clube" aparecem em meio mundo e casariam
+ * qualquer coisa com qualquer coisa. Usado só no resgate por token (ver
+ * `tentarBusca`), onde uma palavra em comum precisa valer como evidência.
+ */
+const GENERICAS_CLUBE = new Set([
+  "sport", "sporting", "sportivo", "sportif", "club", "clube", "futbol", "futebol",
+  "football", "atletico", "atletica", "athletic", "deportivo", "deportes", "unido",
+  "united", "city", "town", "real", "nacional", "internacional", "juventude",
+  "esporte", "esportivo", "calcio", "verein", "sociedad", "sociedade", "asociacion",
+  "associacao", "recreativo", "regatas", "academica", "academy", "munkipal",
+  "municipal", "provincial", "central", "estrela", "olimpico", "olympique",
+])
+
+function tokensDistintivos(nome) {
+  return new Set(nameKey(nome).split(" ")
+    .filter(t => t.length >= 4 && !GENERICAS_CLUBE.has(t)))
+}
+
 function chavesCandidato(c) {
   const slug = c.href.split("/").filter(Boolean)[0] ?? ""
   return new Set([limparNome(c.nome), limparNome(slug.replace(/-/g, " "))])
@@ -317,7 +341,25 @@ async function tentarBusca(termo, clubName, clubCountry, buscar, exigirPalavra, 
   const plausiveis = elegiveis.filter(c =>
     [...chavesCandidato(c)].some(k => k && (k === alvoLimpo || k.includes(alvoLimpo) || alvoLimpo.includes(k))),
   )
-  const distintos = [...new Map(plausiveis.map(c => [c.href, c])).values()]
+  let distintos = [...new Map(plausiveis.map(c => [c.href, c])).values()]
+
+  // RESGATE POR TOKEN DISTINTIVO — só quando a plausibilidade não achou NADA.
+  //
+  // "RB Salzburg" não contém nem está contido em "Red Bull Salzburg", e o clube
+  // ficava `naoEncontrado` para sempre: 928 clubes assim, com elenco fictício
+  // eterno, porque a sigla do jogo não é a razão social do TM (Baltika ->
+  // Baltika Kaliningrad, Brann Bergen -> SK Brann).
+  //
+  // Exige UM só candidato, no MESMO PAÍS, compartilhando uma palavra de 4+ letras
+  // que não seja genérica. Dois candidatos = ambiguidade, e aí continua recusando:
+  // é assim que Botafogo RJ/SP/PB não vira loteria.
+  if (distintos.length === 0 && mesmoPais.length > 0) {
+    const proprias = [...tokensDistintivos(clubName)]
+    const porToken = elegiveis.filter(c =>
+      [...chavesCandidato(c)].some(k => proprias.some(t => k.includes(t))))
+    const unicos = [...new Map(porToken.map(c => [c.href, c])).values()]
+    if (unicos.length === 1) distintos = unicos
+  }
   if (distintos.length === 0) return { semClube: true }
   if (distintos.length === 1) return { url: `https://www.transfermarkt.com.br${distintos[0].href}` }
 
@@ -370,6 +412,12 @@ export function parseSquad(html) {
     const nac = row.match(/title="([^"]+)"[^>]*class="flaggenrahmen/)
     // Idade: a celula "DD/MM/AAAA (NN)" traz a idade entre parenteses.
     const idade = row.match(/\((\d{2})\)/)
+    // FOTO — vem em `data-src` porque o TM carrega o retrato tardiamente; ler
+    // `src` pega o gif de espera. Ela sempre esteve nesta mesma pagina, mas o
+    // parser nao a extraia: os 348 clubes que eu acabei de recuperar entraram com
+    // 5.576 atletas SEM NENHUMA foto, e o rosto teria de vir de outra passada.
+    const foto = row.match(/data-src="(https:\/\/img\.a\.transfermarkt\.technology\/portrait\/[^"]+)"/)
+      ?? row.match(/src="(https:\/\/img\.a\.transfermarkt\.technology\/portrait\/[^"]+)"/)
     out.push({
       tmId: link[1],
       nome,
@@ -377,6 +425,7 @@ export function parseSquad(html) {
       posicao: mapPos(pos[1]),
       nacionalidade: nac ? nac[1] : null,
       idade: idade ? Number(idade[1]) : null,
+      ...(foto ? { foto: foto[1] } : {}),
     })
   }
   return out

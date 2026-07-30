@@ -15,6 +15,120 @@
 // garoto JOGANDO — um empréstimo em que o atleta ficou no banco é ruim para o
 // dono, e ele cobra mais caro ou simplesmente leva de volta.
 
+// ── EMPRÉSTIMO NOVO: a dificuldade da mesa ───────────────────────────────────
+//
+// A mesa de empréstimo do mercado era a parte mais fácil do jogo: taxa fixa de
+// 2% do valor por mês (um craque de 80 mi saía por 1,6 mi/mês, troco), nenhuma
+// resistência do dono, salário não entrava na conta e o atleta topava qualquer
+// coisa porque a força do elenco comprador era passada como zero. Emprestar era
+// mais barato e mais fácil do que qualquer outra forma de reforçar o time.
+//
+// Agora vale a regra da vida real: **ninguém empresta titular em idade de auge**.
+// O que circula por empréstimo é jovem para rodar, reserva encostado e veterano
+// caro que o dono quer tirar da folha.
+
+export interface ContextoDeEmprestimo {
+  overall: number
+  idade: number
+  /** Valor de mercado do atleta. */
+  valor: number
+  /** Prestígio do clube DONO e do clube que quer o empréstimo. */
+  prestigioDono: number
+  prestigioComprador: number
+}
+
+export interface DificuldadeDoEmprestimo {
+  /** Taxa que o dono considera JUSTA pelo período (referência do slider). */
+  taxaJusta: number
+  /** Piso: abaixo disto o dono nem responde. */
+  taxaMinima: number
+  /** Teto: acima disto não adianta pagar mais. */
+  taxaMaxima: number
+  /** Fatia mínima do salário que você tem de assumir (%). */
+  coberturaMinima: number
+  /** Multiplica a chance de aceite do clube dono. */
+  chanceMult: number
+  /** O dono não empresta este atleta de jeito nenhum. */
+  recusaDireta: boolean
+  /** Motivo em português, para a tela. */
+  motivo: string
+}
+
+/**
+ * O quanto este atleta é "emprestável" — 0 = peça intocável, 1 = o dono agradece
+ * se você levar.
+ *
+ * O eixo principal é IDADE × QUALIDADE: jogador bom entre 25 e 31 anos é titular
+ * de alguém, e titular não sai por empréstimo. Jovem sai para rodar; veterano
+ * caro sai para aliviar a folha.
+ */
+export function emprestabilidade(ctx: ContextoDeEmprestimo): number {
+  const auge = ctx.idade >= 25 && ctx.idade <= 31
+  const jovem = ctx.idade <= 22
+  const veterano = ctx.idade >= 33
+
+  // Quanto melhor o atleta, menos o dono quer abrir mão — salvo se for jovem.
+  let base = ctx.overall >= 82 ? 0.08
+    : ctx.overall >= 78 ? 0.2
+    : ctx.overall >= 72 ? 0.45
+    : 0.75
+
+  if (jovem) base += 0.35        // rodar é o objetivo do empréstimo de garoto
+  if (veterano) base += 0.15     // folha alta pesa mais que o passe
+  if (auge) base -= 0.25         // titular em idade de auge não circula
+
+  // Clube grande não empresta para clube pequeno o que ele mesmo usaria.
+  const degrau = (ctx.prestigioComprador - ctx.prestigioDono) / 100
+  base += degrau * 0.2
+
+  return Math.max(0, Math.min(1, base))
+}
+
+/** A régua da negociação de um empréstimo novo. */
+export function dificuldadeDeEmprestimo(ctx: ContextoDeEmprestimo): DificuldadeDoEmprestimo {
+  const solta = emprestabilidade(ctx)
+
+  // TAXA. Sai do patamar do atleta em curva (como pedidoInicial), não de uma
+  // porcentagem linear do valor — é o que faz craque custar caro de verdade.
+  // Quem o dono não quer soltar cobra prêmio; quem ele quer tirar da folha sai barato.
+  const patamar = Math.pow(Math.max(45, ctx.overall) / 62, 3)
+  const premioDeResistencia = 1 + (1 - solta) * 1.6
+  const taxaJusta = Math.max(
+    100_000,
+    Math.round((ctx.valor * 0.11 * patamar * premioDeResistencia) / 50_000) * 50_000,
+  )
+
+  // SALÁRIO. Emprestar serve para aliviar a folha: quanto menos o dono quer
+  // soltar, mais ele exige que você banque o atleta inteiro.
+  const coberturaMinima = solta >= 0.7 ? 50 : solta >= 0.45 ? 75 : 100
+
+  // O dono simplesmente não empresta o titular em auge — nem por dinheiro.
+  if (solta <= 0.12) {
+    return {
+      taxaJusta, taxaMinima: taxaJusta, taxaMaxima: taxaJusta,
+      coberturaMinima: 100, chanceMult: 0, recusaDireta: true,
+      motivo: ctx.idade >= 25 && ctx.idade <= 31
+        ? "Titular em idade de auge não sai por empréstimo. O clube ouve proposta de COMPRA."
+        : "O clube não abre mão deste atleta por empréstimo.",
+    }
+  }
+
+  return {
+    taxaJusta,
+    taxaMinima: Math.round(taxaJusta * 0.6),
+    taxaMaxima: Math.round(taxaJusta * 2),
+    coberturaMinima,
+    // Mesmo dentro do que ele aceita discutir, a chance cai para os melhores.
+    chanceMult: 0.45 + solta * 0.75,
+    recusaDireta: false,
+    motivo: solta >= 0.7
+      ? "O clube quer o atleta rodando e topa conversar."
+      : solta >= 0.45
+        ? "O clube ouve a proposta, mas quer taxa cheia e o salário coberto."
+        : "O clube reluta em emprestar: só sai por uma taxa bem acima e com a folha toda por sua conta.",
+  }
+}
+
 export type PosturaDoDono = "tranquilo" | "exigente" | "quer_de_volta"
 
 export interface TermosDeEmprestimo {

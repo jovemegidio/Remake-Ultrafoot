@@ -58,6 +58,15 @@ PRESENCA_JANELA = 90
 CHAT_INTERVALO = 2      # segundos entre mensagens da mesma conta
 CHAT_LIMITE = 300       # mensagens guardadas no total
 
+# A VPS roda em UTC, mas quem le o painel esta no Brasil. Sem um fuso explicito,
+# "contas de hoje" viraria "contas desde as 21h de ontem" e o grafico por dia
+# ficaria com as barras deslocadas. -3 e o horario de Brasilia (sem horario de
+# verao, que nao existe mais).
+FUSO_PAINEL = -3 * 3600
+
+# Para o cartao de saude do painel: ha quanto tempo este processo esta de pe.
+INICIADO_EM = int(time.time())
+
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
@@ -1067,18 +1076,19 @@ class Handler(BaseHTTPRequestHandler):
                 return self._responder(404, {"erro": "nao encontrado"})
 
             if rota == "/admin/contas":
-                termo = f"%{(corpo.get('busca') or '').strip().lower()}%"
-                linhas = con.execute(
-                    "SELECT id, email, nome, telefone, criada_em, ultimo_login, bloqueada,"
-                    "       motivo_bloqueio, bloqueada_em, admin, ativado, licenca_serie,"
-                    "       (google_sub IS NOT NULL) AS via_google,"
-                    "       (SELECT COUNT(*) FROM compras WHERE conta_id = contas.id"
-                    "        AND estorno_de IS NULL) AS compras"
-                    " FROM contas WHERE email LIKE ? OR nome LIKE ?"
-                    " ORDER BY criada_em DESC LIMIT 200",
-                    (termo, termo),
-                ).fetchall()
-                return self._responder(200, {"contas": [dict(l) for l in linhas]})
+                return self._admin_contas(con, corpo)
+            if rota == "/admin/resumo":
+                return self._admin_resumo(con)
+            if rota == "/admin/auditoria":
+                return self._admin_auditoria(con, corpo)
+            if rota == "/admin/economia":
+                return self._admin_economia(con)
+            if rota == "/admin/hub":
+                return self._admin_hub(con)
+            if rota == "/admin/equipe":
+                return self._admin_equipe(con)
+            if rota == "/admin/chat/apagar":
+                return self._admin_apagar_mensagem(con, eu, corpo)
 
             alvo_id = corpo.get("conta_id")
             if not isinstance(alvo_id, int):
@@ -1138,7 +1148,316 @@ class Handler(BaseHTTPRequestHandler):
                     " WHERE l.alvo_id = ? ORDER BY l.quando DESC LIMIT 50", (alvo_id,)).fetchall()
                 return self._responder(200, {"historico": [dict(l) for l in linhas]})
 
+            if rota == "/admin/conta":
+                return self._admin_conta(con, alvo)
+
         return self._responder(404, {"erro": "nao encontrado"})
+
+    # ── Consultas do painel ──
+    #
+    # Ficam em metodos proprios porque o painel novo pede varios recortes e
+    # deixar tudo dentro de `_admin` transformaria aquele bloco num muro de SQL.
+    # Todas ja recebem a conexao aberta e o admin JA conferido por `_admin`.
+
+    @staticmethod
+    def _um(con, sql: str, *parametros) -> int:
+        linha = con.execute(sql, parametros).fetchone()
+        return int(linha[0] or 0) if linha else 0
+
+    @staticmethod
+    def _dia_local(quando: int) -> int:
+        """Indice do dia no fuso do painel. Ver FUSO_PAINEL."""
+        return (quando + FUSO_PAINEL) // 86400
+
+    def _admin_contas(self, con, corpo: dict):
+        termo = f"%{(corpo.get('busca') or '').strip().lower()}%"
+        filtro = (corpo.get("filtro") or "todas").strip()
+        agora = int(time.time())
+        condicoes = {
+            "banidas": " AND bloqueada = 1",
+            "ativadas": " AND ativado = 1",
+            "sem-ativacao": " AND ativado = 0",
+            "admins": " AND admin = 1",
+            # `online` reaproveita a mesma janela do FC Hub: quem bateu ha menos
+            # de PRESENCA_JANELA segundos.
+            "online": " AND EXISTS (SELECT 1 FROM presenca p WHERE p.conta_id = contas.id"
+                      f" AND p.visto_em >= {agora - PRESENCA_JANELA})",
+        }
+        extra = condicoes.get(filtro, "")
+        linhas = con.execute(
+            "SELECT id, email, nome, telefone, criada_em, ultimo_login, bloqueada,"
+            "       motivo_bloqueio, bloqueada_em, admin, ativado, licenca_serie,"
+            "       (google_sub IS NOT NULL) AS via_google,"
+            "       (SELECT COUNT(*) FROM compras WHERE conta_id = contas.id"
+            "        AND estorno_de IS NULL) AS compras,"
+            "       (SELECT COALESCE(SUM(valor_cents), 0) FROM compras WHERE conta_id = contas.id"
+            "        AND estorno_de IS NULL) AS gasto_cents,"
+            "       (SELECT COALESCE(saldo_cents, 0) FROM carteira WHERE conta_id = contas.id)"
+            "        AS saldo_cents,"
+            "       (SELECT COUNT(*) FROM saves_da_conta WHERE conta_id = contas.id) AS saves,"
+            "       (SELECT visto_em FROM presenca WHERE conta_id = contas.id) AS visto_em,"
+            "       (SELECT COUNT(*) FROM sessoes WHERE conta_id = contas.id AND expira_em > ?)"
+            "        AS sessoes"
+            " FROM contas WHERE (email LIKE ? OR nome LIKE ?)" + extra +
+            " ORDER BY criada_em DESC LIMIT 200",
+            (agora, termo, termo),
+        ).fetchall()
+        total = self._um(con, "SELECT COUNT(*) FROM contas")
+        return self._responder(200, {
+            "contas": [dict(l) for l in linhas],
+            "total": total,
+            "presenca_janela": PRESENCA_JANELA,
+        })
+
+    def _admin_resumo(self, con):
+        agora = int(time.time())
+        dia = 86400
+        hoje = self._dia_local(agora) * dia - FUSO_PAINEL   # meia-noite local, em epoch
+        ontem = hoje - dia
+
+        pago = " AND estorno_de IS NULL"
+        resumo = {
+            "agora": agora,
+            "contas_total": self._um(con, "SELECT COUNT(*) FROM contas"),
+            "contas_hoje": self._um(con, "SELECT COUNT(*) FROM contas WHERE criada_em >= ?", hoje),
+            "contas_ontem": self._um(
+                con, "SELECT COUNT(*) FROM contas WHERE criada_em >= ? AND criada_em < ?",
+                ontem, hoje),
+            "contas_7d": self._um(con, "SELECT COUNT(*) FROM contas WHERE criada_em >= ?",
+                                  agora - 7 * dia),
+            "ativadas": self._um(con, "SELECT COUNT(*) FROM contas WHERE ativado = 1"),
+            "bloqueadas": self._um(con, "SELECT COUNT(*) FROM contas WHERE bloqueada = 1"),
+            "admins": self._um(con, "SELECT COUNT(*) FROM contas WHERE admin = 1"),
+            "via_google": self._um(con, "SELECT COUNT(*) FROM contas WHERE google_sub IS NOT NULL"),
+            "online_agora": self._um(
+                con, "SELECT COUNT(*) FROM presenca p JOIN contas c ON c.id = p.conta_id"
+                     " WHERE p.visto_em >= ? AND c.bloqueada = 0", agora - PRESENCA_JANELA),
+            "sessoes_ativas": self._um(con, "SELECT COUNT(*) FROM sessoes WHERE expira_em > ?",
+                                       agora),
+            "entradas_hoje": self._um(con, "SELECT COUNT(*) FROM sessoes WHERE criada_em >= ?",
+                                      hoje),
+            "entradas_ontem": self._um(
+                con, "SELECT COUNT(*) FROM sessoes WHERE criada_em >= ? AND criada_em < ?",
+                ontem, hoje),
+            "receita_total_cents": self._um(
+                con, "SELECT COALESCE(SUM(valor_cents), 0) FROM compras WHERE 1 = 1" + pago),
+            "receita_hoje_cents": self._um(
+                con, "SELECT COALESCE(SUM(valor_cents), 0) FROM compras WHERE criada_em >= ?"
+                     + pago, hoje),
+            "receita_ontem_cents": self._um(
+                con, "SELECT COALESCE(SUM(valor_cents), 0) FROM compras"
+                     " WHERE criada_em >= ? AND criada_em < ?" + pago, ontem, hoje),
+            "receita_30d_cents": self._um(
+                con, "SELECT COALESCE(SUM(valor_cents), 0) FROM compras WHERE criada_em >= ?"
+                     + pago, agora - 30 * dia),
+            "compras_total": self._um(con, "SELECT COUNT(*) FROM compras WHERE 1 = 1" + pago),
+            "pedidos_pendentes": self._um(
+                con, "SELECT COUNT(*) FROM pedidos WHERE status = 'pendente'"),
+            "saves_total": self._um(con, "SELECT COUNT(*) FROM saves_da_conta"),
+            "chat_24h": self._um(con, "SELECT COUNT(*) FROM chat WHERE quando >= ?", agora - dia),
+        }
+
+        # Serie de 14 dias. Montada em Python a partir dos carimbos crus: fazer
+        # `strftime` no SQLite usaria UTC e as barras sairiam deslocadas em 3h.
+        dias = 14
+        primeiro_dia = self._dia_local(agora) - (dias - 1)
+        serie = {primeiro_dia + i: {"inicio": (primeiro_dia + i) * dia - FUSO_PAINEL,
+                                    "contas": 0, "entradas": 0, "receita_cents": 0}
+                 for i in range(dias)}
+        desde = primeiro_dia * dia - FUSO_PAINEL
+        for tabela, coluna, campo in (("contas", "criada_em", "contas"),
+                                      ("sessoes", "criada_em", "entradas")):
+            for (quando,) in con.execute(
+                    f"SELECT {coluna} FROM {tabela} WHERE {coluna} >= ?", (desde,)):
+                balde = serie.get(self._dia_local(quando))
+                if balde:
+                    balde[campo] += 1
+        for quando, valor in con.execute(
+                "SELECT criada_em, valor_cents FROM compras"
+                " WHERE criada_em >= ? AND estorno_de IS NULL", (desde,)):
+            balde = serie.get(self._dia_local(quando))
+            if balde:
+                balde["receita_cents"] += int(valor)
+        resumo["serie"] = [serie[chave] for chave in sorted(serie)]
+
+        resumo["atividade"] = [dict(l) for l in con.execute(
+            "SELECT l.id, l.acao, l.motivo, l.quando, a.email AS admin_email,"
+            "       v.email AS alvo_email, v.nome AS alvo_nome, l.alvo_id"
+            " FROM admin_log l JOIN contas a ON a.id = l.admin_id"
+            " JOIN contas v ON v.id = l.alvo_id"
+            " ORDER BY l.quando DESC LIMIT 8")]
+
+        # Saude: tudo medido de verdade, nada de numero decorativo. O tamanho do
+        # banco inclui o WAL, que pode ser maior que o .db em si.
+        banco = 0
+        for sufixo in ("", "-wal", "-shm"):
+            arquivo = Path(str(DB_PATH) + sufixo)
+            if arquivo.exists():
+                banco += arquivo.stat().st_size
+        resumo["servidor"] = {
+            "iniciado_em": INICIADO_EM,
+            "banco_bytes": banco,
+            "pagamento_ligado": bool(ASAAS_TOKEN),
+            "google_ligado": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET),
+            "licenca_ligada": bool(LICENCA_SEGREDO),
+            "python": sys.version.split()[0],
+        }
+        return self._responder(200, resumo)
+
+    def _admin_auditoria(self, con, corpo: dict):
+        termo = f"%{(corpo.get('busca') or '').strip().lower()}%"
+        linhas = con.execute(
+            "SELECT l.id, l.acao, l.motivo, l.quando, l.alvo_id,"
+            "       a.email AS admin_email, v.email AS alvo_email, v.nome AS alvo_nome"
+            " FROM admin_log l JOIN contas a ON a.id = l.admin_id"
+            " JOIN contas v ON v.id = l.alvo_id"
+            " WHERE l.acao LIKE ? OR l.motivo LIKE ? OR a.email LIKE ? OR v.email LIKE ?"
+            " ORDER BY l.quando DESC LIMIT 300",
+            (termo, termo, termo, termo)).fetchall()
+        return self._responder(200, {
+            "registros": [dict(l) for l in linhas],
+            "total": self._um(con, "SELECT COUNT(*) FROM admin_log"),
+        })
+
+    def _admin_economia(self, con):
+        agora = int(time.time())
+        compras = con.execute(
+            "SELECT c.id, c.produto, c.valor_cents, c.moeda, c.criada_em, c.estorno_de,"
+            "       c.conta_id, t.email, t.nome"
+            " FROM compras c JOIN contas t ON t.id = c.conta_id"
+            " ORDER BY c.criada_em DESC LIMIT 100").fetchall()
+        pedidos = con.execute(
+            "SELECT p.id, p.produto, p.valor_cents, p.status, p.criado_em, p.entregue_em,"
+            "       p.conta_id, t.email, t.nome"
+            " FROM pedidos p JOIN contas t ON t.id = p.conta_id"
+            " ORDER BY p.criado_em DESC LIMIT 100").fetchall()
+        creditos = con.execute(
+            "SELECT r.id, r.valor_cents, r.origem, r.quando, r.conta_id, t.email, t.nome"
+            " FROM creditos r JOIN contas t ON t.id = r.conta_id"
+            " ORDER BY r.quando DESC LIMIT 100").fetchall()
+        por_produto = con.execute(
+            "SELECT produto, COUNT(*) AS quantidade, COALESCE(SUM(valor_cents), 0) AS total_cents"
+            " FROM compras WHERE estorno_de IS NULL"
+            " GROUP BY produto ORDER BY total_cents DESC").fetchall()
+        return self._responder(200, {
+            "compras": [dict(l) for l in compras],
+            "pedidos": [dict(l) for l in pedidos],
+            "creditos": [dict(l) for l in creditos],
+            "por_produto": [dict(l) for l in por_produto],
+            "catalogo": CATALOGO,
+            "resumo": {
+                "receita_total_cents": self._um(
+                    con, "SELECT COALESCE(SUM(valor_cents), 0) FROM compras"
+                         " WHERE estorno_de IS NULL"),
+                "receita_30d_cents": self._um(
+                    con, "SELECT COALESCE(SUM(valor_cents), 0) FROM compras"
+                         " WHERE estorno_de IS NULL AND criada_em >= ?", agora - 30 * 86400),
+                # ABS porque nada no servidor gera estorno ainda: o lancamento e
+                # feito a mao e o sinal do valor depende de quem o fez. Somar em
+                # modulo responde "quanto voltou" sem depender dessa escolha.
+                "estornos": self._um(
+                    con, "SELECT COUNT(*) FROM compras WHERE estorno_de IS NOT NULL"),
+                "estornos_cents": self._um(
+                    con, "SELECT COALESCE(SUM(ABS(valor_cents)), 0) FROM compras"
+                         " WHERE estorno_de IS NOT NULL"),
+                "creditado_cents": self._um(
+                    con, "SELECT COALESCE(SUM(valor_cents), 0) FROM creditos"),
+                "saldo_em_carteiras_cents": self._um(
+                    con, "SELECT COALESCE(SUM(saldo_cents), 0) FROM carteira"),
+                "pedidos_pendentes": self._um(
+                    con, "SELECT COUNT(*) FROM pedidos WHERE status = 'pendente'"),
+                "pagamento_ligado": bool(ASAAS_TOKEN),
+            },
+        })
+
+    def _admin_hub(self, con):
+        agora = int(time.time())
+        online = con.execute(
+            "SELECT p.conta_id, p.nome, p.clube, p.situacao, p.visto_em, c.email, c.bloqueada"
+            " FROM presenca p JOIN contas c ON c.id = p.conta_id"
+            " WHERE p.visto_em >= ? ORDER BY p.visto_em DESC LIMIT 200",
+            (agora - PRESENCA_JANELA,)).fetchall()
+        chat = con.execute(
+            "SELECT m.id, m.conta_id, m.nome, m.texto, m.quando, c.email, c.bloqueada"
+            " FROM chat m JOIN contas c ON c.id = m.conta_id"
+            " ORDER BY m.id DESC LIMIT 80").fetchall()
+        return self._responder(200, {
+            "online": [dict(l) for l in online],
+            "chat": [dict(l) for l in chat],
+            "janela": PRESENCA_JANELA,
+            "guardadas": self._um(con, "SELECT COUNT(*) FROM chat"),
+        })
+
+    def _admin_equipe(self, con):
+        linhas = con.execute(
+            "SELECT id, email, nome, criada_em, ultimo_login,"
+            "       (SELECT COUNT(*) FROM admin_log WHERE admin_id = contas.id) AS acoes,"
+            "       (SELECT MAX(quando) FROM admin_log WHERE admin_id = contas.id) AS ultima_acao"
+            " FROM contas WHERE admin = 1 ORDER BY criada_em").fetchall()
+        return self._responder(200, {"admins": [dict(l) for l in linhas]})
+
+    def _admin_apagar_mensagem(self, con, eu, corpo: dict):
+        """Modera o chat do FC Hub. Apagar mensagem tambem entra na auditoria."""
+        mensagem_id = corpo.get("mensagem_id")
+        if not isinstance(mensagem_id, int):
+            return self._responder(400, {"erro": "mensagem_id ausente"})
+        msg = con.execute("SELECT conta_id, texto FROM chat WHERE id = ?",
+                          (mensagem_id,)).fetchone()
+        if not msg:
+            return self._responder(404, {"erro": "mensagem nao encontrada"})
+        con.execute("DELETE FROM chat WHERE id = ?", (mensagem_id,))
+        con.execute(
+            "INSERT INTO admin_log (admin_id, alvo_id, acao, motivo, quando) VALUES (?,?,?,?,?)",
+            (eu["id"], msg["conta_id"], "apagar mensagem", msg["texto"][:200], int(time.time())))
+        return self._responder(200, {"ok": True})
+
+    def _admin_conta(self, con, alvo):
+        """Ficha completa de uma conta: o que existe de verdade sobre ela."""
+        conta_id = alvo["id"]
+        agora = int(time.time())
+        compras = con.execute(
+            "SELECT id, produto, valor_cents, moeda, criada_em, estorno_de FROM compras"
+            " WHERE conta_id = ? ORDER BY criada_em DESC LIMIT 50", (conta_id,)).fetchall()
+        creditos = con.execute(
+            "SELECT id, valor_cents, origem, quando FROM creditos"
+            " WHERE conta_id = ? ORDER BY quando DESC LIMIT 50", (conta_id,)).fetchall()
+        pedidos = con.execute(
+            "SELECT id, produto, valor_cents, status, criado_em, entregue_em FROM pedidos"
+            " WHERE conta_id = ? ORDER BY criado_em DESC LIMIT 20", (conta_id,)).fetchall()
+        saves = con.execute(
+            "SELECT codigo, rotulo, criado_em, atualizado_em FROM saves_da_conta"
+            " WHERE conta_id = ? ORDER BY atualizado_em DESC LIMIT 50", (conta_id,)).fetchall()
+        sessoes = con.execute(
+            "SELECT dispositivo, criada_em, expira_em FROM sessoes"
+            " WHERE conta_id = ? AND expira_em > ? ORDER BY criada_em DESC LIMIT 20",
+            (conta_id, agora)).fetchall()
+        historico = con.execute(
+            "SELECT l.acao, l.motivo, l.quando, a.email AS admin_email"
+            " FROM admin_log l JOIN contas a ON a.id = l.admin_id"
+            " WHERE l.alvo_id = ? ORDER BY l.quando DESC LIMIT 50", (conta_id,)).fetchall()
+        presenca = con.execute(
+            "SELECT nome, clube, situacao, visto_em FROM presenca WHERE conta_id = ?",
+            (conta_id,)).fetchone()
+        return self._responder(200, {
+            "conta": {
+                "id": conta_id, "email": alvo["email"], "nome": alvo["nome"],
+                "telefone": alvo["telefone"], "criada_em": alvo["criada_em"],
+                "ultimo_login": alvo["ultimo_login"], "bloqueada": bool(alvo["bloqueada"]),
+                "motivo_bloqueio": alvo["motivo_bloqueio"], "bloqueada_em": alvo["bloqueada_em"],
+                "admin": bool(alvo["admin"]), "ativado": bool(alvo["ativado"]),
+                "via_google": alvo["google_sub"] is not None,
+                "codigo_ativacao": codigo_da_conta(con, conta_id),
+                "saldo_cents": saldo_da_conta(con, conta_id),
+            },
+            "compras": [dict(l) for l in compras],
+            "creditos": [dict(l) for l in creditos],
+            "pedidos": [dict(l) for l in pedidos],
+            "saves": [dict(l) for l in saves],
+            "sessoes": [dict(l) for l in sessoes],
+            "historico": [dict(l) for l in historico],
+            "presenca": dict(presenca) if presenca else None,
+            "janela_presenca": PRESENCA_JANELA,
+        })
 
     def _google(self, corpo: dict):
         info = trocar_codigo_google(

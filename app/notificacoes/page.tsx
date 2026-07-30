@@ -11,6 +11,8 @@ import { useGameManager } from "@/lib/use-game-manager"
 import { cn } from "@/lib/utils"
 import { Bell, Building2, CheckCheck, MessageCircle, MessagesSquare, Trash2, Users } from "lucide-react"
 import { ConversaDiretoria } from "@/components/conversa-diretoria"
+import { clearJobOffers } from "@/lib/career-moves"
+import { hardNavigate } from "@/lib/hard-navigation"
 import { computeBoardConfidence } from "@/lib/board-engine"
 import { useGameEngine } from "@/lib/game-engine"
 
@@ -392,6 +394,13 @@ export default function NotificacoesPage() {
         clube={userTeam.nome}
         estado={estadoDaDiretoria}
         onDesfecho={aplicarDesfechoDaReuniao}
+        onPedirDemissao={() => {
+          // Mesma saída do menu [W]: limpa as propostas, solta o clube e leva à
+          // Área do Treinador. O progresso já é salvo sozinho.
+          clearJobOffers()
+          replaceState({ ...saveState, selectedTeamShort: null, updatedAt: Date.now() })
+          hardNavigate("/treinador")
+        }}
       />
     </div>
   )

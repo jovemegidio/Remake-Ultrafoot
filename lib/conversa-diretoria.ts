@@ -13,7 +13,7 @@
 // diretoria DESTE save, olhando confiança, campanha, caixa e o que você já
 // prometeu antes.
 
-export type AssuntoDaDiretoria = "verba" | "meta" | "pressao" | "elenco"
+export type AssuntoDaDiretoria = "verba" | "meta" | "pressao" | "elenco" | "demissao"
 export type TomDaResposta = "firme" | "diplomatico" | "humilde"
 
 export interface EstadoDaDiretoria {
@@ -48,6 +48,8 @@ export interface DesfechoDaConversa {
   verbaLiberada?: number
   /** Meta renegociada (nova posição exigida), quando cederam. */
   novaMeta?: number
+  /** O técnico pediu demissão nesta fala — a tela confirma antes de executar. */
+  pedeDemissao?: boolean
 }
 
 export const ASSUNTOS: { id: AssuntoDaDiretoria; titulo: string; descricao: string }[] = [
@@ -55,7 +57,68 @@ export const ASSUNTOS: { id: AssuntoDaDiretoria; titulo: string; descricao: stri
   { id: "meta", titulo: "Renegociar a meta da temporada", descricao: "Discuta o objetivo cobrado de você." },
   { id: "pressao", titulo: "Falar sobre a pressão", descricao: "Peça respaldo publico da diretoria." },
   { id: "elenco", titulo: "Falar do elenco", descricao: "Explique o momento do grupo e o que falta." },
+  { id: "demissao", titulo: "Pedir demissão", descricao: "Encerrar seu ciclo no clube." },
 ]
+
+// ── ENTENDER O QUE VOCÊ ESCREVEU ────────────────────────────────────────────
+//
+// O chat é de texto livre, e o jogo roda offline: não há modelo de linguagem do
+// outro lado. O que existe é leitura de INTENÇÃO por palavra-chave — assunto
+// (do que você está falando) e tom (como está falando). É o suficiente para a
+// conversa responder ao que foi dito, e é honesto: quando não entende, a
+// diretoria pede que você seja mais claro em vez de fingir que entendeu.
+
+const semAcento = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+
+const PALAVRAS_DE_ASSUNTO: Record<AssuntoDaDiretoria, string[]> = {
+  verba: ["verba", "dinheiro", "grana", "investir", "investimento", "reforc", "contratar", "contrata", "caixa", "orcamento", "budget", "comprar", "janela"],
+  meta: ["meta", "objetivo", "cobranca", "cobrar", "exig", "titulo", "classific", "rebaix", "tabela", "posicao", "campanha"],
+  pressao: ["pressao", "imprensa", "apoio", "respaldo", "demiss", "demitir", "cadeira", "confianca", "critica", "torcida", "cobranca da torcida"],
+  elenco: ["elenco", "grupo", "jogador", "atleta", "plantel", "lesao", "lesionad", "desfalque", "curto", "qualidade"],
+  // PEDIR DEMISSAO pela conversa (pedido). Palavras que so aparecem quando e
+  // isso mesmo que se quer dizer — "sair", sozinho, e ambiguo demais.
+  demissao: ["pedir demissao", "peco demissao", "me demito", "demito", "quero sair do clube",
+    "deixar o clube", "estou saindo", "renuncio", "renunciar", "entrego o cargo", "abandono o cargo",
+    "nao quero mais", "meu ciclo acabou", "encerrar meu ciclo", "rescindir meu contrato"],
+}
+
+const PALAVRAS_DE_TOM: Record<TomDaResposta, string[]> = {
+  firme: ["preciso", "exijo", "tem que", "nao da", "impossivel", "sem isso", "cobro", "inaceitavel", "obrigat", "ou entao", "nao aceito"],
+  humilde: ["assumo", "minha responsabilidade", "culpa minha", "eu resolvo", "trabalho com", "sem problema", "aceito", "entendo", "vou responder", "me viro"],
+  diplomatico: ["proponho", "sugiro", "podemos", "talvez", "acredito", "gostaria", "seria bom", "vamos", "que tal", "penso"],
+}
+
+function contem(texto: string, chaves: string[]): number {
+  return chaves.reduce((n, k) => (texto.includes(k) ? n + 1 : n), 0)
+}
+
+/** O assunto de que a mensagem trata, ou null quando não dá para saber. */
+export function assuntoDoTexto(texto: string): AssuntoDaDiretoria | null {
+  const t = semAcento(texto)
+  let melhor: { id: AssuntoDaDiretoria; pontos: number } | null = null
+  for (const id of Object.keys(PALAVRAS_DE_ASSUNTO) as AssuntoDaDiretoria[]) {
+    const pontos = contem(t, PALAVRAS_DE_ASSUNTO[id])
+    if (pontos > 0 && (!melhor || pontos > melhor.pontos)) melhor = { id, pontos }
+  }
+  return melhor?.id ?? null
+}
+
+/** O tom da mensagem. Sem sinal claro, trata como diplomático (o meio-termo). */
+export function tomDoTexto(texto: string): TomDaResposta {
+  const t = semAcento(texto)
+  const firme = contem(t, PALAVRAS_DE_TOM.firme) + (texto.includes("!") ? 1 : 0) + (texto === texto.toUpperCase() && texto.length > 12 ? 1 : 0)
+  const humilde = contem(t, PALAVRAS_DE_TOM.humilde)
+  const diplomatico = contem(t, PALAVRAS_DE_TOM.diplomatico)
+  if (firme > humilde && firme > diplomatico) return "firme"
+  if (humilde > firme && humilde > diplomatico) return "humilde"
+  return "diplomatico"
+}
+
+/** Quando a diretoria não entendeu o assunto. */
+export const PEDIDO_DE_CLAREZA =
+  "Não ficou claro o que você está pedindo. Fale de verba para reforços, da meta da temporada, " +
+  "da pressão em cima do trabalho ou do elenco que você tem."
 
 /** A primeira fala — a diretoria abre de acordo com o estado real da carreira. */
 export function aberturaDaDiretoria(assunto: AssuntoDaDiretoria, e: EstadoDaDiretoria): string {
@@ -75,6 +138,10 @@ export function aberturaDaDiretoria(assunto: AssuntoDaDiretoria, e: EstadoDaDire
         : "Não vamos fingir que está tudo bem. O clube esperava mais. Diga o que pretende fazer."
     case "elenco":
       return "Somos todo ouvidos. Como você avalia o grupo que tem em mãos?"
+    case "demissao":
+      return e.confianca >= 60
+        ? "Você quer mesmo sair? O clube está satisfeito com o trabalho e preferia que ficasse. Pense bem."
+        : "Se é essa a sua decisão, o clube não vai segurar ninguém contra a vontade. Confirme e encerramos hoje."
   }
 }
 
@@ -99,6 +166,11 @@ export const RESPOSTAS: Record<AssuntoDaDiretoria, OpcaoDeResposta[]> = {
     { id: "diplomatico", texto: "O grupo é bom, mas duas posições precisam de reforço para o ano." },
     { id: "humilde", texto: "Tenho material suficiente. Cabe a mim extrair mais do grupo." },
   ],
+  demissao: [
+    { id: "firme", texto: "Peço demissão. Não há mais condições de seguir." },
+    { id: "diplomatico", texto: "Acho que meu ciclo aqui se encerrou. Prefiro sair agora." },
+    { id: "humilde", texto: "Não entreguei o que prometi. Deixo o cargo à disposição." },
+  ],
 }
 
 /**
@@ -113,6 +185,17 @@ export function responderDiretoria(
   tom: TomDaResposta,
   e: EstadoDaDiretoria,
 ): DesfechoDaConversa {
+  // DEMISSAO nao e negociacao: o clube pode lamentar, mas quem decide e voce.
+  // A tela e que confirma antes de executar (acao irreversivel).
+  if (assunto === "demissao") {
+    return {
+      resposta: e.confianca >= 60
+        ? "Lamentamos. Fica registrado o respeito do clube pelo seu trabalho — as portas seguem abertas."
+        : "Aceito. Agradecemos o período e desejamos sorte na sequência.",
+      confiancaDelta: 0,
+      pedeDemissao: true,
+    }
+  }
   const cansaco = Math.min(30, e.pedidosNaTemporada * 10)
   const credito = e.confianca - cansaco
   const acimaDaMeta = e.posicao > 0 && e.posicao <= e.metaPosicao

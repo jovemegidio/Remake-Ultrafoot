@@ -7,6 +7,7 @@ import { MarketNotificationsBridge } from "@/components/market-notifications-bri
 import { FinanceInfraNotificationsBridge } from "@/components/finance-infra-notifications-bridge"
 import { SeasonReviewBridge } from "@/components/season-review-bridge"
 import { BenchTalk } from "@/components/bench-talk"
+import { DialogoDoJogo } from "@/components/dialogo-do-jogo"
 import { PendingInboxGate } from "@/components/pending-inbox-gate"
 import { NativeAppProvider } from "@/components/native-app-provider"
 import { MusicPlayerWrapper } from "@/components/music-player-wrapper"
@@ -75,6 +76,8 @@ export default function RootLayout({
                   <FcHubLoader />
                 </EaActionBarProvider>
                 <NotificationToastContainer />
+                {/* Avisos e confirmações do jogo, no lugar das caixas do Windows. */}
+                <DialogoDoJogo />
                 <MusicPlayerWrapper />
               </NotificationsProvider>
             </GamepadProvider>

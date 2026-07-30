@@ -26,6 +26,7 @@ import {
   type PersonalTerms,
 } from "@/lib/negotiation-engine"
 import { getClubRelationship, getRelationshipEffect } from "@/lib/club-relationships"
+import { dificuldadeDeEmprestimo } from "@/lib/emprestimos"
 import { DollarSign, Check, X, AlertCircle, Handshake, Clock, ArrowRight, Sparkles, Users, Swords, Link2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -80,6 +81,9 @@ export function NegotiationModal({
 
   // Papel prometido no elenco — pesa mais que dinheiro para um craque.
   const [role, setRole] = useState<SquadRole>("reforco")
+  // EMPRÉSTIMO: quanto do salário do atleta você assume. Emprestar serve para
+  // aliviar a folha do dono — quem não cobre o salário não leva ninguém.
+  const [coberturaSalarial, setCoberturaSalarial] = useState(75)
   // Termos pessoais em negociacao com o agente.
   const [salary, setSalary] = useState(0)
   const [contractYears, setContractYears] = useState(4)
@@ -105,6 +109,7 @@ export function NegotiationModal({
       setRejectedBy(null)
       setPlayerReason("")
       setRole("reforco")
+      setCoberturaSalarial(75)
       setAgentDemands(null)
       setAgentResponse(null)
       setAgentRounds(0)
@@ -113,13 +118,27 @@ export function NegotiationModal({
 
   if (!player) return null
 
-  // For loans, calculate monthly fee instead of full value
   const isLoan = type === "loan"
-  const loanMonthlyRate = 0.02 // 2% of value per month
-  const loanMonths = 12
-  
-  const minOffer = isLoan
-    ? Math.floor(player.value * loanMonthlyRate * 6) // 6 months minimum
+
+  // ── EMPRÉSTIMO: a mesa mais difícil do mercado ───────────────────────────
+  //
+  // Era a mais FÁCIL: taxa fixa de 2% do valor por mês, nenhuma resistência do
+  // dono e o atleta topando tudo. Um craque de 80 mi saía por 1,6 mi/mês —
+  // emprestar rendia mais que comprar e não custava quase nada.
+  // Agora a régua sai de lib/emprestimos.ts: titular em idade de auge NÃO é
+  // emprestado, craque custa prêmio e o dono ainda exige o salário coberto.
+  const loanDif = isLoan
+    ? dificuldadeDeEmprestimo({
+        overall: player.overall,
+        idade: player.age ?? 26,
+        valor: player.value,
+        prestigioDono: player.team?.prestigio ?? 60,
+        prestigioComprador: team?.prestigio ?? 60,
+      })
+    : null
+
+  const minOffer = loanDif
+    ? loanDif.taxaMinima
     : Math.floor(player.value * 0.5)
   // ── VOCÊ SÓ OFERECE O QUE PODE PAGAR ─────────────────────────────────────
   //
@@ -129,8 +148,8 @@ export function NegotiationModal({
   // falhava. Agora o TETO da proposta é o que o clube tem de verdade: caixa +
   // crédito que o banco cobre (`tetoDeGastos`, calculado por quem abre o modal
   // com canAffordTransfer/borrowingCapacity).
-  const tetoDeMercado = isLoan
-    ? Math.floor(player.value * loanMonthlyRate * 24) // 24 months maximum
+  const tetoDeMercado = loanDif
+    ? loanDif.taxaMaxima
     : Math.floor(player.value * 1.5)
   const tetoDoCaixa = tetoDeGastos ?? Number.POSITIVE_INFINITY
   const maxOffer = Math.max(0, Math.min(tetoDeMercado, tetoDoCaixa))
@@ -149,8 +168,8 @@ export function NegotiationModal({
   // E o clube resiste: derruba a chance de aceite em qualquer patamar de oferta.
   const resistenciaCraque = reputacao === "top_mundial" ? 0.5 : reputacao === "estrela" ? 0.72 : 1
 
-  const fairValue = isLoan
-    ? Math.floor(player.value * loanMonthlyRate * loanMonths)
+  const fairValue = loanDif
+    ? loanDif.taxaJusta
     : Math.floor(player.value * premioCraque)
   const offerPercentage = Math.round((offer / fairValue) * 100)
 
@@ -180,11 +199,16 @@ export function NegotiationModal({
   // segurar quem tem multa quitada).
   // Clausula paga vence tudo (inclusive a resistencia do craque) — e o preco de
   // mercado dele; por isso a multa existe.
-  const clubChance = clausulaAtingida ? 100 : Math.max(
+  // No empréstimo entram DOIS fatores a mais: a resistência do dono em soltar o
+  // atleta (chanceMult) e o quanto do salário você assumiu — cobrir menos do que
+  // o dono exige derruba a conversa, mesmo pagando a taxa cheia.
+  const coberturaEmFalta = loanDif ? Math.max(0, loanDif.coberturaMinima - coberturaSalarial) : 0
+  const clubChance = clausulaAtingida ? 100 : loanDif?.recusaDireta ? 0 : Math.max(
     1,
     Math.min(99, Math.round(
-      status.chance * relEffect.chanceMult * resistenciaCraque -
-      (relEffect.hardBlock && offerPercentage < 130 ? 55 : 0),
+      status.chance * relEffect.chanceMult * resistenciaCraque * (loanDif?.chanceMult ?? 1) -
+      (relEffect.hardBlock && offerPercentage < 130 ? 55 : 0) -
+      coberturaEmFalta * 1.2,
     )),
   )
 
@@ -233,8 +257,11 @@ export function NegotiationModal({
         currentClubPrestige: currentPrestige,
         buyingClubPrestige: buyingPrestige,
         wageRatio,
-        // Proxy da forca do 11 titular do comprador.
-        buyingClubSquadStrength: isLoan ? 0 : buyingPrestige,
+        // Proxy da forca do 11 titular do comprador. No EMPRÉSTIMO isto era 0 —
+        // ou seja, o atleta nunca pensava em quanto ia jogar, e emprestado todo
+        // mundo aceitava tudo. Quem vai emprestado quer MINUTOS: elenco forte
+        // significa banco, e isso pesa contra.
+        buyingClubSquadStrength: buyingPrestige,
       })
 
       // O jogador nem quis ouvir a proposta: acaba aqui (e gera a carencia de 30 dias).
@@ -381,7 +408,7 @@ export function NegotiationModal({
               <div className="p-4 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full" />
                 <div className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
-                  {isLoan ? "Taxa de Emprestimo (12 meses)" : "Valor de Mercado"}
+                  {isLoan ? "Taxa pedida pelo dono" : "Valor de Mercado"}
                 </div>
                 <div className="text-xl font-bold text-white mt-2">{formatCurrency(fairValue)}</div>
                 {isLoan && (
@@ -487,6 +514,53 @@ export function NegotiationModal({
                   )}
                   <div className="opacity-80">{relEffect.note}</div>
                 </div>
+              </div>
+            )}
+
+            {/* EMPRÉSTIMO — o que o dono exige além da taxa. */}
+            {loanDif && (
+              <div className={cn(
+                "space-y-3 rounded-xl border p-4",
+                loanDif.recusaDireta
+                  ? "border-red-500/30 bg-red-500/10"
+                  : "border-white/[0.06] bg-white/[0.02]",
+              )}>
+                <div className="flex items-start gap-3">
+                  <Clock className={cn("mt-0.5 h-4 w-4 shrink-0", loanDif.recusaDireta ? "text-red-300" : "text-white/40")} />
+                  <p className={cn("text-xs leading-relaxed", loanDif.recusaDireta ? "text-red-200" : "text-white/55")}>
+                    {loanDif.motivo}
+                  </p>
+                </div>
+
+                {!loanDif.recusaDireta && (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/50">Salário que você assume</span>
+                      <span className={cn(
+                        "font-semibold tabular-nums",
+                        coberturaSalarial >= loanDif.coberturaMinima ? "text-[var(--brand)]" : "text-orange-400",
+                      )}>
+                        {coberturaSalarial}%
+                      </span>
+                    </div>
+                    <Slider
+                      value={[coberturaSalarial]}
+                      onValueChange={([value]) => setCoberturaSalarial(value)}
+                      min={0}
+                      max={100}
+                      step={5}
+                      className="py-2"
+                    />
+                    <p className={cn(
+                      "text-[11px] leading-snug",
+                      coberturaSalarial >= loanDif.coberturaMinima ? "text-white/35" : "text-orange-300/85",
+                    )}>
+                      {coberturaSalarial >= loanDif.coberturaMinima
+                        ? `O clube dono exige pelo menos ${loanDif.coberturaMinima}% — sua cobertura atende.`
+                        : `O clube dono exige ${loanDif.coberturaMinima}% do salário coberto. Abaixo disso a chance despenca.`}
+                    </p>
+                  </>
+                )}
               </div>
             )}
 
@@ -789,11 +863,11 @@ export function NegotiationModal({
               </Button>
               <Button
                 onClick={handleSubmitOffer}
-                disabled={semDinheiro}
+                disabled={semDinheiro || loanDif?.recusaDireta}
                 className="bg-[var(--brand)] text-[var(--brand-ink)] hover:bg-[var(--brand-2)] font-semibold gap-2 disabled:opacity-40"
               >
                 <Handshake className="h-4 w-4" />
-                Enviar Proposta
+                {loanDif?.recusaDireta ? "Empréstimo recusado" : "Enviar Proposta"}
               </Button>
             </>
           )}

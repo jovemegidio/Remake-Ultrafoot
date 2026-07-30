@@ -31,8 +31,13 @@ const DESTINO = path.join(RAIZ, "public/jogadores")
 const TEMP = path.join(RAIZ, "data/faces-fm/png-extraidos")
 
 const gravar = process.argv.includes("--gravar")
-const ALTURA = 200
-const QUALIDADE = 82
+// Refaz o que ja esta no disco. Serve para trocar altura/qualidade sem apagar
+// nada a mao: o PNG original volta do zip e o webp e reescrito.
+const refazer = process.argv.includes("--refazer")
+// A fonte tem 310px de altura; nao ha o que ganhar em pedir mais. q90 e o teto
+// util do webp com alfa — acima disso o arquivo cresce sem diferenca visivel.
+const ALTURA = 310
+const QUALIDADE = 90
 
 if (!existsSync(ZIP)) throw new Error(`zip do DF11 nao encontrado: ${ZIP}\n  (defina DF11_ZIP)`)
 
@@ -47,7 +52,7 @@ console.log(`mapa:      ${Object.keys(mapa).length} vinculos`)
 console.log(`do DF11:   ${alvos.length}`)
 console.log(`destino:   ${path.relative(RAIZ, DESTINO)}/df11-<id>.webp  (${ALTURA}px, q${QUALIDADE})`)
 
-const jaFeitos = new Set(
+const jaFeitos = refazer ? new Set() : new Set(
   existsSync(DESTINO)
     ? readdirSync(DESTINO).filter(f => f.startsWith("df11-") && f.endsWith(".webp"))
     : [],

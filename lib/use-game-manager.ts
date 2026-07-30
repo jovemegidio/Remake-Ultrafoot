@@ -17,6 +17,7 @@ import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, type FaseCopa, type Pl
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldFireManager } from "@/lib/board-engine"
+import { DIVISOES_SEM_REGISTRO, jogoRegistrado } from "@/lib/beneficios"
 // As vagas de generateJobOffers vinham do nada: agora os outros clubes demitem.
 import { demissoesDaRodada, manchete, tecnicoDoClube } from "@/lib/mercado-de-tecnicos"
 import { addJobOffers, clearJobOffers } from "@/lib/career-moves"
@@ -27,6 +28,10 @@ import { processDebtMonth } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
 import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
+import {
+  amistososVencidos, atribuirDiasDoMes, construirFixturesDeAmistoso, diaDaPartida, ehAmistoso,
+  fixturesQueContamNaTemporada, migrarAmistososSemSemana,
+} from "@/lib/amistosos-calendario"
 import { calcMatchdayRevenue, countCareerTitles, fanBaseGrowth, stadiumCapacity } from "@/lib/stadium-economy"
 import { leaguePrizeMoney } from "@/lib/club-economy"
 import { calcSeasonAwards } from "@/lib/awards-engine"
@@ -269,7 +274,15 @@ export function aplicarPausasFifa(fixtures: Fixture[], userTeam: Team, season = 
       // empurrado pela pausa da Copa continuava com month=Junho e AINDA aparecia
       // em Junho no calendário, ao lado do aviso "clubes pausados" (relato). Os
       // fifa_break têm mês próprio (Jun/Jul do Mundial) e não são recomputados.
-      if (f.competitionType !== "fifa_break") f.month = getGameDate(season, f.week).getMonth()
+      if (f.competitionType !== "fifa_break") {
+        const data = getGameDate(season, f.week)
+        // A temporada que ESTOURA O ANO (as pausas somam ~9 semanas em ano de
+        // Mundial e empurram as últimas rodadas para depois de 31/dez) não pode
+        // voltar para JANEIRO: janeiro já é o estadual do começo do ano, e os
+        // dois campeonatos disputavam as mesmas células do calendário — um deles
+        // simplesmente não era desenhado. A sobra fica em dezembro.
+        f.month = data.getFullYear() > season ? 11 : data.getMonth()
+      }
     }
     for (let k = 0; k < p.count; k++) {
       // O Mundial atravessa junho->julho: as primeiras semanas ficam em junho (5),
@@ -1329,7 +1342,12 @@ export interface Fixture {
   awayScore?: number
   isUserMatch: boolean
   month: number
-  competitionType: "state" | "league" | "cup" | "continental" | "fifa_break"
+  /**
+   * `friendly` é o amistoso marcado pelo técnico. Ele é jogável e aparece no
+   * calendário como qualquer outro jogo, mas NÃO conta para o fim da temporada
+   * nem é simulado como partida atrasada. Ver lib/amistosos-calendario.ts.
+   */
+  competitionType: "state" | "league" | "cup" | "continental" | "fifa_break" | "friendly"
   /**
    * Só em `fifa_break`: esta pausa é a do MUNDIAL (junho de ano de Copa), não uma
    * data FIFA comum. Antes isso era deduzido comparando `competition` com o texto
@@ -1340,6 +1358,12 @@ export interface Fixture {
    */
   worldCup?: boolean
   stage?: string
+  /**
+   * Dia do mês em que a partida aparece no calendário. Os jogos oficiais não
+   * têm data real — o dia sai da tabela por rodada (`roundToDay`) — mas o
+   * AMISTOSO tem semana escolhida pelo técnico e por isso traz o dia calculado.
+   */
+  dayOfMonth?: number
   /**
    * Jogo de MEIO DE SEMANA: divide a semana com a rodada de liga, como no
    * futebol de verdade. Sem isto cada partida de copa consumia uma semana
@@ -1640,6 +1664,9 @@ export function useGameManager() {
     if (!hydrated || !engineHydrated) return
     if (!saveState.selectedTeamShort) return
     gameEngine.migrarContratosParaSemanaAbsoluta()
+    // Entrosamento por minutos juntos (1.0.223): reconstroi as duplas do que ja
+    // foi jogado, para o save em andamento nao perder o entrosamento conquistado.
+    gameEngine.semearEntrosamentoDoHistorico()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, engineHydrated, saveState.selectedTeamShort])
 
@@ -1919,25 +1946,89 @@ export function useGameManager() {
         : fixture,
     )
 
+    // DATAS DO MES. Só aqui, no fim, os fixtures têm semana e mês definitivos
+    // (a pausa FIFA já deslocou tudo). O dia de cada jogo passa a sair da ORDEM
+    // das semanas dentro do mês, e não mais de `roundToDay(round)` — que para um
+    // jogo de copa usava a posição do confronto no chaveamento e jogava a final
+    // para o começo do mês, antes de rodadas anteriores a ela. Ver
+    // lib/amistosos-calendario#atribuirDiasDoMes.
+    allFixtures = atribuirDiasDoMes(allFixtures, seasonNow)
+
+    // ── AMISTOSOS MARCADOS ────────────────────────────────────────────────────
+    // Entram POR ÚLTIMO, depois da reconciliação: eles não têm resultado no motor
+    // (um amistoso não é registrado como partida oficial) e o próprio save guarda
+    // se já foram jogados e com que placar.
+    //
+    // A semana escolhida pelo técnico já é livre por construção (a Área do
+    // Treinador só oferece semanas sem compromisso), mas revalidamos aqui: entre
+    // marcar e jogar, o calendário pode ter sido remontado por uma copa nova ou
+    // pela pausa da Copa do Mundo, que empurra tudo para frente.
+    if (userTeam) {
+      const semanasOcupadas = new Set(
+        allFixtures.filter(f => f.isUserMatch && !ehAmistoso(f)).map(f => f.week),
+      )
+      const diasOcupadosPorMes = new Map<number, Set<number>>()
+      for (const f of allFixtures) {
+        if (!f.isUserMatch) continue
+        const set = diasOcupadosPorMes.get(f.month) ?? new Set<number>()
+        set.add(diaDaPartida(f))
+        diasOcupadosPorMes.set(f.month, set)
+      }
+
+      const marcados = (saveState.amistososAgendados ?? []).filter(
+        a => a.jogado || a.week == null || !semanasOcupadas.has(a.week),
+      )
+      allFixtures = allFixtures.concat(construirFixturesDeAmistoso<Fixture>(marcados, {
+        userTeam,
+        season: seasonNow,
+        currentWeek,
+        resolveTeam: (curto) => getTeamByShort(curto) ?? undefined,
+        diasOcupadosPorMes,
+        monta: (d) => ({
+          id: d.id,
+          round: 0,
+          week: d.week,
+          homeTeam: d.homeTeam,
+          awayTeam: d.awayTeam,
+          competition: "Amistoso",
+          played: d.played,
+          homeScore: d.homeScore,
+          awayScore: d.awayScore,
+          isUserMatch: true,
+          month: d.month,
+          dayOfMonth: d.dayOfMonth,
+          competitionType: "friendly",
+          stage: d.rotulo,
+        }),
+      }))
+    }
+
     // Encontra rodada atual — total inclui estadual + liga + copas/continentais
     // As copas agora dividem a semana com a liga, entao NAO somam semanas. O que
     // ainda pode alongar a temporada e a sobra que nao coube em nenhuma rodada,
     // e essa ja aparece na maior semana dos fixtures.
+    // Amistoso fora da conta: um jogo-treino marcado para depois da última
+    // rodada não pode esticar a temporada.
     const totalWeeks = Math.max(
       stateChampRoundsCount + (leagueTeams.length - 1) * 2,
-      ...allFixtures.map(f => f.week),
+      ...fixturesQueContamNaTemporada(allFixtures).map(f => f.week),
     )
     const currentRound = Math.max(1, Math.min(totalWeeks, currentWeek))
 
-    // Proxima partida do usuario (a de menor semana ainda nao jogada)
+    // Proxima partida do usuario (a de menor semana ainda nao jogada).
+    // O desempate pelo DIA importa: uma semana pode ter dois jogos seus (a copa
+    // entra no meio da semana da rodada de liga) e a ordem entre eles nao pode
+    // depender de quem foi empilhado primeiro no array.
+    const porData = (a: Fixture, b: Fixture) =>
+      a.week - b.week || diaDaPartida(a) - diaDaPartida(b) || a.id - b.id
     const nextUserMatch = allFixtures
       .filter(f => f.isUserMatch && !f.played && f.week >= currentWeek)
-      .sort((a, b) => a.week - b.week)[0] || null
+      .sort(porData)[0] || null
 
     // Ultima partida do usuario (a de maior semana ja jogada)
     const playedUserMatches = allFixtures
       .filter(f => f.isUserMatch && f.played)
-      .sort((a, b) => a.week - b.week)
+      .sort(porData)
     const previousUserMatch = playedUserMatches.length > 0
       ? playedUserMatches[playedUserMatches.length - 1]
       : null
@@ -1947,8 +2038,44 @@ export function useGameManager() {
     return result
     // divisionOverride nas deps: ao subir/cair, o calendario e os adversarios da liga
     // precisam ser recalculados para a divisao nova.
-  }, [saveState.selectedTeamShort, saveState.week, saveState.season, saveState.divisionOverride, saveState.completedFixtureKeys, gameEngine.matchResults])
+  }, [saveState.selectedTeamShort, saveState.week, saveState.season, saveState.divisionOverride, saveState.completedFixtureKeys, saveState.amistososAgendados, gameEngine.matchResults])
   
+  // ── MANUTENÇÃO DOS AMISTOSOS MARCADOS ─────────────────────────────────────
+  //
+  // Duas coisas, ambas fora do caminho crítico do avanço de semana:
+  //
+  //  1. MIGRAÇÃO. Saves anteriores à 1.0.223 guardavam o amistoso só com um
+  //     rótulo de data ("Sáb, 14 Mar"), sem semana — e sem semana ele não tem
+  //     onde entrar no calendário. Realocamos para a próxima semana livre em vez
+  //     de descartar o que o técnico marcou.
+  //  2. VALIDADE. O amistoso que ficou para trás sem ser disputado não é
+  //     simulado (ver fixture-catchup): ele simplesmente não aconteceu e sai da
+  //     agenda. Sem esta limpeza ele ficaria preso no save para sempre, ocupando
+  //     uma das três vagas.
+  useEffect(() => {
+    if (!hydrated) return
+    if (!saveState.selectedTeamShort) return
+    const marcados = saveState.amistososAgendados
+    if (!marcados?.length) return
+
+    const migrados = migrarAmistososSemSemana(marcados, seasonCalendarRef.current.fixtures, saveState.week)
+    const base = migrados ?? marcados
+    const vencidos = amistososVencidos(base, saveState.week)
+    if (!migrados && vencidos.length === 0) return
+
+    const limpos = vencidos.length
+      ? base.filter(a => !vencidos.includes(a))
+      : base
+    setSaveState({ amistososAgendados: limpos } as Parameters<typeof setSaveState>[0])
+    if (vencidos.length > 0) {
+      addNotificationRef.current({
+        type: "system", priority: "low",
+        title: vencidos.length === 1 ? "Amistoso cancelado" : "Amistosos cancelados",
+        message: `${vencidos.map(a => a.oppNome).join(", ")} — a data passou sem o jogo acontecer. Marque outro na Área do Treinador.`,
+      })
+    }
+  }, [hydrated, saveState.selectedTeamShort, saveState.amistososAgendados, saveState.week, setSaveState])
+
   // Avanca uma semana/rodada
   // Uses refs so sequential calls within a loop always read the latest week (fixes stale closure bug)
   const advanceWeek = useCallback(async () => {
@@ -1976,9 +2103,13 @@ export function useGameManager() {
     // Copa em meio de semana nao alonga a temporada; o Math.max abaixo cobre a
     // sobra que porventura tenha ido para o fim.
     const computedSeasonEndWeek = stateRoundsForEnd + leagueRoundsForEnd
+    // AMISTOSO FORA DA CONTA (1.0.223). Um jogo-treino marcado para depois da
+    // última rodada empurraria `seasonEndWeek` e a temporada só fecharia quando o
+    // contador passasse dele — o mesmo mecanismo do bug histórico "a temporada
+    // nunca terminava".
     const seasonEndWeek = Math.max(
       computedSeasonEndWeek,
-      ...seasonCalendarRef.current.fixtures.map(fixture => fixture.week),
+      ...fixturesQueContamNaTemporada(seasonCalendarRef.current.fixtures).map(fixture => fixture.week),
     )
 
     const leagueUserFixtures = seasonCalendarRef.current.fixtures.filter(
@@ -2006,7 +2137,11 @@ export function useGameManager() {
     // caía cedo nas copas terminava a liga e ficava clicando "avançar" em
     // semanas vazias até o contador alcançar um fim de temporada teórico.
     // Agora, acabou a última partida do clube, acabou a temporada.
-    const allUserFixtures = seasonCalendarRef.current.fixtures.filter(fixture => fixture.isUserMatch)
+    // E o amistoso também fica de fora daqui: um jogo-treino pendente deixaria
+    // `semCompromissos` falso para sempre.
+    const allUserFixtures = seasonCalendarRef.current.fixtures.filter(
+      fixture => fixture.isUserMatch && !ehAmistoso(fixture),
+    )
 
     // Mesmo que uma semana tenha sido avançada rapidamente, não permite que o
     // save processe acesso/rebaixamento enquanto a liga do usuário estiver
@@ -2585,8 +2720,14 @@ export function useGameManager() {
           seasonProgress: Math.min(1, newWeek / Math.max(1, seasonEndWeek)),
         })
 
+        // A regra dos paises sem registro (lib/beneficios.ts) tambem vale aqui:
+        // sem o codigo, o tecnico dirige clube do Brasil, da Franca ou da Espanha.
+        // Sem este filtro a proposta de emprego era a porta dos fundos — bastava
+        // aceitar o convite de um clube italiano para furar a regra do menu.
+        const semRegistro = !jogoRegistrado()
         const candidatos = allTeams
           .filter((t) => t.curto !== shortNow)
+          .filter((t) => !semRegistro || DIVISOES_SEM_REGISTRO.includes(String(t.divisao)))
           .map((t) => ({ curto: t.curto, nome: t.nome, prestigio: t.prestigio ?? 60, divisao: String(t.divisao) }))
 
         const ofertas = generateJobOffers(
@@ -2732,8 +2873,11 @@ export function useGameManager() {
     events: MatchEvent[]
   ) => {
     const currentState = saveStateRef.current
+    // Amistoso fora: ele não passa por aqui (o resultado é gravado no save pela
+    // própria tela), e deixá-lo na fila permitiria que um placar oficial contra o
+    // mesmo adversário fosse atribuído ao jogo-treino pelo fallback de confronto.
     const orderedPending = seasonCalendarRef.current.fixtures
-      .filter(fixture => fixture.isUserMatch && !fixture.played)
+      .filter(fixture => fixture.isUserMatch && !fixture.played && !ehAmistoso(fixture))
       .sort((a, b) => a.week - b.week || a.id - b.id)
     /**
      * A qual confronto do calendario este placar pertence.

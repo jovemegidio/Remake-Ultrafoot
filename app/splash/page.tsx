@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { safeLocalGet, safeLocalSet } from "@/lib/safe-storage"
 import { mensagemDeErro, validarCodigo } from "@/lib/license"
 import { getDeviceId } from "@/lib/device-id"
@@ -15,6 +15,7 @@ import { activateCareerSave, listCareerSaves, loadGameState, hasSave, clearAllGa
 import { useGameEngine } from "@/lib/game-engine"
 import { getTeamByShort } from "@/lib/teams-data"
 import { useTranslation } from "@/lib/i18n"
+import { useVersaoDoJogo } from "@/lib/versao-do-jogo"
 import { isTauri } from "@/lib/game-asset"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { LegalConsent } from "@/components/legal-consent"
@@ -58,6 +59,7 @@ const LANGUAGE_COUNTRIES = [
 
 export default function SplashPage() {
   const t = useTranslation()
+  const versaoDoJogo = useVersaoDoJogo()
   const { state: gameState, setState: setGameState } = useGameState()
   const [phase, setPhase] = useState<SplashPhase>("black")
   // Idioma é a primeira decisão da sessão, antes de qualquer opção de carreira.
@@ -185,15 +187,39 @@ export default function SplashPage() {
       }
   })
 
-  const mainMenuOptions: { id: MenuOption; label: string; icon: React.ReactNode; href?: string }[] = [
-    { id: "novo-jogo", label: t.splash.newGame, icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
-    { id: "editar", label: t.splash.clubEditor, icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
-    { id: "carregar", label: t.splash.loadGame, icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
-    // Sem codigo, o item vira um lembrete visivel — o jogo NAO trava (decisao do
-    // usuario: falso negativo com comprador legitimo doi mais do que vale).
-    { id: "registrar", label: isRegistered ? t.splash.register : `${t.splash.register} — versao nao registrada`, icon: <Key className={cn("h-7 w-7", !isRegistered && "text-amber-400")} strokeWidth={1.5} /> },
-    { id: "sair", label: t.splash.exit, icon: <LogOut className="h-7 w-7" strokeWidth={1.5} /> },
-  ]
+  // MENU PRINCIPAL, em tres blocos: jogar, ferramentas e sistema. A ordem antiga
+  // punha o Editor de Clubes ENTRE "Novo jogo" e "Carregar jogo", separando as
+  // duas acoes que todo mundo procura primeiro.
+  //
+  // `grupo` so serve para desenhar o divisor: a lista continua sendo UM array,
+  // porque teclado e controle navegam por indice sobre ela.
+  const mainMenuOptions: {
+    id: MenuOption
+    label: string
+    hint?: string
+    grupo: "jogar" | "ferramentas" | "sistema"
+    icon: React.ReactNode
+    href?: string
+  }[] = useMemo(() => [
+    { id: "novo-jogo", label: t.splash.newGame, hint: "Escolher clube e comecar uma carreira", grupo: "jogar", icon: <Globe className="h-7 w-7" strokeWidth={1.5} />, href: "/novo-jogo" },
+    { id: "carregar", label: t.splash.loadGame, hint: hasSaveGame ? "Continuar uma carreira salva" : "Nenhuma carreira salva ainda", grupo: "jogar", icon: <Save className="h-7 w-7" strokeWidth={1.5} /> },
+    { id: "editar", label: t.splash.clubEditor, hint: "Nomes, escudos, uniformes e elencos", grupo: "ferramentas", icon: <FileEdit className="h-7 w-7" strokeWidth={1.5} />, href: "/editar" },
+    // REGISTRAR so aparece para quem AINDA NAO registrou (pedido 30/07/26): depois
+    // do codigo aceito o item nao tem mais funcao — o estado ja fica no selo
+    // "Registrado" ao lado do titulo. O jogo continua sem travar quem nao registrou.
+    ...(!isRegistered
+      ? [{ id: "registrar" as MenuOption, label: t.splash.register, hint: "Liberar os extras com o seu codigo", grupo: "sistema" as const, icon: <Key className="h-7 w-7 text-amber-400" strokeWidth={1.5} /> }]
+      : []),
+    { id: "sair", label: t.splash.exit, hint: "Fechar o jogo", grupo: "sistema", icon: <LogOut className="h-7 w-7" strokeWidth={1.5} /> },
+    // Memoizado porque a lista entra nas dependencias do teclado/controle: um
+    // array novo a cada render reinstalava os listeners sem parar.
+  ], [t, isRegistered, hasSaveGame])
+
+  // Quem registra COM O MENU ABERTO perde um item da lista. Sem este ajuste o
+  // cursor ficaria apontando para fora dela e o Enter nao faria nada.
+  useEffect(() => {
+    setSelectedIndex(atual => Math.min(atual, mainMenuOptions.length - 1))
+  }, [mainMenuOptions.length])
 
   // ABERTURA. Era uma sequencia de 8,5 s: preto 0,8 + estudio 2 + aviso 2 + ligas
   // 2,5 + barra 1,2. Cada troca de fase ainda levava 1 s de dissolucao. Ficava
@@ -986,54 +1012,68 @@ export default function SplashPage() {
             >
               {mainMenuOptions.map((option, index) => {
                 const isSelected = selectedIndex === index
+                // Divisor entre blocos (jogar / ferramentas / sistema).
+                const abreBloco = index > 0 && mainMenuOptions[index - 1].grupo !== option.grupo
                 return (
-                  <button
-                    key={option.id}
-                    onClick={() => handleMenuSelect(index)}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                    className={cn(
-                      "group relative flex items-center gap-3.5 rounded-xl border px-3.5 py-3 text-left transition-all duration-200 overflow-hidden",
-                      isSelected
-                        ? "border-[var(--brand)]/35"
-                        : "border-transparent hover:border-white/10 hover:bg-white/[0.03]"
-                    )}
-                    style={{
-                      background: isSelected
-                        ? "linear-gradient(90deg, rgba(0,255,200,0.16) 0%, rgba(0,200,255,0.06) 50%, transparent 100%)"
-                        : "transparent",
-                      boxShadow: isSelected ? "0 8px 26px rgba(0,255,200,0.1)" : "none",
-                    }}
-                  >
-                    {/* Barra de acento esquerda */}
-                    <span
+                  <div key={option.id}>
+                    {abreBloco && <div className="mx-3 my-1.5 h-px bg-white/[0.07]" />}
+                    <button
+                      onClick={() => handleMenuSelect(index)}
+                      onMouseEnter={() => setSelectedIndex(index)}
                       className={cn(
-                        "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full transition-all duration-300",
-                        isSelected ? "h-9 bg-gradient-to-b from-[var(--brand)] to-[var(--brand-2)]" : "h-0 bg-transparent"
+                        "group relative flex w-full items-center gap-3.5 rounded-xl border px-3.5 py-2.5 text-left transition-all duration-200 overflow-hidden",
+                        isSelected
+                          ? "border-[var(--brand)]/35"
+                          : "border-transparent hover:border-white/10 hover:bg-white/[0.03]"
                       )}
-                    />
+                      style={{
+                        background: isSelected
+                          ? "linear-gradient(90deg, rgba(0,255,200,0.16) 0%, rgba(0,200,255,0.06) 50%, transparent 100%)"
+                          : "transparent",
+                        boxShadow: isSelected ? "0 8px 26px rgba(0,255,200,0.1)" : "none",
+                      }}
+                    >
+                      {/* Barra de acento esquerda */}
+                      <span
+                        className={cn(
+                          "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-full transition-all duration-300",
+                          isSelected ? "h-9 bg-gradient-to-b from-[var(--brand)] to-[var(--brand-2)]" : "h-0 bg-transparent"
+                        )}
+                      />
 
-                    {/* Icone */}
-                    <div className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 [&>svg]:h-5 [&>svg]:w-5",
-                      isSelected ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-white/[0.05] text-white/45 group-hover:text-white/70"
-                    )}>
-                      {option.icon}
-                    </div>
+                      {/* Icone */}
+                      <div className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 [&>svg]:h-5 [&>svg]:w-5",
+                        isSelected ? "bg-[var(--brand)]/15 text-[var(--brand)]" : "bg-white/[0.05] text-white/45 group-hover:text-white/70"
+                      )}>
+                        {option.icon}
+                      </div>
 
-                    {/* Label */}
-                    <span className={cn(
-                      "flex-1 font-bold text-sm tracking-wide transition-colors duration-200",
-                      isSelected ? "text-white" : "text-white/55 group-hover:text-white/80"
-                    )}>
-                      {option.label}
-                    </span>
+                      {/* Label + linha de apoio (o menu dizia so o nome da acao) */}
+                      <span className="min-w-0 flex-1">
+                        <span className={cn(
+                          "block truncate font-bold text-sm tracking-wide transition-colors duration-200",
+                          isSelected ? "text-white" : "text-white/55 group-hover:text-white/80"
+                        )}>
+                          {option.label}
+                        </span>
+                        {option.hint && (
+                          <span className={cn(
+                            "block truncate text-[10.5px] font-medium transition-colors duration-200",
+                            isSelected ? "text-white/45" : "text-white/25"
+                          )}>
+                            {option.hint}
+                          </span>
+                        )}
+                      </span>
 
-                    {/* Chevron do item selecionado */}
-                    <ChevronRight className={cn(
-                      "h-4 w-4 shrink-0 transition-all duration-200",
-                      isSelected ? "text-[var(--brand)] opacity-100 translate-x-0" : "text-white/0 opacity-0 -translate-x-2"
-                    )} />
-                  </button>
+                      {/* Chevron do item selecionado */}
+                      <ChevronRight className={cn(
+                        "h-4 w-4 shrink-0 transition-all duration-200",
+                        isSelected ? "text-[var(--brand)] opacity-100 translate-x-0" : "text-white/0 opacity-0 -translate-x-2"
+                      )} />
+                    </button>
+                  </div>
                 )
               })}
             </nav>
@@ -1061,6 +1101,17 @@ export default function SplashPage() {
               <kbd className="flex h-5 min-w-5 items-center justify-center rounded border border-[var(--brand)]/30 bg-[var(--brand)]/10 px-1 text-[10px] text-[var(--brand)]">↵</kbd>
               Selecionar
             </span>
+            {/* VERSAO DO JOGO no canto direito do rodape (pedido). Sai do
+                package.json no build e, no desktop, da versao realmente
+                instalada — util para saber se a atualizacao pegou. */}
+            {versaoDoJogo && (
+              <>
+                <span className="h-4 w-px bg-white/10" />
+                <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold tabular-nums tracking-wider text-white/40">
+                  v{versaoDoJogo}
+                </span>
+              </>
+            )}
           </div>
         </div>
 

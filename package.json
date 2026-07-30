@@ -1,6 +1,6 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.218",
+  "version": "1.0.226",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -46,6 +46,7 @@
     "build:qa": "cross-env TAURI_BUILD=1 npm run build",
     "qa:modal": "node scripts/qa-modal-keyboard.mjs",
     "qa:navigation": "tsx scripts/qa-navigation.ts",
+    "qa:regras": "tsx scripts/test-fixture-catchup.ts && tsx scripts/test-amistoso-calendario.ts && tsx scripts/test-treino-entrosamento.ts && tsx scripts/test-entrosamento.ts && tsx scripts/test-mercado-realista.ts",
     "prebuild": "node scripts/preparar-env-licenca.mjs && node scripts/embutir-edicoes.mjs"
   },
   "dependencies": {

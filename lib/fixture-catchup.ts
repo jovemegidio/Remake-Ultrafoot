@@ -8,6 +8,7 @@ export interface CatchupFixture {
   week: number
   played?: boolean
   isUserMatch?: boolean
+  competitionType?: string
 }
 
 /**
@@ -25,6 +26,11 @@ export function isOverdueUserFixture(
 ): boolean {
   if (!fixture.isUserMatch) return false
   if (fixture.played) return false
+  // AMISTOSO NAO E PARTIDA ATRASADA. O jogo-treino que o tecnico deixou passar
+  // simplesmente nao aconteceu — simula-lo geraria resultado, lesao e estatistica
+  // de um jogo que nao vale nada, e um amistoso pendente jamais pode segurar a
+  // temporada (ver lib/amistosos-calendario).
+  if (fixture.competitionType === "friendly") return false
   if (fixture.week >= newWeek) return false
   if (fixtureKey && completedKeys.includes(fixtureKey)) return false
   return true
@@ -41,6 +47,13 @@ export function isOverdueUserFixture(
  * `leagueComplete` continua sendo pré-requisito em ambos os caminhos: sem ele o
  * save processaria acesso/rebaixamento com a liga pela metade — exatamente o
  * bug do "rebaixado com 15 jogos".
+ *
+ * ATENÇÃO ao que entra em `userFixtures` e em `seasonEndWeek`: amistoso NÃO
+ * entra. Um jogo-treino pendente em `userFixtures` faz `semCompromissos` ser
+ * falso para sempre, e um amistoso marcado além da última rodada empurra
+ * `seasonEndWeek` — os dois caminhos levam de volta ao "a temporada nunca
+ * termina". Quem monta esses argumentos deve filtrar por
+ * `fixturesQueContamNaTemporada` (lib/amistosos-calendario).
  */
 export function isSeasonOver(input: {
   leagueComplete: boolean

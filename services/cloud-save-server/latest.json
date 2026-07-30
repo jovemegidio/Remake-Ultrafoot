@@ -1,12 +1,12 @@
 {
-  "version": "1.0.201",
-  "notes": "Corrige o dinheiro infinito da categoria de base: o jogo reenchia o elenco ate 18 atletas de graca no fim de cada temporada, o que tambem fazia aparecerem jogadores aleatorios no time. Agora so repoe quem se aposentou. Corrige tambem a folha salarial, que so subia: um gasto avulso (pagar divida, obras) virava despesa semanal para sempre.",
-  "sizeMb": 523,
-  "sha256": "0E662D5B1ECD76E35AB2740FA09F9347B2648EA972867B7C1A1F16E6CE5EB520",
+  "version": "1.0.218",
+  "notes": "Ultrafoot 26 v1.0.218 - Reuniao com a diretoria, mercado que respeita o caixa, camisa no campo, emprestimo com renovacao negociada, fim do espaco vazio nas telas e italiano.",
+  "sizeMb": 531,
+  "sha256": "0037F1DBE58D505AEF004828873C9625D44D18B8FD33C9786561A2CFAAE9D17D",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRURGQzRmbGswZEdVakg1cGNvcnpxUFFXazRvc2Y2U3Zabmx6cmVhTGpLQVg3VE1uRFlkdGFZbHR1ZjkwSlZIU2wzT0NwWFlSNHpiRUc5YjdUSEpua0FzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1MzI1MzE3CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yMDFfeDY0LXNldHVwLmV4ZQpmcGZOTHZyRWl5Y0VVM2l6K2hZQktSSWtYSElCUlZVZGlDbEYxT2x6anVKU3FWTmJySFZWZVRXMzhzRlZrZ1RQK2xaZG9ubVVFY2hUVmNFdWZGMnVDZz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.201_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRVArb3M2NGV6R0sycWlOZUl1bFZIYU94RVJiZmhwc29DSnkzUHdrNHpPOEpNcGNsVUF4bVRGUW5BNWJncUg4MnA0UmZ6SW9BK0hqT1RGYlRLOFZseXdnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NDI3MDU4CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yMThfeDY0LXNldHVwLmV4ZQpDMXRac1JKbHl0UVU3YXFuU2xzZ2VCcExWSFplamY1VmtIYWtYMHdzZ20wTkxaTU1yeTdWV2o5R0x2ZDZQcldPYitrSjNCWno2M2J4VlZTM1JHbGJDUT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.218_x64-setup.exe"
     }
   }
 }

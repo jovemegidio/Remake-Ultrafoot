@@ -2,8 +2,8 @@
   "expo": {
     "name": "Ultrafoot de Bolso",
     "slug": "ultrafoot-bolso",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "1.0.1",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "ultrafoot",
     "userInterfaceStyle": "dark",

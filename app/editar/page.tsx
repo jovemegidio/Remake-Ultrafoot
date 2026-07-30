@@ -132,6 +132,43 @@ const formatDivisao = (div: string) =>
     ? `Seleção · ${div.slice("national:".length)}`
     : DIV_LABEL[div] ?? div.replace(/_/g, " ").toUpperCase()
 
+/**
+ * NIVEL DA DIVISAO dentro do país — 1 é a primeira divisão, 2 a segunda, e assim
+ * por diante. É o que ordena o painel: a liga de cima vem antes da de baixo.
+ *
+ * Antes as ligas de um país saíam ordenadas por PRESTÍGIO do clube mais forte do
+ * grupo. Quase sempre dava certo por acidente, mas bastava um clube grande caído
+ * (rebaixado, como o Sampdoria na Serie B) para a segunda divisão aparecer ACIMA
+ * da primeira — e o Brasil nem tinha ligas: os clubes vinham repartidos por
+ * estado, sem Série A / B / C / D.
+ */
+const DIV_TIER: Record<string, number> = {
+  serie_a: 1, serie_b: 2, serie_c: 3, serie_d: 4,
+  premier_league: 1, championship: 2,
+  la_liga: 1, la_liga_2: 2,
+  serie_a_ita: 1, serie_b_ita: 2,
+  bundesliga: 1, bundesliga_2: 2,
+  ligue_1: 1, ligue_2: 2,
+  primeira_liga: 1, eredivisie: 1, scottish_prem: 1, super_lig: 1,
+  pro_league_bel: 1, russian_prem: 1, mls: 1, liga_mx: 1,
+  liga_argentina: 1, primeira_a_col: 1, primera_a_col: 1,
+  primera_div_chi: 1, primera_b_chi: 2, primera_div_ury: 1,
+  saudi_pro: 1, saudi_first_div: 2,
+  j_league: 1, k_league_1: 1, chinese_super: 1,
+  primera_a_ecu: 1, primera_div_ecu: 2, primera_div_per: 1, primera_div_bol: 1,
+  primera_div_par: 1, primera_div_ven: 1, super_league_gre: 1, superliga_den: 1,
+  fortuna_liga_cze: 1, premyer_liqa_aze: 1, eliteserien_nor: 1, protathlima_cyp: 1,
+  premier_liga_kaz: 1,
+}
+
+/** Etiqueta curta do nível ("1ª div."), usada ao lado do nome da liga. */
+const tierLabel = (tier: number): string | null =>
+  tier >= 1 && tier <= 8 ? `${tier}ª div.` : null
+
+/** Ordem dos grupos SEM liga conhecida: estaduais depois das ligas, "demais" por último. */
+const TIER_ESTADUAL = 50
+const TIER_DEMAIS = 99
+
 // Nome do pais (PT-BR, como vem do pool) -> codigo, para os clubes do pool caírem no
 // MESMO grupo dos curados. Paises fora do mapa usam o proprio nome como codigo.
 const PAIS_CODE: Record<string, string> = {
@@ -196,22 +233,28 @@ const countryCodeOf = (team: Team): string => {
   return DIV_COUNTRY[team.divisao] ?? "INT"
 }
 
-// Segundo nível de agrupamento: por estado (Brasil) ou por liga (internacional).
-const subGroupOf = (team: Team): { key: string; label: string } => {
+// Segundo nível de agrupamento: a LIGA do clube (com o nível da divisão), e só
+// quem não tem liga cai no estado (Brasil) ou em "Demais clubes".
+const subGroupOf = (team: Team): { key: string; label: string; tier: number } => {
   const code = countryCodeOf(team)
   if (code === "SEL") {
     const confederation = team.divisao.replace(/^national:/, "")
-    return { key: `SEL|${confederation}`, label: confederation }
+    return { key: `SEL|${confederation}`, label: confederation, tier: 1 }
   }
-  // Clubes BR do pool COM estado agrupam por estado (junto dos curados). Sem estado ou
-  // fora do Brasil, caem num "Outros clubes" por pais (nao temos a liga no Team).
+  // Clube do pool nao tem liga no dado — vai para o estado (Brasil) ou para o
+  // balde do pais, sempre DEPOIS das divisoes oficiais.
   if (isPoolTeam(team)) {
-    if (code === "BRA" && team.estado) return { key: `BRA|${team.estado}`, label: ESTADO_LABEL[team.estado] ?? team.estado }
-    return { key: `${code}|pool`, label: "Outros clubes" }
+    if (code === "BRA" && team.estado) {
+      return { key: `BRA|${team.estado}`, label: ESTADO_LABEL[team.estado] ?? team.estado, tier: TIER_ESTADUAL }
+    }
+    return { key: `${code}|pool`, label: "Demais clubes", tier: TIER_DEMAIS }
   }
-  return code === "BRA"
-    ? { key: `BRA|${team.estado}`, label: ESTADO_LABEL[team.estado] ?? team.estado }
-    : { key: `${code}|${team.divisao}`, label: formatDivisao(team.divisao) }
+  // Curado (inclusive os brasileiros, que antes vinham por estado): a liga é o grupo.
+  return {
+    key: `${code}|${team.divisao}`,
+    label: formatDivisao(team.divisao),
+    tier: DIV_TIER[team.divisao] ?? 9,
+  }
 }
 
 // Mock players data generator based on team - completamente deterministico (sem Math.random)
@@ -661,14 +704,14 @@ export default function EditarPage() {
     )
   }, [searchTeam, resolvedTeams])
 
-  // Agrupa os times por País > (estados no Brasil / ligas no exterior).
-  // Países e subgrupos são ordenados por prestígio (o mais forte primeiro),
-  // com o Brasil sempre no topo.
+  // Agrupa os times por País > Liga (divisões da mais alta para a mais baixa;
+  // estaduais e clubes sem liga vêm por último). Os países seguem por prestígio,
+  // com Brasil e Seleções no topo.
   const groupedTeams = useMemo(() => {
     const byCountry = new Map<string, {
       code: string
       name: string
-      subs: Map<string, { key: string; label: string; teams: Team[] }>
+      subs: Map<string, { key: string; label: string; tier: number; teams: Team[] }>
     }>()
 
     for (const team of filteredTeams) {
@@ -679,7 +722,7 @@ export default function EditarPage() {
       const country = byCountry.get(code)!
       const sub = subGroupOf(team)
       if (!country.subs.has(sub.key)) {
-        country.subs.set(sub.key, { key: sub.key, label: sub.label, teams: [] })
+        country.subs.set(sub.key, { key: sub.key, label: sub.label, tier: sub.tier, teams: [] })
       }
       country.subs.get(sub.key)!.teams.push(team)
     }
@@ -693,7 +736,12 @@ export default function EditarPage() {
             ...sub,
             teams: [...sub.teams].sort((a, b) => b.prestigio - a.prestigio || a.nome.localeCompare(b.nome)),
           }))
-          .sort((a, b) => maxPrestige(b.teams) - maxPrestige(a.teams) || a.label.localeCompare(b.label))
+          // Nível da divisão primeiro (1ª antes da 2ª); prestígio só desempata
+          // entre grupos do MESMO nível, e o nome fecha a ordem.
+          .sort((a, b) =>
+            a.tier - b.tier ||
+            maxPrestige(b.teams) - maxPrestige(a.teams) ||
+            a.label.localeCompare(b.label, "pt-BR"))
         const count = subs.reduce((n, s) => n + s.teams.length, 0)
         const prestige = subs.reduce((m, s) => Math.max(m, maxPrestige(s.teams)), 0)
         return { ...country, subs, count, prestige }
@@ -899,6 +947,12 @@ export default function EditarPage() {
                         >
                           <ChevronDown className={cn("h-3 w-3 shrink-0 text-white/25 transition-transform", subOpen ? "" : "-rotate-90")} />
                           <span className="flex-1 text-left text-[11px] font-medium text-[var(--brand)]/70 truncate">{sub.label}</span>
+                          {/* Nível da divisão: deixa explícito quem é a de cima e quem é a de baixo. */}
+                          {tierLabel(sub.tier) && (
+                            <span className="shrink-0 rounded border border-white/10 px-1 text-[8px] font-bold uppercase tracking-wider text-white/30">
+                              {tierLabel(sub.tier)}
+                            </span>
+                          )}
                           <span className="text-[9px] text-white/20 shrink-0">{sub.teams.length}</span>
                         </button>
 

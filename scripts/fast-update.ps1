@@ -13,7 +13,20 @@
 
 $ErrorActionPreference = "Stop"
 $G = (Resolve-Path "$PSScriptRoot\..").Path
-$C = "C:\ultrafoot-build"
+
+# A pasta de build local ja teve dois nomes. Fixar um so fazia o script rodar o
+# robocopy /MIR para uma pasta VAZIA (sem node_modules, sem src-tauri) e falhar
+# la na frente, depois de minutos, com um erro que nao dizia a causa. Agora
+# procura a que existir de verdade e para logo se nao houver nenhuma.
+$C = @("C:\ultrafoot-build", "C:\Ultrafoot") | Where-Object {
+  (Test-Path "$_\src-tauri\Cargo.toml") -and (Test-Path "$_\node_modules")
+} | Select-Object -First 1
+if (-not $C) {
+  Write-Host "ERRO: nenhuma pasta de build local encontrada (procurei C:\ultrafoot-build e C:\Ultrafoot)."
+  Write-Host "      Ela precisa ter src-tauri\Cargo.toml e node_modules."
+  exit 1
+}
+Write-Host "==> pasta de build: $C"
 
 Write-Host "==> Sync source G: -> C: (sem node_modules/target/.next)..."
 $opts = @('/MIR','/XF','desktop.ini','/XD','node_modules','.next','target','gen','.git','/R:1','/W:1','/MT:16','/NP','/NFL','/NDL','/NJH','/NJS')
@@ -33,7 +46,9 @@ foreach ($d in @('images','brand','logos','flags','cutscenes','kits-imported','a
 }
 
 Write-Host "==> Limpando processos antes de UMA build..."
-Get-Process ultrafoot,node,cargo,rustc,makensis,link -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+# So o que disputa o alvo da build. Matar `node` inteiro derrubava tarefas sem
+# relacao nenhuma (outra build, um deploy em andamento) na mesma maquina.
+Get-Process ultrafoot,cargo,rustc,makensis,link -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
 Write-Host "==> tauri build --no-bundle (pula o makensis)..."

@@ -12,7 +12,11 @@ import {
   rotuloDaMoral, pontosDoRotulo,
 } from "@/lib/player-realism"
 import { getCanonicalSeedPosition, getPlayersForTeam } from "@/lib/players-data"
-import { getClubAIConfig, evaluateBuy } from "@/lib/ai-club-engine"
+import { getClubAIConfig } from "@/lib/ai-club-engine"
+import {
+  avaliarCompra, decisaoDoAtleta, papelPrevisto, perfilDeElenco, ROTULO_DO_PAPEL, sondagemDe,
+  type AtletaAlvo, type AvaliacaoDeCompra, type ClubeComprador, type PapelPrevisto, type Sondagem,
+} from "@/lib/mercado-realista"
 import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor } from "@/lib/club-economy"
@@ -23,6 +27,12 @@ import { valorDeMercadoJovem } from "@/lib/youth-academy-rules"
 import { recordWorldTransfer } from "@/lib/world-market"
 // Modulo puro (sem imports): a expulsao vira julgamento em vez de 1 jogo fixo.
 import { julgar, inferirInfracao, type JulgamentoTribunal } from "@/lib/tribunal"
+import {
+  aplicarSemanaDeTreino, decairEntrosamento, entrosamentoDoGrupo, minutosDeTreinoColetivo,
+  PISO_ENTROSAMENTO, PLANO_PADRAO, registrarMinutosJuntos as creditarMinutosJuntos,
+  semearParesDeHistorico,
+  type AtletaNaSemana, type ParesDeEntrosamento, type PlanoDeTreino,
+} from "@/lib/treino-e-entrosamento"
 
 // ============================================
 // TIPOS E INTERFACES
@@ -1773,6 +1783,17 @@ export interface MarketInterest {
   playerName: string
   club: string
   week: number
+  /**
+   * POR QUE aquele clube esta olhando (1.0.223). Antes a sondagem era um sorteio
+   * — clube aleatorio, atleta aleatorio, sem motivo — e por isso nao dizia nada
+   * ao tecnico. Agora ela sai da MESMA avaliacao da proposta (lib/mercado-realista),
+   * entao consegue explicar o interesse. Opcionais para saves antigos.
+   */
+  motivo?: string
+  /** Papel que o atleta teria no elenco do sondador ("titular", "rotação"...). */
+  papel?: string
+  /** O sondador tem caixa para transformar isto em proposta? */
+  temCaixa?: boolean
 }
 
 export interface TransferOffer {
@@ -1814,6 +1835,18 @@ export function nextTransferWindowWeek(week: number): number {
   if (seasonWeek < 27 && seasonWeek > 12) return week + (27 - seasonWeek)
   if (seasonWeek > 36) return week + (53 - seasonWeek)
   return week
+}
+
+/**
+ * Quantas semanas faltam para a janela FECHAR. Zero (ou menos) quando ela ja
+ * esta fechada. E o relogio do deadline day: a ultima quinzena e onde o mercado
+ * enlouquece, e sem esta conta a IA tratava julho e a ultima semana como iguais.
+ */
+export function weeksUntilWindowCloses(week: number): number {
+  const seasonWeek = ((Math.max(1, week) - 1) % 52) + 1
+  if (seasonWeek <= 12) return 12 - seasonWeek + 1
+  if (seasonWeek >= 27 && seasonWeek <= 36) return 36 - seasonWeek + 1
+  return 0
 }
 
 // Times que podem fazer ofertas
@@ -1885,12 +1918,36 @@ interface GameEngineState {
   tacticalAssignments: TacticalAssignments
   /** Coordenadas personalizadas do campo, por nome do atleta (IDs podem mudar ao importar). */
   tacticalPlayerPositions: Record<string, { x: number; y: number }>
+  /**
+   * MOVIMENTAÇÃO: para onde o atleta se desloca com a bola, em % do campo.
+   * É o DESTINO da seta desenhada na prancheta — a posição base continua em
+   * `tacticalPlayerPositions`. Também por nome, pelo mesmo motivo.
+   */
+  tacticalPlayerMovements: Record<string, { x: number; y: number }>
   opponentAnalyses: OpponentAnalysis[]
   
   // Moral e vestiario
   squadMorale: SquadMorale
-  /** Entrosamento do time 0-100 (estilo FM): sobe jogando junto, da bonus. */
+  /**
+   * Entrosamento do XI, 0-100. DERIVADO de `entrosamentoPares` desde a 1.0.223 —
+   * continua aqui porque meia dezena de telas e o bonus em campo o leem, mas ja
+   * nao e um contador que sobe por botao.
+   */
   squadCohesion: number
+  /**
+   * MINUTOS JOGADOS JUNTOS, dupla a dupla. E daqui que sai o entrosamento: dois
+   * atletas que nunca dividiram o gramado nao se entendem, por melhores que
+   * sejam. Ver lib/treino-e-entrosamento.ts.
+   */
+  entrosamentoPares: ParesDeEntrosamento
+  /** Ja reconstruiu as duplas a partir do historico do save antigo? (roda uma vez) */
+  entrosamentoSemeado?: boolean
+  /** Fadiga CRONICA por atleta (0-100) — o cansaco que a semana nao repos. */
+  fadigaCronica: Record<number, number>
+  /** Plano de treino COLETIVO da semana (intensidade x foco). */
+  planoDeTreino: PlanoDeTreino
+  /** Ultimo resumo do treino semanal, para a tela mostrar carga/fadiga/risco. */
+  ultimoTreino: { carga: number; energiaMedia: number; fadigaMedia: number; riscoMedio: number; lesionados: string[]; semana: number } | null
   /** Save ja migrado para o relogio absoluto de contrato (ver migracao). */
   contractsAbsoluteMigrated?: boolean
   
@@ -1929,13 +1986,27 @@ interface GameEngineState {
   // Acoes
   advanceWeek: () => void
   generateAIOffers: (userTeamShort?: string) => void
-  respondToOffer: (offerId: number, accept: boolean) => void
+  /**
+   * Responde a uma proposta recebida.
+   *
+   * Desde a 1.0.223 aceitar NAO fecha o negocio sozinho: o ATLETA ainda decide.
+   * Ele pesa projeto (prestigio do comprador) e minutos (o papel que teria la) —
+   * um idolo do seu clube pode simplesmente recusar descer de patamar, como no
+   * futebol de verdade. Devolve `ok: false` com o motivo quando isso acontece.
+   */
+  respondToOffer: (offerId: number, accept: boolean) => { ok: boolean; motivo?: string }
   counterTransferOffer: (offerId: number, amount: number, wageCoverage?: number, loanWeeks?: number) => "accepted" | "revised" | "rejected"
   trainPlayer: (playerId: number, attribute: string) => void
   setStarter: (playerId: number, isStarter: boolean) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   /** Migra contratos de saves antigos para o relogio absoluto (roda uma vez). */
   migrarContratosParaSemanaAbsoluta: () => void
+  /**
+   * Reconstroi a tabela de duplas a partir dos jogos ja disputados (roda uma
+   * vez). Sem isto, quem ja tinha o time entrosado veria o numero despencar ao
+   * instalar a 1.0.223 — uma punicao por atualizar.
+   */
+  semearEntrosamentoDoHistorico: () => void
   /** `valor` = o que a compradora ofereceu; sem ele, o valor de mercado cheio. */
   sellPlayer: (playerId: number, valor?: number) => void
   /** Aposenta um veterano sem multa nem receita e o remove da folha. */
@@ -1975,8 +2046,23 @@ interface GameEngineState {
    * `void`; quem nao usa o retorno segue funcionando igual.
    */
   processarDesempenhoPartida: (golsPro: number, golsContra: number, events: MatchEvent[]) => VeredictoDaPartida[]
-  /** Ajusta o entrosamento (squadCohesion, 0-100). Amistoso e treino na data FIFA alimentam. */
+  /**
+   * Ajusta o entrosamento (squadCohesion, 0-100) diretamente.
+   *
+   * @deprecated Desde a 1.0.223 o entrosamento vem de MINUTOS JOGADOS JUNTOS —
+   * prefira `registrarMinutosJuntos`, que alimenta a conta de verdade em vez de
+   * empurrar o numero. Este metodo sobreviveu para eventos avulsos (excursao,
+   * confraternizacao) e para saves antigos.
+   */
   adjustSquadCohesion: (delta: number) => void
+  /**
+   * Credita minutos em campo juntos as duplas informadas e recalcula o
+   * entrosamento do XI. E por aqui que partida, amistoso e treino coletivo
+   * alimentam o MESMO numero. Sem `ids`, usa os titulares atuais.
+   */
+  registrarMinutosJuntos: (minutos: number, ids?: number[]) => void
+  /** Define o plano de treino coletivo da semana. */
+  definirPlanoDeTreino: (plano: Partial<PlanoDeTreino>) => void
   rolarLesaoSimulada: (qtdJogos: number) => void
   acumularEstatisticasSimuladas: (golsPro: number, golsContra: number) => void
   cumprirSuspensao: (playerId: number) => void
@@ -1994,6 +2080,8 @@ interface GameEngineState {
   setPlayerInstructions: (playerId: number, instructions: Partial<PlayerInstructions>) => void
   setTacticalAssignments: (assignments: Partial<TacticalAssignments>) => void
   setTacticalPlayerPositions: (positions: Record<string, { x: number; y: number }>) => void
+  /** Setas de movimentação (destino por nome). Traduzidas para as instruções do motor. */
+  setTacticalPlayerMovements: (movements: Record<string, { x: number; y: number }>) => void
   analyzeOpponent: (teamShort: string) => void
   updateOpponentAnalysis: () => void
   
@@ -2530,10 +2618,15 @@ export const useGameEngine = create<GameEngineState>()(
       playerInstructions: {},
       tacticalAssignments: { corner: "", freeKick: "", freeKickLeft: "", freeKickRight: "", penalty: "", captain: "", playerRoles: {} },
       tacticalPlayerPositions: {},
+      tacticalPlayerMovements: {},
       opponentAnalyses: [],
       
       // Moral
-      squadCohesion: 60,
+      squadCohesion: PISO_ENTROSAMENTO,
+      entrosamentoPares: {},
+      fadigaCronica: {},
+      planoDeTreino: { ...PLANO_PADRAO },
+      ultimoTreino: null,
       squadMorale: {
         overall: 70,
         unity: 75,
@@ -2595,7 +2688,40 @@ export const useGameEngine = create<GameEngineState>()(
           const chefeMedico = s.staffMembers.find(m => m.role === "chefe_medico")
           const bonusMedico = chefeMedico ? chefeMedico.competence / 100 : 0
           const recoveryPerWeek = Math.max(1, Math.round(1 + (medicalLvl - 1) * 0.25 + bonusMedico))
+
+          // ── SEMANA DE TREINO (1.0.223) ───────────────────────────────────────
+          //
+          // A energia ja nao sobe +10 para todo mundo. O plano coletivo produz uma
+          // CARGA; a carga mais os minutos jogados produzem DESGASTE; o que a
+          // recuperacao (idade, folego, Centro Medico, foco regenerativo) nao
+          // repoe vira FADIGA CRONICA; e a fadiga realimenta o RISCO DE LESAO.
+          // Ver lib/treino-e-entrosamento.ts.
+          //
+          // `minutosJogados` e uma aproximacao: titular sadio fez os 90 da semana.
+          // O motor nao guarda minuto a minuto por semana, e errar para mais no
+          // titular e exatamente o lado seguro — e ele que precisa ser poupado.
+          const plano = s.planoDeTreino ?? PLANO_PADRAO
+          const fadigaAnterior = s.fadigaCronica ?? {}
+          const entrada: AtletaNaSemana[] = s.squadPlayers.map(p => ({
+            id: p.id,
+            idade: p.age,
+            energia: p.energy ?? 100,
+            fadigaCronica: fadigaAnterior[p.id] ?? 0,
+            minutosJogados: p.isStarter && !p.injury ? 90 : 0,
+            resistencia: p.physical ?? 70,
+            lesionado: Boolean(p.injury),
+            emTreinoIndividual: Boolean(p.training.currentFocus),
+            focoIndividual: p.training.currentFocus ?? null,
+          }))
+          const resumoTreino = aplicarSemanaDeTreino(entrada, plano, {
+            centroDeTreinamento: trainingLvl,
+            centroMedico: medicalLvl,
+          })
+          const efeitoPorId = new Map(resumoTreino.efeitos.map(e => [e.id, e]))
+          const lesionadosNoTreino: string[] = []
+
           const updatedPlayers = s.squadPlayers.map(player => {
+            const efeito = efeitoPorId.get(player.id)
             if (player.injury) {
               const weeksRemaining = player.injury.weeksRemaining - recoveryPerWeek
               if (weeksRemaining <= 0) {
@@ -2603,11 +2729,28 @@ export const useGameEngine = create<GameEngineState>()(
               }
               return { ...player, injury: { ...player.injury, weeksRemaining } }
             }
-            
-            // Recuperar energia
-            const energyGain = player.training.currentFocus ? 5 : 10
-            const newEnergy = Math.min(100, player.energy + energyGain)
-            
+
+            // LESAO DE TREINO: carga alta num elenco cansado quebra gente. Este
+            // era o elo que faltava para a intensidade ter consequencia.
+            if (efeito && Math.random() < efeito.risco) {
+              const grave = Math.random()
+              const sev: PlayerInjury["severity"] = grave < 0.62 ? "leve" : grave < 0.92 ? "media" : "grave"
+              const semanas = sev === "leve" ? 1 + Math.floor(Math.random() * 2)
+                : sev === "media" ? 3 + Math.floor(Math.random() * 3) : 5 + Math.floor(Math.random() * 6)
+              lesionadosNoTreino.push(player.name)
+              return {
+                ...player,
+                energy: Math.round(efeito.energia),
+                training: { ...player.training, currentFocus: null, weeksTrained: 0 },
+                injury: {
+                  type: INJURY_TYPES[Math.floor(Math.random() * INJURY_TYPES.length)],
+                  severity: sev, weeksRemaining: semanas, startWeek: newWeek,
+                },
+              }
+            }
+
+            const newEnergy = Math.round(efeito?.energia ?? Math.min(100, player.energy + 10))
+
             // Processar treinamento (lastTrainingWeek check removed — would never match since currentWeek already advanced)
             if (player.training.currentFocus) {
               const weeksTrained = player.training.weeksTrained + 1
@@ -2626,7 +2769,13 @@ export const useGameEngine = create<GameEngineState>()(
                 // Jovem evolui mais rapido; veterano mais devagar. Antes o treino
                 // semanal IGNORAVA a idade (so o fim de temporada diferenciava).
                 const fatorIdade = player.age <= 20 ? 1.5 : player.age <= 24 ? 1.15 : player.age <= 29 ? 0.9 : 0.55
-                const chance = Math.min(0.95, trainImproveChance * fatorIdade)
+                // O TREINO COLETIVO manda no individual: intensidade alta ensina
+                // mais, elenco esgotado nao aprende nada, e treinar o atributo que
+                // o time inteiro esta treinando rende mais. Sem isto, a intensidade
+                // so tinha custo (fadiga) e nenhum beneficio — ninguem escolheria
+                // "alta" nunca.
+                const rendimento = efeito?.rendimentoIndividual ?? 1
+                const chance = Math.min(0.95, trainImproveChance * fatorIdade * rendimento)
                 const ganho = Math.random() < chance ? (player.age <= 20 && Math.random() < 0.3 ? 2 : 1) : 0
                 if (ganho === 0) {
                   return { ...player, energy: newEnergy, training: { ...player.training, weeksTrained: 0 } }
@@ -2904,11 +3053,47 @@ export const useGameEngine = create<GameEngineState>()(
             }
           })
 
+          // ── ENTROSAMENTO DA SEMANA ───────────────────────────────────────────
+          //
+          // O treino coletivo credita minutos juntos (bem menos que uma partida —
+          // ver minutosDeTreinoColetivo) e o esquecimento corroi as duplas que
+          // pararam de jogar. As duplas de quem SAIU do clube somem: elas nunca
+          // mais serao usadas e so inchariam o save.
+          const idsQueTreinaram = playersAfterNT.filter(p => !p.injury && p.isStarter).map(p => p.id)
+          let paresDaSemana = decairEntrosamento(
+            s.entrosamentoPares ?? {},
+            playersAfterNT.map(p => p.id),
+          )
+          if (idsQueTreinaram.length >= 2) {
+            paresDaSemana = creditarMinutosJuntos(paresDaSemana, idsQueTreinaram, minutosDeTreinoColetivo(plano))
+          }
+          const entrosamentoDaSemana = idsQueTreinaram.length >= 2
+            ? entrosamentoDoGrupo(paresDaSemana, idsQueTreinaram)
+            : (s.squadCohesion ?? PISO_ENTROSAMENTO)
+
+          // Fadiga cronica só dos atletas que continuam no elenco.
+          const fadigaAtualizada: Record<number, number> = {}
+          for (const p of playersAfterNT) {
+            const e = efeitoPorId.get(p.id)
+            if (e) fadigaAtualizada[p.id] = Math.round(e.fadigaCronica)
+          }
+
           return {
             ...s,
             currentWeek: finalWeek,
             currentSeason: newSeason,
             squadPlayers: playersAfterNT,
+            entrosamentoPares: paresDaSemana,
+            squadCohesion: entrosamentoDaSemana,
+            fadigaCronica: fadigaAtualizada,
+            ultimoTreino: {
+              carga: resumoTreino.carga,
+              energiaMedia: resumoTreino.energiaMedia,
+              fadigaMedia: resumoTreino.fadigaMedia,
+              riscoMedio: resumoTreino.riscoMedio,
+              lesionados: lesionadosNoTreino,
+              semana: newWeek,
+            },
             nationalTeamCalls: updatedCalls,
             transferOffers: updatedOffers,
             pendingIncomingTransfers: canRegisterTransfers ? [] : s.pendingIncomingTransfers,
@@ -3061,6 +3246,29 @@ export const useGameEngine = create<GameEngineState>()(
        * plausivel a partir de agora (jovem e craque assinam mais longo). Roda
        * uma unica vez por carreira.
        */
+      semearEntrosamentoDoHistorico: () => {
+        const s = get()
+        if (s.entrosamentoSemeado) return
+        // Save que ja nasceu na 1.0.223 nao tem historico para semear — so marca
+        // como feito para nao repetir a checagem toda semana.
+        const comJogos = s.squadPlayers
+          .map(p => ({ id: p.id, jogos: p.seasonStats?.matchesPlayed ?? 0 }))
+          .filter(p => p.jogos > 0)
+        if (comJogos.length < 2) {
+          set({ entrosamentoSemeado: true })
+          return
+        }
+        const pares = semearParesDeHistorico(comJogos)
+        const titulares = s.squadPlayers.filter(p => p.isStarter).map(p => p.id)
+        set({
+          entrosamentoSemeado: true,
+          entrosamentoPares: pares,
+          squadCohesion: titulares.length >= 2
+            ? entrosamentoDoGrupo(pares, titulares)
+            : (s.squadCohesion ?? PISO_ENTROSAMENTO),
+        })
+      },
+
       migrarContratosParaSemanaAbsoluta: () => {
         const s = get()
         if (s.contractsAbsoluteMigrated) return
@@ -3607,10 +3815,86 @@ export const useGameEngine = create<GameEngineState>()(
         // ativa gera mais ofertas", mas a funcao NUNCA olhou a janela: chovia
         // proposta em qualquer semana do ano. Fora da janela o que existe e
         // sondagem — acontece, mas e bem mais raro.
+        //
+        // Desde a 1.0.223 a janela tambem tem RELOGIO: `semanasParaFechar` faz a
+        // ultima quinzena virar deadline day, quando quem nao resolveu paga mais
+        // caro e abre mais perto do teto (ver urgenciaDaJanela).
         const janelaAberta = isTransferWindowOpen(state.currentWeek)
         const fatorJanela = janelaAberta ? 1 : 0.22
+        const contextoJanela = {
+          aberta: janelaAberta,
+          semanasParaFechar: weeksUntilWindowCloses(state.currentWeek),
+        }
+
+        /**
+         * COMPRADORES POSSIVEIS, com o elenco REAL de cada um.
+         *
+         * O pool antigo era `AI_TEAMS`: dezesseis clubes com orcamento chumbado
+         * na constante e nenhuma nocao do proprio elenco. Agora cada candidato
+         * traz o elenco de verdade (`getPlayersForTeam`, a mesma fonte do resto
+         * do jogo) e o saldo do proprio clube — e por isso consegue responder as
+         * perguntas que importam: "eu preciso de um zagueiro?" e "eu tenho
+         * dinheiro para este?".
+         *
+         * O calculo do perfil e caro (percorre o elenco), entao fica em cache por
+         * chamada: os mesmos candidatos servem todos os atletas da rodada.
+         */
+        const perfilCache = new Map<string, ClubeComprador | null>()
+        const compradorDe = (curto: string, nome: string, prestigio: number, caixa: number): ClubeComprador | null => {
+          if (perfilCache.has(curto)) return perfilCache.get(curto) ?? null
+          let comprador: ClubeComprador | null = null
+          try {
+            const time = getTeamByShort(curto)
+            const elenco = time ? getPlayersForTeam(time) : []
+            // Sem elenco nao da para avaliar necessidade — e avaliar no chute e
+            // exatamente o que se esta corrigindo aqui.
+            if (elenco.length >= 11) {
+              comprador = {
+                curto, nome, prestigio,
+                caixa,
+                folhaSemanal: undefined,
+                perfil: perfilDeElenco(elenco.map(p => ({
+                  posicao: String(p.pos ?? "MEI"),
+                  overall: p.base ?? 65,
+                  idade: p.idade ?? 26,
+                }))),
+              }
+            }
+          } catch { /* clube sem elenco no banco: fica de fora, sem quebrar a semana */ }
+          perfilCache.set(curto, comprador)
+          return comprador
+        }
+
+        /**
+         * O POOL DE COMPRADORES.
+         *
+         * `AI_TEAMS` (16 clubes com orcamento chumbado) continua na base, porque
+         * e la que estao os pesos-pesados com caixa calibrado. Mas ele sozinho
+         * fazia o mercado inteiro girar em torno dos mesmos dezesseis nomes.
+         * Somamos clubes do catalogo com prestigio proximo do elenco do usuario:
+         * o caixa deles sai do proprio `saldo`, e o elenco de `getPlayersForTeam`.
+         *
+         * O corte por prestigio nao e enfeite: e o que impede o time da Serie D
+         * de sondar o craque e o gigante de perder tempo com o reserva — sem
+         * precisar avaliar dois mil clubes por semana.
+         */
+        const prestigioBase = getTeamByShort(meuTime)?.prestigio ?? 70
+        const candidatosDeCompra = [
+          ...AI_TEAMS.map(t => ({ short: t.short, name: t.name, prestige: t.prestige, budget: t.budget })),
+          ...allTeams
+            .filter(t => Math.abs((t.prestigio ?? 60) - prestigioBase) <= 14)
+            .map(t => ({
+              short: t.curto, name: t.nome, prestige: t.prestigio ?? 60,
+              budget: Math.max(500_000, t.saldo ?? 0),
+            })),
+        ]
+          .filter(t => t.short.toUpperCase() !== meuTime)
+          // Sem duplicar quem esta nas duas listas (AI_TEAMS manda: caixa calibrado).
+          .filter((t, i, arr) => arr.findIndex(o => o.short === t.short) === i)
+          .slice(0, 40)
 
         const newOffers: TransferOffer[] = []
+        const candidatosASondagem: { player: Player; sondagem: Sondagem }[] = []
         const pendingIds = new Set(
           state.transferOffers.filter(o => o.status === "pendente").map(o => o.playerId)
         )
@@ -3639,54 +3923,79 @@ export const useGameEngine = create<GameEngineState>()(
             + insatisfacao) * fatorJanela
           if (Math.random() > Math.max(0.02, Math.min(0.7, attractiveness))) continue
 
-          // Clubes candidatos avaliados pela própria IA (perfil + orçamento)
-          const interested = AI_TEAMS
+          // ── QUEM QUER, E POR QUÊ ────────────────────────────────────────────
+          //
+          // Cada candidato responde a mesma pergunta que um diretor de futebol
+          // faria: "eu preciso disto? ele joga aqui? eu tenho o dinheiro?". A
+          // avaliacao devolve o PAPEL PREVISTO (titular/rotacao/reserva) e e ele
+          // que corta o valor da proposta — a raiz do "clube grande manda 13
+          // milhoes por um reserva" era o preco sair do valor de mercado sozinho,
+          // sem passar por "ele vai jogar?".
+          const alvo: AtletaAlvo = {
+            id: player.id,
+            nome: player.name,
+            posicao: player.position,
+            overall: player.overall,
+            potencial: player.potential,
+            idade: player.age,
+            valorDeMercado: player.marketValue,
+            salarioSemanal: player.contract?.salary ?? Math.round(player.marketValue * 0.0006),
+            semanasDeContrato,
+            moral,
+            listado: listed.has(player.id),
+            papelAtual: player.isStarter ? "titular" : "rotacao",
+          }
+
+          const avaliacoes = candidatosDeCompra
             .map(t => {
-              const cfg = getClubAIConfig(t.short, t.prestige)
-              const verdict = evaluateBuy(cfg, {
-                overall: player.overall,
-                age: player.age,
-                value: player.marketValue,
-                nationality: player.nationality,
-              })
-              return { team: t, cfg, verdict }
+              const comprador = compradorDe(t.short, t.name, t.prestige, t.budget)
+              if (!comprador) return null
+              return { comprador, avaliacao: avaliarCompra(comprador, alvo, contextoJanela) }
             })
-            .filter(({ team, verdict }) =>
-              verdict.wants &&
-              team.short.toUpperCase() !== meuTime &&
-              team.budget >= verdict.maxFee * 0.6 &&
-              // Clube grande não busca reserva mediano; clube menor não alcança estrela
-              Math.abs(team.prestige - (player.overall + 5)) <= 18
+            .filter((x): x is { comprador: ClubeComprador; avaliacao: AvaliacaoDeCompra } => x !== null)
+
+          const interessados = avaliacoes.filter(a => a.avaliacao.quer)
+          if (interessados.length === 0) {
+            // Ninguem chegou a proposta, mas quem CHEGOU PERTO fica de olho —
+            // e a sondagem passa a ter motivo em vez de ser sorteio.
+            candidatosASondagem.push(
+              ...avaliacoes
+                .map(a => ({ player, sondagem: sondagemDe(a.comprador, alvo, a.avaliacao) }))
+                .filter((x): x is { player: typeof player; sondagem: Sondagem } => x.sondagem !== null),
             )
-          if (interested.length === 0) continue
+            continue
+          }
 
-          const { team: buyingTeam, cfg, verdict } =
-            interested[Math.floor(Math.random() * interested.length)]
+          // Entre os interessados, ganha quem PRECISA mais — nao um sorteio
+          // uniforme. Clube com o setor furado se move antes do que esta servido.
+          const escolhido = interessados.sort(
+            (a, b) => (b.avaliacao.necessidade + (b.avaliacao.papel === "estrela" ? 0.3 : 0))
+              - (a.avaliacao.necessidade + (a.avaliacao.papel === "estrela" ? 0.3 : 0)),
+          )[0]
+          const { comprador: buyingTeam, avaliacao } = escolhido
+          const cfg = getClubAIConfig(buyingTeam.curto, buyingTeam.prestigio)
 
-          // Empréstimo: jovens fora do time titular ou clube sem caixa para compra
+          // EMPRESTIMO: quem entraria como rotacao, o jovem sem espaco e o clube
+          // que quer mas nao alcanca o preco vem buscar cedido, nao comprado.
           const wantsLoan =
             // Listado para empréstimo pelo técnico: a IA vem com proposta de
             // empréstimo, não de compra (modal do gerenciamento).
             (state.loanListedIds ?? []).includes(player.id) ||
             (player.age <= 22 && !player.isStarter && Math.random() < 0.55) ||
-            buyingTeam.budget < verdict.maxFee
+            (avaliacao.papel === "rotacao" && Math.random() < 0.45) ||
+            buyingTeam.caixa < avaliacao.teto
 
-          let offerAmount: number
-          if (wantsLoan) {
-            offerAmount = player.contract?.salary
-              ? Math.round(player.contract.salary * 4 * (0.5 + Math.random() * 0.5))
-              : 100000
-          } else {
-            // Abertura de negociação: 78-95% do teto do clube (deixa espaço p/ contraproposta)
-            const opening = 0.78 + Math.random() * 0.17
-            offerAmount = Math.round((verdict.maxFee * opening) / 100_000) * 100_000
-          }
+          const offerAmount = wantsLoan
+            ? (player.contract?.salary
+                ? Math.round(player.contract.salary * 4 * (0.5 + Math.random() * 0.5))
+                : 100000)
+            : avaliacao.proposta
 
           newOffers.push({
             id: Date.now() + player.id,
             playerId: player.id,
             playerName: player.name,
-            fromTeam: buyingTeam.name,
+            fromTeam: buyingTeam.nome,
             offerType: wantsLoan ? "emprestimo" : "compra",
             offerAmount,
             wageCoverage: wantsLoan
@@ -3701,27 +4010,27 @@ export const useGameEngine = create<GameEngineState>()(
           if (newOffers.length >= 2) break // máx 2 ofertas novas por semana
         }
 
-        // SONDAGENS: alem das ofertas formais, alguns clubes so "ficam de olho".
-        // Um jogador atraente que nao recebeu proposta esta semana pode virar
-        // sondagem — o aviso antecipa que uma oferta pode chegar. Mantem no
-        // maximo as 8 mais recentes para nao inchar o save.
+        // SONDAGENS: os clubes que olharam o atleta e nao fecharam proposta esta
+        // semana. Antes era um sorteio puro — `Math.random() > 0.12` e um clube
+        // qualquer de AI_TEAMS, sem relacao nenhuma com o atleta ou com o elenco
+        // do sondador. Agora sai da MESMA avaliacao da compra, entao a sondagem
+        // sabe dizer por que existe e costuma virar proposta na janela seguinte.
         const novasSondagens: MarketInterest[] = []
         const jaSondados = new Set((state.marketInterests ?? []).map(i => i.playerId))
-        // O sondador NUNCA pode ser o proprio clube (relato: "meu time esta
-        // sondando meu jogador"). A oferta formal ja excluia meuTime; a sondagem
-        // sorteava de AI_TEAMS sem esse filtro.
-        const clubesSondadores = AI_TEAMS.filter(t => t.short.toUpperCase() !== meuTime)
-        for (const player of marketable) {
+        for (const { player, sondagem } of candidatosASondagem) {
           if (pendingIds.has(player.id) || jaSondados.has(player.id)) continue
-          if (player.overall < 74) continue
-          if (Math.random() > 0.12) continue
-          if (clubesSondadores.length === 0) break
-          const club = clubesSondadores[Math.floor(Math.random() * clubesSondadores.length)]
+          // Fora da janela a sondagem e mais rara — mas ela EXISTE fora da janela,
+          // que e justamente quando um clube monta a lista da temporada seguinte.
+          if (Math.random() > (janelaAberta ? 0.5 : 0.18)) continue
+          jaSondados.add(player.id)
           novasSondagens.push({
             id: `interest-${state.currentSeason}-${state.currentWeek}-${player.id}`,
             playerId: player.id, playerName: player.name,
-            club: typeof club === "string" ? club : (club?.name ?? "Um clube"),
+            club: sondagem.clube,
             week: state.currentWeek,
+            motivo: sondagem.motivo,
+            papel: ROTULO_DO_PAPEL[sondagem.papel],
+            temCaixa: sondagem.temCaixa,
           })
           if (novasSondagens.length >= 2) break
         }
@@ -3739,13 +4048,82 @@ export const useGameEngine = create<GameEngineState>()(
       respondToOffer: (offerId: number, accept: boolean) => {
         const state = get()
         const offer = state.transferOffers.find(o => o.id === offerId)
-        
-        if (!offer || offer.status !== "pendente") return
-        
+
+        if (!offer || offer.status !== "pendente") return { ok: false }
+
         if (accept) {
           const player = state.squadPlayers.find(p => p.id === offer.playerId)
-          if (!player) return
-          
+          if (!player) return { ok: false }
+
+          // ── O ATLETA TAMBEM DECIDE (1.0.223) ──────────────────────────────
+          //
+          // Aceitar a proposta era, ate aqui, decisao exclusiva do tecnico: o
+          // atleta ia, sempre, para onde mandassem. Agora ele pesa PROJETO
+          // (prestigio do comprador contra o do clube atual) e MINUTOS (o papel
+          // que teria no elenco de la) — os dois fatores que de fato derrubam
+          // transferencia no futebol real.
+          //
+          // Emprestimo nao passa por aqui: ceder um atleta que nao esta jogando
+          // e, quase sempre, do interesse dele proprio.
+          if (offer.offerType === "compra") {
+            const compradorTime = getTeamByShort(offer.fromTeam)
+              ?? allTeams.find(t => t.nome === offer.fromTeam)
+            const prestigioComprador = compradorTime?.prestigio
+              ?? AI_TEAMS.find(t => t.name === offer.fromTeam)?.prestige
+              ?? 70
+            const meuPrestigio = getTeamByShort(state.myTeamShort ?? "")?.prestigio ?? 70
+            let papelLa: PapelPrevisto = "titular"
+            try {
+              const elencoComprador = compradorTime ? getPlayersForTeam(compradorTime) : []
+              if (elencoComprador.length >= 11) {
+                papelLa = papelPrevisto(
+                  perfilDeElenco(elencoComprador.map(p => ({
+                    posicao: String(p.pos ?? "MEI"), overall: p.base ?? 65, idade: p.idade ?? 26,
+                  }))),
+                  player.position,
+                  player.overall,
+                )
+              }
+            } catch { /* sem elenco do comprador: fica no palpite neutro (titular) */ }
+
+            const decisao = decisaoDoAtleta({
+              atleta: {
+                id: player.id, nome: player.name, posicao: player.position,
+                overall: player.overall, potencial: player.potential, idade: player.age,
+                valorDeMercado: player.marketValue,
+                salarioSemanal: player.contract?.salary ?? 0,
+                semanasDeContrato: player.contract
+                  ? player.contract.endDate - absoluteWeek(state.currentSeason, state.currentWeek)
+                  : 52,
+                moral: player.moralePoints ?? 55,
+                listado: (state.transferListedIds ?? []).includes(player.id),
+                papelAtual: player.isStarter ? "titular" : "rotacao",
+              },
+              prestigioClubeAtual: meuPrestigio,
+              prestigioClubeNovo: prestigioComprador,
+              papelNoClubeNovo: papelLa,
+              // O comprador cobre o salario atual com o agio do papel previsto.
+              salarioOferecido: Math.round((player.contract?.salary ?? 0)
+                * (papelLa === "estrela" ? 1.45 : papelLa === "titular" ? 1.20 : 1.02)),
+            })
+
+            if (!decisao.aceita) {
+              // A proposta MORRE (o clube nao insiste em quem nao quer ir) e o
+              // atleta ganha um pouco de moral: ficou onde queria ficar.
+              set((s) => ({
+                transferOffers: s.transferOffers.map(o =>
+                  o.id === offerId ? { ...o, status: "rejeitada" as const } : o,
+                ),
+                squadPlayers: s.squadPlayers.map(p =>
+                  p.id === player.id
+                    ? { ...p, moralePoints: Math.min(100, (p.moralePoints ?? 55) + 4) }
+                    : p,
+                ),
+              }))
+              return { ok: false, motivo: `${player.name} recusou a transferência: ${decisao.motivo.toLowerCase()}` }
+            }
+          }
+
           if (offer.offerType === "compra") {
             // Vende o jogador
             set((s) => ({
@@ -3777,13 +4155,15 @@ export const useGameEngine = create<GameEngineState>()(
               )
             }))
           }
-        } else {
-          set((s) => ({
-            transferOffers: s.transferOffers.map(o => 
-              o.id === offerId ? { ...o, status: "rejeitada" as const } : o
-            )
-          }))
+          return { ok: true }
         }
+
+        set((s) => ({
+          transferOffers: s.transferOffers.map(o =>
+            o.id === offerId ? { ...o, status: "rejeitada" as const } : o
+          )
+        }))
+        return { ok: true }
       },
 
       counterTransferOffer: (offerId, amount, wageCoverage, loanWeeks) => {
@@ -4023,14 +4403,29 @@ export const useGameEngine = create<GameEngineState>()(
             }
             return { ...p, ...persist }
           })
-          // ENTROSAMENTO sobe jogando: cada partida disputada aproxima o time do
-          // teto. Vitoria constroi mais que derrota.
-          const ganhoEntrosamento = resultado === "win" ? 3 : resultado === "draw" ? 2 : 1
-          const novoEntrosamento = Math.max(0, Math.min(100, (s.squadCohesion ?? 60) + ganhoEntrosamento))
+          // ENTROSAMENTO: os 90 minutos que ESTE onze acabou de jogar JUNTO.
+          //
+          // Antes era `+3 por vitoria, +2 por empate, +1 por derrota` sobre um
+          // contador global — o time podia trocar de titular toda semana que o
+          // numero subia igual. Agora o credito vai para as DUPLAS que estavam em
+          // campo, e o entrosamento e recalculado a partir delas. Time que roda
+          // demais o elenco simplesmente nao entrosa, como na vida real.
+          //
+          // O resultado ainda pesa, mas de leve e onde faz sentido: vitoria
+          // costura, derrota desune. Vira um pequeno bonus/desconto de minutos.
+          const idsQueJogaram = s.squadPlayers.filter(p => p.isStarter && !p.injury).map(p => p.id)
+          const minutosDoJogo = 90 + (resultado === "win" ? 12 : resultado === "loss" ? -14 : 0)
+          const paresAtualizados = creditarMinutosJuntos(
+            s.entrosamentoPares ?? {}, idsQueJogaram, minutosDoJogo,
+          )
+          const novoEntrosamento = idsQueJogaram.length >= 2
+            ? entrosamentoDoGrupo(paresAtualizados, idsQueJogaram)
+            : (s.squadCohesion ?? PISO_ENTROSAMENTO)
           // Multa do tribunal sai do caixa do clube (o julgamento pune os dois).
           const multas = vereditos.reduce((soma, v) => soma + v.julgamento.multaClube, 0)
           return {
             squadCohesion: novoEntrosamento,
+            entrosamentoPares: paresAtualizados,
             ...(multas > 0 ? { balance: Math.round((s.balance ?? 0) - multas) } : {}),
             squadPlayers: comNota.map(p =>
               p.id === melhorId
@@ -4042,11 +4437,35 @@ export const useGameEngine = create<GameEngineState>()(
         return vereditos
       },
 
-      // Entrosamento por FORA da partida oficial: amistoso e treino na data FIFA.
-      // Mesmo teto de 100 e piso de 0; o efeito em campo ja vem do bonusEntrosamento
-      // (ao-vivo) que le squadCohesion.
+      // Empurrao direto no entrosamento, para eventos avulsos. Ver a nota de
+      // depreciacao na interface: o caminho normal e registrarMinutosJuntos.
       adjustSquadCohesion: (delta) => {
-        set((s) => ({ squadCohesion: Math.max(0, Math.min(100, (s.squadCohesion ?? 60) + delta)) }))
+        set((s) => ({ squadCohesion: Math.max(0, Math.min(100, (s.squadCohesion ?? PISO_ENTROSAMENTO) + delta)) }))
+      },
+
+      /**
+       * A PONTE entre os dois sistemas que nao se falavam.
+       *
+       * Partida oficial, amistoso e treino coletivo passam TODOS por aqui, cada
+       * um com o seu peso em minutos. O entrosamento do XI deixa de ser um
+       * contador que alguem incrementa e passa a ser a leitura de quanto aquele
+       * grupo especifico ja jogou junto — trocar meio time na janela derruba o
+       * numero sozinho, sem ninguem precisar lembrar de descontar.
+       */
+      registrarMinutosJuntos: (minutos, ids) => {
+        set((s) => {
+          const disponiveis = s.squadPlayers.filter(p => !p.injury)
+          const alvo = ids?.length
+            ? ids
+            : disponiveis.filter(p => p.isStarter).map(p => p.id)
+          if (alvo.length < 2) return {}
+          const pares = creditarMinutosJuntos(s.entrosamentoPares ?? {}, alvo, minutos)
+          return { entrosamentoPares: pares, squadCohesion: entrosamentoDoGrupo(pares, alvo) }
+        })
+      },
+
+      definirPlanoDeTreino: (plano) => {
+        set((s) => ({ planoDeTreino: { ...(s.planoDeTreino ?? PLANO_PADRAO), ...plano } }))
       },
 
       /**
@@ -4483,6 +4902,41 @@ export const useGameEngine = create<GameEngineState>()(
 
       setTacticalPlayerPositions: (positions) => {
         set({ tacticalPlayerPositions: positions })
+      },
+
+      /**
+       * Grava a seta de movimentação E a traduz para as instruções que a
+       * SIMULAÇÃO já lê. Sem esta tradução a seta seria enfeite: o motor não
+       * sabe ler coordenada, sabe ler `getForward`, `holdPosition`, `stayWider`
+       * e `cutInside`. No campo da prancheta y=0 é o gol adversário, então
+       * subir (dy negativo) é avançar.
+       */
+      setTacticalPlayerMovements: (movements) => {
+        set({ tacticalPlayerMovements: movements })
+        const base = get().tacticalPlayerPositions
+        const porNome = new Map(get().squadPlayers.map(p => [p.name, p.id]))
+        for (const [nome, destino] of Object.entries(movements)) {
+          const id = porNome.get(nome)
+          const origem = base[nome]
+          if (id == null || !origem) continue
+          const dx = destino.x - origem.x
+          const dy = destino.y - origem.y
+          const avanca = dy <= -6
+          const recua = dy >= 6
+          // Abrir = ir para a lateral mais próxima; fechar = ir para o miolo.
+          const paraFora = Math.abs(destino.x - 50) - Math.abs(origem.x - 50) >= 6
+          const paraDentro = Math.abs(destino.x - 50) - Math.abs(origem.x - 50) <= -6
+          get().setPlayerInstructions(id, {
+            getForward: avanca,
+            holdPosition: recua,
+            stayWider: paraFora,
+            cutInside: paraDentro,
+            // Seta longa = liberdade para se soltar; seta curta = posição.
+            roaming: Math.hypot(dx, dy) >= 22 ? "liberdade_total"
+              : Math.hypot(dx, dy) >= 10 ? "liberdade_moderada" : "ficar_posicao",
+            runs: avanca ? "frequentemente" : recua ? "raramente" : "as_vezes",
+          })
+        }
       },
       
       analyzeOpponent: (teamShort: string) => {

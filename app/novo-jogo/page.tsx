@@ -51,7 +51,7 @@ import {
 import { getLeagueLogo } from "@/lib/league-logos"
 import { useGameManager } from "@/lib/use-game-manager"
 import { listCareerSaves } from "@/lib/save-system"
-import { LIMITE_SAVES_SEM_REGISTRO, ROTA_DE_REGISTRO, useJogoRegistrado } from "@/lib/beneficios"
+import { LIMITE_SAVES_SEM_REGISTRO, PAISES_SEM_REGISTRO, ROTA_DE_REGISTRO, useJogoRegistrado } from "@/lib/beneficios"
 import { createYouthCareer } from "@/lib/youth-career-engine"
 import { createClubDebt, type DebtPreset } from "@/lib/debt-engine"
 import { createScoutingDepartment } from "@/lib/scout-engine"
@@ -256,8 +256,18 @@ export default function NovoJogoPage() {
   const [nameError, setNameError] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
-  const activeCountry = COUNTRIES[countryIndex]
-  const activeLeague = activeCountry.leagues[leagueIndex]
+  // Enquanto o registro nao hidrata (o arquivo do store carrega de forma
+  // assincrona) valem os tres paises livres: o indice 0 e o Brasil nos dois
+  // casos, entao a lista so CRESCE quando o codigo aparece — nunca encolhe
+  // debaixo do dedo de quem ja estava escolhendo.
+  const paises = useMemo(
+    () => (registrado ? COUNTRIES : COUNTRIES.filter(c => PAISES_SEM_REGISTRO.includes(c.code))),
+    [registrado],
+  )
+  const paisesBloqueados = COUNTRIES.length - paises.length
+
+  const activeCountry = paises[Math.min(countryIndex, paises.length - 1)]
+  const activeLeague = activeCountry.leagues[Math.min(leagueIndex, activeCountry.leagues.length - 1)]
   const teams = activeLeague.teams
   const selectedTeam = teams[teamIndex]
 
@@ -376,15 +386,21 @@ export default function NovoJogoPage() {
   const prevTeam = useCallback(() => setTeamIndex(prev => (prev - 1 + teams.length) % teams.length), [teams.length])
 
   const nextCountry = useCallback(() => {
-    setCountryIndex(prev => (prev + 1) % COUNTRIES.length)
+    setCountryIndex(prev => (prev + 1) % paises.length)
     setLeagueIndex(0)
     setTeamIndex(0)
-  }, [])
+  }, [paises.length])
   const prevCountry = useCallback(() => {
-    setCountryIndex(prev => (prev - 1 + COUNTRIES.length) % COUNTRIES.length)
+    setCountryIndex(prev => (prev - 1 + paises.length) % paises.length)
     setLeagueIndex(0)
     setTeamIndex(0)
-  }, [])
+  }, [paises.length])
+
+  // O registro chega depois do primeiro render: a lista de paises cresce e o
+  // indice precisa continuar dentro dela.
+  useEffect(() => {
+    setCountryIndex(prev => Math.min(prev, paises.length - 1))
+  }, [paises.length])
 
   const nextLeague = useCallback(() => {
     setLeagueIndex(prev => (prev + 1) % activeCountry.leagues.length)
@@ -489,7 +505,7 @@ export default function NovoJogoPage() {
             {/* ── Zona 1: Info do clube ── */}
             <div className="flex flex-col w-full lg:w-[300px] shrink-0">
 
-              {/* Pais (com setas, navega nos dois sentidos por todos os ${COUNTRIES.length} paises do jogo) */}
+              {/* Pais (com setas, navega nos dois sentidos pelos paises disponiveis) */}
               <div className="flex items-center gap-1.5 mb-2">
                 <button
                   onClick={prevCountry}
@@ -504,7 +520,7 @@ export default function NovoJogoPage() {
                   className="group flex items-center gap-1.5"
                 >
                   <span className="text-base font-bold uppercase tracking-wide text-white/80 group-hover:text-white transition-colors">{activeCountry.name}</span>
-                  <span className="text-white/35 text-[10px]">{countryIndex + 1}/{COUNTRIES.length}</span>
+                  <span className="text-white/35 text-[10px]">{Math.min(countryIndex, paises.length - 1) + 1}/{paises.length}</span>
                 </button>
                 <button
                   onClick={nextCountry}
@@ -514,6 +530,22 @@ export default function NovoJogoPage() {
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Aviso das ligas que o codigo libera. Fica junto do seletor porque
+                  e ali que a falta aparece — some assim que o jogo e registrado. */}
+              {paisesBloqueados > 0 && (
+                <button
+                  type="button"
+                  onClick={() => hardNavigate(ROTA_DE_REGISTRO)}
+                  className="mb-3 flex w-full items-start gap-2 rounded-lg border border-amber-400/25 bg-amber-400/[0.07] px-2.5 py-2 text-left text-[11px] leading-snug text-amber-100/80 transition-colors hover:border-amber-400/45 hover:bg-amber-400/[0.12]"
+                >
+                  <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+                  <span>
+                    Sem registro voce comeca no <strong className="font-semibold text-amber-100">Brasil, Franca ou Espanha</strong>.
+                    Registre o jogo para abrir os outros {paisesBloqueados} paises.
+                  </span>
+                </button>
+              )}
 
               {/* Nome do time */}
               <h1 className="text-3xl sm:text-[2rem] font-black uppercase tracking-tight text-white leading-tight text-balance mb-5">

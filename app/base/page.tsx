@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { useNotifications } from "@/components/notifications-system"
+import { avisar as avisarNoJogo, confirmar as confirmarNoJogo, pedirTexto as pedirTextoNoJogo } from "@/lib/dialogo-do-jogo"
 import { isTransferWindowOpen, useGameEngine } from "@/lib/game-engine"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { useRequireClub } from "@/lib/use-require-team"
@@ -260,14 +261,21 @@ export default function BasePage() {
   //   • a captacao dos olheiros.
   // Sair da base agora ABRE VAGA, que e o comportamento correto.
 
-  const promote = (player: SquadPlayer) => {
+  const promote = async (player: SquadPlayer) => {
     if (caixaDoMotor < PROMOTION_FEE) {
-      if (typeof window !== "undefined") window.alert("Saldo insuficiente para promover (R$ 200.000).")
+      await avisarNoJogo({
+        titulo: "Saldo insuficiente",
+        mensagem: "Promover um jovem ao elenco profissional custa R$ 200.000.",
+        tom: "alerta",
+      })
       return
     }
-    if (typeof window !== "undefined" && !window.confirm(`Promover ${player.name} ao elenco profissional por R$ 200.000?`)) {
-      return
-    }
+    const confirmado = await confirmarNoJogo({
+      titulo: `Promover ${player.name} ao elenco profissional?`,
+      mensagem: "O clube paga R$ 200.000 e o atleta passa a ocupar vaga no elenco principal.",
+      confirmar: "Promover",
+    })
+    if (!confirmado) return
     const subiu = promoverNoMotor({
       name: player.name, position: player.position, age: player.age,
       overall: player.overall, potential: player.potential,
@@ -275,7 +283,11 @@ export default function BasePage() {
       dribbling: player.dribbling, defending: player.defending, physical: player.physical,
     }, PROMOTION_FEE)
     if (!subiu) {
-      if (typeof window !== "undefined") window.alert("Nao foi possivel promover: saldo insuficiente.")
+      await avisarNoJogo({
+        titulo: "Não foi possível promover",
+        mensagem: "O saldo do clube não cobre a taxa de promoção.",
+        tom: "alerta",
+      })
       return
     }
     const promoted: SquadPlayer = {
@@ -305,8 +317,14 @@ export default function BasePage() {
     })
   }
 
-  const releaseYouth = (player: SquadPlayer) => {
-    if (typeof window !== "undefined" && !window.confirm(`Dispensar ${player.name} da categoria de base? A vaga fica aberta até a próxima peneira ou temporada.`)) return
+  const releaseYouth = async (player: SquadPlayer) => {
+    const confirmado = await confirmarNoJogo({
+      titulo: `Dispensar ${player.name} da categoria de base?`,
+      mensagem: "A vaga fica aberta até a próxima peneira ou temporada.",
+      tom: "perigo",
+      confirmar: "Dispensar",
+    })
+    if (!confirmado) return
     // Dispensar NAO gera substituto na hora. Antes gerava, e dava para ficar
     // apertando dispensar ate sair um bom (relato do jogador) — cada clique era
     // um novo sorteio. Agora a vaga apenas abre; para preencher, use a peneira
@@ -328,40 +346,56 @@ export default function BasePage() {
   const semanasDesdePeneira = stampAtual - (state.youthTryoutStamp ?? -999)
   const peneiraDisponivel = semanasDesdePeneira >= TRYOUT_COOLDOWN
 
-  const holdTryout = () => {
+  const holdTryout = async () => {
     // COOLDOWN: a peneira acontece a cada ~2 meses (8 semanas). Sem isto, rodar
     // peneira (barata) e vender os prospectos em loop imprimia dinheiro infinito.
     if (!peneiraDisponivel) {
       const faltam = TRYOUT_COOLDOWN - semanasDesdePeneira
-      return window.alert(`A próxima peneira só daqui a ${faltam} semana${faltam === 1 ? "" : "s"} (uma a cada ~2 meses).`)
+      return void avisarNoJogo({
+        titulo: "A peneira ainda não pode ser realizada",
+        mensagem: `A próxima só daqui a ${faltam} semana${faltam === 1 ? "" : "s"} — o clube faz uma a cada ~2 meses.`,
+        tom: "alerta",
+      })
     }
     // CAPACIDADE: a peneira era a unica porta de entrada que nao olhava as vagas
     // (comprar no mercado de juniores ja olhava). Dava para estourar o teto da
     // academia e manter uma fila de garotos maior do que o clube comporta.
     if (vagas <= 0) {
-      return window.alert(
-        "A categoria de base está lotada. Promova, venda ou dispense alguém antes da próxima peneira.",
-      )
+      return void avisarNoJogo({
+        titulo: "A categoria de base está lotada",
+        mensagem: "Promova, venda ou dispense alguém antes da próxima peneira.",
+        tom: "alerta",
+      })
     }
     const fee = 100_000
-    if (caixaDoMotor < fee) return window.alert("Saldo insuficiente para realizar a peneira.")
-    if (!gastarDoCaixa(fee)) return window.alert("Saldo insuficiente para realizar a peneira.")
+    const semCaixa = () => void avisarNoJogo({
+      titulo: "Saldo insuficiente",
+      mensagem: "A peneira custa R$ 100.000 e o caixa não cobre esse valor.",
+      tom: "alerta",
+    })
+    if (caixaDoMotor < fee) return semCaixa()
+    if (!gastarDoCaixa(fee)) return semCaixa()
     const intake = runTryout(state, "sub17")
     // So entra quem cabe. O resto da peneira "nao vingou" — melhor do que
     // estourar o teto que a propria tela anuncia.
     const aproveitados = intake.players.slice(0, vagas)
     setState({ youthPlayers: [...youth, ...aproveitados], youthTryoutStamp: stampAtual })
     if (aproveitados.length < intake.players.length) {
-      window.alert(
-        `A base tinha ${vagas} vaga(s): ${aproveitados.length} garoto(s) foram aproveitados de ${intake.players.length} avaliados.`,
-      )
+      void avisarNoJogo({
+        titulo: "Peneira encerrada",
+        mensagem: `A base tinha ${vagas} vaga(s): ${aproveitados.length} garoto(s) foram aproveitados de ${intake.players.length} avaliados.`,
+      })
     }
   }
 
   const developMonth = () => {
     const result = advanceYouthMonth(state)
     setState({ youthPlayers: result.state.youthPlayers, updatedAt: result.state.updatedAt })
-    window.alert(`${result.report.highlights.length} jovem(ns) evoluíram neste mês.`)
+    void avisarNoJogo({
+      titulo: "Mês de trabalho na base",
+      mensagem: `${result.report.highlights.length} jovem(ns) evoluíram neste mês.`,
+      tom: "sucesso",
+    })
   }
 
   /** Uma semana de trabalho na base — o acompanhamento semanal pedido. */
@@ -384,7 +418,7 @@ export default function BasePage() {
   /** Vende um garoto: proposta pelo valor de promessa. So se concretiza com a
    *  janela de transferencias ABERTA (pedido). Fora da janela, a venda e
    *  ACERTADA e o jovem sai da base quando a janela abrir. */
-  const venderJovem = (player: SquadPlayer) => {
+  const venderJovem = async (player: SquadPlayer) => {
     const j = player as unknown as JovemBase
     const justo = valorDeMercadoJovem(j)
     // DIFICULDADE DE VENDA (pedido): nem todo garoto atrai comprador. O interesse
@@ -392,7 +426,10 @@ export default function BasePage() {
     // sondado, uma joia quase sempre. Antes toda venda tinha comprador garantido.
     const interesse = Math.max(0.12, Math.min(0.92, (justo - 200_000) / 3_000_000))
     if (Math.random() > interesse) {
-      return window.alert(`Nenhum clube demonstrou interesse por ${player.name} no momento. Desenvolva-o mais e tente de novo adiante.`)
+      return void avisarNoJogo({
+        titulo: `Nenhum clube demonstrou interesse por ${player.name}`,
+        mensagem: "Desenvolva-o mais e tente de novo adiante.",
+      })
     }
     const clubes = ["Benfica", "Ajax", "Porto", "Shakhtar", "Red Bull Salzburg", "Palmeiras", "Flamengo"]
     const p = propostaPorJovem(j, clubes[Math.floor(Math.random() * clubes.length)])
@@ -400,9 +437,14 @@ export default function BasePage() {
     const aviso = janelaAberta
       ? ""
       : "\n\nA janela está FECHADA: a venda fica acertada e o jovem sai da base assim que a janela abrir."
-    const texto = `${p.clube} oferece ${formatCurrency(p.valor)} por ${player.name}.\n` +
-      `Valor estimado: ${formatCurrency(justo)}${p.abaixoDoValor ? "\n\nA proposta está ABAIXO do valor do atleta." : ""}${aviso}\n\nAceitar a venda?`
-    if (typeof window !== "undefined" && !window.confirm(texto)) return
+    const confirmado = await confirmarNoJogo({
+      titulo: `${p.clube} oferece ${formatCurrency(p.valor)} por ${player.name}`,
+      mensagem: `Valor estimado: ${formatCurrency(justo)}` +
+        (p.abaixoDoValor ? "\n\nA proposta está ABAIXO do valor do atleta." : "") + aviso,
+      tom: p.abaixoDoValor ? "perigo" : "alerta",
+      confirmar: "Aceitar venda",
+    })
+    if (!confirmado) return
 
     if (janelaAberta) {
       receberPorJovem(p.valor, `jovem:${player.id}`)
@@ -426,21 +468,38 @@ export default function BasePage() {
     }
   }
 
-  const sendOnLoan = (player: SquadPlayer) => {
-    const club = window.prompt("Clube de destino do empréstimo:")?.trim()
+  const sendOnLoan = async (player: SquadPlayer) => {
+    const club = (await pedirTextoNoJogo({
+      titulo: `Emprestar ${player.name}`,
+      mensagem: "Para qual clube o jovem vai jogar nesta temporada?",
+      placeholder: "Clube de destino",
+    }))?.trim()
     if (!club) return
     const result = loanYouth(state, player.id, club)
     setState({ youthPlayers: result.youthPlayers ?? [], updatedAt: result.updatedAt })
   }
 
-  const buyYouth = (player: SquadPlayer) => {
-    if (vagas <= 0) return window.alert("A categoria de base está lotada. Promova, venda ou dispense um jovem antes de contratar.")
-    if (caixaDoMotor < player.value) return window.alert("Saldo insuficiente para comprar este junior.")
-    const texto =
-      `${player.fromTeam} pede ${formatCurrency(player.value)} por ${player.name}, ` +
-      `${player.age} anos (${player.position}).\n\nO atleta irá diretamente para sua categoria de base. Confirmar?`
-    if (!window.confirm(texto)) return
-    if (!gastarDoCaixa(player.value)) return window.alert("Saldo insuficiente para concluir a compra.")
+  const buyYouth = async (player: SquadPlayer) => {
+    if (vagas <= 0) {
+      return void avisarNoJogo({
+        titulo: "A categoria de base está lotada",
+        mensagem: "Promova, venda ou dispense um jovem antes de contratar.",
+        tom: "alerta",
+      })
+    }
+    const semCaixa = () => void avisarNoJogo({
+      titulo: "Saldo insuficiente",
+      mensagem: `O clube não tem ${formatCurrency(player.value)} em caixa para contratar ${player.name}.`,
+      tom: "alerta",
+    })
+    if (caixaDoMotor < player.value) return semCaixa()
+    const confirmado = await confirmarNoJogo({
+      titulo: `${player.fromTeam} pede ${formatCurrency(player.value)} por ${player.name}`,
+      mensagem: `${player.age} anos (${player.position}). O atleta irá diretamente para a sua categoria de base.`,
+      confirmar: "Contratar",
+    })
+    if (!confirmado) return
+    if (!gastarDoCaixa(player.value)) return semCaixa()
     const contratado: SquadPlayer = {
       ...player,
       id: `youth_bought_${Date.now()}_${player.id}`,

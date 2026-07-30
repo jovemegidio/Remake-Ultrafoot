@@ -1,0 +1,31 @@
+[Unit]
+Description=Ultrafoot Atualizacoes (banco de elencos, escudos e uniformes)
+After=network.target
+
+[Service]
+Type=simple
+User=ultrafoot
+Group=ultrafoot
+Environment=ULTRAFOOT_ATU_PORT=8792
+# Subdiretorio PROPRIO, e nao um arquivo solto em /var/lib/ultrafoot: aquela
+# pasta e root:root 755, e este servico roda como `ultrafoot` (o auth-server
+# roda como root, por isso o auth.db mora la). Sem o subdiretorio, o servico
+# sobe e morre em laco com "unable to open database file". Mesmo arranjo que
+# saves/ e relay/ ja usam.
+Environment=ULTRAFOOT_ATU_DB=/var/lib/ultrafoot/atualizacoes/atualizacoes.db
+Environment=ULTRAFOOT_AUTH_DB=/var/lib/ultrafoot/auth.db
+Environment=ULTRAFOOT_ATU_PUB=/var/www/ultrafoot/atualizacoes
+Environment=ULTRAFOOT_ATU_URL=https://ultrafoot.179-198-103-30.sslip.io
+ExecStart=/usr/bin/python3 /opt/ultrafoot/atualizacoes/server.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# Precisa escrever em DOIS lugares: o banco (/var/lib) e o diretorio publicado
+# que o nginx serve (/var/www). Sem o segundo, publicar falha com "read-only
+# file system" — e o painel salvaria tudo sem nada chegar ao jogador.
+ReadWritePaths=/var/lib/ultrafoot /var/www/ultrafoot
+
+[Install]
+WantedBy=multi-user.target

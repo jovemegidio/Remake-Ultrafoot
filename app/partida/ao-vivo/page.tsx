@@ -33,6 +33,7 @@ import {
   Circle,
 } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
+import { getCompetitionLogo } from "@/lib/competition-logo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getTeamByShort, serieATeams, formatCurrency, type Team } from "@/lib/teams-data"
@@ -43,6 +44,7 @@ import { useNotifications } from "@/components/notifications-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
 import { assignPlayersToFormation, pickStartingXI } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
+import { concluirAmistoso } from "@/lib/amistosos-calendario"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
 import { getActionForButton, type GameContext } from "@/lib/gamepad-controls"
 import { useGamepad, type GamepadButtonName } from "@/hooks/use-gamepad"
@@ -66,7 +68,7 @@ import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
 import { MatchRadar } from "@/components/match/match-radar"
-import { getKitColors } from "@/components/match/kit-image"
+import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
 import { useMatchSounds } from "@/hooks/use-match-sounds"
 import { clearQueue as clearCommentary, enqueueEvent, initAudio } from "@/lib/audio-commentary"
 import { applyPlayedYouthMatch } from "@/lib/youth-career-engine"
@@ -644,11 +646,18 @@ export default function PartidaAoVivoPage() {
   const displayCompetition = matchCtx.torneio
     ? matchCtx.competition
     : matchCtx.friendly ? "Amistoso" : (matchCtx.youth ? matchCtx.competition : (currentMatch?.competition || matchCtx.competition || "Brasileirao Serie A"))
+  // Emblema da competicao para o placar de transmissao (null quando nao ha arte).
+  const competitionLogo = getCompetitionLogo(displayCompetition)
   const displayRound = matchCtx.torneio
     ? matchCtx.round
     : matchCtx.youth ? matchCtx.round : (currentMatch ? `Rodada ${currentMatch.round}` : (matchCtx.round || "Rodada 1"))
-  const homeKitColors = useMemo(() => getKitColors(homeTeam, matchCtx.homeKit ?? "home"), [homeTeam, matchCtx.homeKit])
-  const awayKitColors = useMemo(() => getKitColors(awayTeam, matchCtx.awayKit ?? "away"), [awayTeam, matchCtx.awayKit])
+  // COR DO UNIFORME ESCOLHIDO. Antes vinha so de getKitColors (cor1/cor2 do
+  // clube), entao o terceiro uniforme sempre pintava o radar de quase-preto e o
+  // visitante branco virava a cor2 cadastrada. Agora a cor sai da ARTE da camisa
+  // que a pessoa marcou no pre-jogo; sem arte, cai na estimativa de antes — que
+  // e exatamente a cor da camisa desenhada. Ver lib/cor-do-uniforme.
+  const homeKitColor = useCorDoUniforme(homeTeam, matchCtx.homeKit ?? "home")
+  const awayKitColor = useCorDoUniforme(awayTeam, matchCtx.awayKit ?? "away")
 
   // Placar agregado de mata-mata. A volta é reconhecida pelo confronto anterior
   // entre o mesmo par de clubes, dentro da mesma competição e temporada. A
@@ -1210,6 +1219,23 @@ export default function PartidaAoVivoPage() {
         // AMISTOSO: e so treino — NAO registra resultado, NAO mexe na tabela nem avanca a
         // semana. So mostra o placar. (Sem isto, um amistoso contaria como jogo oficial.)
         if (matchCtx.friendly) {
+          // AMISTOSO DO CALENDARIO (1.0.223): o jogo-treino marcado na Area do
+          // Treinador tem semana, aparece no calendario e precisa VOLTAR para o
+          // save marcado como disputado — senao ficaria pendente na agenda para
+          // sempre, travado como "proxima partida". O placar fica guardado com
+          // ele: o card do dia mostra o resultado.
+          //
+          // E o entrosamento entra pela mesma porta da partida oficial: minutos
+          // jogados juntos, nao um +4 avulso.
+          if (matchCtx.amistosoSemana != null) {
+            const golsPro = userSide === "home" ? state.home.goals : state.away.goals
+            const golsContra = userSide === "home" ? state.away.goals : state.home.goals
+            const atualizados = concluirAmistoso(
+              savedGame.amistososAgendados ?? [], matchCtx.amistosoSemana, golsPro, golsContra,
+            )
+            if (atualizados) setSavedGame({ amistososAgendados: atualizados })
+          }
+          useGameEngine.getState().registrarMinutosJuntos(70)
           clearMatchContext()
         } else if (matchCtx.youth) {
           const userGoals = userSide === "home" ? state.home.goals : state.away.goals
@@ -1555,58 +1581,72 @@ export default function PartidaAoVivoPage() {
       {/* Conteudo Principal - Estilo EA FC */}
       <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
 
-        {/* Liga Badge - Topo Central */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10">
-            <span className="text-white text-sm font-bold">{displayCompetition}</span>
-          </div>
-        </div>
+        {/* PLACAR DE TRANSMISSÃO — versão minimalista.
+            A anterior era um totem de quatro andares: duas faixas grandes com a cor
+            cheia do clube, o escudo da competição estourando por cima da junção, um
+            bloco roxo para o placar e uma tarja rosa-degradê para o relógio. Muita
+            cor e muita altura para uma informação que se lê em um segundo.
+            Agora é UMA barra só: escudo, sigla, números, relógio. A cor do clube
+            vira um filete de 3px — presente, sem gritar — e o resto é superfície
+            escura neutra, que é o que as transmissões modernas fazem. */}
+        <header className="relative z-10 shrink-0 px-4 pb-3 pt-4 sm:px-8">
+          <div className="mx-auto flex w-fit flex-col items-center gap-1.5">
 
-        {/* Header do Placar */}
-        <header className="relative z-10 shrink-0 pt-16 pb-4 px-4 sm:px-8">
-          <div className="flex items-center justify-center gap-4 sm:gap-8">
-            {/* Time Casa */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <span className="text-white text-lg sm:text-xl font-semibold">{homeTeam.nome}</span>
-              <div className="w-2 h-2 rounded-full bg-white/20" />
-              <TeamCrest team={homeTeam} size="lg" className="w-12 h-12 sm:w-16 sm:h-16" />
+            {/* Competição, em texto — o emblema grande sobrava. */}
+            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+              {competitionLogo && (
+                <img src={competitionLogo} alt="" className="h-4 w-4 object-contain opacity-70" />
+              )}
+              {displayCompetition}
             </div>
 
-            {/* Placar Central */}
-            <div className="flex flex-col items-center">
-              <div className="flex items-baseline gap-3 sm:gap-4">
-                <span className="text-white text-5xl sm:text-7xl font-black tabular-nums">{state.home.goals}</span>
-                <span className="text-white/30 text-3xl sm:text-5xl font-light">:</span>
-                <span className="text-white text-5xl sm:text-7xl font-black tabular-nums">{state.away.goals}</span>
+            {/* A barra */}
+            <div className="flex items-stretch overflow-hidden rounded-lg border border-white/[0.08] bg-[#0b0e14]/90 shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-sm">
+
+              {/* Mandante */}
+              <div className="flex items-center gap-2.5 py-2 pl-3 pr-4 sm:gap-3 sm:pl-4 sm:pr-5">
+                <span className="h-7 w-[3px] rounded-full sm:h-8" style={{ backgroundColor: homeTeam.cor1 }} />
+                <TeamCrest team={homeTeam} size="sm" />
+                <span className="text-lg font-bold tracking-wide text-white sm:text-2xl">{homeTeam.curto}</span>
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-white/80 text-sm font-bold tabular-nums">
+
+              {/* Placar */}
+              <div className="flex items-center gap-2.5 border-x border-white/[0.08] bg-white/[0.03] px-4 py-2 sm:gap-3 sm:px-6">
+                <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">{state.home.goals}</span>
+                <span className="text-lg font-light text-white/25 sm:text-xl">:</span>
+                <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">{state.away.goals}</span>
+              </div>
+
+              {/* Visitante */}
+              <div className="flex items-center gap-2.5 py-2 pl-4 pr-3 sm:gap-3 sm:pl-5 sm:pr-4">
+                <span className="text-lg font-bold tracking-wide text-white sm:text-2xl">{awayTeam.curto}</span>
+                <TeamCrest team={awayTeam} size="sm" />
+                <span className="h-7 w-[3px] rounded-full sm:h-8" style={{ backgroundColor: awayTeam.cor1 }} />
+              </div>
+
+              {/* Relógio, encostado na barra. Acréscimo aparece colado no minuto,
+                  como "45+2", em vez de virar mais um andar colorido. */}
+              <div className="flex min-w-[62px] items-center justify-center gap-0.5 bg-white/[0.06] px-3 sm:min-w-[76px] sm:px-4">
+                <span className="text-base font-bold tabular-nums text-white/90 sm:text-lg">
                   {(state.phase === "first" && state.addedTime > 0) ? "45" :
                    (state.phase === "second" && state.addedTime > 0) ? "90" :
-                   state.minute}&apos;00
+                   state.minute}
                 </span>
-                {extraTime && (
-                  <span className="text-[var(--brand)] text-sm font-bold">{extraTime}&apos;</span>
-                )}
+                {extraTime
+                  ? <span className="text-[11px] font-bold text-[var(--brand)] sm:text-xs">+{extraTime}</span>
+                  : <span className="text-base font-bold text-white/90 sm:text-lg">&apos;</span>}
               </div>
-              {aggregateScore && (
-                <div className="mt-2 flex flex-col items-center">
-                  <span className="rounded-full border border-[var(--brand)]/25 bg-[var(--brand)]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.16em] text-[#66ffdc]">
-                    Agregado {aggregateScore.home}–{aggregateScore.away}
-                  </span>
-                  <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/35">
-                    Ida {aggregateScore.firstLegHome}–{aggregateScore.firstLegAway} · jogo de volta
-                  </span>
-                </div>
-              )}
             </div>
 
-            {/* Time Fora */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <TeamCrest team={awayTeam} size="lg" className="w-12 h-12 sm:w-16 sm:h-16" />
-              <div className="w-2 h-2 rounded-full bg-white/20" />
-              <span className="text-white text-lg sm:text-xl font-semibold">{awayTeam.nome}</span>
-            </div>
+            {/* Agregado do mata-mata, discreto embaixo do bloco. */}
+            {aggregateScore && (
+              <span className="whitespace-nowrap rounded-full border border-white/[0.08] bg-black/40 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[.14em] text-white/50">
+                Agregado {aggregateScore.home}–{aggregateScore.away}
+                <span className="ml-2 font-normal text-white/30">
+                  ida {aggregateScore.firstLegHome}–{aggregateScore.firstLegAway}
+                </span>
+              </span>
+            )}
           </div>
         </header>
 
@@ -1710,8 +1750,8 @@ export default function PartidaAoVivoPage() {
                       phase={state.phase}
                       homeFormation={userSide === "home" ? liveFormation : undefined}
                       awayFormation={userSide === "away" ? liveFormation : undefined}
-                      homeColor={homeKitColors.body}
-                      awayColor={awayKitColors.body}
+                      homeColor={homeKitColor}
+                      awayColor={awayKitColor}
                     />
                   </div>
                 )}
@@ -1760,8 +1800,8 @@ export default function PartidaAoVivoPage() {
                           phase={state.phase}
                           homeFormation={userSide === "home" ? liveFormation : undefined}
                           awayFormation={userSide === "away" ? liveFormation : undefined}
-                          homeColor={homeKitColors.body}
-                          awayColor={awayKitColors.body}
+                          homeColor={homeKitColor}
+                          awayColor={awayKitColor}
                         />
                       </div>
                     </div>

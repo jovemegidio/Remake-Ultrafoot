@@ -57,6 +57,40 @@ function buildIndex(players) {
 // elenco no seed é fictício, não porque o clube esteja errado.
 const PISO_SOBREPOSICAO = 0.05
 const MIN_CASADOS = 2
+/** Só vincula foto, sem tocar em posição, nacionalidade ou elenco. */
+const SO_FOTOS = process.argv.includes("--so-fotos")
+/**
+ * Mostra o que faria e NÃO grava.
+ *
+ * Trocar elenco fictício por elenco real mexe em dado de jogo de ~1.200 clubes de
+ * uma vez, e a armadilha de clube homônimo (Botafogo RJ/SP/PB, Barcelona
+ * ESP/Guayaquil) já casou clube errado antes. Ver a lista antes de gravar é
+ * barato; descobrir depois que o Botafogo-PB recebeu o elenco do RJ, não.
+ */
+const SIMULAR = process.argv.includes("--simular")
+
+/**
+ * Referência COMPACTA da foto do Transfermarkt ("371247-1780359299"), ou "" se
+ * não há foto de verdade.
+ *
+ * ⚠️ ISTO JÁ CUSTOU 8.622 ROSTOS. A regex antiga exigia `.jpg` e o TM serve muita
+ * foto como `.png` (7.693 delas) e algumas com outras extensões (929): todas eram
+ * descartadas em silêncio, e o atleta ficava sem rosto sem ninguém saber por quê.
+ *
+ * A extensão fica GUARDADA quando não é jpg (`"275412-1771071867.png"`), porque
+ * `lib/player-photos.ts` remonta a URL — sem isso o link daria 404. Token sem
+ * ponto continua significando jpg, para não invalidar o que já está gravado.
+ *
+ * `default` é o placeholder do próprio TM (silhueta cinza): pior que não ter foto,
+ * porque o jogo mostraria um vazio em vez de cair nas iniciais do atleta.
+ */
+function fichaDaFoto(url) {
+  const u = String(url ?? "")
+  if (!u || /default/i.test(u)) return ""
+  const m = /portrait\/\w+\/([\d-]+)\.(jpg|jpeg|png|webp)/i.exec(u)
+  if (!m) return ""
+  return m[2].toLowerCase() === "jpg" ? m[1] : `${m[1]}.${m[2].toLowerCase()}`
+}
 
 function sobreposicao(jogadores, idx) {
   if (!jogadores?.length) return { pct: 0, hit: 0 }
@@ -122,7 +156,7 @@ function elencoDoTm(playersTm, jogadoresSeed) {
   return ordenados.map((p, i) => {
     // Distribui do teto antigo ao piso antigo, seguindo o ranking de valor.
     const overall = Math.round(maxAntigo - (i / n) * (maxAntigo - minAntigo))
-    const foto = /portrait\/\w+\/([\d-]+)\.jpg/.exec(p.foto ?? "")
+    const foto = fichaDaFoto(p.foto)
     return {
       id: `tm_${p.tmId ?? i}`,
       nome: p.nome,
@@ -131,7 +165,7 @@ function elencoDoTm(playersTm, jogadoresSeed) {
       idade: p.idade ?? 25,
       salario: Math.round(overall * 800),
       nac: p.nacionalidade || undefined,
-      ...(foto ? { ft: foto[1] } : {}),
+      ...(foto ? { ft: foto } : {}),
     }
   })
 }
@@ -166,7 +200,9 @@ async function main() {
     // Upamecano), entrava no caminho de "correcao" e MANTINHA os fictícios do
     // seed — o elenco ficava com "Atacante BAY 3" ao lado do Neuer. Corrigir so
     // conserta quem ja esta la; nao traz Kane nem tira o placeholder.
-    if (casamentoConfiavel(team.nome, club.url) && club.players.length >= 11) {
+    // Com --so-fotos ninguem troca de elenco: a passada e só para vincular rosto,
+    // e substituir jogadores aqui mexeria em dado de jogo que ninguem pediu.
+    if (!SO_FOTOS && casamentoConfiavel(team.nome, club.url) && club.players.length >= 11) {
       const antes = team.jogadores?.length ?? 0
       team.jogadores = elencoDoTm(club.players, team.jogadores)
       elencosSubstituidos++
@@ -188,12 +224,12 @@ async function main() {
       const real = idx.get(nameKey(jog.nome))
       if (!real) { semMatch++; continue }
 
-      if (real.posicao && real.posicao !== jog.posicao) {
+      if (!SO_FOTOS && real.posicao && real.posicao !== jog.posicao) {
         mudancasPos.push(`${team.curto} ${jog.nome}: ${jog.posicao} -> ${real.posicao}`)
         jog.posicao = real.posicao
         posCorrigida++
       }
-      if (real.nacionalidade && jog.nac !== real.nacionalidade) {
+      if (!SO_FOTOS && real.nacionalidade && jog.nac !== real.nacionalidade) {
         jog.nac = real.nacionalidade
         nacDefinida++
       }
@@ -201,16 +237,17 @@ async function main() {
       // inteira: 20 bytes em vez de ~90 por atleta. A URL e reconstruida em
       // lib/player-photos.ts. So o miolo varia; repetir o prefixo 30 mil vezes
       // so incharia o seed que viaja no bundle.
-      if (real.foto) {
-        const m = /portrait\/\w+\/([\d-]+)\.jpg/.exec(real.foto)
-        if (m) { jog.ft = m[1]; fotoDefinida++ }
-      }
+      const ficha = fichaDaFoto(real.foto)
+      if (ficha && jog.ft !== ficha) { jog.ft = ficha; fotoDefinida++ }
     }
   }
 
-  seed.tmAppliedAt = new Date().toISOString()
-  await writeFile(SEED, JSON.stringify(seed))
+  if (!SIMULAR) {
+    seed.tmAppliedAt = new Date().toISOString()
+    await writeFile(SEED, JSON.stringify(seed))
+  }
 
+  if (SIMULAR) console.log("SIMULACAO — nada foi gravado.\n")
   console.log(`clubes aceitos (correcao): ${clubesComDados}`)
   console.log(`elencos SUBSTITUIDOS     : ${elencosSubstituidos} (${atletasSubstituidos} atletas — seed desatualizado x elenco atual do TM)`)
   console.log(`clubes REJEITADOS       : ${clubesRejeitados} (sobreposição < ${PISO_SOBREPOSICAO * 100}%: clube provavelmente casado errado)`)

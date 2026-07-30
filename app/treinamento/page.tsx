@@ -27,6 +27,11 @@ import { useRouter } from "next/navigation"
 import { useUserTeam } from "@/lib/save-system"
 import { useGameEngine, type Player } from "@/lib/game-engine"
 import { formatCurrency } from "@/lib/teams-data"
+import {
+  aplicarSemanaDeTreino, duplasDoGrupo, PISO_ENTROSAMENTO, PLANO_PADRAO,
+  ROTULO_DO_FOCO, rotuloDaCarga,
+  type FocoColetivo, type IntensidadeTreino,
+} from "@/lib/treino-e-entrosamento"
 import { cn } from "@/lib/utils"
 
 // Tipos de treinamento disponiveis
@@ -100,9 +105,35 @@ function getRecommendedTraining(position: string): string[] {
   return positionTrainingRecommendations[position] || ["physical", "passing"]
 }
 
+/** Objeto vazio ESTÁVEL — ver o comentário no fallback dos seletores do motor. */
+const VAZIO: Record<number, number> = {}
+
+const INTENSIDADES: { id: IntensidadeTreino; nome: string; nota: string }[] = [
+  { id: "leve", nome: "Leve", nota: "Poupa o elenco. Evolui devagar." },
+  { id: "media", nome: "Média", nota: "O equilíbrio entre render e descansar." },
+  { id: "alta", nome: "Alta", nota: "Evolui mais rápido — e machuca mais." },
+]
+
+const FOCOS: { id: FocoColetivo; nota: string }[] = [
+  { id: "entrosamento", nota: "O grupo joga junto. Constrói entrosamento de verdade." },
+  { id: "fisico", nota: "Fôlego e força. A carga mais pesada da semana." },
+  { id: "ofensivo", nota: "Trabalho de finalização com o time inteiro." },
+  { id: "defensivo", nota: "Linha, marcação e cobertura." },
+  { id: "bola_parada", nota: "Ensaio de escanteio, falta e pênalti." },
+  { id: "recuperacao", nota: "Semana regenerativa. Repõe energia e queima fadiga." },
+]
+
 export default function TreinamentoPage() {
   const { team: userTeam } = useUserTeam()
   const { squadPlayers, trainPlayer, currentWeek, clubInfrastructure } = useGameEngine()
+  const planoDeTreino = useGameEngine(s => s.planoDeTreino) ?? PLANO_PADRAO
+  const definirPlanoDeTreino = useGameEngine(s => s.definirPlanoDeTreino)
+  const ultimoTreino = useGameEngine(s => s.ultimoTreino)
+  // `?? VAZIO` e nao `?? {}`: um literal novo a cada render invalidaria os
+  // useMemo abaixo em todo ciclo, e a prévia do treino é cara (percorre o elenco).
+  const fadigaCronica = useGameEngine(s => s.fadigaCronica) ?? VAZIO
+  const entrosamentoPares = useGameEngine(s => s.entrosamentoPares) ?? VAZIO
+  const squadCohesion = useGameEngine(s => s.squadCohesion) ?? PISO_ENTROSAMENTO
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [inspectPlayer, setInspectPlayer] = useState<Player | null>(null)
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
@@ -110,6 +141,35 @@ export default function TreinamentoPage() {
   // % de melhora do treino, espelhando o motor (Centro de Treinamento nivel 1-5).
   const trainingLvl = clubInfrastructure?.training ?? 2
   const trainChancePct = Math.round(Math.min(0.9, 0.6 + trainingLvl * 0.05) * 100)
+
+  // ── PLANO COLETIVO: a previa da semana ────────────────────────────────────
+  //
+  // O mesmo modelo que o motor roda no avanco de semana, so que aqui em SECO:
+  // o tecnico ve a carga, a energia media e o risco de lesao ANTES de escolher.
+  // Sem isto, "alta" e "leve" seriam duas palavras sem consequencia visivel.
+  const previa = useMemo(() => aplicarSemanaDeTreino(
+    squadPlayers.map(p => ({
+      id: p.id,
+      idade: p.age,
+      energia: p.energy ?? 100,
+      fadigaCronica: fadigaCronica[p.id] ?? 0,
+      minutosJogados: p.isStarter && !p.injury ? 90 : 0,
+      resistencia: p.physical ?? 70,
+      lesionado: Boolean(p.injury),
+      emTreinoIndividual: Boolean(p.training.currentFocus),
+      focoIndividual: p.training.currentFocus ?? null,
+    })),
+    planoDeTreino,
+    { centroDeTreinamento: trainingLvl, centroMedico: clubInfrastructure?.medical ?? 2 },
+  ), [squadPlayers, fadigaCronica, planoDeTreino, trainingLvl, clubInfrastructure?.medical])
+
+  // Duplas do onze titular: o rosto humano do entrosamento. "Quem ainda nao se
+  // conhece" e a informacao que faz o tecnico decidir escalar o mesmo time.
+  const duplasDoXI = useMemo(() => {
+    const titulares = squadPlayers.filter(p => p.isStarter && !p.injury)
+    if (titulares.length < 2) return []
+    return duplasDoGrupo(entrosamentoPares, titulares.map(p => ({ id: p.id, nome: p.name })))
+  }, [squadPlayers, entrosamentoPares])
   const [filter, setFilter] = useState<"all" | "available" | "training">("all")
   const [sortBy, setSortBy] = useState<"overall" | "potential" | "idade" | "nome">("overall")
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -231,6 +291,139 @@ export default function TreinamentoPage() {
             </div>
           </div>
         </div>
+
+        {/* ── TREINO COLETIVO DA SEMANA ─────────────────────────────────────
+            Antes esta tela só tinha treino INDIVIDUAL: um atleta, um atributo,
+            quatro semanas. Não havia carga, não havia fadiga e não havia risco —
+            a energia subia +10 por semana para todo mundo. O plano coletivo é o
+            que dá consequência à escolha: carga alta ensina mais e machuca mais,
+            semana regenerativa devolve fôlego e queima fadiga crônica. */}
+        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+                <Users className="h-4 w-4 text-[var(--brand)]" />
+                TREINO COLETIVO DA SEMANA
+              </div>
+              <p className="mt-1 text-[11px] text-white/40">
+                Vale para o elenco inteiro e roda sozinho a cada semana que passa.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <PreviaTile rotulo="Carga" valor={`${previa.carga}`} nota={rotuloDaCarga(previa.carga)} />
+              <PreviaTile rotulo="Energia média" valor={`${previa.energiaMedia}%`} nota="depois da semana" />
+              <PreviaTile
+                rotulo="Fadiga"
+                valor={`${previa.fadigaMedia}`}
+                nota={previa.fadigaMedia >= 55 ? "elenco no limite" : previa.fadigaMedia >= 30 ? "acumulando" : "sob controle"}
+                alerta={previa.fadigaMedia >= 55}
+              />
+              <PreviaTile
+                rotulo="Risco de lesão"
+                valor={`${(previa.riscoMedio * 100).toFixed(1)}%`}
+                nota="por atleta / semana"
+                alerta={previa.riscoMedio > 0.045}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Intensidade</div>
+              <div className="grid grid-cols-3 gap-2">
+                {INTENSIDADES.map(i => (
+                  <button
+                    key={i.id}
+                    onClick={() => definirPlanoDeTreino({ intensidade: i.id })}
+                    title={i.nota}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition-colors",
+                      planoDeTreino.intensidade === i.id
+                        ? "border-[var(--brand)] bg-[var(--brand)]/10"
+                        : "border-white/[0.06] hover:border-white/15 hover:bg-white/5",
+                    )}
+                  >
+                    <div className={cn("text-sm font-semibold", planoDeTreino.intensidade === i.id ? "text-[var(--brand)]" : "text-white")}>{i.nome}</div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-white/40">{i.nota}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Foco</div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {FOCOS.map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => definirPlanoDeTreino({ foco: f.id })}
+                    title={f.nota}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition-colors",
+                      planoDeTreino.foco === f.id
+                        ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]"
+                        : "border-white/[0.06] text-white/70 hover:border-white/15 hover:bg-white/5",
+                    )}
+                  >
+                    <div className="text-xs font-semibold">{ROTULO_DO_FOCO[f.id]}</div>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] leading-tight text-white/35">
+                {FOCOS.find(f => f.id === planoDeTreino.foco)?.nota}
+                {" "}Treino individual no mesmo atributo do foco rende mais.
+              </p>
+            </div>
+          </div>
+
+          {ultimoTreino && (
+            <p className="mt-4 border-t border-white/[0.04] pt-3 text-[11px] text-white/45">
+              Última semana: carga {ultimoTreino.carga} ({rotuloDaCarga(ultimoTreino.carga)}), energia média{" "}
+              {ultimoTreino.energiaMedia}%, fadiga {ultimoTreino.fadigaMedia}.
+              {ultimoTreino.lesionados.length > 0 && (
+                <span className="text-red-400">
+                  {" "}Lesões no treino: {ultimoTreino.lesionados.join(", ")}.
+                </span>
+              )}
+            </p>
+          )}
+        </section>
+
+        {/* ── ENTROSAMENTO ──────────────────────────────────────────────────
+            Vivia solto na Área do Treinador, como um número que subia por botão.
+            Aqui ele aparece onde se trabalha o time, e mostrando de onde vem:
+            minutos jogados juntos, dupla a dupla. */}
+        <section className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-white/60">
+              <Users className="h-4 w-4 text-[var(--brand)]" />
+              ENTROSAMENTO DO ONZE
+            </div>
+            <span className="text-sm font-bold text-white">
+              {squadCohesion}<span className="text-white/40">/100</span>
+              {squadCohesion > 60 && (
+                <span className="ml-2 text-xs font-semibold text-[var(--brand)]">
+                  +{Math.round((squadCohesion - 60) / 8)} em campo
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand)]/70 to-[var(--brand)]" style={{ width: `${squadCohesion}%` }} />
+          </div>
+
+          {duplasDoXI.length > 0 && (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <DuplasLista titulo="Já se acham de olhos fechados" duplas={duplasDoXI.slice(0, 4)} />
+              <DuplasLista titulo="Ainda não se conhecem" duplas={duplasDoXI.slice(-4).reverse()} />
+            </div>
+          )}
+          <p className="mt-3 text-[11px] leading-4 text-white/35">
+            Cada dupla de titulares acumula os minutos que passou em campo junta. Partida oficial, amistoso e
+            treino coletivo com foco em entrosamento alimentam a mesma conta — trocar meio time na janela
+            derruba o número sozinho.
+          </p>
+        </section>
 
         <div className="grid gap-4 lg:grid-cols-3">
           {/* Lista de Jogadores */}
@@ -459,6 +652,30 @@ export default function TreinamentoPage() {
                     <Progress value={selectedPlayer.energy} className="h-2" />
                   </div>
 
+                  {/* FADIGA CRÔNICA: o cansaço que a semana não repôs. É o número
+                      que explica o atleta que não parece cansado e quebra em abril
+                      — e é ele que multiplica o risco de lesão no treino. */}
+                  {(() => {
+                    const fadiga = fadigaCronica[selectedPlayer.id] ?? 0
+                    const risco = previa.efeitos.find(e => e.id === selectedPlayer.id)?.risco ?? 0
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/60">Fadiga acumulada</span>
+                          <span className={cn(fadiga >= 55 ? "text-red-400" : fadiga >= 30 ? "text-amber-300" : "text-white")}>
+                            {fadiga} · risco {(risco * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                          <div
+                            className={cn("h-full rounded-full", fadiga >= 55 ? "bg-red-500" : fadiga >= 30 ? "bg-amber-400" : "bg-[var(--brand)]")}
+                            style={{ width: `${Math.min(100, fadiga)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })()}
+
                   {/* Recomendacoes */}
                   <div className="pt-2 border-t border-white/[0.04]">
                     <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Treinos Recomendados</div>
@@ -553,7 +770,11 @@ export default function TreinamentoPage() {
                 <div className="text-xs text-white/60">
                   <p className="font-medium text-white/80 mb-1">Como funciona</p>
                   <p>O treinamento dura 4 semanas. Ao final, o jogador tem <span className="text-[var(--brand)] font-semibold">{trainChancePct}%</span> de chance de melhorar +1 no atributo escolhido, limitado ao seu potencial maximo.</p>
-                  <p className="mt-1 text-white/40">Centro de Treinamento nivel {trainingLvl}/5 — melhore a estrutura para aumentar a chance (ate 90%).</p>
+                  <p className="mt-1 text-white/40">Centro de Treinamento nivel {trainingLvl}/5 — melhore a estrutura para aumentar a chance (ate 90%), e ela reduz o risco de lesao no treino.</p>
+                  <p className="mt-1 text-white/40">
+                    O PLANO COLETIVO acima modula essa chance: intensidade alta ensina mais, atleta esgotado
+                    nao aprende, e treinar o mesmo atributo do foco da semana rende 30% a mais.
+                  </p>
                 </div>
               </div>
             </div>
@@ -654,6 +875,42 @@ function PlayerInspectModal({ player, currentWeek, onClose }: { player: Player; 
             <StatTile label="Melhor" value={st.manOfTheMatch} />
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/** Número da prévia do treino coletivo (carga, energia, fadiga, risco). */
+function PreviaTile({ rotulo, valor, nota, alerta }: { rotulo: string; valor: string; nota: string; alerta?: boolean }) {
+  return (
+    <div className={cn(
+      "rounded-lg border px-3 py-2 min-w-[104px]",
+      alerta ? "border-red-500/40 bg-red-500/[0.07]" : "border-white/[0.06] bg-white/[0.03]",
+    )}>
+      <div className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</div>
+      <div className={cn("text-lg font-bold tabular-nums leading-tight", alerta ? "text-red-300" : "text-white")}>{valor}</div>
+      <div className="text-[10px] text-white/35">{nota}</div>
+    </div>
+  )
+}
+
+function DuplasLista({ titulo, duplas }: { titulo: string; duplas: { a: string; b: string; pct: number }[] }) {
+  const sobrenome = (n: string) => n.trim().split(/\s+/).pop() ?? n
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2">{titulo}</div>
+      <div className="space-y-1.5">
+        {duplas.map(d => (
+          <div key={`${d.a}-${d.b}`} className="flex items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-xs text-white/70">
+              {sobrenome(d.a)} <span className="text-white/25">+</span> {sobrenome(d.b)}
+            </span>
+            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${d.pct}%` }} />
+            </div>
+            <span className="w-8 text-right text-[10px] tabular-nums text-white/45">{d.pct}%</span>
+          </div>
+        ))}
       </div>
     </div>
   )

@@ -32,6 +32,7 @@ import { useGameState } from "@/lib/save-system"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameEngine, persistGameEngineNow, type TeamTactics, type PlayerInstructions, type PlayerRole, PLAYER_ROLE_INFO } from "@/lib/game-engine"
 import { listarTaticas, salvarTatica, removerTatica, obterTatica, type TaticaSalva } from "@/lib/taticas-salvas"
+import { pedirTexto as pedirTextoNoJogo } from "@/lib/dialogo-do-jogo"
 import { useRouter } from "next/navigation"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 
@@ -142,8 +143,14 @@ export default function TaticasPage() {
   const [avisoTatica, setAvisoTatica] = useState<string | null>(null)
   useEffect(() => { setTaticasSalvas(listarTaticas()) }, [])
 
-  const salvarTaticaAtual = () => {
-    const nome = typeof window === "undefined" ? null : window.prompt("Nome da tática:", `Esquema ${taticasSalvas.length + 1}`)
+  const salvarTaticaAtual = async () => {
+    const nome = await pedirTextoNoJogo({
+      titulo: "Salvar tática",
+      mensagem: "Dê um nome ao conjunto tático para reaproveitá-lo em outras partidas.",
+      placeholder: "Nome da tática",
+      valorInicial: `Esquema ${taticasSalvas.length + 1}`,
+      confirmar: "Salvar",
+    })
     if (!nome?.trim()) return
     salvarTatica({
       nome: nome.trim(),

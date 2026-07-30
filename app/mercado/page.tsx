@@ -39,7 +39,8 @@ const REDE_SECTOR_POSITIONS: Record<string, string[]> = {
   Def: ["ZAG", "LD", "LE", "GOL"],
 }
 import { announceOnlineAction } from "@/lib/online-multiplayer"
-import { markPlayerRejection, getRejectionCooldownDays } from "@/lib/transfer-cooldown"
+import { markRejection, getRejectionCooldown, CARENCIA_POR_MOTIVO } from "@/lib/transfer-cooldown"
+import { confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { formatCurrency, formatCurrencyFor } from "@/lib/teams-data"
 import { generateDetailedMarketTargets, type DetailedMarketTarget } from "@/lib/transfer-engine"
 import { useGameState, useUserTeam, type SquadPlayer } from "@/lib/save-system"
@@ -706,12 +707,16 @@ export default function MercadoPage() {
   const handleNegotiate = (type: "buy" | "loan" = "buy", player = selectedPlayer) => {
     if (!player) return
 
-    // Jogador que recusou fica 30 dias sem ouvir o clube. Antes dava para reabrir o
-    // modal e propor de novo no mesmo dia ate a sorte virar — recusa sem custo nenhum.
-    const daysLeft = getRejectionCooldownDays(player.id, gameDate)
-    if (daysLeft > 0) {
+    // Proposta recusada trava a mesa por um tempo — pelo jogador (30 dias) ou
+    // pelo clube dono (21). Antes dava para reabrir o modal e propor de novo no
+    // mesmo dia ate a sorte virar, e a recusa nao custava nada.
+    const carencia = getRejectionCooldown(player.id, gameDate)
+    if (carencia) {
+      const dias = `${carencia.dias} dia${carencia.dias > 1 ? "s" : ""}`
       setMarketNotice(
-        `${player.name} recusou sua proposta. Ele so voltara a negociar em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}.`
+        carencia.motivo === "clube"
+          ? `${player.team?.nome ?? "O clube"} recusou sua proposta por ${player.name}. A mesa so reabre em ${dias}.`
+          : `${player.name} recusou sua proposta. Ele so voltara a negociar em ${dias}.`,
       )
       return
     }
@@ -816,19 +821,29 @@ export default function MercadoPage() {
   }) => {
     if (type === "sell") return
 
-    // Recusa DO JOGADOR abre 30 dias de carencia. Recusa do clube nao: ali e so
-    // dinheiro, e faz sentido voltar com uma oferta maior.
-    if (!accepted && rejectedBy === "player" && player.id != null) {
-      markPlayerRejection(player.id, gameDate)
-      // Jogador que recusou SAI da Central (pedido com print): manter a
-      // proposta rejeitada listada convidava a reabrir negociação que o
-      // atleta congelou por 30 dias. O toast já comunica a carência.
+    announceOnlineAction("transfer_decision", { player: player.name, type, offer, accepted, rejectedBy: rejectedBy ?? null })
+
+    // TODA recusa abre carência (lib/transfer-cooldown.ts): 30 dias quando o
+    // JOGADOR recusa o projeto, 21 quando o CLUBE dono recusa a compra ou o
+    // empréstimo. Antes só a recusa do jogador contava — o "não" da diretoria
+    // adversária não custava nada e dava para reabrir a mesa no mesmo dia.
+    if (!accepted && rejectedBy && player.id != null) {
+      markRejection(player.id, gameDate, rejectedBy === "player" ? "jogador" : "clube")
+      // Proposta recusada SAI da Central (pedido com print): mantê-la listada
+      // convidava a reabrir uma negociação que acabou de congelar. O aviso
+      // abaixo já comunica a carência.
       setSentProposals(current => current.filter(p => p.playerName !== player.name))
+      addNotification({
+        type: "transfer", priority: "medium",
+        title: `Proposta recusada: ${player.name}`,
+        message: rejectedBy === "player"
+          ? `${player.name} recusou o projeto. Ele só volta a ouvir o clube em ${CARENCIA_POR_MOTIVO.jogador} dias.`
+          : `${player.team?.nome ?? "O clube"} recusou sua proposta por ${player.name}. A mesa só reabre em ${CARENCIA_POR_MOTIVO.clube} dias.`,
+      })
       return
     }
 
     const proposalStatus: SentProposalStatus = accepted ? "aceita" : "rejeitada"
-    announceOnlineAction("transfer_decision", { player: player.name, type, offer, accepted, rejectedBy: rejectedBy ?? null })
 
     // Aviso na Central da resposta à MINHA proposta (pedido). A decisão é
     // sincrona aqui, entao notificamos direto — a ponte global cuida das
@@ -874,7 +889,7 @@ export default function MercadoPage() {
    * vaga e de caixa, mesmo registro em `youthMarketPurchasedIds` (que e o que
    * impede a promessa de reaparecer no pool) e mesma gravacao imediata.
    */
-  const comprarJunior = (jovem: SquadPlayer) => {
+  const comprarJunior = async (jovem: SquadPlayer) => {
     const vagasLivres = vagasNaBase(juniorescNaBase, nivelAcademia)
     if (vagasLivres <= 0) {
       setMarketNotice("A categoria de base está lotada. Promova, venda ou dispense um jovem antes de contratar.")
@@ -896,9 +911,12 @@ export default function MercadoPage() {
       return
     }
     if (resposta.desfecho === "contraproposta" && resposta.contra != null) {
-      const aceita = typeof window !== "undefined" && window.confirm(
-        `${resposta.fala}\n\nAceitar a contraproposta?`,
-      )
+      const aceita = await confirmarNoJogo({
+        titulo: `Contraproposta do empresário de ${jovem.name}`,
+        mensagem: resposta.fala,
+        confirmar: "Aceitar",
+        cancelar: "Recusar",
+      })
       if (!aceita) {
         setMarketNotice(`Negociação por ${jovem.name} encerrada sem acordo.`)
         return
@@ -915,13 +933,17 @@ export default function MercadoPage() {
       )
       return
     }
-    if (typeof window !== "undefined" && !window.confirm(
-      `${resposta.fala}\n\n` +
-      `Ao clube: ${formatCurrency(ofertaAoClube)}\n` +
-      `Comissão de ${agente.nome}: ${formatCurrency(total - ofertaAoClube)}\n` +
-      `TOTAL: ${formatCurrency(total)}\n\n` +
-      `${jovem.name}, ${jovem.age} anos (${jovem.position}), vai para a sua categoria de base. Confirmar?`,
-    )) return
+    const confirmado = await confirmarNoJogo({
+      titulo: `Contratar ${jovem.name} por ${formatCurrency(total)}?`,
+      mensagem:
+        `${resposta.fala}\n\n` +
+        `Ao clube: ${formatCurrency(ofertaAoClube)}\n` +
+        `Comissão de ${agente.nome}: ${formatCurrency(total - ofertaAoClube)}\n` +
+        `TOTAL: ${formatCurrency(total)}\n\n` +
+        `${jovem.name}, ${jovem.age} anos (${jovem.position}), vai para a sua categoria de base.`,
+      confirmar: "Contratar",
+    })
+    if (!confirmado) return
     if (!gameEngine.spendClubFunds(total)) {
       setMarketNotice("Saldo insuficiente para concluir a compra.")
       return
@@ -1437,9 +1459,16 @@ export default function MercadoPage() {
                             <button
                               type="button"
                               title="Demitir olheiro"
-                              onClick={() => {
-                                const busca = scout.isSearching ? " A busca atual também será cancelada." : ""
-                                if (!window.confirm(`Demitir ${scout.name}?${busca}`)) return
+                              onClick={async () => {
+                                const confirmado = await confirmarNoJogo({
+                                  titulo: `Demitir ${scout.name}?`,
+                                  mensagem: scout.isSearching
+                                    ? "A busca em andamento também será cancelada."
+                                    : "O olheiro deixa o departamento e sai da folha salarial.",
+                                  tom: "perigo",
+                                  confirmar: "Demitir",
+                                })
+                                if (!confirmado) return
                                 gameEngine.fireScout(scout.id)
                                 if (expandedScoutId === scout.id) setExpandedScoutId(null)
                                 setMarketNotice(`${scout.name} foi demitido do departamento de olheiros.`)
@@ -1852,7 +1881,20 @@ export default function MercadoPage() {
                             offer={offer}
                             currentWeek={gameEngine.currentWeek}
                             player={gameEngine.squadPlayers.find((item) => item.id === offer.playerId)}
-                            onAccept={() => gameEngine.respondToOffer(offer.id, true)}
+                            // Aceitar já não conclui sozinho: o ATLETA pode recusar
+                            // a transferência (projeto e minutos, ver mercado-realista).
+                            // Sem este aviso, a proposta sumiria da lista e o jogador
+                            // continuaria no elenco sem explicação nenhuma.
+                            onAccept={() => {
+                              const r = gameEngine.respondToOffer(offer.id, true)
+                              if (!r.ok && r.motivo) {
+                                addNotification({
+                                  type: "transfer", priority: "high",
+                                  title: "Transferência recusada pelo atleta",
+                                  message: r.motivo,
+                                })
+                              }
+                            }}
                             onReject={() => gameEngine.respondToOffer(offer.id, false)}
                             onCounter={(amount,coverage,weeks)=>gameEngine.counterTransferOffer(offer.id,amount,coverage,weeks)}
                           />

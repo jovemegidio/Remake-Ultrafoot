@@ -21,6 +21,26 @@ import { lerRegistro } from "@/lib/registration"
 /** Quantas carreiras salvas cabem sem registro. Registrado = sem limite. */
 export const LIMITE_SAVES_SEM_REGISTRO = 3
 
+/**
+ * PAISES DE CLUBE liberados sem registro (pedido 30/07/2026).
+ *
+ * Quem ainda nao registrou dirige clube do Brasil, da Franca ou da Espanha. As
+ * demais ligas entram com o codigo. Continua valendo a regra da casa: a carreira
+ * escolhida vai ate o fim, sem corte no meio da temporada.
+ */
+export const PAISES_SEM_REGISTRO: readonly string[] = ["BRA", "FRA", "ESP"]
+
+/**
+ * As DIVISOES desses tres paises. Existe porque nem toda tela conhece o pais do
+ * clube — as propostas de emprego, por exemplo, so tem a divisao na mao. Mantido
+ * aqui, ao lado da lista de paises, para as duas regras nao se separarem.
+ */
+export const DIVISOES_SEM_REGISTRO: readonly string[] = [
+  "serie_a", "serie_b", "serie_c", "serie_d",
+  "ligue_1", "ligue_2",
+  "la_liga", "la_liga_2",
+]
+
 export type BeneficioId = "nuvem" | "hub" | "editor" | "atualizacoes" | "saves"
 
 export interface Beneficio {
