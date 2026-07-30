@@ -154,3 +154,17 @@ services/auth-server/__pycache__/
 
 # Saida do publicador de elencos (gerada a cada envio)
 data/atualizacoes/.publicado.json
+
+# Build do painel de administracao (feito em C:, publicado por scripts/deploy-painel.sh)
+services/auth-server/painel/node_modules/
+services/auth-server/painel/.next/
+services/auth-server/painel/out/
+services/auth-server/painel/next-env.d.ts
+
+# Cache do raspador de faces (paginas cruas do sortitoutsi, 61 MB e crescendo).
+# O que interessa esta em fm-person-index.json, que e commitavel.
+data/faces-fm/paginas/
+
+# Relatorio de diagnostico do casamento de rostos: 2 MB, regenerado por
+# `node scripts/mapear-faces-fm.mjs casar` a qualquer momento.
+data/faces-fm/casamento-relatorio.json
