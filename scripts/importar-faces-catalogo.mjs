@@ -219,6 +219,52 @@ for (const arquivo of agora) {
   overrides[id] = `/jogadores/${arquivo}`
   registrados++
 }
+
+// ─── APELIDO POR NOME ────────────────────────────────────────────────────────
+//
+// ⚠️ SEM ISTO O ROSTO EXISTE E NÃO APARECE. `getPlayerPhotoUrl(nome, playerId)`
+// consulta o manifesto por id e SÓ ENTÃO por nome — mas de 36 usos do
+// `<PlayerAvatar>` no jogo apenas UM passa `playerId`. O editor, a tela de
+// elenco, o mercado: todos chamam só com o nome. Com as entradas chaveadas
+// apenas por `tm_<id>`, os 12.542 rostos ficavam invisíveis (relato com print:
+// o elenco do Corinthians inteiro na silhueta, mesmo com rosto em disco para
+// Hugo Souza, André Ramalho, Kauê e outros).
+//
+// A saída é registrar TAMBÉM pelo nome — mas só quando o nome é ÚNICO no
+// acervo. É a mesma regra que o `getSobrenomeMap` já aplica em
+// `lib/player-photos.ts`: nome repetido não entra, porque a silhueta é melhor
+// do que a cara de outra pessoa. Foi assim que o Mauro Silva errado entrou no
+// jogo uma vez.
+const nomeNorm = (s) =>
+  String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+
+const idsPorNome = new Map()
+const registrarNome = (nome, f) => {
+  const bruto = String(f ?? "").split("-")[0].trim()
+  if (!bruto) return
+  const chave = nomeNorm(nome)
+  if (!chave) return
+  if (!idsPorNome.has(chave)) idsPorNome.set(chave, new Set())
+  idsPorNome.get(chave).add(`tm_${bruto}`)
+}
+const realSeed = JSON.parse(readFileSync(path.join(RAIZ, "data/seeds/real-squads-tm.json"), "utf-8"))
+for (const elenco of Object.values(realSeed)) for (const p of elenco ?? []) registrarNome(p.n, p.f)
+const bfSeed = JSON.parse(readFileSync(path.join(RAIZ, "data/seeds/imported-bf2026.json"), "utf-8"))
+for (const t of bfSeed.teams ?? []) for (const j of t.jogadores ?? []) registrarNome(j.nome, j.ft)
+
+const temRosto = new Set(agora.map((a) => a.slice("df11-".length, -".webp".length)))
+let porNome = 0, ambiguos = 0
+for (const [chave, ids] of idsPorNome) {
+  const comRosto = [...ids].filter((id) => temRosto.has(id))
+  if (comRosto.length === 0) continue
+  // Duas pessoas diferentes com o mesmo nome e rostos diferentes: não dá para
+  // decidir por nome. Fica só o id, e quem consulta por nome vê a silhueta.
+  if (ids.size > 1 && comRosto.length > 1) { ambiguos++; continue }
+  overrides[chave] = `/jogadores/df11-${comRosto[0]}.webp`
+  porNome++
+}
+console.log(`apelido por nome: ${porNome} nomes únicos (${ambiguos} xarás deixados de fora)`)
 writeFileSync(OVERRIDES, JSON.stringify(overrides, null, 2) + "\n")
 console.log(`\nmapa editorial: ${registrados} rostos df11 registrados (${removidos} entradas antigas substituídas)`)
 

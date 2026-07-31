@@ -144,9 +144,25 @@
   ],
   "changelog": [
     {
-      "version": "1.0.235",
+      "version": "1.0.236",
       "date": "2026-07-31",
       "latest": true,
+      "title": "Os rostos passam a APARECER de verdade",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "OS ROSTOS ESTAVAM NO JOGO E NAO APARECIAM. A versao anterior trouxe 12.542 rostos, mas eles ficaram invisiveis: o jogo procura a foto de um atleta primeiro pelo identificador e so depois pelo nome, e os rostos tinham sido registrados apenas pelo identificador — enquanto quase todas as telas (editor, elenco, mercado) consultam pelo nome. O elenco inteiro do Corinthians aparecia com silhueta mesmo tendo rosto instalado para Hugo Souza, Andre Ramalho, Kaue e outros. Agora os rostos tambem estao registrados por nome e aparecem em todas as telas."
+        },
+        {
+          "type": "improved",
+          "text": "XARA NAO ROUBA MAIS ROSTO. O registro por nome so vale para nomes UNICOS no acervo: 178 casos de dois atletas com o mesmo nome ficaram de fora de proposito, porque a silhueta e melhor do que mostrar a cara de outra pessoa."
+        }
+      ]
+    },
+    {
+      "version": "1.0.235",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "Mais de 12 mil rostos no jogo e a liga da Colombia com o nome certo",
       "changes": [
         {
