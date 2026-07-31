@@ -1,5 +1,5 @@
 {
-  "version": "1.0.22",
+  "version": "1.0.23",
   "notes": "O launcher deixa de depender de atualizacao para continuar funcionando: os enderecos dos servidores agora sao descobertos ao abrir, em vez de ficarem fixos dentro do programa. Se a VPS trocar de IP ou de dominio no futuro, o launcher ja instalado encontra o servidor novo sozinho — antes ele virava tijolo e nem conseguia baixar a propria correcao. Ele tambem guarda uma copia dos enderecos para abrir offline. Alem disso: abre em tela cheia, com Esc e F11 para sair (em tela cheia o Windows esconde a barra de titulo e, com ela, o X).",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }

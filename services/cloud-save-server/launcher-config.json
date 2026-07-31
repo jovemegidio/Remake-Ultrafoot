@@ -144,39 +144,15 @@
   ],
   "changelog": [
     {
-      "version": "1.0.227",
-      "date": "2026-07-30",
-      "latest": true,
-      "title": "A tela principal ganhou vida, o launcher abre em tela cheia e a demissao vira historia",
-      "changes": [
-        {
-          "type": "added",
-          "text": "A TELA PRINCIPAL trocou o fundo fixo por seis artes que se alternam com passagem suave, uma a cada nove segundos. As imagens foram convertidas para WebP: 13 MB viraram 940 KB, entao o menu nao ficou mais pesado do que era."
-        },
-        {
-          "type": "added",
-          "text": "O LAUNCHER ABRE EM TELA CHEIA. Como em tela cheia o Windows esconde a barra de titulo (e com ela o X), Esc sai da tela cheia e F11 alterna — o launcher nunca tinha botao proprio de fechar."
-        },
-        {
-          "type": "improved",
-          "text": "A LISTA DE TAREFAS do escritorio ficou legivel. Os cartoes sao quase transparentes de proposito, para o cenario aparecer, mas e justo atras deles que a arte tem as mesas e as cadeiras — o texto branco caia em cima de bordas claras. Agora ha uma vinheta suave SO naquele bloco, em vez de escurecer a tela inteira."
-        },
-        {
-          "type": "fixed",
-          "text": "DEMISSAO NAO ENTRAVA PARA A HISTORIA. A tela prometia \"registra a passagem no seu historico\" e nada era gravado: o hall da fama marcava TODA passagem como \"contrato encerrado\", entao dava para ser demitido dez vezes e a carreira mostrar dez contratos cumpridos. Agora pedir demissao e ser demitido ficam registrados, cada um com o seu motivo."
-        },
-        {
-          "type": "fixed",
-          "text": "SAIR DO CLUBE NAO LIMPAVA O CLUBE. Quem era demitido continuava com o elenco, a tabela e o mercado do time que acabou de deixar — e seguia recebendo proposta por atleta que ja nao era dele enquanto procurava emprego. O motor agora e zerado na saida."
-        }
-      ]
-    },
-    {
       "version": "1.0.228",
       "date": "2026-07-30",
-      "latest": false,
+      "latest": true,
       "title": "Multa rescisoria no mercado, emprestimo que se negocia, olheiro que se demite e o campeonato online funcionando de ponta a ponta",
       "changes": [
+        {
+          "type": "fixed",
+          "text": "O CAMPEONATO PELA INTERNET ESTAVA FORA DO AR. O servidor exigia uma versao de protocolo diferente da que o jogo enviava, entao TODA tentativa de criar ou entrar num campeonato online era recusada — e o erro so aparecia depois do clique, sem nada indicando que o problema era do servidor. Corrigido no servidor e testado de ponta a ponta: criar, entrar e assistir voltaram a funcionar."
+        },
         {
           "type": "added",
           "text": "PAGAR A MULTA RESCISORIA. Agora da para quitar a clausula na mesa com o clube, antes de sentar com o atleta: quem paga a multa nao ouve 'nao' do clube, nem de rival. Isto nunca tinha funcionado de verdade — o valor da proposta parava em 150% do valor do atleta e a multa quase sempre custa mais que isso, entao o botao existia no papel e a clausula era um numero decorativo na ficha. Depois de quitada, o atleta ainda decide se quer o projeto e o agente ainda negocia salario, luvas e papel."
@@ -220,6 +196,34 @@
         {
           "type": "improved",
           "text": "O LAUNCHER NAO PRECISA MAIS SER ATUALIZADO. Os enderecos dos servidores eram fixos dentro do programa: se a VPS trocasse de IP, o launcher instalado virava tijolo e nem conseguia baixar a propria correcao. Agora ele descobre os enderecos ao abrir e guarda uma copia para funcionar offline — mudar de servidor no futuro nao exige que ninguem reinstale nada."
+        }
+      ]
+    },
+    {
+      "version": "1.0.227",
+      "date": "2026-07-30",
+      "latest": false,
+      "title": "A tela principal ganhou vida, o launcher abre em tela cheia e a demissao vira historia",
+      "changes": [
+        {
+          "type": "added",
+          "text": "A TELA PRINCIPAL trocou o fundo fixo por seis artes que se alternam com passagem suave, uma a cada nove segundos. As imagens foram convertidas para WebP: 13 MB viraram 940 KB, entao o menu nao ficou mais pesado do que era."
+        },
+        {
+          "type": "added",
+          "text": "O LAUNCHER ABRE EM TELA CHEIA. Como em tela cheia o Windows esconde a barra de titulo (e com ela o X), Esc sai da tela cheia e F11 alterna — o launcher nunca tinha botao proprio de fechar."
+        },
+        {
+          "type": "improved",
+          "text": "A LISTA DE TAREFAS do escritorio ficou legivel. Os cartoes sao quase transparentes de proposito, para o cenario aparecer, mas e justo atras deles que a arte tem as mesas e as cadeiras — o texto branco caia em cima de bordas claras. Agora ha uma vinheta suave SO naquele bloco, em vez de escurecer a tela inteira."
+        },
+        {
+          "type": "fixed",
+          "text": "DEMISSAO NAO ENTRAVA PARA A HISTORIA. A tela prometia \"registra a passagem no seu historico\" e nada era gravado: o hall da fama marcava TODA passagem como \"contrato encerrado\", entao dava para ser demitido dez vezes e a carreira mostrar dez contratos cumpridos. Agora pedir demissao e ser demitido ficam registrados, cada um com o seu motivo."
+        },
+        {
+          "type": "fixed",
+          "text": "SAIR DO CLUBE NAO LIMPAVA O CLUBE. Quem era demitido continuava com o elenco, a tabela e o mercado do time que acabou de deixar — e seguia recebendo proposta por atleta que ja nao era dele enquanto procurava emprego. O motor agora e zerado na saida."
         }
       ]
     },

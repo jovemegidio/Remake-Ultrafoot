@@ -6,9 +6,28 @@ After=network.target
 Type=simple
 User=ultrafoot
 Group=ultrafoot
-Environment=PORT=8790
+# PORTA 8789, nao 8790. Este arquivo dizia 8790 e a producao roda em 8789 — na
+# VPS a 8790 e do servidor de contas (ultrafoot-auth). Reaplicar a versao antiga
+# deste unit colocaria o relay em conflito de porta e ele nem subiria.
+Environment=PORT=8789
 Environment=DATA_DIR=/var/lib/ultrafoot/relay
+# A versao que o relay ANUNCIA. Tem de ser a mesma que os clientes ENVIAM
+# (ONLINE_PROTOCOL_VERSION em lib/online-multiplayer.ts).
+#
+# ⚠️ EM 30/07/2026 ISTO ESTAVA EM 1.0.200 NA VPS e os clientes mandavam 1.0.191:
+# o relay devolvia 409 unsupported_game_version em TODA criacao e entrada de
+# sala, e o "Campeonato pela internet" estava 100% fora do ar sem ninguem notar.
+# E o caso exato que a lista abaixo existe para impedir.
 Environment=GAME_VERSION=1.0.191
+# VERSOES DE PROTOCOLO ACEITAS (lista separada por virgula).
+#
+# GAME_VERSION acima e a versao que o relay ANUNCIA; esta lista e a que ele
+# ACEITA. Sao coisas diferentes de proposito: quando o protocolo mudar, a versao
+# antiga fica aqui por pelo menos uma release para que quem ainda nao atualizou
+# o jogo nao seja expulso no meio de um campeonato. Sem isso (era um `!==` com um
+# valor so) publicar o jogo sem republicar o relay no mesmo minuto derrubava o
+# multiplayer de todo mundo que atualizasse.
+Environment=ALLOWED_GAME_VERSIONS=1.0.191,1.0.200
 ExecStart=/usr/bin/node /opt/ultrafoot/relay/server.mjs
 WorkingDirectory=/opt/ultrafoot/relay
 Restart=always
