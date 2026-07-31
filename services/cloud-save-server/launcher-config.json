@@ -144,9 +144,25 @@
   ],
   "changelog": [
     {
-      "version": "1.0.233",
+      "version": "1.0.234",
       "date": "2026-07-31",
       "latest": true,
+      "title": "A escalacao que voce salva passa a valer, e as quatro plataformas voltam para a mesma versao",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "A ESCALACAO SALVA ERA DESCARTADA POR UM UNICO DESFALQUE. Bastava um dos seus onze ficar indisponivel entre salvar e jogar — lesao na semana, convocacao para a selecao, suspensao — para o jogo jogar fora a escalacao INTEIRA e remontar o time por overall. Como o reserva que voce tinha acabado de tirar quase sempre tem overall maior que o titular que voce quis promover, ele voltava a campo. Era o relato de quem salvava a escalacao e via os jogadores removidos entrando assim mesmo. Agora quem voce escolheu e continua disponivel permanece titular, e so o buraco e preenchido — pela posicao que faltou, nao pelo melhor overall do elenco."
+        },
+        {
+          "type": "improved",
+          "text": "Linux, macOS e a versao web voltam para a mesma versao do Windows. Elas tinham ficado para tras nas ultimas publicacoes: quem jogava pelo navegador ou fora do Windows estava duas versoes atras, sem o fundo que se alterna na tela principal, sem os escudos corrigidos no Mercado de Juniores e sem o radar desacelerado."
+        }
+      ]
+    },
+    {
+      "version": "1.0.233",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "Tirar o atleta da posicao dele agora custa caro, e o radar deixou de correr",
       "changes": [
         {
