@@ -735,9 +735,16 @@ export default function ElencoPage() {
   // (game-engine usa nome como chave pois os IDs internos diferem)
   useEffect(() => {
     if (engineSquadPlayers.length === 0) return
-    const starterNames = new Set(players.map(p => p.name))
+    // MESMA correcao de app/partida/escalacao/page.tsx — o codigo e identico nas
+    // duas telas. Um `Set` marcava todos os homonimos; contar quantos de cada
+    // nome foram escalados mantem o numero certo de titulares.
+    const faltam = new Map<string, number>()
+    for (const p of players) faltam.set(p.name, (faltam.get(p.name) ?? 0) + 1)
+
     engineSquadPlayers.forEach((ep: EnginePlayer) => {
-      const shouldBeStarter = starterNames.has(ep.name)
+      const restantes = faltam.get(ep.name) ?? 0
+      const shouldBeStarter = restantes > 0
+      if (shouldBeStarter) faltam.set(ep.name, restantes - 1)
       if (ep.isStarter !== shouldBeStarter) {
         engineSetStarter(ep.id, shouldBeStarter)
       }
