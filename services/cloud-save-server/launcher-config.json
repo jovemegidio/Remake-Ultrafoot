@@ -144,9 +144,29 @@
   ],
   "changelog": [
     {
-      "version": "1.0.234",
+      "version": "1.0.235",
       "date": "2026-07-31",
       "latest": true,
+      "title": "Mais de 12 mil rostos no jogo e a liga da Colombia com o nome certo",
+      "changes": [
+        {
+          "type": "added",
+          "text": "OS ROSTOS SALTARAM DE 7.913 PARA 12.542. A descoberta: 8.510 rostos ja estavam ligados a um atleta e nunca tinham virado imagem — a importacao anterior parou no meio e ninguem viu, porque quando isso acontece nada quebra, o atleta so aparece com a silhueta. Nos elencos reais, o numero de jogadores com rosto de verdade praticamente dobrou."
+        },
+        {
+          "type": "fixed",
+          "text": "ROSTO DE QUEM NAO EXISTE NO JOGO SAIU DO INSTALADOR. Um quarto dos vinculos apontava para atletas que nao estao em elenco nenhum, e 2.217 desses rostos ja tinham sido convertidos — megabytes que ninguem jamais veria. Agora so entra rosto de atleta que o jogo realmente tem."
+        },
+        {
+          "type": "fixed",
+          "text": "A LIGA DA COLOMBIA APARECIA COM O NOME ERRADO. Alem de os clubes caírem no balde 'Internacional' (corrigido antes), a liga deles ainda era exibida como 'PRIMERA A COL' — um rotulo gerado automaticamente — porque o mesmo erro de digitacao estava tambem no mapa de nomes. Agora aparece 'Primera A', como deve ser."
+        }
+      ]
+    },
+    {
+      "version": "1.0.234",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "A escalacao que voce salva passa a valer, e as quatro plataformas voltam para a mesma versao",
       "changes": [
         {

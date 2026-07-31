@@ -74,7 +74,13 @@ const DIV_LABEL: Record<string, string> = {
   scottish_prem: "Scottish Prem", super_lig: "Süper Lig",
   pro_league_bel: "Pro League", russian_prem: "Liga Russa",
   mls: "MLS", liga_mx: "Liga MX",
-  liga_argentina: "Liga Argentina", primeira_a_col: "Primera A",
+  // O MESMO TYPO ESTAVA AQUI. Corrigir só o DIV_COUNTRY tirou os clubes do balde
+  // "Internacional", mas a liga deles ainda apareceria com o rótulo gerado —
+  // "PRIMERA A COL", do `div.replace(/_/g," ").toUpperCase()` que serve de
+  // fallback — porque este mapa também escrevia `primeira_a_col`. As duas
+  // grafias ficam, como no mapa de nível: dado antigo que use a errada continua
+  // com nome legível em vez de cair no fallback.
+  liga_argentina: "Liga Argentina", primera_a_col: "Primera A", primeira_a_col: "Primera A",
   primera_div_chi: "Primera Div", primera_div_ury: "Primera Div",
   saudi_pro: "Saudi Pro", saudi_first_div: "Saudi 1ª Div",
   j_league: "J-League", k_league_1: "K-League 1", chinese_super: "Super League",
