@@ -859,6 +859,30 @@ export function loadGameState(): GameState {
   return migrated
 }
 
+/**
+ * Grava um patch DIRETO no save, sem passar pelo estado do React.
+ *
+ * ⚠️ POR QUE ISTO EXISTE (relato: "não consigo aceitar proposta de seleção, e
+ * mesmo aceitando o escritório não atualiza e continua dizendo que há propostas
+ * em aberto").
+ *
+ * O `setState` do `useGameState` só grava DENTRO do atualizador que ele passa ao
+ * React (`setStateInternal(prev => { ...; queueMicrotask(salvar) })`). Esse
+ * atualizador só roda quando o React processa a fila de updates — e quando a
+ * ação NAVEGA na mesma tacada (aceitar a seleção faz `setState` e logo em
+ * seguida `hardNavigate`), o componente é desmontado antes disso. O React
+ * DESCARTA a atualização pendente, o `queueMicrotask` nunca é agendado e nada
+ * chega ao disco: a proposta não é aceita e não é removida.
+ *
+ * Regra prática: **decisão seguida de navegação grava por aqui**, não pelo
+ * `setState`. Quem fica na tela pode continuar usando o `setState` normal.
+ */
+export function commitGameState(patch: Partial<GameState>): GameState {
+  const merged = { ...loadGameState(), ...patch }
+  saveGameState(merged)
+  return merged
+}
+
 export function saveGameState(state: GameState): void {
   if (typeof window === "undefined") return
   const careerId = state.careerId || getActiveCareerId()

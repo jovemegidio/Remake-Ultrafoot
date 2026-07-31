@@ -11,8 +11,8 @@
 // fim de app/partida/ao-vivo). Sair daqui leva ao pré-escritório, que é para
 // onde a partida ia antes.
 
-import { useEffect, useMemo, useState } from "react"
-import { Gavel, ArrowRight } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Gavel, ArrowRight, Trophy, XCircle } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { LeiloesPanel, contarLeiloesAbertos } from "@/components/leiloes-panel"
 import { useUserTeam, useGameState } from "@/lib/save-system"
@@ -21,6 +21,8 @@ import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { generateDetailedMarketTargets } from "@/lib/transfer-engine"
 import { useGameEngine } from "@/lib/game-engine"
+import { chaveLeilao, resolverLancesPendentes, type DesfechoDeLeilao } from "@/lib/leilao"
+import { formatCurrency } from "@/lib/teams-data"
 
 export default function LeiloesPage() {
   useRequireClub()
@@ -67,19 +69,66 @@ export default function LeiloesPage() {
     [pool, candidatos, semana],
   )
 
+  // ── DESFECHO DOS LEILÕES QUE FECHARAM ───────────────────────────────────
+  //
+  // Corrigir a semana de encerramento (lib/leilao) faz o resultado aparecer para
+  // quem está na tela naquela semana. Mas o jogador pode avançar sem passar por
+  // aqui, e o pedido dele é que o atleta ganho venha "na hora ou na abertura da
+  // janela". Então o desfecho é recalculado a partir do LANCE SALVO, sempre que
+  // esta tela abre — e o que ele ganhou fica gravado em `leilaoVencido`, que o
+  // Mercado consome mesmo dias depois.
+  const [desfechos, setDesfechos] = useState<DesfechoDeLeilao[]>([])
+  const jaResolveu = useRef(false)
+  useEffect(() => {
+    if (jaResolveu.current) return
+    const salvos = state.lancesEmLeilao ?? []
+    if (salvos.length === 0) return
+    jaResolveu.current = true
+
+    const porChave = new Map(
+      pool.filter(a => a.team?.nome).map(a => [chaveLeilao(a.name, a.team.nome), a]),
+    )
+    const { desfechos: saiu, restantes } = resolverLancesPendentes(
+      salvos, semana, season,
+      (chave) => {
+        const a = porChave.get(chave)
+        return a ? {
+          name: a.name, overall: a.overall, age: a.age, potential: a.potential,
+          teamCurto: a.team.curto ?? "", teamNome: a.team.nome,
+        } : undefined
+      },
+      candidatos,
+      { curto: userTeam?.curto ?? "", nome: userTeam?.nome ?? "Seu clube", prestigio: userTeam?.prestigio ?? 60 },
+    )
+    if (saiu.length === 0 && restantes.length === salvos.length) return
+
+    const vitoria = saiu.find(d => d.venceu)
+    setDesfechos(saiu)
+    setState({
+      lancesEmLeilao: restantes,
+      // Só a primeira vitória entra na fila do Mercado — `leilaoVencido` é um
+      // slot só. As demais (raro: dois leilões fechando na mesma semana) ficam
+      // visíveis aqui e o jogador fecha uma de cada vez.
+      ...(vitoria ? { leilaoVencido: { jogador: vitoria.jogadorNome, valor: vitoria.valorVencedor, season } } : {}),
+    })
+  }, [state.lancesEmLeilao, pool, candidatos, semana, season, userTeam, setState])
+
   // SEM LEILÃO A TELA NÃO EXISTE: a partida manda todo mundo para cá porque
   // descobrir isso no fim do jogo exigiria gerar o catálogo inteiro do mercado
   // ali. Quando não há disputa, seguimos sozinhos para o pré-escritório — que era
   // o destino original do pós-partida.
+  //
+  // ⚠️ Nunca sair enquanto houver desfecho para mostrar: era assim que a vitória
+  // no leilão sumia sem o jogador ver nada.
   const [saindo, setSaindo] = useState(false)
   useEffect(() => {
-    if (quantos === 0 && !saindo) {
+    if (quantos === 0 && desfechos.length === 0 && (state.lancesEmLeilao?.length ?? 0) === 0 && !saindo) {
       setSaindo(true)
       hardNavigate("/pre-office")
     }
-  }, [quantos, saindo])
+  }, [quantos, desfechos.length, state.lancesEmLeilao, saindo])
 
-  if (quantos === 0) {
+  if (quantos === 0 && desfechos.length === 0 && (state.lancesEmLeilao?.length ?? 0) === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#050508]">
         <p className="text-sm text-white/40">Nenhum leilão em andamento — indo para o escritório...</p>
@@ -115,6 +164,55 @@ export default function LeiloesPage() {
             Ir para o escritório <ArrowRight className="h-4 w-4" />
           </button>
         </div>
+
+        {/* DESFECHOS — o que aconteceu com os leilões em que você deu lance.
+            Vencer abre a negociação no Mercado (a compra passa pelo caminho
+            normal, com teto de dívida, teto de folha e baixa no clube dono). */}
+        {desfechos.length > 0 && (
+          <div className="mb-6 space-y-3">
+            {desfechos.map(d => (
+              <div
+                key={d.chave}
+                className={
+                  d.venceu
+                    ? "rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/10 p-4"
+                    : "rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                }
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    {d.venceu
+                      ? <Trophy className="mt-0.5 h-5 w-5 shrink-0 text-[var(--brand)]" />
+                      : <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-white/35" />}
+                    <div>
+                      <p className={d.venceu ? "font-semibold text-[var(--brand)]" : "font-semibold text-white/80"}>
+                        {d.venceu
+                          ? `Você arrematou ${d.jogadorNome} por ${formatCurrency(d.valorVencedor)}`
+                          : `${d.jogadorNome} foi para outro clube`}
+                      </p>
+                      <p className="mt-0.5 text-sm text-white/50">{d.motivo}</p>
+                      {!d.venceu && d.valorVencedor > 0 && d.meuLance >= d.valorVencedor && (
+                        <p className="mt-1 text-xs text-amber-300/80">
+                          Seu lance de {formatCurrency(d.meuLance)} era o maior — o atleta preferiu o
+                          projeto do outro clube. No leilão, dinheiro não decide sozinho.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {d.venceu && (
+                    <button
+                      type="button"
+                      onClick={() => hardNavigate("/mercado")}
+                      className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand-ink)] hover:brightness-110"
+                    >
+                      Fechar contrato
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <LeiloesPanel
           pool={pool}

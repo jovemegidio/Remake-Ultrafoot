@@ -5,7 +5,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef } from "react"
-import { useGameState, type NationalOffer, DEFAULT_NATIONAL_CAREER } from "@/lib/save-system"
+import { useGameState, commitGameState, type NationalOffer, DEFAULT_NATIONAL_CAREER } from "@/lib/save-system"
 import {
   getAllNationalTeams,
   getNationalTeamById,
@@ -190,6 +190,14 @@ export function useNationalTeam() {
     if (!hydrated) return
     if (career.nationalTeamId) return
     if ((state.pendingNationalOffers?.length ?? 0) > 0) return
+    // UMA RODADA DE CONVITES POR TEMPORADA — e a trava tem de estar no SAVE.
+    //
+    // `attemptedSeasonRef` é um `useRef`: ele zera a cada montagem do hook, e o
+    // hook monta de novo a cada troca de tela. Sozinho, ele nunca impediu nada
+    // entre telas — bastava ir ao escritório para as mesmas propostas (a semente
+    // é determinística) voltarem, inclusive depois de aceitas ou recusadas.
+    // `lastNationalOfferSeason` já era gravado e nunca era consultado.
+    if (state.lastNationalOfferSeason === state.season) return
     if (attemptedSeasonRef.current === state.season) return
     if (!eligible) return
     // Entre o terceiro e quarto mês a proposta passa a ser obrigatória; antes
@@ -214,7 +222,7 @@ export function useNationalTeam() {
         lastNationalOfferSeason: state.season,
       })
     }
-  }, [hydrated, career.nationalTeamId, state.pendingNationalOffers, state.season, state.week, eligible, coachScore, state.declinedNationalTeamIds, state.managerName, setState])
+  }, [hydrated, career.nationalTeamId, state.pendingNationalOffers, state.season, state.week, state.lastNationalOfferSeason, eligible, coachScore, state.declinedNationalTeamIds, state.managerName, setState])
 
   // Pagamento pessoal mensal do treinador. Não sai do caixa do clube.
   useEffect(() => {
@@ -238,12 +246,22 @@ export function useNationalTeam() {
     return getCompetitionsForConfederation(nationalTeam.confederation)
   }, [nationalTeam])
 
+  /**
+   * Aceita a proposta.
+   *
+   * ⚠️ Grava por `commitGameState` (direto no save) ANTES de tocar no estado do
+   * React. Quem chama isto normalmente navega em seguida (`assumirSelecao` leva
+   * ao escritório), e a navegação desmonta a tela antes de o React processar o
+   * `setState` — a gravação era descartada e a proposta continuava aberta. Era
+   * exatamente o relato "aceito e o escritório não atualiza". O `setState` logo
+   * abaixo continua, para a tela atual reagir na hora.
+   */
   const acceptOffer = useCallback((offer: NationalOffer) => {
     const salary = offer.monthlySalary ?? Math.round((45_000 + offer.strength * 3_500) / 5_000) * 5_000
     const months = offer.contractMonths ?? 18
     const objectives = offer.objectives ?? ["Cumprir a meta da principal competição"]
     const obligations = offer.obligations ?? ["Participar das janelas internacionais", "Convocar atletas por mérito"]
-    setState({
+    const patch = {
       nationalCareer: {
         ...DEFAULT_NATIONAL_CAREER,
         ...(state.nationalCareer ?? {}),
@@ -264,7 +282,14 @@ export function useNationalTeam() {
         lastSalaryPaidWeek: state.week,
       },
       pendingNationalOffers: [],
-    })
+      // Fecha o carrossel desta temporada. Sem isto o escritório REGERAVA as
+      // mesmas propostas (a semente é `${managerName}-${season}-${score}`) assim
+      // que a tela remontava, porque a trava era um `useRef` que zera a cada
+      // montagem — o "ainda diz que tem propostas em aberto" do relato.
+      lastNationalOfferSeason: state.season,
+    }
+    commitGameState(patch)
+    setState(patch)
   }, [setState, state.nationalCareer, state.season, state.week])
 
   const counterOffer = useCallback((offer: NationalOffer, monthlySalary: number, contractMonths: number) => {

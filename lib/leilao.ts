@@ -148,9 +148,130 @@ export function emLeilaoNaSemana(
   return sorteioDe(`leilao:${chaveLeilao(jogadorNome, clubeNome)}:${bloco}`) < 0.0025
 }
 
-/** Semana em que o leilão deste atleta encerra (fim do bloco de 3 semanas). */
+/**
+ * Semana em que o leilão deste atleta encerra.
+ *
+ * ⚠️ BUG QUE ISTO CORRIGE (relato: "mesmo tendo o maior lance não consigo
+ * contratar ninguém; fala que finaliza em certa semana e depois não aparece
+ * mais nada").
+ *
+ * Antes devolvia `(bloco + 1) * 3` — a PRIMEIRA semana do bloco SEGUINTE. Só que
+ * a existência do leilão é derivada do bloco (`emLeilaoNaSemana` usa
+ * `Math.floor(semana / 3)` na semente). Ao chegar na semana de encerramento o
+ * bloco já era outro, a semente mudava e o leilão simplesmente DEIXAVA DE
+ * EXISTIR — no mesmo instante em que deveria ser decidido.
+ *
+ * Consequência: `encerrado = semana >= encerra` nunca era observável, a tela do
+ * vencedor e o botão "Fechar contrato" eram inalcançáveis, e a página de leilões
+ * ainda redirecionava para o escritório por achar que não havia disputa nenhuma.
+ * Vencer o leilão não entregava jogador nenhum, nunca.
+ *
+ * Agora encerra na ÚLTIMA semana do PRÓPRIO bloco: o leilão continua listado
+ * quando é decidido.
+ */
 export function semanaDeEncerramento(semana: number): number {
-  return (Math.floor(semana / 3) + 1) * 3
+  return Math.floor(semana / 3) * 3 + 2
+}
+
+// ─── RESOLUÇÃO DE LANCES PENDENTES ───────────────────────────────────────────
+//
+// Corrigir a semana de encerramento faz o resultado APARECER — mas só para quem
+// abrir a tela exatamente naquela semana. Quem avança a temporada sem passar por
+// ela perderia o atleta que ganhou, e o pedido do jogador é justamente que o
+// vencedor venha "na hora ou na abertura da janela".
+//
+// Por isso o desfecho é recalculado a partir do LANCE SALVO, que é a única coisa
+// que o save guarda. Como os lances da IA são derivados de (leilão, semana), dá
+// para reconstruir a disputa exatamente como ela estava na semana do fecho.
+
+export interface LanceParaResolver {
+  chave: string
+  valor: number
+  encerraNaSemana: number
+  season: number
+}
+
+export interface DesfechoDeLeilao {
+  chave: string
+  jogadorNome: string
+  /** O lance do usuário. */
+  meuLance: number
+  venceu: boolean
+  /** Valor com que o leilão foi arrematado. */
+  valorVencedor: number
+  motivo: string
+}
+
+/**
+ * Resolve os lances do usuário cujos leilões já fecharam.
+ *
+ * `alvoPorChave` devolve o atleta do catálogo (ou undefined se ele saiu do
+ * mercado). Sem o atleta não há como reconstruir a disputa: o lance é
+ * descartado, e é melhor descartar do que travar a fila para sempre.
+ */
+export function resolverLancesPendentes(
+  lances: readonly LanceParaResolver[],
+  semanaAtual: number,
+  seasonAtual: number,
+  alvoPorChave: (chave: string) => { name: string; overall: number; age: number; potential?: number; teamCurto: string; teamNome: string } | undefined,
+  candidatos: { curto: string; nome: string; prestigio: number; caixa: number; forcaElenco: number }[],
+  clubeDoUsuario: { curto: string; nome: string; prestigio: number },
+): { desfechos: DesfechoDeLeilao[]; restantes: LanceParaResolver[] } {
+  const desfechos: DesfechoDeLeilao[] = []
+  const restantes: LanceParaResolver[] = []
+
+  for (const lance of lances) {
+    // Lance de temporada passada nunca mais se resolve — some.
+    if (lance.season !== seasonAtual) continue
+    if (semanaAtual < lance.encerraNaSemana) { restantes.push(lance); continue }
+
+    const alvo = alvoPorChave(lance.chave)
+    if (!alvo) continue
+
+    const base: LeilaoAberto = {
+      id: lance.chave,
+      jogadorNome: alvo.name,
+      jogadorOverall: alvo.overall,
+      jogadorIdade: alvo.age,
+      clubeVendedorCurto: alvo.teamCurto,
+      clubeVendedorNome: alvo.teamNome,
+      valorMinimo: valorMinimoDe(alvo.overall, alvo.age, alvo.potential),
+      encerraNaSemana: lance.encerraNaSemana,
+      lances: [],
+    }
+    // A disputa é reconstruída na SEMANA DO FECHO, não na semana atual: é o
+    // estado que valia quando o martelo bateu.
+    const ia = lancesDaIA(base, candidatos, lance.encerraNaSemana)
+    const completo: LeilaoAberto = {
+      ...base,
+      lances: [...ia, {
+        clubeCurto: clubeDoUsuario.curto,
+        clubeNome: clubeDoUsuario.nome,
+        valor: lance.valor,
+        prestigio: clubeDoUsuario.prestigio,
+        doUsuario: true,
+      }],
+    }
+    const desfecho = encerrarLeilao(completo)
+    if (!desfecho) {
+      desfechos.push({
+        chave: lance.chave, jogadorNome: alvo.name, meuLance: lance.valor,
+        venceu: false, valorVencedor: 0,
+        motivo: `Ninguém cobriu o piso por ${alvo.name}. Ele segue no ${alvo.teamNome}.`,
+      })
+      continue
+    }
+    desfechos.push({
+      chave: lance.chave,
+      jogadorNome: alvo.name,
+      meuLance: lance.valor,
+      venceu: desfecho.vencedor.doUsuario === true,
+      valorVencedor: desfecho.vencedor.valor,
+      motivo: desfecho.motivo,
+    })
+  }
+
+  return { desfechos, restantes }
 }
 
 /**

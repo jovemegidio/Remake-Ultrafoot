@@ -13,7 +13,7 @@
 // Este modulo liga as duas pontas e persiste as propostas no save.
 
 import { storeGet, storeSet } from "@/lib/persistent-store"
-import { getCareerScopedKey } from "@/lib/save-system"
+import { getCareerScopedKey, commitGameState } from "@/lib/save-system"
 import type { JobOffer } from "@/lib/board-engine"
 
 const key = () => getCareerScopedKey("ultrafoot:job-offers")
@@ -221,6 +221,11 @@ export function assumirSelecao(
   nationalTeamId: string,
   deps: { setSaveState: (patch: Record<string, unknown>) => void; navigate: (href: string) => void },
 ): void {
+  // Grava DIRETO no save antes de navegar. `setSaveState` so persiste quando o
+  // React processa a atualizacao, e a navegacao logo abaixo desmonta a tela
+  // antes disso — a troca para o modo selecao se perdia junto com a aceitacao
+  // da proposta. Ver commitGameState em lib/save-system.
+  commitGameState({ managingNationalTeamId: nationalTeamId })
   deps.setSaveState({ managingNationalTeamId: nationalTeamId })
   deps.navigate("/")
 }
@@ -229,6 +234,7 @@ export function assumirSelecao(
 export function voltarAoClube(
   deps: { setSaveState: (patch: Record<string, unknown>) => void; navigate: (href: string) => void },
 ): void {
+  commitGameState({ managingNationalTeamId: null })
   deps.setSaveState({ managingNationalTeamId: null })
   deps.navigate("/")
 }
