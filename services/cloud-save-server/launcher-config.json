@@ -144,9 +144,41 @@
   ],
   "changelog": [
     {
+      "version": "1.0.229",
+      "date": "2026-07-31",
+      "latest": true,
+      "title": "O leilao passou a funcionar (e a ser disputa de verdade) e a proposta de selecao para de sumir",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "GANHAR O LEILAO NAO ENTREGAVA NINGUEM. O leilao era listado por um sorteio ligado ao bloco de tres semanas, mas o encerramento caia na PRIMEIRA semana do bloco seguinte — ou seja, no instante em que deveria ser decidido, ele deixava de existir. Por isso o lance aparecia, a data aparecia, e depois nao aparecia mais nada: a tela do vencedor e o botao de fechar contrato eram inalcancaveis. Medimos: de 1034 leiloes abertos, ZERO chegavam ao proprio encerramento. Nao era intermitente — ganhar um leilao nunca entregou um jogador."
+        },
+        {
+          "type": "added",
+          "text": "O ATLETA GANHO VEM ATE VOCE. O resultado agora e recalculado a partir do seu lance salvo sempre que a tela de leiloes abre, mesmo que voce tenha avancado varias semanas sem passar por ela. Quem voce arrematou fica guardado e o Mercado abre a negociacao quando voce chegar la."
+        },
+        {
+          "type": "improved",
+          "text": "OS RIVAIS AGORA COBREM VOCE. Os lances dos outros clubes eram calculados sem enxergar o seu — nenhum clube respondia, e bastava cobrir a mesa uma vez para levar qualquer atleta. Agora a disputa corre semana a semana: quem tem caixa cobre o maior lance, inclusive o seu. Cobrir cedo sai barato mas voce sera coberto de volta; cobrir na ultima semana e caro e definitivo, porque nao sobra tempo de resposta. A tela diz quantas semanas os rivais ainda tem."
+        },
+        {
+          "type": "improved",
+          "text": "AGORA HA UM MOTIVO PARA O ATLETA IR A LEILAO. Era um sorteio parelho para todo mundo. Ninguem vai a leilao por sorteio: vai porque o clube nao consegue mais segurar o craque, porque e um veterano caro que se quer tirar da folha, ou porque e uma joia a vender no auge. Um craque de 88 num clube modesto agora aparece cerca de tres vezes mais que o mesmo craque num gigante."
+        },
+        {
+          "type": "fixed",
+          "text": "PERDER O LEILAO PASSOU A DOER. Quando outro clube arrematava, o atleta continuava no catalogo do mercado e dava para compra-lo na aba Buscar logo em seguida — o que esvaziava a disputa inteira. Agora ele sai do mercado com quem o levou."
+        },
+        {
+          "type": "fixed",
+          "text": "PROPOSTA DE SELECAO NAO ERA SALVA. Aceitar levava direto ao escritorio, e a troca de tela acontecia antes de a decisao ser gravada: o convite continuava aberto como se nada tivesse sido aceito. Pior, a trava de 'uma rodada de convites por temporada' se perdia a cada troca de tela, entao as mesmas propostas voltavam sozinhas. As duas coisas foram corrigidas: a decisao e gravada antes de sair da tela e a trava passou a viver no save."
+        }
+      ]
+    },
+    {
       "version": "1.0.228",
       "date": "2026-07-30",
-      "latest": true,
+      "latest": false,
       "title": "Multa rescisoria no mercado, emprestimo que se negocia, olheiro que se demite e o campeonato online funcionando de ponta a ponta",
       "changes": [
         {
