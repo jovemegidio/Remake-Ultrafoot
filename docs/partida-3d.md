@@ -101,6 +101,46 @@ Uma partida de 90 min gera ~40 eventos. O motor encena:
 `definirVelocidade()` e `definirDuracaoDoTempo()` continuam existindo para
 controlar o ritmo da encenação, mas já não são a ponte entre os motores.
 
+### Tempo de cena: lance → conclusão → consequência
+
+A primeira versão de `encenar` pulava direto para a conclusão: chamava
+`Rules.goal()` e a bola já estava na rede sem nunca ter sido chutada. Teleporte,
+não futebol.
+
+Agora cada evento é uma pequena roteirização com tempo próprio, consumida pelo
+loop (`_roteiro` + `_passoRoteiro`). Medido no navegador:
+
+| tempo | placar | bola |
+|---|---|---|
+| 100 ms | 0 | 79 km/h, subindo (0,41 m) |
+| 300 ms | 0 | 76 km/h, apex (0,68 m) |
+| **500 ms** | **1** | 74 km/h, chegando (0,48 m) |
+| 900 ms | 1 | 62 km/h, assentando |
+
+O gol entra quando a bola **chega**, não quando o evento é recebido.
+
+A consequência veio junto. O motor tinha 6 poses, todas de **ação** (o que se faz
+com a bola) e nenhuma de **reação**: quem sofria um gol voltava a correr, e um
+cartão amarelo não mudava nada no corpo de ninguém. Foram acrescentadas quatro:
+
+| pose | quando |
+|---|---|
+| `maos_cabeca` | gol sofrido, gol perdido — goleiro e defesa |
+| `reclamar` | falta cometida, cartão, pênalti contra |
+| `maos_quadril` | resignação, esperando a bola voltar ao meio |
+| `aponta` | cobrança ao companheiro |
+
+As reações são dessincronizadas de propósito (`poseT` com variação aleatória e
+chance por jogador) — os 11 fazendo a mesma coisa no mesmo instante pareceria
+coreografia, não gente.
+
+**Nada disso toca física, IA ou regras**, então o resultado que o `match-engine`
+decidiu continua intacto.
+
+Verificação: com a simulação **congelada** (`definirPausa(true)`), encenar um gol
+muda 99,4% dos bytes da imagem — com a cena parada, só as poses podem alterar o
+que se vê.
+
 ---
 
 ## Medição do comportamento (30/07/2026)
