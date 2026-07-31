@@ -448,6 +448,7 @@ export function MatchRadar({
     const reduceMotion = typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
     let lastFrame = 0
+    let tempoAnterior = 0
     const animate = () => {
       if (reduceMotion) {
         const now = performance.now()
@@ -455,6 +456,28 @@ export function MatchRadar({
         lastFrame = now
       }
       const time = performance.now() / 1000
+
+      /**
+       * SUAVIZACAO POR TEMPO, e nao por quadro.
+       *
+       * As interpolacoes eram fatores fixos aplicados A CADA QUADRO (`lerp(a, b,
+       * 0.08)`). Isso trazia dois problemas:
+       *
+       *   - VELOCIDADE ATRELADA AO FPS. A 60fps o atleta fechava 8% da distancia
+       *     a cada 16ms — chegava ao destino em menos de meio segundo, e tudo
+       *     parecia acelerado. E o proprio radar ja roda a 30fps quando o SO pede
+       *     movimento reduzido, entao a mesma partida se movia na metade da
+       *     velocidade dependendo da maquina.
+       *   - RITMO DE VIDEOGAME, nao de futebol. Ninguem atravessa o campo em
+       *     meio segundo.
+       *
+       * `1 - e^(-k·dt)` converte uma TAXA POR SEGUNDO num fator de quadro: o
+       * resultado fica igual em qualquer FPS, e `k` passa a ser legivel — quanto
+       * maior, mais rapido o deslocamento.
+       */
+      const dt = tempoAnterior ? Math.min(0.1, time - tempoAnterior) : 1 / 60
+      tempoAnterior = time
+      const suave = (k: number) => 1 - Math.exp(-k * dt)
       const fase = phaseRef.current
       const paradoFase = fase === "pre" || fase === "halftime" || fase === "fulltime"
 
@@ -468,17 +491,21 @@ export function MatchRadar({
       const cornerBoost = reacting && react!.type === "corner"
 
       // Smooth ball toward target — keep previous frame to derive speed. No chute a
-      // bola VOA (lerp alto); no escanteio vai firme; normal e suave.
-      const ballLerp = reacting ? (react!.type === "shot" ? 0.34 : 0.16) : 0.10
+      // bola VOA (taxa alta); no escanteio vai firme; normal e suave.
+      // Taxas POR SEGUNDO (ver `suave`): a bola em jogo normal leva ~1s para
+      // cobrir a maior parte da distancia, e so o chute e realmente rapido.
+      const ballLerp = suave(reacting ? (react!.type === "shot" ? 11 : 4.5) : 2.6)
       const bp = ballPosRef.current
       const prevBx = bp.x
       const prevBy = bp.y
       bp.x = lerp(bp.x, target.x, ballLerp)
       bp.y = lerp(bp.y, target.y, ballLerp)
 
-      // Ball speed (per frame, normalised units) drives trail + lift + squash
-      const speed = Math.hypot(bp.x - prevBx, bp.y - prevBy)
-      const speedNorm = clamp(speed / 0.012, 0, 1)
+      // Velocidade da bola POR SEGUNDO (nao por quadro): e ela que liga o rastro,
+      // o "voo" e o achatamento. Medida por quadro, os efeitos mudavam de
+      // intensidade conforme o FPS da maquina.
+      const speed = Math.hypot(bp.x - prevBx, bp.y - prevBy) / Math.max(dt, 0.001)
+      const speedNorm = clamp(speed / 0.72, 0, 1)
 
       // Find ball carrier: closest field player on the team in possession
       const currentSlots = slotsRef.current
@@ -529,7 +556,10 @@ export function MatchRadar({
         }
 
         const prev = posRef.current.get(s.key) ?? { x, y }
-        const ease = s.key === carrierKey ? 0.22 : s.key === presserKey ? 0.16 : 0.08
+        // Taxas POR SEGUNDO. Quem esta com a bola reage mais rapido que quem
+        // apenas reposiciona — mas nenhum deles atravessa o campo num piscar,
+        // que era a sensacao de "radar rapido demais".
+        const ease = suave(s.key === carrierKey ? 4.5 : s.key === presserKey ? 3.4 : 2.0)
         const nx = lerp(prev.x, x, ease)
         const ny = lerp(prev.y, y, ease)
         posRef.current.set(s.key, { x: nx, y: ny })
@@ -557,10 +587,11 @@ export function MatchRadar({
 
       // Comet trail: each segment chases the one in front of it
       const trail = trailRef.current
+      const arrasto = suave(28)  // o rastro precisa colar na bola, mas por TEMPO
       for (let i = 0; i < trail.length; i++) {
         const lead = i === 0 ? bp : trail[i - 1]
-        trail[i].x = lerp(trail[i].x, lead.x, 0.42)
-        trail[i].y = lerp(trail[i].y, lead.y, 0.42)
+        trail[i].x = lerp(trail[i].x, lead.x, arrasto)
+        trail[i].y = lerp(trail[i].y, lead.y, arrasto)
         const el = trailRefs.current[i]
         if (el) {
           el.style.left = `${trail[i].x * 100}%`

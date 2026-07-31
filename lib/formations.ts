@@ -375,3 +375,42 @@ const MESMO_SETOR_OUTRO_LADO: Record<string, string[]> = {
 export function estaImprovisado(posicaoAtleta: string, slot: string): boolean {
   return normalizePosition(posicaoAtleta) !== normalizePosition(slot)
 }
+
+/**
+ * QUE POSIÇÃO O ATLETA ESTÁ JOGANDO, pelas coordenadas na prancheta.
+ *
+ * Existe porque `slotPos` (de `assignPlayersToFormation`) NÃO serve para isto: o
+ * encaixe põe cada atleta no slot da PRÓPRIA posição dele — um goleiro sempre
+ * recebe o slot GOL —, e arrastar alguém pelo campo muda apenas `x`/`y`. Ligar a
+ * penalidade de improvisação ao `slotPos` fazia origem e destino serem sempre
+ * iguais: o fator dava 1 e nada acontecia, por mais que o técnico movesse o
+ * atleta. Quem manda é onde ele ESTÁ.
+ *
+ * Convenção da prancheta (a mesma que o save grava): `x` 0-100 da esquerda para
+ * a direita, `y` 0-100 com 0 no gol ADVERSÁRIO e ~92 no próprio gol. Por isso a
+ * profundidade é medida de trás para frente.
+ */
+export function posicaoPelaCoordenada(x: number, y: number): string {
+  const lado = Math.max(0, Math.min(100, x)) / 100
+  // 0 = próprio gol, 1 = gol adversário.
+  const avanco = 1 - Math.max(0, Math.min(100, y)) / 100
+
+  // ÁREA DO PRÓPRIO GOL. Só é goleiro quem está colado na meta E no miolo —
+  // um lateral recuado na linha de fundo não vira goleiro.
+  if (avanco < 0.12 && lado > 0.3 && lado < 0.7) return "GOL"
+
+  if (avanco < 0.38) {
+    if (lado < 0.22) return "LE"
+    if (lado > 0.78) return "LD"
+    return "ZAG"
+  }
+  if (avanco < 0.68) {
+    if (lado < 0.18) return "ME"
+    if (lado > 0.82) return "MD"
+    // O meio tem duas alturas: quem fica na frente da zaga é volante.
+    return avanco < 0.50 ? "VOL" : "MEI"
+  }
+  if (lado < 0.26) return "PE"
+  if (lado > 0.74) return "PD"
+  return "ATA"
+}

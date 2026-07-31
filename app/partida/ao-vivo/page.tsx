@@ -42,7 +42,7 @@ import { loadGameState, saveGameStateAndFlush, useGameState, useUserTeam } from 
 import { calcularEfeitoColetiva } from "@/lib/press-effects"
 import { useNotifications } from "@/components/notifications-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
-import { assignPlayersToFormation, pickStartingXI } from "@/lib/formations"
+import { assignPlayersToFormation, pickStartingXI, posicaoPelaCoordenada } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { concluirAmistoso } from "@/lib/amistosos-calendario"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
@@ -220,7 +220,16 @@ function enginePlayersToMatchSquad(
     defending: p.defending,
     physical: p.physical,
     tacticalSlot: i,
-    formationPosition: p.slotPos,
+    // ONDE ELE VAI JOGAR. `slotPos` sozinho nao servia: o encaixe da a cada
+    // atleta o slot da PROPRIA posicao dele, entao `pos` e `posNatural` saiam
+    // sempre iguais e a penalidade de improvisacao NUNCA disparava no motor —
+    // arrastar o goleiro para a zaga nao mudava nada em campo.
+    //
+    // A coordenada so manda quando o tecnico REALMENTE moveu o atleta: nas
+    // posicoes padrao do template ela poderia cair numa faixa vizinha (um VOL
+    // desenhado um pouco a frente virando MEI) e cobrar uma penalidade que
+    // ninguem pediu.
+    formationPosition: porId[p.id] ? posicaoPelaCoordenada(p.x, p.y) : p.slotPos,
     fieldX: p.x,
     fieldY: p.y,
   }))

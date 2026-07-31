@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
 import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
 import { artilheiros, cartoes } from "@/lib/leaderboards"
-import { FORMATIONS, assignPlayersToFormation, normalizePosition, penalidadeImprovisacao, pickStartingXI } from "@/lib/formations"
+import { FORMATIONS, assignPlayersToFormation, normalizePosition, penalidadeImprovisacao, posicaoPelaCoordenada, pickStartingXI } from "@/lib/formations"
 import { formatCurrency, getCamisaUrl, isKitVariantAvailable, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
@@ -525,6 +525,28 @@ export default function ElencoPage() {
   const positionedPlayers = useMemo(
     () => assignPlayersToFormation(players, formation, playerPositions),
     [players, formation, playerPositions],
+  )
+
+  /**
+   * ONDE O ATLETA VAI JOGAR DE FATO — a base da penalidade de improvisação.
+   *
+   * Não pode ser `slotPos`: `assignPlayersToFormation` encaixa cada atleta no
+   * slot da PRÓPRIA posição dele (o passo 1 é casar posição exata), e arrastar
+   * alguém pelo campo muda só `x`/`y`. Ligado ao `slotPos`, origem e destino
+   * eram sempre iguais, o fator dava 1 e mover o goleiro para a zaga não mudava
+   * nada — nem na tela, nem no motor.
+   *
+   * A coordenada só manda quando o técnico REALMENTE moveu o atleta. Nas
+   * posições padrão do template ela poderia cair numa faixa vizinha (um VOL
+   * desenhado um pouco à frente virando MEI) e cobrar uma penalidade que
+   * ninguém pediu. Mesma regra do caminho da partida (app/partida/ao-vivo).
+   */
+  const slotEfetivo = useCallback(
+    (player: { id: number; position: string; x: number; y: number; slotPos?: string }) =>
+      playerPositions[player.id]
+        ? posicaoPelaCoordenada(player.x, player.y)
+        : normalizePosition(player.slotPos ?? player.position),
+    [playerPositions],
   )
   
   // Rótulos do card de função no campo. A instrução salva manda; sem ela, cai no
@@ -1726,7 +1748,7 @@ export default function ElencoPage() {
                     <CartaDeJogador
                       nome={player.name}
                       posicao={normalizePosition(player.position)}
-                      slot={normalizePosition(player.slotPos ?? player.position)}
+                      slot={slotEfetivo(player)}
                       overall={player.overall}
                       numero={numeroDaCamisa(player.id)}
                       selecionado={selectedPlayerId === player.id}
@@ -1774,7 +1796,7 @@ export default function ElencoPage() {
                           derruba o rendimento dele, e isso precisa aparecer
                           ANTES da partida (o motor já cobrava, em silêncio). */}
                       {(() => {
-                        const slot = normalizePosition(player.slotPos ?? player.position)
+                        const slot = slotEfetivo(player)
                         const origem = normalizePosition(player.position)
                         const fator = penalidadeImprovisacao(origem, slot)
                         const efetivo = Math.round(player.overall * fator)
