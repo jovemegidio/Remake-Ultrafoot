@@ -542,6 +542,46 @@ troca(r"(  cena:null, cenaT:0,\n(?:.*\n)*?  update\(dt\)\{\n)",
       "camera de cena expira sozinha", esperado=1)
 mudancas.append(("camera com enquadramento proprio para lances encenados", 3))
 
+# ── BUG: o passe mirava onde o companheiro NAO estaria ────────────────────────
+# OBSERVADO: "ainda fica 5 pessoas correndo atras da bola e se amontoando".
+# MEDIDO: 51% de acerto de passe, contra ~80% do futebol real.
+#
+# `passTo` mirava a posicao do companheiro somada a `vel * 0.46` — ou seja, onde
+# ele estaria em 0,46 s. Mas a bola nao chega em 0,46 s:
+#
+#   distancia   tempo de voo   antecipacao   o alvo ja andou
+#      10 m        2,3 s          0,46 s          8 m
+#      20 m        3,9 s          0,46 s         16 m
+#      30 m        5,3 s          0,46 s         22 m
+#
+# O passe morria no vazio, virava bola solta, e os dois times convergiam para a
+# disputa — o amontoamento. Nao era a IA "correndo atras da bola": era o passe
+# errando e criando bola dividida o tempo todo.
+#
+# A correcao estima o tempo de voo pela mesma fisica do `passPower` e mira onde
+# o companheiro estara ENTAO. O erro de execucao (qualidade, cansaco) continua
+# intacto — passe ruim ainda erra, mas por incompetencia e nao por mira.
+troca(r"function passTo\(p,m,lofted\)\{\n  const to=m\.pos\.clone\(\)\.addScaledVector\(m\.vel,lofted\?\.62:\.46\)\.sub\(p\.pos\)\.setY\(0\);",
+      """function passTo(p,m,lofted){
+  // ANTECIPACAO PELO TEMPO DE VOO REAL.
+  //
+  // Mirar `vel * 0.46` assumia que a bola chega em meio segundo. Num passe de
+  // 20 m ela leva ~3,9 s, e o companheiro ja andou ~16 m — o passe ia para
+  // onde ele esteve. Estimamos o voo pela distancia e miramos o ponto futuro.
+  //
+  // Duas passadas: a primeira estima o tempo pela distancia atual, a segunda
+  // corrige com a distancia ate o ponto ja antecipado. Converge o bastante
+  // sem custar iteracao no laco de fisica.
+  let alvo = m.pos.clone();
+  for(let i=0;i<2;i++){
+    const dParcial = Math.max(3, alvo.distanceTo(p.pos));
+    const vMedia = lofted ? 12 : Math.max(4.5, 3.6 + dParcial*0.055);
+    const tVoo = clamp(dParcial / vMedia, 0.2, 2.4);
+    alvo = m.pos.clone().addScaledVector(m.vel, tVoo);
+  }
+  const to=alvo.sub(p.pos).setY(0);""",
+      "BUG: passe mirava onde o companheiro nao estaria", esperado=1)
+
 # ── POSES DE CONSEQUENCIA ─────────────────────────────────────────────────────
 # O motor tinha 6 poses: run, kick, dive, tackle, header, celebrate. Todas de
 # ACAO — o que o jogador faz com a bola. Nenhuma de REACAO: depois do lance, o
