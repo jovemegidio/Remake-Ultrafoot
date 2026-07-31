@@ -733,16 +733,25 @@ export default function ElencoPage() {
 
   // Sincroniza titulares com o game-engine sempre que players mudar
   // (game-engine usa nome como chave pois os IDs internos diferem)
+  //
+  // A dependencia e a ASSINATURA (nomes dos titulares), nao o array `players`.
+  // O hook do roster monta objetos novos a cada leitura, entao `players` trocava
+  // de identidade sem mudanca real de conteudo e este efeito redisparava — junto
+  // com `engineSquadPlayers`, que tambem e referencia nova a cada `set` do
+  // zustand. O guard `ep.isStarter !== shouldBeStarter` evitava a escrita, mas
+  // nao o ciclo: era o "Maximum update depth exceeded" ao abrir esta tela.
+  const assinaturaTitulares = players.map(p => p.name).join("|")
   useEffect(() => {
-    if (engineSquadPlayers.length === 0) return
-    const starterNames = new Set(players.map(p => p.name))
-    engineSquadPlayers.forEach((ep: EnginePlayer) => {
+    const squad = useGameEngine.getState().squadPlayers
+    if (squad.length === 0) return
+    const starterNames = new Set(assinaturaTitulares.split("|").filter(Boolean))
+    squad.forEach((ep: EnginePlayer) => {
       const shouldBeStarter = starterNames.has(ep.name)
       if (ep.isStarter !== shouldBeStarter) {
         engineSetStarter(ep.id, shouldBeStarter)
       }
     })
-  }, [players, engineSquadPlayers, engineSetStarter])
+  }, [assinaturaTitulares, engineSetStarter])
 
   // Navegacao por controle no elenco
   useEffect(() => {

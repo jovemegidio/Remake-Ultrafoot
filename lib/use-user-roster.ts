@@ -177,8 +177,25 @@ export function useUserRoster(
   useEffect(() => {
     if (!teamReady) return
     const roster = rosterFromSource()
-    setPlayers(roster.players)
-    setBench(roster.bench)
+
+    // SO troca o estado quando o CONTEUDO mudou.
+    //
+    // `rosterFromSource` monta objetos novos toda vez (enginePlayerToElenco
+    // retorna um literal), entao `setPlayers` sempre recebia um array com
+    // identidade diferente — mesmo quando os jogadores eram exatamente os
+    // mesmos. Isso fazia `players` mudar de referencia, o que redisparava o
+    // efeito de sincronia da tela de gerenciamento (que depende de `players`),
+    // que por sua vez mexia no motor e voltava para ca: "Maximum update depth
+    // exceeded" ao abrir /elenco/gerenciamento.
+    //
+    // Comparar por id+titularidade quebra o ciclo sem perder atualizacao real:
+    // contratacao, venda, emprestimo ou troca de titular mudam a assinatura.
+    const assinatura = (lista: { id: number }[]) => lista.map(p => p.id).join(",")
+
+    setPlayers(atual =>
+      assinatura(atual) === assinatura(roster.players) ? atual : roster.players)
+    setBench(atual =>
+      assinatura(atual) === assinatura(roster.bench) ? atual : roster.bench)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamReady, userTeam.curto, squadIdentity])
 
