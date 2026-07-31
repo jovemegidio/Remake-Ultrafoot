@@ -174,18 +174,31 @@ export default function PartidaEscalacaoPage() {
     setPlayerPositions({})
   }
 
-  // Sincroniza titulares com o game-engine sempre que players mudar
-  // (game-engine usa nome como chave pois os IDs internos diferem)
+  // Sincroniza titulares com o game-engine sempre que a escalacao mudar.
+  //
+  // MESMO efeito da tela de gerenciamento, com as MESMAS duas correcoes:
+  //
+  // 1) HOMONIMOS — um `Set` de nomes marcava TODOS os jogadores com aquele
+  //    nome. 33 times dos dados reais tem homonimo no mesmo elenco (o
+  //    Jacuipense tem dois "Vicente"), e escalar um colocava os dois em campo.
+  //    Contamos quantos de cada nome foram escalados e marcamos essa
+  //    quantidade, na ordem do elenco.
+  //
+  // 2) LOOP DE RENDER — depender de `players` (array novo a cada leitura do
+  //    roster) e de `engineSquadPlayers` (referencia nova a cada `set` do
+  //    zustand) fazia o efeito redisparar sem mudanca real. A dependencia passa
+  //    a ser a ASSINATURA dos titulares, e o squad e lido via `getState()`.
+  const assinaturaTitulares = players.map(p => p.name).join("|")
   useEffect(() => {
-    if (engineSquadPlayers.length === 0) return
-    // HOMONIMOS: um `Set` de nomes marcava TODOS os jogadores com aquele nome.
-    // 33 times dos dados reais tem homonimo no mesmo elenco (o Jacuipense tem
-    // dois "Vicente"), entao escalar um colocava os dois em campo. Contar
-    // quantos de cada nome foram escalados mantem o NUMERO certo de titulares.
-    const faltam = new Map<string, number>()
-    for (const p of players) faltam.set(p.name, (faltam.get(p.name) ?? 0) + 1)
+    const squad = useGameEngine.getState().squadPlayers
+    if (squad.length === 0) return
 
-    engineSquadPlayers.forEach((ep: EnginePlayer) => {
+    const faltam = new Map<string, number>()
+    for (const nome of assinaturaTitulares.split("|").filter(Boolean)) {
+      faltam.set(nome, (faltam.get(nome) ?? 0) + 1)
+    }
+
+    squad.forEach((ep: EnginePlayer) => {
       const restantes = faltam.get(ep.name) ?? 0
       const shouldBeStarter = restantes > 0
       if (shouldBeStarter) faltam.set(ep.name, restantes - 1)
@@ -193,7 +206,7 @@ export default function PartidaEscalacaoPage() {
         engineSetStarter(ep.id, shouldBeStarter)
       }
     })
-  }, [players, engineSquadPlayers, engineSetStarter])
+  }, [assinaturaTitulares, engineSetStarter])
 
   // Navegacao por controle no elenco
   useEffect(() => {
