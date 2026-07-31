@@ -371,6 +371,91 @@ const MESMO_SETOR_OUTRO_LADO: Record<string, string[]> = {
   ALD: ["ALE"], ALE: ["ALD"],
 }
 
+/**
+ * COMPLETA a escalação do técnico em vez de descartá-la.
+ *
+ * O relato: "atualizo os jogadores e salvo, mas quando inicio a partida os
+ * jogadores que tirei estão jogando".
+ *
+ * A causa era uma condição de TUDO OU NADA no ao-vivo: `if (manual.length >= 11)`
+ * usava o XI salvo; senão, remontava do zero por overall. Bastava UM dos onze
+ * ficar indisponível — lesão na semana, convocação para a seleção, suspensão —
+ * para a lista cair para dez, a condição falhar e as OUTRAS DEZ escolhas do
+ * técnico irem junto para o lixo. O remonte automático escolhe por overall, e
+ * traz de volta justamente os reservas que ele tinha acabado de tirar.
+ *
+ * Aqui os escolhidos que continuam disponíveis são MANTIDOS, e só os buracos são
+ * preenchidos — pela posição do slot vago, não pelo overall geral do elenco.
+ */
+export function completarEscalacao<T>(
+  escolhidos: readonly T[],
+  disponiveis: readonly T[],
+  formation: string | undefined,
+  getPos: (p: T) => string,
+  getOverall: (p: T) => number,
+): { starters: T[]; bench: T[] } {
+  const slots = getFormationSlots(formation)
+  const restantes = disponiveis.filter(p => !escolhidos.includes(p))
+
+  // Os escolhidos ocupam primeiro os slots que combinam com eles, para que os
+  // buracos que sobrarem sejam os das posições realmente descobertas.
+  const doTecnico = [...escolhidos]
+  const titulares: T[] = []
+
+  // DUAS PASSAGENS, e a ordem importa. Numa só, o slot de ATACANTE consumia o
+  // PONTA-DIREITA por compatibilidade antes de o slot de PONTA-DIREITA chegar a
+  // reivindicá-lo — o buraco virava PD e entrava um meia do banco, quando o que
+  // faltava era um centroavante. Primeiro todo mundo ocupa o slot da PRÓPRIA
+  // posição; só o que sobrar disputa por compatibilidade.
+  let pendentes = slots.map(s => s.pos)
+
+  const ocupar = (achar: (posDoSlot: string) => number) => {
+    const restam: string[] = []
+    for (const posDoSlot of pendentes) {
+      const i = achar(posDoSlot)
+      if (i === -1) { restam.push(posDoSlot); continue }
+      titulares.push(doTecnico.splice(i, 1)[0])
+    }
+    pendentes = restam
+  }
+
+  ocupar(posDoSlot => doTecnico.findIndex(p => normalizePosition(getPos(p)) === posDoSlot))
+  ocupar(posDoSlot => {
+    for (const compativel of COMPATIBLE_POSITIONS[posDoSlot] ?? []) {
+      const i = doTecnico.findIndex(p => normalizePosition(getPos(p)) === compativel)
+      if (i !== -1) return i
+    }
+    return -1
+  })
+  const vagos = pendentes
+  // Sobrou escolhido sem slot (ex.: três zagueiros num 4-3-3 com a zaga cheia):
+  // ele continua titular — a decisão é do técnico — e um slot vago some.
+  while (doTecnico.length && vagos.length) { titulares.push(doTecnico.shift()!); vagos.pop() }
+  titulares.push(...doTecnico)
+
+  // Buracos: o melhor disponível PARA AQUELA POSIÇÃO, não o melhor do elenco.
+  const sobrando = [...restantes]
+  for (const pos of vagos) {
+    const ordem = [pos, ...(COMPATIBLE_POSITIONS[pos] ?? [])]
+    let escolhido = -1
+    for (const desejada of ordem) {
+      let melhor = -1
+      for (let i = 0; i < sobrando.length; i++) {
+        if (normalizePosition(getPos(sobrando[i])) !== desejada) continue
+        if (melhor === -1 || getOverall(sobrando[i]) > getOverall(sobrando[melhor])) melhor = i
+      }
+      if (melhor !== -1) { escolhido = melhor; break }
+    }
+    // Ninguém da posição nem das compatíveis: pega o melhor que restar.
+    if (escolhido === -1 && sobrando.length) {
+      escolhido = sobrando.reduce((m, p, i, a) => (getOverall(p) > getOverall(a[m]) ? i : m), 0)
+    }
+    if (escolhido !== -1) titulares.push(sobrando.splice(escolhido, 1)[0])
+  }
+
+  return { starters: titulares.slice(0, 11), bench: [...titulares.slice(11), ...sobrando] }
+}
+
 /** true quando o atleta está fora da posição — para a tela avisar. */
 export function estaImprovisado(posicaoAtleta: string, slot: string): boolean {
   return normalizePosition(posicaoAtleta) !== normalizePosition(slot)

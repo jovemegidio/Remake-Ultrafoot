@@ -42,7 +42,7 @@ import { loadGameState, saveGameStateAndFlush, useGameState, useUserTeam } from 
 import { calcularEfeitoColetiva } from "@/lib/press-effects"
 import { useNotifications } from "@/components/notifications-system"
 import { getPlayersForTeam, type Player } from "@/lib/players-data"
-import { assignPlayersToFormation, pickStartingXI, posicaoPelaCoordenada } from "@/lib/formations"
+import { assignPlayersToFormation, completarEscalacao, pickStartingXI, posicaoPelaCoordenada } from "@/lib/formations"
 import { clearMatchContext, loadMatchContext } from "@/lib/match-context"
 import { concluirAmistoso } from "@/lib/amistosos-calendario"
 import { useMatchSimulation } from "@/hooks/use-match-simulation"
@@ -177,8 +177,15 @@ function enginePlayersToMatchSquad(
   // SUSPENSO nao entra em campo (realismo FM): fica fora ate cumprir a punicao.
   const available = players.filter(p => !p.injury && !p.calledUp && (p.suspendedMatches ?? 0) <= 0)
 
-  // Se o usuario montou a escalacao (isStarter), RESPEITA o XI dele. Senao, encaixa na
-  // formacao (defesa/meio/ataque completos) em vez de "os 11 primeiros por posicao".
+  // A ESCALACAO SALVA MANDA — e o que sobra dela tambem.
+  //
+  // Isto era TUDO OU NADA: `if (manual.length >= 11)` usava o XI do tecnico,
+  // senao remontava do zero por overall. Bastava UM dos onze ficar indisponivel
+  // (lesao na semana, convocacao, suspensao) para a lista cair para dez, a
+  // condicao falhar e as OUTRAS DEZ escolhas irem junto para o lixo — e o
+  // remonte automatico, que ordena por overall, trazia de volta exatamente os
+  // reservas que o tecnico tinha acabado de tirar. Era o relato "salvo a
+  // escalacao e os jogadores que tirei continuam jogando".
   const manual = available.filter(p => p.isStarter === true)
   let xi: EnginePlayer[]
   let benchPool: EnginePlayer[]
@@ -190,7 +197,15 @@ function enginePlayersToMatchSquad(
     xi = assignPlayersToFormation(declared, formation).map(player => player as EnginePlayer)
     const xiIds = new Set(xi.map(player => player.id))
     benchPool = available.filter(player => !xiIds.has(player.id))
+  } else if (manual.length > 0) {
+    // Faltou gente: PRESERVA quem o tecnico escolheu e completa so os buracos,
+    // pela posicao do slot vago.
+    const completo = completarEscalacao(manual, available, formation, p => p.position, p => p.overall)
+    xi = assignPlayersToFormation(completo.starters, formation).map(player => player as EnginePlayer)
+    const xiIds = new Set(xi.map(player => player.id))
+    benchPool = available.filter(player => !xiIds.has(player.id))
   } else {
+    // Nenhuma escolha salva: monta automatico.
     const picked = pickStartingXI(available, (p) => p.position, (p) => p.overall, formation)
     xi = picked.starters
     benchPool = picked.bench
