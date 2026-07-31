@@ -147,6 +147,22 @@
       "version": "1.0.237",
       "date": "2026-07-31",
       "latest": true,
+      "title": "As fotos licenciadas no editor param de ser sobrescritas e de sumir",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "A IMPORTACAO EM MASSA ENGOLIA A FOTO QUE VOCE ESCOLHEU. Quando os 12 mil rostos foram registrados por nome, eles gravaram por cima das fotos licenciadas a mao no editor — 39 de 57 atletas de um elenco viraram o recorte do pacote em vez da imagem escolhida. Agora a regra e clara: a importacao automatica so preenche espaco vazio ou troca outro rosto dela mesma; foto licenciada por voce nunca e tocada."
+        },
+        {
+          "type": "fixed",
+          "text": "FOTO LICENCIADA SUMIA ENTRE UMA VERSAO E OUTRA. A imagem era registrada num lugar que era refeito do zero a cada geracao do jogo, entao ela desaparecia sem aviso — o atleta voltava para a silhueta e o arquivo continuava no disco, intacto. 17 fotos ja tinham sumido assim. Agora o registro e feito nas duas fontes e sobrevive."
+        }
+      ]
+    },
+    {
+      "version": "1.0.237",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "Onze campeonatos que nao existiam agora existem, e cada liga disputa as competicoes de verdade",
       "changes": [
         {

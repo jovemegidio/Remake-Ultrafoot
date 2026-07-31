@@ -254,17 +254,35 @@ const bfSeed = JSON.parse(readFileSync(path.join(RAIZ, "data/seeds/imported-bf20
 for (const t of bfSeed.teams ?? []) for (const j of t.jogadores ?? []) registrarNome(j.nome, j.ft)
 
 const temRosto = new Set(agora.map((a) => a.slice("df11-".length, -".webp".length)))
-let porNome = 0, ambiguos = 0
+/** A entrada é do DF11? Só essas podem ser trocadas por este script. */
+const ehDf11 = (url) => typeof url === "string" && url.includes("/jogadores/df11-")
+
+let porNome = 0, ambiguos = 0, preservados = 0
 for (const [chave, ids] of idsPorNome) {
   const comRosto = [...ids].filter((id) => temRosto.has(id))
   if (comRosto.length === 0) continue
+
+  // ⚠️ EDIÇÃO DO USUÁRIO GANHA DO DF11, SEMPRE.
+  //
+  // Quem licencia um atleta no editor escolheu aquela foto de propósito; a
+  // importação em massa é um palpite automático. Na primeira versão deste passo
+  // o apelido gravava por cima sem olhar, e engoliu 39 das 57 fotos que o
+  // usuário tinha licenciado no Corinthians — Yuri Alberto, Matheus Bidu,
+  // Gabriel Pec e outros viraram cutout do facepack.
+  //
+  // A regra agora é: o apelido por nome só PREENCHE VAZIO ou substitui outra
+  // entrada do próprio DF11. Qualquer outra origem (foto do editor, curadoria)
+  // fica intacta.
+  const atual = overrides[chave]
+  if (atual && !ehDf11(atual)) { preservados++; continue }
+
   // Duas pessoas diferentes com o mesmo nome e rostos diferentes: não dá para
   // decidir por nome. Fica só o id, e quem consulta por nome vê a silhueta.
   if (ids.size > 1 && comRosto.length > 1) { ambiguos++; continue }
   overrides[chave] = `/jogadores/df11-${comRosto[0]}.webp`
   porNome++
 }
-console.log(`apelido por nome: ${porNome} nomes únicos (${ambiguos} xarás deixados de fora)`)
+console.log(`apelido por nome: ${porNome} nomes únicos (${ambiguos} xarás fora, ${preservados} edições do usuário preservadas)`)
 writeFileSync(OVERRIDES, JSON.stringify(overrides, null, 2) + "\n")
 console.log(`\nmapa editorial: ${registrados} rostos df11 registrados (${removidos} entradas antigas substituídas)`)
 

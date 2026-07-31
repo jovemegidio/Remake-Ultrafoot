@@ -45,6 +45,20 @@ if (!chaves.length) {
 }
 
 const manifesto = JSON.parse(await readFile(MANIFESTO, "utf8"))
+// ⚠️ GRAVAR SÓ NO MANIFESTO NÃO BASTA — a foto some no próximo build.
+//
+// `build-faces-manifest.mjs` NÃO acrescenta ao manifesto: ele o REGENERA do
+// zero, a partir de `player_photo_overrides.json` cruzado com os arquivos em
+// disco. Tudo que existisse apenas no manifesto era apagado na primeira vez que
+// alguém rodasse `npm run assets:faces` — sem erro nenhum, o jogador só via a
+// silhueta voltar. Foi assim que 17 das 57 fotos licenciadas sumiram do
+// manifesto enquanto os PNG continuavam em `public/jogadores`.
+//
+// Escrevendo TAMBÉM no mapa editorial, a foto sobrevive à regeneração, que é o
+// que faz a edição do usuário chegar aos outros jogadores de verdade.
+const OVERRIDES = path.resolve("data/seeds/player_photo_overrides.json")
+let overrides = {}
+try { overrides = JSON.parse(await readFile(OVERRIDES, "utf8")) } catch { /* primeiro uso */ }
 await mkdir(DESTINO, { recursive: true })
 
 let gravadas = 0, substituidas = 0, ignoradas = 0
@@ -77,12 +91,18 @@ for (const chave of chaves) {
   await writeFile(path.join(DESTINO, arquivo), final)
   if (manifesto.entries[slug]) substituidas++
   manifesto.entries[slug] = `/jogadores/${arquivo}`
+  // A foto do EDITOR manda: se o slot estava com um cutout do DF11 (importacao
+  // automatica), ele cede lugar. Quem licenciou escolheu de proposito.
+  overrides[slug] = `/jogadores/${arquivo}`
   gravadas++
 }
 
 manifesto.available = Object.keys(manifesto.entries).length
 manifesto.generatedAt = new Date().toISOString()
 await writeFile(MANIFESTO, `${JSON.stringify(manifesto, null, 2)}\n`, "utf8")
+// O mapa editorial é a fonte que o `build-faces-manifest.mjs` relê. Sem esta
+// gravação, tudo acima seria desfeito na próxima regeração do manifesto.
+await writeFile(OVERRIDES, `${JSON.stringify(overrides, null, 2)}\n`, "utf8")
 
 const kb = n => `${(n / 1024).toFixed(0)} KB`
 console.log(`fotos de jogador embutidas: ${gravadas} (${substituidas} substituiram entrada existente, ${ignoradas} ignoradas)`)
