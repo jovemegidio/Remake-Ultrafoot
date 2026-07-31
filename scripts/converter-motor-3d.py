@@ -242,6 +242,11 @@ PROLOGO = '''  // Estado do ciclo de vida. Fica no fecho da funcao, e nao no esc
   // O motor original procurava o palco pelo id "stage". Agora ele vem por
   // parametro: o React e dono do DOM e pode montar a partida em qualquer lugar.
   const _palco = opcoes.palco
+
+  // Formacao vinda do 2D, convertida em `formacaoDo2D`. Fica `null` quando a
+  // tela nao passa nada, e o motor usa a `FORMATION` embutida — um 3D sem
+  // formacao nao pode acontecer so porque o dado nao chegou.
+  let _formacaoAtiva = null
   const QUALITY_INICIAL = opcoes.qualidade
     ?? (matchMedia?.("(pointer:coarse)").matches ? "mid" : "high")
 
@@ -349,6 +354,27 @@ CONTROLE = '''
   function definirPausa(pausado){
     if(_destruido || typeof Match === "undefined") return
     Match.paused = !!pausado
+  }
+
+  /**
+   * Usa a formacao do 2D (`lib/formations.ts`) no lugar da embutida.
+   *
+   * Antes o motor tinha um 4-3-3 proprio, sem relacao com o que a tela de
+   * escalacao desenha — o time montado no campinho nao era o que entrava em
+   * campo. Passando os slots do 2D, os dois passam a concordar.
+   *
+   * Precisa ser chamado ANTES de `iniciar()`: os jogadores leem a formacao ao
+   * nascer. Depois disso, so vale na proxima partida.
+   *
+   * @param {{pos: string, x: number, y: number}[]} slots
+   * @returns {boolean} true se a formacao foi aceita
+   */
+  function definirFormacao(slots){
+    if(_destruido) return false
+    const convertida = formacaoDo2D(slots)
+    if(!convertida) return false
+    _formacaoAtiva = convertida
+    return true
   }
 '''
 src = src.replace("\n  // ── ciclo de vida ─", CONTROLE + "\n  // ── ciclo de vida ─", 1)
@@ -541,6 +567,75 @@ troca(r"(  cena:null, cenaT:0,\n(?:.*\n)*?  update\(dt\)\{\n)",
       r"\1    if(this.cenaT > 0){ this.cenaT -= dt; if(this.cenaT <= 0) this.cena = null }\n",
       "camera de cena expira sozinha", esperado=1)
 mudancas.append(("camera com enquadramento proprio para lances encenados", 3))
+
+# ── FORMACAO VINDA DO 2D ──────────────────────────────────────────────────────
+# O motor 3D tinha um 4-3-3 proprio (`FORMATION`), sem relacao com o
+# `lib/formations.ts` que a tela de escalacao usa. Duas fontes de verdade para a
+# mesma coisa: o time desenhado no campinho nao era o time que entrava em campo.
+#
+# Agora as coordenadas saem do 2D, convertidas. Os sistemas sao diferentes:
+#
+#   2D   x = largura   (0-100),  y = profundidade (12 = ataque, 92 = proprio gol)
+#   3D   x = comprimento (-0,5 a 0,5, negativo = proprio gol),  z = largura
+#
+# Os eixos estao TROCADOS e as escalas divergem. Converter direto pelo campo
+# teorico (133) poria o goleiro fora da area: os slots do 2D so usam ate y=92.
+# Normalizamos pela FAIXA REALMENTE USADA, o que faz goleiro e atacante cairem
+# exatamente onde o 3D ja os tinha.
+#
+# O fator de largura (0,857) vem de calibrar a ponta: x=85 no 2D deve virar
+# z=0,30 no 3D, que e onde o lateral ficava.
+FORMACAO_2D = '''
+/**
+ * Converte um slot do 2D (lib/formations.ts) para o sistema do motor 3D.
+ *
+ * `faixaY` e o intervalo de profundidade REALMENTE ocupado pela formacao — nao
+ * o campo teorico. Sem isso o goleiro sairia da area, porque os slots do 2D
+ * param em y=92 e o campo vai a 133.
+ */
+function slotDo2D(slot, faixaY){
+  const [yMin, yMax] = faixaY
+  const t = (slot.y - yMin) / Math.max(1, yMax - yMin)   // 0 = ataque, 1 = defesa
+  return {
+    r: slot.pos,
+    x: X_ATAQUE + t * (X_DEFESA - X_ATAQUE),
+    z: ((slot.x - 50) / 100) * FATOR_LARGURA,
+  }
+}
+
+/** Extremos que o 3D ja usava: goleiro no fundo, atacante na frente. */
+const X_DEFESA = -0.474
+const X_ATAQUE = 0.216
+/** x=85 no 2D (ponta) deve virar z=0,30 no 3D, onde o lateral ficava. */
+const FATOR_LARGURA = 0.857
+
+/**
+ * Monta a formacao do 3D a partir dos slots do 2D.
+ *
+ * Recebe a lista no formato de `lib/formations.ts`. Se vier vazia ou invalida,
+ * devolve `null` e o motor mantem a formacao embutida — um 3D sem formacao nao
+ * pode acontecer so porque a tela nao passou o dado.
+ */
+function formacaoDo2D(slots){
+  if(!Array.isArray(slots) || slots.length !== 11) return null
+  const ys = slots.map(s => s.y)
+  const faixa = [Math.min(...ys), Math.max(...ys)]
+  if(faixa[1] - faixa[0] < 1) return null
+  return slots.map(s => slotDo2D(s, faixa))
+}
+'''
+alvo_form = "const FORMATION=["
+if alvo_form not in src:
+    raise SystemExit("ABORTADO: nao achei a FORMATION do motor")
+src = src.replace(alvo_form, FORMACAO_2D + "\n" + alvo_form, 1)
+mudancas.append(("conversor de formacao 2D -> 3D", 1))
+
+# `FORMATION` e const e so tem UM ponto de consumo. Em vez de reescrever a
+# const, o jogador le de uma variavel que as opcoes podem sobrepor — assim a
+# formacao embutida continua como fallback se a tela nao passar nada.
+troca(r"    this\.def=FORMATION\[idx\];",
+      "    this.def=(_formacaoAtiva||FORMATION)[idx];",
+      "jogador le a formacao ativa (2D) com fallback na embutida", esperado=1)
 
 # ── BUG: o passe mirava onde o companheiro NAO estaria ────────────────────────
 # OBSERVADO: "ainda fica 5 pessoas correndo atras da bola e se amontoando".
@@ -878,7 +973,7 @@ ENCENACAO = '''
   }
 '''
 src = src.replace("\n  // ── ciclo de vida ─", ENCENACAO + "\n  // ── ciclo de vida ─", 1)
-src = src.replace("    definirPausa,", "    definirPausa,\n    encenar,", 1)
+src = src.replace("    definirPausa,", "    definirPausa,\n    definirFormacao,\n    encenar,", 1)
 if "    encenar," not in src:
     raise SystemExit("ABORTADO: nao consegui expor encenar()")
 mudancas.append(("encenar() com arco lance->conclusao->consequencia", 1))
@@ -897,6 +992,16 @@ for _nome in ("function encenar(", "function _passoRoteiro("):
     _n = src.count(_nome)
     if _n != 1:
         raise SystemExit(f"ABORTADO: '{_nome}' aparece {_n}x no motor gerado (esperado 1)")
+
+# Toda funcao da API publica precisa estar NO RETORNO, senao o React nao a
+# alcanca. `definirFormacao` chegou a ser definida sem ser exposta: o motor
+# gerava sem erro e so o teste de navegador pegou ("is not a function").
+_publicas = ("iniciar", "destruir", "lerTelemetria", "definirVelocidade",
+             "definirDuracaoDoTempo", "definirPausa", "definirFormacao", "encenar")
+_retorno = src[src.rindex("  return {"):]
+for _fn in _publicas:
+    if f"    {_fn},"  not in _retorno and f"    {_fn}," not in src[-1200:]:
+        raise SystemExit(f"ABORTADO: '{_fn}' nao aparece no retorno do motor")
 
 destino = raiz / "lib" / "partida-3d" / "motor.js"
 destino.parent.mkdir(parents=True, exist_ok=True)

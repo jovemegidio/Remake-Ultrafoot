@@ -107,6 +107,21 @@ export interface EventoParaEncenar {
   minuto?: number
 }
 
+/**
+ * Slot de formação no formato do 2D (`lib/formations.ts`).
+ *
+ * Declarado aqui em vez de importado de propósito: o motor é JavaScript e não
+ * conhece o resto do jogo — acoplá-lo ao `formations.ts` inverteria a direção
+ * da dependência.
+ */
+export interface SlotDeFormacao {
+  pos: string
+  /** Largura, 0-100. */
+  x: number
+  /** Profundidade: menor = mais perto do gol adversário. */
+  y: number
+}
+
 export interface TelemetriaTime {
   finalizacoes: number
   noGol: number
@@ -155,6 +170,26 @@ export interface Motor {
 
   /** Pausa ou retoma a simulação. */
   definirPausa(pausado: boolean): void
+
+  /**
+   * Usa a formação do 2D (`lib/formations.ts`) no lugar da embutida no motor.
+   *
+   * O motor 3D tinha um 4-3-3 próprio, sem relação com o que a tela de
+   * escalação desenha — o time montado no campinho não era o que entrava em
+   * campo. Passando os slots do 2D, os dois passam a concordar.
+   *
+   * A conversão troca os eixos e normaliza pela faixa realmente ocupada:
+   * no 2D `x` é largura e `y` profundidade (12 = ataque, 92 = próprio gol);
+   * no 3D `x` é comprimento e `z` largura.
+   *
+   * **Chame antes de `iniciar()`** — os jogadores leem a formação ao nascer.
+   * Depois disso, só vale na próxima partida.
+   *
+   * @returns `true` se a formação foi aceita; `false` se os slots eram
+   *   inválidos (não são 11, ou sem variação de profundidade), caso em que o
+   *   motor mantém a formação embutida.
+   */
+  definirFormacao(slots: SlotDeFormacao[]): boolean
 
   /**
    * Encena um evento que o `match-engine` decidiu.
