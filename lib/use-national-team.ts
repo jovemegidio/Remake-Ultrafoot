@@ -32,14 +32,34 @@ import { useGameEngine } from "@/lib/game-engine"
 // aproveitamento + XP). Era 6 e, na pratica, quase ninguem recebia convite
 // (relato: "nunca vem proposta de selecao, nem pequena"). 2 abre as pequenas.
 const MIN_SCORE_FOR_OFFERS = 2
-// QUANDO chega o convite de selecao — o mais fiel possivel a vida real. O
-// carrossel de tecnicos de selecao acontece DEPOIS dos grandes torneios: as
-// federacoes trocam de treinador no meio do ano (junho/julho), apos a Copa do
-// Mundo, a Copa America/Euro ou o fim das Eliminatorias. Nao no comeco da
-// temporada (era semana 9 ~ marco, irreal). Semana 24 ~ fim de junho, logo apos
-// a janela FIFA de junho.
-const OFFER_START_WEEK = 24
-const OFFER_GUARANTEE_WEEK = 30
+// QUANDO chega o convite de selecao.
+//
+// ⚠️ MUDOU NA 1.0.231. Antes o convite chegava DEPOIS da data FIFA de junho
+// (semana 24 ~ 11 de junho), com o raciocinio de que o carrossel de tecnicos
+// acontece apos os grandes torneios. Na pratica isso deixava o tecnico aceitar
+// uma selecao e ficar MESES sem nada para fazer: a janela em que ele comandaria
+// a equipe tinha acabado de passar.
+//
+// Agora o convite chega ANTES da data FIFA — quem aceita ja assume a tempo de
+// dirigir a selecao naquela janela, que e o ponto de aceitar. As semanas saem da
+// data real (temporada comeca em 01/01 e cada rodada avanca 7 dias), e nao de
+// numeros soltos: `primeiraSemanaDoMes` mantem isso valido se o calendario mudar.
+
+/** Semana em que um mes (0-indexed) comeca. Ver lib/game-date: 1 rodada = 7 dias. */
+function primeiraSemanaDoMes(mes: number): number {
+  const diasAteOMes = Math.round(
+    (new Date(2026, mes, 1).getTime() - new Date(2026, 0, 1).getTime()) / 86_400_000,
+  )
+  return Math.floor(diasAteOMes / 7) + 1
+}
+
+// A primeira janela FIFA relevante do ano-calendario do jogo e a de JUNHO (mes 5),
+// que e quando cai a Copa do Mundo / Copa America / Eurocopa.
+const PRIMEIRA_JANELA_FIFA = primeiraSemanaDoMes(5)   // ~semana 23 (04/06)
+// Abre cinco semanas antes: da tempo de negociar, recusar e receber outra.
+const OFFER_START_WEEK = Math.max(1, PRIMEIRA_JANELA_FIFA - 5)      // ~18 (30/04)
+// E esta na mesa antes de a janela comecar, nunca depois.
+const OFFER_GUARANTEE_WEEK = Math.max(1, PRIMEIRA_JANELA_FIFA - 1)  // ~22 (28/05)
 // Quantos convites por temporada, conforme o ANO do ciclo: em ano de Copa do
 // Mundo (2026, 2030) e de torneio continental (2028) MUITAS selecoes trocam de
 // tecnico -> ate 3 convites, incluindo as mais fortes. Em ano "comum" abrem

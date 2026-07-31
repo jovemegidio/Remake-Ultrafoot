@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useJogoRegistrado } from "@/lib/beneficios"
 import { AvisoDeRegistro } from "@/components/registro-necessario"
+import { BandeiraPais } from "@/components/bandeira-pais"
 import {
   Search,
   ArrowLeft,
@@ -90,7 +91,11 @@ const DIV_COUNTRY: Record<string, string> = {
   scottish_prem: "SCO", super_lig: "TUR",
   pro_league_bel: "BEL", russian_prem: "RUS",
   mls: "USA", liga_mx: "MEX",
-  liga_argentina: "ARG", primeira_a_col: "COL",
+  // ⚠️ `primera_a_col` (espanhol), NAO `primeira_a_col` (portugues). O mapa tinha
+  // a grafia portuguesa e a divisao real se chama `primera_a_col` — a busca nunca
+  // casava e TODO clube colombiano caia no `?? "INT"` do fim da funcao, virando
+  // "Internacional" no editor em vez de ter a propria liga. Uma letra.
+  liga_argentina: "ARG", primera_a_col: "COL",
   primera_div_chi: "CHI", primera_b_chi: "CHI", primera_div_ury: "URU",
   saudi_pro: "KSA", saudi_first_div: "KSA",
   j_league: "JPN", k_league_1: "KOR", chinese_super: "CHN",
@@ -931,7 +936,10 @@ export default function EditarPage() {
                     className="w-full flex items-center gap-2 px-3 py-2 bg-[#0a1210] hover:bg-white/[0.05] border-b border-white/[0.06] transition-colors"
                   >
                     <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-white/40 transition-transform", countryOpen ? "" : "-rotate-90")} />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-white/30 w-7 text-left shrink-0">{country.code}</span>
+                    {/* BANDEIRA no lugar da sigla. A coluna era um bloco de
+                        siglas ("BRA", "EQUA", "RUB") que exigia decifrar o
+                        código de cada país; a bandeira se reconhece de relance. */}
+                    <BandeiraPais codigo={country.code} titulo={country.name} className="w-5 h-[13px]" />
                     <span className="flex-1 text-left text-xs font-semibold text-white/80 truncate">{country.name}</span>
                     <span className="text-[10px] text-white/25 shrink-0">{country.count}</span>
                   </button>

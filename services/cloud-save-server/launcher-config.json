@@ -144,9 +144,29 @@
   ],
   "changelog": [
     {
-      "version": "1.0.230",
+      "version": "1.0.231",
       "date": "2026-07-31",
       "latest": true,
+      "title": "Convite de selecao antes da data FIFA, bandeiras no editor e a Colombia com liga propria",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "O CONVITE DE SELECAO CHEGA ANTES DA DATA FIFA. Ele vinha depois — semana 24, ja passada a janela de junho — e quem aceitava ficava meses sem nada para dirigir, porque a janela em que comandaria a equipe tinha acabado de passar. Agora a proposta abre cerca de cinco semanas antes (fim de abril) e esta na mesa antes de a janela comecar, dando tempo de negociar, recusar e ainda assim assumir a tempo de dirigir a selecao naquela data FIFA."
+        },
+        {
+          "type": "improved",
+          "text": "BANDEIRAS NO EDITOR DE CLUBES. A coluna do diretorio de equipes era um bloco de siglas ('BRA', 'EQUA', 'RUB') que obrigava a decifrar o codigo de cada pais. Agora cada pais aparece com a propria bandeira, reconhecivel de relance. Sao 96% dos clubes do editor; os poucos paises sem bandeira desenhada continuam mostrando a sigla, como antes."
+        },
+        {
+          "type": "fixed",
+          "text": "A LIGA DA COLOMBIA APARECIA COMO 'INTERNACIONAL'. Os 20 clubes da Liga BetPlay estavam jogados no balde de internacionais em vez de terem a propria liga no editor. A causa era uma letra: o mapa de paises escrevia a liga em portugues ('primeira_a_col') e ela se chama 'primera_a_col', em espanhol — a busca nunca casava e todo clube colombiano caia no balde."
+        }
+      ]
+    },
+    {
+      "version": "1.0.230",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "A tela principal volta a trocar de fundo, escudo de verdade nos formadores, e o radar deixa de encenar o lance errado",
       "changes": [
         {
