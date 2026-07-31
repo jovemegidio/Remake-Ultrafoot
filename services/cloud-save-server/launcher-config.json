@@ -144,9 +144,29 @@
   ],
   "changelog": [
     {
-      "version": "1.0.236",
+      "version": "1.0.237",
       "date": "2026-07-31",
       "latest": true,
+      "title": "Onze campeonatos que nao existiam agora existem, e cada liga disputa as competicoes de verdade",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "ONZE PAISES NAO TINHAM CAMPEONATO. Grecia, Dinamarca, Noruega, Tchequia, Chipre, Azerbaijao, Cazaquistao, Peru, Bolivia, Paraguai e Venezuela tinham menos de oito clubes cadastrados — sete deles tinham UM so. E o jogo resolvia isso do pior jeito: escolher o Olympiacos montava um campeonato com DEZENOVE clubes da Serie A brasileira. O grego jogava o Brasileirao. Agora cada liga e completada com clubes do PROPRIO PAIS, tirados do banco de 2.453 clubes importados: a Grecia passou de 1 para 18 clubes (34 rodadas), o Peru de 5 para 18, a Noruega de 1 para 16."
+        },
+        {
+          "type": "fixed",
+          "text": "DEZOITO LIGAS DISPUTAVAM COPAS INVENTADAS. Championship, La Liga 2, Ligue 2, Bundesliga 2, Serie B italiana e as onze ligas acima nao tinham competicoes cadastradas: o clube disputava uma generica Copa Nacional e uma Copa Continental, com o mesmo nome para ingles, tcheco e boliviano. Agora cada uma tem a sua — FA Cup, Copa del Rey, DFB-Pokal, Coupe de France, Copa da Grecia, e a continental correta do continente."
+        },
+        {
+          "type": "improved",
+          "text": "CINQUENTA CLUBES GANHARAM LATERAIS, VOLANTES E PONTAS DE VERDADE. Havia 182 clubes cujo elenco so conhecia goleiro, zagueiro, meia e atacante — o Fortaleza vinha com catorze meias e nenhum lateral. O mercado de transferencias JA mostrava a posicao real desses atletas, mas o elenco do proprio clube nao: o mesmo jogador era lateral na vitrine e meia generico em casa. Agora as duas telas concordam."
+        }
+      ]
+    },
+    {
+      "version": "1.0.236",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "Os rostos passam a APARECER de verdade",
       "changes": [
         {
