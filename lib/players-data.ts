@@ -246,7 +246,110 @@ function refinarPosicoes<T extends { nome: string; pos: string }>(elenco: T[]): 
     mudou = true
     return { ...p, pos: real as T["pos"] }
   })
-  return mudou ? out : elenco
+  return distribuirPosicoesGrosseiras(mudou ? out : elenco)
+}
+
+/**
+ * O MINIMO que um elenco precisa ter de cada posicao para o time existir.
+ *
+ * Nao e a forma ideal de um plantel: e o piso abaixo do qual falta gente para
+ * escalar. Quatro zagueiros e dois de cada lateral cobrem defesa e reservas; um
+ * ponta de cada lado evita o 4-3-3 sem beirada.
+ */
+const MINIMO_POR_POSICAO: Array<[string, number]> = [
+  ["LD", 2], ["LE", 2], ["VOL", 2], ["PD", 2], ["PE", 2],
+]
+
+/** O que sobra depois de preencher as lacunas nao pode zerar estas posicoes. */
+const RESERVA_MINIMA: Record<string, number> = { ZAG: 4, MEI: 3 }
+
+/**
+ * DISTRIBUI OS ATLETAS DE POSICAO DESCONHECIDA por um plantel realista.
+ *
+ * A auditoria de 31/07/2026 achou 129 clubes cujo elenco so conhecia quatro
+ * posicoes — o Fortaleza vinha com `MEI:14 ZAG:9 GOL:4 ATA:4`, nenhum lateral,
+ * nenhum volante, nenhuma ponta. Divisoes inteiras estavam assim (Bundesliga:
+ * 18 de 18 clubes).
+ *
+ * A origem: a fonte desses elencos marca todo mundo fora dos titulares como
+ * "DEF" ou "BAN" — que quer dizer DESCONHECIDO, nao zagueiro nem meia. O jogo
+ * convertia esses codigos em ZAG e MEI, e era essa conversao que criava catorze
+ * meias num time so.
+ *
+ * Por isso redistribuir NAO e inventar mais do que ja se inventava: o dado de
+ * origem nunca disse "meia". Ele disse "nao sei". A diferenca e que agora o
+ * palpite tem a forma de um elenco de futebol.
+ *
+ * Duas regras:
+ *   • So mexe em quem esta ZAG/MEI num elenco SEM NENHUMA posicao especializada.
+ *     Clube com laterais de verdade (Flamengo, Palmeiras) nao e tocado.
+ *   • GOLEIRO e ATACANTE nunca mudam — sao os dois codigos que a fonte acerta.
+ *
+ * Deterministico pela ordem alfabetica do nome: o mesmo elenco sai igual toda
+ * vez, senao o lateral-direito do seu time mudaria a cada tela aberta.
+ */
+function distribuirPosicoesGrosseiras<T extends { nome: string; pos: string }>(elenco: T[]): T[] {
+  if (elenco.length < 11) return elenco
+
+  const contagem = new Map<string, number>()
+  for (const p of elenco) {
+    const k = String(p.pos ?? "").toUpperCase()
+    contagem.set(k, (contagem.get(k) ?? 0) + 1)
+  }
+
+  // MUTAVEIS sao os genuinamente DESCONHECIDOS: marcados ZAG/MEI e ausentes da
+  // coleta do Transfermarkt. Quem o TM identificou tem posicao de verdade e nao
+  // pode ser reescrito — foi por preservar isso que a primeira versao desistia do
+  // elenco inteiro quando achava um so atleta identificado, e sobravam dez meias.
+  const mutaveis = elenco.filter(p => {
+    const atual = String(p.pos ?? "").toUpperCase()
+    if (atual !== "ZAG" && atual !== "MEI") return false
+    return !posicaoRealPorNome.has(normalizeTeamName(p.nome))
+  }).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))  // estavel entre sessoes
+
+  if (mutaveis.length === 0) return elenco
+
+  const novaPos = new Map<T, string>()
+  const restante = { ZAG: contagem.get("ZAG") ?? 0, MEI: contagem.get("MEI") ?? 0 }
+
+  // Lacunas em aberto. Percorrer as posicoes EM ORDEM consumindo a fila fazia
+  // LD/LE/VOL levarem todos os disponiveis e PD/PE nunca serem preenchidos —
+  // sobravam 114 clubes sem ponta. Aqui cada atleta escolhe a lacuna que mais
+  // combina com a origem dele, e a rodada segue ate a fila ou as lacunas
+  // acabarem.
+  const lacunas = MINIMO_POR_POSICAO
+    .map(([posicao, minimo]) => ({ posicao, falta: minimo - (contagem.get(posicao) ?? 0) }))
+    .filter(l => l.falta > 0)
+  if (lacunas.length === 0) return elenco
+
+  // Um zagueiro vira lateral antes de virar ponta; um meia vira volante ou ponta
+  // antes de virar lateral. E a mesma logica de parentesco que o encaixe de
+  // formacao usa.
+  const AFINIDADE: Record<string, string[]> = {
+    ZAG: ["LD", "LE", "VOL", "PD", "PE"],
+    MEI: ["VOL", "PD", "PE", "LD", "LE"],
+  }
+
+  for (const atleta of mutaveis) {
+    const origem = String(atleta.pos).toUpperCase() as "ZAG" | "MEI"
+    // Nao esvazia a base do elenco: tirar o quarto zagueiro para criar um ponta
+    // deixaria o time sem defesa reserva.
+    if (restante[origem] <= (RESERVA_MINIMA[origem] ?? 0)) continue
+    const preferidas = AFINIDADE[origem] ?? []
+    const alvo = preferidas
+      .map(p => lacunas.find(l => l.posicao === p && l.falta > 0))
+      .find(Boolean) ?? lacunas.find(l => l.falta > 0)
+    if (!alvo) break
+    novaPos.set(atleta, alvo.posicao)
+    alvo.falta--
+    restante[origem]--
+  }
+
+  if (novaPos.size === 0) return elenco
+  return elenco.map(p => {
+    const nova = novaPos.get(p)
+    return nova ? { ...p, pos: nova as T["pos"] } : p
+  })
 }
 
 /**
