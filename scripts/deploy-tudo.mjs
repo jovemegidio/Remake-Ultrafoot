@@ -88,8 +88,17 @@ function enviarParaVps(destino, conteudo) {
 function espelharNaVps(nomeNoGithub, destino, hashLocal) {
   if (!CHAVE) throw new Error("defina ULTRAFOOT_VPS_KEY com o caminho da chave SSH")
   const url = `https://github.com/${REPO}/releases/download/${nomeNoGithub.tag}/${nomeNoGithub.arquivo}`
-  const remoto = rodar("ssh", ["-i", CHAVE, "-o", "ConnectTimeout=20", VPS,
-    `cd $(dirname ${destino}) && curl -fsSL -o .novo "${url}" && sha256sum .novo | cut -d" " -f1`]).trim()
+  // KEEPALIVE OBRIGATORIO. Baixar 590 MB e depois calcular o sha256 deles leva
+  // varios minutos SEM UM BYTE trafegando na sessao SSH — e em 31/07/2026 a
+  // conexao foi derrubada exatamente no `sha256sum`, com "Connection reset by
+  // peer", abortando o deploy DEPOIS de o GitHub ja estar publicado (o arquivo
+  // ja tinha baixado inteiro; so faltava conferir e mover). Os pacotes de
+  // keepalive mantem a sessao viva durante o silencio.
+  const sshLongo = ["-o", "ConnectTimeout=20", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=40"]
+  // `.novo` de uma tentativa anterior interrompida seria confundido com o
+  // download novo — o curl com -o sobrescreve, mas ser explicito evita surpresa.
+  const remoto = rodar("ssh", ["-i", CHAVE, ...sshLongo, VPS,
+    `cd $(dirname ${destino}) && rm -f .novo && curl -fsSL -o .novo "${url}" && sha256sum .novo | cut -d" " -f1`]).trim()
   if (remoto !== hashLocal) {
     rodar("ssh", ["-i", CHAVE, VPS, `rm -f $(dirname ${destino})/.novo`])
     throw new Error(`o arquivo que chegou na VPS nao confere (${remoto.slice(0, 12)} != ${hashLocal.slice(0, 12)})`)
