@@ -22,7 +22,7 @@ import { TeamCrest } from "@/components/team-crest"
 import { formatCurrency } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 import {
-  chaveLeilao, emLeilaoNaSemana, semanaDeEncerramento, valorMinimoDe,
+  chaveLeilao, emLeilaoNaSemana, semanaDeEncerramento, semanaDeAbertura, valorMinimoDe,
   lanceMinimoSeguinte, lancesDaIA, maiorLance, encerrarLeilao,
   type LeilaoAberto, type LanceLeilao,
 } from "@/lib/leilao"
@@ -42,6 +42,8 @@ export interface LanceSalvo {
   valor: number
   encerraNaSemana: number
   season: number
+  /** Semana do lance: rivais so reagem a ele a partir dai. */
+  semanaDoLance?: number
 }
 
 /**
@@ -64,7 +66,9 @@ export function contarLeiloesAbertos(
   const vistos = new Set<string>()
   for (const alvo of pool) {
     if (!alvo.team?.nome) continue
-    if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana)) continue
+    if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana, {
+      prestigioDoClube: alvo.team.prestigio, idade: alvo.age, potencial: alvo.potential,
+    })) continue
     const chave = chaveLeilao(alvo.name, alvo.team.nome)
     if (vistos.has(chave)) continue
     vistos.add(chave)
@@ -125,7 +129,9 @@ export function LeiloesPanel({
     const vistos = new Set<string>()
     for (const alvo of pool) {
       if (!alvo.team?.nome) continue
-      if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana)) continue
+      if (!emLeilaoNaSemana(alvo.name, alvo.team.nome, alvo.overall, semana, {
+        prestigioDoClube: alvo.team.prestigio, idade: alvo.age, potencial: alvo.potential,
+      })) continue
       const chave = chaveLeilao(alvo.name, alvo.team.nome)
       if (vistos.has(chave)) continue
       vistos.add(chave)
@@ -140,14 +146,17 @@ export function LeiloesPanel({
         encerraNaSemana: encerra,
         lances: [],
       }
-      const lancesIA = lancesDaIA(base, candidatos, semana)
+      const salvoPrevio = lancesSalvos.find(l => l.chave === chave && l.season === season)
+      // O SEU lance entra na derivacao: e o que faz os rivais cobrirem voce.
+      const lancesIA = lancesDaIA(base, candidatos, semana, salvoPrevio
+        ? { valor: salvoPrevio.valor, semana: salvoPrevio.semanaDoLance ?? semanaDeAbertura(encerra) }
+        : undefined)
       // GARANTIA ESTRUTURAL: leilão sem nenhum interessado não é leilão — seria
       // só uma compra pelo piso com outro nome. Se ninguém da IA entrou, o
       // atleta simplesmente não vai à disputa. Isto também protege contra o
       // ajuste de caixa/interesse voltar a secar os lances sem ninguém notar.
       if (lancesIA.length === 0) continue
-      const salvo = lancesSalvos.find(l => l.chave === chave && l.season === season)
-      const meuLance = salvo?.valor ?? null
+      const meuLance = salvoPrevio?.valor ?? null
       const todos = meuLance != null
         ? [...lancesIA, {
             clubeCurto: clubeDoUsuario.curto,
@@ -181,7 +190,7 @@ export function LeiloesPanel({
       setAviso(`Seu caixa é de ${formatCurrency(saldo)} — este lance não cabe. Venda alguém antes.`)
       return
     }
-    onLance({ chave: item.leilao.id, valor, encerraNaSemana: item.leilao.encerraNaSemana, season })
+    onLance({ chave: item.leilao.id, valor, encerraNaSemana: item.leilao.encerraNaSemana, season, semanaDoLance: semana })
     setAviso(`Lance de ${formatCurrency(valor)} registrado por ${item.alvo.name}. O leilão fecha na semana ${item.leilao.encerraNaSemana}.`)
   }
 
@@ -313,6 +322,14 @@ export function LeiloesPanel({
                   <Clock className="h-3.5 w-3.5" />
                   fecha na semana {item.leilao.encerraNaSemana}
                   {maior && !maior.doUsuario && ` · ${maior.clubeNome} lidera`}
+                </span>
+                {/* TEMPO DE REAÇÃO — a informação que faz o técnico decidir QUANDO
+                    cobrir, não só QUANTO. Cobrir cedo é cobrir barato e ser
+                    coberto de volta; cobrir no fim é caro e definitivo. */}
+                <span className="w-full text-xs text-white/35">
+                  {semana >= item.leilao.encerraNaSemana - 1
+                    ? "Última semana: um lance agora não dá tempo de resposta aos rivais."
+                    : `Os rivais ainda têm ${item.leilao.encerraNaSemana - semana} semana(s) para cobrir o seu lance.`}
                 </span>
               </div>
             )}

@@ -133,19 +133,56 @@ export function chaveLeilao(jogadorNome: string, clubeNome: string): string {
 /**
  * Este atleta está em disputa nesta semana?
  *
- * Só ~1 em 400 entra por semana, e nunca abaixo de overall 72: leilão de reserva
- * não interessa a ninguém e encheria a tela de ruído.
+ * REALISMO: ninguém vai a leilão por sorteio. Um clube abre o atleta à disputa
+ * quando tem um MOTIVO — e os motivos reais são poucos e conhecidos:
+ *
+ *   • o clube não consegue mais segurá-lo (craque em clube pequeno; é o caso
+ *     clássico do mercado brasileiro e o que mais aparece na vida real);
+ *   • ele está em fim de linha ali (veterano caro que o clube quer tirar da
+ *     folha antes de perdê-lo de graça);
+ *   • é uma joia jovem e o clube prefere vender no auge da valorização.
+ *
+ * A chance-base continua baixa (leilão tem de ser evento, não rotina), mas agora
+ * é MODULADA por esses motivos em vez de ser uniforme. Um 88 num clube de
+ * prestígio 55 aparece com frequência; um 80 num gigante, quase nunca — que é
+ * exatamente o que se vê no futebol.
+ *
+ * `prestigioDoClube` é opcional para não quebrar quem já chama sem ele.
  */
 export function emLeilaoNaSemana(
   jogadorNome: string,
   clubeNome: string,
   overall: number,
   semana: number,
+  contexto?: { prestigioDoClube?: number; idade?: number; potencial?: number },
 ): boolean {
   if (overall < 78) return false
   // A janela dura 3 semanas, então o bloco de semanas é o que define o lote.
   const bloco = Math.floor(semana / 3)
-  return sorteioDe(`leilao:${chaveLeilao(jogadorNome, clubeNome)}:${bloco}`) < 0.0025
+  const sorteio = sorteioDe(`leilao:${chaveLeilao(jogadorNome, clubeNome)}:${bloco}`)
+
+  let chance = 0.0025
+  if (contexto) {
+    const prestigio = contexto.prestigioDoClube ?? 60
+    const idade = contexto.idade ?? 26
+    const potencial = contexto.potencial ?? overall
+
+    // O clube não segura o craque. `overall - prestigio` mede o desnível entre o
+    // atleta e o porte de quem o tem: 88 num clube de 55 é uma saída anunciada.
+    const desnivel = overall - prestigio
+    if (desnivel > 20) chance *= 3.2
+    else if (desnivel > 10) chance *= 2
+    else if (desnivel < -8) chance *= 0.35   // gigante não solta quem é do tamanho dele
+
+    // Veterano caro: o clube prefere vender agora a perder de graça depois.
+    if (idade >= 31) chance *= 1.8
+    // Joia jovem com potencial bem acima: vender no auge da valorização.
+    else if (idade <= 22 && potencial > overall + 6) chance *= 1.6
+    // Titular em idade de auge é o que menos circula — mesma regra do empréstimo.
+    else if (idade >= 25 && idade <= 30) chance *= 0.6
+  }
+
+  return sorteio < Math.min(0.02, chance)
 }
 
 /**
@@ -189,6 +226,8 @@ export interface LanceParaResolver {
   valor: number
   encerraNaSemana: number
   season: number
+  /** Semana do lance — define a partir de quando os rivais podem reagir a ele. */
+  semanaDoLance?: number
 }
 
 export interface DesfechoDeLeilao {
@@ -240,8 +279,12 @@ export function resolverLancesPendentes(
       lances: [],
     }
     // A disputa é reconstruída na SEMANA DO FECHO, não na semana atual: é o
-    // estado que valia quando o martelo bateu.
-    const ia = lancesDaIA(base, candidatos, lance.encerraNaSemana)
+    // estado que valia quando o martelo bateu — e com o SEU lance dentro dela,
+    // para os rivais terem tido a chance de cobri-lo.
+    const ia = lancesDaIA(base, candidatos, lance.encerraNaSemana, {
+      valor: lance.valor,
+      semana: lance.semanaDoLance ?? semanaDeAbertura(lance.encerraNaSemana),
+    })
     const completo: LeilaoAberto = {
       ...base,
       lances: [...ia, {
@@ -274,15 +317,37 @@ export function resolverLancesPendentes(
   return { desfechos, restantes }
 }
 
+/** Primeira semana do bloco de 3 a que a semana pertence. */
+export function semanaDeAbertura(semana: number): number {
+  return Math.floor(semana / 3) * 3
+}
+
 /**
- * Lances da IA já dados neste leilão, reproduzíveis. Recebe os clubes que
- * poderiam entrar e devolve os que de fato entraram, em ordem crescente de valor
- * — como se tivessem se cobrindo um ao outro ao longo da semana.
+ * Lances da IA neste leilão, reproduzíveis — e agora com DISPUTA DE VERDADE.
+ *
+ * ⚠️ O QUE ISTO CONSERTA. Antes os lances da IA eram derivados do leilão VAZIO:
+ * os rivais nunca enxergavam o lance do usuário e, portanto, **nunca o
+ * cobriam**. Bastava dar um lance qualquer acima do maior da IA para ganhar
+ * qualquer atleta — nenhum clube respondia, por mais rico que fosse. Não era um
+ * leilão, era uma compra pelo piso com etapa extra.
+ *
+ * Agora a disputa corre SEMANA A SEMANA dentro da janela de três semanas:
+ *
+ *   • na abertura, alguns clubes entram;
+ *   • a cada semana seguinte, quem tem caixa pode COBRIR o maior lance da
+ *     mesa — inclusive o seu;
+ *   • quem cobre na ÚLTIMA semana não é respondido (não sobra semana), o que
+ *     dá valor a segurar o lance — como num leilão real.
+ *
+ * `usuario` é o lance do técnico e a semana em que ele foi dado: ele só entra na
+ * conta a partir dessa semana, senão os rivais estariam reagindo a um lance que
+ * ainda não existia.
  */
 export function lancesDaIA(
   leilao: LeilaoAberto,
   candidatos: { curto: string; nome: string; prestigio: number; caixa: number; forcaElenco: number }[],
   semana: number,
+  usuario?: { valor: number; semana: number },
 ): LanceLeilao[] {
   const acumulado: LanceLeilao[] = []
   // Ordem de entrada também é derivada, para o mais rico não ser sempre o último.
@@ -293,11 +358,34 @@ export function lancesDaIA(
   // interesse alto, toda disputa vinha com exatamente 4 clubes e ficava
   // monótona; variando, aparece o duelo direto e aparece o leilão cheio.
   const teto = 1 + Math.floor(sorteioDe(`teto:${leilao.id}`) * 4)
-  for (const clube of ordenados) {
-    const parcial: LeilaoAberto = { ...leilao, lances: acumulado }
-    const lance = lanceDaIA(parcial, clube, sorteioDe(`lance:${leilao.id}:${clube.curto}:${semana}`))
-    if (lance) acumulado.push(lance)
-    if (acumulado.length >= teto) break
+  const abertura = semanaDeAbertura(leilao.encerraNaSemana)
+
+  for (let w = abertura; w <= semana; w++) {
+    // O lance do usuário só é RESPONDIDO a partir da semana seguinte à que foi
+    // dado (`<`, não `<=`). É o que dá sentido a segurar o lance: cobrir na
+    // última semana não deixa tempo para ninguém reagir — como num leilão real,
+    // onde quem arremata no fim leva. Em compensação, quem cobre cedo vai ser
+    // coberto de volta.
+    const doUsuario = usuario && usuario.semana < w
+      ? [{ clubeCurto: "__user__", clubeNome: "", valor: usuario.valor, prestigio: 0, doUsuario: true }]
+      : []
+
+    for (const clube of ordenados) {
+      const jaEsta = acumulado.find(l => l.clubeCurto === clube.curto)
+      // Clube novo só entra até o teto; quem já está na mesa pode cobrir sempre.
+      if (!jaEsta && acumulado.length >= teto) continue
+
+      const parcial: LeilaoAberto = { ...leilao, lances: [...acumulado, ...doUsuario] }
+      const lance = lanceDaIA(parcial, clube, sorteioDe(`lance:${leilao.id}:${clube.curto}:${w}`))
+      if (!lance) continue
+
+      if (jaEsta) {
+        // Cobrir só faz sentido se for para PASSAR o que já está na mesa.
+        if (lance.valor > jaEsta.valor) jaEsta.valor = lance.valor
+      } else {
+        acumulado.push(lance)
+      }
+    }
   }
   return acumulado
 }

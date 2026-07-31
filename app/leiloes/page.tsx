@@ -23,6 +23,7 @@ import { generateDetailedMarketTargets } from "@/lib/transfer-engine"
 import { useGameEngine } from "@/lib/game-engine"
 import { chaveLeilao, resolverLancesPendentes, type DesfechoDeLeilao } from "@/lib/leilao"
 import { formatCurrency } from "@/lib/teams-data"
+import { markDeparted } from "@/lib/departed-players"
 
 export default function LeiloesPage() {
   useRequireClub()
@@ -103,6 +104,15 @@ export default function LeiloesPage() {
     if (saiu.length === 0 && restantes.length === salvos.length) return
 
     const vitoria = saiu.find(d => d.venceu)
+    // QUEM PERDEU O LEILÃO PERDEU O ATLETA. Antes o vencedor da IA levava o
+    // jogador e ele continuava no catálogo do mercado como se nada tivesse
+    // acontecido — dava para simplesmente comprá-lo na aba Buscar logo depois,
+    // o que esvaziava a disputa inteira.
+    for (const d of saiu) {
+      if (d.venceu || d.valorVencedor <= 0) continue
+      const alvo = porChave.get(d.chave)
+      if (alvo?.team?.nome) markDeparted(alvo.team.nome, alvo.name)
+    }
     setDesfechos(saiu)
     setState({
       lancesEmLeilao: restantes,

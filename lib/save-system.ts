@@ -510,7 +510,19 @@ export interface GameState {
    * está em disputa e quanto a IA ofereceu são derivados da semana, para o leilão
    * não virar um simulador paralelo do mercado.
    */
-  lancesEmLeilao?: { chave: string; valor: number; encerraNaSemana: number; season: number }[]
+  lancesEmLeilao?: {
+    chave: string
+    valor: number
+    encerraNaSemana: number
+    season: number
+    /**
+     * Semana em que o lance foi dado. É o que permite os rivais REAGIREM: quem
+     * cobre cedo dá tempo de os outros cobrirem de volta; quem cobre na última
+     * semana não é respondido. Opcional para não invalidar saves antigos — sem
+     * ela, o lance é tratado como dado na abertura da janela.
+     */
+    semanaDoLance?: number
+  }[]
   /**
    * Leilão que o técnico VENCEU e ainda não fechou contrato.
    *
