@@ -726,8 +726,19 @@ export default function ElencoPage() {
     }
     saveTacticalSetup(players.map(player => player.name), formation, savedPositions)
     announceOnlineAction("lineup_update", { formation, starters: players.map(player => player.name) })
+
+    // Confirmacao SO no botao, que vira "Salvo ✓" por 2,2 s.
+    //
+    // Aqui havia tambem um `addNotification`, e notificacao neste jogo e
+    // PERSISTIDA (components/notifications-system grava em
+    // `ultrafoot:notifications` e recarrega em cada tela). O resultado era o
+    // relato do betatester: "a notificacao de time salvo apareceu 3x — uma apos
+    // salvar, na tela de adversario e na tela de comecar a partida".
+    //
+    // A central de notificacoes existe para o que o jogador precisa REVER
+    // depois (proposta, lesao, resultado). Confirmacao de uma acao que ele
+    // acabou de fazer, com feedback imediato no proprio botao, nao pertence la.
     setTacticalSaved(true)
-    addNotification({ type: "system", title: "Tática salva", message: `${formation} e os 11 titulares serão usados na partida e no radar ao vivo.`, priority: "medium" })
     window.setTimeout(() => setTacticalSaved(false), 2200)
   }
 

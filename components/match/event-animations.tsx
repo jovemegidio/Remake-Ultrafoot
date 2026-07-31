@@ -100,9 +100,19 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
         />
 
         {/* Escudo do time */}
+        {/*
+          `spring` so aceita DOIS keyframes. Com `scale: [0, 1.2, 1]` o Framer
+          Motion lanca "Only two keyframes currently supported with spring and
+          inertia animations", o erro sobe como Runtime Error e a partida TRAVA
+          — no gol, que e o evento mais comum do jogo.
+
+          O keyframe do meio existia para o escudo passar de 1 e voltar. O
+          proprio spring com `bounce` ja faz isso: ele ultrapassa o alvo e
+          assenta. Dois keyframes bastam, e o efeito visual continua o mesmo.
+        */}
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: [0, 1.2, 1], rotate: 0 }}
+          animate={{ scale: 1, rotate: 0 }}
           transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
         >
           {team && <TeamCrest team={team} size="2xl" className="w-28 h-28" />}
@@ -176,10 +186,12 @@ function PenaltyAnimation({ team, minute, onComplete }: Omit<EventAnimationProps
 
       <div className="relative flex flex-col items-center">
         {/* Icone de penalti (ponto + bola) */}
+        {/* Mesmo caso do gol: spring nao aceita 3 keyframes. O bounce do
+            proprio spring da o "estica e volta" que o 1.3 fazia. */}
         <motion.div
           initial={{ scale: 0 }}
-          animate={{ scale: [0, 1.3, 1] }}
-          transition={{ duration: 0.6, type: "spring" }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.6, type: "spring", bounce: 0.5 }}
           className="relative"
         >
           <div className="w-32 h-32 rounded-full border-4 border-amber-400 flex items-center justify-center bg-amber-400/10">
@@ -286,14 +298,16 @@ function RedCardAnimation({ team, player, minute, onComplete }: Omit<EventAnimat
 
       <div className="relative flex flex-col items-center">
         {/* Cartao com efeito de "jogando" */}
+        {/*
+          Mesmo caso do gol e do penalti — aqui com QUATRO keyframes em tres
+          propriedades. O `[null, 0, 5, 0]` fazia o cartao chegar, passar um
+          pouco e assentar; o bounce do spring reproduz isso partindo do
+          `initial`, e sem quebrar a partida.
+        */}
         <motion.div
           initial={{ rotateZ: -45, y: -200, x: -100 }}
-          animate={{ 
-            rotateZ: [null, 0, 5, 0],
-            y: [null, 0, -10, 0],
-            x: [null, 0, 5, 0]
-          }}
-          transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+          animate={{ rotateZ: 0, y: 0, x: 0 }}
+          transition={{ duration: 0.8, type: "spring", bounce: 0.45 }}
           className="w-28 h-40 md:w-36 md:h-52 rounded-lg bg-gradient-to-b from-red-500 to-red-700 shadow-2xl"
           style={{ 
             boxShadow: "0 0 80px rgba(239,68,68,0.7)"
