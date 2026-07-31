@@ -191,6 +191,65 @@ const nacionalidadePorNome: Map<string, string> = (() => {
 })()
 
 /**
+ * POSICAO REAL por nome, da mesma coleta do Transfermarkt (campo `p`).
+ *
+ * Por que existe: a auditoria de 31/07/2026 achou 152 clubes SEM NENHUM LATERAL,
+ * 156 sem volante e 129 com vocabulario grosseiro — so GOL/ZAG/MEI/ATA. O
+ * Fortaleza vinha com `MEI:14 ZAG:9 GOL:4 ATA:4`, enquanto Flamengo e Palmeiras
+ * tinham o vocabulario completo. A fonte desses elencos marca todo mundo como
+ * "DEF" ou "BAN", e isso virava zagueiro e meia no jogo.
+ *
+ * O `lib/transfer-engine` JA cruzava esta tabela por nome para o mercado — mas os
+ * ELENCOS nao. O mesmo atleta aparecia como lateral na vitrine de contratacoes e
+ * como meia generico dentro do proprio clube.
+ *
+ * Nome com DUAS posicoes diferentes e descartado: melhor manter o valor
+ * grosseiro do que chutar a posicao de um homonimo.
+ */
+const posicaoRealPorNome: Map<string, string> = (() => {
+  const mapa = new Map<string, string>()
+  const conflito = new Set<string>()
+  for (const elenco of Object.values(realSquadsTM as Record<string, Array<{ n?: string; p?: string }>>)) {
+    if (!Array.isArray(elenco)) continue
+    for (const j of elenco) {
+      if (!j?.n || !j?.p) continue
+      const chave = normalizeTeamName(j.n)
+      if (!chave) continue
+      const anterior = mapa.get(chave)
+      if (anterior && anterior !== j.p) conflito.add(chave)
+      else mapa.set(chave, j.p)
+    }
+  }
+  for (const c of conflito) mapa.delete(c)
+  return mapa
+})()
+
+/** Posicoes GROSSEIRAS — as unicas que o refinamento tem permissao de trocar. */
+const POSICAO_GROSSEIRA = new Set(["MEI", "ZAG", "DEF", "BAN", "MID", ""])
+
+/**
+ * Troca a posicao grosseira pela REAL quando o Transfermarkt souber quem e o
+ * atleta.
+ *
+ * Duas travas, ambas de proposito:
+ *   • so mexe em quem esta com posicao grosseira — um LD ja identificado nao
+ *     pode ser reescrito por um homonimo;
+ *   • so aceita nome com posicao UNICA na coleta (ver `posicaoRealPorNome`).
+ */
+function refinarPosicoes<T extends { nome: string; pos: string }>(elenco: T[]): T[] {
+  let mudou = false
+  const out = elenco.map(p => {
+    const atual = String(p.pos ?? "").toUpperCase()
+    if (!POSICAO_GROSSEIRA.has(atual)) return p
+    const real = posicaoRealPorNome.get(normalizeTeamName(p.nome))
+    if (!real || real.toUpperCase() === atual) return p
+    mudou = true
+    return { ...p, pos: real as T["pos"] }
+  })
+  return mudou ? out : elenco
+}
+
+/**
  * Nacionalidade POR CLUBE. A busca global por nome falha justamente nos casos
  * mais comuns do futebol brasileiro: "Paulinho", "Vitinho" e "Jorginho"
  * aparecem em varios clubes, entao a regra de conflito os descartava; e
@@ -928,8 +987,13 @@ export function getPlayersForTeam(team: Team, opts?: { raw?: boolean }): Player[
   // ja tinham saido (Gillespie/Ramsdale/Trippier voltaram ao Newcastle) — o
   // qa-real-positions pegou. O TM cobre os clubes que o CSV nao alcanca.
   const temOverlayCsv = Boolean(findRealSquad(team, teamAliasOverrides[team.file_key ?? ""] ?? []))
-  const sourceRaw = (temOverlayCsv ? null : getRealSquad(team))
-    ?? enrichWithSeedNationality(team, indexed.length ? indexed : getImportedPlayersForTeam(team))
+  // `refinarPosicoes` fecha a inconsistencia entre a vitrine e o elenco: o
+  // mercado ja cruzava a posicao real do Transfermarkt por nome, os elencos nao.
+  // So troca posicao GROSSEIRA (MEI/ZAG/DEF/BAN) — ver a nota do mapa.
+  const sourceRaw = refinarPosicoes(
+    (temOverlayCsv ? null : getRealSquad(team))
+      ?? enrichWithSeedNationality(team, indexed.length ? indexed : getImportedPlayersForTeam(team)),
+  )
   // Remove quem foi contratado pelo usuário: sem isto o atleta ficava nos DOIS
   // elencos (relato "contratei o Neymar mas ele continua no Santos"). O editor
   // pede `raw` e nesse modo NAO filtramos — ali o objetivo e ver o elenco

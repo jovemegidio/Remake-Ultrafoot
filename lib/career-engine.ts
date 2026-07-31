@@ -1,7 +1,7 @@
 // Motor de carreira — gera fixtures, simula rodadas CPU, atualiza tabela, controla finanças e mensagens.
 
 import type { Team } from "@/lib/teams-data"
-import { serieATeams, serieBTeams, getTeamsByDivision } from "@/lib/teams-data"
+import { serieATeams, serieBTeams, getTeamsByDivision, completarLigaComPool } from "@/lib/teams-data"
 import { simulateFullMatch } from "@/lib/match-engine"
 import type { SavedTeam } from "@/lib/save-system"
 import type {
@@ -26,7 +26,13 @@ export type {
 
 /** Retorna 20 times para a liga do usuário, incluindo o time do usuário. */
 export function getLeagueTeams(userTeam: SavedTeam): Team[] {
-  const divTeams = getTeamsByDivision(userTeam.divisao as Team["divisao"])
+  // O FALLBACK ERA A SERIE A BRASILEIRA — e isso levava o grego a jogar o
+  // Brasileirao. Onze divisoes tinham menos de oito clubes curados; escolher o
+  // Olympiacos montava uma liga com dezenove clubes brasileiros. Agora a divisao
+  // curta e completada com clubes do PROPRIO PAIS (pool importado), e a Serie A
+  // so entra se de fato nao houver nada — o que, hoje, nao acontece para nenhuma
+  // divisao. Ver completarLigaComPool em lib/teams-data.
+  const divTeams = completarLigaComPool(userTeam.divisao as string)
   const base: Team[] = divTeams.length >= 8 ? divTeams : serieATeams
 
   const hasUser = base.some(t => t.curto === userTeam.curto)

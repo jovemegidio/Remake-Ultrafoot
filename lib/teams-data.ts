@@ -1409,6 +1409,120 @@ export function getTeamsByDivision(divisao: string): Team[] {
   return allTeams.filter(t => effectiveDivision(t) === divisao).map(applyTeamOverride)
 }
 
+/** Abaixo disto o turno-returno não sustenta um campeonato. */
+export const MIN_TIMES_PARA_LIGA = 8
+
+/**
+ * País em forma comparável. O catálogo curado e o pool importado escrevem o
+ * MESMO país de formas diferentes — "Grecia" x "Grécia", "Bolivia" x "Bolívia",
+ * "Azerbaijao" x "Azerbaijão" —, e comparar as strings cruas fazia o Olympiacos
+ * não achar nenhum dos trinta clubes gregos que existem no pool.
+ */
+const _paisComparavel = (p: string) =>
+  (p ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
+
+/**
+ * Grafias distintas do mesmo país. Acento o `_paisComparavel` resolve; isto aqui
+ * é para quando os dois lados escolheram palavras diferentes ("Chequia" no
+ * catálogo, "Tchéquia" no pool).
+ */
+const APELIDOS_DE_PAIS: Record<string, string> = {
+  chequia: "tchequia", "republica tcheca": "tchequia",
+  holanda: "paises baixos",
+  eua: "estados unidos", "estados unidos da america": "estados unidos",
+  "coreia do sul": "coreia do sul", "korea do sul": "coreia do sul",
+}
+
+const _paisCanonico = (p: string) => {
+  const base = _paisComparavel(p)
+  return APELIDOS_DE_PAIS[base] ?? base
+}
+
+/**
+ * Confederação do país, para completar uma liga curta com vizinhos de verdade
+ * em vez de clubes de outro continente.
+ */
+/** Confederação pelo país, tolerando acento e grafia (ver `_paisCanonico`). */
+const _confederacao = (pais: string): string | undefined =>
+  CONFEDERACAO_DO_PAIS[_paisCanonico(pais)]
+
+// CHAVES EM FORMA CANONICA (sem acento, minusculas) — as duas bases escrevem os
+// mesmos paises de jeitos diferentes, e uma chave acentuada aqui nunca casaria
+// com o "Grecia" do catalogo. Sempre consultar via `_confederacao`.
+const CONFEDERACAO_DO_PAIS: Record<string, string> = {
+  brasil: "CONMEBOL", argentina: "CONMEBOL", uruguai: "CONMEBOL", chile: "CONMEBOL",
+  colombia: "CONMEBOL", peru: "CONMEBOL", paraguai: "CONMEBOL", bolivia: "CONMEBOL",
+  equador: "CONMEBOL", venezuela: "CONMEBOL",
+  inglaterra: "UEFA", espanha: "UEFA", italia: "UEFA", alemanha: "UEFA", franca: "UEFA",
+  portugal: "UEFA", "paises baixos": "UEFA", belgica: "UEFA",
+  escocia: "UEFA", turquia: "UEFA", russia: "UEFA", austria: "UEFA", suica: "UEFA",
+  ucrania: "UEFA", servia: "UEFA", suecia: "UEFA", noruega: "UEFA", dinamarca: "UEFA",
+  grecia: "UEFA", croacia: "UEFA", tchequia: "UEFA", polonia: "UEFA", chipre: "UEFA",
+  azerbaijao: "UEFA", cazaquistao: "UEFA", romenia: "UEFA", hungria: "UEFA",
+  finlandia: "UEFA", islandia: "UEFA", irlanda: "UEFA", israel: "UEFA",
+  eslovaquia: "UEFA", eslovenia: "UEFA", bulgaria: "UEFA", albania: "UEFA",
+  "estados unidos": "CONCACAF", mexico: "CONCACAF", canada: "CONCACAF",
+  japao: "AFC", "coreia do sul": "AFC", china: "AFC", "arabia saudita": "AFC",
+  "emirados arabes unidos": "AFC", catar: "AFC", ira: "AFC",
+}
+
+/**
+ * COMPLETA UMA LIGA CURTA COM CLUBES DO PAÍS CERTO.
+ *
+ * O problema que isto resolve, medido em 31/07/2026: onze divisões tinham menos
+ * de oito clubes curados — sete delas tinham UM só. E o que o jogo fazia com
+ * elas era pior do que não ter liga nenhuma:
+ *
+ *   • `getLeagueTeams` (career-engine) caía em `serieATeams`. Escolher o
+ *     Olympiacos montava um campeonato com DEZENOVE clubes da Série A
+ *     brasileira — o grego jogava o Brasileirão.
+ *   • `getUserLeagueTeams` devolvia a divisão como estava, e um único clube gera
+ *     zero confrontos: o calendário simplesmente não tinha liga.
+ *
+ * O pool importado tem 2.453 clubes indexados por PAÍS (`pool:Grécia`), e é dele
+ * que vêm os adversários. A ordem é deliberada:
+ *
+ *   1. os curados da divisão (têm elenco, escudo e identidade de verdade);
+ *   2. clubes do MESMO PAÍS no pool, os de maior prestígio primeiro;
+ *   3. só se ainda faltar, vizinhos da MESMA CONFEDERAÇÃO.
+ *
+ * O passo 3 existe para Chipre, Tchéquia e Cazaquistão, que nem com o pool
+ * chegam a oito. Um campeonato cipriota com alguns europeus a mais é estranho;
+ * um campeonato cipriota disputado contra Flamengo e Palmeiras é absurdo.
+ */
+export function completarLigaComPool(divisao: string, alvo = 18): Team[] {
+  const base = getTeamsByDivision(divisao)
+  if (base.length >= MIN_TIMES_PARA_LIGA) return base
+
+  const jaTem = new Set(base.map(t => t.file_key))
+  const paisDaLiga = _paisCanonico(base.map(t => String(t.pais ?? "").trim()).find(Boolean) ?? "")
+  const porPrestigio = (a: Team, b: Team) => (b.prestigio ?? 0) - (a.prestigio ?? 0)
+
+  const doPais = allPoolTeams
+    .filter(t => !jaTem.has(t.file_key) && _paisCanonico(String(t.pais ?? "")) === paisDaLiga)
+    .sort(porPrestigio)
+
+  const resultado = [...base]
+  for (const t of doPais) {
+    if (resultado.length >= alvo) break
+    resultado.push(t); jaTem.add(t.file_key)
+  }
+  if (resultado.length >= MIN_TIMES_PARA_LIGA) return resultado
+
+  // Ainda curta: vizinhos da mesma confederação, nunca de outro continente.
+  const confed = _confederacao(paisDaLiga)
+  if (confed) {
+    const vizinhos = allPoolTeams
+      .filter(t => !jaTem.has(t.file_key) && _confederacao(String(t.pais ?? "")) === confed)
+      .sort(porPrestigio)
+    for (const t of vizinhos) {
+      if (resultado.length >= MIN_TIMES_PARA_LIGA) break
+      resultado.push(t); jaTem.add(t.file_key)
+    }
+  }
+  return resultado
+}
+
 // Função para buscar time por curto (busca tambem por divisao para evitar duplicatas)
 /**
  * Procura o clube pelo codigo curto. Olha os CURADOS primeiro e so entao o POOL:

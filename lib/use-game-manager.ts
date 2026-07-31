@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
 import { useGameEngine, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
-import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, type Team } from "@/lib/teams-data"
+import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, type Team } from "@/lib/teams-data"
 import { getGameDate } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
@@ -1311,7 +1311,12 @@ function getUserLeagueTeams(teamShort: string, divisionOverride?: string): Team[
   const userTeam = getTeamByShort(teamShort)
   if (!userTeam) return []
   const division = divisionOverride ?? userTeam.divisao
-  const divisionTeams = getTeamsByDivision(division)
+  // LIGA CURTA: onze divisoes tinham menos de oito clubes curados (sete tinham UM
+  // so). Devolver a divisao como estava gerava ZERO confrontos — o calendario
+  // ficava sem liga nenhuma. `completarLigaComPool` traz adversarios do MESMO
+  // PAIS a partir do pool importado; so quando nem isso basta e que recorre a
+  // vizinhos da confederacao. Quando a divisao ja tem gente, devolve intacta.
+  const divisionTeams = completarLigaComPool(division)
   // Guarda: divisao sem times (nunca deveria) -> cai na estatica para nao quebrar a liga.
   if (divisionTeams.length < 4) return getTeamsByDivision(userTeam.divisao)
   // Garante que o time do usuario esta na lista (ele sobe/cai levando o proprio clube).

@@ -66,6 +66,42 @@ export const LEAGUE_COMPETITIONS: Record<string, CountryCompetitions> = {
   chinese_super: { country: "China", domesticCup: "Chinese FA Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
   mls: { country: "Estados Unidos", domesticCup: "US Open Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
   liga_mx: { country: "Mexico", domesticCup: "Leagues Cup", continental: "CONCACAF Champions Cup", continentalSecondary: null, hasStateChampionship: false },
+
+  // ── As 18 divisoes que caiam no FALLBACK ────────────────────────────────────
+  //
+  // A auditoria de 31/07/2026 achou dezoito divisoes JOGAVEIS sem entrada aqui.
+  // Elas nao ficavam sem competicao: caiam no FALLBACK, e o clube disputava uma
+  // "Copa Nacional" e uma "Copa Continental" — nomes inventados, iguais para
+  // ingles, tcheco e boliviano. Quem escolhia o Hertha via o time competir numa
+  // copa que nao existe, em vez da DFB-Pokal.
+  //
+  // SEGUNDAS DIVISOES: disputam a copa nacional do proprio pais (na vida real o
+  // segundo escalao entra na FA Cup, na Copa del Rey, na Coppa Italia) e tem a
+  // continental do pais como horizonte — chegar la depende de subir, e disso
+  // cuida a piramide.
+  championship: { country: "Inglaterra", domesticCup: "FA Cup", ...UEFA },
+  la_liga_2: { country: "Espanha", domesticCup: "Copa del Rey", ...UEFA },
+  serie_b_ita: { country: "Italia", domesticCup: "Coppa Italia", ...UEFA },
+  bundesliga_2: { country: "Alemanha", domesticCup: "DFB-Pokal", ...UEFA },
+  ligue_2: { country: "Franca", domesticCup: "Coupe de France", ...UEFA },
+  primera_b_chi: { country: "Chile", domesticCup: "Copa Chile", ...CONMEBOL, hasStateChampionship: false },
+  saudi_first_div: { country: "Arabia Saudita", domesticCup: "King's Cup", continental: "AFC Champions League Elite", continentalSecondary: null, hasStateChampionship: false },
+
+  // LIGAS NACIONAIS que existiam no catalogo sem competicoes declaradas. Sao as
+  // mesmas onze que tinham menos de oito clubes e agora foram completadas pelo
+  // pool (ver completarLigaComPool em lib/teams-data): sem estas entradas, o
+  // campeonato ficava de pe mas a copa e a continental continuavam genericas.
+  primera_div_per: { country: "Peru", domesticCup: "Copa Peru", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_ven: { country: "Venezuela", domesticCup: "Copa Venezuela", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_bol: { country: "Bolivia", domesticCup: "Copa Bolivia", ...CONMEBOL, hasStateChampionship: false },
+  primera_div_par: { country: "Paraguai", domesticCup: "Copa Paraguai", ...CONMEBOL, hasStateChampionship: false },
+  super_league_gre: { country: "Grecia", domesticCup: "Copa da Grecia", ...UEFA },
+  superliga_den: { country: "Dinamarca", domesticCup: "Copa da Dinamarca", ...UEFA },
+  fortuna_liga_cze: { country: "Chequia", domesticCup: "Copa da Chequia", ...UEFA },
+  premyer_liqa_aze: { country: "Azerbaijao", domesticCup: "Copa do Azerbaijao", ...UEFA },
+  eliteserien_nor: { country: "Noruega", domesticCup: "Copa da Noruega", ...UEFA },
+  protathlima_cyp: { country: "Chipre", domesticCup: "Copa do Chipre", ...UEFA },
+  premier_liga_kaz: { country: "Cazaquistao", domesticCup: "Copa do Cazaquistao", ...UEFA },
 }
 
 const FALLBACK: CountryCompetitions = {
