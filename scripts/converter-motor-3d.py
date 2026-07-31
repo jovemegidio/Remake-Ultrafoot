@@ -358,6 +358,190 @@ if "definirVelocidade," not in src:
     raise SystemExit("ABORTADO: nao consegui expor os controles de ritmo")
 mudancas.append(("controles de ritmo (velocidade, duracao, pausa)", 3))
 
+# ── BUG: "no gol" contava o que nao era chute ─────────────────────────────────
+# MEDIDO: taxa "no gol / finalizacoes" de 67%, contra ~33% do futebol real.
+#
+# `Stats.onTarget(Ball.shotBy)` era chamado em TODA interacao do goleiro com a
+# bola — inclusive quando ele sai do gol para recolher uma bola solta, que nao e
+# finalizacao nenhuma. E `shotBy` so era limpo quando a bola parava no chao
+# (`< 3 m/s`), entao um chute que passou LONGE do gol e foi recolhido continuava
+# marcado e entrava como "defendido".
+#
+# A correcao troca `shotBy` cru por uma checagem de direcao: so conta quem
+# estava de fato indo para o gol. Nao mexe na IA nem na fisica — so em quem
+# entra na estatistica.
+GUARDA_ALVO = '''
+/**
+ * A bola estava mesmo indo para o gol de `time`?
+ *
+ * Sem isto, `Stats.onTarget` contava qualquer toque do goleiro como "no alvo" —
+ * inclusive ele saindo para pegar bola solta. A taxa media ficava em 67%,
+ * quando o futebol real fica perto de 33%.
+ */
+function indoAoGol(time){
+  if(!Ball.shotBy) return null
+  const alvo = goalCenter(Ball.shotBy)
+  const v = Ball.vel
+  // Parada ou quase: nao ia a lugar nenhum.
+  const vel = Math.hypot(v.x, v.z)
+  if(vel < 3) return null
+  // A bola precisa estar se aproximando do gol, e nao passando ao largo.
+  const dx = alvo.x - Ball.pos.x, dz = alvo.z - Ball.pos.z
+  const dlen = Math.hypot(dx, dz) || 1
+  const cos = (v.x * dx + v.z * dz) / (vel * dlen)
+  if(cos < 0.3) return null                  // indo claramente para outro lado
+  // Enquadrada com a meta. O gol tem 7,32 m (+-3,66) e a folga cobre o efeito
+  // Magnus, que curva a bola no caminho — a projecao reta subestima quem
+  // entraria. Este numero foi CALIBRADO medindo a taxa "no gol/finalizacoes":
+  // 6,5 zerava a estatistica; 11 devolvia 67%; ~5 chega perto dos 33% reais.
+  const t = dlen / vel
+  const zNoGol = Ball.pos.z + v.z * t
+  if(Math.abs(zNoGol) > 5) return null
+  // Altura: bola por cima do travessao (2,44 m) nao e chute no gol.
+  const yNoGol = Ball.pos.y + Ball.vel.y * t - 4.9 * t * t
+  if(yNoGol > 3.2) return null
+  return Ball.shotBy
+}
+'''
+alvo_guarda = "const Match={"
+if alvo_guarda not in src:
+    raise SystemExit("ABORTADO: nao achei onde inserir indoAoGol")
+src = src.replace(alvo_guarda, GUARDA_ALVO + "\n" + alvo_guarda, 1)
+
+troca(r"b\.offside=null; Stats\.onTarget\(b\.shotBy\);",
+      "b.offside=null; Stats.onTarget(indoAoGol(p.team));",
+      "goleiro saindo do gol nao conta como chute no alvo", esperado=1)
+# A decisao tem de ser tomada ANTES de o goleiro mexer na bola: os dois ramos
+# abaixo (espalmar / segurar) sobrescrevem `b.vel`, e avaliar a trajetoria
+# depois disso media a bola PARADA na mao dele — foi o que zerou a estatistica
+# na primeira tentativa. Capturamos no topo do bloco, com a bola ainda em voo.
+troca(r"(    b\.lastTouch=p; b\.offside=null;\n)(    if\(speed>19)",
+      r"\1    const _alvoDoChute = indoAoGol(p.team);\n\2",
+      "avalia a trajetoria ANTES de o goleiro mexer na bola", esperado=1)
+troca(r"      Stats\.onTarget\(b\.shotBy\);\n(\s+Events\.add\('Defesa de ')",
+      r"      Stats.onTarget(_alvoDoChute);\n\1",
+      "espalmada so conta se a bola ia ao gol", esperado=1)
+troca(r"if\(speed>11\)\{ Stats\.onTarget\(b\.shotBy\);",
+      "if(speed>11){ Stats.onTarget(_alvoDoChute);",
+      "defesa segura so conta se a bola ia ao gol", esperado=1)
+mudancas.append(("BUG: 'no gol' contava toque de goleiro em bola solta", 4))
+
+# ── BUG: faltas 4x acima do real ──────────────────────────────────────────────
+# MEDIDO: 49 x 34 faltas por 90 min, contra ~11 de cada lado no futebol real.
+#
+# A deteccao dispara em contato entre jogadores, e os corpos se atravessam com
+# frequencia (visivel na tela: eles se empilham). Sem um tempo minimo entre
+# faltas do mesmo jogador, um encostao vira tres faltas seguidas.
+FALTA_COOLDOWN = '''
+  // Duas faltas do MESMO jogador em menos de 2,5 s do jogo quase sempre sao o
+  // mesmo encontrao contado varias vezes — os corpos se atravessam e o contato
+  // persiste por varios quadros. Sem esta janela a contagem inflava 4x.
+  if(offender._ultimaFalta && Match.t - offender._ultimaFalta < 2.5) return
+  offender._ultimaFalta = Match.t
+'''
+troca(r"(  foul\(offender,victim\)\{\n)",
+      r"\1" + FALTA_COOLDOWN,
+      "BUG: falta repetida no mesmo contato", esperado=1)
+
+# ── BUG: a formacao colapsa e os jogadores se cercam ──────────────────────────
+# OBSERVADO na tela (o usuario viu antes de eu medir): os corpos se empilham e
+# ficam "cercados". MEDIDO: 5,8 finalizacoes por time/90min contra ~12 reais.
+#
+# A causa esta no posicionamento sem bola:
+#
+#     clamp(s.z + (b.pos.z - s.z) * .32, ...)
+#
+# TODOS os jogadores puxam 32% em direcao ao Z da bola. Os 10 convergem para a
+# mesma faixa, a formacao vira uma massa, e sem LARGURA nao ha linha de passe
+# nem espaco para finalizar. E tambem por isso que as faltas inflavam: corpos
+# amontoados geram contato o tempo todo.
+#
+# A correcao da a cada funcao uma disciplina propria. Zagueiro acompanha a bola
+# de perto (e o trabalho dele); ponta quase nao acompanha — a largura DELE e o
+# que abre o campo. Isso e formacao tatica de verdade, nao um numero unico para
+# os 10.
+DISCIPLINA = '''
+/**
+ * Quanto cada funcao acompanha o Z da bola, de 0 (segura a posicao) a 1 (cola).
+ *
+ * O motor usava .32 para todo mundo, e os 10 colapsavam na mesma faixa. Quem
+ * abre o campo e o ponta: se ele persegue a bola, o time joga num corredor so.
+ */
+const DISCIPLINA_Z = {
+  GOL: 0.10,
+  ZAG: 0.34,           // acompanha: e a funcao dele
+  LE: 0.26, LD: 0.26,  // lateral sobe pela beirada, nao pelo meio
+  VOL: 0.30,
+  MEI: 0.22,
+  PE: 0.10, PD: 0.10,  // ponta MANTEM a largura — e o que abre linha de passe
+  ATA: 0.16,
+}
+
+/** Largura minima que cada funcao respeita, em fracao da meia-largura do campo. */
+const LARGURA_MIN = { PE: 0.62, PD: 0.62, LE: 0.52, LD: 0.52 }
+'''
+alvo_disc = "const Match={"
+if alvo_disc not in src:
+    raise SystemExit("ABORTADO: nao achei onde inserir a disciplina de formacao")
+src = src.replace(alvo_disc, DISCIPLINA + "\n" + alvo_disc, 1)
+
+troca(r"        clamp\(s\.z\+\(b\.pos\.z-s\.z\)\*\.32,-HALF_W\+2,HALF_W-2\)\);",
+      """        clamp((() => {
+          // Cada funcao acompanha a bola no seu proprio grau. O ponta segura a
+          // largura em vez de perseguir — e o que abre o campo e cria a linha
+          // de passe que nao existia.
+          const dz = DISCIPLINA_Z[p.role] ?? 0.24
+          let z = s.z + (b.pos.z - s.z) * dz
+          const wmin = LARGURA_MIN[p.role]
+          if(wmin && att){
+            // Em posse, quem e de beirada NAO fecha para o meio.
+            const lado = Math.sign(s.z) || 1
+            if(Math.abs(z) < HALF_W * wmin) z = lado * HALF_W * wmin
+          }
+          return z
+        })(),-HALF_W+2,HALF_W-2));""",
+      "BUG: formacao colapsava — disciplina por funcao", esperado=1)
+
+# ── CAMERA DE CENA ────────────────────────────────────────────────────────────
+# Um lance encenado nao tem enquadramento proprio: cai no modo generico, que
+# persegue a bola de longe. Um gol roteirizado merece o corte que a TV daria —
+# acompanha a bola no voo, fecha na comemoracao, e devolve o controle depois.
+#
+# Entra ANTES do `switch(this.mode)` e DEPOIS de replay/gol, para nao roubar a
+# camera dessas duas — que ja tem tratamento proprio e mais prioritario.
+CAMERA_CENA = '''    } else if(Director.cena && Director.cenaT > 0){
+      // Enquadramento da cena encenada. `alvo` e o ponto de interesse (a bola,
+      // ou quem esta reagindo); `aperto` fecha o plano conforme a cena avanca.
+      const c = Director.cena
+      const foco = c.alvo || b
+      const t = 1 - clamp(Director.cenaT / (c.dur || 1), 0, 1)
+      const aperto = c.fecha ? (1 - t * 0.45) : 1
+      const ang = c.ang + t * (c.giro || 0)
+      const rai = (c.raio || 16) * aperto
+      want = new THREE.Vector3(
+        foco.x + Math.cos(ang) * rai,
+        (c.alt || 4.2) * aperto + 0.8,
+        foco.z + Math.sin(ang) * rai)
+      look = new THREE.Vector3(foco.x, (c.olha ?? 1.2), foco.z)
+      rate = c.rate || 3.2
+'''
+alvo_cam = "    } else switch(this.mode){"
+if alvo_cam not in src:
+    raise SystemExit("ABORTADO: nao achei o switch de modos de camera")
+src = src.replace(alvo_cam, CAMERA_CENA + alvo_cam, 1)
+
+# Campos de estado + o decaimento do tempo de cena.
+troca(r"(  mode:0, names:\['DINÂMICA','TRANSMISSÃO','TELE','AÉREA'\],)",
+      r"\1\n  cena:null, cenaT:0,",
+      "estado da camera de cena", esperado=1)
+# Ancorado no `update` do DIRECTOR: `update(dt){` sozinho casa com tres funcoes
+# diferentes no motor, e o script abortou ao encontrar as tres — a guarda de
+# `esperado=` fez o trabalho dela.
+troca(r"(  cena:null, cenaT:0,\n(?:.*\n)*?  update\(dt\)\{\n)",
+      r"\1    if(this.cenaT > 0){ this.cenaT -= dt; if(this.cenaT <= 0) this.cena = null }\n",
+      "camera de cena expira sozinha", esperado=1)
+mudancas.append(("camera com enquadramento proprio para lances encenados", 3))
+
 # ── POSES DE CONSEQUENCIA ─────────────────────────────────────────────────────
 # O motor tinha 6 poses: run, kick, dive, tackle, header, celebrate. Todas de
 # ACAO — o que o jogador faz com a bola. Nenhuma de REACAO: depois do lance, o
@@ -525,6 +709,12 @@ ENCENACAO = '''
           Ball.owner = null
         }
 
+        // CAMERA: acompanha o voo de um angulo baixo, atras do chutador — o
+        // plano que a TV usa para mostrar a bola entrando.
+        Director.cena = { ang: Math.atan2(pz, px) + Math.PI, raio: 21, alt: 3.2,
+                          olha: 1.1, giro: 0.5, fecha: false, dur: 1.1, rate: 4.4 }
+        Director.cenaT = 1.1
+
         // CONCLUSAO: a rede balanca quando a bola chega (~0,45s de voo).
         _cena(0.45, () => {
           if(atacante) Ball.lastTouch = atacante
@@ -542,6 +732,15 @@ ENCENACAO = '''
           _reacaoDoTime(adv, 'maos_quadril', 2.4, 0.5)
           const bode = _algumDeLinha(adv)
           if(bode){ bode.pose = 'aponta'; bode.poseT = 2.2 }   // cobra o companheiro
+          // CAMERA: fecha no goleiro que sofreu. E o plano de reacao — a TV
+          // sempre corta para quem perdeu depois de mostrar quem ganhou.
+          const gk = teams[adv] && teams[adv][0]
+          if(gk){
+            Director.cena = { alvo: gk.pos, ang: Math.random() * 6.28, raio: 9,
+                              alt: 2.6, olha: 1.4, giro: 0.35, fecha: true,
+                              dur: 2.2, rate: 2.6 }
+            Director.cenaT = 2.2
+          }
         })
         return true
       }
@@ -596,6 +795,12 @@ ENCENACAO = '''
           // CONSEQUENCIA antes da saida: protesta, depois deixa o campo.
           alvo.pose = 'reclamar'; alvo.poseT = 2.4
           _reacaoDoTime(lado, 'reclamar', 2.2, 0.4)
+          // CAMERA: plano fechado no expulso, girando devagar. E o corte que a
+          // TV da — a reacao dele importa mais que a posicao da bola.
+          Director.cena = { alvo: alvo.pos, ang: Math.random() * 6.28, raio: 8.5,
+                            alt: 2.4, olha: 1.5, giro: 0.6, fecha: true,
+                            dur: 2.4, rate: 2.8 }
+          Director.cenaT = 2.4
           _cena(2.4, () => { Rules.expel(alvo) })
         }
         Match.reds[lado]++

@@ -157,18 +157,52 @@ que se vê.
 | Gols | 0 × 0 | ~1,5 × ~1,2 | ⚠️ |
 
 **A física está boa** — passes e posse batem com futebol de verdade. O problema
-é a camada de decisão:
+estava na camada de decisão.
 
-1. **O time da casa nunca finaliza.** Zero em 15 minutos contra 2 do visitante.
-   Assimetria nessa escala não é aleatoriedade.
-2. **Toda finalização vai no gol.** No futebol real é ~1/3. Ou `onTarget` conta
-   errado, ou não há erro de pontaria.
-3. **Faltas 4× acima do real, e nenhum cartão.** Casa com o que se vê na tela:
-   os jogadores se **empilham**, geram contato e viram falta.
+### O que a amostra maior corrigiu
 
-Ressalva honesta: extrapolado de 15 minutos, não de uma partida inteira. As
-taxas exatas podem mudar em 90 — mas a assimetria casa/fora não se explica por
-amostra curta.
+A primeira medição (15 min, **uma** partida) sugeriu que "o time da casa nunca
+finaliza" — 0 × 12,3. Com 6 partidas o desequilíbrio caiu para **0-1**: era
+variância de amostra curta, não bug. A variância entre partidas é alta o
+bastante para inverter conclusões, então medições aqui usam várias partidas.
+
+### A causa raiz: a formação colapsava
+
+Observado na tela antes de ser medido: os jogadores se **cercavam**. A causa
+estava no posicionamento sem bola —
+
+```js
+clamp(s.z + (b.pos.z - s.z) * .32, ...)   // TODOS puxavam 32% para o Z da bola
+```
+
+Os 10 convergiam para a mesma faixa, a formação virava uma massa, e sem
+**largura** não havia linha de passe nem espaço para finalizar. O excesso de
+faltas vinha junto: corpos amontoados geram contato o tempo todo.
+
+A correção dá disciplina por função (`DISCIPLINA_Z`): zagueiro acompanha a bola
+de perto porque é o trabalho dele; **ponta quase não acompanha** — a largura dele
+é o que abre o campo. Mais uma largura mínima para quem joga pela beirada.
+
+| Métrica (time/90min) | Antes | Depois | Real |
+|---|---|---|---|
+| Finalizações | 5,8 | **10,3** | ~12 |
+| No gol | 0,0 | **4,1** | ~4 |
+| Passes certos | 499 | **446** | ~400 |
+| Faltas | 25,0 | **20,6** | ~11 |
+| Taxa no gol/fin | 0% | **40%** | ~33% |
+
+### Os outros dois
+
+**"No gol" contava o que não era chute.** `Stats.onTarget(Ball.shotBy)` era
+chamado em toda interação do goleiro com a bola — inclusive ele saindo para
+recolher bola solta. `indoAoGol()` passa a checar direção, enquadramento e
+altura, e a decisão é tomada **antes** de o goleiro alterar a velocidade da bola
+(avaliar depois media a bola parada na mão dele, e zerava a estatística).
+
+**Faltas infladas.** Sem tempo mínimo entre faltas do mesmo jogador, um encontrão
+que persiste por vários quadros virava três faltas. Janela de 2,5 s de jogo.
+
+Faltas ainda estão em ~20 contra ~11 reais — melhorou, não resolveu.
 
 ---
 
