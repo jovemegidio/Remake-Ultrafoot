@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
 import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
 import { artilheiros, cartoes } from "@/lib/leaderboards"
-import { FORMATIONS, assignPlayersToFormation, normalizePosition, pickStartingXI } from "@/lib/formations"
+import { FORMATIONS, assignPlayersToFormation, normalizePosition, penalidadeImprovisacao, pickStartingXI } from "@/lib/formations"
 import { formatCurrency, getCamisaUrl, isKitVariantAvailable, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
@@ -115,7 +115,43 @@ function getStarRating(fintas: number) {
 // buildElencoPlayers agora vive em lib/use-user-roster.ts (compartilhado com a Escalacao).
 
 /**
- * CARTA DO ATLETA — o card da prancheta HORIZONTAL, no estilo EA FC.
+ * FAIXA DA CARTA pelo overall — preta, dourada ou bronze.
+ *
+ * É a leitura que o jogador de futebol faz de relance e que a referência (PES)
+ * usa: a cor diz o patamar antes de você ler o número. Três faixas, como pedido:
+ * craque (90+) preta, titular consolidado (75-89) dourada, o resto bronze.
+ */
+type FaixaDaCarta = "preta" | "dourada" | "bronze"
+
+function faixaPorOverall(overall: number): FaixaDaCarta {
+  if (overall >= 90) return "preta"
+  if (overall >= 75) return "dourada"
+  return "bronze"
+}
+
+const ESTILO_DA_FAIXA: Record<FaixaDaCarta, { anel: string; fundo: string; texto: string; brilho: string }> = {
+  preta: {
+    anel: "#e8e8ec",
+    fundo: "linear-gradient(160deg,#2b2b33 0%,#0b0b0f 55%,#1a1a20 100%)",
+    texto: "#f2f2f6",
+    brilho: "0 0 12px rgba(230,230,240,0.45)",
+  },
+  dourada: {
+    anel: "#f5c542",
+    fundo: "linear-gradient(160deg,#8a6b16 0%,#3a2c07 55%,#6b520f 100%)",
+    texto: "#ffe9a8",
+    brilho: "0 0 12px rgba(245,197,66,0.45)",
+  },
+  bronze: {
+    anel: "#c07b46",
+    fundo: "linear-gradient(160deg,#6b452a 0%,#2c1c11 55%,#54361f 100%)",
+    texto: "#f0cfae",
+    brilho: "0 0 10px rgba(192,123,70,0.35)",
+  },
+}
+
+/**
+ * CARTA DO ATLETA — o card da prancheta HORIZONTAL, no estilo da referência.
  *
  * Só existe na horizontal por um motivo prático: em pé, o campo é estreito e
  * onze retratos de 40px viram onze borrões indistinguíveis — a camisa com o
@@ -124,66 +160,99 @@ function getStarRating(fintas: number) {
  *
  * A foto vem de `getPlayerPhotoUrl` (PlayerAvatar), a mesma do resto do jogo;
  * quem não tem retrato cai na silhueta por posição, nunca num quadrado vazio.
- * As cores do clube pintam a moldura, então a carta muda de time para time.
+ *
+ * O OVERALL EXIBIDO é o EFETIVO naquele slot. Um goleiro escalado na zaga não
+ * mostra mais o 78 dele: mostra o que ele de fato rende ali. O motor já aplicava
+ * essa penalidade na partida (`penalidadeImprovisacao`), mas ela era invisível
+ * na hora de escalar — o técnico só descobria pelo resultado.
  */
 function CartaDeJogador({
-  nome, posicao, overall, numero, cor1, cor2, selecionado, funcao, promessa, pills, emTreino,
+  nome, posicao, slot, overall, numero, selecionado, funcao, promessa, pills, emTreino,
 }: {
   nome: string
+  /** Posição de ORIGEM do atleta. */
   posicao: string
+  /** Slot da formação que ele está ocupando. */
+  slot: string
   overall: number
   numero?: number
-  cor1: string
-  cor2: string
   selecionado: boolean
   funcao: string | null
   promessa: boolean
   pills: { key: string; label: string; cls: string }[]
   emTreino?: boolean
 }) {
+  const fator = penalidadeImprovisacao(posicao, slot)
+  const improvisado = fator < 1
+  const overallEfetivo = Math.round(overall * fator)
+  // A FAIXA segue o overall EFETIVO: um craque improvisado no gol deixa de ser
+  // carta preta, porque ali ele não joga como craque.
+  const estilo = ESTILO_DA_FAIXA[faixaPorOverall(overallEfetivo)]
+
   return (
     <div className="relative flex flex-col items-center">
+      {/* A BOLA: rosto ao centro, overall à esquerda e posição à direita, com o
+          anel na cor da faixa — o formato da referência. Redonda em vez de
+          retangular porque onze retratos redondos se distinguem melhor sobre o
+          gramado do que onze retângulos colados. */}
       <div
         className={cn(
-          "relative w-[62px] overflow-hidden rounded-lg border transition-all md:w-[74px]",
-          selecionado
-            ? "border-[var(--brand)] shadow-[0_0_14px_var(--brand)]"
-            : "border-white/25 shadow-[0_4px_10px_rgba(0,0,0,0.55)]",
+          "relative flex h-[52px] w-[52px] items-center justify-center rounded-full border-2 transition-all md:h-[60px] md:w-[60px]",
         )}
-        style={{ background: `linear-gradient(160deg, ${cor1} 0%, ${cor2} 78%)` }}
+        style={{
+          background: estilo.fundo,
+          borderColor: selecionado ? "var(--brand)" : estilo.anel,
+          boxShadow: selecionado ? "0 0 14px var(--brand)" : estilo.brilho,
+        }}
       >
-        {/* Brilho diagonal — o acabamento que faz a carta parecer carta. */}
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.28)_0%,transparent_38%,transparent_62%,rgba(0,0,0,0.30)_100%)]" />
-
-        {/* Overall e posição, na coluna da esquerda, como no card do EA FC. */}
-        <div className="absolute left-1 top-1 z-10 flex flex-col items-center leading-none">
-          <span className="text-[13px] font-black text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] md:text-[15px]">
-            {overall}
-          </span>
-          <span className="text-[7px] font-bold uppercase tracking-wide text-white/80 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)] md:text-[8px]">
-            {posicao}
-          </span>
-        </div>
-
-        {numero != null && (
-          <span className="absolute right-1 top-1 z-10 text-[9px] font-black text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]">
-            {numero}
-          </span>
-        )}
-
         <PlayerAvatar
           name={nome}
           position={posicao}
           size="lg"
-          className="mx-auto mt-3 h-[42px] w-[52px] rounded-none border-0 bg-transparent md:h-[50px] md:w-[62px]"
+          className="h-[44px] w-[44px] rounded-full border-0 bg-transparent md:h-[52px] md:w-[52px]"
         />
 
-        {/* Faixa do nome — sobrenome, que é como o atleta é chamado. */}
-        <div className="relative border-t border-white/20 bg-black/45 px-1 py-[2px] text-center">
-          <div className="truncate text-[8px] font-black uppercase tracking-wide text-white md:text-[9px]">
-            {nome.split(" ").pop()}
-          </div>
+        {/* OVERALL EFETIVO. Improvisado, ele aparece em âmbar e com o valor de
+            origem riscado ao lado — é a diferença que explica por que o time
+            rendeu menos, e ela precisa ser vista ANTES do apito. */}
+        <span
+          className={cn(
+            "absolute -left-1 -top-1 flex min-w-[19px] items-center justify-center rounded-full px-1 text-[10px] font-black leading-[15px] md:text-[11px]",
+            improvisado ? "bg-amber-400 text-black" : "text-black",
+          )}
+          style={improvisado ? undefined : { background: estilo.anel }}
+          title={improvisado
+            ? `Improvisado: ${posicao} jogando de ${slot}. Rende ${overallEfetivo} em vez de ${overall}.`
+            : undefined}
+        >
+          {overallEfetivo}
+        </span>
+
+        {/* A posição mostrada é o SLOT — é onde ele vai jogar. */}
+        <span
+          className="absolute -bottom-1 -right-1 rounded-full px-1 text-[8px] font-black uppercase leading-[14px] text-black md:text-[9px]"
+          style={{ background: estilo.anel }}
+        >
+          {slot}
+        </span>
+
+        {numero != null && (
+          <span className="absolute -top-1 right-0 text-[8px] font-black text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.95)]">
+            {numero}
+          </span>
+        )}
+      </div>
+
+      {/* Nome + o aviso de improvisação (a origem riscada). */}
+      <div className="mt-0.5 max-w-[86px] rounded bg-black/55 px-1 text-center">
+        <div className="truncate text-[9px] font-black uppercase tracking-wide" style={{ color: estilo.texto }}>
+          {nome.split(" ").pop()}
         </div>
+        {improvisado && (
+          <div className="text-[7px] font-bold leading-tight text-amber-300">
+            {posicao} <span className="text-white/40 line-through">{overall}</span>
+          </div>
+        )}
       </div>
 
       {promessa && (
@@ -1657,10 +1726,9 @@ export default function ElencoPage() {
                     <CartaDeJogador
                       nome={player.name}
                       posicao={normalizePosition(player.position)}
+                      slot={normalizePosition(player.slotPos ?? player.position)}
                       overall={player.overall}
                       numero={numeroDaCamisa(player.id)}
-                      cor1={userTeam.cor1}
-                      cor2={userTeam.cor2}
                       selecionado={selectedPlayerId === player.id}
                       funcao={selectedPlayerId === player.id ? roleLabelFor(player) : null}
                       promessa={player.potential > player.overall + 3}
@@ -1701,14 +1769,40 @@ export default function ElencoPage() {
                       )}>
                         {player.name.split(" ").pop()}
                       </div>
-                      <div className="flex items-center justify-center gap-1 text-[8px] leading-tight md:text-[9px]">
-                        <span className={selectedPlayerId === player.id ? "text-black/70" : "text-white/50"}>
-                          {normalizePosition(player.position)}
-                        </span>
-                        <span className={selectedPlayerId === player.id ? "font-bold text-black" : getOverallColor(player.overall)}>
-                          {player.overall}
-                        </span>
-                      </div>
+                      {/* OVERALL EFETIVO NO SLOT — a prancheta em pé mostra a
+                          mesma verdade da carta: escalar um goleiro na zaga
+                          derruba o rendimento dele, e isso precisa aparecer
+                          ANTES da partida (o motor já cobrava, em silêncio). */}
+                      {(() => {
+                        const slot = normalizePosition(player.slotPos ?? player.position)
+                        const origem = normalizePosition(player.position)
+                        const fator = penalidadeImprovisacao(origem, slot)
+                        const efetivo = Math.round(player.overall * fator)
+                        const improvisado = fator < 1
+                        return (
+                          <div className="flex items-center justify-center gap-1 text-[8px] leading-tight md:text-[9px]">
+                            <span className={cn(
+                              selectedPlayerId === player.id ? "text-black/70" : "text-white/50",
+                              improvisado && selectedPlayerId !== player.id && "text-amber-300",
+                            )}>
+                              {improvisado ? `${origem}→${slot}` : origem}
+                            </span>
+                            <span
+                              className={cn(
+                                selectedPlayerId === player.id
+                                  ? "font-bold text-black"
+                                  : improvisado ? "font-bold text-amber-300" : getOverallColor(player.overall),
+                              )}
+                              title={improvisado ? `Improvisado: rende ${efetivo} no lugar de ${player.overall}.` : undefined}
+                            >
+                              {efetivo}
+                            </span>
+                            {improvisado && (
+                              <span className="text-white/35 line-through">{player.overall}</span>
+                            )}
+                          </div>
+                        )
+                      })()}
                       {/* A função só no selecionado: com onze rótulos o campo
                           virava um mural de texto. */}
                       {selectedPlayerId === player.id && (

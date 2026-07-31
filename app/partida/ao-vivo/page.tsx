@@ -68,6 +68,7 @@ import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
 import { MatchRadar } from "@/components/match/match-radar"
+import { selecionarEventoDoRadar } from "@/lib/radar-evento"
 import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
 import { useMatchSounds } from "@/hooks/use-match-sounds"
 import { clearQueue as clearCommentary, enqueueEvent, initAudio } from "@/lib/audio-commentary"
@@ -913,19 +914,11 @@ export default function PartidaAoVivoPage() {
   // Pulso do ULTIMO evento relevante para o radar REAGIR (chute -> bola voa pro
   // gol; escanteio -> aglomeracao na area). seq = indice do evento (monotonico),
   // entao a reacao dispara uma vez por evento novo.
-  const radarEvent = useMemo<
-    { type: "shot" | "goal" | "corner" | "chance"; side: "home" | "away"; seq: number } | undefined
-  >(() => {
-    const evs = state.events
-    for (let i = evs.length - 1; i >= 0; i--) {
-      const e = evs[i]
-      if (e.type === "goal") return { type: "goal", side: e.side, seq: i }
-      if (e.type === "corner") return { type: "corner", side: e.side, seq: i }
-      if (e.type === "shot" || e.type === "shot_on_target" || e.type === "save" || e.type === "post" || e.type === "miss" || e.type === "penalty")
-        return { type: "shot", side: e.side, seq: i }
-    }
-    return undefined
-  }, [state.events])
+  // A escolha do lance foi para lib/radar-evento (pura e testada). Ela varria a
+  // lista do lado errado — o motor guarda o MAIS NOVO NA FRENTE —, entao o radar
+  // encenava o PRIMEIRO chute da partida para sempre, e o `seq` baseado no
+  // indice mudava sozinho a cada evento novo, re-disparando a reacao sem parar.
+  const radarEvent = useMemo(() => selecionarEventoDoRadar(state.events), [state.events])
 
   useEffect(() => {
     // Antes do apito inicial a formação deve sempre refletir a última tática salva.

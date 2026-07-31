@@ -1,12 +1,12 @@
 {
-  "version": "1.0.226",
-  "notes": "Escudo das selecoes no Mundial, a cor da camisa que voce escolhe pintando o radar da partida, e o calendario em ordem cronologica — a final da Copa do Brasil nao aparece mais antes de jogos anteriores a ela, e dois jogos no mesmo dia nao escondem um ao outro. Vem junto o trabalho das 1.0.219 a 1.0.225, que nunca tinha chegado ate voce: amistoso jogavel no calendario, treino com carga e risco de lesao, entrosamento por minutos juntos em campo e o mercado que respeita o papel do atleta no elenco.",
-  "sizeMb": 565,
-  "sha256": "0EDAFCEACB8BBD8BEF41BD8891A19C8D7AB59E140648433F20FFB63BA6E507B2",
+  "version": "1.0.229",
+  "notes": "O leilao passou a funcionar: ganhar entrega o atleta, os rivais agora cobrem o seu lance e perder tem consequencia. A proposta de selecao para de sumir depois de aceita.",
+  "sizeMb": 566,
+  "sha256": "74E63FB4CCA821464A0BB65C9E421B845D2F52A66C25BBAD87A5930B8C181E66",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUhCT093K2JyVVpGNWlCQjZua2RTeHJ1NEdWWHdFZEN0U2FidmNnZHc2R2ZtSW01eUtNbjBtY05aWERpUWgxR0ZxQ0VTdTBMR1hlNm1KS3pEUkJqNVF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NDQ4MjU4CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yMjZfeDY0LXNldHVwLmV4ZQovY3IzY2hxa0UzSVF5QVNyWHZjZHdZakQ2WEZXdEhPUDUzL3IrbnFQdzhjQlpVdFJWVlczRzBSNGRja1lWWWR5UnZDNlliTDZYaUlCcjcrRTl5UmhBdz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.226_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUNtMmt4czlOZEpzS2RxVWx1TEhJQjhCZ3BhMDJNVDk0QUIwRjZ3dHZldmJ3MkgrenVndkJ2emNXQlQ2MnMzUVQ2Ykcyc281bms2eVVDbDZUQ2h4NEFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NDk1NTAxCWZpbGU6VWx0cmFmb290IDI2XzEuMC4yMjlfeDY0LXNldHVwLmV4ZQpZNjhCb1pjanNiNER6eHZUZGovU0dtWmxQenhMOFIzSllhdkYzc0g1SEpEQWQ0Uzd5U0dxUG5tREk0U09RemN4WUh6WHQ1Kzh0NjVVSVphbTlzZk5BUT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.229_x64-setup.exe"
     }
   }
 }

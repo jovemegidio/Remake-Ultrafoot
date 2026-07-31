@@ -1435,9 +1435,63 @@ export function getTeamByFileKey(fileKey: string): Team | undefined {
   return team ? applyTeamOverride(team) : undefined
 }
 
-// Função para buscar time por nome
+/**
+ * Siglas de TIPO de clube — elas não identificam ninguém e só atrapalham o
+ * casamento por nome ("FC Porto" x "Porto", "AFC Ajax" x "Ajax").
+ */
+const SIGLAS_DE_CLUBE = new Set([
+  "fc", "sc", "ec", "ca", "cr", "ac", "se", "afc", "cf", "ud", "cd", "sl", "ss",
+  "as", "us", "rc", "cs", "ce", "aa", "clube", "club", "futebol", "football",
+])
+
+const _semAcento = (s: string) =>
+  (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+
+/** Nome comparável: sem acento, sem pontuação e sem as siglas de tipo de clube. */
+function _nomeComparavel(nome: string): string {
+  return _semAcento(nome)
+    .replace(/[^a-z0-9]+/g, " ").trim()
+    .split(" ").filter(p => p && !SIGLAS_DE_CLUBE.has(p)).join(" ")
+}
+
+/**
+ * Busca time por nome, tolerando as formas com que o mesmo clube é escrito.
+ *
+ * Era só igualdade exata (case-insensitive), e isso derrubava quem escreve o
+ * nome "curto": o Mercado de Juniores pede "Ajax" e "Porto", enquanto o catálogo
+ * guarda "AFC Ajax" e "FC Porto" — dois dos oito clubes formadores caíam no
+ * escudo DESENHADO, que foi o relato.
+ *
+ * A busca vai do mais estrito ao mais tolerante e PARA no primeiro acerto, então
+ * nenhum casamento que já funcionava muda de resultado:
+ *
+ *   1. nome exato;
+ *   2. nome normalizado (acento/pontuação);
+ *   3. nome sem as siglas de tipo ("FC Porto" -> "porto").
+ *
+ * O passo 3 não é um `includes`: "Porto" NÃO pode casar com "Porto Velho". A
+ * comparação continua sendo de igualdade — só que sobre o nome já limpo. Havendo
+ * empate (ex.: dois "Nacional"), vence o de maior prestígio, que é o clube que
+ * quem digitou o nome curto quase sempre quis dizer.
+ */
 export function getTeamByName(nome: string): Team | undefined {
-  return allTeams.map(applyTeamOverride).find(t => t.nome.toLowerCase() === nome.toLowerCase())
+  const times = allTeams.map(applyTeamOverride)
+
+  const exato = times.find(t => t.nome.toLowerCase() === nome.toLowerCase())
+  if (exato) return exato
+
+  const alvoNorm = _semAcento(nome).replace(/[^a-z0-9]+/g, " ").trim()
+  const porNorm = times.filter(t => _semAcento(t.nome).replace(/[^a-z0-9]+/g, " ").trim() === alvoNorm)
+  if (porNorm.length) return _maisPrestigiado(porNorm)
+
+  const alvoLimpo = _nomeComparavel(nome)
+  if (!alvoLimpo) return undefined
+  const porLimpo = times.filter(t => _nomeComparavel(t.nome) === alvoLimpo)
+  return porLimpo.length ? _maisPrestigiado(porLimpo) : undefined
+}
+
+function _maisPrestigiado(times: Team[]): Team {
+  return times.reduce((a, b) => ((b.prestigio ?? 0) > (a.prestigio ?? 0) ? b : a))
 }
 
 // Uniformes dos times (baseado nas cores reais)

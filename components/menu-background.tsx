@@ -44,25 +44,42 @@ export interface MenuBackgroundProps {
 
 export function MenuBackground({ ativo = true, className }: MenuBackgroundProps) {
   const [indice, setIndice] = useState(0)
-  // Movimento reduzido e o modo de performance param o carrossel: fica o primeiro
-  // fundo, parado. É a mesma regra dos fundos do escritório.
-  const [parado, setParado] = useState(false)
+  /**
+   * MOVIMENTO REDUZIDO ≠ FUNDO PARADO.
+   *
+   * A primeira versão disto congelava o carrossel inteiro quando
+   * `prefers-reduced-motion` estava ativo — e foi assim que o carrossel nunca
+   * rodou na máquina do autor: o Windows estava com as animações desligadas
+   * (`MinAnimate = 0`), a WebView reporta `reduce`, e o fundo ficava eternamente
+   * no primeiro quadro. Parecia que a transição não tinha sido implementada.
+   *
+   * A preferência existe para evitar desconforto vestibular — paralaxe, giro,
+   * zoom, movimento rápido. Um crossfade de 2,2s entre duas fotos PARADAS não é
+   * isso. O que se enquadra ali é o ZOOM, e é só ele que desligamos.
+   */
+  const [semMovimento, setSemMovimento] = useState(false)
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    const semMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    const modoPerformance = document.documentElement.hasAttribute("data-performance-mode")
-    setParado(semMovimento || modoPerformance)
+    const consulta = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const avaliar = () => setSemMovimento(
+      consulta.matches || document.documentElement.hasAttribute("data-a11y-reduce-motion"),
+    )
+    avaliar()
+    // A preferência pode mudar com o jogo aberto (tanto no Windows quanto no
+    // painel de acessibilidade do próprio jogo).
+    consulta.addEventListener("change", avaliar)
+    return () => consulta.removeEventListener("change", avaliar)
   }, [])
 
   useEffect(() => {
-    if (!ativo || parado) return
+    if (!ativo) return
     const id = setInterval(
       () => setIndice(i => (i + 1) % FUNDOS_DO_MENU.length),
       SEGUNDOS_POR_FUNDO * 1000,
     )
     return () => clearInterval(id)
-  }, [ativo, parado])
+  }, [ativo])
 
   return (
     <div className={className}>
@@ -79,14 +96,15 @@ export function MenuBackground({ ativo = true, className }: MenuBackgroundProps)
           unoptimized
           className="object-cover"
           style={{
-            opacity: parado ? (i === 0 ? 1 : 0) : i === indice ? 1 : 0,
-            transition: `opacity ${SEGUNDOS_DE_TRANSICAO}s ease-in-out`,
-            // Um leve zoom no que está em cena dá vida sem custar layout: só
-            // transform, que não repinta nada.
-            transform: i === indice ? "scale(1.05)" : "scale(1)",
-            transitionProperty: "opacity, transform",
-            transitionDuration: `${SEGUNDOS_DE_TRANSICAO}s, ${SEGUNDOS_POR_FUNDO + SEGUNDOS_DE_TRANSICAO}s`,
-            transitionTimingFunction: "ease-in-out, ease-out",
+            opacity: i === indice ? 1 : 0,
+            // O ZOOM é a única parte que o movimento reduzido desliga: ele é o
+            // que pode incomodar. A troca de imagem continua acontecendo.
+            transform: semMovimento ? undefined : i === indice ? "scale(1.05)" : "scale(1)",
+            transitionProperty: semMovimento ? "opacity" : "opacity, transform",
+            transitionDuration: semMovimento
+              ? `${SEGUNDOS_DE_TRANSICAO}s`
+              : `${SEGUNDOS_DE_TRANSICAO}s, ${SEGUNDOS_POR_FUNDO + SEGUNDOS_DE_TRANSICAO}s`,
+            transitionTimingFunction: semMovimento ? "ease-in-out" : "ease-in-out, ease-out",
           }}
         />
       ))}

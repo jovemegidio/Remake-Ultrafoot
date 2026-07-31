@@ -144,9 +144,37 @@
   ],
   "changelog": [
     {
-      "version": "1.0.229",
+      "version": "1.0.230",
       "date": "2026-07-31",
       "latest": true,
+      "title": "A tela principal volta a trocar de fundo, escudo de verdade nos formadores, e o radar deixa de encenar o lance errado",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "A TRANSICAO DE FUNDOS DA TELA PRINCIPAL nao acontecia para quem tem as animacoes do Windows desligadas: o carrossel ficava congelado no primeiro quadro e parecia que a troca nunca tinha sido feita. A preferencia de movimento reduzido existe para evitar desconforto com zoom e paralaxe, nao para proibir um crossfade entre duas fotos paradas — agora so o zoom e desligado, e as seis artes continuam se alternando."
+        },
+        {
+          "type": "fixed",
+          "text": "ESCUDO DESENHADO NO MERCADO DE JUNIORES. Dois dos oito clubes formadores (Ajax e Porto) nao eram encontrados porque o catalogo os guarda como AFC Ajax e FC Porto, e a busca so aceitava o nome exato. Agora ela tolera a sigla de tipo do clube — sem confundir Porto com Porto Velho."
+        },
+        {
+          "type": "added",
+          "text": "JOGAR FORA DA POSICAO AGORA APARECE. O motor ja cobrava a improvisacao dentro da partida, mas em silencio: a escalacao mostrava o overall cheio e o tecnico so descobria pelo resultado. Um goleiro 78 escalado na zaga agora aparece como 43, em ambar, com o valor de origem riscado ao lado — nas duas pranchetas."
+        },
+        {
+          "type": "added",
+          "text": "AS CARTAS DO GERENCIAMENTO ganharam visual de carta: rosto ao centro, overall a esquerda, posicao a direita e anel colorido pelo patamar — preta acima de 90, dourada de 75 a 89, bronze abaixo. A cor segue o overall EFETIVO, entao craque improvisado no gol deixa de ser carta preta."
+        },
+        {
+          "type": "fixed",
+          "text": "O RADAR ENCENAVA O LANCE ERRADO. O motor guarda os eventos com o mais novo na frente e a escolha varria a lista ao contrario: aos 66 minutos a bola ainda voava para o gol de quem tinha finalizado aos 3. Pior, a reacao re-disparava a cada lance novo, sempre com o mesmo evento velho. Agora o radar reage ao lance mais recente, e uma vez por lance."
+        }
+      ]
+    },
+    {
+      "version": "1.0.229",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "O leilao passou a funcionar (e a ser disputa de verdade) e a proposta de selecao para de sumir",
       "changes": [
         {
