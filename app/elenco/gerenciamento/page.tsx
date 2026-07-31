@@ -1232,6 +1232,11 @@ export default function ElencoPage() {
                 style={{
                   background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
                   aspectRatio: "3 / 4",
+                  // Mesmo motivo do campinho de partida/escalacao: com a escala de
+                  // acessibilidade em 150% o card cresce (medido em `rem`) mas o
+                  // campo nao (`aspectRatio` fixo), e os jogadores colidem. Com
+                  // `inline-size` os filhos medem-se em `cqw` e acompanham o campo.
+                  containerType: "inline-size",
                 }}
               >
                 {/* Pitch stripes */}
@@ -1284,29 +1289,37 @@ export default function ElencoPage() {
                       "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group z-10",
                       selectedPlayerId === player.id && "z-20"
                     )}
+                    // O card mede-se pelo CAMPO (cqw), nao pelo font-size do root.
+                    style={{ fontSize: "clamp(0.5rem, 3.4cqw, 0.95rem)" }}
                   >
-                    <div className={cn(
-                      "px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
-                      selectedPlayerId === player.id
-                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
-                        : "bg-black/60 text-white/90"
-                    )}>
+                    <div
+                      className={cn(
+                        "rounded font-semibold whitespace-nowrap transition-all",
+                        selectedPlayerId === player.id
+                          ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                          : "bg-black/60 text-white/90"
+                      )}
+                      style={{ fontSize: "0.75em", padding: "0.15em 0.5em", marginBottom: "0.35em" }}
+                    >
                       {player.name.split(" ").pop()}
                     </div>
-                    
+
                     <div className="relative">
                       {player.potential > player.overall + 3 && (
-                        <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[var(--brand)] flex items-center justify-center z-10">
-                          <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
+                        <div
+                          className="absolute rounded-full bg-[var(--brand)] flex items-center justify-center z-10"
+                          style={{ height: "1.1em", width: "1.1em", top: "-0.2em", left: "-0.2em" }}
+                        >
+                          <TrendingUp className="text-black" style={{ height: "0.7em", width: "0.7em" }} />
                         </div>
                       )}
-                      
+
                       <PlayerAvatarCircle
                         name={player.name}
                         teamColor={userTeam.cor1}
                         size="sm"
                         className={cn(
-                          "border-2 transition-all",
+                          "border-2 transition-all !h-[3em] !w-[3em]",
                           selectedPlayerId === player.id
                             ? "border-[var(--brand)] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
                             : "border-white/30"
@@ -1314,10 +1327,17 @@ export default function ElencoPage() {
                       />
                       
                       <div className={cn(
-                        "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
+                        "absolute rounded-full flex items-center justify-center font-black",
                         "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
                         selectedPlayerId === player.id ? "border-[var(--brand)]" : "border-white/30"
-                      )}>
+                      )}
+                      style={{
+                        height: "1.5em",
+                        width: "1.5em",
+                        fontSize: "0.72em",
+                        bottom: "-0.25em",
+                        right: "-0.25em",
+                      }}>
                         <span className={getOverallColor(player.overall)}>{player.overall}</span>
                       </div>
                     </div>

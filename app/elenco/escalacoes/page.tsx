@@ -345,7 +345,10 @@ export default function EscalacoesPage() {
                   aspectRatio: "100 / 133",
                   background: `linear-gradient(180deg,
                     oklch(0.50 0.08 200) 0%,
-                    oklch(0.45 0.06 195) 100%)`
+                    oklch(0.45 0.06 195) 100%)`,
+                  // Card mede-se pelo campo, nao pelo font-size do root — senao a
+                  // escala de acessibilidade em 150% infla o jogador e o campo nao.
+                  containerType: "inline-size",
                 }}
               >
                 {/* Field markings */}
@@ -391,13 +394,14 @@ export default function EscalacoesPage() {
                         style={{
                           left: `${pos.x}%`,
                           top: `${(pos.y / 133) * 100}%`,
+                          fontSize: "clamp(0.5rem, 3.4cqw, 0.95rem)",
                         }}
                       >
                         {/* Jersey icon */}
-                        <div className={cn(
-                          "relative w-10 h-10 flex items-center justify-center",
-                          "transition-transform hover:scale-110"
-                        )}>
+                        <div
+                          className="relative flex items-center justify-center transition-transform hover:scale-110"
+                          style={{ height: "2.8em", width: "2.8em" }}
+                        >
                           {/* Jersey SVG */}
                           <svg viewBox="0 0 40 40" className="w-full h-full">
                             <path

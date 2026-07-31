@@ -666,6 +666,9 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
               aspectRatio: "3 / 4",
               minHeight: "450px",
               maxHeight: "calc(100vh - 200px)",
+              // Card mede-se pelo campo, nao pelo font-size do root — senao a
+              // escala de acessibilidade em 150% infla o jogador e o campo nao.
+              containerType: "inline-size",
             }}
             onMouseMove={draggingId ? handleDrag : undefined}
             onMouseUp={handleDragEnd}
@@ -728,7 +731,11 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                   draggingId === p.id && "z-20 scale-110",
                   selectedPlayer === p.id && "z-10"
                 )}
-                style={{ left: `${p.x}%`, top: `${(p.y / 133) * 100}%` }}
+                style={{
+                  left: `${p.x}%`,
+                  top: `${(p.y / 133) * 100}%`,
+                  fontSize: "clamp(0.5rem, 3.4cqw, 0.95rem)",
+                }}
                 onMouseDown={() => handleDragStart(p.id)}
                 onTouchStart={() => handleDragStart(p.id)}
               >
@@ -740,15 +747,17 @@ export function TacticalEditor({ team, onClose, onSave }: TacticalEditorProps) {
                 {/* Player circle */}
                 <div
                   className={cn(
-                    "relative h-12 w-12 rounded-full flex flex-col items-center justify-center shadow-xl border-[3px] transition-transform",
+                    "relative rounded-full flex flex-col items-center justify-center shadow-xl border-[3px] transition-transform",
                     selectedPlayer === p.id ? "border-[var(--brand)]" : "border-white/[0.04]0"
                   )}
                   style={{
+                    height: "3.4em",
+                    width: "3.4em",
                     backgroundColor: team.cor1,
                     color: team.cor2,
                   }}
                 >
-                  <span className="text-sm font-black leading-none">{p.number}</span>
+                  <span className="font-black leading-none" style={{ fontSize: "0.85em" }}>{p.number}</span>
                 </div>
                 
                 {/* Player name */}
