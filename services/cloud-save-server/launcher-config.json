@@ -144,9 +144,25 @@
   ],
   "changelog": [
     {
-      "version": "1.0.237",
+      "version": "1.0.238",
       "date": "2026-07-31",
       "latest": true,
+      "title": "Todo elenco passa a ter laterais, volantes e pontas de verdade",
+      "changes": [
+        {
+          "type": "improved",
+          "text": "ELENCOS COM FORMATO DE TIME. Havia 152 clubes SEM NENHUM LATERAL, 156 sem volante e 271 sem ponta — o Fortaleza vinha com catorze meias, nove zagueiros e mais nada. A fonte desses elencos marca todo mundo fora dos titulares como DESCONHECIDO, e o jogo convertia isso em zagueiro e meia; o resultado era um plantel que nenhum time real teria. Agora esses atletas sao distribuidos por um elenco de futebol: sem lateral caiu de 152 para 3 clubes, sem volante de 156 para 14, sem ponta de 271 para 107."
+        },
+        {
+          "type": "improved",
+          "text": "Quem JA tinha posicao de verdade nao foi tocado. O Atletico de Madrid tem tres laterais-esquerdos e dois direitos na fonte, e o Empoli tem nove meias confirmados: forcar posicao neles seria trocar dado real por um numero mais bonito. Goleiro tambem nunca e redistribuido."
+        }
+      ]
+    },
+    {
+      "version": "1.0.237",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "Onze campeonatos novos, e as fotos licenciadas no editor param de sumir",
       "changes": [
         {
