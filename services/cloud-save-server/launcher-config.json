@@ -144,9 +144,29 @@
   ],
   "changelog": [
     {
-      "version": "1.0.231",
+      "version": "1.0.232",
       "date": "2026-07-31",
       "latest": true,
+      "title": "Tirar o atleta da posicao dele agora custa caro, e o radar deixou de correr",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "JOGAR FORA DA POSICAO NAO MUDAVA NADA. A penalidade existia, mas estava ligada ao dado errado: o encaixe da formacao poe cada atleta no slot da PROPRIA posicao dele, e arrastar alguem pelo campo mudava so as coordenadas. Origem e destino saiam sempre iguais, entao o fator dava 1 — nem na tela nem dentro da partida a improvisacao chegou a valer uma vez. Agora a posicao sai de ONDE o atleta esta na prancheta: um goleiro 78 arrastado para a zaga vira 43."
+        },
+        {
+          "type": "improved",
+          "text": "Trocar de LADO custa pouco (um lateral-direito na esquerda perde quase nada) e trocar de FUNCAO custa caro, como no futebol. Quem esta na posicao certa nao perde nada, e a formacao padrao nao e penalizada — a coordenada so manda quando voce de fato move o atleta."
+        },
+        {
+          "type": "fixed",
+          "text": "O RADAR CORRIA DEMAIS. O movimento era interpolado por QUADRO e nao por tempo: a 60fps o atleta cobria quase toda a distancia em menos de meio segundo. Pior, o radar ja roda a 30fps quando o sistema pede movimento reduzido — a mesma partida se movia na metade da velocidade dependendo da maquina. Agora o ritmo e por tempo, igual em qualquer PC, e cerca de 40% do que era. So o chute continua rapido."
+        }
+      ]
+    },
+    {
+      "version": "1.0.231",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "Convite de selecao antes da data FIFA, bandeiras no editor e a Colombia com liga propria",
       "changes": [
         {
