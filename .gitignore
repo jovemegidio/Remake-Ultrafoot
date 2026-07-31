@@ -86,7 +86,10 @@ _archive/
 # Backups extras / projeto aninhado duplicado (tem repos git embutidos e
 # arquivos cloud-only ilegiveis que quebram o git add)
 backup (1)/
-dev/
+# ANCORADO NA RAIZ de proposito. Sem a barra inicial, `dev/` casa com QUALQUER
+# diretorio chamado "dev" em qualquer nivel — e engolia `app/dev/`, deixando
+# rotas de desenvolvimento fora do commit em silencio.
+/dev/
 
 # Chaves de assinatura (NUNCA versionar)
 *.key
