@@ -178,9 +178,17 @@ export default function PartidaEscalacaoPage() {
   // (game-engine usa nome como chave pois os IDs internos diferem)
   useEffect(() => {
     if (engineSquadPlayers.length === 0) return
-    const starterNames = new Set(players.map(p => p.name))
+    // HOMONIMOS: um `Set` de nomes marcava TODOS os jogadores com aquele nome.
+    // 33 times dos dados reais tem homonimo no mesmo elenco (o Jacuipense tem
+    // dois "Vicente"), entao escalar um colocava os dois em campo. Contar
+    // quantos de cada nome foram escalados mantem o NUMERO certo de titulares.
+    const faltam = new Map<string, number>()
+    for (const p of players) faltam.set(p.name, (faltam.get(p.name) ?? 0) + 1)
+
     engineSquadPlayers.forEach((ep: EnginePlayer) => {
-      const shouldBeStarter = starterNames.has(ep.name)
+      const restantes = faltam.get(ep.name) ?? 0
+      const shouldBeStarter = restantes > 0
+      if (shouldBeStarter) faltam.set(ep.name, restantes - 1)
       if (ep.isStarter !== shouldBeStarter) {
         engineSetStarter(ep.id, shouldBeStarter)
       }
