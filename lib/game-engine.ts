@@ -3345,7 +3345,19 @@ export const useGameEngine = create<GameEngineState>()(
         const ou = (v: number | undefined, desvio: number) =>
           v && v > 0 ? v : Math.max(20, Math.min(99, Math.round(base + desvio)))
 
-        const salario = Math.round(Math.max(8_000, base * 900))
+        // SALÁRIO DE CRIA DA BASE.
+        //
+        // Era `base * 900`: um garoto de overall 60 saía com R$ 54.000/mês —
+        // 2,25× o que o próprio jogo paga a um profissional do mesmo overall
+        // (`base * 400`, em generateSuccessorPlayer). Promover dois ou três
+        // arrebentava o teto salarial e o caixa ia a zero. Era o relato "promover
+        // júnior deixa o salário alto demais".
+        //
+        // Agora parte da MESMA referência dos profissionais e ainda aplica o
+        // desconto de quem sobe da base: primeiro contrato de cria não se
+        // negocia como o de um contratado pronto. O piso protege o overall
+        // baixo de virar salário simbólico.
+        const salario = Math.round(Math.max(4_000, base * 400 * 0.6))
         const novo: Player = {
           id: Math.max(Date.now(), ...state.squadPlayers.map(p => p.id + 1)),
           name: jovem.name,

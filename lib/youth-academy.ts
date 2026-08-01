@@ -92,7 +92,17 @@ export function generateYouthProspects(
       Math.max(25, Math.min(85, overall + (b[chave] ?? 0) + Math.floor(rnd() * 9) - 4))
 
     out.push({
-      id: `youth_${teamShort}_${season}_${i}`,
+      // ID PRECISA SER ÚNICO ENTRE GERAÇÕES.
+      //
+      // Era `youth_<time>_<temporada>_<i>` — nada ali distingue uma peneira
+      // da outra. Duas gerações do mesmo clube na mesma temporada produziam
+      // os MESMOS 6 ids (medido: 6 de 6 colidiam).
+      //
+      // O estrago aparecia na venda: `receberPorJovem` usa `jovem:<id>` como
+      // recibo anti-duplicata, então a segunda venda com um id repetido era
+      // barrada em silêncio — o jovem saía da base e o dinheiro NÃO entrava.
+      // Era o relato "vendi o jogador e o dinheiro não caiu".
+      id: `youth_${teamShort}_${season}_${Date.now().toString(36)}_${i}`,
       name: `${pick(FIRST)} ${pick(LAST)}`,
       position,
       age,

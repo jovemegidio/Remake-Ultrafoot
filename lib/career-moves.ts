@@ -101,6 +101,16 @@ export function assumirClube(
     navigate: (href: string) => void
     week: number
     season: number
+    /**
+     * Sigla do clube que está sendo DEIXADO, e a dívida dele. Sem isto a dívida
+     * acompanhava o técnico: `assumirClube` zerava elenco, fixtures e base, mas
+     * não o saldo devedor — amortizar num clube e ir para outro levava o débito
+     * junto, e voltar ao antigo mostrava o número errado.
+     */
+    clubeAtual?: string | null
+    dividaAtual?: unknown
+    /** Dívidas já arquivadas, por sigla de clube. */
+    dividasPorClube?: Record<string, unknown>
   },
 ): void {
   clearJobOffers()
@@ -110,8 +120,21 @@ export function assumirClube(
   limparNotificacoes()
   deps.initializeGame(clubShort)
   deps.setEngineTime(deps.week, deps.season)
+
+  // DIVIDA E DO CLUBE, NAO DO TECNICO.
+  //
+  // Arquiva o saldo devedor do clube que fica para tras e carrega o do clube
+  // que se assume. Primeira passagem por um clube comeca sem divida: a que
+  // existia foi criada em novo-jogo para o clube inicial, e nao faz sentido
+  // herda-la ao mudar de emprego.
+  const arquivo: Record<string, unknown> = { ...(deps.dividasPorClube ?? {}) }
+  if (deps.clubeAtual && deps.dividaAtual) arquivo[deps.clubeAtual] = deps.dividaAtual
+  const dividaDoNovoClube = arquivo[clubShort]
+
   deps.setSaveState({
     selectedTeamShort: clubShort,
+    debt: dividaDoNovoClube ?? undefined,
+    debtByClub: arquivo,
     // Assumir um CLUBE volta ao modo clube: se o técnico estava no modo seleção
     // (ex.: demitido e seguindo só na seleção — caso Diniz), o novo clube passa a
     // ser o time ativo. A seleção continua no save; alterna de volta pela /selecao.
@@ -185,6 +208,12 @@ export function encerrarPassagem(
     limparClubeNoMotor?: () => void
     /** Campos extras a gravar junto (ex.: entrar no modo seleção). */
     patchExtra?: Record<string, unknown>
+    /**
+     * Dívida do clube que fica para trás, arquivada por sigla. Sem isto ela
+     * seguiria o técnico para o desemprego e para o próximo clube.
+     */
+    dividaAtual?: unknown
+    dividasPorClube?: Record<string, unknown>
   },
 ): void {
   const passagem: PassagemPorClube = {
@@ -197,6 +226,11 @@ export function encerrarPassagem(
 
   if (motivo === "resigned") clearJobOffers()
 
+  // A dívida FICA COM O CLUBE. Arquiva por sigla e sai do estado ativo: um
+  // técnico desempregado não carrega o saldo devedor do último emprego.
+  const arquivoDeDividas: Record<string, unknown> = { ...(deps.dividasPorClube ?? {}) }
+  if (deps.teamCurto && deps.dividaAtual) arquivoDeDividas[deps.teamCurto] = deps.dividaAtual
+
   deps.setSaveState({
     selectedTeamShort: null,
     // Guarda as últimas 40: o histórico de um técnico longevo não precisa de mais
@@ -204,6 +238,8 @@ export function encerrarPassagem(
     passagens: [...(deps.passagensAtuais ?? []), passagem].slice(-40),
     // O cooldown de troca de clube é do emprego que acabou.
     contratadoEm: undefined,
+    debt: undefined,
+    debtByClub: arquivoDeDividas,
     ...(deps.patchExtra ?? {}),
   })
 
