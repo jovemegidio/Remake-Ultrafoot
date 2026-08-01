@@ -8,15 +8,6 @@ import { applySavedFullscreen, toggleFullscreen } from "@/lib/fullscreen"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { syncCurrencyFromStore, getCurrencyCode } from "@/lib/currency"
 import type { InGameUpdateOffer } from "@/lib/updater"
-import { baixarAtualizacao } from "@/lib/atualizacao-elencos"
-import { jogoRegistrado } from "@/lib/beneficios"
-import {
-  canalAtivo,
-  getAtualizacaoAutomatica,
-  getConsentimento,
-  podeConectar,
-} from "@/lib/atualizacoes-preferencias"
-import { DialogoConsentimentoAtualizacoes } from "@/components/dialogo-consentimento-atualizacoes"
 
 // Versao do "o que ha de novo". Trocar SO quando houver novidade a apresentar —
 // e o que faz o modal reaparecer para quem ja viu a anterior.
@@ -29,8 +20,6 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   const [showQuitConfirm, setShowQuitConfirm] = useState(false)
   const [updateOffer, setUpdateOffer] = useState<InGameUpdateOffer | null>(null)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
-  // Convite para conectar. So aparece para quem nunca respondeu.
-  const [pedirConsentimento, setPedirConsentimento] = useState(false)
 
   useEffect(() => {
     const bridge = window as Window & {
@@ -81,32 +70,15 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
   // mesmo sem limpeza a leitura via de um storage vazio). O flag agora vive no
   // store durável, e e gravado no momento em que o modal APARECE — fechar o
   // jogo com ele aberto nao faz reaparecer.
-  // ATUALIZACAO DE ELENCOS pelo servidor (estilo EA FC). Roda uma vez por
-  // abertura, depois do store hidratar — antes disso a comparacao de versao
-  // leria vazio e rebaixaria a atualizacao que ja esta na maquina.
+  // A BUSCA DE ELENCOS PELO SERVIDOR SAIU NA 1.0.240.
   //
-  // E, agora, SO DEPOIS DE AUTORIZADO. Antes esta busca saia no boot sem
-  // perguntar nada; na primeira execucao o jogo passa a convidar o jogador e
-  // fica offline enquanto ele nao responder.
-  useEffect(() => {
-    let cancelado = false
-    void initPersistentStore().then(async () => {
-      if (cancelado) return
-      const consentimento = getConsentimento()
-      if (consentimento === "nao-perguntado") {
-        setPedirConsentimento(true)
-        return
-      }
-      if (consentimento !== "aceito" || !getAtualizacaoAutomatica()) return
-      // Atualizacao de elencos e um extra de quem registrou (lib/beneficios.ts).
-      // A leitura acontece DEPOIS do initPersistentStore, entao o registro ja
-      // esta em memoria — nao ha risco de negar a quem registrou.
-      if (!jogoRegistrado()) return
-      const versao = await baixarAtualizacao()
-      if (versao) console.info(`[elencos] atualizacao oficial ${versao} aplicada`)
-    })
-    return () => { cancelado = true }
-  }, [])
+  // Ela existia para corrigir elenco, transferencia e escudo sem reinstalar —
+  // um pacote a parte, baixado no boot e aplicado por cima do build. Isso e
+  // justamente a "atualizacao por partes" que deixou de existir: elenco e time
+  // agora vem dentro da build, e quem traz a build e o Ultrafoot Launcher.
+  //
+  // Com ela saiu tambem o convite de consentimento, que so existia porque havia
+  // uma conexao a autorizar no boot.
 
   useEffect(() => {
     let cancelled = false
@@ -304,15 +276,16 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
     document.addEventListener("click", forceStaticAnchorNavigation, true)
     document.documentElement.style.userSelect = "none"
 
-    // Verifica atualizações silenciosamente alguns segundos após o boot,
-    // sem bloquear a splash. No navegador (fora do Tauri) é no-op.
+    // Confere a versao publicada alguns segundos apos o boot, sem bloquear a
+    // splash. No navegador (fora do Tauri) e no-op.
     //
-    // Passa pelo consentimento como o resto: sem autorizacao, nem a versao
-    // publicada e consultada. O initPersistentStore aqui garante que a
-    // preferencia ja foi lida do disco antes da decisao.
+    // NA 1.0.240 ISTO DEIXOU DE SER OPCIONAL. Antes passava por consentimento,
+    // "atualizacao automatica" e canal "jogo" — tres chaves que, desligadas,
+    // deixavam o jogador numa build velha conversando com o servidor online de
+    // outra versao. Estar atualizado nao e preferencia; quem instala continua
+    // sendo o Ultrafoot Launcher.
     const updateTimer = window.setTimeout(() => {
       void initPersistentStore().then(() => {
-        if (!podeConectar() || !getAtualizacaoAutomatica() || !canalAtivo("jogo")) return
         void import("@/lib/updater").then((m) => m.checkForUpdates({ silent: true }))
       })
     }, 5000)
@@ -343,22 +316,6 @@ export function NativeAppProvider({ children }: { children: React.ReactNode }) {
           storeSet(WHATS_NEW_KEY, WHATS_NEW_VERSION)
           setShowWhatsNew(false)
         }} />
-      )}
-      {/* Espera o "o que ha de novo" sair da frente: dois modais empilhados no
-          primeiro boot competiriam pelo Enter. */}
-      {pedirConsentimento && !showWhatsNew && (
-        <DialogoConsentimentoAtualizacoes
-          onDecidir={(aceitou) => {
-            setPedirConsentimento(false)
-            if (!aceitou) return
-            void baixarAtualizacao().then((versao) => {
-              if (versao) console.info(`[elencos] atualizacao oficial ${versao} aplicada`)
-            })
-            if (canalAtivo("jogo")) {
-              void import("@/lib/updater").then((m) => m.checkForUpdates({ silent: true }))
-            }
-          }}
-        />
       )}
     </>
   )

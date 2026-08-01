@@ -36,14 +36,6 @@ import { GameHeader } from "@/components/game-header"
 import { IDIOMAS } from "@/lib/i18n"
 import { AtualizacoesPanel } from "@/components/atualizacoes-panel"
 import { SeloRegistrado } from "@/components/registro-necessario"
-import { DialogoConsentimentoAtualizacoes } from "@/components/dialogo-consentimento-atualizacoes"
-import {
-  EVENTO_PREFERENCIAS,
-  getAtualizacaoAutomatica,
-  getConsentimento,
-  setAtualizacaoAutomatica,
-  setConsentimento,
-} from "@/lib/atualizacoes-preferencias"
 import { anunciarSfx } from "@/lib/sfx-volume"
 import { accessibilityStore } from "@/lib/accessibility-store"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -221,21 +213,6 @@ export default function ConfiguracoesPage() {
   // Controller state
   const [controllerType, setControllerType] = useState<"auto" | "xbox" | "playstation">(state.controllerType || "auto")
 
-  // Conexao com o servidor (mesma preferencia da tela de Atualizacoes). Lida so
-  // depois de montar: o store e do cliente e esta tela e pre-renderizada.
-  const [conectadoAoServidor, setConectadoAoServidor] = useState(false)
-  const [autoAtualizar, setAutoAtualizar] = useState(true)
-  const [pedirConsentimentoOnline, setPedirConsentimentoOnline] = useState(false)
-  useEffect(() => {
-    const ler = () => {
-      setConectadoAoServidor(getConsentimento() === "aceito")
-      setAutoAtualizar(getAtualizacaoAutomatica())
-    }
-    ler()
-    window.addEventListener(EVENTO_PREFERENCIAS, ler)
-    return () => window.removeEventListener(EVENTO_PREFERENCIAS, ler)
-  }, [])
-  
   useEffect(() => {
     if (state.selectedUniform) setSelectedUniform(state.selectedUniform)
     if (state.language) setLanguage(state.language)
@@ -795,32 +772,11 @@ export default function ConfiguracoesPage() {
                   `onCheckedChange`, entao clicar nelas nao mudava nada e o estado
                   nem sobrevivia a sair da tela. Cada uma agora manda em algo real. */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
-                  <div>
-                    <div className="text-sm text-white">{t.settings.onlineMode}</div>
-                    <div className="text-xs text-white/40">{t.settings.onlineModeDesc}</div>
-                  </div>
-                  {/* "Conectar a servidores" E o consentimento de rede: desligar
-                      aqui e o mesmo que desconectar na tela de Atualizacoes. */}
-                  <Switch
-                    checked={conectadoAoServidor}
-                    onCheckedChange={(v) => {
-                      if (v) setPedirConsentimentoOnline(true)
-                      else { setConsentimento("recusado"); setConectadoAoServidor(false) }
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
-                  <div>
-                    <div className="text-sm text-white">{t.settings.autoUpdates}</div>
-                    <div className="text-xs text-white/40">{t.settings.autoUpdatesDesc}</div>
-                  </div>
-                  <Switch
-                    checked={conectadoAoServidor && autoAtualizar}
-                    disabled={!conectadoAoServidor}
-                    onCheckedChange={(v) => { setAutoAtualizar(v); setAtualizacaoAutomatica(v) }}
-                  />
-                </div>
+                {/* "Conectar a servidores" e "Atualizar automaticamente" sairam na
+                    1.0.240. Os dois governavam a atualizacao por partes, que deixou
+                    de existir: manter o jogo na ultima versao nao e mais preferencia
+                    do jogador, e quem instala e o Ultrafoot Launcher. Deixar os
+                    interruptores ali seria pior do que tira-los — comandariam nada. */}
                 <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-white/5">
                   <div>
                     <div className="text-sm text-white">{t.settings.onlineMatches}</div>
@@ -837,19 +793,11 @@ export default function ConfiguracoesPage() {
                 >
                   <div>
                     <div className="text-sm text-white">Central de atualizações</div>
-                    <div className="text-xs text-white/40">Elencos, times e versão do jogo</div>
+                    <div className="text-xs text-white/40">Versão instalada e como o jogo se atualiza</div>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-white/40" />
                 </button>
               </div>
-              {pedirConsentimentoOnline && (
-                <DialogoConsentimentoAtualizacoes
-                  onDecidir={(aceitou) => {
-                    setPedirConsentimentoOnline(false)
-                    setConectadoAoServidor(aceitou)
-                  }}
-                />
-              )}
             </div>
           </div>
         )

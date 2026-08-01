@@ -13,6 +13,7 @@ export function GameHero({
   install,
   mode,
   logado,
+  erroAoAbrir,
   onDownload,
   onRepair,
 }: {
@@ -21,6 +22,8 @@ export function GameHero({
   install: InstallState
   mode: LaunchMode
   logado: boolean
+  /** Por que o jogo nao abriu no ultimo clique em Jogar. Null = sem falha. */
+  erroAoAbrir?: string | null
   onDownload: () => void
   onRepair: () => void
 }) {
@@ -110,6 +113,11 @@ export function GameHero({
             onDownload={onDownload}
             onRepair={onRepair}
           />
+          {erroAoAbrir && (
+            <p className="mt-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+              Não consegui abrir o jogo: {erroAoAbrir}
+            </p>
+          )}
         </div>
       </div>
     </section>

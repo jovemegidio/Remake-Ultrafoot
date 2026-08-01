@@ -24,19 +24,19 @@
 // canais ligados/desligados vivem em lib/atualizacoes-preferencias e são
 // consultados em cada leitura aqui embaixo.
 
-import { storeGet, storeSet } from "@/lib/persistent-store"
-import { buscarJson } from "@/lib/buscar-json"
-import { canalAtivo, podeConectar } from "@/lib/atualizacoes-preferencias"
+import { storeSet } from "@/lib/persistent-store"
+import { canalAtivo } from "@/lib/atualizacoes-preferencias"
 import type { TeamOverride } from "@/lib/team-overrides"
 import type { PlayerOverride } from "@/lib/player-overrides"
 
 const CHAVE = "ultrafoot:atualizacao-elencos"
 
-// Mesma dupla primária/reserva do resto do jogo: quando a VPS caiu, foi o
-// GitHub que manteve os jogadores recebendo atualização.
-const URL_PRIMARIA = "https://ultrafoot.179-198-103-30.sslip.io/atualizacoes/elencos.json"
-const URL_RESERVA =
-  "https://github.com/jovemegidio/Ultrafoot26/releases/download/elencos/elencos.json"
+// As URLs do manifesto (VPS + reserva no GitHub) sairam na 1.0.240 junto com o
+// canal. Ficam registradas aqui porque o servidor continua publicando o
+// elencos.json — quem o consome agora e o BUILD, na hora de gerar os seeds, nao
+// mais o jogo na maquina do jogador:
+//   https://ultrafoot.179-198-103-30.sslip.io/atualizacoes/elencos.json
+//   https://github.com/jovemegidio/Ultrafoot26/releases/download/elencos/elencos.json
 
 /** Um atleta que mudou de clube depois do lançamento do build. */
 export interface TransferenciaOficial {
@@ -69,40 +69,31 @@ export interface AtualizacaoElencos {
 
 const VAZIA: AtualizacaoElencos = { versao: 0 }
 
-let cache: AtualizacaoElencos | null = null
 
 /**
  * O que já está na máquina. Leitura SÍNCRONA de propósito: quem chama são as
  * funções de override, no meio da montagem do elenco — um await ali obrigaria a
  * reescrever meia dezena de caminhos que hoje são síncronos.
+ *
+ * ⚠️ DESLIGADO NA 1.0.240: devolve sempre VAZIA. A atualização deixou de ser por
+ * partes — quem entrega elenco, time e liga agora é a BUILD, inteira, trazida
+ * pelo Ultrafoot Launcher.
+ *
+ * E não bastava parar de baixar. O manifesto que já estava gravado no disco
+ * continuaria valendo para sempre: um pacote baixado na 1.0.230 sobrescreveria
+ * o elenco da 1.0.240 com dados mais VELHOS do que os do próprio build, e sem
+ * ninguém para atualizá-lo. Ignorar o que está gravado é o que faz a build voltar
+ * a ser a única fonte. O arquivo continua no disco, intocado, caso um dia o canal
+ * volte.
  */
 export function getAtualizacao(): AtualizacaoElencos {
-  if (cache) return cache
-  if (typeof window === "undefined") return VAZIA
-  const cru = storeGet(CHAVE)
-  if (!cru) return VAZIA
-  try {
-    const lido = JSON.parse(cru) as AtualizacaoElencos
-    cache = typeof lido?.versao === "number" ? lido : VAZIA
-  } catch {
-    cache = VAZIA
-  }
-  return cache ?? VAZIA
+  return VAZIA
 }
 
 export function versaoAtualizacao(): number {
   return getAtualizacao().versao
 }
 
-async function buscar(url: string, ms: number): Promise<AtualizacaoElencos | null> {
-  // buscarJson usa o http NATIVO dentro do Tauri. Com o fetch da webview esta
-  // busca era barrada por CORS (o nginx da VPS não manda
-  // Access-Control-Allow-Origin em /atualizacoes/), e sobrava só a reserva.
-  const dado = await buscarJson<AtualizacaoElencos>(url, ms)
-  // Um HTML de página de erro parseia como texto e viraria "atualização"
-  // válida com versão indefinida — daí a checagem de tipo.
-  return typeof dado?.versao === "number" ? dado : null
-}
 
 /**
  * Le o que o servidor publicou SEM gravar nada.
@@ -112,20 +103,24 @@ async function buscar(url: string, ms: number): Promise<AtualizacaoElencos | nul
  * jogador manda aplicar. Devolve null sem consentimento ou sem rede.
  */
 export async function consultarServidor(): Promise<AtualizacaoElencos | null> {
-  if (typeof window === "undefined" || !podeConectar()) return null
-  return (await buscar(URL_PRIMARIA, 6000)) ?? (await buscar(URL_RESERVA, 12000))
+  // DESLIGADO NA 1.0.240 junto com `getAtualizacao`. Consultar aqui só ofereceria
+  // ao jogador um pedaço que o jogo não aplica mais — botão que não faz nada.
+  return null
 }
 
 /**
- * Grava uma atualização já baixada. A trava de versão vive aqui: nunca
- * aceitamos algo mais velho do que a máquina já tem.
+ * Grava uma atualização já baixada.
+ *
+ * DESLIGADO NA 1.0.240: ninguém mais chega aqui com conteúdo, porque
+ * `consultarServidor` não traz nada. Continua existindo — e continua gravando —
+ * para o dia em que o canal voltar; o que NÃO pode voltar por engano é a
+ * gravação passar a valer sem `getAtualizacao` voltar junto.
  */
 export function aplicarAtualizacao(nova: AtualizacaoElencos): number {
   if (typeof window === "undefined") return 0
   if (!nova || nova.versao <= getAtualizacao().versao) return 0
 
   storeSet(CHAVE, JSON.stringify(nova))
-  cache = nova
   window.dispatchEvent(
     new CustomEvent("ultrafoot:elencos:atualizados", { detail: { versao: nova.versao } }),
   )

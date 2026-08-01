@@ -145,6 +145,10 @@ export function DownloadControl({
     )
   }
 
+  // ATUALIZAR NAO E ESCOLHA. O launcher ja disparou o download sozinho (ver o
+  // efeito de auto-update em launcher-shell); o botao aqui e so para quem quiser
+  // forcar de novo depois de uma falha de rede. Nao ha "jogar assim mesmo": ficar
+  // numa versao velha quebra o online e e o que esta regra existe para impedir.
   if (status === "update") {
     return (
       <div className="flex flex-col gap-1">
@@ -153,15 +157,11 @@ export function DownloadControl({
           onClick={onDownload}
           className="gap-2 bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
         >
-          {logado ? <RefreshCw className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
-          {logado ? "Atualizar" : "Entrar para atualizar"}
+          <RefreshCw className="h-4 w-4" />
+          Atualizar agora
         </Button>
         <span className="text-xs text-muted-foreground">
-          {logado ? (
-            <>Download da atualização: {formatSize(downloadSizeMb)}</>
-          ) : (
-            <>Baixar exige conta — o jogo instalado continua abrindo normalmente.</>
-          )}
+          Atualização obrigatória ({formatSize(downloadSizeMb)}) — o launcher está baixando sozinha.
         </span>
       </div>
     )

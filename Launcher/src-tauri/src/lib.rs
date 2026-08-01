@@ -254,44 +254,66 @@ fn read_installed_game() -> InstalledGame {
             let version: String = sub.get_value("DisplayVersion").unwrap_or_default();
             let install_loc: String = sub.get_value("InstallLocation").unwrap_or_default();
             let display_icon: String = sub.get_value("DisplayIcon").unwrap_or_default();
+            let uninstall: String = sub.get_value("UninstallString").unwrap_or_default();
             return InstalledGame {
                 installed: true,
                 version: (!version.is_empty()).then_some(version),
-                path: resolve_game_exe(&install_loc, &display_icon),
+                path: resolve_game_exe(&install_loc, &display_icon, &uninstall),
             };
         }
     }
     InstalledGame::default()
 }
 
+/// Caminho do .exe do jogo a partir do que o desinstalador do Windows registrou.
+///
+/// SAO TRES FONTES DE PROPOSITO. Devolver `None` aqui nao mostra erro nenhum na
+/// tela: o botao continua escrito "Jogar", o clique chama `launch_game`, o Rust
+/// responde "nao encontrei o jogo instalado" e a UI engole. O jogador clica e
+/// NADA ACONTECE. Enquanto isso `installed: true` continua valendo (vem do
+/// DisplayVersion), entao nem o estado do botao denuncia o problema. Por isso
+/// vale insistir em todas as pistas do registro antes de desistir.
 #[cfg(windows)]
-fn resolve_game_exe(install_loc: &str, display_icon: &str) -> Option<String> {
+fn resolve_game_exe(install_loc: &str, display_icon: &str, uninstall_string: &str) -> Option<String> {
     use std::path::Path;
 
-    if !install_loc.is_empty() {
-        let direct = Path::new(install_loc).join("Ultrafoot 26.exe");
+    /// `ultrafoot.exe` sim, `uninstall.exe`/`Ultrafoot Launcher.exe` nao.
+    fn e_o_jogo(p: &Path) -> bool {
+        let ext_ok = p.extension().map(|x| x.eq_ignore_ascii_case("exe")).unwrap_or(false);
+        let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
+        ext_ok && stem.contains("ultrafoot") && !stem.contains("launcher") && !stem.contains("uninstall")
+    }
+
+    fn procurar_na_pasta(dir: &Path) -> Option<String> {
+        let direct = dir.join("Ultrafoot 26.exe");
         if direct.exists() {
             return Some(direct.to_string_lossy().into_owned());
         }
-        if let Ok(entries) = std::fs::read_dir(install_loc) {
-            for entry in entries.flatten() {
-                let p = entry.path();
-                let is_exe = p
-                    .extension()
-                    .map(|x| x.eq_ignore_ascii_case("exe"))
-                    .unwrap_or(false);
-                let stem = p
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("")
-                    .to_lowercase();
-                if is_exe && stem.contains("ultrafoot") && !stem.contains("launcher") {
-                    return Some(p.to_string_lossy().into_owned());
-                }
+        for entry in std::fs::read_dir(dir).ok()?.flatten() {
+            let p = entry.path();
+            if e_o_jogo(&p) {
+                return Some(p.to_string_lossy().into_owned());
             }
+        }
+        None
+    }
+
+    // O NSIS grava o InstallLocation COM ASPAS no valor: o registro guarda
+    // literalmente `"C:\...\Ultrafoot 26"`. Sem tirar as aspas, `Path::join` e
+    // `read_dir` recebem um caminho que nao existe e falham os dois — a busca
+    // inteira pelo exe do jogo virava letra morta, e o launcher so continuava
+    // achando o jogo pelo DisplayIcon (que ja trimava). Uma reserva sozinha
+    // segurando o "Jogar" e o tipo de coisa que quebra o dia em que ela some.
+    let install_loc = install_loc.trim().trim_matches('"');
+
+    // 1) A pasta de instalacao.
+    if !install_loc.is_empty() {
+        if let Some(achado) = procurar_na_pasta(Path::new(install_loc)) {
+            return Some(achado);
         }
     }
 
+    // 2) DisplayIcon aponta direto para o .exe (com aspas, e as vezes com ",0").
     if !display_icon.is_empty() {
         let icon = display_icon
             .split(',')
@@ -301,6 +323,26 @@ fn resolve_game_exe(install_loc: &str, display_icon: &str) -> Option<String> {
             .trim_matches('"');
         if Path::new(icon).exists() {
             return Some(icon.to_string());
+        }
+    }
+
+    // 3) A pasta do desinstalador. `UninstallString` sempre existe — sem ele o
+    //    Windows nao conseguiria desinstalar — e o uninstall.exe mora na mesma
+    //    pasta do jogo. E a pista que sobra quando as duas de cima falham.
+    //
+    //    E uma LINHA DE COMANDO, nao um caminho: vem como `"C:\...\uninstall.exe" /S`.
+    //    Sem separar o programa dos argumentos, o `/S` entraria no caminho.
+    let bruto = uninstall_string.trim();
+    let uninstall = if let Some(resto) = bruto.strip_prefix('"') {
+        resto.split('"').next().unwrap_or(resto)
+    } else {
+        bruto.split(" /").next().unwrap_or(bruto).trim()
+    };
+    if !uninstall.is_empty() {
+        if let Some(dir) = Path::new(uninstall).parent() {
+            if let Some(achado) = procurar_na_pasta(dir) {
+                return Some(achado);
+            }
         }
     }
     None
@@ -759,7 +801,21 @@ fn launch_game(app: AppHandle, path: Option<String>) -> Result<(), String> {
     let target = path
         .filter(|p| !p.is_empty())
         .or_else(|| read_installed_game().path)
-        .ok_or_else(|| "não encontrei o jogo instalado".to_string())?;
+        .ok_or_else(|| {
+            // Mensagem ACIONAVEL. "não encontrei o jogo instalado" nao dizia ao
+            // jogador o que fazer, e o registro pode listar o jogo (DisplayVersion
+            // existe, o botao diz "Jogar") sem trazer o caminho do .exe — dai o
+            // clique falhava sem explicacao nenhuma.
+            "o registro do Windows não diz onde o .exe do jogo está. \
+             Reinstale o jogo pelo launcher para recadastrar o caminho."
+                .to_string()
+        })?;
+
+    // Um caminho registrado que nao existe mais (jogo apagado na mao, pasta
+    // movida) daria um erro de sistema cru vindo do spawn.
+    if !std::path::Path::new(&target).exists() {
+        return Err(format!("o arquivo do jogo não está mais em {target}"));
+    }
 
     #[cfg(target_os = "macos")]
     {

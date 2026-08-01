@@ -116,6 +116,8 @@ export function LauncherShell({
   // e travar o Jogar deixaria quem ja pagou sem abrir o que ja esta instalado.
   const [sessao, setSessao] = useState<Sessao | null>(null)
   const [showAuth, setShowAuth] = useState(false)
+  // Motivo de o jogo nao ter aberto, quando o clique em Jogar falha.
+  const [erroAoAbrir, setErroAoAbrir] = useState<string | null>(null)
   // Preferencias visuais. Aplicadas ANTES do primeiro render util para o
   // launcher nao piscar no tema padrao antes de trocar para o escolhido.
   const [prefs, setPrefs] = useState<Preferencias>(PADRAO)
@@ -383,21 +385,25 @@ export function LauncherShell({
     [latest.version],
   )
 
-  // Linux/macOS: baixa e instala automaticamente assim que uma versão desktop
-  // mais nova aparece. O ref impede tentativas repetidas da mesma versão quando
-  // uma falha de rede devolve o estado para "update".
+  // ATUALIZACAO E OBRIGATORIA. Havendo versao nova e rede, o launcher baixa e
+  // instala sozinho — nao ha adiar, nao ha escolher pedaco, e nao ha jogar
+  // desatualizado com o servidor online do outro lado.
+  //
+  // ANTES ISTO EXIGIA CONTA (`if (!logado) return`), no mesmo porteiro do
+  // download inicial. So que o efeito era o oposto do pretendido: quem nao tinha
+  // conta ficava PARADO numa versao velha para sempre, com o botao escrito
+  // "Entrar para atualizar" e nenhum jeito de jogar. Instalar de primeira
+  // continua exigindo conta; MANTER ATUALIZADO quem ja tem o jogo, nao.
   const autoUpdateAttemptRef = useRef<string | null>(null)
   useEffect(() => {
-    // Atualizacao tambem e download: sem conta nao roda sozinha. Quem entrar
-    // depois dispara esta tentativa na hora, porque `logado` esta nas deps.
-    if (!logado) return
     if (status !== "update" || install.downloading || !online || !latestVersion) return
     const url = latest.url ?? game.latestRelease?.downloadUrl
+    // O ref impede repetir a MESMA versao quando uma falha de rede devolve o
+    // estado para "update" — senao isto viraria um laco de download.
     if (!url || autoUpdateAttemptRef.current === latestVersion) return
     autoUpdateAttemptRef.current = latestVersion
     runInstall(url)
   }, [
-    logado,
     status,
     install.downloading,
     online,
@@ -410,16 +416,25 @@ export function LauncherShell({
   const startDownload = useCallback(() => {
     if (install.downloading) return
     if (status === "playable") {
-      void launchGame(install.path) // abre o jogo instalado
+      // O ERRO PRECISA APARECER. Isto aqui era `void launchGame(...)`: quando o
+      // Rust respondia "nao encontrei o jogo instalado" (registro sem o caminho
+      // do .exe), a promessa rejeitava sem ninguem ouvindo e a tela nao mudava
+      // nada. O relato que chegou foi "clico em Jogar Offline e simplesmente
+      // nao acontece nada" — e nao havia como o jogador saber o motivo.
+      setErroAoAbrir(null)
+      launchGame(install.path).catch((e: unknown) => {
+        setErroAoAbrir(typeof e === "string" ? e : (e as Error)?.message || "não consegui abrir o jogo")
+      })
       return
     }
     // A REDE VEM ANTES DA CONTA: sem rede nao ha login nem download, e abrir o
     // formulario de login ali seria pedir uma coisa impossivel. O botao ja diz
     // "sem internet" nesse caso (ver DownloadControl).
     if (!online) return
-    // BAIXAR EXIGE CONTA. Em vez de um botao morto, o clique abre o login: quem
-    // ainda nao tem conta cria ali e volta para o download no mesmo fluxo.
-    if (!logado) {
+    // INSTALAR DE PRIMEIRA exige conta; ATUALIZAR quem ja tem o jogo, nao — ver
+    // o efeito de auto-update acima. Em vez de um botao morto, o clique abre o
+    // login: quem ainda nao tem conta cria ali e volta no mesmo fluxo.
+    if (status === "not-installed" && !logado) {
       setShowAuth(true)
       return
     }
@@ -666,6 +681,7 @@ export function LauncherShell({
                 install={install}
                 mode={mode}
                 logado={logado}
+                erroAoAbrir={erroAoAbrir}
                 onDownload={startDownload}
                 onRepair={startRepair}
               />
