@@ -151,9 +151,21 @@
   ],
   "changelog": [
     {
-      "version": "1.0.242",
+      "version": "1.0.243",
       "date": "2026-08-01",
       "latest": true,
+      "title": "As fotos dos jogadores voltam a aparecer no aplicativo instalado",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "AS FOTOS NAO APARECIAM NO APLICATIVO INSTALADO. As imagens estavam instaladas no computador e o jogo sabia o endereco de cada uma, mas pedia por um caminho que nao existe dentro do aplicativo — as fotos ficam guardadas noutro lugar, alcancavel so por um endereco interno. O pedido falhava em silencio e o atleta caia nas iniciais. Agora, quando o primeiro endereco falha, o jogo tenta o outro automaticamente. Vale para os rostos do pacote, para as fotos que voce licencia no editor e tambem no navegador, onde o problema e o inverso."
+        }
+      ]
+    },
+    {
+      "version": "1.0.242",
+      "date": "2026-08-01",
+      "latest": false,
       "title": "Os juniores vendidos param de voltar — de verdade desta vez",
       "changes": [
         {

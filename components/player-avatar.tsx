@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { getPlayerPhotoUrl } from "@/lib/player-photos"
+import { gameAssetUrlAlternativa } from "@/lib/game-asset"
 import { memo, useEffect, useState } from "react"
 
 export interface PlayerAvatarProps {
@@ -135,13 +136,30 @@ function PlayerAvatarBase({
   playerId,
 }: PlayerAvatarProps & { rounded: "xl" | "full" }) {
   const [imgFailed, setImgFailed] = useState(false)
+  // 0 = URL como veio; 1 = a outra forma (caminho simples <-> game-asset://).
+  const [tentativa, setTentativa] = useState<0 | 1>(0)
 
-  const photoUrl = photoUrlProp ?? getPlayerPhotoUrl(name, playerId)
+  const photoBase = photoUrlProp ?? getPlayerPhotoUrl(name, playerId)
   // Este componente e reutilizado ao navegar entre atletas. Uma falha no
   // retrato anterior nao pode condenar a foto valida do proximo selecionado.
   useEffect(() => {
     setImgFailed(false)
-  }, [photoUrl])
+    setTentativa(0)
+  }, [photoBase])
+
+  // ⚠️ NAO CONFIE NA URL DA PRIMEIRA TENTATIVA.
+  //
+  // O jogo e export estatico: o HTML sai pre-renderizado do build, onde `window`
+  // nao existe e `isTauri()` e falso — entao o `src` gravado no HTML e o caminho
+  // simples `/jogadores/x.png`. Dentro do aplicativo isso NAO resolve, porque
+  // `out/jogadores` e podado do frontend embutido e as fotos so existem como
+  // *resources*, alcancaveis por `game-asset://`. E o React 18 nao corrige
+  // atributo divergente na hidratacao, entao o src errado permanecia e virava
+  // 404 silencioso: o atleta caia nas iniciais mesmo com o arquivo instalado.
+  //
+  // Em vez de acertar o ambiente de primeira, tenta a outra forma quando falha.
+  const alternativa = photoBase ? gameAssetUrlAlternativa(photoBase) : null
+  const photoUrl = tentativa === 0 ? photoBase : alternativa
 
   const hue = hashHue(name)
   const background = teamColor
@@ -167,7 +185,11 @@ function PlayerAvatarBase({
           src={photoUrl}
           alt={name}
           className="absolute inset-0 h-full w-full object-contain object-center"
-          onError={() => setImgFailed(true)}
+          onError={() => {
+            // Primeira falha: tenta a outra forma da URL antes de desistir.
+            if (tentativa === 0 && alternativa) setTentativa(1)
+            else setImgFailed(true)
+          }}
         />
       ) : position !== undefined ? (
         // Silhouette when position is known (even if empty string)

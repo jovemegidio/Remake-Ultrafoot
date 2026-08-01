@@ -35,3 +35,34 @@ export function gameAssetUrl(raw: string): string {
   const path = raw.startsWith("/") ? raw : `/${raw}`
   return `${TAURI_ASSET_PREFIX}${path}`
 }
+
+/**
+ * A OUTRA forma da mesma URL: caminho simples <-> protocolo do Tauri.
+ *
+ * ⚠️ POR QUE ISTO EXISTE (relato: "as fotos nao aparecem no app instalado, em
+ * outro computador").
+ *
+ * O jogo e EXPORT ESTATICO: o HTML e pre-renderizado no build, onde `window` nao
+ * existe. Naquele instante `isTauri()` e falso e a URL sai como `/jogadores/x.png`,
+ * gravada no HTML. Dentro do aplicativo esse caminho NAO resolve — o
+ * `prune-export-music.mjs` remove `out/jogadores` do frontend embutido (as fotos
+ * viajam como *resources*, alcancaveis so por `game-asset://`). O React 18 nao
+ * corrige atributos divergentes na hidratacao, entao o `src` errado podia
+ * permanecer e a imagem virava 404 silencioso -> iniciais.
+ *
+ * O inverso tambem acontece: uma URL de protocolo gravada num contexto onde o
+ * Tauri nao esta presente (versao web, navegador) nao carrega.
+ *
+ * Em vez de depender de acertar o ambiente na primeira tentativa, o
+ * `PlayerAvatar` tenta a outra forma quando a primeira falha. Devolve `null`
+ * quando nao ha alternativa (http, data, blob).
+ */
+export function gameAssetUrlAlternativa(url: string): string | null {
+  if (!url) return null
+  if (url.startsWith(TAURI_ASSET_PREFIX)) {
+    const caminho = url.slice(TAURI_ASSET_PREFIX.length)
+    return caminho.startsWith("/") ? caminho : `/${caminho}`
+  }
+  if (url.startsWith("/")) return `${TAURI_ASSET_PREFIX}${url}`
+  return null
+}
