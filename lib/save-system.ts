@@ -889,8 +889,15 @@ export function loadGameState(): GameState {
  * Regra prática: **decisão seguida de navegação grava por aqui**, não pelo
  * `setState`. Quem fica na tela pode continuar usando o `setState` normal.
  */
-export function commitGameState(patch: Partial<GameState>): GameState {
-  const merged = { ...loadGameState(), ...patch }
+export function commitGameState(
+  patch: Partial<GameState> | ((prev: GameState) => Partial<GameState>),
+): GameState {
+  // Aceita atualizador FUNCIONAL pelo mesmo motivo que o `setState`: ações em
+  // sequência (vender três jovens seguidos) precisam ler o estado mais novo, ou
+  // só a última vale e as outras "ressuscitam".
+  const atual = loadGameState()
+  const delta = typeof patch === "function" ? patch(atual) : patch
+  const merged = { ...atual, ...delta }
   saveGameState(merged)
   return merged
 }

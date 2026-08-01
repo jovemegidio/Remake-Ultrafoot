@@ -7,7 +7,7 @@ import { GameSidebar } from "@/components/game-sidebar"
 import { GameHeader } from "@/components/game-header"
 import { SystemMediaPlayer } from "@/components/system-media-player"
 import { Button } from "@/components/ui/button"
-import { useUserTeam, useGameState, type SquadPlayer } from "@/lib/save-system"
+import { useUserTeam, useGameState, commitGameState, type GameState, type SquadPlayer } from "@/lib/save-system"
 import { flushPersistentStore } from "@/lib/persistent-store"
 import { formatCurrency } from "@/lib/teams-data"
 import { generateYouthMarketProspects, generateYouthProspects } from "@/lib/youth-academy"
@@ -40,6 +40,39 @@ const PROMOTION_FEE = 200_000
  */
 function gravarAgora(): void {
   void flushPersistentStore()
+}
+
+/**
+ * Aplica uma mudança na base GRAVANDO ANTES e só então avisando o React.
+ *
+ * ⚠️ POR QUE `setState` + `gravarAgora()` NÃO BASTAVA (relato reincidente:
+ * "vendi 10 juniores, saí da tela, voltei e os 10 estavam lá; e o dinheiro não
+ * entrou").
+ *
+ * `setState` só escreve no save DENTRO do atualizador que entrega ao React, e
+ * esse atualizador roda depois que o manipulador do clique termina. O
+ * `gravarAgora()` chamado logo abaixo descarregava uma fila que ainda estava
+ * VAZIA. Navegar no jogo é reload completo: a gravação de verdade era perdida e
+ * o save voltava com os garotos.
+ *
+ * O dinheiro não voltava junto porque o caixa vive no MOTOR, que persiste por
+ * outro caminho — e aí os dois sintomas se encadeavam: o jovem ressuscitava com
+ * o MESMO id (a geração é determinística), e vender de novo não pagava nada,
+ * porque `receberPorJovem` já tinha registrado o recibo `jovem:<id>`.
+ *
+ * `commitGameState` escreve direto no save, fora do ciclo do React. O `setState`
+ * continua para a tela reagir na hora.
+ */
+function aplicarNaBase(
+  setState: (p: Partial<GameState>) => void,
+  patch: (prev: GameState) => Partial<GameState>,
+): void {
+  // Repassa ao React EXATAMENTE o que mudou. Uma lista fixa de campos deixaria
+  // de fora `squadPlayers` e `transfers`, que a promoção também mexe.
+  let delta: Partial<GameState> = {}
+  commitGameState((prev) => { delta = patch(prev); return delta })
+  setState(delta)
+  gravarAgora()
 }
 
 /**
@@ -227,19 +260,19 @@ export default function BasePage() {
     if (!isTransferWindowOpen(semanaAtual)) return
     const aVender = youth.filter(p => p.vendaPendente)
     if (aVender.length === 0) return
-    // Um recibo POR JOVEM, e nao um credito unico: se a lista mudar entre duas
-    // execucoes, cada venda continua sendo paga exatamente uma vez.
-    for (const p of aVender) receberPorJovem(p.vendaPendente!.valor, `jovem:${p.id}`)
-    // Funcional: ler a lista mais nova evita que uma leitura velha ressuscite
-    // jovens ja vendidos.
-    setState(s => {
+    // Grava a SAIDA primeiro (ver aplicarNaBase): o `setState` sozinho so
+    // persistia depois que o React processasse a fila, e uma navegacao no meio
+    // devolvia os jovens ja vendidos.
+    aplicarNaBase(setState, s => {
       const saindo = (s.youthPlayers ?? []).filter(p => p.vendaPendente)
       return {
         youthPlayers: (s.youthPlayers ?? []).filter(p => !p.vendaPendente),
         youthDeparted: registrarSaida(s.youthDeparted, saindo.map(p => p.id)),
       }
     })
-    gravarAgora()
+    // Um recibo POR JOVEM, e nao um credito unico: se a lista mudar entre duas
+    // execucoes, cada venda continua sendo paga exatamente uma vez.
+    for (const p of aVender) receberPorJovem(p.vendaPendente!.valor, `jovem:${p.id}`)
     for (const p of aVender) {
       addNotification({ type: "transfer", priority: "medium", title: `${p.name} vendido`,
         message: `${p.vendaPendente!.clube} concretizou a compra de ${p.name} por ${formatCurrency(p.vendaPendente!.valor)} na abertura da janela.` })
@@ -296,15 +329,18 @@ export default function BasePage() {
       fromTeam: "Categoria de Base",
       seasonSigned: state.season,
     }
-    setState({
+    // Promover tambem grava ANTES (ver aplicarNaBase): este caminho nem chamava
+    // gravarAgora, entao promover e trocar de tela em seguida podia devolver o
+    // garoto a base — e ele ja estava no elenco profissional, existindo duas vezes.
+    aplicarNaBase(setState, s => ({
       // Mantido no save tambem: e daqui que sai a cobranca da diretoria por uso
       // da base e o historico de promovidos.
-      squadPlayers: [...(state.squadPlayers ?? []), promoted],
-      youthPlayers: youth.filter(p => p.id !== player.id),
+      squadPlayers: [...(s.squadPlayers ?? []), promoted],
+      youthPlayers: (s.youthPlayers ?? []).filter(p => p.id !== player.id),
       // Promovido tambem NAO volta: senao ele existiria duas vezes, no elenco
       // profissional e na base, na proxima semeadura.
-      youthDeparted: registrarSaida(state.youthDeparted, [player.id]),
-      transfers: [...(state.transfers ?? []), {
+      youthDeparted: registrarSaida(s.youthDeparted, [player.id]),
+      transfers: [...(s.transfers ?? []), {
         id: `youth_promo_${Date.now()}`,
         playerName: player.name,
         fromTeam: "Categoria de Base",
@@ -314,7 +350,7 @@ export default function BasePage() {
         week: state.currentRound ?? 0,
         season: state.season,
       }],
-    })
+    }))
   }
 
   const releaseYouth = async (player: SquadPlayer) => {
@@ -329,15 +365,12 @@ export default function BasePage() {
     // apertando dispensar ate sair um bom (relato do jogador) — cada clique era
     // um novo sorteio. Agora a vaga apenas abre; para preencher, use a peneira
     // (paga) ou espere a proxima temporada semear a base.
-    setState(s => ({
+    // Mesma corrida da venda: `setState` + `gravarAgora()` descarregava fila
+    // vazia e o garoto voltava ao recarregar. Ver aplicarNaBase.
+    aplicarNaBase(setState, s => ({
       youthPlayers: (s.youthPlayers ?? []).filter(p => p.id !== player.id),
       youthDeparted: registrarSaida(s.youthDeparted, [player.id]),
     }))
-    // GRAVA AGORA. Vender ja fazia isto; dispensar nao, e por isso caia na mesma
-    // corrida descrita no topo deste arquivo: navegar e um RELOAD COMPLETO, e
-    // quem dispensava e trocava de tela antes da fila de escrita esvaziar
-    // recarregava o save com o garoto de volta.
-    gravarAgora()
   }
 
   // Carimbo absoluto (semanas desde o marco) da semana atual e da última peneira.
@@ -447,13 +480,16 @@ export default function BasePage() {
     if (!confirmado) return
 
     if (janelaAberta) {
-      receberPorJovem(p.valor, `jovem:${player.id}`)
-      // Funcional: le a base MAIS NOVA (vender varios seguidos nao "ressuscita" os anteriores).
-      setState(s => ({
+      // ORDEM IMPORTA: grava a SAÍDA primeiro, paga depois. Se o pagamento
+      // entrasse antes e a gravação se perdesse, o técnico ficaria com o
+      // dinheiro E com o garoto — que é o dinheiro infinito que esta tela já
+      // teve. Ao contrário, o pior caso é uma venda sem pagamento, visível e
+      // corrigível, em vez de um exploit silencioso.
+      aplicarNaBase(setState, s => ({
         youthPlayers: (s.youthPlayers ?? []).filter(x => x.id !== player.id),
         youthDeparted: registrarSaida(s.youthDeparted, [player.id]),
       }))
-      gravarAgora()
+      receberPorJovem(p.valor, `jovem:${player.id}`)
       addNotification({ type: "transfer", priority: "medium", title: `${player.name} vendido`,
         message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
     } else {
@@ -506,7 +542,7 @@ export default function BasePage() {
       fromTeam: player.fromTeam,
       seasonSigned: state.season,
     }
-    setState(current => ({
+    aplicarNaBase(setState, current => ({
       youthPlayers: [...(current.youthPlayers ?? []), contratado],
       youthMarketPurchasedIds: [...(current.youthMarketPurchasedIds ?? []), player.id],
       transfers: [...(current.transfers ?? []), {
@@ -520,9 +556,6 @@ export default function BasePage() {
         season: state.season,
       }],
     }))
-    // Compra tambem sai do caixa: aqui a corrida e ao contrario — o dinheiro ja
-    // saiu no motor e o junior poderia nao persistir, prejudicando o jogador.
-    gravarAgora()
     addNotification({
       type: "transfer",
       priority: "medium",

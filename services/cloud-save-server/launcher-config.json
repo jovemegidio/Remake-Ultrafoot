@@ -144,9 +144,29 @@
   ],
   "changelog": [
     {
-      "version": "1.0.238",
+      "version": "1.0.239",
       "date": "2026-07-31",
       "latest": true,
+      "title": "Vender na base agora vale: o dinheiro entra e os juniores nao voltam",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "OS JUNIORES VENDIDOS VOLTAVAM. Se voce vendia dez garotos, saia da tela e voltava, os mesmos dez estavam la. A saida da base era anotada, mas a anotacao so ia para o disco depois que a tela terminava de responder ao clique — e trocar de tela no jogo recarrega tudo do zero, entao a gravacao se perdia no caminho. Agora a saida e gravada na hora, antes de qualquer outra coisa."
+        },
+        {
+          "type": "fixed",
+          "text": "O DINHEIRO DA VENDA NAO ENTRAVA NO CAIXA. Era consequencia do problema acima: como o garoto voltava com a mesma identidade, o jogo entendia que aquela venda ja havia sido paga e recusava pagar de novo. Da segunda venda em diante, nada entrava. Com os juniores parando de voltar, o pagamento volta a acontecer todas as vezes."
+        },
+        {
+          "type": "fixed",
+          "text": "PROMOVER PODIA DUPLICAR O ATLETA. A promocao nao gravava imediatamente: promover e trocar de tela em seguida podia devolver o garoto a base enquanto ele ja estava no elenco profissional — o mesmo jogador em dois lugares. Vale tambem para dispensar e para a compra no mercado de juniores, que passaram pelo mesmo conserto."
+        }
+      ]
+    },
+    {
+      "version": "1.0.238",
+      "date": "2026-07-31",
+      "latest": false,
       "title": "Todo elenco passa a ter laterais, volantes e pontas de verdade",
       "changes": [
         {
