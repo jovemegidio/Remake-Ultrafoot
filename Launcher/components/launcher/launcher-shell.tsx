@@ -47,6 +47,15 @@ export type LaunchMode = "online" | "offline"
 
 export type InstallState = {
   version: string | null
+  /**
+   * O jogo EXISTE no disco, mesmo que a versão não tenha sido lida.
+   *
+   * Separado de `version` de propósito: o registro pode ter a entrada do jogo
+   * com `DisplayVersion` vazio. Antes o status olhava só para `version`, então
+   * esse caso virava "não instalado" e o launcher rebaixava o jogo inteiro a
+   * cada abertura — 630 MB por vez, para sempre.
+   */
+  installed: boolean
   path: string | null
   downloading: boolean
   phase: ProgressPhase
@@ -94,6 +103,7 @@ export function LauncherShell({
 
   const [install, setInstall] = useState<InstallState>({
     version: null,
+    installed: false,
     path: null,
     downloading: false,
     phase: "downloading",
@@ -345,7 +355,12 @@ export function LauncherShell({
     void (async () => {
       const installed = await getInstalledGame()
       if (!alive) return
-      setInstall((prev) => ({ ...prev, version: installed.version, path: installed.path }))
+      setInstall((prev) => ({
+        ...prev,
+        version: installed.version,
+        installed: installed.installed,
+        path: installed.path,
+      }))
       if (!online) return
       const remote = await fetchLatest()
       if (alive && remote) setLatest({ version: remote.version, url: remote.url })
@@ -370,11 +385,17 @@ export function LauncherShell({
 
   // No offline nao existe "atualizar": nao da para baixar nada, e oferecer o
   // botao so levaria a um erro de rede. O jogo instalado fica jogavel.
+  //
+  // "Instalado" e `install.installed` (o jogo existe no disco), NAO
+  // `version !== null`. Com a entrada do registro sem DisplayVersion, a regra
+  // antiga dizia "nao instalado" e reinstalava 630 MB toda vez que o launcher
+  // abria. Sem versao legivel o jogo fica JOGAVEL: nao da para afirmar que
+  // esta velho, e insistir em atualizar era exatamente o loop relatado.
   const status: GameStatus = install.downloading
     ? "downloading"
-    : install.version === null
+    : !install.installed
       ? "not-installed"
-      : online && latestVersion && isNewerVersion(latestVersion, install.version)
+      : online && latestVersion && install.version && isNewerVersion(latestVersion, install.version)
         ? "update"
         : "playable"
 
@@ -391,10 +412,19 @@ export function LauncherShell({
           eta: p.eta,
         }))
       })
-        .then(() => {
+        .then(async () => {
+          // RECONFERE NO REGISTRO em vez de assumir que instalou a versao
+          // pedida. Antes isto gravava `version: latest.version` direto no
+          // estado: a tela dizia "atualizado", mas a abertura seguinte relia o
+          // registro e via a versao velha de novo — o loop que o betatester
+          // descreveu ("atualiza, sai, entro e atualiza dnv"). Se o instalador
+          // nao mexeu no registro, e melhor a UI mostrar isso na hora.
+          const real = await getInstalledGame()
           setInstall((prev) => ({
             ...prev,
-            version: latest.version ?? prev.version,
+            version: real.version ?? prev.version,
+            installed: real.installed || prev.installed,
+            path: real.path ?? prev.path,
             downloading: false,
             phase: "done",
             progress: 100,
