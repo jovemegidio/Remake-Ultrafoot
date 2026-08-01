@@ -9,6 +9,13 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "O atalho do jogo abre o jogo",
+      "category": "Correção",
+      "body": "Clicar no atalho da area de trabalho fazia o jogo piscar e sumir, sem janela e sem erro: ao ser aberto direto ele chamava o launcher e se encerrava. Agora o atalho do jogo abre o JOGO e o do launcher abre o LAUNCHER. E quando o Jogar do launcher falha, a tela passa a dizer o motivo em vez de nao fazer nada.",
+      "date": "2026-08-01",
+      "pinned": true
+    },
+    {
       "title": "A camisa que voce escolhe pinta o campinho",
       "category": "Novidade",
       "body": "A cor dos jogadores no radar da partida agora sai da ARTE do uniforme marcado no pre-jogo, e nao das duas cores cadastradas do clube. E o Mundial ganhou os escudos das selecoes no placar de cada jogo.",
@@ -20,7 +27,7 @@
       "category": "Correção",
       "body": "Os jogos de copa entravam no calendario com o dia tirado do numero do confronto, nao da semana: a final da Copa do Brasil aparecia no comeco do mes, antes de rodadas anteriores a ela — e quem tinha acabado de ganhar a semifinal nao via mais jogo nenhum pela frente. Quando dois jogos caiam no mesmo dia, um deles simplesmente nao era desenhado. Agora cada mes fica em ordem, com um dia por jogo.",
       "date": "2026-07-30",
-      "pinned": true
+      "pinned": false
     },
     {
       "title": "Agora da para sentar com a diretoria",
@@ -144,9 +151,37 @@
   ],
   "changelog": [
     {
+      "version": "1.0.240",
+      "date": "2026-08-01",
+      "latest": true,
+      "title": "O atalho abre o jogo, e atualizar deixou de ser por partes",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "O ATALHO DA AREA DE TRABALHO NAO ABRIA O JOGO. Aberto direto — atalho, menu iniciar, duplo-clique no .exe —, o jogo abria o Ultrafoot Launcher e se encerrava na mesma hora. Para quem clicava, ele PISCAVA E SUMIA: nenhuma janela, nenhum erro, indistinguivel de um travamento. E o atalho que o instalador cria aponta justamente para o caminho quebrado. Agora o atalho do jogo abre o jogo e o do launcher abre o launcher."
+        },
+        {
+          "type": "fixed",
+          "text": "JOGAR NO LAUNCHER PODIA NAO FAZER NADA. Quando o registro do Windows listava o jogo mas nao entregava o caminho do .exe, o clique falhava calado — o botao continuava escrito \"Jogar\" e nada acontecia. O launcher agora procura o executavel tambem pela pasta do desinstalador (e passou a lidar com as aspas que o instalador grava no registro), e quando ainda assim nao acha, a tela diz o motivo em vez de ficar muda."
+        },
+        {
+          "type": "changed",
+          "text": "ATUALIZAR NAO EXIGE MAIS CONTA. Instalar de primeira continua exigindo, mas manter o jogo em dia nao: quem nao tinha conta ficava preso numa versao velha para sempre, com o botao escrito \"Entrar para atualizar\" e sem jeito de sair dali. Havendo versao nova, o launcher baixa e instala sozinho."
+        },
+        {
+          "type": "changed",
+          "text": "FIM DA ATUALIZACAO POR PARTES. O jogo baixava pacotes de elenco e de times por fora e os aplicava por cima do build. Isso saiu inteiro: elenco, transferencia, escudo e liga agora vem dentro da versao, e quem entrega a versao e o Ultrafoot Launcher. Um pacote antigo que ja estivesse gravado tambem deixa de valer — ele sobrescreveria o elenco novo com dados mais velhos, sem ninguem para corrigi-lo."
+        },
+        {
+          "type": "changed",
+          "text": "EM CONFIGURACOES sairam \"Conectar a servidores\" e \"Atualizar automaticamente\". Os dois governavam a atualizacao por partes; sem ela, comandariam nada. Estar na ultima versao deixou de ser preferencia — e o que faz o online falar a mesma lingua entre todo mundo."
+        }
+      ]
+    },
+    {
       "version": "1.0.239",
       "date": "2026-07-31",
-      "latest": true,
+      "latest": false,
       "title": "Vender na base agora vale: o dinheiro entra e os juniores nao voltam",
       "changes": [
         {
