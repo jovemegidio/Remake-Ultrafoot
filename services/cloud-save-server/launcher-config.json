@@ -151,9 +151,33 @@
   ],
   "changelog": [
     {
-      "version": "1.0.240",
+      "version": "1.0.242",
       "date": "2026-08-01",
       "latest": true,
+      "title": "Os juniores vendidos param de voltar — de verdade desta vez",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "OS JUNIORES VENDIDOS VOLTAVAM AO ABRIR A CATEGORIA DE BASE. Nao era a venda que deixava de gravar: era a PROPRIA TELA que, ao ser aberta, reescrevia a base inteira antes de o save chegar do disco — e com o clube errado, porque nesse instante o jogo ainda usa um clube provisorio. Como a geracao dos garotos e sempre a mesma para o mesmo clube e ano, cada visita trazia de volta exatamente os mesmos seis. Corrigido: a tela so escreve depois de ler o save de verdade, e sempre por cima do que esta gravado."
+        },
+        {
+          "type": "fixed",
+          "text": "A SEGUNDA VENDA NAO PAGAVA. Consequencia do mesmo problema: o garoto ressuscitava com o mesmo cadastro, e o clube ja tinha registrado o pagamento por aquele cadastro — entao a nova venda saia sem dinheiro nenhum. Com o retorno dos garotos resolvido, cada venda volta a pagar."
+        },
+        {
+          "type": "fixed",
+          "text": "GAROTOS DE OUTRO CLUBE NA SUA BASE. Quem nao dirige o Botafogo podia encontrar na propria base seis garotos gerados para ele. Alem de nao acontecer mais, o jogo agora LIMPA sozinho os que ficaram no seu save e revela a leva correta do seu clube."
+        },
+        {
+          "type": "fixed",
+          "text": "VENDA ACERTADA FORA DA JANELA SE PERDIA. Com a janela de transferencias fechada — o que vale em 30 das 52 semanas do ano — a venda ficava acertada para quando ela abrisse, mas o acerto sumia ao trocar de tela e o garoto voltava inteiro, sem venda e sem dinheiro. Agora fica gravado na hora. O mesmo valia para peneira, emprestimo e as evolucoes da base."
+        }
+      ]
+    },
+    {
+      "version": "1.0.240",
+      "date": "2026-08-01",
+      "latest": false,
       "title": "O atalho abre o jogo, e atualizar deixou de ser por partes",
       "changes": [
         {

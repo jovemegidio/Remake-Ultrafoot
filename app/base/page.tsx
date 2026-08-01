@@ -14,7 +14,7 @@ import { generateYouthMarketProspects, generateYouthProspects } from "@/lib/yout
 import { advanceYouthMonth, loanYouth, runTryout } from "@/lib/youth-engine"
 import {
   capacidadeDaBase, vagasNaBase, evoluirSemana, propostaPorJovem,
-  valorDeMercadoJovem, cobrancaDaDiretoria, type JovemBase,
+  valorDeMercadoJovem, cobrancaDaDiretoria, type JovemBase, type EvolucaoSemanal,
 } from "@/lib/youth-academy-rules"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -95,13 +95,32 @@ function registrarSaida(anteriores: string[] | undefined, ids: string[]): string
   return novos.length > 0 ? [...antes, ...novos] : antes
 }
 
+/**
+ * O id gerado pela academia e `youth_<CURTO>_<TEMPORADA>_<i>` — o clube esta
+ * DENTRO do id. Isto reconhece um garoto que foi gerado para OUTRO clube.
+ *
+ * Serve para limpar o estrago que a semeadura pre-hidratada deixou nos saves: ela
+ * rodava com o time FALLBACK (Botafogo) e enfiava `youth_BOT_2026_x` na base de
+ * quem dirige qualquer outro clube.
+ *
+ * Nao confunde com quem entrou por outra porta: comprado no mercado de juniores e
+ * `youth_market_...` / `youth_bought_...`, e legado e `legacy_...` — nenhum casa
+ * com o formato abaixo, que exige o curto em MAIUSCULAS.
+ */
+function ehDeOutroClube(id: string, curto: string): boolean {
+  const m = /^youth_([A-Z]{2,4})_\d{4}_\d+$/.exec(id)
+  return m != null && m[1] !== curto
+}
+
 export default function BasePage() {
   useRequireClub()
   // Controle: convencao unica (B volta). Ver hooks/use-tela-gamepad.ts.
   useTelaGamepad({ aoVoltar: () => hardNavigate("/") })
 
   const { team } = useUserTeam()
-  const { state, setState } = useGameState()
+  // `hydrated` NAO e detalhe: ver o bloco EFEITO QUE ESCREVE SO DEPOIS DE HIDRATAR,
+  // logo acima da semeadura. Sem ele a tela reescrevia a base no primeiro render.
+  const { state, setState, hydrated } = useGameState()
   const { addNotification } = useNotifications()
   const youth = state.youthPlayers ?? []
   const balance = state.balance && state.balance > 0 ? state.balance : team.saldo
@@ -151,6 +170,27 @@ export default function BasePage() {
     })
   }, [youthMarketPool, fPos, fIdadeMax, fOverallMin, fPotencialMin, fPrecoMax, fBusca])
 
+  // REPARO DOS SAVES JA CONTAMINADOS.
+  //
+  // Enquanto a semeadura rodava pre-hidratada, ela gravava na base os prospectos do
+  // clube FALLBACK (Botafogo). Corrigir o efeito impede novos estragos, mas nao
+  // desfaz o que ja esta no save: sem isto o tecnico ficaria para sempre com seis
+  // garotos que nunca foram do clube dele — e continuaria vendo "os mesmos de
+  // sempre". Aqui eles saem e a semeadura correta e liberada (youthSeededSeason
+  // volta a ficar vago), gerando a leva de verdade do clube.
+  //
+  // Idempotente: sem intrusos, nao escreve nada. Quem dirige o Botafogo nunca cai
+  // aqui, porque os ids batem com o clube.
+  useEffect(() => {
+    if (!hydrated || !state.selectedTeamShort || !team?.curto) return
+    if (!(state.youthPlayers ?? []).some(p => ehDeOutroClube(p.id, team.curto))) return
+    aplicarNaBase(setState, s => ({
+      youthPlayers: (s.youthPlayers ?? []).filter(p => !ehDeOutroClube(p.id, team.curto)),
+      youthSeededSeason: undefined,
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, team?.curto, state.selectedTeamShort, state.youthPlayers])
+
   // SEMEIA a base quando vazia.
   //
   // BUG que isto corrige ("os juniores nao funcionam"): a pagina le state.youthPlayers,
@@ -158,19 +198,51 @@ export default function BasePage() {
   // profissional. A base ficava SEMPRE VAZIA. Aqui geramos os prospectos de forma
   // deterministica (clube + temporada) na primeira visita de cada temporada; promover e
   // dispensar seguem persistindo por cima.
+  //
+  // ⚠️⚠️ EFEITO QUE ESCREVE SO DEPOIS DE HIDRATAR — foi ESTE efeito que devolvia os
+  // juniores vendidos, e nao a gravacao da venda (que a 1.0.239 ja consertou).
+  //
+  // `useGameState` comeca em DEFAULT_STATE e so le o save DENTRO do proprio efeito.
+  // Todos os efeitos deste componente rodam no MESMO commit, com o fechamento do
+  // primeiro render — ou seja, com o save AINDA VAZIO. No primeiro render:
+  //
+  //   • `state.youthDeparted` e []  ⇒ o filtro de quem ja saiu nao filtra NADA;
+  //   • `state.youthPlayers` e []   ⇒ `atuais` some, e a base inteira e substituida;
+  //   • `useUserTeam` tambem esta pre-hidratado ⇒ `team` e o FALLBACK (Botafogo);
+  //   • `youthSeededSeason` (undefined) !== `season` (2026) ⇒ semeia.
+  //
+  // E `hardNavigate` HOJE NAO RECARREGA A PAGINA (despacha `ultrafoot:navigate` para o
+  // router do Next — ver lib/hard-navigation.ts), entao o cache do store ja esta quente
+  // e essa gravacao cai por cima do save REAL. Como a geracao e deterministica, voltar
+  // a tela regenerava SEMPRE os mesmos seis garotos, com os mesmos ids: os vendidos
+  // "voltavam", e a venda seguinte nao pagava nada porque `receberPorJovem` ja tinha o
+  // recibo `jovem:<id>` daquele mesmo id.
+  //
+  // Duas travas, porque uma so nao basta:
+  //   1. `hydrated` — nao escreve antes de o save chegar do disco;
+  //   2. patch FUNCIONAL — o que for gravado e calculado sobre o save mais novo, nunca
+  //      sobre o fechamento do render. Se algum dia o efeito voltar a rodar cedo, ele
+  //      le `youthDeparted` de verdade e nao ressuscita ninguem.
+  //
+  // `team?.curto` nao serve de guarda: useUserTeam NUNCA devolve nulo (cai no fallback
+  // Botafogo). Quem diz que ha clube de verdade e `selectedTeamShort`.
   useEffect(() => {
-    if (!team?.curto) return
+    if (!hydrated) return
+    if (!state.selectedTeamShort || !team?.curto) return
     // Semeia na primeira visita da temporada. Usar `youthSeededSeason !== season` (e nao
     // "youthPlayers === undefined") cobre os dois casos: a primeira vez de todas, E o
     // inicio de uma temporada nova — quando youthPlayers pode ter ficado [] da anterior.
-    if (state.youthSeededSeason !== state.season) {
-      const atuais = state.youthPlayers ?? []
+    if (state.youthSeededSeason === state.season) return
+    aplicarNaBase(setState, s => {
+      // Relido do save: se outra tela ja semeou, nao ha nada a fazer.
+      if (s.youthSeededSeason === s.season) return {}
+      const atuais = s.youthPlayers ?? []
       // Preserva comprados, legados e atletas em desenvolvimento. A nova geração
       // só completa o núcleo mínimo da academia; nunca apaga a turma anterior.
       const quantidadeNova = Math.max(0, Math.min(6, capacidade - atuais.length))
       const novaGeracao = generateYouthProspects(
         team.curto,
-        state.season,
+        s.season,
         team.prestigio ?? 60,
         quantidadeNova,
       )
@@ -182,16 +254,16 @@ export default function BasePage() {
       //
       // Tambem filtra quem ja esta na base para o caso de a semeadura rodar
       // duas vezes (recarregar a tela no meio de uma gravacao pendente).
-      const jaSairam = new Set(state.youthDeparted ?? [])
+      const jaSairam = new Set(s.youthDeparted ?? [])
       const jaEstao = new Set(atuais.map(p => p.id))
       const admitidos = novaGeracao.filter(p => !jaSairam.has(p.id) && !jaEstao.has(p.id))
-      setState({
+      return {
         youthPlayers: [...atuais, ...admitidos],
-        youthSeededSeason: state.season,
-      })
-    }
+        youthSeededSeason: s.season,
+      }
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [team?.curto, state.season])
+  }, [hydrated, team?.curto, state.selectedTeamShort, state.season, state.youthSeededSeason])
 
   // ENVELHECIMENTO + PROMOÇÃO AUTOMÁTICA AOS 18 (pedido do usuário).
   //
@@ -200,30 +272,39 @@ export default function BasePage() {
   // `youthAgedSeason` garante que a idade só avança uma vez por temporada, mesmo
   // reabrindo a tela. Roda depois da semeadura, então a turma nova (14-17) do ano
   // não é promovida no mesmo tick.
+  //
+  // Mesma trava da semeadura: so depois de `hydrated`, e calculando sobre o save
+  // relido. Este efeito move gente da base para o ELENCO — rodar com o fechamento
+  // vazio do primeiro render zeraria os dois lados de uma vez.
   useEffect(() => {
+    if (!hydrated) return
     if (state.youthSeededSeason !== state.season) return // espera semear
     if (state.youthAgedSeason === state.season || youth.length === 0) return
-    // Quem acabou de chegar nesta temporada (nova geração ou compra) não
-    // envelhece no mesmo instante da matrícula.
-    const envelhecida = youth.map(p =>
-      p.seasonSigned === state.season ? p : { ...p, age: (p.age ?? 16) + 1 },
-    )
-    const sobem = envelhecida.filter(p => (p.age ?? 0) >= 18)
-    const ficam = envelhecida.filter(p => (p.age ?? 0) < 18)
-    const promovidos = sobem.map((p, i) => ({
-      ...p,
-      id: `pro_auto_${state.season}_${i}_${p.id}`,
-      fromTeam: "Categoria de Base",
-      seasonSigned: state.season,
-    }))
-    setState({
-      youthPlayers: ficam,
-      squadPlayers: promovidos.length ? [...(state.squadPlayers ?? []), ...promovidos] : state.squadPlayers,
-      youthAgedSeason: state.season,
-      // Quem subiu aos 18 tambem sai da base para sempre. Sem isto a semeadura
-      // da temporada seguinte devolveria o mesmo garoto, que passaria a existir
-      // no profissional E na base ao mesmo tempo.
-      youthDeparted: registrarSaida(state.youthDeparted, sobem.map(p => p.id)),
+    let promovidos: SquadPlayer[] = []
+    aplicarNaBase(setState, s => {
+      if (s.youthAgedSeason === s.season) return {}
+      // Quem acabou de chegar nesta temporada (nova geração ou compra) não
+      // envelhece no mesmo instante da matrícula.
+      const envelhecida = (s.youthPlayers ?? []).map(p =>
+        p.seasonSigned === s.season ? p : { ...p, age: (p.age ?? 16) + 1 },
+      )
+      const sobem = envelhecida.filter(p => (p.age ?? 0) >= 18)
+      const ficam = envelhecida.filter(p => (p.age ?? 0) < 18)
+      promovidos = sobem.map((p, i) => ({
+        ...p,
+        id: `pro_auto_${s.season}_${i}_${p.id}`,
+        fromTeam: "Categoria de Base",
+        seasonSigned: s.season,
+      }))
+      return {
+        youthPlayers: ficam,
+        squadPlayers: promovidos.length ? [...(s.squadPlayers ?? []), ...promovidos] : s.squadPlayers,
+        youthAgedSeason: s.season,
+        // Quem subiu aos 18 tambem sai da base para sempre. Sem isto a semeadura
+        // da temporada seguinte devolveria o mesmo garoto, que passaria a existir
+        // no profissional E na base ao mesmo tempo.
+        youthDeparted: registrarSaida(s.youthDeparted, sobem.map(p => p.id)),
+      }
     })
     if (promovidos.length) {
       addNotification({
@@ -233,11 +314,14 @@ export default function BasePage() {
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.season, state.youthSeededSeason, state.youthAgedSeason, youth.length])
+  }, [hydrated, state.season, state.youthSeededSeason, state.youthAgedSeason, youth.length])
 
   // COBRANÇA DA DIRETORIA pelo uso da base, em momentos definidos da temporada
   // (pedido). Dispara uma vez por janela, marcada em youthBoardCheckWeek.
   useEffect(() => {
+    // Pre-hidratacao a semana e 0 e o elenco e vazio: a cobranca sairia com dados
+    // falsos e ainda gravaria `youthBoardCheckWeek` por cima do save.
+    if (!hydrated) return
     const semana = state.week ?? 0
     const cob = cobrancaDaDiretoria({
       semana,
@@ -252,11 +336,12 @@ export default function BasePage() {
       title: cob.titulo, message: cob.mensagem,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.week, state.season, nivelAcademia])
+  }, [hydrated, state.week, state.season, nivelAcademia])
 
   // Efetiva as vendas de jovens ACERTADAS fora da janela, assim que a janela
   // abre: o jovem sai da base e o valor entra no caixa (pedido).
   useEffect(() => {
+    if (!hydrated) return
     if (!isTransferWindowOpen(semanaAtual)) return
     const aVender = youth.filter(p => p.vendaPendente)
     if (aVender.length === 0) return
@@ -278,7 +363,7 @@ export default function BasePage() {
         message: `${p.vendaPendente!.clube} concretizou a compra de ${p.name} por ${formatCurrency(p.vendaPendente!.valor)} na abertura da janela.` })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [semanaAtual])
+  }, [hydrated, semanaAtual])
 
   // ⚠️ NAO reponha a vaga automaticamente.
   //
@@ -412,7 +497,12 @@ export default function BasePage() {
     // So entra quem cabe. O resto da peneira "nao vingou" — melhor do que
     // estourar o teto que a propria tela anuncia.
     const aproveitados = intake.players.slice(0, vagas)
-    setState({ youthPlayers: [...youth, ...aproveitados], youthTryoutStamp: stampAtual })
+    // Acrescenta sobre a lista RELIDA do save, nao sobre `youth` do fechamento:
+    // um `[...youth, ...novos]` com fechamento velho apagaria quem entrou depois.
+    aplicarNaBase(setState, s => ({
+      youthPlayers: [...(s.youthPlayers ?? []), ...aproveitados],
+      youthTryoutStamp: stampAtual,
+    }))
     if (aproveitados.length < intake.players.length) {
       void avisarNoJogo({
         titulo: "Peneira encerrada",
@@ -422,19 +512,28 @@ export default function BasePage() {
   }
 
   const developMonth = () => {
-    const result = advanceYouthMonth(state)
-    setState({ youthPlayers: result.state.youthPlayers, updatedAt: result.state.updatedAt })
+    // Evolucao tambem grava sobre o save relido: estas duas acoes SUBSTITUEM a
+    // lista inteira, entao um fechamento velho apagaria contratacoes recentes.
+    let evoluidos = 0
+    aplicarNaBase(setState, s => {
+      const result = advanceYouthMonth(s)
+      evoluidos = result.report.highlights.length
+      return { youthPlayers: result.state.youthPlayers, updatedAt: result.state.updatedAt }
+    })
     void avisarNoJogo({
       titulo: "Mês de trabalho na base",
-      mensagem: `${result.report.highlights.length} jovem(ns) evoluíram neste mês.`,
+      mensagem: `${evoluidos} jovem(ns) evoluíram neste mês.`,
       tom: "sucesso",
     })
   }
 
   /** Uma semana de trabalho na base — o acompanhamento semanal pedido. */
   const acompanharSemana = () => {
-    const r = evoluirSemana(youth as unknown as JovemBase[], nivelAcademia)
-    setState({ youthPlayers: r.jovens as unknown as SquadPlayer[] })
+    let r: EvolucaoSemanal = { jovens: [], destaques: [], prontosParaSubir: [] }
+    aplicarNaBase(setState, s => {
+      r = evoluirSemana((s.youthPlayers ?? []) as unknown as JovemBase[], nivelAcademia)
+      return { youthPlayers: r.jovens as unknown as SquadPlayer[] }
+    })
     if (r.destaques.length === 0) {
       addNotification({ type: "system", priority: "low", title: "Semana na base",
         message: "Semana sem evolução relevante entre os garotos." })
@@ -494,7 +593,11 @@ export default function BasePage() {
         message: `${p.clube} contratou ${player.name} da base por ${formatCurrency(p.valor)}.` })
     } else {
       // Marca a saida pendente: o jovem continua na base ate a janela abrir.
-      setState(s => ({
+      // Grava por `aplicarNaBase` como os demais: a janela fica FECHADA em 30 das
+      // 52 semanas, entao este e o caminho MAIS COMUM da venda — e era o unico que
+      // ainda dependia so do `setState`. Sair da tela apagava o acerto, e o garoto
+      // reaparecia inteiro, sem venda e sem dinheiro.
+      aplicarNaBase(setState, s => ({
         youthPlayers: (s.youthPlayers ?? []).map(x => x.id === player.id
           ? ({ ...x, vendaPendente: { clube: p.clube, valor: p.valor } } as SquadPlayer)
           : x),
@@ -511,8 +614,13 @@ export default function BasePage() {
       placeholder: "Clube de destino",
     }))?.trim()
     if (!club) return
-    const result = loanYouth(state, player.id, club)
-    setState({ youthPlayers: result.youthPlayers ?? [], updatedAt: result.updatedAt })
+    // NAO entra em `youthDeparted`: no emprestimo o jovem volta de proposito.
+    // Mas grava como os outros — sair da tela desfazia o emprestimo e o garoto
+    // reaparecia na base, mais um caso de "eles voltam".
+    aplicarNaBase(setState, s => {
+      const result = loanYouth(s, player.id, club)
+      return { youthPlayers: result.youthPlayers ?? [], updatedAt: result.updatedAt }
+    })
   }
 
   const buyYouth = async (player: SquadPlayer) => {
