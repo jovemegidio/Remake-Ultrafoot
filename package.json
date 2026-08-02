@@ -36,6 +36,8 @@
     "qa:gameplay": "tsx scripts/qa-gameplay-matrix.ts",
     "qa:youth-career": "tsx scripts/qa-youth-career.ts",
     "qa:build-1069": "tsx scripts/qa-build-1069.ts",
+    "qa:economia": "tsx scripts/qa-economia.ts",
+    "qa:orfaos": "node scripts/qa-orfaos.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",

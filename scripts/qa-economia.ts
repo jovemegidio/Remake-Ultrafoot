@@ -8,6 +8,7 @@
  */
 
 import { useGameEngine, folhaSemanal } from "../lib/game-engine"
+import { generateYouthProspects } from "../lib/youth-academy"
 
 let falhas = 0
 
@@ -77,6 +78,49 @@ const motor = () => useGameEngine.getState()
   checar("folhaSemanal soma só quem tem contrato", folhaSemanal(elenco) === 350_000,
     String(folhaSemanal(elenco)))
   checar("folhaSemanal de elenco vazio é zero", folhaSemanal([]) === 0)
+}
+
+// ─── 5. O ID do jovem precisa ser único ENTRE peneiras ───────────────────────
+//
+// O anti-duplicata acima só funciona se cada venda tiver um recibo distinto, e
+// o recibo é `jovem:<id>`. O id era `youth_<time>_<temporada>_<i>`: duas
+// gerações do mesmo clube na mesma temporada devolviam os MESMOS 6 ids, então a
+// segunda venda batia no recibo da primeira e era recusada em silêncio — o
+// garoto sumia da base e o dinheiro não entrava.
+//
+// Este caso faltava: o teste de duplicata passava enquanto o bug era relatado,
+// porque ele usava recibos escritos à mão ("jovem:99"), nunca os ids reais.
+
+{
+  const g1 = generateYouthProspects("BGT", 2026, 60, 6)
+  const g2 = generateYouthProspects("BGT", 2026, 60, 6)
+  const ids1 = new Set(g1.map(p => p.id))
+  const colisoes = g2.filter(p => ids1.has(p.id)).length
+  checar("duas peneiras do mesmo clube/temporada não repetem id", colisoes === 0,
+    `${colisoes} de ${g2.length} colidiram`)
+  checar("ids são únicos dentro da mesma peneira", ids1.size === g1.length)
+
+  // 50 peneiras em rajada. É o caso que pega o relógio: várias gerações caem no
+  // MESMO milissegundo, e só um contador as separa. Com `Date.now()` sozinho
+  // isto colide às centenas.
+  const vistos = new Set<string>()
+  let repetidos = 0
+  for (let n = 0; n < 50; n++) {
+    for (const p of generateYouthProspects("BGT", 2026, 60, 6)) {
+      if (vistos.has(p.id)) repetidos++
+      vistos.add(p.id)
+    }
+  }
+  checar("50 peneiras seguidas não repetem nenhum id", repetidos === 0,
+    `${repetidos} repetidos em 300 jovens`)
+
+  // O que o usuário sentia: vender o segundo jovem tinha de creditar de verdade.
+  const antes = motor().balance
+  motor().receberPorJovem(700_000, `jovem:${g1[0].id}`)
+  motor().receberPorJovem(700_000, `jovem:${g2[0].id}`)
+  checar("vender um jovem de cada peneira credita as DUAS vendas",
+    motor().balance === antes + 1_400_000,
+    `entrou ${((motor().balance - antes) / 1000).toFixed(0)}k, esperado 1400k`)
 }
 
 console.log(falhas === 0 ? "\nRESULTADO: TUDO OK" : `\nRESULTADO: ${falhas} FALHA(S)`)
