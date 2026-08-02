@@ -23,6 +23,46 @@ import { getPlayersForTeam, sortByPosition } from "@/lib/players-data"
 import { attributesFromOverall } from "@/lib/player-attributes"
 import { capGoalkeepers, pickStartingXI, repararEscalacao } from "@/lib/formations"
 import type { Player as EnginePlayer } from "@/lib/game-engine"
+import tmFisico from "@/data/seeds/tm-fisico.json"
+
+// ─── ALTURA E PÉ REAIS ───────────────────────────────────────────────────────
+//
+// ⚠️ ANTES ERA TUDO INVENTADO. Altura saía de `seededInt` por posição (185–194
+// para GOL/ZAG, 170–184 para o resto) e o pé de um `seededPick` entre dois
+// valores. Era por isso que o Neymar aparecia com 1,88m — e não era um caso
+// isolado: TODO atleta estava com medida fictícia.
+//
+// Agora o dado vem do Transfermarkt, casado pelo ID do próprio atleta (`ft`), e
+// não pelo nome — há 1.660 nomes repetidos entre clubes, e casar por nome daria
+// a medida do xará. Quem não tem ficha lá continua na estimativa por posição.
+
+const FISICO = (tmFisico as { atletas?: Record<string, { a?: number; p?: string }> }).atletas ?? {}
+const PE_LEGIVEL: Record<string, "Direita" | "Esquerda" | "Ambidestro"> = {
+  D: "Direita", E: "Esquerda", A: "Ambidestro",
+}
+
+/** `ft` é "465821-1726761975"; o ID é a parte antes do hífen. */
+function fisicoDe(ft?: string): { altura?: number; pe?: "Direita" | "Esquerda" | "Ambidestro" } | null {
+  if (!ft) return null
+  const dados = FISICO[ft.split("-")[0]]
+  if (!dados) return null
+  return { altura: dados.a, pe: dados.p ? PE_LEGIVEL[dados.p] : undefined }
+}
+
+/**
+ * PESO a partir da altura real.
+ *
+ * O Transfermarkt não publica peso, então ele continua estimado — mas agora
+ * DERIVA da altura, e não de um sorteio independente. Era a combinação solta que
+ * produzia absurdos como 1,88m com 76kg. A faixa de IMC é a de atleta
+ * profissional (22–24), com goleiro e zagueiro no topo e ponta/meia embaixo.
+ */
+function pesoDe(alturaCm: number, pos: string, semente: string): number {
+  const encorpado = pos === "GOL" || pos === "ZAG" || pos === "ATA"
+  const imc = (encorpado ? 23.2 : 22.2) + seededInt(semente, "imc", 0, 12) / 10
+  const m = alturaCm / 100
+  return Math.round(imc * m * m)
+}
 
 function hashString(input: string): number {
   let hash = 0
@@ -68,11 +108,24 @@ export function buildElencoPlayers(teamObj: ReturnType<typeof getTeamByShort>) {
     energy: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "energy", 70, 94),
     rhythm: seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "rhythm", 70, 94),
     moral: seededPick(moralOptions, `${teamObj.curto}-${p.nome}-${idx}`, "moral"),
-    foot: seededPick(footOptions, `${teamObj.curto}-${p.nome}-${idx}`, "foot"),
+    foot: fisicoDe(p.ft)?.pe ?? seededPick(footOptions, `${teamObj.curto}-${p.nome}-${idx}`, "foot"),
     acceleration: seededPick(["Explosivo", "Controlado", "Equilibrado"] as const, `${teamObj.curto}-${p.nome}-${idx}`, "acceleration"),
     function: p.pos === "GOL" ? "Goleiro" : p.pos === "ZAG" || p.pos === "LD" || p.pos === "LE" ? "Defensivo" : p.pos === "VOL" ? "Box-to-box" : p.pos === "MEI" ? "Meia Armador" : "Finalizador",
     focus: p.pos === "GOL" || p.pos === "ZAG" ? "Defesa" : p.pos === "ATA" || p.pos === "PE" || p.pos === "PD" ? "Ataque" : "Equilibrado",
-    height: p.pos === "GOL" || p.pos === "ZAG" ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 185, 194) : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 170, 184),
+    // ALTURA REAL quando o atleta tem ficha no Transfermarkt; senão, a estimativa
+    // por posição de sempre. Ver `fisicoDe` no topo do arquivo.
+    height: fisicoDe(p.ft)?.altura
+      ?? (p.pos === "GOL" || p.pos === "ZAG"
+        ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 185, 194)
+        : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 170, 184)),
+    weight: pesoDe(
+      fisicoDe(p.ft)?.altura
+        ?? (p.pos === "GOL" || p.pos === "ZAG"
+          ? seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 185, 194)
+          : seededInt(`${teamObj.curto}-${p.nome}-${idx}`, "height", 170, 184)),
+      p.pos,
+      `${teamObj.curto}-${p.nome}-${idx}`,
+    ),
     // Atributos REALISTAS por posição: gerador canônico do motor (perfis por
     // família + pesos + reconciliação do overall), com semente por jogador para
     // variação individual. É o MESMO usado na partida — editor, elenco e simulação
@@ -121,6 +174,9 @@ function enginePlayerToElenco(p: EnginePlayer) {
     function: p.position === "GOL" ? "Goleiro" : p.position === "ZAG" || p.position === "LD" || p.position === "LE" ? "Defensivo" : p.position === "VOL" ? "Box-to-box" : p.position === "MEI" ? "Meia Armador" : "Finalizador",
     focus: p.position === "GOL" || p.position === "ZAG" ? "Defesa" : p.position === "ATA" || p.position === "PE" || p.position === "PD" ? "Ataque" : "Equilibrado",
     height: p.position === "GOL" || p.position === "ZAG" ? 190 : 179,
+    // Mesmo formato do outro caminho: as duas listas se encontram nas telas de
+    // elenco, e um campo a menos aqui quebra o tipo compartilhado.
+    weight: pesoDe(p.position === "GOL" || p.position === "ZAG" ? 190 : 179, p.position, `engine-${p.name}-${p.id}`),
     pace: p.pace,
     shooting: p.shooting,
     passing: p.passing,

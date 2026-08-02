@@ -28,6 +28,16 @@ export interface Player {
   time: string
   /** Nacionalidade real (Transfermarkt), assada no seed. Ausente = desconhecida. */
   nac?: string
+  /**
+   * Token do Transfermarkt ("465821-1726761975"). A parte antes do hífen é o ID
+   * do atleta, e é por ela que altura e pé REAIS são encontrados
+   * (data/seeds/tm-fisico.json).
+   *
+   * Propagar isto foi o que faltava: altura e pé eram sorteados a partir da
+   * POSIÇÃO, então o Neymar aparecia com 1,88m. Casar por nome não serve — há
+   * 1.660 nomes repetidos entre clubes, e o xará receberia a medida do outro.
+   */
+  ft?: string
   // Atributos individuais (so presentes quando o jogador foi editado no editor). A partida
   // usa estes valores quando existem; senao deriva do overall+posicao.
   pace?: number
@@ -147,17 +157,17 @@ for (const team of importedTeams) {
 // Indice global evita perder idade/overall quando o CSV atualizado move o atleta para
 // outro clube, mas o seed antigo ainda o guarda no time anterior. So usamos nomes com
 // uma unica combinacao de idade para nao confundir homonimos.
-const globalImportedPlayers = new Map<string, Array<{ idade: number; overall: number; nac?: string }>>()
+const globalImportedPlayers = new Map<string, Array<{ idade: number; overall: number; nac?: string; ft?: string }>>()
 for (const importedTeam of importedTeams) {
   for (const player of importedTeam.jogadores ?? []) {
     const key = normalizeTeamName(player.nome)
     const list = globalImportedPlayers.get(key) ?? []
-    list.push({ idade: player.idade, overall: player.overall, nac: player.nac })
+    list.push({ idade: player.idade, overall: player.overall, nac: player.nac, ft: player.ft })
     globalImportedPlayers.set(key, list)
   }
 }
 
-function findUniqueImportedPlayer(name: string): { idade: number; overall: number; nac?: string } | undefined {
+function findUniqueImportedPlayer(name: string): { idade: number; overall: number; nac?: string; ft?: string } | undefined {
   const candidates = globalImportedPlayers.get(normalizeTeamName(name)) ?? []
   const unique = new Map(candidates.map(p => [`${p.idade}:${p.overall}`, p]))
   return unique.size === 1 ? [...unique.values()][0] : undefined
@@ -857,6 +867,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
         base: globalSeed ? Math.min(globalSeed.overall, MAX_IMPORTED_OVERALL) : estimated,
         time: team.nome,
         nac: resolverNac(p.nome, globalSeed?.nac, team),
+        ft: globalSeed?.ft,
       }
     })
     if (converted.some((player) => player.pos === "GOL")) return converted
@@ -871,6 +882,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
         base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
         time: team.nome,
         nac: resolverNac(player.nome, player.nac, team),
+        ft: player.ft,
       }))
     return [...seedGoalkeepers, ...converted]
   }
@@ -891,6 +903,7 @@ function getImportedPlayersForTeam(team: Team): Player[] {
       base: Math.min(player.overall, MAX_IMPORTED_OVERALL),
       time: team.nome,
       nac: resolverNac(player.nome, player.nac, team),
+      ft: player.ft,
     }))
 }
 
@@ -1072,6 +1085,7 @@ function getRealSquad(team: Team): Player[] | null {
     base: p.o,
     time: team.nome,
     nac: p.c,
+    ft: p.f,
   }))
 }
 
