@@ -9,6 +9,7 @@
 
 import { useGameEngine, folhaSemanal } from "../lib/game-engine"
 import { generateYouthProspects } from "../lib/youth-academy"
+import { readFileSync } from "node:fs"
 
 let falhas = 0
 
@@ -121,6 +122,39 @@ const motor = () => useGameEngine.getState()
   checar("vender um jovem de cada peneira credita as DUAS vendas",
     motor().balance === antes + 1_400_000,
     `entrou ${((motor().balance - antes) / 1000).toFixed(0)}k, esperado 1400k`)
+
+  // O SELO DA PENEIRA NÃO PODE CEGAR A LIMPEZA DE /base.
+  //
+  // `ehDeOutroClube` (app/base/page.tsx) reconhece pelo id o garoto que a
+  // semeadura pré-hidratada injetou com o clube FALLBACK. A regex dela era
+  // `^youth_([A-Z]{2,4})_\d{4}_\d+$` — o formato SEM selo. Ao acrescentar o
+  // selo no meio do id, ela parou de casar e os saves contaminados nunca mais
+  // seriam limpos. Os dois formatos precisam ser reconhecidos: o antigo pelos
+  // saves que já existem, o novo pelos que vierem.
+  // LÊ A REGEX DO ARQUIVO REAL. Copiá-la para cá faria o teste passar mesmo
+  // depois de alguém mudar a de verdade — que é exatamente a falha que deixou
+  // este bug passar (o QA testava o mecanismo com recibos escritos à mão).
+  const fonte = readFileSync(
+    new URL("../app/base/page.tsx", import.meta.url), "utf8",
+  )
+  const achada = /const m = (\/\^youth_.*?\/)\.exec\(id\)/.exec(fonte)
+  if (!achada) throw new Error("não achei a regex de ehDeOutroClube em app/base/page.tsx")
+  const regex = new RegExp(achada[1].slice(1, -1))
+  const ehDeOutroClube = (id: string, curto: string) => {
+    const m = regex.exec(id)
+    return m != null && m[1] !== curto
+  }
+
+  checar("limpeza reconhece o id ANTIGO de outro clube",
+    ehDeOutroClube("youth_BOT_2026_3", "FLA") === true)
+  checar("limpeza reconhece o id NOVO de outro clube",
+    ehDeOutroClube(generateYouthProspects("BOT", 2026, 60, 1)[0].id, "FLA") === true)
+  checar("limpeza não remove jovem do próprio clube",
+    ehDeOutroClube(generateYouthProspects("FLA", 2026, 60, 1)[0].id, "FLA") === false)
+  checar("limpeza não toca em comprado no mercado",
+    ehDeOutroClube("youth_market_2026_0_ajax_1", "FLA") === false)
+  checar("limpeza não toca em legado",
+    ehDeOutroClube("legacy_123_abc", "FLA") === false)
 }
 
 console.log(falhas === 0 ? "\nRESULTADO: TUDO OK" : `\nRESULTADO: ${falhas} FALHA(S)`)
