@@ -383,9 +383,14 @@ export function fotoDoServidor(nome: string, fileKey?: string): string | null {
   // e EXATA e o xara deixa de ser problema: o "Carlos Miguel" do Palmeiras e o do
   // Benfica B sao chaves diferentes. E so quando o clube e desconhecido que vale
   // a trava de nome repetido (getNomesAmbiguos, em player-photos).
+  //
+  // ⚠️ E QUANDO NAO ACHA, PARA AQUI. Nao cair no indice por nome e o ponto:
+  // "subi o Bruno do Flamengo, entao e do Flamengo e nao de outro time". Se este
+  // clube nao publicou rosto para este atleta, ele NAO TEM rosto — pegar o do
+  // xara de outro time foi exatamente o relato (Bruno Henrique, Paulinho).
   if (fileKey) {
     const exata = getAtualizacao().jogadores?.[`${fileKey}__${chave}`]?.faceDataUrl
-    if (exata) return fotosGuardadas().get(chave) ?? exata
+    return exata ? (fotosGuardadas().get(chave) ?? exata) : null
   }
   const guardada = fotosGuardadas().get(chave)
   if (guardada) return guardada
