@@ -1,5 +1,5 @@
 {
-  "version": "1.0.24",
-  "notes": "Atualizar o jogo deixou de exigir conta. O porteiro do download inicial valia tambem para a atualizacao, e o efeito era o oposto do pretendido: quem nao tinha conta ficava parado numa versao velha para sempre, com o botao escrito \"Entrar para atualizar\" e nenhuma saida. Instalar de primeira continua exigindo conta; manter atualizado, nao — havendo versao nova, o launcher baixa e instala sozinho. Alem disso, o Jogar podia nao fazer nada quando o registro do Windows listava o jogo mas nao entregava o caminho do executavel: agora o launcher procura tambem pela pasta do desinstalador, lida com as aspas que o instalador grava no registro e, quando ainda assim nao acha, diz o motivo na tela em vez de ficar mudo.",
+  "version": "1.0.25",
+  "notes": "O launcher passou a conferir o instalador ANTES de executa-lo: tamanho e assinatura precisam bater com o que o servidor anuncia. Se nao baterem, ele recusa o arquivo e avisa, em vez de tentar instalar e falhar calado. E se uma atualizacao nao pegar duas vezes seguidas, ele para de tentar sozinho e libera o Jogar normalmente — nada de ficar preso na tela de \"atualizando\". Tambem da para fechar essa tela e jogar com a versao instalada enquanto o download acontece.",
   "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
 }

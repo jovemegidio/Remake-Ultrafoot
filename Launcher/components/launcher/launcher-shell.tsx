@@ -518,6 +518,20 @@ export function LauncherShell({
                 ? "Instalando e reiniciando…"
                 : `Baixando… ${selfUpdateProgress.percent}%`}
             </p>
+
+            {/* SAIDA. Esta tela cobre tudo, e foi ela que o jogador ficou vendo
+                sem fim em 02/08/2026. Durante o DOWNLOAD nada foi alterado ainda,
+                entao sair e seguro: o launcher continua na versao instalada e a
+                atualizacao e reoferecida na proxima abertura. Some na instalacao,
+                onde interromper deixaria o programa pela metade. */}
+            {selfUpdateProgress.phase !== "installing" && (
+              <button
+                onClick={() => setLauncherUpdate(null)}
+                className="mt-4 text-xs text-muted-foreground underline underline-offset-4 transition hover:text-foreground"
+              >
+                Jogar sem atualizar agora
+              </button>
+            )}
           </div>
         </div>
       )}
