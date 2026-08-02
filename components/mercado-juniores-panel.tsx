@@ -14,6 +14,32 @@
 import { useMemo, useState } from "react"
 import { Search, ShoppingCart, Sprout, Users, Briefcase } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
+import importedBF from "@/data/seeds/imported-bf2026.json"
+
+// ─── ESCUDO DO CLUBE FORMADOR QUANDO ELE NAO E CURADO ────────────────────────
+//
+// ⚠️ Relato: "diversos clubes estao com seus escudos desenhados em vez do escudo
+// real". `getTeamByName` so varre a lista CURADA (allTeams); as promessas vem de
+// clubes do POOL, que sao ~2.994 e nao estao la. Sem achar, o TeamCrest caia no
+// desenho de iniciais.
+//
+// O pool tem `fileKey` em todos os clubes, e o TeamCrest resolve escudo por
+// fileKey — inclusive o importado no editor. Basta traduzir nome -> fileKey.
+const POOL_POR_NOME: Map<string, string> = (() => {
+  const mapa = new Map<string, string>()
+  const norm = (s: string) =>
+    (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "")
+  for (const t of ((importedBF as { teams?: { nome?: string; fileKey?: string }[] }).teams) ?? []) {
+    const k = norm(t.nome ?? "")
+    if (k && t.fileKey && !mapa.has(k)) mapa.set(k, t.fileKey)
+  }
+  return mapa
+})()
+
+function fileKeyDoPool(nome?: string | null): string | undefined {
+  if (!nome) return undefined
+  return POOL_POR_NOME.get(nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, ""))
+}
 import { formatCurrency, getTeamByName } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
 import type { SquadPlayer } from "@/lib/save-system"
@@ -189,7 +215,9 @@ export function MercadoJunioresPanel({ prospectos, vagas, capacidade, naBase, sa
                     caminho que carrega file_key e escudo importado. */}
                 {clubeFormador
                   ? <TeamCrest team={clubeFormador} size="md" />
-                  : alvo.fromTeam ? <TeamCrest teamShort={alvo.fromTeam} size="md" /> : null}
+                  : fileKeyDoPool(alvo.fromTeam)
+                    ? <TeamCrest fileKey={fileKeyDoPool(alvo.fromTeam)!} size="md" />
+                    : alvo.fromTeam ? <TeamCrest teamShort={alvo.fromTeam} size="md" /> : null}
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2">

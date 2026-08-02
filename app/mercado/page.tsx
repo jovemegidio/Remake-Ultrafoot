@@ -2434,7 +2434,7 @@ function PlayerListCard({
 
       {/* Player Avatar */}
       <div className="relative">
-        <PlayerAvatar name={player.name} teamColor={player.team.cor1} size="sm" />
+        <PlayerAvatar name={player.name} fileKey={player.team.file_key} teamColor={player.team.cor1} size="sm" />
       </div>
 
       {/* Player Info */}
@@ -2546,7 +2546,7 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
         <div className="flex gap-6">
           {/* Left side - Avatar and basic info */}
           <div className="flex flex-col items-center">
-            <PlayerAvatar name={player.name} teamColor={player.team.cor1} size="xl" />
+            <PlayerAvatar name={player.name} fileKey={player.team.file_key} teamColor={player.team.cor1} size="xl" />
           </div>
 
           {/* Right side - Details */}
