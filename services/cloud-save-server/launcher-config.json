@@ -9,6 +9,13 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "Vender na base agora vale a pena",
+      "category": "Correcao",
+      "body": "O dinheiro da venda de junior entra no caixa, os vendidos nao voltam mais, e promover uma cria deixou de custar mais caro que contratar um profissional. A divida tambem parou de seguir o tecnico: ela fica com o clube, e quem ja amortizou nao perde o que pagou. De quebra, o jogo ganhou um botao de minimizar — nao precisa mais de Alt+Tab.",
+      "date": "2026-08-02",
+      "pinned": false
+    },
+    {
       "title": "Elenco novo sem baixar o jogo de novo",
       "category": "Novidade",
       "body": "Correcao de elenco, transferencia e rosto de atleta agora chegam por um pacote de poucos KB, avisado dentro do jogo. Voce decide se baixa. A versao do jogo nao muda, e o que voce baixou continua valendo sem internet. O primeiro pacote traz os 59 rostos licenciados de Corinthians e Cruzeiro.",
@@ -158,9 +165,40 @@
   ],
   "changelog": [
     {
-      "version": "1.0.244",
+      "version": "1.0.245",
       "date": "2026-08-02",
       "latest": true,
+      "title": "Vender na base entra no caixa, e o jogo minimiza sem Alt+Tab",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "VENDEU O JOVEM E O DINHEIRO NAO CAIU. Cada peneira gerava garotos com os MESMOS codigos internos da peneira anterior, e o jogo tratava a segunda venda como se fosse repeticao da primeira: recusava o pagamento em silencio. O garoto saia da base e o caixa nao via nada. Era a ultima das tres causas desse relato — as outras duas cairam na 1.0.239 e na 1.0.242."
+        },
+        {
+          "type": "fixed",
+          "text": "PROMOVER JUNIOR ARREBENTAVA O CAIXA. Um garoto de overall 60 assinava por R$ 54.000 por mes, 2,25x o que o proprio jogo paga a um profissional do mesmo nivel. Agora sai por R$ 14.400, e tres promocoes cabem em R$ 43,2 mil."
+        },
+        {
+          "type": "fixed",
+          "text": "A DIVIDA SEGUIA O TECNICO DE CLUBE EM CLUBE. Quem amortizava no clube A e pedia demissao chegava no clube B com o rombo do A — e, ao voltar para o A, nao encontrava o que tinha pagado. Cada clube passa a ter a sua divida, e quem ja amortizou nao perde nada."
+        },
+        {
+          "type": "fixed",
+          "text": "O LAUNCHER ATUALIZAVA SEM PARAR. Atualizava, fechava, e ao abrir de novo oferecia a mesma atualizacao. Eram tres causas na leitura da versao instalada: a tela dizia 'atualizado' sem conferir, a busca parava num resto de instalacao antiga, e um numero de versao fora do padrao zerava a comparacao."
+        },
+        {
+          "type": "added",
+          "text": "BOTAO DE MINIMIZAR. Em tela cheia o Windows esconde a barra de titulo, e so restava o Alt+Tab para sair do jogo. Agora tem um botao no canto superior direito, e o atalho Ctrl+M. Ao voltar, o jogo devolve a tela cheia do jeito que estava."
+        },
+        {
+          "type": "improved",
+          "text": "Escalacao, formacao e partida: os cards deixam de se sobrepor com a escala do Windows em 150%, goleiro e zagueiro central saem da mesma coluna, a escalacao salva para de ser descartada, e o jogo nao trava mais no gol, no penalti nem no cartao vermelho."
+        }
+      ]
+    },
+    {
+      "version": "1.0.244",
+      "date": "2026-08-02",
       "title": "Atualizacao de elenco sem reinstalar o jogo",
       "changes": [
         {
@@ -188,7 +226,6 @@
     {
       "version": "1.0.243",
       "date": "2026-08-01",
-      "latest": false,
       "title": "As fotos dos jogadores voltam a aparecer no aplicativo instalado",
       "changes": [
         {
@@ -200,7 +237,6 @@
     {
       "version": "1.0.242",
       "date": "2026-08-01",
-      "latest": false,
       "title": "Os juniores vendidos param de voltar — de verdade desta vez",
       "changes": [
         {
@@ -224,7 +260,6 @@
     {
       "version": "1.0.240",
       "date": "2026-08-01",
-      "latest": false,
       "title": "O atalho abre o jogo, e atualizar deixou de ser por partes",
       "changes": [
         {
@@ -252,7 +287,6 @@
     {
       "version": "1.0.239",
       "date": "2026-07-31",
-      "latest": false,
       "title": "Vender na base agora vale: o dinheiro entra e os juniores nao voltam",
       "changes": [
         {
@@ -272,7 +306,6 @@
     {
       "version": "1.0.238",
       "date": "2026-07-31",
-      "latest": false,
       "title": "Todo elenco passa a ter laterais, volantes e pontas de verdade",
       "changes": [
         {
@@ -288,7 +321,6 @@
     {
       "version": "1.0.237",
       "date": "2026-07-31",
-      "latest": false,
       "title": "Onze campeonatos novos, e as fotos licenciadas no editor param de sumir",
       "changes": [
         {
@@ -316,7 +348,6 @@
     {
       "version": "1.0.236",
       "date": "2026-07-31",
-      "latest": false,
       "title": "Os rostos passam a APARECER de verdade",
       "changes": [
         {
@@ -332,7 +363,6 @@
     {
       "version": "1.0.235",
       "date": "2026-07-31",
-      "latest": false,
       "title": "Mais de 12 mil rostos no jogo e a liga da Colombia com o nome certo",
       "changes": [
         {
@@ -352,7 +382,6 @@
     {
       "version": "1.0.234",
       "date": "2026-07-31",
-      "latest": false,
       "title": "A escalacao que voce salva passa a valer, e as quatro plataformas voltam para a mesma versao",
       "changes": [
         {
@@ -368,7 +397,6 @@
     {
       "version": "1.0.233",
       "date": "2026-07-31",
-      "latest": false,
       "title": "Tirar o atleta da posicao dele agora custa caro, e o radar deixou de correr",
       "changes": [
         {
@@ -388,7 +416,6 @@
     {
       "version": "1.0.231",
       "date": "2026-07-31",
-      "latest": false,
       "title": "Convite de selecao antes da data FIFA, bandeiras no editor e a Colombia com liga propria",
       "changes": [
         {
@@ -408,7 +435,6 @@
     {
       "version": "1.0.230",
       "date": "2026-07-31",
-      "latest": false,
       "title": "A tela principal volta a trocar de fundo, escudo de verdade nos formadores, e o radar deixa de encenar o lance errado",
       "changes": [
         {
@@ -436,7 +462,6 @@
     {
       "version": "1.0.229",
       "date": "2026-07-31",
-      "latest": false,
       "title": "O leilao passou a funcionar (e a ser disputa de verdade) e a proposta de selecao para de sumir",
       "changes": [
         {
@@ -468,7 +493,6 @@
     {
       "version": "1.0.228",
       "date": "2026-07-30",
-      "latest": false,
       "title": "Multa rescisoria no mercado, emprestimo que se negocia, olheiro que se demite e o campeonato online funcionando de ponta a ponta",
       "changes": [
         {
@@ -524,7 +548,6 @@
     {
       "version": "1.0.227",
       "date": "2026-07-30",
-      "latest": false,
       "title": "A tela principal ganhou vida, o launcher abre em tela cheia e a demissao vira historia",
       "changes": [
         {
@@ -578,8 +601,7 @@
           "type": "improved",
           "text": "Ultrafoot de Bolso (Android) 1.0.1: a tela gira (o jogo tem layout largo e estava travado em retrato), o botao voltar no menu principal pede confirmacao antes de fechar o app, e voltar do segundo plano recupera o jogo sozinho quando o Android encerrou a WebView."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.225",
@@ -606,8 +628,7 @@
           "type": "improved",
           "text": "A prancheta do elenco pode ficar horizontal sem gravar a formacao de lado."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.218",
@@ -670,8 +691,7 @@
           "type": "improved",
           "text": "Quem registrou o jogo ganha extras: save na nuvem, FC Hub, editor de equipes, Central de Atualizacoes e carreiras ilimitadas. Sem registro o jogo continua completo — nada trava no meio."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.211",
@@ -702,8 +722,7 @@
           "type": "fixed",
           "text": "Barras de rolagem, brilho do placar e o anel de foco de acessibilidade ficavam verde-agua em qualquer tema. Agora seguem a cor escolhida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.210",
@@ -738,8 +757,7 @@
           "type": "fixed",
           "text": "Faixa morta no pe das telas do Mercado: a altura era calculada por subtracao chumbada e o palpite errava — sobrava espaco vazio em telas grandes e cortava conteudo nas menores."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.209",
@@ -782,8 +800,7 @@
           "type": "fixed",
           "text": "Championship marcava três acessos diretos quando são dois, mais o playoff do 3º ao 6º — que a tabela nunca mostrava."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.201",
@@ -798,8 +815,7 @@
           "type": "fixed",
           "text": "Folha salarial que só subia: um gasto avulso (quitar dívida, obra) virava despesa semanal para sempre."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.200",
@@ -818,8 +834,7 @@
           "type": "added",
           "text": "Central de Atualizações: elencos e times novos sem reinstalar, e só quando você autoriza."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.198",
@@ -834,8 +849,7 @@
           "type": "fixed",
           "text": "Avançar no calendário não simula mais a sua própria partida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.196",
@@ -846,8 +860,7 @@
           "type": "added",
           "text": "Escudos, uniformes e fotos editados aparecem para todos os jogadores, inclusive na versão web."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.195",
@@ -858,8 +871,7 @@
           "type": "added",
           "text": "Telas de convocação, competições e amistosos da seleção."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.188",
@@ -874,8 +886,7 @@
           "type": "added",
           "text": "Atualização automática também no Linux e no macOS."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.175",
@@ -902,8 +913,7 @@
           "type": "fixed",
           "text": "Escudos importados pelo usuário passam a vencer o mapa padrão."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.150",
@@ -922,8 +932,7 @@
           "type": "fixed",
           "text": "Correções da auditoria e códigos de país normalizados."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.145",
@@ -937,8 +946,7 @@
           "type": "changed",
           "text": "Ligas europeias e estaduais ajustados às datas informadas."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.144",
@@ -952,8 +960,7 @@
           "type": "added",
           "text": "Treino de entrosamento na data FIFA."
         }
-      ],
-      "latest": false
+      ]
     }
   ]
 }
