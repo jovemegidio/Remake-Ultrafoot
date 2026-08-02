@@ -1,12 +1,12 @@
 {
-  "version": "1.0.240",
-  "notes": "O atalho da area de trabalho voltou a abrir o jogo — antes ele piscava e sumia. Atualizar deixou de exigir conta: o launcher baixa e instala a versao nova sozinho.",
+  "version": "1.0.244",
+  "notes": "Atualizacao de elenco pelo servidor: rostos, elencos e transferencias chegam sem reinstalar o jogo, avisados dentro do jogo e valendo offline. Sem registro, o futebol brasileiro inteiro.",
   "sizeMb": 630,
-  "sha256": "A61D46EE08324D7BBF7EAE9851732987E9F0F4681D5B05942BB62BCC7E397F33",
+  "sha256": "1226DAD347973750927A1545683ADC8A4D6D0391C5131A217BC23C56711F9369",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRVA4Wjk0Q295UTJvcHJUMmpRM1QrTHdhc2UxdDhZeXpKaW1WeU0xOUZRajI5ajFWcy83SjE4QnN2VDJOWURabnIvVXh2VkpSd0N3Zms0S1ViZ3lSeEE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NTk5MjkzCWZpbGU6VWx0cmFmb290IDI2XzEuMC4yNDBfeDY0LXNldHVwLmV4ZQoza0JmdjNxYVJCUEFHbUU5bTY0MmtHMnFnK3hBTkkrUVk4eUVuSEN5emwwaXd3UWU0cnBpTVJodjM4c1kzUzFxd0NSa3htc1JvOHlNNU5JdnRWaGdBZz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.240_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRVBRK2luK3hhZ2l4d1Z6YmpxTk8yTG80ejBoYXJyL0tjdXNhN0tpZ094YnBlVkc3TEVYYXlNWWhTb1hXS3UwMVBCV0R1U3dBNE9acXlpU2JrQWJyblFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NjQxODQ5CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yNDRfeDY0LXNldHVwLmV4ZQp2SUdJUFdEWVdHNFQrbzdwNStCUlZqbTA0ckphMS9kQVpOK1huV1N4cVVVQ0hRZzZnWlNvRUxnN0dpbi9aYzUxOUk4NWg1TldpUU9MRHV2Umtqc1JCdz09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.244_x64-setup.exe"
     }
   }
 }
