@@ -6,6 +6,19 @@ import type { GameState } from "@/lib/save-system"
 import { repairMojibake } from "@/lib/text-normalization"
 import { clubeCuradoPorNome, siglaExibivel } from "@/lib/club-identity"
 import type { SquadPlayer } from "@/lib/save-system"
+import tmFisico from "@/data/seeds/tm-fisico.json"
+
+/**
+ * Altura e pé reais, por ID do Transfermarkt (`ft` = "465821-1726761975").
+ *
+ * Por ID e não por nome: há 1.660 nomes repetidos entre clubes no jogo, e casar
+ * por nome daria ao xará a medida de outra pessoa — o mesmo erro que já tinha
+ * espalhado foto errada.
+ */
+const FISICO_TM = (tmFisico as { atletas?: Record<string, { a?: number; p?: string }> }).atletas ?? {}
+function fisicoDoAtleta(ft?: string): { a?: number; p?: string } | undefined {
+  return ft ? FISICO_TM[ft.split("-")[0]] : undefined
+}
 import type { MarketTarget, IncomingOffer } from "@/lib/career-types"
 import importedBF from "@/data/seeds/imported-bf2026.json"
 import realSquadsTm from "@/data/seeds/real-squads-tm.json"
@@ -57,7 +70,7 @@ interface BfTeamRaw {
   escudo?: string
   fileKey?: string
   // `nac` é assado por scripts/apply-tm-squads.mjs a partir do Transfermarkt.
-  jogadores?: Array<{ nome: string; posicao: string; overall: number; idade: number; salario?: number; nac?: string }>
+  jogadores?: Array<{ nome: string; posicao: string; overall: number; idade: number; salario?: number; nac?: string; ft?: string }>
 }
 
 const ALL_BF_TEAMS = (importedBF as { teams?: BfTeamRaw[] }).teams ?? []
@@ -434,8 +447,18 @@ export function generateDetailedMarketTargets(
       age < 28 ? (rng() < 0.4 ? 'stable' : rng() < 0.5 ? 'up' : 'down') :
       age < 32 ? (rng() < 0.5 ? 'down' : 'stable') : 'down'
 
-    const heightCm = position === "GOL" ? 185 + Math.floor(rng() * 12) : 168 + Math.floor(rng() * 22)
-    const weightKg = Math.round(heightCm * 0.42 + rng() * 8 - 4)
+    // ⚠️ ALTURA E PESO REAIS QUANDO O ATLETA TEM FICHA NO TRANSFERMARKT.
+    //
+    // Este gerador é a origem do relato "o Neymar está com 188cm 76kg": ele
+    // sorteava 168..190 e derivava o peso de `altura * 0,42`. A tela de elenco
+    // tinha OUTRO gerador — duas ficções independentes para o mesmo atleta.
+    // Agora as duas partem do mesmo dado; o sorteio só atende quem não tem ficha.
+    const fisicoReal = fisicoDoAtleta(player.ft)
+    const heightCm = fisicoReal?.a
+      ?? (position === "GOL" ? 185 + Math.floor(rng() * 12) : 168 + Math.floor(rng() * 22))
+    // Peso continua estimado (o TM não publica), mas agora sobre a altura REAL e
+    // por IMC de atleta, não por um fator linear que engordava quem é alto.
+    const weightKg = Math.round(((position === "GOL" || position === "ZAG" || position === "ATA" ? 23.2 : 22.2) + rng() * 1.2) * (heightCm / 100) ** 2)
 
     result.push({
       // ID estável e exclusivo no catálogo; usado também pela carência de negociação.
@@ -455,7 +478,8 @@ export function generateDetailedMarketTargets(
       nationality: player.nac ?? normalizedCountry(team.pais, team.fileKey) ?? "Brasil",
       height: `${heightCm} cm`,
       weight: `${weightKg} kg`,
-      foot: rng() < 0.72 ? "D" : "E",
+      // Pé real quando existe; o sorteio 72/28 só cobre quem não tem ficha.
+      foot: fisicoReal?.p === "E" ? "E" : fisicoReal?.p === "D" ? "D" : (rng() < 0.72 ? "D" : "E"),
       stats: deriveStats(position, overall, rng),
       // ~65% têm multa rescisória (2.2x a 3x o valor)
       releaseClause: rng() < 0.65 ? Math.round((value * (2.2 + rng() * 0.8)) / 500_000) * 500_000 : null,
