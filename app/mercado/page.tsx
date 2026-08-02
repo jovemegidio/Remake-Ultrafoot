@@ -23,6 +23,7 @@ import {
   EyeOff,
   Briefcase,
   Trash2,
+  Clock,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -286,6 +287,15 @@ export default function MercadoPage() {
   const [expandedScoutId, setExpandedScoutId] = useState<number | null>(null)
   const [marketNotice, setMarketNotice] = useState<string | null>(null)
   const [sentProposals, setSentProposals] = useState<SentTransferProposal[]>([])
+  /**
+   * Reforços já pagos que esperam a janela abrir para serem inscritos.
+   *
+   * Vem do MOTOR, não do save da carreira: é lá que a fila vive
+   * (`pendingIncomingTransfers`) e é de lá que ela sai sozinha quando a janela
+   * abre. Sem esta lista na tela, o jogador via o dinheiro sair e nenhum reforço
+   * aparecer — foi o relato que motivou isto.
+   */
+  const chegadasPendentes = useGameEngine(s => s.pendingIncomingTransfers) ?? []
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
@@ -1746,6 +1756,40 @@ export default function MercadoPage() {
                   </button>
                 </div>
               </div>
+
+              {/* ─── ACERTADOS, ESPERANDO A JANELA ────────────────────────────
+                  Relato: "paguei a multa, negociei com o jogador, e ele não veio
+                  ao clube". A janela fica FECHADA em 30 das 52 semanas; fechada,
+                  o valor é cobrado na hora e o atleta espera para ser inscrito.
+                  Ele chega — mas nada mostrava essa fila, então sumia o dinheiro
+                  e não aparecia reforço nenhum. */}
+              {chegadasPendentes.length > 0 && (
+                <div className="mb-4 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand)]/[0.06] overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-[var(--brand)]/15 px-5 py-3">
+                    <h3 className="text-sm font-semibold text-white">Acertados, aguardando a janela</h3>
+                    <span className="text-xs text-[var(--brand)]">{chegadasPendentes.length}</span>
+                  </div>
+                  <div className="divide-y divide-white/[0.04]">
+                    {chegadasPendentes.map((c) => (
+                      <div key={c.id} className="flex items-center gap-4 px-5 py-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--brand)]/15 text-[var(--brand)]">
+                          <Clock className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-white">{c.player?.name}</p>
+                          <p className="text-xs text-white/45">
+                            {c.kind === "emprestimo" ? "Empréstimo" : "Compra"} fechada na semana {c.agreedWeek}
+                            {" · "}pago {formatCurrency(c.fee ?? 0)}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-xs font-medium text-[var(--brand)]">
+                          inscreve na semana {nextTransferWindowWeek(gameEngine.currentWeek)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex min-h-0 flex-col rounded-xl bg-gradient-to-br from-[#1c2b2f]/80 via-[#162224]/80 to-[#0d1618]/80 backdrop-blur-sm border border-white/[0.08] overflow-hidden">
                 <div className="flex shrink-0 items-center justify-between border-b border-white/[0.04] px-5 py-4">

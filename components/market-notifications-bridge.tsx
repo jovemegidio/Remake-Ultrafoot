@@ -29,9 +29,13 @@ export function MarketNotificationsBridge() {
   notificar.current = addNotification
   const transferOffers = useGameEngine(s => s.transferOffers)
   const marketInterests = useGameEngine(s => s.marketInterests)
+  const pendingIn = useGameEngine(s => s.pendingIncomingTransfers)
+  const squad = useGameEngine(s => s.squadPlayers)
 
   const seenOffers = useRef<Set<number>>(new Set())
   const seenInterests = useRef<Set<string>>(new Set())
+  /** id da transferencia pendente -> nome, para avisar quando ela sair da fila. */
+  const pendentesVistos = useRef<Map<string, string>>(new Map())
   const primed = useRef(false)
 
   // Na primeira passada, marca tudo como visto SEM notificar — senao o jogador
@@ -41,7 +45,10 @@ export function MarketNotificationsBridge() {
     primed.current = true
     for (const o of transferOffers ?? []) seenOffers.current.add(o.id)
     for (const i of marketInterests ?? []) seenInterests.current.add(i.id)
-  }, [transferOffers, marketInterests])
+    // A fila de chegadas tambem entra "ja vista": quem abre o jogo com um acerto
+    // pendente nao deve levar o aviso de chegada antes de a janela abrir.
+    for (const p of pendingIn ?? []) pendentesVistos.current.set(p.id, p.player?.name ?? "")
+  }, [transferOffers, marketInterests, pendingIn])
 
   // PROPOSTA RECEBIDA por um jogador meu.
   useEffect(() => {
@@ -80,6 +87,41 @@ export function MarketNotificationsBridge() {
       })
     }
   }, [marketInterests])
+
+  // ─── CHEGADA DE REFORÇO ACERTADO FORA DA JANELA ────────────────────────────
+  //
+  // ⚠️ O RELATO QUE ISTO RESOLVE: "paguei a multa, negociei com o jogador, e o
+  // acertado não veio ao clube".
+  //
+  // A janela de transferências fica FECHADA em 30 das 52 semanas. Fechada, o
+  // motor cobra o valor NA HORA e guarda o atleta em `pendingIncomingTransfers`
+  // até a janela abrir. Ele chega mesmo — mas nada avisava, nenhuma tela
+  // mostrava a fila, e a única pista era um aviso passageiro no mercado. Para
+  // quem joga: o dinheiro sumiu e o reforço não existe em lugar nenhum.
+  //
+  // Aqui fica a METADE do conserto que avisa a chegada; a outra é a fila
+  // visível na Central de Transferências.
+  useEffect(() => {
+    if (!primed.current) return
+    const agora = new Set((pendingIn ?? []).map(p => p.id))
+    for (const [id, nome] of pendentesVistos.current) {
+      if (agora.has(id)) continue
+      pendentesVistos.current.delete(id)
+      // Saiu da fila E está no elenco = chegou de verdade. Sem esta conferência,
+      // uma entrada descartada por nome repetido viraria um "chegou" mentiroso.
+      const chegou = (squad ?? []).some(
+        p => p.name.trim().toLocaleLowerCase("pt-BR") === nome.trim().toLocaleLowerCase("pt-BR"),
+      )
+      if (!chegou) continue
+      notificar.current({
+        type: "transfer", priority: "high",
+        title: `${nome} se apresentou`,
+        message: `A janela abriu e ${nome} foi registrado no elenco. O acerto tinha sido fechado fora do período de inscrições.`,
+        href: "/elenco",
+      })
+    }
+    for (const p of pendingIn ?? []) pendentesVistos.current.set(p.id, p.player?.name ?? "")
+  }, [pendingIn, squad])
 
   return null
 }
