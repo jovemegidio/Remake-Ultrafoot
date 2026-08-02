@@ -1,5 +1,7 @@
 {
   "version": "1.0.25",
   "notes": "O launcher passou a conferir o instalador ANTES de executa-lo: tamanho e assinatura precisam bater com o que o servidor anuncia. Se nao baterem, ele recusa o arquivo e avisa, em vez de tentar instalar e falhar calado. E se uma atualizacao nao pegar duas vezes seguidas, ele para de tentar sozinho e libera o Jogar normalmente — nada de ficar preso na tela de \"atualizando\". Tambem da para fechar essa tela e jogar com a versao instalada enquanto o download acontece.",
-  "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe"
+  "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot-Launcher-Setup.exe",
+  "sha256": "D637B79BE9268FF45DB99FE649D2CE1E6476F790E08B094897641CA59E1EB08D",
+  "size": 17553721
 }
