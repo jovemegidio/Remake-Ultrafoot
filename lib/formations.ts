@@ -82,7 +82,13 @@ export const FORMATIONS: Record<string, { name: string; positions: FormationSlot
     positions: [
       { pos: "GOL", x: 50, y: 92 },
       { pos: "ZAG", x: 75, y: 78 },
-      { pos: "ZAG", x: 50, y: 82 },
+      // O zagueiro central estava em y:82, a 10 pontos do goleiro (50,92) e na
+      // MESMA coluna — os dois cards se sobrepunham em qualquer largura de tela,
+      // porque a distancia e do dado, nao do tamanho do card. Nas formacoes de 4
+      // defensores isso nao acontece: os zagueiros ficam em x:35 e x:65, longe
+      // da coluna do goleiro. Aqui o do meio cai bem em cima dele.
+      // Subir para y:76 alinha o trio defensivo e nao muda a forma tatica.
+      { pos: "ZAG", x: 50, y: 76 },
       { pos: "ZAG", x: 25, y: 78 },
       { pos: "ALD", x: 90, y: 50 },
       { pos: "VOL", x: 65, y: 55 },
@@ -99,7 +105,9 @@ export const FORMATIONS: Record<string, { name: string; positions: FormationSlot
       { pos: "GOL", x: 50, y: 92 },
       { pos: "ALD", x: 90, y: 65 },
       { pos: "ZAG", x: 70, y: 78 },
-      { pos: "ZAG", x: 50, y: 82 },
+      // Mesmo caso do 3-5-2: o zagueiro central colidia com o goleiro por estar
+      // na mesma coluna, a 10 pontos dele.
+      { pos: "ZAG", x: 50, y: 76 },
       { pos: "ZAG", x: 30, y: 78 },
       { pos: "ALE", x: 10, y: 65 },
       { pos: "MEI", x: 70, y: 45 },

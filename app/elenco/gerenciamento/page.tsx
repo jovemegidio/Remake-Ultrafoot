@@ -726,23 +726,63 @@ export default function ElencoPage() {
     }
     saveTacticalSetup(players.map(player => player.name), formation, savedPositions)
     announceOnlineAction("lineup_update", { formation, starters: players.map(player => player.name) })
+
+    // Confirmacao SO no botao, que vira "Salvo ✓" por 2,2 s.
+    //
+    // Aqui havia tambem um `addNotification`, e notificacao neste jogo e
+    // PERSISTIDA (components/notifications-system grava em
+    // `ultrafoot:notifications` e recarrega em cada tela). O resultado era o
+    // relato do betatester: "a notificacao de time salvo apareceu 3x — uma apos
+    // salvar, na tela de adversario e na tela de comecar a partida".
+    //
+    // A central de notificacoes existe para o que o jogador precisa REVER
+    // depois (proposta, lesao, resultado). Confirmacao de uma acao que ele
+    // acabou de fazer, com feedback imediato no proprio botao, nao pertence la.
     setTacticalSaved(true)
-    addNotification({ type: "system", title: "Tática salva", message: `${formation} e os 11 titulares serão usados na partida e no radar ao vivo.`, priority: "medium" })
     window.setTimeout(() => setTacticalSaved(false), 2200)
   }
 
   // Sincroniza titulares com o game-engine sempre que players mudar
   // (game-engine usa nome como chave pois os IDs internos diferem)
+  //
+  // A dependencia e a ASSINATURA (nomes dos titulares), nao o array `players`.
+  // O hook do roster monta objetos novos a cada leitura, entao `players` trocava
+  // de identidade sem mudanca real de conteudo e este efeito redisparava — junto
+  // com `engineSquadPlayers`, que tambem e referencia nova a cada `set` do
+  // zustand. O guard `ep.isStarter !== shouldBeStarter` evitava a escrita, mas
+  // nao o ciclo: era o "Maximum update depth exceeded" ao abrir esta tela.
+  const assinaturaTitulares = players.map(p => p.name).join("|")
   useEffect(() => {
-    if (engineSquadPlayers.length === 0) return
-    const starterNames = new Set(players.map(p => p.name))
-    engineSquadPlayers.forEach((ep: EnginePlayer) => {
-      const shouldBeStarter = starterNames.has(ep.name)
+    // DUAS correcoes combinadas neste efeito:
+    //
+    // 1) HOMONIMOS — um `Set` de nomes marcava TODOS os jogadores com aquele
+    //    nome. 33 times dos dados reais tem homonimo no mesmo elenco (o
+    //    Jacuipense tem dois "Vicente"), e escalar um colocava os dois em campo.
+    //    Contamos quantos de cada nome foram escalados e marcamos essa
+    //    quantidade, na ordem do elenco.
+    //
+    // 2) LOOP DE RENDER — ler `engineSquadPlayers` do store fazia este efeito
+    //    redisparar a cada `set` do zustand, e `players` (array novo a cada
+    //    leitura do roster) fechava o ciclo: "Maximum update depth exceeded" ao
+    //    abrir a tela. Agora dependemos da ASSINATURA dos titulares e lemos o
+    //    squad via `getState()`, sem assinar o store.
+    const squad = useGameEngine.getState().squadPlayers
+    if (squad.length === 0) return
+
+    const faltam = new Map<string, number>()
+    for (const nome of assinaturaTitulares.split("|").filter(Boolean)) {
+      faltam.set(nome, (faltam.get(nome) ?? 0) + 1)
+    }
+
+    squad.forEach((ep: EnginePlayer) => {
+      const restantes = faltam.get(ep.name) ?? 0
+      const shouldBeStarter = restantes > 0
+      if (shouldBeStarter) faltam.set(ep.name, restantes - 1)
       if (ep.isStarter !== shouldBeStarter) {
         engineSetStarter(ep.id, shouldBeStarter)
       }
     })
-  }, [players, engineSquadPlayers, engineSetStarter])
+  }, [assinaturaTitulares, engineSetStarter])
 
   // Navegacao por controle no elenco
   useEffect(() => {

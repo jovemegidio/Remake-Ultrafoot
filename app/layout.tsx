@@ -17,6 +17,7 @@ import { AvisoAtualizacaoElencos } from "@/components/aviso-atualizacao-elencos"
 import { GameAutosave } from "@/components/game-autosave"
 import { PerformanceProfileBootstrap } from "@/components/performance-profile"
 import { MotionProfileProvider } from "@/components/motion-profile"
+import { BotaoMinimizar } from "@/components/botao-minimizar"
 import "./globals.css"
 
 const performanceBootstrapScript = `try{const k="ultrafoot:performance-profile";const s=localStorage.getItem(k);const low=(navigator.deviceMemory||8)<=4||(navigator.hardwareConcurrency||8)<=4;const p=s==="economy"||s==="balanced"||s==="quality"?s:(low?"economy":"balanced");document.documentElement.dataset.performance=p;localStorage.setItem(k,p);const forced=localStorage.getItem("ultrafoot:performance-mode");if(forced==="on"||(forced!=="off"&&low)){document.documentElement.setAttribute("data-performance-mode","");document.documentElement.setAttribute("data-a11y-reduce-motion","")}}catch{document.documentElement.dataset.performance="balanced"}`
@@ -84,6 +85,10 @@ export default function RootLayout({
                 {/* Avisos e confirmações do jogo, no lugar das caixas do Windows. */}
                 <DialogoDoJogo />
                 <MusicPlayerWrapper />
+                {/* Minimizar sem Alt+Tab. Fora da EaActionBar de propósito: aquela
+                    some na splash e no editor, e sair do jogo precisa valer em
+                    qualquer tela. */}
+                <BotaoMinimizar />
               </NotificationsProvider>
             </GamepadProvider>
           </ThemeProvider>

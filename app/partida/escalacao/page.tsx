@@ -174,18 +174,39 @@ export default function PartidaEscalacaoPage() {
     setPlayerPositions({})
   }
 
-  // Sincroniza titulares com o game-engine sempre que players mudar
-  // (game-engine usa nome como chave pois os IDs internos diferem)
+  // Sincroniza titulares com o game-engine sempre que a escalacao mudar.
+  //
+  // MESMO efeito da tela de gerenciamento, com as MESMAS duas correcoes:
+  //
+  // 1) HOMONIMOS — um `Set` de nomes marcava TODOS os jogadores com aquele
+  //    nome. 33 times dos dados reais tem homonimo no mesmo elenco (o
+  //    Jacuipense tem dois "Vicente"), e escalar um colocava os dois em campo.
+  //    Contamos quantos de cada nome foram escalados e marcamos essa
+  //    quantidade, na ordem do elenco.
+  //
+  // 2) LOOP DE RENDER — depender de `players` (array novo a cada leitura do
+  //    roster) e de `engineSquadPlayers` (referencia nova a cada `set` do
+  //    zustand) fazia o efeito redisparar sem mudanca real. A dependencia passa
+  //    a ser a ASSINATURA dos titulares, e o squad e lido via `getState()`.
+  const assinaturaTitulares = players.map(p => p.name).join("|")
   useEffect(() => {
-    if (engineSquadPlayers.length === 0) return
-    const starterNames = new Set(players.map(p => p.name))
-    engineSquadPlayers.forEach((ep: EnginePlayer) => {
-      const shouldBeStarter = starterNames.has(ep.name)
+    const squad = useGameEngine.getState().squadPlayers
+    if (squad.length === 0) return
+
+    const faltam = new Map<string, number>()
+    for (const nome of assinaturaTitulares.split("|").filter(Boolean)) {
+      faltam.set(nome, (faltam.get(nome) ?? 0) + 1)
+    }
+
+    squad.forEach((ep: EnginePlayer) => {
+      const restantes = faltam.get(ep.name) ?? 0
+      const shouldBeStarter = restantes > 0
+      if (shouldBeStarter) faltam.set(ep.name, restantes - 1)
       if (ep.isStarter !== shouldBeStarter) {
         engineSetStarter(ep.id, shouldBeStarter)
       }
     })
-  }, [players, engineSquadPlayers, engineSetStarter])
+  }, [assinaturaTitulares, engineSetStarter])
 
   // Navegacao por controle no elenco
   useEffect(() => {
@@ -599,11 +620,27 @@ export default function PartidaEscalacaoPage() {
                 <span className="text-sm text-white/60">{t.squad.playerImpact}</span>
               </div>
               
-              <div 
+              {/*
+                CAMPINHO — os cards medem-se pelo CAMPO, nao pela fonte do root.
+                Relato de betatester: com a escala do jogo em 150%, "os cards
+                ficam bugados, meio que misturam com outros e parece que ta com
+                1 a menos".
+                A escala de acessibilidade multiplica o `font-size` do <html>
+                (globals.css), e todo `rem` acompanha. Como as POSICOES dos
+                jogadores sao percentuais do container e o container tem
+                `aspectRatio` fixo, o campo NAO cresce junto: medido, o campo
+                ficou em 322px nos dois casos enquanto o card foi de 45px para
+                67px. Resultado: de 2 para 6 sobreposicoes, e cards colidindo.
+                `containerType: inline-size` deixa os filhos usarem `cqw`
+                (1% da largura do container), entao card e campo crescem juntos
+                e a escala de fonte deixa de deformar o layout.
+              */}
+              <div
                 className="relative rounded-2xl overflow-hidden"
                 style={{
                   background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
                   aspectRatio: "3 / 4",
+                  containerType: "inline-size",
                 }}
               >
                 {/* Pitch stripes */}
@@ -655,40 +692,77 @@ export default function PartidaEscalacaoPage() {
                       "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group z-10",
                       selectedPlayerId === player.id && "z-20"
                     )}
+                    style={{
+                      // O card mede-se pelo CAMPO (cqw), nao pelo font-size do
+                      // root. Sem isto, a escala de acessibilidade em 150%
+                      // inflava o card 49% enquanto o campo ficava do mesmo
+                      // tamanho, e os cards colidiam entre si.
+                      //
+                      // O `clamp` segura os extremos: em telas muito estreitas o
+                      // card nao encolhe a ponto de o nome sumir, e em telas
+                      // largas nao vira um bloco gigante.
+                      fontSize: "clamp(0.5rem, 3.4cqw, 0.95rem)",
+                    }}
                   >
-                    <div className={cn(
-                      "px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
-                      selectedPlayerId === player.id
-                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
-                        : "bg-black/60 text-white/90"
-                    )}>
+                    <div
+                      className={cn(
+                        "rounded font-semibold whitespace-nowrap transition-all",
+                        selectedPlayerId === player.id
+                          ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                          : "bg-black/60 text-white/90"
+                      )}
+                      // `em` acompanha o fontSize do card (que vem do campo, em
+                      // cqw). Com `text-[8px]` fixo, o nome nao acompanhava o
+                      // resto e destoava; com `rem`, a escala 150% o inflava
+                      // sozinho e ele passava por cima dos vizinhos.
+                      style={{ fontSize: "0.75em", padding: "0.15em 0.5em", marginBottom: "0.35em" }}
+                    >
                       {player.name.split(" ").pop()}
                     </div>
                     
                     <div className="relative">
                       {player.potential > player.overall + 3 && (
-                        <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[var(--brand)] flex items-center justify-center z-10">
-                          <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
+                        <div
+                          className="absolute rounded-full bg-[var(--brand)] flex items-center justify-center z-10"
+                          style={{ height: "1.1em", width: "1.1em", top: "-0.2em", left: "-0.2em" }}
+                        >
+                          <TrendingUp className="text-black" style={{ height: "0.7em", width: "0.7em" }} />
                         </div>
                       )}
                       
+                      {/*
+                        `!h-[3em] !w-[3em]` sobrescreve o `h-10 w-10` (2,5rem) do
+                        PlayerAvatarCircle. O componente e compartilhado com
+                        outras telas, entao a medida em `em` fica AQUI em vez de
+                        mudar o padrao dele: so o campinho precisa acompanhar o
+                        container, e nao a fonte do root.
+                      */}
                       <PlayerAvatarCircle
                         name={player.name}
                         teamColor={userTeam.cor1}
                         size="sm"
                         className={cn(
-                          "border-2 transition-all",
+                          "border-2 transition-all !h-[3em] !w-[3em]",
                           selectedPlayerId === player.id
                             ? "border-[var(--brand)] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
                             : "border-white/30"
                         )}
                       />
-                      
-                      <div className={cn(
-                        "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
-                        "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
-                        selectedPlayerId === player.id ? "border-[var(--brand)]" : "border-white/30"
-                      )}>
+
+                      <div
+                        className={cn(
+                          "absolute rounded-full flex items-center justify-center font-black",
+                          "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
+                          selectedPlayerId === player.id ? "border-[var(--brand)]" : "border-white/30"
+                        )}
+                        style={{
+                          height: "1.5em",
+                          width: "1.5em",
+                          fontSize: "0.72em",
+                          bottom: "-0.25em",
+                          right: "-0.25em",
+                        }}
+                      >
                         <span className={getOverallColor(player.overall)}>{player.overall}</span>
                       </div>
                     </div>
@@ -819,9 +893,14 @@ export default function PartidaEscalacaoPage() {
               ref={pitchRef}
               onDragOver={handleDragOver}
               onDrop={handleDropOnPitch}
-              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] max-h-[500px]" 
+              className="relative rounded-xl md:rounded-2xl overflow-hidden flex-1 min-h-[350px] max-h-[500px]"
               style={{
                 background: `linear-gradient(180deg, oklch(0.42 0.14 145), oklch(0.32 0.11 145))`,
+                // Ver o comentario do outro campinho: os cards passam a medir-se
+                // pelo CONTAINER (cqw), e nao pelo font-size do <html>. Sem isto,
+                // a escala de acessibilidade em 150% inflava o card ~49% enquanto
+                // o campo ficava do mesmo tamanho, e eles colidiam.
+                containerType: "inline-size",
               }}
             >
               {/* Pitch stripes */}
@@ -889,14 +968,18 @@ export default function PartidaEscalacaoPage() {
                     selectedPlayerId === player.id && "z-20",
                     dragOverTarget === player.id && "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-transparent rounded-full"
                   )}
+                  style={{ fontSize: "clamp(0.5rem, 3.4cqw, 0.95rem)" }}
                 >
                   {/* Player name tag */}
-                  <div className={cn(
-                    "px-1.5 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] font-semibold mb-1 whitespace-nowrap transition-all",
-                    selectedPlayerId === player.id
-                      ? "bg-[var(--brand)] text-[var(--brand-ink)]"
-                      : "bg-black/60 text-white/90 group-hover:bg-black/80"
-                  )}>
+                  <div
+                    className={cn(
+                      "rounded font-semibold whitespace-nowrap transition-all",
+                      selectedPlayerId === player.id
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                        : "bg-black/60 text-white/90 group-hover:bg-black/80"
+                    )}
+                    style={{ fontSize: "0.75em", padding: "0.15em 0.5em", marginBottom: "0.35em" }}
+                  >
                     {player.name.split(" ").pop()}
                   </div>
                   
@@ -907,26 +990,38 @@ export default function PartidaEscalacaoPage() {
                       teamColor={userTeam.cor1}
                       size="sm"
                       className={cn(
-                        "border-2 transition-all",
+                        "border-2 transition-all !h-[3em] !w-[3em]",
                         selectedPlayerId === player.id
                           ? "border-[var(--brand)] shadow-[0_0_12px_rgba(29,185,84,0.5)]"
                           : "border-white/30 group-hover:border-white/60"
                       )}
                     />
-                    
+
                     {/* Overall badge */}
-                    <div className={cn(
-                      "absolute -bottom-1 -right-1 h-5 w-5 md:h-6 md:w-6 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black",
-                      "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
-                      selectedPlayerId === player.id ? "border-[var(--brand)]" : "border-white/30"
-                    )}>
+                    <div
+                      className={cn(
+                        "absolute rounded-full flex items-center justify-center font-black",
+                        "bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border",
+                        selectedPlayerId === player.id ? "border-[var(--brand)]" : "border-white/30"
+                      )}
+                      style={{
+                        height: "1.5em",
+                        width: "1.5em",
+                        fontSize: "0.72em",
+                        bottom: "-0.25em",
+                        right: "-0.25em",
+                      }}
+                    >
                       <span className={getOverallColor(player.overall)}>{player.overall}</span>
                     </div>
-                    
+
                     {/* Potential indicator */}
                     {player.potential > player.overall + 3 && (
-                      <div className="absolute -top-1 -left-1 h-3 w-3 md:h-4 md:w-4 rounded-full bg-[var(--brand)] flex items-center justify-center">
-                        <TrendingUp className="h-2 w-2 md:h-2.5 md:w-2.5 text-black" />
+                      <div
+                        className="absolute rounded-full bg-[var(--brand)] flex items-center justify-center"
+                        style={{ height: "1.1em", width: "1.1em", top: "-0.2em", left: "-0.2em" }}
+                      >
+                        <TrendingUp className="text-black" style={{ height: "0.7em", width: "0.7em" }} />
                       </div>
                     )}
                   </div>

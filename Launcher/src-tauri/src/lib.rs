@@ -244,6 +244,15 @@ fn read_installed_game() -> InstalledGame {
         ),
     ];
 
+    // VARRE TUDO E FICA COM A MAIOR VERSAO — nao com a primeira encontrada.
+    //
+    // Antes isto dava `return` na primeira chave que batia. Quem tivesse uma
+    // entrada velha em HKCU (instalacao antiga que nunca foi desinstalada)
+    // ficava preso nela: o launcher lia a versao velha, oferecia atualizar,
+    // instalava certo, e na proxima abertura lia a MESMA chave velha de novo.
+    // Era o "atualiza, sai, entra e atualiza dnv".
+    let mut melhor: Option<(Vec<u32>, InstalledGame)> = None;
+
     for (root, path) in roots.iter() {
         let Ok(uninstall) = root.open_subkey(*path) else {
             continue;
@@ -263,14 +272,42 @@ fn read_installed_game() -> InstalledGame {
             let install_loc: String = sub.get_value("InstallLocation").unwrap_or_default();
             let display_icon: String = sub.get_value("DisplayIcon").unwrap_or_default();
             let uninstall: String = sub.get_value("UninstallString").unwrap_or_default();
-            return InstalledGame {
+            let path_exe = resolve_game_exe(&install_loc, &display_icon, &uninstall);
+
+            // Chave sem executavel no disco e resto de desinstalacao: ignora,
+            // senao ela venceria uma instalacao boa e o Jogar abriria o nada.
+            if path_exe.is_none() {
+                continue;
+            }
+
+            let peso = parse_versao(&version);
+            let candidato = InstalledGame {
                 installed: true,
                 version: (!version.is_empty()).then_some(version),
-                path: resolve_game_exe(&install_loc, &display_icon, &uninstall),
+                path: path_exe,
             };
+            if melhor.as_ref().map(|(p, _)| peso > *p).unwrap_or(true) {
+                melhor = Some((peso, candidato));
+            }
         }
     }
-    InstalledGame::default()
+
+    melhor.map(|(_, g)| g).unwrap_or_default()
+}
+
+/// Normaliza um `DisplayVersion` para comparacao numerica.
+///
+/// O registro nem sempre traz "1.0.239" limpo: ja apareceu com prefixo `v`,
+/// com quarto componente (`1.0.239.0`) e com sufixo (`1.0.239 (x64)`). Sem
+/// normalizar, "v1.0.239" virava [0,0,0] e o launcher achava que TODA versao
+/// publicada era mais nova — atualizava para sempre.
+fn parse_versao(s: &str) -> Vec<u32> {
+    s.trim()
+        .trim_start_matches(['v', 'V'])
+        .split(|c: char| !c.is_ascii_digit())
+        .filter(|p| !p.is_empty())
+        .filter_map(|p| p.parse::<u32>().ok())
+        .collect()
 }
 
 /// Caminho do .exe do jogo a partir do que o desinstalador do Windows registrou.
@@ -901,14 +938,13 @@ fn spawn_installer_and_relaunch(_setup: &std::path::Path) -> Result<(), String> 
 }
 
 /// Compara "1.0.1" > "1.0.0" numericamente, segmento a segmento.
+///
+/// Usa a mesma normalizacao do registro: `split('.')` cru transformava
+/// "v1.0.239" em [0,0,0] e "1.0.239 (x64)" em [1,0,0], fazendo qualquer
+/// publicacao parecer mais nova que o que ja estava instalado.
 fn is_newer(latest: &str, current: &str) -> bool {
-    let parse = |s: &str| {
-        s.split('.')
-            .map(|p| p.parse::<u32>().unwrap_or(0))
-            .collect::<Vec<u32>>()
-    };
-    let a = parse(latest);
-    let b = parse(current);
+    let a = parse_versao(latest);
+    let b = parse_versao(current);
     let n = a.len().max(b.len());
     for i in 0..n {
         let x = a.get(i).copied().unwrap_or(0);

@@ -2842,6 +2842,8 @@ export function useGameManager() {
               passagensAtuais: currentState.passagens,
               setSaveState: (patch) => setSaveState(patch as Partial<typeof currentState>),
               limparClubeNoMotor: () => useGameEngine.getState().limparClubeAtual(),
+              dividaAtual: currentState.debt,
+              dividasPorClube: currentState.debtByClub,
               patchExtra: { managingNationalTeamId: selecaoAtual },
             })
             if (typeof window !== "undefined") hardNavigate("/")
@@ -2870,6 +2872,8 @@ export function useGameManager() {
             passagensAtuais: currentState.passagens,
             setSaveState: (patch) => setSaveState(patch as Partial<typeof currentState>),
             limparClubeNoMotor: () => useGameEngine.getState().limparClubeAtual(),
+            dividaAtual: currentState.debt,
+            dividasPorClube: currentState.debtByClub,
           })
           if (typeof window !== "undefined") hardNavigate("/treinador")
           // Encerra o avanco: sem clube, nao ha ceremonia de campeao a checar.

@@ -2,6 +2,11 @@ name: Launcher (Windows, Linux e macOS)
 
 on:
   workflow_dispatch:
+    inputs:
+      publicar_windows:
+        description: "Publicar o instalador do Windows na tag fixa 'launcher' (desmarcado = so compila e confere)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -18,6 +23,14 @@ jobs:
           - platform: macos-14
             name: mac
             args: --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json
+          # WINDOWS. Entrou porque o caminho do launcher que mais quebra e o do
+          # Windows — deteccao de versao pelo registro, instalacao NSIS silenciosa,
+          # auto-update — e NADA disso era compilado aqui. Os quatro bugs do
+          # "atualiza, sai, entro e atualiza dnv" viviam em blocos #[cfg(windows)]
+          # que nenhuma CI tocava: Linux e macOS compilam o outro lado do cfg.
+          - platform: windows-latest
+            name: windows
+            args: ""
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +66,8 @@ jobs:
         working-directory: Launcher
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build & publish launcher
+      - name: Build & publish launcher (Linux/macOS)
+        if: matrix.name != 'windows'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,6 +79,73 @@ jobs:
           releaseBody: "Launcher do Ultrafoot 26 para Linux (.AppImage/.deb) e macOS (.dmg). Baixe, instale e o launcher cuida de baixar/atualizar o jogo."
           releaseDraft: false
           prerelease: false
+
+      # O WINDOWS NAO USA O tauri-action: ele publicaria no release
+      # `launcher-desktop-*`, e o Windows le de outro lugar — a tag FIXA
+      # `launcher`, de onde saem `Ultrafoot-Launcher-Setup.exe` e o
+      # `launcher.json` do auto-update. Buildar e publicar sao passos separados
+      # para o build servir de checagem mesmo quando nao se quer publicar.
+      - name: Build launcher (Windows)
+        if: matrix.name == 'windows'
+        working-directory: Launcher
+        run: pnpm tauri build
+
+      - name: Conferir o instalador gerado
+        if: matrix.name == 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          NSIS="Launcher/src-tauri/target/release/bundle/nsis"
+          SETUP=$(ls "$NSIS"/*-setup.exe 2>/dev/null | head -1)
+          if [ -z "$SETUP" ]; then
+            echo "ERRO: o build nao gerou nenhum *-setup.exe em $NSIS"
+            ls -la "$NSIS" 2>/dev/null || echo "(diretorio nao existe)"
+            exit 1
+          fi
+          # Um instalador de poucos KB e build quebrado que "passou": o NSIS
+          # gera o .exe mesmo quando o front nao foi empacotado.
+          TAM=$(stat -c%s "$SETUP" 2>/dev/null || stat -f%z "$SETUP")
+          echo "instalador: $SETUP ($((TAM / 1024 / 1024)) MB)"
+          if [ "$TAM" -lt 5000000 ]; then
+            echo "ERRO: instalador com $TAM bytes — pequeno demais para ser valido"
+            exit 1
+          fi
+          echo "SETUP=$SETUP" >> "$GITHUB_ENV"
+
+      # PUBLICAR E OPCIONAL. Sem isto, rodar o workflow para conferir se compila
+      # sobrescreveria o instalador que os jogadores baixam.
+      - name: Publicar o instalador do Windows
+        if: matrix.name == 'windows' && inputs.publicar_windows
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          DEST="Ultrafoot-Launcher-Setup.exe"
+          cp "$SETUP" "$DEST"
+          gh release upload launcher "$DEST" --repo "$GITHUB_REPOSITORY" --clobber
+          echo "publicado na tag fixa 'launcher' como $DEST"
+
+          # CONFERE PELO CONTEUDO, nunca pelo status: o CDN devolve 200 com o
+          # arquivo antigo por um instante (mesmo motivo do
+          # publicar-launcher-config.mjs conferir pelo corpo).
+          LOCAL=$(sha256sum "$DEST" | cut -d' ' -f1)
+          for tentativa in 1 2 3 4 5 6; do
+            curl -sL --max-time 120 -o baixado.exe \
+              "https://github.com/$GITHUB_REPOSITORY/releases/download/launcher/$DEST?cb=$(date +%s)" || true
+            REMOTO=$(sha256sum baixado.exe 2>/dev/null | cut -d' ' -f1 || echo "")
+            if [ "$LOCAL" = "$REMOTO" ]; then
+              echo "confirmado: o remoto e o binario que acabou de ser buildado"
+              echo "  sha256 $LOCAL"
+              exit 0
+            fi
+            echo "tentativa $tentativa: o CDN ainda serve outro binario, esperando..."
+            sleep 20
+          done
+          echo "ERRO: depois de 6 tentativas o remoto nao bate com o local."
+          echo "  local  $LOCAL"
+          echo "  remoto ${REMOTO:-(download falhou)}"
+          exit 1
 
       # O "LATEST" DO GITHUB TEM DE APONTAR PARA O RELEASE DO JOGO.
       #
@@ -81,6 +162,9 @@ jobs:
       # deixar o latest errado.
       - name: Manter o release do jogo como latest
         if: always()
+        # `shell: bash` explicito: no windows-latest o padrao e PowerShell, onde
+        # `$GITHUB_REPOSITORY` e `$(...)` nao significam o mesmo e o passo falharia.
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

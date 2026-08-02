@@ -563,7 +563,23 @@ export interface GameState {
     campeao?: string
     jogada: boolean
   } | null
+  /**
+   * Dívida do clube ATUAL. Continua sendo o campo que as telas leem.
+   *
+   * Era o único lugar onde a dívida existia — e `assumirClube` não o limpava,
+   * então ela acompanhava o técnico de clube em clube. Amortizar no Botafogo,
+   * sair e voltar depois mostrava o mesmo saldo devedor de sempre: o número na
+   * tela nunca tinha sido do clube em que se estava.
+   */
   debt?: ClubDebtState
+  /**
+   * Dívida de cada clube por onde o técnico passou, por sigla.
+   *
+   * Ao assumir um clube, `debt` é trocado pelo que estiver guardado aqui (ou
+   * fica vazio, se for a primeira passagem). Ao sair, o saldo atual é gravado —
+   * voltar anos depois reencontra a dívida como foi deixada.
+   */
+  debtByClub?: Record<string, ClubDebtState>
   scoutingDepartment?: ScoutingDepartmentState
   stadiumPitch?: StadiumPitch
   /** Torcida do clube já movimentada pela carreira (undefined = valor estático do time). */
@@ -797,6 +813,20 @@ function safeParse(raw: string | null): GameState | null {
     // campanha em andamento — regressao pior do que o problema que a trava
     // resolve. Um save gravado e, por definicao, uma carreira ja iniciada.
     if (parsed.preOfficeVisitado === undefined) parsed.preOfficeVisitado = true
+
+    // A DIVIDA PASSOU A SER POR CLUBE.
+    //
+    // Antes existia so `debt`, um campo global que acompanhava o tecnico: sair
+    // de um clube e assumir outro levava o saldo devedor junto, e amortizar
+    // nunca mudava nada ao voltar. Agora cada clube tem a sua em `debtByClub`.
+    //
+    // Save antigo tem `debt` sem dono. Atribuimos ao clube ATUAL — e a leitura
+    // certa: a divida foi criada em novo-jogo para o clube onde a carreira
+    // comecou, e e nele que o tecnico esta ate trocar de emprego. Sem isto, a
+    // divida existente ficaria orfa e sumiria da tela na primeira troca.
+    if (parsed.debt && !parsed.debtByClub && parsed.selectedTeamShort) {
+      parsed.debtByClub = { [parsed.selectedTeamShort]: parsed.debt }
+    }
     // Migra version 2 para a atual (adiciona campos de treinador e legado)
     if (parsed.version === 2) {
       return {

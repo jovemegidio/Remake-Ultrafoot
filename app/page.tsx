@@ -288,6 +288,11 @@ export default function DashboardPage() {
       navigate: hardNavigate,
       week: saveState.week,
       season: saveState.season,
+      // A dívida fica com o CLUBE. Sem isto ela seguia o técnico de emprego em
+      // emprego, e amortizar num clube não mudava nada ao voltar depois.
+      clubeAtual: saveState.selectedTeamShort,
+      dividaAtual: saveState.debt,
+      dividasPorClube: saveState.debtByClub,
     })
   }
 
@@ -308,6 +313,9 @@ export default function DashboardPage() {
       passagensAtuais: saveState.passagens,
       setSaveState: (patch) => setState(patch as Parameters<typeof setState>[0]),
       limparClubeNoMotor: () => useGameEngine.getState().limparClubeAtual(),
+      // A dívida fica arquivada com o clube que fica para trás.
+      dividaAtual: saveState.debt,
+      dividasPorClube: saveState.debtByClub,
     })
     hardNavigate("/treinador")
   }

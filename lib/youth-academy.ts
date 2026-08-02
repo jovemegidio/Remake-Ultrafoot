@@ -34,6 +34,18 @@ function hash(s: string): number {
 }
 
 /**
+ * Contador de peneiras desta sessao, para o id do jovem ser unico.
+ *
+ * `Date.now()` NAO basta: ele tem resolucao de milissegundo e duas geracoes
+ * seguidas caem no mesmo ms (medido: 2 de 6 ids ainda colidiam so com o
+ * relogio). O contador nao depende de tempo — duas chamadas nunca empatam.
+ *
+ * O relogio continua no id junto com o contador: o contador zera quando o jogo
+ * reabre, e sozinho voltaria a repetir os ids de uma sessao anterior.
+ */
+let peneirasGeradas = 0
+
+/**
  * Gera os prospectos da base para um clube/temporada.
  *
  * @param teamShort clube (parte do seed — cada clube tem a sua leva)
@@ -49,6 +61,9 @@ export function generateYouthProspects(
 ): SquadPlayer[] {
   const rnd = mulberry32(hash(`${teamShort}:${season}:base`))
   const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)]
+
+  // Selo desta peneira: contador (nunca empata) + relogio (sobrevive ao reinicio).
+  const peneira = `${Date.now().toString(36)}${(peneirasGeradas++).toString(36)}`
 
   // Base do overall e do potencial sobem um pouco com o prestigio do clube.
   const overallFloor = 48 + Math.round((prestige - 50) * 0.12)   // ~48-54
@@ -92,7 +107,20 @@ export function generateYouthProspects(
       Math.max(25, Math.min(85, overall + (b[chave] ?? 0) + Math.floor(rnd() * 9) - 4))
 
     out.push({
-      id: `youth_${teamShort}_${season}_${i}`,
+      // ID PRECISA SER ÚNICO ENTRE GERAÇÕES.
+      //
+      // Era `youth_<time>_<temporada>_<i>` — nada ali distingue uma peneira
+      // da outra. Duas gerações do mesmo clube na mesma temporada produziam
+      // os MESMOS 6 ids (medido: 6 de 6 colidiam).
+      //
+      // O estrago aparecia na venda: `receberPorJovem` usa `jovem:<id>` como
+      // recibo anti-duplicata, então a segunda venda com um id repetido era
+      // barrada em silêncio — o jovem saía da base e o dinheiro NÃO entrava.
+      // Era o relato "vendi o jogador e o dinheiro não caiu".
+      //
+      // Só o relógio não resolve: duas peneiras seguidas caem no mesmo
+      // milissegundo (2 de 6 ainda colidiam). Ver `peneirasGeradas`.
+      id: `youth_${teamShort}_${season}_${peneira}_${i}`,
       name: `${pick(FIRST)} ${pick(LAST)}`,
       position,
       age,

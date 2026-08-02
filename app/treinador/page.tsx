@@ -60,8 +60,12 @@ export default function TreinadorPage() {
       navigate: hardNavigate,
       week: state.week,
       season: state.season,
+      // A dívida fica com o CLUBE — ver o comentário em assumirClube.
+      clubeAtual: state.selectedTeamShort,
+      dividaAtual: state.debt,
+      dividasPorClube: state.debtByClub,
     })
-  }, [initializeGame, setState, state.week, state.season, state.contratadoEm, state.selectedTeamShort])
+  }, [initializeGame, setState, state.week, state.season, state.contratadoEm, state.selectedTeamShort, state.debt, state.debtByClub])
 
   const [ofertas, setOfertas] = useState<PendingJobOffer[]>([])
   const atualizarOfertas = useCallback(() => {

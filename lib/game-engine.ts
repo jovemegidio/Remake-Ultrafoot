@@ -34,6 +34,17 @@ import {
   type AtletaNaSemana, type ParesDeEntrosamento, type PlanoDeTreino,
 } from "@/lib/treino-e-entrosamento"
 
+/**
+ * Versao do formato persistido do motor. Fica numa constante porque e usada em
+ * DOIS lugares: o `persist` do zustand e o `persistGameEngineNow`.
+ *
+ * Estavam separados, cada um com o numero escrito a mao. Ao subir o `persist`
+ * para 4, o snapshot manual continuaria gravando 3 — e a migracao rodaria de
+ * novo a cada gravacao, para sempre.
+ */
+const GAME_ENGINE_PERSIST_VERSION = 4
+
+
 // ============================================
 // TIPOS E INTERFACES
 // ============================================
@@ -3334,7 +3345,19 @@ export const useGameEngine = create<GameEngineState>()(
         const ou = (v: number | undefined, desvio: number) =>
           v && v > 0 ? v : Math.max(20, Math.min(99, Math.round(base + desvio)))
 
-        const salario = Math.round(Math.max(8_000, base * 900))
+        // SALÁRIO DE CRIA DA BASE.
+        //
+        // Era `base * 900`: um garoto de overall 60 saía com R$ 54.000/mês —
+        // 2,25× o que o próprio jogo paga a um profissional do mesmo overall
+        // (`base * 400`, em generateSuccessorPlayer). Promover dois ou três
+        // arrebentava o teto salarial e o caixa ia a zero. Era o relato "promover
+        // júnior deixa o salário alto demais".
+        //
+        // Agora parte da MESMA referência dos profissionais e ainda aplica o
+        // desconto de quem sobe da base: primeiro contrato de cria não se
+        // negocia como o de um contratado pronto. O piso protege o overall
+        // baixo de virar salário simbólico.
+        const salario = Math.round(Math.max(4_000, base * 400 * 0.6))
         const novo: Player = {
           id: Math.max(Date.now(), ...state.squadPlayers.map(p => p.id + 1)),
           name: jovem.name,
@@ -6087,22 +6110,78 @@ export const useGameEngine = create<GameEngineState>()(
     }),
     {
       name: 'ultrafoot-game-engine',
-      version: 3,
+      version: GAME_ENGINE_PERSIST_VERSION,
       migrate: (persistedState, version) => {
-        const state = persistedState as Partial<GameEngineState>
-        if (version >= 3 || !Array.isArray(state.squadPlayers)) return state as GameEngineState
-        // v2 convertia CA (centroavante) em MEI ao criar o elenco. Repara somente
-        // esse sentido inequívoco da conversão, preservando edições manuais de
-        // posição feitas pelo usuário em qualquer outro jogador.
-        return {
-          ...state,
-          squadPlayers: state.squadPlayers.map((player: Player) => {
-            const canonical = getCanonicalSeedPosition(player.name)
-            return player.position === "MEI" && canonical === "ATA"
-              ? { ...player, position: "ATA" }
-              : player
-          }),
-        } as GameEngineState
+        let state = persistedState as Partial<GameEngineState>
+        if (!Array.isArray(state.squadPlayers)) return state as GameEngineState
+
+        // v2 -> v3: v2 convertia CA (centroavante) em MEI ao criar o elenco.
+        // Repara somente esse sentido inequívoco da conversão, preservando
+        // edições manuais de posição feitas pelo usuário em qualquer outro
+        // jogador.
+        //
+        // O `return` daqui virou encadeamento: com ele, um save v2 pularia a
+        // migração v4 abaixo.
+        if (version < 3) {
+          state = {
+            ...state,
+            squadPlayers: state.squadPlayers.map((player: Player) => {
+              const canonical = getCanonicalSeedPosition(player.name)
+              return player.position === "MEI" && canonical === "ATA"
+                ? { ...player, position: "ATA" }
+                : player
+            }),
+          }
+        }
+
+        // v3 -> v4: `isStarter` nasceu opcional e saves antigos não o têm.
+        //
+        // Sem ele, `available.filter(p => p.isStarter === true)` devolvia lista
+        // VAZIA na hora da partida, o motor caía no remonte automático e a
+        // escalação do treinador nunca valia — nem no primeiro jogo, sem
+        // desfalque nenhum. É a mesma queixa de "salvo e os jogadores que tirei
+        // continuam jogando", por uma terceira porta: o próprio relator suspeitou
+        // ("será que é por ser save antigo?").
+        //
+        // Marcamos um XI plausível em vez de deixar tudo `undefined`, para a tela
+        // abrir com titulares de verdade. Quem JÁ tem escalação salva não é
+        // tocado — só preenchemos quando ninguém está marcado.
+        if (version < 4) {
+          const jogadores = state.squadPlayers as Player[]
+          const alguemMarcado = jogadores.some(p => p.isStarter === true)
+          if (!alguemMarcado && jogadores.length > 0) {
+            const aptos = jogadores.filter(p => !p.injury)
+            const base = aptos.length >= 11 ? aptos : jogadores
+            const { starters } = pickStartingXI(base, (p) => p.position, (p) => p.overall)
+
+            // REDE DE SEGURANÇA: `pickStartingXI` encaixa por slot de formação e
+            // devolve MENOS de 11 quando o elenco não tem as posições certas. Sem
+            // isto a migração podia deixar o save sem titular nenhum — o mesmo
+            // problema que ela existe para resolver. Um XI imperfeito é melhor do
+            // que nenhum: o treinador ajusta na tela.
+            const titulares = new Set(starters.map(p => p.id))
+            if (titulares.size < Math.min(11, base.length)) {
+              for (const p of [...base].sort((a, b) => b.overall - a.overall)) {
+                if (titulares.size >= Math.min(11, base.length)) break
+                titulares.add(p.id)
+              }
+            }
+
+            state = {
+              ...state,
+              squadPlayers: jogadores.map(p => ({ ...p, isStarter: titulares.has(p.id) })),
+            }
+          } else {
+            // Já havia escalação: só normaliza o campo ausente para false, para
+            // `isStarter === true` passar a ser uma comparação confiável.
+            state = {
+              ...state,
+              squadPlayers: jogadores.map(p => ({ ...p, isStarter: p.isStarter === true })),
+            }
+          }
+        }
+
+        return state as GameEngineState
       },
       // Persistido no persistent-store (arquivo, sobrevive a reinstalacao) em vez do
       // localStorage da webview, que era limpo nos updates e fazia o elenco/tabela
@@ -6120,7 +6199,10 @@ export const useGameEngine = create<GameEngineState>()(
 export function persistGameEngineNow(): void {
   if (typeof window === "undefined") return
   const state = useGameEngine.getState()
-  storeSet(getCareerScopedKey("ultrafoot-game-engine"), JSON.stringify({ state, version: 3 }))
+  storeSet(
+    getCareerScopedKey("ultrafoot-game-engine"),
+    JSON.stringify({ state, version: GAME_ENGINE_PERSIST_VERSION }),
+  )
 }
 
 /** Salva titulares e formacao de uma vez, evitando um radar ler um estado intermediario. */
@@ -6129,14 +6211,28 @@ export function saveTacticalSetup(
   formation: string,
   tacticalPlayerPositions?: Record<string, { x: number; y: number }>,
 ): void {
-  const names = new Set(starterNames)
+  // HOMONIMOS: um `Set` marcava TODOS os jogadores com o mesmo nome, e homonimo
+  // no mesmo elenco nao e hipotese — 33 times dos dados reais tem (o Jacuipense
+  // tem dois "Vicente" e dois "Thiaguinho"). Salvar 11 titulares gravava 12
+  // `isStarter`, e o `slice(0, 11)` da partida cortava um jogador que o tecnico
+  // tinha escalado. Mesmo sintoma do desfalque, por outra porta.
+  //
+  // Contando quantos de cada nome vieram, marcamos essa mesma quantidade na
+  // ordem do elenco. Escolher *qual* dos homonimos exigiria ids estaveis entre
+  // UI e motor, o que hoje nao existe: a UI numera por indice do array
+  // (use-user-roster: `id: idx + 1`) e o motor tem os seus — e foi por isso que
+  // o casamento por nome apareceu.
+  const faltam = new Map<string, number>()
+  for (const n of starterNames) faltam.set(n, (faltam.get(n) ?? 0) + 1)
+
   useGameEngine.setState(state => ({
     formation,
     tacticalPlayerPositions: tacticalPlayerPositions ?? state.tacticalPlayerPositions,
-    squadPlayers: state.squadPlayers.map(player => ({
-      ...player,
-      isStarter: names.has(player.name),
-    })),
+    squadPlayers: state.squadPlayers.map(player => {
+      const restantes = faltam.get(player.name) ?? 0
+      if (restantes > 0) faltam.set(player.name, restantes - 1)
+      return { ...player, isStarter: restantes > 0 }
+    }),
   }))
   persistGameEngineNow()
 }

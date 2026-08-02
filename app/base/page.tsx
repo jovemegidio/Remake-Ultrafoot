@@ -106,9 +106,17 @@ function registrarSaida(anteriores: string[] | undefined, ids: string[]): string
  * Nao confunde com quem entrou por outra porta: comprado no mercado de juniores e
  * `youth_market_...` / `youth_bought_...`, e legado e `legacy_...` — nenhum casa
  * com o formato abaixo, que exige o curto em MAIUSCULAS.
+ *
+ * DOIS FORMATOS DE PROPOSITO. O id da academia ganhou um selo de peneira no
+ * meio — `youth_BOT_2026_ms9x6v4o_1` — porque `youth_<CURTO>_<TEMPORADA>_<i>`
+ * repetia os MESMOS 6 ids a cada geracao e a segunda venda era recusada em
+ * silencio (ver o comentario do id em lib/youth-academy.ts). Os saves antigos
+ * seguem cheios do formato sem selo, entao os dois precisam ser reconhecidos:
+ * so o novo deixaria de limpar o estrago nos saves ja existentes, e so o velho
+ * deixaria de limpa-lo nos novos.
  */
 function ehDeOutroClube(id: string, curto: string): boolean {
-  const m = /^youth_([A-Z]{2,4})_\d{4}_\d+$/.exec(id)
+  const m = /^youth_([A-Z]{2,4})_\d{4}_(?:[a-z0-9]+_)?\d+$/.exec(id)
   return m != null && m[1] !== curto
 }
 
