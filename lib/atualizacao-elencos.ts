@@ -372,10 +372,21 @@ function indexarFotos(): Map<string, string> {
  * A cópia GUARDADA vence a URL remota: é ela que faz o retrato aparecer sem
  * internet. Enquanto o download não termina, a remota atende.
  */
-export function fotoDoServidor(nome: string): string | null {
+export function fotoDoServidor(nome: string, fileKey?: string): string | null {
   if (!canalAtivo("elencos")) return null
   const chave = normalizarNome(nome)
   if (!chave) return null
+
+  // ⚠️ COM O CLUBE, NAO HA AMBIGUIDADE.
+  //
+  // A chave publicada e `fileKey__nome`. Quando quem chama sabe o clube, a busca
+  // e EXATA e o xara deixa de ser problema: o "Carlos Miguel" do Palmeiras e o do
+  // Benfica B sao chaves diferentes. E so quando o clube e desconhecido que vale
+  // a trava de nome repetido (getNomesAmbiguos, em player-photos).
+  if (fileKey) {
+    const exata = getAtualizacao().jogadores?.[`${fileKey}__${chave}`]?.faceDataUrl
+    if (exata) return fotosGuardadas().get(chave) ?? exata
+  }
   const guardada = fotosGuardadas().get(chave)
   if (guardada) return guardada
   const mapa = indexarFotos()

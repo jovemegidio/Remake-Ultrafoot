@@ -2169,7 +2169,7 @@ export default function ElencoPage() {
                     <div className="space-y-3">
                       {players.map(player => (
                         <div key={player.id} className={cn("flex items-center gap-4 p-3 rounded-lg bg-white/5", destaqueStatus(player.name))}>
-                          <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
+                          <PlayerAvatarCircle name={player.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="xs" />
                           <div className="flex-1 min-w-0">
                             <div className="truncate text-sm font-medium text-white">{player.name}</div>
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -2466,7 +2466,7 @@ export default function ElencoPage() {
                     }}
                     className="flex items-center gap-2 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-left"
                   >
-                    <PlayerAvatarCircle name={player.name} teamColor={userTeam.cor1} size="xs" />
+                    <PlayerAvatarCircle name={player.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="xs" />
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-white truncate">{player.name}</div>
                       <div className="text-[10px] text-white/40">{player.position}</div>

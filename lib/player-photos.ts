@@ -165,9 +165,14 @@ function getNomesAmbiguos(): Set<string> {
 }
 
 // Returns the photo URL for a player, or undefined if none is registered.
-export function getPlayerPhotoUrl(name: string, playerId?: string): string | undefined {
-  // Xará: nenhuma das buscas por nome vale. O manifesto embutido continua
-  // valendo quando vem por `playerId`, que identifica o atleta de verdade.
+export function getPlayerPhotoUrl(name: string, playerId?: string, fileKey?: string): string | undefined {
+  // COM O CLUBE não há xará: a busca no pacote do servidor vira exata
+  // (`fileKey__nome`). Sem ele, nenhuma busca por nome vale — o manifesto
+  // embutido só responde por `playerId`, que identifica o atleta de verdade.
+  if (fileKey && typeof window !== "undefined") {
+    const exata = fotoDoServidor(name, fileKey)
+    if (exata) return exata
+  }
   const ambiguo = getNomesAmbiguos().has(normalizePlayerKey(name))
 
   const custom = !ambiguo && typeof window !== "undefined"

@@ -12,6 +12,9 @@ export interface PlayerAvatarProps {
   className?: string
   playerId?: string
   photoUrl?: string
+  /** file_key do clube. Com ele a foto do servidor e buscada por chave EXATA,
+   *  e atleta de nome repetido volta a ter rosto (ver getPlayerPhotoUrl). */
+  fileKey?: string
   position?: string
 }
 
@@ -134,6 +137,7 @@ function PlayerAvatarBase({
   photoUrl: photoUrlProp,
   position,
   playerId,
+  fileKey,
 }: PlayerAvatarProps & { rounded: "xl" | "full" }) {
   const [imgFailed, setImgFailed] = useState(false)
   // 0 = URL como veio; 1 = a outra forma (caminho simples <-> game-asset://).
@@ -150,10 +154,10 @@ function PlayerAvatarBase({
   //
   // Tambem e o que faz o retrato aparecer sozinho quando o store do Tauri
   // termina de hidratar (assincrono) e quando um pacote acaba de ser aplicado.
-  const [photoBase, setPhotoBase] = useState(() => photoUrlProp ?? getPlayerPhotoUrl(name, playerId))
+  const [photoBase, setPhotoBase] = useState(() => photoUrlProp ?? getPlayerPhotoUrl(name, playerId, fileKey))
 
   useEffect(() => {
-    const resolver = () => setPhotoBase(photoUrlProp ?? getPlayerPhotoUrl(name, playerId))
+    const resolver = () => setPhotoBase(photoUrlProp ?? getPlayerPhotoUrl(name, playerId, fileKey))
     resolver()
     window.addEventListener("ultrafoot:store:ready", resolver)
     window.addEventListener("ultrafoot:elencos:atualizados", resolver)
@@ -161,7 +165,7 @@ function PlayerAvatarBase({
       window.removeEventListener("ultrafoot:store:ready", resolver)
       window.removeEventListener("ultrafoot:elencos:atualizados", resolver)
     }
-  }, [photoUrlProp, name, playerId])
+  }, [photoUrlProp, name, playerId, fileKey])
 
   // Este componente e reutilizado ao navegar entre atletas. Uma falha no
   // retrato anterior nao pode condenar a foto valida do proximo selecionado.
@@ -235,6 +239,7 @@ export const PlayerAvatar = memo(function PlayerAvatar({
   photoUrl,
   position,
   playerId,
+  fileKey,
 }: PlayerAvatarProps) {
   return (
     <PlayerAvatarBase
@@ -246,6 +251,7 @@ export const PlayerAvatar = memo(function PlayerAvatar({
       photoUrl={photoUrl}
       position={position}
       playerId={playerId}
+      fileKey={fileKey}
     />
   )
 })
@@ -258,6 +264,7 @@ export const PlayerAvatarCircle = memo(function PlayerAvatarCircle({
   photoUrl,
   position,
   playerId,
+  fileKey,
 }: PlayerAvatarProps) {
   return (
     <PlayerAvatarBase
@@ -269,6 +276,7 @@ export const PlayerAvatarCircle = memo(function PlayerAvatarCircle({
       photoUrl={photoUrl}
       position={position}
       playerId={playerId}
+      fileKey={fileKey}
     />
   )
 })
