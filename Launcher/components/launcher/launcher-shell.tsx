@@ -108,6 +108,12 @@ export function LauncherShell({
     phase: "downloading",
     percent: 0,
   })
+  /**
+   * Por que a falha VAI PARA A TELA: antes ela era engolida, e o sintoma que o
+   * jogador via era "o launcher fica atualizando para sempre". Um aviso curto,
+   * que não bloqueia o Jogar, troca um travamento mudo por uma informação.
+   */
+  const [falhaAoAtualizar, setFalhaAoAtualizar] = useState<string | null>(null)
 
   // Configurações do launcher.
   const [showSettings, setShowSettings] = useState(false)
@@ -300,13 +306,30 @@ export function LauncherShell({
     void (async () => {
       const upd = await checkLauncherUpdate()
       if (!alive || !upd) return
+
+      // ⚠️ `auto === false` = esta versão JÁ FALHOU as vezes permitidas.
+      //
+      // Insistir era o loop de 02/08/2026: instalação falhava calada, o launcher
+      // reabria na versão velha, via a atualização de novo e recomeçava. Agora
+      // ele desiste de tentar sozinho e deixa o jogador seguir jogando — o botão
+      // Jogar continua valendo com a versão instalada.
+      if (upd.auto === false) {
+        setFalhaAoAtualizar(
+          "Não consegui instalar a atualização do launcher. Você pode continuar jogando normalmente.",
+        )
+        return
+      }
+
       setLauncherUpdate(upd)
       // Atualiza automaticamente: baixa, instala e reabre (o app fecha no fim).
-      selfUpdate(upd.url, (p) => {
+      selfUpdate(upd, (p) => {
         if (alive) setSelfUpdateProgress({ phase: p.phase, percent: p.percent })
-      }).catch(() => {
-        // Falhou: não trava o launcher — segue normal nesta versão.
-        if (alive) setLauncherUpdate(null)
+      }).catch((e) => {
+        // Falhou: não trava o launcher — segue normal nesta versão. O motivo vai
+        // para a tela porque "não acontece nada" é o pior diagnóstico possível.
+        if (!alive) return
+        setLauncherUpdate(null)
+        setFalhaAoAtualizar(String(e?.message ?? e ?? "falha ao atualizar o launcher"))
       })
     })()
     return () => {
@@ -496,6 +519,19 @@ export function LauncherShell({
                 : `Baixando… ${selfUpdateProgress.percent}%`}
             </p>
           </div>
+        </div>
+      )}
+      {falhaAoAtualizar && (
+        // Faixa, não modal: a atualização do launcher falhou, mas jogar continua
+        // possível. Bloquear a tela aqui seria repetir o travamento de 02/08.
+        <div className="fixed inset-x-0 top-0 z-[210] flex items-center justify-center gap-3 bg-amber-500/15 px-4 py-2 text-xs text-amber-200 backdrop-blur">
+          <span className="truncate">{falhaAoAtualizar}</span>
+          <button
+            onClick={() => setFalhaAoAtualizar(null)}
+            className="shrink-0 rounded px-2 py-0.5 font-medium text-amber-100 transition hover:bg-amber-500/20"
+          >
+            Fechar
+          </button>
         </div>
       )}
       {showAuth && (

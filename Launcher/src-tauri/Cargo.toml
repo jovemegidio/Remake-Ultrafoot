@@ -26,6 +26,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # HTTP nativo (com TLS) para baixar latest.json e o setup.exe do GitHub.
 ureq = { version = "2.12", features = ["json"] }
+# Conferir o instalador ANTES de executa-lo. Sem isto o launcher rodava como
+# instalador qualquer arquivo que chegasse — e em 02/08/2026 chegou lixo de
+# 94 MB, a instalacao falhou calada e o launcher entrou em loop de atualizacao.
+sha2 = "0.10"
 
 [target.'cfg(windows)'.dependencies]
 # Lê a versão/caminho do jogo instalado no registro do Windows.

@@ -188,11 +188,19 @@ struct InstalledGame {
     path: Option<String>,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Default)]
 struct LatestInfo {
     version: String,
     notes: String,
     url: String,
+    /// sha256 esperado do instalador, quando o manifesto publica (launcher.json).
+    /// Ausente em manifesto antigo: cai na conferência só por tamanho.
+    sha256: Option<String>,
+    /// Tamanho exato em bytes. Sozinho já teria barrado o incidente de 02/08/2026.
+    size: Option<u64>,
+    /// false = NÃO instalar sozinho. É o freio do loop: quando a mesma versão já
+    /// falhou duas vezes, o launcher para de tentar e devolve a decisão ao jogador.
+    auto: bool,
 }
 
 #[derive(Serialize, Clone)]
@@ -444,7 +452,8 @@ fn fetch_latest_windows() -> Result<LatestInfo, String> {
     if version.is_empty() || url.is_empty() {
         return Err("latest.json sem versão ou URL do Windows".into());
     }
-    Ok(LatestInfo { version, notes, url })
+    // Campos de verificação são do auto-update do LAUNCHER; o jogo tem o dele.
+    Ok(LatestInfo { version, notes, url, ..Default::default() })
 }
 
 /// Linux/macOS: acha o release "desktop-*" mais recente e o asset com a extensão.
@@ -475,7 +484,7 @@ fn fetch_latest_desktop(ext: &str) -> Result<LatestInfo, String> {
                         .unwrap_or_default()
                         .to_string();
                     if !url.is_empty() {
-                        return Ok(LatestInfo { version, notes, url });
+                        return Ok(LatestInfo { version, notes, url, ..Default::default() });
                     }
                 }
             }
@@ -737,9 +746,124 @@ fn do_install_macos(app: &AppHandle, url: &str, version: &str) -> Result<(), Str
     Ok(())
 }
 
-fn do_self_update(app: &AppHandle, url: &str) -> Result<(), String> {
+// ─── Freio do loop de atualização ────────────────────────────────────────────
+//
+// ⚠️ O PROBLEMA QUE ISTO RESOLVE (02/08/2026, relatado por jogador):
+// "o launcher crashou, fica no loop infinito de atualizando".
+//
+// `self_update` SEMPRE parecia dar certo: ele só dispara o instalador destacado
+// e encerra o launcher. Se a instalação falhava — arquivo corrompido, antivírus,
+// permissão —, o .bat reabria o launcher na MESMA versão, o manifesto continuava
+// anunciando a versão nova, e tudo recomeçava. Para sempre, sem nenhum erro na
+// tela, porque quem falhou foi um processo que o launcher já não acompanhava.
+//
+// A saída é lembrar entre execuções: se a mesma versão já foi tentada duas vezes
+// e o launcher continua sendo o que era, ele para de tentar sozinho.
+
+const MAX_TENTATIVAS: u32 = 2;
+
+fn arquivo_de_tentativas() -> std::path::PathBuf {
+    std::env::temp_dir().join("ultrafoot-launcher-tentativas.json")
+}
+
+/// Quantas vezes já tentamos instalar ESTA versão.
+fn tentativas_de(versao: &str) -> u32 {
+    let bruto = match std::fs::read_to_string(arquivo_de_tentativas()) {
+        Ok(t) => t,
+        Err(_) => return 0,
+    };
+    let v: serde_json::Value = match serde_json::from_str(&bruto) {
+        Ok(v) => v,
+        Err(_) => return 0,
+    };
+    if v.get("versao").and_then(|x| x.as_str()) != Some(versao) {
+        return 0; // versão diferente: contador zera, a nova merece chance limpa
+    }
+    v.get("vezes").and_then(|x| x.as_u64()).unwrap_or(0) as u32
+}
+
+fn registrar_tentativa(versao: &str) {
+    let vezes = tentativas_de(versao) + 1;
+    let corpo = serde_json::json!({ "versao": versao, "vezes": vezes });
+    let _ = std::fs::write(arquivo_de_tentativas(), corpo.to_string());
+}
+
+/// Some com o registro quando a atualização deu certo (o launcher já é a versão
+/// nova, então nada aqui vale mais).
+fn limpar_tentativas() {
+    let _ = std::fs::remove_file(arquivo_de_tentativas());
+}
+
+fn sha256_do_arquivo(caminho: &std::path::Path) -> Result<String, String> {
+    use sha2::{Digest, Sha256};
+    let mut f = std::fs::File::open(caminho).map_err(|e| e.to_string())?;
+    let mut h = Sha256::new();
+    std::io::copy(&mut f, &mut h).map_err(|e| e.to_string())?;
+    Ok(format!("{:x}", h.finalize()))
+}
+
+/// ⚠️ CONFERE ANTES DE EXECUTAR. Nunca remover.
+///
+/// O launcher rodava como instalador QUALQUER arquivo que chegasse na URL. Em
+/// 02/08/2026 chegou um arquivo de 94 MB no lugar do instalador de 17,5 MB
+/// (falha na publicação) e todo jogador em versão anterior entrou em loop.
+fn conferir_instalador(
+    caminho: &std::path::Path,
+    sha_esperado: &Option<String>,
+    tamanho_esperado: Option<u64>,
+) -> Result<(), String> {
+    let tamanho = std::fs::metadata(caminho).map_err(|e| e.to_string())?.len();
+
+    // Piso de sanidade, válido mesmo com manifesto antigo (sem sha/size): um
+    // instalador NSIS começa com "MZ" e nunca é minúsculo. Pega página de erro
+    // HTML servida com 200, que é o disfarce mais comum de download quebrado.
+    let mut cabecalho = [0u8; 2];
+    {
+        use std::io::Read;
+        let mut f = std::fs::File::open(caminho).map_err(|e| e.to_string())?;
+        f.read_exact(&mut cabecalho).map_err(|e| e.to_string())?;
+    }
+    if &cabecalho != b"MZ" {
+        return Err("o arquivo baixado não é um instalador do Windows".into());
+    }
+    if tamanho < 1_000_000 {
+        return Err(format!("o instalador baixado está incompleto ({tamanho} bytes)"));
+    }
+
+    if let Some(esperado) = tamanho_esperado {
+        if tamanho != esperado {
+            return Err(format!(
+                "o instalador baixado tem {tamanho} bytes, mas deveria ter {esperado}"
+            ));
+        }
+    }
+    if let Some(esperado) = sha_esperado {
+        let obtido = sha256_do_arquivo(caminho)?;
+        if !obtido.eq_ignore_ascii_case(esperado) {
+            return Err("o instalador baixado está corrompido (assinatura não confere)".into());
+        }
+    }
+    Ok(())
+}
+
+fn do_self_update(
+    app: &AppHandle,
+    url: &str,
+    versao: &str,
+    sha256: &Option<String>,
+    size: Option<u64>,
+) -> Result<(), String> {
     let tmp = std::env::temp_dir().join("Ultrafoot-Launcher-setup.exe");
     download_with_progress(app, url, &tmp)?;
+
+    if let Err(e) = conferir_instalador(&tmp, sha256, size) {
+        let _ = std::fs::remove_file(&tmp); // não deixa lixo para a próxima tentativa
+        return Err(e);
+    }
+
+    // Só conta a tentativa depois que o arquivo passou: um download interrompido
+    // não deve gastar as chances de uma instalação que nunca chegou a começar.
+    registrar_tentativa(versao);
     emit(app, "installing");
     spawn_installer_and_relaunch(&tmp)?;
     Ok(())
@@ -858,22 +982,37 @@ fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
         let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
         let url = body.get("url").and_then(|v| v.as_str()).unwrap_or_default().to_string();
         let notes = body.get("notes").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        let sha256 = body.get("sha256").and_then(|v| v.as_str()).map(|s| s.to_string());
+        let size = body.get("size").and_then(|v| v.as_u64());
 
         if version.is_empty() || url.is_empty() {
             return Ok(None);
         }
-        if is_newer(&version, env!("CARGO_PKG_VERSION")) {
-            Ok(Some(LatestInfo { version, notes, url }))
-        } else {
-            Ok(None)
+        if !is_newer(&version, env!("CARGO_PKG_VERSION")) {
+            // Já estamos na versão anunciada: se havia tentativa registrada, ela
+            // deu certo — e o contador não pode sobrar para envenenar a próxima.
+            limpar_tentativas();
+            return Ok(None);
         }
+        // Se esta mesma versão já foi tentada até o limite e o launcher AINDA é o
+        // antigo, instalar de novo daria no mesmo. Devolve a decisão ao jogador
+        // em vez de repetir o ciclo.
+        let auto = tentativas_de(&version) < MAX_TENTATIVAS;
+        Ok(Some(LatestInfo { version, notes, url, sha256, size, auto }))
     }
 }
 
 #[tauri::command]
-async fn self_update(app: AppHandle, url: String) -> Result<(), String> {
+async fn self_update(
+    app: AppHandle,
+    url: String,
+    version: Option<String>,
+    sha256: Option<String>,
+    size: Option<u64>,
+) -> Result<(), String> {
     let app2 = app.clone();
-    tauri::async_runtime::spawn_blocking(move || do_self_update(&app2, &url))
+    let versao = version.unwrap_or_default();
+    tauri::async_runtime::spawn_blocking(move || do_self_update(&app2, &url, &versao, &sha256, size))
         .await
         .map_err(|e| format!("tarefa interrompida: {e}"))??;
     app.exit(0);

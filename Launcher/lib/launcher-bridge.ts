@@ -16,6 +16,14 @@ export type LatestInfo = {
   version: string
   notes: string
   url: string
+  /** sha256/tamanho esperados do instalador — o launcher recusa o que não bater. */
+  sha256?: string | null
+  size?: number | null
+  /**
+   * false = não instalar sozinho. O Rust devolve false quando esta mesma versão
+   * já falhou duas vezes; sem isso o launcher repetia o ciclo para sempre.
+   */
+  auto?: boolean
 }
 
 export type ProgressPhase = "downloading" | "installing" | "done"
@@ -94,7 +102,7 @@ export async function checkLauncherUpdate(): Promise<LatestInfo | null> {
  * no fim (o instalador troca o .exe em uso e reabre o app).
  */
 export async function selfUpdate(
-  url: string,
+  info: LatestInfo,
   onProgress: (p: ProgressPayload) => void,
 ): Promise<void> {
   if (!isTauri()) return
@@ -102,7 +110,14 @@ export async function selfUpdate(
   const { listen } = await import("@tauri-apps/api/event")
   const unlisten = await listen<ProgressPayload>("launcher://progress", (e) => onProgress(e.payload))
   try {
-    await invoke("self_update", { url })
+    // A versão vai junto porque é a chave do contador de tentativas do lado Rust
+    // — é ele que impede o loop quando a instalação não pega.
+    await invoke("self_update", {
+      url: info.url,
+      version: info.version,
+      sha256: info.sha256 ?? null,
+      size: info.size ?? null,
+    })
   } finally {
     unlisten()
   }

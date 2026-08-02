@@ -88,22 +88,67 @@ function enviarParaVps(destino, conteudo) {
 function espelharNaVps(nomeNoGithub, destino, hashLocal) {
   if (!CHAVE) throw new Error("defina ULTRAFOOT_VPS_KEY com o caminho da chave SSH")
   const url = `https://github.com/${REPO}/releases/download/${nomeNoGithub.tag}/${nomeNoGithub.arquivo}`
+  const dir = path.posix.dirname(destino)
+  const base = path.posix.basename(destino)
+  // ⚠️ NOME DE STAGING EXCLUSIVO DESTE ARQUIVO — nao voltar para `.novo`.
+  //
+  // Jogo e launcher gravavam no MESMO `.novo`, no mesmo diretorio. Em 02/08/2026
+  // o launcher da VPS amanheceu com 94 MB (o instalador tem 17,5) e todo jogador
+  // em versao anterior entrou em LOOP: baixava o arquivo quebrado, a instalacao
+  // falhava em silencio, o launcher reabria na mesma versao e recomecava.
+  const temp = `.novo-${base}`
+
   // KEEPALIVE OBRIGATORIO. Baixar 590 MB e depois calcular o sha256 deles leva
   // varios minutos SEM UM BYTE trafegando na sessao SSH — e em 31/07/2026 a
   // conexao foi derrubada exatamente no `sha256sum`, com "Connection reset by
-  // peer", abortando o deploy DEPOIS de o GitHub ja estar publicado (o arquivo
-  // ja tinha baixado inteiro; so faltava conferir e mover). Os pacotes de
-  // keepalive mantem a sessao viva durante o silencio.
+  // peer", abortando o deploy DEPOIS de o GitHub ja estar publicado.
   const sshLongo = ["-o", "ConnectTimeout=20", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=40"]
-  // `.novo` de uma tentativa anterior interrompida seria confundido com o
-  // download novo — o curl com -o sobrescreve, mas ser explicito evita surpresa.
-  const remoto = rodar("ssh", ["-i", CHAVE, ...sshLongo, VPS,
-    `cd $(dirname ${destino}) && rm -f .novo && curl -fsSL -o .novo "${url}" && sha256sum .novo | cut -d" " -f1`]).trim()
-  if (remoto !== hashLocal) {
-    rodar("ssh", ["-i", CHAVE, VPS, `rm -f $(dirname ${destino})/.novo`])
-    throw new Error(`o arquivo que chegou na VPS nao confere (${remoto.slice(0, 12)} != ${hashLocal.slice(0, 12)})`)
+
+  // ⚠️ CONFERIR E MOVER NA MESMA SESSAO SSH.
+  //
+  // Antes eram duas: uma calculava o hash, a outra movia. Entre as duas havia uma
+  // janela em que outro processo podia trocar o arquivo de staging — e ai o que
+  // ia para o destino nao era o que tinha sido conferido. Classico time-of-check
+  // versus time-of-use, e a explicacao mais provavel do launcher de 94 MB.
+  //
+  // `--http1.1` porque o curl da VPS morreu com "HTTP/2 stream not closed
+  // cleanly: PROTOCOL_ERROR" ao baixar do GitHub; as tentativas cobrem o 404
+  // transitorio que o CDN devolve logo apos um upload.
+  const script = [
+    "set -e",
+    `cd ${dir}`,
+    `rm -f '${temp}'`,
+    `curl --http1.1 -fsSL --retry 5 --retry-all-errors --retry-delay 8 -o '${temp}' "${url}"`,
+    `recebido=$(sha256sum '${temp}' | cut -d' ' -f1)`,
+    `if [ "$recebido" != "${hashLocal}" ]; then rm -f '${temp}'; echo "DIVERGENTE:$recebido" >&2; exit 1; fi`,
+    `mv '${temp}' '${base}'`,
+    `chmod 644 '${base}'`,
+    // Confere DE NOVO, agora no arquivo que ficou publicado: e o unico hash que
+    // interessa, porque e o que o jogador vai baixar.
+    `sha256sum '${base}' | cut -d' ' -f1`,
+  ].join("\n")
+
+  const noAr = rodar("ssh", ["-i", CHAVE, ...sshLongo, VPS, script]).trim().split("\n").pop().trim()
+  if (noAr !== hashLocal) {
+    throw new Error(`o arquivo publicado na VPS nao confere (${noAr.slice(0, 12)} != ${hashLocal.slice(0, 12)})`)
   }
-  rodar("ssh", ["-i", CHAVE, VPS, `cd $(dirname ${destino}) && mv .novo ${path.posix.basename(destino)} && chmod 644 ${path.posix.basename(destino)}`])
+}
+
+/**
+ * Confere pela URL PUBLICA que o arquivo servido tem o tamanho esperado.
+ *
+ * O hash acima prova o que esta em disco; isto prova o que o nginx entrega —
+ * sao coisas diferentes quando ha regra de location errada, cache ou proxy no
+ * caminho. Barato: uma requisicao de cabecalho, sem baixar o arquivo.
+ */
+function conferirNoAr(url, bytesEsperados) {
+  const saida = rodar("curl", ["-sI", "--max-time", "60", url])
+  const linha = saida.split("\n").find(l => /^content-length:/i.test(l.trim()))
+  const servido = Number((linha ?? "").split(":")[1] ?? 0)
+  if (servido !== bytesEsperados) {
+    throw new Error(`o servidor entrega ${servido} bytes em ${url}, esperado ${bytesEsperados}`)
+  }
+  console.log(`  ok — ${path.posix.basename(url)} servido com ${servido} bytes`)
 }
 
 /**
@@ -174,12 +219,24 @@ if (!soJogo) {
   espelharNaVps({ tag: "launcher", arquivo: "Ultrafoot-Launcher-Setup.exe" },
     "/var/www/ultrafoot/downloads/Ultrafoot-Launcher-Setup.exe", hash)
 
+  conferirNoAr(`${SITE}/downloads/Ultrafoot-Launcher-Setup.exe`, statSync(EXE_LAUNCHER).size)
+
   passo("launcher: manifesto (depois do binario)")
-  const manifesto = readFileSync(path.join(RAIZ, "services/cloud-save-server/launcher.json"), "utf-8")
-  if (JSON.parse(manifesto).version !== VERSAO_LAUNCHER) {
-    throw new Error(`launcher.json diz ${JSON.parse(manifesto).version}, mas o build e ${VERSAO_LAUNCHER}`)
-  }
   const arqManifesto = path.join(RAIZ, "services/cloud-save-server/launcher.json")
+  const manifestoLido = JSON.parse(readFileSync(arqManifesto, "utf-8"))
+  if (manifestoLido.version !== VERSAO_LAUNCHER) {
+    throw new Error(`launcher.json diz ${manifestoLido.version}, mas o build e ${VERSAO_LAUNCHER}`)
+  }
+  // ⚠️ SHA256 E TAMANHO SAO O QUE PERMITE O LAUNCHER RECUSAR UM ARQUIVO RUIM.
+  //
+  // Sem eles o launcher baixava o que viesse e EXECUTAVA como instalador. Em
+  // 02/08/2026 o que veio tinha 94 MB de lixo: a instalacao falhava calada, o
+  // launcher reabria na versao velha e tentava outra vez, para sempre. O jogo ja
+  // publicava `sha256` no latest.json; o launcher nao tinha equivalente.
+  manifestoLido.sha256 = hash.toUpperCase()
+  manifestoLido.size = statSync(EXE_LAUNCHER).size
+  const manifesto = JSON.stringify(manifestoLido, null, 2)
+  writeFileSync(arqManifesto, manifesto)
   rodar("gh", ["release", "upload", "launcher", arqManifesto, "--repo", REPO, "--clobber"], { stdio: "inherit" })
   enviarParaVps("/var/www/ultrafoot/downloads/launcher.json", manifesto)
 
@@ -241,6 +298,7 @@ if (!soLauncher) {
 
   const vps = campoPublicado(`${SITE}/downloads/latest.json`, "version")
   if (vps !== VERSAO_JOGO) throw new Error(`jogo nao confere na VPS: ${vps}, esperado ${VERSAO_JOGO}`)
+  conferirNoAr(`${SITE}/downloads/${nomeRemoto}`, statSync(EXE_JOGO).size)
   console.log(`  ok — jogo ${VERSAO_JOGO} publicado (${tamanhoMb} MB)`)
 }
 
