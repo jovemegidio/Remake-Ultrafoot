@@ -123,21 +123,72 @@ export function normalizePlayerKey(name: string): string {
     .replace(/[^a-z0-9-]/g, "")
 }
 
+let nomesAmbiguos: Set<string> | null = null
+/**
+ * Nomes que pertencem a MAIS DE UM clube no jogo.
+ *
+ * ⚠️ POR QUE ISTO EXISTE (relato de 02/08/2026: "a foto do Carlos Miguel do
+ * Palmeiras está se repetindo em outro jogador; o Kaio Cesar do Corinthians
+ * aparece em jogadores de outros clubes").
+ *
+ * As duas fontes de foto por NOME — a edição local do editor
+ * (`ultrafoot:player-photo:`) e o pacote do servidor — são indexadas só pelo
+ * nome, porque `getPlayerPhotoUrl` não recebe o clube. Enquanto cada rosto vinha
+ * de um atleta único isso passou despercebido; publicar elencos inteiros expôs a
+ * falha. No pool de 66 mil atletas há "Carlos Miguel" no Palmeiras E no Benfica
+ * B, "Kaio Cesar" no Corinthians E em dois Operários.
+ *
+ * Enquanto a busca não souber o clube, nome repetido não recebe rosto: silhueta
+ * é melhor do que a cara de outra pessoa — a mesma regra que a importação do
+ * DF11 já seguia.
+ */
+function getNomesAmbiguos(): Set<string> {
+  if (nomesAmbiguos) return nomesAmbiguos
+  const doClube = new Map<string, string>()
+  const repetidos = new Set<string>()
+  const ver = (nome: string, clube: string) => {
+    const k = normalizePlayerKey(nome)
+    if (!k || !clube) return
+    const anterior = doClube.get(k)
+    if (anterior === undefined) doClube.set(k, clube)
+    else if (anterior !== clube) repetidos.add(k)
+  }
+  for (const [chave, roster] of Object.entries(realSquadsTM as Record<string, { n: string }[]>)) {
+    const clube = chave.split("|")[1] ?? chave
+    for (const p of roster ?? []) ver(p.n, clube)
+  }
+  for (const team of ((importedBF as { teams?: (SeedTeamFt & { nome?: string })[] }).teams) ?? []) {
+    for (const j of team.jogadores ?? []) ver(j.nome, team.nome ?? "")
+  }
+  nomesAmbiguos = repetidos
+  return repetidos
+}
+
 // Returns the photo URL for a player, or undefined if none is registered.
 export function getPlayerPhotoUrl(name: string, playerId?: string): string | undefined {
-  const custom = typeof window !== "undefined" ? storeGet(`ultrafoot:player-photo:${normalizePlayerKey(name)}`) : null
+  // Xará: nenhuma das buscas por nome vale. O manifesto embutido continua
+  // valendo quando vem por `playerId`, que identifica o atleta de verdade.
+  const ambiguo = getNomesAmbiguos().has(normalizePlayerKey(name))
+
+  const custom = !ambiguo && typeof window !== "undefined"
+    ? storeGet(`ultrafoot:player-photo:${normalizePlayerKey(name)}`)
+    : null
   if (custom) return custom
   // Retrato publicado no servidor: entra DEPOIS da edição local (o trabalho de
   // quem edita na própria máquina sempre vence) e ANTES do manifesto embutido,
   // que é o piso do build. É por aqui que uma foto licenciada no editor chega a
   // todo mundo sem instalador novo.
-  const doServidor = typeof window !== "undefined" ? fotoDoServidor(name) : null
+  const doServidor = !ambiguo && typeof window !== "undefined" ? fotoDoServidor(name) : null
   if (doServidor) return doServidor
-  const rawUrl =
-    (playerId && photoMap[playerId]) ? photoMap[playerId] : photoMap[normalizePlayerKey(name)]
+  // Xará ainda pode receber rosto POR ID — ali o atleta é identificado de fato,
+  // não pelo nome.
+  const rawUrl = ambiguo
+    ? (playerId ? photoMap[playerId] : undefined)
+    : ((playerId && photoMap[playerId]) ? photoMap[playerId] : photoMap[normalizePlayerKey(name)])
   if (rawUrl) return gameAssetUrl(rawUrl)
   // Sem arquivo empacotado: foto real do Transfermarkt — local (offline) quando
-  // baixada; remota como reserva.
+  // baixada; remota como reserva. Também por nome, então também vale a trava.
+  if (ambiguo) return undefined
   const ft = getTmFotoMap().get(normalizePlayerKey(name)) ?? fotoPorSobrenome(name)
   if (!ft) return undefined
   // O `ft` traz a EXTENSAO quando nao e jpg ("275412-1771071867.png"): o TM serve
