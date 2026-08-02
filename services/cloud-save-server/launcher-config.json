@@ -9,11 +9,18 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "Elenco novo sem baixar o jogo de novo",
+      "category": "Novidade",
+      "body": "Correcao de elenco, transferencia e rosto de atleta agora chegam por um pacote de poucos KB, avisado dentro do jogo. Voce decide se baixa. A versao do jogo nao muda, e o que voce baixou continua valendo sem internet. O primeiro pacote traz os 59 rostos licenciados de Corinthians e Cruzeiro.",
+      "date": "2026-08-02",
+      "pinned": true
+    },
+    {
       "title": "O atalho do jogo abre o jogo",
       "category": "Correção",
       "body": "Clicar no atalho da area de trabalho fazia o jogo piscar e sumir, sem janela e sem erro: ao ser aberto direto ele chamava o launcher e se encerrava. Agora o atalho do jogo abre o JOGO e o do launcher abre o LAUNCHER. E quando o Jogar do launcher falha, a tela passa a dizer o motivo em vez de nao fazer nada.",
       "date": "2026-08-01",
-      "pinned": true
+      "pinned": false
     },
     {
       "title": "A camisa que voce escolhe pinta o campinho",
@@ -151,9 +158,37 @@
   ],
   "changelog": [
     {
+      "version": "1.0.244",
+      "date": "2026-08-02",
+      "latest": true,
+      "title": "Atualizacao de elenco sem reinstalar o jogo",
+      "changes": [
+        {
+          "type": "added",
+          "text": "ATUALIZACAO DE ELENCO PELO SERVIDOR. Rostos de atletas, elencos corrigidos, transferencias, escudos e uniformes agora chegam em poucos KB, direto no jogo, sem baixar instalador nenhum. Quando ha novidade, aparece um aviso no canto inferior direito com o que vem no pacote — voce escolhe baixar ou deixar para depois. A VERSAO DO JOGO NAO MUDA: quem esta na 1.0.244 continua na 1.0.244 depois de aplicar. Tambem da para procurar na mao em Personalizar > Atualizacoes."
+        },
+        {
+          "type": "added",
+          "text": "AS FOTOS BAIXADAS FUNCIONAM SEM INTERNET. Ao aplicar um pacote, os retratos sao guardados no seu computador. Antes uma foto vinda do servidor so aparecia com internet e sumia sem ela; agora vale offline igual as que vem no instalador."
+        },
+        {
+          "type": "added",
+          "text": "PRIMEIRO PACOTE NO AR: os 59 rostos licenciados de Corinthians e Cruzeiro."
+        },
+        {
+          "type": "changed",
+          "text": "SEM REGISTRO, O FUTEBOL BRASILEIRO INTEIRO. Quem ainda nao registrou dirige qualquer clube do Brasil, da Serie A a Serie D. Antes eram Brasil, Franca e Espanha. Continua valendo a regra da casa: nada e cortado no meio de uma carreira ja comecada, e o codigo abre as ligas do resto do mundo."
+        },
+        {
+          "type": "fixed",
+          "text": "NOTICIAS SEM INTERNET. Offline o jogo nao fica mais esperando por manchetes que nao vao chegar, e o campo de noticias encolhe para o tamanho do que ele tem de fato: as noticias da sua propria carreira, geradas a partir dos resultados, da tabela, da artilharia e das lesoes."
+        }
+      ]
+    },
+    {
       "version": "1.0.243",
       "date": "2026-08-01",
-      "latest": true,
+      "latest": false,
       "title": "As fotos dos jogadores voltam a aparecer no aplicativo instalado",
       "changes": [
         {

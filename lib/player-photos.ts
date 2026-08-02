@@ -3,6 +3,7 @@ import importedBF from "@/data/seeds/imported-bf2026.json"
 import realSquadsTM from "@/data/seeds/real-squads-tm.json"
 import tmPhotos from "@/data/seeds/tm-photos.json"
 import { gameAssetUrl } from "@/lib/game-asset"
+import { fotoDoServidor } from "@/lib/atualizacao-elencos"
 import { storeGet, storeSet } from "@/lib/persistent-store"
 
 // O manifesto contém apenas arquivos fisicamente empacotados. O mapa editorial é
@@ -126,6 +127,12 @@ export function normalizePlayerKey(name: string): string {
 export function getPlayerPhotoUrl(name: string, playerId?: string): string | undefined {
   const custom = typeof window !== "undefined" ? storeGet(`ultrafoot:player-photo:${normalizePlayerKey(name)}`) : null
   if (custom) return custom
+  // Retrato publicado no servidor: entra DEPOIS da edição local (o trabalho de
+  // quem edita na própria máquina sempre vence) e ANTES do manifesto embutido,
+  // que é o piso do build. É por aqui que uma foto licenciada no editor chega a
+  // todo mundo sem instalador novo.
+  const doServidor = typeof window !== "undefined" ? fotoDoServidor(name) : null
+  if (doServidor) return doServidor
   const rawUrl =
     (playerId && photoMap[playerId]) ? photoMap[playerId] : photoMap[normalizePlayerKey(name)]
   if (rawUrl) return gameAssetUrl(rawUrl)

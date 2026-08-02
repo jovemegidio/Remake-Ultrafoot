@@ -18,25 +18,58 @@
 // O download é sempre BEST-EFFORT: sem internet, o jogo abre com o que já tem.
 // Nada aqui pode bloquear o boot.
 //
-// E nada aqui conecta sem AUTORIZAÇÃO. O jogador aceita uma vez (o convite do
-// primeiro boot, ou a tela Personalizar > Atualizações) e pode revogar quando
-// quiser; enquanto não aceitar, este arquivo não faz uma requisição sequer. Os
-// canais ligados/desligados vivem em lib/atualizacoes-preferencias e são
-// consultados em cada leitura aqui embaixo.
+// NADA É APLICADO SEM O JOGADOR MANDAR. A consulta ao servidor apenas OLHA; quem
+// grava é `aplicarAtualizacao`, e ela só roda quando o jogador clica em Baixar no
+// aviso (components/aviso-atualizacao-elencos). Quem não quiser nem a consulta
+// desliga o canal em Personalizar > Atualizações — os interruptores vivem em
+// lib/atualizacoes-preferencias e são consultados em cada leitura aqui embaixo.
+//
+// A VERSÃO DO PACOTE É INDEPENDENTE DA VERSÃO DO JOGO, de propósito: é isso que
+// permite corrigir um elenco sem publicar meio giga de instalador. Quem cuida de
+// os dois não se atropelarem é `maisNovoQueOBuild`, logo abaixo.
 
-import { storeSet } from "@/lib/persistent-store"
+import { storeGet, storeSet } from "@/lib/persistent-store"
+import { buscarJson } from "@/lib/buscar-json"
 import { canalAtivo } from "@/lib/atualizacoes-preferencias"
 import type { TeamOverride } from "@/lib/team-overrides"
 import type { PlayerOverride } from "@/lib/player-overrides"
 
 const CHAVE = "ultrafoot:atualizacao-elencos"
+/** Versao que o jogador mandou nao oferecer de novo. */
+const CHAVE_DISPENSADA = "ultrafoot:atualizacao-elencos:dispensada"
 
-// As URLs do manifesto (VPS + reserva no GitHub) sairam na 1.0.240 junto com o
-// canal. Ficam registradas aqui porque o servidor continua publicando o
-// elencos.json — quem o consome agora e o BUILD, na hora de gerar os seeds, nao
-// mais o jogo na maquina do jogador:
-//   https://ultrafoot.179-198-103-30.sslip.io/atualizacoes/elencos.json
-//   https://github.com/jovemegidio/Ultrafoot26/releases/download/elencos/elencos.json
+// A VPS primeiro; o GitHub e reserva para quando ela estiver fora do ar.
+const FONTES = [
+  "https://ultrafoot.179-198-103-30.sslip.io/atualizacoes/elencos.json",
+  "https://github.com/jovemegidio/Ultrafoot26/releases/download/elencos/elencos.json",
+]
+
+/** Quando ESTE build foi feito (epoch em segundos). Ver next.config.mjs. */
+const SELO_DO_BUILD = Number(process.env.NEXT_PUBLIC_SELO_DO_BUILD ?? 0)
+
+/**
+ * ⚠️ A TRAVA QUE PERMITE ESTE CANAL EXISTIR — nao remover sem ler isto.
+ *
+ * O canal foi desligado inteiro na 1.0.240 por uma falha real: o pacote gravado
+ * no disco valia para SEMPRE. Quem baixasse elencos na 1.0.230 e atualizasse o
+ * jogo continuava com aquele pacote sobrescrevendo o elenco da build nova — com
+ * dados mais VELHOS do que os do proprio build, e sem ninguem para corrigi-lo.
+ *
+ * Comparar a versao do pacote com a versao do jogo NAO resolve: sao numeracoes
+ * independentes de proposito (e justamente isso que deixa a correcao de elenco
+ * sair sem mexer na versao do jogo). Comparar DATAS resolve, e e demonstravel:
+ * um pacote publicado depois deste build so pode conhecer o que este build ja
+ * conhece, e mais. Publicado antes, o build sabe pelo menos tanto quanto ele.
+ *
+ * Efeito pratico: ao atualizar o jogo, um pacote velho para de valer sozinho e o
+ * aviso reaparece oferecendo o pacote atual do servidor. Quem estiver offline
+ * joga com o seed do build, que e mais novo — nunca com dado pior.
+ */
+function maisNovoQueOBuild(a: AtualizacaoElencos): boolean {
+  // Build sem selo (dev server, teste unitario): nao trava nada.
+  if (!SELO_DO_BUILD) return true
+  return (a.publicado_em ?? 0) > SELO_DO_BUILD
+}
 
 /** Um atleta que mudou de clube depois do lançamento do build. */
 export interface TransferenciaOficial {
@@ -70,24 +103,33 @@ export interface AtualizacaoElencos {
 const VAZIA: AtualizacaoElencos = { versao: 0 }
 
 
+// Memoriza o pacote JÁ PARSEADO, indexado pelo texto de onde ele veio.
+//
+// ⚠️ Nunca guardar resultado NEGATIVO: `storeGet` lê de um cache em memória que
+// só existe depois de `initPersistentStore`, e no Tauri isso é assíncrono. Um
+// `cache = VAZIA` gravado antes da hidratação congelaria o canal desligado pelo
+// resto da sessão — a mesma armadilha do efeito que grava antes de hidratar.
+let cache: { bruto: string; valor: AtualizacaoElencos } | null = null
+
 /**
  * O que já está na máquina. Leitura SÍNCRONA de propósito: quem chama são as
  * funções de override, no meio da montagem do elenco — um await ali obrigaria a
  * reescrever meia dezena de caminhos que hoje são síncronos.
- *
- * ⚠️ DESLIGADO NA 1.0.240: devolve sempre VAZIA. A atualização deixou de ser por
- * partes — quem entrega elenco, time e liga agora é a BUILD, inteira, trazida
- * pelo Ultrafoot Launcher.
- *
- * E não bastava parar de baixar. O manifesto que já estava gravado no disco
- * continuaria valendo para sempre: um pacote baixado na 1.0.230 sobrescreveria
- * o elenco da 1.0.240 com dados mais VELHOS do que os do próprio build, e sem
- * ninguém para atualizá-lo. Ignorar o que está gravado é o que faz a build voltar
- * a ser a única fonte. O arquivo continua no disco, intocado, caso um dia o canal
- * volte.
  */
 export function getAtualizacao(): AtualizacaoElencos {
-  return VAZIA
+  if (typeof window === "undefined") return VAZIA
+  const bruto = storeGet(CHAVE)
+  if (!bruto) return VAZIA
+  if (cache?.bruto === bruto) return cache.valor
+  let valor = VAZIA
+  try {
+    const lido = JSON.parse(bruto) as AtualizacaoElencos
+    // O pacote continua gravado mesmo quando não vale: ele volta a valer sozinho
+    // se um dia for republicado, e apagá-lo só criaria download desnecessário.
+    if (lido && typeof lido.versao === "number" && maisNovoQueOBuild(lido)) valor = lido
+  } catch { /* pacote corrompido: o build assume */ }
+  cache = { bruto, valor }
+  return valor
 }
 
 export function versaoAtualizacao(): number {
@@ -103,8 +145,17 @@ export function versaoAtualizacao(): number {
  * jogador manda aplicar. Devolve null sem consentimento ou sem rede.
  */
 export async function consultarServidor(): Promise<AtualizacaoElencos | null> {
-  // DESLIGADO NA 1.0.240 junto com `getAtualizacao`. Consultar aqui só ofereceria
-  // ao jogador um pedaço que o jogo não aplica mais — botão que não faz nada.
+  if (typeof window === "undefined") return null
+  // Canal desligado nas preferências: nem a consulta sai da máquina.
+  if (!canalAtivo("elencos") && !canalAtivo("times")) return null
+  for (const url of FONTES) {
+    const lido = await buscarJson<AtualizacaoElencos>(url, 8000)
+    if (!lido || typeof lido.versao !== "number") continue
+    // Um pacote anterior a este build não tem o que acrescentar: oferecê-lo seria
+    // um convite para PIORAR o elenco. Ver `maisNovoQueOBuild`.
+    if (!maisNovoQueOBuild(lido)) return null
+    return lido
+  }
   return null
 }
 
@@ -149,6 +200,8 @@ export interface ResumoAtualizacao {
   jogadores: number
   transferencias: number
   competicoes: number
+  /** Quantos atletas vêm com retrato — o que o jogador mais percebe na tela. */
+  fotos: number
 }
 
 export function resumir(a: AtualizacaoElencos | null): ResumoAtualizacao {
@@ -157,6 +210,7 @@ export function resumir(a: AtualizacaoElencos | null): ResumoAtualizacao {
     jogadores: Object.keys(a?.jogadores ?? {}).length,
     transferencias: (a?.transferencias ?? []).length,
     competicoes: Object.keys(a?.ligas ?? {}).length,
+    fotos: Object.values(a?.jogadores ?? {}).filter(j => j.faceDataUrl).length,
   }
 }
 
@@ -261,4 +315,175 @@ export function temTransferencias(): boolean {
 export function clubesDaLigaNoServidor(competicao: string): string[] | null {
   if (!canalAtivo("times")) return null
   return getAtualizacao().ligas?.[competicao]?.clubes ?? null
+}
+
+// ─── Retratos publicados pelo servidor ───────────────────────────────────────
+//
+// POR QUE ESTE ÍNDICE EXISTE, se o retrato já chega dentro de `jogadores`:
+//
+// a chave do manifesto é `fileKey__nome` (o clube junto), mas `getPlayerPhotoUrl`
+// — a função que TODO `PlayerAvatar` usa — recebe só o nome. Foi exatamente esse
+// descasamento que fez a importação dos rostos do DF11 parecer pronta e aparecer
+// vazia na tela. Aqui o índice é por nome, e o clube some.
+//
+// XARÁS: nome repetido em clubes diferentes, com retratos diferentes, fica de
+// FORA. A silhueta é melhor do que o rosto de outra pessoa — mesma regra que a
+// importação de rostos já seguia (178 xarás excluídos lá).
+
+let indiceFotos: { versao: number; porNome: Map<string, string> } | null = null
+
+/** Mesma normalização de `normPlayerName` (player-overrides), sem importá-la: o
+ *  import criaria ciclo, porque player-overrides já depende deste módulo. */
+function normalizarNome(nome: string): string {
+  return (nome ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+}
+
+function indexarFotos(): Map<string, string> {
+  const at = getAtualizacao()
+  if (indiceFotos && indiceFotos.versao === at.versao) return indiceFotos.porNome
+  const porNome = new Map<string, string>()
+  const ambiguos = new Set<string>()
+  for (const [chave, jogador] of Object.entries(at.jogadores ?? {})) {
+    const url = jogador.faceDataUrl
+    if (!url) continue
+    // `fileKey__nome`: o nome é tudo depois do primeiro separador duplo.
+    const corte = chave.indexOf("__")
+    const nome = corte >= 0 ? chave.slice(corte + 2) : chave
+    if (!nome) continue
+    const anterior = porNome.get(nome)
+    if (anterior && anterior !== url) { ambiguos.add(nome); continue }
+    porNome.set(nome, url)
+  }
+  for (const nome of ambiguos) porNome.delete(nome)
+  indiceFotos = { versao: at.versao, porNome }
+  return porNome
+}
+
+/**
+ * Retrato publicado para este atleta, ou null.
+ *
+ * Consultado por `getPlayerPhotoUrl` DEPOIS da edição local (o trabalho de quem
+ * edita na própria máquina sempre vence) e ANTES do manifesto embutido.
+ *
+ * A cópia GUARDADA vence a URL remota: é ela que faz o retrato aparecer sem
+ * internet. Enquanto o download não termina, a remota atende.
+ */
+export function fotoDoServidor(nome: string): string | null {
+  if (!canalAtivo("elencos")) return null
+  const chave = normalizarNome(nome)
+  if (!chave) return null
+  const guardada = fotosGuardadas().get(chave)
+  if (guardada) return guardada
+  const mapa = indexarFotos()
+  return mapa.size === 0 ? null : mapa.get(chave) ?? null
+}
+
+// ─── Cópia local dos retratos (para funcionar SEM internet) ──────────────────
+//
+// O manifesto já fica gravado no disco, então elenco, transferência e escudo
+// funcionam offline assim que o pacote é aplicado. A FOTO não: ela viaja como
+// URL remota (é o que evitou o seed de 30 MB em base64). Sem esta cópia, o rosto
+// aparecia com internet e sumia sem ela — "atualizou" pela metade.
+//
+// Guardadas num ÚNICO valor, gravado uma vez só no fim: são 59 retratos hoje, e
+// 59 gravações separadas fariam o persistent-store reescrever o arquivo inteiro
+// 59 vezes.
+
+const CHAVE_FOTOS = "ultrafoot:atualizacao-fotos"
+
+/**
+ * Teto da cópia local. Acima disto o retrato continua funcionando ONLINE, pela
+ * URL remota — só não fica guardado. O limite existe porque `storeSet` espelha em
+ * `localStorage`, que estoura por volta de 5–10 MB (e na versão web ele é o
+ * único armazenamento que existe).
+ */
+const TETO_FOTOS_BYTES = 8 * 1024 * 1024
+
+let cacheFotos: { bruto: string; mapa: Map<string, string> } | null = null
+
+function fotosGuardadas(): Map<string, string> {
+  if (typeof window === "undefined") return new Map()
+  const bruto = storeGet(CHAVE_FOTOS)
+  if (!bruto) return new Map()
+  if (cacheFotos?.bruto === bruto) return cacheFotos.mapa
+  let mapa = new Map<string, string>()
+  try {
+    mapa = new Map(Object.entries(JSON.parse(bruto) as Record<string, string>))
+  } catch { /* corrompido: volta a valer a URL remota */ }
+  cacheFotos = { bruto, mapa }
+  return mapa
+}
+
+function paraDataUrl(bytes: ArrayBuffer, tipo: string): string {
+  const b = new Uint8Array(bytes)
+  let binario = ""
+  // Em blocos: `String.fromCharCode(...array)` estoura a pilha num PNG de 100 KB.
+  for (let i = 0; i < b.length; i += 0x8000) {
+    binario += String.fromCharCode(...b.subarray(i, i + 0x8000))
+  }
+  return `data:${tipo || "image/png"};base64,${btoa(binario)}`
+}
+
+/**
+ * Baixa e guarda os retratos do pacote. Best-effort: o que falhar continua
+ * funcionando online, e nada aqui pode atrapalhar o que já foi aplicado.
+ *
+ * Chamada DEPOIS de `aplicarAtualizacao` — o elenco já vale antes de a primeira
+ * foto chegar.
+ */
+export async function guardarFotosLocalmente(
+  pacote: AtualizacaoElencos,
+  aoProgredir?: (feitas: number, total: number) => void,
+): Promise<number> {
+  if (typeof window === "undefined") return 0
+  const alvos = new Map<string, string>()
+  for (const [chave, jogador] of Object.entries(pacote.jogadores ?? {})) {
+    const url = jogador.faceDataUrl
+    if (!url || url.startsWith("data:")) continue
+    const corte = chave.indexOf("__")
+    const nome = corte >= 0 ? chave.slice(corte + 2) : chave
+    if (nome) alvos.set(nome, url)
+  }
+  if (alvos.size === 0) return 0
+
+  const { fetchDoAmbiente } = await import("@/lib/buscar-json")
+  const requisitar = await fetchDoAmbiente()
+  const guardadas: Record<string, string> = Object.fromEntries(fotosGuardadas())
+  let bytes = JSON.stringify(guardadas).length
+  let feitas = 0
+  let novas = 0
+
+  for (const [nome, url] of alvos) {
+    feitas++
+    aoProgredir?.(feitas, alvos.size)
+    if (guardadas[nome]?.startsWith("data:")) continue
+    if (bytes >= TETO_FOTOS_BYTES) break
+    try {
+      const r = await requisitar(url, {})
+      if (!r.ok) continue
+      const dados = paraDataUrl(await r.arrayBuffer(), r.headers.get("content-type") ?? "")
+      guardadas[nome] = dados
+      bytes += dados.length + nome.length + 8
+      novas++
+    } catch { /* uma foto a menos não invalida o pacote */ }
+  }
+
+  if (novas > 0) storeSet(CHAVE_FOTOS, JSON.stringify(guardadas))
+  return novas
+}
+
+// ─── Dispensa ────────────────────────────────────────────────────────────────
+
+/** "Agora não": esta versão não volta a ser oferecida. A próxima, sim. */
+export function dispensarVersao(versao: number): void {
+  storeSet(CHAVE_DISPENSADA, String(versao))
+}
+
+export function foiDispensada(versao: number): boolean {
+  if (typeof window === "undefined") return false
+  return Number(storeGet(CHAVE_DISPENSADA) ?? 0) >= versao
 }

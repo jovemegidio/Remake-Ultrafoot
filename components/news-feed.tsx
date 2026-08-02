@@ -372,6 +372,13 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   const [direction, setDirection] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [isClient, setIsClient] = useState(false)
+  /**
+   * Offline (ou feed real vazio). Muda DUAS coisas: o cartão fica mais enxuto —
+   * sem manchete real, a mídia grande só ocupava espaço — e o que resta é
+   * inteiramente a notícia SIMULADA da carreira, gerada por `generateDynamicNews`
+   * a partir do motor (resultados, tabela, artilharia, lesões e transferências).
+   */
+  const [semRede, setSemRede] = useState(false)
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set())
   const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set())
 
@@ -411,9 +418,23 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
     // (public/ads), entao o card renderiza igual nos dois casos.
     setNews(intercalarAnuncios(inGame))
     let vivo = true
+
+    // SEM REDE NAO SE CONSULTA NADA. Antes a chamada saia do mesmo jeito e
+    // ficava pendurada ate o timeout: o jogador offline esperava por manchetes
+    // que nao viriam, e o cartao ficava do tamanho de um feed que nunca enchia.
+    // Agora o modo offline e assumido de cara, e o feed encolhe para o tamanho
+    // do que ele de fato tem — as noticias simuladas da propria carreira.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setSemRede(true)
+      return () => { vivo = false }
+    }
+
     buscarNoticiasReais()
       .then((reais: RealNewsItem[]) => {
-        if (!vivo || reais.length === 0) return
+        if (!vivo) return
+        // Feed vazio conta como offline: o efeito para quem ve e o mesmo.
+        if (reais.length === 0) { setSemRede(true); return }
+        setSemRede(false)
         const comoNoticia: NewsItem[] = reais.slice(0, 6).map((r: RealNewsItem, i: number) => ({
           id: `real-${i}`,
           source: "espn" as keyof typeof NEWS_SOURCES,
@@ -430,7 +451,7 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
         }))
         setNews(intercalarAnuncios([...comoNoticia, ...inGame]))
       })
-      .catch(() => { /* sem rede: fica so a noticia in-game */ })
+      .catch(() => { if (vivo) setSemRede(true) })
     return () => { vivo = false }
   }, [userTeamShort, state.season, state.week, engine.matchResults, engine.serieAStandings, engine.topScorers])
 
@@ -545,9 +566,10 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
                   title={currentNews.title}
                   description={currentNews.description}
                   season={state.season}
+                  enxuto={semRede}
                 />
               ) : (
-                <NewsContentCard news={currentNews} />
+                <NewsContentCard news={currentNews} enxuto={semRede} />
               )}
             </motion.div>
           </AnimatePresence>
@@ -658,14 +680,20 @@ function MatchPreviewCard({
   title,
   description,
   season,
+  enxuto,
 }: {
   matches: Array<{ home: Team; away: Team }>
   title: string
   description?: string
   season: number
+  /** Offline: o cartão encolhe (ver `semRede` em NewsFeed). */
+  enxuto?: boolean
 }) {
   return (
-    <div className="relative aspect-[4/3] bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#081020] overflow-hidden">
+    <div className={cn(
+      "relative bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#081020] overflow-hidden",
+      enxuto ? "aspect-[16/9]" : "aspect-[4/3]",
+    )}>
       <div className="absolute inset-0 opacity-40">
         <svg viewBox="0 0 400 300" className="w-full h-full">
           <path
@@ -740,7 +768,7 @@ const NEWS_TYPE_TO_IMAGE_CATEGORY: Record<string, string> = {
   standings: "highlight",
 }
 
-function NewsContentCard({ news }: { news: NewsItem }) {
+function NewsContentCard({ news, enxuto }: { news: NewsItem; enxuto?: boolean }) {
   const source = NEWS_SOURCES[news.source]
 
   const imageCategory = NEWS_TYPE_TO_IMAGE_CATEGORY[news.type] ?? "match"
@@ -786,7 +814,11 @@ function NewsContentCard({ news }: { news: NewsItem }) {
 
   return (
     <div className={cn(
-      "relative aspect-video bg-gradient-to-br overflow-hidden",
+      "relative bg-gradient-to-br overflow-hidden",
+      // Offline a capa e sempre a ilustracao generica do acervo local — nao ha
+      // foto de materia para valorizar. Ocupar menos altura deixa o painel de
+      // baixo (o jogo em si) aparecer sem rolagem.
+      enxuto ? "aspect-[21/9]" : "aspect-video",
       typeColors[news.type] || "from-gray-900/50 to-gray-950/30"
     )}>
       <div className="absolute inset-0">

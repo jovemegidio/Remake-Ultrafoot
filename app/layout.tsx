@@ -13,6 +13,7 @@ import { NativeAppProvider } from "@/components/native-app-provider"
 import { MusicPlayerWrapper } from "@/components/music-player-wrapper"
 import { EaActionBarProvider, EaActionBar } from "@/components/ea-action-bar"
 import { FcHubLoader } from "@/components/fc-hub-loader"
+import { AvisoAtualizacaoElencos } from "@/components/aviso-atualizacao-elencos"
 import { GameAutosave } from "@/components/game-autosave"
 import { PerformanceProfileBootstrap } from "@/components/performance-profile"
 import { MotionProfileProvider } from "@/components/motion-profile"
@@ -76,6 +77,10 @@ export default function RootLayout({
                   <FcHubLoader />
                 </EaActionBarProvider>
                 <NotificationToastContainer />
+                {/* Fora do NotificationsProvider de propósito? Não: fica aqui dentro
+                    por conveniência de árvore, mas NÃO usa o sistema de notificações
+                    — aquele é escopado por carreira, e correção de elenco é global. */}
+                <AvisoAtualizacaoElencos />
                 {/* Avisos e confirmações do jogo, no lugar das caixas do Windows. */}
                 <DialogoDoJogo />
                 <MusicPlayerWrapper />

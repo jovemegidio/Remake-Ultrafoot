@@ -22,26 +22,28 @@ import { lerRegistro } from "@/lib/registration"
 export const LIMITE_SAVES_SEM_REGISTRO = 3
 
 /**
- * PAISES DE CLUBE liberados sem registro (pedido 30/07/2026).
+ * PAISES DE CLUBE liberados sem registro.
  *
- * Quem ainda nao registrou dirige clube do Brasil, da Franca ou da Espanha. As
- * demais ligas entram com o codigo. Continua valendo a regra da casa: a carreira
- * escolhida vai ate o fim, sem corte no meio da temporada.
+ * 30/07/2026: Brasil, Franca e Espanha.
+ * 01/08/2026: **so o Brasil** — o futebol brasileiro inteiro (Serie A ate a D) e
+ * a amostra de quem ainda nao registrou; o resto do mundo entra com o codigo.
+ *
+ * Continua valendo a regra da casa: nao e trava no meio do caminho. A carreira
+ * escolhida vai ate o fim, e quem ja tinha uma carreira em clube estrangeiro
+ * segue jogando — a lista so filtra a ESCOLHA de clube novo.
  */
-export const PAISES_SEM_REGISTRO: readonly string[] = ["BRA", "FRA", "ESP"]
+export const PAISES_SEM_REGISTRO: readonly string[] = ["BRA"]
 
 /**
- * As DIVISOES desses tres paises. Existe porque nem toda tela conhece o pais do
+ * As DIVISOES desses paises. Existe porque nem toda tela conhece o pais do
  * clube — as propostas de emprego, por exemplo, so tem a divisao na mao. Mantido
  * aqui, ao lado da lista de paises, para as duas regras nao se separarem.
  */
 export const DIVISOES_SEM_REGISTRO: readonly string[] = [
   "serie_a", "serie_b", "serie_c", "serie_d",
-  "ligue_1", "ligue_2",
-  "la_liga", "la_liga_2",
 ]
 
-export type BeneficioId = "nuvem" | "hub" | "editor" | "atualizacoes" | "saves"
+export type BeneficioId = "nuvem" | "hub" | "editor" | "atualizacoes" | "saves" | "ligas"
 
 export interface Beneficio {
   id: BeneficioId
@@ -51,6 +53,11 @@ export interface Beneficio {
 
 /** A lista que a tela de registro e as telas bloqueadas mostram. */
 export const BENEFICIOS: Beneficio[] = [
+  {
+    id: "ligas",
+    titulo: "O mundo inteiro",
+    descricao: "Sem registro você dirige o futebol brasileiro (Série A à D). O código abre as ligas dos outros países.",
+  },
   {
     id: "nuvem",
     titulo: "Save na nuvem",

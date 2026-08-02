@@ -139,7 +139,30 @@ function PlayerAvatarBase({
   // 0 = URL como veio; 1 = a outra forma (caminho simples <-> game-asset://).
   const [tentativa, setTentativa] = useState<0 | 1>(0)
 
-  const photoBase = photoUrlProp ?? getPlayerPhotoUrl(name, playerId)
+  // ⚠️ RESOLVER DE NOVO DEPOIS DE MONTAR — nao e redundancia.
+  //
+  // O jogo e export estatico: este `src` ja vem escrito no HTML, calculado no
+  // build. La `window` nao existe, entao `getPlayerPhotoUrl` nao enxerga nem a
+  // edicao local do jogador nem o retrato baixado pelo canal de atualizacao —
+  // devolve o retrato EMBUTIDO (ou o do Transfermarkt). E o React 18 nao corrige
+  // atributo divergente na hidratacao: sem este efeito, a foto nova era baixada,
+  // gravada, e a tela continuava exibindo a antiga ate alguem recarregar.
+  //
+  // Tambem e o que faz o retrato aparecer sozinho quando o store do Tauri
+  // termina de hidratar (assincrono) e quando um pacote acaba de ser aplicado.
+  const [photoBase, setPhotoBase] = useState(() => photoUrlProp ?? getPlayerPhotoUrl(name, playerId))
+
+  useEffect(() => {
+    const resolver = () => setPhotoBase(photoUrlProp ?? getPlayerPhotoUrl(name, playerId))
+    resolver()
+    window.addEventListener("ultrafoot:store:ready", resolver)
+    window.addEventListener("ultrafoot:elencos:atualizados", resolver)
+    return () => {
+      window.removeEventListener("ultrafoot:store:ready", resolver)
+      window.removeEventListener("ultrafoot:elencos:atualizados", resolver)
+    }
+  }, [photoUrlProp, name, playerId])
+
   // Este componente e reutilizado ao navegar entre atletas. Uma falha no
   // retrato anterior nao pode condenar a foto valida do proximo selecionado.
   useEffect(() => {

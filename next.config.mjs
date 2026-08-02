@@ -20,9 +20,21 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 // Tambem aceitamos uma flag explicita `TAURI_BUILD=1` para builds manuais.
 const isTauriBuild = Boolean(process.env.TAURI_ENV_PLATFORM) || process.env.TAURI_BUILD === '1'
 
+// QUANDO ESTE BUILD FOI FEITO (epoch em segundos).
+//
+// E o arbitro entre o seed EMBUTIDO e o pacote de elencos BAIXADO. O canal de
+// atualizacao foi desligado na 1.0.240 por um motivo concreto: um pacote gravado
+// no disco valia para sempre e passava a sobrescrever o elenco de uma build mais
+// NOVA com dados mais velhos, sem ninguem para corrigi-lo. Comparar versao do
+// pacote com versao do jogo nao resolve — sao numeracoes independentes de
+// proposito. Comparar DATAS resolve: um pacote publicado depois deste build so
+// pode conhecer o que este build ja conhece, e mais.
+const SELO_DO_BUILD = String(Math.floor(Date.now() / 1000))
+
 const nextConfig = {
   env: {
     NEXT_PUBLIC_VERSAO_DO_JOGO: pkg.version,
+    NEXT_PUBLIC_SELO_DO_BUILD: SELO_DO_BUILD,
   },
   ...(isTauriBuild
     ? {
