@@ -195,7 +195,7 @@
     {
       "version": "1.0.250",
       "date": "2026-08-03",
-      "latest": true,
+      "latest": false,
       "title": "Escudos licenciados chegam sem reinstalar o jogo",
       "changes": [
         {
@@ -215,7 +215,7 @@
     {
       "version": "1.0.249",
       "date": "2026-08-03",
-      "latest": false,
+      "latest": true,
       "title": "Fotos por clube, carreira do treinador e finanças realistas",
       "changes": [
         {

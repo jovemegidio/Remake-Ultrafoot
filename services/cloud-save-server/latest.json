@@ -1,12 +1,12 @@
 {
-  "version": "1.0.244",
-  "notes": "Atualizacao de elenco pelo servidor: rostos, elencos e transferencias chegam sem reinstalar o jogo, avisados dentro do jogo e valendo offline. Sem registro, o futebol brasileiro inteiro.",
-  "sizeMb": 630,
-  "sha256": "1226DAD347973750927A1545683ADC8A4D6D0391C5131A217BC23C56711F9369",
+  "version": "1.0.249",
+  "notes": "Ultrafoot 26 v1.0.249",
+  "sizeMb": 631,
+  "sha256": "C4665BD2BE68B41DBDCF2B657EF87B387582E96B4AD1542FAB95EEE3FB6F04E4",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRVBRK2luK3hhZ2l4d1Z6YmpxTk8yTG80ejBoYXJyL0tjdXNhN0tpZ094YnBlVkc3TEVYYXlNWWhTb1hXS3UwMVBCV0R1U3dBNE9acXlpU2JrQWJyblFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NjQxODQ5CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yNDRfeDY0LXNldHVwLmV4ZQp2SUdJUFdEWVdHNFQrbzdwNStCUlZqbTA0ckphMS9kQVpOK1huV1N4cVVVQ0hRZzZnWlNvRUxnN0dpbi9aYzUxOUk4NWg1TldpUU9MRHV2Umtqc1JCdz09Cg==",
-      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.244_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSRHdJcWNIMmhGRUUrSmNTekFjaDZWL1FJcjRZakFLQnc3MWJoMk9oMTBnTjhvaERkUUZ4WkZwdlh5ajFVRG9yRC9YUnhuY2hXc3YvM1dyYVRlTEdrSHNsVktzWUgwZWc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg1NzgwMDI2CWZpbGU6VWx0cmFmb290IDI2XzEuMC4yNDlfeDY0LXNldHVwLmV4ZQplaFNIQXVKdFZScGgxWmVTVnJXWllLSnk5TVBmK0h5MzZZNnZkVUI4WkxuTnQ0YVJlVzA1V1Q0NENmY21LMXZkQWtPWGJkUnpRZW9zNExQOHVTQ0NCQT09Cg==",
+      "url": "https://ultrafoot.179-198-103-30.sslip.io/downloads/Ultrafoot.26_1.0.249_x64-setup.exe"
     }
   }
 }
