@@ -44,7 +44,7 @@ import { getNationalCrestUrl } from "@/lib/national-assets"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { getPlayerOverride, setPlayerOverride, defaultPlayerAttributes, reputationBonus,
   caracteristicasDaPosicao, MAX_CARACTERISTICAS, BONUS_CARACTERISTICA } from "@/lib/player-overrides"
-import { TeamCrest, setCustomLogoUrl, getCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
+import { TeamCrest, setCustomLogoUrl, getLocalCustomLogoUrl, removeCustomLogoUrl, listLocalCustomLogos } from "@/components/team-crest"
 import { isTauri } from "@/lib/game-asset"
 import { compressImageDataUrl } from "@/lib/image-utils"
 import {
@@ -598,7 +598,9 @@ export default function EditarPage() {
 
   useEffect(() => {
     if (selectedTeam?.file_key) {
-      setHasCustomLogo(!!getCustomLogoUrl(selectedTeam.file_key))
+      // ⚠️ SÓ o escudo local: escudo que veio do canal ou do build não é "custom"
+      // desta instalação, e não há o que remover.
+      setHasCustomLogo(!!getLocalCustomLogoUrl(selectedTeam.file_key))
     }
   }, [selectedTeam, storeReady])
 

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { getEscudoUrl, getTeamByShort, type Team } from "@/lib/teams-data"
 import { storeGet, storeSet, storeRemove } from "@/lib/persistent-store"
+import { escudoDoServidor } from "@/lib/atualizacao-elencos"
 // Escudos EMBUTIDOS no build (viajam no mesmo seed dos overrides, campo logoUrl). E por
 // eles que um escudo importado no editor chega aos OUTROS jogadores, nao so ao save local.
 import bundledOverrides from "@/data/seeds/team-overrides.json"
@@ -50,11 +51,29 @@ const sizePixels = {
  */
 const CUSTOM_LOGO_KEY = (key: string) => `ultrafoot:logo:${key}`
 
+/**
+ * SÓ o escudo que ESTA instalação importou — sem o canal e sem o build.
+ *
+ * ⚠️ Existe porque o editor precisa saber se há o que REMOVER. Enquanto ele
+ * perguntava isso a `getCustomLogoUrl`, o botão "remover logo" passou a aparecer
+ * em todo clube que apenas recebeu escudo publicado, e clicar nele não fazia
+ * nada — apagava uma chave local que nunca existiu.
+ */
+export function getLocalCustomLogoUrl(fileKey: string): string | null {
+  if (typeof window === "undefined") return null
+  return storeGet(CUSTOM_LOGO_KEY(fileKey)) ?? null
+}
+
 export function getCustomLogoUrl(fileKey: string): string | null {
-  // Save LOCAL vence (personalizacao propria); o escudo EMBUTIDO no build e o fallback,
-  // e por ele que o escudo que voce importou aparece para todo mundo.
-  const local = typeof window === "undefined" ? null : storeGet(CUSTOM_LOGO_KEY(fileKey))
-  return local ?? BUNDLED_LOGOS[fileKey]?.logoUrl ?? null
+  // Save LOCAL vence (personalizacao propria); depois o escudo PUBLICADO pelo canal
+  // de atualizacao; o escudo EMBUTIDO no build e o ultimo fallback.
+  //
+  // ⚠️ A CAMADA DO MEIO FALTAVA. Ate 03/08/2026 esta funcao lia so o save local e o
+  // seed embutido — entao um escudo publicado pelo canal chegava ao manifesto, era
+  // gravado no disco, e NUNCA aparecia na tela, porque TeamCrest e quem desenha todo
+  // escudo do jogo e passa por aqui (nao por getTeamOverride). Sem erro nenhum: o
+  // escudo velho continuava no lugar. Irmao do descasamento dos retratos do DF11.
+  return getLocalCustomLogoUrl(fileKey) ?? escudoDoServidor(fileKey) ?? BUNDLED_LOGOS[fileKey]?.logoUrl ?? null
 }
 
 /** Escudos custom no save local (ultrafoot:logo:*), por fileKey — usado pelo editor ao exportar. */
@@ -126,9 +145,14 @@ export function TeamCrest({
     // navegacao reinicia esse cache). Sem re-ler aqui, um escudo ja importado
     // continuaria caindo no fallback ate ser reimportado.
     window.addEventListener("ultrafoot:store:ready", refresh)
+    // O pacote de atualizacao chega DEPOIS da montagem: sem re-resolver, o escudo
+    // novo seria baixado e gravado, e a tela continuaria com o antigo ate reabrir
+    // o jogo (o mesmo motivo de PlayerAvatar escutar este evento).
+    window.addEventListener("ultrafoot:elencos:atualizados", refresh)
     return () => {
       window.removeEventListener("ultrafoot:logo:changed", handler)
       window.removeEventListener("ultrafoot:store:ready", refresh)
+      window.removeEventListener("ultrafoot:elencos:atualizados", refresh)
     }
   }, [escudoKey])
 

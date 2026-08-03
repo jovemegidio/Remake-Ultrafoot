@@ -255,6 +255,29 @@ export function timeDoServidor(fileKey: string): TeamOverride | null {
   return getAtualizacao().times?.[fileKey] ?? null
 }
 
+/**
+ * Escudo publicado para este clube, ou null.
+ *
+ * ⚠️ EXISTE PORQUE `timeDoServidor` NÃO BASTAVA. O escudo do canal chegava até
+ * `getTeamOverride`, mas a tela não passa por lá: `getCustomLogoUrl`
+ * (components/team-crest) lia só o save local e o seed EMBUTIDO no build. Ou
+ * seja, dava para publicar escudo pelo canal e ele não aparecia em lugar
+ * nenhum, sem erro nenhum — o mesmo descasamento que os retratos do DF11
+ * tiveram entre a chave do manifesto e `getPlayerPhotoUrl`.
+ *
+ * Mesma regra da foto: a CÓPIA guardada vence a URL remota (é ela que faz o
+ * escudo aparecer sem internet), mas só se for cópia DESTA url — como a url
+ * termina no sha da imagem, comparar as duas é a verificação de validade.
+ */
+export function escudoDoServidor(fileKey: string): string | null {
+  if (!canalAtivo("times")) return null
+  const url = getAtualizacao().times?.[fileKey]?.logoUrl
+  if (!url) return null
+  if (url.startsWith("data:")) return url
+  const copia = imagensGuardadas().porChave.get(chaveEscudo(fileKey))
+  return copia?.u === url ? copia.d : url
+}
+
 export function jogadorDoServidor(chave: string): PlayerOverride | null {
   if (!canalAtivo("elencos")) return null
   return getAtualizacao().jogadores?.[chave] ?? null
@@ -388,50 +411,96 @@ export function fotoDoServidor(nome: string, fileKey?: string): string | null {
   // "subi o Bruno do Flamengo, entao e do Flamengo e nao de outro time". Se este
   // clube nao publicou rosto para este atleta, ele NAO TEM rosto — pegar o do
   // xara de outro time foi exatamente o relato (Bruno Henrique, Paulinho).
+  //
+  // ⚠️ E A COPIA LOCAL SO VALE SE FOR COPIA DESTA URL. Ver a nota do
+  // CHAVE_FOTOS: enquanto ela vencia sem conferencia, republicar um clube nao
+  // tinha efeito nenhum em quem ja tinha baixado.
   if (fileKey) {
-    const exata = getAtualizacao().jogadores?.[`${fileKey}__${chave}`]?.faceDataUrl
-    return exata ? (fotosGuardadas().get(chave) ?? exata) : null
+    const chaveCompleta = `${fileKey}__${chave}`
+    const exata = getAtualizacao().jogadores?.[chaveCompleta]?.faceDataUrl
+    if (!exata) return null
+    const copia = imagensGuardadas().porChave.get(chaveCompleta)
+    return copia?.u === exata ? copia.d : exata
   }
-  const guardada = fotosGuardadas().get(chave)
-  if (guardada) return guardada
   const mapa = indexarFotos()
-  return mapa.size === 0 ? null : mapa.get(chave) ?? null
+  const url = mapa.size === 0 ? undefined : mapa.get(chave)
+  if (!url) return null
+  return imagensGuardadas().porUrl.get(url) ?? url
 }
 
-// ─── Cópia local dos retratos (para funcionar SEM internet) ──────────────────
+// ─── Cópia local das imagens (para funcionar SEM internet) ───────────────────
 //
-// O manifesto já fica gravado no disco, então elenco, transferência e escudo
-// funcionam offline assim que o pacote é aplicado. A FOTO não: ela viaja como
-// URL remota (é o que evitou o seed de 30 MB em base64). Sem esta cópia, o rosto
-// aparecia com internet e sumia sem ela — "atualizou" pela metade.
+// O manifesto já fica gravado no disco, então elenco e transferência funcionam
+// offline assim que o pacote é aplicado. A IMAGEM não: retrato e escudo viajam
+// como URL remota (é o que evitou o seed de 30 MB em base64). Sem esta cópia, a
+// figura aparecia com internet e sumia sem ela — "atualizou" pela metade.
 //
-// Guardadas num ÚNICO valor, gravado uma vez só no fim: são 59 retratos hoje, e
-// 59 gravações separadas fariam o persistent-store reescrever o arquivo inteiro
-// 59 vezes.
+// Guardadas num ÚNICO valor, gravado uma vez só no fim: são centenas de
+// imagens, e uma gravação por imagem faria o persistent-store reescrever o
+// arquivo inteiro a cada uma.
 
-const CHAVE_FOTOS = "ultrafoot:atualizacao-fotos"
+// ⚠️ O NOME DA CHAVE CONTINUA "fotos" DE PROPÓSITO, mesmo agora que ela guarda
+// escudo também: mudar a string descartaria a cópia de quem já baixou, e todo
+// mundo voltaria a depender da internet até o próximo pacote.
+const CHAVE_IMAGENS = "ultrafoot:atualizacao-fotos"
+
+/** Prefixo do escudo dentro da cópia. Atleta é `fileKey__nome`; clube não tem
+ *  `__`, então os dois espaços de chave não se encostam. */
+const chaveEscudo = (fileKey: string) => `escudo__${fileKey}`
 
 /**
- * Teto da cópia local. Acima disto o retrato continua funcionando ONLINE, pela
- * URL remota — só não fica guardado. O limite existe porque `storeSet` espelha em
+ * ⚠️ A CÓPIA LOCAL PRECISA SABER DE QUAL FOTO ELA É CÓPIA.
+ *
+ * A primeira versão guardava `{ nome: "data:..." }` e tinha dois furos que só
+ * apareceram quando um clube foi republicado (Cruzeiro, 03/08/2026):
+ *
+ *  1. **Indexada só pelo NOME**, jogando fora o clube — o mesmo descasamento que
+ *     `fotoDoServidor` já evita quando recebe o `fileKey`.
+ *  2. **Nunca invalidada**: `guardarFotosLocalmente` pulava quem já tinha cópia e
+ *     `fotoDoServidor` devolvia a cópia ANTES da URL do manifesto. Republicar
+ *     virava operação sem efeito para quem já tinha baixado — e sem sintoma
+ *     nenhum, porque a foto continuava aparecendo; só que a antiga.
+ *
+ * Agora a cópia guarda a URL de origem junto. Como a URL termina no sha da
+ * imagem, comparar as duas É a verificação de validade: mudou a foto, mudou o
+ * sha, mudou a URL, a cópia cai sozinha.
+ */
+interface ImagemGuardada { u: string; d: string }
+
+/**
+ * Teto da cópia local. Acima disto a imagem continua funcionando ONLINE, pela
+ * URL remota — só não fica guardada. O limite existe porque `storeSet` espelha em
  * `localStorage`, que estoura por volta de 5–10 MB (e na versão web ele é o
  * único armazenamento que existe).
  */
-const TETO_FOTOS_BYTES = 8 * 1024 * 1024
+const TETO_IMAGENS_BYTES = 8 * 1024 * 1024
 
-let cacheFotos: { bruto: string; mapa: Map<string, string> } | null = null
+interface CacheImagens { porChave: Map<string, ImagemGuardada>; porUrl: Map<string, string> }
+let cacheImagens: { bruto: string; dados: CacheImagens } | null = null
 
-function fotosGuardadas(): Map<string, string> {
-  if (typeof window === "undefined") return new Map()
-  const bruto = storeGet(CHAVE_FOTOS)
-  if (!bruto) return new Map()
-  if (cacheFotos?.bruto === bruto) return cacheFotos.mapa
-  let mapa = new Map<string, string>()
+const VAZIO: CacheImagens = { porChave: new Map(), porUrl: new Map() }
+
+function imagensGuardadas(): CacheImagens {
+  if (typeof window === "undefined") return VAZIO
+  const bruto = storeGet(CHAVE_IMAGENS)
+  if (!bruto) return VAZIO
+  if (cacheImagens?.bruto === bruto) return cacheImagens.dados
+  const dados: CacheImagens = { porChave: new Map(), porUrl: new Map() }
   try {
-    mapa = new Map(Object.entries(JSON.parse(bruto) as Record<string, string>))
+    for (const [chave, valor] of Object.entries(JSON.parse(bruto) as Record<string, unknown>)) {
+      // Formato antigo (`nome: "data:..."`): DESCARTADO de propósito. Não tem
+      // URL para conferir e está indexado pelo nome sem clube — é justamente a
+      // cópia que servia foto velha. Descartar é seguro: o retrato continua
+      // vindo pela URL do manifesto e volta a ser guardado no próximo pacote.
+      if (typeof valor !== "object" || valor === null) continue
+      const { u, d } = valor as Partial<ImagemGuardada>
+      if (typeof u !== "string" || typeof d !== "string") continue
+      dados.porChave.set(chave, { u, d })
+      dados.porUrl.set(u, d)
+    }
   } catch { /* corrompido: volta a valer a URL remota */ }
-  cacheFotos = { bruto, mapa }
-  return mapa
+  cacheImagens = { bruto, dados }
+  return dados
 }
 
 function paraDataUrl(bytes: ArrayBuffer, tipo: string): string {
@@ -445,50 +514,74 @@ function paraDataUrl(bytes: ArrayBuffer, tipo: string): string {
 }
 
 /**
- * Baixa e guarda os retratos do pacote. Best-effort: o que falhar continua
- * funcionando online, e nada aqui pode atrapalhar o que já foi aplicado.
+ * Baixa e guarda os retratos E os escudos do pacote. Best-effort: o que falhar
+ * continua funcionando online, e nada aqui pode atrapalhar o que já foi aplicado.
  *
  * Chamada DEPOIS de `aplicarAtualizacao` — o elenco já vale antes de a primeira
- * foto chegar.
+ * imagem chegar.
  */
 export async function guardarFotosLocalmente(
   pacote: AtualizacaoElencos,
   aoProgredir?: (feitas: number, total: number) => void,
 ): Promise<number> {
   if (typeof window === "undefined") return 0
+  // Chaveado por `fileKey__nome`, o mesmo do manifesto: guardar por nome jogava
+  // fora o clube e fazia xarás de clubes diferentes dividirem uma cópia só.
   const alvos = new Map<string, string>()
+  // ⚠️ ESCUDO PRIMEIRO, e não é ordem estética: o laço PARA quando bate o teto
+  // de 8 MB, e só os retratos já passam disso. Deixados por último, os escudos
+  // nunca seriam guardados — apareceriam online e sumiriam offline. São dezenas
+  // de clubes contra centenas de atletas; passam na frente por caberem.
+  for (const [fileKey, time] of Object.entries(pacote.times ?? {})) {
+    const url = time?.logoUrl
+    if (!url || url.startsWith("data:")) continue
+    alvos.set(chaveEscudo(fileKey), url)
+  }
   for (const [chave, jogador] of Object.entries(pacote.jogadores ?? {})) {
     const url = jogador.faceDataUrl
     if (!url || url.startsWith("data:")) continue
-    const corte = chave.indexOf("__")
-    const nome = corte >= 0 ? chave.slice(corte + 2) : chave
-    if (nome) alvos.set(nome, url)
+    alvos.set(chave, url)
   }
   if (alvos.size === 0) return 0
 
   const { fetchDoAmbiente } = await import("@/lib/buscar-json")
   const requisitar = await fetchDoAmbiente()
-  const guardadas: Record<string, string> = Object.fromEntries(fotosGuardadas())
+  const guardadas: Record<string, ImagemGuardada> = Object.fromEntries(imagensGuardadas().porChave)
+
+  // Cópia de quem saiu do pacote não serve mais para nada e ainda ocupa o teto —
+  // é o que sobrava do elenco antigo depois de uma transferência.
+  let removidas = 0
+  for (const chave of Object.keys(guardadas)) {
+    if (alvos.has(chave)) continue
+    delete guardadas[chave]
+    removidas++
+  }
+
   let bytes = JSON.stringify(guardadas).length
   let feitas = 0
   let novas = 0
 
-  for (const [nome, url] of alvos) {
+  for (const [chave, url] of alvos) {
     feitas++
     aoProgredir?.(feitas, alvos.size)
-    if (guardadas[nome]?.startsWith("data:")) continue
-    if (bytes >= TETO_FOTOS_BYTES) break
+    // Rebaixa quando a URL MUDOU — e ela muda sempre que a imagem muda, porque
+    // termina no sha. Era aqui que a republicação morria.
+    if (guardadas[chave]?.u === url) continue
+    if (bytes >= TETO_IMAGENS_BYTES) break
     try {
       const r = await requisitar(url, {})
       if (!r.ok) continue
       const dados = paraDataUrl(await r.arrayBuffer(), r.headers.get("content-type") ?? "")
-      guardadas[nome] = dados
-      bytes += dados.length + nome.length + 8
+      guardadas[chave] = { u: url, d: dados }
+      bytes += dados.length + url.length + chave.length + 16
       novas++
     } catch { /* uma foto a menos não invalida o pacote */ }
   }
 
-  if (novas > 0) storeSet(CHAVE_FOTOS, JSON.stringify(guardadas))
+  // Grava também quando só houve descarte: a limpeza do formato antigo e das
+  // sobras de elenco anterior precisa persistir mesmo que nenhuma imagem nova
+  // tenha entrado (offline, teto batido, servidor fora).
+  if (novas > 0 || removidas > 0) storeSet(CHAVE_IMAGENS, JSON.stringify(guardadas))
   return novas
 }
 
