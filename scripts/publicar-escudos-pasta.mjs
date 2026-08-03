@@ -70,10 +70,19 @@ const norm = s => semAcento(s).toLowerCase().replace(/[^a-z0-9]/g, "")
 // Brasil ela e o nome: tirando-a, "Atletico-GO" viraria so "go" e deixaria de
 // casar com o arquivo "AtleticoGO" — e, pior, Atletico-MG, -GO e -PR ficariam
 // com a mesma chave.
+//
+// ⚠️ A LISTA E MULTILINGUE PORQUE A PASTA E. "Club de Deportes Iquique",
+// "Clube Desportivo Nacional", "Sivasspor Kulübü", "Sport Clube Beira-Mar": sem
+// derrubar essas palavras, 160 clubes que EXISTEM no jogo saiam como "sem clube
+// no seed", porque o seed guarda so "Iquique", "Nacional", "Sivasspor".
 const SOCIEDADE = new Set([
-  "fc", "ac", "sc", "ec", "cf", "cd", "ca", "afc", "cfc", "sac",
+  "fc", "ac", "sc", "ec", "cf", "cd", "ca", "afc", "cfc", "sac", "ad", "sd",
+  "ud", "cdr", "gdr", "sad", "as", "us", "ss", "aa",
   "calcio", "club", "clube", "futebol", "futbol", "football", "esporte",
   "esportivo", "esportiva", "sociedade", "associacao",
+  "deportes", "deportivo", "deportiva", "desportivo", "desportiva", "desportos",
+  "social", "recreativa", "recreativo", "sporting", "sport", "kulubu", "spor",
+  "de", "da", "do", "del", "y", "e",
 ])
 
 /**
@@ -124,6 +133,30 @@ const PAISES = {
   BOL: { pais: ["bolivia"], sufixos: ["bol"] },
   EQU: { pais: ["equador"], sufixos: ["equ"] },
   VEN: { pais: ["venezuela"], sufixos: ["ven"] },
+  // ⚠️ O SEED NAO USA O MESMO CODIGO DO ARQUIVO. Arabia Saudita e `ARA` no
+  // campo `pais` (o arquivo diz ARB) e Cazaquistao e `CAZ` (o arquivo diz KAZ);
+  // varios paises guardam o nome por extenso e outros a sigla. Por isso cada
+  // entrada aceita as DUAS formas, e os valores abaixo saem de consulta ao
+  // proprio seed, nao de chute.
+  ARB: { pais: ["ara"], sufixos: ["ara"] },
+  TUR: { pais: ["turquia"], sufixos: ["tur"] },
+  GRE: { pais: ["grecia"], sufixos: ["gre"] },
+  CYP: { pais: ["cyp"], sufixos: ["cyp"] },
+  KAZ: { pais: ["caz"], sufixos: ["caz"] },
+  AZE: { pais: ["azb"], sufixos: ["aze", "azb"] },
+  NOR: { pais: ["noruega"], sufixos: ["nor"] },
+  DEN: { pais: ["dinamarca", "den"], sufixos: ["den"] },
+  CZE: { pais: ["cze"], sufixos: ["cze"] },
+  PER: { pais: ["peru"], sufixos: ["per"] },
+  RUS: { pais: ["russia"], sufixos: ["rus"] },
+  SUI: { pais: ["suica"], sufixos: ["sui"] },
+  BEL: { pais: ["belgica"], sufixos: ["bel"] },
+  AUT: { pais: ["austria"], sufixos: ["aut"] },
+  SUE: { pais: ["suecia"], sufixos: ["sue"] },
+  UCR: { pais: ["ucrania"], sufixos: ["ucr"] },
+  ESC: { pais: ["escocia"], sufixos: ["esc"] },
+  CRO: { pais: ["croacia"], sufixos: ["cro"] },
+  SER: { pais: ["servia"], sufixos: ["ser", "srb"] },
 }
 
 /** "A.C Monza - ITA.png" -> { nome: "A.C Monza", sufixo: "ITA" } */
@@ -157,6 +190,8 @@ function clubes() {
       fileKey,
       nome: t.nome,
       chave: chaveNome(t.nome),
+      // Nome sem palavra derrubada: e ele que dispensa a prova de origem.
+      cru: norm(t.nome),
       pais: t.pais ?? "",
       estado: t.estado ?? "",
       sufixo: (fileKey.split("_").at(-1) ?? "").toLowerCase(),
@@ -189,6 +224,44 @@ function contradiz(clube, sufixo) {
   return outro
 }
 
+/**
+ * Quanta prova A FAVOR o sufixo do arquivo da para este clube.
+ *   2 = a UF bate exatamente
+ *   1 = o pais bate (e a UF do arquivo implica Brasil)
+ *   0 = nada prova nem desmente
+ *  -1 = o sufixo CONTRADIZ
+ */
+function prova(clube, sufixo) {
+  if (contradiz(clube, sufixo)) return -1
+  if (!sufixo) return 0
+
+  if (UFS.has(sufixo)) {
+    if ((clube.estado || "").toUpperCase() === sufixo) return 2
+    if ((clube.pais || "").toUpperCase() === sufixo) return 2
+    // UF no arquivo quer dizer clube BRASILEIRO — e isso ja separa o Boavista
+    // do Rio do Boavista do Porto.
+    if (norm(clube.pais) === "brasil" || clube.sufixo === "bra") return 1
+    return 0
+  }
+
+  const alvo = PAISES[sufixo]
+  if (!alvo) return 0
+  if (alvo.pais.some(p => norm(clube.pais) === norm(p))) return 1
+  if (alvo.sufixos.includes(clube.sufixo)) return 1
+  // Clube brasileiro do pool guarda a UF no campo `pais` ("AM", "SE"): para
+  // BRA isso e prova a favor, nao ausencia de prova.
+  if (sufixo === "BRA" && UFS.has((clube.pais || "").toUpperCase())) return 1
+  return 0
+}
+
+/** Fica so com quem tem a MAIOR prova a favor — e ninguem, se todos contradizem. */
+function porMaiorProva(candidatos, sufixo) {
+  const comNota = candidatos.map(c => ({ c, n: prova(c, sufixo) })).filter(x => x.n >= 0)
+  if (!comNota.length) return []
+  const max = Math.max(...comNota.map(x => x.n))
+  return comNota.filter(x => x.n === max).map(x => x.c)
+}
+
 // ─── Leitura da pasta ────────────────────────────────────────────────────────
 
 const ASSINATURAS = [
@@ -211,44 +284,118 @@ const casados = []
 const ambiguos = []
 const semClube = []
 const contraditos = []
+const duplicados = []
 
+// ─── Primeiro passe: so resolve o clube de cada arquivo ──────────────────────
+//
+// Separado do recorte de propriedade: com 442 arquivos, redimensionar antes de
+// saber que dois deles disputam o mesmo clube seria trabalho jogado fora — e,
+// pior, o segundo sobrescreveria o primeiro em silencio no pacote.
+const resolvidos = []
 for (const arquivo of arquivos) {
   const { nome, sufixo } = partesDoArquivo(arquivo)
 
-  let alvo = null
   if (MANUAIS.has(arquivo)) {
     const fk = MANUAIS.get(arquivo)
-    alvo = CLUBES.find(c => c.fileKey === fk)
+    const alvo = CLUBES.find(c => c.fileKey === fk)
     if (!alvo) {
       console.error(`file_key inexistente no seed: "${fk}" (par manual de "${arquivo}")`)
       process.exit(1)
     }
-  } else {
-    const chave = chaveNome(nome)
-    const mesmoNome = CLUBES.filter(c => c.chave === chave)
-    const validos = mesmoNome.filter(c => !contradiz(c, sufixo))
-    if (validos.length === 1) alvo = validos[0]
-    else if (mesmoNome.length === 0) semClube.push(arquivo)
-    else if (validos.length === 0) contraditos.push(`${arquivo} (${mesmoNome.map(c => c.fileKey).join(", ")})`)
-    else ambiguos.push(`${arquivo} -> ${validos.map(c => `${c.fileKey} (${c.nome})`).join(" | ")}`)
+    resolvidos.push({ arquivo, alvo, sufixo, manual: true })
+    continue
   }
-  if (!alvo) continue
 
+  const chave = chaveNome(nome)
+  // ⚠️ DERRUBAR PALAVRA DE SOCIEDADE APROXIMA CLUBES DIFERENTES. "Vitória Sport
+  // Clube" (Guimarães) vira "vitoria" e cai em cima do Vitória do Barradão —
+  // que no seed se chama so "Vitória", entao a igualdade e legitima pela regra e
+  // ainda assim e outro clube. Nao deu escudo errado por sorte: o arquivo com UF
+  // venceu o desempate de duplicados.
+  //
+  // A trava: um casamento que SO existiu porque palavras cairam precisa de PROVA
+  // a favor da origem (o pais/UF do arquivo batendo com o do clube). Casamento
+  // que ja valia com o nome cru nao precisa de nada — e o proprio nome.
+  const cru = norm(nome)
+  const mesmoNome = CLUBES.filter(c =>
+    c.chave === chave && (c.cru === cru || prova(c, sufixo) >= 1))
+  // ⚠️ PROVA A FAVOR VENCE AUSENCIA DE PROVA CONTRA. Antes eu so descartava quem
+  // o sufixo CONTRADIZ, e sobrava empate onde a sigla ja dizia tudo: "BoaVista -
+  // RJ" ficava entre o brasileiro e o portugues, e "Deportes Santa Cruz - CHI"
+  // entrava na briga do Santa Cruz de Pernambuco. Entre um clube que BATE com a
+  // sigla e outro que apenas nao a contradiz, o primeiro ganha.
+  const validos = porMaiorProva(mesmoNome, sufixo)
+  if (validos.length === 1) resolvidos.push({ arquivo, alvo: validos[0], sufixo, manual: false })
+  else if (mesmoNome.length === 0) semClube.push(arquivo)
+  else if (validos.length === 0) contraditos.push(`${arquivo} (${mesmoNome.map(c => c.fileKey).join(", ")})`)
+  else ambiguos.push(`${arquivo} -> ${validos.map(c => `${c.fileKey} (${c.nome})`).join(" | ")}`)
+}
+
+// ─── Dois arquivos para o mesmo clube ────────────────────────────────────────
+//
+// ⚠️ ACONTECE, E ANTES PASSAVA DESPERCEBIDO: a pasta tem "Amazonas - BRA.png" e
+// "Amazonas.png", "CRB - BRA.png" e "CRB.png", "Marcilio Dias - BRA.png" e
+// "- SC.png". Sem tratamento, os dois entram no pacote com o mesmo file_key e
+// vale o ULTIMO — escolha ao acaso da ordem alfabetica.
+//
+// Quando os bytes sao iguais, nao ha o que decidir. Quando diferem, vence o
+// sufixo MAIS ESPECIFICO (UF > pais > nenhum), porque quem escreveu a UF sabia
+// de qual dos homonimos estava falando. Empate de especificidade nao e
+// desempatavel por regra nenhuma: os dois ficam de fora e aparecem no relatorio.
+const forca = s => (!s ? 0 : UFS.has(s) ? 2 : 1)
+const porClube = new Map()
+for (const r of resolvidos) {
+  if (!porClube.has(r.alvo.fileKey)) porClube.set(r.alvo.fileKey, [])
+  porClube.get(r.alvo.fileKey).push(r)
+}
+
+const escolhidos = []
+for (const [fileKey, lista] of porClube) {
+  if (lista.length === 1) { escolhidos.push(lista[0]); continue }
+  const bytes = lista.map(r => readFileSync(path.join(PASTA, r.arquivo)))
+  const iguais = bytes.every(b => b.equals(bytes[0]))
+  if (iguais) {
+    escolhidos.push(lista[0])
+    duplicados.push(`${fileKey}: ${lista.map(r => r.arquivo).join(" = ")} (identicos, usei o primeiro)`)
+    continue
+  }
+  const max = Math.max(...lista.map(r => forca(r.sufixo)))
+  const melhores = lista.filter(r => forca(r.sufixo) === max)
+  if (melhores.length === 1) {
+    escolhidos.push(melhores[0])
+    duplicados.push(`${fileKey}: usei "${melhores[0].arquivo}" (sufixo mais especifico); ignorei ${lista.filter(r => r !== melhores[0]).map(r => `"${r.arquivo}"`).join(", ")}`)
+  } else {
+    duplicados.push(`⚠️ ${fileKey}: ${melhores.map(r => `"${r.arquivo}"`).join(" x ")} — imagens DIFERENTES e mesma especificidade, NENHUM publicado`)
+  }
+}
+
+// ─── Segundo passe: recorte e base64 ─────────────────────────────────────────
+for (const { arquivo, alvo, manual } of escolhidos) {
   // `contain` com fundo transparente: escudo nao e quadrado, e esticar ou cortar
   // deforma. O PNG paletizado sai em poucos KB — 500x500 cheios sao 150 KB, e
-  // com 23 clubes isso e a diferenca entre 3 MB e 300 KB no manifesto.
+  // com centenas de clubes isso e a diferenca entre dezenas de MB e poucos.
   const png = await sharp(path.join(PASTA, arquivo))
     .resize(LADO, LADO, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png({ compressionLevel: 9, palette: true })
     .toBuffer()
 
   itens.push({ file_key: alvo.fileKey, escudo_data: `data:image/png;base64,${png.toString("base64")}` })
-  casados.push(`${arquivo} -> ${alvo.nome} [${alvo.fileKey}]${MANUAIS.has(arquivo) ? "  (par manual)" : ""}`)
+  casados.push(`${arquivo} -> ${alvo.nome} [${alvo.fileKey}]${manual ? "  (par manual)" : ""}`)
 }
+
+const RESUMO = process.argv.includes("--resumo")
 
 console.log(`arquivos de imagem na pasta: ${arquivos.length}`)
 console.log(`CASADOS: ${casados.length}`)
-for (const c of casados) console.log(`   ${c}`)
+if (!RESUMO) for (const c of casados) console.log(`   ${c}`)
+if (duplicados.length) {
+  console.log(`\nMESMO CLUBE EM MAIS DE UM ARQUIVO:`)
+  for (const d of duplicados) console.log(`   ${d}`)
+}
+if (duplicados.length) {
+  console.log(`\nMESMO CLUBE EM MAIS DE UM ARQUIVO:`)
+  for (const d of duplicados) console.log(`   ${d}`)
+}
 if (ambiguos.length) {
   console.log(`\nAMBIGUOS (nenhum escudo destes vai no pacote) — resolva com file_key="arquivo":`)
   for (const a of ambiguos) console.log(`   ${a}`)
