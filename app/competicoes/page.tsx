@@ -67,12 +67,12 @@ const COPA_BRASIL_2026_OITAVAS: string[] = [
 import { useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams, computeStandingsFromFixtures, type Fixture } from "@/lib/use-game-manager"
 import type { StandingsEntry } from "@/lib/game-engine"
-import { useGameEngine } from "@/lib/game-engine"
+import { useGameEngine, type MatchResult as EngineMatchResult } from "@/lib/game-engine"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { gerarEstatisticasCompeticao } from "@/lib/competition-scorers"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto, type CobrancaPenalti } from "@/lib/cup-engine"
-import { passouNoConfronto } from "@/lib/cup-bracket"
+import { resultadoDoConfronto } from "@/lib/cup-bracket"
 // Assistir a disputa de penaltis de qualquer confronto da chave, nao so do seu.
 import { PenaltisAlheiosModal } from "@/components/match/penaltis-alheios-modal"
 import { getCountryCompetitions, getContinentalSpot, getContinentalDivisions } from "@/lib/country-competitions"
@@ -148,16 +148,21 @@ function copaBrasilDoCalendario(
   fixtures: Fixture[],
   userCurto: string,
   season: number,
+  competitionName: string,
+  /** Resultados do save: é deles que sai o placar REAL da disputa de pênaltis. */
+  resultados: readonly EngineMatchResult[] = [],
 ): CompetitionState["copaBrasil"] {
+  const isOfficial = (fixture: Fixture) => fixture.competitionType === "cup"
+    && fixture.competition.localeCompare(competitionName, undefined, { sensitivity: "base" }) === 0
   const fases = [
-    { fixtureStages: ["quinta_fase", "oitavas"], stateStage: "oitavas" as const },
+    { fixtureStages: ["primeira_fase", "segunda_fase", "terceira_fase", "quarta_fase", "quinta_fase", "oitavas"], stateStage: "oitavas" as const },
     { fixtureStages: ["quartas"], stateStage: "quartas" as const },
     { fixtureStages: ["semifinal"], stateStage: "semis" as const },
     { fixtureStages: ["final"], stateStage: "final" as const },
   ]
   const next = {
     ...state,
-    drawn: state.drawn || fixtures.some(f => f.competitionType === "cup" && /copa do brasil/i.test(f.competition)),
+    drawn: state.drawn || fixtures.some(isOfficial),
     oitavas: state.oitavas.map(match => ({ ...match })),
     quartas: state.quartas.map(match => ({ ...match })),
     semis: state.semis.map(match => ({ ...match })),
@@ -168,13 +173,11 @@ function copaBrasilDoCalendario(
     // Quando a oitava já foi criada ela substitui a 5ª fase no primeiro espaço
     // da chave compacta; enquanto isso, o sorteio inicial mostra a 5ª fase real.
     const fixtureStage = [...fase.fixtureStages].reverse().find(stage => fixtures.some(f =>
-      f.competitionType === "cup" && /copa do brasil/i.test(f.competition)
-        && f.stage === stage && f.isUserMatch,
+      isOfficial(f) && f.stage === stage && f.isUserMatch,
     ))
     if (!fixtureStage) continue
     const oficiais = fixtures
-      .filter(f => f.competitionType === "cup" && /copa do brasil/i.test(f.competition)
-        && f.stage === fixtureStage && f.isUserMatch)
+      .filter(f => isOfficial(f) && f.stage === fixtureStage && f.isUserMatch)
       .sort((a, b) => a.week - b.week || a.id - b.id)
     if (!oficiais.length) continue
 
@@ -188,17 +191,32 @@ function copaBrasilDoCalendario(
     const confrontoEncerrado = encerradas.length === oficiais.length
     const golsUser = encerradas.reduce((total, f) => total + (f.homeTeam.curto === userCurto ? f.homeScore! : f.awayScore!), 0)
     const golsRival = encerradas.reduce((total, f) => total + (f.homeTeam.curto === rival ? f.homeScore! : f.awayScore!), 0)
-    const empatouAgregado = confrontoEncerrado && golsUser === golsRival
-    const passou = confrontoEncerrado
-      ? passouNoConfronto(
-          encerradas.map(f => ({
-            golsPro: f.homeTeam.curto === userCurto ? f.homeScore! : f.awayScore!,
-            golsContra: f.homeTeam.curto === userCurto ? f.awayScore! : f.homeScore!,
-          })),
+    // O placar da disputa vem do SAVE quando ela foi jogada na tela; senão, da
+    // disputa determinística. Nos dois casos é o MESMO número que decidiu quem
+    // passou — antes esta tela chumbava "5-4"/"4-5" para uma disputa que nunca
+    // tinha acontecido.
+    const decisao = confrontoEncerrado
+      ? resultadoDoConfronto(
+          encerradas.map(f => {
+            const euEmCasa = f.homeTeam.curto === userCurto
+            const r = resultados.find(x =>
+              x.season === season && x.week === f.week &&
+              (x.homeTeam === f.homeTeam.curto && x.awayTeam === f.awayTeam.curto),
+            )
+            return {
+              golsPro: euEmCasa ? f.homeScore! : f.awayScore!,
+              golsContra: euEmCasa ? f.awayScore! : f.homeScore!,
+              penaltisPro: euEmCasa ? r?.homePenalties : r?.awayPenalties,
+              penaltisContra: euEmCasa ? r?.awayPenalties : r?.homePenalties,
+            }
+          }),
           oficiais.length,
-          `${userCurto}:copa_brasil:${season}:${fixtureStage}`,
+          `${userCurto}:${primeira.competitionId ?? competitionName}:${season}:${fixtureStage}`,
+          getTeamByShort(userCurto)?.prestigio ?? 70,
+          getTeamByShort(rival)?.prestigio ?? 70,
         )
-      : null
+      : { passou: null, penaltis: null }
+    const passou = decisao.passou
 
     partidas[slot] = {
       ...base,
@@ -208,8 +226,7 @@ function copaBrasilDoCalendario(
       score2: encerradas.length ? golsRival : null,
       played: confrontoEncerrado,
       winner: confrontoEncerrado ? (passou ? userCurto : rival) : null,
-      // Empate agregado sempre mostra a disputa que definiu o classificado.
-      penaltis: empatouAgregado ? (passou ? [5, 4] : [4, 5]) as [number, number] : null,
+      penaltis: decisao.penaltis,
       cobrancas: null,
     }
   }
@@ -823,8 +840,15 @@ export default function CompeticoesPage() {
   } = useCompetitions(userTeam.curto, userPosition, currentSeason)
 
   const copaBrasilStateOficial = useMemo(
-    () => copaBrasilDoCalendario(compState.copaBrasil, seasonCalendar.fixtures, userTeam.curto, currentSeason),
-    [compState.copaBrasil, seasonCalendar.fixtures, userTeam.curto, currentSeason],
+    () => copaBrasilDoCalendario(
+      compState.copaBrasil,
+      seasonCalendar.fixtures,
+      userTeam.curto,
+      currentSeason,
+      getCountryCompetitions(userTeam.divisao).domesticCup,
+      matchResults ?? [],
+    ),
+    [compState.copaBrasil, seasonCalendar.fixtures, userTeam.curto, userTeam.divisao, currentSeason, matchResults],
   )
 
   // Navega para a tela de campeao se o usuario ganhar uma copa
@@ -1169,6 +1193,11 @@ export default function CompeticoesPage() {
               state={compState.libertadores}
               onDraw={drawLibertadores}
               competitionName={continentalName}
+              fixtures={seasonCalendar.fixtures.filter(f =>
+                f.competitionType === "continental" && f.competition === continentalName,
+              )}
+              season={currentSeason}
+              resultados={matchResults ?? []}
             />
           </TabsContent>
         </Tabs>
@@ -1444,16 +1473,26 @@ function LibertadoresView({
   state,
   onDraw,
   competitionName,
+  fixtures,
+  season,
+  resultados,
 }: {
   userTeam: Team
   state: CompetitionState["libertadores"]
   onDraw: () => void
   /** Competicao que o clube realmente disputa — nao e sempre a Libertadores. */
   competitionName: string
+  fixtures: Fixture[]
+  season: number
+  /** Resultados do save: trazem o placar real das disputas de pênaltis. */
+  resultados?: readonly EngineMatchResult[]
 }) {
   const t = useTranslation()
+  const groupFixtures = fixtures.filter(f => f.stage === "fase_grupos")
+  const officialGroupShorts = Array.from(new Set(groupFixtures.flatMap(f => [f.homeTeam.curto, f.awayTeam.curto])))
+  const hasOfficialCompetition = fixtures.length > 0
 
-  if (!state.qualified) {
+  if (!state.qualified && !hasOfficialCompetition) {
     return (
       <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5 mx-auto mb-6">
@@ -1470,7 +1509,7 @@ function LibertadoresView({
     )
   }
 
-  if (!state.group) {
+  if (!state.group && !hasOfficialCompetition) {
     return (
       <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-400/10 mx-auto mb-6">
@@ -1491,18 +1530,31 @@ function LibertadoresView({
     )
   }
 
+  const groupRows = officialGroupShorts.length > 0
+    ? officialGroupShorts.map(short => {
+        const games = groupFixtures.filter(f => f.played && (f.homeTeam.curto === short || f.awayTeam.curto === short))
+        const points = games.reduce((total, f) => {
+          const pro = f.homeTeam.curto === short ? (f.homeScore ?? 0) : (f.awayScore ?? 0)
+          const against = f.homeTeam.curto === short ? (f.awayScore ?? 0) : (f.homeScore ?? 0)
+          return total + (pro > against ? 3 : pro === against ? 1 : 0)
+        }, 0)
+        const team = getTeamByShort(short)
+        return { short, country: team?.pais || team?.estado || "", points, played: games.length }
+      }).sort((a, b) => b.points - a.points)
+    : (state.group?.teams ?? [])
+
   return (
     <div className="rounded-xl bg-[#0c0c10] border border-white/[0.04] p-6">
       <div className="flex items-center gap-2 mb-6">
         <Globe className="h-5 w-5 text-amber-400" />
-        <h3 className="text-lg font-semibold text-white">{competitionName} 2026 - {state.group.name}</h3>
+        <h3 className="text-lg font-semibold text-white">{competitionName} {season}</h3>
       </div>
 
-      <div className="max-w-md">
+      {groupRows.length > 0 && <div className="max-w-md">
         <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4">
-          <h4 className="text-sm font-semibold text-amber-400 mb-3">{state.group.name}</h4>
+          <h4 className="text-sm font-semibold text-amber-400 mb-3">{state.group?.name ?? "Fase de liga/grupos oficial"}</h4>
           <div className="space-y-2">
-            {state.group.teams.map((team, idx) => {
+            {groupRows.map((team, idx) => {
               const isUser = team.short === userTeam.curto
               
               return (
@@ -1530,7 +1582,97 @@ function LibertadoresView({
             })}
           </div>
         </div>
-      </div>
+      </div>}
+
+      <OfficialKnockoutPath
+        fixtures={fixtures}
+        userCurto={userTeam.curto}
+        competitionName={competitionName}
+        season={season}
+        resultados={resultados}
+      />
+    </div>
+  )
+}
+
+/** Caminho real do clube em qualquer mata-mata continental. */
+function OfficialKnockoutPath({
+  fixtures,
+  userCurto,
+  competitionName,
+  season,
+  resultados = [],
+}: {
+  fixtures: Fixture[]
+  userCurto: string
+  competitionName: string
+  season: number
+  resultados?: readonly EngineMatchResult[]
+}) {
+  const stages = ["playoff", "oitavas", "quartas", "semifinal", "final"]
+  const labels: Record<string, string> = {
+    playoff: "Playoff", oitavas: "Oitavas de final", quartas: "Quartas de final",
+    semifinal: "Semifinal", final: "Final",
+  }
+  const rounds = stages.map(stage => ({
+    stage,
+    games: fixtures.filter(f => f.stage === stage && f.isUserMatch).sort((a, b) => a.week - b.week || a.id - b.id),
+  })).filter(round => round.games.length > 0)
+  if (!rounds.length) return null
+
+  return (
+    <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
+      <h4 className="text-xs font-black uppercase tracking-wider text-amber-300">Mata-mata oficial</h4>
+      {rounds.map(({ stage, games }) => {
+        const rival = games[0].homeTeam.curto === userCurto ? games[0].awayTeam.curto : games[0].homeTeam.curto
+        const played = games.filter(g => g.played && g.homeScore !== undefined && g.awayScore !== undefined)
+        const complete = played.length === games.length
+        const placares = played.map(g => {
+          const euEmCasa = g.homeTeam.curto === userCurto
+          const r = resultados.find(x =>
+            x.season === season && x.week === g.week &&
+            x.homeTeam === g.homeTeam.curto && x.awayTeam === g.awayTeam.curto,
+          )
+          return {
+            golsPro: euEmCasa ? g.homeScore! : g.awayScore!,
+            golsContra: euEmCasa ? g.awayScore! : g.homeScore!,
+            penaltisPro: euEmCasa ? r?.homePenalties : r?.awayPenalties,
+            penaltisContra: euEmCasa ? r?.awayPenalties : r?.homePenalties,
+          }
+        })
+        const pro = placares.reduce((sum, score) => sum + score.golsPro, 0)
+        const against = placares.reduce((sum, score) => sum + score.golsContra, 0)
+        // O placar exibido é o MESMO que decidiu o confronto — antes era "5-4"
+        // chumbado no código, para uma disputa que nunca acontecia.
+        const decisao = complete ? resultadoDoConfronto(
+          placares,
+          games.length,
+          `${userCurto}:${games[0].competitionId ?? competitionName}:${season}:${stage}`,
+          getTeamByShort(userCurto)?.prestigio ?? 70,
+          getTeamByShort(rival)?.prestigio ?? 70,
+        ) : { passou: null, penaltis: null }
+        const passed = decisao.passou
+        const penalties = decisao.penaltis ? `${decisao.penaltis[0]}-${decisao.penaltis[1]}` : null
+        return (
+          <div key={stage} className="rounded-lg border border-white/10 bg-white/[0.025] p-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <span className="text-xs font-bold uppercase text-white/50">{labels[stage] ?? stage}</span>
+              {complete && <span className={cn("text-xs font-bold", passed ? "text-emerald-400" : "text-red-400")}>
+                {passed ? "Classificado" : "Eliminado"}
+              </span>}
+            </div>
+            <div className="flex items-center gap-3 text-sm text-white">
+              <span className="font-semibold">{getTeamByShort(userCurto)?.nome ?? userCurto}</span>
+              <span className="rounded bg-black/40 px-2 py-1 font-black">{played.length ? `${pro} - ${against}` : "x"}</span>
+              <span className="font-semibold">{getTeamByShort(rival)?.nome ?? rival}</span>
+            </div>
+            {games.length > 1 && <div className="mt-2 text-[11px] text-white/40">
+              {played.map(g => `${g.homeTeam.curto} ${g.homeScore}-${g.awayScore} ${g.awayTeam.curto}`).join(" · ") || "Ida e volta ainda não disputadas"}
+            </div>}
+            {penalties && <div className="mt-2 text-xs font-semibold text-amber-300">Decidido nos pênaltis: {penalties}</div>}
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -117,6 +117,95 @@ export const FORMATIONS: Record<string, { name: string; positions: FormationSlot
       { pos: "ATA", x: 38, y: 15 },
     ],
   },
+  // As duas abaixo entraram junto com a deteccao automatica de formacao
+  // (`detectarFormacao`). Sem elas, arrastar um zagueiro para o meio produzia um
+  // 3-4-3 que o jogo nao sabia nomear, e o rotulo ficava presomo no esquema
+  // antigo — o tecnico via o time numa forma e a ficha dizendo outra.
+  "3-4-3": {
+    name: "3-4-3",
+    positions: [
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "ZAG", x: 72, y: 78 },
+      { pos: "ZAG", x: 50, y: 76 },
+      { pos: "ZAG", x: 28, y: 78 },
+      { pos: "MD", x: 88, y: 50 },
+      { pos: "VOL", x: 62, y: 52 },
+      { pos: "VOL", x: 38, y: 52 },
+      { pos: "ME", x: 12, y: 50 },
+      { pos: "PD", x: 80, y: 20 },
+      { pos: "ATA", x: 50, y: 12 },
+      { pos: "PE", x: 20, y: 20 },
+    ],
+  },
+  "4-5-1": {
+    name: "4-5-1",
+    positions: [
+      { pos: "GOL", x: 50, y: 92 },
+      { pos: "LD", x: 85, y: 75 },
+      { pos: "ZAG", x: 65, y: 80 },
+      { pos: "ZAG", x: 35, y: 80 },
+      { pos: "LE", x: 15, y: 75 },
+      { pos: "MD", x: 88, y: 48 },
+      { pos: "VOL", x: 64, y: 55 },
+      { pos: "MEI", x: 50, y: 45 },
+      { pos: "VOL", x: 36, y: 55 },
+      { pos: "ME", x: 12, y: 48 },
+      { pos: "ATA", x: 50, y: 14 },
+    ],
+  },
+}
+
+// ── DETECCAO DE FORMACAO A PARTIR DO CAMPO ───────────────────────────────────
+//
+// Ate aqui o rotulo da formacao era so o que estava selecionado no seletor: o
+// tecnico podia arrastar o time inteiro para outra forma e a ficha continuava
+// dizendo "4-3-3". Agora a forma REAL em campo e quem manda no nome.
+//
+// As faixas sao no eixo VERTICAL (y=92 e o proprio gol, y=12 o ataque). Nao ha
+// versao horizontal disto de proposito: as coordenadas taticas sao sempre
+// verticais e a prancheta horizontal converte na hora de desenhar.
+const FAIXAS_DE_LINHA = [
+  { limite: 64, nome: "defesa" },
+  { limite: 38, nome: "meio" },
+  { limite: 26, nome: "meia-atacante" },
+  { limite: -Infinity, nome: "ataque" },
+] as const
+
+function faixaDe(y: number): number {
+  return FAIXAS_DE_LINHA.findIndex(f => y >= f.limite)
+}
+
+/**
+ * O "desenho" de um conjunto de posicoes, no formato do nome de uma formacao
+ * ("4-3-3", "4-2-3-1"...). O goleiro nao entra, e faixas vazias somem — e por
+ * isso que o 4-3-3 sai "4-3-3" e nao "4-3-0-3".
+ */
+export function desenhoDaFormacao(
+  posicoes: readonly { pos?: string; y: number }[],
+): string {
+  const linha = posicoes.filter(p => normalizePosition(p.pos) !== "GOL")
+  const contagem = new Array(FAIXAS_DE_LINHA.length).fill(0)
+  for (const p of linha) {
+    const faixa = faixaDe(p.y)
+    if (faixa >= 0) contagem[faixa]++
+  }
+  return contagem.filter(n => n > 0).join("-")
+}
+
+/**
+ * Nome da formacao correspondente ao time desenhado em campo, ou `null` quando o
+ * desenho nao bate com nenhuma formacao conhecida (o tecnico fica com a que ja
+ * tinha, e as posicoes personalizadas seguem valendo).
+ *
+ * O goleiro e identificado pela POSICAO, nao pelo y: um goleiro adiantado nao
+ * vira jogador de linha.
+ */
+export function detectarFormacao(
+  posicoes: readonly { pos?: string; y: number }[],
+): string | null {
+  if (posicoes.length !== 11) return null
+  const desenho = desenhoDaFormacao(posicoes)
+  return desenho in FORMATIONS ? desenho : null
 }
 
 /** Slots da formacao pedida; cai no 4-3-3 se a formacao nao existir. */

@@ -32,8 +32,8 @@ import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { useGameEngine, type Player as EnginePlayer } from "@/lib/game-engine"
-import { useUserRoster } from "@/lib/use-user-roster"
-import { FORMATIONS, assignPlayersToFormation } from "@/lib/formations"
+import { useUserRoster, resolverIdsDosTitulares } from "@/lib/use-user-roster"
+import { FORMATIONS, assignPlayersToFormation, detectarFormacao } from "@/lib/formations"
 import { useNotifications } from "@/components/notifications-system"
 import { useTranslation } from "@/lib/i18n"
 
@@ -110,7 +110,7 @@ export default function PartidaEscalacaoPage() {
   const engineFormation = useGameEngine(s => s.formation)
   const engineSetFormation = useGameEngine(s => s.setFormation)
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
-  const engineSetStarter = useGameEngine(s => s.setStarter)
+  const engineSetStarters = useGameEngine(s => s.setStarters)
   // Elenco vem do hook compartilhado (lib/use-user-roster).
   //
   // Antes esta tela tinha a MESMA armadilha do gerenciamento: um time default "BGT"
@@ -118,7 +118,7 @@ export default function PartidaEscalacaoPage() {
   // quando o save ainda nao havia hidratado. Por isso a ESCALACAO mostrava nomes de
   // outro clube enquanto a PARTIDA, que le o elenco na hora, mostrava os corretos.
   const { userTeam, teamReady, players, setPlayers, bench, setBench } =
-    useUserRoster(state.selectedTeamShort, engineSquadPlayers)
+    useUserRoster(state.selectedTeamShort, engineSquadPlayers, engineFormation ?? "4-3-3")
 
   const t = useTranslation()
   useDiscordActivity("Ajustando escalacao para partida", userTeam.nome)
@@ -188,25 +188,28 @@ export default function PartidaEscalacaoPage() {
   //    roster) e de `engineSquadPlayers` (referencia nova a cada `set` do
   //    zustand) fazia o efeito redisparar sem mudanca real. A dependencia passa
   //    a ser a ASSINATURA dos titulares, e o squad e lido via `getState()`.
-  const assinaturaTitulares = players.map(p => p.name).join("|")
+  // 3) ESCRITA ATOMICA — ver o mesmo efeito no gerenciamento. Um `setStarter` por
+  //    atleta fazia o elenco passar por um estado de DOZE titulares ao promover um
+  //    reserva, e o reparo automatico cortava justamente o promovido (o de menor
+  //    overall). O XI inteiro passa a ir numa gravacao so.
+  const assinaturaTitulares = players.map(p => `${p.id}:${p.name}`).join("|")
   useEffect(() => {
     const squad = useGameEngine.getState().squadPlayers
     if (squad.length === 0) return
 
-    const faltam = new Map<string, number>()
-    for (const nome of assinaturaTitulares.split("|").filter(Boolean)) {
-      faltam.set(nome, (faltam.get(nome) ?? 0) + 1)
-    }
+    const titulares = resolverIdsDosTitulares(
+      assinaturaTitulares.split("|").filter(Boolean).map(entrada => {
+        const corte = entrada.indexOf(":")
+        return { id: Number(entrada.slice(0, corte)), name: entrada.slice(corte + 1) }
+      }),
+      squad,
+    )
+    const atuais = squad.filter(p => p.isStarter).map(p => p.id).sort((a, b) => a - b)
+    const novos = [...titulares].sort((a, b) => a - b)
+    if (atuais.length === novos.length && atuais.every((id, i) => id === novos[i])) return
 
-    squad.forEach((ep: EnginePlayer) => {
-      const restantes = faltam.get(ep.name) ?? 0
-      const shouldBeStarter = restantes > 0
-      if (shouldBeStarter) faltam.set(ep.name, restantes - 1)
-      if (ep.isStarter !== shouldBeStarter) {
-        engineSetStarter(ep.id, shouldBeStarter)
-      }
-    })
-  }, [assinaturaTitulares, engineSetStarter])
+    engineSetStarters(titulares)
+  }, [assinaturaTitulares, engineSetStarters])
 
   // Navegacao por controle no elenco
   useEffect(() => {
@@ -318,17 +321,30 @@ export default function PartidaEscalacaoPage() {
         setBench(prev => prev.map(p => p.id === benchPlayer.id ? fieldPlayer : p))
       }
     } else {
-      // Update position for field player
-      setPlayerPositions(prev => ({
-        ...prev,
-        [playerId]: { x: clampedX, y: clampedY }
-      }))
+      // Jogador de campo movido: fixa os 11 slots atuais e move so ele.
+      //
+      // Fixar todos e o que permite DETECTAR a formacao — com um mapa parcial, os
+      // que ainda estao no slot padrao nao teriam coordenada para classificar.
+      const pinned = { ...playerPositions }
+      for (const p of positionedPlayers) {
+        if (pinned[p.id] === undefined) pinned[p.id] = { x: p.x, y: p.y }
+      }
+      pinned[playerId] = { x: clampedX, y: clampedY }
+      setPlayerPositions(pinned)
+
+      // A FORMACAO SEGUE OS JOGADORES — mesma regra do Gerenciamento. Sem isto o
+      // time podia estar desenhado num 3-5-2 e a partida receber "4-4-2", que e o
+      // rotulo que o motor de fato usa.
+      const nova = detectarFormacao(
+        positionedPlayers.map(p => ({ pos: p.position, y: pinned[p.id]?.y ?? p.y })),
+      )
+      if (nova && nova !== formation) setFormation(nova)
     }
     
     setDraggingPlayer(null)
     setDragOverTarget(null)
-  }, [bench, positionedPlayers])
-  
+  }, [bench, positionedPlayers, playerPositions, formation, setFormation, setPlayers, setBench])
+
   const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
     e.preventDefault()
     e.stopPropagation()

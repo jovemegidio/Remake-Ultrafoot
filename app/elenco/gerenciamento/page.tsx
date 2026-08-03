@@ -38,12 +38,12 @@ import { cn } from "@/lib/utils"
 import { ContractNegotiationModal } from "@/components/squad/contract-negotiation-modal"
 import { RenovacaoEmprestimoModal } from "@/components/squad/renovacao-emprestimo-modal"
 import { artilheiros, cartoes } from "@/lib/leaderboards"
-import { FORMATIONS, assignPlayersToFormation, normalizePosition, penalidadeImprovisacao, posicaoPelaCoordenada, pickStartingXI } from "@/lib/formations"
+import { FORMATIONS, assignPlayersToFormation, detectarFormacao, normalizePosition, penalidadeImprovisacao, posicaoPelaCoordenada, pickStartingXI } from "@/lib/formations"
 import { formatCurrency, getCamisaUrl, isKitVariantAvailable, getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useGameState } from "@/lib/save-system"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
 import { absoluteWeek, CONTRACT_EPOCH_SEASON, defaultRoleForPosition, getContractStatus, isTransferWindowOpen, PLAYER_ROLE_INFO, saveTacticalSetup, terminationCost, useGameEngine, type Player as EnginePlayer, type PlayerRole } from "@/lib/game-engine"
-import { useUserRoster } from "@/lib/use-user-roster"
+import { useUserRoster, resolverIdsDosTitulares } from "@/lib/use-user-roster"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useNotifications } from "@/components/notifications-system"
 import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
@@ -297,7 +297,7 @@ export default function ElencoPage() {
   const engineSquadPlayers = useGameEngine(s => s.squadPlayers)
   const engineMatchResults = useGameEngine(s => s.matchResults)
   const engineSeason = useGameEngine(s => s.currentSeason)
-  const engineSetStarter = useGameEngine(s => s.setStarter)
+  const engineSetStarters = useGameEngine(s => s.setStarters)
   const enginePlayerInstructions = useGameEngine(s => s.playerInstructions)
   const engineSetPlayerPosition = useGameEngine(s => s.setPlayerPosition)
   const engineSetPlayerInstructions = useGameEngine(s => s.setPlayerInstructions)
@@ -357,7 +357,7 @@ export default function ElencoPage() {
   // O hook ja lida com a hidratacao assincrona do save: teamReady=false enquanto nao ha
   // time, e o roster e recarregado quando o clube resolve.
   const { userTeam, teamReady, players, setPlayers, bench, setBench } =
-    useUserRoster(state.selectedTeamShort, engineSquadPlayers)
+    useUserRoster(state.selectedTeamShort, engineSquadPlayers, engineFormation ?? "4-3-3")
 
   const t = useTranslation()
   useDiscordActivity("Gerenciando o elenco", userTeam.nome)
@@ -726,7 +726,11 @@ export default function ElencoPage() {
       const name = nameById.get(Number(id))
       if (name) savedPositions[name] = position
     }
-    saveTacticalSetup(players.map(player => player.name), formation, savedPositions)
+    saveTacticalSetup(
+      resolverIdsDosTitulares(players, useGameEngine.getState().squadPlayers),
+      formation,
+      savedPositions,
+    )
     announceOnlineAction("lineup_update", { formation, starters: players.map(player => player.name) })
 
     // Confirmacao SO no botao, que vira "Salvo ✓" por 2,2 s.
@@ -753,38 +757,39 @@ export default function ElencoPage() {
   // com `engineSquadPlayers`, que tambem e referencia nova a cada `set` do
   // zustand. O guard `ep.isStarter !== shouldBeStarter` evitava a escrita, mas
   // nao o ciclo: era o "Maximum update depth exceeded" ao abrir esta tela.
-  const assinaturaTitulares = players.map(p => p.name).join("|")
+  //
+  // 3) ESCRITA ATOMICA — era um `setStarter` por atleta, e cada um e um `set` do
+  //    zustand. Promover um reserva passava por um instante com DOZE titulares (o
+  //    reserva ja dentro, o titular ainda nao removido); quem lesse o elenco ali
+  //    mandava a escalacao para `repararEscalacao`, que corta o de MENOR overall
+  //    — exatamente o reserva recem-promovido. A escolha era desfeita e a tela
+  //    ressincronizava: o loop relatado ("coloco um reserva e nao salva").
+  //    Agora o XI inteiro vai numa gravacao so e esse instante nao existe.
+  const assinaturaTitulares = players.map(p => `${p.id}:${p.name}`).join("|")
   useEffect(() => {
-    // DUAS correcoes combinadas neste efeito:
-    //
-    // 1) HOMONIMOS — um `Set` de nomes marcava TODOS os jogadores com aquele
-    //    nome. 33 times dos dados reais tem homonimo no mesmo elenco (o
-    //    Jacuipense tem dois "Vicente"), e escalar um colocava os dois em campo.
-    //    Contamos quantos de cada nome foram escalados e marcamos essa
-    //    quantidade, na ordem do elenco.
-    //
-    // 2) LOOP DE RENDER — ler `engineSquadPlayers` do store fazia este efeito
-    //    redisparar a cada `set` do zustand, e `players` (array novo a cada
-    //    leitura do roster) fechava o ciclo: "Maximum update depth exceeded" ao
-    //    abrir a tela. Agora dependemos da ASSINATURA dos titulares e lemos o
-    //    squad via `getState()`, sem assinar o store.
+    // LOOP DE RENDER — ler `engineSquadPlayers` do store fazia este efeito
+    // redisparar a cada `set` do zustand, e `players` (array novo a cada leitura
+    // do roster) fechava o ciclo: "Maximum update depth exceeded" ao abrir a
+    // tela. Dependemos da ASSINATURA dos titulares e lemos o squad via
+    // `getState()`, sem assinar o store.
     const squad = useGameEngine.getState().squadPlayers
     if (squad.length === 0) return
 
-    const faltam = new Map<string, number>()
-    for (const nome of assinaturaTitulares.split("|").filter(Boolean)) {
-      faltam.set(nome, (faltam.get(nome) ?? 0) + 1)
-    }
+    const titulares = resolverIdsDosTitulares(
+      assinaturaTitulares.split("|").filter(Boolean).map(entrada => {
+        const corte = entrada.indexOf(":")
+        return { id: Number(entrada.slice(0, corte)), name: entrada.slice(corte + 1) }
+      }),
+      squad,
+    )
+    // Nada mudou: nao grava. Sem esta saida o efeito escreveria a cada montagem
+    // da tela, criando estado novo do zustand por nada.
+    const atuais = squad.filter(p => p.isStarter).map(p => p.id).sort((a, b) => a - b)
+    const novos = [...titulares].sort((a, b) => a - b)
+    if (atuais.length === novos.length && atuais.every((id, i) => id === novos[i])) return
 
-    squad.forEach((ep: EnginePlayer) => {
-      const restantes = faltam.get(ep.name) ?? 0
-      const shouldBeStarter = restantes > 0
-      if (shouldBeStarter) faltam.set(ep.name, restantes - 1)
-      if (ep.isStarter !== shouldBeStarter) {
-        engineSetStarter(ep.id, shouldBeStarter)
-      }
-    })
-  }, [assinaturaTitulares, engineSetStarter])
+    engineSetStarters(titulares)
+  }, [assinaturaTitulares, engineSetStarters])
 
   // Navegacao por controle no elenco
   useEffect(() => {
@@ -957,19 +962,35 @@ export default function ElencoPage() {
       }
     } else {
       // Jogador de campo largado num ponto livre: so ele se move.
-      setPlayerPositions(prev => {
-        const pinned = { ...prev }
-        for (const p of positionedPlayers) {
-          if (pinned[p.id] === undefined) pinned[p.id] = { x: p.x, y: p.y }
-        }
-        pinned[playerId] = { x: clampedX, y: clampedY }
-        return pinned
-      })
+      //
+      // O mapa e montado FORA do `setPlayerPositions` porque a formacao tambem sai
+      // dele: um updater do React pode ser reexecutado, e disparar `setFormation`
+      // la dentro seria efeito colateral em funcao pura.
+      const pinned = { ...playerPositions }
+      for (const p of positionedPlayers) {
+        if (pinned[p.id] === undefined) pinned[p.id] = { x: p.x, y: p.y }
+      }
+      pinned[playerId] = { x: clampedX, y: clampedY }
+      setPlayerPositions(pinned)
+
+      // A FORMACAO SEGUE OS JOGADORES. Antes o rotulo era so o que estava no
+      // seletor: dava para arrastar um zagueiro para o meio, montar um 3-5-2 em
+      // campo, e a ficha continuar dizendo "4-4-2" — e e o ROTULO que a partida
+      // usa. Agora o desenho real em campo renomeia a formacao.
+      //
+      // NAO limpamos as posicoes personalizadas ao trocar (como faz o seletor):
+      // aqui elas sao a propria fonte do novo nome, e apaga-las devolveria o time
+      // aos slots padrao, desfazendo o arrasto que acabou de acontecer.
+      const nova = detectarFormacao(
+        positionedPlayers.map(p => ({ pos: p.position, y: pinned[p.id]?.y ?? p.y })),
+      )
+      if (nova && nova !== formation) setFormation(nova)
     }
 
     setDraggingPlayer(null)
     setDragOverTarget(null)
-  }, [bench, positionedPlayers, pinSlotsAndSwap, modoMovimento, movimentos, setMovimentos, paraCampo])
+  }, [bench, positionedPlayers, pinSlotsAndSwap, modoMovimento, movimentos, setMovimentos, paraCampo,
+    playerPositions, formation, setFormation, setPlayers, setBench])
   
   const handleDropOnPlayer = useCallback((e: React.DragEvent, targetId: number) => {
     e.preventDefault()

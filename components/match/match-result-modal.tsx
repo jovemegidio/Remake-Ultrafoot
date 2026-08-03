@@ -162,7 +162,7 @@ export function MatchResultModal({
                 </div>
 
                 {/* Score */}
-                <div className="flex items-center gap-2 sm:gap-4 px-4 sm:px-8 py-4 rounded-2xl bg-white/5 border border-white/10">
+                <div className="relative flex items-center gap-2 sm:gap-4 px-4 sm:px-8 py-4 rounded-2xl bg-white/5 border border-white/10">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -190,6 +190,13 @@ export function MatchResultModal({
                   >
                     {state.away.goals}
                   </motion.div>
+                  {/* DISPUTA DE PENALTIS: o placar dos 90 continua sendo o de
+                      cima (a súmula não muda), mas quem se classificou saiu daqui. */}
+                  {state.shootout?.finished && (
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-0.5 text-xs font-bold text-amber-300">
+                      pên. {state.shootout.homeGoals}-{state.shootout.awayGoals}
+                    </span>
+                  )}
                 </div>
 
                 {/* Away Team */}

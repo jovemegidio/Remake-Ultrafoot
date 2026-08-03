@@ -188,9 +188,20 @@ function enginePlayerToElenco(p: EnginePlayer) {
   }
 }
 
+// Reexportado para as telas que ja importam daqui; a implementacao mora em
+// lib/escalacao-ids.ts, sem dependencia de seeds, para poder ser testada isolada.
+export { resolverIdsDosTitulares } from "@/lib/escalacao-ids"
+
 export function useUserRoster(
   selectedTeamShort: string | null | undefined,
   engineSquad: EnginePlayer[] = [],
+  /**
+   * Formacao do tecnico. So importa quando a escalacao precisa ser CONSERTADA
+   * (titular vendido, lesionado, XI incompleto): o reparo completa o time pelos
+   * slots que o esquema pede. Sem ela o conserto assumia 4-3-3 e devolvia um
+   * time com a forma errada para quem joga 5-3-2 ou 4-2-3-1.
+   */
+  formation = "4-3-3",
 ) {
   const resolvedTeam: Team | undefined = selectedTeamShort
     ? getTeamByShort(selectedTeamShort)
@@ -207,9 +218,9 @@ export function useUserRoster(
       // Um 12o titular (promessa na conversa com reserva) ou um titular vendido
       // derrubava a escalacao inteira de volta para a automatica — e a tela
       // gravava a automatica por cima, perdendo a escalacao salva para sempre.
-      const reparado = repararEscalacao(declared, available, p => p.position, p => p.overall)
+      const reparado = repararEscalacao(declared, available, p => p.position, p => p.overall, formation)
       const starters = reparado?.starters
-        ?? pickStartingXI(available, p => p.position, p => p.overall).starters
+        ?? pickStartingXI(available, p => p.position, p => p.overall, formation).starters
       const starterIds = new Set(starters.map(p => p.id))
       return {
         players: starters.map(enginePlayerToElenco),
@@ -246,14 +257,23 @@ export function useUserRoster(
     //
     // Comparar por id+titularidade quebra o ciclo sem perder atualizacao real:
     // contratacao, venda, emprestimo ou troca de titular mudam a assinatura.
-    const assinatura = (lista: { id: number }[]) => lista.map(p => p.id).join(",")
+    //
+    // A assinatura e ORDENADA de proposito. Antes ela era `map(id).join(",")` na
+    // ordem da lista, e a ordem do motor nunca e a da tela: ao promover um
+    // reserva, o tecnico o coloca NO SLOT do titular que saiu, enquanto o motor
+    // devolve o XI na ordem do array do elenco. As duas assinaturas divergiam
+    // mesmo com o time IDENTICO, o roster sobrescrevia a lista e o jogador
+    // "pulava" de posicao em campo — parecia que a escalacao nao tinha sido
+    // salva. Comparando o CONJUNTO, a arrumacao do tecnico permanece.
+    const assinatura = (lista: { id: number }[]) =>
+      lista.map(p => p.id).sort((a, b) => a - b).join(",")
 
     setPlayers(atual =>
       assinatura(atual) === assinatura(roster.players) ? atual : roster.players)
     setBench(atual =>
       assinatura(atual) === assinatura(roster.bench) ? atual : roster.bench)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamReady, userTeam.curto, squadIdentity])
+  }, [teamReady, userTeam.curto, squadIdentity, formation])
 
   return { userTeam, teamReady, players, setPlayers, bench, setBench }
 }

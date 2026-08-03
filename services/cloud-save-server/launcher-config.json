@@ -193,9 +193,49 @@
   ],
   "changelog": [
     {
-      "version": "1.0.251",
+      "version": "1.0.252",
       "date": "2026-08-03",
       "latest": true,
+      "title": "Penaltis decidem o mata-mata, e a escalacao para de voltar sozinha",
+      "changes": [
+        {
+          "type": "added",
+          "text": "DISPUTA DE PENALTIS. Mata-mata empatado ao fim dos 90 agora vai as cobrancas: voce escolhe cada batedor, ve chute a chute e o vencedor se classifica. Vale para Copa do Brasil, Libertadores, Sul-Americana, Champions, Europa League, Mundial, estaduais e as demais copas."
+        },
+        {
+          "type": "fixed",
+          "text": "O CLASSIFICADO ERA SORTEADO NA MOEDA. Todo confronto empatado no agregado era decidido por cara-ou-coroa, e a tela ainda exibia um placar de penaltis (5-4) inventado para uma disputa que nunca acontecia. Agora ha cobrancas de verdade e o placar mostrado e o que decidiu."
+        },
+        {
+          "type": "fixed",
+          "text": "NOS ESTADUAIS o empate classificava sempre quem tinha melhor campanha — o azarao nunca eliminava o favorito. Passa a ser decidido nos penaltis."
+        },
+        {
+          "type": "fixed",
+          "text": "ESCALAR UM RESERVA NAO SALVAVA. Ao promover um reserva a titular, o time voltava sozinho ao anterior. O elenco era gravado um jogador por vez e passava por um instante com 12 titulares; o ajuste automatico cortava justamente o recem-promovido. Agora a escalacao inteira e gravada de uma vez."
+        },
+        {
+          "type": "fixed",
+          "text": "O JOGADOR PULAVA DE POSICAO depois de arrastado, porque a tela reordenava o time pela ordem interna do elenco. Ele fica onde voce o colocou."
+        },
+        {
+          "type": "added",
+          "text": "A FORMACAO SEGUE OS JOGADORES: arraste um zagueiro para o meio e o 4-4-2 vira 3-5-2 sozinho. Entraram tambem os esquemas 3-4-3 e 4-5-1."
+        },
+        {
+          "type": "fixed",
+          "text": "PROMESSA DE VAGA NO TIME cumprida de verdade: quem recebia a promessa no vestiario podia ser cortado em seguida pelo ajuste automatico."
+        },
+        {
+          "type": "fixed",
+          "text": "HOMONIMO NO ELENCO deixava de escalar o jogador certo — 33 clubes tem dois atletas de mesmo nome. A escalacao agora identifica cada um individualmente."
+        }
+      ]
+    },
+    {
+      "version": "1.0.251",
+      "date": "2026-08-03",
+      "latest": false,
       "title": "Os escudos novos agora aparecem mesmo",
       "changes": [
         {

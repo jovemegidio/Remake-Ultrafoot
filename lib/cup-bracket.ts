@@ -144,6 +144,102 @@ export interface PlacarDaCopa {
   /** Gols do clube do usuário na partida. */
   golsPro: number
   golsContra: number
+  /**
+   * Placar da DISPUTA DE PÊNALTIS, quando esta partida terminou empatada num
+   * mata-mata decisivo e a disputa foi jogada na tela (lib/match-engine).
+   *
+   * Quando existe, é ele que decide o confronto — a disputa que o técnico jogou
+   * vale mais que qualquer simulação. Ausente (partida antiga, jogo simulado da
+   * CPU, semana pulada) cai na disputa determinística abaixo.
+   */
+  penaltisPro?: number
+  penaltisContra?: number
+}
+
+/**
+ * Disputa de pênaltis DETERMINÍSTICA — a mesma semente dá sempre o mesmo placar,
+ * então recarregar a tela nunca muda quem passou.
+ *
+ * Substitui o cara-ou-coroa que decidia TODO confronto empatado do jogo:
+ *
+ *     // Pênaltis: moeda levemente honesta, sem favorecer o usuário.
+ *     return rngDeterministico(`penaltis:${semente}`)() >= 0.5
+ *
+ * O comentário dizia "pênaltis" mas era literalmente um sorteio — e valia para
+ * Copa do Brasil, Libertadores, Sul-Americana, Champions, Europa League,
+ * Conference, Mundial, Recopa, Supercopas e as copas nacionais, porque todas
+ * passam por `passouNoConfronto`. Aqui há cobranças de verdade: cinco de cada
+ * lado, morte súbita depois, e a força do elenco entra COMPRIMIDA como no resto
+ * do motor (um time excelente converte ~85%, um ruim ~65% — nunca 99% x 30%).
+ */
+export function disputaDeterministica(
+  semente: string,
+  forcaPro = 70,
+  forcaContra = 70,
+): [number, number] {
+  const rng = rngDeterministico(`penaltis:${semente}`)
+  const taxa = (forca: number) => {
+    const desvio = forca - 70
+    const base = 0.75 + Math.sign(desvio) * Math.pow(Math.abs(desvio), 0.5) * 0.013
+    return Math.max(0.55, Math.min(0.9, base))
+  }
+  const taxaPro = taxa(forcaPro)
+  const taxaContra = taxa(forcaContra)
+
+  let pro = 0
+  let contra = 0
+  for (let i = 0; i < 5; i++) {
+    if (rng() < taxaPro) pro++
+    if (rng() < taxaContra) contra++
+  }
+  // Morte súbita. O teto de 20 não é regra de futebol, é trava: se a conversão
+  // virasse determinística o laço não terminaria, e travar o jogo no mata-mata é
+  // muito pior que uma disputa longa demais.
+  let extra = 5
+  while (pro === contra && extra < 20) {
+    if (rng() < taxaPro) pro++
+    if (rng() < taxaContra) contra++
+    extra++
+  }
+  if (pro === contra) pro++   // desempate forçado no limite; não ocorre em jogo real
+  return [pro, contra]
+}
+
+/**
+ * Resultado COMPLETO do confronto: quem passou e, quando houve, o placar real da
+ * disputa de pênaltis. A tela de chaveamento lê daqui em vez de chumbar "5-4".
+ */
+export interface ResultadoDoConfronto {
+  /** `null` = confronto ainda não terminou. */
+  passou: boolean | null
+  /** `[pró, contra]` quando a decisão veio das cobranças; `null` quando não houve. */
+  penaltis: [number, number] | null
+}
+
+export function resultadoDoConfronto(
+  placares: readonly PlacarDaCopa[],
+  jogosDoConfronto: number,
+  semente: string,
+  forcaPro = 70,
+  forcaContra = 70,
+): ResultadoDoConfronto {
+  if (placares.length < jogosDoConfronto) return { passou: null, penaltis: null }
+  const pro = placares.reduce((s, p) => s + p.golsPro, 0)
+  const contra = placares.reduce((s, p) => s + p.golsContra, 0)
+  if (pro !== contra) return { passou: pro > contra, penaltis: null }
+
+  // A disputa JOGADA na tela manda. Vem sempre da última partida do confronto —
+  // é ela que empatou o agregado e foi para as cobranças.
+  const decisiva = placares[placares.length - 1]
+  if (decisiva?.penaltisPro != null && decisiva.penaltisContra != null) {
+    return {
+      passou: decisiva.penaltisPro > decisiva.penaltisContra,
+      penaltis: [decisiva.penaltisPro, decisiva.penaltisContra],
+    }
+  }
+
+  const penaltis = disputaDeterministica(semente, forcaPro, forcaContra)
+  return { passou: penaltis[0] > penaltis[1], penaltis }
 }
 
 /** Aleatório determinístico: a mesma disputa dá sempre o mesmo resultado. */
@@ -163,22 +259,22 @@ function rngDeterministico(semente: string): () => number {
 
 /**
  * O clube passou pelo confronto? Soma os gols das partidas disputadas; empate no
- * agregado vai para os pênaltis, decididos de forma determinística (a mesma
- * carreira nunca muda de resultado ao recarregar a tela).
+ * agregado vai para os PÊNALTIS — a disputa jogada na tela quando ela existe, ou
+ * uma disputa determinística (a mesma carreira nunca muda de resultado ao
+ * recarregar a tela).
  *
  * `null` = confronto ainda não terminou.
+ *
+ * Atalho de `resultadoDoConfronto` para quem só precisa do sim/não.
  */
 export function passouNoConfronto(
   placares: readonly PlacarDaCopa[],
   jogosDoConfronto: number,
   semente: string,
+  forcaPro = 70,
+  forcaContra = 70,
 ): boolean | null {
-  if (placares.length < jogosDoConfronto) return null
-  const pro = placares.reduce((s, p) => s + p.golsPro, 0)
-  const contra = placares.reduce((s, p) => s + p.golsContra, 0)
-  if (pro !== contra) return pro > contra
-  // Pênaltis: moeda levemente honesta, sem favorecer o usuário.
-  return rngDeterministico(`penaltis:${semente}`)() >= 0.5
+  return resultadoDoConfronto(placares, jogosDoConfronto, semente, forcaPro, forcaContra).passou
 }
 
 /**

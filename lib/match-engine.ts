@@ -28,6 +28,16 @@ export type MatchPhase =
   | "halftime"
   | "second"
   | "fulltime"
+  /**
+   * DISPUTA DE PENALTIS — mata-mata empatado ao fim dos 90.
+   *
+   * Ate aqui o jogo simplesmente apitava "fulltime" num 1x1 de final e o
+   * classificado era decidido DEPOIS, fora da partida, por um cara-ou-coroa em
+   * `passouNoConfronto` (lib/cup-bracket). O momento mais tenso do futebol nao
+   * existia: voce jogava a final, empatava, e descobria pelo calendario se tinha
+   * passado. Agora a partida NAO termina no empate — ela entra nesta fase.
+   */
+  | "penaltis"
 
 export type EventType =
   | "kickoff"
@@ -124,7 +134,44 @@ export interface MatchState {
    * Agora o motor PARA aqui e espera resolvePenalty() com o batedor escolhido.
    */
   pendingPenalty: { side: Side; minute: number } | null
+  /**
+   * Disputa de penaltis em andamento. `null` em toda partida que nao empatou num
+   * mata-mata decisivo — ou seja, na esmagadora maioria dos jogos.
+   */
+  shootout: ShootoutState | null
 }
+
+/** Uma cobranca da disputa. */
+export interface ShootoutKick {
+  ordem: number
+  side: Side
+  batedor: string
+  goleiro: string
+  resultado: "gol" | "defesa" | "fora"
+}
+
+export interface ShootoutState {
+  kicks: ShootoutKick[]
+  homeGoals: number
+  awayGoals: number
+  /** Lado da PROXIMA cobranca. */
+  nextSide: Side
+  /** Lado que abre a disputa (sorteio de moeda, como na vida real). */
+  firstSide: Side
+  /** Passou das cinco cobrancas regulamentares: agora e alternada, morte subita. */
+  suddenDeath: boolean
+  finished: boolean
+  winner: Side | null
+  /**
+   * Quem ja bateu, por lado. Nenhum atleta repete antes de TODOS os que estao em
+   * campo baterem — e a regra real, e sem ela o usuario escalaria o melhor
+   * finalizador nas cinco cobrancas.
+   */
+  usedHome: string[]
+  usedAway: string[]
+}
+
+const SHOOTOUT_REGULATION_KICKS = 5
 
 // Jogador do elenco — nome+pos obrigatórios, atributos opcionais (retrocompat)
 export interface SquadPlayer {
@@ -242,6 +289,7 @@ export function createInitialState(): MatchState {
     playerYellowCards: {},
     playerRedCards: {},
     pendingPenalty: null,
+    shootout: null,
   }
 }
 
@@ -1147,6 +1195,174 @@ export function resolvePendingPenalty(
   return { state: next, outcome }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DISPUTA DE PENALTIS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Abre a disputa. A partida sai de "fulltime" e entra em "penaltis" — o placar
+ * dos 90 minutos fica congelado (os gols da disputa NAO entram nele, como manda
+ * a regra: o jogo continua 1x1 na sumula).
+ *
+ * Quem bate primeiro sai no cara-ou-coroa, que aqui e a UNICA moeda legitima da
+ * disputa — decidir o CLASSIFICADO na moeda era o defeito que isto conserta.
+ */
+export function startShootout(state: MatchState): MatchState {
+  if (state.shootout) return state
+  const firstSide: Side = rnd() < 0.5 ? "home" : "away"
+  return {
+    ...state,
+    phase: "penaltis",
+    shootout: {
+      kicks: [],
+      homeGoals: 0,
+      awayGoals: 0,
+      nextSide: firstSide,
+      firstSide,
+      suddenDeath: false,
+      finished: false,
+      winner: null,
+      usedHome: [],
+      usedAway: [],
+    },
+  }
+}
+
+/**
+ * Batedores DISPONIVEIS de um lado, na ordem em que a tela deve sugeri-los.
+ *
+ * Fica de fora quem ja bateu na rodada corrente e quem foi expulso — um time com
+ * dois vermelhos bate com nove, e isso pesa. Quando todos ja bateram, a lista
+ * reabre (a partir da sexta cobranca o ciclo recomeca).
+ */
+export function shootoutAvailableTakers(
+  state: MatchState,
+  config: MatchConfig,
+  side: Side,
+): SquadPlayer[] {
+  const squad = (side === "home" ? config.homeSquad : config.awaySquad) ?? []
+  const emCampo = squad.filter(p => !state.playerRedCards[p.nome])
+  if (!emCampo.length) return []
+  const used = side === "home" ? state.shootout?.usedHome ?? [] : state.shootout?.usedAway ?? []
+  // O ciclo se fecha quando TODOS bateram: dai a lista reabre inteira.
+  const restantes = emCampo.filter(p => !used.includes(p.nome))
+  return restantes.length ? restantes : emCampo
+}
+
+/** O melhor batedor disponivel — usado pela IA e quando o usuario nao escolhe. */
+function bestShootoutTaker(state: MatchState, config: MatchConfig, side: Side): SquadPlayer | null {
+  const pool = shootoutAvailableTakers(state, config, side)
+  if (!pool.length) return null
+  // Goleiro so bate quando nao sobrou mais ninguem.
+  const linha = pool.filter(p => p.pos !== "GOL")
+  const base = linha.length ? linha : pool
+  return [...base].sort((a, b) => (b.shooting ?? b.rating ?? 70) - (a.shooting ?? a.rating ?? 70))[0]
+}
+
+/**
+ * A disputa ja tem vencedor matematico?
+ *
+ * Nas cinco cobrancas regulamentares vale o saldo possivel: 3x1 com o adversario
+ * tendo so mais uma cobranca ja acabou. Na morte subita, so decide com os dois
+ * lados tendo batido o mesmo numero de vezes.
+ */
+function shootoutDecided(s: ShootoutState): Side | null {
+  const homeKicks = s.kicks.filter(k => k.side === "home").length
+  const awayKicks = s.kicks.filter(k => k.side === "away").length
+
+  if (homeKicks >= SHOOTOUT_REGULATION_KICKS && awayKicks >= SHOOTOUT_REGULATION_KICKS) {
+    if (homeKicks !== awayKicks) return null
+    if (s.homeGoals > s.awayGoals) return "home"
+    if (s.awayGoals > s.homeGoals) return "away"
+    return null
+  }
+
+  const homeRestantes = Math.max(0, SHOOTOUT_REGULATION_KICKS - homeKicks)
+  const awayRestantes = Math.max(0, SHOOTOUT_REGULATION_KICKS - awayKicks)
+  if (s.homeGoals > s.awayGoals + awayRestantes) return "home"
+  if (s.awayGoals > s.homeGoals + homeRestantes) return "away"
+  return null
+}
+
+/**
+ * Cobra UMA penalidade da disputa. `taker` = escolha do usuario; `null` deixa o
+ * motor escolher (lado da IA, ou usuario que fechou o modal sem decidir).
+ *
+ * A conversao sai da FINALIZACAO de quem bate contra o goleiro que esta la —
+ * comprimida de proposito, como no resto do motor: um batedor excelente converte
+ * ~86%, um ruim ~58%. Penalti e loteria, mas nao e moeda.
+ */
+export function takeShootoutKick(
+  state: MatchState,
+  config: MatchConfig,
+  taker: SquadPlayer | null,
+): { state: MatchState; kick: ShootoutKick | null } {
+  const atual = state.shootout
+  if (!atual || atual.finished) return { state, kick: null }
+
+  const side = atual.nextSide
+  const gkSide: Side = side === "home" ? "away" : "home"
+  const escolhido = taker ?? bestShootoutTaker(state, config, side)
+  const batedor = escolhido?.nome ?? pickPlayer(side, config, ["ATA"])
+  const goleiro = pickPlayerFull(gkSide, config, ["GOL"])?.nome ?? pickPlayer(gkSide, config, ["GOL"])
+
+  const finalizacao = escolhido?.shooting ?? escolhido?.rating
+    ?? (side === "home" ? config.homeRating : config.awayRating)
+  // Mesma curva comprimida de lib/cup-engine.disputarPenaltis, para a disputa que
+  // voce joga e a que a CPU joga terem a MESMA fisica.
+  const desvio = finalizacao - 70
+  const base = 0.75 + Math.sign(desvio) * Math.pow(Math.abs(desvio), 0.5) * 0.013
+  // Na morte subita a pressao cobra seu preco: todo mundo converte um pouco menos.
+  const pressao = atual.suddenDeath ? 0.04 : 0
+  const conversao = Math.max(0.55, Math.min(0.9, base - pressao))
+
+  const converteu = rnd() < conversao
+  // Errou: o goleiro pega com mais frequencia do que a bola vai pra fora.
+  const resultado: ShootoutKick["resultado"] = converteu ? "gol" : (rnd() < 0.6 ? "defesa" : "fora")
+
+  const kick: ShootoutKick = {
+    ordem: atual.kicks.length + 1,
+    side,
+    batedor,
+    goleiro,
+    resultado,
+  }
+
+  const kicks = [...atual.kicks, kick]
+  const homeGoals = atual.homeGoals + (side === "home" && converteu ? 1 : 0)
+  const awayGoals = atual.awayGoals + (side === "away" && converteu ? 1 : 0)
+
+  // Fecha o ciclo: quando TODOS os que estao em campo ja bateram, a lista zera e
+  // o primeiro batedor volta a ficar disponivel.
+  const elegiveis = (lado: Side) =>
+    ((lado === "home" ? config.homeSquad : config.awaySquad) ?? [])
+      .filter(p => !state.playerRedCards[p.nome]).length
+  const cicla = (lista: string[], lado: Side) => lista.length >= Math.max(1, elegiveis(lado)) ? [] : lista
+
+  const usedHome = cicla(side === "home" ? [...atual.usedHome, batedor] : atual.usedHome, "home")
+  const usedAway = cicla(side === "away" ? [...atual.usedAway, batedor] : atual.usedAway, "away")
+
+  const parcial: ShootoutState = {
+    ...atual,
+    kicks,
+    homeGoals,
+    awayGoals,
+    usedHome,
+    usedAway,
+    nextSide: gkSide,
+    suddenDeath:
+      kicks.filter(k => k.side === "home").length >= SHOOTOUT_REGULATION_KICKS &&
+      kicks.filter(k => k.side === "away").length >= SHOOTOUT_REGULATION_KICKS,
+  }
+
+  const winner = shootoutDecided(parcial)
+  const shootout: ShootoutState = winner
+    ? { ...parcial, finished: true, winner }
+    : parcial
+
+  return { state: { ...state, shootout }, kick }
+}
+
 // ──────���──────────────────────────────────────────────────────────────────────
 // Atualização de posse (baseada em midfield + momentum)
 // ──────────────────────────────────────���──────────────────────────────────────
@@ -1332,7 +1548,10 @@ function stampStoppage(next: MatchState, eventsBefore: number, config: MatchConf
 }
 
 export function tickMinute(state: MatchState, config: MatchConfig): MatchState {
-  if (state.phase === "fulltime" || state.phase === "pre") return state
+  // "penaltis" entra aqui junto com fulltime: o relogio da partida ja parou e a
+  // disputa avanca por cobranca (takeShootoutKick), nunca por minuto. Sem esta
+  // guarda o tick voltaria a simular jogo com a disputa aberta.
+  if (state.phase === "fulltime" || state.phase === "pre" || state.phase === "penaltis") return state
   // Penalti do usuario pendente: o relogio NAO anda ate ele escolher o batedor.
   if (state.pendingPenalty) return state
 

@@ -42,7 +42,7 @@ const agora = () =>
 export function BenchTalk() {
   const squad = useGameEngine(s => s.squadPlayers)
   const ajustarMoral = useGameEngine(s => s.ajustarMoralJogador)
-  const setStarter = useGameEngine(s => s.setStarter)
+  const setStarters = useGameEngine(s => s.setStarters)
   const toggleTransferListed = useGameEngine(s => s.toggleTransferListed)
   const transferListedIds = useGameEngine(s => s.transferListedIds)
   const { state: saveState, setState: setSaveState } = useGameState()
@@ -202,8 +202,15 @@ export function BenchTalk() {
       const mesmaPos = titulares.filter(p => p.position === jogador.position)
       const candidatos = mesmaPos.length > 0 ? mesmaPos : titulares.filter(p => p.position !== "GOL")
       const sai = [...candidatos].sort((a, b) => a.overall - b.overall)[0]
-      if (sai) setStarter(sai.id, false)
-      setStarter(jogador.id, true)
+      // GRAVACAO UNICA. Eram dois `setStarter`, e entre eles o elenco ficava com
+      // DEZ titulares — estado invalido que o reparo automatico "conserta"
+      // chamando o melhor do banco. O atleta a quem voce acabou de PROMETER a
+      // vaga era entao cortado como excedente, e a promessa virava mentira sem
+      // nenhum aviso. Com uma escrita so, esse instante nao existe.
+      setStarters([
+        ...titulares.filter(p => p.id !== sai?.id).map(p => p.id),
+        jogador.id,
+      ])
     }
 
     if (d.registraPromessa) {

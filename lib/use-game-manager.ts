@@ -13,7 +13,7 @@ import { getGameDate } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
-import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
+import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, disputaDeterministica, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
 import { generateJobOffers, computeBoardConfidence, calcSeasonObjective, shouldFireManager } from "@/lib/board-engine"
@@ -811,6 +811,7 @@ export function getOpponentPool(userTeam: Team, plan: CupCompetitionPlan): Team[
 // Gera as partidas do usuario em uma copa/continental (somente o time do usuario joga)
 interface CupMatchDescriptor {
   competition: string
+  competitionId: string
   competitionType: "cup" | "continental"
   homeTeam: Team
   awayTeam: Team
@@ -846,9 +847,12 @@ export function generateUserCupMatches(
     .filter(r => r.season === season && r.competition === plan.competition.name
       && (r.homeTeam === userTeam.curto || r.awayTeam === userTeam.curto))
     .sort((a, b) => a.week - b.week)
+    // A disputa de pênaltis viaja junto: sem ela o confronto empatado voltaria a
+    // ser decidido pela simulação determinística, ignorando a disputa que o
+    // técnico acabou de jogar na tela.
     .map(r => r.homeTeam === userTeam.curto
-      ? { golsPro: r.homeScore, golsContra: r.awayScore }
-      : { golsPro: r.awayScore, golsContra: r.homeScore })
+      ? { golsPro: r.homeScore, golsContra: r.awayScore, penaltisPro: r.homePenalties, penaltisContra: r.awayPenalties }
+      : { golsPro: r.awayScore, golsContra: r.homeScore, penaltisPro: r.awayPenalties, penaltisContra: r.homePenalties })
 
   // Adversario fica mais forte a cada fase: quem chega a semifinal nao pega o
   // lanterna da segunda divisao.
@@ -899,6 +903,7 @@ export function generateUserCupMatches(
         const emCasa = i < rivais.length
         partidas.push({
           competition: plan.competition.name,
+          competitionId: plan.competition.id,
           competitionType: plan.competitionType,
           homeTeam: emCasa ? userTeam : rival,
           awayTeam: emCasa ? rival : userTeam,
@@ -919,6 +924,7 @@ export function generateUserCupMatches(
       const emCasa = etapa.jogos === 1 ? (userTeam.prestigio ?? 0) >= (rival.prestigio ?? 0) : i === 1
       partidas.push({
         competition: plan.competition.name,
+        competitionId: plan.competition.id,
         competitionType: plan.competitionType,
         homeTeam: emCasa ? userTeam : rival,
         awayTeam: emCasa ? rival : userTeam,
@@ -1228,7 +1234,7 @@ export function generateStateChampionshipFixtures(
     return created
   }
 
-  const winners = (entrants: string[], stageFixtures: Fixture[]): string[] => {
+  const winners = (entrants: string[], stageFixtures: Fixture[], stage: string): string[] => {
     const hydrated = reconcilePlayedFixtures(stageFixtures, knownResults, season)
     const output: string[] = []
     for (let i = 0; i < entrants.length / 2; i++) {
@@ -1237,16 +1243,51 @@ export function generateStateChampionshipFixtures(
       let goalsA = 0
       let goalsB = 0
       let complete = false
+      // Pênaltis da disputa jogada na tela, quando um dos dois é o clube do usuário.
+      let penA: number | undefined
+      let penB: number | undefined
       for (const match of hydrated.filter(item =>
         (item.homeTeam.curto === a && item.awayTeam.curto === b) ||
         (item.homeTeam.curto === b && item.awayTeam.curto === a),
       )) {
         if (!match.played || match.homeScore === undefined || match.awayScore === undefined) continue
         complete = true
-        if (match.homeTeam.curto === a) { goalsA += match.homeScore; goalsB += match.awayScore }
-        else { goalsA += match.awayScore; goalsB += match.homeScore }
+        const resultado = knownResults.find(r =>
+          r.season === season && r.week === match.week &&
+          ((r.homeTeam === match.homeTeam.curto && r.awayTeam === match.awayTeam.curto) ||
+           (r.homeTeam === match.awayTeam.curto && r.awayTeam === match.homeTeam.curto)),
+        )
+        if (match.homeTeam.curto === a) {
+          goalsA += match.homeScore; goalsB += match.awayScore
+          if (resultado?.homePenalties != null) {
+            const invertido = resultado.homeTeam !== a
+            penA = invertido ? resultado.awayPenalties : resultado.homePenalties
+            penB = invertido ? resultado.homePenalties : resultado.awayPenalties
+          }
+        } else {
+          goalsA += match.awayScore; goalsB += match.homeScore
+          if (resultado?.homePenalties != null) {
+            const invertido = resultado.homeTeam !== a
+            penA = invertido ? resultado.awayPenalties : resultado.homePenalties
+            penB = invertido ? resultado.homePenalties : resultado.awayPenalties
+          }
+        }
       }
-      output.push(complete && goalsA !== goalsB ? (goalsA > goalsB ? a : b) : [a, b].sort(compareShort)[0])
+      if (!complete) { output.push([a, b].sort(compareShort)[0]); continue }
+      if (goalsA !== goalsB) { output.push(goalsA > goalsB ? a : b); continue }
+      // EMPATE NO AGREGADO -> PÊNALTIS.
+      //
+      // Antes: `[a, b].sort(compareShort)[0]` — passava quem tinha melhor campanha
+      // (pontos, saldo, prestígio). Determinístico e permanentemente injusto: no
+      // Paulistão, Carioca, Gaúcho e todos os outros estaduais o azarão NUNCA
+      // eliminava o favorito num empate, porque não havia disputa nenhuma.
+      if (penA != null && penB != null && penA !== penB) { output.push(penA > penB ? a : b); continue }
+      const [pa, pb] = disputaDeterministica(
+        `${competition}:${season}:${stage}:${[a, b].sort().join("x")}`,
+        teamByShort.get(a)?.prestigio ?? 70,
+        teamByShort.get(b)?.prestigio ?? 70,
+      )
+      output.push(pa > pb ? a : b)
     }
     return output.sort(compareShort)
   }
@@ -1299,7 +1340,7 @@ export function generateStateChampionshipFixtures(
     // `winners()` (provisórios enquanto o confronto não acontece) e se atualizam a
     // cada rebuild conforme os jogos são disputados. A EstadualView mostra sempre a
     // fase ATUAL (1ª não jogada), então o "finalista provisório" não fica à vista.
-    entrants = winners(entrants, stageFixtures)
+    entrants = winners(entrants, stageFixtures, stage)
   }
 
   return fixtures
@@ -1342,6 +1383,8 @@ export interface Fixture {
   homeTeam: Team
   awayTeam: Team
   competition: string
+  /** Identificador estável usado no sorteio e no desempate determinístico. */
+  competitionId?: string
   played: boolean
   homeScore?: number
   awayScore?: number
@@ -1888,6 +1931,7 @@ export function useGameManager() {
             homeTeam: cm.homeTeam,
             awayTeam: cm.awayTeam,
             competition: cm.competition,
+            competitionId: cm.competitionId,
             played: false,
             isUserMatch: true,
             month: roundMonth,
@@ -1909,6 +1953,7 @@ export function useGameManager() {
           homeTeam: cm.homeTeam,
           awayTeam: cm.awayTeam,
           competition: cm.competition,
+          competitionId: cm.competitionId,
           played: false,
           isUserMatch: true,
           month: 11,
@@ -2954,7 +2999,13 @@ export function useGameManager() {
     awayTeam: string,
     homeScore: number,
     awayScore: number,
-    events: MatchEvent[]
+    events: MatchEvent[],
+    /**
+     * Placar da disputa de pênaltis, quando o mata-mata empatou e a disputa foi
+     * jogada na tela. Não mexe no placar da partida — entra no resultado como
+     * dado próprio e é o que decide o classificado adiante.
+     */
+    penalties?: { home: number; away: number } | null,
   ) => {
     const currentState = saveStateRef.current
     // Amistoso fora: ele não passa por aqui (o resultado é gravado no save pela
@@ -3026,7 +3077,9 @@ export function useGameManager() {
       awayTeam,
       homeScore,
       awayScore,
-      events
+      events,
+      homePenalties: penalties?.home,
+      awayPenalties: penalties?.away,
     }
 
     // So atualiza standings da liga principal (nao do estadual/copas/continentais)
@@ -3094,18 +3147,26 @@ export function useGameManager() {
           (r.homeTeam === userShort || r.awayTeam === userShort))
         .sort((a, b) => a.week - b.week)
         .map(r => r.homeTeam === userShort
-          ? { golsPro: r.homeScore, golsContra: r.awayScore }
-          : { golsPro: r.awayScore, golsContra: r.homeScore })
+          ? { golsPro: r.homeScore, golsContra: r.awayScore, penaltisPro: r.homePenalties, penaltisContra: r.awayPenalties }
+          : { golsPro: r.awayScore, golsContra: r.homeScore, penaltisPro: r.awayPenalties, penaltisContra: r.homePenalties })
 
-      const campeao = ehFinal
-        ? passouNoConfronto(
+      // A FINAL empatada é decidida pela disputa que acabou de acontecer na tela
+      // (ou, para finais antigas, pela disputa determinística). Antes o título
+      // saía de um cara-ou-coroa e a cerimônia ainda anunciava "decidido nos
+      // pênaltis" — uma disputa que nunca existiu.
+      const decisaoDaFinal = ehFinal
+        ? resultadoDoConfronto(
             placaresDaFinal,
             jogosDaFinal,
             `final:${competitionName}:${currentState.season}:${userShort}`,
+            userTeamForComp?.prestigio ?? 70,
+            (fixtureForWeek?.homeTeam.curto === userShort
+              ? fixtureForWeek?.awayTeam.prestigio
+              : fixtureForWeek?.homeTeam.prestigio) ?? 70,
           )
-        : null
-      const decidiuNosPenaltis = campeao != null && placaresDaFinal.length >= jogosDaFinal &&
-        placaresDaFinal.reduce((s, p) => s + p.golsPro, 0) === placaresDaFinal.reduce((s, p) => s + p.golsContra, 0)
+        : { passou: null, penaltis: null }
+      const campeao = decisaoDaFinal.passou
+      const decidiuNosPenaltis = decisaoDaFinal.penaltis != null
 
       if (ehFinal && restantes === 0 && campeao === true) {
         safeLocalSet("ultrafoot-pending-champion", JSON.stringify({

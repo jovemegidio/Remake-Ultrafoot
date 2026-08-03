@@ -1172,6 +1172,17 @@ export interface MatchResult {
    * Opcional: saves antigos e partidas sem geracao caem na atribuicao deterministica.
    */
   scorers?: MatchScorer[]
+  /**
+   * Placar da DISPUTA DE PÊNALTIS, quando o mata-mata empatou e a disputa foi
+   * jogada (lib/match-engine, fase "penaltis"). Os gols da disputa NÃO entram em
+   * homeScore/awayScore — a súmula continua 1x1, como na regra.
+   *
+   * Ausente na esmagadora maioria dos jogos: só existe em confronto decisivo
+   * empatado. É o dado que `lib/cup-bracket.resultadoDoConfronto` usa para saber
+   * quem se classificou, no lugar do cara-ou-coroa que havia antes.
+   */
+  homePenalties?: number
+  awayPenalties?: number
 }
 
 export interface MatchScorer {
@@ -2009,6 +2020,20 @@ interface GameEngineState {
   counterTransferOffer: (offerId: number, amount: number, wageCoverage?: number, loanWeeks?: number) => "accepted" | "revised" | "rejected"
   trainPlayer: (playerId: number, attribute: string) => void
   setStarter: (playerId: number, isStarter: boolean) => void
+  /**
+   * Grava o XI INTEIRO de uma vez.
+   *
+   * Existe porque as telas de escalacao chamavam `setStarter` um jogador por vez,
+   * e cada chamada e um `set` do zustand — ou seja, o elenco passava por estados
+   * intermediarios INVALIDOS. Ao promover um reserva, havia um instante com DOZE
+   * titulares (o reserva ja dentro, o titular ainda nao removido), e quem lesse o
+   * elenco nesse instante mandava a escalacao para `repararEscalacao`, que corta o
+   * de menor overall — justamente o reserva recem-promovido. A escolha do tecnico
+   * era desfeita e a tela voltava a sincronizar: o "loop" relatado.
+   *
+   * Com uma escrita so, esse instante deixa de existir.
+   */
+  setStarters: (starterIds: readonly number[]) => void
   renewContract: (playerId: number, newSalary: number, weeks: number) => void
   /** Migra contratos de saves antigos para o relogio absoluto (roda uma vez). */
   migrarContratosParaSemanaAbsoluta: () => void
@@ -3233,6 +3258,19 @@ export const useGameEngine = create<GameEngineState>()(
           squadPlayers: s.squadPlayers.map(p =>
             p.id === playerId ? { ...p, isStarter } : p
           )
+        }))
+      },
+
+      setStarters: (starterIds) => {
+        const titulares = new Set(starterIds)
+        set((s) => ({
+          squadPlayers: s.squadPlayers.map(p => {
+            const deveSerTitular = titulares.has(p.id)
+            // Preserva a referencia de quem nao mudou: sem isto todo objeto do
+            // elenco vira novo a cada gravacao e as telas que comparam por
+            // identidade re-renderizam a toa.
+            return p.isStarter === deveSerTitular ? p : { ...p, isStarter: deveSerTitular }
+          }),
         }))
       },
       
@@ -6216,33 +6254,27 @@ export function persistGameEngineNow(): void {
   )
 }
 
-/** Salva titulares e formacao de uma vez, evitando um radar ler um estado intermediario. */
+/**
+ * Salva titulares e formacao de uma vez, evitando um radar ler um estado intermediario.
+ *
+ * Recebe os IDS do motor (resolvidos por `resolverIdsDosTitulares`), nao nomes.
+ * O casamento por nome existia porque "os ids divergem entre UI e motor" — o que
+ * so vale no caminho de fallback do roster. Com nome, homonimo no mesmo elenco
+ * (33 clubes dos dados reais tem) tornava impossivel saber QUAL dos dois o
+ * tecnico escalou: salvar 11 titulares podia gravar o xara no lugar.
+ */
 export function saveTacticalSetup(
-  starterNames: string[],
+  starterIds: readonly number[],
   formation: string,
   tacticalPlayerPositions?: Record<string, { x: number; y: number }>,
 ): void {
-  // HOMONIMOS: um `Set` marcava TODOS os jogadores com o mesmo nome, e homonimo
-  // no mesmo elenco nao e hipotese — 33 times dos dados reais tem (o Jacuipense
-  // tem dois "Vicente" e dois "Thiaguinho"). Salvar 11 titulares gravava 12
-  // `isStarter`, e o `slice(0, 11)` da partida cortava um jogador que o tecnico
-  // tinha escalado. Mesmo sintoma do desfalque, por outra porta.
-  //
-  // Contando quantos de cada nome vieram, marcamos essa mesma quantidade na
-  // ordem do elenco. Escolher *qual* dos homonimos exigiria ids estaveis entre
-  // UI e motor, o que hoje nao existe: a UI numera por indice do array
-  // (use-user-roster: `id: idx + 1`) e o motor tem os seus — e foi por isso que
-  // o casamento por nome apareceu.
-  const faltam = new Map<string, number>()
-  for (const n of starterNames) faltam.set(n, (faltam.get(n) ?? 0) + 1)
-
+  const titulares = new Set(starterIds)
   useGameEngine.setState(state => ({
     formation,
     tacticalPlayerPositions: tacticalPlayerPositions ?? state.tacticalPlayerPositions,
     squadPlayers: state.squadPlayers.map(player => {
-      const restantes = faltam.get(player.name) ?? 0
-      if (restantes > 0) faltam.set(player.name, restantes - 1)
-      return { ...player, isStarter: restantes > 0 }
+      const deveSerTitular = titulares.has(player.id)
+      return player.isStarter === deveSerTitular ? player : { ...player, isStarter: deveSerTitular }
     }),
   }))
   persistGameEngineNow()

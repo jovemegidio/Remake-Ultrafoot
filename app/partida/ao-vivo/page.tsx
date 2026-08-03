@@ -67,6 +67,7 @@ import { RoundResultsModal } from "@/components/match/round-results-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
+import { ShootoutModal } from "@/components/match/shootout-modal"
 import { MatchRadar } from "@/components/match/match-radar"
 import { selecionarEventoDoRadar } from "@/lib/radar-evento"
 import { useCorDoUniforme } from "@/lib/cor-do-uniforme"
@@ -925,7 +926,43 @@ export default function PartidaAoVivoPage() {
   }), [homeTeam, awayTeam, homeSquad, awaySquad, matchCtx.duration, userSide, userMentality, tacticalForces, userForces, bonusEntrosamento, engineSetPieceTakers, engineTacticalAssignments])
 
   const sim = useMatchSimulation(config)
-  const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty } = sim
+  const { state, speed, isRunning, start, pause, resume, reset, setSpeed, fastForward, addEvent, takePenalty,
+    beginShootout, kickShootout, endShootout, shootoutTakers } = sim
+
+  /**
+   * Esta partida DECIDE um confronto de mata-mata?
+   *
+   * Só aqui dá para saber: o motor não conhece o calendário, e o calendário é o
+   * único lugar que diz se o confronto é de jogo único ou de ida e volta. Jogo
+   * único decide sempre; ida e volta decide só na VOLTA.
+   *
+   * Sem esta checagem a disputa apareceria no fim da IDA de uma semifinal —
+   * exatamente o erro oposto ao que estamos consertando.
+   */
+  const confrontoDecisivo = useMemo(() => {
+    if (!currentMatch || matchCtx.friendly || matchCtx.youth || matchCtx.torneio) return false
+    const stage = String(currentMatch.stage ?? "").toLowerCase()
+    // Fase de grupos e classificatória terminam empatadas normalmente.
+    if (!stage || stage === "fase_grupos" || stage === "fase_classificatoria") return false
+    if (!["cup", "continental", "state"].includes(currentMatch.competitionType)) return false
+
+    const pernas = seasonCalendar.fixtures.filter(f =>
+      f.competition === currentMatch.competition &&
+      String(f.stage ?? "").toLowerCase() === stage &&
+      (
+        (f.homeTeam.curto === homeTeam.curto && f.awayTeam.curto === awayTeam.curto) ||
+        (f.homeTeam.curto === awayTeam.curto && f.awayTeam.curto === homeTeam.curto)
+      ),
+    )
+    // Confronto que o calendário não reconhece: trata como jogo único, que é o
+    // caso conservador — decidir aqui é melhor que deixar um empate sem dono.
+    if (!pernas.length) return true
+    // Ordena por (semana, id) e confere se ESTA é a última perna. Comparar só a
+    // semana bastaria hoje — ida e volta caem em semanas diferentes —, mas o `id`
+    // desempata sem depender disso.
+    const ultima = [...pernas].sort((a, b) => a.week - b.week || a.id - b.id).at(-1)!
+    return ultima.id === currentMatch.id
+  }, [currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.torneio, seasonCalendar.fixtures, homeTeam.curto, awayTeam.curto])
 
   // PLACAR AGREGADO do jogo de volta. Tem que ficar DEPOIS de `state`: enquanto
   // era calculado logo após `previousLeg`, lá em cima, lia `state` antes da
@@ -938,6 +975,18 @@ export default function PartidaAoVivoPage() {
     firstLegHome: firstLeg.home,
     firstLegAway: firstLeg.away,
   } : null
+
+  /**
+   * Empate que não pode ficar de pé: agregado nivelado numa partida decisiva.
+   *
+   * Fica DEPOIS de `aggregateScore` de propósito — ver o comentário acima sobre a
+   * TDZ que já derrubou a tela inteira no jogo de volta.
+   */
+  const precisaDePenaltis = confrontoDecisivo && (
+    aggregateScore
+      ? aggregateScore.home === aggregateScore.away
+      : state.home.goals === state.away.goals
+  )
 
   // Pulso do ULTIMO evento relevante para o radar REAGIR (chute -> bola voa pro
   // gol; escanteio -> aglomeracao na area). seq = indice do evento (monotonico),
@@ -1140,6 +1189,9 @@ export default function PartidaAoVivoPage() {
   // Handler de teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Durante a disputa de pênaltis o teclado pertence ao modal: avançar,
+      // substituir ou pausar não fazem sentido com a partida já encerrada.
+      if (state.phase === "penaltis") return
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault()
         if (state.phase === "pre") { start(); return }
@@ -1231,7 +1283,18 @@ export default function PartidaAoVivoPage() {
     }]
   }, [roundResults, state.phase, state.home.goals, state.away.goals, matchCtx.competition, finalMatch, homeTeam, awayTeam])
 
+  // MATA-MATA EMPATADO: a partida NÃO acaba aqui. Abre a disputa de pênaltis
+  // antes de qualquer registro — o efeito de fim de jogo, logo abaixo, espera.
   useEffect(() => {
+    if (state.phase !== "fulltime" || !precisaDePenaltis) return
+    if (state.shootout) return
+    beginShootout()
+  }, [state.phase, state.shootout, precisaDePenaltis, beginShootout])
+
+  useEffect(() => {
+    // Enquanto a disputa não terminar, nada é gravado: o classificado ainda não
+    // existe e registrar aqui recriaria o velho empate sem dono.
+    if (precisaDePenaltis && !state.shootout?.finished) return
     if (state.phase === "fulltime" && !showResult) {
       if (!resultRegistered.current) {
         resultRegistered.current = true
@@ -1282,7 +1345,12 @@ export default function PartidaAoVivoPage() {
             awayTeam.curto,
             state.home.goals,
             state.away.goals,
-            events
+            events,
+            // O placar das cobranças viaja com o resultado. É ele que decide o
+            // classificado em lib/cup-bracket — no lugar do cara-ou-coroa.
+            state.shootout?.finished
+              ? { home: state.shootout.homeGoals, away: state.shootout.awayGoals }
+              : null,
           )
 
           // REALISMO: nota por jogador + cartoes->suspensao. Mapeia os eventos do
@@ -1425,7 +1493,7 @@ export default function PartidaAoVivoPage() {
       const t = setTimeout(() => setShowResult(true), 1200)
       return () => clearTimeout(t)
     }
-  }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, matchCtx.friendly, matchCtx.youth, savedGame, setSavedGame, userSide])
+  }, [state.phase, showResult, state.events, state.home.goals, state.away.goals, state.shootout, precisaDePenaltis, homeTeam.curto, awayTeam.curto, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana, matchCtx.friendly, matchCtx.youth, savedGame, setSavedGame, userSide])
 
   // Stamina drena por minuto.
   // Dois bugs do relato ("até o goleiro cansou kk" + print "5.4000000000012%"):
@@ -2215,6 +2283,19 @@ export default function PartidaAoVivoPage() {
     minute={currentAnimation?.minute}
     onComplete={handleAnimationComplete}
   />
+
+  {/* DISPUTA DE PENALTIS: mata-mata empatado ao fim dos 90. */}
+  {state.phase === "penaltis" && state.shootout && (
+    <ShootoutModal
+      shootout={state.shootout}
+      homeTeam={homeTeam}
+      awayTeam={awayTeam}
+      userSide={userSide}
+      takers={shootoutTakers}
+      onKick={kickShootout}
+      onFinish={() => endShootout()}
+    />
+  )}
 
   {/* Modal de selecao de batedor de penalti */}
   <PenaltyTakerModal

@@ -8,6 +8,9 @@ import {
   tickMinute,
   getFootballClock,
   resolvePendingPenalty,
+  startShootout,
+  takeShootoutKick,
+  shootoutAvailableTakers,
   SPEED_TICKS_PER_SEC,
   type MatchConfig,
   type MatchEvent,
@@ -15,6 +18,8 @@ import {
   type MatchSpeed,
   type SquadPlayer,
   type PenaltyOutcome,
+  type ShootoutKick,
+  type Side,
 } from "@/lib/match-engine"
 import {
   applyDecision,
@@ -54,6 +59,18 @@ export interface UseMatchSimulation {
    * destrava a partida.
    */
   takePenalty: (taker: SquadPlayer | null) => PenaltyOutcome | null
+  /**
+   * Abre a disputa de penaltis. Chamado pela tela quando o mata-mata termina
+   * empatado — o motor nao decide isso sozinho porque so a tela sabe se este
+   * jogo e a partida DECISIVA do confronto (ida e volta x jogo unico).
+   */
+  beginShootout: () => void
+  /** Cobra a proxima penalidade da disputa; devolve o lance para a narracao. */
+  kickShootout: (taker: SquadPlayer | null) => ShootoutKick | null
+  /** Encerra a disputa e devolve a partida a "fulltime" (pos-jogo normal). */
+  endShootout: () => void
+  /** Batedores ainda disponiveis de um lado (nao repete antes de todos baterem). */
+  shootoutTakers: (side: Side) => SquadPlayer[]
 }
 
 /**
@@ -224,7 +241,9 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     let cur = stateRef.current
     if (cur.phase === "pre") cur = startMatch(cur)
     let safety = 200
-    while (cur.phase !== "fulltime" && safety-- > 0) {
+    // "penaltis" tambem encerra o laco: a disputa avanca por cobranca, e sem esta
+    // saida o "avancar" giraria em falso ate estourar o safety.
+    while (cur.phase !== "fulltime" && cur.phase !== "penaltis" && safety-- > 0) {
       // tickMinute nao avanca enquanto houver penalti pendente — sem resolver aqui,
       // o "avancar" ficaria girando em falso ate estourar o safety. O motor bate.
       if (cur.pendingPenalty) {
@@ -253,6 +272,45 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     return outcome
   }, [])
 
+  // ── Disputa de penaltis ───────────────────────────────────────────────────
+
+  /** Abre a disputa: a partida sai de "fulltime" e entra em "penaltis". */
+  const beginShootout = useCallback(() => {
+    const next = startShootout(stateRef.current)
+    stateRef.current = next
+    setState(next)
+  }, [])
+
+  /** Cobra a proxima penalidade e devolve o lance para a tela narrar. */
+  const kickShootout = useCallback((taker: SquadPlayer | null): ShootoutKick | null => {
+    const cfg = configRef.current
+    if (!cfg) return null
+    const { state: next, kick } = takeShootoutKick(stateRef.current, cfg, taker)
+    stateRef.current = next
+    setState(next)
+    return kick
+  }, [])
+
+  /**
+   * Fecha a disputa e devolve a partida a "fulltime".
+   *
+   * A fase volta de proposito: e em "fulltime" que a tela registra o resultado,
+   * avanca a semana e mostra o pos-jogo. O `shootout` fica no estado — e dele que
+   * sai o placar das cobrancas gravado no save.
+   */
+  const endShootout = useCallback(() => {
+    const next: MatchState = { ...stateRef.current, phase: "fulltime" }
+    stateRef.current = next
+    setState(next)
+  }, [])
+
+  /** Quem ainda pode bater por um lado (a tela do usuario lista isto). */
+  const shootoutTakers = useCallback((side: Side): SquadPlayer[] => {
+    const cfg = configRef.current
+    if (!cfg) return []
+    return shootoutAvailableTakers(stateRef.current, cfg, side)
+  }, [])
+
   /**
    * Aplica uma decisão do técnico. `applyDecision` mexe no momentum do estado
    * corrente — é a mesma grandeza que o tickMinute usa para decidir quem cria
@@ -260,7 +318,7 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
    */
   const applyCoachDecision = useCallback((id: MatchDecisionId) => {
     const current = stateRef.current
-    if (current.phase === "fulltime") return
+    if (current.phase === "fulltime" || current.phase === "penaltis") return
     const { state: next, active } = applyDecision(current, id)
     stateRef.current = next
     setState(next)
@@ -268,7 +326,9 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
   }, [])
 
   // Sugestão do auxiliar: recalculada a cada minuto a partir do placar/momentum.
-  const suggestedDecision = state.phase === "fulltime" ? null : suggestDecision(state)
+  const suggestedDecision = state.phase === "fulltime" || state.phase === "penaltis"
+    ? null
+    : suggestDecision(state)
 
   return {
     state,
@@ -286,5 +346,9 @@ export function useMatchSimulation(config: MatchConfig | null): UseMatchSimulati
     addEvent,
     fastForward,
     takePenalty,
+    beginShootout,
+    kickShootout,
+    endShootout,
+    shootoutTakers,
   }
 }
