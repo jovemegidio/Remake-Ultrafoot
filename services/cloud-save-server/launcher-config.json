@@ -225,6 +225,26 @@
       ]
     },
     {
+      "version": "1.0.250",
+      "date": "2026-08-03",
+      "latest": false,
+      "title": "Escudos licenciados chegam sem reinstalar o jogo",
+      "changes": [
+        {
+          "type": "new",
+          "text": "ESCUDOS NOVOS PELA CENTRAL DE ATUALIZAÇÕES. 55 clubes ganharam escudo licenciado — Serie A italiana (Milan, Napoli, Udinese, Genoa, Cagliari, Como, Lecce, Parma, Monza, Venezia) e dezenas de brasileiros de Serie B, C, D e estaduais."
+        },
+        {
+          "type": "fixed",
+          "text": "ESCUDO PUBLICADO NÃO APARECIA NA TELA. O jogo baixava o escudo novo, guardava no disco e continuava desenhando o antigo, sem avisar nada. Agora ele aparece assim que o pacote é aplicado, inclusive no editor de equipes."
+        },
+        {
+          "type": "improved",
+          "text": "ESCUDO FUNCIONA SEM INTERNET. A cópia local guardava só retrato; agora guarda escudo também, e na frente dos retratos na fila de download."
+        }
+      ]
+    },
+    {
       "version": "1.0.248",
       "date": "2026-08-03",
       "latest": false,
