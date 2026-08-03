@@ -1,0 +1,82 @@
+name: Desktop Linux
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Read game version
+        id: gamever
+        shell: bash
+        run: echo "version=$(node -p "require('./src-tauri/tauri.conf.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - run: pnpm install --no-frozen-lockfile
+
+      - name: Fetch game assets
+        shell: bash
+        run: |
+          curl -fsSL -o game-assets.zip \
+            "https://github.com/jovemegidio/Ultrafoot26/releases/download/game-assets/game-assets.zip"
+          unzip -q -o game-assets.zip || true
+          rm -f game-assets.zip
+          test -d public/escudos
+          test -d public/jogadores
+
+      - name: Verify distributable game assets
+        run: node scripts/qa-release-assets.mjs
+
+      - name: Build and publish Linux packages
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --config src-tauri/tauri.linux.conf.json
+          tagName: desktop-${{ steps.gamever.outputs.version }}
+          releaseName: "Ultrafoot 26 ${{ steps.gamever.outputs.version }} — Linux"
+          releaseBody: "Ultrafoot 26 para Linux (.AppImage e .deb)."
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload Linux packages for QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ultrafoot-linux-x64
+          path: |
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
+          if-no-files-found: error
+
+      - name: Keep Windows updater release as latest
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "desktop-${{ steps.gamever.outputs.version }}" --latest=false --repo "$GITHUB_REPOSITORY" || true
+          gh release edit "build-${{ steps.gamever.outputs.version }}" --latest --repo "$GITHUB_REPOSITORY" || true

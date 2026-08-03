@@ -199,6 +199,10 @@
       "title": "Escudos licenciados chegam sem reinstalar o jogo",
       "changes": [
         {
+          "type": "fixed",
+          "text": "COPA DO BRASIL COM CHAVE REAL. O adversário mostrado no sorteio agora é o mesmo agendado no calendário; confrontos empatados no agregado exibem a decisão por pênaltis e sempre registram um classificado. A correção também alcança a 5ª fase dos clubes da Série A e saves em andamento."
+        },
+        {
           "type": "new",
           "text": "ESCUDOS NOVOS PELA CENTRAL DE ATUALIZAÇÕES. 55 clubes ganharam escudo licenciado — Serie A italiana (Milan, Napoli, Udinese, Genoa, Cagliari, Como, Lecce, Parma, Monza, Venezia) e dezenas de brasileiros de Serie B, C, D e estaduais."
         },

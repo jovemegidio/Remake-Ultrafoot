@@ -72,6 +72,7 @@ import { getPlayersForTeam } from "@/lib/players-data"
 import { gerarEstatisticasCompeticao } from "@/lib/competition-scorers"
 import { getCompetitionLogo } from "@/lib/competition-logo"
 import { resolveTieByCurto, type CobrancaPenalti } from "@/lib/cup-engine"
+import { passouNoConfronto } from "@/lib/cup-bracket"
 // Assistir a disputa de penaltis de qualquer confronto da chave, nao so do seu.
 import { PenaltisAlheiosModal } from "@/components/match/penaltis-alheios-modal"
 import { getCountryCompetitions, getContinentalSpot, getContinentalDivisions } from "@/lib/country-competitions"
@@ -135,6 +136,85 @@ interface CompetitionState {
     group: { name: string; teams: { short: string; country: string; points: number; played: number }[] } | null
     eliminated: boolean
   }
+}
+
+/**
+ * A chave visual antiga tinha um sorteio próprio no localStorage, separado do
+ * calendário oficial. Mantemos os confrontos da CPU, mas o caminho do usuário
+ * sempre é sobrescrito pelas fixtures reais do save.
+ */
+function copaBrasilDoCalendario(
+  state: CompetitionState["copaBrasil"],
+  fixtures: Fixture[],
+  userCurto: string,
+  season: number,
+): CompetitionState["copaBrasil"] {
+  const fases = [
+    { fixtureStages: ["quinta_fase", "oitavas"], stateStage: "oitavas" as const },
+    { fixtureStages: ["quartas"], stateStage: "quartas" as const },
+    { fixtureStages: ["semifinal"], stateStage: "semis" as const },
+    { fixtureStages: ["final"], stateStage: "final" as const },
+  ]
+  const next = {
+    ...state,
+    drawn: state.drawn || fixtures.some(f => f.competitionType === "cup" && /copa do brasil/i.test(f.competition)),
+    oitavas: state.oitavas.map(match => ({ ...match })),
+    quartas: state.quartas.map(match => ({ ...match })),
+    semis: state.semis.map(match => ({ ...match })),
+    final: state.final.map(match => ({ ...match })),
+  }
+
+  for (const fase of fases) {
+    // Quando a oitava já foi criada ela substitui a 5ª fase no primeiro espaço
+    // da chave compacta; enquanto isso, o sorteio inicial mostra a 5ª fase real.
+    const fixtureStage = [...fase.fixtureStages].reverse().find(stage => fixtures.some(f =>
+      f.competitionType === "cup" && /copa do brasil/i.test(f.competition)
+        && f.stage === stage && f.isUserMatch,
+    ))
+    if (!fixtureStage) continue
+    const oficiais = fixtures
+      .filter(f => f.competitionType === "cup" && /copa do brasil/i.test(f.competition)
+        && f.stage === fixtureStage && f.isUserMatch)
+      .sort((a, b) => a.week - b.week || a.id - b.id)
+    if (!oficiais.length) continue
+
+    const primeira = oficiais[0]
+    const rival = primeira.homeTeam.curto === userCurto ? primeira.awayTeam.curto : primeira.homeTeam.curto
+    const partidas = next[fase.stateStage]
+    const encontrado = partidas.findIndex(m => m.team1 === userCurto || m.team2 === userCurto)
+    const slot = encontrado >= 0 ? encontrado : 0
+    const base = partidas[slot] ?? { id: slot + 1, team1: "", team2: "", score1: null, score2: null, played: false, winner: null }
+    const encerradas = oficiais.filter(f => f.played && f.homeScore !== undefined && f.awayScore !== undefined)
+    const confrontoEncerrado = encerradas.length === oficiais.length
+    const golsUser = encerradas.reduce((total, f) => total + (f.homeTeam.curto === userCurto ? f.homeScore! : f.awayScore!), 0)
+    const golsRival = encerradas.reduce((total, f) => total + (f.homeTeam.curto === rival ? f.homeScore! : f.awayScore!), 0)
+    const empatouAgregado = confrontoEncerrado && golsUser === golsRival
+    const passou = confrontoEncerrado
+      ? passouNoConfronto(
+          encerradas.map(f => ({
+            golsPro: f.homeTeam.curto === userCurto ? f.homeScore! : f.awayScore!,
+            golsContra: f.homeTeam.curto === userCurto ? f.awayScore! : f.homeScore!,
+          })),
+          oficiais.length,
+          `${userCurto}:copa_brasil:${season}:${fixtureStage}`,
+        )
+      : null
+
+    partidas[slot] = {
+      ...base,
+      team1: userCurto,
+      team2: rival,
+      score1: encerradas.length ? golsUser : null,
+      score2: encerradas.length ? golsRival : null,
+      played: confrontoEncerrado,
+      winner: confrontoEncerrado ? (passou ? userCurto : rival) : null,
+      // Empate agregado sempre mostra a disputa que definiu o classificado.
+      penaltis: empatouAgregado ? (passou ? [5, 4] : [4, 5]) as [number, number] : null,
+      cobrancas: null,
+    }
+  }
+
+  return next
 }
 
 // A Copa do Brasil, o estadual e a Libertadores NAO usam mais listas fixas: os
@@ -742,6 +822,11 @@ export default function CompeticoesPage() {
     drawLibertadores,
   } = useCompetitions(userTeam.curto, userPosition, currentSeason)
 
+  const copaBrasilStateOficial = useMemo(
+    () => copaBrasilDoCalendario(compState.copaBrasil, seasonCalendar.fixtures, userTeam.curto, currentSeason),
+    [compState.copaBrasil, seasonCalendar.fixtures, userTeam.curto, currentSeason],
+  )
+
   // Navega para a tela de campeao se o usuario ganhar uma copa
   const handleSimulateCopa = (competitionName: string, season: string) => {
     const userWon = simulateCopaBrasilRound()
@@ -1059,7 +1144,7 @@ export default function CompeticoesPage() {
           <TabsContent value="copa-do-brasil" className="mt-4">
             <CopaBracket
               userTeam={userTeam}
-              state={compState.copaBrasil}
+              state={copaBrasilStateOficial}
               onDraw={drawCopaBrasil}
               onSimulate={() => handleSimulateCopa(
                 "Copa do Brasil",
@@ -1267,6 +1352,11 @@ function CopaBracket({
                         <PlayCircle className="h-3.5 w-3.5" />
                         Assistir pênaltis ({match.penaltis[0]}-{match.penaltis[1]})
                       </button>
+                    )}
+                    {match.penaltis && (!match.cobrancas || match.cobrancas.length === 0) && (
+                      <div className="mt-2 rounded-md border border-amber-400/20 bg-amber-400/10 py-1.5 text-center text-[11px] font-semibold text-amber-300">
+                        Decidido nos pênaltis: {match.penaltis[0]}-{match.penaltis[1]}
+                      </div>
                     )}
                   </div>
                 )
