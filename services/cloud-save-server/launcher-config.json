@@ -9,11 +9,18 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "Filtro de time do mercado consertado",
+      "category": "Correção",
+      "body": "Escolher uma liga na busca de atletas deixava a lista de Times vazia. Agora da para filtrar por clube dentro da liga escolhida.",
+      "date": "2026-08-03",
+      "pinned": true
+    },
+    {
       "title": "Os jogadores ficaram do tamanho certo",
       "category": "Correção",
       "body": "Altura e pe passam a ser dados reais, para mais de 41 mil atletas, e o peso acompanha a altura. Junto com isso, o rosto de um jogador nao aparece mais em outro de mesmo nome, e os clubes do mercado de juniores mostram o escudo de verdade.",
       "date": "2026-08-02",
-      "pinned": true
+      "pinned": false
     },
     {
       "title": "Vender na base agora vale a pena",
@@ -172,9 +179,21 @@
   ],
   "changelog": [
     {
+      "version": "1.0.247",
+      "date": "2026-08-03",
+      "latest": true,
+      "title": "Escolher a liga voltou a permitir escolher o time",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "FILTRO DE TIME TRAVADO EM \"QUALQUER\". Ao escolher uma liga na busca de atletas, a lista de Times ficava vazia e nao dava para ver so os jogadores de um clube — valia para qualquer liga. As opcoes de liga sao mostradas com o pais junto (\"Serie A (Brasil)\") e a comparacao interna usava o nome sem o pais, entao nunca batia. Agora escolher a liga preenche a lista de times normalmente."
+        }
+      ]
+    },
+    {
       "version": "1.0.246",
       "date": "2026-08-02",
-      "latest": true,
+      "latest": false,
       "title": "Altura, peso e pe de verdade — e o rosto certo em cada atleta",
       "changes": [
         {
