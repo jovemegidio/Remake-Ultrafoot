@@ -193,9 +193,25 @@
   ],
   "changelog": [
     {
-      "version": "1.0.250",
+      "version": "1.0.251",
       "date": "2026-08-03",
       "latest": true,
+      "title": "Os escudos novos agora aparecem mesmo",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "ESCUDO PUBLICADO SUMIA NA MAIORIA DOS CLUBES. Dos 599 escudos enviados, so 234 apareciam: os demais dependiam de buscar a imagem no servidor na hora de desenhar, e o jogo instalado nao consegue fazer isso. Agora todos ficam guardados na sua maquina e aparecem sempre, inclusive sem internet."
+        },
+        {
+          "type": "fixed",
+          "text": "FOTO DE JOGADOR PAROU DE SER GUARDADA na atualizacao anterior, porque os escudos ocupavam todo o espaco reservado. Escudo e foto passam a ter espaco proprio, um nao toma o do outro."
+        }
+      ]
+    },
+    {
+      "version": "1.0.250",
+      "date": "2026-08-03",
+      "latest": false,
       "title": "Escudos licenciados chegam sem reinstalar o jogo",
       "changes": [
         {

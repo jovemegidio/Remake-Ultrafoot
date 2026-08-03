@@ -30,6 +30,7 @@
 
 import { storeGet, storeSet } from "@/lib/persistent-store"
 import { buscarJson } from "@/lib/buscar-json"
+import { isTauri } from "@/lib/game-asset"
 import { canalAtivo } from "@/lib/atualizacoes-preferencias"
 import type { TeamOverride } from "@/lib/team-overrides"
 import type { PlayerOverride } from "@/lib/player-overrides"
@@ -468,12 +469,40 @@ const chaveEscudo = (fileKey: string) => `escudo__${fileKey}`
 interface ImagemGuardada { u: string; d: string }
 
 /**
- * Teto da cópia local. Acima disto a imagem continua funcionando ONLINE, pela
- * URL remota — só não fica guardada. O limite existe porque `storeSet` espelha em
- * `localStorage`, que estoura por volta de 5–10 MB (e na versão web ele é o
- * único armazenamento que existe).
+ * ⚠️ NO APP INSTALADO A CÓPIA LOCAL NÃO É "PARA FUNCIONAR OFFLINE" — É A ÚNICA
+ * FORMA DE A IMAGEM APARECER.
+ *
+ * A webview do Tauri **não alcança a VPS**: é por isso que o download logo abaixo
+ * usa `fetchDoAmbiente` (plugin HTTP do Tauri) em vez do `fetch` da webview. O
+ * mesmo vale para `<img src="https://...">` — a URL remota do manifesto nunca
+ * pinta. Só o `data:` da cópia local pinta.
+ *
+ * Foi assim que a 1.0.250 saiu com 599 escudos publicados e o jogador viu 234:
+ * o teto de 8 MB coube exatamente 234, e os outros 365 ficaram com a URL remota,
+ * que no app não vale nada. Na versão WEB o problema não existe — a página é
+ * servida pela própria VPS, mesma origem.
+ *
+ * Daí os dois tetos. Na web o limite é real (`storeSet` espelha em
+ * `localStorage`, que estoura por volta de 5–10 MB e é o único armazenamento que
+ * existe lá). No app o armazenamento é ARQUIVO — o save deste projeto já passa
+ * de 60 MB — e apertar aqui não economiza nada, só apaga escudo da tela.
  */
-const TETO_IMAGENS_BYTES = 8 * 1024 * 1024
+const TETO_WEB = 8 * 1024 * 1024
+const TETO_APP = 48 * 1024 * 1024
+
+function tetoDeImagens(): number {
+  return isTauri() ? TETO_APP : TETO_WEB
+}
+
+/**
+ * ⚠️ ORÇAMENTO SEPARADO POR TIPO, e não uma fila só.
+ *
+ * Com fila única o que vem primeiro come tudo: pôr escudo na frente (para ele
+ * caber, ver acima) fez a 1.0.250 guardar 234 escudos e **zero retratos**. Quem
+ * vem depois não fica "com menos" — fica sem nada, porque o laço para no teto.
+ * Cada tipo tem metade e um não pode invadir o do outro.
+ */
+const FATIA = { escudo: 0.5, foto: 0.5 }
 
 interface CacheImagens { porChave: Map<string, ImagemGuardada>; porUrl: Map<string, string> }
 let cacheImagens: { bruto: string; dados: CacheImagens } | null = null
@@ -527,21 +556,19 @@ export async function guardarFotosLocalmente(
   if (typeof window === "undefined") return 0
   // Chaveado por `fileKey__nome`, o mesmo do manifesto: guardar por nome jogava
   // fora o clube e fazia xarás de clubes diferentes dividirem uma cópia só.
-  const alvos = new Map<string, string>()
-  // ⚠️ ESCUDO PRIMEIRO, e não é ordem estética: o laço PARA quando bate o teto
-  // de 8 MB, e só os retratos já passam disso. Deixados por último, os escudos
-  // nunca seriam guardados — apareceriam online e sumiriam offline. São dezenas
-  // de clubes contra centenas de atletas; passam na frente por caberem.
+  const escudos = new Map<string, string>()
+  const fotos = new Map<string, string>()
   for (const [fileKey, time] of Object.entries(pacote.times ?? {})) {
     const url = time?.logoUrl
     if (!url || url.startsWith("data:")) continue
-    alvos.set(chaveEscudo(fileKey), url)
+    escudos.set(chaveEscudo(fileKey), url)
   }
   for (const [chave, jogador] of Object.entries(pacote.jogadores ?? {})) {
     const url = jogador.faceDataUrl
     if (!url || url.startsWith("data:")) continue
-    alvos.set(chave, url)
+    fotos.set(chave, url)
   }
+  const alvos = new Map([...escudos, ...fotos])
   if (alvos.size === 0) return 0
 
   const { fetchDoAmbiente } = await import("@/lib/buscar-json")
@@ -557,26 +584,39 @@ export async function guardarFotosLocalmente(
     removidas++
   }
 
-  let bytes = JSON.stringify(guardadas).length
+  const teto = tetoDeImagens()
   let feitas = 0
   let novas = 0
 
-  for (const [chave, url] of alvos) {
-    feitas++
-    aoProgredir?.(feitas, alvos.size)
-    // Rebaixa quando a URL MUDOU — e ela muda sempre que a imagem muda, porque
-    // termina no sha. Era aqui que a republicação morria.
-    if (guardadas[chave]?.u === url) continue
-    if (bytes >= TETO_IMAGENS_BYTES) break
-    try {
-      const r = await requisitar(url, {})
-      if (!r.ok) continue
-      const dados = paraDataUrl(await r.arrayBuffer(), r.headers.get("content-type") ?? "")
-      guardadas[chave] = { u: url, d: dados }
-      bytes += dados.length + url.length + chave.length + 16
-      novas++
-    } catch { /* uma foto a menos não invalida o pacote */ }
+  // Quanto do que JÁ está guardado pertence a cada tipo: sem isto o orçamento do
+  // escudo seria gasto de novo a cada pacote e o do retrato nunca sobraria.
+  const gastoDe = (ehEscudo: boolean) =>
+    Object.entries(guardadas)
+      .filter(([c]) => c.startsWith("escudo__") === ehEscudo)
+      .reduce((s, [c, v]) => s + v.d.length + v.u.length + c.length + 16, 0)
+
+  async function baixar(lista: Map<string, string>, limite: number) {
+    let bytes = gastoDe(lista === escudos)
+    for (const [chave, url] of lista) {
+      feitas++
+      aoProgredir?.(feitas, alvos.size)
+      // Rebaixa quando a URL MUDOU — e ela muda sempre que a imagem muda, porque
+      // termina no sha. Era aqui que a republicação morria.
+      if (guardadas[chave]?.u === url) continue
+      if (bytes >= limite) break
+      try {
+        const r = await requisitar(url, {})
+        if (!r.ok) continue
+        const dados = paraDataUrl(await r.arrayBuffer(), r.headers.get("content-type") ?? "")
+        guardadas[chave] = { u: url, d: dados }
+        bytes += dados.length + url.length + chave.length + 16
+        novas++
+      } catch { /* uma imagem a menos não invalida o pacote */ }
+    }
   }
+
+  await baixar(escudos, teto * FATIA.escudo)
+  await baixar(fotos, teto * FATIA.foto)
 
   // Grava também quando só houve descarte: a limpeza do formato antigo e das
   // sobras de elenco anterior precisa persistir mesmo que nenhuma imagem nova

@@ -372,8 +372,13 @@ for (const [fileKey, lista] of porClube) {
 // ─── Segundo passe: recorte e base64 ─────────────────────────────────────────
 for (const { arquivo, alvo, manual } of escolhidos) {
   // `contain` com fundo transparente: escudo nao e quadrado, e esticar ou cortar
-  // deforma. O PNG paletizado sai em poucos KB — 500x500 cheios sao 150 KB, e
-  // com centenas de clubes isso e a diferenca entre dezenas de MB e poucos.
+  // deforma.
+  //
+  // ⚠️ PNG PALETIZADO, E ISSO FOI MEDIDO. Tentei webp sem perda achando que
+  // encolheria a copia local (que no app e a unica coisa que aparece, e vive
+  // dentro do save de 60 MB): saiu MAIOR — 11,3 MB contra 9,5 MB nos mesmos 388
+  // escudos. Estes escudos sao monocromaticos e de area chapada, exatamente o
+  // caso em que a paleta do PNG ganha. Nao troque sem medir de novo.
   const png = await sharp(path.join(PASTA, arquivo))
     .resize(LADO, LADO, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png({ compressionLevel: 9, palette: true })
