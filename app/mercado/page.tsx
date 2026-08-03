@@ -415,9 +415,19 @@ export default function MercadoPage() {
     const byCountry = filterCountry === "Qualquer"
       ? transferTargets
       : transferTargets.filter((p) => p.team.pais === filterCountry)
+    // ⚠️ COMPARAR NA MESMA FORMA EM QUE A OPCAO FOI GERADA.
+    //
+    // As opcoes de liga saem DECORADAS — `ligaComPais` produz "Série A (Brasil)"
+    // —, mas aqui a comparacao era contra `p.team.liga` CRU ("Série A"). Nunca
+    // batia, entao `byLeague` ficava VAZIO e a lista de Times era so "Qualquer":
+    // escolher qualquer liga tornava impossivel filtrar por clube. O filtro de
+    // verdade (filteredPlayers) ja usava a forma decorada; era so a lista de
+    // opcoes que divergia.
+    const ligaDoAtleta = (p: typeof byCountry[number]) =>
+      ligaComPais(p.team.liga, p.team.pais) ?? divisaoLabel(p.team.divisao)
     const byLeague = filterLeague === "Qualquer"
       ? byCountry
-      : byCountry.filter((p) => p.team.liga === filterLeague)
+      : byCountry.filter((p) => ligaDoAtleta(p) === filterLeague)
     // Duas coisas DIFERENTES que estavam saindo da mesma lista: "País/Região" é
     // onde o clube joga; "Nacionalidade" é de onde o ATLETA é. O filtro compara
     // contra p.nationality, mas as opções vinham de p.team.pais — entao escolher
