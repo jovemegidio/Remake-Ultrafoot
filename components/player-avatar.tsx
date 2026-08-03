@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { getPlayerPhotoUrl } from "@/lib/player-photos"
+import { getPlayerPhotoUrls } from "@/lib/player-photos"
 import { gameAssetUrlAlternativa } from "@/lib/game-asset"
 import { memo, useEffect, useState } from "react"
 
@@ -140,6 +140,7 @@ function PlayerAvatarBase({
   fileKey,
 }: PlayerAvatarProps & { rounded: "xl" | "full" }) {
   const [imgFailed, setImgFailed] = useState(false)
+  const [photoIndex, setPhotoIndex] = useState(0)
   // 0 = URL como veio; 1 = a outra forma (caminho simples <-> game-asset://).
   const [tentativa, setTentativa] = useState<0 | 1>(0)
 
@@ -154,10 +155,15 @@ function PlayerAvatarBase({
   //
   // Tambem e o que faz o retrato aparecer sozinho quando o store do Tauri
   // termina de hidratar (assincrono) e quando um pacote acaba de ser aplicado.
-  const [photoBase, setPhotoBase] = useState(() => photoUrlProp ?? getPlayerPhotoUrl(name, playerId, fileKey))
+  const [photoBases, setPhotoBases] = useState<string[]>(() => photoUrlProp
+    ? [photoUrlProp]
+    : getPlayerPhotoUrls(name, playerId, fileKey))
 
   useEffect(() => {
-    const resolver = () => setPhotoBase(photoUrlProp ?? getPlayerPhotoUrl(name, playerId, fileKey))
+    const resolver = () => {
+      setPhotoBases(photoUrlProp ? [photoUrlProp] : getPlayerPhotoUrls(name, playerId, fileKey))
+      setPhotoIndex(0)
+    }
     resolver()
     window.addEventListener("ultrafoot:store:ready", resolver)
     window.addEventListener("ultrafoot:elencos:atualizados", resolver)
@@ -172,7 +178,7 @@ function PlayerAvatarBase({
   useEffect(() => {
     setImgFailed(false)
     setTentativa(0)
-  }, [photoBase])
+  }, [photoBases])
 
   // ⚠️ NAO CONFIE NA URL DA PRIMEIRA TENTATIVA.
   //
@@ -185,6 +191,7 @@ function PlayerAvatarBase({
   // 404 silencioso: o atleta caia nas iniciais mesmo com o arquivo instalado.
   //
   // Em vez de acertar o ambiente de primeira, tenta a outra forma quando falha.
+  const photoBase = photoBases[photoIndex]
   const alternativa = photoBase ? gameAssetUrlAlternativa(photoBase) : null
   const photoUrl = tentativa === 0 ? photoBase : alternativa
 
@@ -215,6 +222,10 @@ function PlayerAvatarBase({
           onError={() => {
             // Primeira falha: tenta a outra forma da URL antes de desistir.
             if (tentativa === 0 && alternativa) setTentativa(1)
+            else if (photoIndex + 1 < photoBases.length) {
+              setPhotoIndex(index => index + 1)
+              setTentativa(0)
+            }
             else setImgFailed(true)
           }}
         />

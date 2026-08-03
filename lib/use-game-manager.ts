@@ -24,7 +24,7 @@ import { addJobOffers, clearJobOffers, encerrarPassagem } from "@/lib/career-mov
 import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
 import { resolveDivisionChange, evolvePyramids, type PyramidClub } from "@/lib/league-pyramid"
-import { processDebtMonth } from "@/lib/debt-engine"
+import { debtConsequences, processDebtMonth, renegotiateDebt, successorDebtBudget } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
 import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
@@ -1751,6 +1751,9 @@ export function useGameManager() {
       selectedTeamShort: teamShort,
       week: 0,
       season: 2026,
+      // Data de posse do primeiro clube. Antes só trocas de emprego preenchiam
+      // este campo, então a Área do Treinador não sabia quando a carreira começou.
+      contratadoEm: { season: 2026, week: 0 },
       ...(managerName ? { managerName: managerName.trim() || "Tecnico" } : {}),
       // Fixtures semeadas para rastreamento de fim de temporada
       fixtures: initialFixtures,
@@ -2572,20 +2575,55 @@ export function useGameManager() {
 
     // Update ref immediately so the next loop iteration sees the incremented week
     let debt=currentState.debt
+    let debtByClub={...(currentState.debtByClub??{})}
+    let teamMorale=currentState.teamMorale??70
+    let boardConfidenceBonus=currentState.boardConfidenceBonus??0
     if(debt?.enabled&&newWeek>=debt.nextPaymentWeek){
       const antesMissed=debt.missedPayments
       const payment=processDebtMonth(debt,useGameEngine.getState().balance);gameEngine.payClubDebt(payment.paid);debt=payment.debt
       // CONSEQUENCIA da inadimplencia (antes missedPayments so era contado, nunca
       // usado): a diretoria pressiona, e ao atrasar a 3a parcela o mercado congela.
       if(debt.missedPayments>antesMissed){
-        const congelou=debt.missedPayments>=3
+        const consequencia=debtConsequences(debt)
+        teamMorale=Math.max(0,teamMorale+consequencia.moraleDelta)
+        boardConfidenceBonus=Math.max(-40,boardConfidenceBonus+consequencia.confidenceDelta)
         addNotificationRef.current({
           type:"system",priority:"high",
-          title:congelou?"Mercado congelado pela dívida":"Parcela da dívida em atraso",
-          message:congelou
-            ?`A diretoria não conseguiu quitar a parcela (${debt.missedPayments}ª em atraso) e SUSPENDEU as contratações até regularizar as finanças.`
-            :`O caixa não cobriu a parcela da dívida deste mês (multa de 2% somada ao saldo devedor). Regularize antes que a diretoria corte o mercado.`,
+          title:consequencia.label,
+          message:`A parcela não foi quitada integralmente (${debt.missedPayments} atraso(s)). ${consequencia.description} A multa de mora foi incorporada ao saldo devedor.`,
         })
+      }else if(debt.missedPayments<antesMissed){
+        // Gestão responsável recupera o ambiente aos poucos, assim como limpa
+        // um atraso por vez. Não volta a 100 de confiança instantaneamente.
+        teamMorale=Math.min(100,teamMorale+2)
+        boardConfidenceBonus=Math.min(0,boardConfidenceBonus+2)
+      }
+    }
+
+    // O clube deixado para trás continua existindo. A nova diretoria reserva
+    // caixa conforme porte/prestígio, paga ou atrasa parcelas e pode renegociar.
+    // Assim a dívida pertence ao clube durante toda a carreira, mesmo com outro
+    // treinador, e estará evoluída caso o usuário volte anos depois.
+    for(const [clubShort,arquivada] of Object.entries(debtByClub)){
+      if(clubShort===userShort||!arquivada?.enabled||newWeek<arquivada.nextPaymentWeek)continue
+      const clube=getTeamByShort(clubShort)
+      let gerida=arquivada
+      const atrasosAntes=gerida.missedPayments
+      // Limite evita loop enorme ao migrar um save antigo muito avançado.
+      for(let parcela=0;parcela<3&&gerida.enabled&&newWeek>=gerida.nextPaymentWeek;parcela++){
+        const caixa=successorDebtBudget(clube?.saldo??0,clube?.prestigio??50)
+        gerida=processDebtMonth(gerida,caixa).debt
+      }
+      // A administração sucessora reage à crise; renegociar reduz a parcela,
+      // mas cobra taxa maior e não apaga os atrasos já acumulados.
+      if(gerida.enabled&&gerida.missedPayments>=3&&gerida.missedPayments>atrasosAntes&&gerida.renegotiations<2){
+        gerida=renegotiateDebt(gerida)
+      }
+      debtByClub[clubShort]=gerida
+      const cruzouMarco=[3,6,8].some(m=>atrasosAntes<m&&gerida.missedPayments>=m)
+      if(cruzouMarco){
+        const c=debtConsequences(gerida)
+        addNotificationRef.current({type:"news",priority:gerida.missedPayments>=6?"high":"low",title:`Crise financeira no ${clube?.nome??clubShort}`,message:`A gestão que sucedeu você herdou a dívida e chegou a ${gerida.missedPayments} atraso(s). ${c.description}`,href:"/financas"})
       }
     }
     if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)
@@ -2647,8 +2685,11 @@ export function useGameManager() {
     const completedFixtureKeys = completedKeysFromAuto.length > 0
       ? Array.from(new Set([...(currentState.completedFixtureKeys ?? []), ...completedKeysFromAuto]))
       : currentState.completedFixtureKeys
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment, completedFixtureKeys } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, scoutingDepartment, completedFixtureKeys } as Partial<typeof currentState> & { fixtures: unknown })
+    // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
+    // impossível uma troca de treinador perder o saldo entre dois renders.
+    if(userShort&&debt)debtByClub[userShort]=debt
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys } as Partial<typeof currentState> & { fixtures: unknown })
 
     // O jogador precisa saber que uma partida dele foi resolvida sem ele.
     if (autoPlayed.length > 0) {
@@ -2707,6 +2748,9 @@ export function useGameManager() {
 
         // Forma recente do usuario (mais recente primeiro), a partir dos resultados dele.
         const recentForm = [...useGameEngine.getState().matchResults]
+          // A nova diretoria/temporada não pune o treinador por resultados do
+          // ano anterior. Também garante três jogos oficiais antes de avaliar.
+          .filter((r) => r.season === st.season)
           .filter((r) => r.homeTeam === shortNow || r.awayTeam === shortNow)
           .slice(-5)
           .reverse()
@@ -2717,13 +2761,16 @@ export function useGameManager() {
             return pro > contra ? "V" : pro === contra ? "E" : "D"
           }) as ("V" | "E" | "D")[]
 
-        const confianca = computeBoardConfidence({
+        const confiancaEsportiva = computeBoardConfidence({
           currentPosition: posNow,
           // calcSeasonObjective so le prestigio/nome/divisao, presentes em Team; cast e seguro.
           objective: calcSeasonObjective(teamNow as unknown as Parameters<typeof calcSeasonObjective>[0]),
           recentForm,
           seasonProgress: Math.min(1, newWeek / Math.max(1, seasonEndWeek)),
         })
+        // Crise financeira também é crise de governança: atraso recorrente
+        // desgasta a diretoria mesmo quando o resultado em campo ainda é bom.
+        const confianca = Math.max(0, Math.min(100, confiancaEsportiva + (st.boardConfidenceBonus ?? 0)))
 
         // A regra dos paises sem registro (lib/beneficios.ts) tambem vale aqui:
         // sem o codigo, o tecnico dirige clube do Brasil, da Franca ou da Espanha.
@@ -2819,7 +2866,15 @@ export function useGameManager() {
         // por chance, com mais paciencia no comeco da temporada. Poupamos o
         // comeco absoluto (semana <= 4) para nao demitir antes de o time jogar.
         const progressoTemporada = Math.min(1, newWeek / Math.max(1, seasonEndWeek))
-        if (newWeek > 4 && shouldFireManager(confianca, progressoTemporada)) {
+        // A diretoria só reavalia o cargo depois de uma partida OFICIAL do clube.
+        // Amistosos de pré-temporada não valem pontos e não podem demitir alguém
+        // antes da estreia; antes, qualquer avanço de calendário disparava a regra.
+        const jogouOficialNestaSemana = useGameEngine.getState().matchResults.some(r =>
+          r.season === currentState.season && r.week === newWeek &&
+          (r.homeTeam === shortNow || r.awayTeam === shortNow) &&
+          r.competition !== "Amistoso",
+        )
+        if (jogouOficialNestaSemana && recentForm.length >= 3 && newWeek > 4 && shouldFireManager(confianca, progressoTemporada)) {
           // CASO FERNANDO DINIZ: quem acumula clube + SELEÇÃO não fica sem emprego
           // ao ser demitido do clube — segue no comando da seleção, como na vida
           // real (Diniz seguiu na Seleção Brasileira após sair do Fluminense).

@@ -652,18 +652,22 @@ export default function PartidaAoVivoPage() {
   // Determina times a partir do contexto salvo. AMISTOSO tem prioridade sobre o jogo da
   // rodada (currentMatch), senao o amistoso acabaria jogando contra o adversario do fixture.
   const homeTeam = useMemo(() => {
+    // No apito final o calendário avança e `currentMatch` já aponta para o jogo
+    // seguinte. O snapshot impede o placar de trocar A x B por A x C aos 90'.
+    if (finalMatch) return finalMatch.home
     if ((matchCtx.friendly || matchCtx.youth) && matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     if (currentMatch) return currentMatch.homeTeam
     if (matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
-  }, [currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.homeShort, userTeamId])
+  }, [finalMatch, currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.homeShort, userTeamId])
 
   const awayTeam = useMemo(() => {
+    if (finalMatch) return finalMatch.away
     if ((matchCtx.friendly || matchCtx.youth) && matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     if (currentMatch) return currentMatch.awayTeam
     if (matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
-  }, [currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.awayShort, homeTeam.curto])
+  }, [finalMatch, currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.awayShort, homeTeam.curto])
 
   // TORNEIO AMISTOSO: e amistoso (nao conta para a temporada) mas tem nome
   // proprio — mostrar "Amistoso" na Final do torneio que o tecnico montou

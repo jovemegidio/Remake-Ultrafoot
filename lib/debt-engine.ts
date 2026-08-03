@@ -14,6 +14,15 @@ export interface ClubDebtState {
   sponsorContributions: number
 }
 
+export interface DebtConsequences {
+  level: "regular" | "attention" | "overdue" | "embargo" | "wage_crisis" | "insolvency"
+  label: string
+  description: string
+  moraleDelta: number
+  confidenceDelta: number
+  transferEmbargo: boolean
+}
+
 const PRESETS: Record<Exclude<DebtPreset, "none">, { ratio: number; rate: number; months: number }> = {
   light: { ratio: .15, rate: .06, months: 60 },
   realistic: { ratio: .35, rate: .095, months: 84 },
@@ -31,9 +40,39 @@ export function processDebtMonth(debt: ClubDebtState, availableBalance: number):
   const next={...debt};if(!next.enabled||next.principal<=0)return{debt:next,paid:0,interest:0,principalPaid:0}
   const interest=Math.round(next.principal*next.annualInterestRate/12), due=Math.min(next.principal+interest,next.monthlyPayment)
   const paid=Math.max(0,Math.min(availableBalance,due));const principalPaid=Math.max(0,paid-interest)
-  if(paid<due){next.missedPayments++;next.principal+=Math.round((due-paid)*.02)}else next.monthsPaid++
+  if(paid<due){
+    next.missedPayments++
+    // Juros não pagos são capitalizados; além deles há multa de mora de 2% sobre
+    // o restante da parcela. Sem isso, deixar de pagar podia sair mais barato.
+    const unpaidInterest=Math.max(0,interest-paid)
+    next.principal+=unpaidInterest+Math.round((due-paid)*.02)
+  }else{
+    next.monthsPaid++
+    // Regularização é gradual: uma parcela paga não apaga meses de crise, mas
+    // permite ao clube sair do embargo depois de uma sequência de pagamentos.
+    next.missedPayments=Math.max(0,next.missedPayments-1)
+  }
   next.principal=Math.max(0,next.principal-principalPaid);next.nextPaymentWeek+=4;if(next.principal===0)next.enabled=false
   return{debt:next,paid,interest:Math.min(paid,interest),principalPaid}
+}
+
+/** Consequências esportivas e administrativas conforme a inadimplência. */
+export function debtConsequences(debt: ClubDebtState | undefined): DebtConsequences {
+  const atrasos = debt?.enabled ? debt.missedPayments : 0
+  if (atrasos >= 8) return { level:"insolvency",label:"Risco de insolvência",description:"Salários e fornecedores estão comprometidos; atletas podem forçar saída e a diretoria corre risco de intervenção.",moraleDelta:-10,confidenceDelta:-14,transferEmbargo:true }
+  if (atrasos >= 6) return { level:"wage_crisis",label:"Salários em risco",description:"O caixa não sustenta folha e dívida ao mesmo tempo. O elenco perde confiança e jogadores podem pedir para sair.",moraleDelta:-7,confidenceDelta:-10,transferEmbargo:true }
+  if (atrasos >= 3) return { level:"embargo",label:"Embargo de transferências",description:"Contratações e novos empréstimos estão suspensos até a regularização das parcelas.",moraleDelta:-4,confidenceDelta:-6,transferEmbargo:true }
+  if (atrasos === 2) return { level:"overdue",label:"Inadimplência",description:"Duas parcelas estão em atraso; fornecedores pressionam e o ambiente interno começa a piorar.",moraleDelta:-2,confidenceDelta:-3,transferEmbargo:false }
+  if (atrasos === 1) return { level:"attention",label:"Parcela em atraso",description:"O clube recebeu a primeira cobrança e precisa recompor o caixa.",moraleDelta:-1,confidenceDelta:-1,transferEmbargo:false }
+  return { level:"regular",label:"Dívida regular",description:"Parcelas em dia e risco financeiro controlado.",moraleDelta:0,confidenceDelta:0,transferEmbargo:false }
+}
+
+/**
+ * Caixa mensal que uma diretoria sucessora consegue reservar para a dívida.
+ * Usa porte e prestígio do clube; não depende do caixa do novo clube do usuário.
+ */
+export function successorDebtBudget(clubBalance: number, prestige: number): number {
+  return Math.max(100_000, Math.round(Math.max(0, clubBalance) * .0125 + Math.max(0, prestige) * 5_000))
 }
 
 export function debtTransferLimit(debt: ClubDebtState | undefined, balance: number): number {
@@ -48,7 +87,7 @@ export function debtTransferLimit(debt: ClubDebtState | undefined, balance: numb
  * era incrementado e NUNCA lido — atrasar nao tinha consequencia nenhuma.
  */
 export function transfersFrozen(debt: ClubDebtState | undefined): boolean {
-  return Boolean(debt?.enabled && debt.missedPayments >= 3)
+  return debtConsequences(debt).transferEmbargo
 }
 
 /** Uma compra de `fee` e permitida? Respeita o teto por divido e o congelamento. */

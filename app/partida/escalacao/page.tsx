@@ -1517,7 +1517,7 @@ export default function PartidaEscalacaoPage() {
                 </button>
               </div>
               <div className="flex items-center gap-4 mb-6">
-                <PlayerAvatarCircle name={selectedPlayer.name} teamColor={userTeam.cor1} size="lg" />
+                <PlayerAvatarCircle name={selectedPlayer.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="lg" />
                 <div>
                   <h3 className="text-xl font-bold text-white">{selectedPlayer.name}</h3>
                   <p className="text-sm text-white/50">{selectedPlayer.position} - {selectedPlayer.age} anos</p>
@@ -1626,7 +1626,7 @@ export default function PartidaEscalacaoPage() {
                       className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        <PlayerAvatarCircle name={tiredPlayer.name} teamColor={userTeam.cor1} size="xs" />
+                        <PlayerAvatarCircle name={tiredPlayer.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="xs" />
                         <div className="text-left">
                           <div className="text-xs text-white">{tiredPlayer.name}</div>
                           <div className="text-[10px] text-red-400">{tiredPlayer.energy}% energia</div>
@@ -1634,7 +1634,7 @@ export default function PartidaEscalacaoPage() {
                       </div>
                       <ArrowLeftRight className="h-4 w-4 text-white/40" />
                       <div className="flex items-center gap-2">
-                        <PlayerAvatarCircle name={replacement.name} teamColor={userTeam.cor1} size="xs" />
+                        <PlayerAvatarCircle name={replacement.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="xs" />
                         <div className="text-left">
                           <div className="text-xs text-white">{replacement.name}</div>
                           <div className="text-[10px] text-green-400">{replacement.energy}% energia</div>

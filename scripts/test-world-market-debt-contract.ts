@@ -4,7 +4,7 @@
 //  3. Relogio de contrato (o aviso de vencimento nunca disparava)
 
 import { simulateWorldTransferWindow, getArrivals, recordWorldTransfer } from "../lib/world-market"
-import { financeWithDebt, borrowingCapacity, canAffordTransfer, transfersFrozen, createClubDebt } from "../lib/debt-engine"
+import { debtConsequences, financeWithDebt, borrowingCapacity, canAffordTransfer, transfersFrozen, createClubDebt, processDebtMonth, successorDebtBudget } from "../lib/debt-engine"
 import { absoluteWeek, getContractStatus, type Player } from "../lib/game-engine"
 
 let falhas = 0
@@ -78,6 +78,13 @@ function checar(nome: string, ok: boolean, detalhe = "") {
   checar("inadimplente NAO consegue mais credito", borrowingCapacity(congelado, 1_000_000) === 0)
   checar("inadimplente tem o mercado congelado", transfersFrozen(congelado))
   checar("compra barrada quando congelado", !canAffordTransfer(congelado, 999_000_000, 1_000_000).ok)
+
+  const emCrise = { ...createClubDebt("high", 100_000_000), missedPayments: 6 }
+  const crise = debtConsequences(emCrise)
+  checar("seis atrasos colocam salários e elenco em crise", crise.level === "wage_crisis" && crise.moraleDelta <= -7)
+  const regularizando = processDebtMonth(emCrise, emCrise.monthlyPayment).debt
+  checar("pagamento regular reduz o histórico de atrasos gradualmente", regularizando.missedPayments === 5)
+  checar("sucessor reserva caixa conforme o porte do clube", successorDebtBudget(100_000_000, 80) > successorDebtBudget(10_000_000, 40))
 }
 
 // ── 3. Relogio de contrato: o aviso agora dispara ──────────────────────────

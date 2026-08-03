@@ -26,6 +26,7 @@ const photoMap = (manifest as { entries: Record<string, string> }).entries
 // quebrada. Sem internet E sem arquivo, o onError do PlayerAvatar mostra as
 // iniciais.
 import fotosLocais from "@/data/seeds/tm-fotos-local.json"
+import fotosPorTime from "@/data/seeds/team-player-photos.json"
 const TM_LOCAL = new Set((fotosLocais as { fts: string[] }).fts)
 const TM_PORTRAIT = "https://img.a.transfermarkt.technology/portrait/medium/"
 
@@ -123,6 +124,13 @@ export function normalizePlayerKey(name: string): string {
     .replace(/[^a-z0-9-]/g, "")
 }
 
+const teamPhotoMap = (fotosPorTime as { entries: Record<string, string> }).entries
+
+/** Chave usada pelo catálogo de retratos com o uniforme do clube atual. */
+function teamPlayerKey(name: string, fileKey: string): string {
+  return `${fileKey}__${normalizePlayerKey(name)}`
+}
+
 let nomesAmbiguos: Set<string> | null = null
 /**
  * Nomes que pertencem a MAIS DE UM clube no jogo.
@@ -165,42 +173,51 @@ function getNomesAmbiguos(): Set<string> {
 }
 
 // Returns the photo URL for a player, or undefined if none is registered.
-export function getPlayerPhotoUrl(name: string, playerId?: string, fileKey?: string): string | undefined {
-  // COM O CLUBE não há xará: a busca no pacote do servidor vira exata
-  // (`fileKey__nome`). Sem ele, nenhuma busca por nome vale — o manifesto
-  // embutido só responde por `playerId`, que identifica o atleta de verdade.
-  if (fileKey && typeof window !== "undefined") {
-    const exata = fotoDoServidor(name, fileKey)
-    if (exata) return exata
-  }
+function getOfficialPlayerPhotoUrl(name: string, playerId?: string): string | undefined {
   const ambiguo = getNomesAmbiguos().has(normalizePlayerKey(name))
 
   const custom = !ambiguo && typeof window !== "undefined"
     ? storeGet(`ultrafoot:player-photo:${normalizePlayerKey(name)}`)
     : null
   if (custom) return custom
-  // Retrato publicado no servidor: entra DEPOIS da edição local (o trabalho de
-  // quem edita na própria máquina sempre vence) e ANTES do manifesto embutido,
-  // que é o piso do build. É por aqui que uma foto licenciada no editor chega a
-  // todo mundo sem instalador novo.
   const doServidor = !ambiguo && typeof window !== "undefined" ? fotoDoServidor(name) : null
   if (doServidor) return doServidor
-  // Xará ainda pode receber rosto POR ID — ali o atleta é identificado de fato,
-  // não pelo nome.
   const rawUrl = ambiguo
     ? (playerId ? photoMap[playerId] : undefined)
     : ((playerId && photoMap[playerId]) ? photoMap[playerId] : photoMap[normalizePlayerKey(name)])
   if (rawUrl) return gameAssetUrl(rawUrl)
-  // Sem arquivo empacotado: foto real do Transfermarkt — local (offline) quando
-  // baixada; remota como reserva. Também por nome, então também vale a trava.
   if (ambiguo) return undefined
   const ft = getTmFotoMap().get(normalizePlayerKey(name)) ?? fotoPorSobrenome(name)
   if (!ft) return undefined
-  // O `ft` traz a EXTENSAO quando nao e jpg ("275412-1771071867.png"): o TM serve
-  // boa parte das fotos como png, e cravar ".jpg" aqui dava 404 nelas. Token sem
-  // ponto continua sendo jpg, que e o formato da maioria e o que ja estava gravado.
   const arquivo = ft.includes(".") ? ft : `${ft}.jpg`
   return TM_LOCAL.has(ft) ? gameAssetUrl(`/jogadores/${arquivo}`) : `${TM_PORTRAIT}${arquivo}`
+}
+
+/**
+ * URLs em ordem de preferência. A primeira é o retrato com a camisa do clube
+ * atual; a seguinte é a foto oficial/genérica. O componente tenta ambas, então
+ * uma variação ausente ou corrompida nunca apaga um retrato que já funcionava.
+ */
+export function getPlayerPhotoUrls(name: string, playerId?: string, fileKey?: string): string[] {
+  const urls: string[] = []
+  // A pasta editorial e intencional e vence as fontes automaticas: se alguem
+  // colocou Neymar dentro de miirassol_sp, aquela e a camisa que deve aparecer.
+  const porTime = fileKey ? teamPhotoMap[teamPlayerKey(name, fileKey)] : undefined
+  if (porTime) urls.push(gameAssetUrl(porTime))
+  // COM O CLUBE não há xará: a busca no pacote do servidor vira exata
+  // (`fileKey__nome`). Sem ele, nenhuma busca por nome vale — o manifesto
+  // embutido só responde por `playerId`, que identifica o atleta de verdade.
+  if (fileKey && typeof window !== "undefined") {
+    const exata = fotoDoServidor(name, fileKey)
+    if (exata) urls.push(exata)
+  }
+  const oficial = getOfficialPlayerPhotoUrl(name, playerId)
+  if (oficial) urls.push(oficial)
+  return [...new Set(urls)]
+}
+
+export function getPlayerPhotoUrl(name: string, playerId?: string, fileKey?: string): string | undefined {
+  return getPlayerPhotoUrls(name, playerId, fileKey)[0]
 }
 
 export function setPlayerPhotoOverride(name: string, dataUrl: string): void {

@@ -263,12 +263,13 @@ export default function DashboardPage() {
     })
 
   const seasonObjective = calcSeasonObjective(userTeam as unknown as Parameters<typeof calcSeasonObjective>[0])
-  const boardConfidence = computeBoardConfidence({
+  const boardConfidenceSporting = computeBoardConfidence({
     currentPosition: userPosition > 0 ? userPosition : seasonObjective.targetPosition,
     objective: seasonObjective,
     recentForm,
     seasonProgress,
   })
+  const boardConfidence = Math.max(0, Math.min(100, boardConfidenceSporting + (saveState.boardConfidenceBonus ?? 0)))
   const careerStatus = getCareerStatus(boardConfidence)
 
   /** Aceitar proposta: assume o novo clube e limpa as propostas pendentes. */

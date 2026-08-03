@@ -40,6 +40,7 @@ export default function TreinadorPage() {
   const { state, setState } = useGameState()
   const { currentSeason, currentMatch, seasonCalendar } = useGameManager()
   const matchResults = useGameEngine(s => s.matchResults)
+  const classificacao = useGameEngine(s => s.serieAStandings)
   const initializeGame = useGameEngine(s => s.initializeGame)
   const squadCohesion = useGameEngine(s => s.squadCohesion)
 
@@ -177,6 +178,41 @@ export default function TreinadorPage() {
     const pontos = ultimos.reduce((s, r) => s + (r.resultado === "V" ? 3 : r.resultado === "E" ? 1 : 0), 0)
     return Math.round((pontos / (ultimos.length * 3)) * 100)
   }, [ultimos])
+
+  // Dados do VÍNCULO atual, não estatísticas genéricas da carreira. O marco de
+  // posse permite responder quando o treinador chegou e separar o trabalho
+  // feito neste clube do que aconteceu nos empregos anteriores.
+  const vinculoAtual = useMemo(() => {
+    if (desempregado || !state.selectedTeamShort) return null
+    const inicio = state.contratadoEm ?? { season: 2026, week: 0 }
+    const depoisDaPosse = (season: number, week: number) =>
+      season > inicio.season || (season === inicio.season && week >= inicio.week)
+    const jogos = matchResults.filter(r =>
+      depoisDaPosse(r.season, r.week) &&
+      (r.homeTeam === state.selectedTeamShort || r.awayTeam === state.selectedTeamShort),
+    )
+    let vitorias = 0, empates = 0, derrotas = 0, golsPro = 0, golsContra = 0
+    for (const r of jogos) {
+      const casa = r.homeTeam === state.selectedTeamShort
+      const pro = casa ? r.homeScore : r.awayScore
+      const contra = casa ? r.awayScore : r.homeScore
+      golsPro += pro; golsContra += contra
+      if (pro > contra) vitorias++
+      else if (pro === contra) empates++
+      else derrotas++
+    }
+    const semanas = Math.max(0, (state.season - inicio.season) * 52 + state.week - inicio.week)
+    const posicao = classificacao.findIndex(l => l.teamShort === state.selectedTeamShort)
+    return {
+      inicio,
+      inicioLabel: `${rotuloDaSemana(inicio.season, inicio.week)} de ${inicio.season}`,
+      semanas,
+      jogos: jogos.length,
+      vitorias, empates, derrotas, golsPro, golsContra,
+      aproveitamento: jogos.length ? Math.round(((vitorias * 3 + empates) / (jogos.length * 3)) * 100) : 0,
+      posicao: posicao >= 0 ? posicao + 1 : null,
+    }
+  }, [desempregado, state.selectedTeamShort, state.contratadoEm, state.season, state.week, matchResults, classificacao])
 
   // ── ENTROSAMENTO, AMISTOSOS E DATA FIFA ───────────────────────────────────
   // O entrosamento (squadCohesion, 0-100) vira ate +5 de forca em campo — a
@@ -350,6 +386,40 @@ export default function TreinadorPage() {
                 <X className="h-4 w-4" />
               </button>
             </div>
+          )}
+          {vinculoAtual && (
+            <section className="mb-4 rounded-xl border border-white/10 bg-black/40 p-5 backdrop-blur-md">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <TeamCrest team={userTeam} size="lg" />
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Vínculo atual</p>
+                    <h2 className="text-lg font-bold text-white">Treinador do {userTeam.nome}</h2>
+                    <p className="text-xs text-white/55">No clube desde {vinculoAtual.inicioLabel} · semana {vinculoAtual.inicio.week + 1}</p>
+                  </div>
+                </div>
+                <div className="text-right text-xs text-white/45">
+                  <p>{String(state.divisionOverride ?? userTeam.divisao).replaceAll("_", " ")}</p>
+                  <p>Prestígio do clube: <span className="font-semibold text-white/75">{userTeam.prestigio}</span></p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                {[
+                  ["Tempo no cargo", vinculoAtual.semanas === 0 ? "Recém-chegado" : `${vinculoAtual.semanas} sem.`],
+                  ["Partidas", String(vinculoAtual.jogos)],
+                  ["Campanha", `${vinculoAtual.vitorias}V ${vinculoAtual.empates}E ${vinculoAtual.derrotas}D`],
+                  ["Aproveitamento", `${vinculoAtual.aproveitamento}%`],
+                  ["Gols", `${vinculoAtual.golsPro}–${vinculoAtual.golsContra}`],
+                  ["Posição atual", vinculoAtual.posicao ? `${vinculoAtual.posicao}º` : "Pré-temporada"],
+                  ["Temporada", String(state.season)],
+                ].map(([rotulo, valor]) => (
+                  <div key={rotulo} className="rounded-lg bg-white/[0.04] px-3 py-2.5">
+                    <p className="text-[9px] uppercase tracking-wide text-white/35">{rotulo}</p>
+                    <p className="mt-1 text-sm font-bold text-white">{valor}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
           {(() => {
             // Sem clube: mostra as propostas por reputacao (sempre ha). Empregado:

@@ -1180,7 +1180,32 @@ export default function MercadoPage() {
             {/* O antigo "preview de 8 atletas" saiu: a lista completa esta logo
                 abaixo dos filtros, nesta mesma aba. */}
 
-            <div className="grid grid-cols-4 gap-4">
+            {/* Formato compacto, igual ao Mercado de Juniores: os filtros ficam
+                numa barra legível e o resultado começa sem oito cards gigantes. */}
+            <div className="mb-4 flex flex-wrap gap-3 rounded-xl border border-white/[0.06] bg-black/30 p-3">
+              <FiltroCompacto rotulo="Posição" valor={selectedPosition} opcoes={POSICOES} onChange={setSelectedPosition} />
+              <FiltroCompacto rotulo="Nacionalidade" valor={filterNationality} opcoes={filterOptions.nacionalidade} onChange={setFilterNationality} />
+              <FiltroCompacto rotulo="País" valor={filterCountry} opcoes={filterOptions.pais} onChange={(v) => { setFilterCountry(v); setFilterLeague("Qualquer"); setFilterTeam("Qualquer") }} />
+              <FiltroCompacto rotulo="Liga" valor={filterLeague} opcoes={filterOptions.liga} onChange={(v) => { setFilterLeague(v); setFilterTeam("Qualquer") }} />
+              <FiltroCompacto rotulo="Clube" valor={filterTeam} opcoes={filterOptions.time} onChange={setFilterTeam} />
+              <FiltroCompacto rotulo="Situação" valor={filterStatus} opcoes={STATUS_OPTIONS} onChange={setFilterStatus} />
+              <label className="flex min-w-[92px] flex-col gap-1">
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Idade mín.</span>
+                <input type="number" min={15} max={maxAge} value={minAge} onChange={e => setMinAge(Math.max(15, Math.min(maxAge, Number(e.target.value))))} className="h-9 rounded-lg border border-white/10 bg-black/40 px-2 text-sm text-white outline-none focus:border-[var(--brand)]/50" />
+              </label>
+              <label className="flex min-w-[92px] flex-col gap-1">
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Idade máx.</span>
+                <input type="number" min={minAge} max={45} value={maxAge} onChange={e => setMaxAge(Math.max(minAge, Math.min(45, Number(e.target.value))))} className="h-9 rounded-lg border border-white/10 bg-black/40 px-2 text-sm text-white outline-none focus:border-[var(--brand)]/50" />
+              </label>
+              <button type="button" onClick={clearAllFilters} className="self-end rounded-lg border border-white/10 px-4 py-2 text-sm text-white/55 hover:border-white/25 hover:text-white">
+                Limpar
+              </button>
+            </div>
+
+            {/* Cards antigos mantidos fora da renderização por enquanto para não
+                mexer na lógica de filtros já testada; a experiência visível é a
+                barra compacta acima. */}
+            <div className="hidden">
               {/* First Row */}
               <FilterCardComponent 
                 card={filterCards[0]} 
@@ -2744,6 +2769,24 @@ function PlayerDetailsPanel({ player, onNegotiate, onPrev, onNext, indice = -1, 
         </div>
       </div>
     </div>
+  )
+}
+
+function FiltroCompacto({
+  rotulo, valor, opcoes, onChange,
+}: {
+  rotulo: string
+  valor: string
+  opcoes: readonly string[]
+  onChange: (valor: string) => void
+}) {
+  return (
+    <label className="flex min-w-[145px] max-w-[220px] flex-1 flex-col gap-1">
+      <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">{rotulo}</span>
+      <select value={valor} onChange={e => onChange(e.target.value)} className="h-9 min-w-0 rounded-lg border border-white/10 bg-black/40 px-2 text-xs text-white outline-none focus:border-[var(--brand)]/50">
+        {opcoes.map(opcao => <option key={opcao} value={opcao}>{opcao}</option>)}
+      </select>
+    </label>
   )
 }
 

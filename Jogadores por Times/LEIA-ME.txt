@@ -1,0 +1,22 @@
+FOTOS DOS JOGADORES POR TIME
+
+Crie uma pasta com o file_key exato do clube e coloque dentro dela as fotos.
+O nome do arquivo deve ser o nome do jogador. PNG, JPG, WEBP e AVIF funcionam.
+
+Exemplo:
+  Jogadores por Times/
+    santos/
+      Neymar Jr.png
+    miirassol_sp/
+      Neymar Jr.png
+
+Se Neymar estiver no Mirassol, o jogo procura primeiro a foto da pasta miirassol_sp.
+Se ela não existir, usa a foto oficial/genérica de Neymar normalmente.
+
+Depois de adicionar fotos, execute:
+  npm run assets:players-by-team
+
+O build também executa essa atualização automaticamente.
+
+Para recriar as pastas de todos os clubes e o índice de consulta, execute:
+  npm run assets:player-team-folders

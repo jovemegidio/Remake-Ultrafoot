@@ -28,7 +28,7 @@ import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/teams-data"
 import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dialogo-do-jogo"
 import { useGameState, useUserTeam } from "@/lib/save-system"
-import { debtTransferLimit, renegotiateDebt, amortizeDebt, financeWithDebt, borrowingCapacity, transfersFrozen } from "@/lib/debt-engine"
+import { debtConsequences, debtTransferLimit, renegotiateDebt, amortizeDebt, financeWithDebt, borrowingCapacity, transfersFrozen } from "@/lib/debt-engine"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
@@ -124,6 +124,7 @@ export default function FinancasPage() {
   const { state: saveState, setState: setSaveState } = useGameState()
   const { currentWeek, currentSeason, userPosition, standings, hydrated } = useGameManager()
   const t = useTranslation()
+  const criseDaDivida = debtConsequences(saveState.debt)
 
   // Calcula receitas dinamicas
   const dynamicFinances = useMemo(() => {
@@ -432,6 +433,18 @@ export default function FinancasPage() {
                 <button onClick={() => setSaveState({debt:renegotiateDebt(saveState.debt!)})} disabled={saveState.debt.renegotiations>=2} className="rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs text-amber-200 disabled:opacity-30">Renegociar empréstimo</button>
               </div>
               <p className="mt-1 text-[10px] text-white/35">A parcela mensal já é descontada automaticamente do caixa.</p>
+            </div>
+          </div>
+          <div className={cn(
+            "mt-3 flex items-start gap-2 rounded-lg border px-3 py-2.5",
+            criseDaDivida.level === "regular" ? "border-emerald-400/20 bg-emerald-400/[0.05]"
+              : criseDaDivida.level === "attention" ? "border-amber-300/20 bg-amber-300/[0.05]"
+                : "border-red-400/25 bg-red-400/[0.06]",
+          )}>
+            <AlertTriangle className={cn("mt-0.5 h-4 w-4 shrink-0", criseDaDivida.level === "regular" ? "text-emerald-300" : criseDaDivida.level === "attention" ? "text-amber-300" : "text-red-300")} />
+            <div>
+              <p className="text-xs font-bold text-white">{criseDaDivida.label} · {saveState.debt.missedPayments} parcela(s) em atraso</p>
+              <p className="mt-0.5 text-[11px] leading-4 text-white/50">{criseDaDivida.description}</p>
             </div>
           </div>
         </section>}

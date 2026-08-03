@@ -167,9 +167,10 @@ const ESTILO_DA_FAIXA: Record<FaixaDaCarta, { anel: string; fundo: string; texto
  * na hora de escalar — o técnico só descobria pelo resultado.
  */
 function CartaDeJogador({
-  nome, posicao, slot, overall, numero, selecionado, funcao, promessa, pills, emTreino,
+  nome, fileKey, posicao, slot, overall, numero, selecionado, funcao, promessa, pills, emTreino,
 }: {
   nome: string
+  fileKey: string
   /** Posição de ORIGEM do atleta. */
   posicao: string
   /** Slot da formação que ele está ocupando. */
@@ -207,6 +208,7 @@ function CartaDeJogador({
       >
         <PlayerAvatar
           name={nome}
+          fileKey={fileKey}
           position={posicao}
           size="lg"
           className="h-[44px] w-[44px] rounded-full border-0 bg-transparent md:h-[52px] md:w-[52px]"
@@ -1343,6 +1345,7 @@ export default function ElencoPage() {
                       
                       <PlayerAvatarCircle
                         name={player.name}
+                        fileKey={userTeam.file_key}
                         teamColor={userTeam.cor1}
                         size="sm"
                         className={cn(
@@ -1787,6 +1790,7 @@ export default function ElencoPage() {
                   {campoHorizontal ? (
                     <CartaDeJogador
                       nome={player.name}
+                      fileKey={userTeam.file_key}
                       posicao={normalizePosition(player.position)}
                       slot={slotEfetivo(player)}
                       overall={player.overall}
@@ -2000,6 +2004,7 @@ export default function ElencoPage() {
                         <div className="relative mb-1">
                           <PlayerAvatarCircle
                             name={player.name}
+                            fileKey={userTeam.file_key}
                             teamColor={userTeam.cor1}
                             size="xs"
                             className={cn(
@@ -2504,7 +2509,7 @@ export default function ElencoPage() {
                 </button>
               </div>
               <div className="flex items-center gap-4 mb-6">
-                <PlayerAvatarCircle name={selectedPlayer.name} teamColor={userTeam.cor1} size="lg" />
+                <PlayerAvatarCircle name={selectedPlayer.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="lg" />
                 <div>
                   <h3 className="text-xl font-bold text-white">{selectedPlayer.name}</h3>
                   <p className="text-sm text-white/50">{selectedPlayer.position} - {selectedPlayer.age} anos</p>
@@ -3092,7 +3097,7 @@ export default function ElencoPage() {
                       className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        <PlayerAvatarCircle name={tiredPlayer.name} teamColor={userTeam.cor1} size="xs" />
+                        <PlayerAvatarCircle name={tiredPlayer.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="xs" />
                         <div className="text-left">
                           <div className="text-xs text-white">{tiredPlayer.name}</div>
                           <div className="text-[10px] text-red-400">{tiredPlayer.energy}% energia</div>
@@ -3100,7 +3105,7 @@ export default function ElencoPage() {
                       </div>
                       <ArrowLeftRight className="h-4 w-4 text-white/40" />
                       <div className="flex items-center gap-2">
-                        <PlayerAvatarCircle name={replacement.name} teamColor={userTeam.cor1} size="xs" />
+                        <PlayerAvatarCircle name={replacement.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="xs" />
                         <div className="text-left">
                           <div className="text-xs text-white">{replacement.name}</div>
                           <div className="text-[10px] text-green-400">{replacement.energy}% energia</div>

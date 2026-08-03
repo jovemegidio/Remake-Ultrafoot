@@ -9,6 +9,13 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "Neymar troca de camisa junto com o clube",
+      "category": "Atualização",
+      "body": "O retrato do jogador agora acompanha o time em que ele está: foram adicionadas 37 variações do Neymar com uniformes de clubes brasileiros. A atualização também traz mercado mais simples, Área do Treinador completa, placar estável no apito final e uma dívida que permanece e gera crise no clube mesmo depois da troca de técnico.",
+      "date": "2026-08-03",
+      "pinned": true
+    },
+    {
       "title": "Cria da base parou de ganhar salario de Serie A",
       "category": "Correção",
       "body": "Quem sobe da base agora assina pelo padrao da SUA divisao. Num clube de Serie D o garoto chegava ganhando quase 20 vezes o titular ao lado dele — e o mesmo acontecia sozinho, todo fim de temporada, com os jovens que repoem os aposentados.",
@@ -186,9 +193,41 @@
   ],
   "changelog": [
     {
-      "version": "1.0.248",
+      "version": "1.0.249",
       "date": "2026-08-03",
       "latest": true,
+      "title": "Fotos por clube, carreira do treinador e finanças realistas",
+      "changes": [
+        {
+          "type": "new",
+          "text": "FOTO DO JOGADOR ACOMPANHA O CLUBE. O jogo passa a procurar primeiro o retrato com o uniforme do time atual e usa a foto oficial como reserva. O primeiro pacote traz 37 variações do Neymar em clubes brasileiros."
+        },
+        {
+          "type": "improved",
+          "text": "ÁREA DO TREINADOR MAIS CONCRETA. Agora mostra quando o técnico assumiu, tempo no cargo, partidas, campanha, aproveitamento, gols, posição, divisão e prestígio do clube."
+        },
+        {
+          "type": "fixed",
+          "text": "AMISTOSO NÃO DEMITE MAIS TREINADOR. A diretoria só reavalia o cargo depois de jogo oficial e com pelo menos três partidas disputadas na temporada atual."
+        },
+        {
+          "type": "fixed",
+          "text": "PLACAR NÃO TROCA MAIS DE ADVERSÁRIO AOS 90 MINUTOS. O confronto encerrado fica congelado antes de o calendário apontar para a próxima partida."
+        },
+        {
+          "type": "improved",
+          "text": "DÍVIDA PERTENCE AO CLUBE E CONTINUA COM O SUCESSOR. Parcelas seguem vencendo após a saída do técnico; atrasos capitalizam juros e multa, derrubam moral e confiança, bloqueiam transferências e podem chegar a crise salarial e insolvência."
+        },
+        {
+          "type": "improved",
+          "text": "MERCADO MAIS SIMPLES. A busca de atletas ganhou a barra compacta de filtros usada no Mercado de Juniores, reduzindo cartões e etapas desnecessárias."
+        }
+      ]
+    },
+    {
+      "version": "1.0.248",
+      "date": "2026-08-03",
+      "latest": false,
       "title": "O salario de quem sobe da base agora respeita a divisao do clube",
       "changes": [
         {
