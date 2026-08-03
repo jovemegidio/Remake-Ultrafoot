@@ -9,11 +9,18 @@
   "serverStatusUrl": "https://ultrafoot.179-198-103-30.sslip.io/relay",
   "news": [
     {
+      "title": "Cria da base parou de ganhar salario de Serie A",
+      "category": "Correção",
+      "body": "Quem sobe da base agora assina pelo padrao da SUA divisao. Num clube de Serie D o garoto chegava ganhando quase 20 vezes o titular ao lado dele — e o mesmo acontecia sozinho, todo fim de temporada, com os jovens que repoem os aposentados.",
+      "date": "2026-08-03",
+      "pinned": true
+    },
+    {
       "title": "Filtro de time do mercado consertado",
       "category": "Correção",
       "body": "Escolher uma liga na busca de atletas deixava a lista de Times vazia. Agora da para filtrar por clube dentro da liga escolhida.",
       "date": "2026-08-03",
-      "pinned": true
+      "pinned": false
     },
     {
       "title": "Os jogadores ficaram do tamanho certo",
@@ -179,9 +186,25 @@
   ],
   "changelog": [
     {
-      "version": "1.0.247",
+      "version": "1.0.248",
       "date": "2026-08-03",
       "latest": true,
+      "title": "O salario de quem sobe da base agora respeita a divisao do clube",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "CRIA DA BASE CHEGAVA GANHANDO SALARIO DE OUTRA DIVISAO. O contrato do promovido saia de uma conta fixa, igual para todo mundo, enquanto o salario do resto do elenco escala com a divisao. Num clube de Serie D o garoto de overall 58 assinava por R$ 13.920 semanais ao lado de um titular que ganha R$ 700 — quase 20 vezes mais. Na Serie C eram 9 vezes, na B 3 vezes, e so na Serie A os dois numeros batiam. Agora o primeiro contrato parte da mesma curva do profissional (overall e divisao) com o desconto de quem ainda tem tudo a provar."
+        },
+        {
+          "type": "fixed",
+          "text": "OS JOVENS QUE REPOEM APOSENTADOS ESTOURAVAM A FOLHA SOZINHOS. Todo fim de temporada o clube recebe garotos no lugar de quem pendurou as chuteiras, e eles entravam com salario cheio de profissional, tambem sem olhar a divisao — ate 33 vezes o valor correto na Serie D. Como e automatico, a folha subia todo ano sem o tecnico fazer nada e sem aparecer em tela nenhuma. Passa a usar a mesma conta do botao Promover."
+        }
+      ]
+    },
+    {
+      "version": "1.0.247",
+      "date": "2026-08-03",
+      "latest": false,
       "title": "Escolher a liga voltou a permitir escolher o time",
       "changes": [
         {
