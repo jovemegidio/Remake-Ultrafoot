@@ -39,6 +39,27 @@ export function playerSalaryWeekly(overall: number, division: string): number {
   return Math.max(700, Math.round(curva * fator))
 }
 
+/**
+ * SALARIO SEMANAL do PRIMEIRO contrato de quem sobe da base (R$).
+ *
+ * Cria nao negocia como contratado pronto: parte da mesma curva do profissional
+ * (por overall E por divisao) e leva o desconto de quem ainda tem tudo a provar.
+ *
+ * Por que existe como funcao propria: os dois caminhos que levam um garoto ao
+ * elenco — `promoverDaBase` (o botao PROMOVER) e a reposicao de aposentados no
+ * virar da temporada — calculavam o salario cada um do seu jeito, e nenhum dos
+ * dois olhava a divisao. Numa Serie D (fator 0.045) o profissional de overall 58
+ * ganha R$ 700/semana e o promovido saia com R$ 13.920 — vinte vezes mais que o
+ * titular ao lado dele. Era o relato "salario dos juvenis".
+ *
+ * O piso e o MESMO do profissional (R$ 700): sem ele o desconto derrubaria o
+ * garoto de divisao pequena para um salario simbolico.
+ */
+export function youthPromotionSalaryWeekly(overall: number, division: string): number {
+  const DESCONTO_DE_CRIA = 0.6
+  return Math.max(700, Math.round(playerSalaryWeekly(overall, division) * DESCONTO_DE_CRIA))
+}
+
 /** Valor de mercado (R$) — coerente com o salario/divisao. */
 export function playerMarketValue(overall: number, division: string): number {
   const anualEquivalente = playerSalaryWeekly(overall, division) * 52

@@ -402,12 +402,19 @@ export default function BasePage() {
       confirmar: "Promover",
     })
     if (!confirmado) return
+    // A DIVISAO vai junto: o salario do primeiro contrato sai dela (um garoto de
+    // Serie D nao pode entrar ganhando salario de Serie A). `divisionOverride` e
+    // a divisao de HOJE, ja com acesso/rebaixamento; o cadastro do clube so vale
+    // enquanto ninguem subiu nem desceu. No modo selecao `team.divisao` e a
+    // sentinela "selecao", que nao tem fator salarial: deixa o motor resolver.
+    const divisaoParaSalario = state.divisionOverride
+      ?? (team.divisao === "selecao" ? undefined : team.divisao)
     const subiu = promoverNoMotor({
       name: player.name, position: player.position, age: player.age,
       overall: player.overall, potential: player.potential,
       pace: player.pace, shooting: player.shooting, passing: player.passing,
       dribbling: player.dribbling, defending: player.defending, physical: player.physical,
-    }, PROMOTION_FEE)
+    }, PROMOTION_FEE, divisaoParaSalario)
     if (!subiu) {
       await avisarNoJogo({
         titulo: "Não foi possível promover",

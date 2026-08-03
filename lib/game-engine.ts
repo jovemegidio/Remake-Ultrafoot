@@ -19,7 +19,7 @@ import {
 } from "@/lib/mercado-realista"
 import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
-import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor } from "@/lib/club-economy"
+import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor, youthPromotionSalaryWeekly } from "@/lib/club-economy"
 import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@/lib/player-attributes"
 // Modulo puro (sem imports proprios): entra aqui sem risco de ciclo. Serve para
 // o promovido da base chegar ao elenco valendo o MESMO que valia na base.
@@ -2038,7 +2038,7 @@ interface GameEngineState {
   promoverDaBase: (jovem: {
     name: string; position: string; age: number; overall: number; potential: number
     pace?: number; shooting?: number; passing?: number; dribbling?: number; defending?: number; physical?: number
-  }, taxa: number) => boolean
+  }, taxa: number, divisao?: string) => boolean
   /** Entrada de caixa da venda de um atleta da base. */
   receberPorJovem: (valor: number, vendaId?: string) => void
   ajustarMoralJogador: (playerId: number, degraus: number) => void
@@ -3333,7 +3333,7 @@ export const useGameEngine = create<GameEngineState>()(
         }))
       },
 
-      promoverDaBase: (jovem, taxa) => {
+      promoverDaBase: (jovem, taxa, divisao) => {
         const state = get()
         if (state.balance < taxa) return false
 
@@ -3347,17 +3347,20 @@ export const useGameEngine = create<GameEngineState>()(
 
         // SALÁRIO DE CRIA DA BASE.
         //
-        // Era `base * 900`: um garoto de overall 60 saía com R$ 54.000/mês —
-        // 2,25× o que o próprio jogo paga a um profissional do mesmo overall
-        // (`base * 400`, em generateSuccessorPlayer). Promover dois ou três
-        // arrebentava o teto salarial e o caixa ia a zero. Era o relato "promover
-        // júnior deixa o salário alto demais".
+        // Era `base * 900`: um garoto de overall 60 saía com R$ 54.000 por
+        // semana. Virou `base * 400 * 0,6` (piso 4 mil) para acompanhar o
+        // profissional — mas essa conta é CEGA À DIVISÃO, e o elenco à volta
+        // dele não é. Numa Serie D (fator 0.045) o profissional de overall 58
+        // ganha R$ 700/semana e o promovido saía com R$ 13.920: vinte vezes o
+        // salário do titular ao lado. Só na Serie A os dois números batiam —
+        // por isso o conserto anterior pareceu resolver.
         //
-        // Agora parte da MESMA referência dos profissionais e ainda aplica o
-        // desconto de quem sobe da base: primeiro contrato de cria não se
-        // negocia como o de um contratado pronto. O piso protege o overall
-        // baixo de virar salário simbólico.
-        const salario = Math.round(Math.max(4_000, base * 400 * 0.6))
+        // Agora sai de `youthPromotionSalaryWeekly`, a MESMA curva do
+        // profissional (overall + divisão) com o desconto de primeiro contrato
+        // de cria. A divisão vem da tela (que conhece o acesso/rebaixamento em
+        // `divisionOverride`); sem ela, do cadastro do clube.
+        const divisaoDoClube = divisao ?? String(getTeamByShort(state.myTeamShort ?? "")?.divisao ?? "serie_a")
+        const salario = youthPromotionSalaryWeekly(base, divisaoDoClube)
         const novo: Player = {
           id: Math.max(Date.now(), ...state.squadPlayers.map(p => p.id + 1)),
           name: jovem.name,
@@ -6002,6 +6005,9 @@ export const useGameEngine = create<GameEngineState>()(
           // youthAcademyLevel — campo inexistente — e caia sempre no default 2,
           // entao a academia NAO afetava os jovens do fim de temporada.
           const youthAcadLevel = s.clubInfrastructure?.youth ?? 2
+          // Divisao do clube: o salario destes garotos precisa dela (ver o
+          // contrato deles, mais abaixo).
+          const divisaoDoClube = String(getTeamByShort(s.myTeamShort ?? "")?.divisao ?? "serie_a")
           const staffCoord = (s as any).staffMembers?.find((sm: StaffMember) => sm.role === "coordenador_base")
           const coordBonus = staffCoord ? Math.round(staffCoord.competence / 20) : 0
 
@@ -6067,7 +6073,12 @@ export const useGameEngine = create<GameEngineState>()(
               morale: "Motivado" as const,
               form: base - 5,
               contract: {
-                salary: Math.round(base * 400),
+                // MESMA conta do botao PROMOVER (ver `youthPromotionSalaryWeekly`).
+                // Era `base * 400`: salario de profissional, cego a divisao e sem
+                // o desconto de cria. Este e o caminho AUTOMATICO — o garoto entra
+                // no elenco no virar da temporada sem ninguem clicar em nada —,
+                // entao a folha da Serie C/D estourava sozinha a cada ano.
+                salary: youthPromotionSalaryWeekly(base, divisaoDoClube),
                 endDate: 78 + Math.floor(Math.random() * 78),
                 releaseClause: null,
                 signedWeek: 0,
