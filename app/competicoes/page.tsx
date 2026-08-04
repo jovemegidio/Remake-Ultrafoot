@@ -64,7 +64,7 @@ const COPA_BRASIL_2026_OITAVAS: string[] = [
   "vasco", "palmeiras", "atleticomg_bra", "miirassol_sp", "juventude",
   "chapecoense_bra", "gremio", "atleticopr_bra", "fortaleza", "corinthians_bra",
 ]
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam, getCareerScopedKey } from "@/lib/save-system"
 import { useGameManager, getLeagueName, getStateChampRounds, ESTADO_CAMPEONATO, getStateChampionshipTeams, computeStandingsFromFixtures, type Fixture } from "@/lib/use-game-manager"
 import type { StandingsEntry } from "@/lib/game-engine"
 import { useGameEngine, type MatchResult as EngineMatchResult } from "@/lib/game-engine"
@@ -309,7 +309,19 @@ function sanitizeCompetitionState(value: CompetitionState, userPosition: number)
 // Hook para gerenciar estado das competicoes. O estado e por clube E temporada;
 // o antigo slot global vazava eliminacoes ao trocar de emprego ou iniciar novo ano.
 function useCompetitions(userTeamShort: string, userPosition: number, season: number) {
-  const storageKey = `ultrafoot-competitions:${season}:${userTeamShort}`
+  /**
+   * A CHAVE PRECISA SER DA CARREIRA, não só do clube+temporada.
+   *
+   * Era `ultrafoot-competitions:${season}:${userTeamShort}`. Duas carreiras com o
+   * MESMO clube na mesma temporada — recomeçar com o Corinthians em 2026, que é
+   * o caso mais comum de todos — liam e escreviam a mesma entrada: a campanha
+   * nova abria com o sorteio, os confrontos e os classificados da anterior. É o
+   * "às vezes exibe dados de outros campeonatos" do relato.
+   *
+   * `getCareerScopedKey` é o mecanismo que o resto do projeto já usa (save do
+   * motor, notificações) exatamente por isso; esta tela guardava por fora dele.
+   */
+  const storageKey = getCareerScopedKey(`ultrafoot-competitions:${season}:${userTeamShort}`)
   const skipSave = useRef(false)
   const [state, setState] = useState<CompetitionState>(() => {
     // Tenta carregar do localStorage
