@@ -5445,11 +5445,124 @@ export const useGameEngine = create<GameEngineState>()(
               { text: "Chegar o mais longe possivel.", tone: "neutro", impact: 1 },
               { text: "Primeiro nos livrar do rebaixamento.", tone: "negativo", impact: -3 }
             ]
+          },
+
+          // ── MERCADO E BASTIDORES ────────────────────────────────────────────
+          // O pool inteiro falava de partida, tatica e lesao. Nada de mercado,
+          // nada de dinheiro — justo os assuntos que a imprensa mais persegue, e
+          // agora tambem os sistemas de agente e patrocinio.
+          {
+            id: 21,
+            type: "transfer",
+            question: "O empresario de um atleta seu disse publicamente que ele quer sair. Procede?",
+            options: [
+              { text: "Conversei com o atleta. Ele fica e esta comprometido.", tone: "positivo", impact: 4 },
+              { text: "Toda negociacao tem ruido. Trato isso internamente.", tone: "neutro", impact: 1 },
+              { text: "Quem nao quiser vestir a camisa pode procurar outro clube.", tone: "agressivo", impact: -2 }
+            ]
+          },
+          {
+            id: 22,
+            type: "transfer",
+            question: "Um titular entra nos ultimos meses de contrato. Vai renovar?",
+            options: [
+              { text: "A proposta ja esta na mesa. Ele e prioridade.", tone: "positivo", impact: 5 },
+              { text: "Estamos conversando. Nao vou negociar pela imprensa.", tone: "neutro", impact: 1 },
+              { text: "Se ele quisesse ficar, ja teria assinado.", tone: "negativo", impact: -4 }
+            ]
+          },
+          {
+            id: 23,
+            type: "transfer",
+            question: "A torcida cobra reforcos. O clube vai gastar nesta janela?",
+            options: [
+              { text: "Vamos investir. O elenco precisa de qualidade.", tone: "positivo", impact: 3 },
+              { text: "So chega quem melhorar o grupo de verdade.", tone: "neutro", impact: 2 },
+              { text: "Nao ha dinheiro. Vamos com o que temos.", tone: "negativo", impact: -3 }
+            ]
+          },
+          {
+            id: 24,
+            type: "transfer",
+            question: "Um clube grande sondou seu principal jogador. Ele tem preco?",
+            options: [
+              { text: "Nao esta a venda. Ponto final.", tone: "agressivo", impact: 3 },
+              { text: "Todo mundo tem preco. Depende da proposta.", tone: "neutro", impact: 0 },
+              { text: "Se a oferta for boa, o clube precisa do dinheiro.", tone: "negativo", impact: -4 }
+            ]
+          },
+          {
+            id: 25,
+            type: "transfer",
+            question: "Voce perdeu um atleta de graca por fim de contrato. Falha de gestao?",
+            options: [
+              { text: "Assumo. Era para termos resolvido antes.", tone: "neutro", impact: 2 },
+              { text: "A decisao foi dele. Oferecemos o que podiamos.", tone: "neutro", impact: 0 },
+              { text: "Pergunte a diretoria, nao a mim.", tone: "agressivo", impact: -5 }
+            ]
+          },
+          {
+            id: 26,
+            type: "transfer",
+            question: "O clube fechou um patrocinio maior. Esse dinheiro vira reforco?",
+            options: [
+              { text: "Vira elenco. Foi para isso que buscamos o contrato.", tone: "positivo", impact: 4 },
+              { text: "Primeiro equilibra a folha, depois pensamos em chegar.", tone: "neutro", impact: 1 },
+              { text: "Nao me meto em dinheiro. Cuido do time.", tone: "neutro", impact: -1 }
+            ]
+          },
+          {
+            id: 27,
+            type: "transfer",
+            question: "Um patrocinador cobrou publicamente melhores resultados. Incomoda?",
+            options: [
+              { text: "Quem investe tem o direito de cobrar. Cobro mais de mim.", tone: "positivo", impact: 3 },
+              { text: "Cada um faz o seu trabalho. O meu e dentro de campo.", tone: "neutro", impact: 1 },
+              { text: "Nao trabalho sob pressao de patrocinador.", tone: "agressivo", impact: -3 }
+            ]
+          },
+          {
+            id: 28,
+            type: "player",
+            question: "Um reserva reclamou de falta de minutos. O que responde?",
+            options: [
+              { text: "Ele tem razao em querer jogar. Vai ter chance.", tone: "positivo", impact: 3 },
+              { text: "Quem treina bem joga. E simples assim.", tone: "neutro", impact: 1 },
+              { text: "Quem escala sou eu. Se nao gostou, a porta e larga.", tone: "agressivo", impact: -4 }
+            ]
+          },
+          {
+            id: 29,
+            type: "transfer",
+            question: "Sobre a folha salarial: o clube paga acima do que arrecada?",
+            options: [
+              { text: "Estamos ajustando com responsabilidade.", tone: "neutro", impact: 2 },
+              { text: "Investir em elenco e investir em resultado.", tone: "positivo", impact: 1 },
+              { text: "Essa conta nao e minha.", tone: "negativo", impact: -4 }
+            ]
+          },
+          {
+            id: 30,
+            type: "transfer",
+            question: "A base tem revelado nomes. Vai apostar neles em vez de contratar?",
+            options: [
+              { text: "Quem tiver nivel joga, tenha 18 ou 32 anos.", tone: "positivo", impact: 5 },
+              { text: "A base complementa, nao substitui o mercado.", tone: "neutro", impact: 1 },
+              { text: "Garoto nao ganha campeonato.", tone: "negativo", impact: -3 }
+            ]
           }
         ]
-        
-        // Seleciona 3 perguntas aleatorias
-        const shuffled = questionPool.sort(() => Math.random() - 0.5)
+
+        // SORTEIO DE VERDADE. Era `sort(() => Math.random() - 0.5)`, que nao
+        // embaralha: o comparador aleatorio viola a transitividade que o `sort`
+        // pressupoe e o resultado fica preso perto da ordem original. Com 30
+        // perguntas e so 3 escolhidas, as primeiras do pool apareciam muito mais
+        // — e as dez novas, no fim da lista, quase nunca sairiam.
+        const shuffled = [...questionPool]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
         const selectedQuestions = shuffled.slice(0, 3)
         
         set({ nextPressConference: selectedQuestions })
