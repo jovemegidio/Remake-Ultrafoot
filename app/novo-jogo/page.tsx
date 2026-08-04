@@ -5,7 +5,8 @@ import { safeLocalSet } from "@/lib/safe-storage"
 import { getClubFacts } from "@/lib/club-facts"
 import { getTeamStadiumBackground } from "@/lib/pre-match-bg"
 import Image from "next/image"
-import { Star, StarHalf, ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat } from "lucide-react"
+import { motion } from "framer-motion"
+import { ChevronLeft, ChevronRight, User, Play, Check, Trophy, Award, Globe, Building2, CornerDownLeft, ArrowLeft, Shuffle, Repeat } from "lucide-react"
 import {
   serieATeams,
   serieBTeams,
@@ -51,6 +52,7 @@ import {
 import { getLeagueLogo } from "@/lib/league-logos"
 import { useGameManager } from "@/lib/use-game-manager"
 import { listCareerSaves } from "@/lib/save-system"
+import { contaLogada } from "@/lib/conta-ultrafoot"
 import { LIMITE_SAVES_SEM_REGISTRO, PAISES_SEM_REGISTRO, ROTA_DE_REGISTRO, useJogoRegistrado } from "@/lib/beneficios"
 import { createYouthCareer } from "@/lib/youth-career-engine"
 import { createClubDebt, type DebtPreset } from "@/lib/debt-engine"
@@ -58,7 +60,6 @@ import { createScoutingDepartment } from "@/lib/scout-engine"
 import { createStadiumPitch } from "@/lib/infrastructure-engine"
 import { generateOffers } from "@/lib/sponsor-engine"
 import { TeamCrest } from "@/components/team-crest"
-import { VitrineDoClube } from "@/components/novo-jogo/vitrine-do-clube"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -252,6 +253,53 @@ export default function NovoJogoPage() {
   const [kitError, setKitError] = useState(false)
   const [kitRetryCount, setKitRetryCount] = useState(0)
   const [managerName, setManagerName] = useState("")
+  /**
+   * O nome já vem preenchido com o da CONTA do launcher.
+   *
+   * Quem entrou na conta já se identificou uma vez; pedir o nome de novo aqui é
+   * atrito puro — e era o único campo que barrava o botão de começar. Continua
+   * editável: o técnico pode usar outro nome na carreira se quiser.
+   *
+   * `nome` vazio cai na parte do e-mail antes do @, porque cadastro por Google
+   * às vezes chega sem nome preenchido e um placeholder vazio anularia o ganho.
+   */
+  const nomePreenchido = useRef(false)
+  useEffect(() => {
+    if (nomePreenchido.current) return
+    let vivo = true
+
+    const aplicar = (nome: string) => {
+      const limpo = nome.trim().slice(0, 32)
+      if (!vivo || !limpo || nomePreenchido.current) return
+      nomePreenchido.current = true
+      // Só preenche campo VAZIO: se a pessoa já começou a digitar, manda ela.
+      setManagerName(atual => (atual.trim().length > 0 ? atual : limpo))
+    }
+
+    void (async () => {
+      // 1) CONTA DO LAUNCHER. Só existe dentro do app: `contaLogada` chama o
+      //    comando Tauri `ler_sessao_do_launcher`, que no NAVEGADOR sempre
+      //    falha e devolve null. Por isso o campo continuava vazio no preview
+      //    web — não era o código não rodar, era não haver conta para ler ali.
+      const conta = await contaLogada()
+      const doEmail = (conta?.email ?? "").split("@")[0]?.trim() ?? ""
+      const daConta = (conta?.nome ?? "").trim() || doEmail
+      if (daConta) return aplicar(daConta)
+
+      // 2) SEM CONTA: usa o nome da carreira mais recente. Quem já jogou não
+      //    precisa redigitar o próprio nome a cada carreira nova — e isso vale
+      //    inclusive na versão web, onde a conta do launcher não existe.
+      try {
+        const anteriores = await Promise.resolve(listCareerSaves())
+        const ultimo = [...(anteriores ?? [])]
+          .sort((a, b) => b.updatedAt - a.updatedAt)
+          .find(c => (c.managerName ?? "").trim().length > 0)
+        if (ultimo) aplicar(ultimo.managerName)
+      } catch { /* preencher o nome e conforto: nunca pode travar a tela */ }
+    })()
+
+    return () => { vivo = false }
+  }, [])
   const [careerStart, setCareerStart] = useState<"professional" | "sub20">("professional")
   const [debtPreset, setDebtPreset] = useState<DebtPreset>("none")
   const [nameError, setNameError] = useState(false)
@@ -317,11 +365,14 @@ export default function NovoJogoPage() {
 
   // Mapeia score 0..100 para rotulo + gradiente (heatmap estilo EA FC)
   const levelInfo = (score: number) => {
-    if (score >= 80) return { label: "MUITO ALTA", grad: "from-[#e11d48] to-[#7f1d1d]" }
-    if (score >= 62) return { label: "ALTA", grad: "from-[#ea580c] to-[#7c2d12]" }
-    if (score >= 44) return { label: "MÉDIA", grad: "from-[#00c8a0] to-[#0a4a44]" }
-    if (score >= 26) return { label: "BAIXA", grad: "from-[#2563eb] to-[#1e3a8a]" }
-    return { label: "MUITO BAIXA", grad: "from-[#475569] to-[#1e293b]" }
+    // Cores da referência (EA FC): o degradê vai do tom VIVO no topo para uma
+    // versão mais funda embaixo — nunca para quase-preto, que era o que fazia
+    // os três cards virarem manchas marrons indistinguíveis na tela.
+    if (score >= 80) return { label: "MUITO ALTA", grad: "from-[#f43f5e] via-[#c81e4a] to-[#7d1533]" }
+    if (score >= 62) return { label: "ALTA", grad: "from-[#fb923c] via-[#e35d12] to-[#8f3a0c]" }
+    if (score >= 44) return { label: "MÉDIA", grad: "from-[#2dd4bf] via-[#0f9e8c] to-[#0a4f47]" }
+    if (score >= 26) return { label: "BAIXA", grad: "from-[#60a5fa] via-[#2563eb] to-[#1a3f96]" }
+    return { label: "MUITO BAIXA", grad: "from-[#94a3b8] via-[#5b6b7f] to-[#2b3542]" }
   }
 
   const uniforms = useMemo(() => (selectedTeam ? getTeamUniforms(selectedTeam) : null), [selectedTeam])
@@ -482,7 +533,10 @@ export default function NovoJogoPage() {
     })
   }, [])
 
-  const cardBase = "rounded-2xl bg-[#0c1118]/85 border border-white/[0.07] backdrop-blur-sm"
+  // Cartão da referência: azul-ardósia translúcido, canto BEM arredondado e
+  // borda quase invisível. O antigo tinha canto menor e fundo mais opaco, o que
+  // dava um ar de "caixa de formulário" em vez do vidro suave do FIFA 26.
+  const cardBase = "rounded-[20px] bg-[#141b28]/72 border border-white/[0.06] backdrop-blur-md shadow-[0_18px_50px_-24px_rgba(0,0,0,0.9)]"
   const fan = levelInfo(profile.fanAdmiration)
   const youth = levelInfo(profile.youthFacilities)
   const fin = levelInfo(profile.financialStability)
@@ -490,11 +544,45 @@ export default function NovoJogoPage() {
   return (
     <main className="h-screen w-screen overflow-hidden relative">
 
-      {/* Background */}
+      {/* ── FUNDO ────────────────────────────────────────────────────────────
+          A referência (FIFA 26) usa um fundo CINEMATOGRÁFICO e desfocado, não
+          uma foto nítida: névoa escura com um halo frio de um lado e quente do
+          outro. A foto do estádio continua ali, mas borrada e dessaturada — ela
+          dá profundidade sem disputar atenção com os cartões, que é o problema
+          de usá-la nítida. */}
       <div className="absolute inset-0 z-0">
-        <Image src={STADIUM_BG} alt="Stadium Background" fill className="object-cover" priority unoptimized />
-        <div className="absolute inset-0 bg-black/55" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
+        {/* A ARTE é o fundo (Nova pasta/Fundo 2.png -> WebP, 53 KB): gramado
+            noturno com névoa e profundidade de campo. Substitui a foto de
+            estádio, que mudava a cada clube e fazia a tela trocar de
+            temperatura sem que isso dissesse nada sobre o time. */}
+        <Image
+          src="/images/escolha-time-bg.webp"
+          alt=""
+          fill
+          className="object-cover"
+          priority
+          unoptimized
+        />
+        {/* Véu leve (30%). A arte já nasce escura; véu forte apagaria o gramado
+            e sobraria um retângulo preto. O suficiente para o texto branco
+            assentar sobre a área mais clara do campo. */}
+        <div className="absolute inset-0 bg-[#06080b]/30" />
+        {/* Halos do clube nos cantos SUPERIORES: a metade de baixo da arte é o
+            gramado iluminado, e halo colorido ali vira mancha suja. Em cima, na
+            névoa escura, a cor do time aparece limpa. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 transition-[background] duration-700"
+          style={{
+            background:
+              `radial-gradient(50% 45% at 8% 12%, ${cor1}3a 0%, transparent 66%),`
+              + ` radial-gradient(45% 40% at 94% 10%, ${cor2}26 0%, transparent 62%)`,
+          }}
+        />
+        {/* Vinheta + escurecimento do rodapé: fecha os cantos e garante contraste
+            para os controles, agora que a barra de baixo é transparente. */}
+        <div className="absolute inset-0 bg-[radial-gradient(120%_95%_at_50%_40%,transparent_38%,rgba(0,0,0,0.7)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/80 to-transparent" />
       </div>
 
       <div className="relative z-10 h-full flex flex-col">
@@ -548,52 +636,79 @@ export default function NovoJogoPage() {
                 </button>
               )}
 
-              {/* Nome do time */}
-              <h1 className="text-3xl sm:text-[2rem] font-black uppercase tracking-tight text-white leading-tight text-balance mb-5">
+              {/* NOME + ESCUDO, na hierarquia da referência: o nome manda, o
+                  escudo vem grande logo abaixo, sem moldura nem círculo. O halo
+                  fica na COR DO CLUBE e troca junto com ele. */}
+              <h1 className="text-[2.1rem] sm:text-[2.5rem] font-black uppercase tracking-[-0.02em] text-white leading-[0.95] text-balance">
                 {selectedTeam?.nome}
               </h1>
 
-              {/* Escudo com setas */}
-              <div className="relative flex items-center justify-center my-2">
-                <button
-                  onClick={prevTeam}
-                  aria-label="Time anterior"
-                  className="absolute left-0 w-10 h-10 flex items-center justify-center rounded-full text-white/45 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <ChevronLeft className="w-7 h-7" />
-                </button>
+              {/* ESCUDO — o elemento mais importante da tela, e agora com o
+                  tamanho que isso exige. Halo duplo (cor do clube + brilho
+                  quente) para ele descolar do fundo em qualquer escudo, claro
+                  ou escuro. */}
+              <div className="relative my-7 flex items-center justify-center">
                 <div
-                  className="w-48 h-48 sm:w-52 sm:h-52 flex items-center justify-center rounded-full"
-                  style={{ background: `radial-gradient(circle, ${cor1}26 0%, transparent 68%)` }}
+                  aria-hidden
+                  className="absolute h-72 w-72 rounded-full blur-[70px] transition-colors duration-500"
+                  style={{ backgroundColor: `${cor1}55` }}
+                />
+                <div
+                  aria-hidden
+                  className="absolute h-44 w-44 rounded-full bg-white/[0.06] blur-2xl"
+                />
+                <motion.div
+                  key={selectedTeam?.curto}
+                  initial={{ opacity: 0, scale: 0.86, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative"
                 >
-                  <TeamCrest team={selectedTeam} size="4xl" className="w-44 h-44 sm:w-48 sm:h-48" />
-                </div>
-                <button
-                  onClick={nextTeam}
-                  aria-label="Proximo time"
-                  className="absolute right-0 w-10 h-10 flex items-center justify-center rounded-full text-white/45 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <ChevronRight className="w-7 h-7" />
-                </button>
+                  <TeamCrest
+                    team={selectedTeam}
+                    size="4xl"
+                    className="h-56 w-56 drop-shadow-[0_18px_46px_rgba(0,0,0,0.8)] sm:h-64 sm:w-64"
+                  />
+                </motion.div>
               </div>
 
-              {/* Estrelas */}
-              <div className="flex items-center justify-center gap-1 my-4">
+              {/* Estrelas — medida de força do clube, discretas sob o escudo. */}
+              <div className="mb-5 flex items-center justify-center gap-1.5">
                 {Array.from({ length: 5 }).map((_, i) => {
                   const fill = ratingHalf - i
-                  if (fill >= 1) {
-                    return <Star key={i} className="w-6 h-6 fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]" />
-                  }
-                  if (fill >= 0.5) {
-                    return (
-                      <span key={i} className="relative inline-block w-6 h-6">
-                        <Star className="absolute inset-0 w-full h-full text-white/15" />
-                        <StarHalf className="absolute inset-0 w-full h-full fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.6)]" />
-                      </span>
-                    )
-                  }
-                  return <Star key={i} className="w-6 h-6 text-white/15" />
+                  return (
+                    <span
+                      key={i}
+                      className={cn(
+                        "h-2.5 w-2.5 rotate-45 rounded-[1px] transition-colors",
+                        fill >= 1 ? "bg-amber-400"
+                          : fill >= 0.5 ? "bg-gradient-to-br from-amber-400 from-50% to-white/12 to-50%"
+                            : "bg-white/12",
+                      )}
+                    />
+                  )
                 })}
+              </div>
+
+              {/* PÍLULAS DE AÇÃO — o formato da referência. "Trocar de time" no
+                  lugar das setas soltas em volta do escudo: fica claro que é
+                  ação, e não decoração do brasão.
+                  (A referência tem também "ÍDOLOS e Heróis/Heroínas"; fora daqui
+                  de propósito — este jogo não tem times femininos.) */}
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={nextTeam}
+                  className="group flex h-11 w-full max-w-[260px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-5 text-sm font-semibold text-white/85 transition-all hover:border-white/30 hover:bg-white/[0.13] hover:text-white"
+                >
+                  <Shuffle className="h-4 w-4 opacity-70" />
+                  Trocar de time
+                </button>
+                <button
+                  onClick={selectRandomTeam}
+                  className="flex h-10 w-full max-w-[260px] items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 text-[13px] font-medium text-white/60 transition-all hover:border-white/25 hover:bg-white/[0.1] hover:text-white"
+                >
+                  Surpreenda-me
+                </button>
               </div>
 
               {/* Liga (com setas se houver multiplas no pais) */}
@@ -631,21 +746,29 @@ export default function NovoJogoPage() {
               </div>
             </div>
 
-            {/* ── Zona 2: Uniforme + Estadio ── */}
-            <div className="flex flex-col gap-3 w-full lg:w-[220px] shrink-0">
+            {/* ── Zona 2: Uniforme + Estadio ──
+                Coluna mais larga para a camisa CABER GRANDE: era 220px e a
+                camisa saía com 150px, menor que o escudo do card ao lado. */}
+            <div className="flex flex-col gap-3 w-full lg:w-[268px] shrink-0">
               {/* Card Uniforme */}
               <button onClick={cycleUniform} className={cn(cardBase, "flex-1 flex flex-col items-center px-5 py-4 transition-colors hover:border-[var(--brand)]/30")} aria-label="Trocar uniforme">
                 <span className="text-xs text-white/50 tracking-wide">Uniforme</span>
                 <span className="text-base font-black uppercase tracking-wide text-white mb-2">Uniforme {(uniformIndex % uniformVariants.length) + 1}</span>
-                <div className="flex-1 flex items-center justify-center w-full px-6">
+                <motion.div
+                  key={`${selectedTeam?.curto}-${activeVariant}`}
+                  initial={{ opacity: 0, y: 10, scale: 0.94 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex-1 flex items-center justify-center w-full px-2"
+                >
                   {selectedTeam && !kitError ? (
                     <Image
                       key={`${selectedTeam.file_key}-${activeVariant}-${kitRetryCount}`}
                       src={getCamisaUrl(selectedTeam.file_key, activeVariant, selectedTeam.nome)}
                       alt={`Uniforme ${(uniformIndex % uniformVariants.length) + 1} do ${selectedTeam.nome}`}
-                      width={150}
-                      height={188}
-                      className="max-w-[150px] w-full h-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
+                      width={230}
+                      height={288}
+                      className="max-w-[230px] w-full h-auto object-contain drop-shadow-[0_14px_34px_rgba(0,0,0,0.65)]"
                       onError={handleKitError}
                       unoptimized
                     />
@@ -655,10 +778,10 @@ export default function NovoJogoPage() {
                       primary={activeUniform.primary}
                       secondary={activeUniform.secondary}
                       pattern={activeUniform.pattern}
-                      className="max-w-[150px]"
+                      className="max-w-[230px]"
                     />
                   ) : null}
-                </div>
+                </motion.div>
                 {/* Indicador de carrossel */}
                 <div className="flex items-center gap-2 mt-3">
                   <ChevronLeft className="w-3.5 h-3.5 text-white/30" />
@@ -700,32 +823,129 @@ export default function NovoJogoPage() {
               )}
             </div>
 
-            {/* ── VITRINE DO CLUBE ──────────────────────────────────────────
-                Substitui as antigas Zonas 3 e 4 (fundação/títulos/valores,
-                diretoria e o heatmap de três cards). Tudo o que elas mostravam
-                está aqui, no visual da arte de referência, e com o escudo em
-                destaque — que era o pedido: a tela tem de destacar o TIME.
+            {/* ── Zona 3: Estatisticas + Diretoria ── */}
+            <div className="flex flex-col gap-3 w-full lg:flex-1 lg:max-w-[440px]">
+              {/* O conteúdo se DISTRIBUI na altura do cartão (justify-between +
+                  py maior). Antes tudo se amontoava no topo e sobrava um vazio
+                  grande embaixo — na referência o cartão é preenchido de ponta
+                  a ponta, e é isso que o faz parecer um painel e não uma lista
+                  que acabou cedo. */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className={cn(cardBase, "flex-1 px-7 py-7 flex flex-col justify-center gap-8")}
+              >
+                {/* FUNDAÇÃO com a moldura de louros da referência. São dois
+                    ramos em CSS (bordas arredondadas cortadas), não um asset:
+                    o card precisa funcionar em qualquer clube sem depender de
+                    arte que não temos. */}
+                <div className="relative text-center">
+                  <span className="text-[13px] text-white/55 tracking-wide">Fundação</span>
+                  <div className="relative mx-auto mt-1 flex w-fit items-center gap-3">
+                    <span aria-hidden className="h-12 w-6 rounded-l-full border-y-2 border-l-2 border-white/20" />
+                    <div className="text-6xl font-black text-white tabular-nums leading-none">
+                      {profile.foundation ?? "—"}
+                    </div>
+                    <span aria-hidden className="h-12 w-6 rounded-r-full border-y-2 border-r-2 border-white/20" />
+                  </div>
+                </div>
 
-                A navegação (país, time, liga) e o card de uniforme continuam na
-                Zona 1/2: são controles, não vitrine, e movê-los mudaria o jeito
-                de usar a tela sem necessidade. */}
-            <div className="w-full lg:flex-1 lg:max-w-[760px]">
-              {selectedTeam && (
-                <VitrineDoClube
-                  team={selectedTeam}
-                  perfil={profile}
-                  estrelas={ratingHalf}
-                  indice={teamIndex}
-                  total={teams.length}
-                />
-              )}
+                {/* Titulos */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { icon: Award, label: "Ligas nacionais", value: profile.ligas },
+                    { icon: Trophy, label: "Copas nacionais", value: profile.copas },
+                    { icon: Globe, label: "Continental", value: profile.continental },
+                  ].map(({ icon: Icon, label, value }, i) => (
+                    <motion.div
+                      key={label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, delay: 0.08 + i * 0.06 }}
+                      className="flex flex-col items-center text-center"
+                    >
+                      <Icon className="w-9 h-9 text-white/85" strokeWidth={1.5} />
+                      <span className="text-[11px] text-white/50 mt-2 leading-tight">{label}</span>
+                      <span className="text-4xl font-black text-white tabular-nums mt-1 leading-none">{value ?? "—"}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="h-px bg-white/[0.09]" />
+
+                {/* Valores */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <span className="text-[12px] text-white/50">Valor do clube</span>
+                    <div className="text-2xl font-black gradient-text-primary tabular-nums leading-tight">{formatCompact(profile.clubValue)}</div>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-[12px] text-white/50">Verba de transf.</span>
+                    <div className="text-2xl font-black text-white tabular-nums leading-tight">{formatCompact(profile.transferBudget)}</div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Card Diretoria */}
+              <div className={cn(cardBase, "px-6 py-4 text-center")}>
+                <span className="text-xs text-white/50 tracking-wide">Expectativa da Diretoria</span>
+                <p className="text-sm font-black uppercase tracking-wide text-white mt-1 text-balance leading-snug">{profile.board}</p>
+              </div>
+            </div>
+
+            {/* ── Zona 4: Cards de nivel ──
+                O DEGRADÊ é o dado aqui: a cor diz o nível antes de a pessoa ler
+                a palavra. Antes um `bg-black/20` cobria o cartão inteiro e
+                apagava justamente isso — restava um retângulo cinza-avermelhado
+                em que "MUITO ALTA" e "BAIXA" pareciam a mesma coisa. Agora o véu
+                é só um degradê de baixo para cima, para o texto continuar
+                legível sem matar a cor. */}
+            <div className="flex flex-col gap-3 w-full lg:w-[232px] shrink-0">
+              {[
+                { title: "Admiração da Torcida", info: fan },
+                { title: "Instalações da Base", info: youth },
+                { title: "Estabilidade financeira", info: fin },
+              ].map(({ title, info }, i) => (
+                <motion.div
+                  key={title}
+                  initial={{ opacity: 0, x: 18 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.06 * i, ease: [0.16, 1, 0.3, 1] }}
+                  className={cn(
+                    "relative flex flex-1 flex-col justify-between overflow-hidden rounded-[20px] bg-gradient-to-b px-5 py-5 shadow-[0_18px_50px_-24px_rgba(0,0,0,0.9)]",
+                    info.grad,
+                  )}
+                >
+                  {/* Brilho SÓ no topo, como na referência: dá volume ao cartão
+                      sem o véu preto que antes cobria tudo e apagava a cor —
+                      era ele que deixava os três cards com a mesma cara. */}
+                  <div aria-hidden className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/[0.14] to-transparent" />
+                  <span className="relative text-[15px] font-semibold leading-tight text-white text-balance drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                    {title}
+                  </span>
+                  <motion.span
+                    key={info.label}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.28 }}
+                    className="relative text-[1.7rem] font-black uppercase leading-none tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
+                  >
+                    {info.label}
+                  </motion.span>
+                </motion.div>
+              ))}
             </div>
 
           </div>
         </div>
 
         {/* ── Barra inferior (estilo EA FC) ── */}
-        <footer className="relative shrink-0 border-t border-white/[0.08] bg-black/75 backdrop-blur-md px-4 sm:px-8 py-3">
+        {/* RODAPÉ TRANSPARENTE — a barra opaca cortava a arte do fundo numa
+            faixa reta e fazia a tela parecer duas imagens coladas. Sem fundo
+            nem borda: só um degradê muito suave por baixo, para os controles
+            claros não sumirem quando a arte tiver área clara ali. */}
+        <footer className="relative shrink-0 bg-gradient-to-t from-black/55 to-transparent px-4 sm:px-8 py-3">
           <div className="flex items-center justify-between gap-4 max-w-[1480px] mx-auto flex-wrap">
 
             {/* Dicas de controle */}
@@ -753,9 +973,11 @@ export default function NovoJogoPage() {
 
             {/* Nome do tecnico + iniciar */}
             <div className="flex items-center gap-3">
-              <div className="flex h-11 rounded-xl border border-white/15 bg-black/55 p-1">
-                <button type="button" onClick={() => setCareerStart("professional")} className={cn("px-3 rounded-lg text-[10px] font-black uppercase tracking-wide transition", careerStart === "professional" ? "bg-white text-black" : "text-white/55")}>Profissional</button>
-              </div>
+              {/* O botão "Profissional" saiu daqui: era um seletor de UMA opção
+                  só — `careerStart` nunca deixava de ser "professional", já que
+                  não havia botão para o sub-20. Um controle que não controla
+                  nada ocupa espaço e sugere uma escolha que não existe.
+                  O estado continua, com o mesmo valor padrão. */}
               <select value={debtPreset} onChange={event => setDebtPreset(event.target.value as DebtPreset)} aria-label="Dívida inicial do clube" className="h-11 rounded-xl border border-white/15 bg-black/70 px-3 text-[10px] font-bold uppercase text-white/75">
                 <option value="none">Sem dívida</option><option value="light">Dívida leve</option><option value="realistic">Dívida realista</option><option value="high">Dívida alta</option>
               </select>
