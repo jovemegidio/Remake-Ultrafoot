@@ -58,6 +58,7 @@ import { createScoutingDepartment } from "@/lib/scout-engine"
 import { createStadiumPitch } from "@/lib/infrastructure-engine"
 import { generateOffers } from "@/lib/sponsor-engine"
 import { TeamCrest } from "@/components/team-crest"
+import { VitrineDoClube } from "@/components/novo-jogo/vitrine-do-clube"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -699,66 +700,25 @@ export default function NovoJogoPage() {
               )}
             </div>
 
-            {/* ── Zona 3: Estatisticas + Diretoria ── */}
-            <div className="flex flex-col gap-3 w-full lg:flex-1 lg:max-w-[440px]">
-              <div className={cn(cardBase, "flex-1 px-6 py-5 flex flex-col")}>
-                {/* Fundacao */}
-                <div className="text-center">
-                  <span className="text-xs text-white/50 tracking-wide">Fundação</span>
-                  <div className="text-4xl font-black text-white tabular-nums leading-tight">{profile.foundation ?? "—"}</div>
-                  <div className="mx-auto mt-1 h-px w-20 bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
-                </div>
+            {/* ── VITRINE DO CLUBE ──────────────────────────────────────────
+                Substitui as antigas Zonas 3 e 4 (fundação/títulos/valores,
+                diretoria e o heatmap de três cards). Tudo o que elas mostravam
+                está aqui, no visual da arte de referência, e com o escudo em
+                destaque — que era o pedido: a tela tem de destacar o TIME.
 
-                {/* Titulos */}
-                <div className="grid grid-cols-3 gap-2 mt-6">
-                  {[
-                    { icon: Award, label: "Ligas nacionais", value: profile.ligas },
-                    { icon: Trophy, label: "Copas nacionais", value: profile.copas },
-                    { icon: Globe, label: "Continental", value: profile.continental },
-                  ].map(({ icon: Icon, label, value }) => (
-                    <div key={label} className="flex flex-col items-center text-center">
-                      <Icon className="w-7 h-7 text-white/80" strokeWidth={1.5} />
-                      <span className="text-[10px] text-white/45 mt-1.5 leading-tight">{label}</span>
-                      <span className="text-2xl font-black text-white tabular-nums mt-1">{value ?? "—"}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="h-px bg-white/[0.08] my-5" />
-
-                {/* Valores */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <span className="text-[11px] text-white/45">Valor do clube</span>
-                    <div className="text-lg font-black gradient-text-primary tabular-nums">{formatCompact(profile.clubValue)}</div>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-[11px] text-white/45">Verba de transf.</span>
-                    <div className="text-lg font-black text-white tabular-nums">{formatCompact(profile.transferBudget)}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Diretoria */}
-              <div className={cn(cardBase, "px-6 py-4 text-center")}>
-                <span className="text-xs text-white/50 tracking-wide">Expectativa da Diretoria</span>
-                <p className="text-sm font-black uppercase tracking-wide text-white mt-1 text-balance leading-snug">{profile.board}</p>
-              </div>
-            </div>
-
-            {/* ── Zona 4: Cards de nivel (heatmap) ── */}
-            <div className="flex flex-col gap-3 w-full lg:w-[220px] shrink-0">
-              {[
-                { title: "Admiração da Torcida", info: fan },
-                { title: "Instalações da Base", info: youth },
-                { title: "Estabilidade financeira", info: fin },
-              ].map(({ title, info }) => (
-                <div key={title} className={cn("flex-1 rounded-2xl border border-white/[0.08] p-5 flex flex-col bg-gradient-to-br overflow-hidden relative", info.grad)}>
-                  <div className="absolute inset-0 bg-black/20" />
-                  <span className="relative text-sm font-semibold text-white/90 leading-tight text-balance">{title}</span>
-                  <span className="relative text-xl font-black uppercase tracking-wide text-white mt-auto drop-shadow">{info.label}</span>
-                </div>
-              ))}
+                A navegação (país, time, liga) e o card de uniforme continuam na
+                Zona 1/2: são controles, não vitrine, e movê-los mudaria o jeito
+                de usar a tela sem necessidade. */}
+            <div className="w-full lg:flex-1 lg:max-w-[760px]">
+              {selectedTeam && (
+                <VitrineDoClube
+                  team={selectedTeam}
+                  perfil={profile}
+                  estrelas={ratingHalf}
+                  indice={teamIndex}
+                  total={teams.length}
+                />
+              )}
             </div>
 
           </div>
