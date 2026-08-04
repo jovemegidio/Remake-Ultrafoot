@@ -13,7 +13,7 @@ import { getGameDate } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
-import { pedidoDaSemana, montarPedido, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
+import { pedidoDaSemana, montarPedido, agenteProcuraOutroClube, chanceDePreContrato, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, disputaDeterministica, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
@@ -2340,9 +2340,20 @@ export function useGameManager() {
         // os demais saem. Sair primeiro o pior é o inverso do que um clube faz.
         const MINIMO_DE_ELENCO = 14
         const podeSair = Math.max(0, elenco.length - MINIMO_DE_ELENCO)
-        const saemAgora = [...vencidos]
-          .sort((a, b) => a.overall - b.overall)   // os piores vão primeiro
-          .slice(0, podeSair)
+
+        // PRÉ-CONTRATO tem prioridade e NÃO respeita a trava de elenco mínimo:
+        // ele já assinou com outro clube, não há como a diretoria segurá-lo. A
+        // trava existe para o clube não ficar sem time, e para isso sobram os
+        // vencidos comuns e o mercado.
+        const assinaramFora = new Set(Object.keys(currentState.preContratos ?? {}))
+        const porPreContrato = elenco.filter(p => assinaramFora.has(String(p.id)))
+        const vencidosComuns = vencidos.filter(p => !assinaramFora.has(String(p.id)))
+        const saemAgora = [
+          ...porPreContrato,
+          ...[...vencidosComuns]
+            .sort((a, b) => a.overall - b.overall)   // os piores vão primeiro
+            .slice(0, podeSair),
+        ]
         const perdidos = saemAgora.length > 0
           ? useGameEngine.getState().releaseExpiredPlayers(saemAgora.map(p => p.id))
           : []
@@ -2351,6 +2362,19 @@ export function useGameManager() {
         // este conserto veio corrigir — e no ano seguinte o atleta apareceria
         // vencido de novo, sem nunca ter tido contrato.
         const idsQueSairam = new Set(saemAgora.map(p => p.id))
+
+        // Pré-contrato cumprido some do registro. Sem isto o mapa cresceria a
+        // cada temporada com atletas que nem estão mais no clube — e um id
+        // reaproveitado por uma contratação futura herdaria a marca de alguém
+        // que já foi embora.
+        if (idsQueSairam.size > 0) {
+          const restantes: Record<string, { clube: string; semana: number }> = {}
+          for (const [id, dado] of Object.entries(currentState.preContratos ?? {})) {
+            if (!idsQueSairam.has(Number(id))) restantes[id] = dado
+          }
+          setSaveState({ preContratos: restantes })
+        }
+
         const segurados = vencidos.filter(p => !idsQueSairam.has(p.id))
         for (const p of segurados) {
           useGameEngine.getState().renewContract(p.id, p.contract?.salary ?? 0, 52)
@@ -2709,6 +2733,54 @@ export function useGameManager() {
       } catch { /* a cobranca do agente nunca pode travar o avanco da semana */ }
     }
 
+    // ── CONSEQUÊNCIAS DO DESGASTE ────────────────────────────────────────────
+    //
+    // Sem isto a relação azedava e não acontecia nada — a ameaça do agente seria
+    // um blefe, exatamente como era o aviso de fim de contrato.
+    let preContratos = { ...(currentState.preContratos ?? {}) }
+    try {
+      const elencoAgora = useGameEngine.getState().squadPlayers
+      const semanaAbsoluta = absoluteWeek(currentState.season, newWeek)
+      for (const p of elencoAgora) {
+        const relacao = relacoesComAgentes[String(p.id)]
+        if (!relacao || !agenteProcuraOutroClube(relacao)) continue
+
+        // 1) O agente passa a oferecer o atleta. Reusa a lista de transferíveis,
+        //    que a geração de propostas da IA já consulta — quem está na lista
+        //    entra SEMPRE no mercado. Só lista uma vez.
+        if (!(useGameEngine.getState().transferListedIds ?? []).includes(p.id)) {
+          useGameEngine.getState().toggleTransferListed(p.id)
+          addNotificationRef.current({
+            type: "system", priority: "high",
+            title: `O empresário de ${p.name} rompeu com o clube`,
+            message: "Depois de sucessivas negativas, ele está oferecendo o atleta a outros clubes. Espere sondagens.",
+            href: "/mercado",
+          })
+        }
+
+        // 2) PRÉ-CONTRATO: em fim de contrato, o atleta pode acertar com outro
+        //    clube e sair de graça na virada — e aí nem renovar adianta mais.
+        if (preContratos[String(p.id)]) continue
+        const semanasDeContrato = Math.max(0, (p.contract?.endDate ?? 0) - semanaAbsoluta)
+        const risco = chanceDePreContrato({
+          id: p.id, nome: p.name, overall: p.overall, idade: p.age,
+          salarioMensal: p.contract?.salary ?? 0, valorDeMercado: p.marketValue ?? 0,
+          semanasDeContrato, minutosNaTemporada: p.seasonStats?.minutesPlayed ?? 0,
+          jogosDoClube: 0, titular: !!p.isStarter, moral: p.moralePoints ?? 70,
+        }, relacao)
+        if (risco > 0 && Math.random() < risco / 12) {
+          // /12 porque o risco é da TEMPORADA, e isto roda toda semana.
+          preContratos[String(p.id)] = { clube: "outro clube", semana: newWeek }
+          addNotificationRef.current({
+            type: "system", priority: "high",
+            title: `${p.name} assinou pré-contrato`,
+            message: "Ele acertou com outro clube e sai de graça no fim da temporada. Renovar já não resolve — a hora de agir era antes.",
+            href: "/contratos",
+          })
+        }
+      }
+    } catch { /* consequencia e importante, mas nao pode travar a semana */ }
+
     // Update ref immediately so the next loop iteration sees the incremented week
     let debt=currentState.debt
     let debtByClub={...(currentState.debtByClub??{})}
@@ -2824,8 +2896,8 @@ export function useGameManager() {
     // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
     // impossível uma troca de treinador perder o saldo entre dois renders.
     if(userShort&&debt)debtByClub[userShort]=debt
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente } as Partial<typeof currentState> & { fixtures: unknown })
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente, preContratos } as Partial<typeof currentState> & { fixtures: unknown })
 
     // O jogador precisa saber que uma partida dele foi resolvida sem ele.
     if (autoPlayed.length > 0) {

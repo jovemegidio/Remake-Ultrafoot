@@ -625,6 +625,14 @@ export interface GameState {
   relacoesComAgentes?: Record<string, import("@/lib/pressao-do-agente").RelacaoComAgente>
   /** Pedido do agente aguardando resposta do técnico. Um por vez, de propósito. */
   pedidoDeAgente?: import("@/lib/pressao-do-agente").PedidoDoAgente | null
+  /**
+   * Quem já assinou PRÉ-CONTRATO com outro clube (chave = id do jogador).
+   *
+   * Sai de graça na virada mesmo que o técnico renove depois — é o ponto do
+   * pré-contrato: passou da hora. Sem guardar isso, renovar desfaria a
+   * consequência e o desgaste do agente voltaria a não significar nada.
+   */
+  preContratos?: Record<string, { clube: string; semana: number }>
   nationalCuts?: string[]
   // Amistosos marcados na Area do Treinador (maximo 3). Desde a 1.0.223 cada um
   // carrega a SEMANA em que acontece e vira um fixture de verdade no calendario
