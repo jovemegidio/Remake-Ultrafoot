@@ -195,6 +195,49 @@ export function useNationalTeam() {
 
   const career = state.nationalCareer ?? DEFAULT_NATIONAL_CAREER
   const nationalTeam = getNationalTeamById(career.nationalTeamId)
+
+  /**
+   * AUTO-REPARO de saves em que o par contrato/modo se separou.
+   *
+   * Antes da gravação atômica em `acceptOffer`, dava para terminar com
+   * `managingNationalTeamId` apontando para uma seleção e o contrato vazio. O
+   * save fica num limbo visível: o escritório mostra a seleção no cabeçalho mas
+   * com FORÇA 0, o convite reaparece e as telas do menu expulsam o técnico.
+   *
+   * Quem já está nesse estado não deveria precisar recomeçar a carreira. Se o
+   * MODO aponta para uma seleção válida e não há contrato, reconstruímos o
+   * contrato a partir dela — o técnico de fato assinou, só a gravação se perdeu.
+   */
+  useEffect(() => {
+    if (!hydrated) return
+    const modo = state.managingNationalTeamId
+    if (!modo || career.nationalTeamId) return
+    const selecao = getNationalTeamById(modo)
+    if (!selecao) return
+    const patch = {
+      nationalCareer: {
+        ...DEFAULT_NATIONAL_CAREER,
+        ...(state.nationalCareer ?? {}),
+        nationalTeamId: selecao.id,
+        nationalTeamName: selecao.name,
+        acceptedSeason: state.season,
+        contract: {
+          nationalTeamId: selecao.id,
+          monthlySalary: Math.round((45_000 + getNationalStrength(selecao) * 3_500) / 5_000) * 5_000,
+          contractMonths: 18,
+          startSeason: state.season,
+          startWeek: state.week,
+          objectives: ["Cumprir a meta da principal competição"],
+          obligations: ["Participar das janelas internacionais", "Convocar atletas por mérito"],
+        },
+        lastSalaryPaidWeek: state.week,
+      },
+      pendingNationalOffers: [],
+      lastNationalOfferSeason: state.season,
+    }
+    commitGameState(patch)
+    setState(patch)
+  }, [hydrated, state.managingNationalTeamId, career.nationalTeamId, state.nationalCareer, state.season, state.week, setState])
   // Registro da temporada corrente (vitorias/empates/derrotas na liga do usuario),
   // para o aproveitamento pesar ja no 1o ano, antes de a temporada fechar.
   const userShort = state.selectedTeamShort ?? ""
@@ -308,18 +351,25 @@ export function useNationalTeam() {
       // montagem — o "ainda diz que tem propostas em aberto" do relato.
       lastNationalOfferSeason: state.season,
     }
-    // COMMIT FUNCIONAL: aceitar uma proposta dispara DUAS gravações em sequência
-    // (esta e a de `assumirSelecao`, que troca o modo e navega). Com um patch
-    // fixo, montado a partir do `state` do React, a segunda gravação podia
-    // reintroduzir a lista de propostas que esta acabou de limpar — o banner
-    // "3 seleções querem te contratar" voltava depois de o técnico já ter
-    // assinado. Lendo o estado mais novo aqui dentro, a limpeza não se perde.
+    // GRAVAÇÃO ATÔMICA DO PAR. Assinar com uma seleção grava DOIS registros:
+    // o contrato (`nationalCareer.nationalTeamId`) e o modo em que o técnico
+    // fica (`managingNationalTeamId`). Eles eram escritos por caminhos
+    // diferentes — este e o `assumirSelecao` — e por mecanismos diferentes:
+    // `commitGameState` relê o disco e mescla, enquanto o `setState` do
+    // useGameState grava o estado INTEIRO a partir do snapshot do React. Quando
+    // divergiam, o save ficava com o modo apontando para a seleção e o contrato
+    // vazio, e o estrago era triplo: o banner de convite voltava, a força da
+    // seleção aparecia como 0 e as telas de convocação/competições/amistosos
+    // expulsavam o técnico de volta (a guarda delas olha o CONTRATO).
+    //
+    // Escrevendo os dois no MESMO patch, o par não tem como se separar.
+    const completo = { ...patch, managingNationalTeamId: offer.nationalTeamId }
     commitGameState(prev => ({
-      ...patch,
-      nationalCareer: { ...patch.nationalCareer, ...(prev.nationalCareer ?? {}), ...patch.nationalCareer },
+      ...completo,
+      nationalCareer: { ...(prev.nationalCareer ?? {}), ...patch.nationalCareer },
       pendingNationalOffers: [],
     }))
-    setState(patch)
+    setState(completo)
   }, [setState, state.nationalCareer, state.season, state.week])
 
   const counterOffer = useCallback((offer: NationalOffer, monthlySalary: number, contractMonths: number) => {
@@ -359,10 +409,30 @@ export function useNationalTeam() {
     })
   }, [setState, state.pendingNationalOffers, state.declinedNationalTeamIds])
 
+  /**
+   * Deixar a seleção precisa desfazer as DUAS coisas que aceitar fez.
+   *
+   * Antes isto zerava só o `nationalCareer` (o contrato). O
+   * `managingNationalTeamId` — que é o que decide o "time atual" de TODAS as
+   * telas (save-system.useUserTeam) — continuava apontando para a seleção. O
+   * resultado era um beco sem saída: o técnico seguia visualmente no modo
+   * seleção, comandando uma seleção que não era mais dele, e as três telas
+   * (convocação, competições, amistosos) o EXPULSAVAM de volta para /selecao a
+   * cada tentativa, porque a guarda delas olha o contrato, não o modo.
+   *
+   * `commitGameState` porque a tela costuma navegar logo depois de sair, e um
+   * `setState` sozinho se perde na navegação — o mesmo motivo de `assumirSelecao`.
+   */
   const leaveNationalTeam = useCallback(() => {
-    setState({
+    const patch = {
       nationalCareer: { ...DEFAULT_NATIONAL_CAREER },
-    })
+      managingNationalTeamId: null,
+      // A convocação era daquela seleção; guardá-la só vazaria para a próxima.
+      nationalCuts: [],
+      nationalCalls: [],
+    }
+    commitGameState(patch)
+    setState(patch)
   }, [setState])
 
   const startCompetition = useCallback((competitionId: string) => {
