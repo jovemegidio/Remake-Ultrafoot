@@ -308,7 +308,17 @@ export function useNationalTeam() {
       // montagem — o "ainda diz que tem propostas em aberto" do relato.
       lastNationalOfferSeason: state.season,
     }
-    commitGameState(patch)
+    // COMMIT FUNCIONAL: aceitar uma proposta dispara DUAS gravações em sequência
+    // (esta e a de `assumirSelecao`, que troca o modo e navega). Com um patch
+    // fixo, montado a partir do `state` do React, a segunda gravação podia
+    // reintroduzir a lista de propostas que esta acabou de limpar — o banner
+    // "3 seleções querem te contratar" voltava depois de o técnico já ter
+    // assinado. Lendo o estado mais novo aqui dentro, a limpeza não se perde.
+    commitGameState(prev => ({
+      ...patch,
+      nationalCareer: { ...patch.nationalCareer, ...(prev.nationalCareer ?? {}), ...patch.nationalCareer },
+      pendingNationalOffers: [],
+    }))
     setState(patch)
   }, [setState, state.nationalCareer, state.season, state.week])
 

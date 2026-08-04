@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import type { Team } from "@/lib/teams-data"
+import { corDoClubeSobreEscuro } from "@/lib/cor-legivel"
 
 /**
  * Fecha a animacao sozinha depois de `ms` — e o que devolve a partida ao relogio.
@@ -49,6 +50,10 @@ interface EventAnimationProps {
 function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimationProps, "event">) {
   useAutoDismiss(onComplete, 4000)
 
+  // Usada no texto, no brilho e nas particulas: se a cor do clube nao se le sobre
+  // o overlay escuro, tudo isso desaparecia junto.
+  const corDoGol = corDoClubeSobreEscuro(team?.cor1, team?.cor2) || "#00ffc8"
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -81,7 +86,7 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
               ease: "easeOut"
             }}
             className="absolute w-2 h-2 rounded-full"
-            style={{ backgroundColor: team?.cor1 || "#00ffc8" }}
+            style={{ backgroundColor: corDoGol }}
           />
         ))}
       </div>
@@ -95,7 +100,7 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
           transition={{ duration: 1, ease: "easeOut" }}
           className="absolute w-64 h-64 rounded-full"
           style={{ 
-            background: `radial-gradient(circle, ${team?.cor1 || "#00ffc8"}40, transparent)` 
+            background: `radial-gradient(circle, ${corDoGol}40, transparent)`
           }}
         />
 
@@ -125,11 +130,15 @@ function GoalAnimation({ team, player, minute, onComplete }: Omit<EventAnimation
           transition={{ duration: 0.5, delay: 0.3, type: "spring" }}
           className="mt-6"
         >
-          <h1 
+          <h1
             className="text-7xl md:text-9xl font-black tracking-tighter"
-            style={{ 
-              color: team?.cor1 || "#00ffc8",
-              textShadow: `0 0 60px ${team?.cor1 || "#00ffc8"}80`
+            style={{
+              // Corinthians tem cor1 "#000000": o GOOOL saia PRETO sobre o
+              // overlay preto e ninguem lia o lance mais importante do jogo.
+              // corDoClubeSobreEscuro cai na SEGUNDA cor do clube (branco, no
+              // caso) em vez de abandonar a identidade.
+              color: corDoGol,
+              textShadow: `0 0 60px ${corDoGol}80`
             }}
           >
             GOOOL!

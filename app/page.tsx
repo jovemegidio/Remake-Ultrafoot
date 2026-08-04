@@ -376,7 +376,14 @@ export default function DashboardPage() {
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
         {/* Proposta de selecao nacional */}
-        {!hasNationalTeam && nationalOffers.length > 0 && (
+        {/*
+          `managingNationalTeamId` entra na condicao alem de `hasNationalTeam`:
+          sao DOIS registros distintos (o contrato da carreira e o modo em que o
+          tecnico esta), gravados por caminhos diferentes ao aceitar a proposta.
+          Bastava um deles chegar atrasado para o convite reaparecer para quem ja
+          tinha assinado. Com os dois, o banner some assim que qualquer um marcar.
+        */}
+        {!hasNationalTeam && !saveState.managingNationalTeamId && nationalOffers.length > 0 && (
           <Link
             href="/selecao"
             className="group flex items-center gap-4 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/[0.06] p-4 transition-colors hover:bg-[var(--brand)]/[0.1]"

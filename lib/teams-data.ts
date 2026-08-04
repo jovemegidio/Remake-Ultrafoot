@@ -6,6 +6,8 @@ import { normalizeCountry } from "@/lib/country-normalize"
 import { applyTeamOverride, getTeamOverride } from "@/lib/team-overrides"
 import { getCurrency, currencyForCountry } from "@/lib/currency"
 import importedBF2026 from "@/data/seeds/imported-bf2026.json"
+// Tabela de acesso/rebaixamento ja consumada em 2026. Ver `_divisoes2026`.
+import divisionOverrides2026 from "@/data/seeds/division_overrides_2026.json"
 import { repairMojibake } from "@/lib/text-normalization"
 import { getNationalKitUrl } from "@/lib/national-assets"
 
@@ -1400,9 +1402,76 @@ export function setClubDivisions(map: Record<string, string> | undefined): void 
 export function getClubDivisions(): Record<string, string> {
   return _clubDivisions
 }
-/** Divisao ATUAL do clube: o override da piramide, ou a divisao estatica. */
+/**
+ * DIVISOES BRASILEIRAS DE 2026 — o acesso e o rebaixamento que ja tinham
+ * acontecido quando a carreira comeca.
+ *
+ * `data/seeds/division_overrides_2026.json` existe no repositorio desde sempre,
+ * com a tabela CERTA de 2026 (Coritiba, RB Bragantino, Remo e Chapecoense na
+ * Serie A; Ceara, Fortaleza, Sport e Juventude na B). So que ninguem no jogo o
+ * lia — o unico consumidor era `scripts/publicar-uniformes-pasta.mjs`. As listas
+ * estaticas logo acima ficaram na temporada ANTERIOR, e como `_clubDivisions`
+ * nasce vazio, toda CARREIRA NOVA comecava com 22 clubes na divisao errada.
+ *
+ * A ordem de precedencia importa: a piramide viva do save (`_clubDivisions`)
+ * vem primeiro, senao um save de 2029 seria puxado de volta para 2026 a cada
+ * leitura.
+ */
+/**
+ * O MESMO clube grafado diferente nas duas fontes. NAO e para "limpar sufixos"
+ * automaticamente: neste projeto tirar palavra da chave de identidade ja juntou
+ * clubes distintos. Cada linha aqui foi conferida uma a uma.
+ *
+ * Chave = nome no catalogo curado; valor = nome no arquivo de 2026.
+ * Contraexemplos deliberados (parecem alias e NAO sao):
+ *   Sao Raimundo-AM  x  "São Raimundo-RR"  — clubes de estados diferentes
+ *   Guarany de Sobral x  "Guarany Bagé"    — CE e RS
+ */
+const _ALIAS_DIVISAO_2026: Record<string, string> = {
+  amazonas: "amazonasfc",
+  ypirangars: "ypiranga",
+  saojosers: "saojose",
+}
+
+const _divisoes2026: Record<string, string> = (() => {
+  const mapa: Record<string, string> = {}
+  // Nome (normalizado) -> divisao oficial de 2026.
+  const divisaoPorNome = new Map<string, string>()
+  for (const [divisao, nomes] of Object.entries(
+    divisionOverrides2026 as Record<string, string[]>,
+  )) {
+    for (const nome of nomes) divisaoPorNome.set(_normKey(nome), divisao)
+  }
+
+  const resolver = (nome: string): string | undefined => {
+    const chave = _normKey(nome)
+    return divisaoPorNome.get(chave) ?? divisaoPorNome.get(_ALIAS_DIVISAO_2026[chave] ?? "")
+  }
+
+  // 1) Catalogo curado. So BRASILEIROS: o arquivo lista nomes curtos
+  //    ("Botafogo", "Guarani") que tambem existem fora do Brasil.
+  for (const t of [...serieATeams, ...serieBTeams, ...serieCTeams, ...serieDTeams]) {
+    const divisao = resolver(t.nome)
+    if (divisao) mapa[t.curto] = divisao
+  }
+
+  // NAO estendemos isto ao POOL. Tentei, e o resultado foi Serie A com
+  // "Cruzeiro - AL", "Bragantino-PA" e um segundo "Coritiba": o pool tem `curto`
+  // repetido e dezenas de nomes quase iguais, entao casar por nome ali duplica
+  // clube e importa homonimo de outro estado. A Serie C fica com menos clubes
+  // curados e `completarLigaComPool` completa por prestigio, como ja fazia —
+  // divisao incompleta e melhor que divisao com o clube errado.
+  return mapa
+})()
+
+/** Quanto do arquivo de 2026 casou com o catalogo curado (para o teste conferir). */
+export function getDivisoes2026(): Record<string, string> {
+  return _divisoes2026
+}
+
+/** Divisao ATUAL do clube: piramide do save > tabela de 2026 > divisao estatica. */
 export function effectiveDivision(team: { curto: string; divisao: string }): string {
-  return _clubDivisions[team.curto] ?? team.divisao
+  return _clubDivisions[team.curto] ?? _divisoes2026[team.curto] ?? team.divisao
 }
 
 export function getTeamsByDivision(divisao: string): Team[] {
