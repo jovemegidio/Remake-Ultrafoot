@@ -81,9 +81,15 @@ export function KitImage({ team, variant }: { team: Team; variant: KitVariant })
     }
     window.addEventListener("ultrafoot:store:ready", refresh)
     window.addEventListener("ultrafoot:team:changed", refresh)
+    // O pacote de atualizacao chega DEPOIS da montagem: sem re-resolver, o
+    // uniforme publicado pelo canal so apareceria ao reabrir o jogo (o mesmo
+    // motivo de TeamCrest e PlayerAvatar escutarem este evento). O evento nao
+    // traz `key`, entao cai no ramo que atualiza qualquer clube.
+    window.addEventListener("ultrafoot:elencos:atualizados", refresh)
     return () => {
       window.removeEventListener("ultrafoot:store:ready", refresh)
       window.removeEventListener("ultrafoot:team:changed", refresh)
+      window.removeEventListener("ultrafoot:elencos:atualizados", refresh)
     }
   }, [team.file_key])
 

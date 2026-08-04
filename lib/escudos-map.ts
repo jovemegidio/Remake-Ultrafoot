@@ -203,6 +203,12 @@ export const localEscudoMap: Record<string, string> = {
   "bochum": "/escudos/bundesliga/bochum.png",
   "heidenheim": "/escudos/bundesliga/heidenheim.png",
   "darmstadt": "/escudos/bundesliga/darmstadt.png",
+  // Convidados continentais cujo arquivo existe com OUTRO nome. Sem estas duas
+  // linhas eram os unicos dois clubes do jogo inteiro sem escudo na tela, e a
+  // arte estava no disco o tempo todo: `carabobo` -> "Carabobo.png" (maiuscula)
+  // e `juventud_ury` -> "juventud_uru.png" (uru x ury).
+  "carabobo": "/escudos/Carabobo.png",
+  "juventud_ury": "/escudos/juventud_uru.png",
   // Ligue 1
   "psg": "/escudos/ligue_1/psg.png",
   "monaco": "/escudos/ligue_1/monaco.png",

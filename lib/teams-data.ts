@@ -61,6 +61,10 @@ export type Divisao =
   | "torneo_betplay"
   | "primera_b_chi"
   | "segunda_div_ury"
+  // Segundas divisoes que faltavam para o pais ter rebaixamento de verdade.
+  // Sao montadas com o pool do proprio pais (ver PAIS_DA_DIVISAO).
+  | "scottish_champ"
+  | "serie_b_ecu"
   // 2as divisões - Asia
   | "saudi_first_div"
   | "j2_league"
@@ -1482,6 +1486,74 @@ export function getTeamsByDivision(divisao: string): Team[] {
 export const MIN_TIMES_PARA_LIGA = 8
 
 /**
+ * TAMANHO OFICIAL DE CADA LIGA — quantos clubes ela deve ter na tabela.
+ *
+ * Existe porque doze divisoes tinham MENOS clubes curados do que a competicao
+ * declarava, e nada corrigia a diferenca: a Bundesliga 2 rodava com 13 clubes
+ * anunciando 18, a Ligue 2 com 14 anunciando 18, a MLS com 24 anunciando 30. O
+ * calendario e as rodadas SAO derivados do elenco real (`buildRoundRobin`), de
+ * modo que o campeonato funcionava — so que menor do que o regulamento na tela.
+ *
+ * ⚠️ E O ALVO DO COMPLETAMENTO, nao um corte. `completarLigaComPool` so
+ * ACRESCENTA clubes do proprio pais; liga que ja tem mais que o alvo fica como
+ * esta (o Chile tem 19 curados para 16 vagas oficiais, e apagar clube curado
+ * seria pior do que uma tabela com tres a mais).
+ *
+ * Os numeros sao os das edicoes de 2026 e batem com `teams` em
+ * `competitionsByLeague` — as duas listas sao conferidas pelo
+ * `scripts/auditar-ligas-consistencia.mjs`.
+ */
+export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
+  serie_a: 20, serie_b: 20, serie_c: 20, serie_d: 20,
+  premier_league: 20, championship: 24,
+  la_liga: 20, la_liga_2: 22,
+  serie_a_ita: 20, serie_b_ita: 20,
+  bundesliga: 18, bundesliga_2: 18,
+  ligue_1: 18, ligue_2: 18,
+  primeira_liga: 18, eredivisie: 18, scottish_prem: 12, super_lig: 18,
+  pro_league_bel: 16, russian_prem: 16,
+  saudi_pro: 18, saudi_first_div: 18,
+  j_league: 20, k_league_1: 12, chinese_super: 16,
+  mls: 30, liga_mx: 18,
+  liga_argentina: 30, primera_a_col: 20, primera_a_ecu: 16,
+  primera_div_chi: 16, primera_b_chi: 16, primera_div_ury: 16,
+  // Segundas divisoes montadas com o pool do proprio pais (ver PAIS_DA_DIVISAO).
+  liga_portugal_2: 18, eerste_divisie: 20, challenger_pro: 16,
+  tff_1_lig: 20, russian_first: 20, primera_b_arg: 20,
+  torneo_betplay: 16, segunda_div_ury: 14, china_league_one: 16,
+  scottish_champ: 10, serie_b_ecu: 10,
+}
+
+/** Alvo de clubes para a divisao, com o padrao antigo (18) para o que nao esta na tabela. */
+export function tamanhoDaLiga(divisao: string): number {
+  return TAMANHO_OFICIAL_DA_LIGA[divisao] ?? 18
+}
+
+/**
+ * PAIS DE UMA DIVISAO QUE NAO TEM NENHUM CLUBE CURADO.
+ *
+ * Onze segundas divisoes ja estavam TOTALMENTE declaradas — tipo `Divisao`,
+ * competicao em `competitionsByLeague`, nome, premio, acesso e rebaixamento — e
+ * nunca tiveram um unico clube. Elas nao apareciam em lugar nenhum e, pior,
+ * deixavam a PRIMEIRA divisao do pais anunciando rebaixamento sem ter para onde
+ * rebaixar: onze paises com zona de queda decorativa.
+ *
+ * `completarLigaComPool` descobre o pais olhando o primeiro clube da divisao; com
+ * a divisao vazia nao ha o que olhar, e e este mapa que responde. Os clubes saem
+ * do pool importado — sao clubes REAIS do pais, os de maior prestigio que ainda
+ * nao estao na primeira divisao.
+ */
+const PAIS_DA_DIVISAO: Record<string, string> = {
+  liga_portugal_2: "Portugal", eerste_divisie: "Holanda", challenger_pro: "Belgica",
+  tff_1_lig: "Turquia", russian_first: "Russia", primera_b_arg: "Argentina",
+  torneo_betplay: "Colombia", segunda_div_ury: "Uruguai",
+  china_league_one: "China", scottish_champ: "Escocia", serie_b_ecu: "Equador",
+  // ⚠️ Japao (11 clubes livres no pool), China (11) e Coreia do Sul (ZERO) nao
+  // sustentam a segunda divisao que declaram. Ficam de fora de proposito: uma
+  // liga com tres clubes e pior do que nenhuma.
+}
+
+/**
  * País em forma comparável. O catálogo curado e o pool importado escrevem o
  * MESMO país de formas diferentes — "Grecia" x "Grécia", "Bolivia" x "Bolívia",
  * "Azerbaijao" x "Azerbaijão" —, e comparar as strings cruas fazia o Olympiacos
@@ -1495,10 +1567,17 @@ const _paisComparavel = (p: string) =>
  * é para quando os dois lados escolheram palavras diferentes ("Chequia" no
  * catálogo, "Tchéquia" no pool).
  */
+/** UFs brasileiras — o clube curado do Brasil guarda a UF em `estado` e nao tem `pais`. */
+const UFS_BRASIL = new Set(["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"])
+
 const APELIDOS_DE_PAIS: Record<string, string> = {
   chequia: "tchequia", "republica tcheca": "tchequia",
   holanda: "paises baixos",
   eua: "estados unidos", "estados unidos da america": "estados unidos",
+  // ⚠️ O seed grava a Arabia Saudita como `ARA` (a sigla do arquivo e ARB, e a
+  // do jogo, ARA). Sem este apelido as duas divisoes sauditas nao achavam um
+  // unico clube do proprio pais no pool e ficavam com 17 e 15 clubes.
+  ara: "arabia saudita", arb: "arabia saudita", ksa: "arabia saudita",
   "coreia do sul": "coreia do sul", "korea do sul": "coreia do sul",
 }
 
@@ -1559,12 +1638,27 @@ const CONFEDERACAO_DO_PAIS: Record<string, string> = {
  * chegam a oito. Um campeonato cipriota com alguns europeus a mais é estranho;
  * um campeonato cipriota disputado contra Flamengo e Palmeiras é absurdo.
  */
-export function completarLigaComPool(divisao: string, alvo = 18): Team[] {
+export function completarLigaComPool(divisao: string, alvo = tamanhoDaLiga(divisao)): Team[] {
   const base = getTeamsByDivision(divisao)
-  if (base.length >= MIN_TIMES_PARA_LIGA) return base
+  // ⚠️ O CORTE ERA `>= 8`, e nao `>= alvo`. Bastava a divisao ter oito clubes
+  // para o completamento parar, entao doze ligas rodavam menores do que o
+  // proprio regulamento anunciava — Bundesliga 2 com 13 de 18, Ligue 2 com 14
+  // de 18, MLS com 24 de 30. Nada acusava: as rodadas saem do elenco real.
+  if (base.length >= alvo) return base
 
   const jaTem = new Set(base.map(t => t.file_key))
-  const paisDaLiga = _paisCanonico(base.map(t => String(t.pais ?? "").trim()).find(Boolean) ?? "")
+  // ⚠️ CLUBE BRASILEIRO CURADO NAO TEM O CAMPO `pais` — ele guarda a UF em
+  // `estado` ("DF", "SP"). Procurando so por `pais`, a Serie D ficava sem pais
+  // nenhum e nao achava um unico clube do pool para completar as 20 vagas, com
+  // 184 brasileiros disponiveis ali.
+  // ⚠️ Os fallbacks devolvem `undefined`, nunca "": `??` nao cai com string
+  // vazia, e um "" no meio da cadeia impediria o mapa de ser consultado.
+  const paisCru = base.map(t => String(t.pais ?? "").trim()).find(Boolean)
+    ?? (base.some(t => UFS_BRASIL.has(String(t.estado ?? "").toUpperCase())) ? "Brasil" : undefined)
+    // Divisao sem clube curado nenhum: o pais so pode vir do mapa.
+    ?? PAIS_DA_DIVISAO[divisao]
+    ?? ""
+  const paisDaLiga = _paisCanonico(paisCru)
   const porPrestigio = (a: Team, b: Team) => (b.prestigio ?? 0) - (a.prestigio ?? 0)
 
   const doPais = allPoolTeams

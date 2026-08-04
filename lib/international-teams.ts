@@ -3878,9 +3878,21 @@ export const primeiraAColTeams: Team[] = [
 ]
 
 // =============================================
-// PRIMERA DIVISION - CHILE
+// PRIMERA DIVISION - CHILE  (+ convidados continentais)
 // =============================================
-export const primeraDivChileTeams: Team[] = [
+//
+// ⚠️ ESTE ARRAY E UM CONTEINER DE DECLARACAO, NAO UMA LIGA. Alem dos clubes
+// chilenos, ele guarda os ~27 clubes criados para os participantes reais da
+// Libertadores, Sul-Americana e Champions 2026 (Olympiacos, FC Copenhagen,
+// Bolivar, Cerro Porteno...), cada um com o SEU proprio `divisao`
+// (`primera_div_per`, `super_league_gre`, ...). Sao 15 ligas aqui dentro.
+//
+// Enquanto `primeraDivChileTeams` era o array cru, a tela de novo jogo oferecia
+// o Chile com **59 clubes**, Copenhagen e Olympiacos incluidos. Por isso as
+// ligas exportadas abaixo sao DERIVADAS do campo `divisao`, que e a unica
+// verdade — e `allInternationalTeams` continua espalhando o conteiner inteiro,
+// senao os convidados sumiriam do mundo e as competicoes continentais quebrariam.
+const chileEConvidados: Team[] = [
   { nome: "Colo Colo", curto: "CCO", cidade: "Santiago", estado: "Chile", cor1: "#FFFFFF", cor2: "#000000", prestigio: 88, torcida: 250000000, estadio_cap: 47000, saldo: 150000000, file_key: "colo_colo", estadio_nome: "Estadio Monumental David Arellano", patrocinador: "Adidas", escudo_url: getIntlEscudo("colo_colo"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
   { nome: "Universidad Catolica", curto: "UCA", cidade: "Santiago", estado: "Chile", cor1: "#CC0000", cor2: "#FFFFFF", prestigio: 86, torcida: 220000000, estadio_cap: 20550, saldo: 130000000, file_key: "u_catolica_chi", estadio_nome: "Estadio San Carlos de Apoquindo", patrocinador: "Cruzados", escudo_url: getIntlEscudo("u_catolica_chi"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
   { nome: "Universidad de Chile", curto: "UCH", cidade: "Santiago", estado: "Chile", cor1: "#003DA5", cor2: "#CC0000", prestigio: 84, torcida: 200000000, estadio_cap: 47000, saldo: 120000000, file_key: "u_de_chile", estadio_nome: "Estadio Monumental David Arellano", patrocinador: "U de Chile", escudo_url: getIntlEscudo("u_de_chile"), divisao: "primera_div_chi", regiao: "americas", pais: "Chile" },
@@ -3947,6 +3959,20 @@ export const primeraDivChileTeams: Team[] = [
   { nome: "Pafos", curto: "PAF", cidade: "Pafos", estado: "Chipre", cor1: "#0067B1", cor2: "#FFFFFF", prestigio: 60, torcida: 1000000, estadio_cap: 9394, saldo: 12000000, file_key: "pafos_fc", estadio_nome: "Estadio Stelios Kyriakides", patrocinador: "Pafos", escudo_url: getIntlEscudo("pafos_fc"), divisao: "protathlima_cyp", regiao: "europa", pais: "Chipre" },
   { nome: "Kairat", curto: "KAI", cidade: "Almaty", estado: "Cazaquistao", cor1: "#FFD700", cor2: "#000000", prestigio: 60, torcida: 2000000, estadio_cap: 23804, saldo: 12000000, file_key: "kairat", estadio_nome: "Estadio Central de Almaty", patrocinador: "Kairat", escudo_url: getIntlEscudo("kairat"), divisao: "premier_liga_kaz", regiao: "europa", pais: "Cazaquistao" },
 ]
+
+/** Primera Division do Chile — so os clubes que REALMENTE a disputam. */
+export const primeraDivChileTeams: Team[] = chileEConvidados.filter(t => t.divisao === "primera_div_chi")
+/** Primera B do Chile. Existia no conteiner e nao era oferecida em lugar nenhum. */
+export const primeraBChileTeams: Team[] = chileEConvidados.filter(t => t.divisao === "primera_b_chi")
+/**
+ * Os convidados continentais: clubes que existem para disputar Libertadores,
+ * Sul-Americana e Champions, cada um na liga do proprio pais. Varias dessas
+ * ligas tem 1 a 5 clubes, entao NAO sao oferecidas como liga jogavel — mas os
+ * clubes precisam existir no mundo.
+ */
+export const convidadosContinentais: Team[] = chileEConvidados.filter(
+  t => t.divisao !== "primera_div_chi" && t.divisao !== "primera_b_chi",
+)
 
 // =============================================
 // PRIMERA DIVISION - URUGUAI
@@ -4191,7 +4217,9 @@ export const allInternationalTeams = [
   ...russianPremTeams,
   ...ligaArgentinaTeams,
   ...primeiraAColTeams,
-  ...primeraDivChileTeams,
+  // ⚠️ O CONTEINER INTEIRO, nao a liga filtrada: os convidados continentais
+  // precisam existir no mundo, senao Libertadores/Champions ficam sem clube.
+  ...chileEConvidados,
   ...primeraDivUryTeams,
   ...ecuadorTeams,
   ...kLeague1Teams,
@@ -4202,6 +4230,22 @@ export const allInternationalTeams = [
   ...ligue2Teams,
   ...laLiga2Teams,
 ]
+
+/**
+ * Indice por `divisao`, montado uma vez.
+ *
+ * ⚠️ EXISTE PORQUE O `switch` ABAIXO NAO COBRIA TUDO. `primera_a_ecu` devolvia
+ * lista VAZIA — a LigaPro tem 16 clubes, escudo em todos e regulamento proprio,
+ * e mesmo assim era inalcancavel por aqui. O mesmo valia para `primera_b_chi` e
+ * para as 11 ligas dos convidados continentais. O campo `divisao` de cada clube
+ * ja tinha a resposta; faltava alguem consultar.
+ */
+const timesPorDivisao = new Map<string, Team[]>()
+for (const time of allInternationalTeams) {
+  const lista = timesPorDivisao.get(time.divisao)
+  if (lista) lista.push(time)
+  else timesPorDivisao.set(time.divisao, [time])
+}
 
 // Funcao para obter times por liga
 export function getTeamsByLeague(league: Divisao): Team[] {
@@ -4233,7 +4277,9 @@ export function getTeamsByLeague(league: Divisao): Team[] {
     case "bundesliga_2": return bundesliga2Teams
     case "ligue_2": return ligue2Teams
     case "la_liga_2": return laLiga2Teams
-    default: return []
+    // Sem caso explicito, cai no indice por `divisao` — que cobre Equador,
+    // Primera B do Chile e as ligas dos convidados continentais.
+    default: return timesPorDivisao.get(league) ?? []
   }
 }
 

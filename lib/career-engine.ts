@@ -1,7 +1,7 @@
 // Motor de carreira — gera fixtures, simula rodadas CPU, atualiza tabela, controla finanças e mensagens.
 
 import type { Team } from "@/lib/teams-data"
-import { serieATeams, serieBTeams, getTeamsByDivision, completarLigaComPool } from "@/lib/teams-data"
+import { serieATeams, serieBTeams, getTeamsByDivision, completarLigaComPool, tamanhoDaLiga } from "@/lib/teams-data"
 import { simulateFullMatch } from "@/lib/match-engine"
 import type { SavedTeam } from "@/lib/save-system"
 import type {
@@ -35,8 +35,12 @@ export function getLeagueTeams(userTeam: SavedTeam): Team[] {
   const divTeams = completarLigaComPool(userTeam.divisao as string)
   const base: Team[] = divTeams.length >= 8 ? divTeams : serieATeams
 
+  // ⚠️ O CORTE ERA 20, FIXO, PARA TODA LIGA DO MUNDO. Ele nunca apertou nada
+  // enquanto as divisoes eram curtas, mas passa a apertar agora que elas sao
+  // completadas ate o tamanho oficial: a Championship tem 24 e a MLS 30.
+  const alvo = tamanhoDaLiga(userTeam.divisao as string)
   const hasUser = base.some(t => t.curto === userTeam.curto)
-  if (hasUser) return base.slice(0, 20)
+  if (hasUser) return base.slice(0, alvo)
 
   const userAsTeam: Team = {
     nome: userTeam.nome,
@@ -58,7 +62,7 @@ export function getLeagueTeams(userTeam: SavedTeam): Team[] {
   }
 
   const sorted = [...base].sort((a, b) => b.prestigio - a.prestigio)
-  return [userAsTeam, ...sorted.slice(0, 19)]
+  return [userAsTeam, ...sorted.slice(0, alvo - 1)]
 }
 
 // ─── Round-Robin ───────────────────────────────────────────────────────────────

@@ -508,7 +508,11 @@ interface ImagemGuardada { u: string; d: string }
  * de 60 MB — e apertar aqui não economiza nada, só apaga escudo da tela.
  */
 const TETO_WEB = 8 * 1024 * 1024
-const TETO_APP = 48 * 1024 * 1024
+// 72 MB porque e o que o conteudo real pede: ~600 escudos (14 MB), ~670
+// uniformes em resolucao nativa (28 MB) e ~240 retratos (8 MB), com folga. O
+// uniforme so nao e reduzido porque reduzir foi testado e reprovado — ver
+// scripts/publicar-camisas-pasta.mjs.
+const TETO_APP = 72 * 1024 * 1024
 
 function tetoDeImagens(): number {
   return isTauri() ? TETO_APP : TETO_WEB
@@ -522,7 +526,7 @@ function tetoDeImagens(): number {
  * vem depois não fica "com menos" — fica sem nada, porque o laço para no teto.
  * Cada tipo tem metade e um não pode invadir o do outro.
  */
-const FATIA = { escudo: 0.35, kit: 0.35, foto: 0.3 }
+const FATIA = { escudo: 0.22, kit: 0.48, foto: 0.3 }
 
 interface CacheImagens { porChave: Map<string, ImagemGuardada>; porUrl: Map<string, string> }
 let cacheImagens: { bruto: string; dados: CacheImagens } | null = null

@@ -105,12 +105,12 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       region: "brasil",
       format: "league_playoff",
       teams: 20,
-      rounds: 19,
+      rounds: 38,
       prize: 10000000,
       prestige: 40,
       promotion: 4,
-      relegation: 2,
-      formatDetails: "Grupo único na primeira fase; oito classificados formam dois quadrangulares. Sobem os dois melhores de cada chave.",
+      relegation: 4,
+      formatDetails: "Turno e returno entre os 20 clubes; sobem quatro e caem quatro para a Série D.",
     },
   ],
   serie_d: [
@@ -121,14 +121,15 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       type: "league",
       region: "brasil",
       format: "group_knockout",
-      teams: 96,
-      rounds: 10,
-      groups: 16,
-      teamsPerGroup: 6,
+      // A Serie D real tem 96 clubes em 16 grupos; o jogo disputa uma chave
+      // unica de 20, como as demais divisoes. Enquanto isto dizia 96 e dez
+      // rodadas, a tela do regulamento descrevia um torneio que nao existia.
+      teams: 20,
+      rounds: 38,
       prize: 2000000,
       prestige: 25,
-      promotion: 6,
-      formatDetails: "16 grupos de seis; quatro avançam. Semifinalistas e dois vencedores dos playoffs de acesso sobem.",
+      promotion: 4,
+      formatDetails: "Turno e returno entre os 20 clubes; sobem quatro à Série C. Na competição real são 96 clubes em 16 grupos.",
     },
   ],
 
@@ -303,7 +304,8 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       rounds: 34,
       prize: 130000000,
       prestige: 92,
-      relegation: 2,
+      relegation: 3,
+      formatDetails: "Turno e returno; 17º e 18º caem diretamente e o 16º decide a permanência com o 3º da 2. Bundesliga — três clubes trocam de divisão.",
       continentalSpots: [
         { competition: "champions_league", spots: 4 },
         { competition: "europa_league", spots: 2 },
@@ -347,7 +349,8 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       rounds: 34,
       prize: 100000000,
       prestige: 85,
-      relegation: 2,
+      relegation: 3,
+      formatDetails: "Turno e returno; 17º e 18º caem diretamente e o 16º decide a permanência com o 3º da Ligue 2 — três clubes trocam de divisão.",
       continentalSpots: [
         { competition: "champions_league", spots: 3 },
         { competition: "europa_league", spots: 1 },
@@ -486,13 +489,13 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       region: "usa",
       format: "league_playoff",
       teams: 30,
-      rounds: 34,
+      rounds: 58,
       prize: 40000000,
       prestige: 65,
       continentalSpots: [
         { competition: "concacaf_champions", spots: 4 },
       ],
-      formatDetails: "Duas conferências de 15 clubes, 34 jogos por clube. Os sete primeiros de cada conferência avançam à primeira rodada e 8º x 9º disputam o Wild Card.",
+      formatDetails: "Turno e returno entre os 30 clubes. A MLS real separa duas conferências de 15 com 34 jogos por clube e playoffs.",
     },
     {
       id: "us_open_cup",
@@ -541,13 +544,13 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       region: "mexico",
       format: "league_playoff",
       teams: 18,
-      rounds: 17,
+      rounds: 34,
       prize: 45000000,
       prestige: 72,
       continentalSpots: [
         { competition: "concacaf_champions", spots: 4 },
       ],
-      formatDetails: "Torneios Apertura e Clausura separados: 17 rodadas por torneio e fase final. No Clausura 2026, os oito primeiros avançam diretamente às quartas.",
+      formatDetails: "Turno e returno entre os 18 clubes. No México a temporada se divide em Apertura e Clausura, com 17 rodadas cada e fase final.",
     },
     {
       id: "liguilla",
@@ -658,11 +661,11 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
       region: "japao",
       format: "group_knockout",
       teams: 20,
-      rounds: 18,
+      rounds: 38,
       prize: 30000000,
       prestige: 60,
       relegation: 0,
-      formatDetails: "Torneio especial de transição de 2026: dois grupos regionais de dez em turno e returno, seguidos por playoff de classificação; não há rebaixamento.",
+      formatDetails: "Turno e returno entre os 20 clubes, sem rebaixamento. Em 2026 o Japão disputa um torneio de transição com dois grupos regionais de dez.",
     },
   ],
 
@@ -673,7 +676,7 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // Scottish Premiership - Escocia
   scottish_prem: [
-    { id: "scottish_prem", name: "Scottish Premiership", shortName: "SPFL Prem", type: "league", region: "escocia", format: "league_playoff", teams: 12, rounds: 38, prize: 15000000, prestige: 65, relegation: 2, formatDetails: "33 rodadas e divisão em grupos de título e permanência para mais cinco jogos." },
+    { id: "scottish_prem", name: "Scottish Premiership", shortName: "SPFL Prem", type: "league", region: "escocia", format: "league_playoff", teams: 12, rounds: 22, prize: 15000000, prestige: 65, relegation: 2, formatDetails: "Turno e returno entre os 12 clubes. Na Escócia são 33 rodadas e uma divisão em grupos de título e permanência; aqui a temporada é corrida." },
   ],
 
   // Super Lig - Turquia
@@ -683,7 +686,7 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // Belgian Pro League - Belgica
   pro_league_bel: [
-    { id: "pro_league_bel", name: "Belgian Pro League", shortName: "Pro League", type: "league", region: "belgica", format: "points", teams: 18, rounds: 34, prize: 20000000, prestige: 66, relegation: 2, formatDetails: "Liga clássica de 18 clubes em 34 rodadas, sem playoffs, adotada a partir de 2026/27." },
+    { id: "pro_league_bel", name: "Belgian Pro League", shortName: "Pro League", type: "league", region: "belgica", format: "points", teams: 16, rounds: 30, prize: 20000000, prestige: 66, relegation: 2, formatDetails: "Liga clássica em turno e returno, sem playoffs." },
   ],
 
   // Russian Premier League - Russia
@@ -693,22 +696,24 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // Liga Argentina
   liga_argentina: [
-    { id: "liga_argentina", name: "Liga Profesional de Fútbol", shortName: "Liga Argentina", type: "league", region: "argentina", format: "group_knockout", teams: 30, rounds: 16, groups: 2, teamsPerGroup: 15, prize: 20000000, prestige: 75, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 6 }, { competition: "sulamericana", spots: 6 }], formatDetails: "Apertura e Clausura: duas zonas de 15, 14 jogos internos mais clássico/interzonal e uma rodada interzonal. O G8 de cada zona avança às oitavas em jogo único." },
+    { id: "liga_argentina", name: "Liga Profesional de Fútbol", shortName: "Liga Argentina", type: "league", region: "argentina", format: "group_knockout", teams: 31, rounds: 60, prize: 20000000, prestige: 75, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 6 }, { competition: "sulamericana", spots: 6 }], formatDetails: "Turno e returno entre todos os clubes. Na Argentina a temporada se divide em Apertura e Clausura, com duas zonas de 15 e mata-mata." },
   ],
 
   // Primera A - Colombia
   primera_a_col: [
-    { id: "primera_a_col", name: "Liga BetPlay Dimayor", shortName: "Primera A", type: "league", region: "colombia", format: "group_knockout", teams: 20, rounds: 19, prize: 8000000, prestige: 62, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Dois torneios em 2026. Liga I: todos contra todos, quartas, semifinais e final. Liga II: todos contra todos, dois quadrangulares e final." },
+    { id: "primera_a_col", name: "Liga BetPlay Dimayor", shortName: "Primera A", type: "league", region: "colombia", format: "group_knockout", teams: 20, rounds: 38, prize: 8000000, prestige: 62, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Dois torneios em 2026. Liga I: todos contra todos, quartas, semifinais e final. Liga II: todos contra todos, dois quadrangulares e final." },
   ],
 
   // Primera Division - Chile
   primera_div_chi: [
-    { id: "primera_div_chi", name: "Liga de Primera de Chile", shortName: "Primera Chile", type: "league", region: "chile", format: "points", teams: 16, rounds: 30, prize: 6000000, prestige: 60, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }] },
+    // 19 clubes, e nao os 16 da edicao real: o catalogo curado tem tres a mais e
+    // apagar clube com elenco e escudo seria pior do que uma tabela maior.
+    { id: "primera_div_chi", name: "Liga de Primera de Chile", shortName: "Primera Chile", type: "league", region: "chile", format: "points", teams: 19, rounds: 36, prize: 6000000, prestige: 60, relegation: 2, promotion: 0, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }] },
   ],
 
   // Primera Division - Uruguay
   primera_div_ury: [
-    { id: "primera_div_ury", name: "Liga AUF Uruguaya", shortName: "Liga AUF", type: "league", region: "uruguai", format: "group_knockout", teams: 16, rounds: 37, groups: 2, teamsPerGroup: 8, prize: 4000000, prestige: 58, relegation: 3, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Torneio Apertura de 15 datas, Intermedio em duas séries de oito e Clausura de 15 datas; a Tabela Anual e a definição da temporada determinam o campeão e os rebaixamentos." },
+    { id: "primera_div_ury", name: "Liga AUF Uruguaya", shortName: "Liga AUF", type: "league", region: "uruguai", format: "group_knockout", teams: 17, rounds: 32, prize: 4000000, prestige: 58, relegation: 3, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Turno e returno entre todos os clubes. No Uruguai a temporada tem Apertura, Intermedio e Clausura, com a Tabela Anual definindo campeao e rebaixamentos." },
   ],
 
   // LigaPro Serie A - Equador (liga que faltava)
@@ -718,7 +723,7 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // K-League 1 - Coreia do Sul
   k_league_1: [
-    { id: "k_league_1", name: "K League 1", shortName: "K-League 1", type: "league", region: "coreia_do_sul", format: "league_playoff", teams: 12, rounds: 33, prize: 15000000, prestige: 58, relegation: 2, formatDetails: "Três turnos antes da divisão entre grupos final A e B." },
+    { id: "k_league_1", name: "K League 1", shortName: "K-League 1", type: "league", region: "coreia_do_sul", format: "league_playoff", teams: 12, rounds: 22, prize: 15000000, prestige: 58, relegation: 0, formatDetails: "Turno e returno entre os 12 clubes, sem rebaixamento — o jogo nao tem a K League 2. Na Coreia a temporada tem três turnos e depois se divide em grupos A e B; aqui ela é disputada em pontos corridos." },
   ],
 
   // Chinese Super League - China
@@ -760,16 +765,16 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // 2as divisoes - Americas
   primera_b_arg: [
-    { id: "primera_b_arg", name: "Primera Nacional", shortName: "Primera B Arg", type: "league", region: "argentina", format: "league_playoff", teams: 36, rounds: 36, groups: 2, teamsPerGroup: 18, prize: 2000000, prestige: 40, promotion: 2, relegation: 4, formatDetails: "Duas zonas de 18 em ida e volta mais interzonal. Os líderes fazem final única pelo primeiro acesso; 14 clubes e o perdedor disputam o Reducido pela segunda vaga; caem os dois últimos de cada zona." },
+    { id: "primera_b_arg", name: "Primera Nacional", shortName: "Primera B Arg", type: "league", region: "argentina", format: "league_playoff", teams: 20, rounds: 38, prize: 2000000, prestige: 40, promotion: 2, relegation: 4, formatDetails: "Turno e returno entre os 20 clubes; sobem dois. A Primera Nacional real tem 36 clubes em duas zonas." },
   ],
   torneo_betplay: [
-    { id: "torneo_betplay", name: "Torneo BetPlay Dimayor", shortName: "Torneo Betplay", type: "league", region: "colombia", format: "group_knockout", teams: 16, rounds: 15, groups: 2, teamsPerGroup: 4, prize: 1500000, prestige: 35, promotion: 2, formatDetails: "Apertura e Clausura: todos contra todos, dois quadrangulares semifinais e final; os campeões e a reclassificação definem dois acessos para 2027." },
+    { id: "torneo_betplay", name: "Torneo BetPlay Dimayor", shortName: "Torneo Betplay", type: "league", region: "colombia", format: "group_knockout", teams: 16, rounds: 30, prize: 1500000, prestige: 35, promotion: 2, formatDetails: "Turno e returno entre os 16 clubes; sobem dois a Primera A." },
   ],
   primera_b_chi: [
     { id: "primera_b_chi", name: "Liga de Ascenso de Chile", shortName: "Liga Ascenso", type: "league", region: "chile", format: "league_playoff", teams: 16, rounds: 30, prize: 1000000, prestige: 32, promotion: 2, relegation: 2, formatDetails: "Dezesseis clubes em 30 rodadas, com acesso direto e liguilla pela segunda vaga." },
   ],
   segunda_div_ury: [
-    { id: "segunda_div_ury", name: "Segunda División Profesional", shortName: "Segunda Uruguay", type: "league", region: "uruguai", format: "league_playoff", teams: 13, rounds: 26, groups: 2, prize: 500000, prestige: 28, promotion: 3, relegation: 2, formatDetails: "Torneio Competencia inicial em séries de seis e sete clubes, seguido por fase regular em ida e volta, distribuída por 26 datas." },
+    { id: "segunda_div_ury", name: "Segunda División Profesional", shortName: "Segunda Uruguay", type: "league", region: "uruguai", format: "league_playoff", teams: 14, rounds: 26, prize: 500000, prestige: 28, promotion: 3, relegation: 2, formatDetails: "Turno e returno entre os 14 clubes; sobem dois a Primera Division." },
   ],
 
   // 2as divisoes - Asia
@@ -779,8 +784,15 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
   k_league_2: [
     { id: "k_league_2", name: "K League 2", shortName: "K-League 2", type: "league", region: "coreia_do_sul", format: "league_playoff", teams: 17, rounds: 34, prize: 3000000, prestige: 32, promotion: 3, relegation: 1, formatDetails: "Dezessete clubes jogam 32 partidas em 34 rodadas. 1º e 2º sobem diretamente; 3º a 6º disputam o playoff pela terceira vaga." },
   ],
+  // 2as divisoes criadas para o pais ter rebaixamento de verdade
+  scottish_champ: [
+    { id: "scottish_champ", name: "Scottish Championship", shortName: "Scottish Champ", type: "league", region: "escocia", format: "league_playoff", teams: 10, rounds: 18, prize: 2000000, prestige: 34, promotion: 2, relegation: 2, formatDetails: "Turno e returno entre os dez clubes; o campeao sobe direto e o segundo decide o acesso no playoff." },
+  ],
+  serie_b_ecu: [
+    { id: "serie_b_ecu", name: "LigaPro Serie B", shortName: "LigaPro B", type: "league", region: "equador", format: "league_playoff", teams: 10, rounds: 18, prize: 1200000, prestige: 32, promotion: 2, relegation: 2, formatDetails: "Turno e returno entre os dez clubes; os dois primeiros sobem a Serie A." },
+  ],
   china_league_one: [
-    { id: "china_league_one", name: "China League One", shortName: "China Liga 1", type: "league", region: "china", format: "points", teams: 16, rounds: 30, prize: 3000000, prestige: 30, promotion: 2, relegation: 2 },
+    { id: "china_league_one", name: "China League One", shortName: "China Liga 1", type: "league", region: "china", format: "points", teams: 11, rounds: 20, prize: 3000000, prestige: 30, promotion: 2, relegation: 2, formatDetails: "Turno e returno. A China League One real tem 16 clubes; aqui a divisao e montada com os clubes chineses disponiveis." },
   ],
 }
 

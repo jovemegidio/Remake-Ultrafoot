@@ -14,6 +14,7 @@ import {
   serieDTeams,
   getTeamUniforms,
   getCamisaUrl,
+  getEscudoUrl,
   isKitVariantAvailable,
   type Divisao,
   type Team,
@@ -40,6 +41,8 @@ import {
   ligaArgentinaTeams,
   primeiraAColTeams,
   primeraDivChileTeams,
+  primeraBChileTeams,
+  ecuadorTeams,
   primeraDivUryTeams,
   kLeague1Teams,
   chineseSuperTeams,
@@ -59,7 +62,9 @@ import { createClubDebt, type DebtPreset } from "@/lib/debt-engine"
 import { createScoutingDepartment } from "@/lib/scout-engine"
 import { createStadiumPitch } from "@/lib/infrastructure-engine"
 import { generateOffers } from "@/lib/sponsor-engine"
-import { TeamCrest } from "@/components/team-crest"
+import { TeamCrest, getCustomLogoUrl } from "@/components/team-crest"
+import { Escudo3D } from "@/components/novo-jogo/escudo-3d"
+import { NumeroQueConta } from "@/components/novo-jogo/numero-que-conta"
 import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { hardNavigate } from "@/lib/hard-navigation"
@@ -202,6 +207,15 @@ const COUNTRIES: CountryTab[] = [
     name: "Chile", code: "CHI", region: "americas",
     leagues: [
       { key: "primera_div_chi", label: "Primera Division", short: "Primera Div", teams: primeraDivChileTeams },
+      { key: "primera_b_chi", label: "Primera B", short: "Primera B", teams: primeraBChileTeams },
+    ],
+  },
+  {
+    // A LigaPro existia inteira (16 clubes, escudo em todos, regulamento
+    // proprio) e nao aparecia aqui — o pais nao era oferecido.
+    name: "Equador", code: "ECU", region: "americas",
+    leagues: [
+      { key: "primera_a_ecu", label: "LigaPro Serie A", short: "LigaPro", teams: ecuadorTeams },
     ],
   },
   {
@@ -327,6 +341,24 @@ export default function NovoJogoPage() {
     () => getTeamStadiumBackground(selectedTeam?.nome, selectedTeam?.estadio_nome),
     [selectedTeam?.nome, selectedTeam?.estadio_nome],
   )
+
+  // URL do escudo para a cena 3D, resolvida na MESMA ordem do TeamCrest (save
+  // local > canal > build). Resolvida num efeito, e nao direto no render, porque
+  // `getCustomLogoUrl` le o persistent-store, que hidrata depois da montagem —
+  // ler cedo devolveria o escudo do build e a cena ficaria com o antigo.
+  const [escudo3dUrl, setEscudo3dUrl] = useState<string | null>(null)
+  useEffect(() => {
+    const chave = selectedTeam?.file_key
+    if (!chave) { setEscudo3dUrl(null); return }
+    const resolver = () => setEscudo3dUrl(getCustomLogoUrl(chave) ?? getEscudoUrl(chave))
+    resolver()
+    window.addEventListener("ultrafoot:store:ready", resolver)
+    window.addEventListener("ultrafoot:elencos:atualizados", resolver)
+    return () => {
+      window.removeEventListener("ultrafoot:store:ready", resolver)
+      window.removeEventListener("ultrafoot:elencos:atualizados", resolver)
+    }
+  }, [selectedTeam?.file_key])
 
   const profile = useMemo(() => {
     const t = selectedTeam
@@ -664,11 +696,25 @@ export default function NovoJogoPage() {
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   className="relative"
                 >
+                  {/* O ESCUDO 3D FICA POR CIMA, NAO NO LUGAR. O TeamCrest continua
+                      desenhando embaixo: e ele que resolve escudo local, do canal
+                      e do build, e e ele que aparece se faltar WebGL, se a textura
+                      falhar ou se o jogador tiver ligado "reduzir movimento". A
+                      cena 3D so acende quando de fato carregou. */}
                   <TeamCrest
                     team={selectedTeam}
                     size="4xl"
                     className="h-56 w-56 drop-shadow-[0_18px_46px_rgba(0,0,0,0.8)] sm:h-64 sm:w-64"
                   />
+                  {escudo3dUrl && (
+                    <Escudo3D
+                      key={escudo3dUrl}
+                      src={escudo3dUrl}
+                      cor1={selectedTeam?.cor1}
+                      cor2={selectedTeam?.cor2}
+                      className="pointer-events-none absolute -inset-8"
+                    />
+                  )}
                 </motion.div>
               </div>
 
@@ -840,15 +886,48 @@ export default function NovoJogoPage() {
                     ramos em CSS (bordas arredondadas cortadas), não um asset:
                     o card precisa funcionar em qualquer clube sem depender de
                     arte que não temos. */}
+                {/* O DESTAQUE SO ACENDE QUANDO HA FATO CURADO. Brilho e moldura
+                    dourada em cima de "—" chamam atencao para o que o jogo NAO
+                    sabe; sem dado, a moldura fica discreta e o rotulo explica.
+                    Ver lib/club-facts: fundacao e titulo sao afirmacoes sobre
+                    clube real, entao ou vem de curadoria ou nao vem. */}
                 <div className="relative text-center">
                   <span className="text-[13px] text-white/55 tracking-wide">Fundação</span>
-                  <div className="relative mx-auto mt-1 flex w-fit items-center gap-3">
-                    <span aria-hidden className="h-12 w-6 rounded-l-full border-y-2 border-l-2 border-white/20" />
-                    <div className="text-6xl font-black text-white tabular-nums leading-none">
-                      {profile.foundation ?? "—"}
+                  <motion.div
+                    key={`fund-${selectedTeam?.file_key ?? ""}`}
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative mx-auto mt-1 flex w-fit items-center gap-3"
+                  >
+                    <span aria-hidden className={cn(
+                      "h-12 w-6 rounded-l-full border-y-2 border-l-2 transition-colors duration-500",
+                      profile.foundation ? "border-[color:var(--brand)]/70" : "border-white/20",
+                    )} />
+                    <div className="relative">
+                      {profile.foundation && (
+                        <motion.span
+                          aria-hidden
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: [0, 0.5, 0.28] }}
+                          transition={{ duration: 1.1, times: [0, 0.45, 1] }}
+                          className="pointer-events-none absolute -inset-4 rounded-full bg-[color:var(--brand)]/25 blur-2xl"
+                        />
+                      )}
+                      <NumeroQueConta
+                        valor={profile.foundation}
+                        tipo="ano"
+                        className="relative text-6xl font-black text-white tabular-nums leading-none"
+                      />
                     </div>
-                    <span aria-hidden className="h-12 w-6 rounded-r-full border-y-2 border-r-2 border-white/20" />
-                  </div>
+                    <span aria-hidden className={cn(
+                      "h-12 w-6 rounded-r-full border-y-2 border-r-2 transition-colors duration-500",
+                      profile.foundation ? "border-[color:var(--brand)]/70" : "border-white/20",
+                    )} />
+                  </motion.div>
+                  {!profile.foundation && (
+                    <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/25">sem registro histórico</p>
+                  )}
                 </div>
 
                 {/* Titulos */}
@@ -859,15 +938,33 @@ export default function NovoJogoPage() {
                     { icon: Globe, label: "Continental", value: profile.continental },
                   ].map(({ icon: Icon, label, value }, i) => (
                     <motion.div
-                      key={label}
+                      key={`${label}-${selectedTeam?.file_key ?? ""}`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, delay: 0.08 + i * 0.06 }}
                       className="flex flex-col items-center text-center"
                     >
-                      <Icon className="w-9 h-9 text-white/85" strokeWidth={1.5} />
+                      {/* Sala de troféus: quem TEM título ganha ícone aceso e
+                          número na cor do tema; quem tem zero (ou não tem dado)
+                          fica apagado. É a diferença entre a vitrine do clube
+                          grande e a do clube pequeno, que é justamente o que
+                          esta tela deveria comunicar. */}
+                      <Icon
+                        className={cn(
+                          "w-9 h-9 transition-colors duration-500",
+                          value ? "text-[color:var(--brand)]" : "text-white/35",
+                        )}
+                        strokeWidth={1.5}
+                      />
                       <span className="text-[11px] text-white/50 mt-2 leading-tight">{label}</span>
-                      <span className="text-4xl font-black text-white tabular-nums mt-1 leading-none">{value ?? "—"}</span>
+                      <NumeroQueConta
+                        valor={value}
+                        duracao={700}
+                        className={cn(
+                          "text-4xl font-black tabular-nums mt-1 leading-none",
+                          value ? "text-white" : "text-white/35",
+                        )}
+                      />
                     </motion.div>
                   ))}
                 </div>

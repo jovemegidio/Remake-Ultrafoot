@@ -29,6 +29,33 @@ export const PYRAMIDS: readonly Pyramid[] = [
   { country: "Alemanha", tiers: ["bundesliga", "bundesliga_2"], swaps: [3] },
   { country: "Franca", tiers: ["ligue_1", "ligue_2"], swaps: [3] },
   { country: "Arabia", tiers: ["saudi_pro", "saudi_first_div"], swaps: [3] },
+  // Chile: as duas divisoes ja existiam com elenco (19 e 13 clubes) e nenhuma
+  // delas trocava de nivel — era a unica piramide pronta que faltava ligar.
+  // Dois clubes, como na vida real (o 2o acesso sai de liguilla, simplificado).
+  { country: "Chile", tiers: ["primera_div_chi", "primera_b_chi"], swaps: [2] },
+  // ⚠️ ESTES OITO PAISES TINHAM ZONA DE REBAIXAMENTO DECORATIVA. A competicao da
+  // primeira divisao declarava 2 ou 3 rebaixados, a segunda divisao ja existia
+  // no tipo `Divisao` e em `competitionsByLeague` com nome, premio e acesso — e
+  // nao tinha clube nenhum, entao ninguem caia e ninguem subia. Os clubes da
+  // segunda vem do pool do proprio pais (ver PAIS_DA_DIVISAO em teams-data).
+  //
+  // O numero de trocas e o `relegation` que a primeira divisao ja declarava; as
+  // duas listas sao conferidas pelo scripts/auditar-ligas-consistencia.mjs.
+  { country: "Portugal", tiers: ["primeira_liga", "liga_portugal_2"], swaps: [2] },
+  { country: "Holanda", tiers: ["eredivisie", "eerste_divisie"], swaps: [3] },
+  { country: "Belgica", tiers: ["pro_league_bel", "challenger_pro"], swaps: [2] },
+  { country: "Turquia", tiers: ["super_lig", "tff_1_lig"], swaps: [3] },
+  { country: "Russia", tiers: ["russian_prem", "russian_first"], swaps: [2] },
+  { country: "Argentina", tiers: ["liga_argentina", "primera_b_arg"], swaps: [2] },
+  { country: "Colombia", tiers: ["primera_a_col", "torneo_betplay"], swaps: [2] },
+  { country: "Uruguai", tiers: ["primera_div_ury", "segunda_div_ury"], swaps: [3] },
+  // China: o pool so tem 11 clubes chineses livres, entao a segunda divisao
+  // nasce com 11 em vez dos 16 da competicao real.
+  { country: "China", tiers: ["chinese_super", "china_league_one"], swaps: [3] },
+  // Escocia e Equador nao tinham nem a divisao no tipo `Divisao`; as duas foram
+  // criadas para o rebaixamento que a primeira divisao ja anunciava existir.
+  { country: "Escocia", tiers: ["scottish_prem", "scottish_champ"], swaps: [2] },
+  { country: "Equador", tiers: ["primera_a_ecu", "serie_b_ecu"], swaps: [2] },
 ]
 
 const TIER_INDEX = new Map<string, { pyramid: Pyramid; idx: number }>()
@@ -76,6 +103,18 @@ const LABELS: Record<string, string> = {
   bundesliga: "Bundesliga", bundesliga_2: "Bundesliga 2",
   ligue_1: "Ligue 1", ligue_2: "Ligue 2",
   saudi_pro: "Saudi Pro League", saudi_first_div: "Saudi First Division",
+  primera_div_chi: "Primera División", primera_b_chi: "Primera B",
+  primeira_liga: "Primeira Liga", liga_portugal_2: "Liga Portugal 2",
+  eredivisie: "Eredivisie", eerste_divisie: "Eerste Divisie",
+  pro_league_bel: "Pro League", challenger_pro: "Challenger Pro League",
+  super_lig: "Süper Lig", tff_1_lig: "TFF 1. Lig",
+  russian_prem: "Premier League Russa", russian_first: "First League",
+  liga_argentina: "Liga Profesional", primera_b_arg: "Primera Nacional",
+  primera_a_col: "Primera A", torneo_betplay: "Torneo BetPlay",
+  primera_div_ury: "Primera División", segunda_div_ury: "Segunda División",
+  chinese_super: "Chinese Super League", china_league_one: "China League One",
+  scottish_prem: "Scottish Premiership", scottish_champ: "Scottish Championship",
+  primera_a_ecu: "LigaPro Serie A", serie_b_ecu: "LigaPro Serie B",
 }
 export function divisionLabel(division: string): string {
   return LABELS[division] ?? division
