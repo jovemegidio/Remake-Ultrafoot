@@ -18,7 +18,8 @@ import {
 import { GameHeader } from "@/components/game-header"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
-import { useUserTeam } from "@/lib/save-system"
+import { useUserTeam, useGameState } from "@/lib/save-system"
+import { aplicarResposta, RELACAO_INICIAL, type RespostaDoClube } from "@/lib/pressao-do-agente"
 import { useGameEngine, type Player, getContractStatus, formatWeeksToDate, absoluteWeek } from "@/lib/game-engine"
 import { formatCurrency } from "@/lib/teams-data"
 import { cn } from "@/lib/utils"
@@ -32,6 +33,46 @@ export default function ContratosPage() {
   const [filter, setFilter] = useState<"all" | "expiring" | "expired">("all")
   const [gpPlayerIdx, setGpPlayerIdx] = useState(0)
   
+  // ── RESPOSTA AO EMPRESÁRIO ────────────────────────────────────────────────
+  //
+  // Aceitar tem CUSTO REAL: renova de fato pelo que ele pediu (renovação) ou
+  // sobe o salário (aumento). Sem isso o "aceitar" seria um botão que só faz o
+  // agente calar a boca, e a negociação não valeria nada.
+  const { state: saveState, setState: setSaveState } = useGameState()
+  const pedidoDeAgente = saveState.pedidoDeAgente ?? null
+
+  const responderAoAgente = (resposta: RespostaDoClube) => {
+    if (!pedidoDeAgente) return
+    const chave = String(pedidoDeAgente.playerId)
+    const relacao = saveState.relacoesComAgentes?.[chave] ?? RELACAO_INICIAL
+
+    if (resposta === "aceito") {
+      const atleta = squadPlayers.find(p => p.id === pedidoDeAgente.playerId)
+      const salario = pedidoDeAgente.salarioPedido ?? atleta?.contract?.salary ?? 0
+      if (atleta) {
+        if (pedidoDeAgente.tipo === "renovacao") {
+          renewContract(atleta.id, salario, (pedidoDeAgente.anosPedidos ?? 2) * 52)
+        } else if (pedidoDeAgente.tipo === "salario") {
+          // Mantém o prazo que ele já tinha e mexe só no valor.
+          const semanasRestantes = Math.max(
+            26, (atleta.contract?.endDate ?? 0) - absoluteWeek(currentSeason, currentWeek),
+          )
+          renewContract(atleta.id, salario, semanasRestantes)
+        }
+        // Minutagem não tem contrapartida contratual: o compromisso é escalar,
+        // e quem cobra isso é o próprio agente na próxima ligação.
+      }
+    }
+
+    setSaveState({
+      relacoesComAgentes: {
+        ...(saveState.relacoesComAgentes ?? {}),
+        [chave]: aplicarResposta(relacao, pedidoDeAgente, resposta, currentWeek),
+      },
+      pedidoDeAgente: null,
+    })
+  }
+
   // Estado da negociacao
   const [proposedSalary, setProposedSalary] = useState(0)
   const [proposedYears, setProposedYears] = useState(2)
@@ -168,6 +209,43 @@ export default function ContratosPage() {
             <p className="text-sm text-white/50 mt-1">Renove e gerencie os contratos do elenco</p>
           </div>
         </div>
+
+        {/* O EMPRESÁRIO ESTÁ ESPERANDO RESPOSTA.
+            Fica no topo desta tela porque é aqui que o técnico resolve contrato —
+            e porque ignorar tem preço: o silêncio desgasta MAIS que o "não". */}
+        {pedidoDeAgente && (
+          <div className="rounded-xl border border-amber-400/30 bg-amber-400/[0.06] p-5">
+            <div className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300">
+              <AlertTriangle className="h-4 w-4" />
+              {pedidoDeAgente.tipo === "renovacao" ? "Renovação"
+                : pedidoDeAgente.tipo === "salario" ? "Pedido de aumento" : "Reclamação por minutagem"}
+            </div>
+            <p className="text-white">{pedidoDeAgente.fala}</p>
+            {pedidoDeAgente.salarioPedido != null && (
+              <p className="mt-2 text-sm text-white/60">
+                Pede {formatCurrency(pedidoDeAgente.salarioPedido)}/mês
+                {pedidoDeAgente.anosPedidos ? ` por ${pedidoDeAgente.anosPedidos} ano(s)` : ""}.
+              </p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => responderAoAgente("aceito")}
+                className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-bold text-[var(--brand-ink)] hover:opacity-90"
+              >
+                Aceitar
+              </button>
+              <button
+                onClick={() => responderAoAgente("recusado")}
+                className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15"
+              >
+                Recusar
+              </button>
+              <span className="self-center text-xs text-white/40">
+                Sair da tela sem responder conta como silêncio — e desgasta mais que recusar.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Cards de resumo */}
         <div className="grid gap-4 md:grid-cols-4">

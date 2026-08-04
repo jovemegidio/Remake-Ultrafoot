@@ -7,12 +7,13 @@ import { safeLocalSet } from "@/lib/safe-storage"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createCareerId, createFreshCareerState, setActiveCareerId, useGameState, type CoachSkillId, type GameState } from "@/lib/save-system"
 import { getLeagueTeams, generateSeasonFixtures, initStandings } from "@/lib/career-engine"
-import { useGameEngine, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
+import { useGameEngine, absoluteWeek, getContractStatus, isTransferWindowOpen, type StandingsEntry, type MatchResult, type MatchEvent } from "@/lib/game-engine"
 import { getTeamsByDivision, getTeamByShort, setClubDivisions, effectiveDivision, allBrazilianTeams, allPoolTeams, allTeams, completarLigaComPool, type Team } from "@/lib/teams-data"
 import { getGameDate } from "@/lib/game-date"
 import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
+import { pedidoDaSemana, montarPedido, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, disputaDeterministica, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
@@ -2667,6 +2668,47 @@ export function useGameManager() {
       } catch { /* o mercado do mundo e um extra: nunca derruba o avanco da semana */ }
     }
 
+    // ── O EMPRESÁRIO LIGA ────────────────────────────────────────────────────
+    //
+    // UM pedido por vez, de propósito: três agentes cobrando na mesma semana
+    // viram ruído e o técnico passa a fechar tudo sem ler — que é o oposto do
+    // efeito pretendido. Enquanto houver pedido sem resposta, ninguém mais liga.
+    let relacoesComAgentes = { ...(currentState.relacoesComAgentes ?? {}) }
+    let pedidoDeAgente = currentState.pedidoDeAgente ?? null
+    if (!pedidoDeAgente) {
+      try {
+        const elencoAgora = useGameEngine.getState().squadPlayers
+        const jogosDoClube = seasonCalendarRef.current.fixtures
+          .filter(f => f.isUserMatch && f.played).length
+        // Ordena por qualidade: o agente do craque liga antes do agente do reserva.
+        const candidatos = [...elencoAgora].sort((a, b) => b.overall - a.overall)
+        for (const p of candidatos) {
+          const relacao = relacoesComAgentes[String(p.id)] ?? RELACAO_INICIAL
+          const atleta = {
+            id: p.id, nome: p.name, overall: p.overall, idade: p.age,
+            salarioMensal: p.contract?.salary ?? 0,
+            valorDeMercado: p.marketValue ?? 0,
+            semanasDeContrato: Math.max(0, (p.contract?.endDate ?? 0) - absoluteWeek(currentState.season, newWeek)),
+            minutosNaTemporada: p.seasonStats?.minutesPlayed ?? 0,
+            jogosDoClube,
+            titular: !!p.isStarter,
+            moral: p.moralePoints ?? 70,
+          }
+          const tipo = pedidoDaSemana(atleta, relacao, newWeek)
+          if (!tipo) continue
+          pedidoDeAgente = montarPedido(atleta, tipo)
+          relacoesComAgentes[String(p.id)] = { ...relacao, ultimoPedidoSemana: newWeek }
+          addNotificationRef.current({
+            type: "system", priority: "medium",
+            title: `O empresário de ${p.name} quer conversar`,
+            message: pedidoDeAgente.fala,
+            href: "/contratos",
+          })
+          break
+        }
+      } catch { /* a cobranca do agente nunca pode travar o avanco da semana */ }
+    }
+
     // Update ref immediately so the next loop iteration sees the incremented week
     let debt=currentState.debt
     let debtByClub={...(currentState.debtByClub??{})}
@@ -2782,8 +2824,8 @@ export function useGameManager() {
     // Mantém também uma cópia da dívida ativa no arquivo por clube. Isso torna
     // impossível uma troca de treinador perder o saldo entre dois renders.
     if(userShort&&debt)debtByClub[userShort]=debt
-    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys } as typeof currentState & { fixtures: unknown }
-    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys } as Partial<typeof currentState> & { fixtures: unknown })
+    saveStateRef.current = { ...currentState, week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente } as typeof currentState & { fixtures: unknown }
+    setSaveState({ week: newWeek, fixtures: updatedStateFixtures, debt, debtByClub, teamMorale, boardConfidenceBonus, scoutingDepartment, completedFixtureKeys, relacoesComAgentes, pedidoDeAgente } as Partial<typeof currentState> & { fixtures: unknown })
 
     // O jogador precisa saber que uma partida dele foi resolvida sem ele.
     if (autoPlayed.length > 0) {

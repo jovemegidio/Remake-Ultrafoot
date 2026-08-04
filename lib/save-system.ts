@@ -616,6 +616,15 @@ export interface GameState {
   divisionMovement?: { movement: "promoted" | "relegated"; message: string; season: number }
   // Convocacao manual da selecao: jogadores CORTADOS e CONVOCADOS a dedo pelo tecnico
   // (chaves nome__clube). Vazio = convocacao 100% automatica.
+  /**
+   * Relação com o empresário de cada atleta (chave = id do jogador).
+   *
+   * Mora no save, e não no motor, porque é memória de CARREIRA: o desgaste vem
+   * de conversas que aconteceram ao longo de temporadas. Ver lib/pressao-do-agente.
+   */
+  relacoesComAgentes?: Record<string, import("@/lib/pressao-do-agente").RelacaoComAgente>
+  /** Pedido do agente aguardando resposta do técnico. Um por vez, de propósito. */
+  pedidoDeAgente?: import("@/lib/pressao-do-agente").PedidoDoAgente | null
   nationalCuts?: string[]
   // Amistosos marcados na Area do Treinador (maximo 3). Desde a 1.0.223 cada um
   // carrega a SEMANA em que acontece e vira um fixture de verdade no calendario
