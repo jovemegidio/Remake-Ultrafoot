@@ -193,9 +193,77 @@
   ],
   "changelog": [
     {
+      "version": "1.0.255",
+      "date": "2026-08-04",
+      "latest": true,
+      "title": "Agentes que ligam, patrocinio que vence e fim de contrato que doi",
+      "changes": [
+        {
+          "type": "added",
+          "text": "O EMPRESARIO AGORA TE PROCURA. Ele cobra aumento, minutagem ou renovacao por conta propria. Recusar desgasta a relacao; ignorar desgasta mais. Chegando ao limite, ele rompe e sai oferecendo seu jogador a outros clubes."
+        },
+        {
+          "type": "added",
+          "text": "PRE-CONTRATO: em fim de contrato, o atleta pode acertar com outro clube e sair de graca na virada — e ai renovar ja nao resolve. A notificacao diz quem levou."
+        },
+        {
+          "type": "fixed",
+          "text": "FIM DE CONTRATO LEVA O ATLETA EMBORA. O aviso de perder o atleta de graca existia ha tempos e ninguem nunca saia: era blefe. Agora sai, a folha alivia e o elenco encolhe."
+        },
+        {
+          "type": "fixed",
+          "text": "PATROCINIO tinha proposta gerada UMA vez, no comeco da carreira, e contrato eterno. Agora os contratos vencem, novas empresas procuram o clube a cada temporada e o diretor de marketing melhora o que chega."
+        },
+        {
+          "type": "added",
+          "text": "COLETIVA com 10 perguntas novas sobre mercado, folha salarial, base e patrocinio. E o sorteio das perguntas foi corrigido: ele nao sorteava de verdade e as ultimas do baralho quase nunca apareciam."
+        },
+        {
+          "type": "added",
+          "text": "JOGOS DO RIVAL AO VIVO na tela da partida: os confrontos que mexem na sua posicao, com placar andando e alerta de gol."
+        },
+        {
+          "type": "added",
+          "text": "TEMPO PARA ESCOLHER O BATEDOR do penalti. Esgotado o prazo, o auxiliar bate."
+        },
+        {
+          "type": "added",
+          "text": "BACKUP DO SAVE NA SUA CONTA acontece sozinho para quem esta logado no launcher. Formatou o PC? Entra na conta e a carreira volta."
+        },
+        {
+          "type": "fixed",
+          "text": "MODO SELECAO: convocacao, competicoes e amistosos expulsavam o tecnico de volta para a tela de propostas, e a selecao aparecia com forca 0. Saves ja afetados sao consertados sozinhos ao abrir."
+        },
+        {
+          "type": "fixed",
+          "text": "CONVITES DE SELECAO agora chegam em MARCO, com tempo de negociar e montar a convocacao antes da janela."
+        },
+        {
+          "type": "fixed",
+          "text": "A tela de ESCOLHA DE TIME foi refeita, com escudo e uniforme em destaque."
+        },
+        {
+          "type": "fixed",
+          "text": "UM ICONE SO na area de trabalho: o do Launcher. O atalho extra do jogo e removido automaticamente."
+        },
+        {
+          "type": "fixed",
+          "text": "A CHAVE DE COMPETICOES vazava entre carreiras do mesmo clube: recomecar com o mesmo time trazia o sorteio da campanha anterior."
+        },
+        {
+          "type": "fixed",
+          "text": "DIVISOES BRASILEIRAS DE 2026 corrigidas em carreira nova: Coritiba, RB Bragantino, Remo e Chapecoense na Serie A."
+        },
+        {
+          "type": "fixed",
+          "text": "Os garotos revelados na base passam a ter nome do pais do clube — a base do Ajax nao revela mais Matheus Nascimento."
+        }
+      ]
+    },
+    {
       "version": "1.0.252",
       "date": "2026-08-03",
-      "latest": true,
+      "latest": false,
       "title": "Penaltis decidem o mata-mata, e a escalacao para de voltar sozinha",
       "changes": [
         {
