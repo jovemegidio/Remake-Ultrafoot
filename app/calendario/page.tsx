@@ -72,6 +72,35 @@ export default function CalendarioPage() {
   const seasonMonths = useMemo(() => seasonMonthsForDivision(league ?? "serie_a"), [league])
   const [currentMonth, setCurrentMonth] = useState(() => seasonMonths[0])
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
+
+  /**
+   * O calendário acompanha ONDE O JOGO ESTÁ.
+   *
+   * `currentMonth` nascia em `seasonMonths[0]` e nada o sincronizava com a
+   * semana corrente. Quem simulava até março — ou parava no meio — voltava a
+   * olhar JANEIRO, e tinha de navegar mês a mês até achar onde parou. Era o
+   * "ao pausar/parar deve ficar de onde parou no calendário".
+   *
+   * Só ajusta quando o mês do jogo REALMENTE muda: sem essa comparação, o
+   * efeito desfaria a navegação manual do técnico a cada render, e ele nunca
+   * conseguiria olhar um mês futuro.
+   */
+  const mesDoJogo = useMemo(() => {
+    const data = getGameDate(currentSeason, currentWeek)
+    const mes = data.getMonth()
+    // A temporada de algumas divisões não começa em janeiro; se o mês corrente
+    // não faz parte dela, fica no mais próximo que faz.
+    return seasonMonths.includes(mes)
+      ? mes
+      : seasonMonths.reduce((a, b) => (Math.abs(b - mes) < Math.abs(a - mes) ? b : a), seasonMonths[0])
+  }, [currentSeason, currentWeek, seasonMonths])
+
+  const mesJaSincronizado = useRef<number | null>(null)
+  useEffect(() => {
+    if (mesJaSincronizado.current === mesDoJogo) return
+    mesJaSincronizado.current = mesDoJogo
+    setCurrentMonth(mesDoJogo)
+  }, [mesDoJogo])
   const [isSimulating, setIsSimulating] = useState(false)
   const [showChampionScreen, setShowChampionScreen] = useState(false)
   const [championTeam, setChampionTeam] = useState<string | null>(null)
