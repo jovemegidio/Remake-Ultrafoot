@@ -2323,14 +2323,63 @@ export function useGameManager() {
         const elenco = useGameEngine.getState().squadPlayers
         const vencendo = elenco.filter(p => getContractStatus(p, 0, nextSeason) === "expiring")
         const vencidos = elenco.filter(p => getContractStatus(p, 0, nextSeason) === "expired")
-        if (vencendo.length > 0 || vencidos.length > 0) {
-          const nomes = [...vencidos, ...vencendo].slice(0, 4).map(p => p.name).join(", ")
+
+        // O ATLETA VAI EMBORA DE VERDADE.
+        //
+        // Antes daqui só saía a notificação "renove antes de perder o atleta de
+        // graça" — e ninguém nunca saía. O elenco carregava contratos vencidos
+        // para sempre e o aviso era um blefe: ignorar a renovação não custava
+        // nada. Agora o fim de contrato tem a consequência do futebol de
+        // verdade, e o técnico teve a temporada inteira de aviso ("expiring" já
+        // acende a 6 meses do fim).
+        // TRAVA DE ELENCO MÍNIMO. Um save negligenciado pode ter dez contratos
+        // vencendo juntos; soltar todos deixaria o clube sem time para escalar e
+        // travaria a temporada — quebrar o jogo é pior que a regra realista.
+        // A diretoria "renova de emergência" os melhores até fechar 14 atletas;
+        // os demais saem. Sair primeiro o pior é o inverso do que um clube faz.
+        const MINIMO_DE_ELENCO = 14
+        const podeSair = Math.max(0, elenco.length - MINIMO_DE_ELENCO)
+        const saemAgora = [...vencidos]
+          .sort((a, b) => a.overall - b.overall)   // os piores vão primeiro
+          .slice(0, podeSair)
+        const perdidos = saemAgora.length > 0
+          ? useGameEngine.getState().releaseExpiredPlayers(saemAgora.map(p => p.id))
+          : []
+        // Quem a trava segurou precisa ser RENOVADO DE VERDADE, não só anunciado.
+        // Deixar o contrato vencido e dizer que renovou seria a mesma mentira que
+        // este conserto veio corrigir — e no ano seguinte o atleta apareceria
+        // vencido de novo, sem nunca ter tido contrato.
+        const idsQueSairam = new Set(saemAgora.map(p => p.id))
+        const segurados = vencidos.filter(p => !idsQueSairam.has(p.id))
+        for (const p of segurados) {
+          useGameEngine.getState().renewContract(p.id, p.contract?.salary ?? 0, 52)
+        }
+        if (segurados.length > 0) {
           addNotificationRef.current({
             type: "system", priority: "high",
-            title: vencidos.length > 0
-              ? `${vencidos.length} contrato${vencidos.length === 1 ? "" : "s"} vencido${vencidos.length === 1 ? "" : "s"}`
-              : `${vencendo.length} contrato${vencendo.length === 1 ? "" : "s"} perto do fim`,
-            message: `${nomes}${(vencendo.length + vencidos.length) > 4 ? " e outros" : ""}. Renove antes de perder o atleta de graça.`,
+            title: `A diretoria renovou ${segurados.length} contrato${segurados.length === 1 ? "" : "s"} de emergência`,
+            message: `${segurados.slice(0, 3).map(p => p.name).join(", ")}${segurados.length > 3 ? " e outros" : ""}`
+              + " — o elenco ficaria pequeno demais para competir. Foi renovação forçada por um ano, não planejamento.",
+            href: "/contratos",
+          })
+        }
+
+        if (perdidos.length > 0) {
+          const lista = perdidos.slice(0, 4).join(", ")
+          addNotificationRef.current({
+            type: "system", priority: "high",
+            title: `${perdidos.length} atleta${perdidos.length === 1 ? "" : "s"} saiu por fim de contrato`,
+            message: `${lista}${perdidos.length > 4 ? " e outros" : ""} deixaram o clube de graça. `
+              + `A folha aliviou, mas o elenco encolheu.`,
+            href: "/elenco",
+          })
+        }
+        if (vencendo.length > 0) {
+          const nomes = vencendo.slice(0, 4).map(p => p.name).join(", ")
+          addNotificationRef.current({
+            type: "system", priority: "high",
+            title: `${vencendo.length} contrato${vencendo.length === 1 ? "" : "s"} perto do fim`,
+            message: `${nomes}${vencendo.length > 4 ? " e outros" : ""}. Renove agora — no fim da temporada eles saem de graça.`,
             href: "/contratos",
           })
         }

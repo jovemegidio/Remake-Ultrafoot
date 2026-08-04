@@ -2213,6 +2213,12 @@ interface GameEngineState {
 
   /** Rescinde o contrato pagando multa. `false` = sem caixa suficiente. */
   terminateContract: (playerId: number) => boolean
+  /**
+   * Libera quem teve o contrato vencido: sai de graça, sem receber nada, e a
+   * folha alivia. Devolve os NOMES de quem saiu, para a notificação dizer quem
+   * foi perdido — o aviso genérico não ensinava nada.
+   */
+  releaseExpiredPlayers: (playerIds: readonly number[]) => string[]
 
   /** Muda a POSIÇÃO do atleta (ATA→MEI etc.) — pedido do modal de gerenciamento. */
   setPlayerPosition: (playerId: number, position: string) => void
@@ -3559,6 +3565,35 @@ export const useGameEngine = create<GameEngineState>()(
           weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary ?? 0)),
         }))
         return true
+      },
+
+      /**
+       * FIM DE CONTRATO: o atleta vai embora DE GRAÇA.
+       *
+       * Até aqui a virada de temporada só DISPARAVA A NOTIFICAÇÃO — "renove
+       * antes de perder o atleta de graça" — e ninguém nunca saía. O elenco
+       * ficava com contratos vencidos indefinidamente e o aviso era um blefe:
+       * ignorar a renovação não custava nada.
+       *
+       * Não entra dinheiro (é transferência livre) e a folha alivia na hora.
+       * Devolve quem realmente saiu, para a tela poder nomeá-los.
+       */
+      releaseExpiredPlayers: (playerIds) => {
+        const alvo = new Set(playerIds)
+        const state = get()
+        const saindo = state.squadPlayers.filter(p => alvo.has(p.id))
+        if (!saindo.length) return []
+        const folhaLiberada = saindo.reduce((s, p) => s + (p.contract?.salary ?? 0), 0)
+        set((s) => ({
+          squadPlayers: s.squadPlayers.filter(p => !alvo.has(p.id)),
+          // Some das listas junto: atleta que não é mais do clube não pode
+          // continuar anunciado nem recebendo sondagem.
+          transferListedIds: (s.transferListedIds ?? []).filter(id => !alvo.has(id)),
+          loanListedIds: (s.loanListedIds ?? []).filter(id => !alvo.has(id)),
+          transferOffers: s.transferOffers.filter(o => !alvo.has(o.playerId)),
+          weeklyExpenses: Math.max(0, s.weeklyExpenses - folhaLiberada),
+        }))
+        return saindo.map(p => p.name)
       },
 
       buyPlayer: (player, fee, isFreeAgent = false) => {
