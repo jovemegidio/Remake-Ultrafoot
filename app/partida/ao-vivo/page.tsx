@@ -5,6 +5,7 @@ import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { timeDaSelecao } from "@/lib/partida-da-selecao"
+import { getNationalSquad } from "@/lib/national-teams"
 import {
   ChevronLeft,
   Activity,
@@ -659,7 +660,17 @@ export default function PartidaAoVivoPage() {
   // Vai por REF, não direto no efeito do apito final: aquele efeito roda dentro
   // de um closure que já causou congelamento de modal neste arquivo quando
   // capturou callback velho. O ref sempre aponta para a versão atual.
-  const { playNextRound: gravarRodadaDaSelecao } = useNationalTeam()
+  const { playNextRound: gravarRodadaDaSelecao, nationalTeam: selecaoDoTecnico } = useNationalTeam()
+  // Convocação de 23 — a lista que o técnico montou em /selecao/convocacao.
+  const selecaoConvocada = useMemo(
+    () => (matchCtx.national && selecaoDoTecnico
+      ? getNationalSquad(selecaoDoTecnico, {
+          cuts: savedGame.nationalCuts ?? [],
+          calls: savedGame.nationalCalls ?? [],
+        })
+      : []),
+    [matchCtx.national, selecaoDoTecnico, savedGame.nationalCuts, savedGame.nationalCalls],
+  )
   const playNextRoundRef = useRef<typeof gravarRodadaDaSelecao | null>(null)
   useEffect(() => { playNextRoundRef.current = gravarRodadaDaSelecao }, [gravarRodadaDaSelecao])
 
@@ -808,6 +819,40 @@ export default function PartidaAoVivoPage() {
       const opponent = buildSideFromData(isHome ? awayTeam : homeTeam, isHome ? 200 : 0, "SUB20_")
       if (isHome) { setHomeSquad(youthSquad.starters); setHomeBench(youthSquad.bench); setAwaySquad(opponent.starters); setAwayBench(opponent.bench) }
       else { setAwaySquad(youthSquad.starters); setAwayBench(youthSquad.bench); setHomeSquad(opponent.starters); setHomeBench(opponent.bench) }
+    } else if (matchCtx.national && selecaoConvocada.length > 0) {
+      // SELEÇÃO: quem entra em campo é a CONVOCAÇÃO, não o elenco do clube.
+      // `enginePlayers` é sempre o plantel do clube — sem este ramo o técnico
+      // jogava a Copa com os jogadores do seu time vestindo o escudo do país.
+      // Mesma conversão do ramo da base, que já resolve o caso "atletas que não
+      // vivem no game-engine".
+      const convocados = selecaoConvocada.map((jogador, indice) => ({
+        id: indice + 1,
+        name: jogador.nome,
+        position: jogador.pos,
+        overall: jogador.base,
+        energy: 100,
+        pace: jogador.base,
+        shooting: shootingForPosition(jogador.base, jogador.pos),
+        passing: jogador.base,
+        dribbling: jogador.base,
+        defending: jogador.base,
+        physical: jogador.base,
+        // A convocação vem ordenada por setor e nota; os onze primeiros começam.
+        isStarter: indice < 11,
+        shirtNumber: indice + 1,
+        injury: null,
+        calledUp: false,
+      } as unknown as EnginePlayer))
+      const userSquad = enginePlayersToMatchSquad(convocados, isHome ? 0 : 200, savedFormation ?? "4-3-3")
+      if (isHome) {
+        const opp = buildSideFromData(awayTeam, 200, "A_")
+        setHomeSquad(userSquad.starters); setHomeBench(userSquad.bench)
+        setAwaySquad(opp.starters); setAwayBench(opp.bench)
+      } else {
+        const opp = buildSideFromData(homeTeam, 0, "H_")
+        setAwaySquad(userSquad.starters); setAwayBench(userSquad.bench)
+        setHomeSquad(opp.starters); setHomeBench(opp.bench)
+      }
     } else if (enginePlayers && enginePlayers.length > 0) {
       const userSquad = enginePlayersToMatchSquad(enginePlayers, isHome ? 0 : 200, savedFormation ?? "4-3-3", tacticalPlayerPositions ?? {})
       if (isHome) {

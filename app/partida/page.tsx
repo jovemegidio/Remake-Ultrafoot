@@ -279,13 +279,24 @@ export default function PartidaPage() {
   // VALIDACAO DA ESCALACAO (pedido): expulso/lesionado/suspenso NAO pode ser
   // escalado. Se houver algum titular nessas condicoes, abre uma tela com duas
   // opcoes — corrigir automatico (substituir) ou corrigir manual.
+  // Contexto da PARTIDA DA SELEÇÃO. Declarado aqui em cima porque
+  // `titularesInvalidos` (logo abaixo) depende dele — `const` em TDZ estoura
+  // em tempo de execução, não de compilação.
+  const ctxDaSelecao = useMemo(() => loadMatchContext().national ?? null, [])
   const enginePlayersPre = useGameEngine(s => s.squadPlayers)
   const setStarterPre = useGameEngine(s => s.setStarter)
   const [escalacaoInvalida, setEscalacaoInvalida] = useState<Player[] | null>(null)
 
+  // NA SELEÇÃO ESTA CHECAGEM NÃO SE APLICA. `enginePlayersPre` é sempre o
+  // plantel do CLUBE; quem entra em campo pela seleção é a convocação, montada
+  // em /selecao/convocacao e resolvida na tela da partida. Sem esta guarda, um
+  // lesionado do seu clube barrava a escalação da seleção — e o "corrigir
+  // automático" mexeria no XI do clube antes de um jogo que nem é dele.
   const titularesInvalidos = useMemo(
-    () => enginePlayersPre.filter(p => p.isStarter && (p.injury || (p.suspendedMatches ?? 0) > 0)),
-    [enginePlayersPre],
+    () => (ctxDaSelecao
+      ? []
+      : enginePlayersPre.filter(p => p.isStarter && (p.injury || (p.suspendedMatches ?? 0) > 0))),
+    [enginePlayersPre, ctxDaSelecao],
   )
 
   /** Motivo da inelegibilidade, para a tela. */
@@ -354,7 +365,6 @@ export default function PartidaPage() {
   // `prepararPartidaDaSelecao`; aqui ele TEM prioridade sobre o próximo jogo do
   // clube, senão esta tela mostraria o adversário errado — o do campeonato — e
   // ainda gravaria os `shorts` do clube por cima da partida da seleção.
-  const ctxDaSelecao = useMemo(() => loadMatchContext().national ?? null, [])
   const selecaoMandante = useMemo(
     () => (ctxDaSelecao ? timeDaSelecao(ctxDaSelecao.usuarioEmCasa ? ctxDaSelecao.selecaoId : ctxDaSelecao.adversarioId) : null),
     [ctxDaSelecao],
