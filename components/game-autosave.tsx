@@ -5,6 +5,7 @@ import { persistGameEngineNow, useGameEngine } from "@/lib/game-engine"
 import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
 import { useNotifications } from "@/components/notifications-system"
 import { getSavedCloudCode, uploadSave } from "@/lib/cloud-save"
+import { contaLogada } from "@/lib/conta-ultrafoot"
 
 /** Salva os dois estados da carreira após a quantidade configurada de partidas. */
 export function GameAutosave() {
@@ -47,8 +48,24 @@ export function GameAutosave() {
         persistGameEngineNow()
         const next = { ...state, lastAutoSaveMatchCount: matchCount, updatedAt: Date.now() }
         await saveGameStateAndFlush(next)
+        // BACKUP NA CONTA, SEM O JOGADOR PEDIR.
+        //
+        // Isto era `if (cloudCode) await uploadSave(cloudCode)`: só fazia backup
+        // de quem JÁ tinha um código — e nada no jogo cria o primeiro sozinho.
+        // Só a tela de salvar manual gera um, então quem nunca foi lá nunca teve
+        // backup nenhum, mesmo com conta ativa. A lista de saves da conta ficava
+        // vazia e a promessa de "formatei o PC e recuperei minha carreira" não
+        // se cumpria.
+        //
+        // `uploadSave()` sem código gera um, sobe e o cataloga na conta
+        // (cloud-save.ts). Só fazemos isso para quem ESTÁ LOGADO: criar save na
+        // nuvem para quem não tem conta seria guardar dado de quem não pediu.
         const cloudCode = getSavedCloudCode()
-        if (cloudCode) await uploadSave(cloudCode)
+        if (cloudCode) {
+          await uploadSave(cloudCode)
+        } else if (await contaLogada()) {
+          await uploadSave()
+        }
         notificar.current({
           type: "system",
           title: "Jogo salvo automaticamente",
