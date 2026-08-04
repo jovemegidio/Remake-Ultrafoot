@@ -26,7 +26,7 @@ import { addJobOffers, clearJobOffers, encerrarPassagem } from "@/lib/career-mov
 import { hardNavigate } from "@/lib/hard-navigation"
 // Acesso/rebaixamento: a posicao final muda a divisao do clube na proxima temporada.
 import { resolveDivisionChange, evolvePyramids, type PyramidClub } from "@/lib/league-pyramid"
-import { debtConsequences, processDebtMonth, renegotiateDebt, successorDebtBudget } from "@/lib/debt-engine"
+import { applySponsorDebtContribution, debtConsequences, processDebtMonth, renegotiateDebt, successorDebtBudget } from "@/lib/debt-engine"
 import { advanceScoutingWeek } from "@/lib/scout-engine"
 import { useNotifications } from "@/components/notifications-system"
 import { isSeasonOver, selectOverdueUserFixtures } from "@/lib/fixture-catchup"
@@ -97,44 +97,46 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   ligue_1:        { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   primeira_liga:  { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   eredivisie:     { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  scottish_prem:  { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  scottish_prem:  { startMonth: 7,  monthsInSeason: 10, rounds: 22 },
+  scottish_champ: { startMonth: 7,  monthsInSeason: 10, rounds: 18 },
   super_lig:      { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  pro_league_bel: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  pro_league_bel: { startMonth: 7,  monthsInSeason: 10, rounds: 30 },
   russian_prem:   { startMonth: 6,  monthsInSeason: 11, rounds: 30 },
   // Americas nao-Brasil
-  mls:            { startMonth: 2,  monthsInSeason: 9,  rounds: 34 },
+  mls:            { startMonth: 2,  monthsInSeason: 9,  rounds: 58 },
   liga_mx:        { startMonth: 6,  monthsInSeason: 11, rounds: 34 },
   liga_argentina: { startMonth: 0,  monthsInSeason: 12, rounds: 46 },
-  primera_a_col:  { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
-  primera_div_chi:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
-  primera_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  primera_a_col:  { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
+  primera_div_chi:{ startMonth: 1,  monthsInSeason: 10, rounds: 36 },
+  primera_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 32 },
   primera_a_ecu:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  serie_b_ecu:    { startMonth: 1,  monthsInSeason: 10, rounds: 18 },
   // Asia
-  saudi_pro:      { startMonth: 7,  monthsInSeason: 10, rounds: 30 },
-  j_league:       { startMonth: 1,  monthsInSeason: 11, rounds: 34 },
-  k_league_1:     { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
+  saudi_pro:      { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
+  j_league:       { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
+  k_league_1:     { startMonth: 1,  monthsInSeason: 11, rounds: 22 },
   chinese_super:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
   // 2as divisoes Europa
   championship:   { startMonth: 7,  monthsInSeason: 10, rounds: 46 },
   la_liga_2:      { startMonth: 7,  monthsInSeason: 10, rounds: 42 },
   serie_b_ita:    { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
   bundesliga_2:   { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  ligue_2:        { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  ligue_2:        { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   liga_portugal_2:{ startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  eerste_divisie: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  challenger_pro: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  tff_1_lig:      { startMonth: 7,  monthsInSeason: 10, rounds: 36 },
-  russian_first:  { startMonth: 6,  monthsInSeason: 11, rounds: 30 },
+  eerste_divisie: { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  challenger_pro: { startMonth: 7,  monthsInSeason: 10, rounds: 30 },
+  tff_1_lig:      { startMonth: 7,  monthsInSeason: 10, rounds: 38 },
+  russian_first:  { startMonth: 6,  monthsInSeason: 11, rounds: 38 },
   // 2as divisoes Americas
-  primera_b_arg:  { startMonth: 0,  monthsInSeason: 12, rounds: 46 },
-  torneo_betplay: { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
+  primera_b_arg:  { startMonth: 0,  monthsInSeason: 12, rounds: 38 },
+  torneo_betplay: { startMonth: 1,  monthsInSeason: 11, rounds: 30 },
   primera_b_chi:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
-  segunda_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 30 },
+  segunda_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 26 },
   // 2as divisoes Asia
-  saudi_first_div:{ startMonth: 7,  monthsInSeason: 10, rounds: 30 },
+  saudi_first_div:{ startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   j2_league:      { startMonth: 1,  monthsInSeason: 11, rounds: 40 },
   k_league_2:     { startMonth: 1,  monthsInSeason: 11, rounds: 36 },
-  china_league_one:{ startMonth: 1, monthsInSeason: 10, rounds: 30 },
+  china_league_one:{ startMonth: 1, monthsInSeason: 10, rounds: 20 },
 }
 
 // Meses que o calendario deve MOSTRAR, derivados do MESMO LEAGUE_CALENDAR que
@@ -1398,7 +1400,17 @@ function getUserLeagueTeams(teamShort: string, divisionOverride?: string): Team[
 export function getLeagueName(teamShort: string, divisionOverride?: string): string {
   const userTeam = getTeamByShort(teamShort)
   if (!userTeam) return "Liga"
-  return LEAGUE_NAMES[divisionOverride ?? userTeam.divisao] ?? "Liga"
+  // `effectiveDivision`, e NAO `userTeam.divisao`.
+  //
+  // O calendario e as ligas sao montados por getTeamsByDivision, que resolve a
+  // divisao EFETIVA (piramide do save > tabela de 2026 > estatica). Aqui lia-se
+  // a estatica: quando as duas discordam — e desde a correcao das divisoes de
+  // 2026 elas discordam para varios clubes — o nome da liga nao batia com o das
+  // partidas, `computeStandingsFromFixtures` devolvia tabela VAZIA e a posicao
+  // final do usuario virava 0. Sem posicao nao ha acesso nem rebaixamento, e
+  // nenhuma mensagem aparece: era o relato "terminei em 3o na Serie D e
+  // continuei na Serie D, sem aviso nenhum".
+  return LEAGUE_NAMES[divisionOverride ?? effectiveDivision(userTeam)] ?? "Liga"
 }
 
 export function getDivisionLeagueTeams(teamShort: string): Team[] {
@@ -2179,7 +2191,7 @@ export function useGameManager() {
     // regulamento cadastrado. Em saves antigos havia bancos parciais e o cálculo
     // por `times.length` podia encerrar uma campanha antes do returno completo.
     const leagueRoundsForEnd = Math.max(
-      getLeagueRounds(divOverride ?? getTeamByShort(userShort)?.divisao ?? "serie_a"),
+      getLeagueRounds(divOverride ?? (() => { const tm = getTeamByShort(userShort); return tm ? effectiveDivision(tm) : null })() ?? "serie_a"),
       (leagueTeamsForEnd.length - 1) * 2,
     )
     // Copa em meio de semana nao alonga a temporada; o Math.max abaixo cobre a
@@ -2267,7 +2279,7 @@ export function useGameManager() {
       // posicao final decide a divisao do clube na proxima temporada, e os adversarios
       // do reset ja vem da divisao nova.
       const userTeamStatic = getTeamByShort(userShort)
-      const currentDivision = divOverride ?? userTeamStatic?.divisao ?? "serie_a"
+      const currentDivision = divOverride ?? (userTeamStatic ? effectiveDivision(userTeamStatic) : null) ?? "serie_a"
       const userFinalPos = sortedForChampion.findIndex(s => s.teamShort === userShort) + 1
 
       // PIRAMIDE VIVA: evolui TODOS os clubes de todas as piramides. A divisao do
@@ -2903,7 +2915,28 @@ export function useGameManager() {
         addNotificationRef.current({type:"news",priority:gerida.missedPayments>=6?"high":"low",title:`Crise financeira no ${clube?.nome??clubShort}`,message:`A gestão que sucedeu você herdou a dívida e chegou a ${gerida.missedPayments} atraso(s). ${c.description}`,href:"/financas"})
       }
     }
-    if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0);if(sponsorship>0)gameEngine.addClubRevenue(sponsorship);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)
+    if(newWeek%4===0){const sponsorship=(currentState.activeSponsors??[]).reduce((sum,sponsor)=>sum+sponsor.monthlyValue,0)
+      // ANTECIPACAO DO PATROCINADOR CONTRA A DIVIDA.
+      //
+      // `applySponsorDebtContribution` e o campo `sponsorContributions` existiam
+      // no motor de divida desde sempre e NINGUEM os chamava: nenhum centavo de
+      // patrocinio jamais abateu o saldo devedor, e o contador ficava zerado
+      // para todo mundo. E o unico mecanismo do sistema de dividas que estava
+      // escrito e desligado.
+      //
+      // So acontece com o clube EM ATRASO — que e quando isso acontece na vida
+      // real: o patrocinador antecipa parte da cota para segurar o credor, e o
+      // dinheiro nao passa pelo caixa (por isso a receita entra ja liquida).
+      let aporte=0
+      if(debt?.enabled&&debt.missedPayments>0&&sponsorship>0){
+        aporte=Math.min(Math.round(sponsorship*.25),debt.principal)
+        if(aporte>0){
+          debt=applySponsorDebtContribution(debt,aporte)
+          addNotificationRef.current({type:"system",priority:"low",title:"Patrocinador antecipou cota",
+            message:`Com parcelas em atraso, o patrocinador direcionou R$ ${Math.round(aporte).toLocaleString("pt-BR")} da cota mensal direto para o saldo devedor. O valor não entra no caixa.`,href:"/financas"})
+        }
+      }
+      if(sponsorship-aporte>0)gameEngine.addClubRevenue(sponsorship-aporte);if(currentState.stadiumPitch?.monthlyMaintenance)gameEngine.spendClubFunds(currentState.stadiumPitch.monthlyMaintenance)
       // SÓCIO TORCEDOR. Entra no mesmo ciclo mensal do patrocínio. Existia um
       // `calculateFanRevenue` no game-engine sem nenhum chamador: nenhum real
       // pingava no caixa por sócio. Agora pinga, e o valor ACOMPANHA a carreira
