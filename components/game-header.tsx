@@ -102,8 +102,8 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const routeMeta = getRouteMeta(pathname)
   // Dirigindo uma selecao o menu perde os itens de clube (mercado, financas,
   // juniores...) e recebe os da selecao. Ver buildNavMenuItems.
-  const { isNational } = useManagingNational()
-  const navMenuItems = useMemo(() => buildNavMenuItems(isNational), [isNational])
+  const { isNational: emModoSelecao } = useManagingNational()
+  const navMenuItems = useMemo(() => buildNavMenuItems(emModoSelecao), [emModoSelecao])
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -114,9 +114,21 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const [showNavMenu, setShowNavMenu] = useState(false)
   const [showResignConfirm, setShowResignConfirm] = useState(false)
 
-  // Pedir demissao: sai do clube e volta ao menu (o progresso ja e salvo sozinho).
-  // Mesma acao do card do escritorio, agora acessivel de qualquer tela pelo menu [W].
+  /**
+   * Pedir demissão: sai do CLUBE e volta ao menu.
+   *
+   * ⚠️ ESTE BOTÃO VIVE NO CABEÇALHO, logo aparece em TODA tela — inclusive nas
+   * do modo seleção. Ele demitia do clube sem olhar o contexto: quem estava
+   * comandando a seleção e clicava aqui achando que largava a SELEÇÃO perdia o
+   * emprego no clube. Era o relato "pedi demissão da seleção e ele pediu
+   * demissão do time junto".
+   *
+   * No modo seleção o botão não aparece mais (ver `podePedirDemissao` abaixo):
+   * largar a seleção tem tela própria, em /selecao, onde a ação está descrita
+   * pelo nome certo e o contrato é encerrado junto.
+   */
   const handleResign = () => {
+    if (emModoSelecao) return
     clearJobOffers()
     setState({ selectedTeamShort: null })
     // Sem clube leva a Area do Treinador, onde as propostas por reputacao
@@ -616,17 +628,22 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
               })}
             </div>
 
-            {/* Pedir demissao — acao destrutiva, separada da grade de navegacao. */}
-            <div className="border-t border-white/[0.06] p-3">
-              <button
-                type="button"
-                onClick={() => { setShowNavMenu(false); setShowResignConfirm(true) }}
-                className="flex w-full items-center gap-3 border-l-2 border-l-red-400/60 bg-red-500/5 px-3 py-2.5 text-sm font-semibold text-red-300/90 transition-colors hover:bg-red-500/10 hover:text-red-200"
-              >
-                <LogOut className="h-4 w-4" />
-                Pedir demissao
-              </button>
-            </div>
+            {/* Pedir demissao — acao destrutiva, separada da grade de navegacao.
+                SOME no modo selecao: ali este botao demitia do CLUBE, e quem
+                clicava achando que largava a selecao perdia o emprego no time.
+                Largar a selecao tem tela propria, em /selecao. */}
+            {!emModoSelecao && (
+              <div className="border-t border-white/[0.06] p-3">
+                <button
+                  type="button"
+                  onClick={() => { setShowNavMenu(false); setShowResignConfirm(true) }}
+                  className="flex w-full items-center gap-3 border-l-2 border-l-red-400/60 bg-red-500/5 px-3 py-2.5 text-sm font-semibold text-red-300/90 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Pedir demissao
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
