@@ -31,6 +31,9 @@ interface PenaltyTakerModalProps {
 }
 
 // Preparacoes possiveis — sorteadas para a cobranca nunca soar igual.
+/** Segundos para o tecnico escolher o batedor antes de o auxiliar assumir. */
+const TEMPO_PARA_ESCOLHER = 10
+
 const BUILDUPS = [
   "Ajeita a bola no ponto. Respira fundo.",
   "Foi na paradinha...",
@@ -65,11 +68,44 @@ export function PenaltyTakerModal({
   const penaltyScore = (p: Player) => (p.shooting || 70) + (POS_PENALTY_BIAS[p.position] ?? 0)
   const sortedPlayers = [...players].sort((a, b) => penaltyScore(b) - penaltyScore(a))
 
-  const handleConfirm = () => {
-    if (!selectedPlayer) return
+  /**
+   * TEMPO PARA DECIDIR.
+   *
+   * Sem relógio, a partida ficava parada indefinidamente esperando o técnico
+   * escolher — e um pênalti, que é o lance mais tenso do jogo, virava uma pausa
+   * confortável para comparar finalização de onze atletas. O contador devolve a
+   * pressão do momento.
+   *
+   * Esgotado o prazo, o AUXILIAR bate: `onSelectPlayer(null)` deixa o motor
+   * escolher, que é o mesmo caminho de quem fecha o modal. Nunca trava.
+   */
+  const [segundos, setSegundos] = useState(TEMPO_PARA_ESCOLHER)
+  useEffect(() => {
+    // Enquanto narra, o relógio não corre: a decisão já foi tomada.
+    if (!isOpen || narration) return
+    if (segundos <= 0) return
+    const t = setTimeout(() => setSegundos(s => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [isOpen, narration, segundos])
 
+  // Reinicia a cada abertura — sem isto o segundo pênalti da partida já nasceria
+  // com o relógio zerado e bateria sozinho.
+  useEffect(() => {
+    if (isOpen) setSegundos(TEMPO_PARA_ESCOLHER)
+  }, [isOpen])
+
+  const baterRef = useRef<(jogador: Player | null) => void>(() => {})
+  useEffect(() => {
+    if (!isOpen || narration || segundos > 0) return
+    // Escolha do usuário vale mesmo no estouro: se ele já clicou num nome e só
+    // não confirmou, respeitamos a escolha em vez de sortear por cima dela.
+    baterRef.current(selectedPlayer)
+  }, [isOpen, narration, segundos, selectedPlayer])
+
+  /** Cobra com o atleta escolhido; `null` = deixa o motor decidir. */
+  const bater = (jogador: Player | null) => {
     // Cobra AGORA: o desfecho ja existe, a narracao apenas o revela aos poucos.
-    const res = onSelectPlayer(selectedPlayer)
+    const res = jogador ? onSelectPlayer(jogador) : onSelectPlayer(sortedPlayers[0])
     if (!res) {
       onFinish()
       return
@@ -91,6 +127,14 @@ export function PenaltyTakerModal({
       finale,
     ])
     setNarrationStep(0)
+  }
+  // O efeito do estouro precisa chamar `bater` sem entrar nas deps dele — a
+  // função é recriada a cada render e reiniciaria o relógio a cada quadro.
+  baterRef.current = bater
+
+  const handleConfirm = () => {
+    if (!selectedPlayer) return
+    bater(selectedPlayer)
   }
 
   // onFinish num REF — sem isto o modal TRAVA a partida inteira.
@@ -181,8 +225,26 @@ export function PenaltyTakerModal({
                 </motion.div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">PENALTI!</h2>
-                  <p className="text-white/60 text-sm">Escolha o batedor</p>
+                  <p className="text-white/60 text-sm">
+                    {narration ? "A bola está no ponto" : "Escolha o batedor"}
+                  </p>
                 </div>
+                {/* CONTADOR — vermelho e pulsando nos últimos 3 segundos, porque
+                    é aí que a decisão importa. Some durante a narração: o lance
+                    já foi cobrado e um relógio correndo ali só confundiria. */}
+                {!narration && (
+                  <div
+                    className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 text-lg font-black tabular-nums transition-colors",
+                      segundos <= 3
+                        ? "animate-pulse border-red-500 bg-red-500/15 text-red-400"
+                        : "border-white/20 bg-white/[0.06] text-white/80",
+                    )}
+                    aria-label={`${segundos} segundos para escolher`}
+                  >
+                    {segundos}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <TeamCrest team={team} size="lg" />
