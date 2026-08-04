@@ -905,6 +905,34 @@ export default function CompeticoesPage() {
   // Barcelona via "Copa do Brasil", "Paulistao" e "Libertadores".
   const countryComps = getCountryCompetitions(userTeam.divisao)
   const isBrazilian = countryComps.hasStateChampionship
+
+  /**
+   * SÓ AS COMPETIÇÕES QUE O CLUBE DISPUTA.
+   *
+   * As abas eram fixas: um clube da Série D via "Série B", e a aba continental
+   * aparecia mesmo marcada "NÃO CLASSIFICADO" — competições que ele não joga,
+   * ocupando espaço e sugerindo participação que não existe.
+   *
+   * A fonte é o CALENDÁRIO, não a configuração do país: o que o clube joga é,
+   * literalmente, aquilo que está agendado para ele.
+   */
+  const competicoesDoClube = useMemo(() => {
+    const minhas = seasonCalendar.fixtures.filter(f => f.isUserMatch)
+    const tipos = new Set(minhas.map(f => f.competitionType))
+    return {
+      liga: tipos.has("league"),
+      estadual: tipos.has("state"),
+      copa: tipos.has("cup"),
+      continental: tipos.has("continental"),
+      // Nomes reais, para a aba dizer o que o técnico vai de fato disputar.
+      // O fallback fica vazio de propósito: `continentalName` só é declarado
+      // adiante, e lê-lo aqui cairia na TDZ — a mesma armadilha que já derrubou
+      // a tela de partida ao vivo neste projeto. A aba só aparece quando há
+      // fixture, e havendo fixture o nome vem dela.
+      nomeDaCopa: minhas.find(f => f.competitionType === "cup")?.competition ?? countryComps.domesticCup,
+      nomeContinental: minhas.find(f => f.competitionType === "continental")?.competition ?? "Continental",
+    }
+  }, [seasonCalendar.fixtures, countryComps.domesticCup])
   // Champions ou Europa League? Depende da posicao do clube na liga.
   const continentalSpot = getContinentalSpot(userTeam.divisao, userPosition)
   // Rotulo unico da continental: usado no card, na aba e nos headers de dentro dela.
@@ -1120,22 +1148,19 @@ export default function CompeticoesPage() {
             >
               {getLeagueName(userTeam.curto)}
             </TabsTrigger>
-            {/* Serie B e Estadual so existem no Brasil. */}
-            {isBrazilian && (
+            {/* A aba "Serie B" saiu: ela aparecia para TODO clube brasileiro,
+                inclusive os que jogam a A, a C ou a D — uma competicao que o
+                tecnico nao disputa. As demais so aparecem se houver partida
+                agendada para o clube nelas. */}
+            {competicoesDoClube.copa && (
               <TabsTrigger
-                value="serie-b"
+                value="copa-do-brasil"
                 className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
               >
-                Serie B
+                {competicoesDoClube.nomeDaCopa}
               </TabsTrigger>
             )}
-            <TabsTrigger
-              value="copa-do-brasil"
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              {countryComps.domesticCup}
-            </TabsTrigger>
-            {isBrazilian && (
+            {competicoesDoClube.estadual && (
               <TabsTrigger
                 value="estadual"
                 className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
@@ -1143,12 +1168,14 @@ export default function CompeticoesPage() {
                 Estadual
               </TabsTrigger>
             )}
-            <TabsTrigger
-              value="libertadores"
-              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
-            >
-              {continentalName}
-            </TabsTrigger>
+            {competicoesDoClube.continental && (
+              <TabsTrigger
+                value="libertadores"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 px-4 py-2"
+              >
+                {competicoesDoClube.nomeContinental}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="brasileirao" className="mt-4">
