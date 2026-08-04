@@ -10,9 +10,10 @@
 // campo esta vazio; promover/dispensar seguem persistindo normalmente.
 
 import type { SquadPlayer } from "@/lib/save-system"
+import { nomeDeAtleta } from "@/lib/nomes-por-pais"
 
-const FIRST = ["Lucas","Gabriel","Pedro","Matheus","João","Rafael","Felipe","André","Bruno","Kauan","Thiago","Vitor","Diego","Kayke","Guilherme","Luan","Enzo","Miguel","Davi","Arthur"]
-const LAST = ["Silva","Santos","Oliveira","Lima","Costa","Ferreira","Ribeiro","Alves","Carvalho","Nascimento","Gomes","Martins","Pereira","Araújo","Souza","Rocha","Barbosa","Moraes","Cardoso","Pinto"]
+// As listas de nome saíram daqui para lib/nomes-por-pais: eram só brasileiras e
+// este gerador atende clube de qualquer país.
 const POSITIONS = ["GOL","ZAG","ZAG","LD","LE","VOL","VOL","MEI","MEI","PD","PE","ATA","ATA"]
 
 // mulberry32: RNG deterministico e estavel por seed.
@@ -58,6 +59,13 @@ export function generateYouthProspects(
   season: number,
   prestige = 60,
   count = 6,
+  /**
+   * País do clube. Sem ele a base do Ajax revelava "Matheus Nascimento": as
+   * listas de nome eram só brasileiras e o gerador não sabia de onde era o
+   * clube. Opcional para não quebrar chamador antigo — ausente, cai no conjunto
+   * neutro, que é melhor que assumir Brasil para o mundo inteiro.
+   */
+  pais?: string,
 ): SquadPlayer[] {
   const rnd = mulberry32(hash(`${teamShort}:${season}:base`))
   const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)]
@@ -121,7 +129,7 @@ export function generateYouthProspects(
       // Só o relógio não resolve: duas peneiras seguidas caem no mesmo
       // milissegundo (2 de 6 ainda colidiam). Ver `peneirasGeradas`.
       id: `youth_${teamShort}_${season}_${peneira}_${i}`,
-      name: `${pick(FIRST)} ${pick(LAST)}`,
+      name: nomeDeAtleta(pais, rnd),
       position,
       age,
       overall,
@@ -144,14 +152,16 @@ export function generateYouthProspects(
 }
 
 const YOUTH_MARKET_CLUBS = [
-  { key: "ajax", name: "Ajax", prestige: 84 },
-  { key: "benfica", name: "Benfica", prestige: 82 },
-  { key: "porto", name: "Porto", prestige: 80 },
-  { key: "palmeiras", name: "Palmeiras", prestige: 83 },
-  { key: "flamengo", name: "Flamengo", prestige: 84 },
-  { key: "santos", name: "Santos", prestige: 79 },
-  { key: "river", name: "River Plate", prestige: 81 },
-  { key: "nacional", name: "Nacional", prestige: 73 },
+  // O campo `pais` alimenta os nomes gerados (lib/nomes-por-pais): sem ele a
+  // base do Ajax revelava "Matheus Nascimento" e a do River, "Lucas Silva".
+  { key: "ajax", name: "Ajax", prestige: 84, pais: "Paises Baixos" },
+  { key: "benfica", name: "Benfica", prestige: 82, pais: "Portugal" },
+  { key: "porto", name: "Porto", prestige: 80, pais: "Portugal" },
+  { key: "palmeiras", name: "Palmeiras", prestige: 83, pais: "Brasil" },
+  { key: "flamengo", name: "Flamengo", prestige: 84, pais: "Brasil" },
+  { key: "santos", name: "Santos", prestige: 79, pais: "Brasil" },
+  { key: "river", name: "River Plate", prestige: 81, pais: "Argentina" },
+  { key: "nacional", name: "Nacional", prestige: 73, pais: "Uruguai" },
 ] as const
 
 /**
@@ -167,6 +177,7 @@ export function generateYouthMarketProspects(season: number, week: number, count
       season,
       club.prestige,
       1,
+      club.pais,
     )[0]
     // Clubes cobram mais do que o valor contábil da promessa; joias têm ágio.
     const premium = generated.potential >= 85 ? 1.65 : generated.potential >= 78 ? 1.3 : 1.05

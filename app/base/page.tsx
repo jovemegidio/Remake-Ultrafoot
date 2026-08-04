@@ -253,6 +253,7 @@ export default function BasePage() {
         s.season,
         team.prestigio ?? 60,
         quantidadeNova,
+        team.pais,
       )
       // QUEM SAIU NAO VOLTA. `generateYouthProspects` e deterministico
       // (semente = clube + temporada), entao ele devolve SEMPRE os mesmos
