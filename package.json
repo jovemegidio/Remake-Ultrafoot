@@ -1,11 +1,11 @@
 {
   "name": "ultrafoot-remake-iv",
-  "version": "1.0.255",
+  "version": "1.0.257",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build --webpack && node scripts/fix-next-export-rsc.mjs",
-    "build:tauri": "cross-env TAURI_BUILD=1 npm run build && node scripts/prune-export-music.mjs",
+    "build:tauri": "node scripts/build-tauri.mjs",
     "start": "next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",

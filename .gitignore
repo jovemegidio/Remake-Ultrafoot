@@ -168,3 +168,4 @@ data/faces-fm/paginas/
 # Relatorio de diagnostico do casamento de rostos: 2 MB, regenerado por
 # `node scripts/mapear-faces-fm.mjs casar` a qualquer momento.
 data/faces-fm/casamento-relatorio.json
+.imagens-reservadas/
