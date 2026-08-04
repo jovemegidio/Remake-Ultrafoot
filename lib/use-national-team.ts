@@ -56,8 +56,16 @@ function primeiraSemanaDoMes(mes: number): number {
 // A primeira janela FIFA relevante do ano-calendario do jogo e a de JUNHO (mes 5),
 // que e quando cai a Copa do Mundo / Copa America / Eurocopa.
 const PRIMEIRA_JANELA_FIFA = primeiraSemanaDoMes(5)   // ~semana 23 (04/06)
-// Abre cinco semanas antes: da tempo de negociar, recusar e receber outra.
-const OFFER_START_WEEK = Math.max(1, PRIMEIRA_JANELA_FIFA - 5)      // ~18 (30/04)
+/**
+ * Os convites abrem em MARÇO (pedido do produto), e não cinco semanas antes da
+ * janela de junho como era antes (~30/04).
+ *
+ * A diferença não é cosmética: com o convite chegando no fim de abril, o técnico
+ * tinha poucas semanas para negociar, recusar, receber outro e ainda montar a
+ * convocação antes da primeira janela. Em março ele decide com folga e chega ao
+ * torneio com o grupo escolhido por ele, que é o ponto de comandar uma seleção.
+ */
+const OFFER_START_WEEK = primeiraSemanaDoMes(2)       // ~semana 10 (05/03)
 // E esta na mesa antes de a janela comecar, nunca depois.
 const OFFER_GUARANTEE_WEEK = Math.max(1, PRIMEIRA_JANELA_FIFA - 1)  // ~22 (28/05)
 // Quantos convites por temporada, conforme o ANO do ciclo: em ano de Copa do
