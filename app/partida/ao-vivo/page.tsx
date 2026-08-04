@@ -67,6 +67,8 @@ import { RoundResultsModal } from "@/components/match/round-results-modal"
 import { PostMatchPress } from "@/components/match/post-match-press"
 import { EventAnimation, type AnimatableEvent } from "@/components/match/event-animations"
 import { PenaltyTakerModal } from "@/components/match/penalty-taker-modal"
+import { RivaisAoVivoPainel } from "@/components/match/rivais-ao-vivo-painel"
+import { jogosQueImportam } from "@/lib/rivais-ao-vivo"
 import { ShootoutModal } from "@/components/match/shootout-modal"
 import { MatchRadar } from "@/components/match/match-radar"
 import { selecionarEventoDoRadar } from "@/lib/radar-evento"
@@ -572,7 +574,7 @@ export default function PartidaAoVivoPage() {
   const { addNotification } = useNotifications()
   const { team: _userTeamHook } = useUserTeam()
   const userTeamId = _userTeamHook.curto
-  const { currentMatch, seasonCalendar, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana } = useGameManager()
+  const { currentMatch, seasonCalendar, currentStandings, registerUserMatchResult, advanceWeek, temPartidaPendenteNaSemana } = useGameManager()
   const { squadPlayers: enginePlayers, formation: savedFormation, teamTactics, tacticalPlayerPositions, processarDesempenhoPartida, squadCohesion } = useGameEngine()
   const bonusEntrosamento = Math.round(Math.max(0, ((squadCohesion ?? 60) - 60)) / 8)
   const engineMatchResults = useGameEngine(s => s.matchResults)
@@ -987,6 +989,30 @@ export default function PartidaAoVivoPage() {
       ? aggregateScore.home === aggregateScore.away
       : state.home.goals === state.away.goals
   )
+
+  /**
+   * Confrontos da MESMA rodada que decidem posição perto da minha.
+   *
+   * Só em partida de LIGA: copa e mata-mata não têm tabela para brigar por
+   * posição. E só da MESMA competição e semana — varrer a rodada inteira do
+   * calendário misturaria estadual com Brasileirão na mesma lista.
+   */
+  const jogosDoRival = useMemo(() => {
+    if (!currentMatch || currentMatch.competitionType !== "league") return []
+    if (!currentStandings?.length) return []
+    const daRodada = seasonCalendar.fixtures
+      .filter(f =>
+        f.competition === currentMatch.competition &&
+        f.week === currentMatch.week &&
+        !f.isUserMatch,
+      )
+      .map(f => ({
+        homeCurto: f.homeTeam.curto, awayCurto: f.awayTeam.curto,
+        homeNome: f.homeTeam.nome, awayNome: f.awayTeam.nome,
+      }))
+    if (!daRodada.length) return []
+    return jogosQueImportam(daRodada, currentStandings, userTeam.curto, currentStandings.length)
+  }, [currentMatch, seasonCalendar.fixtures, currentStandings, userTeam.curto])
 
   // Pulso do ULTIMO evento relevante para o radar REAGIR (chute -> bola voa pro
   // gol; escanteio -> aglomeracao na area). seq = indice do evento (monotonico),
@@ -2040,6 +2066,15 @@ export default function PartidaAoVivoPage() {
 
   {/* Coluna Direita - Escalação do Visitante (espelhada, ref. 16.png) */}
   <div className="hidden lg:flex flex-col justify-center gap-4 w-52">
+  {/* JOGOS QUE IMPORTAM. Fica na coluna já reservada a informação ao vivo, e
+      só em partida de LIGA: em copa não há tabela para brigar por posição. */}
+  {jogosDoRival.length > 0 && isMatchInProgress && (
+    <RivaisAoVivoPainel
+      jogos={jogosDoRival}
+      minuto={state.minute}
+      semente={`${currentMatch?.competition ?? ""}:${currentMatch?.week ?? 0}`}
+    />
+  )}
   {sideFoul && (
     <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-3 shadow-[0_12px_35px_rgba(0,0,0,.25)]" role="status" aria-live="polite">
       <div className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-300">
