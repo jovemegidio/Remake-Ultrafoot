@@ -14,6 +14,7 @@ import { getPlayersForTeam } from "@/lib/players-data"
 import { simulateWorldTransferWindow } from "@/lib/world-market"
 import { competitionsByLeague, type Competition } from "@/lib/international-competitions"
 import { pedidoDaSemana, montarPedido, agenteProcuraOutroClube, chanceDePreContrato, RELACAO_INICIAL } from "@/lib/pressao-do-agente"
+import { generateOffers } from "@/lib/sponsor-engine"
 import { caminhoDaCopa, passouNoConfronto, passouNoGrupo, resultadoDoConfronto, disputaDeterministica, type FaseCopa, type PlacarDaCopa } from "@/lib/cup-bracket"
 import { COMPETITION_REGULATIONS_2026, type CompetitionRegulation2026 } from "@/lib/competition-regulations-2026"
 // Propostas de outros clubes: o motor existia mas nunca era chamado (codigo morto).
@@ -2401,6 +2402,45 @@ export function useGameManager() {
           }
           setSaveState({ preContratos: restantes })
         }
+
+        // ── PATROCÍNIO: contratos VENCEM e o mercado volta a procurar o clube ──
+        //
+        // O motor (lib/sponsor-engine) sempre teve `evaluateContract`, `renew` e
+        // `contractEnd`, e NADA os consultava. As propostas eram geradas UMA vez
+        // — no novo jogo — e nunca mais: aceitas ou recusadas aquelas, nenhum
+        // patrocinador aparecia pelo resto da carreira, e os aceitos valiam para
+        // sempre. Uma receita eterna que não se renegocia não é patrocínio.
+        try {
+          const ativosAgora = currentState.activeSponsors ?? []
+          const expirados = ativosAgora.filter(s => s.contractEnd <= currentState.season)
+          const seguem = ativosAgora.filter(s => s.contractEnd > currentState.season)
+
+          // O diretor de marketing melhora o que chega — é o efeito passivo que
+          // a ficha dele promete ("negocia cláusulas mais justas") e que nunca
+          // tinha sido ligado às propostas.
+          const diretor = useGameEngine.getState().staffMembers?.find(s => s.role === "diretor_marketing")
+          const nivelMarketing = diretor ? Math.max(1, Math.min(5, Math.round(diretor.competence / 20))) : 1
+
+          const novas = generateOffers(userTeam?.prestigio ?? 50, nivelMarketing)
+          setSaveState({ activeSponsors: seguem, sponsorOffers: novas })
+
+          if (expirados.length > 0) {
+            addNotificationRef.current({
+              type: "system", priority: "high",
+              title: `${expirados.length} patrocínio${expirados.length === 1 ? "" : "s"} chegou ao fim`,
+              message: `${expirados.map(s => s.name).join(", ")}. `
+                + "A receita mensal caiu — há novas propostas na mesa para repor.",
+              href: "/mensagens",
+            })
+          } else if (novas.length > 0) {
+            addNotificationRef.current({
+              type: "system", priority: "medium",
+              title: `${novas.length} proposta${novas.length === 1 ? "" : "s"} de patrocínio`,
+              message: "Empresas procuraram o clube para a nova temporada. Dá para negociar valor e duração.",
+              href: "/mensagens",
+            })
+          }
+        } catch { /* patrocinio nunca pode travar a virada de temporada */ }
 
         const segurados = vencidos.filter(p => !idsQueSairam.has(p.id))
         for (const p of segurados) {
