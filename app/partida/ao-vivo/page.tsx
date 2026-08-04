@@ -877,7 +877,7 @@ export default function PartidaAoVivoPage() {
       setAwaySquad(away.starters)
       setAwayBench(away.bench)
     }
-  }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome, matchCtx.youth, savedGame.youthPlayers, savedGame.youthCareer?.startingPlayerIds, savedFormation])
+  }, [enginePlayers, homeTeam.curto, awayTeam.curto, isHome, matchCtx.youth, matchCtx.national, selecaoConvocada, savedGame.youthPlayers, savedGame.youthCareer?.startingPlayerIds, savedFormation])
 
   const toSquadPlayer = (p: MatchPlayer) => ({
     nome: p.name,
@@ -927,7 +927,22 @@ export default function PartidaAoVivoPage() {
   // prestigio. Aqui saem dos atributos do XI titular, por setor, mais a tatica
   // e um modificador de FORMA e MORAL (que o motor ignorava por completo).
   const userForces = useMemo(() => {
-    const xi = enginePlayers.filter(p => p.isStarter && !p.injury)
+    // NA SELEÇÃO A FORÇA É A DA CONVOCAÇÃO. `enginePlayers` é o plantel do
+    // clube: sem isto, a força do time em campo numa Copa do Mundo era a do seu
+    // clube — o placar sairia do elenco errado mesmo com os nomes certos na
+    // escalação. Forma e moral não existem para o convocado (são do vínculo com
+    // o clube), então ficam nos neutros e o modificador zera.
+    const xi = matchCtx.national && selecaoConvocada.length > 0
+      ? selecaoConvocada.slice(0, 11).map(j => ({
+          position: j.pos,
+          overall: j.base,
+          isStarter: true,
+          injury: null,
+          form: 70,
+          morale: "Normal",
+          moralePoints: 55,
+        } as unknown as EnginePlayer))
+      : enginePlayers.filter(p => p.isStarter && !p.injury)
     const setor = (posicoes: string[], quantos: number) => {
       const g = xi.filter(p => posicoes.includes(p.position)).sort((a, b) => b.overall - a.overall).slice(0, quantos)
       return g.length ? g.reduce((s, p) => s + p.overall, 0) / g.length : 65
@@ -949,7 +964,7 @@ export default function PartidaAoVivoPage() {
       defense: def + tacticalForces.defense + mod,
       midfield: mid + tacticalForces.midfield + mod,
     }
-  }, [enginePlayers, tacticalForces, userSide, homeTeam.prestigio, awayTeam.prestigio])
+  }, [enginePlayers, selecaoConvocada, matchCtx.national, tacticalForces, userSide, homeTeam.prestigio, awayTeam.prestigio])
 
   // Config da simulacao
   const config = useMemo(() => ({
@@ -1084,9 +1099,12 @@ export default function PartidaAoVivoPage() {
         homeCurto: f.homeTeam.curto, awayCurto: f.awayTeam.curto,
         homeNome: f.homeTeam.nome, awayNome: f.awayTeam.nome,
       }))
+    // Em jogo de SELEÇÃO nao ha briga por G4 nem por titulo do seu
+    // campeonato para acompanhar: os rivais sao os do CLUBE.
+    if (matchCtx.national) return []
     if (!daRodada.length) return []
     return jogosQueImportam(daRodada, currentStandings, userTeam.curto, currentStandings.length)
-  }, [currentMatch, seasonCalendar.fixtures, currentStandings, userTeam.curto])
+  }, [currentMatch, seasonCalendar.fixtures, currentStandings, userTeam.curto, matchCtx.national])
 
   // Pulso do ULTIMO evento relevante para o radar REAGIR (chute -> bola voa pro
   // gol; escanteio -> aglomeracao na area). seq = indice do evento (monotonico),
@@ -1420,7 +1438,11 @@ export default function PartidaAoVivoPage() {
             golsDoAdversario: golsContra,
             venceuNosPenaltis: state.shootout ? penaltisPro > penaltisContra : undefined,
           })
-          useGameEngine.getState().registrarMinutosJuntos(70)
+          // SEM `registrarMinutosJuntos` AQUI. Ele credita minutos em campo
+          // juntos ao ELENCO DO CLUBE, e quem jogou foi a convocação — o clube
+          // ganharia entrosamento de uma partida que os jogadores dele nunca
+          // disputaram. O amistoso de clube (abaixo) credita porque lá quem
+          // entra em campo é o time do usuário.
           clearMatchContext()
         } else if (matchCtx.friendly) {
           // AMISTOSO DO CALENDARIO (1.0.223): o jogo-treino marcado na Area do
