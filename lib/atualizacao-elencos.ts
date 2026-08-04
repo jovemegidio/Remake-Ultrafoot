@@ -251,9 +251,32 @@ export function canalTemNovidade(servidor: AtualizacaoElencos | null, canal: "el
 // Atualizações faz o jogo voltar a enxergar o escudo/uniforme do build sem
 // apagar nada do que ja foi baixado — religar devolve tudo na hora.
 
+/**
+ * A cópia local desta URL, se houver — senão a própria URL.
+ *
+ * ⚠️ NO APP INSTALADO ISTO NÃO É OTIMIZAÇÃO, É O QUE FAZ A IMAGEM EXISTIR. A
+ * webview do Tauri não alcança a VPS, então `<img src="https://…">` do manifesto
+ * nunca pinta; só o `data:` pinta. Como a chave do mapa É a url (e a url termina
+ * no sha), achar aqui já prova que a cópia é desta imagem.
+ */
+function comCopiaLocal(url: string | undefined): string | undefined {
+  if (!url || url.startsWith("data:")) return url
+  return imagensGuardadas().porUrl.get(url) ?? url
+}
+
 export function timeDoServidor(fileKey: string): TeamOverride | null {
   if (!canalAtivo("times")) return null
-  return getAtualizacao().times?.[fileKey] ?? null
+  const bruto = getAtualizacao().times?.[fileKey]
+  if (!bruto) return null
+  // Troca escudo E uniforme pela cópia local antes de entregar. É por aqui que
+  // `getCamisaUrl` (lib/teams-data) recebe o uniforme publicado — sem a troca
+  // ele receberia a url remota e a camisa ficaria invisível no app.
+  if (!bruto.logoUrl && !bruto.kits) return bruto
+  const kits = bruto.kits
+    ? Object.fromEntries(Object.entries(bruto.kits).map(([variante, k]) =>
+        [variante, k ? { ...k, imageUrl: comCopiaLocal(k.imageUrl) } : k]))
+    : undefined
+  return { ...bruto, logoUrl: comCopiaLocal(bruto.logoUrl), ...(kits ? { kits } : {}) } as TeamOverride
 }
 
 /**
@@ -272,11 +295,7 @@ export function timeDoServidor(fileKey: string): TeamOverride | null {
  */
 export function escudoDoServidor(fileKey: string): string | null {
   if (!canalAtivo("times")) return null
-  const url = getAtualizacao().times?.[fileKey]?.logoUrl
-  if (!url) return null
-  if (url.startsWith("data:")) return url
-  const copia = imagensGuardadas().porChave.get(chaveEscudo(fileKey))
-  return copia?.u === url ? copia.d : url
+  return comCopiaLocal(getAtualizacao().times?.[fileKey]?.logoUrl) ?? null
 }
 
 export function jogadorDoServidor(chave: string): PlayerOverride | null {
@@ -445,9 +464,10 @@ export function fotoDoServidor(nome: string, fileKey?: string): string | null {
 // mundo voltaria a depender da internet até o próximo pacote.
 const CHAVE_IMAGENS = "ultrafoot:atualizacao-fotos"
 
-/** Prefixo do escudo dentro da cópia. Atleta é `fileKey__nome`; clube não tem
- *  `__`, então os dois espaços de chave não se encostam. */
+/** Prefixos dentro da cópia. Atleta é `fileKey__nome`; clube não tem `__`, então
+ *  os espaços de chave não se encostam. */
 const chaveEscudo = (fileKey: string) => `escudo__${fileKey}`
+const chaveKit = (fileKey: string, variante: string) => `kit__${fileKey}__${variante}`
 
 /**
  * ⚠️ A CÓPIA LOCAL PRECISA SABER DE QUAL FOTO ELA É CÓPIA.
@@ -502,7 +522,7 @@ function tetoDeImagens(): number {
  * vem depois não fica "com menos" — fica sem nada, porque o laço para no teto.
  * Cada tipo tem metade e um não pode invadir o do outro.
  */
-const FATIA = { escudo: 0.5, foto: 0.5 }
+const FATIA = { escudo: 0.35, kit: 0.35, foto: 0.3 }
 
 interface CacheImagens { porChave: Map<string, ImagemGuardada>; porUrl: Map<string, string> }
 let cacheImagens: { bruto: string; dados: CacheImagens } | null = null
@@ -557,18 +577,22 @@ export async function guardarFotosLocalmente(
   // Chaveado por `fileKey__nome`, o mesmo do manifesto: guardar por nome jogava
   // fora o clube e fazia xarás de clubes diferentes dividirem uma cópia só.
   const escudos = new Map<string, string>()
+  const kits = new Map<string, string>()
   const fotos = new Map<string, string>()
   for (const [fileKey, time] of Object.entries(pacote.times ?? {})) {
     const url = time?.logoUrl
-    if (!url || url.startsWith("data:")) continue
-    escudos.set(chaveEscudo(fileKey), url)
+    if (url && !url.startsWith("data:")) escudos.set(chaveEscudo(fileKey), url)
+    for (const [variante, k] of Object.entries(time?.kits ?? {})) {
+      const img = k?.imageUrl
+      if (img && !img.startsWith("data:")) kits.set(chaveKit(fileKey, variante), img)
+    }
   }
   for (const [chave, jogador] of Object.entries(pacote.jogadores ?? {})) {
     const url = jogador.faceDataUrl
     if (!url || url.startsWith("data:")) continue
     fotos.set(chave, url)
   }
-  const alvos = new Map([...escudos, ...fotos])
+  const alvos = new Map([...escudos, ...kits, ...fotos])
   if (alvos.size === 0) return 0
 
   const { fetchDoAmbiente } = await import("@/lib/buscar-json")
@@ -588,15 +612,18 @@ export async function guardarFotosLocalmente(
   let feitas = 0
   let novas = 0
 
-  // Quanto do que JÁ está guardado pertence a cada tipo: sem isto o orçamento do
-  // escudo seria gasto de novo a cada pacote e o do retrato nunca sobraria.
-  const gastoDe = (ehEscudo: boolean) =>
+  // Quanto do que JÁ está guardado pertence a cada tipo: sem isto o orçamento de
+  // um tipo seria gasto de novo a cada pacote e o dos outros nunca sobraria.
+  const tipoDa = (chave: string) =>
+    chave.startsWith("escudo__") ? "escudo" : chave.startsWith("kit__") ? "kit" : "foto"
+  const gastoDe = (tipo: string) =>
     Object.entries(guardadas)
-      .filter(([c]) => c.startsWith("escudo__") === ehEscudo)
+      .filter(([c]) => tipoDa(c) === tipo)
       .reduce((s, [c, v]) => s + v.d.length + v.u.length + c.length + 16, 0)
 
-  async function baixar(lista: Map<string, string>, limite: number) {
-    let bytes = gastoDe(lista === escudos)
+  async function baixar(tipo: keyof typeof FATIA, lista: Map<string, string>) {
+    const limite = teto * FATIA[tipo]
+    let bytes = gastoDe(tipo)
     for (const [chave, url] of lista) {
       feitas++
       aoProgredir?.(feitas, alvos.size)
@@ -615,8 +642,9 @@ export async function guardarFotosLocalmente(
     }
   }
 
-  await baixar(escudos, teto * FATIA.escudo)
-  await baixar(fotos, teto * FATIA.foto)
+  await baixar("escudo", escudos)
+  await baixar("kit", kits)
+  await baixar("foto", fotos)
 
   // Grava também quando só houve descarte: a limpeza do formato antigo e das
   // sobras de elenco anterior precisa persistir mesmo que nenhuma imagem nova
