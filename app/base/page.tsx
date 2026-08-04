@@ -144,6 +144,12 @@ export default function BasePage() {
   const caixaDoMotor = useGameEngine(st => st.balance)
   const gastarDoCaixa = useGameEngine(st => st.spendClubFunds)
   const semanaAtual = useGameEngine(st => st.currentWeek)
+  // SEMANA DA TEMPORADA para a janela de transferencias. O contador do motor
+  // (currentWeek) e absoluto e nunca zera; a temporada zera todo ano e acaba
+  // na ultima rodada do calendario, quase nunca na 52a semana. Usar o contador
+  // absoluto fazia a janela abrir e fechar em datas que nao existem no
+  // calendario que o jogador ve.
+  const semanaDaTemporada = state.week ?? 0
   const capacidade = capacidadeDaBase(nivelAcademia)
   const vagas = vagasNaBase(youth.length, nivelAcademia)
   // BUSCA COM FILTROS, no modelo da central de transferencias.
@@ -351,7 +357,7 @@ export default function BasePage() {
   // abre: o jovem sai da base e o valor entra no caixa (pedido).
   useEffect(() => {
     if (!hydrated) return
-    if (!isTransferWindowOpen(semanaAtual)) return
+    if (!isTransferWindowOpen(semanaDaTemporada)) return
     const aVender = youth.filter(p => p.vendaPendente)
     if (aVender.length === 0) return
     // Grava a SAIDA primeiro (ver aplicarNaBase): o `setState` sozinho so
@@ -581,7 +587,7 @@ export default function BasePage() {
     }
     const clubes = ["Benfica", "Ajax", "Porto", "Shakhtar", "Red Bull Salzburg", "Palmeiras", "Flamengo"]
     const p = propostaPorJovem(j, clubes[Math.floor(Math.random() * clubes.length)])
-    const janelaAberta = isTransferWindowOpen(semanaAtual)
+    const janelaAberta = isTransferWindowOpen(semanaDaTemporada)
     const aviso = janelaAberta
       ? ""
       : "\n\nA janela está FECHADA: a venda fica acertada e o jovem sai da base assim que a janela abrir."

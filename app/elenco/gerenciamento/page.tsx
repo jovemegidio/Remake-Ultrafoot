@@ -315,6 +315,12 @@ export default function ElencoPage() {
   const engineRetirePlayer = useGameEngine(s => s.retirePlayer)
   const engineBalance = useGameEngine(s => s.balance)
   const engineCurrentWeek = useGameEngine(s => s.currentWeek)
+  // SEMANA DA TEMPORADA para a janela de transferencias. O contador do motor
+  // (currentWeek) e absoluto e nunca zera; a temporada zera todo ano e acaba
+  // na ultima rodada do calendario, quase nunca na 52a semana. Usar o contador
+  // absoluto fazia a janela abrir e fechar em datas que nao existem no
+  // calendario que o jogador ve.
+  const semanaDaTemporada = state.week ?? 0
   // SITUACAO CONTRATUAL por nome. O elenco desta tela vem do hook de UI e nao
   // carrega contrato; o contrato esta no motor. Sem isto, atleta de contrato
   // VENCIDO ficava visualmente igual aos demais e o tecnico so descobria quando
@@ -2749,7 +2755,7 @@ export default function ElencoPage() {
                   // base ja respeitava a janela e o elenco nao. Era por essa
                   // porta que o garoto promovido virava dinheiro em qualquer
                   // semana do ano.
-                  if (!isTransferWindowOpen(engineCurrentWeek)) {
+                  if (!isTransferWindowOpen(semanaDaTemporada)) {
                     await avisarNoJogo({
                       titulo: "A janela de transferências está fechada",
                       mensagem: `${selectedPlayer.name} só pode ser negociado quando ela reabrir.`,

@@ -2068,7 +2068,23 @@ interface GameEngineState {
   receberPorJovem: (valor: number, vendaId?: string) => void
   ajustarMoralJogador: (playerId: number, degraus: number) => void
   /** "wage_budget" = recusado pela diretoria por estourar o teto salarial. */
-  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
+  /**
+   * `janelaAberta` vem de FORA de proposito. O motor so conhece
+   * `currentWeek`, que e um contador ABSOLUTO (nunca zera), enquanto a
+   * temporada zera a semana todo ano e nao tem 52 semanas — ela termina na
+   * ultima rodada do calendario. As duas contas divergiam mais a cada
+   * temporada, e era por isso que contratar com a janela aberta ainda deixava o
+   * reforco esperando. Quem chama sabe a semana da TEMPORADA; o motor, nao.
+   */
+  buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean, janelaAberta?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
+  /**
+   * Desiste de um reforco que ainda espera a janela e DEVOLVE o dinheiro.
+   *
+   * O valor sai do caixa na hora do acordo, mas nao havia como desfazer: o
+   * atleta ficava presos na fila e o dinheiro, gasto. Devolve a taxa paga e
+   * tira o salario dele da folha.
+   */
+  cancelarChegadaPendente: (id: string) => boolean
   payClubDebt: (amount: number) => number
   spendClubFunds: (amount: number) => boolean
   addClubRevenue: (amount: number) => void
@@ -2079,7 +2095,7 @@ interface GameEngineState {
    * Sem ela a taxa negociada era apenas um número na tela: o empréstimo não
    * tirava um centavo do caixa, por mais caro que fosse o acordo.
    */
-  loanPlayer: (player: Player, weeks: number, salary: number, fee?: number) => "joined" | "pending" | "failed" | "no_cash"
+  loanPlayer: (player: Player, weeks: number, salary: number, fee?: number, janelaAberta?: boolean) => "joined" | "pending" | "failed" | "no_cash"
   hireScout: (scout: Scout) => void
   startScoutSearch: (scoutId: number, region: string, weeksToComplete?: number, searchCost?: number, criteria?: ScoutCriteria | null) => void
   stopScoutSearch: (scoutId: number) => void
@@ -3318,6 +3334,15 @@ export const useGameEngine = create<GameEngineState>()(
        * uma unica vez por carreira.
        */
       limparClubeAtual: () => {
+        // ESTORNO DAS CHEGADAS PENDENTES. A fila era simplesmente descartada, e
+        // o dinheiro ja debitado sumia junto: quem acertou um reforco fora da
+        // janela e depois trocou de clube pagava por um atleta que nunca chegou.
+        const pendentes = get().pendingIncomingTransfers
+        const aEstornar = pendentes.reduce((soma, t) => soma + t.fee, 0)
+        set(s => ({
+          balance: s.balance + aEstornar,
+          transferBudget: s.transferBudget + aEstornar,
+        }))
         set({
           myTeamShort: "",
           squadPlayers: [],
@@ -3596,7 +3621,7 @@ export const useGameEngine = create<GameEngineState>()(
         return saindo.map(p => p.name)
       },
 
-      buyPlayer: (player, fee, isFreeAgent = false) => {
+      buyPlayer: (player, fee, isFreeAgent = false, janelaAberta) => {
         const state = get()
         if (state.balance < fee) return "failed"
         // Teto salarial: a tela de Finanças já avisava "limite salarial excedido",
@@ -3624,7 +3649,10 @@ export const useGameEngine = create<GameEngineState>()(
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
         }
         
-        const joinsNow = isFreeAgent || isTransferWindowOpen(state.currentWeek)
+        // JANELA ABERTA = REFORCO NA HORA. `janelaAberta` chega de quem conhece a
+        // semana da TEMPORADA; `currentWeek` e o contador absoluto e so serve de
+        // ultimo recurso para chamadas antigas que ainda nao passam o parametro.
+        const joinsNow = isFreeAgent || (janelaAberta ?? isTransferWindowOpen(state.currentWeek))
         set((s) => ({
           squadPlayers: joinsNow ? [...s.squadPlayers, newPlayer] : s.squadPlayers,
           pendingIncomingTransfers: joinsNow ? s.pendingIncomingTransfers : [...s.pendingIncomingTransfers, {
@@ -3640,6 +3668,22 @@ export const useGameEngine = create<GameEngineState>()(
           weeklyExpenses: s.weeklyExpenses + (player.contract?.salary || 50000)
         }))
         return joinsNow ? "joined" : "pending"
+      },
+
+      cancelarChegadaPendente: (id) => {
+        const alvo = get().pendingIncomingTransfers.find(t => t.id === id)
+        if (!alvo) return false
+        set(s => ({
+          pendingIncomingTransfers: s.pendingIncomingTransfers.filter(t => t.id !== id),
+          // ESTORNO. A taxa saiu do caixa quando o acordo foi fechado; desistindo,
+          // ela volta — inclusive para o orcamento de transferencias, que foi
+          // debitado junto.
+          balance: s.balance + alvo.fee,
+          transferBudget: s.transferBudget + alvo.fee,
+          // E o salario dele sai da folha: ele nunca chegou a vestir a camisa.
+          weeklyExpenses: Math.max(0, s.weeklyExpenses - (alvo.salary ?? alvo.player.contract?.salary ?? 50000)),
+        }))
+        return true
       },
 
       // ⚠️ GASTO AVULSO NAO ENTRA NA DESPESA SEMANAL.
@@ -3679,7 +3723,7 @@ export const useGameEngine = create<GameEngineState>()(
         if (value > 0) set(state => ({ balance: state.balance - value }))
       },
       
-      loanPlayer: (player, weeks, salary, fee = 0) => {
+      loanPlayer: (player, weeks, salary, fee = 0, janelaAberta) => {
         const state = get()
         const normalizedName = player.name.trim().toLocaleLowerCase("pt-BR")
         if (state.squadPlayers.some(p => p.name.trim().toLocaleLowerCase("pt-BR") === normalizedName) || state.pendingIncomingTransfers.some(p => p.player.name.trim().toLocaleLowerCase("pt-BR") === normalizedName)) return "failed"
@@ -3699,7 +3743,8 @@ export const useGameEngine = create<GameEngineState>()(
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
         }
         
-        const joinsNow = isTransferWindowOpen(state.currentWeek)
+        // Mesma regra da compra: a semana da TEMPORADA manda, nao o contador absoluto.
+        const joinsNow = janelaAberta ?? isTransferWindowOpen(state.currentWeek)
         set((s) => ({
           balance: s.balance - taxa,
           squadPlayers: joinsNow ? [...s.squadPlayers, loanedPlayer] : s.squadPlayers,

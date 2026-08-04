@@ -55,6 +55,7 @@ import {
   type Scout,
   type TransferOffer,
   nextTransferWindowWeek,
+  isTransferWindowOpen,
   absoluteWeek,
 } from "@/lib/game-engine"
 import { useDiscordActivity } from "@/hooks/use-discord-rpc"
@@ -1818,8 +1819,32 @@ export default function MercadoPage() {
                           </p>
                         </div>
                         <p className="shrink-0 text-xs font-medium text-[var(--brand)]">
-                          inscreve na semana {nextTransferWindowWeek(gameEngine.currentWeek)}
+                          inscreve na semana {nextTransferWindowWeek(careerState.week ?? 0)}
                         </p>
+                        {/* DESISTIR COM ESTORNO. A taxa sai do caixa na hora do
+                            acordo, mas nao havia como voltar atras: o reforco
+                            ficava preso na fila e o dinheiro, gasto. */}
+                        <button
+                          onClick={async () => {
+                            const confirmado = await confirmarNoJogo({
+                              titulo: `Desistir de ${c.player?.name}?`,
+                              mensagem:
+                                `O acordo e desfeito e ${formatCurrency(c.fee ?? 0)} voltam para o caixa. ` +
+                                `Ele deixa de contar na folha salarial.`,
+                              confirmar: "Desistir e receber de volta",
+                              cancelar: "Manter o acordo",
+                            })
+                            if (!confirmado) return
+                            if (gameEngine.cancelarChegadaPendente(c.id)) {
+                              setMarketNotice(
+                                `Acordo por ${c.player?.name} desfeito. ${formatCurrency(c.fee ?? 0)} de volta no caixa.`,
+                              )
+                            }
+                          }}
+                          className="shrink-0 rounded-lg border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white/60 transition-colors hover:border-red-400/40 hover:bg-red-400/10 hover:text-red-300"
+                        >
+                          Desistir
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -2026,6 +2051,13 @@ export default function MercadoPage() {
         }
         onConfirm={(fee, salarioSemanal, loan) => {
           if (!selectedPlayer) return
+          // JANELA: pela semana da TEMPORADA, nunca pelo contador absoluto do
+          // motor. O motor conta semanas desde o inicio da carreira e nao zera;
+          // a temporada zera todo ano e nem sempre tem 52 semanas — ela acaba na
+          // ultima rodada do calendario. As duas contas iam se afastando a cada
+          // temporada, e era por isso que o reforco contratado com a janela
+          // ABERTA ainda caia na fila de espera.
+          const janelaAberta = isTransferWindowOpen(careerState.week ?? 0)
           const divisaoUsuario = String(careerState.divisionOverride ?? userTeam.divisao ?? "serie_a")
           // Contrato de 3 anos a partir de AGORA, em semana absoluta.
           const fimContrato = absoluteWeek(gameEngine.currentSeason, gameEngine.currentWeek) + 52 * 3
@@ -2035,7 +2067,7 @@ export default function MercadoPage() {
             // e `taxa/26` de salário — a negociação de empréstimo não chegava aqui.
             const semanas = loan?.semanas ?? 26
             const salarioDoEmprestimo = loan?.salarioSemanal ?? Math.round(fee / Math.max(1, semanas))
-            const result = gameEngine.loanPlayer(enginePlayer, semanas, salarioDoEmprestimo, loan?.taxa ?? fee)
+            const result = gameEngine.loanPlayer(enginePlayer, semanas, salarioDoEmprestimo, loan?.taxa ?? fee, janelaAberta)
             if (result === "no_cash") {
               setMarketNotice(`Caixa insuficiente para a taxa de ${formatCurrency(loan?.taxa ?? fee)} do empréstimo.`)
               setActiveTab("enviadas")
@@ -2079,7 +2111,7 @@ export default function MercadoPage() {
               setMarketNotice(`Contratação FINANCIADA: o clube tomou ${formatCurrency(falta)} emprestado (parcela de ${formatCurrency(novaDivida.monthlyPayment)}/mês). Atrasar parcelas congela o mercado.`)
             }
             const isFreeAgent = !selectedPlayer.team
-            const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent)
+            const transferResult = gameEngine.buyPlayer(enginePlayer, fee, isFreeAgent, janelaAberta)
             if (transferResult === "wage_budget") {
               setMarketNotice(
                 "A diretoria vetou: o salário deste atleta estoura o teto da folha. Libere espaço vendendo, rescindindo ou renegociando contratos.",

@@ -193,9 +193,48 @@
   ],
   "changelog": [
     {
-      "version": "1.0.255",
+      "version": "1.0.257",
       "date": "2026-08-04",
       "latest": true,
+      "title": "Telas rapidas, Data FIFA de verdade, historico do treinador e selecao jogada",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "AS TELAS ABRIAM DEVAGAR (mercado, elenco, praticamente todas). O calendario inteiro da temporada — estadual, liga, copas e continental — era remontado do zero a CADA navegacao, e mais de uma vez na mesma tela. Agora e calculado uma vez e reaproveitado."
+        },
+        {
+          "type": "fixed",
+          "text": "DATA FIFA: o escritorio dizia que o campeonato estava pausado e, logo abaixo, ainda oferecia \"Jogar Partida\" e \"Simular\". Nao oferece mais — a janela e para treinar e ajustar o elenco."
+        },
+        {
+          "type": "added",
+          "text": "CENTRAL DA DATA FIFA: nas janelas que nao sao Copa do Mundo (marco, setembro, outubro e novembro) da para acompanhar Eliminatorias, Liga das Nacoes e amistosos das seis confederacoes enquanto os dias passam. Quem nao quiser acompanhar pula a janela direto."
+        },
+        {
+          "type": "added",
+          "text": "HISTORICO DO TREINADOR temporada a temporada na Area do Treinador: competicao, clube, posicao, pontos, V-E-D, gols e o desfecho de cada ano (campeao, acesso ou rebaixamento)."
+        },
+        {
+          "type": "added",
+          "text": "PARTIDA DA SELECAO COMO A DO CLUBE: pre-jogo, partida ao vivo, coletiva de imprensa e volta ao escritorio da selecao — com disputa de penaltis no mata-mata. Antes um clique resolvia o jogo e mostrava o placar pronto. Quem preferir, \"Simular rodada\" continua ali."
+        },
+        {
+          "type": "fixed",
+          "text": "JANELA ABERTA TRAZ O REFORCO NA HORA. A janela era calculada por um contador que conta as semanas desde o inicio da carreira e nunca zera, enquanto a temporada zera todo ano e acaba na ultima rodada — quase nunca na 52a semana. As duas contas se afastavam a cada temporada, e o reforco contratado com a janela aberta caia na fila de espera. Vale para compra, emprestimo, venda e base."
+        },
+        {
+          "type": "added",
+          "text": "DESISTIR DE UM REFORCO ACERTADO, COM ESTORNO. Quem fecha fora da janela ja paga na hora e o atleta fica na fila. Nao havia como voltar atras: o dinheiro estava gasto. Agora da para desistir na aba Enviadas e o valor volta integral para o caixa, saindo tambem da folha salarial."
+        },
+        {
+          "type": "fixed",
+          "text": "TROCAR DE CLUBE APAGAVA os reforcos ainda na fila e o dinheiro ja pago sumia junto. Agora o valor e estornado antes de a fila ser descartada."
+        }
+      ]
+    },
+    {
+      "version": "1.0.255",
+      "date": "2026-08-04",
       "title": "Agentes que ligam, patrocinio que vence e fim de contrato que doi",
       "changes": [
         {
@@ -263,7 +302,6 @@
     {
       "version": "1.0.252",
       "date": "2026-08-03",
-      "latest": false,
       "title": "Penaltis decidem o mata-mata, e a escalacao para de voltar sozinha",
       "changes": [
         {
@@ -303,7 +341,6 @@
     {
       "version": "1.0.251",
       "date": "2026-08-03",
-      "latest": false,
       "title": "Os escudos novos agora aparecem mesmo",
       "changes": [
         {
@@ -319,7 +356,6 @@
     {
       "version": "1.0.250",
       "date": "2026-08-03",
-      "latest": false,
       "title": "Escudos licenciados chegam sem reinstalar o jogo",
       "changes": [
         {
@@ -343,7 +379,6 @@
     {
       "version": "1.0.249",
       "date": "2026-08-03",
-      "latest": false,
       "title": "Fotos por clube, carreira do treinador e finanças realistas",
       "changes": [
         {
@@ -375,7 +410,6 @@
     {
       "version": "1.0.248",
       "date": "2026-08-03",
-      "latest": false,
       "title": "O salario de quem sobe da base agora respeita a divisao do clube",
       "changes": [
         {
@@ -391,7 +425,6 @@
     {
       "version": "1.0.247",
       "date": "2026-08-03",
-      "latest": false,
       "title": "Escolher a liga voltou a permitir escolher o time",
       "changes": [
         {
@@ -403,7 +436,6 @@
     {
       "version": "1.0.246",
       "date": "2026-08-02",
-      "latest": false,
       "title": "Altura, peso e pe de verdade — e o rosto certo em cada atleta",
       "changes": [
         {
@@ -431,7 +463,6 @@
     {
       "version": "1.0.245",
       "date": "2026-08-02",
-      "latest": false,
       "title": "Vender na base entra no caixa, e o jogo minimiza sem Alt+Tab",
       "changes": [
         {
@@ -485,8 +516,7 @@
           "type": "fixed",
           "text": "NOTICIAS SEM INTERNET. Offline o jogo nao fica mais esperando por manchetes que nao vao chegar, e o campo de noticias encolhe para o tamanho do que ele tem de fato: as noticias da sua propria carreira, geradas a partir dos resultados, da tabela, da artilharia e das lesoes."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.243",
@@ -497,8 +527,7 @@
           "type": "fixed",
           "text": "AS FOTOS NAO APARECIAM NO APLICATIVO INSTALADO. As imagens estavam instaladas no computador e o jogo sabia o endereco de cada uma, mas pedia por um caminho que nao existe dentro do aplicativo — as fotos ficam guardadas noutro lugar, alcancavel so por um endereco interno. O pedido falhava em silencio e o atleta caia nas iniciais. Agora, quando o primeiro endereco falha, o jogo tenta o outro automaticamente. Vale para os rostos do pacote, para as fotos que voce licencia no editor e tambem no navegador, onde o problema e o inverso."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.242",
@@ -521,8 +550,7 @@
           "type": "fixed",
           "text": "VENDA ACERTADA FORA DA JANELA SE PERDIA. Com a janela de transferencias fechada — o que vale em 30 das 52 semanas do ano — a venda ficava acertada para quando ela abrisse, mas o acerto sumia ao trocar de tela e o garoto voltava inteiro, sem venda e sem dinheiro. Agora fica gravado na hora. O mesmo valia para peneira, emprestimo e as evolucoes da base."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.240",
@@ -549,8 +577,7 @@
           "type": "changed",
           "text": "EM CONFIGURACOES sairam \"Conectar a servidores\" e \"Atualizar automaticamente\". Os dois governavam a atualizacao por partes; sem ela, comandariam nada. Estar na ultima versao deixou de ser preferencia — e o que faz o online falar a mesma lingua entre todo mundo."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.239",
@@ -569,8 +596,7 @@
           "type": "fixed",
           "text": "PROMOVER PODIA DUPLICAR O ATLETA. A promocao nao gravava imediatamente: promover e trocar de tela em seguida podia devolver o garoto a base enquanto ele ja estava no elenco profissional — o mesmo jogador em dois lugares. Vale tambem para dispensar e para a compra no mercado de juniores, que passaram pelo mesmo conserto."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.238",
@@ -585,8 +611,7 @@
           "type": "improved",
           "text": "Quem JA tinha posicao de verdade nao foi tocado. O Atletico de Madrid tem tres laterais-esquerdos e dois direitos na fonte, e o Empoli tem nove meias confirmados: forcar posicao neles seria trocar dado real por um numero mais bonito. Goleiro tambem nunca e redistribuido."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.237",
@@ -613,8 +638,7 @@
           "type": "fixed",
           "text": "FOTO LICENCIADA SUMIA ENTRE UMA VERSAO E OUTRA. A imagem era registrada num lugar que era refeito do zero a cada geracao do jogo, entao ela desaparecia sem aviso — o atleta voltava para a silhueta e o arquivo continuava no disco, intacto. 17 fotos ja tinham sumido assim. Agora o registro e feito nas duas fontes e sobrevive."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.236",
@@ -629,8 +653,7 @@
           "type": "improved",
           "text": "XARA NAO ROUBA MAIS ROSTO. O registro por nome so vale para nomes UNICOS no acervo: 178 casos de dois atletas com o mesmo nome ficaram de fora de proposito, porque a silhueta e melhor do que mostrar a cara de outra pessoa."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.235",
@@ -649,8 +672,7 @@
           "type": "fixed",
           "text": "A LIGA DA COLOMBIA APARECIA COM O NOME ERRADO. Alem de os clubes caírem no balde 'Internacional' (corrigido antes), a liga deles ainda era exibida como 'PRIMERA A COL' — um rotulo gerado automaticamente — porque o mesmo erro de digitacao estava tambem no mapa de nomes. Agora aparece 'Primera A', como deve ser."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.234",
@@ -665,8 +687,7 @@
           "type": "improved",
           "text": "Linux, macOS e a versao web voltam para a mesma versao do Windows. Elas tinham ficado para tras nas ultimas publicacoes: quem jogava pelo navegador ou fora do Windows estava duas versoes atras, sem o fundo que se alterna na tela principal, sem os escudos corrigidos no Mercado de Juniores e sem o radar desacelerado."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.233",
@@ -685,8 +706,7 @@
           "type": "fixed",
           "text": "O RADAR CORRIA DEMAIS. O movimento era interpolado por QUADRO e nao por tempo: a 60fps o atleta cobria quase toda a distancia em menos de meio segundo. Pior, o radar ja roda a 30fps quando o sistema pede movimento reduzido — a mesma partida se movia na metade da velocidade dependendo da maquina. Agora o ritmo e por tempo, igual em qualquer PC, e cerca de 40% do que era. So o chute continua rapido."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.231",
@@ -705,8 +725,7 @@
           "type": "fixed",
           "text": "A LIGA DA COLOMBIA APARECIA COMO 'INTERNACIONAL'. Os 20 clubes da Liga BetPlay estavam jogados no balde de internacionais em vez de terem a propria liga no editor. A causa era uma letra: o mapa de paises escrevia a liga em portugues ('primeira_a_col') e ela se chama 'primera_a_col', em espanhol — a busca nunca casava e todo clube colombiano caia no balde."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.230",
@@ -733,8 +752,7 @@
           "type": "fixed",
           "text": "O RADAR ENCENAVA O LANCE ERRADO. O motor guarda os eventos com o mais novo na frente e a escolha varria a lista ao contrario: aos 66 minutos a bola ainda voava para o gol de quem tinha finalizado aos 3. Pior, a reacao re-disparava a cada lance novo, sempre com o mesmo evento velho. Agora o radar reage ao lance mais recente, e uma vez por lance."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.229",
@@ -765,8 +783,7 @@
           "type": "fixed",
           "text": "PROPOSTA DE SELECAO NAO ERA SALVA. Aceitar levava direto ao escritorio, e a troca de tela acontecia antes de a decisao ser gravada: o convite continuava aberto como se nada tivesse sido aceito. Pior, a trava de 'uma rodada de convites por temporada' se perdia a cada troca de tela, entao as mesmas propostas voltavam sozinhas. As duas coisas foram corrigidas: a decisao e gravada antes de sair da tela e a trava passou a viver no save."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.228",
@@ -821,8 +838,7 @@
           "type": "improved",
           "text": "O LAUNCHER NAO PRECISA MAIS SER ATUALIZADO. Os enderecos dos servidores eram fixos dentro do programa: se a VPS trocasse de IP, o launcher instalado virava tijolo e nem conseguia baixar a propria correcao. Agora ele descobre os enderecos ao abrir e guarda uma copia para funcionar offline — mudar de servidor no futuro nao exige que ninguem reinstale nada."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.227",
@@ -849,8 +865,7 @@
           "type": "fixed",
           "text": "SAIR DO CLUBE NAO LIMPAVA O CLUBE. Quem era demitido continuava com o elenco, a tabela e o mercado do time que acabou de deixar — e seguia recebendo proposta por atleta que ja nao era dele enquanto procurava emprego. O motor agora e zerado na saida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.226",
@@ -881,8 +896,7 @@
           "type": "improved",
           "text": "Ultrafoot de Bolso (Android) 1.0.1: a tela gira (o jogo tem layout largo e estava travado em retrato), o botao voltar no menu principal pede confirmacao antes de fechar o app, e voltar do segundo plano recupera o jogo sozinho quando o Android encerrou a WebView."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.225",
@@ -909,8 +923,7 @@
           "type": "improved",
           "text": "A prancheta do elenco pode ficar horizontal sem gravar a formacao de lado."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.218",
@@ -973,8 +986,7 @@
           "type": "improved",
           "text": "Quem registrou o jogo ganha extras: save na nuvem, FC Hub, editor de equipes, Central de Atualizacoes e carreiras ilimitadas. Sem registro o jogo continua completo — nada trava no meio."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.211",
@@ -1005,8 +1017,7 @@
           "type": "fixed",
           "text": "Barras de rolagem, brilho do placar e o anel de foco de acessibilidade ficavam verde-agua em qualquer tema. Agora seguem a cor escolhida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.210",
@@ -1041,8 +1052,7 @@
           "type": "fixed",
           "text": "Faixa morta no pe das telas do Mercado: a altura era calculada por subtracao chumbada e o palpite errava — sobrava espaco vazio em telas grandes e cortava conteudo nas menores."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.209",
@@ -1085,8 +1095,7 @@
           "type": "fixed",
           "text": "Championship marcava três acessos diretos quando são dois, mais o playoff do 3º ao 6º — que a tabela nunca mostrava."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.201",
@@ -1101,8 +1110,7 @@
           "type": "fixed",
           "text": "Folha salarial que só subia: um gasto avulso (quitar dívida, obra) virava despesa semanal para sempre."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.200",
@@ -1121,8 +1129,7 @@
           "type": "added",
           "text": "Central de Atualizações: elencos e times novos sem reinstalar, e só quando você autoriza."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.198",
@@ -1137,8 +1144,7 @@
           "type": "fixed",
           "text": "Avançar no calendário não simula mais a sua própria partida."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.196",
@@ -1149,8 +1155,7 @@
           "type": "added",
           "text": "Escudos, uniformes e fotos editados aparecem para todos os jogadores, inclusive na versão web."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.195",
@@ -1161,8 +1166,7 @@
           "type": "added",
           "text": "Telas de convocação, competições e amistosos da seleção."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.188",
@@ -1177,8 +1181,7 @@
           "type": "added",
           "text": "Atualização automática também no Linux e no macOS."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.175",
@@ -1205,8 +1208,7 @@
           "type": "fixed",
           "text": "Escudos importados pelo usuário passam a vencer o mapa padrão."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.150",
@@ -1225,8 +1227,7 @@
           "type": "fixed",
           "text": "Correções da auditoria e códigos de país normalizados."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.145",
@@ -1240,8 +1241,7 @@
           "type": "changed",
           "text": "Ligas europeias e estaduais ajustados às datas informadas."
         }
-      ],
-      "latest": false
+      ]
     },
     {
       "version": "1.0.144",
@@ -1255,8 +1255,7 @@
           "type": "added",
           "text": "Treino de entrosamento na data FIFA."
         }
-      ],
-      "latest": false
+      ]
     }
   ]
 }
