@@ -70,5 +70,48 @@
     ${EndIf}
   ${EndIf}
 
+  ; ─── UM ICONE SO: o do Launcher ─────────────────────────────────────────────
+  ;
+  ; O instalador do jogo cria o atalho "Ultrafoot 26" e, logo acima, instala o
+  ; Launcher — que cria o dele. O jogador ficava com DOIS icones para a mesma
+  ; coisa, e o do jogo nem serve: abrir o ultrafoot.exe direto so redireciona
+  ; para o Launcher (maybe_redirect_to_launcher, em src/lib.rs) e encerra.
+  ;
+  ; Este bloco roda em TODA instalacao, inclusive nas atualizacoes automaticas —
+  ; e por isso ele tambem limpa o icone de quem ja tinha o jogo instalado, sem
+  ; precisar de nenhuma acao do jogador.
+  ;
+  ; TRAVA DE SEGURANCA: so apaga se o atalho do Launcher EXISTIR. Se a instalacao
+  ; do Launcher tiver falhado (o ExecWait acima pode retornar erro), apagar o
+  ; atalho do jogo deixaria a pessoa sem NENHUMA forma de abrir o Ultrafoot pelo
+  ; Windows. Melhor dois icones do que zero.
+  ;
+  ; Apaga apenas os arquivos com o nome EXATO que o nosso instalador cria; nada
+  ; que o jogador tenha criado ou renomeado e tocado.
+  StrCpy $3 ""
+  ${If} ${FileExists} "$DESKTOP\Ultrafoot Launcher.lnk"
+    StrCpy $3 "sim"
+  ${ElseIf} ${FileExists} "$SMPROGRAMS\Ultrafoot Launcher.lnk"
+    StrCpy $3 "sim"
+  ${EndIf}
+
+  ${If} $3 == "sim"
+    DetailPrint "Mantendo apenas o icone do Ultrafoot Launcher..."
+    ; Os tres caminhos que o template do Tauri usa (conferidos no installer.nsi
+    ; gerado): area de trabalho, Menu Iniciar na raiz e Menu Iniciar dentro da
+    ; pasta escolhida na instalacao — esta ultima e `$AppStartMenuFolder`, e NAO
+    ; o nome do produto, que era o que eu tinha suposto.
+    Delete "$DESKTOP\${PRODUCTNAME}.lnk"
+    Delete "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+    ${If} $AppStartMenuFolder != ""
+      Delete "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+      ; So remove a pasta se ela ficou VAZIA — RMDir sem /r nao apaga pasta com
+      ; conteudo, entao um atalho que o jogador tenha posto ali sobrevive.
+      RMDir "$SMPROGRAMS\$AppStartMenuFolder"
+    ${EndIf}
+  ${Else}
+    DetailPrint "Atalho do Launcher nao encontrado; mantendo o icone do jogo."
+  ${EndIf}
+
   SetRegView lastused
 !macroend
