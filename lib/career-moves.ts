@@ -13,7 +13,7 @@
 // Este modulo liga as duas pontas e persiste as propostas no save.
 
 import { storeGet, storeSet } from "@/lib/persistent-store"
-import { getCareerScopedKey, commitGameState } from "@/lib/save-system"
+import { getCareerScopedKey, commitGameState, loadGameState } from "@/lib/save-system"
 import type { JobOffer } from "@/lib/board-engine"
 
 const key = () => getCareerScopedKey("ultrafoot:job-offers")
@@ -266,13 +266,25 @@ export function assumirSelecao(
   deps.navigate("/")
 }
 
-/** Volta a comandar o CLUBE (sai do modo seleção). */
+/**
+ * Volta a comandar o CLUBE (sai do modo seleção).
+ *
+ * ⚠️ PRECISA CONFERIR SE AINDA HÁ CLUBE. Antes ia direto para "/" em qualquer
+ * caso — e o técnico que largou o clube enquanto dirigia a seleção caía no
+ * escritório com o fallback `"BGT"`, ou seja, comandando o RB Bragantino sem
+ * nunca ter assinado com ele. Era o "voltar ao clube fica bugado" do relato.
+ *
+ * Sem clube, o destino certo é a Área do Treinador, que é onde as propostas
+ * aparecem — o mesmo lugar para onde a demissão manda.
+ */
 export function voltarAoClube(
   deps: { setSaveState: (patch: Record<string, unknown>) => void; navigate: (href: string) => void },
 ): void {
+  const atual = loadGameState()
+  const temClube = Boolean((atual.selectedTeamShort ?? "").trim())
   commitGameState({ managingNationalTeamId: null })
   deps.setSaveState({ managingNationalTeamId: null })
-  deps.navigate("/")
+  deps.navigate(temClube ? "/" : "/treinador")
 }
 
 /** Notificacoes sao por carreira; ao trocar de clube o historico e zerado. */
