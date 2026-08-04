@@ -941,6 +941,33 @@ export function generateUserCupMatches(
   return partidas
 }
 
+/**
+ * Qual clube leva o atleta que assinou pré-contrato.
+ *
+ * A primeira versão disto gravava a string literal "outro clube" — e a
+ * notificação mais dura do jogo ("você vai perder o cara de graça") não dizia
+ * quem levou, que é justamente a informação que dói e que ensina.
+ *
+ * Quem leva tem de ser PLAUSÍVEL: ninguém perde um atleta de 82 para um clube de
+ * prestígio 40, e um reserva de 65 não vai para o Real Madrid. A faixa é
+ * ancorada no nível do atleta — um clube um pouco melhor que ele, que é quem de
+ * fato assedia. Cai no clube mais forte disponível se a faixa vier vazia.
+ */
+function clubeQueLevaOAtleta(overall: number, clubeDoUsuario: string): string {
+  const candidatos = allTeams.filter(t =>
+    t.curto !== clubeDoUsuario &&
+    (t.prestigio ?? 0) >= overall - 4 &&
+    (t.prestigio ?? 0) <= overall + 14,
+  )
+  const lista = candidatos.length
+    ? candidatos
+    : [...allTeams].filter(t => t.curto !== clubeDoUsuario)
+        .sort((a, b) => (b.prestigio ?? 0) - (a.prestigio ?? 0))
+        .slice(0, 10)
+  if (!lista.length) return "outro clube"
+  return lista[Math.floor(Math.random() * lista.length)].nome
+}
+
 // Decompoe um conjunto de confrontos em rodadas onde todo mundo joga uma vez.
 // Backtracking: escolhe o primeiro time sem adversario e testa cada aresta livre.
 function dividirEmRodadas(teams: Team[], arestas: Array<[Team, Team]>, roundCount: number): Array<Array<[Team, Team]>> {
@@ -2770,11 +2797,13 @@ export function useGameManager() {
         }, relacao)
         if (risco > 0 && Math.random() < risco / 12) {
           // /12 porque o risco é da TEMPORADA, e isto roda toda semana.
-          preContratos[String(p.id)] = { clube: "outro clube", semana: newWeek }
+          const destino = clubeQueLevaOAtleta(p.overall, currentState.selectedTeamShort ?? "")
+          preContratos[String(p.id)] = { clube: destino, semana: newWeek }
           addNotificationRef.current({
             type: "system", priority: "high",
-            title: `${p.name} assinou pré-contrato`,
-            message: "Ele acertou com outro clube e sai de graça no fim da temporada. Renovar já não resolve — a hora de agir era antes.",
+            title: `${p.name} assinou pré-contrato com o ${destino}`,
+            message: `Ele acertou com o ${destino} e sai de graça no fim da temporada. `
+              + "Renovar já não resolve — a hora de agir era antes.",
             href: "/contratos",
           })
         }
