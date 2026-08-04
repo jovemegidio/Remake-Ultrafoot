@@ -547,7 +547,18 @@ function sortTable(table: GroupRow[]): GroupRow[] {
 }
 
 // Avanca uma rodada da competicao. Retorna novo estado (imutavel).
-export function advanceNationalRound(state: NationalCompetitionState, userId: string, userStrength?: number): NationalCompetitionState {
+export function advanceNationalRound(
+  state: NationalCompetitionState,
+  userId: string,
+  userStrength?: number,
+  /**
+   * Resumo do jogo do usuario quando ele ja foi DISPUTADO na tela (ver
+   * `aplicarPlacarDoUsuario`). Sem isto, a rodada em que o tecnico jogou de
+   * verdade era resumida como "Rodada simulada." — o placar dele sumia do
+   * escritorio, porque o laco abaixo so gera resumo do que ele mesmo simula.
+   */
+  resumoDoUsuario?: string,
+): NationalCompetitionState {
   if (state.status !== "active") return state
   const strengths = getAllNationalStrengths()
   const next: NationalCompetitionState = JSON.parse(JSON.stringify(state))
@@ -557,7 +568,7 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
   const strengthOf = (id: string) => id === userId && userStrength != null ? userStrength : (strengths[id] ?? 60)
 
   const roundFixtures = next.fixtures.filter(f => f.round === next.currentRound && !f.played)
-  let userResult = ""
+  let userResult = resumoDoUsuario ?? ""
 
   for (const f of roundFixtures) {
     let [hs, as] = simulateScore(strengthOf(f.homeId), strengthOf(f.awayId), rng)
@@ -763,4 +774,66 @@ export function advanceNationalRound(state: NationalCompetitionState, userId: st
 // Proxima partida do usuario na competicao
 export function getUserNextFixture(state: NationalCompetitionState): NationalFixture | null {
   return state.fixtures.find(f => f.round === state.currentRound && f.isUserMatch && !f.played) ?? null
+}
+
+/**
+ * Grava na competicao o placar de uma partida da selecao JOGADA DE VERDADE.
+ *
+ * Ate aqui o jogo da selecao era resolvido por simulacao instantanea dentro de
+ * `advanceNationalRound` — o tecnico clicava e ja lia o placar, sem pre-jogo,
+ * sem partida ao vivo e sem coletiva, enquanto o clube tinha o fluxo completo.
+ * Agora a partida do usuario e disputada no motor normal e o resultado entra por
+ * aqui.
+ *
+ * A funcao NAO avanca a rodada: ela apenas marca o jogo do usuario como jogado.
+ * `advanceNationalRound` roda em seguida e, como filtra por `!f.played`, pula
+ * este jogo e simula so os outros — o resto (tabela, classificacao, mata-mata)
+ * continua sendo responsabilidade dele, sem duplicar regra.
+ */
+export function aplicarPlacarDoUsuario(
+  state: NationalCompetitionState,
+  userId: string,
+  golsDoUsuario: number,
+  golsDoAdversario: number,
+  venceuNosPenaltis?: boolean,
+): { state: NationalCompetitionState; resumo: string } | null {
+  const alvo = getUserNextFixture(state)
+  if (!alvo) return null
+
+  const next: NationalCompetitionState = JSON.parse(JSON.stringify(state))
+  const f = next.fixtures.find(x => x.id === alvo.id)
+  if (!f) return null
+
+  const usuarioEmCasa = f.homeId === userId
+  const golsCasa = usuarioEmCasa ? golsDoUsuario : golsDoAdversario
+  const golsFora = usuarioEmCasa ? golsDoAdversario : golsDoUsuario
+
+  f.played = true
+  f.homeScore = golsCasa
+  f.awayScore = golsFora
+
+  // Empate em mata-mata so se decide nos penaltis; quem avanca vem da disputa
+  // que o jogador acabou de fazer na tela, nao de um sorteio novo.
+  const mataMata = next.currentRound > next.totalGroupRounds
+  if (mataMata && golsCasa === golsFora) {
+    f.decidedOnPens = true
+    f.userAdvanced = venceuNosPenaltis === true
+  }
+
+  // Na fase de grupos/liga o placar tambem conta na tabela.
+  if (next.currentRound <= next.totalGroupRounds) {
+    const linhaCasa = next.table.find(r => r.teamId === f.homeId)
+    const linhaFora = next.table.find(r => r.teamId === f.awayId)
+    if (linhaCasa && linhaFora) {
+      applyResult(linhaCasa, golsCasa, golsFora)
+      applyResult(linhaFora, golsFora, golsCasa)
+    }
+  }
+
+  const adversario = usuarioEmCasa ? f.awayName : f.homeName
+  const resumo = f.decidedOnPens
+    ? `${golsDoUsuario} x ${golsDoAdversario} vs ${adversario} (${f.userAdvanced ? "venceu" : "perdeu"} nos penaltis)`
+    : `${golsDoUsuario} x ${golsDoAdversario} vs ${adversario}`
+
+  return { state: next, resumo }
 }

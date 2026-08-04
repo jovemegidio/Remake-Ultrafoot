@@ -111,6 +111,12 @@ export default function TreinadorPage() {
     return historico.length > 0 ? buildCareerStats(historico, state.passagens ?? []) : null
   }, [state.seasonHistory, state.passagens])
   const ranking = useMemo(() => (carreira ? rankInHistory(carreira) : null), [carreira])
+  // Temporadas encerradas, da mais recente para a mais antiga. Inclui os títulos
+  // de copa, que entram no seasonHistory como registro proprio (posicao 1).
+  const historicoPorTemporada = useMemo(
+    () => [...(state.seasonHistory ?? [])].sort((a, b) => b.season - a.season),
+    [state.seasonHistory],
+  )
 
   // ── ESTADO SEM CLUBE ──────────────────────────────────────────────────────
   // Ao pedir demissao ou ser demitido, o tecnico vem PARA CA (nao mais para uma
@@ -701,6 +707,83 @@ export default function TreinadorPage() {
                           </span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TEMPORADA A TEMPORADA.
+                    A Carreira só mostrava agregados (total de temporadas, títulos,
+                    aproveitamento) e a lista de clubes — não dava para olhar para
+                    trás e ver o que aconteceu em cada ano. O save já guardava tudo
+                    em `seasonHistory` desde o primeiro fim de temporada; faltava
+                    apenas exibir. Mais recente primeiro, que é como se consulta. */}
+                {historicoPorTemporada.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/60">
+                      Temporada a temporada
+                    </p>
+                    <div className="mt-2 overflow-x-auto">
+                      <table className="w-full min-w-[560px] border-collapse text-sm">
+                        <thead>
+                          <tr className="text-[10px] uppercase tracking-wider text-white/35">
+                            <th className="px-2 py-2 text-left font-semibold">Temp.</th>
+                            <th className="px-2 py-2 text-left font-semibold">Competição</th>
+                            <th className="px-2 py-2 text-left font-semibold">Clube</th>
+                            <th className="px-2 py-2 text-center font-semibold">Pos.</th>
+                            <th className="px-2 py-2 text-center font-semibold">Pts</th>
+                            <th className="px-2 py-2 text-center font-semibold">V-E-D</th>
+                            <th className="px-2 py-2 text-center font-semibold">Gols</th>
+                            <th className="px-2 py-2 text-left font-semibold">Desfecho</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {historicoPorTemporada.map((t, i) => {
+                            const campeao = t.position === 1
+                            return (
+                              <tr
+                                key={`${t.season}-${t.competition}-${i}`}
+                                className="border-t border-white/[0.06]"
+                              >
+                                <td className="px-2 py-2 font-semibold text-white/80">{t.season}</td>
+                                <td className="px-2 py-2 text-white/70">{t.competition}</td>
+                                <td className="px-2 py-2 text-white/50">{t.teamNome || t.teamCurto}</td>
+                                <td className={cn(
+                                  "px-2 py-2 text-center font-bold tabular-nums",
+                                  campeao ? "text-[#ffd700]" : "text-white/80",
+                                )}>
+                                  {t.position > 0 ? `${t.position}º` : "—"}
+                                </td>
+                                <td className="px-2 py-2 text-center tabular-nums text-white/70">{t.points}</td>
+                                <td className="px-2 py-2 text-center tabular-nums text-white/60">
+                                  {t.won}-{t.drawn}-{t.lost}
+                                </td>
+                                <td className="px-2 py-2 text-center tabular-nums text-white/60">
+                                  {t.goalsFor}:{t.goalsAgainst}
+                                </td>
+                                <td className="px-2 py-2">
+                                  {campeao ? (
+                                    <span className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#ffd700]">
+                                      Campeão
+                                    </span>
+                                  ) : t.promoted ? (
+                                    <span className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-400">
+                                      Acesso
+                                    </span>
+                                  ) : t.relegated ? (
+                                    <span className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-400">
+                                      Rebaixado
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] text-white/30">
+                                      {t.champion ? `Campeão: ${t.champion}` : "—"}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}

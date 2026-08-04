@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 import { useNationalTeam } from "@/lib/use-national-team"
 import { periodoLabelPorNome } from "@/lib/competition-dates-2026"
 import { getCompetitionDef, type NationalCompetitionDef } from "@/lib/national-competitions"
+import { prepararPartidaDaSelecao } from "@/lib/partida-da-selecao"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 export function NationalCompetitionPanel() {
   const { currentCompetition, userNextFixture, nationalTeam, playNextRound, finishCompetition } = useNationalTeam()
@@ -162,12 +164,26 @@ export function NationalCompetitionPanel() {
 
         {/* Acoes */}
         {isActive && userNextFixture ? (
-          <button
-            onClick={playNextRound}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-[var(--brand)] text-[#050508] font-semibold py-3 hover:bg-[var(--brand)]/90 transition-colors"
-          >
-            <Play className="h-4 w-4" /> Jogar proxima partida
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {/* JOGAR de verdade: pre-jogo -> ao vivo -> coletiva -> escritorio,
+                o mesmo fluxo do clube. Antes so existia a resolucao instantanea. */}
+            <button
+              onClick={() => {
+                if (!nationalTeam || !currentCompetition) return
+                hardNavigate(prepararPartidaDaSelecao(nationalTeam, userNextFixture, currentCompetition))
+              }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--brand)] py-3 font-semibold text-[#050508] transition-colors hover:bg-[var(--brand)]/90"
+            >
+              <Play className="h-4 w-4" /> Jogar partida
+            </button>
+            {/* Simular continua disponivel para quem nao quer dirigir o jogo. */}
+            <button
+              onClick={() => playNextRound()}
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-3 font-medium text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white"
+            >
+              Simular rodada
+            </button>
+          </div>
         ) : !isActive ? (
           <button
             onClick={finishCompetition}

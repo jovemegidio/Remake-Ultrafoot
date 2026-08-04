@@ -30,6 +30,25 @@ export interface MatchContext {
    */
   torneio?: { rodada: number; mandanteCurto: string; visitanteCurto: string }
   youth?: boolean
+  /**
+   * PARTIDA DA SELECAO. Os times NAO sao clubes: `homeShort`/`awayShort` trazem
+   * o codigo da selecao (BRA, ARG) e quem resolve o escudo/nome e o banco de
+   * selecoes, nao `getTeamByShort`. Como no amistoso, a partida nao mexe na
+   * temporada do clube; o resultado volta para a competicao da selecao.
+   */
+  national?: {
+    /** Id da selecao do usuario ("brasil"). */
+    selecaoId: string
+    /** Id da selecao adversaria. */
+    adversarioId: string
+    /** True quando o usuario e o mandante do confronto. */
+    usuarioEmCasa: boolean
+    /**
+     * Fase eliminatoria: empate no tempo normal vai para os penaltis. Fase de
+     * grupos e Eliminatorias terminam empatadas normalmente.
+     */
+    mataMata: boolean
+  }
   duration: number // minutos (45, 90)
   weather: "sunny" | "cloudy" | "rain"
   matchMode: "normal" | "highlights" | "commentary"

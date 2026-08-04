@@ -53,6 +53,7 @@ import { Flag, Briefcase } from "lucide-react"
 import { useGameState, useManagingNational } from "@/lib/save-system"
 import { NationalOffice } from "@/components/national-office"
 import { WorldCupCenter } from "@/components/world-cup-center"
+import { DataFifaCenter } from "@/components/data-fifa-center"
 
 const HOME_MONTHS_SHORT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const HOME_WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
@@ -94,6 +95,9 @@ export default function DashboardPage() {
   const { hydrated, userTeam, seasonCalendar, currentStandings, currentCompetition, userPosition, currentSeason, saveState, fifaPause, advancePastFifaBreak, advanceWeek } = useGameManager()
   const [avancandoFifa, setAvancandoFifa] = useState(false)
   const [worldCupOpen, setWorldCupOpen] = useState(false)
+  // Central da Data FIFA — janelas que NAO sao Copa do Mundo (Marco, Setembro,
+  // Outubro, Novembro e os Junhos sem torneio). Antes nao havia o que ver nelas.
+  const [dataFifaOpen, setDataFifaOpen] = useState(false)
   const avancarDataFifa = useCallback(async () => {
     if (avancandoFifa) return
     setAvancandoFifa(true)
@@ -333,6 +337,17 @@ export default function DashboardPage() {
 
   return (
     <div className="relative h-screen md:pl-0 pl-0 pb-20 md:pb-12 bg-[#050508] flex flex-col overflow-hidden">
+      {fifaPause?.active && !fifaPause.isWorldCup && (
+        <DataFifaCenter
+          open={dataFifaOpen}
+          temporada={currentSeason}
+          mes={fifaPause.month}
+          semanaAtual={saveState.week}
+          ateSemana={fifaPause.untilWeek}
+          onClose={() => setDataFifaOpen(false)}
+          onAvancar={async () => { await advanceWeek() }}
+        />
+      )}
       {fifaPause?.isWorldCup && (
         <WorldCupCenter
           open={worldCupOpen}
@@ -546,15 +561,28 @@ export default function DashboardPage() {
                       <p className="mt-1.5 text-sm leading-relaxed text-white/55">
                         {fifaPause.isWorldCup
                           ? "As ligas de clubes param durante o Mundial. Acompanhe a Copa do Mundo e avance até o seu campeonato voltar. Se você for chamado para dirigir uma seleção, comanda a equipe pela Área do Treinador."
-                          : "Os jogos de clube param na janela de seleções (amistosos e Eliminatórias). Avance a data FIFA para retomar o campeonato."}
+                          : "Os jogos de clube param na janela de seleções. Acompanhe os resultados das Eliminatórias, da Liga das Nações e dos amistosos enquanto os dias passam, ou pule direto para o retorno do campeonato."}
                       </p>
-                      <button
-                        onClick={fifaPause.isWorldCup ? abrirCentralCopa : avancarDataFifa}
-                        disabled={avancandoFifa}
-                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-[#231a05] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {avancandoFifa ? "Avançando…" : fifaPause.isWorldCup ? "Abrir Central da Copa do Mundo" : "Avançar a data FIFA"}
-                      </button>
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={fifaPause.isWorldCup ? abrirCentralCopa : () => setDataFifaOpen(true)}
+                          disabled={avancandoFifa}
+                          className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-[#231a05] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {avancandoFifa ? "Avançando…" : fifaPause.isWorldCup ? "Abrir Central da Copa do Mundo" : "Acompanhar jogos das seleções"}
+                        </button>
+                        {/* Pular a janela inteira continua sendo uma opcao — quem nao
+                            quer acompanhar rodada a rodada volta direto ao clube. */}
+                        {!fifaPause.isWorldCup && (
+                          <button
+                            onClick={avancarDataFifa}
+                            disabled={avancandoFifa}
+                            className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Pular a data FIFA
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ) : homeTeam && awayTeam ? (
                     <div className="mt-6">

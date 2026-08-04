@@ -35,7 +35,8 @@ import {
 } from "@/lib/teams-data"
 import { useGameState, useUserTeam } from "@/lib/save-system"
 import { useGameManager, getLeagueName } from "@/lib/use-game-manager"
-import { clearMatchContext, saveMatchContext } from "@/lib/match-context"
+import { clearMatchContext, loadMatchContext, saveMatchContext } from "@/lib/match-context"
+import { timeDaSelecao } from "@/lib/partida-da-selecao"
 import { concluirAmistoso, ehAmistoso } from "@/lib/amistosos-calendario"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { simulateFullMatch, type MatchEvent as SimEvent, type MatchState } from "@/lib/match-engine"
@@ -349,18 +350,34 @@ export default function PartidaPage() {
     [userTeam.team?.curto],
   )
 
+  // PRÉ-JOGO DA SELEÇÃO. O contexto já foi montado por
+  // `prepararPartidaDaSelecao`; aqui ele TEM prioridade sobre o próximo jogo do
+  // clube, senão esta tela mostraria o adversário errado — o do campeonato — e
+  // ainda gravaria os `shorts` do clube por cima da partida da seleção.
+  const ctxDaSelecao = useMemo(() => loadMatchContext().national ?? null, [])
+  const selecaoMandante = useMemo(
+    () => (ctxDaSelecao ? timeDaSelecao(ctxDaSelecao.usuarioEmCasa ? ctxDaSelecao.selecaoId : ctxDaSelecao.adversarioId) : null),
+    [ctxDaSelecao],
+  )
+  const selecaoVisitante = useMemo(
+    () => (ctxDaSelecao ? timeDaSelecao(ctxDaSelecao.usuarioEmCasa ? ctxDaSelecao.adversarioId : ctxDaSelecao.selecaoId) : null),
+    [ctxDaSelecao],
+  )
+
   const homeTeam = useMemo(() => {
+    if (selecaoMandante) return selecaoMandante
     if (currentMatch) return currentMatch.homeTeam
     if (nextFixture) return nextFixture.homeTeam
     return userTeamData ?? serieATeams[0]
-  }, [currentMatch, nextFixture, userTeamData])
+  }, [selecaoMandante, currentMatch, nextFixture, userTeamData])
 
   const awayTeam = useMemo(() => {
+    if (selecaoVisitante) return selecaoVisitante
     if (currentMatch) return currentMatch.awayTeam
     if (nextFixture) return nextFixture.awayTeam
     // Sem calendario: qualquer adversario, menos o proprio time.
     return serieATeams.find(t => t.curto !== (userTeamData?.curto ?? "")) ?? serieATeams[1]
-  }, [currentMatch, nextFixture, userTeamData])
+  }, [selecaoVisitante, currentMatch, nextFixture, userTeamData])
 
   const matchInfo = useMemo(() => {
     // league é a chave de divisao (ex: "serie_a") — usar diretamente para o logo
@@ -484,13 +501,22 @@ export default function PartidaPage() {
         awayShort: awayTeam.curto,
         homeKit,
         awayKit,
-        competition: matchInfo.competition,
-        round: matchInfo.round,
-        friendly: amistosoDoCalendario ? true : undefined,
-        amistosoSemana: amistosoDoCalendario?.week,
+        // Na partida da seleção, competição e fase já vieram prontas da
+        // competição da seleção — `matchInfo` fala do campeonato do CLUBE, e
+        // sobrescrever aqui trocaria "Copa do Mundo · Semifinal" pela rodada da
+        // Série A. `friendly` também precisa continuar true: é o que impede
+        // esta partida de mexer na temporada do clube.
+        ...(ctxDaSelecao
+          ? { friendly: true }
+          : {
+              competition: matchInfo.competition,
+              round: matchInfo.round,
+              friendly: amistosoDoCalendario ? true : undefined,
+              amistosoSemana: amistosoDoCalendario?.week,
+            }),
       })
     }
-  }, [homeTeam, awayTeam, homeKit, awayKit, matchInfo, amistosoDoCalendario])
+  }, [homeTeam, awayTeam, homeKit, awayKit, matchInfo, amistosoDoCalendario, ctxDaSelecao])
 
   // Gamepad controls
   useEffect(() => {

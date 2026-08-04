@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { safeLocalSet } from "@/lib/safe-storage"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useNationalTeam } from "@/lib/use-national-team"
+import { timeDaSelecao } from "@/lib/partida-da-selecao"
 import {
   ChevronLeft,
   Activity,
@@ -652,25 +654,48 @@ export default function PartidaAoVivoPage() {
   // Carrega contexto da partida salva ou usa valores padrao
   const matchCtx = useMemo(() => loadMatchContext(), [])
 
+  // PARTIDA DA SELEÇÃO: gravar o placar de volta na competição.
+  //
+  // Vai por REF, não direto no efeito do apito final: aquele efeito roda dentro
+  // de um closure que já causou congelamento de modal neste arquivo quando
+  // capturou callback velho. O ref sempre aponta para a versão atual.
+  const { playNextRound: gravarRodadaDaSelecao } = useNationalTeam()
+  const playNextRoundRef = useRef<typeof gravarRodadaDaSelecao | null>(null)
+  useEffect(() => { playNextRoundRef.current = gravarRodadaDaSelecao }, [gravarRodadaDaSelecao])
+
   // Determina times a partir do contexto salvo. AMISTOSO tem prioridade sobre o jogo da
   // rodada (currentMatch), senao o amistoso acabaria jogando contra o adversario do fixture.
+  // PARTIDA DA SELEÇÃO: os dois lados são seleções, não clubes. `getTeamByShort`
+  // procura no catálogo de clubes e nunca acha "BRA" — sem esta ponte a tela
+  // caía no fallback e mostrava dois times da Série A.
+  const selecaoMandante = useMemo(
+    () => (matchCtx.national ? timeDaSelecao(matchCtx.national.usuarioEmCasa ? matchCtx.national.selecaoId : matchCtx.national.adversarioId) : null),
+    [matchCtx.national],
+  )
+  const selecaoVisitante = useMemo(
+    () => (matchCtx.national ? timeDaSelecao(matchCtx.national.usuarioEmCasa ? matchCtx.national.adversarioId : matchCtx.national.selecaoId) : null),
+    [matchCtx.national],
+  )
+
   const homeTeam = useMemo(() => {
     // No apito final o calendário avança e `currentMatch` já aponta para o jogo
     // seguinte. O snapshot impede o placar de trocar A x B por A x C aos 90'.
     if (finalMatch) return finalMatch.home
+    if (selecaoMandante) return selecaoMandante
     if ((matchCtx.friendly || matchCtx.youth) && matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     if (currentMatch) return currentMatch.homeTeam
     if (matchCtx.homeShort) return getTeamByShort(matchCtx.homeShort) ?? serieATeams[0]
     return getTeamByShort(userTeamId ?? "") ?? serieATeams[0]
-  }, [finalMatch, currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.homeShort, userTeamId])
+  }, [finalMatch, selecaoMandante, currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.homeShort, userTeamId])
 
   const awayTeam = useMemo(() => {
     if (finalMatch) return finalMatch.away
+    if (selecaoVisitante) return selecaoVisitante
     if ((matchCtx.friendly || matchCtx.youth) && matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     if (currentMatch) return currentMatch.awayTeam
     if (matchCtx.awayShort) return getTeamByShort(matchCtx.awayShort) ?? serieATeams[1]
     return serieATeams.find(t => t.curto !== homeTeam.curto) ?? serieATeams[1]
-  }, [finalMatch, currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.awayShort, homeTeam.curto])
+  }, [finalMatch, selecaoVisitante, currentMatch, matchCtx.friendly, matchCtx.youth, matchCtx.awayShort, homeTeam.curto])
 
   // TORNEIO AMISTOSO: e amistoso (nao conta para a temporada) mas tem nome
   // proprio — mostrar "Amistoso" na Final do torneio que o tecnico montou
@@ -942,6 +967,10 @@ export default function PartidaAoVivoPage() {
    * exatamente o erro oposto ao que estamos consertando.
    */
   const confrontoDecisivo = useMemo(() => {
+    // SELEÇÃO: a competição já sabe se está no mata-mata, e ela viaja como
+    // `friendly` — sem este ramo antes, a checagem abaixo devolveria false e uma
+    // semifinal de Copa do Mundo terminaria empatada, sem dono.
+    if (matchCtx.national) return matchCtx.national.mataMata
     if (!currentMatch || matchCtx.friendly || matchCtx.youth || matchCtx.torneio) return false
     const stage = String(currentMatch.stage ?? "").toLowerCase()
     // Fase de grupos e classificatória terminam empatadas normalmente.
@@ -1328,7 +1357,27 @@ export default function PartidaAoVivoPage() {
         setFinalMatch({ home: homeTeam, away: awayTeam, userSide })
         // AMISTOSO: e so treino — NAO registra resultado, NAO mexe na tabela nem avanca a
         // semana. So mostra o placar. (Sem isto, um amistoso contaria como jogo oficial.)
-        if (matchCtx.friendly) {
+        if (matchCtx.national) {
+          // PARTIDA DA SELEÇÃO. Viaja como `friendly` (não mexe na temporada do
+          // clube), mas o resultado NÃO se perde: volta para a competição da
+          // seleção, que então simula o resto da rodada. Sem este ramo, o jogo
+          // seria disputado e a competição continuaria esperando por ele.
+          const golsPro = userSide === "home" ? state.home.goals : state.away.goals
+          const golsContra = userSide === "home" ? state.away.goals : state.home.goals
+          const penaltisPro = state.shootout
+            ? (userSide === "home" ? state.shootout.homeGoals : state.shootout.awayGoals)
+            : 0
+          const penaltisContra = state.shootout
+            ? (userSide === "home" ? state.shootout.awayGoals : state.shootout.homeGoals)
+            : 0
+          playNextRoundRef.current?.({
+            golsDoUsuario: golsPro,
+            golsDoAdversario: golsContra,
+            venceuNosPenaltis: state.shootout ? penaltisPro > penaltisContra : undefined,
+          })
+          useGameEngine.getState().registrarMinutosJuntos(70)
+          clearMatchContext()
+        } else if (matchCtx.friendly) {
           // AMISTOSO DO CALENDARIO (1.0.223): o jogo-treino marcado na Area do
           // Treinador tem semana, aparece no calendario e precisa VOLTAR para o
           // save marcado como disputado — senao ficaria pendente na agenda para
@@ -2305,7 +2354,9 @@ export default function PartidaAoVivoPage() {
         // Quem decide se ha disputa e a PROPRIA tela de leiloes: descobrir isso
         // aqui exigiria gerar o catalogo inteiro do mercado no fim da partida.
         // Sem leilao aberto, ela segue sozinha para o pre-office.
-        hardNavigate(matchCtx.youth ? "/base/carreira" : "/leiloes")
+        // A seleção não tem leilão nem pré-office de clube: o técnico volta para
+        // o escritório da seleção, que é onde está a competição dele.
+        hardNavigate(matchCtx.national ? "/selecao" : matchCtx.youth ? "/base/carreira" : "/leiloes")
       }}
     />
   )}

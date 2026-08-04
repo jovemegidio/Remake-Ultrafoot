@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
+import { useGameManager } from "@/lib/use-game-manager"
 import { ChevronLeft, ChevronRight, Play, Monitor, Calendar, MapPin, Clock } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { CarouselDots } from "@/components/controller-buttons"
@@ -25,6 +26,11 @@ interface MatchCarouselProps {
 }
 
 export function MatchCarousel({ matches, userTeam, className }: MatchCarouselProps) {
+  // A pausa vem do proprio game-manager, e nao por prop: o carrossel e usado em
+  // mais de um lugar e nenhum deles deveria precisar lembrar de repassar isto.
+  const { fifaPause } = useGameManager()
+  const emPausaFifa = Boolean(fifaPause?.active)
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState<"left" | "right" | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -253,23 +259,40 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
         </div>
       </div>
 
-      {/* Action buttons - EA FC style */}
-      <div className="flex items-center gap-3 px-4 pb-4">
-        <Link 
-          href="/partida" 
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black text-sm font-bold hover:from-[#33ffd4] hover:to-[#33d4ff] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(0,255,200,0.3)]"
-        >
-          <Play className="h-4 w-4 fill-current" />
-          <span>Jogar Partida</span>
-        </Link>
-        <Link 
-          href="/partida/ao-vivo?simulate=true" 
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg border-2 border-white/20 bg-white/5 text-white text-sm font-medium hover:border-[var(--brand)]/50 hover:bg-white/10 hover:text-[var(--brand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
-        >
-          <Monitor className="h-4 w-4" />
-          <span>Simular</span>
-        </Link>
-      </div>
+      {/* Action buttons - EA FC style.
+          NA JANELA DE SELEÇÕES NÃO SE JOGA. Estes eram dois `Link` fixos: o card
+          da pausa FIFA aparecia no topo do escritório dizendo "campeonato
+          pausado" e, logo abaixo, o carrossel continuava oferecendo "Jogar
+          Partida" e "Simular" — a tela se contradizia, e clicar ali furava a
+          pausa. A janela existe para treinar e organizar o time. */}
+      {emPausaFifa ? (
+        <div className="mx-4 mb-4 rounded-lg border border-amber-400/25 bg-amber-400/[0.07] px-4 py-3 text-center">
+          <p className="text-[13px] font-semibold text-amber-200">
+            Janela de seleções — sem jogos de clube
+          </p>
+          <p className="mt-0.5 text-[11px] leading-snug text-white/50">
+            Use a pausa para treinar e ajustar o elenco. Avance a data FIFA no card acima
+            para retomar o campeonato.
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 px-4 pb-4">
+          <Link
+            href="/partida"
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] text-black text-sm font-bold hover:from-[#33ffd4] hover:to-[#33d4ff] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(0,255,200,0.3)]"
+          >
+            <Play className="h-4 w-4 fill-current" />
+            <span>Jogar Partida</span>
+          </Link>
+          <Link
+            href="/partida/ao-vivo?simulate=true"
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg border-2 border-white/20 bg-white/5 text-white text-sm font-medium hover:border-[var(--brand)]/50 hover:bg-white/10 hover:text-[var(--brand)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Monitor className="h-4 w-4" />
+            <span>Simular</span>
+          </Link>
+        </div>
+      )}
     </section>
   )
 }

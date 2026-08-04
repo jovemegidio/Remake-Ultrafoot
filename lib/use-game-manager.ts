@@ -1721,6 +1721,39 @@ export function computeStandingsFromFixtures(fixtures: Fixture[], competition: s
   )
 }
 
+/**
+ * useMemo COMPARTILHADO ENTRE INSTANCIAS.
+ *
+ * Por que existe: `useGameManager` e um hook comum, nao um provider — 22 pontos
+ * do jogo o chamam. Cada `useMemo` dele e por INSTANCIA, entao toda navegacao
+ * desmontava a tela e remontava o calendario da temporada inteiro (estadual +
+ * liga + copas + continental) do zero, e de novo para cada componente da mesma
+ * tela que chamasse o hook. Era isso que deixava mercado, elenco e as demais
+ * telas lentas — nao o tamanho do bundle.
+ *
+ * A comparacao e por referencia, elemento a elemento, igual a do proprio React
+ * (Object.is). O estado vem sempre do mesmo snapshot da store, entao instancias
+ * diferentes veem as MESMAS referencias e o cache acerta; se qualquer entrada
+ * mudar de referencia, recalcula. Nao ha como servir calendario velho.
+ */
+function criarMemoCompartilhado<T>() {
+  let depsAnteriores: readonly unknown[] | null = null
+  let valor: T
+  return (calcular: () => T, deps: readonly unknown[]): T => {
+    if (
+      depsAnteriores === null ||
+      depsAnteriores.length !== deps.length ||
+      deps.some((d, i) => !Object.is(d, depsAnteriores![i]))
+    ) {
+      valor = calcular()
+      depsAnteriores = deps
+    }
+    return valor
+  }
+}
+
+const memoDoCalendario = criarMemoCompartilhado<SeasonCalendar>()
+
 export function useGameManager() {
   const { state: saveState, setState: setSaveState, replaceState: replaceSaveState, hydrated } = useGameState()
   const gameEngine = useGameEngine()
@@ -1855,7 +1888,7 @@ export function useGameManager() {
   }, [gameEngine, replaceSaveState, saveState.language, saveState.controllerType, saveState.controllerBindings, saveState.commentaryEnabled, saveState.commentaryVoice, saveState.commentaryVolume, saveState.autoSaveInterval])
   
   // Calendario da temporada — ref is updated after useMemo so advanceWeek loop calls see latest fixtures
-  const seasonCalendar = useMemo((): SeasonCalendar => {
+  const seasonCalendar = memoDoCalendario((): SeasonCalendar => {
     if (!saveState.selectedTeamShort) {
       return { fixtures: [], currentRound: 1, nextUserMatch: null, previousUserMatch: null }
     }
@@ -3731,6 +3764,10 @@ export function useGameManager() {
       note: isWorldCup ? worldCupNote(saveState.season) : "",
       fromWeek: breaks[0].week,
       untilWeek: breaks[breaks.length - 1].week + 1,
+      // Mes da janela (0 = Janeiro). A Central da Data FIFA precisa dele para
+      // saber QUAL janela e — Marco de Eliminatorias nao gera os mesmos jogos
+      // que Setembro da Liga das Nacoes.
+      month: breaks[0].month,
     }
   }, [seasonCalendar.fixtures, seasonCalendar.nextUserMatch, saveState.week, saveState.season])
 

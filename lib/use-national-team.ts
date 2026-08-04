@@ -19,6 +19,7 @@ import {
   getCompetitionDef,
   createNationalCompetition,
   advanceNationalRound,
+  aplicarPlacarDoUsuario,
   getUserNextFixture,
   type NationalCompetitionDef,
 } from "@/lib/national-competitions"
@@ -457,17 +458,51 @@ export function useNationalTeam() {
     })
   }, [nationalTeam, state.nationalCareer, state.season, setState])
 
-  const playNextRound = useCallback(() => {
-    const current = state.nationalCareer?.currentCompetition
-    if (!current || !nationalTeam) return
-    if (current.status !== "active") return
+  /**
+   * Avanca a rodada da competicao da selecao.
+   *
+   * Sem argumento, e o comportamento antigo: simula a rodada inteira, inclusive
+   * o jogo do usuario. Com `placarDisputado`, o jogo do usuario JA foi jogado no
+   * motor de partida (pre-jogo -> ao vivo -> coletiva) e so os outros jogos da
+   * rodada sao simulados.
+   */
+  const playNextRound = useCallback((placarDisputado?: {
+    golsDoUsuario: number
+    golsDoAdversario: number
+    venceuNosPenaltis?: boolean
+  }) => {
+    const atual = state.nationalCareer?.currentCompetition
+    if (!atual || !nationalTeam) return
+    if (atual.status !== "active") return
 
-    const playedBefore = current.fixtures.filter(f => f.isUserMatch && f.played)
+    let current = atual
+    let resumoDisputado: string | undefined
+    if (placarDisputado) {
+      const gravado = aplicarPlacarDoUsuario(
+        atual,
+        nationalTeam.id,
+        placarDisputado.golsDoUsuario,
+        placarDisputado.golsDoAdversario,
+        placarDisputado.venceuNosPenaltis,
+      )
+      // Sem jogo pendente do usuario nesta rodada, nao ha o que gravar — sair
+      // sem avancar evita que uma volta a tela de partida rode a rodada de novo.
+      if (!gravado) return
+      current = gravado.state
+      resumoDisputado = gravado.resumo
+    }
+
+    const playedBefore = atual.fixtures.filter(f => f.isUserMatch && f.played)
     const selectedSquad = getNationalSquad(nationalTeam, {
       cuts: state.nationalCuts ?? [],
       calls: state.nationalCalls ?? [],
     })
-    const updated = advanceNationalRound(current, nationalTeam.id, getNationalStrength(nationalTeam, selectedSquad))
+    const updated = advanceNationalRound(
+      current,
+      nationalTeam.id,
+      getNationalStrength(nationalTeam, selectedSquad),
+      resumoDisputado,
+    )
     const playedAfter = updated.fixtures.filter(f => f.isUserMatch && f.played)
     const newMatches = playedAfter.slice(playedBefore.length)
 

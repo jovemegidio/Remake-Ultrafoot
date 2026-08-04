@@ -22,6 +22,7 @@ import { useNationalTeam } from "@/lib/use-national-team"
 import { voltarAoClube } from "@/lib/career-moves"
 import { getTeamByShort } from "@/lib/teams-data"
 import { getNationalStrength, CONFEDERATION_LABEL } from "@/lib/national-teams"
+import { prepararPartidaDaSelecao } from "@/lib/partida-da-selecao"
 
 /**
  * OFFICE DA SELEÇÃO (Task 2 — seleção como time pleno).
@@ -128,12 +129,25 @@ export function NationalOffice() {
                   </div>
                   <h2 className="mt-2 text-xl font-black text-white">{userNextFixture.stage} · vs {oppName}</h2>
                   <p className="mt-1 text-sm text-white/55">Temporada {currentCompetition.season}</p>
-                  <button
-                    onClick={playNextRound}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-black text-[var(--brand-ink)] transition-all hover:brightness-110"
-                  >
-                    <Play className="h-4 w-4 fill-current" /> Jogar próxima partida
-                  </button>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {/* Fluxo completo, igual ao do clube: pré-jogo, partida ao
+                        vivo, coletiva e volta para o escritório da seleção. */}
+                    <button
+                      onClick={() => {
+                        if (!nationalTeam || !currentCompetition || !userNextFixture) return
+                        hardNavigate(prepararPartidaDaSelecao(nationalTeam, userNextFixture, currentCompetition))
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-black text-[var(--brand-ink)] transition-all hover:brightness-110"
+                    >
+                      <Play className="h-4 w-4 fill-current" /> Jogar partida
+                    </button>
+                    <button
+                      onClick={() => playNextRound()}
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold text-white/70 transition-all hover:bg-white/5 hover:text-white"
+                    >
+                      Simular rodada
+                    </button>
+                  </div>
                 </div>
               ) : availableCompetitions.length > 0 ? (
                 <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
