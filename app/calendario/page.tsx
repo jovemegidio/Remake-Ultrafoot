@@ -349,26 +349,85 @@ export default function CalendarioPage() {
 
   {/* Overlay de simulacao DIA A DIA (imersao: a data corre dia por dia ate a partida) */}
   {isSimulating && simDate && (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/88 backdrop-blur-sm">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-[var(--brand)]">
-        Simulando dias
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm">
+      {/* Grade de calendário ao fundo: dá o assunto da tela sem escrever nada.
+          Puro CSS — nenhuma imagem para carregar no meio de uma simulação. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)",
+          backgroundSize: "72px 72px",
+          maskImage: "radial-gradient(ellipse at center, #000 20%, transparent 72%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, #000 20%, transparent 72%)",
+        }}
+      />
+
+      <div className="relative flex flex-col items-center">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-[var(--brand)]">
+          Simulando dias
+        </div>
+
+        {/* FOLHA DE CALENDÁRIO. A metáfora é a de arrancar a folha do dia: faixa
+            do mês no topo, número grande, dia da semana embaixo. `key` no número
+            faz o React remontar o nó a cada data — é o que dá o "vira a folha"
+            sem biblioteca de animação. */}
+        <div className="mt-5 w-[13.5rem] overflow-hidden rounded-2xl border border-white/12 bg-[#0b0b10] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.9)]">
+          <div className="flex items-center justify-center bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] py-2">
+            <span className="text-sm font-black uppercase tracking-[0.2em] text-[var(--brand-ink)]">
+              {MONTH_NAMES_SHORT[simDate.getMonth()]}
+            </span>
+          </div>
+          <div className="flex flex-col items-center px-4 pb-4 pt-3">
+            <div
+              key={simDate.toDateString()}
+              className="animate-in fade-in zoom-in-95 text-[5.5rem] font-black leading-none tabular-nums text-white duration-150"
+            >
+              {String(simDate.getDate()).padStart(2, "0")}
+            </div>
+            <div className="mt-1 text-xs font-semibold uppercase tracking-[0.25em] text-white/45">
+              {["Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"][simDate.getDay()]}
+            </div>
+          </div>
+        </div>
+
+        {/* A SEMANA CORRENDO. Sete casas, a de hoje acesa: mostra o movimento
+            entre um dia e o outro, que é justamente o que a tela está fazendo e
+            que o número sozinho não comunica. */}
+        <div className="mt-5 flex items-center gap-1.5">
+          {["D", "S", "T", "Q", "Q", "S", "S"].map((letra, i) => (
+            <div
+              key={i}
+              className={
+                i === simDate.getDay()
+                  ? "flex h-7 w-7 items-center justify-center rounded-md bg-[var(--brand)] text-[11px] font-black text-[var(--brand-ink)]"
+                  : "flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.06] text-[11px] font-bold text-white/30"
+              }
+            >
+              {letra}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-7 h-1.5 w-72 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] transition-[width] duration-100"
+            style={{ width: `${simProgress}%` }}
+          />
+        </div>
+        {/* Diz PARA ONDE está indo. A barra sozinha informava só quanto falta —
+            e o técnico não tinha como conferir se escolheu a data certa. */}
+        <div className="mt-3 flex items-center gap-2 text-xs text-white/35">
+          <span className="tabular-nums">{simProgress}%</span>
+          {nextUserMatch && (
+            <>
+              <span className="text-white/15">·</span>
+              <span>até {dayOfWeek} {String(dayNum).padStart(2, "0")} {monthName}</span>
+            </>
+          )}
+        </div>
       </div>
-      <div className="mt-4 text-7xl font-black tabular-nums leading-none text-white">
-        {String(simDate.getDate()).padStart(2, "0")}
-        <span className="ml-3 text-4xl font-black uppercase text-white/70">
-          {MONTH_NAMES_SHORT[simDate.getMonth()]}
-        </span>
-      </div>
-      <div className="mt-3 text-sm font-medium uppercase tracking-wider text-white/45">
-        {["Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"][simDate.getDay()]}
-      </div>
-      <div className="mt-8 h-1.5 w-72 overflow-hidden rounded-full bg-white/10">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] transition-[width] duration-100"
-          style={{ width: `${simProgress}%` }}
-        />
-      </div>
-      <div className="mt-3 text-xs text-white/35">{simProgress}%</div>
 
       {/* PARAR. A simulação corre sozinha até a partida-alvo; sem saída, quem
           escolheu a data errada assiste meses passarem sem poder intervir.
