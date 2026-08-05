@@ -200,6 +200,11 @@ CREATE TABLE IF NOT EXISTS pedidos (
   conta_id    INTEGER NOT NULL REFERENCES contas(id),
   produto     TEXT    NOT NULL,
   valor_cents INTEGER NOT NULL,
+  -- Como foi pago (PIX, BOLETO, CREDIT_CARD). Antes isto so era MANDADO ao
+  -- Asaas e nunca guardado — o banco sabia quanto entrou, mas nao por onde, e
+  -- emitir recibo obrigava a abrir o extrato do Asaas a mao. O valor final vem
+  -- do webhook, nao do pedido: quem escolhe "UNDEFINED" decide na hora de pagar.
+  forma       TEXT    NOT NULL DEFAULT '',
   -- id da cobrança no Asaas; é por ele que o webhook encontra o pedido.
   asaas_id    TEXT UNIQUE,
   status      TEXT    NOT NULL DEFAULT 'pendente',
@@ -217,6 +222,57 @@ CREATE TABLE IF NOT EXISTS series_emitidas (
   conta_id      INTEGER NOT NULL REFERENCES contas(id),
   quando        INTEGER NOT NULL
 );
+
+-- ─── Recibos emitidos ────────────────────────────────────────────────────────
+--
+-- A NUMERAÇÃO mora aqui, e não no HTML do recibo. Se o número nascesse no
+-- navegador, dois admins emitindo ao mesmo tempo produziriam o MESMO número — e
+-- comprovante com número repetido não serve como comprovante.
+--
+-- A sequência reinicia a cada ano (UF-2026-0001). `(ano, sequencia)` é UNIQUE de
+-- propósito: o servidor é multi-thread, e é o banco — não a boa vontade do
+-- código — que garante que a corrida entre dois pedidos simultâneos falhe em vez
+-- de duplicar. Quem perde a corrida tenta o número seguinte.
+--
+-- Nada aqui é apagado nem editado: recibo emitido é documento que já está na mão
+-- de alguém. Emissão errada se conserta emitindo outro, não reescrevendo.
+--
+-- `conta_id` é NULO quando a venda aconteceu fora do launcher (Pix na mão, por
+-- exemplo) e não há conta a que amarrar — o recibo existe do mesmo jeito.
+--
+-- `pedido_id` é UNIQUE e é o que sustenta o botão de recibo do launcher: o
+-- comprador pede o recibo do pedido dele e o servidor devolve o que já existe em
+-- vez de emitir outro. Sem isso, cada clique queimaria um número novo e a mesma
+-- venda teria três comprovantes diferentes. É NULO na emissão manual, que não
+-- nasce de pedido nenhum — e NULL não colide em UNIQUE no SQLite, então várias
+-- emissões manuais convivem sem problema.
+CREATE TABLE IF NOT EXISTS recibos (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  ano         INTEGER NOT NULL,
+  sequencia   INTEGER NOT NULL,
+  numero      TEXT    NOT NULL UNIQUE,   -- UF-2026-0001, exatamente como é impresso
+  conta_id    INTEGER REFERENCES contas(id),
+  pedido_id   INTEGER REFERENCES pedidos(id),   -- unico pelo indice logo abaixo
+  nome        TEXT    NOT NULL,
+  email       TEXT    NOT NULL,
+  valor_cents INTEGER NOT NULL,
+  forma       TEXT    NOT NULL DEFAULT '',
+  chave       TEXT    NOT NULL DEFAULT '',
+  item        TEXT    NOT NULL DEFAULT '',
+  pago_em     INTEGER NOT NULL,
+  emitido_por INTEGER NOT NULL REFERENCES contas(id),
+  emitido_em  INTEGER NOT NULL,
+  UNIQUE (ano, sequencia)
+);
+
+CREATE INDEX IF NOT EXISTS idx_recibos_emissao ON recibos(emitido_em DESC);
+CREATE INDEX IF NOT EXISTS idx_recibos_conta ON recibos(conta_id);
+
+-- É ISTO que garante um recibo por pedido. Índice em vez de `UNIQUE` na coluna
+-- porque o SQLite não aceita ALTER TABLE ... ADD COLUMN UNIQUE: assim o banco que
+-- já existe e o banco novo terminam com exatamente a mesma regra. Vários NULL
+-- convivem (emissão manual não tem pedido).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_recibos_pedido ON recibos(pedido_id);
 
 -- ─── Licenças Ed25519 ────────────────────────────────────────────────────────
 --

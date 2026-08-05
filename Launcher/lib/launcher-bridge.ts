@@ -24,9 +24,19 @@ export type LatestInfo = {
    * já falhou duas vezes; sem isso o launcher repetia o ciclo para sempre.
    */
   auto?: boolean
+  /**
+   * Manifesto de arquivos desta versão. Presente = dá para atualizar baixando só
+   * o que mudou (ver `atualizarPorPartes`). Ausente = publicação no formato
+   * antigo, e o caminho continua sendo o instalador inteiro.
+   */
+  manifesto?: string | null
 }
 
-export type ProgressPhase = "downloading" | "installing" | "done"
+/**
+ * `checking` = conferindo o que já está no disco (fase do delta, antes de baixar).
+ * `applying` = trocando os arquivos, já com tudo baixado — não dá para cancelar.
+ */
+export type ProgressPhase = "checking" | "downloading" | "installing" | "applying" | "done"
 
 export type ProgressPayload = {
   phase: ProgressPhase
@@ -215,11 +225,281 @@ export async function setupCloseToTray(shouldMinimize: () => boolean): Promise<(
   return unlisten
 }
 
-/** Abre o jogo instalado. */
+/** Abre o jogo instalado. O launcher CONTINUA VIVO supervisionando (ver jogo.rs). */
 export async function launchGame(path: string | null): Promise<void> {
   if (!isTauri()) return
   const { invoke } = await import("@tauri-apps/api/core")
   await invoke("launch_game", { path })
+}
+
+// ─── Atualização diferencial (delta) e integridade ───────────────────────────
+
+export type RelatorioDoPatch = {
+  versao: string
+  arquivos_no_total: number
+  arquivos_baixados: number
+  bytes_baixados: number
+  bytes_da_versao: number
+  arquivos_removidos: number
+  ok: boolean
+  problemas: string[]
+}
+
+/** Há manifesto publicado nesse endereço? Decide entre delta e instalador. */
+export async function temManifesto(url: string): Promise<boolean> {
+  if (!isTauri()) return false
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<boolean>("tem_manifesto", { urlDoManifesto: url })
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Atualiza baixando SÓ os arquivos que mudaram.
+ *
+ * Erro aqui não é fim de linha: quem chama cai no instalador completo. O delta é
+ * otimização — a atualização precisa acontecer de um jeito ou de outro.
+ */
+export async function atualizarPorPartes(
+  urlDoManifesto: string,
+  onProgress: (p: ProgressPayload) => void,
+): Promise<RelatorioDoPatch> {
+  const { invoke } = await import("@tauri-apps/api/core")
+  const { listen } = await import("@tauri-apps/api/event")
+  const unlisten = await listen<ProgressPayload>("launcher://progress", (e) => onProgress(e.payload))
+  try {
+    return await invoke<RelatorioDoPatch>("atualizar_por_partes", { urlDoManifesto })
+  } finally {
+    unlisten()
+  }
+}
+
+/** "Verificar integridade": confere arquivo por arquivo e, com `reparar`, conserta. */
+export async function verificarArquivos(
+  urlDoManifesto: string,
+  reparar: boolean,
+  onProgress: (p: ProgressPayload) => void,
+): Promise<RelatorioDoPatch> {
+  const { invoke } = await import("@tauri-apps/api/core")
+  const { listen } = await import("@tauri-apps/api/event")
+  const unlisten = await listen<ProgressPayload>("launcher://progress", (e) => onProgress(e.payload))
+  try {
+    return await invoke<RelatorioDoPatch>("verificar_arquivos", { urlDoManifesto, reparar })
+  } finally {
+    unlisten()
+  }
+}
+
+// ─── Controle do download ────────────────────────────────────────────────────
+
+export type EstadoDoDownload = { pausado: boolean; cancelado: boolean; limite_kbps: number }
+
+export async function pausarDownload(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("pausar_download")
+}
+
+export async function retomarDownload(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("retomar_download")
+}
+
+/** Cancela. O pedaço já baixado FICA no disco, salvo `apagarParcial`. */
+export async function cancelarDownload(apagarParcial = false): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("cancelar_download", { apagarParcial })
+}
+
+/** Teto de velocidade em KB/s. 0 = sem limite. */
+export async function definirLimiteDeBanda(kbps: number): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("definir_limite_de_banda", { kbps })
+}
+
+export async function estadoDoDownload(): Promise<EstadoDoDownload> {
+  if (!isTauri()) return { pausado: false, cancelado: false, limite_kbps: 0 }
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<EstadoDoDownload>("estado_do_download")
+  } catch {
+    return { pausado: false, cancelado: false, limite_kbps: 0 }
+  }
+}
+
+/** Ouve mudanças de pausa/cancelamento vindas do Rust. */
+export async function ouvirEstadoDoDownload(
+  aoMudar: (e: EstadoDoDownload) => void,
+): Promise<() => void> {
+  if (!isTauri()) return () => {}
+  const { listen } = await import("@tauri-apps/api/event")
+  return listen<EstadoDoDownload>("launcher://download-estado", (e) => aoMudar(e.payload))
+}
+
+// ─── Disco e pasta de instalação ─────────────────────────────────────────────
+
+export type EspacoNoDisco = { caminho: string; livre: number | null; livre_texto: string }
+
+export async function espacoNoDisco(caminho?: string): Promise<EspacoNoDisco | null> {
+  if (!isTauri()) return null
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<EspacoNoDisco>("espaco_no_disco", { caminho: caminho ?? null })
+  } catch {
+    return null
+  }
+}
+
+export async function pastaDeInstalacao(): Promise<string | null> {
+  if (!isTauri()) return null
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<string | null>("pasta_de_instalacao")
+  } catch {
+    return null
+  }
+}
+
+/** Abre o seletor de pastas. Devolve null se o jogador desistiu. */
+export async function escolherPastaDeInstalacao(): Promise<string | null> {
+  if (!isTauri()) return null
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string | null>("escolher_pasta_de_instalacao")
+}
+
+export async function limparPastaDeInstalacao(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("limpar_pasta_de_instalacao")
+}
+
+// ─── O jogo em execução ──────────────────────────────────────────────────────
+
+export type EstadoDoJogo = {
+  rodando: boolean
+  sessao_segundos: number
+  total_segundos: number
+  /** Época em segundos. 0 = nunca jogou. */
+  ultima_vez: number
+  sessoes: number
+}
+
+export async function estadoDoJogo(): Promise<EstadoDoJogo> {
+  const vazio: EstadoDoJogo = {
+    rodando: false, sessao_segundos: 0, total_segundos: 0, ultima_vez: 0, sessoes: 0,
+  }
+  if (!isTauri()) return vazio
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<EstadoDoJogo>("estado_do_jogo")
+  } catch {
+    return vazio
+  }
+}
+
+export async function ouvirEstadoDoJogo(aoMudar: (e: EstadoDoJogo) => void): Promise<() => void> {
+  if (!isTauri()) return () => {}
+  const { listen } = await import("@tauri-apps/api/event")
+  return listen<EstadoDoJogo>("launcher://jogo", (e) => aoMudar(e.payload))
+}
+
+/** O jogo fechou com erro. É a hora certa de oferecer "verificar arquivos". */
+export async function ouvirCrashDoJogo(aoCair: (codigo: number) => void): Promise<() => void> {
+  if (!isTauri()) return () => {}
+  const { listen } = await import("@tauri-apps/api/event")
+  return listen<number>("launcher://jogo-caiu", (e) => aoCair(e.payload))
+}
+
+export async function pararJogo(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("parar_jogo")
+}
+
+export type AcaoAoAbrir = "bandeja" | "minimizar" | "fechar" | "nada"
+
+export async function acaoAoAbrir(): Promise<AcaoAoAbrir> {
+  if (!isTauri()) return "bandeja"
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<AcaoAoAbrir>("acao_ao_abrir")
+  } catch {
+    return "bandeja"
+  }
+}
+
+export async function definirAcaoAoAbrir(acao: AcaoAoAbrir): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("definir_acao_ao_abrir", { acao })
+}
+
+// ─── Manutenção ──────────────────────────────────────────────────────────────
+
+export async function desinstalarJogo(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("desinstalar_jogo")
+}
+
+export async function criarAtalho(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("criar_atalho")
+}
+
+export type Canal = "estavel" | "beta"
+
+export async function canalAtual(): Promise<Canal> {
+  if (!isTauri()) return "estavel"
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<Canal>("canal")
+  } catch {
+    return "estavel"
+  }
+}
+
+export async function definirCanal(canal: Canal): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("definir_canal", { canal })
+}
+
+export type VersaoDisponivel = {
+  version: string
+  url: string
+  notes: string
+  manifesto: string | null
+}
+
+/** Versões às quais dá para voltar quando a mais nova sai com defeito. */
+export async function versoesAnteriores(): Promise<VersaoDisponivel[]> {
+  if (!isTauri()) return []
+  try {
+    const { invoke } = await import("@tauri-apps/api/core")
+    return await invoke<VersaoDisponivel[]>("versoes_anteriores")
+  } catch {
+    return []
+  }
+}
+
+export async function abrirPastaDeLogs(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  await invoke("abrir_pasta_de_logs")
+}
+
+/** Gera o arquivo de diagnóstico e devolve o caminho dele. */
+export async function gerarDiagnostico(): Promise<string> {
+  if (!isTauri()) return ""
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string>("gerar_diagnostico")
 }
 
 // ─── Fallback de navegador (dev) ─────────────────────────────────────────────

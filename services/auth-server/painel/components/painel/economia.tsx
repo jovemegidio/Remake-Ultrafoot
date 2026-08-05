@@ -12,6 +12,15 @@ import { BotaoRecarregar, CabecalhoDaTela, Estado, Indicador, usarDados, Vazio }
 
 type Aba = 'compras' | 'pedidos' | 'creditos'
 
+// Nomes que o Asaas usa. Codigo cru na tela ("CREDIT_CARD") nao ajuda ninguem.
+const FORMAS: Record<string, string> = {
+  PIX: 'Pix',
+  BOLETO: 'Boleto',
+  CREDIT_CARD: 'Cartão de crédito',
+  DEBIT_CARD: 'Cartão de débito',
+  TRANSFER: 'Transferência',
+}
+
 const ABAS: { chave: Aba; rotulo: string }[] = [
   { chave: 'compras', rotulo: 'Compras' },
   { chave: 'pedidos', rotulo: 'Pedidos' },
@@ -190,7 +199,14 @@ export function Economia() {
                                 <p className="text-sm font-medium">{p.nome || '(sem nome)'}</p>
                                 <p className="text-xs text-muted-foreground">{p.email}</p>
                               </TableCell>
-                              <TableCell>{p.produto}</TableCell>
+                              <TableCell>
+                                <p className="text-sm">{p.produto}</p>
+                                {/* Vazio nos pedidos antigos: a forma so passou
+                                    a ser guardada quando o recibo precisou dela. */}
+                                <p className="text-xs text-muted-foreground">
+                                  {FORMAS[p.forma] || p.forma || '—'}
+                                </p>
+                              </TableCell>
                               <TableCell>
                                 <Badge
                                   variant={

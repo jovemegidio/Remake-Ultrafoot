@@ -14,8 +14,14 @@ export function GameHero({
   mode,
   logado,
   erroAoAbrir,
+  pausado,
+  jogando,
   onDownload,
   onRepair,
+  onPausar,
+  onRetomar,
+  onCancelar,
+  onPararJogo,
 }: {
   game: GameWithReleases
   status: GameStatus
@@ -24,8 +30,14 @@ export function GameHero({
   logado: boolean
   /** Por que o jogo nao abriu no ultimo clique em Jogar. Null = sem falha. */
   erroAoAbrir?: string | null
+  pausado: boolean
+  jogando: boolean
   onDownload: () => void
   onRepair: () => void
+  onPausar: () => void
+  onRetomar: () => void
+  onCancelar: () => void
+  onPararJogo: () => void
 }) {
   const latest = game.latestRelease
   const online = mode === "online"
@@ -110,8 +122,14 @@ export function GameHero({
             mode={mode}
             logado={logado}
             downloadSizeMb={downloadSizeMb}
+            pausado={pausado}
+            jogando={jogando}
             onDownload={onDownload}
             onRepair={onRepair}
+            onPausar={onPausar}
+            onRetomar={onRetomar}
+            onCancelar={onCancelar}
+            onPararJogo={onPararJogo}
           />
           {erroAoAbrir && (
             <p className="mt-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">

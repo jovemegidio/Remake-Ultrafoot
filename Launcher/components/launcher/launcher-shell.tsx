@@ -16,8 +16,11 @@ import {
   type Preferencias,
 } from "@/lib/preferencias"
 import { CommunityBar } from "./community-bar"
+import { BarraDeTitulo, BordasParaRedimensionar } from "./barra-de-titulo"
+import { GerenciarPanel } from "./gerenciar-panel"
 import { ligarAtalhosDeTelaCheia } from "@/lib/tela-cheia"
 import { cn } from "@/lib/utils"
+import { useT } from "@/lib/i18n"
 import { useLiveLatest } from "@/lib/use-live-latest"
 import {
   getInstalledGame,
@@ -32,12 +35,22 @@ import {
   fetchLauncherConfig,
   checkServerStatus,
   openExternal,
+  atualizarPorPartes,
+  pausarDownload,
+  retomarDownload,
+  cancelarDownload,
+  ouvirEstadoDoDownload,
+  estadoDoJogo,
+  ouvirEstadoDoJogo,
+  ouvirCrashDoJogo,
+  pararJogo,
   type ProgressPhase,
   type LatestInfo,
   type LauncherConfig,
   type ServerStatus,
+  type EstadoDoJogo,
 } from "@/lib/launcher-bridge"
-import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings, User, LogIn, Users, ShoppingBag} from "lucide-react"
+import { Home, Newspaper, ScrollText, ShieldCheck, ShieldOff, Wifi, WifiOff, Settings, User, LogIn, Users, ShoppingBag, SlidersHorizontal } from "lucide-react"
 
 const CLOSE_TO_TRAY_KEY = "ultrafoot-launcher:close-to-tray"
 const MODE_KEY = "ultrafoot-launcher:mode"
@@ -64,7 +77,7 @@ export type InstallState = {
   eta: number
 }
 
-type Tab = "home" | "loja" | "news" | "social" | "changelog" | "security"
+type Tab = "home" | "loja" | "news" | "social" | "changelog" | "security" | "gerenciar"
 
 function isNewerVersion(candidate: string, installed: string): boolean {
   const a = candidate.split(".").map(part => Number.parseInt(part, 10) || 0)
@@ -83,7 +96,15 @@ export function LauncherShell({
   game: GameWithReleases
   news: NewsWithGame[]
 }) {
+  const t = useT()
   const [tab, setTab] = useState<Tab>("home")
+
+  // Download pausado pelo jogador (o estado real mora no Rust).
+  const [pausado, setPausado] = useState(false)
+  // O jogo está aberto AGORA. O launcher sobrevive a ele desde jogo.rs, então
+  // este estado existe de verdade — antes o processo já teria morrido aqui.
+  const [jogo, setJogo] = useState<EstadoDoJogo | null>(null)
+  const [avisoDeCrash, setAvisoDeCrash] = useState(false)
 
   // Modo de execucao. Comeca SEMPRE "online" para o HTML do export estatico
   // bater com o 1o render (hidratacao); a preferencia salva e a ausencia de rede
@@ -96,9 +117,15 @@ export function LauncherShell({
   // Última versão publicada: parte do dado estático embutido e é confirmada em
   // runtime pelo latest.json — assim o launcher reconhece uma versão nova sem
   // precisar ser recompilado.
-  const [latest, setLatest] = useState<{ version: string | null; url: string | null }>(() => ({
+  const [latest, setLatest] = useState<{
+    version: string | null
+    url: string | null
+    /** Manifesto de arquivos: é ele que habilita a atualização diferencial. */
+    manifesto: string | null
+  }>(() => ({
     version: game.latestRelease?.version ?? null,
     url: game.latestRelease?.downloadUrl ?? null,
+    manifesto: null,
   }))
 
   const [install, setInstall] = useState<InstallState>({
@@ -363,7 +390,13 @@ export function LauncherShell({
       }))
       if (!online) return
       const remote = await fetchLatest()
-      if (alive && remote) setLatest({ version: remote.version, url: remote.url })
+      if (alive && remote) {
+        setLatest({
+          version: remote.version,
+          url: remote.url,
+          manifesto: remote.manifesto ?? null,
+        })
+      }
     })()
     return () => {
       alive = false
@@ -378,8 +411,40 @@ export function LauncherShell({
     // Fora do Windows o `live` nao traz URL (o pacote do SO vem do release
     // desktop-*, resolvido pelo Rust): preserva a que o `fetchLatest` ja achou
     // em vez de zera-la, senao o download cairia na URL estatica do Windows.
-    if (live?.version) setLatest(prev => ({ version: live.version, url: live.downloadUrl || prev.url }))
+    if (live?.version) {
+      setLatest(prev => ({
+        version: live.version,
+        url: live.downloadUrl || prev.url,
+        // O manifesto vem do latest.json (comando Rust); a API do GitHub não o
+        // conhece. Preservar em vez de zerar é o que mantém o delta disponível.
+        manifesto: prev.manifesto,
+      }))
+    }
   }, [live])
+
+  // ── Estado do download (pausa/cancelamento) e do jogo em execução ──
+  useEffect(() => {
+    let limparDownload = () => {}
+    let limparJogo = () => {}
+    let limparCrash = () => {}
+    void ouvirEstadoDoDownload((e) => setPausado(e.pausado)).then((un) => {
+      limparDownload = un
+    })
+    void ouvirEstadoDoJogo(setJogo).then((un) => {
+      limparJogo = un
+    })
+    // O jogo caiu: o launcher está vivo para perceber (era o que faltava) e
+    // aponta para o único conserto que costuma resolver.
+    void ouvirCrashDoJogo(() => setAvisoDeCrash(true)).then((un) => {
+      limparCrash = un
+    })
+    void estadoDoJogo().then(setJogo)
+    return () => {
+      limparDownload()
+      limparJogo()
+      limparCrash()
+    }
+  }, [])
 
   const latestVersion = latest.version
 
@@ -402,7 +467,7 @@ export function LauncherShell({
   const runInstall = useCallback(
     (url: string) => {
       setInstall((prev) => ({ ...prev, downloading: true, phase: "downloading", progress: 0, speed: 0, eta: 0 }))
-      installOrUpdate(url, latest.version ?? "", (p) => {
+      const aoProgredir = (p: { phase: ProgressPhase; percent: number; speed: number; eta: number }) => {
         setInstall((prev) => ({
           ...prev,
           downloading: p.phase !== "done",
@@ -411,7 +476,36 @@ export function LauncherShell({
           speed: p.speed,
           eta: p.eta,
         }))
-      })
+      }
+
+      /**
+       * ATUALIZAÇÃO DIFERENCIAL PRIMEIRO, INSTALADOR DEPOIS.
+       *
+       * Com manifesto publicado e o jogo já no disco, dá para baixar só os
+       * arquivos que mudaram — uma correção pequena vira alguns megabytes em vez
+       * do pacote inteiro. O delta é OTIMIZAÇÃO: qualquer falha (sem manifesto,
+       * arquivo travado, rede) cai no instalador completo, que é o caminho que
+       * sempre funcionou. Atualizar não pode depender de o atalho dar certo.
+       */
+      const caminho = async () => {
+        if (latest.manifesto && install.installed) {
+          try {
+            const r = await atualizarPorPartes(latest.manifesto, aoProgredir)
+            console.info(
+              `[launcher] delta: ${r.arquivos_baixados} arquivos, ${r.bytes_baixados} de ${r.bytes_da_versao} bytes`,
+            )
+            return
+          } catch (e) {
+            // Cancelar é ordem do jogador, não falha: não vale cair no
+            // instalador completo logo depois de pedirem para parar.
+            if (String(e).includes("cancelado")) throw e
+            console.warn("[launcher] delta falhou, usando o instalador completo:", e)
+          }
+        }
+        await installOrUpdate(url, latest.version ?? "", aoProgredir)
+      }
+
+      caminho()
         .then(async () => {
           // RECONFERE NO REGISTRO em vez de assumir que instalou a versao
           // pedida. Antes isto gravava `version: latest.version` direto no
@@ -435,7 +529,7 @@ export function LauncherShell({
           setInstall((prev) => ({ ...prev, downloading: false }))
         })
     },
-    [latest.version],
+    [latest.version, latest.manifesto, install.installed],
   )
 
   // ATUALIZACAO E OBRIGATORIA. Havendo versao nova e rede, o launcher baixa e
@@ -511,23 +605,40 @@ export function LauncherShell({
   }, [install.downloading, logado, online, latest.url, game.latestRelease?.downloadUrl, runInstall])
 
   const tabs: { key: Tab; label: string; icon: typeof Home }[] = [
-    { key: "home", label: "Início", icon: Home },
-    { key: "loja", label: "Loja", icon: ShoppingBag },
-    { key: "news", label: "Novidades", icon: Newspaper },
-    { key: "social", label: "FC Hub", icon: Users },
-    { key: "changelog", label: "Changelog", icon: ScrollText },
-    { key: "security", label: "Segurança", icon: ShieldCheck },
+    { key: "home", label: t("nav.inicio"), icon: Home },
+    { key: "loja", label: t("nav.loja"), icon: ShoppingBag },
+    { key: "news", label: t("nav.novidades"), icon: Newspaper },
+    { key: "social", label: t("nav.hub"), icon: Users },
+    { key: "gerenciar", label: t("nav.gerenciar"), icon: SlidersHorizontal },
+    { key: "changelog", label: t("nav.changelog"), icon: ScrollText },
+    { key: "security", label: t("nav.seguranca"), icon: ShieldCheck },
   ]
 
+  // Recarrega o estado da instalação depois de reparar ou desinstalar.
+  const recarregarInstalacao = useCallback(() => {
+    void getInstalledGame().then((real) =>
+      setInstall((prev) => ({
+        ...prev,
+        version: real.version,
+        installed: real.installed,
+        path: real.path,
+      })),
+    )
+  }, [])
+
   return (
-    <div className="launcher-shell relative flex h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="launcher-shell relative flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
+      {/* Janela sem decoração do sistema: os controles e o arrasto vêm daqui. */}
+      <BordasParaRedimensionar />
+      <BarraDeTitulo titulo="Ultrafoot Launcher" fecharParaBandeja={() => closeToTrayRef.current} />
+      <div className="relative flex min-h-0 flex-1 w-full overflow-hidden">
       <div className="pointer-events-none absolute inset-0 opacity-40 launcher-grid" />
       {launcherUpdate && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/95 p-6 backdrop-blur">
           <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 text-center">
-            <h2 className="font-display text-lg font-bold text-foreground">Atualizando o launcher</h2>
+            <h2 className="font-display text-lg font-bold text-foreground">{t("launcher.atualizando")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Nova versão {launcherUpdate.version}. O launcher vai reiniciar em instantes.
+              {t("launcher.novaVersao", { versao: launcherUpdate.version })}
             </p>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
               <div
@@ -559,7 +670,7 @@ export function LauncherShell({
                 onClick={() => setLauncherUpdate(null)}
                 className="mt-4 text-xs text-muted-foreground underline underline-offset-4 transition hover:text-foreground"
               >
-                Jogar sem atualizar agora
+                {t("launcher.semAtualizar")}
               </button>
             )}
           </div>
@@ -575,6 +686,30 @@ export function LauncherShell({
             className="shrink-0 rounded px-2 py-0.5 font-medium text-amber-100 transition hover:bg-amber-500/20"
           >
             Fechar
+          </button>
+        </div>
+      )}
+      {/* O JOGO CAIU. Só existe porque o launcher agora continua vivo enquanto o
+          jogo roda — antes ninguém sobrava para ver o código de saída. Aponta
+          para o conserto que costuma resolver em vez de deixar a pessoa
+          adivinhando. */}
+      {avisoDeCrash && (
+        <div className="fixed inset-x-0 top-9 z-[210] flex items-center justify-center gap-3 bg-red-500/15 px-4 py-2 text-xs text-red-200 backdrop-blur">
+          <span className="truncate">{t("aviso.jogoCaiu")}</span>
+          <button
+            onClick={() => {
+              setAvisoDeCrash(false)
+              setTab("gerenciar")
+            }}
+            className="shrink-0 rounded bg-red-500/20 px-2 py-0.5 font-medium text-red-100 transition hover:bg-red-500/30"
+          >
+            {t("acao.verificar")}
+          </button>
+          <button
+            onClick={() => setAvisoDeCrash(false)}
+            className="shrink-0 rounded px-2 py-0.5 font-medium text-red-100 transition hover:bg-red-500/20"
+          >
+            {t("acao.fechar")}
           </button>
         </div>
       )}
@@ -694,19 +829,19 @@ export function LauncherShell({
         <div className="flex h-16 items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div>
-              <p className="text-sm font-bold text-white">{tabs.find(t => t.key === tab)?.label}</p>
-              <p className="text-[10px] text-white/30">Gerencie, atualize e jogue</p>
+              <p className="text-sm font-bold text-white">{tabs.find(item => item.key === tab)?.label}</p>
+              <p className="text-[10px] text-white/30">{t("nav.subtitulo")}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {online ? (
               <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-                <ShieldCheck className="h-4 w-4 text-primary" /> Anti-cheat ativo
+                <ShieldCheck className="h-4 w-4 text-primary" /> {t("rede.anticheat")}
               </span>
             ) : (
               <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-                <ShieldOff className="h-4 w-4 text-accent" /> Edição liberada
+                <ShieldOff className="h-4 w-4 text-accent" /> {t("rede.edicaoLiberada")}
               </span>
             )}
 
@@ -721,7 +856,7 @@ export function LauncherShell({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Wifi className="h-3.5 w-3.5" /> Online
+                <Wifi className="h-3.5 w-3.5" /> {t("rede.online")}
               </button>
               <button
                 onClick={() => changeMode("offline")}
@@ -732,7 +867,7 @@ export function LauncherShell({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <WifiOff className="h-3.5 w-3.5" /> Offline
+                <WifiOff className="h-3.5 w-3.5" /> {t("rede.offline")}
               </button>
             </div>
 
@@ -762,8 +897,14 @@ export function LauncherShell({
                 mode={mode}
                 logado={logado}
                 erroAoAbrir={erroAoAbrir}
+                pausado={pausado}
+                jogando={!!jogo?.rodando}
                 onDownload={startDownload}
                 onRepair={startRepair}
+                onPausar={() => void pausarDownload()}
+                onRetomar={() => void retomarDownload()}
+                onCancelar={() => void cancelarDownload(false)}
+                onPararJogo={() => void pararJogo().catch(() => {})}
               />
               <NewsFeed news={effectiveNews.slice(0, 4)} title="Últimas novidades" compact />
             </div>
@@ -788,10 +929,20 @@ export function LauncherShell({
             />
           )}
 
+          {tab === "gerenciar" && (
+            <GerenciarPanel
+              instalado={install.installed}
+              manifesto={latest.manifesto}
+              online={online}
+              aoMudarInstalacao={recarregarInstalacao}
+            />
+          )}
+
           {tab === "changelog" && <ChangelogView game={game} releases={effectiveReleases} />}
 
           {tab === "security" && <SecurityPanel mode={mode} />}
         </div>
+      </div>
       </div>
       </div>
     </div>

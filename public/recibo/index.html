@@ -11,9 +11,19 @@
   do proprio navegador. Nao ha dependencia nova, nao ha deploy de servico, e
   funciona igual no launcher, no site e aberta do disco.
 
-  COMO O LAUNCHER CHAMA — tudo por querystring, nada e chumbado:
+  O NUMERO NAO NASCE AQUI. Ele e reservado pelo servidor de contas (/recibo para
+  o comprador, /admin/recibo/emitir para a administracao) e chega pronto. Gerar
+  numero no navegador faria dois emissores tirarem o mesmo, e recibo com numero
+  repetido nao vale.
 
-    /recibo/?pedido=UF-2026-0001
+  ⚠️ OS DADOS VEM DEPOIS DO "#", NAO DEPOIS DO "?". O fragmento NUNCA e enviado
+  ao servidor: com "?", a chave de ativacao e o e-mail de quem comprou iriam
+  parar no log de acesso do nginx a cada impressao. Ler `search` continua
+  funcionando so para nao quebrar link antigo — nao gerar link novo assim.
+
+  COMO O PAINEL (E O LAUNCHER) CHAMAM — nada e chumbado:
+
+    /recibo/#pedido=UF-2026-0001
            &nome=Fulano%20de%20Tal
            &email=fulano@exemplo.com
            &valor=49.90
@@ -93,10 +103,12 @@
 <div class="folha">
   <header>
     <div class="marca">
-      <!-- Coloque o arquivo em public/brand/agencia-do-japa.png. Enquanto ele
-           nao existir, o onerror troca pelo nome escrito — a pagina nunca
+      <!-- Caminho RELATIVO de proposito: esta mesma pagina e servida na raiz do
+           site (/recibo/) e dentro do painel de admin (/painel/recibo/). Com
+           "/brand/..." absoluto, o logo sumiria no segundo caso. Se mesmo assim
+           o arquivo faltar, o onerror troca pelo nome escrito — a pagina nunca
            mostra icone quebrado. -->
-      <img id="logo" src="/brand/agencia-do-japa.png" alt="Agência do Japa"
+      <img id="logo" src="../brand/agencia-do-japa.png" alt="Agência do Japa"
            onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'texto',textContent:'Agência do Japa'}))">
       <div>
         <div class="texto">Agência do Japa</div>
@@ -141,9 +153,10 @@
 </div>
 
 <script>
-  // Preenche pela querystring. Campo ausente fica com o travessão que já está no
-  // HTML — nunca "undefined" nem espaço em branco sem explicação.
-  const q = new URLSearchParams(location.search)
+  // Preenche pelo FRAGMENTO (ver o aviso no topo: "?" vazaria a chave para o log
+  // do servidor). Campo ausente fica com o travessão que já está no HTML — nunca
+  // "undefined" nem espaço em branco sem explicação.
+  const q = new URLSearchParams(location.hash.slice(1) || location.search)
   const por = (id, valor) => { if (valor) document.getElementById(id).textContent = valor }
 
   por("pedido", q.get("pedido"))

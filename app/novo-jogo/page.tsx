@@ -13,6 +13,7 @@ import {
   serieCTeams,
   serieDTeams,
   getTeamUniforms,
+  completarLigaComPool,
   getCamisaUrl,
   getEscudoUrl,
   isKitVariantAvailable,
@@ -45,6 +46,7 @@ import {
   ecuadorTeams,
   primeraDivUryTeams,
   kLeague1Teams,
+  kLeague2Teams,
   chineseSuperTeams,
   championshipTeams,
   serieBItaTeams,
@@ -89,6 +91,15 @@ interface LeagueTab {
   label: string
   short: string
   teams: Team[]
+  /**
+   * Liga montada com o pool do proprio pais (as segundas divisoes ligadas em
+   * 04/08). ⚠️ NAO da para resolver isso no escopo do modulo: o caminho passa
+   * por `applyTeamOverride`, que le o persistent-store, e no Tauri o store
+   * hidrata DEPOIS do import — o clube apareceria com o nome e o escudo de
+   * antes das suas edicoes, e nunca se corrigiria. Ver
+   * [[ultrafoot-efeito-que-grava-antes-de-hidratar]].
+   */
+  doPool?: boolean
 }
 
 interface CountryTab {
@@ -147,36 +158,42 @@ const COUNTRIES: CountryTab[] = [
     name: "Portugal", code: "POR", region: "europa",
     leagues: [
       { key: "primeira_liga", label: "Primeira Liga", short: "Primeira Liga", teams: primeiraLigaTeams },
+      { key: "liga_portugal_2", label: "Liga Portugal 2", short: "Liga 2", teams: [], doPool: true },
     ],
   },
   {
     name: "Holanda", code: "NED", region: "europa",
     leagues: [
       { key: "eredivisie", label: "Eredivisie", short: "Eredivisie", teams: eredivisieTeams },
+      { key: "eerste_divisie", label: "Eerste Divisie", short: "Eerste Div", teams: [], doPool: true },
     ],
   },
   {
     name: "Escocia", code: "SCO", region: "europa",
     leagues: [
       { key: "scottish_prem", label: "Scottish Premiership", short: "Scottish Prem", teams: scottishPremTeams },
+      { key: "scottish_champ", label: "Scottish Championship", short: "Championship", teams: [], doPool: true },
     ],
   },
   {
     name: "Turquia", code: "TUR", region: "europa",
     leagues: [
       { key: "super_lig", label: "Super Lig", short: "Super Lig", teams: superLigTeams },
+      { key: "tff_1_lig", label: "TFF 1. Lig", short: "1. Lig", teams: [], doPool: true },
     ],
   },
   {
     name: "Belgica", code: "BEL", region: "europa",
     leagues: [
       { key: "pro_league_bel", label: "Belgian Pro League", short: "Pro League", teams: proLeagueBelTeams },
+      { key: "challenger_pro", label: "Challenger Pro League", short: "Challenger", teams: [], doPool: true },
     ],
   },
   {
     name: "Russia", code: "RUS", region: "europa",
     leagues: [
       { key: "russian_prem", label: "Russian Premier League", short: "Russian Prem", teams: russianPremTeams },
+      { key: "russian_first", label: "Russian First League", short: "First League", teams: [], doPool: true },
     ],
   },
   {
@@ -195,12 +212,14 @@ const COUNTRIES: CountryTab[] = [
     name: "Argentina", code: "ARG", region: "americas",
     leagues: [
       { key: "liga_argentina", label: "Liga Profesional", short: "Liga Argentina", teams: ligaArgentinaTeams },
+      { key: "primera_b_arg", label: "Primera Nacional", short: "Primera Nacional", teams: [], doPool: true },
     ],
   },
   {
     name: "Colombia", code: "COL", region: "americas",
     leagues: [
       { key: "primera_a_col", label: "Primera A", short: "Primera A", teams: primeiraAColTeams },
+      { key: "torneo_betplay", label: "Torneo BetPlay", short: "Torneo BetPlay", teams: [], doPool: true },
     ],
   },
   {
@@ -216,12 +235,14 @@ const COUNTRIES: CountryTab[] = [
     name: "Equador", code: "ECU", region: "americas",
     leagues: [
       { key: "primera_a_ecu", label: "LigaPro Serie A", short: "LigaPro", teams: ecuadorTeams },
+      { key: "serie_b_ecu", label: "LigaPro Serie B", short: "LigaPro B", teams: [], doPool: true },
     ],
   },
   {
     name: "Uruguai", code: "URU", region: "americas",
     leagues: [
       { key: "primera_div_ury", label: "Primera Division", short: "Primera Div", teams: primeraDivUryTeams },
+      { key: "segunda_div_ury", label: "Segunda Division", short: "Segunda Div", teams: [], doPool: true },
     ],
   },
   {
@@ -241,12 +262,14 @@ const COUNTRIES: CountryTab[] = [
     name: "Coreia do Sul", code: "KOR", region: "asia",
     leagues: [
       { key: "k_league_1", label: "K-League 1", short: "K-League 1", teams: kLeague1Teams },
+      { key: "k_league_2", label: "K-League 2", short: "K-League 2", teams: kLeague2Teams },
     ],
   },
   {
     name: "China", code: "CHN", region: "asia",
     leagues: [
       { key: "chinese_super", label: "Chinese Super League", short: "Super League", teams: chineseSuperTeams },
+      { key: "china_league_one", label: "China League One", short: "China Liga 1", teams: [], doPool: true },
     ],
   },
 ]
@@ -323,9 +346,25 @@ export default function NovoJogoPage() {
   // assincrona) valem os tres paises livres: o indice 0 e o Brasil nos dois
   // casos, entao a lista so CRESCE quando o codigo aparece — nunca encolhe
   // debaixo do dedo de quem ja estava escolhendo.
+  // O store hidrata assincrono; enquanto isso as ligas do pool ficam vazias e
+  // esta revisao as recalcula quando ele avisa.
+  const [storeHidratado, setStoreHidratado] = useState(0)
+  useEffect(() => {
+    const avisar = () => setStoreHidratado(v => v + 1)
+    window.addEventListener("ultrafoot:store:ready", avisar)
+    return () => window.removeEventListener("ultrafoot:store:ready", avisar)
+  }, [])
+
   const paises = useMemo(
-    () => (registrado ? COUNTRIES : COUNTRIES.filter(c => PAISES_SEM_REGISTRO.includes(c.code))),
-    [registrado],
+    () => {
+      const lista = registrado ? COUNTRIES : COUNTRIES.filter(c => PAISES_SEM_REGISTRO.includes(c.code))
+      return lista.map(pais => ({
+        ...pais,
+        leagues: pais.leagues.map(liga =>
+          liga.doPool ? { ...liga, teams: completarLigaComPool(liga.key) } : liga),
+      }))
+    },
+    [registrado, storeHidratado],
   )
   const paisesBloqueados = COUNTRIES.length - paises.length
 
@@ -347,8 +386,13 @@ export default function NovoJogoPage() {
   // `getCustomLogoUrl` le o persistent-store, que hidrata depois da montagem —
   // ler cedo devolveria o escudo do build e a cena ficaria com o antigo.
   const [escudo3dUrl, setEscudo3dUrl] = useState<string | null>(null)
+  /** A cena assumiu? Enquanto for false, quem aparece e o TeamCrest normal. */
+  const [escudo3dAtivo, setEscudo3dAtivo] = useState(false)
   useEffect(() => {
     const chave = selectedTeam?.file_key
+    // Trocou de clube: a reserva volta AGORA. Sem isto o escudo do time anterior
+    // ficaria escondido enquanto a textura nova carrega, e a tela piscaria vazia.
+    setEscudo3dAtivo(false)
     if (!chave) { setEscudo3dUrl(null); return }
     const resolver = () => setEscudo3dUrl(getCustomLogoUrl(chave) ?? getEscudoUrl(chave))
     resolver()
@@ -696,15 +740,20 @@ export default function NovoJogoPage() {
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   className="relative"
                 >
-                  {/* O ESCUDO 3D FICA POR CIMA, NAO NO LUGAR. O TeamCrest continua
-                      desenhando embaixo: e ele que resolve escudo local, do canal
-                      e do build, e e ele que aparece se faltar WebGL, se a textura
-                      falhar ou se o jogador tiver ligado "reduzir movimento". A
-                      cena 3D so acende quando de fato carregou. */}
+                  {/* O TeamCrest e a RESERVA, e some quando a cena 3D assume — os
+                      dois visiveis ao mesmo tempo davam escudo duplicado, porque a
+                      placa 3D e o <img> nao ocupam o mesmo espaco. Ele continua
+                      montado (nao e `&&`) de proposito: e ele que resolve escudo
+                      local, do canal e do build, e volta a aparecer sozinho se
+                      faltar WebGL, se a textura falhar ou se o jogador ligar
+                      "reduzir movimento". */}
                   <TeamCrest
                     team={selectedTeam}
                     size="4xl"
-                    className="h-56 w-56 drop-shadow-[0_18px_46px_rgba(0,0,0,0.8)] sm:h-64 sm:w-64"
+                    className={cn(
+                      "h-56 w-56 drop-shadow-[0_18px_46px_rgba(0,0,0,0.8)] sm:h-64 sm:w-64 transition-opacity duration-300",
+                      escudo3dAtivo && "opacity-0",
+                    )}
                   />
                   {escudo3dUrl && (
                     <Escudo3D
@@ -712,7 +761,8 @@ export default function NovoJogoPage() {
                       src={escudo3dUrl}
                       cor1={selectedTeam?.cor1}
                       cor2={selectedTeam?.cor2}
-                      className="pointer-events-none absolute -inset-8"
+                      onPronto={setEscudo3dAtivo}
+                      className="pointer-events-none absolute inset-0"
                     />
                   )}
                 </motion.div>

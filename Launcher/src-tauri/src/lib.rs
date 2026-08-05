@@ -16,6 +16,14 @@ use serde::Serialize;
 use std::io::{Read, Write};
 use tauri::{AppHandle, Emitter};
 
+// Módulos do launcher. Cada um resolve uma coisa que faltava para ele se
+// comportar como plataforma (Steam/Epic/EA) e não como baixador de .exe.
+mod controle; // pausar, cancelar e limitar a banda do download
+mod diario; // log em arquivo + diagnóstico para o suporte
+mod disco; // espaço livre e pasta de instalação escolhida
+mod jogo; // supervisão do jogo aberto, tempo de jogo e crash
+mod patch; // atualização por arquivo (delta) e verificação de integridade
+
 const LATEST_JSON_URL: &str =
     "https://ultrafoot.179-198-103-30.sslip.io/downloads/latest.json";
 
@@ -193,6 +201,12 @@ struct LatestInfo {
     version: String,
     notes: String,
     url: String,
+    /// Endereço do manifesto de arquivos desta versão, quando publicado.
+    ///
+    /// É o que habilita a atualização diferencial: com ele, o launcher baixa só
+    /// os arquivos que mudaram. Ausente = versão publicada no formato antigo, e
+    /// o caminho continua sendo o instalador inteiro.
+    manifesto: Option<String>,
     /// sha256 esperado do instalador, quando o manifesto publica (launcher.json).
     /// Ausente em manifesto antigo: cai na conferência só por tamanho.
     sha256: Option<String>,
@@ -222,10 +236,66 @@ fn emit(app: &AppHandle, phase: &'static str) {
     );
 }
 
+/// Progresso detalhado. Usado pelo motor de patch, que conta bytes de vários
+/// arquivos como se fossem um download só.
+pub(crate) fn emitir_progresso(
+    app: &AppHandle,
+    phase: &'static str,
+    percent: u32,
+    downloaded: u64,
+    total: u64,
+    speed: u64,
+    eta: u64,
+) {
+    let _ = app.emit(
+        "launcher://progress",
+        Progress { phase, percent, downloaded, total, speed, eta },
+    );
+}
+
+/// Notificação do Windows (bandeja).
+///
+/// Existe porque o launcher agora passa boa parte do tempo ESCONDIDO — na
+/// bandeja durante o download e enquanto o jogo roda. Sem notificação, "o
+/// download acabou" e "o jogo caiu" só apareceriam quando a pessoa lembrasse de
+/// reabrir a janela.
+///
+/// Não incomoda quem está olhando: se a janela do launcher está visível e em
+/// foco, a informação já está na tela e o aviso é dispensado.
+pub(crate) fn avisar_sistema(app: &AppHandle, titulo: &str, corpo: &str) {
+    use tauri::Manager;
+    use tauri_plugin_notification::NotificationExt;
+
+    let em_foco = app
+        .get_webview_window("main")
+        .map(|w| {
+            w.is_focused().unwrap_or(false) && w.is_visible().unwrap_or(false) && !w.is_minimized().unwrap_or(false)
+        })
+        .unwrap_or(false);
+    if em_foco {
+        return;
+    }
+    let _ = app.notification().builder().title(titulo).body(corpo).show();
+}
+
+/// Apaga downloads parciais deixados para trás (pedido explícito do jogador ao
+/// cancelar). Mantido num lugar só para não sobrar arquivo órfão em %TEMP%.
+pub(crate) fn limpar_parciais() {
+    let temp = std::env::temp_dir();
+    for nome in [
+        "Ultrafoot-setup.exe",
+        "Ultrafoot-setup.exe.origem",
+        "Ultrafoot26.AppImage.part",
+        "Ultrafoot26.dmg",
+    ] {
+        let _ = std::fs::remove_file(temp.join(nome));
+    }
+}
+
 // ─── Detecção do jogo instalado ──────────────────────────────────────────────
 
 #[cfg(windows)]
-fn read_installed_game() -> InstalledGame {
+pub(crate) fn read_installed_game() -> InstalledGame {
     use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
     use winreg::RegKey;
 
@@ -423,7 +493,7 @@ fn write_game_meta(version: &str, path: &str) -> Result<(), String> {
 }
 
 #[cfg(not(windows))]
-fn read_installed_game() -> InstalledGame {
+pub(crate) fn read_installed_game() -> InstalledGame {
     let Ok(text) = std::fs::read_to_string(game_meta_path()) else {
         return InstalledGame::default();
     };
@@ -470,27 +540,124 @@ fn fetch_latest() -> Result<LatestInfo, String> {
     }
 }
 
+// ─── Canal de atualização (estável / beta) ───────────────────────────────────
+//
+// Uma build ruim hoje atinge todo mundo de uma vez, porque só existe um canal.
+// Com o canal beta, quem quiser testa antes; o resto continua no estável e a
+// correção chega sem susto. É o mesmo desenho das "betas" da Steam, e do lado do
+// servidor não custa endpoint novo: o próprio latest.json carrega um bloco
+// `beta` opcional. Sem esse bloco publicado, pedir beta simplesmente devolve o
+// estável — nunca deixa o jogador sem atualização.
+
+fn arquivo_de_canal() -> Option<std::path::PathBuf> {
+    pasta_compartilhada().map(|p| p.join("canal.json"))
+}
+
+pub(crate) fn canal_atual() -> String {
+    arquivo_de_canal()
+        .and_then(|c| std::fs::read_to_string(c).ok())
+        .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok())
+        .and_then(|v| v.get("canal").and_then(|x| x.as_str()).map(|s| s.to_string()))
+        .unwrap_or_else(|| "estavel".into())
+}
+
+#[tauri::command]
+fn canal() -> String {
+    canal_atual()
+}
+
+#[tauri::command]
+fn definir_canal(canal: String) -> Result<(), String> {
+    let arquivo = arquivo_de_canal().ok_or("não encontrei a pasta de dados")?;
+    let corpo = serde_json::json!({ "canal": canal });
+    std::fs::write(arquivo, corpo.to_string())
+        .map_err(|e| format!("não consegui guardar o canal: {e}"))?;
+    diario!("INFO", "canal de atualização: {canal}");
+    Ok(())
+}
+
+/// Versões publicadas às quais dá para voltar (campo `anteriores` do latest.json).
+///
+/// Existe para o dia em que uma versão sai com um defeito que impede jogar:
+/// sem isto, a única saída do jogador é esperar a correção.
+#[derive(Serialize, Clone)]
+struct VersaoDisponivel {
+    version: String,
+    url: String,
+    notes: String,
+    manifesto: Option<String>,
+}
+
+#[tauri::command]
+fn versoes_anteriores() -> Result<Vec<VersaoDisponivel>, String> {
+    let alvo = endpoints();
+    let body = buscar_json_com_reserva(&alvo.latest, &alvo.latest_reserva)
+        .map_err(|e| format!("falha ao consultar versões: {e}"))?;
+    let lista = body
+        .get("anteriores")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+    Ok(lista
+        .iter()
+        .filter_map(|v| {
+            let version = v.get("version")?.as_str()?.to_string();
+            let url = v
+                .get("url")
+                .and_then(|u| u.as_str())
+                .or_else(|| {
+                    v.get("platforms")
+                        .and_then(|p| p.get("windows-x86_64"))
+                        .and_then(|w| w.get("url"))
+                        .and_then(|u| u.as_str())
+                })?
+                .to_string();
+            Some(VersaoDisponivel {
+                version,
+                url,
+                notes: v.get("notes").and_then(|n| n.as_str()).unwrap_or_default().to_string(),
+                manifesto: v.get("manifesto").and_then(|m| m.as_str()).map(|s| s.to_string()),
+            })
+        })
+        .collect())
+}
+
 #[cfg(windows)]
 fn fetch_latest_windows() -> Result<LatestInfo, String> {
     let alvo = endpoints();
     let body: serde_json::Value = buscar_json_com_reserva(&alvo.latest, &alvo.latest_reserva)
         .map_err(|e| format!("falha ao consultar atualizações: {e}"))?;
 
-    let version = body.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-    let notes = body.get("notes").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-    let url = body
-        .get("platforms")
-        .and_then(|p| p.get("windows-x86_64"))
+    // Bloco `beta`, quando existe E o jogador pediu esse canal.
+    let raiz = if canal_atual() == "beta" {
+        body.get("beta").filter(|b| b.get("version").is_some()).unwrap_or(&body)
+    } else {
+        &body
+    };
+
+    let version = raiz.get("version").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+    let notes = raiz.get("notes").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+    let plataforma = raiz.get("platforms").and_then(|p| p.get("windows-x86_64"));
+    let url = plataforma
         .and_then(|w| w.get("url"))
         .and_then(|u| u.as_str())
         .unwrap_or_default()
         .to_string();
 
+    // O manifesto pode vir na plataforma (o normal) ou solto na raiz, para
+    // publicação que ainda não separou por sistema.
+    let manifesto = plataforma
+        .and_then(|w| w.get("manifesto"))
+        .or_else(|| raiz.get("manifesto"))
+        .and_then(|m| m.as_str())
+        .filter(|m| m.starts_with("https://"))
+        .map(|m| m.to_string());
+
     if version.is_empty() || url.is_empty() {
         return Err("latest.json sem versão ou URL do Windows".into());
     }
     // Campos de verificação são do auto-update do LAUNCHER; o jogo tem o dele.
-    Ok(LatestInfo { version, notes, url, ..Default::default() })
+    Ok(LatestInfo { version, notes, url, manifesto, ..Default::default() })
 }
 
 /// Linux/macOS: acha o release "desktop-*" mais recente e o asset com a extensão.
@@ -540,13 +707,39 @@ async fn download_and_install(app: AppHandle, url: String, version: String) -> R
 /// Baixa `url` para `dest` com progresso (velocidade/ETA), RETOMANDO de um download
 /// parcial e com ATÉ 3 tentativas em caso de falha de rede.
 fn download_with_progress(app: &AppHandle, url: &str, dest: &std::path::Path) -> Result<(), String> {
-    let _ = std::fs::remove_file(dest);
+    // ⚠️ O PEDAÇO PARCIAL SÓ VALE PARA A MESMA URL. Ver o bug de %TEMP% mais
+    // abaixo: um parcial de OUTRA versão fazia o `Range` pedir a continuação de
+    // um arquivo já completo, o servidor devolvia 416 e a atualização morria em
+    // silêncio — para sempre, até alguém limpar o temp na mão.
+    //
+    // Antes isto era resolvido apagando o destino SEMPRE. Só que apagar sempre
+    // também jogava fora o download legítimo de quem pausou ou cancelou, e o
+    // pause acabou de virar recurso. A marca de origem separa os dois casos:
+    // mesma URL, continua; URL diferente, começa do zero.
+    let marca = std::path::PathBuf::from(format!("{}.origem", dest.display()));
+    let mesma_origem = std::fs::read_to_string(&marca).map(|u| u.trim() == url).unwrap_or(false);
+    if !mesma_origem {
+        let _ = std::fs::remove_file(dest);
+    }
+    let _ = std::fs::write(&marca, url);
+
+    controle::iniciar(app);
 
     let mut last_err = String::new();
     for attempt in 1..=3 {
         match download_attempt(app, url, dest) {
-            Ok(()) => return Ok(()),
+            Ok(()) => {
+                let _ = std::fs::remove_file(&marca);
+                return Ok(());
+            }
             Err(e) => {
+                // Cancelamento é ordem do jogador, não falha de rede: nem repete
+                // nem vira erro genérico na tela.
+                if controle::foi_cancelado(&e) {
+                    diario!("INFO", "download interrompido a pedido");
+                    return Err(e);
+                }
+                diario!("AVISO", "tentativa {attempt} de download falhou: {e}");
                 last_err = e;
                 if attempt < 3 {
                     std::thread::sleep(std::time::Duration::from_secs(2));
@@ -592,14 +785,20 @@ fn download_attempt(app: &AppHandle, url: &str, dest: &std::path::Path) -> Resul
     let mut last_percent: u32 = u32::MAX;
     let mut last_time = Instant::now();
     let mut last_bytes = start;
+    let mut regulador = controle::Regulador::novo();
 
     loop {
+        // Pausa/cancelamento entram AQUI, entre blocos: é o único ponto em que
+        // parar não deixa meio bloco gravado, e o arquivo continua válido para
+        // ser retomado depois.
+        controle::checar(app)?;
         let n = reader.read(&mut buf).map_err(|e| format!("erro ao baixar: {e}"))?;
         if n == 0 {
             break;
         }
         file.write_all(&buf[..n]).map_err(|e| format!("erro ao gravar: {e}"))?;
         downloaded += n as u64;
+        regulador.contar(n as u64);
 
         let percent = if total > 0 {
             ((downloaded.saturating_mul(100)) / total) as u32
@@ -677,22 +876,73 @@ fn do_install_windows(app: &AppHandle, url: &str) -> Result<(), String> {
     // (linha do remove_file) — não deixa rastro.
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     let tmp = std::env::temp_dir().join("Ultrafoot-setup.exe");
+
+    // ── ESPAÇO EM DISCO, ANTES DE COMEÇAR ──
+    //
+    // Disco cheio no meio da instalação é falha MUDA: o NSIS termina, o registro
+    // não muda, o launcher relê a versão velha e oferece a mesma atualização de
+    // novo. Foi assim que nasceu o loop de 02/08/2026. Perguntar o tamanho ao
+    // servidor custa uma requisição HEAD e transforma isso numa frase clara.
+    let tamanho = ureq::head(url)
+        .timeout(std::time::Duration::from_secs(10))
+        .call()
+        .ok()
+        .and_then(|r| r.header("Content-Length").and_then(|v| v.parse::<u64>().ok()))
+        .unwrap_or(0);
+    if tamanho > 0 {
+        let temp = std::env::temp_dir();
+        if let Some(livre) = disco::espaco_livre_em(&temp) {
+            let preciso = tamanho + tamanho / 10;
+            if livre < preciso {
+                return Err(format!(
+                    "espaço insuficiente em {} para baixar o instalador: são precisos {} e há {} livres.",
+                    temp.display(),
+                    disco::humano(preciso),
+                    disco::humano(livre)
+                ));
+            }
+        }
+        let destino = disco::pasta_de_instalacao()
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| std::env::temp_dir());
+        disco::conferir_espaco(&destino, tamanho)?;
+    }
+
     download_with_progress(app, url, &tmp)?;
     emit(app, "installing");
+    diario!("INFO", "instalando o jogo ({} bytes)", tamanho);
 
-    let status = std::process::Command::new(&tmp)
-        .arg("/S")
-        .creation_flags(CREATE_NO_WINDOW)
+    let mut comando = std::process::Command::new(&tmp);
+    comando.arg("/S").creation_flags(CREATE_NO_WINDOW);
+
+    // PASTA ESCOLHIDA PELO JOGADOR. O `/D=` do NSIS tem duas regras rígidas:
+    // precisa ser o ÚLTIMO argumento e não pode vir entre aspas — mesmo com
+    // espaço no caminho. Passar aspas aqui faz o instalador criar uma pasta com
+    // aspas no nome, e ninguém acha o jogo depois.
+    //
+    // Só vale para a PRIMEIRA instalação: com o jogo já instalado, o NSIS
+    // atualiza onde ele está, e mandar outro destino criaria uma segunda cópia.
+    if !read_installed_game().installed {
+        if let Some(pasta) = disco::pasta_escolhida() {
+            let limpo = pasta.trim_end_matches(['\\', '/']).to_string();
+            diario!("INFO", "instalando em {limpo}");
+            comando.raw_arg(format!("/D={limpo}"));
+        }
+    }
+
+    let status = comando
         .status()
         .map_err(|e| format!("não consegui iniciar o instalador: {e}"))?;
     if !status.success() {
-        return Err(format!(
-            "o instalador terminou com erro (código {})",
-            status.code().unwrap_or(-1)
-        ));
+        let codigo = status.code().unwrap_or(-1);
+        diario!("ERRO", "instalador terminou com código {codigo}");
+        return Err(format!("o instalador terminou com erro (código {codigo})"));
     }
 
     let _ = std::fs::remove_file(&tmp);
+    limpar_parciais();
+    diario!("INFO", "instalação concluída");
+    avisar_sistema(app, "Ultrafoot 26 pronto", "A instalação terminou. Bom jogo!");
     emit(app, "done");
     Ok(())
 }
@@ -984,20 +1234,151 @@ fn launch_game(app: AppHandle, path: Option<String>) -> Result<(), String> {
             .arg(&target)
             .status()
             .map_err(|e| format!("não consegui abrir o jogo: {e}"))?;
+        let _ = app;
+        return Ok(());
     }
+    // Windows e Linux: o launcher CONTINUA VIVO supervisionando o jogo (tempo de
+    // jogo, presença e detecção de crash). Ver o comentário de abertura de
+    // `jogo.rs` — o `app.exit(0)` que existia aqui era o que impedia tudo isso.
     #[cfg(not(target_os = "macos"))]
     {
-        // Windows (.exe) e Linux (.AppImage): executa direto.
-        // "--via-launcher" evita o redirecionamento do jogo de volta ao launcher.
-        std::process::Command::new(&target)
-            .arg("--via-launcher")
-            .env("ULTRAFOOT_VIA_LAUNCHER", "1")
-            .spawn()
-            .map_err(|e| format!("não consegui abrir o jogo: {e}"))?;
+        jogo::abrir(&app, &target)
     }
+}
 
-    app.exit(0);
+// ─── Desinstalar pelo launcher ───────────────────────────────────────────────
+
+/// Remove o jogo usando o desinstalador registrado pelo próprio NSIS.
+///
+/// Fazer isso na mão (apagar a pasta) deixaria a chave do registro para trás — e
+/// é essa chave que o launcher lê para saber o que está instalado. Meia
+/// desinstalação é pior do que nenhuma: o jogo some, o launcher continua achando
+/// que ele existe e o botão Jogar aponta para o nada.
+#[cfg(windows)]
+#[tauri::command]
+async fn desinstalar_jogo(app: AppHandle) -> Result<(), String> {
+    if jogo::esta_rodando() {
+        return Err("feche o Ultrafoot antes de desinstalar".into());
+    }
+    let comando = uninstall_string().ok_or("não encontrei o desinstalador do jogo no registro")?;
+
+    tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        diario!("INFO", "desinstalando: {comando}");
+
+        // `_?=` faz o desinstalador do NSIS rodar do lugar em vez de se copiar
+        // para o temp — sem isso o processo volta na hora e não dá para saber
+        // quando terminou, e o launcher mostraria "instalado" logo depois.
+        let caminho = std::path::PathBuf::from(&comando);
+        let pasta = caminho.parent().map(|p| p.to_path_buf());
+        let mut cmd = std::process::Command::new(&caminho);
+        cmd.arg("/S").creation_flags(CREATE_NO_WINDOW);
+        if let Some(dir) = &pasta {
+            cmd.raw_arg(format!("_?={}", dir.display()));
+        }
+        let status = cmd.status().map_err(|e| format!("não consegui desinstalar: {e}"))?;
+        if !status.success() {
+            return Err(format!(
+                "o desinstalador terminou com erro (código {})",
+                status.code().unwrap_or(-1)
+            ));
+        }
+        // O desinstalador do NSIS deixa o próprio .exe para trás quando roda com
+        // `_?=`; a pasta vazia fica ocupando lugar sem servir para nada.
+        if let Some(dir) = pasta {
+            let _ = std::fs::remove_file(dir.join("uninstall.exe"));
+            let _ = std::fs::remove_dir(&dir);
+        }
+        Ok(())
+    })
+    .await
+    .map_err(|e| format!("tarefa interrompida: {e}"))??;
+
+    diario!("INFO", "jogo desinstalado");
+    avisar_sistema(&app, "Ultrafoot 26 removido", "A desinstalação terminou.");
     Ok(())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+async fn desinstalar_jogo(_app: AppHandle) -> Result<(), String> {
+    Err("desinstalar pelo launcher só está disponível no Windows".into())
+}
+
+/// Caminho do desinstalador registrado pelo NSIS (sem os argumentos).
+#[cfg(windows)]
+fn uninstall_string() -> Option<String> {
+    use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+    use winreg::RegKey;
+
+    let raizes = [
+        (RegKey::predef(HKEY_CURRENT_USER), r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (RegKey::predef(HKEY_LOCAL_MACHINE), r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (RegKey::predef(HKEY_LOCAL_MACHINE), r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+    ];
+    for (raiz, caminho) in raizes.iter() {
+        let Ok(uninstall) = raiz.open_subkey(*caminho) else { continue };
+        for nome in uninstall.enum_keys().flatten() {
+            let Ok(sub) = uninstall.open_subkey(&nome) else { continue };
+            let display: String = sub.get_value("DisplayName").unwrap_or_default();
+            let minusculo = display.to_lowercase();
+            if !minusculo.contains("ultrafoot") || minusculo.contains("launcher") {
+                continue;
+            }
+            let bruto: String = sub.get_value("UninstallString").unwrap_or_default();
+            let bruto = bruto.trim();
+            if bruto.is_empty() {
+                continue;
+            }
+            // Vem como `"C:\...\uninstall.exe" /S` ou sem aspas: separa o
+            // programa dos argumentos, senão o `/S` entra no caminho.
+            let so_o_exe = if let Some(resto) = bruto.strip_prefix('"') {
+                resto.split('"').next().unwrap_or(resto).to_string()
+            } else {
+                bruto.split(" /").next().unwrap_or(bruto).trim().to_string()
+            };
+            if std::path::Path::new(&so_o_exe).exists() {
+                return Some(so_o_exe);
+            }
+        }
+    }
+    None
+}
+
+/// Cria o atalho na área de trabalho apontando para o jogo.
+///
+/// Feito pelo WScript.Shell porque criar um .lnk de verdade exige COM
+/// (IShellLink) — uma dependência inteira para uma linha de PowerShell que o
+/// Windows já traz.
+#[cfg(windows)]
+#[tauri::command]
+fn criar_atalho() -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    let alvo = read_installed_game().path.ok_or("o jogo não está instalado")?;
+    let script = format!(
+        "$a=[Environment]::GetFolderPath('Desktop');\
+         $s=(New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $a 'Ultrafoot 26.lnk'));\
+         $s.TargetPath='{alvo}';$s.WorkingDirectory=Split-Path '{alvo}';$s.Save()"
+    );
+    let status = std::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .creation_flags(CREATE_NO_WINDOW)
+        .status()
+        .map_err(|e| format!("não consegui criar o atalho: {e}"))?;
+    if !status.success() {
+        return Err("não consegui criar o atalho".into());
+    }
+    diario!("INFO", "atalho criado na área de trabalho");
+    Ok(())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+fn criar_atalho() -> Result<(), String> {
+    Err("atalho automático só está disponível no Windows".into())
 }
 
 /// Versão MAIS NOVA do próprio launcher (launcher.json). Só no Windows por ora —
@@ -1034,7 +1415,9 @@ fn check_launcher_update() -> Result<Option<LatestInfo>, String> {
         // antigo, instalar de novo daria no mesmo. Devolve a decisão ao jogador
         // em vez de repetir o ciclo.
         let auto = tentativas_de(&version) < MAX_TENTATIVAS;
-        Ok(Some(LatestInfo { version, notes, url, sha256, size, auto }))
+        // `manifesto` é do JOGO (atualização por arquivo). O launcher se
+        // atualiza pelo instalador inteiro — ele tem 17 MB, não 600.
+        Ok(Some(LatestInfo { version, notes, url, sha256, size, auto, manifesto: None }))
     }
 }
 
@@ -1124,7 +1507,7 @@ fn show_main(app: &AppHandle) {
 /// Cada app Tauri tem a propria pasta de dados (identificadores diferentes), e
 /// por isso o launcher nao consegue escrever no armazenamento do jogo. Este
 /// diretorio comum e o ponto de encontro dos dois.
-fn pasta_compartilhada() -> Option<std::path::PathBuf> {
+pub(crate) fn pasta_compartilhada() -> Option<std::path::PathBuf> {
     let base = if cfg!(windows) {
         std::env::var_os("APPDATA").map(std::path::PathBuf::from)
     } else if cfg!(target_os = "macos") {
@@ -1301,11 +1684,27 @@ pub fn run() {
             show_main(app);
         }))
         .plugin(tauri_plugin_opener::init())
+        // Seletor de pasta de instalação (o jogador escolhe o disco).
+        .plugin(tauri_plugin_dialog::init())
+        // Avisos do sistema: o launcher passa muito tempo escondido (bandeja
+        // durante o download, e enquanto o jogo roda) — sem notificação, "o
+        // download acabou" e "o jogo caiu" ficariam invisíveis.
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
         .setup(|app| {
+            diario::limpar_antigos();
+            diario!(
+                "INFO",
+                "launcher {} iniciado ({} {})",
+                env!("CARGO_PKG_VERSION"),
+                std::env::consts::OS,
+                std::env::consts::ARCH
+            );
+            controle::carregar_limite();
+
             // DESCOBERTA DE ENDEREÇOS FORA DA THREAD DA UI.
             //
             // `endpoints()` faz uma consulta de rede na PRIMEIRA chamada, e no
@@ -1367,7 +1766,36 @@ pub fn run() {
             check_server_status,
             google_login,
             salvar_ativacao,
-            salvar_sessao
+            salvar_sessao,
+            // Atualização diferencial e integridade
+            patch::atualizar_por_partes,
+            patch::verificar_arquivos,
+            patch::tem_manifesto,
+            // Controle do download
+            controle::pausar_download,
+            controle::retomar_download,
+            controle::cancelar_download,
+            controle::definir_limite_de_banda,
+            controle::estado_do_download,
+            // Disco e pasta de instalação
+            disco::espaco_no_disco,
+            disco::pasta_de_instalacao,
+            disco::escolher_pasta_de_instalacao,
+            disco::limpar_pasta_de_instalacao,
+            // O jogo em execução
+            jogo::estado_do_jogo,
+            jogo::parar_jogo,
+            jogo::tempo_de_jogo,
+            jogo::acao_ao_abrir,
+            jogo::definir_acao_ao_abrir,
+            // Manutenção
+            desinstalar_jogo,
+            criar_atalho,
+            canal,
+            definir_canal,
+            versoes_anteriores,
+            diario::abrir_pasta_de_logs,
+            diario::gerar_diagnostico
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Ultrafoot Launcher");

@@ -227,6 +227,10 @@ const ALIAS_TM = {
   "parma": "Parma Calcio 1913",
   "strasbourg": "RC Strasbourg Alsace",
   "sport": "Sport Recife",
+  // O TM nao conhece "Atletico-MG": la e "Clube Atletico Mineiro". Sem o alias a
+  // busca voltava vazia e o clube ficava `naoEncontrado` — era o unico time
+  // GRANDE da Serie A sem elenco real, caindo no curado (uma temporada atras).
+  "atletico-mg": "Clube Atlético Mineiro",
   "cagliari": "Cagliari Calcio",
   "montpellier": "Montpellier HSC",
   "dc united": "DC United",
@@ -249,7 +253,36 @@ function aliasTm(clubName) {
   return ALIAS_TM[k] ?? null
 }
 
+/**
+ * URL FIXA, para quando nem o alias resolve.
+ *
+ * O alias so troca o TERMO buscado; a validacao continua. "Atletico-MG" cai num
+ * caso que o alias nao alcanca: a busca por "Clube Atletico Mineiro" devolve
+ * DEZENAS de "Atletico ..." do Brasil, todos plausiveis, e o desempate final e
+ * por sobrecarga de nomes do elenco do SEED — que para este clube e ficticio.
+ * Zero nomes em comum, entao o desempate recusa tudo e o clube fica
+ * `naoEncontrado` para sempre. Era o unico time GRANDE da Serie A sem elenco
+ * real (caia no curado, uma temporada atras).
+ *
+ * ⚠️ URL fixada e afirmacao de identidade: confira o elenco da pagina ANTES de
+ * incluir aqui. A de baixo foi conferida em 03/08/2026 (Everson, Renan Lodi,
+ * Scarpa, Bernard, Cassierra).
+ */
+const URL_TM = {
+  "atletico-mg": "https://www.transfermarkt.com.br/atletico-mineiro/startseite/verein/330",
+}
+
+function urlTm(clubName) {
+  const k = (clubName || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
+  return URL_TM[k] ?? null
+}
+
 async function findClubUrl(clubName, clubCountry, buscar, seedNames) {
+  // URL fixada vence tudo: ela existe justamente para os casos que a busca nao
+  // consegue resolver, entao tentar buscar antes so gastaria requisicao.
+  const fixa = urlTm(clubName)
+  if (fixa) return { url: fixa }
+
   // Segunda chance com o nome encurtado: a busca do TM é bem literal e não acha
   // "Racing Montevideo" (lá é "Racing Club de Montevideo") nem "Barcelona
   // Guayaquil" (é "Barcelona SC Guayaquil"). Tirando o qualificador final, acha.
@@ -449,10 +482,30 @@ async function main() {
   // tem alias (ver ALIAS_TM). Sem isto eles ficariam para sempre no cache como
   // vazios, porque a retomada normal so pega quem tem versao de parser antiga.
   const retryAlias = args.includes("--retry-alias")
+  // --retry-tudo: retenta TODO clube marcado como nao encontrado, tenha alias ou
+  // nao. O --retry-alias so alcanca quem ganhou apelido novo; este e para varrer
+  // o acervo inteiro de uma vez. Boa parte vai falhar de novo e isso e esperado:
+  // o pool tem entrada corrompida (nome de estadio, nome de pessoa) e time B,
+  // que a validacao recusa de proposito.
+  const retryTudo = args.includes("--retry-tudo")
+  // --force: audita novamente TODOS os clubes, inclusive os que ja passaram
+  // pelo parser atual. Usado antes de uma publicacao integral de elencos.
+  const force = args.includes("--force")
+  // --clube <texto>: so os clubes cujo nome contem o texto (varios por virgula).
+  // A fila e ordenada por prestigio e tem clubes que voltam a cada rodada
+  // (nome com espaco sobrando, razao social longa), entao um clube de prestigio
+  // medio como o Atletico-MG nunca alcancava as primeiras posicoes: eu subia o
+  // --limit e a vaga era tomada por Liverpool, Montpellier, Lille de novo.
+  const filtroClube = args.includes("--clube")
+    ? args[args.indexOf("--clube") + 1].toLowerCase().split(",").map(s => s.trim()).filter(Boolean)
+    : null
   const pendentes = teams
     .filter(t => {
+      if (filtroClube && !filtroClube.some(f => (t.nome ?? "").toLowerCase().includes(f))) return false
       const c = cache.clubs[chaveClube(t)]
-      if ((c?.v ?? 0) < PARSER_V) return true
+      if (filtroClube) return true // pedido explicito refaz mesmo se ja tem cache
+      if (force || (c?.v ?? 0) < PARSER_V) return true
+      if (retryTudo && c?.naoEncontrado) return true
       if (retryAlias && c?.naoEncontrado && aliasTm(t.nome)) return true
       return false
     })
@@ -527,18 +580,66 @@ async function main() {
         // (Botafogo RJ/SP/PB) pela sobreposicao de jogadores.
         const seedNames = (team.jogadores ?? []).map(j => j.nome)
         const achado = await findClubUrl(team.nome, team.pais, buscar, seedNames)
+        if (args.includes("--verboso")) console.log(`   [${team.nome}] -> ${JSON.stringify(achado)}`)
         if (achado.falhou) {
           // Não grava nada: fica pendente e uma passada posterior tenta de novo.
           erro++
         } else if (achado.semClube) {
-          cache.clubs[chaveClube(team)] = { v: PARSER_V, curto: team.curto, nome: team.nome, players: [], naoEncontrado: true }
+          // ⚠️ NUNCA TROCAR ELENCO BOM POR VAZIO.
+          //
+          // Esta linha, antes incondicional, e a origem do estrago de
+          // 30/07/2026: 17 clubes que TINHAM elenco (Santa Cruz, Bangu,
+          // Tenerife, Barnsley, Chester...) foram reprocessados, a busca falhou
+          // naquele momento, e o registro bom virou `players: []`. O prejuizo so
+          // aparece um build depois, quando o clube some do jogo — e a essa
+          // altura ninguem liga uma coisa a outra. Eu mesmo repeti o erro hoje:
+          // restaurei os 17 do backup e as rodadas seguintes zeraram tres de
+          // novo. Busca que falha e evento transitorio; nao e prova de que o
+          // clube deixou de existir.
+          const chave = chaveClube(team)
+          const tinha = cache.clubs[chave]?.players?.length ?? 0
+          if (tinha > 0) {
+            cache.clubs[chave] = { ...cache.clubs[chave], v: PARSER_V, buscaFalhouEm: new Date().toISOString() }
+            console.log(`  ~ ${team.nome}: busca sem resultado, mantendo os ${tinha} atletas ja coletados`)
+          } else {
+            cache.clubs[chave] = { v: PARSER_V, curto: team.curto, nome: team.nome, players: [], naoEncontrado: true }
+          }
           semClube++
         } else {
           await sleep(delayMs)
           const res = await buscar(achado.url)
           if (!res.ok) { erro++; feitos++; await sleep(delayMs); continue }
           const squad = parseSquad(await res.text())
-          cache.clubs[chaveClube(team)] = { v: PARSER_V, curto: team.curto, nome: team.nome, url: achado.url, players: squad }
+          // Mesma trava do ramo de cima, para o outro jeito de perder dado: a
+          // pagina responde 200 mas o parser nao acha ninguem (layout do TM
+          // muda, pagina de clube extinto). Zero atleta NAO substitui elenco.
+          const chave = chaveClube(team)
+          const tinha = cache.clubs[chave]?.players?.length ?? 0
+          if (squad.length === 0 && tinha > 0) {
+            console.log(`  ~ ${team.nome}: pagina sem elenco, mantendo os ${tinha} atletas ja coletados`)
+          } else {
+            // ⚠️ PRESERVAR O VALOR DE MERCADO.
+            //
+            // `parseSquad` nao le valor — quem preenche e import-tm-values.mjs,
+            // num segundo passe caro (uma requisicao por clube, horas). Trocar o
+            // objeto do clube inteiro aqui APAGA `valor` e `valoresEm`, e o
+            // clube volta para a fila daquele passe como se nunca tivesse sido
+            // feito. Foi assim que 16 mil valores sumiram em 30/07/2026 e outros
+            // 13 mil em 03/08 — nos dois casos o sintoma so apareceu depois, no
+            // build, com clube inteiro achatado na mediana.
+            const antigo = cache.clubs[chave]
+            const valorPorId = new Map()
+            for (const p of antigo?.players ?? []) if (p.valor != null) valorPorId.set(String(p.tmId), p.valor)
+            let herdados = 0
+            for (const p of squad) {
+              const v = valorPorId.get(String(p.tmId))
+              if (v != null) { p.valor = v; herdados++ }
+            }
+            cache.clubs[chave] = {
+              v: PARSER_V, curto: team.curto, nome: team.nome, url: achado.url, players: squad,
+              ...(antigo?.valoresEm && herdados > 0 ? { valoresEm: antigo.valoresEm } : {}),
+            }
+          }
           ok++
         }
       } catch {

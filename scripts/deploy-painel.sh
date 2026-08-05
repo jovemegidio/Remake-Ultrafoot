@@ -28,6 +28,18 @@ DESTINO="/var/www/ultrafoot/painel"
 grep -q '/painel/_next/' "$OUT/index.html" || {
   echo "ERRO: o index.html nao aponta para /painel/_next — o basePath saiu errado"; exit 1; }
 
+# A pagina do recibo viaja JUNTO com o painel, copiada da unica copia que existe
+# (public/recibo/). Assim o botao "emitir" funciona sem depender de quando a
+# versao web do jogo for publicada — e continua havendo um so template para
+# manter em dia. O logo vai junto porque o <img> do recibo e relativo.
+RECIBO="$(dirname "$0")/../public/recibo/index.html"
+LOGO="$(dirname "$0")/../public/brand/agencia-do-japa.png"
+[ -f "$RECIBO" ] || { echo "ERRO: $RECIBO nao existe — o painel iria sem a pagina do recibo"; exit 1; }
+echo "==> incluindo a pagina do recibo"
+mkdir -p "$OUT/recibo" "$OUT/brand"
+cp "$RECIBO" "$OUT/recibo/index.html"
+[ -f "$LOGO" ] && cp "$LOGO" "$OUT/brand/agencia-do-japa.png"
+
 echo "==> empacotando $OUT"
 tar czf /tmp/ultrafoot-painel.tar.gz -C "$OUT" .
 
@@ -53,4 +65,5 @@ REMOTO
 rm -f /tmp/ultrafoot-painel.tar.gz
 echo "==> conferindo de fora"
 curl -s -o /dev/null -w "    painel: %{http_code}\n" "https://ultrafoot.179-198-103-30.sslip.io/painel/"
+curl -s -o /dev/null -w "    recibo: %{http_code}\n" "https://ultrafoot.179-198-103-30.sslip.io/painel/recibo/"
 echo "pronto: https://ultrafoot.179-198-103-30.sslip.io/painel/"

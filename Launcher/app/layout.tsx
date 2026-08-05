@@ -1,5 +1,12 @@
-import { Analytics } from '@vercel/analytics/next'
+// ⚠️ SEM ANALYTICS AQUI. O `@vercel/analytics` só faz sentido num site servido
+// pela Vercel: dentro do app desktop ele carrega um script que não existe no
+// pacote (a UI é exportada estaticamente e roda de arquivo local), gerando
+// requisição morta a cada abertura — e mandando dado de uso do jogador para
+// fora sem que ninguém tenha pedido. Medição do launcher, se houver, tem de
+// nascer no Rust, ser opcional e medir o que importa: taxa de sucesso de
+// instalação e de auto-update.
 import type { Metadata, Viewport } from 'next'
+import { ProvedorDeIdioma } from '@/lib/i18n'
 import { Geist, Geist_Mono, Space_Grotesk } from 'next/font/google'
 // As 20 fontes escolhíveis: as variáveis precisam existir no <body> para a
 // preferência do jogador poder apontar para qualquer uma delas.
@@ -40,8 +47,7 @@ export default function RootLayout({
       className={`dark bg-background ${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable}`}
     >
       <body className={`font-sans antialiased ${CLASSES_DE_FONTE}`}>
-        {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <ProvedorDeIdioma>{children}</ProvedorDeIdioma>
       </body>
     </html>
   )

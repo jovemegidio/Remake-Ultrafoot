@@ -11,6 +11,7 @@ import {
   LockKeyhole,
   LogOut,
   Menu,
+  ReceiptText,
   Search,
   Settings,
   Shield,
@@ -44,6 +45,7 @@ import { Economia } from './painel/economia'
 import { Equipe } from './painel/equipe'
 import { FcHub } from './painel/hub'
 import { Jogadores } from './painel/jogadores'
+import { Recibos } from './painel/recibos'
 import { usarTema, type Tema } from './painel/tema'
 import { VisaoGeral } from './painel/visao-geral'
 
@@ -57,6 +59,7 @@ const TELAS = [
   { rotulo: 'Jogadores', icone: Users },
   { rotulo: 'FC Hub', icone: Wifi },
   { rotulo: 'Economia', icone: WalletCards },
+  { rotulo: 'Recibos', icone: ReceiptText },
   { rotulo: 'Equipe admin', icone: UserRoundCog },
   { rotulo: 'Auditoria', icone: FileClock },
 ]
@@ -380,6 +383,7 @@ function Painel({
           {tela === 'Jogadores' && <Jogadores key={buscaInicial} buscaInicial={buscaInicial} />}
           {tela === 'FC Hub' && <FcHub />}
           {tela === 'Economia' && <Economia />}
+          {tela === 'Recibos' && <Recibos />}
           {tela === 'Equipe admin' && <Equipe />}
           {tela === 'Auditoria' && <Auditoria />}
           {tela === 'Configurações' && <Configuracoes tema={tema} aoTrocarTema={trocarTema} />}

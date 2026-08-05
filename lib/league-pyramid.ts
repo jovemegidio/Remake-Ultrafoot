@@ -56,6 +56,9 @@ export const PYRAMIDS: readonly Pyramid[] = [
   // criadas para o rebaixamento que a primeira divisao ja anunciava existir.
   { country: "Escocia", tiers: ["scottish_prem", "scottish_champ"], swaps: [2] },
   { country: "Equador", tiers: ["primera_a_ecu", "serie_b_ecu"], swaps: [2] },
+  // Coreia do Sul: a K League 2 passou a existir de verdade (17 clubes e
+  // elencos importados do Transfermarkt), entao o pais volta a rebaixar.
+  { country: "Coreia do Sul", tiers: ["k_league_1", "k_league_2"], swaps: [2] },
 ]
 
 const TIER_INDEX = new Map<string, { pyramid: Pyramid; idx: number }>()
@@ -115,6 +118,7 @@ const LABELS: Record<string, string> = {
   chinese_super: "Chinese Super League", china_league_one: "China League One",
   scottish_prem: "Scottish Premiership", scottish_champ: "Scottish Championship",
   primera_a_ecu: "LigaPro Serie A", serie_b_ecu: "LigaPro Serie B",
+  k_league_1: "K League 1", k_league_2: "K League 2",
 }
 export function divisionLabel(division: string): string {
   return LABELS[division] ?? division

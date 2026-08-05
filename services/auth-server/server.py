@@ -85,12 +85,24 @@ def conectar() -> sqlite3.Connection:
     return con
 
 
+def _colunas(con, tabela: str) -> set:
+    """Colunas de uma tabela — vazio quando ela ainda nao existe."""
+    return {l["name"] for l in con.execute(f"PRAGMA table_info({tabela})")}
+
+
 def iniciar_banco() -> None:
     with conectar() as con:
+        # ANTES do schema: o script cria indice sobre `recibos.pedido_id`, e num
+        # banco que ja tem a tabela sem essa coluna o CREATE INDEX morreria com
+        # "no such column" e derrubaria o servidor no boot.
+        recibos = _colunas(con, "recibos")
+        if recibos and "pedido_id" not in recibos:
+            con.execute("ALTER TABLE recibos ADD COLUMN pedido_id INTEGER REFERENCES pedidos(id)")
+
         con.executescript(SCHEMA.read_text(encoding="utf-8"))
         # Colunas novas em banco que ja existe. `CREATE TABLE IF NOT EXISTS` nao
         # altera tabela criada antes, entao quem ja tinha conta ficaria sem elas.
-        existentes = {l["name"] for l in con.execute("PRAGMA table_info(contas)")}
+        existentes = _colunas(con, "contas")
         for coluna, definicao in (
             ("telefone", "TEXT NOT NULL DEFAULT ''"),
             ("ativado", "INTEGER NOT NULL DEFAULT 0"),
@@ -100,6 +112,11 @@ def iniciar_banco() -> None:
         ):
             if coluna not in existentes:
                 con.execute(f"ALTER TABLE contas ADD COLUMN {coluna} {definicao}")
+
+        # Pedidos anteriores a esta versao ficam com forma vazia — a informacao
+        # nunca foi guardada e nao da para inventar depois. O painel mostra "—".
+        if "forma" not in _colunas(con, "pedidos"):
+            con.execute("ALTER TABLE pedidos ADD COLUMN forma TEXT NOT NULL DEFAULT ''")
 
 
 # ─── Codigo de ativacao ───────────────────────────────────────────────────────
@@ -237,6 +254,85 @@ CATALOGO = [
 ]
 
 CATALOGO_POR_ID = {item["id"]: item for item in CATALOGO}
+
+# Formas de pagamento aceitas pelo Asaas. "UNDEFINED" e a escolha do comprador na
+# tela de pagamento — nesse caso a forma REAL so aparece no webhook.
+FORMAS_ASAAS = ("PIX", "BOLETO", "CREDIT_CARD", "UNDEFINED")
+
+# Como cada uma aparece no recibo. Sem isto sairia "CREDIT_CARD" impresso no
+# comprovante de quem comprou.
+FORMA_POR_EXTENSO = {
+    "PIX": "Pix",
+    "BOLETO": "Boleto bancário",
+    "CREDIT_CARD": "Cartão de crédito",
+    "DEBIT_CARD": "Cartão de débito",
+    "TRANSFER": "Transferência bancária",
+    "UNDEFINED": "",
+}
+
+
+def gravar_recibo(con, *, conta_id, pedido_id, nome: str, email: str, valor_cents: int,
+                  forma: str, chave: str, item: str, pago_em: int, emitido_por: int) -> dict | None:
+    """Reserva o proximo numero do ano e grava o recibo. None se nao conseguiu.
+
+    O numero e reservado AQUI, no servidor, e nunca no navegador: o painel e uma
+    pagina estatica e o launcher roda na maquina de cada comprador — se cada um
+    contasse por conta propria, dois recibos sairiam com o mesmo numero.
+
+    Devolve tambem o recibo que JA existia quando o pedido ja tinha um: pedir o
+    recibo duas vezes tem de dar o mesmo papel, nao um numero novo.
+    """
+    ano = time.gmtime(pago_em + FUSO_PAINEL).tm_year
+    for _ in range(8):
+        anterior = con.execute("SELECT COALESCE(MAX(sequencia), 0) FROM recibos WHERE ano = ?",
+                               (ano,)).fetchone()
+        proxima = int(anterior[0] or 0) + 1
+        numero = f"UF-{ano}-{proxima:04d}"
+        try:
+            con.execute(
+                "INSERT INTO recibos (ano, sequencia, numero, conta_id, pedido_id, nome, email,"
+                " valor_cents, forma, chave, item, pago_em, emitido_por, emitido_em)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (ano, proxima, numero, conta_id, pedido_id, nome, email, valor_cents, forma,
+                 chave, item, pago_em, emitido_por, int(time.time())))
+        except sqlite3.IntegrityError:
+            # Desfaz a tentativa perdida ANTES de recontar. Sem o rollback a
+            # transacao continua aberta segurando a trava de escrita, e a
+            # releitura enxergaria a foto antiga do banco — as 8 tentativas
+            # baixariam no mesmo numero.
+            con.rollback()
+            # Pode nao ter sido o numero: `pedido_id` tambem e UNIQUE. Se outro
+            # clique do mesmo comprador chegou primeiro, o certo e entregar o
+            # recibo dele, nao insistir por um numero novo.
+            if pedido_id is not None:
+                ja = con.execute("SELECT * FROM recibos WHERE pedido_id = ?", (pedido_id,)).fetchone()
+                if ja:
+                    return dict(ja)
+            continue
+        # Comita AQUI, e nao no fim do `with`: o numero so pode ser dito a quem
+        # pediu depois de estar gravado. Responder primeiro e gravar depois e como
+        # o recibo impresso ganharia um numero que o banco nao tem.
+        con.commit()
+        return dict(con.execute("SELECT * FROM recibos WHERE numero = ?", (numero,)).fetchone())
+    return None
+
+
+def recibo_para_resposta(r: dict) -> dict:
+    """Formato que as duas telas consomem. `forma_nome` sai pronto porque quem
+    imprime nao deve ter de saber traduzir "CREDIT_CARD"."""
+    return {
+        "numero": r["numero"],
+        "nome": r["nome"],
+        "email": r["email"],
+        "valor_cents": r["valor_cents"],
+        "forma": r["forma"],
+        "forma_nome": FORMA_POR_EXTENSO.get(r["forma"], r["forma"]),
+        "chave": r["chave"],
+        "item": r["item"],
+        "pago_em": r["pago_em"],
+        "conta_id": r["conta_id"],
+        "pedido_id": r["pedido_id"],
+    }
 
 
 def saldo_da_conta(con, conta_id: int) -> int:
@@ -615,11 +711,24 @@ class Handler(BaseHTTPRequestHandler):
                     "SELECT id, produto, valor_cents, criado_em FROM pedidos"
                     " WHERE conta_id = ? AND status = 'pendente' ORDER BY criado_em DESC LIMIT 5",
                     (conta["id"],)).fetchall()
+                # O que ja foi PAGO. Nao sai de `compras`: a entrega do registro
+                # nao grava linha la (ver _entregar_pedido), entao a compra
+                # principal do jogo ficaria invisivel — e e justamente dela que o
+                # comprador quer o recibo. `numero` vem nulo enquanto ele nao
+                # pediu o recibo pela primeira vez.
+                pagos = con.execute(
+                    "SELECT p.id, p.produto, p.valor_cents, p.forma, p.criado_em, p.entregue_em,"
+                    "       r.numero AS recibo"
+                    " FROM pedidos p LEFT JOIN recibos r ON r.pedido_id = p.id"
+                    " WHERE p.conta_id = ? AND p.status = 'entregue'"
+                    " ORDER BY p.entregue_em DESC, p.id DESC LIMIT 20",
+                    (conta["id"],)).fetchall()
                 return self._responder(200, {
                     "catalogo": CATALOGO,
                     "saldo_cents": saldo_da_conta(con, conta["id"]),
                     "meus_itens": [dict(m) for m in meus],
                     "pedidos_pendentes": [dict(p) for p in pendentes],
+                    "pedidos_pagos": [dict(p) for p in pagos],
                     "ativado": bool(conta["ativado"]),
                     "pagamento_ligado": bool(ASAAS_TOKEN),
                 })
@@ -672,6 +781,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._pagar(corpo)
         if rota == "/asaas/webhook":
             return self._webhook_asaas(corpo)
+        if rota == "/recibo":
+            return self._recibo_do_pedido(corpo)
         if rota == "/loja/comprar":
             return self._comprar(corpo)
         if rota == "/hub/presenca":
@@ -766,16 +877,16 @@ class Handler(BaseHTTPRequestHandler):
                 return self._responder(502, {"erro": "nao consegui falar com o Asaas agora"})
 
             agora = int(time.time())
+            forma = corpo.get("forma") if corpo.get("forma") in FORMAS_ASAAS else "PIX"
             cur = con.execute(
-                "INSERT INTO pedidos (conta_id, produto, valor_cents, status, criado_em)"
-                " VALUES (?,?,?,?,?)",
-                (conta["id"], item["id"], item["preco_cents"], "pendente", agora))
+                "INSERT INTO pedidos (conta_id, produto, valor_cents, forma, status, criado_em)"
+                " VALUES (?,?,?,?,?,?)",
+                (conta["id"], item["id"], item["preco_cents"], forma, "pendente", agora))
             pedido_id = cur.lastrowid
 
             cobranca = asaas("/payments", {
                 "customer": cliente,
-                "billingType": corpo.get("forma") if corpo.get("forma") in
-                    ("PIX", "BOLETO", "CREDIT_CARD", "UNDEFINED") else "PIX",
+                "billingType": forma,
                 "value": round(item["preco_cents"] / 100, 2),
                 # Vencimento hoje: Pix nao espera, e boleto com prazo longo deixa
                 # pedido pendente ocupando a fila por dias.
@@ -874,8 +985,69 @@ class Handler(BaseHTTPRequestHandler):
                 print(f"[asaas] webhook sem pedido correspondente: {asaas_id}",
                       file=sys.stderr, flush=True)
                 return self._responder(200, {"ok": True, "sem_pedido": True})
+            # A forma que vale e ESTA, nao a do pedido: quem abriu a cobranca com
+            # "UNDEFINED" so escolheu Pix ou boleto na tela de pagamento, e quem
+            # pediu boleto pode ter pago por Pix no fim. E este dado que vai para
+            # o recibo, entao ele tem de vir de quem viu o dinheiro entrar.
+            forma = (pagamento.get("billingType") or "").strip().upper()
+            if forma and forma != "UNDEFINED":
+                con.execute("UPDATE pedidos SET forma = ? WHERE id = ?", (forma, pedido["id"]))
             self._entregar_pedido(con, pedido)
         return self._responder(200, {"ok": True})
+
+    def _recibo_do_pedido(self, corpo: dict):
+        """Recibo de um pedido DO PROPRIO comprador, emitido pelo launcher.
+
+        Nao e uma segunda via de nada: se o pedido ainda nao tem recibo, este e o
+        primeiro; se ja tem, volta o MESMO — `recibos.pedido_id` e UNIQUE. Sem
+        essa amarra, cada clique no botao queimaria um numero novo e a mesma
+        venda teria tres comprovantes com numeros diferentes.
+        """
+        with conectar() as con:
+            conta = conta_da_sessao(con, self._token())
+            if not conta:
+                return self._responder(401, {"erro": "sessao invalida"})
+
+            pedido_id = corpo.get("pedido")
+            if not isinstance(pedido_id, int):
+                return self._responder(400, {"erro": "pedido ausente"})
+            pedido = con.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+            # Mesma resposta para "nao existe" e "e de outra pessoa": responder
+            # coisas diferentes deixaria descobrir, por tentativa, quais numeros
+            # de pedido existem.
+            if not pedido or pedido["conta_id"] != conta["id"]:
+                return self._responder(404, {"erro": "pedido nao encontrado"})
+            if pedido["status"] != "entregue":
+                # Recibo de pagamento que ainda nao foi confirmado seria papel
+                # dizendo que recebemos um dinheiro que nao chegou.
+                return self._responder(409, {"erro": "este pedido ainda nao foi pago"})
+
+            ja = con.execute("SELECT * FROM recibos WHERE pedido_id = ?", (pedido_id,)).fetchone()
+            if ja:
+                return self._responder(200, recibo_para_resposta(dict(ja)))
+
+            item = CATALOGO_POR_ID.get(pedido["produto"]) or {}
+            recibo = gravar_recibo(
+                con,
+                conta_id=conta["id"],
+                pedido_id=pedido_id,
+                nome=conta["nome"] or conta["email"],
+                email=conta["email"],
+                valor_cents=pedido["valor_cents"],
+                forma=pedido["forma"] or "",
+                # A chave sai da conta na hora de imprimir, e nao de uma copia
+                # guardada: reemissao de licenca troca o codigo, e um recibo com
+                # a chave velha mandaria o comprador digitar algo que nao vale
+                # mais.
+                chave=codigo_da_conta(con, conta["id"]) if item.get("tipo") == "registro" else "",
+                item=item.get("nome") or pedido["produto"],
+                # Data do PAGAMENTO, que e quando o webhook confirmou. `criado_em`
+                # e quando a cobranca foi aberta — pode ser dias antes.
+                pago_em=pedido["entregue_em"] or pedido["criado_em"],
+                emitido_por=conta["id"])
+            if not recibo:
+                return self._responder(409, {"erro": "nao consegui emitir agora — tente de novo"})
+            return self._responder(201, recibo_para_resposta(recibo))
 
     def _comprar(self, corpo: dict):
         """Compra um item da loja gastando o saldo da carteira.
@@ -1221,6 +1393,13 @@ class Handler(BaseHTTPRequestHandler):
                     (eu["id"], alvo["conta_id"], "soltar-device", codigo, int(time.time())))
                 return self._responder(200, {"ok": True})
 
+            # Recibo tambem vem antes: a venda pode ter acontecido fora do
+            # launcher (Pix na mao) e nao ter conta nenhuma para amarrar.
+            if rota == "/admin/recibos":
+                return self._admin_recibos(con)
+            if rota == "/admin/recibo/emitir":
+                return self._admin_emitir_recibo(con, eu, corpo)
+
             alvo_id = corpo.get("conta_id")
             if not isinstance(alvo_id, int):
                 return self._responder(400, {"erro": "conta_id ausente"})
@@ -1458,7 +1637,7 @@ class Handler(BaseHTTPRequestHandler):
             " FROM compras c JOIN contas t ON t.id = c.conta_id"
             " ORDER BY c.criada_em DESC LIMIT 100").fetchall()
         pedidos = con.execute(
-            "SELECT p.id, p.produto, p.valor_cents, p.status, p.criado_em, p.entregue_em,"
+            "SELECT p.id, p.produto, p.valor_cents, p.forma, p.status, p.criado_em, p.entregue_em,"
             "       p.conta_id, t.email, t.nome"
             " FROM pedidos p JOIN contas t ON t.id = p.conta_id"
             " ORDER BY p.criado_em DESC LIMIT 100").fetchall()
@@ -1500,6 +1679,70 @@ class Handler(BaseHTTPRequestHandler):
                 "pagamento_ligado": bool(ASAAS_TOKEN),
             },
         })
+
+    # ── Recibos ──
+
+    def _admin_recibos(self, con):
+        linhas = con.execute(
+            "SELECT r.*, a.email AS emitido_por_email"
+            " FROM recibos r LEFT JOIN contas a ON a.id = r.emitido_por"
+            # `id` desempata: o carimbo tem resolucao de SEGUNDO, e dois recibos
+            # emitidos no mesmo segundo sairiam do banco em ordem qualquer — na
+            # tela, o mais novo apareceria embaixo do mais velho.
+            " ORDER BY r.emitido_em DESC, r.id DESC LIMIT 200").fetchall()
+        return self._responder(200, {
+            "recibos": [dict(l) for l in linhas],
+            "formas": [{"id": f, "nome": FORMA_POR_EXTENSO[f]}
+                       for f in FORMAS_ASAAS if FORMA_POR_EXTENSO[f]],
+            "catalogo": CATALOGO,
+        })
+
+    def _admin_emitir_recibo(self, con, eu, corpo: dict):
+        """Reserva o proximo numero e grava o recibo. O painel so IMPRIME o que
+        volta daqui.
+
+        Por que o numero nasce no servidor: o painel e uma pagina estatica aberta
+        em qualquer maquina, e dois admins emitindo ao mesmo tempo gerariam o
+        mesmo numero se cada navegador contasse por conta propria.
+        """
+        nome = (corpo.get("nome") or "").strip()[:120]
+        email = normalizar_email(corpo.get("email") or "")
+        valor = corpo.get("valor_cents")
+        forma = (corpo.get("forma") or "").strip().upper()
+        chave = (corpo.get("chave") or "").strip()[:64]
+        item = (corpo.get("item") or "").strip()[:160]
+
+        if not nome:
+            return self._responder(400, {"erro": "informe o nome do comprador"})
+        if not EMAIL_RE.match(email):
+            return self._responder(400, {"erro": "e-mail invalido"})
+        if not isinstance(valor, int) or valor <= 0:
+            return self._responder(400, {"erro": "valor invalido"})
+        if forma and forma not in FORMA_POR_EXTENSO:
+            return self._responder(400, {"erro": "forma de pagamento desconhecida"})
+
+        agora = int(time.time())
+        pago_em = corpo.get("pago_em")
+        # Recibo antedatado e comum (a venda foi ontem, a emissao e hoje), mas no
+        # FUTURO nao existe: seria comprovante de pagamento que ainda nao houve.
+        if not isinstance(pago_em, int) or pago_em <= 0 or pago_em > agora + 86400:
+            pago_em = agora
+        if not item:
+            item = CATALOGO[0]["nome"]
+
+        # Amarra a uma conta quando o e-mail bate com uma que existe. Sem isso o
+        # recibo ficaria solto e a ficha do comprador nao mostraria a emissao.
+        vinculo = con.execute("SELECT id FROM contas WHERE email = ?", (email,)).fetchone()
+        conta_id = vinculo["id"] if vinculo else None
+
+        # `pedido_id` fica NULO: esta emissao e manual e nao nasce de pedido
+        # nenhum — a venda pode ter acontecido fora do launcher.
+        recibo = gravar_recibo(
+            con, conta_id=conta_id, pedido_id=None, nome=nome, email=email, valor_cents=valor,
+            forma=forma, chave=chave, item=item, pago_em=pago_em, emitido_por=eu["id"])
+        if not recibo:
+            return self._responder(409, {"erro": "nao consegui reservar um numero — tente de novo"})
+        return self._responder(201, recibo_para_resposta(recibo))
 
     def _admin_hub(self, con):
         agora = int(time.time())

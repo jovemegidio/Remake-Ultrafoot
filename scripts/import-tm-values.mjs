@@ -59,8 +59,16 @@ export function extrairValores(html) {
 
 async function main() {
   const cache = JSON.parse(await readFile(OUT, "utf8"))
+  // --clube <texto>: processa so as chaves que contem o texto. A fila inteira
+  // sao ~1.400 clubes e mais de uma hora; quando o que se quer e fechar um clube
+  // recem-importado (que entra com overall achatado na mediana ate ter valor),
+  // esperar a fila toda nao faz sentido. Aceita varios, separados por virgula.
+  const filtro = args.includes("--clube")
+    ? args[args.indexOf("--clube") + 1].toLowerCase().split(",").map(s => s.trim()).filter(Boolean)
+    : null
   const pendentes = Object.entries(cache.clubs)
-    .filter(([, c]) => c.url && c.players?.length && !c.valoresEm)
+    .filter(([k, c]) => c.url && c.players?.length && !c.valoresEm
+      && (!filtro || filtro.some(f => k.toLowerCase().includes(f))))
     .slice(0, limit)
   const feitos = Object.values(cache.clubs).filter(c => c.valoresEm).length
   console.log(`${feitos} clubes ja com valores | processando ${pendentes.length}`)

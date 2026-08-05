@@ -19,6 +19,21 @@ jogador — em **modo silencioso** — sem precisar atualizar por dentro do jogo
 
 O botão único mostra **Instalar** / **Atualizar** / **Jogar** conforme o estado real.
 
+### Recibo da compra
+
+Na aba da loja, todo pedido **já pago** ganha um botão de recibo. O launcher pede
+`POST /recibo` ao servidor de contas e abre a página preenchida no navegador do
+sistema — é lá que existe "Salvar como PDF" de verdade.
+
+Duas coisas que **não** podem mudar:
+
+- **O número é do servidor.** `recibos.pedido_id` é UNIQUE: o segundo clique
+  devolve o mesmo recibo, não um número novo. Se a numeração passasse a nascer no
+  launcher, cada máquina começaria a contar do zero.
+- **Os dados vão depois do `#`, não do `?`.** O fragmento nunca é enviado ao
+  servidor; com querystring, a chave de ativação de quem comprou iria parar no log
+  de acesso do nginx a cada impressão.
+
 ### Uma instância por vez
 
 O launcher tem várias portas de entrada — atalho na área de trabalho, "iniciar com

@@ -1,6 +1,6 @@
 [package]
 name = "ultrafoot-launcher"
-version = "1.0.25"
+version = "1.0.26"
 description = "Ultrafoot Launcher — baixa, instala e atualiza o Ultrafoot 26"
 authors = ["Ultrafoot Studio"]
 license = ""
@@ -22,6 +22,12 @@ tauri-plugin-autostart = "2"
 # Uma instancia por vez. Ver o comentario em `run()`: sem isto, "iniciar com o
 # Windows" + atalho + bandeja abrem tres launchers que brigam pelo mesmo download.
 tauri-plugin-single-instance = "2"
+# Seletor de pasta: o jogador escolhe em que disco o jogo é instalado.
+tauri-plugin-dialog = "2"
+# Avisos do Windows. O launcher agora fica escondido (bandeja) durante o download
+# e enquanto o jogo roda — sem notificacao, "acabou de baixar" e "o jogo caiu"
+# nao chegariam a ninguem.
+tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # HTTP nativo (com TLS) para baixar latest.json e o setup.exe do GitHub.
@@ -30,6 +36,9 @@ ureq = { version = "2.12", features = ["json"] }
 # instalador qualquer arquivo que chegasse — e em 02/08/2026 chegou lixo de
 # 94 MB, a instalacao falhou calada e o launcher entrou em loop de atualizacao.
 sha2 = "0.10"
+# Blobs do patch chegam comprimidos: dado do jogo e quase todo texto (JSON de
+# elencos, tabelas), onde o gzip corta mais da metade da transferencia.
+flate2 = "1"
 
 [target.'cfg(windows)'.dependencies]
 # Lê a versão/caminho do jogo instalado no registro do Windows.

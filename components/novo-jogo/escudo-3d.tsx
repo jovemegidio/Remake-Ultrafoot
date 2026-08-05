@@ -2,10 +2,9 @@
 
 // ESCUDO EM 3D DA TELA DE ESCOLHA DE CLUBE.
 //
-// O escudo vira uma placa no espaco: inclina seguindo o ponteiro, flutua devagar
-// e ganha um brilho que varre a superficie conforme a inclinacao. Atras dele,
-// particulas nas cores do clube com profundidade — sao elas que dao a sensacao
-// de volume quando o jogador troca de time.
+// O escudo vira uma placa no espaco: inclina seguindo o ponteiro e flutua
+// devagar. Atras dele, particulas nas cores do clube com profundidade — sao elas
+// que dao a sensacao de volume quando o jogador troca de time.
 //
 // ⚠️ TRES COISAS QUE ESTA TELA EXIGE E QUE UM EXEMPLO DE three NAO TEM:
 //
@@ -30,6 +29,16 @@ interface Props {
   cor1?: string
   cor2?: string
   className?: string
+  /**
+   * Avisa quando a cena passou a desenhar de fato.
+   *
+   * ⚠️ QUEM CHAMA PRECISA DISTO PARA ESCONDER O ESCUDO 2D. A primeira versao
+   * deixava o `TeamCrest` visivel embaixo como reserva e o resultado foi escudo
+   * DUPLICADO na tela: a placa 3D e o <img> nao ocupam o mesmo espaco, entao um
+   * aparecia atras do outro. A reserva tem de sumir no instante em que a cena
+   * assume — e voltar se a cena nunca assumir.
+   */
+  onPronto?: (pronto: boolean) => void
 }
 
 /** Deve animar? Junta a preferencia do jogo, a do sistema e o modo economico. */
@@ -41,9 +50,16 @@ function podeAnimar(): boolean {
   return !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
 }
 
-export function Escudo3D({ src, cor1 = "#22d3ee", cor2 = "#0ea5e9", className }: Props) {
+export function Escudo3D({ src, cor1 = "#22d3ee", cor2 = "#0ea5e9", className, onPronto }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [pronto, setPronto] = useState(false)
+
+  // O aviso mora num ref para nao entrar na dependencia do efeito da cena: um
+  // callback recriado a cada render remontaria a cena inteira a cada quadro.
+  const avisar = useRef(onPronto)
+  avisar.current = onPronto
+  useEffect(() => { avisar.current?.(pronto) }, [pronto])
+  useEffect(() => () => { avisar.current?.(false) }, [])
 
   useEffect(() => {
     const host = hostRef.current
@@ -123,18 +139,11 @@ export function Escudo3D({ src, cor1 = "#22d3ee", cor2 = "#0ea5e9", className }:
         }))
         grupo.add(new THREE.Mesh(geo, mat))
 
-        // Brilho que varre a placa. Fica NA FRENTE do escudo com blending
-        // aditivo: e o reflexo, nao uma sombra.
-        const geoBrilho = registrar(new THREE.PlaneGeometry(altura * prop * 0.42, altura * 1.35))
-        const matBrilho = registrar(new THREE.MeshBasicMaterial({
-          color: 0xffffff, transparent: true, opacity: 0.07,
-          blending: THREE.AdditiveBlending, depthWrite: false,
-        }))
-        const brilho = new THREE.Mesh(geoBrilho, matBrilho)
-        brilho.position.z = 0.02
-        brilho.rotation.z = 0.35
-        grupo.add(brilho)
-        grupo.userData.brilho = brilho
+        // ⚠️ NAO REPOR O "BRILHO QUE VARRE". Havia aqui uma placa branca inclinada
+        // com blending aditivo, para simular reflexo passando pelo escudo. Contra
+        // o fundo escuro desta tela ela nao leu como reflexo: leu como uma FAIXA
+        // clara atras do escudo, e foi reprovada assim que apareceu na tela. O
+        // movimento ja vem da inclinacao e da flutuacao — nao precisa de reflexo.
 
         setPronto(true)
         desenhar()
@@ -144,14 +153,12 @@ export function Escudo3D({ src, cor1 = "#22d3ee", cor2 = "#0ea5e9", className }:
     )
 
     function desenhar() {
-      const brilho = grupo.userData.brilho as THREE.Mesh | undefined
       const t = performance.now() / 1000
       atual.x += (alvo.x - atual.x) * 0.08
       atual.y += (alvo.y - atual.y) * 0.08
       grupo.rotation.y = atual.x * 0.5 + Math.sin(t * 0.5) * 0.04
       grupo.rotation.x = -atual.y * 0.4 + Math.cos(t * 0.42) * 0.03
       grupo.position.y = Math.sin(t * 0.7) * 0.06
-      if (brilho) brilho.position.x = Math.sin(t * 0.6) * 1.1
       matParticulas.opacity = 0.42 + Math.sin(t * 0.9) * 0.12
       renderer.render(cena, camera)
     }

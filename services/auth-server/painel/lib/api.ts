@@ -222,12 +222,55 @@ export type Pedido = {
   id: number
   produto: string
   valor_cents: number
+  /** Vazio nos pedidos anteriores à versão que passou a guardar isto. */
+  forma: string
   status: string
   criado_em: number
   entregue_em: number | null
   conta_id: number
   email: string
   nome: string
+}
+
+export type Recibo = {
+  id: number
+  numero: string
+  ano: number
+  sequencia: number
+  conta_id: number | null
+  /** Preenchido quando o próprio comprador pediu o recibo pelo launcher. */
+  pedido_id: number | null
+  nome: string
+  email: string
+  valor_cents: number
+  forma: string
+  chave: string
+  item: string
+  pago_em: number
+  emitido_por: number
+  emitido_por_email: string | null
+  emitido_em: number
+}
+
+export type Recibos = {
+  recibos: Recibo[]
+  formas: { id: string; nome: string }[]
+  catalogo: { id: string; nome: string; preco_cents: number; descricao: string }[]
+}
+
+/** O que /admin/recibo/emitir devolve: o número já reservado no banco. */
+export type ReciboEmitido = {
+  numero: string
+  nome: string
+  email: string
+  valor_cents: number
+  forma: string
+  forma_nome: string
+  chave: string
+  item: string
+  pago_em: number
+  conta_id: number | null
+  pedido_id: number | null
 }
 
 export type Credito = {

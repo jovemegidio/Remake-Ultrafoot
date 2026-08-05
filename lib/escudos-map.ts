@@ -209,6 +209,17 @@ export const localEscudoMap: Record<string, string> = {
   // e `juventud_ury` -> "juventud_uru.png" (uru x ury).
   "carabobo": "/escudos/Carabobo.png",
   "juventud_ury": "/escudos/juventud_uru.png",
+  // Clubes criados em 04/08 cuja arte JA estava no disco com outro nome.
+  // ⚠️ Os dois de Concepcion ficaram de fora: o unico "Concepcion" no acervo e
+  // `Concepcion_arg.png`, que e argentino — outro clube. E `suwon_kor.png` nao
+  // da para dizer se e o Suwon FC ou o Suwon Samsung, entao nenhum dos dois o
+  // recebe. Escudo generico e melhor do que o escudo de outro time.
+  "gangwon_fc": "/escudos/gangwon_cor.png",
+  "albion_ury": "/escudos/albion_uru.png",
+  "central_espanol_ury": "/escudos/centralespanol_uru.png",
+  "dep_maldonado_ury": "/escudos/depmaldonado_uru.png",
+  "gimnasia_mendoza": "/escudos/gimnasiamendoza_arg.png",
+  "estudiantes_rio_cuarto": "/escudos/EstudiantesDeRioCuarto_arg.png",
   // Ligue 1
   "psg": "/escudos/ligue_1/psg.png",
   "monaco": "/escudos/ligue_1/monaco.png",

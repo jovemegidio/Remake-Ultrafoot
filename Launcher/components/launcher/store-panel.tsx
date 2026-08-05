@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   ShoppingBag, Check, Loader2, Wallet, Palette, Banknote, LogIn, Info,
-  KeyRound, QrCode, Copy, X, RefreshCw, WifiOff,
+  KeyRound, QrCode, Copy, X, RefreshCw, WifiOff, ReceiptText,
 } from "lucide-react"
 import { sessaoSalva } from "@/lib/auth"
+import { openExternal } from "@/lib/launcher-bridge"
 
 /**
  * LOJA DO LAUNCHER.
@@ -28,6 +29,14 @@ import { sessaoSalva } from "@/lib/auth"
 
 const BASE = "https://ultrafoot.179-198-103-30.sslip.io/auth"
 
+/**
+ * Página do recibo. Fica sob /painel/ porque é de lá que ela é publicada
+ * (`scripts/deploy-painel.sh` copia `public/recibo/`) — assim ela existe no ar
+ * junto com as rotas que a alimentam, sem depender de quando a versão web do
+ * jogo for publicada. Mudou de lugar? É esta linha só.
+ */
+const PAGINA_DO_RECIBO = "https://ultrafoot.179-198-103-30.sslip.io/painel/recibo/"
+
 interface ItemDaLoja {
   id: string
   nome: string
@@ -37,14 +46,40 @@ interface ItemDaLoja {
   carga?: Record<string, unknown>
 }
 
+interface PedidoPago {
+  id: number
+  produto: string
+  valor_cents: number
+  forma: string
+  criado_em: number
+  entregue_em: number | null
+  /** Número do recibo, se ele já foi emitido alguma vez. */
+  recibo: string | null
+}
+
 interface EstadoDaLoja {
   catalogo: ItemDaLoja[]
   saldo_cents: number
   meus_itens: { produto: string; valor_cents: number; criada_em: number }[]
   pedidos_pendentes: { id: number; produto: string; valor_cents: number; criado_em: number }[]
+  /** O que já foi PAGO. Não sai de `compras`: a entrega do registro não grava
+   *  linha lá, e é justamente dele que o comprador quer o recibo. */
+  pedidos_pagos: PedidoPago[]
   ativado: boolean
   /** false = o servidor ainda não tem as chaves do Asaas. */
   pagamento_ligado: boolean
+}
+
+/** O que o servidor devolve em /recibo — já com a forma por extenso. */
+interface Recibo {
+  numero: string
+  nome: string
+  email: string
+  valor_cents: number
+  forma_nome: string
+  chave: string
+  item: string
+  pago_em: number
 }
 
 interface Cobranca {
@@ -78,6 +113,8 @@ export function StorePanel({ onEntrar, online = true }: {
   const [aviso, setAviso] = useState("")
   const [cobranca, setCobranca] = useState<Cobranca | null>(null)
   const [copiado, setCopiado] = useState(false)
+  /** Id do pedido cujo recibo está sendo emitido — 0 = nenhum. */
+  const [emitindo, setEmitindo] = useState(0)
   const temSessao = !!sessaoSalva()
 
   const carregar = useCallback(async () => {
@@ -122,6 +159,51 @@ export function StorePanel({ onEntrar, online = true }: {
       setErro("sem conexão com o servidor")
     } finally {
       setComprando("")
+    }
+  }
+
+  /**
+   * Abre o recibo de um pedido pago no navegador do sistema.
+   *
+   * O número vem do SERVIDOR e é um por pedido: clicar de novo abre o mesmo
+   * recibo, nunca um número novo. O navegador do sistema (e não a janela do
+   * launcher) porque é lá que existe "Salvar como PDF" de verdade.
+   */
+  const verRecibo = async (pedido: PedidoPago) => {
+    const s = sessaoSalva()
+    if (!s || emitindo) return
+    setEmitindo(pedido.id)
+    setErro("")
+    try {
+      const r = await fetch(`${BASE}/recibo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${s.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ pedido: pedido.id }),
+      })
+      const d = await r.json().catch(() => ({})) as Partial<Recibo> & { erro?: string }
+      if (!r.ok || !d.numero) {
+        setErro(d.erro || "não foi possível emitir o recibo")
+        return
+      }
+      const campos = new URLSearchParams({
+        pedido: d.numero,
+        nome: d.nome ?? "",
+        email: d.email ?? "",
+        valor: ((d.valor_cents ?? 0) / 100).toFixed(2),
+        data: new Date((d.pago_em ?? 0) * 1000).toISOString().slice(0, 10),
+        forma: d.forma_nome ?? "",
+        chave: d.chave ?? "",
+        item: d.item ?? "",
+      })
+      // Depois do "#", nunca do "?": o fragmento não é enviado ao servidor, e a
+      // chave de ativação não vai parar no log de acesso do nginx.
+      await openExternal(`${PAGINA_DO_RECIBO}#${campos}`)
+      // Recarrega para o pedido passar a mostrar o número que acabou de nascer.
+      await carregar()
+    } catch {
+      setErro("sem conexão com o servidor")
+    } finally {
+      setEmitindo(0)
     }
   }
 
@@ -357,21 +439,54 @@ export function StorePanel({ onEntrar, online = true }: {
         })}
       </div>
 
-      {(dados?.meus_itens?.length ?? 0) > 0 && (
+      {((dados?.pedidos_pagos?.length ?? 0) > 0 || (dados?.meus_itens?.length ?? 0) > 0) && (
         <section className="rounded-2xl border border-border bg-card p-5">
           <h3 className="mb-3 text-sm font-bold text-foreground">Suas compras</h3>
-          <div className="space-y-1.5">
-            {dados!.meus_itens.map((m, i) => (
-              <div key={`${m.produto}-${i}`} className="flex items-center justify-between text-xs">
-                <span className="text-foreground">
-                  {dados!.catalogo.find(c => c.id === m.produto)?.nome ?? m.produto}
-                </span>
-                <span className="text-muted-foreground">
-                  {emReais(m.valor_cents)} · {new Date(m.criada_em * 1000).toLocaleDateString("pt-BR")}
-                </span>
+
+          {/* Pago em dinheiro: tem recibo. */}
+          <div className="space-y-2">
+            {(dados?.pedidos_pagos ?? []).map(p => (
+              <div key={p.id} className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs text-foreground">
+                    {dados!.catalogo.find(c => c.id === p.produto)?.nome ?? p.produto}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {emReais(p.valor_cents)} ·{" "}
+                    {new Date((p.entregue_em ?? p.criado_em) * 1000).toLocaleDateString("pt-BR")}
+                    {p.recibo && ` · recibo ${p.recibo}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => void verRecibo(p)}
+                  disabled={!!emitindo}
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[11px] font-semibold text-foreground transition-colors hover:bg-white/[0.05] disabled:opacity-40"
+                >
+                  {emitindo === p.id
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <ReceiptText className="h-3 w-3" />}
+                  {p.recibo ? "Ver recibo" : "Emitir recibo"}
+                </button>
               </div>
             ))}
           </div>
+
+          {/* Pago com saldo da carteira: nao ha pagamento a comprovar, entao nao
+              ha recibo — o recibo do dinheiro foi o da recarga. */}
+          {(dados?.meus_itens?.length ?? 0) > 0 && (
+            <div className={cn("space-y-1.5", (dados?.pedidos_pagos?.length ?? 0) > 0 && "mt-4 border-t border-border pt-3")}>
+              {dados!.meus_itens.map((m, i) => (
+                <div key={`${m.produto}-${i}`} className="flex items-center justify-between text-xs">
+                  <span className="text-foreground">
+                    {dados!.catalogo.find(c => c.id === m.produto)?.nome ?? m.produto}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {emReais(m.valor_cents)} · {new Date(m.criada_em * 1000).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>

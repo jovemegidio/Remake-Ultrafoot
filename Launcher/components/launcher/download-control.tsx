@@ -3,8 +3,12 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { formatSize } from "@/lib/format"
+import { useT } from "@/lib/i18n"
 import type { GameStatus, InstallState, LaunchMode } from "./launcher-shell"
-import { Download, Play, RefreshCw, Loader2, Wifi, WifiOff, Wrench, LogIn } from "lucide-react"
+import {
+  Download, Play, RefreshCw, Loader2, Wifi, WifiOff, Wrench, LogIn,
+  Pause, PlayCircle, XCircle, Square,
+} from "lucide-react"
 
 function formatSpeed(bytesPerSec: number): string {
   if (!bytesPerSec || bytesPerSec <= 0) return ""
@@ -27,8 +31,14 @@ export function DownloadControl({
   mode,
   logado,
   downloadSizeMb,
+  pausado,
+  jogando,
   onDownload,
   onRepair,
+  onPausar,
+  onRetomar,
+  onCancelar,
+  onPararJogo,
   size = "lg",
 }: {
   status: GameStatus
@@ -37,22 +47,49 @@ export function DownloadControl({
   /** Sem conta o download fica travado — ver `startDownload` em launcher-shell. */
   logado: boolean
   downloadSizeMb: number | null | undefined
+  pausado: boolean
+  /** O jogo está aberto AGORA — o launcher sobrevive a ele desde jogo.rs. */
+  jogando: boolean
   onDownload: () => void
   onRepair: () => void
+  onPausar: () => void
+  onRetomar: () => void
+  onCancelar: () => void
+  onPararJogo: () => void
   size?: "lg" | "sm"
 }) {
+  const t = useT()
   const online = mode === "online"
   if (status === "downloading") {
     const pct = Math.round(install.progress)
-    const installing = install.phase === "installing"
-    const label = installing ? "Instalando" : install.version ? "Atualizando" : "Baixando"
+    const installing = install.phase === "installing" || install.phase === "applying"
+    const conferindo = install.phase === "checking"
+    const label = pausado
+      ? t("baixar.pausado")
+      : install.phase === "applying"
+        ? t("baixar.aplicando")
+        : install.phase === "installing"
+          ? t("baixar.instalando")
+          : conferindo
+            ? t("baixar.conferindo")
+            : install.version
+              ? t("baixar.atualizando")
+              : t("baixar.baixando")
     const speed = formatSpeed(install.speed)
     const eta = formatEta(install.eta)
+    // Só o download dá para interromper. Durante a aplicação do patch e a
+    // instalação, parar no meio deixaria o jogo pela metade — e é justamente o
+    // estado do qual não há como sair sem reinstalar tudo.
+    const podeControlar = !installing && !conferindo
     return (
       <div className={cn("w-full", size === "lg" ? "max-w-md" : "max-w-none")}>
         <div className="mb-1.5 flex items-center justify-between text-xs">
           <span className="flex items-center gap-1.5 font-medium text-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+            {pausado ? (
+              <Pause className="h-3.5 w-3.5 text-accent" />
+            ) : (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+            )}
             {label}… {installing ? "" : `${pct}%`}
           </span>
           {!installing && (
@@ -64,16 +101,38 @@ export function DownloadControl({
         <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
           <div
             className={cn(
-              "h-full rounded-full bg-primary transition-all duration-200",
+              "h-full rounded-full transition-all duration-200",
+              pausado ? "bg-accent" : "bg-primary",
               installing && "animate-pulse",
             )}
             style={{ width: installing ? "100%" : `${pct}%` }}
           />
         </div>
-        {!installing && (speed || eta) && (
+        {!installing && (speed || eta) && !pausado && (
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
             <span>{speed}</span>
             <span>{eta}</span>
+          </div>
+        )}
+        {podeControlar && (
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              onClick={pausado ? onRetomar : onPausar}
+              className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {pausado ? <PlayCircle className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+              {pausado ? t("acao.retomar") : t("acao.pausar")}
+            </button>
+            <button
+              onClick={onCancelar}
+              /* O pedaço baixado FICA no disco: cancelar quase sempre é "agora
+                 não", e recomeçar do zero depois seria hostil. */
+              title="O que já foi baixado continua no disco para retomar depois."
+              className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              {t("acao.cancelar")}
+            </button>
           </div>
         )}
       </div>
@@ -81,6 +140,24 @@ export function DownloadControl({
   }
 
   if (status === "playable") {
+    // JOGANDO AGORA. Antes este estado não existia: o launcher se matava ao
+    // abrir o jogo. Agora ele fica de pé, conta o tempo e oferece o "Parar".
+    if (jogando) {
+      return (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button size={size === "lg" ? "lg" : "default"} disabled className="gap-2 font-semibold">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("acao.jogando")}
+          </Button>
+          <button
+            onClick={onPararJogo}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Square className="h-3.5 w-3.5" /> {t("acao.parar")}
+          </button>
+        </div>
+      )
+    }
     return (
       <div className="flex flex-wrap items-center gap-3">
         <Button
@@ -92,7 +169,7 @@ export function DownloadControl({
           )}
         >
           <Play className="h-4 w-4" fill="currentColor" />
-          {online ? "Jogar Online" : "Jogar Offline"}
+          {online ? t("acao.jogarOnline") : t("acao.jogarOffline")}
         </Button>
         {/* Reparar baixa o instalador inteiro: offline nem aparece, para nao
             oferecer o que nao tem como acontecer. */}
@@ -107,17 +184,17 @@ export function DownloadControl({
             }
           >
             <Wrench className="h-3.5 w-3.5" />
-            Reparar
+            {t("acao.reparar")}
           </button>
         )}
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {online ? (
             <>
-              <Wifi className="h-3.5 w-3.5 text-primary" /> Anti-cheat ativo
+              <Wifi className="h-3.5 w-3.5 text-primary" /> {t("rede.anticheat")}
             </>
           ) : (
             <>
-              <WifiOff className="h-3.5 w-3.5 text-accent" /> Edição liberada
+              <WifiOff className="h-3.5 w-3.5 text-accent" /> {t("rede.edicaoLiberada")}
             </>
           )}
         </span>
@@ -158,10 +235,10 @@ export function DownloadControl({
           className="gap-2 bg-accent font-semibold text-accent-foreground hover:bg-accent/90"
         >
           <RefreshCw className="h-4 w-4" />
-          Atualizar agora
+          {t("acao.atualizar")}
         </Button>
         <span className="text-xs text-muted-foreground">
-          Atualização obrigatória ({formatSize(downloadSizeMb)}) — o launcher está baixando sozinha.
+          {t("baixar.obrigatoria", { tamanho: formatSize(downloadSizeMb) })}
         </span>
       </div>
     )
@@ -175,11 +252,11 @@ export function DownloadControl({
         className="gap-2 font-semibold"
       >
         {logado ? <Download className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
-        {logado ? "Instalar" : "Entrar para instalar"}
+        {logado ? t("acao.instalar") : t("acao.entrarParaInstalar")}
       </Button>
       <span className="text-xs text-muted-foreground">
         {logado ? (
-          <>Tamanho: {formatSize(downloadSizeMb)}</>
+          t("baixar.tamanho", { tamanho: formatSize(downloadSizeMb) })
         ) : (
           <>Crie sua conta ou entre para baixar o jogo · {formatSize(downloadSizeMb)}</>
         )}

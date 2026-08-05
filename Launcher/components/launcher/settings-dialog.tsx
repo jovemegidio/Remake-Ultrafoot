@@ -1,11 +1,12 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   X, Power, MinusSquare, Palette, Type, Accessibility, UserCircle, Monitor, RotateCcw,
-  Upload, Trash2,
+  Upload, Trash2, Languages, Search, Check,
 } from "lucide-react"
+import { useIdioma, useT, IDIOMAS } from "@/lib/i18n"
 import {
   TEMAS, FONTES, AVATARES, PADRAO, iniciais, fotoParaAvatar,
   type Preferencias,
@@ -50,18 +51,89 @@ function Linha({ icone: Icone, titulo, descricao, children }: {
   )
 }
 
-type Aba = "geral" | "aparencia" | "acessibilidade" | "perfil"
+type Aba = "geral" | "idioma" | "aparencia" | "acessibilidade" | "perfil"
 
 // Os textos precisam bater EXATAMENTE com `grupo` em lib/fontes.ts — com acento
 // e tudo. Sem isso o filtro não casa e o grupo some da lista sem erro nenhum.
 const GRUPOS_DE_FONTE = ["Interface", "Esportiva", "Serifada", "Monoespaçada", "Acessível"] as const
 
-const ABAS: { id: Aba; nome: string; icone: typeof Power }[] = [
-  { id: "geral", nome: "Geral", icone: Monitor },
-  { id: "aparencia", nome: "Aparência", icone: Palette },
-  { id: "acessibilidade", nome: "Acessibilidade", icone: Accessibility },
-  { id: "perfil", nome: "Perfil", icone: UserCircle },
+const ABAS: { id: Aba; chave: "conf.geral" | "conf.idioma" | "conf.aparencia" | "conf.acessibilidade" | "conf.perfil"; icone: typeof Power }[] = [
+  { id: "geral", chave: "conf.geral", icone: Monitor },
+  { id: "idioma", chave: "conf.idioma", icone: Languages },
+  { id: "aparencia", chave: "conf.aparencia", icone: Palette },
+  { id: "acessibilidade", chave: "conf.acessibilidade", icone: Accessibility },
+  { id: "perfil", chave: "conf.perfil", icone: UserCircle },
 ]
+
+/**
+ * SELETOR DE IDIOMA.
+ *
+ * A busca não é enfeite: com mais de 120 idiomas, rolar a lista até achar o seu
+ * é pior do que digitar. Ela casa com o nome NATIVO e com o nome em português —
+ * quem procura "japonês" e quem procura "日本語" acham o mesmo item.
+ *
+ * A porcentagem ao lado diz quanto daquele idioma já está traduzido. Mostrar
+ * isso é mais honesto do que deixar o jogador descobrir sozinho que metade da
+ * tela ficou em inglês — e é o que faz um idioma parcial ser aceitável.
+ */
+function AbaDeIdioma() {
+  const { idioma, trocarIdioma, cobertura } = useIdioma()
+  const [busca, setBusca] = useState("")
+
+  const lista = useMemo(() => {
+    const alvo = busca.trim().toLowerCase()
+    if (!alvo) return IDIOMAS
+    return IDIOMAS.filter(
+      (i) =>
+        i.nativo.toLowerCase().includes(alvo) ||
+        i.pt.toLowerCase().includes(alvo) ||
+        i.codigo.toLowerCase().includes(alvo),
+    )
+  }, [busca])
+
+  return (
+    <div className="flex h-full min-h-0 flex-col p-5">
+      <div className="relative mb-3">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar idioma…"
+          className="w-full rounded-lg border border-border bg-black/20 py-2 pl-9 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50"
+        />
+      </div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        {IDIOMAS.length} idiomas · o atual está {Math.round(cobertura * 100)}% traduzido.
+        O que faltar aparece em inglês.
+      </p>
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
+        {lista.map((i) => (
+          <button
+            key={i.codigo}
+            onClick={() => trocarIdioma(i.codigo)}
+            className={cn(
+              "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors",
+              idioma === i.codigo
+                ? "border-primary/50 bg-primary/10"
+                : "border-transparent hover:bg-white/[0.04]",
+            )}
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm text-foreground" dir={i.rtl ? "rtl" : "ltr"}>
+                {i.nativo}
+              </span>
+              <span className="block truncate text-[11px] text-muted-foreground">{i.pt}</span>
+            </span>
+            {idioma === i.codigo && <Check className="h-4 w-4 shrink-0 text-primary" />}
+          </button>
+        ))}
+        {lista.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">Nenhum idioma com esse nome.</p>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function SettingsDialog({
   autostart,
@@ -82,6 +154,7 @@ export function SettingsDialog({
   onPrefs: (p: Preferencias) => void
   onClose: () => void
 }) {
+  const t = useT()
   const [aba, setAba] = useState<Aba>("geral")
   const arquivoRef = useRef<HTMLInputElement>(null)
   const [erroFoto, setErroFoto] = useState("")
@@ -101,7 +174,7 @@ export function SettingsDialog({
       >
         <nav className="flex w-40 shrink-0 flex-col gap-0.5 border-r border-border bg-black/20 p-2">
           <p className="px-3 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-            Configurações
+            {t("conf.titulo")}
           </p>
           {ABAS.map(item => (
             <button
@@ -115,7 +188,7 @@ export function SettingsDialog({
               )}
             >
               <item.icone className="h-4 w-4 shrink-0" />
-              {item.nome}
+              {t(item.chave)}
             </button>
           ))}
         </nav>
@@ -123,7 +196,7 @@ export function SettingsDialog({
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <h2 className="font-display text-lg font-bold text-foreground">
-              {ABAS.find(a => a.id === aba)?.nome}
+              {t(ABAS.find(a => a.id === aba)?.chave ?? "conf.geral")}
             </h2>
             <button
               onClick={onClose}
@@ -139,20 +212,22 @@ export function SettingsDialog({
               <div className="flex flex-col divide-y divide-border">
                 <Linha
                   icone={Power}
-                  titulo="Iniciar com o Windows"
+                  titulo={t("conf.iniciarComWindows")}
                   descricao="O launcher abre sozinho quando você liga o computador."
                 >
                   <Toggle checked={autostart} onChange={onAutostart} />
                 </Linha>
                 <Linha
                   icone={MinusSquare}
-                  titulo="Minimizar para a bandeja ao fechar"
+                  titulo={t("conf.bandeja")}
                   descricao="Ao clicar no X, o launcher continua rodando no ícone ao lado do relógio."
                 >
                   <Toggle checked={closeToTray} onChange={onCloseToTray} />
                 </Linha>
               </div>
             )}
+
+            {aba === "idioma" && <AbaDeIdioma />}
 
             {aba === "aparencia" && (
               <div className="space-y-6 p-5">
@@ -401,7 +476,7 @@ export function SettingsDialog({
               onClick={onClose}
               className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
-              Concluído
+              {t("acao.concluido")}
             </button>
           </div>
         </div>
