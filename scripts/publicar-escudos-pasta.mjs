@@ -46,12 +46,37 @@ const PASTA = arg("--pasta")
 const SAIDA = arg("--exportar")
 
 if (!PASTA) {
-  console.error('uso: --pasta "caminho" [--exportar saida.json] [file_key="arquivo"]')
+  console.error('uso: --pasta "caminho" [--exportar saida.json] [--pares pares.json] [file_key="arquivo"]')
   process.exit(1)
 }
 
 // Pares `file_key=arquivo` resolvem a mao o que o casamento automatico recusou.
+//
+// ⚠️ ACIMA DE UMA DUZIA, USE `--pares pares.json`. Sao ~125 pares hoje, e metade
+// tem acento nos dois lados ("Águia - Pará.png" -> `aguiapa_bra`,
+// "Curicó Unido" , a chave `operário_por`): o console do Windows entrega esses
+// bytes em CP1252 e o par simplesmente NAO casa com o nome do arquivo — sem
+// erro, o escudo so nao aparece no pacote. O JSON e lido como UTF-8 e nao passa
+// pelo shell. Formato: { "file_key": "Arquivo.png", ... }
+//
+// ⚠️ E PRECISA HAVER COMO DIZER "ESTE ARQUIVO NAO VAI" (`_excluir`). A pasta tem
+// segunda arte do mesmo clube ("S.D Eibar" e "SD Eibar") e homonimo de outro
+// pais que o seed nao tem ("Al-Faisaly SC" e o de Amman, o do seed e o saudita):
+// os dois caem na mesma chave e a trava de duplicado derruba OS DOIS. Sem lista
+// de exclusao nao ha como ficar com um — o clube acaba sem escudo nenhum.
 const MANUAIS = new Map()
+const EXCLUIDOS = new Set()
+const PARES = arg("--pares")
+if (PARES) {
+  for (const [fk, arquivo] of Object.entries(JSON.parse(readFileSync(PARES, "utf-8")))) {
+    if (fk === "_excluir") { for (const f of arquivo) EXCLUIDOS.add(String(f).trim()); continue }
+    // Chave com `_` na frente e comentario: e onde fica registrado COMO cada
+    // grupo de pares foi decidido, que e a parte que nao da para reconstruir
+    // depois. JSON nao tem comentario; isto e o substituto.
+    if (fk.startsWith("_")) continue
+    MANUAIS.set(String(arquivo).trim(), fk.trim())
+  }
+}
 for (const a of process.argv.slice(2)) {
   if (a.startsWith("--") || !a.includes("=")) continue
   const i = a.indexOf("=")
@@ -292,7 +317,9 @@ const duplicados = []
 // saber que dois deles disputam o mesmo clube seria trabalho jogado fora — e,
 // pior, o segundo sobrescreveria o primeiro em silencio no pacote.
 const resolvidos = []
+const excluidos = []
 for (const arquivo of arquivos) {
+  if (EXCLUIDOS.has(arquivo)) { excluidos.push(arquivo); continue }
   const { nome, sufixo } = partesDoArquivo(arquivo)
 
   if (MANUAIS.has(arquivo)) {
@@ -397,10 +424,6 @@ if (duplicados.length) {
   console.log(`\nMESMO CLUBE EM MAIS DE UM ARQUIVO:`)
   for (const d of duplicados) console.log(`   ${d}`)
 }
-if (duplicados.length) {
-  console.log(`\nMESMO CLUBE EM MAIS DE UM ARQUIVO:`)
-  for (const d of duplicados) console.log(`   ${d}`)
-}
 if (ambiguos.length) {
   console.log(`\nAMBIGUOS (nenhum escudo destes vai no pacote) — resolva com file_key="arquivo":`)
   for (const a of ambiguos) console.log(`   ${a}`)
@@ -412,6 +435,9 @@ if (contraditos.length) {
 if (semClube.length) {
   console.log(`\nSEM CLUBE com esse nome no seed:`)
   for (const s of semClube) console.log(`   ${s}`)
+}
+if (excluidos.length) {
+  console.log(`\nEXCLUIDOS de proposito (--pares "_excluir"): ${excluidos.join(", ")}`)
 }
 
 const kb = (itens.reduce((s, i) => s + i.escudo_data.length, 0) / 1024).toFixed(0)
