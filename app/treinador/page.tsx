@@ -341,7 +341,14 @@ export default function TreinadorPage() {
         <div className="absolute inset-0 bg-[#050508]/72" />
       </div>
 
-      <div className="relative z-10">
+      {/* ⚠️ ESTE WRAPPER PRECISA SER FLEX. Ele era um `div` solto entre o
+          container `h-screen flex-col overflow-hidden` e o `main flex-1`: sem
+          `flex/min-h-0/flex-1` aqui, o `flex-1` do main nao tinha contra o que
+          crescer, o `overflow-y-auto` la de baixo ficava com altura automatica e
+          o `overflow-hidden` do topo simplesmente CORTAVA o resto da pagina. A
+          area do tecnico nao rolava — o conteudo abaixo da dobra era
+          inalcancavel. */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
       <GameHeader team={userTeam} />
 
       <main className="flex min-h-0 flex-1 flex-col">
