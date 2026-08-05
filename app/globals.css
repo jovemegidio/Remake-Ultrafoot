@@ -390,6 +390,13 @@
     text-transform: uppercase;
   }
 
+  /* Geometrica estilo Century Gothic (Poppins), usada no menu principal.
+     Sem `text-transform` aqui de proposito: a caixa certa de cada idioma vem do
+     texto da traducao, nao do CSS. */
+  .font-geometrica {
+    font-family: var(--font-geometrica), var(--font-geist), system-ui, sans-serif;
+  }
+
   .font-display-italic {
     font-family: var(--font-display);
     font-weight: 700;

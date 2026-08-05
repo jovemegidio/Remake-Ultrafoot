@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono, Oswald } from "next/font/google"
+import { Geist, Geist_Mono, Oswald, Poppins } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { GamepadProvider } from "@/components/gamepad-provider"
 import { NotificationsProvider, NotificationToastContainer } from "@/components/notifications-system"
@@ -35,6 +35,16 @@ const oswald = Oswald({
   weight: ["500", "600", "700"],
   variable: "--font-oswald",
 })
+// GEOMETRICA, estilo Century Gothic (pedido para o menu principal). A Century
+// Gothic e da Monotype e nao pode ser embutida; a Poppins e a substituta
+// geometrica mais proxima e livre — mesmo "a" de um andar, mesmas formas
+// circulares. O `next/font` baixa no build e SERVE DO PROPRIO PACOTE, entao o
+// jogo instalado nao depende de rede nem da fonte existir no Windows.
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-geometrica",
+})
 
 export const metadata: Metadata = {
   title: "ULTRAFOOT 26 — Football Manager",
@@ -54,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={`bg-background ${geist.variable} ${geistMono.variable} ${oswald.variable}`} suppressHydrationWarning>
+    <html lang="pt-BR" className={`bg-background ${geist.variable} ${geistMono.variable} ${oswald.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: performanceBootstrapScript }} />
       </head>

@@ -38,7 +38,6 @@ type SplashPhase =
   | "studio-logo" 
   | "ea-warning" 
   | "leagues"
-  | "loading" 
   | "main-menu"
   | "fade-out"
 
@@ -73,7 +72,6 @@ export default function SplashPage() {
   // o carrossel direto para o menu; o restante do fluxo fica intacto.
   const [languageSelected, setLanguageSelected] = useState(true)
   const [languageIndex, setLanguageIndex] = useState(0)
-  const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isExiting, setIsExiting] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
@@ -303,11 +301,9 @@ export default function SplashPage() {
         safeLocalSet(INTRO_VISTA, "1")
       }
 
-      setPhase("loading")
-      for (let i = 0; i <= 100; i += 5) {
-        if (!(await wait(lightweight ? 5 : 16))) return
-        setLoadingProgress(i)
-      }
+      // A TELA DE CARREGAMENTO SAIU (1.0.267, pedido). Ela era teatro: a barra
+      // andava de 0 a 100 por temporizador, sem esperar carga nenhuma — o menu
+      // já estava pronto. Agora a abertura vai direto para ele.
       if (!(await wait(150))) return
       setPhase("main-menu")
     }
@@ -322,7 +318,6 @@ export default function SplashPage() {
     const cortar = () => {
       pulou.current = true
       safeLocalSet(INTRO_VISTA, "1")
-      setLoadingProgress(100)
       setPhase("main-menu")
     }
     window.addEventListener("pointerdown", cortar)
@@ -801,175 +796,6 @@ export default function SplashPage() {
         </div>
       </div>
 
-      {/* Phase: Loading - Professional Institutional Style */}
-      <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 overflow-hidden",
-        phase === "loading" ? "opacity-100" : "opacity-0 pointer-events-none"
-      )}>
-        {/* Background with subtle gradient */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: "linear-gradient(180deg, #0a0a0a 0%, #0d1117 40%, #0a1628 70%, #0a0a0a 100%)",
-          }}
-        />
-        
-        {/* Animated ambient light - top */}
-        <div 
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse at center top, rgba(0, 255, 200, 0.06) 0%, transparent 60%)",
-            animation: "breathe 4s ease-in-out infinite",
-          }}
-        />
-        
-        {/* Subtle grid pattern overlay */}
-        <div 
-          className="absolute inset-0 opacity-[0.02] pointer-events-none"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: "60px 60px",
-          }}
-        />
-
-        {/* Main content */}
-        <div className="relative z-10 flex flex-col items-center w-full max-w-lg px-8">
-          
-          {/* Logo container */}
-          <div 
-            className="relative mb-16"
-            style={{
-              animation: phase === "loading" ? "logoFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
-            }}
-          >
-            <Image
-              src="/brand/ultrafoot-logo.png"
-              alt="Ultrafoot"
-              width={320}
-              height={70}
-              className="object-contain w-auto"
-              style={{ height: "auto" }}
-              priority
-            />
-          </div>
-
-          {/* Loading section with elegant design */}
-          <div 
-            className="w-full"
-            style={{
-              animation: phase === "loading" ? "fadeInUp 0.8s ease-out 0.3s forwards" : "none",
-              opacity: 0,
-            }}
-          >
-            {/* Status text - refined typography */}
-            <div className="text-center mb-6">
-              <p 
-                key={loadingProgress < 25 ? "1" : loadingProgress < 50 ? "2" : loadingProgress < 75 ? "3" : "4"}
-                className="text-white/50 text-[11px] tracking-[0.2em] uppercase font-light transition-all duration-300"
-              >
-                {loadingProgress < 25 && t.splash.loadingEngine}
-                {loadingProgress >= 25 && loadingProgress < 50 && t.splash.loadingClubs}
-                {loadingProgress >= 50 && loadingProgress < 75 && t.splash.loadingSeason}
-                {loadingProgress >= 75 && t.splash.loadingExperience}
-              </p>
-            </div>
-
-            {/* Progress bar - sleek modern design */}
-            <div className="relative">
-              {/* Track background */}
-              <div 
-                className="h-[3px] rounded-full overflow-hidden"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.3)",
-                }}
-              >
-                {/* Progress fill with gradient */}
-                <div 
-                  className="h-full rounded-full transition-all duration-150 ease-out relative overflow-hidden"
-                  style={{ 
-                    width: `${loadingProgress}%`,
-                    background: "linear-gradient(90deg, var(--brand) 0%, var(--brand-2) 50%, var(--brand) 100%)",
-                    boxShadow: "0 0 20px rgba(0, 255, 200, 0.5), 0 0 40px rgba(0, 255, 200, 0.3)",
-                  }}
-                >
-                  {/* Shimmer effect */}
-                  <div 
-                    className="absolute inset-0"
-                    style={{
-                      background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)",
-                      animation: "shimmerMove 1.5s ease-in-out infinite",
-                    }}
-                  />
-                </div>
-              </div>
-              
-              {/* Glow indicator at progress end */}
-              <div 
-                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full transition-all duration-150"
-                style={{ 
-                  left: `calc(${loadingProgress}% - 4px)`,
-                  background: "#00ffc8",
-                  boxShadow: "0 0 12px rgba(0, 255, 200, 0.8), 0 0 24px rgba(0, 255, 200, 0.4)",
-                  opacity: loadingProgress > 0 ? 1 : 0,
-                }}
-              />
-            </div>
-
-            {/* Percentage display - elegant monospace */}
-            <div className="flex justify-center mt-5">
-              <div className="relative">
-                <span 
-                  className="text-white/80 font-mono text-sm tabular-nums tracking-wider"
-                  style={{
-                    textShadow: "0 0 20px rgba(0, 255, 200, 0.3)",
-                  }}
-                >
-                  {loadingProgress}
-                </span>
-                <span className="text-white/40 font-mono text-sm ml-0.5">%</span>
-              </div>
-            </div>
-
-            {/* Animated loading indicator - refined dots */}
-            <div className="flex justify-center gap-1.5 mt-8">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="w-1 h-1 rounded-full"
-                  style={{
-                    background: "rgba(0, 255, 200, 0.6)",
-                    boxShadow: "0 0 6px rgba(0, 255, 200, 0.4)",
-                    animation: `dotPulse 1.2s ease-in-out infinite`,
-                    animationDelay: `${i * 0.2}s`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom branding bar */}
-        <div 
-          className="absolute bottom-0 left-0 right-0 py-6 px-8"
-          style={{
-            background: "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
-          }}
-        >
-          <div className="flex justify-between items-center max-w-4xl mx-auto">
-            <span className="text-white/20 text-[9px] tracking-[0.15em] uppercase font-light">
-              Ultrafoot 26
-            </span>
-            <span className="text-white/20 text-[9px] tracking-[0.1em] uppercase font-light">
-              Agencia do Japa
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Phase: Main Menu - EAFC Style */}
       <div className={cn(
         "absolute inset-0 flex flex-col transition-all duration-700",
@@ -982,15 +808,19 @@ export default function SplashPage() {
             sob os botões, e o rodapé da barra de dicas. Ver components/menu-background. */}
         <div className="absolute inset-0 overflow-hidden">
           <MenuBackground ativo={phase === "main-menu"} className="absolute inset-0" />
-          {/* Vinheta à esquerda, sob a lista. Ficou um pouco mais densa na
-              1.0.267: sem a caixa de vidro por trás, o texto do menu passou a
-              apoiar-se SÓ neste degradê para se manter legível quando o fundo
-              troca para uma arte clara. */}
+          {/* VINHETA SÓ DO LADO DO MENU, no tom mais leve que ainda sustenta o
+              texto (pedido). Uma camada só, sem recorte: qualquer clip-path aqui
+              cria uma borda diagonal DURA, que é o oposto de suave. O degradê
+              tem cinco paradas justamente para não ter degrau — ele morre por
+              volta de 36% da tela e não encosta na arte central.
+              A legibilidade que a vinheta deixou de dar veio para o texto, em
+              forma de sombra (ver a lista abaixo): sombra pesa no glifo, não na
+              foto inteira. */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-y-0 left-0 w-[44%]"
             style={{
               background:
-                "linear-gradient(90deg, rgba(3,5,9,0.9) 0%, rgba(3,5,9,0.62) 26%, rgba(3,5,9,0.14) 50%, transparent 68%)",
+                "linear-gradient(90deg, rgba(2,4,7,0.72) 0%, rgba(2,4,7,0.58) 26%, rgba(2,4,7,0.34) 48%, rgba(2,4,7,0.12) 68%, transparent 86%)",
             }}
           />
           {/* Rodapé sutil para a barra de dicas de controle. */}
@@ -999,43 +829,11 @@ export default function SplashPage() {
             style={{ background: "linear-gradient(0deg, rgba(4,6,10,0.6) 0%, transparent 100%)" }}
           />
 
-          {/* FAIXAS DIAGONAIS da identidade (referência: menu do eFootball).
-              São só recorte + degradê — nada de imagem nova nem de blur, que é o
-              que custa caro em tela cheia. Opacidade baixa de propósito: elas
-              emolduram a lista sem competir com a arte do carrossel. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              animation: phase === "main-menu" ? "fadeIn 1.2s ease-out 0.25s forwards" : "none",
-              opacity: 0,
-            }}
-          >
-            {/* Lâmina larga, do canto inferior esquerdo para o meio da tela. */}
-            <div
-              className="absolute inset-0 opacity-[0.16]"
-              style={{
-                clipPath: "polygon(0 74%, 74% 30%, 88% 44%, 0 96%)",
-                background: "linear-gradient(90deg, var(--brand) 0%, rgba(0,212,255,0.35) 45%, transparent 82%)",
-              }}
-            />
-            {/* Fio fino e aceso correndo por cima dela. */}
-            <div
-              className="absolute inset-0 opacity-60"
-              style={{
-                clipPath: "polygon(0 70.5%, 74% 26.5%, 74.6% 28.4%, 0 72.6%)",
-                background: "linear-gradient(90deg, var(--brand) 0%, rgba(0,255,200,0.15) 60%, transparent 85%)",
-              }}
-            />
-            {/* Cunha escura no alto, para os ícones e o logo respirarem. */}
-            <div
-              className="absolute inset-x-0 top-0 h-[38%] opacity-70"
-              style={{
-                clipPath: "polygon(0 0, 100% 0, 100% 26%, 0 100%)",
-                background: "linear-gradient(180deg, rgba(3,5,9,0.85) 0%, transparent 100%)",
-              }}
-            />
-          </div>
+          {/* As faixas diagonais coloridas saíram a pedido (05/08/26). Sobre a
+              arte fotográfica do carrossel elas liam como risco na imagem, não
+              como identidade — o original pode usá-las porque o fundo dele é
+              preto liso. O ângulo da referência sobrevive no traço do item
+              selecionado, que é inclinado. */}
         </div>
 
         {/* Subtle top gradient - EAFC style */}
@@ -1082,7 +880,10 @@ export default function SplashPage() {
               onClick={() => setPainel(atalho.id)}
               aria-label={atalho.rotulo}
               title={atalho.rotulo}
-              className="group flex items-center gap-2.5 rounded-full py-1.5 pl-2 pr-3 text-white/45 transition-all duration-200 hover:bg-white/[0.07] hover:text-[var(--brand)]"
+              // A cunha escura do topo saiu junto com as faixas; a sombra é o
+              // que mantém os dois ícones visíveis quando a arte do carrossel é
+              // clara.
+              className="group flex items-center gap-2.5 rounded-full py-1.5 pl-2 pr-3 text-white/55 drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)] transition-all duration-200 hover:bg-white/[0.07] hover:text-[var(--brand)]"
             >
               {atalho.icone}
               {/* O rótulo só aparece no hover/foco: a referência mostra ícone
@@ -1114,22 +915,12 @@ export default function SplashPage() {
                 style={{ height: "auto" }}
                 priority
               />
-              <div className="mt-3 flex items-center gap-3">
-                <span className="text-white/45 text-[11px] tracking-[0.25em] uppercase font-medium">
-                  Modo Carreira · 2026
-                </span>
-                <span className="h-1 w-1 rounded-full bg-white/20" />
-                {!isRegistered ? (
-                  <span className="text-amber-500/80 text-[10px] font-semibold tracking-widest uppercase">
-                    {t.splash.unregistered}
-                  </span>
-                ) : (
-                  <span className="text-emerald-400/90 text-[10px] font-semibold tracking-widest uppercase flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3 w-3" />
-                    {t.splash.registered}
-                  </span>
-                )}
-              </div>
+              {/* A linha "Modo Carreira · 2026 · Versão não registrada" saiu a
+                  pedido (1.0.267): sob a marca, ela era uma terceira voz numa
+                  tela que ficou de propósito com duas — logo e lista.
+                  Nada se perdeu de função: quem não registrou continua vendo o
+                  item "Registrar" na lista (ele some sozinho depois do código
+                  aceito), e o estado completo está no modal de registro. */}
             </div>
 
             {/* MENU EM LISTA DE TEXTO (1.0.267). Saiu o painel de vidro com um
@@ -1141,8 +932,22 @@ export default function SplashPage() {
 
                 Sem divisor entre os blocos: o respiro maior (mt-*) já separa
                 jogar / ferramentas / sistema sem desenhar nada. */}
+            <div className="relative">
+            {/* HALO DA LISTA. A vinheta da tela é fraca de propósito (pedido), e
+                sobre a camisa branca do carrossel os itens ficavam no limite.
+                Em vez de escurecer a tela de novo, o apoio vem SÓ onde o texto
+                está — e em degradê radial, que não tem borda: ele se dissolve
+                antes de chegar em qualquer canto, então não vira caixa. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -bottom-14 -left-28 -right-24 -top-12"
+              style={{
+                background:
+                  "radial-gradient(52% 58% at 30% 50%, rgba(2,4,7,0.62) 0%, rgba(2,4,7,0.44) 38%, rgba(2,4,7,0.18) 66%, transparent 88%)",
+              }}
+            />
             <nav
-              className="flex flex-col items-start"
+              className="relative flex flex-col items-start"
               style={{
                 animation: phase === "main-menu" ? "slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
                 opacity: 0,
@@ -1158,8 +963,8 @@ export default function SplashPage() {
                     onMouseEnter={() => setSelectedIndex(index)}
                     onFocus={() => setSelectedIndex(index)}
                     className={cn(
-                      "group relative w-full py-2 pl-5 pr-2 text-left transition-transform duration-300 ease-out",
-                      abreBloco && "mt-4",
+                      "group relative w-full py-3 pl-5 pr-2 text-left transition-transform duration-300 ease-out",
+                      abreBloco && "mt-5",
                       isSelected ? "translate-x-2" : "translate-x-0",
                     )}
                   >
@@ -1178,12 +983,29 @@ export default function SplashPage() {
                       }}
                     />
 
+                    {/* Peso e cor seguem a referência: o ativo é bold branco, os
+                        outros ficam num cinza que ainda se LÊ (o /35 da primeira
+                        versão sumia sobre a arte clara do carrossel). */}
+                    {/* TIPOGRAFIA — geométrica (estilo Century Gothic) em caixa
+                        mista, que é o pedido. Duas coisas mudaram junto e uma
+                        depende da outra:
+                          • a caixa mista vem do TEXTO da tradução, não de CSS —
+                            `capitalize`/`lowercase` global escreveria errado em
+                            idioma que exige maiúscula no substantivo;
+                          • com caixa mista o espaçamento entre letras cai muito
+                            (0,01em/0,05em contra os 0,05/0,13 de antes): quem
+                            precisava de ar era a caixa alta; a mista já tem o
+                            contorno de palavra que a leitura procura.
+                        A Poppins é mais leve no desenho que a Geist, então o peso
+                        subiu um degrau para o ativo continuar firme.
+                        Sombra difusa e única; a curta dava contorno duro no
+                        glifo e com o halo atrás não fazia falta. */}
                     <span
                       className={cn(
-                        "block truncate font-black leading-none transition-all duration-300",
+                        "font-geometrica block truncate leading-[1.15] transition-all duration-300 [text-shadow:0_2px_18px_rgba(0,0,0,0.7)]",
                         isSelected
-                          ? "text-[26px] text-white sm:text-[30px] [text-shadow:0_2px_22px_rgba(0,0,0,0.85)]"
-                          : "text-[18px] text-white/35 group-hover:text-white/65 sm:text-[20px]",
+                          ? "text-[26px] font-semibold tracking-[0.01em] text-white sm:text-[30px]"
+                          : "text-[18px] font-normal tracking-[0.05em] text-white/45 group-hover:text-white/80 sm:text-[20px]",
                       )}
                     >
                       {option.label}
@@ -1195,9 +1017,9 @@ export default function SplashPage() {
                     {option.hint && (
                       <span
                         className={cn(
-                          "block overflow-hidden truncate text-[10.5px] font-semibold uppercase tracking-[0.18em] transition-all duration-300",
+                          "font-geometrica block overflow-hidden truncate text-[10.5px] font-normal uppercase tracking-[0.16em] transition-all duration-300 [text-shadow:0_1px_10px_rgba(0,0,0,0.85)]",
                           isSelected
-                            ? "mt-2 max-h-5 text-[var(--brand)]/75 opacity-100"
+                            ? "mt-2.5 max-h-5 text-white/45 opacity-100"
                             : "mt-0 max-h-0 opacity-0",
                         )}
                       >
@@ -1208,6 +1030,7 @@ export default function SplashPage() {
                 )
               })}
             </nav>
+            </div>
           </div>
         </div>
 

@@ -51,11 +51,15 @@ export const ptBR = {
     settings: "Configuracoes",
   },
   splash: {
-    newGame: "NOVO JOGO",
-    clubEditor: "EDITOR DE CLUBES",
-    loadGame: "CARREGAR JOGO",
-    register: "REGISTRAR",
-    exit: "SAIR",
+    // Caixa MISTA (1.0.267): o menu principal deixou de ser um bloco em caixa
+    // alta. A caixa certa de cada idioma mora aqui, no texto — nao em CSS: em
+    // aleman, por exemplo, o substantivo tem maiuscula obrigatoria, e um
+    // `capitalize`/`lowercase` global escreveria errado.
+    newGame: "Novo Jogo",
+    clubEditor: "Editor de Clubes",
+    loadGame: "Carregar Jogo",
+    register: "Registrar",
+    exit: "Sair",
     presents: "Apresenta",
     disclaimer: "Este jogo e uma simulacao de gerenciamento de futebol. Todos os nomes de times, jogadores e competicoes sao ficticios ou usados apenas para fins de entretenimento.",
     copyright: "Ultrafoot 26 - Todos os direitos reservados",
