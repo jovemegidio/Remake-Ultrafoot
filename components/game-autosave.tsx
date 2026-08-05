@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { persistGameEngineNow, useGameEngine } from "@/lib/game-engine"
-import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
+import { useGameEngine } from "@/lib/game-engine"
+import { podeSalvarCarreira, useGameState } from "@/lib/save-system"
+import { salvarTudo } from "@/lib/salvar-tudo"
 import { useNotifications } from "@/components/notifications-system"
 import { getSavedCloudCode, uploadSave } from "@/lib/cloud-save"
 import { contaLogada } from "@/lib/conta-ultrafoot"
@@ -45,9 +46,11 @@ export function GameAutosave() {
     saving.current = true
     void (async () => {
       try {
-        persistGameEngineNow()
-        const next = { ...state, lastAutoSaveMatchCount: matchCount, updatedAt: Date.now() }
-        await saveGameStateAndFlush(next)
+        // O autosave gravava `{ ...state }` — o retrato do React deste
+        // componente — e assim desfazia qualquer movimentação escrita direto no
+        // disco desde a montagem (rescisão, empréstimo, venda). Ver
+        // lib/salvar-tudo.ts: o merge agora é feito sobre o save do disco.
+        await salvarTudo({ lastAutoSaveMatchCount: matchCount })
         // BACKUP NA CONTA, SEM O JOGADOR PEDIR.
         //
         // Isto era `if (cloudCode) await uploadSave(cloudCode)`: só fazia backup

@@ -7,8 +7,8 @@ import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TeamCrest } from "@/components/team-crest"
 import { useActionBar } from "@/components/ea-action-bar"
-import { podeSalvarCarreira, saveGameStateAndFlush, useGameState } from "@/lib/save-system"
-import { persistGameEngineNow } from "@/lib/game-engine"
+import { useGameState } from "@/lib/save-system"
+import { salvarTudo } from "@/lib/salvar-tudo"
 import { useGameManager } from "@/lib/use-game-manager"
 import { getTeamByShort, serieATeams } from "@/lib/teams-data"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
@@ -51,15 +51,18 @@ export default function SalvarPage() {
   }, [hydrated, state.saveName])
 
   const commitSave = async () => {
-    if (!podeSalvarCarreira(state)) {
-      setSaveFeedback("Entre no pré-jogo para começar a carreira antes de salvar.")
+    const name = saveName.trim() || "Carreira principal"
+    // GRAVA TUDO (motor + save + demais chaves da carreira) mesclando sobre o
+    // DISCO. Antes ia `{ ...state }` — o retrato do React desta tela — e qualquer
+    // movimentação gravada por `commitGameState` depois da montagem (rescisão,
+    // empréstimo, venda) era sobrescrita pelo valor antigo. Ver lib/salvar-tudo.ts.
+    const resultado = await salvarTudo({ saveName: name })
+    if (!resultado.ok) {
+      setSaveFeedback(resultado.motivo ?? "Não foi possível salvar.")
       setNaming(false)
       setTimeout(() => setSaveFeedback(""), 3500)
       return
     }
-    const name = saveName.trim() || "Carreira principal"
-    persistGameEngineNow()
-    await saveGameStateAndFlush({ ...state, saveName: name, updatedAt: Date.now() })
     setSavedName(name)
     setNaming(false)
 

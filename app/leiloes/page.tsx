@@ -11,17 +11,21 @@
 // fim de app/partida/ao-vivo). Sair daqui leva ao pré-escritório, que é para
 // onde a partida ia antes.
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { Gavel, ArrowRight, Trophy, XCircle } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Gavel, ArrowRight, Trophy, XCircle, Coins } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { LeiloesPanel, contarLeiloesAbertos } from "@/components/leiloes-panel"
+import { LeilaoVendaPanel } from "@/components/leilao-venda-panel"
 import { useUserTeam, useGameState } from "@/lib/save-system"
 import { useRequireClub } from "@/lib/use-require-team"
 import { useTelaGamepad } from "@/hooks/use-tela-gamepad"
 import { hardNavigate } from "@/lib/hard-navigation"
 import { generateDetailedMarketTargets } from "@/lib/transfer-engine"
-import { useGameEngine } from "@/lib/game-engine"
+import { useGameEngine, isTransferWindowOpen } from "@/lib/game-engine"
 import { chaveLeilao, resolverLancesPendentes, type DesfechoDeLeilao } from "@/lib/leilao"
+import { resolverLeiloesDeVenda, type DesfechoDaVenda, type LeilaoDeVenda } from "@/lib/leilao-de-venda"
+import { ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
+import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/teams-data"
 import { markDeparted } from "@/lib/departed-players"
 
@@ -123,6 +127,59 @@ export default function LeiloesPage() {
     })
   }, [state.lancesEmLeilao, pool, candidatos, semana, season, userTeam, setState])
 
+  // ── LEILÃO DE VENDA: os SEUS atletas em disputa ─────────────────────────
+  //
+  // Contrapartida do bloco acima. O anúncio fecha sozinho na semana marcada,
+  // mesmo que o técnico não abra esta tela: quem vence leva, o dinheiro entra na
+  // hora e o atleta sai quando a janela abrir (lib/leilao-de-venda +
+  // `registrarSaidaAcertada` no motor).
+  const elencoDoMotor = useGameEngine(st => st.squadPlayers)
+  const registrarSaidaAcertada = useGameEngine(st => st.registrarSaidaAcertada)
+  const [vendas, setVendas] = useState<DesfechoDaVenda[]>([])
+  const jaResolveuVendas = useRef(false)
+  useEffect(() => {
+    if (jaResolveuVendas.current) return
+    const anuncios = state.leiloesDeVenda ?? []
+    if (anuncios.length === 0) return
+    jaResolveuVendas.current = true
+
+    const { desfechos: fechados, abertos } = resolverLeiloesDeVenda(
+      anuncios, semana, season, candidatos,
+      { curto: userTeam?.curto ?? "", nome: userTeam?.nome ?? "Seu clube" },
+    )
+    if (fechados.length === 0) return
+
+    const janelaAberta = isTransferWindowOpen(state.week ?? 0)
+    for (const venda of fechados) {
+      if (!venda.vencedor) continue
+      registrarSaidaAcertada(
+        venda.leilao.playerId, venda.valor, venda.vencedor.clubeNome, janelaAberta, "leilao",
+      )
+    }
+    setVendas(fechados)
+    setState({ leiloesDeVenda: abertos })
+  }, [state.leiloesDeVenda, state.week, candidatos, semana, season, userTeam, setState, registrarSaidaAcertada])
+
+  const anunciar = useCallback((anuncio: LeilaoDeVenda) => {
+    setState(atual => ({ leiloesDeVenda: [...(atual.leiloesDeVenda ?? []), anuncio] }))
+  }, [setState])
+  const cancelarAnuncio = useCallback((id: string) => {
+    setState(atual => ({ leiloesDeVenda: (atual.leiloesDeVenda ?? []).filter(a => a.id !== id) }))
+  }, [setState])
+
+  // ABERTURA DELIBERADA vs PASSAGEM DO PÓS-PARTIDA. A partida manda todo mundo
+  // para cá e a tela sai sozinha quando não há disputa nenhuma — comportamento
+  // certo para uma passagem, e fatal para quem veio ANUNCIAR um atleta (seria
+  // expulso antes de conseguir). `?ver=vender` marca a visita intencional.
+  const [aba, setAba] = useState<"comprar" | "vender">("comprar")
+  const [visitaDeliberada, setVisitaDeliberada] = useState(false)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (new URLSearchParams(window.location.search).get("ver") !== "vender") return
+    setAba("vender")
+    setVisitaDeliberada(true)
+  }, [])
+
   // SEM LEILÃO A TELA NÃO EXISTE: a partida manda todo mundo para cá porque
   // descobrir isso no fim do jogo exigiria gerar o catálogo inteiro do mercado
   // ali. Quando não há disputa, seguimos sozinhos para o pré-escritório — que era
@@ -130,15 +187,23 @@ export default function LeiloesPage() {
   //
   // ⚠️ Nunca sair enquanto houver desfecho para mostrar: era assim que a vitória
   // no leilão sumia sem o jogador ver nada.
+  //
+  // ⚠️ O LEILÃO DE VENDA TAMBÉM SEGURA A TELA. Sair com um anúncio seu aberto (ou
+  // com uma venda recém-fechada por mostrar) esconderia o dinheiro que acabou de
+  // entrar e o atleta que está de saída.
   const [saindo, setSaindo] = useState(false)
+  const nadaAResolver =
+    !visitaDeliberada &&
+    quantos === 0 && desfechos.length === 0 && (state.lancesEmLeilao?.length ?? 0) === 0 &&
+    vendas.length === 0 && (state.leiloesDeVenda?.length ?? 0) === 0
   useEffect(() => {
-    if (quantos === 0 && desfechos.length === 0 && (state.lancesEmLeilao?.length ?? 0) === 0 && !saindo) {
+    if (nadaAResolver && !saindo) {
       setSaindo(true)
       hardNavigate("/pre-office")
     }
-  }, [quantos, desfechos.length, state.lancesEmLeilao, saindo])
+  }, [nadaAResolver, saindo])
 
-  if (quantos === 0 && desfechos.length === 0 && (state.lancesEmLeilao?.length ?? 0) === 0) {
+  if (nadaAResolver) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#050508]">
         <p className="text-sm text-white/40">Nenhum leilão em andamento — indo para o escritório...</p>
@@ -162,7 +227,9 @@ export default function LeiloesPage() {
             <div>
               <h1 className="text-2xl font-bold leading-tight text-white">Leilões</h1>
               <p className="text-sm text-white/50">
-                Atletas em disputa por mais de um clube. Cobrir agora ou perder o alvo.
+                {aba === "vender"
+                  ? "Anuncie um atleta seu e deixe o mercado disputar o preço."
+                  : "Atletas em disputa por mais de um clube. Cobrir agora ou perder o alvo."}
               </p>
             </div>
           </div>
@@ -175,6 +242,84 @@ export default function LeiloesPage() {
           </button>
         </div>
 
+        {/* ABAS: comprar (disputa por atleta de outro clube) x vender (os SEUS
+            atletas anunciados). Ver lib/leilao-de-venda.ts. */}
+        <div className="mb-5 flex gap-2">
+          {([["comprar", "Comprar", Gavel], ["vender", "Vender", Coins]] as const).map(([id, rotulo, Icone]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setAba(id)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors",
+                aba === id
+                  ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                  : "border border-white/10 text-white/55 hover:border-white/25 hover:text-white",
+              )}
+            >
+              <Icone className="h-4 w-4" />
+              {rotulo}
+              {id === "vender" && (state.leiloesDeVenda?.length ?? 0) > 0 && (
+                <span className="rounded bg-black/25 px-1.5 text-[10px] tabular-nums">{state.leiloesDeVenda?.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* DESFECHO DOS SEUS ANÚNCIOS. Aparece nas duas abas: o dinheiro já entrou
+            no caixa e esconder isso atrás de uma aba seria a mesma falha do
+            "vencedor do leilão que sumia sem o jogador ver nada". */}
+        {vendas.length > 0 && (
+          <div className="mb-6 space-y-3">
+            {vendas.map(v => (
+              <div
+                key={v.leilao.id}
+                className={v.vencedor
+                  ? "rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/10 p-4"
+                  : "rounded-xl border border-white/10 bg-white/[0.03] p-4"}
+              >
+                <div className="flex items-start gap-3">
+                  {v.vencedor
+                    ? <Coins className="mt-0.5 h-5 w-5 shrink-0 text-[var(--brand)]" />
+                    : <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-white/35" />}
+                  <div>
+                    <p className={v.vencedor ? "font-semibold text-[var(--brand)]" : "font-semibold text-white/80"}>
+                      {v.vencedor
+                        ? `${v.leilao.playerName} foi arrematado por ${formatCurrency(v.valor)}`
+                        : `Ninguém levou ${v.leilao.playerName}`}
+                    </p>
+                    <p className="mt-0.5 text-sm text-white/50">{v.motivo}</p>
+                    {v.vencedor && (
+                      <p className="mt-1 text-xs text-white/45">
+                        {isTransferWindowOpen(state.week ?? 0)
+                          ? "O valor entrou no caixa e o atleta já deixou o elenco."
+                          : "O valor entrou no caixa. Ele continua jogando por você até a janela de transferências abrir."}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {aba === "vender" ? (
+          <LeilaoVendaPanel
+            elenco={elencoDoMotor.map(p => ({
+              id: p.id, name: p.name, position: p.position, age: p.age,
+              overall: p.overall, marketValue: p.marketValue, isLoanedIn: p.isLoanedIn,
+            }))}
+            anuncios={state.leiloesDeVenda ?? []}
+            candidatos={candidatos}
+            semana={semana}
+            season={season}
+            clubeDoUsuario={{ curto: userTeam?.curto ?? "", nome: userTeam?.nome ?? "Seu clube" }}
+            elencoMinimo={ELENCO_MINIMO}
+            onAnunciar={anunciar}
+            onCancelar={cancelarAnuncio}
+          />
+        ) : (
+        <>
         {/* DESFECHOS — o que aconteceu com os leilões em que você deu lance.
             Vencer abre a negociação no Mercado (a compra passa pelo caminho
             normal, com teto de dívida, teto de folha e baixa no clube dono). */}
@@ -254,6 +399,8 @@ export default function LeiloesPage() {
             hardNavigate("/mercado")
           }}
         />
+        </>
+        )}
       </main>
     </div>
   )

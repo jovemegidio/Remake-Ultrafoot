@@ -4,12 +4,12 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords } from "lucide-react"
+import { Save, FastForward, Play, Settings, Check, Loader2, ChevronDown, User, Trophy, Calendar, TrendingUp, ChevronRight, Star, LogOut, Bell, Sprout, Flag, Swords, Gavel } from "lucide-react"
 import { TeamCrest } from "@/components/team-crest"
 import { ManagerAvatar } from "@/components/manager-avatar"
 import { getTeamByShort, serieATeams, type Team } from "@/lib/teams-data"
-import { podeSalvarCarreira, saveGameStateAndFlush, useGameState, useManagingNational } from "@/lib/save-system"
-import { persistGameEngineNow } from "@/lib/game-engine"
+import { podeSalvarCarreira, useGameState, useManagingNational } from "@/lib/save-system"
+import { salvarTudo } from "@/lib/salvar-tudo"
 import { useGameManager } from "@/lib/use-game-manager"
 import { clearJobOffers } from "@/lib/career-moves"
 import { cn } from "@/lib/utils"
@@ -303,12 +303,16 @@ export function GameHeader({ team, showNav = true, className }: GameHeaderProps)
   const gameDateLabel = `${gameDate.getDate().toString().padStart(2, "0")} ${MONTHS_SHORT[gameDate.getMonth()]}`
 
   const handleSave = async () => {
-    // Sem carreira iniciada no pre-office nao ha o que salvar.
+    // Sem carreira iniciada no pre-office nao ha o que salvar (salvarTudo checa
+    // de novo, lendo o disco — aqui e so para nao acender o "salvando").
     if (!podeSalvarCarreira(state)) return
     setSaving(true)
-    persistGameEngineNow()
-    await saveGameStateAndFlush({ ...state, updatedAt: Date.now() })
+    // TUDO: motor (elenco/contratos/emprestimos/caixa), save da carreira e as
+    // demais chaves. E o merge e feito sobre o DISCO, nao sobre o `state` deste
+    // componente — ver lib/salvar-tudo.ts.
+    const resultado = await salvarTudo()
     setSaving(false)
+    if (!resultado.ok) return
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -729,6 +733,10 @@ const NAV_MENU_ITEMS: NavMenuItem[] = [
   { label: "Juniores", href: "/base", icon: Sprout, clubOnly: true },
   { label: "Taticas", href: "/elenco/taticas", icon: Settings, clubOnly: true },
   { label: "Mercado", href: "/mercado", icon: TrendingUp, clubOnly: true },
+  // LEILOES era alcancavel SO pelo pos-partida, e a tela ate saia sozinha quando
+  // nao havia disputa. Com o leilao de VENDA (anunciar um atleta seu) ela virou
+  // destino: `?ver=vender` marca a visita deliberada e segura a tela.
+  { label: "Leiloes", href: "/leiloes?ver=vender", icon: Gavel, clubOnly: true },
   { label: "Calendario", href: "/calendario", icon: Calendar, clubOnly: true },
   // Competicoes e Classificacao apontavam para a MESMA rota — eram duas
   // entradas para a mesma tela. Viraram uma so.

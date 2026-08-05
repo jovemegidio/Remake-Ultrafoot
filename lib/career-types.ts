@@ -88,15 +88,45 @@ export interface SeasonRecord {
   teamNome: string
 }
 
+/**
+ * TIPO DE MOVIMENTACAO no elenco.
+ *
+ * Era so `buy | sell | loan`, e por isso o save guardava um recorte do que o
+ * tecnico fez: compra pelo mercado e venda de jovem entravam, mas rescisao,
+ * renovacao, emprestimo de saida, devolucao, promocao da base, fim de contrato e
+ * leilao nao existiam em lugar nenhum — nem no historico, nem no save. Pedido:
+ * "ao salvar deve salvar tudo... todas as movimentacoes feitas pelo jogador".
+ *
+ * Os tres antigos continuam com o MESMO significado (challenge-engine conta
+ * `type === "buy"` para o desafio de nao contratar), entao saves anteriores
+ * seguem sendo lidos sem migracao.
+ */
+export type TransferRecordType =
+  | 'buy'          // contratacao em definitivo (mercado, livre, junior)
+  | 'sell'         // venda em definitivo
+  | 'loan'         // empréstimo de ENTRADA (compatibilidade: era o unico que existia)
+  | 'loan_out'     // empréstimo de SAIDA
+  | 'loan_return'  // fim/devolucao de empréstimo
+  | 'loan_buy'     // opcao de compra exercida ao fim do empréstimo
+  | 'auction'      // saida por leilao
+  | 'release'      // rescisao ou fim de contrato
+  | 'renew'        // renovacao de contrato
+  | 'promote'      // subiu da base ao profissional
+  | 'retire'       // encerrou a carreira
+
 export interface TransferRecord {
   id: string
   playerName: string
   fromTeam: string
   toTeam: string
   value: number
-  type: 'buy' | 'sell' | 'loan'
+  type: TransferRecordType
   week: number
   season: number
+  /** Linha em português para a tela de movimentações (opcional em saves antigos). */
+  detalhe?: string
+  /** Quando aconteceu, em tempo real — ordena o extrato quando semana/temporada empatam. */
+  em?: number
 }
 
 /** Lesão ativa de um jogador. weeksRemaining decrementa a cada rodada. */

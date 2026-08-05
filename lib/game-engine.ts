@@ -30,6 +30,10 @@ import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@
 // o promovido da base chegar ao elenco valendo o MESMO que valia na base.
 import { valorDeMercadoJovem } from "@/lib/youth-academy-rules"
 import { recordWorldTransfer } from "@/lib/world-market"
+// EXTRATO DE MOVIMENTACOES. Toda entrada/saida do elenco passa a deixar rastro no
+// save (pedido: "ao salvar deve salvar tudo... todas as movimentacoes feitas pelo
+// jogador"). O modulo so importa save-system, que NAO importa o motor — sem ciclo.
+import { registrarMovimentacao } from "@/lib/movimentacoes"
 // Modulo puro (sem imports): a expulsao vira julgamento em vez de 1 jogo fixo.
 import { julgar, inferirInfracao, type JulgamentoTribunal } from "@/lib/tribunal"
 import {
@@ -497,6 +501,17 @@ export interface Player {
   loanEndWeek?: number
   loanSalaryReduction?: number
   parentClub?: string
+  /**
+   * OPÇÃO DE COMPRA acertada na mesa do empréstimo (0/ausente = sem opção).
+   *
+   * A negociação de empréstimo (lib/emprestimos.ts, `TermosNovoEmprestimo`) já
+   * discutia opção de compra desde a 1.0.228 — o dono aceitava ou não, cobrava um
+   * piso, e a barra de satisfação contava com ela. Só que o valor acertado
+   * MORRIA na tela: `loanPlayer` não recebia o campo e o atleta chegava sem
+   * nenhum registro do combinado. No fim do vínculo ele simplesmente voltava para
+   * casa, e a cláusula que você pagou mais caro para incluir nunca existiu.
+   */
+  loanBuyOption?: number
 
   // Escalacao manual (true = titular, false = reserva)
   isStarter?: boolean
@@ -1858,6 +1873,33 @@ export interface PendingIncomingTransfer {
   agreedSeason: number
   loanWeeks?: number
   salary?: number
+  /** Opção de compra acertada na mesa do empréstimo (ver `Player.loanBuyOption`). */
+  opcaoDeCompra?: number
+}
+
+/**
+ * SAÍDA JÁ ACERTADA que só se efetiva quando a janela abrir.
+ *
+ * ⚠️ POR QUE ISTO EXISTE (pedido: "colocar seus jogadores em leilão — caso algum
+ * time compre, o dinheiro entra em caixa e o jogador sai na abertura da janela").
+ *
+ * A chegada de reforço fora da janela já esperava em `pendingIncomingTransfers`
+ * desde sempre; a SAÍDA não tinha equivalente — vender fora da janela era
+ * simplesmente impossível, ou (pior) instantâneo por outro caminho. O leilão
+ * fecha em qualquer semana, então precisa dos dois tempos separados: o dinheiro
+ * entra na hora do martelo (é o que o clube comprador paga para garantir o
+ * atleta) e o vínculo só termina quando a janela abre.
+ */
+export interface PendingOutgoingTransfer {
+  id: string
+  playerId: number
+  playerName: string
+  /** Clube que levou o atleta. */
+  toTeam: string
+  fee: number
+  agreedWeek: number
+  agreedSeason: number
+  kind: "venda" | "leilao"
 }
 
 /** Janelas brasileiras simplificadas no calendario semanal: jan-mar e jul-set. */
@@ -1945,6 +1987,11 @@ interface GameEngineState {
   // Ofertas de transferencia
   transferOffers: TransferOffer[]
   pendingIncomingTransfers: PendingIncomingTransfer[]
+  /**
+   * Saidas ja acertadas esperando a janela abrir (leilao/venda fora da janela).
+   * Opcional: saves anteriores nao tem o campo.
+   */
+  pendingOutgoingTransfers?: PendingOutgoingTransfer[]
   /** Sondagens: clubes de olho num jogador meu, antes de uma proposta formal. */
   marketInterests: MarketInterest[]
   
@@ -2134,7 +2181,29 @@ interface GameEngineState {
    * Sem ela a taxa negociada era apenas um número na tela: o empréstimo não
    * tirava um centavo do caixa, por mais caro que fosse o acordo.
    */
-  loanPlayer: (player: Player, weeks: number, salary: number, fee?: number, janelaAberta?: boolean) => "joined" | "pending" | "failed" | "no_cash"
+  loanPlayer: (player: Player, weeks: number, salary: number, fee?: number, janelaAberta?: boolean, opcaoDeCompra?: number) => "joined" | "pending" | "failed" | "no_cash"
+  /**
+   * EXERCE A OPÇÃO DE COMPRA de um atleta que chegou por empréstimo.
+   *
+   * É o que o futebol faz de verdade no fim do vínculo: o clube que emprestou
+   * paga o valor combinado na mesa e o passe passa a ser dele. Só existe para
+   * quem tem `loanBuyOption` — a cláusula precisa ter sido negociada.
+   *
+   * "no_cash" quando falta caixa, "no_window" quando a janela está fechada
+   * (comprar É transferência, e transferência respeita a janela), "failed"
+   * quando o atleta não é emprestado ou não tem opção.
+   */
+  exercerOpcaoDeCompra: (playerId: number, janelaAberta?: boolean) => "comprado" | "no_cash" | "no_window" | "failed"
+  /**
+   * Fecha a SAÍDA de um atleta seu (leilão vencido por um clube da IA).
+   *
+   * O dinheiro entra na hora; o atleta só deixa o elenco quando a janela abrir —
+   * até lá ele segue treinando e jogando por você, como no futebol real. Com a
+   * janela ABERTA sai na hora. Ver `PendingOutgoingTransfer`.
+   */
+  registrarSaidaAcertada: (
+    playerId: number, valor: number, clubeComprador: string, janelaAberta: boolean, origem?: "venda" | "leilao",
+  ) => "saiu" | "pendente" | "failed"
   hireScout: (scout: Scout) => void
   startScoutSearch: (scoutId: number, region: string, weeksToComplete?: number, searchCost?: number, criteria?: ScoutCriteria | null) => void
   stopScoutSearch: (scoutId: number) => void
@@ -2680,6 +2749,7 @@ export const useGameEngine = create<GameEngineState>()(
       transferOffers: [],
       marketInterests: [],
       pendingIncomingTransfers: [],
+      pendingOutgoingTransfers: [],
 
       // Panelinhas
       affinityGroups: [],
@@ -3004,6 +3074,32 @@ export const useGameEngine = create<GameEngineState>()(
             }))
           if (arrivedPlayers.length) updatedPlayers.push(...arrivedPlayers)
 
+          // ---- SAIDA JA ACERTADA: o atleta sai QUANDO A JANELA ABRE ----
+          //
+          // Contrapartida da fila de chegada. O leilao de venda fecha em qualquer
+          // semana e o dinheiro entra na hora do martelo, mas o vinculo so termina
+          // na janela — e o futebol de verdade (e o pedido: "o dinheiro entra em
+          // caixa e o jogador sai na abertura da janela"). Ate la ele continua
+          // treinando, jogando e na folha.
+          // A FOLHA se acerta sozinha: `ajusteDaFolhaSemanal` (mais abaixo) compara
+          // a folha do elenco DEPOIS com a de ANTES, então tirar o atleta daqui já
+          // devolve o salário dele. Subtrair também aqui cobraria duas vezes.
+          const saidasAgora = canRegisterTransfers ? (s.pendingOutgoingTransfers ?? []) : []
+          if (saidasAgora.length > 0) {
+            const idsQueSaem = new Set(saidasAgora.map(t => t.playerId))
+            const nomesQueSaem = new Set(saidasAgora.map(t => t.playerName.trim().toLocaleLowerCase("pt-BR")))
+            for (let i = updatedPlayers.length - 1; i >= 0; i--) {
+              const p = updatedPlayers[i]
+              // Casa por ID e, como reserva, por NOME: a fila de chegada
+              // reatribui ids, e um atleta vendido logo apos chegar por essa fila
+              // teria id novo. Perder a saida deixaria o clube com o dinheiro E
+              // com o jogador.
+              if (idsQueSaem.has(p.id) || nomesQueSaem.has(p.name.trim().toLocaleLowerCase("pt-BR"))) {
+                updatedPlayers.splice(i, 1)
+              }
+            }
+          }
+
           // ---- EMPRESTIMO QUE VENCEU: o atleta VOLTA para casa ----
           //
           // `loanEndWeek` era gravado na chegada e nunca mais consultado: quem
@@ -3016,6 +3112,23 @@ export const useGameEngine = create<GameEngineState>()(
             const idsQueVoltaram = new Set(emprestimosVencidos.map(p => p.id))
             for (let i = updatedPlayers.length - 1; i >= 0; i--) {
               if (idsQueVoltaram.has(updatedPlayers[i].id)) updatedPlayers.splice(i, 1)
+            }
+            // O fim do vinculo entra no extrato — inclusive quando havia uma opcao
+            // de compra que o tecnico deixou passar, que e informacao de verdade
+            // ("por que o atleta sumiu do meu elenco?").
+            for (const p of emprestimosVencidos) {
+              registrarMovimentacao({
+                playerName: p.name,
+                type: "loan_return",
+                value: 0,
+                fromTeam: s.myTeamShort ?? "",
+                toTeam: p.parentClub ?? "clube de origem",
+                season: s.currentSeason,
+                week: newWeek,
+                detalhe: (p.loanBuyOption ?? 0) > 0
+                  ? "Empréstimo encerrado — a opção de compra não foi exercida"
+                  : "Empréstimo encerrado",
+              })
             }
           }
 
@@ -3445,6 +3558,7 @@ export const useGameEngine = create<GameEngineState>()(
             nationalTeamCalls: updatedCalls,
             transferOffers: updatedOffers,
             pendingIncomingTransfers: canRegisterTransfers ? [] : s.pendingIncomingTransfers,
+            pendingOutgoingTransfers: canRegisterTransfers ? [] : (s.pendingOutgoingTransfers ?? []),
             marketingContracts: updatedMarketing,
             pendingFundOffers: fundOffers,
             balance: s.balance + weeklyBalance + marketingBonus - penaltyTotal - saidaDeCaixaDaDiretoria,
@@ -3593,6 +3707,15 @@ export const useGameEngine = create<GameEngineState>()(
           ),
           weeklyExpenses: s.weeklyExpenses + (newSalary - oldSalary)
         }))
+        const renovado = get().squadPlayers.find(p => p.id === playerId)
+        if (renovado) {
+          registrarMovimentacao({
+            playerName: renovado.name, type: "renew", value: newSalary,
+            fromTeam: get().myTeamShort ?? "", toTeam: get().myTeamShort ?? "",
+            season: get().currentSeason, week: get().currentWeek,
+            detalhe: `Renovou por ${Math.max(1, Math.round(weeks / 52))} ano(s) a ${newSalary.toLocaleString("pt-BR")}/semana`,
+          })
+        }
       },
 
       /**
@@ -3624,6 +3747,8 @@ export const useGameEngine = create<GameEngineState>()(
           transferOffers: [],
           marketInterests: [],
           pendingIncomingTransfers: [],
+          // Saida acertada tambem fica para tras: ela era do clube anterior.
+          pendingOutgoingTransfers: [],
           transferListedIds: [],
           loanListedIds: [],
           // Tabela e resultados do emprego anterior nao valem para o proximo.
@@ -3768,6 +3893,12 @@ export const useGameEngine = create<GameEngineState>()(
           balance: s.balance - taxa,
           weeklyExpenses: s.weeklyExpenses + salario,
         }))
+        registrarMovimentacao({
+          playerName: novo.name, type: "promote", value: taxa,
+          fromTeam: "Categoria de base", toTeam: state.myTeamShort ?? "",
+          season: state.currentSeason, week: state.currentWeek,
+          detalhe: `Subiu ao profissional aos ${novo.age} anos`,
+        })
         return true
       },
 
@@ -3837,6 +3968,12 @@ export const useGameEngine = create<GameEngineState>()(
           balance: s.balance + recebido,
           weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary || 0)),
         }))
+        registrarMovimentacao({
+          playerName: player.name, type: "sell", value: recebido,
+          fromTeam: state.myTeamShort ?? "", toTeam: "",
+          season: state.currentSeason, week: state.currentWeek,
+          detalhe: "Venda em definitivo",
+        })
       },
 
       retirePlayer: (playerId) => {
@@ -3850,6 +3987,12 @@ export const useGameEngine = create<GameEngineState>()(
           transferOffers: s.transferOffers.filter(offer => offer.playerId !== playerId),
           weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary ?? 0)),
         }))
+        registrarMovimentacao({
+          playerName: player.name, type: "retire", value: 0,
+          fromTeam: state.myTeamShort ?? "", toTeam: "",
+          season: state.currentSeason, week: state.currentWeek,
+          detalhe: `Encerrou a carreira aos ${player.age} anos`,
+        })
         return true
       },
       
@@ -3873,6 +4016,12 @@ export const useGameEngine = create<GameEngineState>()(
           balance: s.balance - cost,
           weeklyExpenses: Math.max(0, s.weeklyExpenses - (player.contract?.salary ?? 0)),
         }))
+        registrarMovimentacao({
+          playerName: player.name, type: "release", value: cost,
+          fromTeam: state.myTeamShort ?? "", toTeam: "",
+          season: state.currentSeason, week: state.currentWeek,
+          detalhe: "Rescisão de contrato (multa paga)",
+        })
         return true
       },
 
@@ -3902,6 +4051,14 @@ export const useGameEngine = create<GameEngineState>()(
           transferOffers: s.transferOffers.filter(o => !alvo.has(o.playerId)),
           weeklyExpenses: Math.max(0, s.weeklyExpenses - folhaLiberada),
         }))
+        for (const p of saindo) {
+          registrarMovimentacao({
+            playerName: p.name, type: "release", value: 0,
+            fromTeam: state.myTeamShort ?? "", toTeam: "",
+            season: state.currentSeason, week: state.currentWeek,
+            detalhe: "Saiu de graça por fim de contrato",
+          })
+        }
         return saindo.map(p => p.name)
       },
 
@@ -3963,6 +4120,14 @@ export const useGameEngine = create<GameEngineState>()(
           transferBudget: Math.max(0, s.transferBudget - fee),
           weeklyExpenses: s.weeklyExpenses + (player.contract?.salary || 50000)
         }))
+        registrarMovimentacao({
+          playerName: newPlayer.name, type: "buy", value: fee,
+          fromTeam: isFreeAgent ? "Sem clube" : "", toTeam: state.myTeamShort ?? "",
+          season: state.currentSeason, week: state.currentWeek,
+          detalhe: isFreeAgent
+            ? "Assinou livre, sem custo de transferência"
+            : joinsNow ? "Contratação registrada na hora" : "Contratação registrada — chega quando a janela abrir",
+        })
         return joinsNow ? "joined" : "pending"
       },
 
@@ -4019,7 +4184,7 @@ export const useGameEngine = create<GameEngineState>()(
         if (value > 0) set(state => ({ balance: state.balance - value }))
       },
       
-      loanPlayer: (player, weeks, salary, fee = 0, janelaAberta) => {
+      loanPlayer: (player, weeks, salary, fee = 0, janelaAberta, opcaoDeCompra = 0) => {
         const state = get()
         const normalizedName = player.name.trim().toLocaleLowerCase("pt-BR")
         if (state.squadPlayers.some(p => p.name.trim().toLocaleLowerCase("pt-BR") === normalizedName) || state.pendingIncomingTransfers.some(p => p.player.name.trim().toLocaleLowerCase("pt-BR") === normalizedName)) return "failed"
@@ -4028,18 +4193,22 @@ export const useGameEngine = create<GameEngineState>()(
         const taxa = Math.max(0, Math.round(fee))
         if (taxa > state.balance) return "no_cash"
 
+        // A OPÇÃO DE COMPRA acertada na mesa vem JUNTO com o atleta. Ela era
+        // negociada e descartada aqui (ver `Player.loanBuyOption`).
+        const opcao = Math.max(0, Math.round(opcaoDeCompra))
         const loanedPlayer: Player = {
           ...player,
           id: Date.now(),
           joinedClubWeek: state.currentWeek,
           joinedClubSeason: state.currentSeason,
           isLoanedIn: true,
+          loanBuyOption: opcao > 0 ? opcao : undefined,
           // Semana ABSOLUTA (ver a chegada da fila de transferencias acima).
           loanEndWeek: absoluteWeek(state.currentSeason, state.currentWeek) + weeks,
           contract: { salary, endDate: absoluteWeek(state.currentSeason, state.currentWeek) + weeks, releaseClause: null, signedWeek: state.currentWeek, signedSeason: state.currentSeason },
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
         }
-        
+
         // Mesma regra da compra: a semana da TEMPORADA manda, nao o contador absoluto.
         const joinsNow = janelaAberta ?? isTransferWindowOpen(state.currentWeek)
         set((s) => ({
@@ -4054,12 +4223,137 @@ export const useGameEngine = create<GameEngineState>()(
             agreedSeason: state.currentSeason,
             loanWeeks: weeks,
             salary,
+            opcaoDeCompra: opcao > 0 ? opcao : undefined,
           }],
           weeklyExpenses: s.weeklyExpenses + salary
         }))
+        registrarMovimentacao({
+          playerName: player.name,
+          type: "loan",
+          value: taxa,
+          fromTeam: player.parentClub ?? "",
+          toTeam: state.myTeamShort ?? "",
+          season: state.currentSeason,
+          week: state.currentWeek,
+          detalhe: `${weeks} semanas${opcao > 0 ? ` · opção de compra de ${opcao.toLocaleString("pt-BR")}` : " · sem opção de compra"}`,
+        })
         return joinsNow ? "joined" : "pending"
       },
-      
+
+      /**
+       * EXERCER A OPÇÃO DE COMPRA (pedido: "comprar jogador emprestado, assim
+       * como na vida real, onde o time ao fim do empréstimo exerce a opção de
+       * compra se assim disponível").
+       *
+       * O atleta deixa de ser emprestado e passa a ser do clube: sai o vínculo
+       * temporário (`isLoanedIn`, `loanEndWeek`, `parentClub`) e entra um contrato
+       * de verdade, com o MESMO salário que ele já recebia — quem bancou a folha
+       * durante o empréstimo não é surpreendido por um salário novo, e o teto de
+       * folha não muda (por isso a diretoria não veta aqui: nada aumenta).
+       */
+      exercerOpcaoDeCompra: (playerId, janelaAberta) => {
+        const state = get()
+        const alvo = state.squadPlayers.find(p => p.id === playerId)
+        if (!alvo?.isLoanedIn) return "failed"
+        const preco = Math.max(0, Math.round(alvo.loanBuyOption ?? 0))
+        if (preco <= 0) return "failed"
+        // Comprar É transferência: respeita a janela como qualquer outra.
+        const aberta = janelaAberta ?? isTransferWindowOpen(state.currentWeek)
+        if (!aberta) return "no_window"
+        if (state.balance < preco) return "no_cash"
+
+        const salario = alvo.contract?.salary ?? 0
+        set(s => ({
+          balance: s.balance - preco,
+          squadPlayers: s.squadPlayers.map(p => p.id !== playerId ? p : {
+            ...p,
+            isLoanedIn: false,
+            loanEndWeek: undefined,
+            loanBuyOption: undefined,
+            loanSalaryReduction: undefined,
+            parentClub: undefined,
+            joinedClubWeek: s.currentWeek,
+            joinedClubSeason: s.currentSeason,
+            morale: "Feliz",
+            contract: {
+              salary: salario,
+              // Semana ABSOLUTA, sempre: `currentWeek` zera a cada temporada e um
+              // contrato relativo nasceria vencido no ano seguinte.
+              endDate: absoluteWeek(s.currentSeason, s.currentWeek) + 52 * PRAZO_MINIMO_DE_CONTRATO_ANOS,
+              releaseClause: null,
+              signedWeek: s.currentWeek,
+              signedSeason: s.currentSeason,
+            },
+          }),
+        }))
+        registrarMovimentacao({
+          playerName: alvo.name,
+          type: "loan_buy",
+          value: preco,
+          fromTeam: alvo.parentClub ?? "clube de origem",
+          toTeam: state.myTeamShort ?? "",
+          season: state.currentSeason,
+          week: state.currentWeek,
+          detalhe: "Opção de compra exercida ao fim do empréstimo",
+        })
+        return "comprado"
+      },
+
+      /**
+       * SAÍDA ACERTADA (leilão vencido por um clube da IA, ou venda fora da
+       * janela). Dinheiro na hora; o atleta só sai quando a janela abre.
+       */
+      registrarSaidaAcertada: (playerId, valor, clubeComprador, janelaAberta, origem = "leilao") => {
+        const state = get()
+        const alvo = state.squadPlayers.find(p => p.id === playerId)
+        // Emprestado não se vende: o passe não é seu (mesma trava de
+        // `toggleTransferListed`). E ninguém sai duas vezes pela mesma fila.
+        if (!alvo || alvo.isLoanedIn) return "failed"
+        if ((state.pendingOutgoingTransfers ?? []).some(t => t.playerId === playerId)) return "failed"
+
+        const recebido = Math.max(0, Math.round(valor))
+        if (janelaAberta) {
+          set(s => ({
+            balance: s.balance + recebido,
+            squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
+            transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
+            loanListedIds: (s.loanListedIds ?? []).filter(id => id !== playerId),
+            transferOffers: s.transferOffers.filter(o => o.playerId !== playerId),
+            weeklyExpenses: Math.max(0, s.weeklyExpenses - (alvo.contract?.salary ?? 0)),
+          }))
+        } else {
+          // O DINHEIRO ENTRA AGORA e o atleta continua jogando por você até a
+          // janela. A folha dele também continua — ele ainda é seu funcionário.
+          set(s => ({
+            balance: s.balance + recebido,
+            transferOffers: s.transferOffers.filter(o => o.playerId !== playerId),
+            pendingOutgoingTransfers: [...(s.pendingOutgoingTransfers ?? []), {
+              id: `outgoing-${origem}-${s.currentSeason}-${s.currentWeek}-${playerId}`,
+              playerId,
+              playerName: alvo.name,
+              toTeam: clubeComprador,
+              fee: recebido,
+              agreedWeek: s.currentWeek,
+              agreedSeason: s.currentSeason,
+              kind: origem,
+            }],
+          }))
+        }
+        registrarMovimentacao({
+          playerName: alvo.name,
+          type: origem === "leilao" ? "auction" : "sell",
+          value: recebido,
+          fromTeam: state.myTeamShort ?? "",
+          toTeam: clubeComprador,
+          season: state.currentSeason,
+          week: state.currentWeek,
+          detalhe: janelaAberta
+            ? "Saída imediata — janela aberta"
+            : "Valor em caixa; o atleta sai na abertura da janela",
+        })
+        return janelaAberta ? "saiu" : "pendente"
+      },
+
       hireScout: (scout) => {
         set((s) => {
           if (s.scouts.some((item) => item.id === scout.id)) return s
@@ -4210,7 +4504,15 @@ export const useGameEngine = create<GameEngineState>()(
           squadPlayers: s.squadPlayers.filter(p => p.id !== playerId),
           transferListedIds: (s.transferListedIds ?? []).filter(id => id !== playerId),
           loanListedIds: (s.loanListedIds ?? []).filter(id => id !== playerId),
+          // A folha volta ao normal: durante o emprestimo o salario dele era seu.
+          weeklyExpenses: Math.max(0, s.weeklyExpenses - (alvo.contract?.salary ?? 0)),
         }))
+        registrarMovimentacao({
+          playerName: alvo.name, type: "loan_return", value: 0,
+          fromTeam: get().myTeamShort ?? "", toTeam: alvo.parentClub ?? "clube de origem",
+          season: get().currentSeason, week: get().currentWeek,
+          detalhe: "Devolvido antes do prazo",
+        })
         return true
       },
 
@@ -4674,6 +4976,20 @@ export const useGameEngine = create<GameEngineState>()(
               )
             }))
           }
+          // Aceitar proposta era a saida MAIS comum do elenco e a unica que nao
+          // deixava rastro nenhum no save (ver lib/movimentacoes.ts).
+          registrarMovimentacao({
+            playerName: player.name,
+            type: offer.offerType === "compra" ? "sell" : "loan_out",
+            value: offer.offerAmount,
+            fromTeam: state.myTeamShort ?? "",
+            toTeam: offer.fromTeam,
+            season: state.currentSeason,
+            week: state.currentWeek,
+            detalhe: offer.offerType === "compra"
+              ? "Proposta aceita — venda em definitivo"
+              : `Emprestado por ${offer.loanWeeks ?? 26} semanas (${offer.wageCoverage ?? 100}% do salário coberto)`,
+          })
           return { ok: true }
         }
 

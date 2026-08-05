@@ -1,3 +1,70 @@
+; ─── COMPATIBILIDADE COM WINDOWS 10 ────────────────────────────────────────────
+;
+; O jogo É uma aplicação Tauri: sem o runtime do WebView2 não existe tela, só uma
+; janela em branco. O Windows 11 sempre traz esse runtime; o Windows 10 recebeu
+; ele por atualização do Edge a partir de 2021 — a maioria tem, mas imagens LTSC,
+; instalações enxutas e máquinas sem atualizar NÃO têm.
+;
+; O `webviewInstallMode` do projeto é `offlineInstaller`: o runtime COMPLETO vem
+; dentro do pacote e é instalado sem rede nenhuma. Antes era `embedBootstrapper`
+; — só um baixador, que numa máquina sem internet (ou atrás de proxy corporativo)
+; falhava e deixava o jogador com uma janela preta e nenhuma explicação. Custa
+; ~130 MB a mais no instalador; é o preço de funcionar em Windows 10 offline.
+;
+; Este hook cuida do que o `offlineInstaller` NÃO resolve: um Windows velho
+; demais para o runtime existir, e o diagnóstico quando algo assim mesmo falha.
+;
+; ⚠️ TUDO AQUI É GUARDADO POR `IfSilent`. O auto-updater roda o instalador em
+; modo passivo/silencioso: um MessageBox nesse caminho fica esperando um clique
+; numa janela que ninguém vê, e a atualização trava para sempre.
+!macro NSIS_HOOK_PREINSTALL
+  SetRegView 64
+
+  ; ── Versão mínima do Windows ────────────────────────────────────────────────
+  ; O WebView2 exige Windows 10 1809 (build 17763) ou mais novo. Abaixo disso o
+  ; jogo NÃO tem como funcionar, e instalar seria enganar o jogador.
+  ClearErrors
+  ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuildNumber"
+  ${IfNot} ${Errors}
+    ; IntCmp: igual / menor / maior. Só barra quando é comprovadamente menor.
+    ; IntCmp: igual / menor / maior. Só barra quando é comprovadamente menor.
+    ; O `IfSilent +2` pula APENAS o diálogo — o Abort vale nos dois caminhos.
+    ; Instalar em silêncio num Windows que não roda o jogo seria enganar o
+    ; updater: ele reportaria sucesso e o jogador ficaria com a tela preta.
+    IntCmp $0 17763 ultrafoot_so_ok ultrafoot_so_antigo ultrafoot_so_ok
+    ultrafoot_so_antigo:
+      DetailPrint "Windows build $0 e anterior a 17763 (Windows 10 1809)."
+      IfSilent +2
+      MessageBox MB_ICONSTOP|MB_OK "Este Windows é antigo demais para o Ultrafoot 26.$\n$\nO jogo precisa do Windows 10 versão 1809 (build 17763) ou mais recente, porque o runtime do Microsoft Edge WebView2 — que desenha todas as telas — não funciona em versões anteriores.$\n$\nSeu Windows informa a build $0. Atualize o Windows e tente de novo."
+      Abort
+    ultrafoot_so_ok:
+  ${EndIf}
+
+  ; ── Runtime do WebView2 ─────────────────────────────────────────────────────
+  ; Mesmas três chaves que o launcher consulta (ver `requisitos.rs`): máquina
+  ; 64 bits, máquina 32 bits e instalação por usuário. Olhar só uma delas dá
+  ; falso negativo — o instalador do runtime escolhe uma dependendo de como foi
+  ; executado.
+  StrCpy $1 ""
+  ReadRegStr $1 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+  ${If} $1 == ""
+    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+  ${EndIf}
+  ${If} $1 == ""
+    ReadRegStr $1 HKCU "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+  ${EndIf}
+
+  ; Sem WebView2 a instalação NÃO para: o runtime completo viaja dentro deste
+  ; pacote (`offlineInstaller`) e o Tauri o instala sozinho, sem internet. O
+  ; registro aqui existe para o log do instalador — quando alguém reportar tela
+  ; preta, é a primeira linha a procurar.
+  ${If} $1 == ""
+    DetailPrint "WebView2 ausente — sera instalado a partir do runtime embutido no pacote."
+  ${Else}
+    DetailPrint "WebView2 presente (versao $1)."
+  ${EndIf}
+!macroend
+
 ; Pré-requisito do Ultrafoot: Microsoft Visual C++ v14 x64 Runtime.
 ; Evita falhas MSVCP140.dll, VCRUNTIME140.dll e dependências nativas do Discord SDK.
 !macro NSIS_HOOK_POSTINSTALL
@@ -11,6 +78,9 @@
     ${If} $9 == 0
       Delete "$INSTDIR\resources\install-game-assets.ps1"
     ${Else}
+      ; IfSilent: numa atualizacao automatica nao ha ninguem para clicar.
+      DetailPrint "Falha ao extrair os dados visuais (codigo $9)."
+      IfSilent +2
       MessageBox MB_ICONEXCLAMATION|MB_OK "Não foi possível extrair os dados visuais do jogo (código $9). Verifique espaço livre, feche o jogo e execute o instalador novamente. Diagnóstico: $TEMP\ultrafoot-assets-install.log"
     ${EndIf}
   ${EndIf}
@@ -28,6 +98,8 @@
   ${ElseIf} ${FileExists} "$INSTDIR\resources\prerequisites\vc_redist.x64.exe"
     StrCpy $2 "$INSTDIR\resources\prerequisites\vc_redist.x64.exe"
   ${Else}
+    DetailPrint "vc_redist.x64.exe nao encontrado no pacote."
+    IfSilent +2
     MessageBox MB_ICONEXCLAMATION|MB_OK "O pré-requisito Microsoft Visual C++ não foi encontrado no instalador. Reinstale o Ultrafoot usando o instalador oficial."
     Goto ultrafoot_vcredist_done
   ${EndIf}
@@ -45,6 +117,8 @@
   ${ElseIf} $1 == 3010
     DetailPrint "Microsoft Visual C++ Runtime instalado; reinicie o Windows quando possível."
   ${Else}
+    DetailPrint "Falha ao instalar o Visual C++ Runtime (codigo $1)."
+    IfSilent +2
     MessageBox MB_ICONEXCLAMATION|MB_OK "Não foi possível instalar o Microsoft Visual C++ Runtime (código $1). O log está em $TEMP\ultrafoot-vcredist.log."
   ${EndIf}
 

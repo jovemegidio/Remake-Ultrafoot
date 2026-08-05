@@ -52,6 +52,7 @@ import { calcSeasonObjective, computeBoardConfidence, getCareerStatus } from "@/
 import { Flag, Briefcase } from "lucide-react"
 import { useGameState, useManagingNational } from "@/lib/save-system"
 import { NationalOffice } from "@/components/national-office"
+import { IniciarTemporadaCard } from "@/components/iniciar-temporada"
 import { WorldCupCenter } from "@/components/world-cup-center"
 import { DataFifaCenter } from "@/components/data-fifa-center"
 
@@ -394,6 +395,13 @@ export default function DashboardPage() {
         <GameHeader team={userTeam} />
 
       <main className="flex-1 p-4 overflow-y-auto space-y-4">
+        {/* FIM DE TEMPORADA NO ESCRITORIO. Sem partida marcada, "Avancar" no
+            cabecalho manda para /partida, que devolve para ca — o laco que o
+            jogador relatou. Ver components/iniciar-temporada.tsx. */}
+        {!seasonCalendar.nextUserMatch && (
+          <IniciarTemporadaCard advanceWeek={advanceWeek} season={currentSeason} destino="/pre-office" />
+        )}
+
         {/* Proposta de selecao nacional */}
         {/*
           `managingNationalTeamId` entra na condicao alem de `hasNationalTeam`:

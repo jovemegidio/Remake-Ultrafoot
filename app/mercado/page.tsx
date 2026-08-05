@@ -311,6 +311,20 @@ export default function MercadoPage() {
   const [selectedPosition, setSelectedPosition] = useState("Tudo")
   const [minAge, setMinAge] = useState(16)
   const [maxAge, setMaxAge] = useState(35)
+  /**
+   * BUSCA POR VALOR DE MERCADO (pedido).
+   *
+   * A aba Buscar filtrava por nome, posicao, idade, nacionalidade, pais, liga,
+   * time e status — tudo, menos PRECO. E preco e o primeiro corte que um tecnico
+   * faz: com 8 milhoes em caixa, ver a lista inteira do catalogo (53 mil atletas,
+   * a maioria fora do seu alcance) nao ajuda em nada.
+   *
+   * Faixa aberta nos dois lados: 0 = sem minimo, `null` = sem teto. Mesmo par
+   * min/max do filtro de idade, para a tela nao inventar um segundo idioma de
+   * filtro.
+   */
+  const [minValor, setMinValor] = useState(0)
+  const [maxValor, setMaxValor] = useState<number | null>(null)
   const POSICOES = ["Tudo", "GOL", "ZAG", "LD", "LE", "VOL", "MEI", "PD", "PE", "ATA"]
   const cyclePosition = () => {
     const i = POSICOES.indexOf(selectedPosition)
@@ -336,6 +350,7 @@ export default function MercadoPage() {
   const clearAllFilters = () => {
     setNameFilter(""); setSearchQuery(""); setSelectedPosition("Tudo")
     setMinAge(16); setMaxAge(35)
+    setMinValor(0); setMaxValor(null)
     setFilterNationality("Qualquer"); setFilterCountry("Qualquer")
     setFilterLeague("Qualquer"); setFilterTeam("Qualquer"); setFilterStatus("Qualquer")
   }
@@ -486,6 +501,12 @@ export default function MercadoPage() {
       if (p.age < minAge || p.age > maxAge) {
         return false
       }
+      // Valor de mercado. `p.value` e a MESMA escala que a ficha e a mesa de
+      // negociacao mostram (calcMarketValue), entao o que o tecnico digita aqui
+      // e o que ele vai ver no preco — nao ha segunda escala.
+      const valorDoAtleta = p.value ?? 0
+      if (minValor > 0 && valorDoAtleta < minValor) return false
+      if (maxValor != null && valorDoAtleta > maxValor) return false
       // Filtro por SETOR da aba "rede". Antes comparava com uma única sigla
       // ("ATA"/"MEI"/"ZAG"), então "Ata" escondia pontas, "Mei" escondia volantes
       // e "Def" escondia os laterais — a maior parte do catálogo sumia.
@@ -516,7 +537,7 @@ export default function MercadoPage() {
       return true
     })
   }, [transferTargets, nameFilter, searchQuery, selectedPosition, minAge, maxAge, positionFilter,
-      filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
+      minValor, maxValor, filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
   
   /**
    * O jogador PROCUROU alguma coisa? Nome digitado ou qualquer filtro fora do
@@ -525,7 +546,8 @@ export default function MercadoPage() {
    */
   const buscaAtiva =
     searchQuery.trim() !== "" || nameFilter.trim() !== "" || selectedPosition !== "Tudo" ||
-    minAge > 16 || maxAge < 35 || filterNationality !== "Qualquer" ||
+    minAge > 16 || maxAge < 35 || minValor > 0 || maxValor != null ||
+    filterNationality !== "Qualquer" ||
     filterCountry !== "Qualquer" || filterLeague !== "Qualquer" ||
     filterTeam !== "Qualquer" || filterStatus !== "Qualquer"
 
@@ -621,12 +643,23 @@ export default function MercadoPage() {
         if (activeTab === "buscar") {
           const algumAtivo =
             searchQuery !== "" || nameFilter !== "" || selectedPosition !== "Tudo" ||
-            minAge > 16 || maxAge < 35 || filterNationality !== "Qualquer" ||
+            minAge > 16 || maxAge < 35 || minValor > 0 || maxValor != null ||
+            filterNationality !== "Qualquer" ||
             filterCountry !== "Qualquer" || filterLeague !== "Qualquer" ||
             filterTeam !== "Qualquer" || filterStatus !== "Qualquer"
           if (algumAtivo) { clearAllFilters(); return }
         }
         window.history.back()
+        return
+      }
+
+      // ENTER ABRE O ATLETA. O card selecionado sempre mostrou o keycap "Enter",
+      // mas nada escutava a tecla: o atalho anunciado na tela nao existia — e o
+      // rodape ainda dizia que Enter era so "aplicar busca por nome". Agora ele
+      // abre a mesa do atleta selecionado (o mesmo que o duplo clique faz).
+      if (e.key === "Enter" && activeTab === "buscar" && selectedPlayer) {
+        e.preventDefault()
+        handleNegotiate("buy", selectedPlayer)
         return
       }
 
@@ -655,7 +688,7 @@ export default function MercadoPage() {
     return () => window.removeEventListener("keydown", handler)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, negotiationOpen, searchQuery, nameFilter, selectedPosition, minAge, maxAge,
-      filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
+      filterNationality, filterCountry, filterLeague, filterTeam, filterStatus, selectedPlayer])
 
   // Renderizar 53 mil cards de uma vez bloqueava a WebView ao abrir a Rede Mundial.
   // O catálogo continua completo para busca/filtros, mas a lista é paginada.
@@ -698,6 +731,7 @@ export default function MercadoPage() {
     return () => window.removeEventListener("keydown", onKey)
   }, [positionFilter])
   useEffect(() => setMarketPage(0), [searchQuery, nameFilter, selectedPosition, minAge, maxAge,
+    minValor, maxValor,
     positionFilter, filterNationality, filterCountry, filterLeague, filterTeam, filterStatus])
   useEffect(() => {
     if (marketPage >= marketPageCount) setMarketPage(marketPageCount - 1)
@@ -1212,6 +1246,49 @@ export default function MercadoPage() {
                 <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Idade máx.</span>
                 <input type="number" min={minAge} max={45} value={maxAge} onChange={e => setMaxAge(Math.max(minAge, Math.min(45, Number(e.target.value))))} className="h-9 rounded-lg border border-white/10 bg-black/40 px-2 text-sm text-white outline-none focus:border-[var(--brand)]/50" />
               </label>
+              {/* VALOR DE MERCADO (pedido). Campos de TEXTO com separador de
+                  milhar, nao `type="number"`: o numero cru mostrava "22475111" e
+                  nao dava para saber se eram 2 ou 22 milhoes — a mesma correcao
+                  ja feita no campo de lance do leilao. Vazio = sem limite. */}
+              <label className="flex min-w-[132px] flex-col gap-1">
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Valor mín.</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="sem mínimo"
+                  value={minValor > 0 ? minValor.toLocaleString("pt-BR") : ""}
+                  onChange={e => {
+                    const digitos = e.target.value.replace(/\D/g, "")
+                    setMinValor(digitos ? Number(digitos) : 0)
+                  }}
+                  className="h-9 rounded-lg border border-white/10 bg-black/40 px-2 text-right text-sm tabular-nums text-white outline-none placeholder:text-white/25 focus:border-[var(--brand)]/50"
+                />
+              </label>
+              <label className="flex min-w-[132px] flex-col gap-1">
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/35">Valor máx.</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="sem teto"
+                  value={maxValor != null ? maxValor.toLocaleString("pt-BR") : ""}
+                  onChange={e => {
+                    const digitos = e.target.value.replace(/\D/g, "")
+                    setMaxValor(digitos ? Number(digitos) : null)
+                  }}
+                  className="h-9 rounded-lg border border-white/10 bg-black/40 px-2 text-right text-sm tabular-nums text-white outline-none placeholder:text-white/25 focus:border-[var(--brand)]/50"
+                />
+              </label>
+              {/* ATALHO DO CAIXA: o corte que o tecnico faz na pratica e "o que eu
+                  consigo pagar HOJE". Digitar o saldo a mao a cada busca e atrito
+                  puro. */}
+              <button
+                type="button"
+                onClick={() => { setMinValor(0); setMaxValor(Math.max(0, Math.round(gameEngine.balance))) }}
+                className="self-end rounded-lg border border-[var(--brand)]/25 px-3 py-2 text-xs font-semibold text-[var(--brand)]/85 hover:border-[var(--brand)]/50 hover:text-[var(--brand)]"
+                title={`Mostra só quem cabe no caixa (${formatCurrency(gameEngine.balance)})`}
+              >
+                Até o meu caixa
+              </button>
               <button type="button" onClick={clearAllFilters} className="self-end rounded-lg border border-white/10 px-4 py-2 text-sm text-white/55 hover:border-white/25 hover:text-white">
                 Limpar
               </button>
@@ -1396,6 +1473,7 @@ export default function MercadoPage() {
                             selected={selectedPlayer?.id === player.id}
                             detailed={redeDetailed}
                             onClick={() => handlePlayerSelect(player)}
+                            onDoubleClick={() => handleNegotiate("buy", player)}
                           />
                         ))}
                       </div>
@@ -1438,7 +1516,7 @@ export default function MercadoPage() {
             <div className="mt-6 flex items-center gap-6 pb-4 text-xs text-white/50">
               <div className="flex items-center gap-2">
                 <span className="rounded border border-white/30 px-1.5 py-0.5">Enter</span>
-                <span>Aplicar busca por nome</span>
+                <span>Abrir o atleta selecionado (ou dois cliques nele)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="rounded border border-white/30 px-1.5 py-0.5">Esc</span>
@@ -2097,7 +2175,12 @@ export default function MercadoPage() {
             // e `taxa/26` de salário — a negociação de empréstimo não chegava aqui.
             const semanas = loan?.semanas ?? 26
             const salarioDoEmprestimo = loan?.salarioSemanal ?? Math.round(fee / Math.max(1, semanas))
-            const result = gameEngine.loanPlayer(enginePlayer, semanas, salarioDoEmprestimo, loan?.taxa ?? fee, janelaAberta)
+            // OPÇÃO DE COMPRA. Ela era negociada na mesa (e o dono cobrava caro
+            // por ela) e depois DESCARTADA aqui: o atleta chegava sem registro
+            // nenhum da cláusula. Ver `Player.loanBuyOption` no motor.
+            const result = gameEngine.loanPlayer(
+              enginePlayer, semanas, salarioDoEmprestimo, loan?.taxa ?? fee, janelaAberta, loan?.opcaoDeCompra ?? 0,
+            )
             if (result === "no_cash") {
               setMarketNotice(`Caixa insuficiente para a taxa de ${formatCurrency(loan?.taxa ?? fee)} do empréstimo.`)
               registrarDesfecho(selectedPlayer.name, "rejeitada")
@@ -2113,7 +2196,8 @@ export default function MercadoPage() {
             setMarketNotice(result === "pending"
               ? `${selectedPlayer.name} assinou e será registrado na semana ${nextTransferWindowWeek(gameEngine.currentWeek)}.`
               : result === "joined"
-                ? `${selectedPlayer.name} chegou por empréstimo${loan ? ` (${loan.semanas} semanas, ${loan.coberturaSalarial}% do salário por sua conta)` : ""}.`
+                ? `${selectedPlayer.name} chegou por empréstimo${loan ? ` (${loan.semanas} semanas, ${loan.coberturaSalarial}% do salário por sua conta` : ""}` +
+                  `${loan && loan.opcaoDeCompra > 0 ? `, com opção de compra de ${formatCurrency(loan.opcaoDeCompra)}` : ""}${loan ? ")" : ""}.`
                 : "Não foi possível concluir o empréstimo.")
           } else {
             // DIVIDA: a compra respeita o teto por endividamento e o congelamento
@@ -2504,11 +2588,19 @@ function PlayerListCard({
   player,
   selected,
   onClick,
+  onDoubleClick,
   detailed = false,
 }: {
   player: Player
   selected: boolean
   onClick: () => void
+  /**
+   * DUPLO CLIQUE = ENTER (pedido: "para acessar um jogador tem que apertar
+   * enter; ajuste para dar dois cliques no jogador funcionar da mesma forma").
+   * Um clique seleciona e mostra a ficha ao lado; dois abrem a mesa de
+   * negociacao, que e o que o keycap "Enter" do card sempre prometeu.
+   */
+  onDoubleClick?: () => void
   /** Modo "Detalhes": mostra overall, valor e clube direto na linha. */
   detailed?: boolean
 }) {
@@ -2524,6 +2616,8 @@ function PlayerListCard({
   return (
     <button
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      title={onDoubleClick ? "Clique para ver a ficha · duplo clique (ou Enter) para negociar" : undefined}
       className={cn(
         "relative flex items-center gap-3 p-3 rounded-lg transition-all text-left",
         "bg-[#1a1a1a]/80",

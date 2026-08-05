@@ -594,6 +594,15 @@ export interface GameState {
    */
   leilaoVencido?: { jogador: string; valor: number; season: number } | null
   /**
+   * Atletas SEUS anunciados em leilão (lib/leilao-de-venda).
+   *
+   * Mesma economia do `lancesEmLeilao`: só o ANÚNCIO é salvo. Quem entrou na
+   * disputa e quanto ofereceu continua derivado de (anúncio, semana) — dois
+   * lugares gerando lances divergiriam, e o técnico veria um preço na tela e
+   * receberia outro no caixa.
+   */
+  leiloesDeVenda?: import("@/lib/leilao-de-venda").LeilaoDeVenda[]
+  /**
    * Torneio amistoso criado pelo técnico (lib/torneio-amistoso). Fica no save
    * porque jogar uma partida sai desta tela e volta — sem persistir, a tabela
    * zerava a cada jogo.

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { GameHeader } from "@/components/game-header"
-import { useGameState, useUserTeam } from "@/lib/save-system"
+import { commitGameState, useGameState, useUserTeam } from "@/lib/save-system"
 import { useGameEngine } from "@/lib/game-engine"
 import { useGameManager } from "@/lib/use-game-manager"
 import { buildCareerStats, rankInHistory } from "@/lib/hall-of-fame-engine"
@@ -20,6 +20,7 @@ import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dial
 import { getGameDate } from "@/lib/game-date"
 import { PISO_ENTROSAMENTO } from "@/lib/treino-e-entrosamento"
 import { TeamCrest } from "@/components/team-crest"
+import { IniciarTemporadaCard } from "@/components/iniciar-temporada"
 import { cn } from "@/lib/utils"
 import { Award, Briefcase, ClipboardList, Star, TrendingDown, TrendingUp, Trophy, UserCircle, Swords, Home, Plane, Dumbbell, Users, X } from "lucide-react"
 
@@ -41,7 +42,7 @@ export default function TreinadorPage() {
   const router = useRouter()
   const { team: userTeam } = useUserTeam()
   const { state, setState } = useGameState()
-  const { currentSeason, currentMatch, seasonCalendar } = useGameManager()
+  const { currentSeason, currentMatch, seasonCalendar, advanceWeek } = useGameManager()
   const matchResults = useGameEngine(s => s.matchResults)
   const classificacao = useGameEngine(s => s.serieAStandings)
   const initializeGame = useGameEngine(s => s.initializeGame)
@@ -155,10 +156,29 @@ export default function TreinadorPage() {
   }, [desempregado, standing, state.week, state.season, rodadaMercado])
 
   const aguardarPropostas = useCallback(() => {
-    // Passa uma semana da carreira (o futebol segue) e reembaralha as ofertas.
-    setState({ week: (state.week ?? 0) + 1 } as Parameters<typeof setState>[0])
+    // ⚠️ A DATA NO CABECALHO NAO MUDAVA (relato: "ao pedir demissao e selecionar a
+    // opcao aguardar mais uma semana nao altera a data no calendario").
+    //
+    // Duas causas, as duas corrigidas aqui:
+    //
+    //  1. `setState` do useGameState so grava DENTRO do atualizador que ele passa
+    //     ao React. Esta e uma acao isolada numa tela sem clube; o `queueMicrotask`
+    //     que salva chegava tarde ou nao chegava, e o proximo `loadGameState` (que
+    //     e de onde o GameHeader tira a data) lia a semana antiga. `commitGameState`
+    //     grava direto no disco, lendo o valor mais novo — e a regra da casa para
+    //     decisao que nao fica esperando um re-render.
+    //  2. A semana tambem vive no MOTOR (`currentWeek`), que alimenta contratos,
+    //     emprestimos e janela. Mexer so no save deixava os dois relogios em
+    //     desacordo, e o desacordo aparecia na primeira tela que lesse o motor.
+    //
+    // A virada de ANO fica de fora de proposito: quem vira temporada e o
+    // `advanceWeek` (campeao, acesso/rebaixamento, calendario novo). Aqui o
+    // tecnico esta sem clube — nao ha temporada de clube para encerrar.
+    const nova = commitGameState(atual => ({ week: (atual.week ?? 0) + 1 }))
+    useGameEngine.setState({ currentWeek: nova.week, currentSeason: nova.season })
+    setState({ week: nova.week } as Parameters<typeof setState>[0])
     setRodadaMercado(r => r + 1)
-  }, [setState, state.week])
+  }, [setState])
 
   // Últimos resultados do clube do usuário, do mais recente para o mais antigo.
   const ultimos = useMemo(() => {
@@ -418,6 +438,18 @@ export default function TreinadorPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 scrollbar-game">
+          {/* FIM DE TEMPORADA (pedido: "implemente na area do treinador a mesma
+              opcao de iniciar uma nova temporada tambem"). So com clube: quem
+              esta desempregado nao tem temporada de clube para virar — para ele o
+              relogio anda por "Aguardar novas propostas", logo abaixo. */}
+          {!desempregado && !seasonCalendar.nextUserMatch && (
+            <IniciarTemporadaCard
+              advanceWeek={advanceWeek}
+              season={currentSeason}
+              destino="/pre-office"
+              className="mb-4"
+            />
+          )}
           {avisoDemissao && (
             <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-500/40 bg-red-500/[0.08] p-4">
               <TrendingDown className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />

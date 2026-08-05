@@ -30,6 +30,7 @@ import {
   Check,
   RectangleHorizontal,
   RectangleVertical,
+  Gavel,
 } from "lucide-react"
 import { GameHeader } from "@/components/game-header"
 import { TeamCrest } from "@/components/team-crest"
@@ -52,6 +53,7 @@ import { avisar as avisarNoJogo, confirmar as confirmarNoJogo } from "@/lib/dial
 import { useTranslation } from "@/lib/i18n"
 import { announceOnlineAction } from "@/lib/online-multiplayer"
 import { generateRetirementSuccessor } from "@/lib/youth-academy"
+import { hardNavigate } from "@/lib/hard-navigation"
 
 // FORMATIONS agora vive em lib/formations.ts (compartilhado com a Central de Transferencias).
 
@@ -315,6 +317,7 @@ export default function ElencoPage() {
   const engineTerminateContract = useGameEngine(s => s.terminateContract)
   const engineSellPlayer = useGameEngine(s => s.sellPlayer)
   const engineRetirePlayer = useGameEngine(s => s.retirePlayer)
+  const engineExercerOpcaoDeCompra = useGameEngine(s => s.exercerOpcaoDeCompra)
   const engineBalance = useGameEngine(s => s.balance)
   const engineCurrentWeek = useGameEngine(s => s.currentWeek)
   // SEMANA DA TEMPORADA para a janela de transferencias. O contador do motor
@@ -396,6 +399,8 @@ export default function ElencoPage() {
   const [isMatchInProgress] = useState(false)
   const [showSubstitutionModal, setShowSubstitutionModal] = useState(false)
   const [showPlayerProfile, setShowPlayerProfile] = useState(false)
+  /** Aba do modal de detalhes — ver o comentario do proprio modal. */
+  const [abaDoPerfil, setAbaDoPerfil] = useState<"perfil" | "contrato" | "mercado">("perfil")
   /** Qual negociacao de contrato esta aberta (null = nenhuma). */
   const [negociacao, setNegociacao] = useState<"renovar" | "rescindir" | null>(null)
   const [showTutorials, setShowTutorials] = useState(false)
@@ -1430,7 +1435,7 @@ export default function ElencoPage() {
                     animate={{ left: `${player.x}%`, top: `${player.y}%` }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     onClick={() => setSelectedPlayerId(player.id)}
-                    onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
+                    onDoubleClick={() => { setSelectedPlayerId(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
                     className={cn(
                       "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group z-10",
                       selectedPlayerId === player.id && "z-20"
@@ -1886,7 +1891,7 @@ export default function ElencoPage() {
                     ? { duration: 5.2, times: [0, 0.5, 1], repeat: Infinity, repeatDelay: 0.6, ease: "easeInOut" }
                     : { type: "spring", stiffness: 400, damping: 30 }}
                   onClick={() => setSelectedPlayerId(player.id)}
-                    onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
+                    onDoubleClick={() => { setSelectedPlayerId(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
                   className={cn(
                     "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing group z-10",
                     selectedPlayerId === player.id && "z-20",
@@ -2090,7 +2095,7 @@ export default function ElencoPage() {
                           opacity: draggingPlayer === player.id ? 0.7 : 1,
                         }}
                         onClick={() => setSelectedPlayerId(player.id)}
-                    onDoubleClick={() => { setSelectedPlayerId(player.id); setShowPlayerProfile(true) }}
+                    onDoubleClick={() => { setSelectedPlayerId(player.id); setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
                         className={cn(
                           "relative flex flex-col items-center p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all",
                           selectedPlayerId === player.id
@@ -2639,7 +2644,7 @@ export default function ElencoPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowPlayerProfile(true)}
+                  onClick={() => { setAbaDoPerfil("perfil"); setShowPlayerProfile(true) }}
                   className="w-full h-9 text-white/50 hover:text-white hover:bg-white/5 text-xs"
                 >
                   <Info className="h-3.5 w-3.5 mr-2" />
@@ -2792,14 +2797,55 @@ export default function ElencoPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#1a1a1a] rounded-2xl border border-white/10 p-6 max-w-md w-full"
+              /*
+                ALTURA E ROLAGEM (pedido: "organize o modal detalhes do jogador").
+                O cartao era um `p-6` sem teto de altura empilhando NOVE blocos —
+                atributos, temporada, contrato, aposentar, emprestimo, lista de
+                transferiveis, vender, posicao/funcao e rescisao. Numa janela
+                normal metade ficava FORA da tela e, como `html/body` tem
+                `overflow: hidden` no globals.css, nao havia como rolar ate ela:
+                os botoes de rescindir e de vender simplesmente nao existiam para
+                quem nao usasse uma tela grande.
+                Agora o modal tem teto (85vh), cabecalho e abas FIXOS e so o
+                miolo rola.
+              */
+              className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a1a]"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">Perfil do Jogador</h2>
-                <button onClick={() => setShowPlayerProfile(false)} className="p-2 rounded-lg hover:bg-white/10">
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                <div className="min-w-0">
+                  <h2 className="truncate text-lg font-bold text-white">{selectedPlayer.name}</h2>
+                  <p className="text-xs text-white/45">
+                    {selectedPlayer.position} · {selectedPlayer.age} anos · geral {selectedPlayer.overall}
+                    {emprestimoDoSelecionado ? " · emprestado" : ""}
+                  </p>
+                </div>
+                <button onClick={() => setShowPlayerProfile(false)} className="shrink-0 rounded-lg p-2 hover:bg-white/10">
                   <X className="h-5 w-5 text-white/60" />
                 </button>
               </div>
+
+              {/* ABAS. As decisoes sobre o atleta viviam todas na mesma coluna, em
+                  ordem de quando cada uma foi implementada — nao por assunto. */}
+              <div className="flex gap-1 border-b border-white/[0.06] px-3 py-2">
+                {([["perfil", "Perfil"], ["contrato", "Contrato"], ["mercado", "Mercado"]] as const).map(([id, rotulo]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setAbaDoPerfil(id)}
+                    className={cn(
+                      "flex-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
+                      abaDoPerfil === id
+                        ? "bg-[var(--brand)] text-[var(--brand-ink)]"
+                        : "text-white/50 hover:bg-white/[0.06] hover:text-white",
+                    )}
+                  >
+                    {rotulo}
+                  </button>
+                ))}
+              </div>
+
+              <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-5">
+              {abaDoPerfil === "perfil" && (<>
               <div className="flex items-center gap-4 mb-6">
                 <PlayerAvatarCircle name={selectedPlayer.name} fileKey={userTeam.file_key} teamColor={userTeam.cor1} size="lg" />
                 <div>
@@ -2854,7 +2900,9 @@ export default function ElencoPage() {
                   </div>
                 )
               })()}
+              </>)}
 
+              {abaDoPerfil === "contrato" && (<>
               {/* CONTRATO: tempo de vínculo do atleta (pedido). O contrato vive no
                   motor (endDate em semana ABSOLUTA); aqui derivamos o ano de
                   término e o tempo restante em anos/meses. */}
@@ -2941,6 +2989,45 @@ export default function ElencoPage() {
                 </button>
               )}
 
+              {/* Renovar / rescindir ficam na aba do CONTRATO: sao as duas
+                  decisoes sobre o vinculo, e viviam separadas por seis blocos. */}
+              {!emprestimoDoSelecionado && (() => {
+                const enginePlayer = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
+                if (!enginePlayer) return null
+                const cost = terminationCost(enginePlayer, engineCurrentWeek)
+                const affordable = engineBalance >= cost
+                return (
+                  <div className="mt-4 space-y-2">
+                    <button
+                      onClick={() => setNegociacao("renovar")}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--brand)]/30 py-2.5 text-xs font-bold text-[var(--brand)] hover:bg-[var(--brand)]/10"
+                    >
+                      Renovar contrato
+                    </button>
+                    <button
+                      onClick={() => setNegociacao("rescindir")}
+                      disabled={!affordable}
+                      className={cn(
+                        "flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-xs font-bold transition-all",
+                        affordable
+                          ? "border-red-400/40 text-red-300 hover:bg-red-400/10"
+                          : "cursor-not-allowed border-white/10 text-white/25",
+                      )}
+                    >
+                      <X className="h-4 w-4" />
+                      Negociar rescisao — ate {formatCurrency(cost)}
+                    </button>
+                    {!affordable && (
+                      <p className="text-center text-[10px] text-red-300/70">
+                        Caixa insuficiente para pagar a multa.
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
+              </>)}
+
+              {abaDoPerfil === "mercado" && (<>
               {/* ATLETA EMPRESTADO: o passe não é seu.
                   Vender ou anunciar quem chegou por empréstimo era uma brecha
                   real (pegar craque emprestado e revender no mesmo mercado).
@@ -2952,7 +3039,63 @@ export default function ElencoPage() {
                     <span className="font-bold">Atleta emprestado.</span> O passe pertence ao clube de
                     origem — ele não pode ser vendido nem anunciado. O vínculo vai até a semana{" "}
                     {emprestimoDoSelecionado.loanEndWeek ?? "—"}.
+                    {(emprestimoDoSelecionado.loanBuyOption ?? 0) > 0
+                      ? ` Há opção de compra acertada por ${formatCurrency(emprestimoDoSelecionado.loanBuyOption ?? 0)}.`
+                      : " Não há opção de compra neste empréstimo."}
                   </p>
+                  {/* OPÇÃO DE COMPRA (pedido). Só aparece para quem tem a cláusula
+                      acertada na mesa — ela é negociada em lib/emprestimos.ts e
+                      viaja no atleta como `loanBuyOption`. Comprar É transferência:
+                      respeita a janela como qualquer outra. */}
+                  {(emprestimoDoSelecionado.loanBuyOption ?? 0) > 0 && (
+                    <button
+                      onClick={async () => {
+                        const preco = emprestimoDoSelecionado.loanBuyOption ?? 0
+                        if (!isTransferWindowOpen(semanaDaTemporada)) {
+                          await avisarNoJogo({
+                            titulo: "A janela de transferências está fechada",
+                            mensagem: `A opção de compra de ${selectedPlayer.name} só pode ser exercida com a janela aberta.`,
+                            tom: "alerta",
+                          })
+                          return
+                        }
+                        const confirmado = await confirmarNoJogo({
+                          titulo: `Comprar ${selectedPlayer.name} por ${formatCurrency(preco)}?`,
+                          mensagem:
+                            `Opção de compra acertada com o ${emprestimoDoSelecionado.parentClub ?? "clube de origem"}.
+
+` +
+                            "O passe passa a ser do clube: acaba o empréstimo e ele assina contrato, " +
+                            "mantendo o mesmo salário que você já paga.",
+                          confirmar: "Exercer opção",
+                        })
+                        if (!confirmado) return
+                        const r = engineExercerOpcaoDeCompra(emprestimoDoSelecionado.id, true)
+                        if (r === "no_cash") {
+                          await avisarNoJogo({
+                            titulo: "Caixa insuficiente",
+                            mensagem: `Faltam recursos para pagar ${formatCurrency(preco)}.`,
+                            tom: "alerta",
+                          })
+                          return
+                        }
+                        if (r !== "comprado") {
+                          await avisarNoJogo({ titulo: "Não foi possível exercer a opção", mensagem: "Tente novamente com a janela aberta.", tom: "alerta" })
+                          return
+                        }
+                        addNotification({
+                          type: "transfer", priority: "high",
+                          title: `${selectedPlayer.name} é do clube em definitivo`,
+                          message: `Opção de compra exercida por ${formatCurrency(preco)}.`,
+                        })
+                        setShowPlayerProfile(false)
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--brand)]/50 bg-[var(--brand)]/10 py-2.5 text-xs font-bold text-[var(--brand)] transition-all hover:bg-[var(--brand)]/20"
+                    >
+                      <ArrowLeftRight className="h-4 w-4" />
+                      Exercer opção de compra — {formatCurrency(emprestimoDoSelecionado.loanBuyOption ?? 0)}
+                    </button>
+                  )}
                   <button
                     onClick={() => setRenovacaoAberta(true)}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-sky-400/50 bg-sky-400/10 py-2.5 text-xs font-bold text-sky-200 transition-all hover:bg-sky-400/20"
@@ -3068,7 +3211,19 @@ export default function ElencoPage() {
                 Vender agora
               </button>
 
-              {/* Posição, função, renovação e empréstimo — o modal do
+              {/* LEILÃO (pedido). "Vender agora" e uma sondagem unica, com sorteio
+                  de interesse e um so comprador — quem quer que o mercado DISPUTE
+                  o preco precisa anunciar. A tela de leiloes cuida do resto:
+                  lib/leilao-de-venda.ts. */}
+              <button
+                onClick={() => hardNavigate("/leiloes?ver=vender")}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 py-2.5 text-xs font-bold text-white/70 transition-all hover:border-[var(--brand)]/40 hover:text-[var(--brand)]"
+              >
+                <Gavel className="h-4 w-4" />
+                Colocar em leilão
+              </button>
+
+              {/* Posição, função e empréstimo — o modal do
                   gerenciamento agora concentra as decisões sobre o atleta
                   (pedido: duplo-clique abre tudo, inclusive para reservas). */}
               {(() => {
@@ -3110,67 +3265,26 @@ export default function ElencoPage() {
                       </label>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      {/* Abre a NEGOCIACAO. Antes este botao renovava direto por
-                          salario x1,12 e 3 anos, sem ninguem do outro lado. */}
-                      <button
-                        onClick={() => setNegociacao("renovar")}
-                        className="rounded-lg border border-[var(--brand)]/30 py-2 text-xs font-bold text-[var(--brand)] hover:bg-[var(--brand)]/10"
-                      >
-                        Renovar contrato
-                      </button>
-                      <button
-                        onClick={() => engineToggleLoanListed(enginePlayer.id)}
-                        className={cn(
-                          "rounded-lg border py-2 text-xs font-bold transition-all",
-                          loanListedIds?.includes(enginePlayer.id)
-                            ? "border-sky-400/50 bg-sky-400/10 text-sky-300"
-                            : "border-white/15 text-white/70 hover:border-white/30",
-                        )}
-                      >
-                        {loanListedIds?.includes(enginePlayer.id) ? "Retirar do empréstimo" : "Emprestar"}
-                      </button>
-                    </div>
+                    {/* Renovar saiu daqui: renovacao e decisao de CONTRATO e agora
+                        mora na aba propria, junto com a rescisao. */}
+                    <button
+                      onClick={() => engineToggleLoanListed(enginePlayer.id)}
+                      className={cn(
+                        "w-full rounded-lg border py-2 text-xs font-bold transition-all",
+                        loanListedIds?.includes(enginePlayer.id)
+                          ? "border-sky-400/50 bg-sky-400/10 text-sky-300"
+                          : "border-white/15 text-white/70 hover:border-white/30",
+                      )}
+                    >
+                      {loanListedIds?.includes(enginePlayer.id) ? "Retirar da lista de empréstimo" : "Colocar na lista de empréstimo"}
+                    </button>
                   </div>
                 )
               })()}
               </>
               )}
-
-              {/* Rescisão: não havia como dispensar ninguém. Um atleta caro que o
-                  mercado não quisesse ficava travado no elenco consumindo folha
-                  até o contrato vencer sozinho. */}
-              {(() => {
-                // O elenco da tela e o do engine sao tipos diferentes (contrato só
-                // existe no engine) e os IDs divergem para atletas importados — a
-                // ponte é pelo nome, como no resto da página.
-                const enginePlayer = engineSquadPlayers.find(p => p.name === selectedPlayer.name)
-                if (!enginePlayer) return null
-                const cost = terminationCost(enginePlayer, engineCurrentWeek)
-                const affordable = engineBalance >= cost
-                return (
-                  <>
-                    <button
-                      onClick={() => setNegociacao("rescindir")}
-                      disabled={!affordable}
-                      className={cn(
-                        "mt-2 flex w-full items-center justify-center gap-2 rounded-lg border py-2.5 text-xs font-bold transition-all",
-                        affordable
-                          ? "border-red-400/40 text-red-300 hover:bg-red-400/10"
-                          : "cursor-not-allowed border-white/10 text-white/25",
-                      )}
-                    >
-                      <X className="h-4 w-4" />
-                      Negociar rescisao — ate {formatCurrency(cost)}
-                    </button>
-                    {!affordable && (
-                      <p className="mt-2 text-center text-[10px] text-red-300/70">
-                        Caixa insuficiente para pagar a multa.
-                      </p>
-                    )}
-                  </>
-                )
-              })()}
+              </>)}
+              </div>
             </motion.div>
           </motion.div>
         )}
