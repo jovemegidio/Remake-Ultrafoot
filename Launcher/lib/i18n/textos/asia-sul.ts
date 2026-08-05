@@ -1,0 +1,178 @@
+// Sul da Ásia. O híndi e o bengali são os mais completos do grupo.
+import type { PacoteDeIdioma } from "../catalogo"
+
+const hi: PacoteDeIdioma = {
+  "nav.inicio": "होम",
+  "nav.loja": "स्टोर",
+  "nav.novidades": "खबरें",
+  "nav.changelog": "बदलाव",
+  "nav.seguranca": "सुरक्षा",
+  "nav.gerenciar": "प्रबंधन",
+  "nav.subtitulo": "प्रबंधित करें, अपडेट करें और खेलें",
+  "conta.entrar": "साइन इन",
+  "conta.sair": "साइन आउट",
+  "conta.beneficios": "खरीद और प्रगति",
+  "rede.online": "ऑनलाइन",
+  "rede.offline": "ऑफ़लाइन",
+  "rede.anticheat": "एंटी-चीट चालू",
+  "acao.instalar": "इंस्टॉल करें",
+  "acao.entrarParaInstalar": "इंस्टॉल करने के लिए साइन इन करें",
+  "acao.atualizar": "अभी अपडेट करें",
+  "acao.jogarOnline": "ऑनलाइन खेलें",
+  "acao.jogarOffline": "ऑफ़लाइन खेलें",
+  "acao.jogando": "खेल रहे हैं",
+  "acao.parar": "रोकें",
+  "acao.reparar": "मरम्मत",
+  "acao.verificar": "फ़ाइलें जाँचें",
+  "acao.pausar": "रोकें",
+  "acao.retomar": "जारी रखें",
+  "acao.cancelar": "रद्द करें",
+  "acao.concluido": "पूर्ण",
+  "acao.fechar": "बंद करें",
+  "baixar.baixando": "डाउनलोड हो रहा है",
+  "baixar.instalando": "इंस्टॉल हो रहा है",
+  "baixar.conferindo": "फ़ाइलें जाँची जा रही हैं",
+  "baixar.pausado": "रुका हुआ",
+  "baixar.restantes": "{tempo} शेष",
+  "baixar.tamanho": "आकार: {tamanho}",
+  "baixar.semInternet": "डाउनलोड के लिए इंटरनेट नहीं है",
+  "baixar.semEspaco": "डिस्क में जगह कम है",
+  "gerenciar.pasta": "गेम फ़ोल्डर",
+  "gerenciar.escolherPasta": "फ़ोल्डर चुनें",
+  "gerenciar.espacoLivre": "{espaco} खाली",
+  "gerenciar.limite": "गति सीमा",
+  "gerenciar.semLimite": "कोई सीमा नहीं",
+  "gerenciar.tempoDeJogo": "खेलने का समय",
+  "gerenciar.ultimaVez": "पिछली बार खेला",
+  "gerenciar.nunca": "कभी नहीं",
+  "gerenciar.desinstalar": "अनइंस्टॉल",
+  "gerenciar.desinstalarAviso": "गेम इस कंप्यूटर से हट जाएगा। आपके सेव और खाता बने रहेंगे।",
+  "gerenciar.atalho": "डेस्कटॉप शॉर्टकट बनाएँ",
+  "gerenciar.canal": "अपडेट चैनल",
+  "gerenciar.logs": "लॉग फ़ोल्डर खोलें",
+  "conf.titulo": "सेटिंग्स",
+  "conf.geral": "सामान्य",
+  "conf.aparencia": "दिखावट",
+  "conf.acessibilidade": "सुगम्यता",
+  "conf.perfil": "प्रोफ़ाइल",
+  "conf.idioma": "भाषा",
+  "conf.iniciarComWindows": "विंडोज़ के साथ शुरू करें",
+  "conf.tema": "थीम",
+  "conf.fonte": "फ़ॉन्ट",
+  "conf.tamanhoDoTexto": "टेक्स्ट का आकार",
+  "aviso.jogoCaiu": "गेम अचानक बंद हो गया। फ़ाइलें जाँचने से आमतौर पर ठीक हो जाता है।",
+}
+
+const bn: PacoteDeIdioma = {
+  "nav.inicio": "হোম", "nav.loja": "স্টোর", "nav.novidades": "খবর",
+  "nav.changelog": "পরিবর্তন", "nav.seguranca": "নিরাপত্তা", "nav.gerenciar": "ব্যবস্থাপনা",
+  "nav.subtitulo": "পরিচালনা করুন, আপডেট করুন এবং খেলুন",
+  "conta.entrar": "সাইন ইন", "conta.sair": "সাইন আউট",
+  "rede.online": "অনলাইন", "rede.offline": "অফলাইন",
+  "acao.instalar": "ইনস্টল করুন", "acao.atualizar": "এখনই আপডেট করুন",
+  "acao.jogarOnline": "অনলাইনে খেলুন", "acao.jogarOffline": "অফলাইনে খেলুন",
+  "acao.reparar": "মেরামত", "acao.verificar": "ফাইল যাচাই করুন",
+  "acao.pausar": "বিরতি", "acao.retomar": "চালিয়ে যান", "acao.cancelar": "বাতিল",
+  "acao.fechar": "বন্ধ করুন", "acao.concluido": "সম্পন্ন",
+  "baixar.baixando": "ডাউনলোড হচ্ছে", "baixar.instalando": "ইনস্টল হচ্ছে", "baixar.pausado": "বিরত",
+  "gerenciar.desinstalar": "আনইনস্টল", "gerenciar.tempoDeJogo": "খেলার সময়",
+  "conf.titulo": "সেটিংস", "conf.idioma": "ভাষা", "conf.tema": "থিম",
+}
+
+const pa: PacoteDeIdioma = {
+  "nav.inicio": "ਘਰ", "nav.loja": "ਸਟੋਰ", "nav.novidades": "ਖ਼ਬਰਾਂ",
+  "conta.entrar": "ਸਾਈਨ ਇਨ", "conta.sair": "ਸਾਈਨ ਆਊਟ",
+  "acao.instalar": "ਇੰਸਟਾਲ ਕਰੋ", "acao.atualizar": "ਹੁਣੇ ਅੱਪਡੇਟ ਕਰੋ",
+  "acao.jogarOnline": "ਆਨਲਾਈਨ ਖੇਡੋ", "acao.jogarOffline": "ਆਫ਼ਲਾਈਨ ਖੇਡੋ",
+  "acao.fechar": "ਬੰਦ ਕਰੋ", "baixar.baixando": "ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ",
+  "gerenciar.desinstalar": "ਅਣਇੰਸਟਾਲ", "conf.titulo": "ਸੈਟਿੰਗਾਂ", "conf.idioma": "ਭਾਸ਼ਾ",
+}
+
+const gu: PacoteDeIdioma = {
+  "nav.inicio": "હોમ", "nav.loja": "સ્ટોર", "nav.novidades": "સમાચાર",
+  "conta.entrar": "સાઇન ઇન", "conta.sair": "સાઇન આઉટ",
+  "acao.instalar": "ઇન્સ્ટોલ કરો", "acao.atualizar": "હમણાં અપડેટ કરો",
+  "acao.jogarOnline": "ઓનલાઇન રમો", "acao.jogarOffline": "ઓફલાઇન રમો",
+  "acao.fechar": "બંધ કરો", "baixar.baixando": "ડાઉનલોડ થાય છે",
+  "gerenciar.desinstalar": "અનઇન્સ્ટોલ", "conf.titulo": "સેટિંગ્સ", "conf.idioma": "ભાષા",
+}
+
+const mr: PacoteDeIdioma = {
+  "nav.inicio": "मुख्यपृष्ठ", "nav.loja": "स्टोअर", "nav.novidades": "बातम्या",
+  "conta.entrar": "साइन इन", "conta.sair": "साइन आउट",
+  "acao.instalar": "स्थापित करा", "acao.atualizar": "आता अद्ययावत करा",
+  "acao.jogarOnline": "ऑनलाइन खेळा", "acao.jogarOffline": "ऑफलाइन खेळा",
+  "acao.fechar": "बंद करा", "baixar.baixando": "डाउनलोड होत आहे",
+  "gerenciar.desinstalar": "काढून टाका", "conf.titulo": "सेटिंग्ज", "conf.idioma": "भाषा",
+}
+
+const ta: PacoteDeIdioma = {
+  "nav.inicio": "முகப்பு", "nav.loja": "கடை", "nav.novidades": "செய்திகள்",
+  "nav.gerenciar": "நிர்வாகம்", "conta.entrar": "உள்நுழை", "conta.sair": "வெளியேறு",
+  "rede.online": "ஆன்லைன்", "rede.offline": "ஆஃப்லைன்",
+  "acao.instalar": "நிறுவு", "acao.atualizar": "இப்போது புதுப்பி",
+  "acao.jogarOnline": "ஆன்லைனில் விளையாடு", "acao.jogarOffline": "ஆஃப்லைனில் விளையாடு",
+  "acao.fechar": "மூடு", "baixar.baixando": "பதிவிறக்குகிறது",
+  "gerenciar.desinstalar": "நீக்கு", "conf.titulo": "அமைப்புகள்", "conf.idioma": "மொழி",
+}
+
+const te: PacoteDeIdioma = {
+  "nav.inicio": "హోమ్", "nav.loja": "స్టోర్", "nav.novidades": "వార్తలు",
+  "conta.entrar": "సైన్ ఇన్", "conta.sair": "సైన్ అవుట్",
+  "acao.instalar": "ఇన్‌స్టాల్ చేయి", "acao.atualizar": "ఇప్పుడే నవీకరించు",
+  "acao.jogarOnline": "ఆన్‌లైన్‌లో ఆడు", "acao.jogarOffline": "ఆఫ్‌లైన్‌లో ఆడు",
+  "acao.fechar": "మూసివేయి", "baixar.baixando": "డౌన్‌లోడ్ అవుతోంది",
+  "gerenciar.desinstalar": "తొలగించు", "conf.titulo": "సెట్టింగ్‌లు", "conf.idioma": "భాష",
+}
+
+const kn: PacoteDeIdioma = {
+  "nav.inicio": "ಮುಖಪುಟ", "nav.loja": "ಅಂಗಡಿ", "nav.novidades": "ಸುದ್ದಿ",
+  "conta.entrar": "ಸೈನ್ ಇನ್", "conta.sair": "ಸೈನ್ ಔಟ್",
+  "acao.instalar": "ಸ್ಥಾಪಿಸಿ", "acao.atualizar": "ಈಗ ನವೀಕರಿಸಿ",
+  "acao.jogarOnline": "ಆನ್‌ಲೈನ್ ಆಡಿ", "acao.jogarOffline": "ಆಫ್‌ಲೈನ್ ಆಡಿ",
+  "acao.fechar": "ಮುಚ್ಚಿ", "conf.titulo": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು", "conf.idioma": "ಭಾಷೆ",
+}
+
+const ml: PacoteDeIdioma = {
+  "nav.inicio": "ഹോം", "nav.loja": "സ്റ്റോർ", "nav.novidades": "വാർത്തകൾ",
+  "conta.entrar": "സൈൻ ഇൻ", "conta.sair": "സൈൻ ഔട്ട്",
+  "acao.instalar": "ഇൻസ്റ്റാൾ ചെയ്യുക", "acao.atualizar": "ഇപ്പോൾ അപ്ഡേറ്റ് ചെയ്യുക",
+  "acao.jogarOnline": "ഓൺലൈനിൽ കളിക്കുക", "acao.jogarOffline": "ഓഫ്‌ലൈനിൽ കളിക്കുക",
+  "acao.fechar": "അടയ്ക്കുക", "conf.titulo": "ക്രമീകരണങ്ങൾ", "conf.idioma": "ഭാഷ",
+}
+
+const or: PacoteDeIdioma = {
+  "nav.inicio": "ମୂଳପୃଷ୍ଠା", "nav.loja": "ଦୋକାନ", "nav.novidades": "ଖବର",
+  "conta.entrar": "ସାଇନ୍ ଇନ୍", "acao.instalar": "ସ୍ଥାପନ କରନ୍ତୁ",
+  "acao.jogarOnline": "ଅନଲାଇନ ଖେଳନ୍ତୁ", "acao.fechar": "ବନ୍ଦ କରନ୍ତୁ",
+  "conf.titulo": "ସେଟିଂସ୍", "conf.idioma": "ଭାଷା",
+}
+
+const as: PacoteDeIdioma = {
+  "nav.inicio": "ঘৰ", "nav.loja": "দোকান", "nav.novidades": "বাতৰি",
+  "conta.entrar": "ছাইন ইন", "acao.instalar": "ইনষ্টল কৰক",
+  "acao.jogarOnline": "অনলাইনত খেলক", "acao.fechar": "বন্ধ কৰক",
+  "conf.titulo": "ছেটিংছ", "conf.idioma": "ভাষা",
+}
+
+const ne: PacoteDeIdioma = {
+  "nav.inicio": "गृह", "nav.loja": "पसल", "nav.novidades": "समाचार",
+  "conta.entrar": "साइन इन", "conta.sair": "साइन आउट",
+  "acao.instalar": "स्थापना गर्नुहोस्", "acao.atualizar": "अहिले अपडेट गर्नुहोस्",
+  "acao.jogarOnline": "अनलाइन खेल्नुहोस्", "acao.jogarOffline": "अफलाइन खेल्नुहोस्",
+  "acao.fechar": "बन्द गर्नुहोस्", "conf.titulo": "सेटिङहरू", "conf.idioma": "भाषा",
+}
+
+const si: PacoteDeIdioma = {
+  "nav.inicio": "මුල් පිටුව", "nav.loja": "වෙළඳසැල", "nav.novidades": "පුවත්",
+  "conta.entrar": "පිවිසෙන්න", "conta.sair": "ඉවත් වන්න",
+  "acao.instalar": "ස්ථාපනය කරන්න", "acao.atualizar": "දැන් යාවත්කාලීන කරන්න",
+  "acao.jogarOnline": "සබැඳිව සෙල්ලම් කරන්න", "acao.jogarOffline": "නොබැඳිව සෙල්ලම් කරන්න",
+  "acao.fechar": "වසන්න", "conf.titulo": "සැකසුම්", "conf.idioma": "භාෂාව",
+}
+
+const PACOTES: Record<string, PacoteDeIdioma> = {
+  hi, bn, pa, gu, mr, ta, te, kn, ml, or, as, ne, si,
+}
+
+export default PACOTES
