@@ -27,7 +27,6 @@ export function ManagerAvatar({
   if (src) {
     // <img> e nao next/image: o valor e um data URI que muda em runtime, e o
     // otimizador nao acrescenta nada aqui (o arquivo ja veio reduzido).
-    // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt="Foto do tecnico" className={cn("object-cover", className)} />
   }
   return (

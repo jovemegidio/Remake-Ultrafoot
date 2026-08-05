@@ -1429,7 +1429,13 @@ function moveBall(state: MatchState): void {
       state.ball = { x: 50, y: 50, side: ev.type === "goal" ? (s === "home" ? "away" : "home") : s }
       return
     }
+    // O `switch` abaixo tem `default` e reatribui os dois em todo caminho, entao
+    // o lint marca estes valores como inuteis. NAO REMOVER: `rnd()` avanca o
+    // gerador, e tirar a chamada muda a sequencia de numeros de TODA a partida —
+    // o motor esta calibrado em cima dela (harness de 20 mil jogos).
+    // eslint-disable-next-line no-useless-assignment
     let adv = 0.6
+    // eslint-disable-next-line no-useless-assignment
     let ty = 20 + rnd() * 60
     switch (ev.type) {
       case "penalty":

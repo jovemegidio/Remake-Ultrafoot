@@ -100,7 +100,10 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   scottish_prem:  { startMonth: 7,  monthsInSeason: 10, rounds: 22 },
   scottish_champ: { startMonth: 7,  monthsInSeason: 10, rounds: 18 },
   super_lig:      { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
-  pro_league_bel: { startMonth: 7,  monthsInSeason: 10, rounds: 30 },
+  // 18 clubes desde 2026/27 => 34 rodadas. Este numero TEM de acompanhar
+  // `teams`/`rounds` do catalogo: foi a divergencia entre as duas fontes que
+  // deixou quatro ligas sem conseguir fechar a temporada (bug #1).
+  pro_league_bel: { startMonth: 7,  monthsInSeason: 10, rounds: 34 },
   russian_prem:   { startMonth: 6,  monthsInSeason: 11, rounds: 30 },
   // Americas nao-Brasil
   mls:            { startMonth: 2,  monthsInSeason: 9,  rounds: 58 },
@@ -108,7 +111,8 @@ const LEAGUE_CALENDAR: Record<string, LeagueCalendarConfig> = {
   liga_argentina: { startMonth: 0,  monthsInSeason: 12, rounds: 46 },
   primera_a_col:  { startMonth: 1,  monthsInSeason: 11, rounds: 38 },
   primera_div_chi:{ startMonth: 1,  monthsInSeason: 10, rounds: 36 },
-  primera_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 32 },
+  // Apertura (15) + Intermedio (7) + Clausura (15) = 37, igual ao catalogo.
+  primera_div_ury:{ startMonth: 1,  monthsInSeason: 10, rounds: 37 },
   primera_a_ecu:  { startMonth: 1,  monthsInSeason: 10, rounds: 30 },
   serie_b_ecu:    { startMonth: 1,  monthsInSeason: 10, rounds: 18 },
   // Asia
@@ -1379,7 +1383,11 @@ export function generateStateChampionshipFixtures(
 
 // divisionOverride: divisao ATUAL do usuario apos acesso/rebaixamento (do save). Quando
 // presente, os adversarios da liga vem dela — e nao da divisao estatica do time.
-function getUserLeagueTeams(teamShort: string, divisionOverride?: string): Team[] {
+// Exportada para a auditoria da virada de temporada
+// (scripts/qa-virada-de-temporada.ts) poder chamar a funcao DE VERDADE. Uma
+// copia no script testaria a copia — e o numero que esta funcao devolve e
+// exatamente o que decide se a temporada acaba.
+export function getUserLeagueTeams(teamShort: string, divisionOverride?: string): Team[] {
   const userTeam = getTeamByShort(teamShort)
   if (!userTeam) return []
   const division = divisionOverride ?? userTeam.divisao
@@ -3405,7 +3413,6 @@ export function useGameManager() {
     // classificava para a Libertadores/Champions, e nao rendia premio. Tudo isso
     // lia o seasonHistory, que so tinha a liga. Aqui o titulo passa a existir.
     let cupTitleRecord: import("@/lib/career-types").SeasonRecord | null = null
-    let cupPrize = 0
     if (!isLeagueMatch && typeof window !== "undefined") {
       // A partida precisa ser a FINAL. "Nao restam partidas no calendario" nao
       // basta mais: as fases de mata-mata agora so entram DEPOIS da classificacao,
@@ -3493,7 +3500,7 @@ export function useGameManager() {
           teamCurto: userShort,
           teamNome: userTeamForComp?.nome ?? userShort,
         }
-        cupPrize = cupTitlePrize(competitionName)
+        const cupPrize = cupTitlePrize(competitionName)
         if (cupPrize > 0) gameEngine.addClubRevenue(cupPrize)
       }
     }

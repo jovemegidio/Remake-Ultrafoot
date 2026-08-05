@@ -686,7 +686,11 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // Belgian Pro League - Belgica
   pro_league_bel: [
-    { id: "pro_league_bel", name: "Belgian Pro League", shortName: "Pro League", type: "league", region: "belgica", format: "points", teams: 16, rounds: 30, prize: 20000000, prestige: 66, relegation: 2, formatDetails: "Liga clássica em turno e returno, sem playoffs." },
+    // 18 clubes desde 2026/27 (fonte oficial da Pro League). Eram 16 aqui e 30
+    // rodadas, enquanto o LEAGUE_CALENDAR pedia 34: a liga nunca fechava a
+    // temporada pela contagem de rodadas. Agora os tres numeros batem —
+    // 18 clubes => 34 rodadas => calendario de 34.
+    { id: "pro_league_bel", name: "Belgian Pro League", shortName: "Pro League", type: "league", region: "belgica", format: "points", teams: 18, rounds: 34, prize: 20000000, prestige: 66, relegation: 2, formatDetails: "Liga clássica em turno e returno entre os 18 clubes, sem playoffs." },
   ],
 
   // Russian Premier League - Russia
@@ -696,7 +700,9 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // Liga Argentina
   liga_argentina: [
-    { id: "liga_argentina", name: "Liga Profesional de Fútbol", shortName: "Liga Argentina", type: "league", region: "argentina", format: "group_knockout", teams: 30, rounds: 58, prize: 20000000, prestige: 75, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 6 }, { competition: "sulamericana", spots: 6 }], formatDetails: "Turno e returno entre todos os clubes. Na Argentina a temporada se divide em Apertura e Clausura, com duas zonas de 15 e mata-mata." },
+    // `groups: 2` estava faltando: o texto ja descrevia as duas zonas de 15, mas
+    // o campo que o resto do jogo le dizia chave unica.
+    { id: "liga_argentina", name: "Liga Profesional de Fútbol", shortName: "Liga Argentina", type: "league", region: "argentina", format: "group_knockout", teams: 30, groups: 2, rounds: 58, prize: 20000000, prestige: 75, relegation: 2, continentalSpots: [{ competition: "libertadores", spots: 6 }, { competition: "sulamericana", spots: 6 }], formatDetails: "Turno e returno entre todos os clubes. Na Argentina a temporada se divide em Apertura e Clausura, com duas zonas de 15 e mata-mata." },
   ],
 
   // Primera A - Colombia
@@ -713,7 +719,9 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // Primera Division - Uruguay
   primera_div_ury: [
-    { id: "primera_div_ury", name: "Liga AUF Uruguaya", shortName: "Liga AUF", type: "league", region: "uruguai", format: "group_knockout", teams: 16, rounds: 30, prize: 4000000, prestige: 58, relegation: 3, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Turno e returno entre todos os clubes. No Uruguai a temporada tem Apertura, Intermedio e Clausura, com a Tabela Anual definindo campeao e rebaixamentos." },
+    // 37 rodadas = Apertura (15) + Intermedio (7) + Clausura (15), os tres
+    // torneios que o texto ja descrevia mas que o numero de rodadas ignorava.
+    { id: "primera_div_ury", name: "Liga AUF Uruguaya", shortName: "Liga AUF", type: "league", region: "uruguai", format: "group_knockout", teams: 16, groups: 2, rounds: 37, prize: 4000000, prestige: 58, relegation: 3, continentalSpots: [{ competition: "libertadores", spots: 4 }, { competition: "sulamericana", spots: 4 }], formatDetails: "Apertura, Intermedio e Clausura somam 37 rodadas; a Tabela Anual define campeao e rebaixamentos." },
   ],
 
   // LigaPro Serie A - Equador (liga que faltava)
@@ -765,7 +773,14 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
 
   // 2as divisoes - Americas
   primera_b_arg: [
-    { id: "primera_b_arg", name: "Primera Nacional", shortName: "Primera B Arg", type: "league", region: "argentina", format: "league_playoff", teams: 20, rounds: 38, prize: 2000000, prestige: 40, promotion: 2, relegation: 0, formatDetails: "Turno e returno entre os 20 clubes; sobem dois. A Primera Nacional real tem 36 clubes em duas zonas." },
+    // Os 36 clubes reais da Primera Nacional, em duas zonas — o comentario antigo
+    // ja admitia a diferenca ("a real tem 36 clubes em duas zonas") e o jogo
+    // seguia com 20 e sem rebaixamento nenhum.
+    // `relegation` fica em 0 DE PROPOSITO. A Primera Nacional real rebaixa quatro
+    // para a Primera B Metropolitana / Torneo Federal, que o jogo nao modela:
+    // anunciar zona de rebaixamento que nunca rebaixa e mentir para o jogador —
+    // e o defeito que a `league-pyramid` ja chama de "zona decorativa".
+    { id: "primera_b_arg", name: "Primera Nacional", shortName: "Primera B Arg", type: "league", region: "argentina", format: "league_playoff", teams: 36, groups: 2, rounds: 38, prize: 2000000, prestige: 40, promotion: 2, relegation: 0, formatDetails: "Duas zonas de 18 clubes em turno e returno; sobem dois. Nao ha divisao abaixo no jogo, entao ninguem e rebaixado." },
   ],
   torneo_betplay: [
     { id: "torneo_betplay", name: "Torneo BetPlay Dimayor", shortName: "Torneo Betplay", type: "league", region: "colombia", format: "group_knockout", teams: 16, rounds: 30, prize: 1500000, prestige: 35, promotion: 2, formatDetails: "Turno e returno entre os 16 clubes; sobem dois a Primera A." },
@@ -774,7 +789,11 @@ export const competitionsByLeague: Record<Divisao, Competition[]> = {
     { id: "primera_b_chi", name: "Liga de Ascenso de Chile", shortName: "Liga Ascenso", type: "league", region: "chile", format: "league_playoff", teams: 18, rounds: 34, prize: 1000000, prestige: 32, promotion: 2, relegation: 0, formatDetails: "Dezesseis clubes em 30 rodadas, com acesso direto e liguilla pela segunda vaga." },
   ],
   segunda_div_ury: [
-    { id: "segunda_div_ury", name: "Segunda División Profesional", shortName: "Segunda Uruguay", type: "league", region: "uruguai", format: "league_playoff", teams: 14, rounds: 26, prize: 500000, prestige: 28, promotion: 3, relegation: 0, formatDetails: "Turno e returno entre os 14 clubes; sobem dois a Primera Division." },
+    // 14 clubes, e nao os 13 da edicao real: com 13 o turno-returno fecha em 24
+    // rodadas e o calendario declara 26 — a divergencia entre as duas contas e
+    // exatamente o que impedia a temporada de fechar (bug #1). Um clube a mais
+    // custa menos que uma liga que nao termina.
+    { id: "segunda_div_ury", name: "Segunda División Profesional", shortName: "Segunda Uruguay", type: "league", region: "uruguai", format: "league_playoff", teams: 14, rounds: 26, prize: 500000, prestige: 28, promotion: 3, relegation: 0, formatDetails: "Turno e returno entre os 14 clubes; sobem tres a Primera Division." },
   ],
 
   // 2as divisoes - Asia

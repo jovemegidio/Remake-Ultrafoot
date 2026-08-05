@@ -122,7 +122,6 @@ export function KitImage({ team, variant }: { team: Team; variant: KitVariant })
 
   return (
     // <img> cru (nao next/image): precisamos do onError para cair no desenho.
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={imgRef}
       src={source}

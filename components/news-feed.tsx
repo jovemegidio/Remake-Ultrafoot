@@ -385,7 +385,8 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   const toggleLike = (id: string) => {
     setLikedItems(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -393,7 +394,8 @@ export function NewsFeed({ className, compact = false }: NewsFeedProps) {
   const toggleBookmark = (id: string) => {
     setBookmarkedItems(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }

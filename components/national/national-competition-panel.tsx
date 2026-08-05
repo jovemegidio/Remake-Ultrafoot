@@ -67,8 +67,8 @@ export function NationalCompetitionPanel() {
               <h3 className="text-xl font-bold text-white drop-shadow">{comp.competitionName}</h3>
               <p className="text-xs text-white/70 drop-shadow">Temporada {comp.season} - {comp.stage}</p>
               {/* Periodo REAL da competicao (Copa do Mundo 11 jun – 19 jul 2026 etc.). */}
-              {periodoLabelPorNome(comp.competitionName) && (
-                <p className="mt-0.5 text-[11px] text-white/55 drop-shadow">📅 {periodoLabelPorNome(comp.competitionName)}</p>
+              {periodoLabelPorNome(comp.competitionName, comp.season) && (
+                <p className="mt-0.5 text-[11px] text-white/55 drop-shadow">📅 {periodoLabelPorNome(comp.competitionName, comp.season)}</p>
               )}
             </div>
           </div>

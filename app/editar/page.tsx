@@ -784,14 +784,16 @@ export default function EditarPage() {
   const toggleCountry = (code: string) =>
     setExpandedCountries(prev => {
       const next = new Set(prev)
-      next.has(code) ? next.delete(code) : next.add(code)
+      if (next.has(code)) next.delete(code)
+      else next.add(code)
       return next
     })
 
   const toggleSub = (key: string) =>
     setExpandedSubs(prev => {
       const next = new Set(prev)
-      next.has(key) ? next.delete(key) : next.add(key)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
       return next
     })
 
@@ -1560,7 +1562,7 @@ export default function EditarPage() {
                                   <input type="color" value={kit.primary}
                                     onChange={e => setEditDraft(p => ({
                                       ...p,
-                                      kits: { ...p.kits, [variant]: { ...p.kits?.[variant]!, primary: e.target.value } }
+                                      kits: { ...p.kits, [variant]: { ...(p.kits?.[variant] ?? {}), primary: e.target.value } }
                                     }))}
                                     className="h-6 w-8 rounded cursor-pointer border border-white/10 bg-transparent"
                                   />
@@ -1575,7 +1577,7 @@ export default function EditarPage() {
                                   <input type="color" value={kit.secondary}
                                     onChange={e => setEditDraft(p => ({
                                       ...p,
-                                      kits: { ...p.kits, [variant]: { ...p.kits?.[variant]!, secondary: e.target.value } }
+                                      kits: { ...p.kits, [variant]: { ...(p.kits?.[variant] ?? {}), secondary: e.target.value } }
                                     }))}
                                     className="h-6 w-8 rounded cursor-pointer border border-white/10 bg-transparent"
                                   />
@@ -1590,7 +1592,7 @@ export default function EditarPage() {
                                   value={kit.pattern}
                                   onChange={e => setEditDraft(p => ({
                                     ...p,
-                                    kits: { ...p.kits, [variant]: { ...p.kits?.[variant]!, pattern: e.target.value as KitPattern } }
+                                    kits: { ...p.kits, [variant]: { ...(p.kits?.[variant] ?? {}), pattern: e.target.value as KitPattern } }
                                   }))}
                                   className="w-full px-2 py-1 text-[10px] bg-white/[0.04] border border-white/[0.08] rounded text-white/70 focus:outline-none focus:border-white/20 transition-all"
                                 >

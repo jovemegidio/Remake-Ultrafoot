@@ -18,6 +18,7 @@
 import { storeGet, storeSet } from "@/lib/persistent-store"
 import { getActiveCareerId, getCareerScopedKey } from "@/lib/save-system"
 import { markDeparted } from "@/lib/departed-players"
+import { playerMarketValue } from "@/lib/club-economy"
 
 const KEY = () => getCareerScopedKey("ultrafoot:world-arrivals")
 
@@ -184,7 +185,11 @@ export function simulateWorldTransferWindow(params: {
   rotulo?: string
 }): WorldTransferNews[] {
   const { clubes, squadOf, clubeDoUsuario, temporada, semana } = params
-  const quantidade = params.quantidade ?? 14
+  // 14 negocios por janela sobre 525 clubes elegiveis = ~2,6% dos clubes
+  // contratando por ano; o mundo parecia parado. 40 mantem o custo baixo (a
+  // simulacao e um laco simples sobre sementes) e ja da movimento perceptivel na
+  // Central de Transferencias.
+  const quantidade = params.quantidade ?? 40
   const rotulo = params.rotulo ?? "virada"
   const noticias: WorldTransferNews[] = []
 
@@ -226,7 +231,11 @@ export function simulateWorldTransferWindow(params: {
     })
     noticias.push({
       atleta: alvo.nome, de: vendedor.nome, para: comprador.nome,
-      valor: Math.round(Math.pow(alvo.base / 60, 3) * 4_000_000),
+      // MESMA conta do mercado do jogador (`playerMarketValue`). A fórmula local
+      // `(base/60)³ × 4M` era uma segunda régua para a mesma coisa e divergia até
+      // 2x no topo: um atleta de overall 90 valia R$ 13,5 mi na notícia do mundo e
+      // R$ 27,6 mi na tela de mercado. Duas verdades sobre o preço do mesmo atleta.
+      valor: playerMarketValue(alvo.base, comprador.divisao),
       pos: alvo.pos, idade: alvo.idade, base: alvo.base, temporada, semana,
     })
   }

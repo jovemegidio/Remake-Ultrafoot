@@ -908,7 +908,7 @@ export default function NovoJogoPage() {
                   onMouseLeave={() => setShowStadiumPhoto(false)}
                 >
                   <div className="relative mx-4 w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {/* <img> cru: a foto do estadio vem de caminho resolvido em runtime. */}
                     <img src={stadiumPhoto} alt={selectedTeam?.estadio_nome ?? "Estádio"} className="h-auto w-full object-cover" />
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-4">
                       <p className="text-lg font-black text-white">{selectedTeam?.estadio_nome}</p>

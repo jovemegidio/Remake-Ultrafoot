@@ -95,24 +95,42 @@ export function periodo2026PorNome(nome: string): PeriodoCompeticao | null {
   return porNome.get(norm(nome)) ?? null
 }
 
-function rotuloData(iso: string, comAno: boolean): string {
+/** Temporada de referencia das datas cadastradas neste arquivo. */
+export const TEMPORADA_DAS_DATAS = 2026
+
+function rotuloData(iso: string, comAno: boolean, deslocamento: number): string {
   const [a, m, d] = iso.split("-").map(Number)
-  return `${d} ${MESES[(m ?? 1) - 1]}${comAno ? ` ${a}` : ""}`
+  return `${d} ${MESES[(m ?? 1) - 1]}${comAno ? ` ${(a ?? TEMPORADA_DAS_DATAS) + deslocamento}` : ""}`
 }
 
-function formatar(p: PeriodoCompeticao): string {
+function formatar(p: PeriodoCompeticao, deslocamento: number): string {
   const mesmoAno = p.startsOn.slice(0, 4) === p.endsOn.slice(0, 4)
-  return `${p.aproximado ? "~" : ""}${rotuloData(p.startsOn, !mesmoAno)} – ${rotuloData(p.endsOn, true)}`
+  return `${p.aproximado ? "~" : ""}${rotuloData(p.startsOn, !mesmoAno, deslocamento)} – ${rotuloData(p.endsOn, true, deslocamento)}`
+}
+
+/**
+ * ⚠️ O ANO ACOMPANHA A TEMPORADA.
+ *
+ * As datas aqui sao as REAIS de 2026 e eram exibidas cruas: na temporada 2027 a
+ * tela continuava anunciando "11 jun – 19 jul 2026", uma data no passado. Como
+ * isto e metadado de EXIBICAO (o motor e por semana), deslocar o ano pela
+ * temporada mantem o que e util — o mes em que a competicao acontece — e para
+ * de mentir o ano. Dia e mes ficam como estao: uma liga comeca praticamente no
+ * mesmo periodo todo ano.
+ */
+function deslocamentoDe(season?: number): number {
+  if (!season || !Number.isFinite(season)) return 0
+  return season - TEMPORADA_DAS_DATAS
 }
 
 /** "11 jun – 19 jul 2026" (mesmo ano) ou "15 set 2026 – 29 mai 2027". Por id. */
-export function periodoLabel(competitionId: string): string | null {
+export function periodoLabel(competitionId: string, season?: number): string | null {
   const p = periodo2026(competitionId)
-  return p ? formatar(p) : null
+  return p ? formatar(p, deslocamentoDe(season)) : null
 }
 
 /** Idem, mas casando pelo NOME de exibicao. */
-export function periodoLabelPorNome(nome: string): string | null {
+export function periodoLabelPorNome(nome: string, season?: number): string | null {
   const p = periodo2026PorNome(nome)
-  return p ? formatar(p) : null
+  return p ? formatar(p, deslocamentoDe(season)) : null
 }

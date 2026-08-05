@@ -122,7 +122,7 @@ function applyYouthResult(next: GameState, goalsFor: number, goalsAgainst: numbe
   c.competitionAggregateAgainst=(c.competitionAggregateAgainst ?? 0)+goalsAgainst
 
   if((c.competitionMatchInStage ?? 0)<stage.matches)return
-  let qualified=true
+  let qualified:boolean
   if(stage.kind==="group"||stage.kind==="league") qualified=(c.competitionPoints ?? 0)>=(stage.qualificationPoints ?? 0)
   else {
     const gf=c.competitionAggregateFor ?? 0,ga=c.competitionAggregateAgainst ?? 0

@@ -1511,7 +1511,7 @@ export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
   bundesliga: 18, bundesliga_2: 18,
   ligue_1: 18, ligue_2: 18,
   primeira_liga: 18, eredivisie: 18, scottish_prem: 12, super_lig: 18,
-  pro_league_bel: 16, russian_prem: 16,
+  pro_league_bel: 18, russian_prem: 16,
   saudi_pro: 18, saudi_first_div: 18,
   j_league: 20, k_league_1: 12, chinese_super: 16,
   mls: 30, liga_mx: 18,
@@ -1519,7 +1519,7 @@ export const TAMANHO_OFICIAL_DA_LIGA: Record<string, number> = {
   primera_div_chi: 16, primera_b_chi: 16, primera_div_ury: 16,
   // Segundas divisoes montadas com o pool do proprio pais (ver PAIS_DA_DIVISAO).
   liga_portugal_2: 18, eerste_divisie: 20, challenger_pro: 16,
-  tff_1_lig: 20, russian_first: 20, primera_b_arg: 20,
+  tff_1_lig: 20, russian_first: 20, primera_b_arg: 36,
   torneo_betplay: 16, segunda_div_ury: 14, china_league_one: 16,
   scottish_champ: 10, serie_b_ecu: 10,
 }

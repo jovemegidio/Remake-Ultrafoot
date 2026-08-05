@@ -260,7 +260,8 @@ export const musicStore = {
     return initialState
   },
   toggle() {
-    state.playing ? pause() : play()
+    if (state.playing) pause()
+    else play()
   },
   play,
   pause,

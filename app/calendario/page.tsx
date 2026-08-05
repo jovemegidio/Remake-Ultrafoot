@@ -259,10 +259,16 @@ export default function CalendarioPage() {
 
   // Dias do calendario
   const calendarDays = useMemo(() => {
-    const daysInMonth = new Date(2026, currentMonth + 1, 0).getDate()
-    const firstDayOfMonth = new Date(2026, currentMonth, 1).getDay()
+    // ⚠️ O ANO TEM DE SER O DA TEMPORADA, e nao 2026 cravado.
+    //
+    // Com 2026 fixo a grade nunca mudava de ano: em 2027 cada mes comeca em
+    // OUTRO dia da semana, entao todo dia caia na coluna errada — o calendario
+    // parecia embaralhado a partir da segunda temporada. E em ano bissexto
+    // (2028, 2032) fevereiro vinha com 28 dias e o dia 29 nao existia na tela.
+    const daysInMonth = new Date(currentSeason, currentMonth + 1, 0).getDate()
+    const firstDayOfMonth = new Date(currentSeason, currentMonth, 1).getDay()
     const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1
-    const prevMonthDays = new Date(2026, currentMonth, 0).getDate()
+    const prevMonthDays = new Date(currentSeason, currentMonth, 0).getDate()
     
     const days: { day: number; isCurrentMonth: boolean; fixture: Fixture | null }[] = []
     
@@ -284,7 +290,7 @@ export default function CalendarioPage() {
     }
     
     return days
-  }, [currentMonth, monthFixtures])
+  }, [currentSeason, currentMonth, monthFixtures])
 
   // Janela de transferencias
   const transferWindow = useMemo(() => {
@@ -368,7 +374,9 @@ export default function CalendarioPage() {
   // Data atual formatada usando month do fixture
   const matchMonth = nextUserMatch ? nextUserMatch.month : seasonMonths[0]
   const matchDay = nextUserMatch ? diaDaPartida(nextUserMatch) : 15
-  const matchDate = new Date(2026, matchMonth, matchDay)
+  // Mesmo motivo da grade acima: fora de 2026 o dia da semana do proximo jogo
+  // sairia errado com o ano cravado.
+  const matchDate = new Date(currentSeason, matchMonth, matchDay)
   const dayOfWeek = WEEKDAY_NAMES[matchDate.getDay()]
   const dayNum = matchDate.getDate()
   const monthName = MONTH_NAMES_SHORT[matchDate.getMonth()].toUpperCase()
@@ -520,6 +528,12 @@ export default function CalendarioPage() {
         <div className="flex items-center gap-6">
           <span className="text-white/60 text-sm font-medium">Escritorio</span>
           <span className="text-white text-sm font-bold">Calendario</span>
+          {/* A TEMPORADA, escrita. O calendario nao mostrava o ano em canto
+              nenhum — so os nomes dos meses —, entao virar de 2026 para 2027 nao
+              tinha nenhum sinal na tela e parecia que nada havia mudado. */}
+          <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-bold tabular-nums text-white/80">
+            {currentSeason}
+          </span>
           {/* Month Tabs */}
           <div className="flex items-center gap-1 ml-4">
             <button

@@ -193,9 +193,41 @@
   ],
   "changelog": [
     {
+      "version": "1.0.261",
+      "date": "2026-08-05",
+      "latest": true,
+      "title": "O calendario vira de ano, e o elenco para de esvaziar sozinho",
+      "changes": [
+        {
+          "type": "fixed",
+          "text": "O CALENDARIO NAO MUDAVA DE ANO. O ano 2026 estava escrito na mao na montagem da grade, entao a partir da segunda temporada todo dia caia embaixo do dia da semana errado — 2027 nao comeca no mesmo dia que 2026. Em ano bissexto (2028) fevereiro vinha com 28 dias e o dia 29 simplesmente nao existia na tela."
+        },
+        {
+          "type": "added",
+          "text": "O CALENDARIO AGORA MOSTRA A TEMPORADA no cabecalho. Antes so apareciam os nomes dos meses, entao virar de 2026 para 2027 nao tinha nenhum sinal visivel e parecia que nada havia mudado."
+        },
+        {
+          "type": "fixed",
+          "text": "DIA DA SEMANA ERRADO no proximo jogo do Escritorio, na lista de partidas e no carrossel da tela inicial — mesma causa do calendario."
+        },
+        {
+          "type": "fixed",
+          "text": "AS DATAS DAS COMPETICOES ficavam presas em 2026 (a tela anunciava \"Copa do Mundo 11 jun - 19 jul 2026\" mesmo na temporada 2029). Agora acompanham a temporada, inclusive as competicoes que atravessam o ano, como a Champions."
+        },
+        {
+          "type": "fixed",
+          "text": "O ELENCO ESVAZIAVA SOZINHO ao longo das temporadas: um clube cujo tecnico nao renovava contratos perdia praticamente todo o plantel em seis temporadas e terminava com atletas emergenciais. Agora a diretoria renova por conta propria quem o clube quer manter, e avisa."
+        },
+        {
+          "type": "fixed",
+          "text": "A REDE DE SEGURANCA DO ELENCO so agia na virada da temporada e com piso de 11 atletas — sem banco e sem cobertura para lesao ou suspensao. Passa a agir semana a semana e com folga para escalar de verdade."
+        }
+      ]
+    },
+    {
       "version": "1.0.258",
       "date": "2026-08-04",
-      "latest": true,
+      "latest": false,
       "title": "Descanso do elenco, fotos nas substituicoes e propostas que nao somem",
       "changes": [
         {

@@ -28,7 +28,10 @@ interface MatchCarouselProps {
 export function MatchCarousel({ matches, userTeam, className }: MatchCarouselProps) {
   // A pausa vem do proprio game-manager, e nao por prop: o carrossel e usado em
   // mais de um lugar e nenhum deles deveria precisar lembrar de repassar isto.
-  const { fifaPause } = useGameManager()
+  // A temporada vem junto pelo mesmo motivo: o dia da semana de cada partida
+  // depende do ANO, e com 2026 cravado (como estava em `getDayName`) o rotulo
+  // saia errado em toda temporada a partir da segunda.
+  const { fifaPause, currentSeason } = useGameManager()
   const emPausaFifa = Boolean(fifaPause?.active)
 
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -93,7 +96,7 @@ export function MatchCarousel({ matches, userTeam, className }: MatchCarouselPro
     const day = parseInt(parts[1])
 
     if (monthIndex >= 0 && Number.isFinite(day)) {
-      return days[new Date(2026, monthIndex, day).getDay()]
+      return days[new Date(currentSeason, monthIndex, day).getDay()]
     }
 
     return dateStr

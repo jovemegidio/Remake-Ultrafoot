@@ -1119,10 +1119,10 @@ export default function CompeticoesPage() {
                 {/* Periodo REAL da competicao em 2026 (Copa do Mundo 11 jun – 19 jul,
                     etc.). O motor e por semana; isto e a data de verdade exibida.
                     Casa pelo NOME porque o card usa id generico. */}
-                {periodoLabelPorNome(comp.name) && (
+                {periodoLabelPorNome(comp.name, currentSeason) && (
                   <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/40">
                     <CalendarRange className="h-3 w-3" />
-                    <span>{periodoLabelPorNome(comp.name)}</span>
+                    <span>{periodoLabelPorNome(comp.name, currentSeason)}</span>
                   </div>
                 )}
                 <div className={cn(

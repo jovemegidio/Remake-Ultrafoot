@@ -157,7 +157,7 @@ export function updateStandings(
     const ga = isHome ? awayGoals : homeGoals
     const diff = gf - ga
 
-    let pts = 0
+    let pts: number
     let w = 0, d = 0, l = 0
     let res: "W" | "D" | "L"
     if (diff > 0) { w = 1; pts = 3; res = "W" }

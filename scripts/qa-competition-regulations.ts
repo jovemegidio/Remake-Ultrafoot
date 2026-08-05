@@ -49,10 +49,17 @@ assert(catalogById.get("j_league")?.relegation === 0, "j_league: torneio especia
 assert(catalogById.get("j2_league")?.promotion === 0 && catalogById.get("j2_league")?.relegation === 0, "j2_league: transição 2026 sem acesso/descenso")
 assert(catalogById.get("k_league_2")?.teams === 17 && catalogById.get("k_league_2")?.promotion === 3, "k_league_2: formato 2026 divergente")
 assert(catalogById.get("afc_champions_league")?.teams === 32 && catalogById.get("afc_champions_league")?.rounds === 8, "afc_champions_league: formato 2026/27 divergente")
-assert(catalogById.get("primera_b_arg")?.teams === 36 && catalogById.get("primera_b_arg")?.promotion === 2 && catalogById.get("primera_b_arg")?.relegation === 4, "primera_b_arg: formato AFA 2026 divergente")
+// `relegation` cobra 0, e nao os 4 da AFA: a divisao abaixo (Primera B
+// Metropolitana / Torneo Federal) nao existe no jogo, e zona de rebaixamento que
+// nunca rebaixa e pior do que nao ter zona. O que da para conferir de verdade —
+// 36 clubes em duas zonas e dois acessos — continua sendo cobrado.
+assert(catalogById.get("primera_b_arg")?.teams === 36 && catalogById.get("primera_b_arg")?.groups === 2 && catalogById.get("primera_b_arg")?.promotion === 2 && catalogById.get("primera_b_arg")?.relegation === 0, "primera_b_arg: formato AFA 2026 divergente")
 assert(catalogById.get("torneo_betplay")?.teams === 16 && catalogById.get("torneo_betplay")?.format === "group_knockout", "torneo_betplay: formato DIMAYOR 2026 divergente")
 assert(catalogById.get("primera_div_ury")?.rounds === 37 && catalogById.get("primera_div_ury")?.groups === 2, "primera_div_ury: Apertura/Intermedio/Clausura não configurados")
-assert(catalogById.get("segunda_div_ury")?.teams === 13 && catalogById.get("segunda_div_ury")?.rounds === 26, "segunda_div_ury: formato AUF 2026 divergente")
+// 14 clubes, nao os 13 reais: com 13 o turno-returno fecha em 24 rodadas e o
+// calendario declara 26 — a liga nao fecharia a temporada. Ver o comentario no
+// catalogo. O que importa aqui e as rodadas baterem com o numero de clubes.
+assert(catalogById.get("segunda_div_ury")?.teams === 14 && catalogById.get("segunda_div_ury")?.rounds === 26, "segunda_div_ury: formato AUF 2026 divergente")
 assert((COMPETITION_REGULATIONS_2026.primera_div_chi.registrationRules?.length ?? 0) >= 4, "primera_div_chi: regras de estrangeiros/base ausentes")
 assert(!getContinentalSpot("serie_b", 1).qualified, "serie_b: clube de divisão inferior não pode obter vaga continental pela colocação")
 assert(getContinentalSpot("premier_league", 5).competition === "UEFA Champions League", "premier_league: quinta vaga da Champions não aplicada")
@@ -82,7 +89,11 @@ assert(planWindowCompetition({ season: 2027, month: 8, confederation: "UEFA" }).
 const expected: Record<string, Partial<{ participants: number; firstPhaseRounds: number; groups: number; relegation: number }>> = {
   brasileirao_a: { participants: 20, relegation: 4 },
   brasileirao_b: { participants: 20, relegation: 4 },
-  brasileirao_d: { participants: 96 },
+  // 20, e nao os 96 da competicao real: o jogo disputa a Serie D em chave unica,
+  // como as outras divisoes (ver o comentario no catalogo). Este numero pedia 96
+  // enquanto a assercao de cima cobrava igualdade com o catalogo (20) — as duas
+  // regras se contradiziam e o gate ficava vermelho de forma permanente.
+  brasileirao_d: { participants: 20 },
   copa_brasil: { participants: 126 },
   paulistao_a1: { participants: 16, firstPhaseRounds: 8, relegation: 2 },
   paulistao_a2: { participants: 16, firstPhaseRounds: 15, relegation: 2 },

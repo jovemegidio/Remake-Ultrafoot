@@ -72,22 +72,26 @@ function roundToDay(round: number): number {
 
 // Usa o mes real do fixture (fonte de verdade do calendario da temporada) quando
 // disponivel; roundToMonth e apenas fallback. Mantem a Central sincronizada com o Calendario.
-function fixtureDate(round: number, month?: number): Date {
-  return new Date(2026, month ?? roundToMonth(round), roundToDay(round))
+//
+// ⚠️ O ANO E O DA TEMPORADA. Estava 2026 cravado, entao a partir da segunda
+// temporada o DIA DA SEMANA de todo jogo saia errado (2027 nao comeca no mesmo
+// dia que 2026) e 29/fev nao existia em ano bissexto.
+function fixtureDate(season: number, round: number, month?: number): Date {
+  return new Date(season, month ?? roundToMonth(round), roundToDay(round))
 }
 
-function fixtureDateShort(round: number, month?: number): string {
-  const date = fixtureDate(round, month)
+function fixtureDateShort(season: number, round: number, month?: number): string {
+  const date = fixtureDate(season, round, month)
   return `${HOME_MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`
 }
 
-function fixtureDateLine(round: number, month?: number): string {
-  const date = fixtureDate(round, month)
+function fixtureDateLine(season: number, round: number, month?: number): string {
+  const date = fixtureDate(season, round, month)
   return `${HOME_WEEKDAYS_SHORT[date.getDay()]}, ${date.getDate()} ${HOME_MONTHS_SHORT[date.getMonth()]}`
 }
 
-function fixtureDateHeadline(round: number, month?: number): string {
-  const date = fixtureDate(round, month)
+function fixtureDateHeadline(season: number, round: number, month?: number): string {
+  const date = fixtureDate(season, round, month)
   return `${HOME_WEEKDAYS_LONG[date.getDay()]}, ${date.getDate()} de ${HOME_MONTHS_LONG[date.getMonth()]}`
 }
 
@@ -533,7 +537,7 @@ export default function DashboardPage() {
                 <>
                   {/* Manchete de data */}
                   <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight text-white text-balance">
-                    {fixtureDateHeadline(round, next?.month)}
+                    {fixtureDateHeadline(currentSeason, round, next?.month)}
                   </h1>
                   <div className="mt-3 flex items-center gap-3">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">Rodada {round}</span>
@@ -655,7 +659,7 @@ export default function DashboardPage() {
                 matches={nextMatches.map((f, i) => ({
                   home: f.homeTeam,
                   away: f.awayTeam,
-                  date: fixtureDateShort(f.round, f.month),
+                  date: fixtureDateShort(currentSeason, f.round, f.month),
                   time: "",
                   competition: f.competition,
                   matchday: f.round,
@@ -676,7 +680,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="divide-y divide-white/5">
                   {recentResults.map(f => (
-                    <FixtureRow key={f.id} fixture={f} userTeam={userTeam} />
+                    <FixtureRow key={f.id} fixture={f} userTeam={userTeam} season={currentSeason} />
                   ))}
                 </div>
               </section>
@@ -696,7 +700,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="divide-y divide-white/5">
                   {nextMatches.slice(0, 5).map((f, i) => (
-                    <FixtureRow key={f.id} fixture={f} userTeam={userTeam} isNext={i === 0} />
+                    <FixtureRow key={f.id} fixture={f} userTeam={userTeam} season={currentSeason} isNext={i === 0} />
                   ))}
                 </div>
               </section>
@@ -953,7 +957,7 @@ function GoalCard({ title, description, progress, status, tone }: {
   )
 }
 
-function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam: Team; isNext?: boolean }) {
+function FixtureRow({ fixture, userTeam, season, isNext }: { fixture: Fixture; userTeam: Team; season: number; isNext?: boolean }) {
   const isHome = fixture.homeTeam.curto === userTeam.curto
   const t = useTranslation()
   const homeLabel = t.common.home
@@ -967,7 +971,7 @@ function FixtureRow({ fixture, userTeam, isNext }: { fixture: Fixture; userTeam:
     )}>
       <div className="w-20 text-xs">
         <div className="text-white/80">Rod. {fixture.round}</div>
-        <div className="text-[10px] text-white/45">{fixtureDateLine(fixture.round, fixture.month)}</div>
+        <div className="text-[10px] text-white/45">{fixtureDateLine(season, fixture.round, fixture.month)}</div>
         <div className={cn("text-[10px] font-medium", fixture.played ? (
           fixture.homeScore !== undefined && fixture.awayScore !== undefined
             ? (isHome ? fixture.homeScore > fixture.awayScore! : fixture.awayScore! > fixture.homeScore) ? "text-[var(--brand)]"

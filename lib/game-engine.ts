@@ -6,7 +6,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { createTauriZustandStorage, storeSet } from "@/lib/persistent-store"
 import { getCareerScopedKey } from "@/lib/save-system"
-import { allTeams, getTeamByShort } from "@/lib/teams-data"
+import { allTeams, getTeamByShort, effectiveDivision } from "@/lib/teams-data"
 import {
   type PlayerPersona, gerarPersona, contribuicoesPorJogador, calcularNota, suspensaoPorCartoes,
   rotuloDaMoral, pontosDoRotulo,
@@ -20,6 +20,11 @@ import {
 import { pickStartingXI } from "@/lib/formations"
 import { infrastructureUpgradeWeeks, type TicketTier } from "@/lib/stadium-economy"
 import { playerSalaryWeekly, playerMarketValue, weeklyIncomeFor, youthPromotionSalaryWeekly } from "@/lib/club-economy"
+import { reforcosEmergenciais, ELENCO_MINIMO } from "@/lib/reposicao-emergencial"
+import { decidirRenovacoes } from "@/lib/diretoria"
+
+/** Prazo minimo que um reforco assina ao chegar. Ver o contrato em `buyPlayer`. */
+const PRAZO_MINIMO_DE_CONTRATO_ANOS = 2
 import { attributesFromOverall, overallFromAttributes, shiftAttributes } from "@/lib/player-attributes"
 // Modulo puro (sem imports proprios): entra aqui sem risco de ciclo. Serve para
 // o promovido da base chegar ao elenco valendo o MESMO que valia na base.
@@ -42,7 +47,7 @@ import {
  * para 4, o snapshot manual continuaria gravando 3 — e a migracao rodaria de
  * novo a cada gravacao, para sempre.
  */
-const GAME_ENGINE_PERSIST_VERSION = 4
+const GAME_ENGINE_PERSIST_VERSION = 5
 
 
 // ============================================
@@ -2088,12 +2093,18 @@ interface GameEngineState {
   ajustarMoralJogador: (playerId: number, degraus: number) => void
   /** "wage_budget" = recusado pela diretoria por estourar o teto salarial. */
   /**
-   * `janelaAberta` vem de FORA de proposito. O motor so conhece
-   * `currentWeek`, que e um contador ABSOLUTO (nunca zera), enquanto a
-   * temporada zera a semana todo ano e nao tem 52 semanas — ela termina na
-   * ultima rodada do calendario. As duas contas divergiam mais a cada
-   * temporada, e era por isso que contratar com a janela aberta ainda deixava o
-   * reforco esperando. Quem chama sabe a semana da TEMPORADA; o motor, nao.
+   * `janelaAberta` vem de FORA de proposito. O motor conhece `currentWeek`, que
+   * conta 0..51 dentro da temporada corrente, enquanto a temporada de verdade
+   * nao tem 52 semanas — ela termina na ultima rodada do calendario. As duas
+   * contas divergiam mais a cada temporada, e era por isso que contratar com a
+   * janela aberta ainda deixava o reforco esperando. Quem chama sabe a semana
+   * da TEMPORADA; o motor, nao.
+   *
+   * ⚠️ `currentWeek` NAO e um contador absoluto — `processSeasonEnd` zera ele
+   * todo ano. Para qualquer data que precise sobreviver a virada de temporada
+   * (fim de contrato, fim de emprestimo) use `absoluteWeek(season, week)`.
+   * Esta descricao dizia o contrario e foi a origem de quatro gravadores que
+   * faziam o atleta sair de graca (corrigido na v5 do save).
    */
   buyPlayer: (player: Player, fee: number, isFreeAgent?: boolean, janelaAberta?: boolean) => "joined" | "pending" | "failed" | "wage_budget"
   /**
@@ -2957,9 +2968,14 @@ export const useGameEngine = create<GameEngineState>()(
               joinedClubWeek: newWeek,
               joinedClubSeason: s.currentSeason,
               isLoanedIn: item.kind === "emprestimo",
-              loanEndWeek: item.kind === "emprestimo" ? newWeek + (item.loanWeeks ?? 26) : undefined,
+              // Semana ABSOLUTA nos dois campos: `newWeek` zera a cada temporada,
+              // entao um emprestimo fechado na semana 40 gravava fim na 66 — que
+              // o contador da temporada nunca alcanca. O vinculo nao terminava
+              // nunca, e o contract.endDate relativo ainda fazia o atleta ser
+              // expulso como "contrato vencido" nas temporadas seguintes.
+              loanEndWeek: item.kind === "emprestimo" ? absoluteWeek(s.currentSeason, newWeek) + (item.loanWeeks ?? 26) : undefined,
               contract: item.kind === "emprestimo"
-                ? { salary: item.salary ?? 0, endDate: newWeek + (item.loanWeeks ?? 26), releaseClause: null, signedWeek: item.agreedWeek, signedSeason: item.agreedSeason }
+                ? { salary: item.salary ?? 0, endDate: absoluteWeek(s.currentSeason, newWeek) + (item.loanWeeks ?? 26), releaseClause: null, signedWeek: item.agreedWeek, signedSeason: item.agreedSeason }
                 : item.player.contract ? { ...item.player.contract, signedWeek: item.agreedWeek, signedSeason: item.agreedSeason } : null,
               isStarter: false,
               seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
@@ -2972,7 +2988,7 @@ export const useGameEngine = create<GameEngineState>()(
           // vinha por emprestimo ficava no elenco para sempre, de graca. Agora a
           // data vale — sem renovacao (ver lib/emprestimos.ts), ele sai.
           const emprestimosVencidos = updatedPlayers.filter(
-            p => p.isLoanedIn && p.loanEndWeek != null && p.loanEndWeek <= newWeek,
+            p => p.isLoanedIn && p.loanEndWeek != null && p.loanEndWeek <= absoluteWeek(s.currentSeason, newWeek),
           )
           if (emprestimosVencidos.length > 0) {
             const idsQueVoltaram = new Set(emprestimosVencidos.map(p => p.id))
@@ -3105,8 +3121,52 @@ export const useGameEngine = create<GameEngineState>()(
           // jogador continuava para sempre no elenco se o técnico esquecesse de
           // renovar. A partir da primeira semana após o fim:
           //   • a opção automática, quando contratada, prorroga o vínculo;
-          //   • sem renovação, o atleta sai sem taxa e assina por outro clube.
+          //   • a DIRETORIA renova quem ainda interessa (ver lib/diretoria.ts);
+          //   • sem nada disso, o atleta sai sem taxa e assina por outro clube.
           const absoluteNow = absoluteWeek(s.currentSeason, newWeek)
+
+          // ---- A DIRETORIA AGE ANTES DA PORTA SE FECHAR ----
+          //
+          // Sem isto, um técnico que não renova perde 100% do elenco em 6
+          // temporadas (medido: overall médio 74 -> 42). A diretoria segura quem
+          // está da mediana do elenco para cima e as promessas até 23 anos; o
+          // resto sai como sempre saiu.
+          const renovacoesDaDiretoria = decidirRenovacoes(
+            playersAfterNT
+              .filter(p => p.contract && !p.isLoanedIn)
+              .map(p => ({
+                id: p.id,
+                name: p.name,
+                overall: p.overall,
+                age: p.age,
+                salarioSemanal: p.contract?.salary ?? 0,
+                fimDoContrato: p.contract?.endDate ?? Infinity,
+                listadoParaSair: (s.transferListedIds ?? []).includes(p.id),
+              })),
+            {
+              agora: absoluteNow,
+              caixa: s.balance,
+              folhaAtual: folhaSemanal(playersAfterNT),
+              tetoDeFolha: Math.max(0, s.weeklyIncome) * 1.6,
+            },
+          )
+          if (renovacoesDaDiretoria.length > 0) {
+            const porId = new Map(renovacoesDaDiretoria.map(r => [r.id, r]))
+            playersAfterNT = playersAfterNT.map(p => {
+              const r = porId.get(p.id)
+              if (!r || !p.contract) return p
+              return {
+                ...p,
+                contract: { ...p.contract, endDate: r.novoFim, salary: r.novoSalario, signedWeek: newWeek, signedSeason: s.currentSeason },
+              }
+            })
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("ultrafoot:renovacoes-da-diretoria", {
+                detail: renovacoesDaDiretoria.map(r => ({ nome: r.name, motivo: r.motivo, salario: r.novoSalario })),
+              }))
+            }
+          }
+
           const renewedPlayers = playersAfterNT.map(player => {
             const contract = player.contract
             if (!contract || contract.endDate > absoluteNow || !contract.autoRenewalOption) return player
@@ -3147,6 +3207,63 @@ export const useGameEngine = create<GameEngineState>()(
             }
             return false
           })
+
+          // ---- PISO DE ELENCO NO MEIO DA TEMPORADA ----
+          //
+          // A rede de seguranca so existia no `processSeasonEnd`, mas contrato
+          // vence semana a semana: entre uma virada e outra o elenco despencava
+          // sem piso nenhum (medido: 39 -> 15 em uma temporada). Aqui o clube
+          // corre ao mercado e tapa o buraco assim que ele aparece.
+          //
+          // Emergencial vale 0 no mercado — a mesma regra do fim de temporada,
+          // para a rede nao virar impressora de dinheiro.
+          const reforcosDeEmergencia = reforcosEmergenciais(playersAfterNT, {
+            divisao: String(getTeamByShort(s.myTeamShort ?? "")?.divisao ?? "serie_a"),
+            temporada: s.currentSeason,
+            semana: newWeek,
+          })
+          if (reforcosDeEmergencia.length > 0) {
+            const fimDoVinculo = absoluteWeek(s.currentSeason, newWeek) + 52
+            playersAfterNT = [
+              ...playersAfterNT,
+              ...reforcosDeEmergencia.map((r, i) => ({
+                id: Math.max(Date.now() + i, ...playersAfterNT.map(p => p.id + i + 1)),
+                name: r.name,
+                position: r.position,
+                age: r.age,
+                overall: r.overall,
+                potential: r.potential,
+                nationality: r.nationality,
+                ...atributosPorPosicao(r.overall, r.position, r.name),
+                energy: 100,
+                morale: "Normal" as const,
+                form: r.overall,
+                contract: {
+                  salary: r.salarioSemanal,
+                  endDate: fimDoVinculo,
+                  releaseClause: null,
+                  signedWeek: newWeek,
+                  signedSeason: s.currentSeason,
+                },
+                injury: null,
+                marketValue: r.marketValue,
+                seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
+                training: { currentFocus: null, weeksTrained: 0, lastTrainingWeek: 0 },
+                nationalTeam: null,
+                calledUp: false,
+                joinedClubWeek: newWeek,
+                joinedClubSeason: s.currentSeason,
+                isLoanedIn: false,
+                isStarter: false,
+                statusEffects: [],
+              } as Player)),
+            ]
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("ultrafoot:reforcos-emergenciais", {
+                detail: reforcosDeEmergencia.map(r => ({ nome: r.name, posicao: r.position, overall: r.overall })),
+              }))
+            }
+          }
 
           // ---- FUNDO DE INVESTIMENTO: forcar venda se chegou a semana ----
           const fundOffers: InvestmentFundOffer[] = [...s.pendingFundOffers]
@@ -3200,11 +3317,22 @@ export const useGameEngine = create<GameEngineState>()(
           const minutosDepois: Record<number, number> = {}
           for (const p of playersAfterNT) minutosDepois[p.id] = p.seasonStats?.minutesPlayed ?? 0
 
+          // A FOLHA TEM DE ACOMPANHAR O ELENCO — mesmo ajuste por DIFERENCA que o
+          // `processSeasonEnd` ja faz. Contrato vencido saia sem devolver salario
+          // e o reforco emergencial entrava sem cobrar: `weeklyExpenses` ficava
+          // congelado no valor do elenco original enquanto o elenco encolhia. Em
+          // 6 temporadas o clube pagava 953 mil por uma folha real de 93 mil.
+          //
+          // Ajusta pela diferenca (e nao por `folhaSemanal` puro) porque
+          // `weeklyExpenses` tambem carrega comissao tecnica e olheiros.
+          const ajusteDaFolhaSemanal = folhaSemanal(playersAfterNT) - folhaSemanal(s.squadPlayers)
+
           return {
             ...s,
             currentWeek: finalWeek,
             currentSeason: newSeason,
             squadPlayers: playersAfterNT,
+            weeklyExpenses: Math.max(0, s.weeklyExpenses + ajusteDaFolhaSemanal),
             entrosamentoPares: paresDaSemana,
             squadCohesion: entrosamentoDaSemana,
             fadigaCronica: fadigaAtualizada,
@@ -3495,7 +3623,14 @@ export const useGameEngine = create<GameEngineState>()(
             salary: salario,
             // Tres temporadas de contrato para o garoto da base — tempo de se
             // firmar sem virar agente livre no meio do caminho.
-            endDate: state.currentWeek + 52 * 3,
+            //
+            // ⚠️ SEMANA ABSOLUTA, sempre. `currentWeek` zera a cada temporada e o
+            // vencimento e conferido contra `absoluteWeek` (ver o filtro de
+            // contratos vencidos no advanceWeek). Com a conta relativa, o garoto
+            // promovido em 2029 nascia com endDate=156 contra um absoluteNow=156:
+            // saia de graca no advanceWeek seguinte, e promover da base virava
+            // jogar dinheiro fora.
+            endDate: absoluteWeek(state.currentSeason, state.currentWeek) + 52 * 3,
             releaseClause: null,
             signedWeek: state.currentWeek,
             signedSeason: state.currentSeason,
@@ -3691,8 +3826,20 @@ export const useGameEngine = create<GameEngineState>()(
           joinedClubSeason: state.currentSeason,
           isLoanedIn: false,
           isStarter: false,
+          // CONTRATAR E ASSINAR UM VINCULO NOVO — nao herdar o do vendedor.
+          //
+          // `buyPlayer` so trocava `signedWeek`/`signedSeason` e mantinha o
+          // `endDate` que veio junto. Quem chegava com contrato curto (ou ja
+          // vencido, no caso de um objeto montado a partir de outro atleta) saia
+          // de graca poucas semanas depois de custar dinheiro. A tela do Mercado
+          // ja negocia o prazo e passa o `endDate` certo; este piso protege todos
+          // os outros caminhos.
           contract: player.contract ? {
             ...player.contract,
+            endDate: Math.max(
+              player.contract.endDate ?? 0,
+              absoluteWeek(state.currentSeason, state.currentWeek) + 52 * PRAZO_MINIMO_DE_CONTRATO_ANOS,
+            ),
             signedWeek: state.currentWeek,
             signedSeason: state.currentSeason,
           } : null,
@@ -3788,8 +3935,9 @@ export const useGameEngine = create<GameEngineState>()(
           joinedClubWeek: state.currentWeek,
           joinedClubSeason: state.currentSeason,
           isLoanedIn: true,
-          loanEndWeek: state.currentWeek + weeks,
-          contract: { salary, endDate: state.currentWeek + weeks, releaseClause: null, signedWeek: state.currentWeek, signedSeason: state.currentSeason },
+          // Semana ABSOLUTA (ver a chegada da fila de transferencias acima).
+          loanEndWeek: absoluteWeek(state.currentSeason, state.currentWeek) + weeks,
+          contract: { salary, endDate: absoluteWeek(state.currentSeason, state.currentWeek) + weeks, releaseClause: null, signedWeek: state.currentWeek, signedSeason: state.currentSeason },
           seasonStats: { goals: 0, assists: 0, yellowCards: 0, redCards: 0, matchesPlayed: 0, minutesPlayed: 0, cleanSheets: 0, manOfTheMatch: 0 },
         }
         
@@ -3971,15 +4119,22 @@ export const useGameEngine = create<GameEngineState>()(
       renovarEmprestimo: (playerId, semanas, salarioSemanal) => {
         const alvo = get().squadPlayers.find(p => p.id === playerId)
         if (!alvo?.isLoanedIn) return false
-        set((s) => ({
-          squadPlayers: s.squadPlayers.map(p => p.id !== playerId ? p : {
-            ...p,
-            loanEndWeek: Math.max(p.loanEndWeek ?? s.currentWeek, s.currentWeek) + semanas,
-            contract: p.contract
-              ? { ...p.contract, salary: salarioSemanal ?? p.contract.salary, endDate: (p.loanEndWeek ?? s.currentWeek) + semanas }
-              : p.contract,
-          }),
-        }))
+        set((s) => {
+          // Estende a partir do MAIOR entre o fim atual e agora, sempre em semana
+          // ABSOLUTA — renovar um emprestimo ja vencido nao pode devolver uma data
+          // no passado, e `currentWeek` sozinho zera a cada temporada.
+          const agora = absoluteWeek(s.currentSeason, s.currentWeek)
+          const novoFim = Math.max(alvo.loanEndWeek ?? agora, agora) + semanas
+          return {
+            squadPlayers: s.squadPlayers.map(p => p.id !== playerId ? p : {
+              ...p,
+              loanEndWeek: novoFim,
+              contract: p.contract
+                ? { ...p.contract, salary: salarioSemanal ?? p.contract.salary, endDate: novoFim }
+                : p.contract,
+            }),
+          }
+        })
         return true
       },
 
@@ -4904,7 +5059,13 @@ export const useGameEngine = create<GameEngineState>()(
 
         // Carrega elenco do time escolhido a partir dos dados de seed
         const chosenTeam = getTeamByShort(teamShort)
-        const chosenDivision = String(chosenTeam?.divisao ?? "serie_a")
+        // DIVISAO EFETIVA (a de 2026 / a da piramide do save), nao o campo estatico
+        // do cadastro. Os dois divergem em varios clubes — o ABC tem `serie_c`
+        // gravado e joga a `serie_d` — e a carreira inteira nascia torta: salario,
+        // valor de mercado e receita semanal calculados numa divisao, o calendario
+        // e a tabela em outra. Aparecia como um tombo de receita na primeira virada
+        // de temporada, quando o recalculo passava a usar a divisao certa.
+        const chosenDivision = chosenTeam ? String(effectiveDivision(chosenTeam)) : "serie_a"
         let seedPlayers: Player[] = []
 
         if (chosenTeam) {
@@ -6288,7 +6449,13 @@ export const useGameEngine = create<GameEngineState>()(
           const youthAcadLevel = s.clubInfrastructure?.youth ?? 2
           // Divisao do clube: o salario destes garotos precisa dela (ver o
           // contrato deles, mais abaixo).
-          const divisaoDoClube = String(getTeamByShort(s.myTeamShort ?? "")?.divisao ?? "serie_a")
+          // DIVISAO EFETIVA, nao a estatica do cadastro: quem subiu ou caiu tem a
+          // divisao nova no `clubDivisions` do save (piramide viva). Ler o campo
+          // cru fazia o clube seguir para sempre com a divisao de estreia.
+          const timeDoClube = getTeamByShort(s.myTeamShort ?? "")
+          const divisaoDoClube = timeDoClube
+            ? String(effectiveDivision(timeDoClube))
+            : "serie_a"
           const staffCoord = (s as any).staffMembers?.find((sm: StaffMember) => sm.role === "coordenador_base")
           const coordBonus = staffCoord ? Math.round(staffCoord.competence / 20) : 0
 
@@ -6319,11 +6486,15 @@ export const useGameEngine = create<GameEngineState>()(
           // rede de seguranca para o save nao virar injogavel (sem 11 atletas nao
           // da nem para escalar), e esses emergenciais valem ZERO no mercado, de
           // modo que revende-los nao rende nada.
-          const MINIMO_PARA_JOGAR = 11
+          // O piso era 11 — exatamente o minimo para escalar, sem banco e sem
+          // cobertura: um lesionado ja deixava o time impossivel de montar.
+          // ELENCO_MINIMO (18) e o mesmo numero que o qa-smoke cobra de "elenco
+          // jogavel". Subir o piso NAO reabre a impressora de dinheiro: o
+          // emergencial continua valendo 0 no mercado (ver `marketValue` abaixo).
           const reposicaoDeAposentados = retiredPositions.length
           const emergenciais = Math.max(
             0,
-            MINIMO_PARA_JOGAR - (playersWithMarketUpdate.length + reposicaoDeAposentados),
+            ELENCO_MINIMO - (playersWithMarketUpdate.length + reposicaoDeAposentados),
           )
           const needed = reposicaoDeAposentados + emergenciais
           const baseMin = 55 + youthAcadLevel * 3 + coordBonus
@@ -6360,7 +6531,11 @@ export const useGameEngine = create<GameEngineState>()(
                 // no elenco no virar da temporada sem ninguem clicar em nada —,
                 // entao a folha da Serie C/D estourava sozinha a cada ano.
                 salary: youthPromotionSalaryWeekly(base, divisaoDoClube),
-                endDate: 78 + Math.floor(Math.random() * 78),
+                // ⚠️ SEMANA ABSOLUTA. Com `78 + random*78` cru, a partir de 2029
+                // o proprio garoto da rede de seguranca ja nascia com o contrato
+                // vencido (absoluteWeek(2029,0) = 156) e sumia no primeiro
+                // advanceWeek — a rede desfazia a si mesma em silencio.
+                endDate: absoluteWeek(nextSeason, 0) + 78 + Math.floor(Math.random() * 78),
                 releaseClause: null,
                 signedWeek: 0,
                 signedSeason: nextSeason
@@ -6388,9 +6563,19 @@ export const useGameEngine = create<GameEngineState>()(
           const elencoNovo = [...playersWithMarketUpdate, ...youthPlayers]
           const ajusteDaFolha = folhaSemanal(elencoNovo) - folhaSemanal(s.squadPlayers)
 
+          // RECEITA RECORRENTE ACOMPANHA A DIVISAO.
+          //
+          // `weeklyIncome` era calculado UMA vez, no `initializeGame`, e nunca mais.
+          // O clube subia da Serie D a Serie A e continuava recebendo como Serie D
+          // (e vice-versa) — acesso e rebaixamento nao tinham consequencia no caixa
+          // semanal, so na premiacao de fim de temporada. Recalculamos aqui, com a
+          // divisao EFETIVA da temporada que comeca.
+          const receitaSemanal = weeklyIncomeFor(divisaoDoClube, timeDoClube?.prestigio ?? 50)
+
           return {
             squadPlayers: elencoNovo,
             weeklyExpenses: Math.max(0, s.weeklyExpenses + ajusteDaFolha),
+            weeklyIncome: receitaSemanal,
             serieAStandings: newStandings,
             lastSeasonStandings,
             currentWeek: 0,
@@ -6470,6 +6655,42 @@ export const useGameEngine = create<GameEngineState>()(
               ...state,
               squadPlayers: jogadores.map(p => ({ ...p, isStarter: p.isStarter === true })),
             }
+          }
+        }
+
+        // v4 -> v5: CONTRATO GRAVADO NA BASE ERRADA DE TEMPO.
+        //
+        // `contract.endDate` e `loanEndWeek` sao conferidos contra
+        // `absoluteWeek(season, week)`, mas quatro gravadores usavam `currentWeek`,
+        // que ZERA a cada temporada: promover da base, contratar emprestado, a
+        // chegada da fila de transferencias e a renovacao de emprestimo. O atleta
+        // nascia com um vencimento no passado e saia de graca na semana seguinte.
+        //
+        // O reparo e possivel porque o contrato guarda `signedWeek`/`signedSeason`:
+        // se o fim e ANTERIOR ao proprio momento da assinatura, o numero so pode
+        // ter sido escrito na base relativa. Rebasamos preservando a DURACAO
+        // acordada (`endDate - signedWeek`). Contrato legitimamente vencido tem
+        // fim posterior a assinatura e nao e tocado.
+        if (version < 5) {
+          const rebase = (fim: number | undefined, assinaturaSemana: number, assinaturaTemporada: number) => {
+            if (fim == null) return fim
+            const assinaturaAbsoluta = absoluteWeek(assinaturaTemporada, assinaturaSemana)
+            if (fim >= assinaturaAbsoluta) return fim          // ja estava absoluto
+            return assinaturaAbsoluta + Math.max(0, fim - assinaturaSemana)
+          }
+          state = {
+            ...state,
+            squadPlayers: (state.squadPlayers as Player[]).map(p => {
+              const assinaturaSemana = p.contract?.signedWeek ?? p.joinedClubWeek ?? 0
+              const assinaturaTemporada = p.contract?.signedSeason ?? p.joinedClubSeason ?? CONTRACT_EPOCH_SEASON
+              return {
+                ...p,
+                loanEndWeek: rebase(p.loanEndWeek, assinaturaSemana, assinaturaTemporada),
+                contract: p.contract
+                  ? { ...p.contract, endDate: rebase(p.contract.endDate, assinaturaSemana, assinaturaTemporada) ?? p.contract.endDate }
+                  : p.contract,
+              }
+            }),
           }
         }
 
